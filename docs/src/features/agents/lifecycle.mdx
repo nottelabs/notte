@@ -3,6 +3,10 @@ title: Agent Lifecycle
 description: Understand agent execution modes, states, and control flow
 ---
 
+import AsyncExecution from "/snippets/agents/async_execution.mdx";
+import ParallelAgents from "/snippets/agents/parallel_agents.mdx";
+import RetryPattern from "/snippets/agents/retry_pattern.mdx";
+
 Agents support multiple execution patterns - from simple blocking calls to advanced asynchronous monitoring. Choose the right pattern for your use case.
 
 ## Execution Modes
@@ -62,21 +66,7 @@ with client.Session() as session:
 
 Run agents asynchronously with `async`/`await`:
 
-```python
-import asyncio
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-async def run_agent_task():
-    with client.Session() as session:
-        agent = client.Agent(session=session)
-        result = await agent.arun(task="Extract data")
-        return result
-
-# Run async
-result = asyncio.run(run_agent_task())
-```
+<AsyncExecution />
 
 **When to use:**
 - Building async applications
@@ -206,23 +196,7 @@ print(f"Final result: {status.success}")
 
 Run multiple agents simultaneously:
 
-```python
-import asyncio
-
-async def run_multiple_agents():
-    tasks = []
-
-    for task_description in ["Task 1", "Task 2", "Task 3"]:
-        with client.Session() as session:
-            agent = client.Agent(session=session)
-            tasks.append(agent.arun(task=task_description))
-
-    # Run all agents in parallel
-    results = await asyncio.gather(*tasks)
-    return results
-
-results = asyncio.run(run_multiple_agents())
-```
+<ParallelAgents />
 
 ### Batch Execution
 
@@ -341,22 +315,7 @@ else:
 
 Retry failed agents:
 
-```python
-MAX_RETRIES = 3
-
-for attempt in range(MAX_RETRIES):
-    with client.Session() as session:
-        agent = client.Agent(session=session)
-        result = agent.run(task="Complete task")
-
-        if result.success:
-            break
-
-        print(f"Attempt {attempt + 1} failed, retrying...")
-        time.sleep(2 ** attempt)  # Exponential backoff
-else:
-    raise RuntimeError("Agent failed after all retries")
-```
+<RetryPattern />
 
 ### Agent Fallback
 

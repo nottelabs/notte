@@ -3,6 +3,8 @@ title: Browser Agents
 description: AI-powered agents that autonomously complete browser tasks
 ---
 
+import AgentQuickstart from "/snippets/agents/quickstart.mdx";
+
 Browser Agents are AI-powered systems that can autonomously navigate websites, complete tasks, and extract information using natural language instructions.
 
 ## What is a Browser Agent?
@@ -19,26 +21,7 @@ Unlike scripted automation, agents can adapt to changes, handle unexpected scena
 
 Create and run an agent in a few lines:
 
-<CodeGroup>
-```python Python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
-    agent = client.Agent(
-        session=session,
-        reasoning_model="gemini/gemini-2.0-flash",
-        max_steps=10
-    )
-
-    result = agent.run(
-        task="Go to example.com and find the contact email"
-    )
-
-    print(result.answer)
-```
-</CodeGroup>
+<AgentQuickstart />
 
 ## How Agents Work
 

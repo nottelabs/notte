@@ -3,6 +3,8 @@ title: Agent Fallback
 description: Automatically recover from script failures with AI agents
 ---
 
+import AgentFallbackExample from "/snippets/agents/agent_fallback_example.mdx";
+
 Agent Fallback automatically spawns an AI agent when deterministic script execution fails, providing intelligent error recovery without manual intervention.
 
 ## Overview
@@ -15,24 +17,7 @@ When executing session actions, failures can occur due to:
 
 Agent Fallback catches these failures and uses an agent to recover:
 
-```python
-from notte_sdk import NotteClient, actions
-
-client = NotteClient()
-
-with client.Session() as session:
-    with client.AgentFallback(session, task="Add item to cart") as fb:
-        # Try deterministic actions
-        session.execute(actions.Click(selector="#add-to-cart"))
-        session.execute(actions.Click(selector="#checkout"))
-
-        # If any action fails, agent takes over automatically
-
-    if fb.success:
-        print("Task completed!")
-    if fb.agent_invoked:
-        print("Agent helped recover from failure")
-```
+<AgentFallbackExample />
 
 ## How It Works
 

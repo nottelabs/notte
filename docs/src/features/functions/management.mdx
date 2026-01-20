@@ -3,6 +3,10 @@ title: Function Management
 description: Update, version, monitor, and manage your deployed Functions
 ---
 
+import ListFunctions from "/snippets/functions/list_functions.mdx";
+import MonitorRuns from "/snippets/functions/monitor_runs.mdx";
+import FunctionHealthCheck from "/snippets/functions/function_health_check.mdx";
+
 Manage the lifecycle of your Functions including updates, versioning, monitoring executions, and viewing replays.
 
 ## Viewing Functions
@@ -11,21 +15,7 @@ Manage the lifecycle of your Functions including updates, versioning, monitoring
 
 View all deployed Functions:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-# List all functions
-workflows = client.workflows.list()
-
-for workflow in workflows.workflows:
-    print(f"ID: {workflow.workflow_id}")
-    print(f"Name: {workflow.name}")
-    print(f"Version: {workflow.latest_version}")
-    print(f"Created: {workflow.created_at}")
-    print("---")
-```
+<ListFunctions />
 
 ### Get Function Details
 
@@ -236,34 +226,7 @@ print("Function execution stopped")
 
 Track execution progress:
 
-```python
-import time
-
-function = client.Workflow(workflow_id="workflow_abc123")
-
-# Start run
-result = function.run(
-    url="https://example.com",
-    stream=False  # Don't stream logs
-)
-
-run_id = result.workflow_run_id
-
-# Poll status
-while True:
-    status = client.workflows.get_run(
-        workflow_id="workflow_abc123",
-        run_id=run_id
-    )
-
-    print(f"Status: {status.status}")
-
-    if status.status in ["closed", "failed"]:
-        print(f"Final result: {status.result}")
-        break
-
-    time.sleep(5)  # Check every 5 seconds
-```
+<MonitorRuns />
 
 ## Forking Functions
 
@@ -443,28 +406,7 @@ function.update(workflow_path="new_version.py")
 
 Regular health checks:
 
-```python
-def check_function_health(workflow_id: str):
-    """Check recent run success rate."""
-    runs = client.workflows.list_runs(
-        workflow_id=workflow_id,
-        only_active=False
-    )
-
-    total = len(runs.runs)
-    failed = sum(1 for r in runs.runs if r.status == "failed")
-
-    success_rate = ((total - failed) / total * 100) if total > 0 else 0
-
-    print(f"Success rate: {success_rate:.1f}%")
-    print(f"Total runs: {total}")
-    print(f"Failed runs: {failed}")
-
-    return success_rate
-
-# Monitor function
-check_function_health("workflow_abc123")
-```
+<FunctionHealthCheck />
 
 ### 3. Clean Up Old Runs
 

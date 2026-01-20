@@ -1,0 +1,16 @@
+```python form_submission.py
+from notte_sdk import NotteClient, actions
+
+def run(form_url: str, name: str, email: str, message: str):
+    """Submit a contact form."""
+    client = NotteClient()
+
+    with client.Session() as session:
+        session.execute(actions.Goto(url=form_url))
+        session.execute(actions.Fill(id="name", value=name))
+        session.execute(actions.Fill(id="email", value=email))
+        session.execute(actions.Fill(id="message", value=message))
+        session.execute(actions.Click(selector="button[type='submit']"))
+
+    return {"status": "submitted"}
+```

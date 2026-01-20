@@ -134,17 +134,6 @@
             ]
           },
           {
-            "tab": "CLI",
-            "groups": [
-              {
-                "group": "Getting Started",
-                "pages": [
-                  "cli"
-                ]
-              }
-            ]
-          },
-          {
             "tab": "API",
             "openapi": {
               "source": "https://api.notte.cc/openapi.json",
@@ -385,13 +374,13 @@
   },
   "topbarCtaButton": {
     "name": "Book a Demo",
-    "url": "https://notte.cc/demo"
+    "url": "https://cal.com/team/notte/demo"
   },
   "navbar": {
     "links": [
       {
         "label": "Book Demo",
-        "href": "https://cal.com/team/nottelabs/ap",
+        "href": "https://cal.com/team/notte/demo",
         "icon": "arrow-up-right-from-square"
       },
       {

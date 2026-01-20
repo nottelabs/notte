@@ -3,6 +3,9 @@ title: Function Schedules
 description: Schedule Functions to run automatically with cron expressions
 ---
 
+import PriceMonitor from "/snippets/functions/price_monitor.mdx";
+import UptimeMonitor from "/snippets/functions/uptime_monitor.mdx";
+
 Schedule Functions to run automatically at specific times using cron expressions.
 
 ## Overview
@@ -144,25 +147,7 @@ Run at 9 AM, 12 PM, 3 PM, and 6 PM every day.
 
 Monitor competitor pricing every day:
 
-```python
-# price_monitor.py
-def run(competitor_urls: list[str]):
-    """Monitor competitor prices daily."""
-    from notte_sdk import NotteClient, actions
-
-    client = NotteClient()
-    prices = []
-
-    for url in competitor_urls:
-        with client.Session() as session:
-            session.execute(actions.Goto(url=url))
-            price = session.scrape(
-                instructions="Extract product price"
-            )
-            prices.append({"url": url, "price": price})
-
-    return {"prices": prices, "checked_at": datetime.now().isoformat()}
-```
+<PriceMonitor />
 
 **Schedule:** `0 9 * * *` (Every day at 9 AM)
 
@@ -230,35 +215,7 @@ def run():
 
 Monitor website availability every 5 minutes:
 
-```python
-# uptime_monitor.py
-def run(target_url: str, expected_text: str):
-    """Monitor site uptime."""
-    from notte_sdk import NotteClient, actions
-
-    client = NotteClient()
-
-    try:
-        with client.Session(timeout_minutes=2) as session:
-            session.execute(actions.Goto(url=target_url))
-            content = session.scrape()
-
-            is_up = expected_text in content
-
-        return {
-            "status": "up" if is_up else "down",
-            "url": target_url,
-            "checked_at": datetime.now().isoformat()
-        }
-
-    except Exception as e:
-        return {
-            "status": "error",
-            "url": target_url,
-            "error": str(e),
-            "checked_at": datetime.now().isoformat()
-        }
-```
+<UptimeMonitor />
 
 **Schedule:** `*/5 * * * *` (Every 5 minutes)
 

@@ -3,6 +3,9 @@ title: Functions
 description: Deploy browser automations as serverless API endpoints
 ---
 
+import BasicFunction from "/snippets/functions/basic_function.mdx";
+import DeployFunction from "/snippets/functions/deploy_function.mdx";
+
 Functions are serverless deployments of your browser automations that can be invoked via API, scheduled to run automatically, or triggered by events.
 
 ## What are Functions?
@@ -26,57 +29,13 @@ Unlike running scripts locally, Functions:
 
 Create a Python file with a `run()` function:
 
-```python
-# my_automation.py
-from notte_sdk import NotteClient, actions
-
-def run(url: str, search_query: str):
-    """
-    Search a website and extract results.
-
-    Args:
-        url: The website URL
-        search_query: Search term
-    """
-    client = NotteClient()
-
-    with client.Session() as session:
-        # Navigate to site
-        session.execute(actions.Goto(url=url))
-
-        # Search
-        session.execute(actions.Fill(
-            placeholder="Search",
-            value=search_query
-        ))
-        session.execute(actions.PressKey(key="Enter"))
-
-        # Extract results
-        results = session.scrape(
-            instructions="Extract search results"
-        )
-
-        return results
-```
+<BasicFunction />
 
 ### 2. Deploy to Notte
 
 Upload your script to create a Function:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-# Deploy function
-function = client.Workflow(
-    workflow_path="my_automation.py",
-    name="Search Automation",
-    description="Searches a website and extracts results"
-)
-
-print(f"Function deployed: {function.workflow_id}")
-```
+<DeployFunction />
 
 ### 3. Invoke the Function
 

@@ -3,6 +3,13 @@ title: Browser Controls
 description: Complete reference of all browser actions available in sessions
 ---
 
+import ActionChaining from "/snippets/browser-controls/action_chaining.mdx";
+import BrowserFormSubmission from "/snippets/browser-controls/form_submission.mdx";
+import SearchExtract from "/snippets/browser-controls/search_extract.mdx";
+import MultiTab from "/snippets/browser-controls/multi_tab.mdx";
+import FileUploadDownload from "/snippets/browser-controls/file_upload_download.mdx";
+import ErrorHandling from "/snippets/browser-controls/error_handling.mdx";
+
 Sessions provide a comprehensive set of browser actions for interacting with web pages. All actions are executed through `session.execute()`.
 
 ## Navigation Actions
@@ -468,48 +475,13 @@ See [Personas](/concepts/personas) for details.
 
 Execute multiple actions in sequence:
 
-```python
-with client.Session() as session:
-    # Navigation
-    session.execute(actions.Goto(url="https://example.com/login"))
-
-    # Form filling
-    session.execute(actions.Fill(
-        selector="input[name='email']",
-        value="user@example.com"
-    ))
-    session.execute(actions.Fill(
-        selector="input[name='password']",
-        value="password123"
-    ))
-
-    # Submission
-    session.execute(actions.Click(selector="button[type='submit']"))
-
-    # Wait for redirect
-    session.execute(actions.Wait(duration=2))
-
-    # Verify success
-    content = session.scrape()
-```
+<ActionChaining />
 
 ### Error Handling
 
 Handle action failures:
 
-```python
-# Don't raise on failure
-result = session.execute(
-    actions.Click(selector="button.maybe-exists"),
-    raise_on_failure=False
-)
-
-if result.success:
-    print("Button clicked successfully")
-else:
-    print(f"Click failed: {result.message}")
-    # Try alternative approach
-```
+<ErrorHandling />
 
 ### Conditional Actions
 
@@ -600,67 +572,19 @@ actions.Fill(selector="input", value="user@example.com")
 
 ### Form Submission
 
-```python
-with client.Session() as session:
-    session.execute(actions.Goto(url="https://example.com/contact"))
-    session.execute(actions.Fill(id="name", value="John Doe"))
-    session.execute(actions.Fill(id="email", value="john@example.com"))
-    session.execute(actions.Fill(id="message", value="Hello!"))
-    session.execute(actions.Click(selector="button[type='submit']"))
-```
+<BrowserFormSubmission />
 
 ### Search and Extract
 
-```python
-with client.Session() as session:
-    session.execute(actions.Goto(url="https://example.com"))
-    session.execute(actions.Fill(
-        placeholder="Search",
-        value="laptop"
-    ))
-    session.execute(actions.PressKey(key="Enter"))
-    session.execute(actions.Wait(duration=2))
-
-    results = session.scrape(
-        instructions="Extract search results"
-    )
-```
+<SearchExtract />
 
 ### Multi-Tab Workflow
 
-```python
-with client.Session() as session:
-    # Open multiple tabs
-    session.execute(actions.Goto(url="https://site1.com"))
-    session.execute(actions.GotoNewTab(url="https://site2.com"))
-    session.execute(actions.GotoNewTab(url="https://site3.com"))
-
-    # Extract from each tab
-    for tab_index in range(3):
-        session.execute(actions.SwitchTab(tab_index=tab_index))
-        data = session.scrape()
-        process_data(data)
-```
+<MultiTab />
 
 ### File Upload and Download
 
-```python
-with client.Session() as session:
-    session.execute(actions.Goto(url="https://example.com/upload"))
-
-    # Upload file
-    session.execute(actions.UploadFile(
-        selector="input[type='file']",
-        file_path="/path/to/document.pdf"
-    ))
-    session.execute(actions.Click(selector="button.submit"))
-
-    # Wait for processing
-    session.execute(actions.Wait(duration=3))
-
-    # Download result
-    session.execute(actions.DownloadFile(selector="a.download"))
-```
+<FileUploadDownload />
 
 ## Next Steps
 

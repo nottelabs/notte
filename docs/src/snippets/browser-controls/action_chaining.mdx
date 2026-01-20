@@ -1,0 +1,29 @@
+```python action_chaining.py
+from notte_sdk import NotteClient, actions
+
+client = NotteClient()
+
+with client.Session() as session:
+    # Navigation
+    session.execute(actions.Goto(url="https://example.com/login"))
+
+    # Form filling
+    session.execute(actions.Fill(
+        selector="input[name='email']",
+        value="user@example.com"
+    ))
+    session.execute(actions.Fill(
+        selector="input[name='password']",
+        value="password123"
+    ))
+
+    # Submission
+    session.execute(actions.Click(selector="button[type='submit']"))
+
+    # Wait for redirect
+    session.execute(actions.Wait(duration=2))
+
+    # Verify success
+    content = session.scrape()
+    print(content)
+```

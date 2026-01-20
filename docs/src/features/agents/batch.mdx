@@ -3,32 +3,15 @@ title: Batch Agents
 description: Run multiple agents in parallel for improved success rates and throughput
 ---
 
+import BatchAgent from "/snippets/agents/batch_agent.mdx";
+
 Batch Agents execute multiple agent instances in parallel, either returning the first successful result or collecting all results.
 
 ## Overview
 
 Run multiple agents concurrently with different strategies:
 
-```python
-from notte_sdk import NotteClient
-from notte_sdk.endpoints.agents import BatchRemoteAgent
-
-client = NotteClient()
-
-with client.Session() as session:
-    batch_agent = BatchRemoteAgent(
-        session=session,
-        max_steps=15,
-        _client=client
-    )
-
-    # Run 3 agents in parallel, return first success
-    result = await batch_agent.run(
-        task="Find and extract pricing information",
-        n_jobs=3,
-        strategy="first_success"
-    )
-```
+<BatchAgent />
 
 ## Why Use Batch Agents?
 

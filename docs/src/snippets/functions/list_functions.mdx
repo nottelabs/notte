@@ -1,0 +1,15 @@
+```python list_functions.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# List all functions
+workflows = client.workflows.list()
+
+for workflow in workflows.workflows:
+    print(f"ID: {workflow.workflow_id}")
+    print(f"Name: {workflow.name}")
+    print(f"Version: {workflow.latest_version}")
+    print(f"Created: {workflow.created_at}")
+    print("---")
+```

@@ -1,0 +1,22 @@
+```python error_handling.py
+from notte_sdk import NotteClient, actions
+
+client = NotteClient()
+
+with client.Session() as session:
+    session.execute(actions.Goto(url="https://example.com"))
+
+    # Don't raise on failure
+    result = session.execute(
+        actions.Click(selector="button.maybe-exists"),
+        raise_on_failure=False
+    )
+
+    if result.success:
+        print("Button clicked successfully")
+        session.execute(actions.Click(selector="button.next"))
+    else:
+        print(f"Click failed: {result.message}")
+        # Try alternative approach
+        session.execute(actions.Click(selector="button.alternative"))
+```

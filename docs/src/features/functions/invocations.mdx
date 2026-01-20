@@ -3,30 +3,16 @@ title: Function Invocations
 description: Call Functions via API, SDK, cURL, or webhooks
 ---
 
+import InvokeFunction from "/snippets/functions/invoke_function.mdx";
+import BatchInvocation from "/snippets/functions/batch_invocation.mdx";
+
 Functions can be invoked in multiple ways - through the Python SDK, HTTP API, cURL commands, or as webhook endpoints.
 
 ## Via Python SDK
 
 The simplest way to call a Function:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-# Get function by ID
-function = client.Workflow(workflow_id="workflow_abc123")
-
-# Run function with parameters
-result = function.run(
-    url="https://example.com",
-    search_query="laptop"
-)
-
-print(result.result)  # Access the return value
-print(result.status)   # "closed" or "failed"
-print(result.session_id)  # Session ID if created
-```
+<InvokeFunction />
 
 ### Run Parameters
 
@@ -390,27 +376,7 @@ else:
 
 ### Run Multiple Functions
 
-```python
-from concurrent.futures import ThreadPoolExecutor
-
-function = client.Workflow(workflow_id="workflow_abc123")
-
-urls = [
-    "https://site1.com",
-    "https://site2.com",
-    "https://site3.com"
-]
-
-def invoke_function(url):
-    return function.run(url=url)
-
-# Run in parallel
-with ThreadPoolExecutor(max_workers=3) as executor:
-    results = list(executor.map(invoke_function, urls))
-
-for result in results:
-    print(result.result)
-```
+<BatchInvocation />
 
 ### Sequential Invocations
 
