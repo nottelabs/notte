@@ -16,12 +16,12 @@ from notte_sdk.types import (
     AgentStatusRequest,
     AgentStatusRequestDict,
     Cookie,
+    CreateFunctionRequest,
+    CreateFunctionRequestDict,
+    CreateFunctionRunRequest,
+    CreateFunctionRunRequestDict,
     CreatePhoneNumberRequest,
     CreatePhoneNumberRequestDict,
-    CreateWorkflowRequest,
-    CreateWorkflowRequestDict,
-    CreateWorkflowRunRequest,
-    CreateWorkflowRunRequestDict,
     DeleteCredentialsRequest,
     DeleteCredentialsRequestDict,
     DeleteCreditCardRequest,
@@ -30,19 +30,21 @@ from notte_sdk.types import (
     DeleteVaultRequestDict,
     ExecutionRequest,
     ExecutionRequestDict,
+    FunctionRunUpdateRequest,
+    FunctionRunUpdateRequestDict,
     GetCredentialsRequest,
     GetCredentialsRequestDict,
     GetCreditCardRequest,
     GetCreditCardRequestDict,
-    GetWorkflowRequest,
-    GetWorkflowRequestDict,
+    GetFunctionRequest,
+    GetFunctionRequestDict,
     ListCredentialsRequest,
     ListCredentialsRequestDict,
     ListFilesResponse,
-    ListWorkflowRunsRequest,
-    ListWorkflowRunsRequestDict,
-    ListWorkflowsRequest,
-    ListWorkflowsRequestDict,
+    ListFunctionRunsRequest,
+    ListFunctionRunsRequestDict,
+    ListFunctionsRequest,
+    ListFunctionsRequestDict,
     MessageReadRequest,
     MessageReadRequestDict,
     ObserveRequest,
@@ -53,8 +55,8 @@ from notte_sdk.types import (
     PersonaCreateRequestDict,
     PersonaListRequest,
     PersonaListRequestDict,
-    RunWorkflowRequest,
-    RunWorkflowRequestDict,
+    RunFunctionRequest,
+    RunFunctionRequestDict,
     ScrapeParams,
     ScrapeParamsDict,
     ScrapeRequest,
@@ -71,14 +73,12 @@ from notte_sdk.types import (
     SessionStartRequest,
     SessionStartRequestDict,
     SetCookiesRequest,
-    UpdateWorkflowRequest,
-    UpdateWorkflowRequestDict,
+    UpdateFunctionRequest,
+    UpdateFunctionRequestDict,
     VaultCreateRequest,
     VaultCreateRequestDict,
     VaultListRequest,
     VaultListRequestDict,
-    WorkflowRunUpdateRequest,
-    WorkflowRunUpdateRequestDict,
 )
 from pydantic import BaseModel, ValidationError
 
@@ -310,45 +310,45 @@ def test_scrape_request_dict_alignment():
     _test_request_dict_alignment(ScrapeRequest, ScrapeRequestDict)
 
 
-def test_create_workflow_request_dict_alignment():
+def test_create_function_request_dict_alignment():
     try:
-        _test_request_dict_alignment(CreateWorkflowRequest, CreateWorkflowRequestDict)
+        _test_request_dict_alignment(CreateFunctionRequest, CreateFunctionRequestDict)
     except Exception as e:
-        if "Field path from CreateWorkflowRequestDict is missing in CreateWorkflowRequest" in str(e):
+        if "Field path from CreateFunctionRequestDict is missing in CreateFunctionRequest" in str(e):
             return
         raise e
 
 
-def test_update_workflow_request_dict_alignment():
-    _test_request_dict_alignment(UpdateWorkflowRequest, UpdateWorkflowRequestDict)
+def test_update_function_request_dict_alignment():
+    _test_request_dict_alignment(UpdateFunctionRequest, UpdateFunctionRequestDict)
 
 
-def test_get_workflow_request_dict_alignment():
-    _test_request_dict_alignment(GetWorkflowRequest, GetWorkflowRequestDict)
+def test_get_function_request_dict_alignment():
+    _test_request_dict_alignment(GetFunctionRequest, GetFunctionRequestDict)
 
 
-def test_list_workflows_request_dict_alignment():
-    _test_request_dict_alignment(ListWorkflowsRequest, ListWorkflowsRequestDict)
+def test_list_functions_request_dict_alignment():
+    _test_request_dict_alignment(ListFunctionsRequest, ListFunctionsRequestDict)
 
 
-def test_run_workflow_request_dict_alignment():
-    _test_request_dict_alignment(RunWorkflowRequest, RunWorkflowRequestDict)
+def test_run_function_request_dict_alignment():
+    _test_request_dict_alignment(RunFunctionRequest, RunFunctionRequestDict)
 
 
-def test_workflow_run_update_request_dict_alignment():
-    _test_request_dict_alignment(WorkflowRunUpdateRequest, WorkflowRunUpdateRequestDict)
+def test_function_run_update_request_dict_alignment():
+    _test_request_dict_alignment(FunctionRunUpdateRequest, FunctionRunUpdateRequestDict)
 
 
-def test_list_workflow_runs_request_dict_alignment():
-    _test_request_dict_alignment(ListWorkflowRunsRequest, ListWorkflowRunsRequestDict)
+def test_list_function_runs_request_dict_alignment():
+    _test_request_dict_alignment(ListFunctionRunsRequest, ListFunctionRunsRequestDict)
 
 
 def test_agent_start_request_dict_alignment():
     _test_request_dict_alignment(AgentStartRequest, SdkAgentStartRequestDict)
 
 
-def test_create_workflow_run_request_dict_alignment():
-    _test_request_dict_alignment(CreateWorkflowRunRequest, CreateWorkflowRunRequestDict)
+def test_create_function_run_request_dict_alignment():
+    _test_request_dict_alignment(CreateFunctionRunRequest, CreateFunctionRunRequestDict)
 
 
 def test_sdk_response_should_not_fail_on_extra_fields():
@@ -410,14 +410,14 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
         "ScrapeRequest",  # Inherits from ScrapeParams, uses ScrapeRequestDict indirectly
         "__AgentCreateRequest",  # Private base class, has AgentCreateRequestDict
         "AgentStartRequest",  # Composite class, uses SdkAgentStartRequestDict
-        "ForkWorkflowRequest",  # Simple class, no dict needed
+        "ForkFunctionRequest",  # Simple class, no dict needed
         # Classes that are missing Dict types but legitimately don't need them
         "AgentSessionRequest",  # Simple base class with single field
         "DownloadFileRequest",  # Simple class with single field
         "DownloadsListRequest",  # Simple class with single field
         "SessionStatusRequest",  # Simple class with basic fields
         "SetCookiesRequest",  # Uses existing Cookie structures
-        "StartWorkflowRunRequest",  # Complex composition, may not need Dict
+        "StartFunctionRunRequest",  # Complex composition, may not need Dict
         "TabSessionDebugRequest",  # Simple debug request with single field
     }
 
@@ -438,8 +438,8 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
     legitimate_dict_types = {
         "VaultListRequestDict",  # For VaultListRequest (inherits from SessionListRequest)
         "PersonaListRequestDict",  # For PersonaListRequest (inherits from SessionListRequest)
-        "ListWorkflowsRequestDict",  # For ListWorkflowsRequest (inherits from SessionListRequest)
-        "ListWorkflowRunsRequestDict",  # For ListWorkflowRunsRequest (inherits from SessionListRequest)
+        "ListFunctionsRequestDict",  # For ListFunctionsRequest (inherits from SessionListRequest)
+        "ListFunctionRunsRequestDict",  # For ListFunctionRunsRequest (inherits from SessionListRequest)
     }
 
     # Remove mappings that have special dict types
@@ -460,6 +460,7 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
             "AgentRunRequest",
             "__AgentCreateRequest",
             "AgentSessionRequest",
+            "RunFunctionRequest",
         ]
 
         # Handle multiple inheritance and complex inheritance patterns
@@ -563,7 +564,7 @@ def test_all_response_classes_inherit_from_sdk_response():
     # Valid inheritance patterns - build hierarchy aware validation
     def is_valid_response_inheritance(class_name: str, inheritance_chain: str) -> bool:
         valid_direct_bases = ["SdkResponse", "BaseModel"]
-        valid_response_bases = ["SessionResponse", "AgentResponse", "GetWorkflowResponse", "ReplayResponse"]
+        valid_response_bases = ["SessionResponse", "AgentResponse", "GetFunctionResponse", "ReplayResponse"]
         valid_composite_bases = ["ExecutionResult", "Observation", "DataSpace"]
 
         # Handle multiple inheritance and complex inheritance patterns

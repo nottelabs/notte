@@ -85,7 +85,7 @@ class AgentsClient(BaseClient):
     AGENT_START_CUSTOM = "start/custom"
     AGENT_STOP = "{agent_id}/stop?session_id={session_id}"
     AGENT_STATUS = "{agent_id}"
-    AGENT_WORKFLOW = "{agent_id}/workflow/code"
+    AGENT_FUNCTION = "{agent_id}/workflow/code"
     AGENT_LIST = ""
     # The following endpoints downloads a MP4 file
     AGENT_REPLAY = "{agent_id}/replay"
@@ -183,7 +183,7 @@ class AgentsClient(BaseClient):
         Returns:
             NotteEndpoint configured with the GET method and AgentFunctionCodeResponse as the expected response.
         """
-        path = AgentsClient.AGENT_WORKFLOW
+        path = AgentsClient.AGENT_FUNCTION
         if agent_id is not None:
             path = path.format(agent_id=agent_id)
         return NotteEndpoint(path=path, response=AgentFunctionCodeResponse, method="GET")

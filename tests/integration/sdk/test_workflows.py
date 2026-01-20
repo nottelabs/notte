@@ -97,12 +97,12 @@ class TestWorkflowsClient:
         response = client.functions.create(path=temp_workflow_file)
 
         assert isinstance(response, GetFunctionResponse)
-        assert response.workflow_id is not None
+        assert response.function_id is not None
         assert response.latest_version is not None
         assert response.status is not None
 
         # Store workflow_id for cleanup in other tests
-        TestWorkflowsClient._test_workflow_id = response.workflow_id
+        TestWorkflowsClient._test_workflow_id = response.function_id
 
     def test_get_script(self, client: NotteClient):
         """Test getting a script with download URL."""
@@ -112,7 +112,7 @@ class TestWorkflowsClient:
         response = client.functions.get(function_id=TestWorkflowsClient._test_workflow_id)
 
         assert isinstance(response, GetFunctionWithLinkResponse)
-        assert response.workflow_id == TestWorkflowsClient._test_workflow_id
+        assert response.function_id == TestWorkflowsClient._test_workflow_id
         assert response.url is not None
         # URL should be encrypted
         assert not response.url.startswith(("http://", "https://"))
@@ -130,7 +130,7 @@ class TestWorkflowsClient:
 
         # Check if our test script is in the list
         if hasattr(TestWorkflowsClient, "_test_workflow_id"):
-            workflow_ids = [script.workflow_id for script in response.items]
+            workflow_ids = [script.function_id for script in response.items]
             assert TestWorkflowsClient._test_workflow_id in workflow_ids
 
     def test_update_script(self, client: NotteClient, temp_updated_workflow_file: str):
@@ -143,7 +143,7 @@ class TestWorkflowsClient:
         )
 
         assert isinstance(response, GetFunctionResponse)
-        assert response.workflow_id == TestWorkflowsClient._test_workflow_id
+        assert response.function_id == TestWorkflowsClient._test_workflow_id
         assert response.latest_version is not None
 
     def test_delete_script(self, client: NotteClient):
@@ -263,7 +263,7 @@ class TestRemoteWorkflowFactory:
 
         assert script is not None
         assert hasattr(script, "response")
-        assert script.response.workflow_id is not None
+        assert script.response.function_id is not None
         assert script.response.latest_version is not None
 
         # Cleanup
@@ -279,15 +279,15 @@ class TestRemoteWorkflowFactory:
 
         try:
             # Then get it through factory
-            script = client.Function(function_id=response.workflow_id)
+            script = client.Function(function_id=response.function_id)
 
             assert script is not None
-            assert script.response.workflow_id == response.workflow_id
+            assert script.response.function_id == response.function_id
             assert script.response.latest_version is not None
 
         finally:
             # Cleanup
-            _ = client.functions.delete(function_id=response.workflow_id)
+            _ = client.functions.delete(function_id=response.function_id)
 
 
 class TestWorkflowValidation:
@@ -358,10 +358,10 @@ def run():
         try:
             response = client.functions.create(path=temp_path)
 
-            assert response.workflow_id is not None
+            assert response.function_id is not None
 
             # Cleanup
-            resp = client.functions.delete(function_id=response.workflow_id)
+            resp = client.functions.delete(function_id=response.function_id)
             assert resp.status == "success"
 
         finally:

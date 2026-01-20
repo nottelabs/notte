@@ -79,13 +79,13 @@ def test_workflow(client: NotteClient, temp_workflow_file: str) -> Generator[Get
 @pytest.fixture
 def test_remote_function(client: NotteClient, test_workflow: GetFunctionResponse) -> RemoteWorkflow:
     """Create a RemoteWorkflow instance for testing."""
-    return client.Function(function_id=test_workflow.workflow_id)
+    return client.Function(function_id=test_workflow.function_id)
 
 
 @pytest.fixture
 def test_remote_workflow(client: NotteClient, test_workflow: GetFunctionResponse) -> RemoteWorkflow:
     """Create a RemoteWorkflow instance for testing."""
-    return client.Workflow(function_id=test_workflow.function_id)
+    return client.Workflow(test_workflow.function_id)
 
 
 class TestFunctionRunsClient:
@@ -93,17 +93,17 @@ class TestFunctionRunsClient:
 
     def test_create_workflow_run(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test creating a new workflow run."""
-        response = client.functions.create_run(function_id=test_workflow.workflow_id)
+        response = client.functions.create_run(function_id=test_workflow.function_id)
 
         assert isinstance(response, CreateFunctionRunResponse)
-        assert response.workflow_id == test_workflow.workflow_id
-        assert response.workflow_run_id is not None
+        assert response.function_id == test_workflow.function_id
+        assert response.function_run_id is not None
         assert response.created_at is not None
         assert response.status == "created"
 
     def test_list_workflow_runs_empty(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test listing workflow runs when there are none."""
-        response = client.functions.list_runs(function_id=test_workflow.workflow_id)
+        response = client.functions.list_runs(function_id=test_workflow.function_id)
 
         assert isinstance(response, ListFunctionRunsResponse)
         assert isinstance(response.items, list)
@@ -117,11 +117,11 @@ class TestFunctionRunsClient:
         # Create a few runs first
         run_ids = []
         for _ in range(3):
-            create_response = client.functions.create_run(function_id=test_workflow.workflow_id)
-            run_ids.append(create_response.workflow_run_id)
+            create_response = client.functions.create_run(function_id=test_workflow.function_id)
+            run_ids.append(create_response.function_run_id)
 
         # Test pagination
-        response = client.functions.list_runs(function_id=test_workflow.workflow_id, page=1, page_size=2)
+        response = client.functions.list_runs(function_id=test_workflow.function_id, page=1, page_size=2)
 
         assert isinstance(response, ListFunctionRunsResponse)
         assert len(response.items) <= 2
@@ -143,20 +143,20 @@ class TestFunctionRunsClient:
         create_response = client.functions.create_run(function_id=test_workflow.workflow_id)
 
         # List runs
-        list_response = client.functions.list_runs(function_id=test_workflow.workflow_id)
+        list_response = client.functions.list_runs(function_id=test_workflow.function_id)
 
         assert isinstance(list_response, ListFunctionRunsResponse)
         assert len(list_response.items) >= 1
 
         # Check if our created run is in the list
-        run_ids = [run.workflow_run_id for run in list_response.items]
-        assert create_response.workflow_run_id in run_ids
+        run_ids = [run.function_run_id for run in list_response.items]
+        assert create_response.function_run_id in run_ids
 
         # Verify the structure of a workflow run response
-        found_run = next(run for run in list_response.items if run.workflow_run_id == create_response.workflow_run_id)
+        found_run = next(run for run in list_response.items if run.function_run_id == create_response.function_run_id)
         assert isinstance(found_run, GetFunctionRunResponse)
-        assert found_run.workflow_id == test_workflow.workflow_id
-        assert found_run.workflow_run_id == create_response.workflow_run_id
+        assert found_run.function_id == test_workflow.function_id
+        assert found_run.function_run_id == create_response.function_run_id
         assert found_run.created_at is not None
         assert isinstance(found_run.logs, list)
 
@@ -170,8 +170,8 @@ class TestFunctionRunsClient:
         test_result = {"status": "success", "data": {"processed": True}}
 
         update_response = client.functions.update_run(
-            function_id=test_workflow.workflow_id,
-            run_id=create_response.workflow_run_id,
+            function_id=test_workflow.function_id,
+            run_id=create_response.function_run_id,
             session_id=session_id,
             logs=test_logs,
             result=str(test_result),  # Result is stored as string
@@ -179,8 +179,8 @@ class TestFunctionRunsClient:
         )
 
         assert isinstance(update_response, UpdateFunctionRunResponse)
-        assert update_response.function_id == test_workflow.workflow_id
-        assert update_response.workflow_run_id == create_response.workflow_run_id
+        assert update_response.function_id == test_workflow.function_id
+        assert update_response.function_run_id == create_response.function_run_id
         assert update_response.updated_at is not None
         assert update_response.status == "updated"
 
@@ -191,7 +191,7 @@ class TestFunctionRunsClient:
 
         # Update only the status
         update_response = client.functions.update_run(
-            function_id=test_workflow.workflow_id, run_id=create_response.workflow_run_id, status="active"
+            function_id=test_workflow.function_id, run_id=create_response.workflow_run_id, status="active"
         )
 
         assert isinstance(update_response, UpdateFunctionRunResponse)
@@ -205,12 +205,12 @@ class TestFunctionRunsClient:
         # Test each valid status
         for status in ["active", "failed"]:
             update_response: UpdateFunctionRunResponse = client.functions.update_run(
-                function_id=test_workflow.workflow_id, run_id=create_response.workflow_run_id, status=status
+                function_id=test_workflow.function_id, run_id=create_response.workflow_run_id, status=status
             )
             assert update_response.status == "updated"
         with pytest.raises(Exception, match="is not active"):
             _ = client.functions.update_run(
-                function_id=test_workflow.workflow_id, run_id=create_response.workflow_run_id, status="closed"
+                function_id=test_workflow.function_id, run_id=create_response.workflow_run_id, status="closed"
             )
 
 
@@ -226,7 +226,7 @@ class TestFunctionRunExecution:
             (),
             {
                 "json": lambda self: {
-                    "workflow_id": test_workflow.workflow_id,
+                    "workflow_id": test_workflow.function_id,
                     "workflow_run_id": "test-run-id",
                     "created_at": "2023-01-01T00:00:00Z",
                     "status": "created",
@@ -242,7 +242,7 @@ class TestFunctionRunExecution:
             (),
             {
                 "json": lambda self: {
-                    "workflow_id": test_workflow.workflow_id,
+                    "workflow_id": test_workflow.function_id,
                     "workflow_run_id": "test-run-id",
                     "session_id": "test-session-id",
                     "result": str({"test_var": "test_value", "result": "mock_scraped_data"}),
@@ -261,15 +261,15 @@ class TestFunctionRunExecution:
 
         # Run the workflow
         response = client.functions.run(
-            function_run_id=create_response.workflow_run_id,
-            function_id=test_workflow.workflow_id,
+            function_run_id=create_response.function_run_id,
+            function_id=test_workflow.function_id,
             variables={"test_var": "test_value"},
             stream=False,
         )
 
         assert isinstance(response, FunctionRunResponse)
-        assert response.workflow_id == test_workflow.workflow_id
-        assert response.workflow_run_id == create_response.workflow_run_id
+        assert response.function_id == test_workflow.function_id
+        assert response.function_run_id == create_response.function_run_id
         assert response.session_id is not None
         assert response.result is not None
         assert response.status in ["closed", "active", "failed"]
@@ -291,7 +291,7 @@ class TestFunctionRunExecution:
         from notte_sdk.errors import NotteAPIError
 
         with pytest.raises((NotteAPIError, requests.exceptions.HTTPError)):
-            client.functions.run(function_run_id="invalid-run-id", function_id=test_workflow.workflow_id, variables={})
+            client.functions.run(function_run_id="invalid-run-id", function_id=test_workflow.function_id, variables={})
 
     def test_run_workflow_missing_workflow_id(self, client: NotteClient):
         """Test running a workflow with missing workflow ID."""
@@ -470,8 +470,8 @@ class TestFunctionRunsErrorHandling:
         # This should raise a validation error due to invalid status
         with pytest.raises(Exception):  # Pydantic validation error expected
             _ = client.functions.update_run(
-                function_id=test_workflow.workflow_id,
-                run_id=create_response.workflow_run_id,
+                function_id=test_workflow.function_id,
+                run_id=create_response.function_run_id,
                 status="invalid_status",  # This is not one of the allowed values
             )
 
@@ -486,30 +486,30 @@ class TestFunctionRunsIntegration:
         # 1. Create a workflow run
         create_response = client.functions.create_run(function_id=test_workflow.workflow_id)
         assert create_response.status == "created"
-        run_id = create_response.workflow_run_id
+        run_id = create_response.function_run_id
 
         # 2. Update the run with some data
         test_logs = ["Starting workflow", "Processing data"]
 
         update_response = client.functions.update_run(
-            function_id=test_workflow.workflow_id, run_id=run_id, session_id=session_id, logs=test_logs, status="active"
+            function_id=test_workflow.function_id, run_id=run_id, session_id=session_id, logs=test_logs, status="active"
         )
         assert update_response.status == "updated"
 
         # 3. List runs and verify our run is there
-        list_response = client.functions.list_runs(function_id=test_workflow.workflow_id)
+        list_response = client.functions.list_runs(function_id=test_workflow.function_id)
         run_ids = [run.workflow_run_id for run in list_response.items]
         assert run_id in run_ids
 
         # 4. Find our specific run and verify its data
         our_run = next(run for run in list_response.items if run.workflow_run_id == run_id)
-        assert our_run.workflow_id == test_workflow.workflow_id
+        assert our_run.function_id == test_workflow.function_id
         assert our_run.session_id == session_id
         assert our_run.logs == test_logs
 
         # 5. Update the run to closed status
         final_update = client.functions.update_run(
-            function_id=test_workflow.workflow_id,
+            function_id=test_workflow.function_id,
             run_id=run_id,
             result="Integration test completed successfully",
             status="closed",
@@ -523,18 +523,18 @@ class TestFunctionRunsIntegration:
 
         # create new workflow
         response = client.functions.create(path=temp_workflow_file)
-        workflow_id = response.workflow_id
+        workflow_id = response.function_id
 
         # Create multiple runs
         for i in range(run_count):
             response = client.functions.create_run(function_id=workflow_id)
-            created_runs.append(response.workflow_run_id)
+            created_runs.append(response.function_run_id)
 
             # Update each run with different data
             # Use UUID format for session_id since server expects valid UUID
             _ = client.functions.update_run(
                 function_id=workflow_id,
-                run_id=response.workflow_run_id,
+                run_id=response.function_run_id,
                 session_id=session_id,
                 logs=[f"Log entry {i}"],
                 status="closed",
@@ -564,15 +564,15 @@ class TestFunctionRunsIntegration:
     def test_remote_function_complete_flow(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test complete RemoteWorkflow execution flow."""
         # Create RemoteWorkflow
-        function: NotteFunction = client.Function(function_id=test_workflow.workflow_id)
+        function: NotteFunction = client.Function(function_id=test_workflow.function_id)
 
         # Mock the create_run call
         with patch.object(function.client, "create_run") as mock_create_run:
             import datetime
 
             mock_create_run.return_value = CreateFunctionRunResponse(
-                workflow_id=test_workflow.workflow_id,
-                workflow_run_id="remote-test-run-id",
+                function_id=test_workflow.function_id,
+                function_run_id="remote-test-run-id",
                 created_at=datetime.datetime.now(),
                 status="created",
             )
@@ -585,7 +585,7 @@ class TestFunctionRunsIntegration:
                     (),
                     {
                         "json": lambda self: {
-                            "workflow_id": test_workflow.workflow_id,
+                            "workflow_id": test_workflow.function_id,
                             "workflow_run_id": "remote-test-run-id",
                             "session_id": "remote-test-session",
                             "result": str({"complete_flow": True, "success": True}),
@@ -610,7 +610,7 @@ class TestFunctionRunsIntegration:
         call_kwargs = mock_post.call_args.kwargs
         assert "data" in call_kwargs
         data = json.loads(call_kwargs["data"])
-        assert data["workflow_id"] == test_workflow.workflow_id
+        assert data["workflow_id"] == test_workflow.function_id
         assert "variables" in data
         assert data["variables"]["complete_flow_test"] is True
         assert data["variables"]["integration_test"] == "enabled"

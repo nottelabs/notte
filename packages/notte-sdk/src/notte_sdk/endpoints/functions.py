@@ -35,7 +35,7 @@ class NotteFunction(RemoteWorkflow):
         _client: NotteClient | None = None,
         **data: Unpack[CreateFunctionRequestDict],
     ) -> None:
-        # Map function_id to function_id and call parent constructor
+        # Pass function_id to parent RemoteWorkflow constructor
         if function_id is not None:
             # Call with positional argument to match first overload
             super().__init__(function_id, decryption_key=decryption_key, _client=_client)  # pyright: ignore[reportDeprecated]
