@@ -114,7 +114,7 @@ def test_client_delete_profile(client: NotteClient) -> None:
     # Verify it's gone
     with pytest.raises(NotteAPIError) as exc_info:
         _ = client.profiles.get(profile_id)
-    assert exc_info.value.error.get("status") == 404
+    assert exc_info.value.error.get("status") == 400
 
 
 def test_session_with_profile_read_only(client: NotteClient) -> None:

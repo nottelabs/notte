@@ -8,10 +8,10 @@ from notte_sdk import NotteClient
 from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.workflows import RemoteWorkflow
 from notte_sdk.types import (
-    DeleteWorkflowResponse,
-    GetWorkflowResponse,
-    GetWorkflowWithLinkResponse,
-    ListWorkflowsResponse,
+    DeleteFunctionResponse,
+    GetFunctionResponse,
+    GetFunctionWithLinkResponse,
+    ListFunctionsResponse,
 )
 
 
@@ -94,34 +94,34 @@ class TestWorkflowsClient:
 
     def test_create_script(self, client: NotteClient, temp_workflow_file: str):
         """Test creating a new script."""
-        response = client.workflows.create(workflow_path=temp_workflow_file)
+        response = client.functions.create(path=temp_workflow_file)
 
-        assert isinstance(response, GetWorkflowResponse)
-        assert response.workflow_id is not None
+        assert isinstance(response, GetFunctionResponse)
+        assert response.function_id is not None
         assert response.latest_version is not None
         assert response.status is not None
 
         # Store workflow_id for cleanup in other tests
-        TestWorkflowsClient._test_workflow_id = response.workflow_id
+        TestWorkflowsClient._test_workflow_id = response.function_id
 
     def test_get_script(self, client: NotteClient):
         """Test getting a script with download URL."""
         if not hasattr(TestWorkflowsClient, "_test_workflow_id"):
             pytest.skip("No script created to test get operation")
 
-        response = client.workflows.get(workflow_id=TestWorkflowsClient._test_workflow_id)
+        response = client.functions.get(function_id=TestWorkflowsClient._test_workflow_id)
 
-        assert isinstance(response, GetWorkflowWithLinkResponse)
-        assert response.workflow_id == TestWorkflowsClient._test_workflow_id
+        assert isinstance(response, GetFunctionWithLinkResponse)
+        assert response.function_id == TestWorkflowsClient._test_workflow_id
         assert response.url is not None
         # URL should be encrypted
         assert not response.url.startswith(("http://", "https://"))
 
     def test_list_workflows(self, client: NotteClient):
         """Test listing all workflows."""
-        response = client.workflows.list()
+        response = client.functions.list()
 
-        assert isinstance(response, ListWorkflowsResponse)
+        assert isinstance(response, ListFunctionsResponse)
         assert isinstance(response.items, list)
         assert isinstance(response.page, int)
         assert isinstance(response.page_size, int)
@@ -130,7 +130,7 @@ class TestWorkflowsClient:
 
         # Check if our test script is in the list
         if hasattr(TestWorkflowsClient, "_test_workflow_id"):
-            workflow_ids = [script.workflow_id for script in response.items]
+            workflow_ids = [script.function_id for script in response.items]
             assert TestWorkflowsClient._test_workflow_id in workflow_ids
 
     def test_update_script(self, client: NotteClient, temp_updated_workflow_file: str):
@@ -138,12 +138,12 @@ class TestWorkflowsClient:
         if not hasattr(TestWorkflowsClient, "_test_workflow_id"):
             pytest.skip("No script created to test update operation")
 
-        response = client.workflows.update(
-            workflow_id=TestWorkflowsClient._test_workflow_id, workflow_path=temp_updated_workflow_file
+        response = client.functions.update(
+            function_id=TestWorkflowsClient._test_workflow_id, path=temp_updated_workflow_file
         )
 
-        assert isinstance(response, GetWorkflowResponse)
-        assert response.workflow_id == TestWorkflowsClient._test_workflow_id
+        assert isinstance(response, GetFunctionResponse)
+        assert response.function_id == TestWorkflowsClient._test_workflow_id
         assert response.latest_version is not None
 
     def test_delete_script(self, client: NotteClient):
@@ -152,16 +152,16 @@ class TestWorkflowsClient:
             pytest.skip("No script created to test delete operation")
 
         # Delete should return a proper response
-        response = client.workflows.delete(workflow_id=TestWorkflowsClient._test_workflow_id)
+        response = client.functions.delete(function_id=TestWorkflowsClient._test_workflow_id)
 
         # Verify we get a proper delete response
-        assert isinstance(response, DeleteWorkflowResponse)
+        assert isinstance(response, DeleteFunctionResponse)
         assert response.status == "success"
         assert response.message is not None
 
         # Verify script is deleted by trying to get it (should fail or return empty)
         try:
-            _ = client.workflows.get(workflow_id=TestWorkflowsClient._test_workflow_id)
+            _ = client.functions.get(function_id=TestWorkflowsClient._test_workflow_id)
             # If we get here, the script might still exist with a different state
             # This depends on the API implementation
         except Exception:
@@ -172,8 +172,8 @@ class TestWorkflowsClient:
 @pytest.fixture
 def remote_workflow(client: NotteClient) -> RemoteWorkflow:
     """Create a remote workflow using a specific workflow ID and decryption key."""
-    return client.Workflow(
-        workflow_id="9fb6d40e-c76a-4d44-a73a-aa7843f0f535",  # pragma: allowlist secret
+    return client.Function(
+        function_id="9fb6d40e-c76a-4d44-a73a-aa7843f0f535",  # pragma: allowlist secret
         decryption_key="4ca0a0f585312d94028fee5e53480dbd03d8229ea0512a12b7422456d5100c98",  # pragma: allowlist secret
     )
 
@@ -263,7 +263,7 @@ class TestRemoteWorkflowFactory:
 
         assert script is not None
         assert hasattr(script, "response")
-        assert script.response.workflow_id is not None
+        assert script.response.function_id is not None
         assert script.response.latest_version is not None
 
         # Cleanup
@@ -275,19 +275,19 @@ class TestRemoteWorkflowFactory:
     def test_factory_get_existing_script(self, client: NotteClient, temp_workflow_file: str):
         """Test getting existing script through factory."""
         # First create a script
-        response = client.workflows.create(workflow_path=temp_workflow_file)
+        response = client.functions.create(path=temp_workflow_file)
 
         try:
             # Then get it through factory
-            script = client.Workflow(workflow_id=response.workflow_id)
+            script = client.Function(function_id=response.function_id)
 
             assert script is not None
-            assert script.response.workflow_id == response.workflow_id
+            assert script.response.function_id == response.function_id
             assert script.response.latest_version is not None
 
         finally:
             # Cleanup
-            _ = client.workflows.delete(workflow_id=response.workflow_id)
+            _ = client.functions.delete(function_id=response.function_id)
 
 
 class TestWorkflowValidation:
@@ -309,7 +309,7 @@ def invalid_function():
             with pytest.raises(
                 Exception, match="Python script must contain a 'run' function"
             ):  # Should raise validation error
-                _ = client.workflows.create(workflow_path=temp_path)
+                _ = client.functions.create(path=temp_path)
         finally:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
@@ -330,7 +330,7 @@ def run():
 
         try:
             with pytest.raises(Exception, match="Import of 'os' is not allowed"):  # Should raise validation error
-                _ = client.workflows.create(workflow_path=temp_path)
+                _ = client.functions.create(path=temp_path)
         finally:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
@@ -356,12 +356,12 @@ def run():
             temp_path = f.name
 
         try:
-            response = client.workflows.create(workflow_path=temp_path)
+            response = client.functions.create(path=temp_path)
 
-            assert response.workflow_id is not None
+            assert response.function_id is not None
 
             # Cleanup
-            resp = client.workflows.delete(workflow_id=response.workflow_id)
+            resp = client.functions.delete(function_id=response.function_id)
             assert resp.status == "success"
 
         finally:
@@ -376,8 +376,8 @@ def test_end_to_end_function(client: NotteClient, sample_workflow_content: str, 
 
     # Create script file
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-        f.write(sample_workflow_content)
-        workflow_path = f.name
+        _ = f.write(sample_workflow_content)
+        path = f.name
 
     # 0. Create script
     function = client.Function(
@@ -387,19 +387,19 @@ def test_end_to_end_function(client: NotteClient, sample_workflow_content: str, 
     function_id = function.function_id
     assert function_id is not None
     # 1. Update script
-    _ = function.update(path=workflow_path)
+    _ = function.update(path=path)
 
     # 2. List workflows (should include our script)
-    # list_response = client.workflows.list(page_size=20)
+    # list_response = client.functions.list(page_size=20)
     # workflow_ids = [s.workflow_id for s in list_response.items]
     # assert workflow_id in workflow_ids
 
     # 4. Update script
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         _ = f.write(updated_workflow_content)
-        updated_workflow_path = f.name
+        updated_path = f.name
 
-    _ = function.update(path=updated_workflow_path)
+    _ = function.update(path=updated_path)
 
     # 5. Test RemoteWorkflow functionality
     download_url = function.get_url()
@@ -413,6 +413,6 @@ def test_end_to_end_function(client: NotteClient, sample_workflow_content: str, 
         assert "updated" in downloaded_content.lower() or "httpbin" in downloaded_content
 
     # Clean up temp files
-    os.unlink(workflow_path)
-    os.unlink(updated_workflow_path)
+    os.unlink(path)
+    os.unlink(updated_path)
     os.unlink(f.name)
