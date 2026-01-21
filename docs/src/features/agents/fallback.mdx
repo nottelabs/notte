@@ -58,12 +58,7 @@ When an action fails, the agent spawns:
 
 After agent recovery, remaining actions are skipped:
 
-```python
-with client.AgentFallback(session, task="Complete checkout") as fb:
-    session.execute(type="click", selector="#step1")  # ✅ Success
-    session.execute(type="click", selector="#step2")  # ❌ Fails - agent spawned
-    session.execute(type="click", selector="#step3")  # ⏭️ Skipped (agent already handled task)
-```
+<Continuation />
 
 ## Use Cases
 
@@ -71,49 +66,25 @@ with client.AgentFallback(session, task="Complete checkout") as fb:
 
 Handle pages with frequently changing selectors:
 
-```python
-with client.AgentFallback(session, task="Click the submit button") as fb:
-    # Try specific selector first (fast and cheap)
-    session.execute(type="click", selector="button#submit-btn")
-
-    # If selector changed, agent finds the button (slower but works)
-```
+<FragileSelectors />
 
 ### 2. Dynamic Content
 
 Handle dynamically loaded content:
 
-```python
-with client.AgentFallback(session, task="Click the popup close button") as fb:
-    # Try clicking without waiting
-    session.execute(type="click", selector=".popup-close")
-
-    # If popup not loaded yet, agent waits and retries
-```
+<DynamicContent />
 
 ### 3. A/B Testing
 
 Handle pages with multiple variations:
 
-```python
-with client.AgentFallback(session, task="Click continue button") as fb:
-    # Try variant A
-    session.execute(type="click", selector="#continue-a")
-
-    # If user got variant B, agent adapts
-```
+<AbTesting />
 
 ### 4. Graceful Degradation
 
 Start with fast scripts, fall back to AI when needed:
 
-```python
-with client.AgentFallback(session, task="Navigate to pricing") as fb:
-    # Fast path - direct navigation
-    session.execute(type="click", selector="nav a[href='/pricing']")
-
-    # Slow path - agent finds the pricing link if layout changed
-```
+<GracefulDegradation />
 
 ## Configuration
 
@@ -121,105 +92,42 @@ with client.AgentFallback(session, task="Navigate to pricing") as fb:
 
 The task guides the agent when it's invoked:
 
-```python
-# Clear task description helps agent understand goal
-with client.AgentFallback(session, task="Add the first product to cart") as fb:
-    session.execute(type="click", selector=".add-to-cart")
-```
+<TaskDescription />
 
 ### Agent Parameters
 
 Pass agent configuration:
 
-```python
-with client.AgentFallback(
-    session,
-    task="Complete signup",
-    max_steps=15,  # Agent parameters
-    reasoning_model="anthropic/claude-3.5-sonnet",
-    use_vision=True
-) as fb:
-    session.execute(type="click", selector="#signup")
-```
+<AgentParameters />
 
 ### Vault and Persona
 
 Provide credentials to the agent:
 
-```python
-vault = client.Vault(vault_id="vault_123")
-
-with client.AgentFallback(
-    session,
-    task="Login and navigate to settings",
-    vault=vault
-) as fb:
-    # Try logging in with deterministic actions
-    session.execute(type="fill", selector="#email", value="user@example.com")
-    session.execute(type="fill", selector="#password", value="password123")
-    session.execute(type="click", selector="#login")
-
-    # If login flow changed, agent uses vault credentials
-```
+<VaultAndPersona />
 
 ## Fallback Properties
 
 Access information about the fallback execution:
 
-```python
-with client.AgentFallback(session, task="Complete task") as fb:
-    # Execute actions
-    session.execute(type="click", selector="#button")
-
-# Check what happened
-print(f"All succeeded: {fb.success}")
-print(f"Agent was invoked: {fb.agent_invoked}")
-
-if fb.agent_response:
-    print(f"Agent result: {fb.agent_response}")
-```
+<FallbackProperties />
 
 ### Success
 
 Whether the task was completed successfully:
 
-```python
-with client.AgentFallback(session, task="Task") as fb:
-    session.execute(type="click", selector="#button")
-
-if fb.success:
-    print("Task completed successfully!")
-else:
-    print("Task failed even after agent intervention")
-```
+<SuccessProperty />
 
 ### Agent Response
 
 Details from the agent if it was invoked:
 
-```python
-with client.AgentFallback(session, task="Extract data") as fb:
-    session.execute(type="click", selector="#button")
-
-if fb.agent_invoked:
-    print(f"Agent answer: {fb.agent_response.answer}")
-    print(f"Agent steps: {len(fb.agent_response.steps)}")
-```
+<AgentResponse />
 
 <Accordion title="Inspecting Individual Steps">
   Access detailed information about each execution attempt:
 
-  ```python
-  with client.AgentFallback(session, task="Task") as fb:
-      session.execute(type="click", selector="#btn1")
-      session.execute(type="click", selector="#btn2")  # Fails
-
-  for step in fb.steps:
-      print(f"Action: {step.action}")    # The action type and parameters
-      print(f"Success: {step.success}")  # Whether this step succeeded
-      if not step.success:
-          print(f"Error: {step.message}")  # Error message if failed
-  ```
+  <InspectingSteps />
 
   This is useful for debugging which specific action triggered the agent fallback.
 </Accordion>
@@ -230,82 +138,31 @@ if fb.agent_invoked:
 
 Ideal for pages that change frequently:
 
-```python
-# Good use case - page layout changes often
-with client.AgentFallback(session, task="Click pricing link") as fb:
-    session.execute(type="click", selector="a[href='/pricing']")
-```
+<BrittleWorkflows />
 
 ### 2. Be Specific in Tasks
 
 Clear tasks help the agent understand what to do:
 
-```python
-# Good - specific task
-with client.AgentFallback(session, task="Add the blue XL t-shirt to cart") as fb:
-    session.execute(type="click", selector="#add-to-cart")
-
-# Less clear - vague task
-with client.AgentFallback(session, task="Do something") as fb:
-    session.execute(type="click", selector="#button")
-```
+<SpecificTasks />
 
 ### 3. Try Fast Path First
 
 Put cheap, fast actions inside the fallback:
 
-```python
-with client.AgentFallback(session, task="Navigate to dashboard") as fb:
-    # Fast path - direct click
-    session.execute(type="click", selector="a[href='/dashboard']")
-
-    # Agent only invoked if fast path fails
-```
+<FastPathFirst />
 
 ### 4. Don't Use for Complex Logic
 
 Fallback is for single-goal recovery, not complex workflows:
 
-```python
-# Bad - too complex for fallback
-with client.AgentFallback(session, task="Complete entire checkout process") as fb:
-    session.execute(type="click", selector="#cart")
-    session.execute(type="click", selector="#checkout")
-    session.execute(type="fill", selector="#address", value="123 Main St")
-    # ... many more steps
-
-# Better - break into smaller fallbacks
-with client.AgentFallback(session, task="Click cart") as fb:
-    session.execute(type="click", selector="#cart")
-
-with client.AgentFallback(session, task="Proceed to checkout") as fb:
-    session.execute(type="click", selector="#checkout")
-```
+<ComplexLogic />
 
 ### 5. Monitor Fallback Rate
 
 Track how often agents are invoked:
 
-```python
-fallback_invoked_count = 0
-total_runs = 0
-
-for _ in range(100):
-    with client.AgentFallback(session, task="Task") as fb:
-        session.execute(type="click", selector="#button")
-
-    total_runs += 1
-    if fb.agent_invoked:
-        fallback_invoked_count += 1
-
-fallback_rate = fallback_invoked_count / total_runs
-print(f"Agent fallback rate: {fallback_rate:.1%}")
-
-# If rate is high, consider:
-# - Updating selectors
-# - Using agents directly
-# - Improving page stability
-```
+<MonitorFallbackRate />
 
 ## Limitations
 
@@ -313,19 +170,11 @@ print(f"Agent fallback rate: {fallback_rate:.1%}")
 
 Agent Fallback does not support:
 
-❌ `session.scrape()` calls
-❌ `raise_on_failure=True` on actions
-❌ Multiple nested fallbacks
+- `session.scrape()` calls
+- `raise_on_failure=True` on actions
+- Multiple nested fallbacks
 
-```python
-# This will raise an error
-with client.AgentFallback(session, task="Task") as fb:
-    data = session.scrape()  # ❌ Not allowed
-
-# This will raise an error
-with client.AgentFallback(session, task="Task") as fb:
-    session.execute(type="click", selector="#btn", raise_on_failure=True)  # ❌ Not allowed
-```
+<NotSupported />
 
 ### When Not to Use
 
@@ -340,19 +189,7 @@ Don't use Agent Fallback for:
 
 Handle failures gracefully:
 
-```python
-try:
-    with client.AgentFallback(session, task="Critical task") as fb:
-        session.execute(type="click", selector="#button")
-
-    if not fb.success:
-        # Even agent couldn't complete the task
-        alert_failure(f"Task failed: {fb.steps[-1].message}")
-
-except Exception as e:
-    # Unexpected error
-    logging.error(f"Fallback exception: {e}")
-```
+<ErrorHandling />
 
 ## Next Steps
 

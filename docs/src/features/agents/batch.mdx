@@ -92,16 +92,7 @@ Batch agents create multiple sessions with the same configuration:
 
 Control parallelism with `n_jobs`:
 
-```python
-# Light parallelism (2-3 agents)
-result = await batch_agent.run(task="Task", n_jobs=2)
-
-# Medium parallelism (3-5 agents)
-result = await batch_agent.run(task="Task", n_jobs=5)
-
-# Heavy parallelism (5-10 agents)
-result = await batch_agent.run(task="Task", n_jobs=10)
-```
+<NJobs />
 
 **Cost consideration:** Each agent incurs full costs, so `n_jobs=5` costs 5x a single agent.
 
@@ -109,17 +100,7 @@ result = await batch_agent.run(task="Task", n_jobs=10)
 
 Pass any agent parameter:
 
-```python
-batch_agent = BatchRemoteAgent(
-    session=session,
-    reasoning_model="anthropic/claude-3.5-sonnet",
-    max_steps=20,
-    use_vision=True,
-    vault=vault,
-    persona=persona,
-    _client=client
-)
-```
+<AgentParams />
 
 ## Use Cases
 
@@ -127,103 +108,25 @@ batch_agent = BatchRemoteAgent(
 
 Pages with random failures:
 
-```python
-# Page sometimes has timing issues
-with client.Session() as session:
-    batch_agent = BatchRemoteAgent(
-        session=session,
-        max_steps=10,
-        _client=client
-    )
-
-    # Run 3 attempts
-    result = await batch_agent.run(
-        task="Click the submit button that appears after 2 seconds",
-        n_jobs=3,
-        strategy="first_success"
-    )
-
-    # Much higher success rate than single agent
-```
+<UnreliablePages />
 
 ### 2. Rate-Limited Sites
 
 Avoid rate limit failures:
 
-```python
-# Some agents might get rate limited
-with client.Session(proxies="residential") as session:
-    batch_agent = BatchRemoteAgent(
-        session=session,
-        max_steps=15,
-        _client=client
-    )
-
-    # Run 5 agents from different IPs
-    result = await batch_agent.run(
-        task="Extract product data",
-        n_jobs=5,
-        strategy="first_success"
-    )
-```
+<RateLimitedSites />
 
 ### 3. A/B Testing
 
 Test which model works best:
 
-```python
-# Test different models
-models = [
-    "gemini/gemini-2.0-flash",
-    "anthropic/claude-3.5-sonnet",
-    "openai/gpt-4o"
-]
-
-results = []
-for model in models:
-    batch_agent = BatchRemoteAgent(
-        session=session,
-        reasoning_model=model,
-        _client=client
-    )
-
-    result = await batch_agent.run(
-        task="Complex task",
-        n_jobs=3,
-        strategy="first_success"
-    )
-
-    results.append({
-        "model": model,
-        "success": result.success,
-        "steps": len(result.steps)
-    })
-
-# Compare which model performed best
-```
+<AbTesting />
 
 ### 4. Consensus Results
 
 Get multiple agent opinions:
 
-```python
-batch_agent = BatchRemoteAgent(
-    session=session,
-    max_steps=10,
-    _client=client
-)
-
-# Get results from all agents
-results = await batch_agent.run(
-    task="Extract the company's revenue",
-    n_jobs=5,
-    strategy="all_finished"
-)
-
-# Find consensus
-revenues = [r.answer for r in results if r.success]
-consensus = max(set(revenues), key=revenues.count)
-```
+<ConsensusResults />
 
 ## Performance
 
@@ -231,23 +134,13 @@ consensus = max(set(revenues), key=revenues.count)
 
 With `first_success` strategy:
 
-```python
-# Single agent: 40 seconds average
-# Batch of 3: ~13 seconds (first success)
-# Speedup: ~3x faster for successful case
-```
+<ExecutionTime />
 
 ### Cost
 
 Batch agents cost more:
 
-```python
-# Single agent: $0.02
-# Batch of 3: $0.06 (3x cost)
-# Batch of 5: $0.10 (5x cost)
-
-# But: Higher success rate means fewer retries
-```
+<Cost />
 
 ### Success Rate
 
@@ -265,90 +158,31 @@ Probability of at least one success:
 
 Balance cost and reliability:
 
-```python
-# Good starting point
-result = await batch_agent.run(
-    task="Task with ~70% success rate",
-    n_jobs=3,  # 97% combined success
-    strategy="first_success"
-)
-```
+<StartWithParallel />
 
 ### 2. Use for Critical Tasks
 
 Worth the cost for important operations:
 
-```python
-# Critical: Use batch
-with client.Session() as session:
-    batch_agent = BatchRemoteAgent(session=session, _client=client)
-    result = await batch_agent.run(
-        task="Process payment",
-        n_jobs=3
-    )
-
-# Non-critical: Use single agent
-agent = client.Agent(session=session)
-result = agent.run(task="Nice-to-have data")
-```
+<CriticalTasks />
 
 ### 3. Monitor Success Rates
 
 Track if batch execution is needed:
 
-```python
-import asyncio
-
-# Test single agent success rate
-successes = 0
-for _ in range(10):
-    result = agent.run(task="Test task")
-    if result.success:
-        successes += 1
-
-success_rate = successes / 10
-
-if success_rate < 0.8:
-    # Use batch for low success rates
-    batch_agent = BatchRemoteAgent(session=session, _client=client)
-    result = await batch_agent.run(task="Test task", n_jobs=3)
-```
+<MonitorSuccessRates />
 
 ### 4. Use Appropriate Strategy
 
 Choose based on your needs:
 
-```python
-# Need one good result quickly
-strategy="first_success"
-
-# Need to compare multiple results
-strategy="all_finished"
-
-# Need statistical confidence
-strategy="all_finished"
-```
+<AppropriateStrategy />
 
 ### 5. Set Reasonable Timeouts
 
 Prevent hanging:
 
-```python
-async def run_with_timeout():
-    batch_agent = BatchRemoteAgent(session=session, _client=client)
-
-    try:
-        result = await asyncio.wait_for(
-            batch_agent.run(task="Task", n_jobs=3),
-            timeout=120  # 2 minute timeout
-        )
-        return result
-    except asyncio.TimeoutError:
-        print("Batch execution timed out")
-        raise
-
-result = await run_with_timeout()
-```
+<Timeout />
 
 ## Limitations
 
@@ -365,50 +199,19 @@ Batch agents consume more resources:
 
 Account for rate limits:
 
-```python
-# May hit account concurrency limit
-result = await batch_agent.run(
-    task="Task",
-    n_jobs=20  # Might exceed concurrent session limit
-)
-
-# Safer approach
-result = await batch_agent.run(
-    task="Task",
-    n_jobs=5  # Within typical limits
-)
-```
+<ConcurrencyLimits />
 
 ### Cost Scaling
 
 Costs multiply with `n_jobs`:
 
-```python
-# Single agent task: $0.02
-# n_jobs=3: $0.06
-# n_jobs=10: $0.20
-
-# Use batch only when success rate justifies cost
-```
+<CostScaling />
 
 ## Async Only
 
 Batch agents require async execution:
 
-```python
-import asyncio
-
-async def run_batch():
-    batch_agent = BatchRemoteAgent(session=session, _client=client)
-    result = await batch_agent.run(task="Task", n_jobs=3)
-    return result
-
-# Must use asyncio.run
-result = asyncio.run(run_batch())
-
-# Or in async context
-result = await run_batch()
-```
+<AsyncOnly />
 
 ## Next Steps
 
