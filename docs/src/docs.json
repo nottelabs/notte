@@ -126,30 +126,55 @@
                 "pages": [
                   "concepts/scraping"
                 ]
+              },
+              {
+                "group": "Guides",
+                "icon": "book-open",
+                "pages": [
+                  "guides/reliability",
+                  "guides/scraping",
+                  "guides/stealth",
+                  "guides/account_creation"
+                ]
+              },
+              {
+                "group": "Integrations",
+                "icon": "plug",
+                "pages": [
+                  {
+                    "group": "MCP",
+                    "collapsed": true,
+                    "pages": [
+                      "integrations/mcp",
+                      "guides/vibe-coding"
+                    ]
+                  },
+                  "integrations/kernel",
+                  "integrations/openai-cua"
+                ]
               }
             ]
           },
           {
             "tab": "API",
+            "openapi": "https://api.notte.cc/openapi.json",
             "groups": [
               {
                 "group": "Getting Started",
                 "pages": [
-                  "api/authentication",
-                  "api/errors",
-                  "api/rate-limits"
+                  "api-reference/authentication",
+                  "api-reference/errors",
+                  "api-reference/rate-limits"
                 ]
               },
               {
                 "group": "Health",
-                "openapi": "https://api.notte.cc/openapi.json",
                 "pages": [
                   "GET /health"
                 ]
               },
               {
                 "group": "Sessions",
-                "openapi": "https://api.notte.cc/openapi.json",
                 "pages": [
                   "GET /sessions",
                   "POST /sessions/start",
@@ -162,7 +187,6 @@
               },
               {
                 "group": "Page",
-                "openapi": "https://api.notte.cc/openapi.json",
                 "pages": [
                   "POST /sessions/{session_id}/page/observe",
                   "POST /sessions/{session_id}/page/execute",
@@ -171,7 +195,6 @@
               },
               {
                 "group": "Agents",
-                "openapi": "https://api.notte.cc/openapi.json",
                 "pages": [
                   "POST /agents/start",
                   "GET /agents/{agent_id}",
@@ -183,7 +206,6 @@
               },
               {
                 "group": "Workflows",
-                "openapi": "https://api.notte.cc/openapi.json",
                 "pages": [
                   "POST /workflows",
                   "GET /workflows",
@@ -202,7 +224,6 @@
               },
               {
                 "group": "Vaults",
-                "openapi": "https://api.notte.cc/openapi.json",
                 "pages": [
                   "POST /vaults/create",
                   "POST /vaults/{vault_id}/credentials",
@@ -219,7 +240,6 @@
               },
               {
                 "group": "Personas",
-                "openapi": "https://api.notte.cc/openapi.json",
                 "pages": [
                   "POST /personas/create",
                   "DELETE /personas/{persona_id}",
@@ -233,7 +253,6 @@
               },
               {
                 "group": "Profiles",
-                "openapi": "https://api.notte.cc/openapi.json",
                 "pages": [
                   "POST /profiles/create",
                   "GET /profiles/{profile_id}",
@@ -243,7 +262,6 @@
               },
               {
                 "group": "Storage",
-                "openapi": "https://api.notte.cc/openapi.json",
                 "pages": [
                   "GET /storage/{session_id}/downloads/{filename}",
                   "POST /storage/{session_id}/downloads/{filename}",
@@ -254,7 +272,6 @@
               },
               {
                 "group": "Scrape",
-                "openapi": "https://api.notte.cc/openapi.json",
                 "pages": [
                   "POST /scrape",
                   "POST /scrape_from_html"
@@ -262,7 +279,6 @@
               },
               {
                 "group": "Usage",
-                "openapi": "https://api.notte.cc/openapi.json",
                 "pages": [
                   "GET /usage",
                   "GET /usage/logs"
@@ -270,7 +286,6 @@
               },
               {
                 "group": "Debug",
-                "openapi": "https://api.notte.cc/openapi.json",
                 "pages": [
                   "GET /sessions/{session_id}/debug",
                   "GET /sessions/{session_id}/replay",
@@ -279,14 +294,12 @@
               },
               {
                 "group": "Network",
-                "openapi": "https://api.notte.cc/openapi.json",
                 "pages": [
                   "GET /sessions/{session_id}/network/logs"
                 ]
               },
               {
                 "group": "Prompts",
-                "openapi": "https://api.notte.cc/openapi.json",
                 "pages": [
                   "POST /prompts/improve",
                   "POST /prompts/nudge"
@@ -432,30 +445,11 @@
             "tab": "Products",
             "groups": [
               {
-                "group": "Overview",
-                "pages": [
-                  "product/index"
-                ]
-              },
-              {
-                "group": "Build",
+                "group": "Products",
                 "pages": [
                   "product/agent-mode",
                   "product/demonstrate-mode",
                   "product/studio"
-                ]
-              },
-              {
-                "group": "Deploy",
-                "pages": [
-                  "product/functions",
-                  "product/marketplace"
-                ]
-              },
-              {
-                "group": "Tools",
-                "pages": [
-                  "product/scrape"
                 ]
               }
             ]
@@ -468,7 +462,6 @@
                 "pages": [
                   "pricing",
                   "rate-limits",
-                  "python-sdk",
                   "guides/vibe-coding"
                 ]
               },
@@ -481,39 +474,6 @@
                 ]
               },
               {
-                "group": "Guides",
-                "pages": [
-                  "guides/reliability",
-                  "guides/scraping",
-                  "guides/stealth",
-                  "guides/account_creation"
-                ]
-              },
-              {
-                "group": "Integrations",
-                "pages": [
-                  "integrations/mcp",
-                  "integrations/cursor",
-                  "integrations/kernel",
-                  "integrations/browser-use",
-                  {
-                    "group": "Computer Use",
-                    "collapsed": true,
-                    "pages": [
-                      "integrations/claude-computer-use",
-                      "integrations/openai-computer-use",
-                      "integrations/gemini-computer-use",
-                      "integrations/computer-use-openagi"
-                    ]
-                  },
-                  "integrations/magnitude",
-                  "integrations/claude-agent-sdk",
-                  "integrations/laminar",
-                  "integrations/stagehand",
-                  "integrations/val-town"
-                ]
-              },
-              {
                 "group": "Community",
                 "pages": [
                   "community/github",
@@ -523,7 +483,8 @@
                   "community/yc",
                   "community/featurebase",
                   "community/trustpilot",
-                  "community/producthunt"
+                  "community/producthunt",
+                  "community/youtube"
                 ]
               }
             ]
@@ -539,7 +500,7 @@
             {
               "anchor": "Submit Feedback",
               "href": "https://notte.featurebase.app/",
-              "icon": "comments"
+              "icon": "message"
             }
           ]
         }
