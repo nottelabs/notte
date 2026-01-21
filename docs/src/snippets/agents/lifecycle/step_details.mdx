@@ -1,0 +1,9 @@
+```python
+result = agent.run(task="Navigate and extract")
+
+for i, step in enumerate(result.steps):
+    print(f"Step {i+1}:")
+    print(f"  Action: {step.action}")
+    print(f"  Success: {step.success}")
+    print(f"  Message: {step.message}")
+```

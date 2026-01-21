@@ -1,0 +1,5 @@
+```python
+# Clear task description helps agent understand goal
+with client.AgentFallback(session, task="Add the first product to cart") as fb:
+    session.execute(type="click", selector=".add-to-cart")
+```

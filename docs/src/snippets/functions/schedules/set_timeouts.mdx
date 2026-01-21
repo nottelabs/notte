@@ -1,0 +1,11 @@
+<CodeGroup>
+  ```python Python
+  def run():
+      client = NotteClient()
+
+      # Set timeout appropriate for schedule
+      with client.Session(timeout_minutes=10) as session:
+          # Your automation
+          pass
+  ```
+</CodeGroup>

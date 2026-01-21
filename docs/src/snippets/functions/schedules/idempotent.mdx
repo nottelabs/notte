@@ -1,0 +1,18 @@
+<CodeGroup>
+  ```python Python
+  def run(date: str):
+      """Idempotent function - safe to run multiple times."""
+      # Use date as unique identifier
+      # Skip if already processed
+      if already_processed(date):
+          return {"status": "already_processed", "date": date}
+
+      # Process data
+      result = process_data(date)
+
+      # Mark as processed
+      mark_processed(date)
+
+      return {"status": "processed", "date": date, "result": result}
+  ```
+</CodeGroup>

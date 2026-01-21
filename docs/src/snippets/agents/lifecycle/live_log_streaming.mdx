@@ -1,0 +1,13 @@
+```python
+async def monitor_agent():
+    agent.start(task="Complete task")
+
+    # Stream logs as they happen
+    await agent.watch_logs(log=True)
+
+    # Get final status
+    status = agent.status()
+    return status
+
+asyncio.run(monitor_agent())
+```

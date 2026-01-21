@@ -3,30 +3,36 @@ title: Replay & Debugging
 description: Debug agents with visual replays and step-by-step inspection
 ---
 
+import BasicReplay from '/snippets/agents/replay/basic_replay.mdx';
+import ViewInNotebook from '/snippets/agents/replay/view_in_notebook.mdx';
+import SaveToFile from '/snippets/agents/replay/save_to_file.mdx';
+import ViewInBrowser from '/snippets/agents/replay/view_in_browser.mdx';
+import RunAgent from '/snippets/agents/replay/run_agent.mdx';
+import CheckIfFailed from '/snippets/agents/replay/check_if_failed.mdx';
+import InspectSteps from '/snippets/agents/replay/inspect_steps.mdx';
+import WatchReplay from '/snippets/agents/replay/watch_replay.mdx';
+import FixAndRetry from '/snippets/agents/replay/fix_and_retry.mdx';
+import DebugMissingElement from '/snippets/agents/replay/debug_missing_element.mdx';
+import FixMissingElement from '/snippets/agents/replay/fix_missing_element.mdx';
+import DebugWrongAction from '/snippets/agents/replay/debug_wrong_action.mdx';
+import FixWrongAction from '/snippets/agents/replay/fix_wrong_action.mdx';
+import DebugMaxSteps from '/snippets/agents/replay/debug_max_steps.mdx';
+import FixMaxSteps from '/snippets/agents/replay/fix_max_steps.mdx';
+import StepByStepAnalysis from '/snippets/agents/replay/step_by_step_analysis.mdx';
+import ComparingRuns from '/snippets/agents/replay/comparing_runs.mdx';
+import MonitorStatus from '/snippets/agents/replay/monitor_status.mdx';
+import ReviewFailedAgents from '/snippets/agents/replay/review_failed_agents.mdx';
+import SaveProductionReplays from '/snippets/agents/replay/save_production_replays.mdx';
+import ReplaysForQa from '/snippets/agents/replay/replays_for_qa.mdx';
+import ShareWithTeam from '/snippets/agents/replay/share_with_team.mdx';
+
 Debug agent executions with MP4 replays that show exactly what the agent saw and did during its run.
 
 ## Agent Replay
 
 Get a visual replay of the agent's execution:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
-    agent = client.Agent(session=session)
-    result = agent.run(task="Navigate and extract data")
-
-    # Get MP4 replay
-    replay = agent.replay()
-
-    # Display in notebook
-    replay.show()
-
-    # Or save to file
-    replay.save("agent_run.mp4")
-```
+<BasicReplay />
 
 ## What's Included
 
@@ -44,36 +50,19 @@ Agent replays capture:
 
 Display the replay inline:
 
-```python
-replay = agent.replay()
-replay.show()  # Opens video player in notebook
-```
+<ViewInNotebook />
 
 ### Save to File
 
 Save for later viewing or sharing:
 
-```python
-replay = agent.replay()
-replay.save("debug_run.mp4")
-
-# With custom path
-from pathlib import Path
-output_dir = Path("./replays")
-output_dir.mkdir(exist_ok=True)
-replay.save(output_dir / f"agent_{agent.agent_id}.mp4")
-```
+<SaveToFile />
 
 ### In Browser
 
 Use the Notte Console to view replays:
 
-```python
-result = agent.run(task="Complete task")
-
-# Get replay URL
-print(f"View replay: https://console.notte.cc/agents/{result.agent_id}/replay")
-```
+<ViewInBrowser />
 
 ## Debugging Workflow
 
@@ -81,10 +70,7 @@ print(f"View replay: https://console.notte.cc/agents/{result.agent_id}/replay")
 
 Execute your agent task:
 
-```python
-agent = client.Agent(session=session, max_steps=15)
-result = agent.run(task="Find and click the pricing button")
-```
+<RunAgent />
 
 ### 2. Check If Failed
 

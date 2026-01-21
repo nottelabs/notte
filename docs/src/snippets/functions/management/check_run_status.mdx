@@ -1,0 +1,13 @@
+<CodeGroup>
+  ```python Python
+  # Get run details
+  run_status = client.workflows.get_run(
+      workflow_id="workflow_abc123",
+      run_id="run_xyz789"
+  )
+
+  print(f"Status: {run_status.status}")  # "active", "closed", "failed"
+  print(f"Result: {run_status.result}")
+  print(f"Session ID: {run_status.session_id}")
+  ```
+</CodeGroup>

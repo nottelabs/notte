@@ -4,6 +4,27 @@ description: Run multiple agents in parallel for improved success rates and thro
 ---
 
 import BatchAgent from "/snippets/agents/batch_agent.mdx";
+import SuccessRateCalc from "/snippets/agents/batch/success_rate_calc.mdx";
+import TimeToSuccess from "/snippets/agents/batch/time_to_success.mdx";
+import FirstSuccessStrategy from "/snippets/agents/batch/first_success_strategy.mdx";
+import AllFinishedStrategy from "/snippets/agents/batch/all_finished_strategy.mdx";
+import SessionParams from "/snippets/agents/batch/session_params.mdx";
+import NJobs from "/snippets/agents/batch/n_jobs.mdx";
+import AgentParams from "/snippets/agents/batch/agent_params.mdx";
+import UnreliablePages from "/snippets/agents/batch/unreliable_pages.mdx";
+import RateLimitedSites from "/snippets/agents/batch/rate_limited_sites.mdx";
+import AbTesting from "/snippets/agents/batch/ab_testing.mdx";
+import ConsensusResults from "/snippets/agents/batch/consensus_results.mdx";
+import ExecutionTime from "/snippets/agents/batch/execution_time.mdx";
+import Cost from "/snippets/agents/batch/cost.mdx";
+import StartWithParallel from "/snippets/agents/batch/start_with_parallel.mdx";
+import CriticalTasks from "/snippets/agents/batch/critical_tasks.mdx";
+import MonitorSuccessRates from "/snippets/agents/batch/monitor_success_rates.mdx";
+import AppropriateStrategy from "/snippets/agents/batch/appropriate_strategy.mdx";
+import Timeout from "/snippets/agents/batch/timeout.mdx";
+import ConcurrencyLimits from "/snippets/agents/batch/concurrency_limits.mdx";
+import CostScaling from "/snippets/agents/batch/cost_scaling.mdx";
+import AsyncOnly from "/snippets/agents/batch/async_only.mdx";
 
 Batch Agents execute multiple agent instances in parallel, either returning the first successful result or collecting all results.
 
@@ -25,19 +46,13 @@ Agents can fail due to:
 
 Running multiple attempts in parallel increases success probability:
 
-```python
-# Single agent: 70% success rate
-# 3 parallel agents: 97% success rate (1 - 0.3^3)
-```
+<SuccessRateCalc />
 
 ### Faster Time-to-Success
 
 Return as soon as any agent succeeds:
 
-```python
-# Single agent: might take 60 seconds and fail
-# 3 parallel agents: first success in ~20 seconds
-```
+<TimeToSuccess />
 
 ## Strategies
 
@@ -45,23 +60,7 @@ Return as soon as any agent succeeds:
 
 Return immediately when any agent succeeds:
 
-```python
-batch_agent = BatchRemoteAgent(
-    session=session,
-    max_steps=10,
-    _client=client
-)
-
-# Run 3 agents, return first success
-result = await batch_agent.run(
-    task="Complete task",
-    n_jobs=3,
-    strategy="first_success"  # Default
-)
-
-print(result.success)  # True if any agent succeeded
-print(result.answer)   # Answer from successful agent
-```
+<FirstSuccessStrategy />
 
 **When to use:**
 - Non-deterministic pages
@@ -73,18 +72,7 @@ print(result.answer)   # Answer from successful agent
 
 Wait for all agents to complete:
 
-```python
-# Run 5 agents, wait for all
-results = await batch_agent.run(
-    task="Extract data",
-    n_jobs=5,
-    strategy="all_finished"
-)
-
-# Returns list of results
-for i, result in enumerate(results):
-    print(f"Agent {i+1}: Success={result.success}")
-```
+<AllFinishedStrategy />
 
 **When to use:**
 - Comparing agent outputs
@@ -98,23 +86,7 @@ for i, result in enumerate(results):
 
 Batch agents create multiple sessions with the same configuration:
 
-```python
-with client.Session(
-    headless=True,
-    proxies="us",
-    browser_type="chrome"
-) as session:
-    batch_agent = BatchRemoteAgent(
-        session=session,
-        reasoning_model="gemini/gemini-2.0-flash",
-        max_steps=15,
-        use_vision=True,
-        _client=client
-    )
-
-    # All parallel agents use same session config
-    result = await batch_agent.run(task="Task", n_jobs=3)
-```
+<SessionParams />
 
 ### Number of Jobs
 

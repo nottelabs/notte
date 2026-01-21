@@ -1,0 +1,15 @@
+<CodeGroup>
+  ```python Python
+  # Don't raise exception on failure
+  result = function.run(
+      url="https://example.com",
+      raise_on_failure=False
+  )
+
+  # Check status manually
+  if result.status == "failed":
+      print(f"Function failed: {result.result}")
+  else:
+      print(f"Success: {result.result}")
+  ```
+</CodeGroup>

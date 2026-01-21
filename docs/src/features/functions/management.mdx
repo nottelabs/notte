@@ -6,6 +6,31 @@ description: Update, version, monitor, and manage your deployed Functions
 import ListFunctions from "/snippets/functions/list_functions.mdx";
 import MonitorRuns from "/snippets/functions/monitor_runs.mdx";
 import FunctionHealthCheck from "/snippets/functions/function_health_check.mdx";
+import GetFunctionDetails from "/snippets/functions/management/get_function_details.mdx";
+import UpdateCode from "/snippets/functions/management/update_code.mdx";
+import VersionManagement from "/snippets/functions/management/version_management.mdx";
+import RunSpecificVersion from "/snippets/functions/management/run_specific_version.mdx";
+import VersionHistory from "/snippets/functions/management/version_history.mdx";
+import ViewRunHistory from "/snippets/functions/management/view_run_history.mdx";
+import CheckRunStatus from "/snippets/functions/management/check_run_status.mdx";
+import FilterActiveRuns from "/snippets/functions/management/filter_active_runs.mdx";
+import AccessReplay from "/snippets/functions/management/access_replay.mdx";
+import ReplayAfterRun from "/snippets/functions/management/replay_after_run.mdx";
+import StopRunning from "/snippets/functions/management/stop_running.mdx";
+import ForkFunction from "/snippets/functions/management/fork_function.mdx";
+import ModifyForked from "/snippets/functions/management/modify_forked.mdx";
+import DownloadCode from "/snippets/functions/management/download_code.mdx";
+import BackupFunctions from "/snippets/functions/management/backup_functions.mdx";
+import DeleteFunction from "/snippets/functions/management/delete_function.mdx";
+import MakePublic from "/snippets/functions/management/make_public.mdx";
+import PrivateFunction from "/snippets/functions/management/private_function.mdx";
+import VersionBackup from "/snippets/functions/management/version_backup.mdx";
+import CleanupOldRuns from "/snippets/functions/management/cleanup_old_runs.mdx";
+import DocumentChanges from "/snippets/functions/management/document_changes.mdx";
+import TestBeforeProd from "/snippets/functions/management/test_before_prod.mdx";
+import TroubleshootFails from "/snippets/functions/management/troubleshoot_fails.mdx";
+import MissingEnvVars from "/snippets/functions/management/missing_env_vars.mdx";
+import HighFailureRate from "/snippets/functions/management/high_failure_rate.mdx";
 
 Manage the lifecycle of your Functions including updates, versioning, monitoring executions, and viewing replays.
 
@@ -21,17 +46,7 @@ View all deployed Functions:
 
 Retrieve specific Function information:
 
-```python
-# Get function by ID
-function = client.Function(function_id="func_abc123")
-
-# Access function properties
-print(f"Function ID: {function.function_id}")
-print(f"Name: {function.response.name}")
-print(f"Description: {function.response.description}")
-print(f"Latest Version: {function.response.latest_version}")
-print(f"Versions: {function.response.versions}")
-```
+<GetFunctionDetails />
 
 ## Updating Functions
 
@@ -39,16 +54,7 @@ print(f"Versions: {function.response.versions}")
 
 Deploy a new version of your Function:
 
-```python
-function = client.Function(function_id="func_abc123")
-
-# Update with new code
-function.update(
-    workflow_path="updated_function.py"
-)
-
-print(f"Updated to version: {function.response.latest_version}")
-```
+<UpdateCode />
 
 ### Update Function Metadata
 
@@ -67,45 +73,19 @@ Change Function name or description:
 
 Functions automatically version on each update:
 
-```python
-function = client.Function(function_id="func_abc123")
-
-# Get all versions
-print(f"Available versions: {function.response.versions}")
-
-# Get latest version
-print(f"Latest: {function.response.latest_version}")
-```
+<VersionManagement />
 
 ### Run Specific Version
 
 Execute a specific Function version:
 
-```python
-# Run latest version (default)
-result = function.run(
-    url="https://example.com"
-)
-
-# Run specific version
-result = function.run(
-    url="https://example.com",
-    version="v2"
-)
-```
+<RunSpecificVersion />
 
 ### Version History
 
 Track changes across versions:
 
-```python
-workflows = client.workflows.list()
-
-for workflow in workflows.workflows:
-    print(f"Function: {workflow.name}")
-    print(f"Versions: {', '.join(workflow.versions)}")
-    print(f"Latest: {workflow.latest_version}")
-```
+<VersionHistory />
 
 ## Monitoring Executions
 
@@ -113,36 +93,13 @@ for workflow in workflows.workflows:
 
 List recent Function executions:
 
-```python
-# Get recent runs
-runs = client.workflows.list_runs(
-    workflow_id="workflow_abc123",
-    only_active=False  # Include completed runs
-)
-
-for run in runs.runs:
-    print(f"Run ID: {run.workflow_run_id}")
-    print(f"Status: {run.status}")
-    print(f"Created: {run.created_at}")
-    print(f"Updated: {run.updated_at}")
-    print("---")
-```
+<ViewRunHistory />
 
 ### Check Run Status
 
 Monitor specific execution:
 
-```python
-# Get run details
-run_status = client.workflows.get_run(
-    workflow_id="workflow_abc123",
-    run_id="run_xyz789"
-)
-
-print(f"Status: {run_status.status}")  # "active", "closed", "failed"
-print(f"Result: {run_status.result}")
-print(f"Session ID: {run_status.session_id}")
-```
+<CheckRunStatus />
 
 **Status values:**
 - `active` - Function is currently running
@@ -153,18 +110,7 @@ print(f"Session ID: {run_status.session_id}")
 
 View only running executions:
 
-```python
-# Get only active runs
-active_runs = client.workflows.list_runs(
-    workflow_id="workflow_abc123",
-    only_active=True
-)
-
-print(f"Active runs: {len(active_runs.runs)}")
-
-for run in active_runs.runs:
-    print(f"Run {run.workflow_run_id} - {run.status}")
-```
+<FilterActiveRuns />
 
 ## Viewing Replays
 
@@ -172,18 +118,7 @@ for run in active_runs.runs:
 
 Watch MP4 replay of Function execution:
 
-```python
-function = client.Function(function_id="func_abc123")
-
-# Run the function first
-result = function.run(url="https://example.com")
-
-# Get replay for this run (uses the session from the last run)
-replay = function.replay()
-
-# Save the replay
-replay.save("function_replay.mp4")
-```
+<AccessReplay />
 
 **Replay features:**
 - Video recording of browser session
@@ -195,16 +130,7 @@ replay.save("function_replay.mp4")
 
 Get replay immediately after execution:
 
-```python
-# Run function
-result = function.run(url="https://example.com")
-
-# Get replay for this run (automatically uses the session from the run)
-replay = function.replay()
-
-# Save the video
-replay.save("execution_replay.mp4")
-```
+<ReplayAfterRun />
 
 ## Managing Runs
 
@@ -212,15 +138,7 @@ replay.save("execution_replay.mp4")
 
 Cancel a long-running execution:
 
-```python
-# Stop specific run
-client.workflows.stop_run(
-    workflow_id="workflow_abc123",
-    run_id="run_xyz789"
-)
-
-print("Function execution stopped")
-```
+<StopRunning />
 
 ### Monitoring Long Runs
 
@@ -234,14 +152,7 @@ Track execution progress:
 
 Create your own copy of a shared Function:
 
-```python
-# Fork a function from marketplace or teammate
-original = client.Function(function_id="func_abc123")
-forked_function = original.fork()
-
-print(f"Forked function ID: {forked_function.function_id}")
-print(f"Original ID: func_abc123")
-```
+<ForkFunction />
 
 **Use cases:**
 - Customize shared Functions
@@ -253,17 +164,7 @@ print(f"Original ID: func_abc123")
 
 After forking, update as needed:
 
-```python
-# Fork function
-original = client.Function(function_id="shared_function_id")
-forked = original.fork()
-
-# Update your copy
-forked.update(workflow_path="my_modified_version.py")
-
-# Run your version
-result = forked.run(url="https://example.com")
-```
+<ModifyForked />
 
 ## Downloading Functions
 
@@ -271,20 +172,7 @@ result = forked.run(url="https://example.com")
 
 Retrieve Function source code:
 
-```python
-function = client.Function(
-    function_id="func_abc123",
-    decryption_key="your-decryption-key"  # Required for downloading
-)
-
-# Download function code
-code = function.download()
-
-print(code)  # Function source code
-
-# Or download directly to a file
-code = function.download(workflow_path="downloaded_function.py")
-```
+<DownloadCode />
 
 **Requirements:**
 - Decryption key (available in Console) - passed when creating Function instance
@@ -294,31 +182,7 @@ code = function.download(workflow_path="downloaded_function.py")
 
 Back up all your Functions:
 
-```python
-import os
-
-functions = client.functions.list()
-
-# Create backup directory
-os.makedirs("function_backups", exist_ok=True)
-
-for func in functions.workflows:
-    function = client.Function(
-        function_id=func.workflow_id,
-        decryption_key="your-key"
-    )
-
-    try:
-        code = function.download()
-
-        filename = f"function_backups/{func.name}_{func.latest_version}.py"
-        with open(filename, "w") as f:
-            f.write(code)
-
-        print(f"Backed up: {func.name}")
-    except Exception as e:
-        print(f"Failed to backup {func.name}: {e}")
-```
+<BackupFunctions />
 
 ## Deleting Functions
 
@@ -326,14 +190,7 @@ for func in functions.workflows:
 
 Remove a Function permanently:
 
-```python
-function = client.Function(function_id="func_abc123")
-
-# Delete function
-function.delete()
-
-print("Function deleted")
-```
+<DeleteFunction />
 
 **Warning:**
 - Deletion is permanent
@@ -347,14 +204,7 @@ print("Function deleted")
 
 Share Functions with others:
 
-```python
-# Deploy as shared
-function = client.Function(
-    workflow_path="my_function.py",
-    name="Public Scraper",
-    shared=True  # Make publicly accessible
-)
-```
+<MakePublic />
 
 **Shared Functions:**
 - ✅ Others can view and fork
@@ -366,13 +216,7 @@ function = client.Function(
 
 Keep Functions private (default):
 
-```python
-function = client.Function(
-    workflow_path="my_function.py",
-    name="Private Automation",
-    shared=False  # Private (default)
-)
-```
+<PrivateFunction />
 
 ## Best Practices
 
@@ -380,17 +224,7 @@ function = client.Function(
 
 Update incrementally with clear changes:
 
-```python
-# Before major update, download current version
-current_code = function.download(decryption_key="key")
-
-# Save backup
-with open(f"backups/function_v{function.response.latest_version}.py", "w") as f:
-    f.write(current_code)
-
-# Update function
-function.update(workflow_path="new_version.py")
-```
+<VersionBackup />
 
 ### 2. Monitor Function Health
 
@@ -402,85 +236,19 @@ Regular health checks:
 
 Archive or analyze old execution data:
 
-```python
-import json
-from datetime import datetime, timedelta
-
-def archive_old_runs(workflow_id: str, days_old: int = 30):
-    """Archive runs older than specified days."""
-    runs = client.workflows.list_runs(
-        workflow_id=workflow_id,
-        only_active=False
-    )
-
-    cutoff_date = datetime.now() - timedelta(days=days_old)
-    archive = []
-
-    for run in runs.runs:
-        run_date = datetime.fromisoformat(run.created_at.replace('Z', '+00:00'))
-
-        if run_date < cutoff_date:
-            archive.append({
-                "run_id": run.workflow_run_id,
-                "status": run.status,
-                "created_at": run.created_at,
-                "result": str(run.result)[:100]  # First 100 chars
-            })
-
-    # Save archive
-    with open(f"archives/{workflow_id}_{datetime.now().date()}.json", "w") as f:
-        json.dump(archive, f, indent=2)
-
-    print(f"Archived {len(archive)} old runs")
-
-archive_old_runs("workflow_abc123")
-```
+<CleanupOldRuns />
 
 ### 4. Document Changes
 
 Keep change log for Function updates:
 
-```python
-# changelog.py
-"""
-Function: Data Scraper
-Function ID: func_abc123
-
-Version History:
-- v1 (2024-01-15): Initial release
-- v2 (2024-01-20): Added error handling
-- v3 (2024-01-25): Improved scraping accuracy
-- v4 (2024-02-01): Added retry logic
-"""
-
-def run(url: str):
-    # Your function code
-    pass
-```
+<DocumentChanges />
 
 ### 5. Test Before Production
 
 Validate updates before deploying:
 
-```python
-# Test locally first - decryption key needed for local execution
-function = client.Function(
-    function_id="func_abc123",
-    decryption_key="your-key"
-)
-
-# Run with local=True for testing
-test_result = function.run(
-    url="https://test-site.com",
-    local=True
-)
-
-if test_result.status == "closed":
-    print("Test passed, ready to update production")
-    function.update(workflow_path="tested_function.py")
-else:
-    print(f"Test failed: {test_result.result}")
-```
+<TestBeforeProd />
 
 ## Troubleshooting
 
@@ -488,57 +256,19 @@ else:
 
 Check run details for errors:
 
-```python
-run = client.workflows.get_run(
-    workflow_id="workflow_abc123",
-    run_id="run_xyz789"
-)
-
-if run.status == "failed":
-    print(f"Error: {run.result}")
-
-    # Get replay for debugging
-    replay = function.replay(workflow_run_id=run.workflow_run_id)
-    print(f"Watch failure: {replay.url}")
-```
+<TroubleshootFails />
 
 ### Missing Environment Variables
 
 Verify configuration:
 
-```python
-import os
-
-def run():
-    required_vars = ["API_KEY", "WEBHOOK_URL"]
-
-    missing = [var for var in required_vars if not os.getenv(var)]
-
-    if missing:
-        return {
-            "error": f"Missing environment variables: {', '.join(missing)}"
-        }
-
-    # Continue with automation
-```
+<MissingEnvVars />
 
 ### High Failure Rate
 
 Analyze failure patterns:
 
-```python
-runs = client.workflows.list_runs(workflow_id="workflow_abc123")
-
-failures = [r for r in runs.runs if r.status == "failed"]
-
-print(f"Failed runs: {len(failures)}/{len(runs.runs)}")
-
-# Analyze failure reasons
-for run in failures[:5]:  # Last 5 failures
-    print(f"Run {run.workflow_run_id}:")
-    print(f"  Error: {run.result}")
-    print(f"  Time: {run.created_at}")
-```
+<HighFailureRate />
 
 ## Next Steps
 

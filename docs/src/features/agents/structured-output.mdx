@@ -3,65 +3,43 @@ title: Structured Output
 description: Get type-safe, structured responses from agents using Pydantic models
 ---
 
+import OverviewDefault from '/snippets/agents/structured-output/overview_default.mdx';
+import OverviewStructured from '/snippets/agents/structured-output/overview_structured.mdx';
+import BasicExample from '/snippets/agents/structured-output/basic_example.mdx';
+import NestedStructures from '/snippets/agents/structured-output/nested_structures.mdx';
+import ListsOfObjects from '/snippets/agents/structured-output/lists_of_objects.mdx';
+import OptionalFields from '/snippets/agents/structured-output/optional_fields.mdx';
+import EcommerceExtraction from '/snippets/agents/structured-output/ecommerce_extraction.mdx';
+import LeadGeneration from '/snippets/agents/structured-output/lead_generation.mdx';
+import JobListings from '/snippets/agents/structured-output/job_listings.mdx';
+import SocialMedia from '/snippets/agents/structured-output/social_media.mdx';
+import FieldValidation from '/snippets/agents/structured-output/field_validation.mdx';
+import BpSpecificTask from '/snippets/agents/structured-output/bp_specific_task.mdx';
+import BpAppropriateTypes from '/snippets/agents/structured-output/bp_appropriate_types.mdx';
+import BpOptionalFields from '/snippets/agents/structured-output/bp_optional_fields.mdx';
+import BpFieldDescriptions from '/snippets/agents/structured-output/bp_field_descriptions.mdx';
+import BpStartSimple from '/snippets/agents/structured-output/bp_start_simple.mdx';
+import ErrorHandling from '/snippets/agents/structured-output/error_handling.mdx';
+import LimitationsNotSuitable from '/snippets/agents/structured-output/limitations_not_suitable.mdx';
+import LimitationsComplex from '/snippets/agents/structured-output/limitations_complex.mdx';
+
 Agents can return structured data in a specific format using Pydantic models, ensuring type safety and validation.
 
 ## Overview
 
 By default, agents return unstructured text answers:
 
-```python
-result = agent.run(task="Find the contact email")
-print(result.answer)  # "contact@example.com"
-```
+<OverviewDefault />
 
 With structured output, define the exact format you want:
 
-```python
-from pydantic import BaseModel
-
-class ContactInfo(BaseModel):
-    email: str
-    phone: str | None
-
-result = agent.run(
-    task="Extract contact information",
-    response_format=ContactInfo
-)
-
-print(result.answer.email)  # Type-safe access
-print(result.answer.phone)  # None if not found
-```
+<OverviewStructured />
 
 ## Basic Example
 
 Define a Pydantic model and pass it to `response_format`:
 
-```python
-from notte_sdk import NotteClient
-from pydantic import BaseModel
-
-client = NotteClient()
-
-class Product(BaseModel):
-    name: str
-    price: float
-    in_stock: bool
-
-with client.Session() as session:
-    agent = client.Agent(session=session)
-
-    result = agent.run(
-        task="Extract product information",
-        url="https://example.com/product/123",
-        response_format=Product
-    )
-
-    # Type-safe access
-    product = result.answer
-    print(f"{product.name}: ${product.price}")
-    if product.in_stock:
-        print("Available!")
-```
+<BasicExample />
 
 ## Complex Models
 
@@ -69,73 +47,19 @@ with client.Session() as session:
 
 Models can contain nested objects:
 
-```python
-from pydantic import BaseModel
-
-class Address(BaseModel):
-    street: str
-    city: str
-    zip_code: str
-
-class Company(BaseModel):
-    name: str
-    address: Address
-    employees: int | None
-
-result = agent.run(
-    task="Extract company information",
-    response_format=Company
-)
-
-print(result.answer.name)
-print(result.answer.address.city)
-```
+<NestedStructures />
 
 ### Lists of Objects
 
 Extract multiple items:
 
-```python
-from pydantic import BaseModel
-
-class Review(BaseModel):
-    author: str
-    rating: int
-    comment: str
-
-result = agent.run(
-    task="Extract all product reviews",
-    response_format=list[Review]
-)
-
-# Iterate over reviews
-for review in result.answer:
-    print(f"{review.author}: {review.rating}/5")
-    print(review.comment)
-```
+<ListsOfObjects />
 
 ### Optional Fields
 
 Use `None` for optional fields:
 
-```python
-from pydantic import BaseModel
-
-class Product(BaseModel):
-    name: str
-    price: float
-    discount: float | None = None  # Optional
-    shipping_cost: float | None = None  # Optional
-
-result = agent.run(
-    task="Extract product details",
-    response_format=Product
-)
-
-# Safe to access optional fields
-if result.answer.discount:
-    final_price = result.answer.price - result.answer.discount
-```
+<OptionalFields />
 
 ## Use Cases
 
@@ -143,116 +67,31 @@ if result.answer.discount:
 
 Extract structured product data:
 
-```python
-from pydantic import BaseModel
-from datetime import date
-
-class ProductListing(BaseModel):
-    name: str
-    price: float
-    original_price: float | None
-    rating: float
-    review_count: int
-    availability: str
-    seller: str
-
-result = agent.run(
-    task="Extract product listing information",
-    url="https://store.example.com/products/laptop",
-    response_format=ProductListing
-)
-```
+<EcommerceExtraction />
 
 ### Lead Generation
 
 Extract structured contact information:
 
-```python
-from pydantic import BaseModel
-
-class Lead(BaseModel):
-    company_name: str
-    contact_person: str | None
-    email: str
-    phone: str | None
-    industry: str | None
-    website: str
-
-result = agent.run(
-    task="Extract company contact details",
-    url="https://example.com/about",
-    response_format=Lead
-)
-```
+<LeadGeneration />
 
 ### Job Listings
 
 Extract job posting details:
 
-```python
-from pydantic import BaseModel
-
-class JobPosting(BaseModel):
-    title: str
-    company: str
-    location: str
-    salary_range: str | None
-    job_type: str  # "Full-time", "Part-time", etc.
-    posted_date: str
-    requirements: list[str]
-
-result = agent.run(
-    task="Extract job posting information",
-    response_format=JobPosting
-)
-```
+<JobListings />
 
 ### Social Media Data
 
 Extract social media profiles:
 
-```python
-from pydantic import BaseModel
-
-class SocialProfile(BaseModel):
-    username: str
-    display_name: str
-    bio: str | None
-    follower_count: int
-    following_count: int
-    post_count: int
-    verified: bool
-
-result = agent.run(
-    task="Extract social media profile information",
-    response_format=SocialProfile
-)
-```
+<SocialMedia />
 
 ## Field Validation
 
 Use Pydantic validators for data quality:
 
-```python
-from pydantic import BaseModel, Field, field_validator
-
-class Product(BaseModel):
-    name: str = Field(min_length=1)
-    price: float = Field(gt=0)  # Must be positive
-    rating: float = Field(ge=0, le=5)  # 0-5 range
-
-    @field_validator('price')
-    @classmethod
-    def validate_price(cls, v):
-        if v > 10000:
-            raise ValueError('Price seems unreasonably high')
-        return v
-
-result = agent.run(
-    task="Extract product",
-    response_format=Product
-)
-```
+<FieldValidation />
 
 ## Best Practices
 
@@ -260,96 +99,37 @@ result = agent.run(
 
 Match your task to the response format:
 
-```python
-# Good - task matches response_format
-result = agent.run(
-    task="Extract the product name, price, and stock status",
-    response_format=Product
-)
-
-# Less clear - agent might not fill all fields
-result = agent.run(
-    task="Tell me about this product",
-    response_format=Product
-)
-```
+<BpSpecificTask />
 
 ### 2. Use Appropriate Types
 
 Choose Python types that match the data:
 
-```python
-from pydantic import BaseModel
-from datetime import date
-
-class Event(BaseModel):
-    title: str
-    date: date  # Will be parsed as date
-    price: float  # Not str
-    attendee_count: int  # Not float
-```
+<BpAppropriateTypes />
 
 ### 3. Make Optional Fields Explicit
 
 Don't assume data will always be present:
 
-```python
-class Product(BaseModel):
-    name: str  # Always required
-    price: float  # Always required
-    discount: float | None = None  # Might not exist
-    rating: float | None = None  # Might not exist
-```
+<BpOptionalFields />
 
 ### 4. Use Field Descriptions
 
 Help the agent understand what you want:
 
-```python
-from pydantic import BaseModel, Field
-
-class Product(BaseModel):
-    name: str = Field(description="Product title/name")
-    price: float = Field(description="Current selling price in USD")
-    original_price: float | None = Field(
-        description="Original price before discount, if any"
-    )
-```
+<BpFieldDescriptions />
 
 ### 5. Start Simple, Then Expand
 
 Begin with basic models:
 
-```python
-# Start with minimal model
-class Product(BaseModel):
-    name: str
-    price: float
-
-# Add fields as needed
-class DetailedProduct(BaseModel):
-    name: str
-    price: float
-    description: str | None
-    specs: dict[str, str] | None
-```
+<BpStartSimple />
 
 ## Error Handling
 
 Handle validation errors:
 
-```python
-from pydantic import ValidationError
-
-try:
-    result = agent.run(
-        task="Extract product data",
-        response_format=Product
-    )
-    product = result.answer
-except ValidationError as e:
-    print(f"Agent returned invalid data: {e}")
-```
+<ErrorHandling />
 
 ## Limitations
 
@@ -357,34 +137,17 @@ except ValidationError as e:
 
 Structured output works best for data extraction, not for:
 
-❌ Open-ended creative tasks
-❌ Tasks requiring explanation or reasoning
-❌ When you want natural language responses
+- Open-ended creative tasks
+- Tasks requiring explanation or reasoning
+- When you want natural language responses
 
-```python
-# Don't do this - use plain text response instead
-class Explanation(BaseModel):
-    answer: str
-
-# Do this instead
-result = agent.run(task="Explain how this product works")
-print(result.answer)  # Natural language explanation
-```
+<LimitationsNotSuitable />
 
 ### Complex Relationships
 
 Very complex nested structures may be challenging:
 
-```python
-# Difficult for agents
-class ComplexStructure(BaseModel):
-    nested: dict[str, list[dict[str, Product]]]
-
-# Better - flatten or simplify
-class SimplifiedStructure(BaseModel):
-    products: list[Product]
-    categories: list[str]
-```
+<LimitationsComplex />
 
 ## Next Steps
 
@@ -393,8 +156,8 @@ class SimplifiedStructure(BaseModel):
     Configure agent parameters
   </Card>
 
-  <Card title="Models" icon="brain" href="/features/agents/models">
-    Choose the right reasoning model
+  <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle">
+    Understand agent execution modes
   </Card>
 
   <Card title="Scraping" icon="database" href="/concepts/scraping">

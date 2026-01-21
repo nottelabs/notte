@@ -5,6 +5,23 @@ description: Configure agent behavior with creation and runtime parameters
 
 import ProductionAgent from "/snippets/agents/production.mdx";
 import StructuredExtraction from "/snippets/agents/structured_extraction.mdx";
+import CreatingAgent from "/snippets/agents/config/creating_agent.mdx";
+import ParamSession from "/snippets/agents/config/param_session.mdx";
+import ParamReasoningModel from "/snippets/agents/config/param_reasoning_model.mdx";
+import ParamUseVision from "/snippets/agents/config/param_use_vision.mdx";
+import ParamMaxSteps from "/snippets/agents/config/param_max_steps.mdx";
+import ParamVault from "/snippets/agents/config/param_vault.mdx";
+import ParamPersona from "/snippets/agents/config/param_persona.mdx";
+import ParamNotifier from "/snippets/agents/config/param_notifier.mdx";
+import ParamTask from "/snippets/agents/config/param_task.mdx";
+import ParamUrl from "/snippets/agents/config/param_url.mdx";
+import ParamResponseFormat from "/snippets/agents/config/param_response_format.mdx";
+import ParamSessionOffset from "/snippets/agents/config/param_session_offset.mdx";
+import SimpleAgent from "/snippets/agents/config/simple_agent.mdx";
+import BpStepLimits from "/snippets/agents/config/bp_step_limits.mdx";
+import BpModelSelection from "/snippets/agents/config/bp_model_selection.mdx";
+import BpVision from "/snippets/agents/config/bp_vision.mdx";
+import BpUrlContext from "/snippets/agents/config/bp_url_context.mdx";
 
 Configure agents with parameters that control their reasoning model, step limits, vision capabilities, and more.
 
@@ -12,21 +29,7 @@ Configure agents with parameters that control their reasoning model, step limits
 
 Create an agent with configuration parameters:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
-    agent = client.Agent(
-        session=session,
-        reasoning_model="gemini/gemini-2.0-flash",
-        use_vision=True,
-        max_steps=15,
-        vault=vault,  # Optional
-        persona=persona  # Optional
-    )
-```
+<CreatingAgent />
 
 ## Agent Creation Parameters
 
@@ -38,23 +41,15 @@ Parameters set when creating the agent instance.
   The browser session the agent will use to execute actions. Must be a Notte session instance.
 </ParamField>
 
-```python
-with client.Session(headless=False) as session:
-    agent = client.Agent(session=session)
-```
+<ParamSession />
 
 ### reasoning_model
 
 <ParamField path="reasoning_model" type="str" default="gemini/gemini-2.0-flash">
-  The large language model used for agent reasoning and decision-making. See [Models](/features/agents/models) for available options.
+  The large language model used for agent reasoning and decision-making. Supported models include `gemini/gemini-2.0-flash`, `anthropic/claude-3.5-sonnet`, `anthropic/claude-3.5-haiku`, `openai/gpt-4o`, and `openai/gpt-4o-mini`.
 </ParamField>
 
-```python
-agent = client.Agent(
-    session=session,
-    reasoning_model="anthropic/claude-3.5-sonnet"
-)
-```
+<ParamReasoningModel />
 
 ### use_vision
 
@@ -62,12 +57,7 @@ agent = client.Agent(
   Whether to enable vision capabilities for the agent. Vision allows the agent to analyze images, screenshots, and visual page elements. Not all models support vision.
 </ParamField>
 
-```python
-agent = client.Agent(
-    session=session,
-    use_vision=True  # Agent can understand images
-)
-```
+<ParamUseVision />
 
 ### max_steps
 
@@ -75,12 +65,7 @@ agent = client.Agent(
   Maximum number of actions the agent can take before stopping. Must be between 1 and 50. Higher values allow more complex tasks but increase cost and execution time.
 </ParamField>
 
-```python
-agent = client.Agent(
-    session=session,
-    max_steps=20  # Allow up to 20 actions
-)
-```
+<ParamMaxSteps />
 
 ### vault
 
@@ -88,14 +73,7 @@ agent = client.Agent(
   Optional vault instance containing credentials the agent can use for authentication. See [Vaults](/concepts/vaults) for details.
 </ParamField>
 
-```python
-vault = client.Vault(vault_id="vault_123")
-
-agent = client.Agent(
-    session=session,
-    vault=vault  # Agent can access vault credentials
-)
-```
+<ParamVault />
 
 ### persona
 
@@ -103,14 +81,7 @@ agent = client.Agent(
   Optional persona providing the agent with phone numbers, email addresses, and other identity information. See [Personas](/concepts/personas) for details.
 </ParamField>
 
-```python
-persona = client.Persona(persona_id="persona_456")
-
-agent = client.Agent(
-    session=session,
-    persona=persona  # Agent can use persona information
-)
-```
+<ParamPersona />
 
 ### notifier
 
@@ -118,16 +89,7 @@ agent = client.Agent(
   Optional notifier that sends notifications when the agent completes or fails. Useful for long-running tasks.
 </ParamField>
 
-```python
-from notte_core.common.notifier import EmailNotifier
-
-notifier = EmailNotifier(email="user@example.com")
-
-agent = client.Agent(
-    session=session,
-    notifier=notifier  # Get email when agent finishes
-)
-```
+<ParamNotifier />
 
 ## Agent Runtime Parameters
 
@@ -139,11 +101,7 @@ Parameters provided when running the agent.
   Natural language description of what the agent should accomplish. Be specific and clear for best results.
 </ParamField>
 
-```python
-result = agent.run(
-    task="Find the cheapest laptop under $1000 and add it to cart"
-)
-```
+<ParamTask />
 
 ### url
 
@@ -151,12 +109,7 @@ result = agent.run(
   Optional starting URL for the agent. If not provided, the agent starts from the current page in the session.
 </ParamField>
 
-```python
-result = agent.run(
-    task="Extract pricing information",
-    url="https://example.com/products"
-)
-```
+<ParamUrl />
 
 ### response_format
 
@@ -164,19 +117,7 @@ result = agent.run(
   Optional Pydantic model defining the structure of the agent's response. Use this to get type-safe, structured output. See [Structured Output](/features/agents/structured-output) for details.
 </ParamField>
 
-```python
-from pydantic import BaseModel
-
-class Product(BaseModel):
-    name: str
-    price: float
-    in_stock: bool
-
-result = agent.run(
-    task="Extract product information",
-    response_format=Product
-)
-```
+<ParamResponseFormat />
 
 <Accordion title="Advanced Configuration">
   ### session_offset
@@ -185,17 +126,7 @@ result = agent.run(
     **Experimental** - The step number from which the agent should gather information from the session history. If not provided, the agent has fresh memory. Use this to make the agent aware of previous actions.
   </ParamField>
 
-  ```python
-  # Execute some actions first
-  session.execute(type="goto", url="https://example.com")
-  session.execute(type="click", selector="button.search")
-
-  # Agent remembers actions from step 0
-  result = agent.run(
-      task="Continue from where we left off",
-      session_offset=0
-  )
-  ```
+  <ParamSessionOffset />
 </Accordion>
 
 ## Configuration Examples
@@ -204,11 +135,7 @@ result = agent.run(
 
 Minimal configuration for basic tasks:
 
-```python
-with client.Session() as session:
-    agent = client.Agent(session=session)
-    result = agent.run(task="Find contact email")
-```
+<SimpleAgent />
 
 ### Production Agent
 
@@ -228,58 +155,25 @@ Agent configured for data extraction:
 
 Match `max_steps` to task complexity:
 
-```python
-# Simple task (3-5 actions)
-max_steps=5
-
-# Medium complexity (5-15 actions)
-max_steps=15
-
-# Complex multi-page task (15-30 actions)
-max_steps=30
-```
+<BpStepLimits />
 
 ### 2. Balance Cost and Capability
 
 Use cheaper models for simple tasks:
 
-```python
-# Simple navigation and extraction
-reasoning_model="gemini/gemini-2.0-flash"
-
-# Complex reasoning and decision-making
-reasoning_model="anthropic/claude-3.5-sonnet"
-```
+<BpModelSelection />
 
 ### 3. Use Vision Selectively
 
 Disable vision when not needed to reduce costs:
 
-```python
-# Text-only site
-agent = client.Agent(session=session, use_vision=False)
-
-# Image-heavy site
-agent = client.Agent(session=session, use_vision=True)
-```
+<BpVision />
 
 ### 4. Provide Context via URL
 
 Start agents at the right page:
 
-```python
-# Good - start where needed
-agent.run(
-    task="Extract product details",
-    url="https://example.com/product/123"
-)
-
-# Less efficient - agent must navigate first
-agent.run(
-    task="Go to product page and extract details",
-    url="https://example.com"
-)
-```
+<BpUrlContext />
 
 ## Next Steps
 
@@ -288,8 +182,8 @@ agent.run(
     Learn about agent execution modes
   </Card>
 
-  <Card title="Models" icon="brain" href="/features/agents/models">
-    Compare available reasoning models
+  <Card title="Replay & Debugging" icon="circle-play" href="/features/agents/replay">
+    Debug agents with visual replays
   </Card>
 
   <Card title="Structured Output" icon="brackets-curly" href="/features/agents/structured-output">

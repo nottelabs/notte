@@ -1,0 +1,8 @@
+```python
+agent = client.Agent(session=session, max_steps=5)
+result = agent.run(task="Very complex task")
+
+if len(result.steps) >= 5:
+    # Agent hit max_steps limit
+    print("Agent stopped: maximum steps reached")
+```

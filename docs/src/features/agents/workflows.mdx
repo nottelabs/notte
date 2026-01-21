@@ -3,26 +3,32 @@ title: Agent to Function Conversion
 description: Convert agent executions into reusable function code
 ---
 
+import Overview from '/snippets/agents/workflows/overview.mdx';
+import GetPythonScript from '/snippets/agents/workflows/get-python-script.mdx';
+import ExampleOutput from '/snippets/agents/workflows/example-output.mdx';
+import CreateFunctionObject from '/snippets/agents/workflows/create-function-object.mdx';
+import ExecuteGeneratedCode from '/snippets/agents/workflows/execute-generated-code.mdx';
+import UseFunctionApi from '/snippets/agents/workflows/use-function-api.mdx';
+import PrototypingWithAgents from '/snippets/agents/workflows/prototyping-with-agents.mdx';
+import ScheduledTasks from '/snippets/agents/workflows/scheduled-tasks.mdx';
+import CostOptimization from '/snippets/agents/workflows/cost-optimization.mdx';
+import TestingVariations from '/snippets/agents/workflows/testing-variations.mdx';
+import AddParameters from '/snippets/agents/workflows/add-parameters.mdx';
+import AddErrorHandling from '/snippets/agents/workflows/add-error-handling.mdx';
+import OptimizeSelectors from '/snippets/agents/workflows/optimize-selectors.mdx';
+import TestGeneratedFunctions from '/snippets/agents/workflows/test-generated-functions.mdx';
+import DocumentTheSource from '/snippets/agents/workflows/document-the-source.mdx';
+import VersionControl from '/snippets/agents/workflows/version-control.mdx';
+import MonitorFunctionSuccess from '/snippets/agents/workflows/monitor-function-success.mdx';
+import RegenerateWhenPagesChange from '/snippets/agents/workflows/regenerate-when-pages-change.mdx';
+
 Convert successful agent runs into deterministic function code that can be executed faster and cheaper than agents.
 
 ## Overview
 
 After an agent completes a task, you can extract the steps as function code:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
-    agent = client.Agent(session=session)
-    result = agent.run(task="Navigate to pricing page and extract plans")
-
-    if result.success:
-        # Convert to function code
-        function_code = agent.workflow.code()
-        print(function_code.python_script)
-```
+<Overview />
 
 ## Why Convert to Functions?
 
@@ -46,58 +52,17 @@ with client.Session() as session:
 
 Get executable Python code:
 
-```python
-agent = client.Agent(session=session)
-result = agent.run(task="Login and navigate to dashboard")
-
-if result.success:
-    # Get function code
-    code = agent.workflow.code(as_workflow=True)
-
-    print(code.python_script)
-```
+<GetPythonScript />
 
 Example output:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
-    # Step 1: Navigate to login page
-    session.execute(type="goto", url="https://example.com/login")
-
-    # Step 2: Fill email field
-    session.execute(type="fill", selector="input[name='email']", value="user@example.com")
-
-    # Step 3: Fill password field
-    session.execute(type="fill", selector="input[name='password']", value="********")
-
-    # Step 4: Click login button
-    session.execute(type="click", selector="button[type='submit']")
-
-    # Step 5: Wait for dashboard
-    session.execute(type="goto", url="https://example.com/dashboard")
-```
+<ExampleOutput />
 
 ### As Function Object
 
 Create a reusable function:
 
-```python
-agent = client.Agent(session=session)
-result = agent.run(task="Extract product data")
-
-if result.success:
-    # Create function from agent
-    function = agent.workflow.create()
-
-    print(f"Created function: {function.function_id}")
-
-    # Run function later
-    function_result = function.run()
-```
+<CreateFunctionObject />
 
 ## Running Functions
 
@@ -105,34 +70,13 @@ if result.success:
 
 Copy and run the generated Python:
 
-```python
-# Generated from agent
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
-    session.execute(type="goto", url="https://example.com")
-    session.execute(type="click", selector="button.search")
-    session.execute(type="fill", selector="input[name='query']", value="laptop")
-    data = session.scrape(instructions="Extract product names")
-
-print(data)
-```
+<ExecuteGeneratedCode />
 
 ### Use Function API
 
 Run via the function endpoint:
 
-```python
-# Create function from successful agent
-function = agent.workflow.create()
-
-# Run multiple times
-for query in ["laptop", "phone", "tablet"]:
-    result = function.run(query=query)
-    print(result)
-```
+<UseFunctionApi />
 
 ## Use Cases
 
@@ -140,69 +84,25 @@ for query in ["laptop", "phone", "tablet"]:
 
 Use agents to figure out the automation, then convert:
 
-```python
-# Phase 1: Prototype with agent
-agent = client.Agent(session=session)
-result = agent.run(task="Find all products under $100")
-
-if result.success:
-    # Phase 2: Convert to function for production
-    code = agent.workflow.code()
-
-    # Save for production use
-    with open("production_function.py", "w") as f:
-        f.write(code.python_script)
-```
+<PrototypingWithAgents />
 
 ### 2. Scheduled Tasks
 
 Convert one-time agent runs to scheduled functions:
 
-```python
-# Manual run to figure out the task
-agent = client.Agent(session=session)
-result = agent.run(task="Extract daily price changes")
-
-# Convert to function
-function = agent.workflow.create()
-
-# Schedule to run daily (via API or console)
-# function.schedule(cron="0 9 * * *")
-```
+<ScheduledTasks />
 
 ### 3. Cost Optimization
 
 Run agents once, then use cheaper functions:
 
-```python
-# One-time: Use agent to solve the task ($0.20)
-agent = client.Agent(session=session)
-result = agent.run(task="Complex data extraction")
-
-# Recurring: Use function ($0.05 per run)
-function = agent.workflow.create()
-
-# Run 100 times - save $15 vs running agent each time
-for i in range(100):
-    function.run()
-```
+<CostOptimization />
 
 ### 4. Testing Variations
 
 Create function templates from agents:
 
-```python
-# Base workflow from agent
-agent = client.Agent(session=session)
-result = agent.run(task="Search and extract results")
-
-code = agent.workflow.code()
-
-# Modify code for variations
-# - Different search queries
-# - Different extraction logic
-# - Different URLs
-```
+<TestingVariations />
 
 ## Customizing Generated Code
 
@@ -210,52 +110,19 @@ code = agent.workflow.code()
 
 Make functions reusable with parameters:
 
-```python
-# Agent-generated base code
-code = agent.workflow.code()
-
-# Customize with parameters
-customized_code = f"""
-def extract_products(search_query: str, max_results: int = 10):
-    {code.python_script}
-"""
-```
+<AddParameters />
 
 ### Add Error Handling
 
 Enhance with production-ready error handling:
 
-```python
-# Agent-generated code
-base_code = agent.workflow.code()
-
-enhanced_code = f"""
-from notte_sdk import NotteClient
-import logging
-
-def run_function():
-    client = NotteClient()
-    try:
-        with client.Session() as session:
-            {base_code.python_script}
-            return {{"success": True, "data": result}}
-    except Exception as e:
-        logging.error(f"Function failed: {{e}}")
-        return {{"success": False, "error": str(e)}}
-"""
-```
+<AddErrorHandling />
 
 ### Optimize Selectors
 
 Review and improve generated selectors:
 
-```python
-# Generated code might use:
-session.execute(type="click", selector="div.container > button:nth-child(3)")
-
-# Optimize to:
-session.execute(type="click", selector="button[data-testid='submit']")
-```
+<OptimizeSelectors />
 
 ## Best Practices
 
@@ -263,93 +130,31 @@ session.execute(type="click", selector="button[data-testid='submit']")
 
 Always test before production:
 
-```python
-# Generate function code
-code = agent.workflow.code()
-
-# Test in fresh session
-with client.Session() as session:
-    exec(code.python_script)
-    # Verify it works
-```
+<TestGeneratedFunctions />
 
 ### 2. Document the Source
 
 Track which agent generated the function:
 
-```python
-function = agent.workflow.create()
-
-# Add metadata
-metadata = {
-    "agent_id": agent.agent_id,
-    "original_task": "Extract product data",
-    "created_at": datetime.now().isoformat(),
-    "success_rate": result.success
-}
-
-# Save with function
-```
+<DocumentTheSource />
 
 ### 3. Version Control
 
 Store functions in git:
 
-```python
-# Save function code
-code = agent.workflow.code()
-
-function_path = Path("functions/extract_products.py")
-function_path.write_text(code.python_script)
-
-# Commit to git
-# git add functions/extract_products.py
-# git commit -m "Add product extraction function from agent run"
-```
+<VersionControl />
 
 ### 4. Monitor Function Success
 
 Track if functions continue to work:
 
-```python
-from datetime import datetime
-
-def run_monitored_function():
-    try:
-        function = client.Function(function_id="func_abc123")
-        result = function.run()
-
-        if result.status == "closed":
-            log_success(datetime.now())
-        else:
-            alert_failure(result.result)
-
-    except Exception as e:
-        # Function broken - maybe page changed?
-        # Time to re-run agent and regenerate
-        alert_function_broken(e)
-```
+<MonitorFunctionSuccess />
 
 ### 5. Regenerate When Pages Change
 
 When functions break, use agents to update:
 
-```python
-# Old function failing
-try:
-    old_function.run()
-except Exception as e:
-    print("Function broken, regenerating...")
-
-    # Use agent to figure out new function
-    agent = client.Agent(session=session)
-    result = agent.run(task=original_task_description)
-
-    if result.success:
-        # Generate new function
-        new_function = agent.workflow.create()
-        print(f"New function created: {new_function.function_id}")
-```
+<RegenerateWhenPagesChange />
 
 ## Limitations
 

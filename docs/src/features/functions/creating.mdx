@@ -5,6 +5,28 @@ description: Write and deploy browser automation Functions
 
 import FormSubmission from "/snippets/functions/form_submission.mdx";
 import StructuredExtraction from "/snippets/functions/structured_extraction.mdx";
+import BasicFunction from "/snippets/functions/creating/basic_function.mdx";
+import FunctionWithParams from "/snippets/functions/creating/function_with_params.mdx";
+import BrowserAutomationFunction from "/snippets/functions/creating/browser_automation_function.mdx";
+import DeploySdk from "/snippets/functions/creating/deploy_sdk.mdx";
+import DeploymentOptions from "/snippets/functions/creating/deployment_options.mdx";
+import HandlerExamples from "/snippets/functions/creating/handler_examples.mdx";
+import Dependencies from "/snippets/functions/creating/dependencies.mdx";
+import ReturnValues from "/snippets/functions/creating/return_values.mdx";
+import ParameterTypes from "/snippets/functions/creating/parameter_types.mdx";
+import TypeValidation from "/snippets/functions/creating/type_validation.mdx";
+import ComplexTypes from "/snippets/functions/creating/complex_types.mdx";
+import EnvironmentVariables from "/snippets/functions/creating/environment_variables.mdx";
+import GracefulErrors from "/snippets/functions/creating/graceful_errors.mdx";
+import RaisingExceptions from "/snippets/functions/creating/raising_exceptions.mdx";
+import TestLocally from "/snippets/functions/creating/test_locally.mdx";
+import MockApiCalls from "/snippets/functions/creating/mock_api_calls.mdx";
+import DocumentParams from "/snippets/functions/creating/document_params.mdx";
+import ReturnStructured from "/snippets/functions/creating/return_structured.mdx";
+import AddLogging from "/snippets/functions/creating/add_logging.mdx";
+import SetTimeouts from "/snippets/functions/creating/set_timeouts.mdx";
+import ValidateInputs from "/snippets/functions/creating/validate_inputs.mdx";
+import SimpleScraper from "/snippets/functions/creating/simple_scraper.mdx";
 
 Learn how to write Function scripts and deploy them to Notte's serverless infrastructure.
 
@@ -16,62 +38,19 @@ Functions are Python scripts with a `run()` function that serves as the entry po
 
 The minimal Function structure:
 
-```python
-# hello_function.py
-def run():
-    """A simple function that returns a greeting."""
-    return "Hello from Notte Functions!"
-```
+<BasicFunction />
 
 ### Function with Parameters
 
 Accept input parameters:
 
-```python
-# greet_function.py
-def run(name: str, greeting: str = "Hello"):
-    """
-    Greet someone by name.
-
-    Args:
-        name: The person's name
-        greeting: The greeting word (default: "Hello")
-
-    Returns:
-        A personalized greeting
-    """
-    return f"{greeting}, {name}!"
-```
+<FunctionWithParams />
 
 ### Browser Automation Function
 
 Use Notte SDK for browser automation:
 
-```python
-# scraper_function.py
-from notte_sdk import NotteClient
-
-def run(url: str, selector: str):
-    """
-    Scrape data from a website.
-
-    Args:
-        url: The website URL
-        selector: CSS selector for target element
-
-    Returns:
-        Extracted data
-    """
-    client = NotteClient()
-
-    with client.Session() as session:
-        session.execute(type="goto", url=url)
-        data = session.scrape(
-            instructions=f"Extract content from {selector}"
-        )
-
-    return {"url": url, "data": data}
-```
+<BrowserAutomationFunction />
 
 ## Deploying Functions
 
@@ -79,32 +58,11 @@ def run(url: str, selector: str):
 
 Deploy from Python:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-# Deploy function
-function = client.Function(
-    workflow_path="scraper_function.py",
-    name="Website Scraper",
-    description="Scrapes data from websites"
-)
-
-print(f"Function deployed: {function.function_id}")
-print(f"Version: {function.response.latest_version}")
-```
+<DeploySdk />
 
 ### Deployment Options
 
-```python
-function = client.Function(
-    workflow_path="my_function.py",
-    name="My Function",  # Display name
-    description="What this function does",  # Description
-    shared=False  # Private by default
-)
-```
+<DeploymentOptions />
 
 **Parameters:**
 - `workflow_path` (str, required): Path to your Python file
@@ -118,40 +76,13 @@ function = client.Function(
 
 Must have a `run()` function:
 
-```python
-# ✅ Correct
-def run(param1, param2):
-    return "result"
-
-# ❌ Wrong - different name
-def execute(param1, param2):
-    return "result"
-
-# ❌ Wrong - no function
-result = perform_task()
-```
+<HandlerExamples />
 
 ### Dependencies
 
 Import Notte SDK and standard libraries:
 
-```python
-# Built-in imports
-import os
-import json
-from datetime import datetime
-
-# Notte SDK
-from notte_sdk import NotteClient
-from pydantic import BaseModel
-
-# Third-party (common libraries available)
-import requests
-
-def run():
-    # Your code
-    pass
-```
+<Dependencies />
 
 **Available packages:**
 - `notte-sdk` - Notte SDK
@@ -164,84 +95,31 @@ def run():
 
 Return JSON-serializable data:
 
-```python
-# ✅ Valid returns
-return "string"
-return 123
-return {"key": "value"}
-return ["item1", "item2"]
-return None
-
-# ❌ Invalid returns
-return datetime.now()  # Not JSON serializable
-return lambda x: x  # Functions not serializable
-```
+<ReturnValues />
 
 ## Parameter Types
 
 ### Supported Types
 
-```python
-def run(
-    text: str,                    # String
-    number: int,                   # Integer
-    decimal: float,                # Float
-    flag: bool,                    # Boolean
-    items: list,                   # List
-    data: dict,                    # Dictionary
-    optional: str | None = None,   # Optional
-    with_default: int = 10         # Default value
-):
-    pass
-```
+<ParameterTypes />
 
 ### Type Validation
 
 Use type hints for automatic validation:
 
-```python
-def run(count: int):
-    # count is automatically validated as int
-    for i in range(count):
-        print(i)
-```
+<TypeValidation />
 
 ### Complex Types
 
 Use Pydantic for structured parameters:
 
-```python
-from pydantic import BaseModel
-
-class SearchParams(BaseModel):
-    url: str
-    query: str
-    max_results: int = 10
-
-def run(params: SearchParams):
-    # params is validated against SearchParams model
-    client = NotteClient()
-    # Use params.url, params.query, etc.
-```
+<ComplexTypes />
 
 ## Environment Variables
 
 Access secrets securely:
 
-```python
-import os
-
-def run():
-    # Access environment variables
-    api_key = os.getenv("MY_API_KEY")
-    webhook_url = os.getenv("WEBHOOK_URL")
-
-    if not api_key:
-        return {"error": "API key not configured"}
-
-    # Use in automation
-    client = NotteClient(api_key=api_key)
-```
+<EnvironmentVariables />
 
 Set environment variables in Console or locally for testing.
 
@@ -251,38 +129,13 @@ Set environment variables in Console or locally for testing.
 
 Return error information in results:
 
-```python
-def run(url: str):
-    try:
-        client = NotteClient()
-        with client.Session() as session:
-            session.execute(type="goto", url=url)
-            data = session.scrape()
-
-        return {
-            "success": True,
-            "data": data
-        }
-
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "error_type": type(e).__name__
-        }
-```
+<GracefulErrors />
 
 ### Raising Exceptions
 
 Let Functions fail explicitly:
 
-```python
-def run(url: str):
-    if not url.startswith("https://"):
-        raise ValueError("URL must use HTTPS")
-
-    # Continue with automation
-```
+<RaisingExceptions />
 
 ## Testing Locally
 
@@ -290,42 +143,13 @@ def run(url: str):
 
 Run your function locally:
 
-```python
-# test_function.py
-from scraper_function import run
-
-# Test with sample parameters
-result = run(
-    url="https://example.com",
-    selector=".content"
-)
-
-print(result)
-```
+<TestLocally />
 
 ### Mock API Calls
 
 Test without deploying:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-# Load existing function with decryption key for local execution
-function = client.Function(
-    function_id="func_abc123",
-    decryption_key="your-decryption-key"  # Required for local execution
-)
-
-# Run locally (not on cloud)
-result = function.run(
-    local=True,
-    url="https://example.com"
-)
-
-print(result.result)
-```
+<MockApiCalls />
 
 ## Best Practices
 
@@ -333,118 +157,37 @@ print(result.result)
 
 Use clear docstrings:
 
-```python
-def run(url: str, max_retries: int = 3):
-    """
-    Fetch data from a website with retries.
-
-    Args:
-        url: The website URL to scrape
-        max_retries: Number of retry attempts on failure (default: 3)
-
-    Returns:
-        Dict with 'success' (bool) and 'data' (any) keys
-    """
-    pass
-```
+<DocumentParams />
 
 ### 2. Return Structured Data
 
 Use consistent return formats:
 
-```python
-def run(url: str):
-    try:
-        # Perform automation
-        data = scrape_url(url)
-
-        return {
-            "success": True,
-            "data": data,
-            "url": url,
-            "timestamp": datetime.now().isoformat()
-        }
-
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "url": url
-        }
-```
+<ReturnStructured />
 
 ### 3. Add Logging
 
 Log key steps for debugging:
 
-```python
-from loguru import logger
-
-def run(url: str):
-    logger.info(f"Starting scrape of {url}")
-
-    client = NotteClient()
-    with client.Session() as session:
-        logger.info("Session created")
-        session.execute(type="goto", url=url)
-        logger.info("Page loaded")
-
-        data = session.scrape()
-        logger.info(f"Extracted {len(data)} items")
-
-    return data
-```
+<AddLogging />
 
 ### 4. Set Timeouts
 
 Prevent functions from hanging:
 
-```python
-def run(url: str):
-    client = NotteClient()
-
-    # Set session timeout
-    with client.Session(timeout_minutes=5) as session:
-        session.execute(type="goto", url=url)
-        data = session.scrape()
-
-    return data
-```
+<SetTimeouts />
 
 ### 5. Validate Inputs
 
 Check parameters before processing:
 
-```python
-def run(url: str, count: int):
-    # Validate inputs
-    if not url.startswith("http"):
-        return {"error": "Invalid URL format"}
-
-    if count < 1 or count > 100:
-        return {"error": "Count must be between 1 and 100"}
-
-    # Proceed with automation
-    pass
-```
+<ValidateInputs />
 
 ## Examples
 
 ### Simple Scraper
 
-```python
-from notte_sdk import NotteClient
-
-def run(url: str):
-    """Scrape page content."""
-    client = NotteClient()
-
-    with client.Session() as session:
-        session.execute(type="goto", url=url)
-        content = session.scrape()
-
-    return content
-```
+<SimpleScraper />
 
 ### Form Submission
 

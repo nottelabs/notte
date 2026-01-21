@@ -5,6 +5,17 @@ description: Schedule Functions to run automatically with cron expressions
 
 import PriceMonitor from "/snippets/functions/price_monitor.mdx";
 import UptimeMonitor from "/snippets/functions/uptime_monitor.mdx";
+import HourlyDataCollection from "/snippets/functions/schedules/hourly_data_collection.mdx";
+import WeeklyReports from "/snippets/functions/schedules/weekly_reports.mdx";
+import DynamicParams from "/snippets/functions/schedules/dynamic_params.mdx";
+import ExecutionHistory from "/snippets/functions/schedules/execution_history.mdx";
+import FailedRuns from "/snippets/functions/schedules/failed_runs.mdx";
+import Alerts from "/snippets/functions/schedules/alerts.mdx";
+import ErrorHandling from "/snippets/functions/schedules/error_handling.mdx";
+import SetTimeouts from "/snippets/functions/schedules/set_timeouts.mdx";
+import HealthCheck from "/snippets/functions/schedules/health_check.mdx";
+import Idempotent from "/snippets/functions/schedules/idempotent.mdx";
+import Timezone from "/snippets/functions/schedules/timezone.mdx";
 
 Schedule Functions to run automatically at specific times using cron expressions.
 
@@ -157,20 +168,7 @@ Monitor competitor pricing every day:
 
 Collect data every hour:
 
-```python
-# data_collector.py
-def run(source_url: str):
-    """Collect data every hour."""
-    from notte_sdk import NotteClient
-
-    client = NotteClient()
-
-    with client.Session() as session:
-        session.execute(type="goto", url=source_url)
-        data = session.scrape()
-
-    return {"data": data, "timestamp": datetime.now().isoformat()}
-```
+<HourlyDataCollection />
 
 **Schedule:** `0 * * * *` (Every hour)
 
@@ -180,32 +178,7 @@ def run(source_url: str):
 
 Generate reports every Monday:
 
-```python
-# weekly_report.py
-def run():
-    """Generate weekly report."""
-    from notte_sdk import NotteClient
-
-    client = NotteClient()
-
-    # Collect data from multiple sources
-    report_data = []
-
-    sources = [
-        "https://analytics.example.com",
-        "https://dashboard.example.com"
-    ]
-
-    for url in sources:
-        with client.Session() as session:
-            session.execute(type="goto", url=url)
-            data = session.scrape(
-                instructions="Extract weekly metrics"
-            )
-            report_data.append(data)
-
-    return {"report": report_data, "week": datetime.now().isocalendar()[1]}
-```
+<WeeklyReports />
 
 **Schedule:** `0 8 * * 1` (Every Monday at 8 AM)
 
@@ -240,21 +213,7 @@ Every scheduled run uses these parameters.
 
 Use environment variables or context:
 
-```python
-import os
-from datetime import datetime
-
-def run():
-    # Access environment variables
-    api_key = os.getenv("API_KEY")
-    webhook_url = os.getenv("WEBHOOK_URL")
-
-    # Use current date
-    today = datetime.now().strftime("%Y-%m-%d")
-
-    # Your automation
-    pass
-```
+<DynamicParams />
 
 ## Managing Schedules
 
@@ -289,76 +248,19 @@ Remove schedule permanently:
 
 View past scheduled runs:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-# List recent runs
-runs = client.workflows.list_runs(
-    workflow_id="workflow_abc123",
-    only_active=False  # Include completed runs
-)
-
-for run in runs.runs:
-    print(f"Run {run.workflow_run_id}:")
-    print(f"  Status: {run.status}")
-    print(f"  Created: {run.created_at}")
-    print(f"  Updated: {run.updated_at}")
-```
+<ExecutionHistory />
 
 ### Failed Runs
 
 Handle scheduled failures:
 
-```python
-# In your function
-def run():
-    try:
-        # Your automation
-        result = perform_automation()
-
-        # Send success notification
-        notify_success(result)
-
-        return result
-
-    except Exception as e:
-        # Send failure alert
-        notify_failure(str(e))
-
-        # Return error info
-        return {
-            "success": False,
-            "error": str(e)
-        }
-```
+<FailedRuns />
 
 ### Alerts
 
 Set up alerts for failures:
 
-```python
-def run():
-    import requests
-
-    try:
-        # Your automation
-        result = perform_automation()
-        return result
-
-    except Exception as e:
-        # Send to Slack/Discord/Email
-        requests.post(
-            os.getenv("WEBHOOK_URL"),
-            json={
-                "text": f"Scheduled function failed: {str(e)}",
-                "function_id": "workflow_abc123"
-            }
-        )
-
-        raise  # Re-raise to mark run as failed
-```
+<Alerts />
 
 ## Best Practices
 
@@ -378,62 +280,17 @@ Match schedule to data update frequency:
 
 Scheduled functions should handle errors gracefully:
 
-```python
-def run():
-    try:
-        result = perform_automation()
-        return {"success": True, "data": result}
-    except Exception as e:
-        # Log error, send alert
-        return {"success": False, "error": str(e)}
-```
+<ErrorHandling />
 
 ### 3. Set Reasonable Timeouts
 
-```python
-def run():
-    client = NotteClient()
-
-    # Set timeout appropriate for schedule
-    with client.Session(timeout_minutes=10) as session:
-        # Your automation
-        pass
-```
+<SetTimeouts />
 
 ### 4. Monitor Schedule Health
 
 Check that schedules are running:
 
-```python
-# weekly_health_check.py
-def run():
-    """Check if all schedules are healthy."""
-    from notte_sdk import NotteClient
-
-    client = NotteClient()
-
-    # Get all workflow runs from last 24 hours
-    workflows = client.workflows.list()
-
-    health_report = []
-    for workflow in workflows.workflows:
-        runs = client.workflows.list_runs(
-            workflow_id=workflow.workflow_id
-        )
-
-        # Check recent runs
-        recent_failures = [
-            r for r in runs.runs
-            if r.status == "failed"
-        ]
-
-        health_report.append({
-            "workflow_id": workflow.workflow_id,
-            "recent_failures": len(recent_failures)
-        })
-
-    return health_report
-```
+<HealthCheck />
 
 **Schedule:** `0 0 * * *` (Daily health check)
 
@@ -441,22 +298,7 @@ def run():
 
 Design functions to handle duplicate runs:
 
-```python
-def run(date: str):
-    """Idempotent function - safe to run multiple times."""
-    # Use date as unique identifier
-    # Skip if already processed
-    if already_processed(date):
-        return {"status": "already_processed", "date": date}
-
-    # Process data
-    result = process_data(date)
-
-    # Mark as processed
-    mark_processed(date)
-
-    return {"status": "processed", "date": date, "result": result}
-```
+<Idempotent />
 
 ## Timezone Considerations
 
@@ -472,18 +314,7 @@ Schedules run in UTC by default. Convert to your timezone:
 
 Or handle timezone in function:
 
-```python
-from datetime import datetime
-import pytz
-
-def run():
-    # Get current time in specific timezone
-    tz = pytz.timezone("America/New_York")
-    current_time = datetime.now(tz)
-
-    # Your automation
-    pass
-```
+<Timezone />
 
 ## Next Steps
 

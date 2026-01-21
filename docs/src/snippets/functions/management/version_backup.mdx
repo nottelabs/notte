@@ -1,0 +1,13 @@
+<CodeGroup>
+  ```python Python
+  # Before major update, download current version
+  current_code = function.download(decryption_key="key")
+
+  # Save backup
+  with open(f"backups/function_v{function.response.latest_version}.py", "w") as f:
+      f.write(current_code)
+
+  # Update function
+  function.update(workflow_path="new_version.py")
+  ```
+</CodeGroup>
