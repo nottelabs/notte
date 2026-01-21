@@ -427,6 +427,20 @@
                     ]
                   }
                 ]
+              },
+              {
+                "group": "Debug",
+                "pages": [
+                  {
+                    "group": "Debug Methods",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/notteclient/health_check",
+                      "sdk-reference/remotesession/debug_info",
+                      "sdk-reference/remotesession/offset"
+                    ]
+                  }
+                ]
               }
             ]
           },

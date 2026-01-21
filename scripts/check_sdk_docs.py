@@ -45,8 +45,15 @@ def get_documented_methods_from_docs_json(docs_json_path: Path) -> set[str]:
             docs_data = json.load(f)
 
         # Navigate to the SDK Reference section
+        # Handle both old format (navigation.tabs) and new format (navigation.languages[0].tabs)
         navigation = docs_data.get("navigation", {})
-        tabs = navigation.get("tabs", [])
+        if "languages" in navigation:
+            # New format: navigation.languages[0].tabs
+            languages = navigation.get("languages", [])
+            tabs = languages[0].get("tabs", []) if languages else []
+        else:
+            # Old format: navigation.tabs
+            tabs = navigation.get("tabs", [])
 
         for tab in tabs:
             if tab.get("tab") == "SDK":
