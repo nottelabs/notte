@@ -310,6 +310,7 @@
               {
                 "group": "Core Features",
                 "pages": [
+                  "sdk-reference/notteclient/scrape",
                   {
                     "group": "Session",
                     "collapsed": true,
