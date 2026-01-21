@@ -3,6 +3,15 @@ title: Session Lifecycle
 description: Manage the lifecycle of your Notte browser sessions
 ---
 
+import CreateSession from '/snippets/sessions/lifecycle/create_session.mdx';
+import GetSessionDetails from '/snippets/sessions/lifecycle/get_session_details.mdx';
+import ListSessions from '/snippets/sessions/lifecycle/list_sessions.mdx';
+import StopSession from '/snippets/sessions/lifecycle/stop_session.mdx';
+import CompleteExample from '/snippets/sessions/lifecycle/complete_example.mdx';
+import ConnectExisting from '/snippets/sessions/lifecycle/connect_existing.mdx';
+import ErrorHandling from '/snippets/sessions/lifecycle/error_handling.mdx';
+import HandleInterrupts from '/snippets/sessions/lifecycle/handle_interrupts.mdx';
+
 Every Notte session follows a predictable lifecycle from creation to termination. Understanding this lifecycle helps you build reliable automation workflows and manage resources effectively.
 
 ## Session States
@@ -18,47 +27,7 @@ Sessions transition through these states:
 
 Create a new session using the context manager pattern (recommended):
 
-<CodeGroup>
-  ```python Python - Context Manager
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  # Recommended: Use context manager for automatic cleanup
-  with client.Session(
-      headless=True,
-      timeout_minutes=10,
-      viewport_width=1920,
-      viewport_height=1080
-  ) as session:
-      print(f"Session {session.session_id} is active")
-
-      # Access Playwright page
-      page = session.page
-      page.goto("https://example.com")
-      print(f"Page title: {page.title()}")
-
-  # Session automatically stopped here
-  ```
-
-  ```python Python - Manual Management
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  # Manual management (not recommended)
-  session = client.Session(timeout_minutes=10)
-  session.start()
-
-  try:
-      print(f"Session {session.session_id} is active")
-      page = session.page
-      page.goto("https://example.com")
-  finally:
-      # Always stop the session
-      session.stop()
-  ```
-</CodeGroup>
+<CreateSession />
 
 <Tip>
   Always use the context manager (`with` statement) to ensure sessions are properly stopped, even if errors occur.
@@ -68,28 +37,7 @@ Create a new session using the context manager pattern (recommended):
 
 Retrieve current information about your session:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  with client.Session() as session:
-      # Get full session status
-      status = session.status()
-
-      print(f"Session ID: {status.session_id}")
-      print(f"Status: {status.status}")
-      print(f"Created at: {status.created_at}")
-      print(f"Last accessed: {status.last_accessed_at}")
-      print(f"Timeout: {status.timeout_minutes} minutes")
-      print(f"Duration: {status.duration}")
-
-      # Get CDP URL for external connections
-      cdp_url = session.cdp_url()
-      print(f"CDP WebSocket: {cdp_url}")
-  ```
-</CodeGroup>
+<GetSessionDetails />
 
 <ResponseField name="session_id" type="string">
   Unique identifier for the session
@@ -123,47 +71,13 @@ Retrieve current information about your session:
 
 Query all your active sessions:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  # List all sessions
-  sessions = client.sessions.list()
-  print(f"Total sessions: {len(sessions)}")
-
-  for session in sessions:
-      print(f"- {session.session_id} ({session.status})")
-      print(f"  Created: {session.created_at}")
-      print(f"  Duration: {session.duration}")
-
-  # Filter by status
-  active_sessions = client.sessions.list(status="active")
-  print(f"Active sessions: {len(active_sessions)}")
-  ```
-</CodeGroup>
+<ListSessions />
 
 ## Stopping a Session
 
 Sessions are automatically stopped when using the context manager, but you can also stop them manually:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  # Manual stop
-  session = client.Session()
-  session.start()
-
-  # ... do work ...
-
-  session.stop()
-  print("Session stopped successfully")
-  ```
-</CodeGroup>
+<StopSession />
 
 <Tip>
   Stopping a session is idempotent - you can safely call it multiple times without errors.
@@ -173,129 +87,19 @@ Sessions are automatically stopped when using the context manager, but you can a
 
 Here's a complete example demonstrating best practices for session management:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  import time
-
-  client = NotteClient()
-
-  def run_automation():
-      # 1. Create session with configuration
-      print("Creating session...")
-
-      with client.Session(
-          headless=False,  # Opens live viewer
-          timeout_minutes=10,
-          cookie_file="cookies.json"  # Auto-load/save cookies
-      ) as session:
-          print(f"Session created: {session.session_id}")
-          print("Live viewer opened in browser")
-
-          # 2. Access Playwright page
-          page = session.page
-
-          # 3. Use the session
-          print("Navigating to example.com...")
-          page.goto("https://example.com")
-
-          title = page.title()
-          print(f"Page title: {title}")
-
-          # Take a screenshot
-          page.screenshot(path="screenshot.png")
-          print("Screenshot saved")
-
-          # Wait before closing
-          time.sleep(3)
-
-          # Cookies automatically saved to cookies.json
-          print("Session will be stopped and cookies saved...")
-
-      # Session automatically stopped here
-      print("Session stopped successfully")
-
-  if __name__ == "__main__":
-      run_automation()
-  ```
-</CodeGroup>
+<CompleteExample />
 
 ## Connecting to Existing Sessions
 
 You can reconnect to an existing session using its session_id:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  # Connect to existing session
-  session_id = "550e8400-e29b-41d4-a716-446655440000"
-
-  with client.Session(session_id) as session:
-      print(f"Connected to session: {session.session_id}")
-
-      # Get current status
-      status = session.status()
-      print(f"Session status: {status.status}")
-
-      # Continue using the session
-      page = session.page
-      page.goto("https://example.com")
-  ```
-</CodeGroup>
+<ConnectExisting />
 
 ## Error Handling
 
 The context manager automatically handles cleanup, even when errors occur:
 
-<CodeGroup>
-  ```python Python - Automatic Cleanup
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  try:
-      with client.Session() as session:
-          page = session.page
-          page.goto("https://example.com")
-
-          # Simulate an error
-          raise ValueError("Something went wrong!")
-
-  except ValueError as e:
-      print(f"Automation failed: {e}")
-      # Session is still automatically stopped
-
-  print("Session was cleaned up despite the error")
-  ```
-
-  ```python Python - Manual Error Handling
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  session = None
-
-  try:
-      session = client.Session()
-      session.start()
-
-      page = session.page
-      page.goto("https://example.com")
-
-      # Your automation code here
-
-  except Exception as error:
-      print(f"Automation failed: {error}")
-  finally:
-      # This always runs, whether success or failure
-      if session is not None:
-          session.stop()
-          print("Session stopped")
-  ```
-</CodeGroup>
+<ErrorHandling />
 
 ## Best Practices
 
@@ -342,20 +146,7 @@ with client.Session() as session:
 
 Even with context managers, handle interrupts:
 
-```python
-import signal
-import sys
-
-def signal_handler(sig, frame):
-    print('Interrupt received, cleaning up...')
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler)
-
-with client.Session() as session:
-    # Your automation
-    pass
-```
+<HandleInterrupts />
 
 ## Session Lifecycle Diagram
 

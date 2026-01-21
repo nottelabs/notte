@@ -75,26 +75,13 @@
                   "concepts/agents",
                   "features/agents/configuration",
                   "features/agents/lifecycle",
-                  "features/agents/models",
-                  {
-                    "group": "Structured Output",
-                    "collapsed": true,
-                    "pages": [
-                      "features/agents/structured-output"
-                    ]
-                  },
-                  {
-                    "group": "Debugging & Monitoring",
-                    "collapsed": true,
-                    "pages": [
-                      "features/agents/replay",
-                      "features/agents/workflows"
-                    ]
-                  },
                   {
                     "group": "Advanced",
                     "collapsed": true,
                     "pages": [
+                      "features/agents/structured-output",
+                      "features/agents/replay",
+                      "features/agents/workflows",
                       "features/agents/fallback",
                       "features/agents/batch"
                     ]
@@ -114,6 +101,7 @@
               },
               {
                 "group": "Agent Tools",
+                "icon": "link",
                 "pages": [
                   "concepts/file-storage",
                   "concepts/vaults",

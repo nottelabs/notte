@@ -3,6 +3,9 @@ title: Connect with Selenium
 description: Use Selenium with Notte sessions via Chrome DevTools Protocol
 ---
 
+import SeleniumConnect from '/snippets/sessions/cdp/selenium_connect.mdx';
+import SeleniumForm from '/snippets/sessions/cdp/selenium_form.mdx';
+
 Notte sessions can be controlled with Selenium 4's CDP support. This allows you to use Selenium's WebDriver API while benefiting from Notte's cloud infrastructure, anti-detection features, and session management.
 
 ## Prerequisites
@@ -21,70 +24,29 @@ pip install notte-sdk selenium>=4.0.0
 
 Start a Notte session and connect Selenium to it using the CDP URL:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  from selenium import webdriver
-  from selenium.webdriver.chrome.options import Options
-
-  client = NotteClient()
-
-  # Start Notte session
-  with client.Session() as session:
-      # Get CDP URL
-      cdp_url = session.cdp_url()
-
-      # Configure Selenium options
-      chrome_options = Options()
-      chrome_options.add_experimental_option("debuggerAddress", cdp_url.replace("ws://", "").replace("wss://", ""))
-
-      # Connect Selenium to Notte session
-      driver = webdriver.Remote(
-          command_executor=cdp_url,
-          options=chrome_options
-      )
-
-      # Use Selenium WebDriver API
-      driver.get("https://example.com")
-      print(f"Title: {driver.title}")
-
-      # Take screenshot
-      driver.save_screenshot("screenshot.png")
-
-      driver.quit()
-  ```
-</CodeGroup>
+<SeleniumConnect />
 
 <Warning>
   The CDP connection approach shown above works in most cases, but Selenium's CDP support may vary by version. For more reliable connections, consider using the Remote WebDriver approach below.
 </Warning>
 
-## Alternative: Using Selenium Grid Format
+## Alternative: Using Notte's Built-in Page
 
-A more reliable way to connect Selenium is by using the Remote WebDriver with standard WebDriver protocol:
+A more reliable way is to use Notte's built-in Playwright page directly:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  from selenium import webdriver
-  from selenium.webdriver.chrome.options import Options
-  from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+```python
+from notte_sdk import NotteClient
 
-  client = NotteClient()
+client = NotteClient()
 
-  with client.Session() as session:
-      # Access the Playwright page directly
-      # (Notte sessions include a Playwright-compatible page)
-      page = session.page
+with client.Session() as session:
+    # Access the Playwright page directly
+    page = session.page
 
-      # Use Playwright for automation
-      page.goto("https://example.com")
-      print(f"Title: {page.title()}")
-
-      # Selenium is better suited for Selenium Grid setups
-      # For Notte, we recommend using Playwright or Puppeteer instead
-  ```
-</CodeGroup>
+    # Use Playwright for automation
+    page.goto("https://example.com")
+    print(f"Title: {page.title()}")
+```
 
 <Tip>
   For Python-based automation with Notte, we recommend using **Playwright** instead of Selenium. Notte sessions include a built-in Playwright page (`session.page`) that's easier to use and better integrated.
@@ -92,213 +54,188 @@ A more reliable way to connect Selenium is by using the Remote WebDriver with st
 
 ## Basic Web Automation
 
-If you're using Selenium with Notte, here's a basic example:
+If you're using Selenium with Notte, here's a basic example using Playwright (recommended):
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  from selenium import webdriver
-  from selenium.webdriver.common.by import By
-  from selenium.webdriver.support.ui import WebDriverWait
-  from selenium.webdriver.support import expected_conditions as EC
+```python
+from notte_sdk import NotteClient
 
-  client = NotteClient()
+client = NotteClient()
 
-  with client.Session() as session:
-      # For this example, we'll use the Playwright page
-      # which has better integration with Notte
-      page = session.page
+with client.Session() as session:
+    page = session.page
 
-      # Navigate
-      page.goto("https://example.com/login")
+    # Navigate
+    page.goto("https://example.com/login")
 
-      # Fill form
-      page.fill('input[name="email"]', "user@example.com")
-      page.fill('input[name="password"]', "password123")
+    # Fill form
+    page.fill('input[name="email"]', "user@example.com")
+    page.fill('input[name="password"]', "password123")
 
-      # Click submit
-      page.click('button[type="submit"]')
+    # Click submit
+    page.click('button[type="submit"]')
 
-      # Wait for navigation
-      page.wait_for_url("**/dashboard")
+    # Wait for navigation
+    page.wait_for_url("**/dashboard")
 
-      print(f"Logged in: {page.title()}")
-  ```
-</CodeGroup>
+    print(f"Logged in: {page.title()}")
+```
 
 ## Finding Elements
 
-Use Selenium-style element selection with Notte's Playwright page:
+Use Playwright-style element selection with Notte's page:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+from notte_sdk import NotteClient
 
-  client = NotteClient()
+client = NotteClient()
 
-  with client.Session() as session:
-      page = session.page
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
 
-      page.goto("https://example.com")
+    # CSS selectors
+    element = page.query_selector("div.content")
 
-      # CSS selectors
-      element = page.query_selector("div.content")
+    # XPath (use locator with xpath)
+    element = page.locator("xpath=//div[@class='content']")
 
-      # XPath (use locator with xpath)
-      element = page.locator("xpath=//div[@class='content']")
+    # Get text content
+    text = page.locator("h1").inner_text()
+    print(f"Heading: {text}")
 
-      # Get text content
-      text = page.locator("h1").inner_text()
-      print(f"Heading: {text}")
-
-      # Get attribute
-      href = page.locator("a.link").get_attribute("href")
-      print(f"Link: {href}")
-  ```
-</CodeGroup>
+    # Get attribute
+    href = page.locator("a.link").get_attribute("href")
+    print(f"Link: {href}")
+```
 
 ## Waiting for Elements
 
 Wait for elements to appear or conditions to be met:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+from notte_sdk import NotteClient
 
-  client = NotteClient()
+client = NotteClient()
 
-  with client.Session() as session:
-      page = session.page
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
 
-      page.goto("https://example.com")
+    # Wait for element to be visible
+    page.wait_for_selector("div.content", state="visible")
 
-      # Wait for element to be visible
-      page.wait_for_selector("div.content", state="visible")
+    # Wait for element to be hidden
+    page.wait_for_selector("div.loading", state="hidden")
 
-      # Wait for element to be hidden
-      page.wait_for_selector("div.loading", state="hidden")
+    # Wait for URL pattern
+    page.click("a.next")
+    page.wait_for_url("**/page2")
 
-      # Wait for URL pattern
-      page.click("a.next")
-      page.wait_for_url("**/page2")
-
-      # Wait with timeout
-      page.wait_for_selector("div.result", timeout=10000)  # 10 seconds
-  ```
-</CodeGroup>
+    # Wait with timeout
+    page.wait_for_selector("div.result", timeout=10000)  # 10 seconds
+```
 
 ## Taking Screenshots
 
 Capture screenshots during automation:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+from notte_sdk import NotteClient
 
-  client = NotteClient()
+client = NotteClient()
 
-  with client.Session() as session:
-      page = session.page
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
 
-      page.goto("https://example.com")
+    # Full page screenshot
+    page.screenshot(path="screenshot.png", full_page=True)
 
-      # Full page screenshot
-      page.screenshot(path="screenshot.png", full_page=True)
+    # Screenshot of specific element
+    element = page.locator("div.content")
+    element.screenshot(path="element.png")
 
-      # Screenshot of specific element
-      element = page.locator("div.content")
-      element.screenshot(path="element.png")
-
-      # Screenshot to bytes
-      screenshot_bytes = page.screenshot()
-  ```
-</CodeGroup>
+    # Screenshot to bytes
+    screenshot_bytes = page.screenshot()
+```
 
 ## Executing JavaScript
 
 Run custom JavaScript in the page context:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+from notte_sdk import NotteClient
 
-  client = NotteClient()
+client = NotteClient()
 
-  with client.Session() as session:
-      page = session.page
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
 
-      page.goto("https://example.com")
+    # Execute JavaScript
+    result = page.evaluate("document.title")
+    print(f"Title: {result}")
 
-      # Execute JavaScript
-      result = page.evaluate("document.title")
-      print(f"Title: {result}")
+    # Execute complex script
+    data = page.evaluate("""
+        () => {
+            const items = document.querySelectorAll('.item');
+            return Array.from(items).map(item => item.textContent);
+        }
+    """)
+    print(f"Items: {data}")
 
-      # Execute complex script
-      data = page.evaluate("""
-          () => {
-              const items = document.querySelectorAll('.item');
-              return Array.from(items).map(item => item.textContent);
-          }
-      """)
-      print(f"Items: {data}")
-
-      # Pass arguments to JavaScript
-      result = page.evaluate("x => x * 2", 5)
-      print(f"Result: {result}")  # 10
-  ```
-</CodeGroup>
+    # Pass arguments to JavaScript
+    result = page.evaluate("x => x * 2", 5)
+    print(f"Result: {result}")  # 10
+```
 
 ## Handling Alerts and Dialogs
 
 Manage browser dialogs using Playwright:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+from notte_sdk import NotteClient
 
-  client = NotteClient()
+client = NotteClient()
 
-  with client.Session() as session:
-      page = session.page
+with client.Session() as session:
+    page = session.page
 
-      # Set up dialog handler before triggering
-      page.on("dialog", lambda dialog: dialog.accept())
+    # Set up dialog handler before triggering
+    page.on("dialog", lambda dialog: dialog.accept())
 
-      page.goto("https://example.com")
+    page.goto("https://example.com")
 
-      # Click button that shows alert
-      page.click("button#show-alert")
+    # Click button that shows alert
+    page.click("button#show-alert")
 
-      # Dialog is automatically accepted
-  ```
-</CodeGroup>
+    # Dialog is automatically accepted
+```
 
 ## Working with Frames
 
 Access iframe content:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+from notte_sdk import NotteClient
 
-  client = NotteClient()
+client = NotteClient()
 
-  with client.Session() as session:
-      page = session.page
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
 
-      page.goto("https://example.com")
+    # Get frame by selector
+    frame = page.frame_locator("iframe#content")
 
-      # Get frame by selector
-      frame = page.frame_locator("iframe#content")
+    # Interact with elements inside frame
+    frame.locator("button").click()
 
-      # Interact with elements inside frame
-      frame.locator("button").click()
-
-      # Get text from frame
-      text = frame.locator("h1").inner_text()
-      print(f"Frame heading: {text}")
-  ```
-</CodeGroup>
+    # Get text from frame
+    text = frame.locator("h1").inner_text()
+    print(f"Frame heading: {text}")
+```
 
 ## Why Use Playwright Instead of Selenium?
 
@@ -339,45 +276,7 @@ If you're migrating from Selenium, here's a quick comparison:
 
 Here's a complete example using Playwright with Notte (recommended approach):
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  def automate_form():
-      with client.Session(headless=False) as session:
-          page = session.page
-
-          # Navigate to form
-          page.goto("https://example.com/contact")
-
-          # Fill form fields
-          page.fill('input[name="name"]', "John Doe")
-          page.fill('input[name="email"]', "john@example.com")
-          page.fill('textarea[name="message"]', "Hello, this is a test message")
-
-          # Select from dropdown
-          page.select_option('select[name="topic"]', "support")
-
-          # Check checkbox
-          page.check('input[name="subscribe"]')
-
-          # Submit form
-          page.click('button[type="submit"]')
-
-          # Wait for success message
-          page.wait_for_selector("div.success")
-
-          success_message = page.locator("div.success").inner_text()
-          print(f"Success: {success_message}")
-
-          # Take screenshot
-          page.screenshot(path="success.png")
-
-  automate_form()
-  ```
-</CodeGroup>
+<SeleniumForm />
 
 ## Best Practices
 

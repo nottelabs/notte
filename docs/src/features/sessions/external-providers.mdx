@@ -3,6 +3,12 @@ title: External Providers
 description: Connect Notte to external browser infrastructure via Chrome DevTools Protocol
 ---
 
+import ExternalBasic from '/snippets/sessions/cdp/external_basic.mdx';
+import ExternalKernel from '/snippets/sessions/cdp/external_kernel.mdx';
+import ExternalBrowserbase from '/snippets/sessions/cdp/external_browserbase.mdx';
+import ExternalMultiProvider from '/snippets/sessions/cdp/external_multi_provider.mdx';
+import ExternalTroubleshooting from '/snippets/sessions/cdp/external_troubleshooting.mdx';
+
 Notte can connect to any browser that exposes a Chrome DevTools Protocol (CDP) endpoint. This allows you to use Notte's features (Agents, Actions, Scraping) with browser infrastructure from providers like Kernel.sh or BrowserBase.
 
 ## How It Works
@@ -14,61 +20,13 @@ Instead of starting a browser in Notte's cloud, you can:
 3. Pass the CDP URL to Notte when creating a session
 4. Use Notte's features on the external browser
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  # CDP URL from any external provider
-  cdp_url = "ws://external-provider.com:9222/devtools/browser/abc123"
-
-  # Connect Notte to the external browser
-  with client.Session(cdp_url=cdp_url) as session:
-      # Use Notte's features on the external browser
-      page = session.page
-      page.goto("https://example.com")
-
-      # Use Notte's Agent
-      agent = client.Agent(session=session, max_steps=10)
-      result = agent.run(task="Extract all product names")
-  ```
-</CodeGroup>
+<ExternalBasic />
 
 ## Kernel.sh Integration
 
 Kernel.sh is a browser infrastructure platform optimized for AI agents. Here's how to use it with Notte:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  from kernel import Kernel
-
-  # Initialize clients
-  client = NotteClient()
-  kernel = Kernel()
-
-  # Create browser on Kernel
-  kernel_browser = kernel.browsers.create()
-
-  try:
-      # Connect Notte to Kernel's browser
-      with client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
-          # Use Notte's features
-          page = session.page
-          page.goto("https://example.com")
-
-          # Run an Agent
-          agent = client.Agent(session=session, max_steps=10)
-          result = agent.run(task="Find the contact email")
-
-          print(f"Result: {result.answer}")
-
-  finally:
-      # Clean up Kernel browser
-      kernel.browsers.delete_by_id(kernel_browser.session_id)
-  ```
-</CodeGroup>
+<ExternalKernel />
 
 <Tip>
   See the [Kernel.sh Integration](/integrations/kernel) guide for complete setup instructions and examples.
@@ -78,45 +36,7 @@ Kernel.sh is a browser infrastructure platform optimized for AI agents. Here's h
 
 BrowserBase provides managed browser infrastructure. Connect it to Notte:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  import requests
-
-  client = NotteClient()
-
-  # Create session on BrowserBase (using their API)
-  browserbase_response = requests.post(
-      "https://api.browserbase.com/v1/sessions",
-      headers={"Authorization": f"Bearer {BROWSERBASE_API_KEY}"},
-      json={"projectId": "your-project-id"}
-  )
-
-  session_data = browserbase_response.json()
-  cdp_url = session_data["cdpUrl"]
-
-  try:
-      # Connect Notte to BrowserBase
-      with client.Session(cdp_url=cdp_url) as session:
-          page = session.page
-          page.goto("https://example.com")
-
-          # Use Notte's scraping
-          result = session.scrape(
-              instruction="Get all article titles",
-              schema={"titles": ["string"]}
-          )
-
-          print(result)
-
-  finally:
-      # Clean up BrowserBase session
-      requests.delete(
-          f"https://api.browserbase.com/v1/sessions/{session_data['id']}",
-          headers={"Authorization": f"Bearer {BROWSERBASE_API_KEY}"}
-      )
-  ```
-</CodeGroup>
+<ExternalBrowserbase />
 
 ## Benefits of External Providers
 
@@ -165,46 +85,7 @@ When you connect Notte to an external browser, you get:
 
 Run the same automation across different providers:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  from kernel import Kernel
-  from typing import Literal
-
-  client = NotteClient()
-
-  def run_automation(provider: Literal["notte", "kernel"], task: str):
-      """Run automation on different browser providers"""
-
-      if provider == "notte":
-          # Use Notte's browser
-          with client.Session() as session:
-              agent = client.Agent(session=session)
-              result = agent.run(task=task)
-              return result
-
-      elif provider == "kernel":
-          # Use Kernel's browser
-          kernel = Kernel()
-          kernel_browser = kernel.browsers.create()
-
-          try:
-              with client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
-                  agent = client.Agent(session=session)
-                  result = agent.run(task=task)
-                  return result
-          finally:
-              kernel.browsers.delete_by_id(kernel_browser.session_id)
-
-  # Run on Notte's infrastructure
-  result1 = run_automation("notte", "Get the latest news from example.com")
-  print(f"Notte result: {result1.answer}")
-
-  # Run on Kernel's infrastructure
-  result2 = run_automation("kernel", "Get the latest news from example.com")
-  print(f"Kernel result: {result2.answer}")
-  ```
-</CodeGroup>
+<ExternalMultiProvider />
 
 ## Supported CDP Features
 
@@ -238,21 +119,7 @@ If connection fails, verify:
 3. **Browser Availability**: Verify the browser is running and accessible
 4. **Timeout**: Increase session timeout for slow connections
 
-<CodeGroup>
-  ```python Python
-  # Add timeout and error handling
-  try:
-      with client.Session(
-          cdp_url=cdp_url,
-          timeout_minutes=15  # Longer timeout
-      ) as session:
-          page = session.page
-          page.goto("https://example.com")
-  except Exception as e:
-      print(f"CDP connection failed: {e}")
-      # Handle error or retry
-  ```
-</CodeGroup>
+<ExternalTroubleshooting />
 
 ### Browser State Issues
 
@@ -267,16 +134,14 @@ When using external browsers:
 
 Some providers require authentication in the CDP URL:
 
-<CodeGroup>
-  ```python Python
-  # CDP URL with authentication
-  cdp_url = "wss://user:password@provider.com:9222/devtools/browser/abc123"
+```python
+# CDP URL with authentication
+cdp_url = "wss://user:password@provider.com:9222/devtools/browser/abc123"
 
-  with client.Session(cdp_url=cdp_url) as session:
-      # Your automation
-      pass
-  ```
-</CodeGroup>
+with client.Session(cdp_url=cdp_url) as session:
+    # Your automation
+    pass
+```
 
 ## Provider Comparison
 

@@ -1,0 +1,46 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  import time
+
+  client = NotteClient()
+
+  def run_automation():
+      # 1. Create session with configuration
+      print("Creating session...")
+
+      with client.Session(
+          headless=False,  # Opens live viewer
+          timeout_minutes=10,
+          cookie_file="cookies.json"  # Auto-load/save cookies
+      ) as session:
+          print(f"Session created: {session.session_id}")
+          print("Live viewer opened in browser")
+
+          # 2. Access Playwright page
+          page = session.page
+
+          # 3. Use the session
+          print("Navigating to example.com...")
+          page.goto("https://example.com")
+
+          title = page.title()
+          print(f"Page title: {title}")
+
+          # Take a screenshot
+          page.screenshot(path="screenshot.png")
+          print("Screenshot saved")
+
+          # Wait before closing
+          time.sleep(3)
+
+          # Cookies automatically saved to cookies.json
+          print("Session will be stopped and cookies saved...")
+
+      # Session automatically stopped here
+      print("Session stopped successfully")
+
+  if __name__ == "__main__":
+      run_automation()
+  ```
+</CodeGroup>

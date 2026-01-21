@@ -3,24 +3,21 @@ title: Session Configurations
 description: Learn how to create and configure Notte browser sessions
 ---
 
+import QuickStart from '/snippets/sessions/configuration/quick_start.mdx';
+import FullConfig from '/snippets/sessions/configuration/full_config.mdx';
+import HeadlessMode from '/snippets/sessions/configuration/headless_mode.mdx';
+import CaptchaSolving from '/snippets/sessions/configuration/captcha_solving.mdx';
+import Timeout from '/snippets/sessions/configuration/timeout.mdx';
+import Viewport from '/snippets/sessions/configuration/viewport.mdx';
+import ExternalCdp from '/snippets/sessions/configuration/external_cdp.mdx';
+
 Sessions are isolated browser instances running in the cloud that you can control programmatically. Each session provides a Playwright-compatible page that you can automate using familiar browser automation APIs.
 
 ## Quick Start
 
 Create a session with default settings:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  with client.Session() as session:
-      print(f"Session ID: {session.session_id}")
-      page = session.page  # Playwright-compatible page
-      page.goto("https://example.com")
-  ```
-</CodeGroup>
+<QuickStart />
 
 Active sessions can be viewed and managed in the [Sessions](https://console.notte.cc/sessions) page in the console.
 
@@ -32,25 +29,7 @@ Active sessions can be viewed and managed in the [Sessions](https://console.nott
 
 Customize your session with these options:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  with client.Session(
-      headless=True,
-      solve_captchas=True,
-      proxies=True,
-      viewport_width=1920,
-      viewport_height=1080,
-      timeout_minutes=10,
-      browser_type="chromium"
-  ) as session:
-      page = session.page
-      page.goto("https://example.com")
-  ```
-</CodeGroup>
+<FullConfig />
 
 ### Common Parameters
 
@@ -151,24 +130,7 @@ replay.save("session.mp4")
 
 Control whether to run the browser visibly or in the background:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  # Headless mode (no viewer)
-  with client.Session(headless=True) as session:
-      page = session.page
-      page.goto("https://example.com")
-
-  # Non-headless (opens live viewer automatically)
-  with client.Session(headless=False) as session:
-      page = session.page
-      page.goto("https://example.com")
-      # Viewer opens automatically in your browser
-  ```
-</CodeGroup>
+<HeadlessMode />
 
 <Tip>
   When `headless=False`, a live viewer automatically opens in your browser so you can watch the automation in real-time.
@@ -192,22 +154,7 @@ with client.Session(proxies=True) as session:
 
 Automatically detect and solve captchas during automation:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  # Captcha solving requires Firefox
-  with client.Session(
-      solve_captchas=True,
-      browser_type="firefox"
-  ) as session:
-      page = session.page
-      page.goto("https://www.google.com/recaptcha/api2/demo")
-      # Captchas are automatically solved
-  ```
-</CodeGroup>
+<CaptchaSolving />
 
 <Warning>
   Captcha solving is only available with `browser_type="firefox"`. It supports reCAPTCHA v2, reCAPTCHA v3, and hCaptcha.
@@ -221,18 +168,7 @@ Automatically detect and solve captchas during automation:
 
 Configure how long sessions stay active:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  # Session closes after 10 minutes of inactivity
-  with client.Session(timeout_minutes=10) as session:
-      page = session.page
-      page.goto("https://example.com")
-  ```
-</CodeGroup>
+<Timeout />
 
 The timeout range is 1-30 minutes. Sessions automatically close when the timeout is reached.
 
@@ -240,21 +176,7 @@ The timeout range is 1-30 minutes. Sessions automatically close when the timeout
 
 Set custom screen dimensions for specific testing scenarios:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  # 4K resolution
-  with client.Session(
-      viewport_width=3840,
-      viewport_height=2160
-  ) as session:
-      page = session.page
-      page.goto("https://example.com")
-  ```
-</CodeGroup>
+<Viewport />
 
 ## Cookie Management
 
@@ -275,23 +197,7 @@ with client.Session(cookie_file="cookies.json") as session:
 
 Use Notte with external browser providers like Kernel.sh:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  from kernel import Kernel
-
-  client = NotteClient()
-  kernel = Kernel()
-
-  # Create browser on Kernel
-  kernel_browser = kernel.browsers.create()
-
-  # Connect Notte to Kernel's browser
-  with client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
-      page = session.page
-      page.goto("https://example.com")
-  ```
-</CodeGroup>
+<ExternalCdp />
 
 <Note>
   See the [Kernel.sh Integration](/integrations/kernel) guide for complete setup instructions.

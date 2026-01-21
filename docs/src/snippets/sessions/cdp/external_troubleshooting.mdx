@@ -1,0 +1,15 @@
+<CodeGroup>
+  ```python Python
+  # Add timeout and error handling
+  try:
+      with client.Session(
+          cdp_url=cdp_url,
+          timeout_minutes=15  # Longer timeout
+      ) as session:
+          page = session.page
+          page.goto("https://example.com")
+  except Exception as e:
+      print(f"CDP connection failed: {e}")
+      # Handle error or retry
+  ```
+</CodeGroup>

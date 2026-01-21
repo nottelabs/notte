@@ -3,6 +3,10 @@ title: Playwright vs Notte Controls
 description: Understanding the difference between direct Playwright control and Notte's AI-enabled SDK
 ---
 
+import PlaywrightExample from '/snippets/sessions/playwright-vs-notte/playwright_example.mdx';
+import NotteSdkExample from '/snippets/sessions/playwright-vs-notte/notte_sdk_example.mdx';
+import MixBoth from '/snippets/sessions/playwright-vs-notte/mix_both.mdx';
+
 When working with Notte sessions, you have two ways to interact with the browser: using Playwright directly via CDP, or using Notte's AI-enabled SDK methods. Both approaches work with the same session, and you can even mix them in your automation.
 
 ## Direct Playwright Control
@@ -57,26 +61,7 @@ Choose `session.page` when you need:
 - **Standard patterns** - Use familiar Playwright code and examples
 - **Fine-grained control** - Access to every Playwright feature
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  from playwright.sync_api import sync_playwright
-
-  client = NotteClient()
-
-  with client.Session() as session:
-      page = session.page
-
-      # Block images for faster loading
-      page.route("**/*.{png,jpg,jpeg}", lambda route: route.abort())
-
-      # Listen to network requests
-      page.on("request", lambda req: print(f"→ {req.url}"))
-      page.on("response", lambda res: print(f"← {res.url} ({res.status})"))
-
-      page.goto("https://example.com")
-  ```
-</CodeGroup>
+<PlaywrightExample />
 
 ## Why Use Notte SDK?
 
@@ -89,62 +74,13 @@ Choose `session.execute()`, `observe()`, and `scrape()` when you need:
 - **Production reliability** - Automatic retries, error handling, validation
 - **Agent workflows** - Designed for AI agents with semantic action spaces
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  from pydantic import BaseModel
-
-  client = NotteClient()
-
-  class Product(BaseModel):
-      name: str
-      price: float
-
-  with client.Session() as session:
-      session.execute(type="goto", url="https://example.com/products")
-
-      # AI understands the page
-      obs = session.observe(instructions="Find the search box")
-      action = obs.space.first()  # AI picks the right element
-      session.execute(action.with_value("laptops"))
-
-      # Structured extraction with LLM
-      products = session.scrape(
-          response_format=list[Product],
-          instructions="Extract all products with names and prices"
-      )
-
-      # Every action is recorded
-      replay = session.replay()
-      replay.save("automation.mp4")
-  ```
-</CodeGroup>
+<NotteSdkExample />
 
 ## Mix Both Approaches
 
 You can combine both methods in the same session:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  with client.Session() as session:
-      # Use Notte for high-level navigation
-      session.execute(type="goto", url="https://example.com")
-
-      # Switch to Playwright for network control
-      page = session.page
-      page.route("**/api/*", lambda route: route.continue_(headers={
-          **route.request.headers,
-          "Authorization": f"Bearer {token}"
-      }))
-
-      # Back to Notte for AI-powered scraping
-      data = session.scrape(instructions="Extract all article titles")
-  ```
-</CodeGroup>
+<MixBoth />
 
 ## When to Choose What
 

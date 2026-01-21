@@ -1,0 +1,29 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from playwright.sync_api import sync_playwright
+
+  client = NotteClient()
+
+  with client.Session() as session:
+      cdp_url = session.cdp_url()
+
+      with sync_playwright() as p:
+          browser = p.chromium.connect_over_cdp(cdp_url)
+          page = browser.contexts[0].pages[0]
+
+          # Listen to console messages
+          page.on("console", lambda msg: print(f"Console: {msg.text}"))
+
+          # Listen to page errors
+          page.on("pageerror", lambda err: print(f"Error: {err}"))
+
+          # Listen to requests
+          page.on("request", lambda req: print(f"Request: {req.url}"))
+
+          # Listen to responses
+          page.on("response", lambda res: print(f"Response: {res.url} - {res.status}"))
+
+          page.goto("https://example.com")
+  ```
+</CodeGroup>

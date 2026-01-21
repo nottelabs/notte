@@ -3,42 +3,25 @@ title: Live View
 description: Watch your browser sessions in real-time as they execute
 ---
 
+import QuickStart from '/snippets/sessions/live-view/quick_start.mdx';
+import ManualViewer from '/snippets/sessions/live-view/manual.mdx';
+import AgentViewer from '/snippets/sessions/live-view/agent.mdx';
+import SharingViewer from '/snippets/sessions/live-view/sharing.mdx';
+import ViewerConfig from '/snippets/sessions/live-view/configuration.mdx';
+
 Live View allows you to watch your browser sessions in real-time as they execute, making it easy to debug and monitor automation.
 
 ## Quick Start
 
 Open a live viewer automatically when the session starts:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-# Live viewer opens automatically
-with client.Session(open_viewer=True) as session:
-    session.execute(type="goto", url="https://example.com")
-    session.execute(type="click", selector="button.submit")
-    # Watch it happen in your browser!
-```
+<QuickStart />
 
 ## Manual Live View
 
 Open the live viewer manually at any point during the session:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
-    session.execute(type="goto", url="https://example.com")
-
-    # Open live viewer
-    session.viewer()
-
-    # Continue automation while watching
-    session.execute(type="click", selector="button.submit")
-```
+<ManualViewer />
 
 ## Viewer Types
 
@@ -84,56 +67,19 @@ with client.Session() as session:
 
 Watch AI agents make decisions in real-time:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session(open_viewer=True) as session:
-    agent = client.Agent(session=session, max_steps=10)
-
-    result = agent.run(
-        task="Find the pricing page and extract all plan prices"
-    )
-
-    print(f"Agent completed: {result.answer}")
-```
+<AgentViewer />
 
 ## Sharing Live View
 
 Share the viewer URL with your team for collaborative debugging:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
-    session.execute(type="goto", url="https://example.com")
-
-    # Get viewer URL
-    debug_info = session.debug_info()
-    print(f"Share this URL with your team: {debug_info.debug_url}")
-
-    # Team can watch live while you continue
-    session.execute(type="click", selector="button.submit")
-```
+<SharingViewer />
 
 ## Viewer Configuration
 
 Set a default viewer type for all sessions:
 
-```python
-from notte_sdk import NotteClient
-from notte_sdk.endpoints.sessions import SessionViewerType
-
-# Set default viewer to CDP
-client = NotteClient(viewer_type=SessionViewerType.CDP)
-
-with client.Session(open_viewer=True) as session:
-    # Opens CDP viewer by default
-    session.execute(type="goto", url="https://example.com")
-```
+<ViewerConfig />
 
 Available viewer types:
 - `SessionViewerType.BROWSER` - Frame-by-frame browser viewer (default)

@@ -1,0 +1,39 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  import requests
+
+  client = NotteClient()
+
+  # Create session on BrowserBase (using their API)
+  browserbase_response = requests.post(
+      "https://api.browserbase.com/v1/sessions",
+      headers={"Authorization": f"Bearer {BROWSERBASE_API_KEY}"},
+      json={"projectId": "your-project-id"}
+  )
+
+  session_data = browserbase_response.json()
+  cdp_url = session_data["cdpUrl"]
+
+  try:
+      # Connect Notte to BrowserBase
+      with client.Session(cdp_url=cdp_url) as session:
+          page = session.page
+          page.goto("https://example.com")
+
+          # Use Notte's scraping
+          result = session.scrape(
+              instruction="Get all article titles",
+              schema={"titles": ["string"]}
+          )
+
+          print(result)
+
+  finally:
+      # Clean up BrowserBase session
+      requests.delete(
+          f"https://api.browserbase.com/v1/sessions/{session_data['id']}",
+          headers={"Authorization": f"Bearer {BROWSERBASE_API_KEY}"}
+      )
+  ```
+</CodeGroup>

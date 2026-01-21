@@ -9,6 +9,11 @@ import SearchExtract from "/snippets/browser-controls/search_extract.mdx";
 import MultiTab from "/snippets/browser-controls/multi_tab.mdx";
 import FileUploadDownload from "/snippets/browser-controls/file_upload_download.mdx";
 import ErrorHandling from "/snippets/browser-controls/error_handling.mdx";
+import GotoExample from "/snippets/browser-controls/goto.mdx";
+import ScrapeExample from "/snippets/browser-controls/scrape.mdx";
+import SmsReadExample from "/snippets/browser-controls/sms_read.mdx";
+import EmailReadExample from "/snippets/browser-controls/email_read.mdx";
+import ConditionalActions from "/snippets/browser-controls/conditional_actions.mdx";
 
 Sessions provide a comprehensive set of browser actions for interacting with web pages. All actions are executed through `session.execute()`.
 
@@ -18,14 +23,7 @@ Sessions provide a comprehensive set of browser actions for interacting with web
 
 Navigate to a URL.
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
-    session.execute(type="goto", url="https://example.com")
-```
+<GotoExample />
 
 **Parameters:**
 - `url` (str): The URL to navigate to
@@ -361,27 +359,7 @@ session.execute(type="wait", duration=5000)
 
 Extract data from the current page.
 
-```python
-# Get page markdown
-markdown = session.scrape()
-
-# Extract with instructions
-data = session.scrape(
-    instructions="Extract all product names and prices"
-)
-
-# Structured extraction
-from pydantic import BaseModel
-
-class Product(BaseModel):
-    name: str
-    price: float
-
-products = session.scrape(
-    response_format=list[Product],
-    instructions="Extract all products"
-)
-```
+<ScrapeExample />
 
 **Parameters:**
 - `instructions` (str): Natural language extraction instructions
@@ -390,7 +368,7 @@ products = session.scrape(
 
 **Use for:** Data extraction, web scraping, content analysis
 
-See [Scrape](/product/scrape) for detailed documentation.
+See [Scraping](/concepts/scraping) for detailed documentation.
 
 ---
 
@@ -400,27 +378,7 @@ See [Scrape](/product/scrape) for detailed documentation.
 
 Read SMS messages from a persona's phone number.
 
-```python
-# Create persona with phone number
-persona = client.Persona()
-number = persona.create_number(country="US")
-
-# Use in session
-with client.Session() as session:
-    # Trigger SMS (e.g., 2FA code)
-    session.execute(
-        type="fill",
-        selector="input[name='phone']",
-        value=number.phone_number
-    )
-    session.execute(type="click", selector="button.send-code")
-
-    # Read SMS
-    messages = session.execute(type="sms_read", persona_id=persona.persona_id)
-
-    # Extract verification code
-    code = extract_code(messages)
-```
+<SmsReadExample />
 
 **Parameters:**
 - `persona_id` (str): Persona ID with phone number
@@ -435,27 +393,7 @@ See [Personas](/concepts/personas) for details.
 
 Read emails from a persona's email address.
 
-```python
-# Create persona with email
-persona = client.Persona()
-emails = persona.emails()
-
-# Use in session
-with client.Session() as session:
-    # Trigger email (e.g., verification email)
-    session.execute(
-        type="fill",
-        selector="input[name='email']",
-        value=emails[0]
-    )
-    session.execute(type="click", selector="button.send-verification")
-
-    # Read email
-    messages = session.execute(type="email_read", persona_id=persona.persona_id)
-
-    # Extract verification link
-    link = extract_link(messages)
-```
+<EmailReadExample />
 
 **Parameters:**
 - `persona_id` (str): Persona ID with email address
@@ -484,21 +422,7 @@ Handle action failures:
 
 Execute actions based on conditions:
 
-```python
-# Check if element exists
-result = session.execute(
-    type="click",
-    selector="button.optional",
-    raise_on_failure=False
-)
-
-if result.success:
-    # Element was there and clicked
-    session.execute(type="click", selector="button.next")
-else:
-    # Element wasn't there, skip
-    print("Optional button not found, continuing...")
-```
+<ConditionalActions />
 
 ## Selector Strategies
 
