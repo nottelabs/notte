@@ -7,10 +7,8 @@ description: "Fill an input field with a value"
 
 **Example:**
 ```python
-from notte_sdk import actions
-
-session.execute(actions.Fill(id="email-input", value="user@example.com"))
-session.execute(actions.Fill(id="name-input", value="John Doe", clear_before_fill=False))
+session.execute(type="fill", id="email-input", value="user@example.com")
+session.execute(type="fill", id="name-input", value="John Doe", clear_before_fill=False)
 ```
 
 ## Fields

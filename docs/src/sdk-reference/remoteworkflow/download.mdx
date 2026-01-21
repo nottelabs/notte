@@ -1,13 +1,13 @@
 ---
 title: "download"
-description: "Download the workflow code from the notte console as a python file"
+description: "Download the function code from the notte console as a python file"
 ---
 
 
 
 ```python
-workflow = notte.Workflow("<your-workflow-id>")
-workflow.download(workflow_path="<path-to-your-workflow.py>", decryption_key="<your-key>")
+function = notte.Function("<your-function-id>", decryption_key="<your-key>")
+function.download(workflow_path="<path-to-your-function.py>")
 ```
 
 

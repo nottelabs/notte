@@ -1,6 +1,6 @@
 ---
 title: "run"
-description: "Run the workflow using the specified version and variables"
+description: "Run the function using the specified version and variables"
 ---
 
 
@@ -8,13 +8,13 @@ description: "Run the workflow using the specified version and variables"
 If no version is provided, the latest version is used.
 
 ```python
-workflow = notte.Workflow("<your-workflow-id>")
-workflow.run(variable1="value1", variable2="value2")
+function = notte.Function("<your-function-id>")
+function.run(variable1="value1", variable2="value2")
 ```
 
-> Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
+> Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the function will fail.
 
-You can use `local=True` to run the workflow locally if you have access to the decryption key
+You can use `local=True` to run the function locally if you have access to the decryption key
 
 
 ## Parameters
