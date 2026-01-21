@@ -1,16 +1,17 @@
 ```python search_extract.py
-from notte_sdk import NotteClient, actions
+from notte_sdk import NotteClient
 
 client = NotteClient()
 
 with client.Session() as session:
-    session.execute(actions.Goto(url="https://example.com"))
-    session.execute(actions.Fill(
+    session.execute(type="goto", url="https://example.com")
+    session.execute(
+        type="fill",
         placeholder="Search",
         value="laptop"
-    ))
-    session.execute(actions.PressKey(key="Enter"))
-    session.execute(actions.Wait(duration=2))
+    )
+    session.execute(type="press_key", key="Enter")
+    session.execute(type="wait", duration=2000)
 
     results = session.scrape(
         instructions="Extract search results"

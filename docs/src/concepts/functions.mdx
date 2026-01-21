@@ -95,24 +95,21 @@ def run(param1: str, param2: int = 10):
 - Should include docstring documentation
 - Returns a value (any JSON-serializable type)
 
-### Parameters (Variables)
+### Parameters
 
-Functions accept parameters through the `variables` argument:
+Define parameters as arguments to the `run` function:
 
 ```python
 def run(email: str, password: str, product_id: str):
     client = NotteClient()
 
     with client.Session() as session:
-        # Use parameters in automation
-        session.execute(actions.Fill(id="email", value=email))
-        session.execute(actions.Fill(id="password", value=password))
-        session.execute(actions.Goto(
-            url=f"https://example.com/product/{product_id}"
-        ))
+        session.execute(type="fill", id="email", value=email)
+        session.execute(type="fill", id="password", value=password)
+        session.execute(type="goto", url=f"https://example.com/product/{product_id}")
 ```
 
-When invoking:
+Pass values when invoking the function:
 
 ```python
 function.run(
@@ -168,7 +165,7 @@ def run(product_urls: list[str]):
 
     for url in product_urls:
         with client.Session() as session:
-            session.execute(actions.Goto(url=url))
+            session.execute(type="goto", url=url)
             price = session.scrape(
                 instructions="Extract product price"
             )
@@ -177,7 +174,7 @@ def run(product_urls: list[str]):
     return prices
 
 # Deploy and schedule to run daily
-function = client.Workflow(
+function = client.Function(
     workflow_path="price_monitor.py",
     name="Daily Price Monitor"
 )
@@ -195,7 +192,7 @@ def run(company_url: str):
     client = NotteClient()
 
     with client.Session() as session:
-        session.execute(actions.Goto(url=company_url))
+        session.execute(type="goto", url=company_url)
 
         contact_info = session.scrape(
             instructions="Extract contact email and phone"
@@ -204,7 +201,7 @@ def run(company_url: str):
         return contact_info
 
 # Now callable from any service
-# GET /workflows/{id}/runs/start?variables={"company_url": "..."}
+# GET /functions/{id}/runs/start?variables={"company_url": "..."}
 ```
 
 ### 3. Webhooks
@@ -218,17 +215,19 @@ def run(order_id: str, action: str):
 
     with client.Session() as session:
         # Login to admin panel
-        session.execute(actions.Goto(url="https://admin.example.com"))
+        session.execute(type="goto", url="https://admin.example.com")
 
         # Process order
         if action == "fulfill":
-            session.execute(actions.Click(
+            session.execute(
+                type="click",
                 selector=f"button[data-order='{order_id}'].fulfill"
-            ))
+            )
         elif action == "refund":
-            session.execute(actions.Click(
+            session.execute(
+                type="click",
                 selector=f"button[data-order='{order_id}'].refund"
-            ))
+            )
 
     return {"order_id": order_id, "action": action, "status": "completed"}
 
@@ -248,7 +247,7 @@ def run(urls: list[str], max_workers: int = 5):
 
     def extract_from_url(url):
         with client.Session() as session:
-            session.execute(actions.Goto(url=url))
+            session.execute(type="goto", url=url)
             data = session.scrape()
             return {"url": url, "data": data}
 
@@ -258,32 +257,42 @@ def run(urls: list[str], max_workers: int = 5):
     return results
 ```
 
-## Functions vs Agents vs Sessions
+## How Functions Fit In
 
-| Aspect | Function | Agent | Session |
-|--------|----------|-------|---------|
-| **Deployment** | Serverless API | Single execution | Single execution |
-| **Invocation** | HTTP/API call | Python code | Python code |
-| **Scheduling** | Built-in cron support | Manual scheduling | Manual scheduling |
-| **Reusability** | Highly reusable | One-time use | One-time use |
-| **Sharing** | Shareable endpoint | Not shareable | Not shareable |
-| **Versioning** | Built-in versions | No versions | No versions |
+Functions are a **deployment layer** - they turn any automation into a reusable API.
+
+```
+┌─────────────────────────────────────────────────────┐
+│                     Function                        │
+│            (Deployment & Scheduling)                │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│   ┌─────────────────┐    ┌─────────────────┐       │
+│   │ Scripted        │ or │ Agent           │       │
+│   │ Automation      │    │ (AI-driven)     │       │
+│   └────────┬────────┘    └────────┬────────┘       │
+│            │                      │                 │
+│            └──────────┬───────────┘                 │
+│                       │                             │
+│              ┌────────▼────────┐                    │
+│              │    Session      │                    │
+│              │ (Cloud Browser) │                    │
+│              └─────────────────┘                    │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+- **Session** - The cloud browser that runs everything
+- **Scripted Automation vs Agent** - How you control the session
+- **Function** - Deploys your automation as an API with scheduling, versioning, and sharing
 
 **Use Functions when:**
 - You need to run automation repeatedly
 - You want to expose automation as an API
 - You need scheduling capabilities
-- You want to share automation with team/customers
+- You want to share automation with team or customers
 
-**Use Agents when:**
-- One-time complex task
-- Need AI decision-making
-- Unknown/changing workflows
-
-**Use Sessions when:**
-- One-time deterministic task
-- Known sequence of actions
-- Maximum speed and cost efficiency
+Functions can contain either scripted automation or agents - they're not mutually exclusive.
 
 ## Function Lifecycle
 
@@ -355,7 +364,7 @@ def run(url: str):
     try:
         client = NotteClient()
         with client.Session() as session:
-            session.execute(actions.Goto(url=url))
+            session.execute(type="goto", url=url)
             data = session.scrape()
             return {"success": True, "data": data}
     except Exception as e:
@@ -366,22 +375,7 @@ def run(url: str):
         }
 ```
 
-### 4. Use Environment Variables
-
-Keep secrets out of code:
-
-```python
-import os
-
-def run():
-    api_key = os.getenv("MY_API_KEY")
-    if not api_key:
-        return {"error": "API key not configured"}
-
-    # Use api_key in automation
-```
-
-### 5. Add Logging
+### 4. Add Logging
 
 Log important steps for debugging:
 
@@ -394,7 +388,7 @@ def run(url: str):
     client = NotteClient()
     with client.Session() as session:
         logger.info("Session started")
-        session.execute(actions.Goto(url=url))
+        session.execute(type="goto", url=url)
         logger.info("Navigation complete")
 
         data = session.scrape()

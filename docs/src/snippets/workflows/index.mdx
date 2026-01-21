@@ -1,37 +1,37 @@
-Given a script you want to set up as a workflow:
+Given a script you want to set up as a function:
 
-```python my_scraping_workflow.py
-from notte_sdk import NotteClient, actions
+```python my_scraping_function.py
+from notte_sdk import NotteClient
 notte = NotteClient()
 
 def run(url: str):
     with notte.Session() as session:
-        session.execute(actions.Goto(url=url))
+        session.execute(type="goto", url=url)
         return session.scrape()
 ```
 
-You can create, update and run workflows:
+You can create, update and run functions:
 
-```python play_with_workflow.py
+```python play_with_function.py
 from notte_sdk import NotteClient
 
 notte = NotteClient()
 
-# Create a new workflow from our local Python file
-workflow = notte.Workflow(
-    workflow_path="my_scraping_workflow.py",
-    name="My Scraping Workflow",
-    description="A workflow for scraping the web"
+# Create a new function from our local Python file
+function = notte.Function(
+    workflow_path="my_scraping_function.py",
+    name="My Scraping Function",
+    description="A function for scraping the web"
 )
-print(f"Workflow created with ID: {workflow.response.workflow_id}. You can reference it using `notte.Workflow(<workflow_id>)`")
+print(f"Function created with ID: {function.function_id}. You can reference it using `notte.Function(<function_id>)`")
 
-# Run the workflow, providing variables
-response = workflow.run(url="https://shop.notte.cc/")
-print(f"Workflow completed with result: {response.result}")
+# Run the function, providing variables
+response = function.run(url="https://shop.notte.cc/")
+print(f"Function completed with result: {response.result}")
 
-# Update workflow with new version, from our local python file
-workflow.update(workflow_path="my_scraping_workflow.py")
+# Update function with new version, from our local python file
+function.update(workflow_path="my_scraping_function.py")
 
-# List all workflows
-workflows = notte.workflows.list()
+# List all functions
+functions = notte.functions.list()
 ```

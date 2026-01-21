@@ -4,7 +4,7 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-function = client.Workflow(workflow_id="workflow_abc123")
+function = client.Function(function_id="func_abc123")
 
 # Start run
 result = function.run(
@@ -16,8 +16,8 @@ run_id = result.workflow_run_id
 
 # Poll status
 while True:
-    status = client.workflows.get_run(
-        workflow_id="workflow_abc123",
+    status = client.functions.get_run(
+        workflow_id="func_abc123",
         run_id=run_id
     )
 

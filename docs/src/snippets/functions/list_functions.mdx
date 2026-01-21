@@ -4,12 +4,12 @@ from notte_sdk import NotteClient
 client = NotteClient()
 
 # List all functions
-workflows = client.workflows.list()
+functions = client.functions.list()
 
-for workflow in workflows.workflows:
-    print(f"ID: {workflow.workflow_id}")
-    print(f"Name: {workflow.name}")
-    print(f"Version: {workflow.latest_version}")
-    print(f"Created: {workflow.created_at}")
+for func in functions.workflows:
+    print(f"ID: {func.workflow_id}")
+    print(f"Name: {func.name}")
+    print(f"Version: {func.latest_version}")
+    print(f"Created: {func.created_at}")
     print("---")
 ```

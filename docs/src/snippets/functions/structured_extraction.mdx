@@ -1,5 +1,5 @@
 ```python structured_extraction.py
-from notte_sdk import NotteClient, actions
+from notte_sdk import NotteClient
 from pydantic import BaseModel
 
 class Product(BaseModel):
@@ -12,7 +12,7 @@ def run(product_url: str):
     client = NotteClient()
 
     with client.Session() as session:
-        session.execute(actions.Goto(url=product_url))
+        session.execute(type="goto", url=product_url)
 
         product = session.scrape(
             response_format=Product,

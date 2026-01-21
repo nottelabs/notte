@@ -57,25 +57,32 @@ This cycle repeats until:
 - Maximum steps are reached
 - An error occurs that can't be resolved
 
-## Agent vs Session
+## Agents vs Scripted Automation
 
-| Feature | Session | Agent |
-|---------|---------|-------|
-| **Control** | Manual (you write code) | Autonomous (AI decides) |
-| **Complexity** | Simple, deterministic tasks | Complex, adaptive tasks |
-| **Cost** | Lower (pay per action) | Higher (pay per LLM call) |
-| **Reliability** | Predictable, fast | Can vary, slower |
-| **Use Case** | Known workflows | Unknown or changing workflows |
+Both agents and scripted automation run on [browser sessions](/concepts/sessions)—the cloud browser infrastructure. The difference is how you control what happens in that session.
 
-**Use Sessions when:**
-- You know the exact steps
+| Aspect | Scripted Automation | Agent |
+|--------|---------------------|-------|
+| **Control** | You write the code | AI decides each step |
+| **Flexibility** | Fixed workflow | Adapts to changes |
+| **Speed** | Fast (direct execution) | Slower (LLM reasoning per step) |
+| **Cost** | Browser minutes only | Browser minutes + LLM calls |
+| **Reliability** | Deterministic | Can vary based on page state |
+| **Use Case** | Known, stable workflows | Unknown or dynamic workflows |
+
+**Use scripted automation when:**
+- You know the exact steps to take
 - Speed and cost are critical
-- The workflow rarely changes
+- The target pages rarely change
 
-**Use Agents when:**
-- The steps are unclear
+**Use agents when:**
+- You don't know the exact steps
 - Pages change frequently
 - You need intelligent decision-making
+
+<Note>
+  You can combine both approaches: use an agent to figure out a workflow, then [convert it to a function](/features/agents/workflows) for faster, cheaper repeated execution.
+</Note>
 
 ## Key Features
 

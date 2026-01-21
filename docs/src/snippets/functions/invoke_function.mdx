@@ -4,7 +4,7 @@ from notte_sdk import NotteClient
 client = NotteClient()
 
 # Get function by ID
-function = client.Workflow(workflow_id="workflow_abc123")
+function = client.Function(function_id="func_abc123")
 
 # Run function with parameters
 result = function.run(

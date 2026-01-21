@@ -1,23 +1,24 @@
 ```python file_upload_download.py
-from notte_sdk import NotteClient, actions
+from notte_sdk import NotteClient
 
 client = NotteClient()
 
 with client.Session() as session:
-    session.execute(actions.Goto(url="https://example.com/upload"))
+    session.execute(type="goto", url="https://example.com/upload")
 
     # Upload file
-    session.execute(actions.UploadFile(
+    session.execute(
+        type="upload_file",
         selector="input[type='file']",
         file_path="/path/to/document.pdf"
-    ))
-    session.execute(actions.Click(selector="button.submit"))
+    )
+    session.execute(type="click", selector="button.submit")
 
     # Wait for processing
-    session.execute(actions.Wait(duration=3))
+    session.execute(type="wait", duration=3000)
 
     # Download result
-    session.execute(actions.DownloadFile(selector="a.download"))
+    session.execute(type="download_file", selector="a.download")
 
     # Access downloaded files
     downloaded_files = session.storage.list_downloaded_files()

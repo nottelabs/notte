@@ -1,0 +1,272 @@
+---
+title: File Storage
+description: Upload and download files for your automations
+---
+
+File Storage provides a cloud bucket for uploading files to use in your automations and downloading files that agents retrieve from websites.
+
+## Quick Start
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+storage = client.FileStorage()
+
+# Upload a file before the session
+storage.upload("document.pdf")
+
+# Create session with storage attached
+with client.Session(storage=storage) as session:
+    agent = client.Agent(session=session)
+
+    result = agent.run(
+        task="Upload document.pdf to the portal and download the receipt",
+        url="https://example.com/upload"
+    )
+
+# Download files the agent retrieved
+for file_name in storage.list_downloaded_files():
+    storage.download(file_name=file_name, local_dir="./downloads")
+```
+
+## How It Works
+
+File Storage has two buckets:
+
+| Bucket | Purpose | API |
+|--------|---------|-----|
+| **Uploads** | Files you upload for agents to use | `storage.upload()` |
+| **Downloads** | Files agents download from websites | `storage.download()` |
+
+```
+┌─────────────┐                    ┌──────────────┐
+│ Local Files │ ── upload() ─────> │   Uploads    │
+└─────────────┘                    └──────┬───────┘
+                                          │
+                                          v
+                                   ┌──────────────┐
+                                   │   Session    │
+                                   │   / Agent    │
+                                   └──────┬───────┘
+                                          │
+                                          v
+┌─────────────┐                    ┌──────────────┐
+│ Local Files │ <── download() ─── │  Downloads   │
+└─────────────┘                    └──────────────┘
+```
+
+## Uploading Files
+
+Upload files from your local machine to make them available in sessions:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+storage = client.FileStorage()
+
+# Upload a file (uses the original filename)
+storage.upload("report.pdf")
+
+# Upload with a custom name
+storage.upload("report.pdf", upload_file_name="quarterly_report.pdf")
+
+# List uploaded files
+files = storage.list_uploaded_files()
+print(f"Uploaded: {files}")
+```
+
+## Downloading Files
+
+Download files that agents retrieved from websites:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+storage = client.FileStorage()
+
+with client.Session(storage=storage) as session:
+    agent = client.Agent(session=session)
+    agent.run(task="Download the invoice from the account page")
+
+# List downloaded files
+downloaded = storage.list_downloaded_files()
+print(f"Downloaded: {downloaded}")
+
+# Download to local directory
+for file_name in downloaded:
+    storage.download(
+        file_name=file_name,
+        local_dir="./invoices"
+    )
+```
+
+### Force Overwrite
+
+Overwrite existing local files:
+
+```python
+storage.download(
+    file_name="report.pdf",
+    local_dir="./downloads",
+    force=True  # Overwrite if exists
+)
+```
+
+## Using with Agents
+
+Agents can interact with files on websites when storage is attached:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+storage = client.FileStorage()
+
+# Upload files for the agent to use
+storage.upload("contract.pdf")
+storage.upload("signature.png")
+
+with client.Session(storage=storage) as session:
+    agent = client.Agent(session=session, max_steps=15)
+
+    result = agent.run(
+        task="""
+        1. Upload contract.pdf to the document portal
+        2. Add signature.png to the signature field
+        3. Submit the form
+        4. Download the signed confirmation
+        """,
+        url="https://example.com/documents"
+    )
+
+# Get the confirmation the agent downloaded
+for file_name in storage.list_downloaded_files():
+    storage.download(file_name=file_name, local_dir="./signed")
+```
+
+## Using with Sessions
+
+Use file storage with scripted automation:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+storage = client.FileStorage()
+
+# Upload file
+storage.upload("data.csv")
+
+with client.Session(storage=storage) as session:
+    session.execute(type="goto", url="https://example.com/import")
+
+    # Upload using the upload_file action
+    session.execute(
+        type="upload_file",
+        selector='input[type="file"]',
+        filename="data.csv"
+    )
+
+    session.execute(type="click", selector="button.submit")
+
+# Download any files
+for file_name in storage.list_downloaded_files():
+    storage.download(file_name=file_name, local_dir="./results")
+```
+
+## API Reference
+
+### FileStorage Methods
+
+| Method | Description |
+|--------|-------------|
+| `upload(file_path, upload_file_name=None)` | Upload a local file to storage |
+| `download(file_name, local_dir, force=False)` | Download a file to local directory |
+| `list_uploaded_files()` | List files you've uploaded |
+| `list_downloaded_files()` | List files downloaded by agents |
+
+### Parameters
+
+**upload()**
+- `file_path` - Path to the local file to upload
+- `upload_file_name` - Optional custom name for the uploaded file
+
+**download()**
+- `file_name` - Name of the file in storage
+- `local_dir` - Local directory to save the file
+- `force` - Overwrite existing file (default: False)
+
+## Supported File Types
+
+File storage supports all common file types:
+
+- **Documents**: PDF, DOCX, XLSX, TXT, CSV
+- **Images**: PNG, JPG, JPEG, GIF, WEBP
+- **Archives**: ZIP, RAR, TAR, GZ
+- **Media**: MP4, MP3
+- **Data**: JSON, XML
+
+## Best Practices
+
+### 1. Attach Storage Before Starting
+
+Always create and attach storage before starting the session:
+
+```python
+# Correct
+storage = client.FileStorage()
+storage.upload("file.pdf")
+
+with client.Session(storage=storage) as session:
+    # Storage is available
+    pass
+```
+
+### 2. Use Descriptive Filenames
+
+```python
+from datetime import datetime
+
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+storage.upload("report.pdf", upload_file_name=f"report_{timestamp}.pdf")
+```
+
+### 3. Check Downloads After Session
+
+Always check for downloaded files after the session ends:
+
+```python
+with client.Session(storage=storage) as session:
+    agent.run(task="Download all invoices")
+
+# Check what was downloaded
+files = storage.list_downloaded_files()
+if not files:
+    print("No files were downloaded")
+else:
+    for f in files:
+        storage.download(file_name=f, local_dir="./invoices")
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Agents" icon="robot" href="/concepts/agents">
+    Use agents with file operations
+  </Card>
+
+  <Card title="Sessions" icon="browser" href="/concepts/sessions">
+    Learn about browser sessions
+  </Card>
+
+  <Card title="Vaults" icon="lock" href="/concepts/vaults">
+    Store credentials securely
+  </Card>
+
+  <Card title="Personas" icon="user" href="/concepts/personas">
+    Create browser identities
+  </Card>
+</CardGroup>
