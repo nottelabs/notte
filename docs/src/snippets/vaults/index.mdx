@@ -1,9 +1,9 @@
 ```python agent_with_vault.py
 from notte_sdk import NotteClient
 
-notte = NotteClient()
+client = NotteClient()
 # Get your vault id from the Notte dashboard
-vault = notte.Vault(vault_id="my_vault_id")
+vault = client.Vault(vault_id="my_vault_id")
 # Add your credentials securely
 _ = vault.add_credentials(
     url="https://github.com/",
@@ -14,7 +14,7 @@ _ = vault.add_credentials(
     mfa_secret="PYNT7I67RFS2EPR5",
 )
 # Run an agent with secure credential access
-with notte.Session() as session:
-    agent = notte.Agent(vault=vault, session=session, max_steps=10)
+with client.Session() as session:
+    agent = client.Agent(vault=vault, session=session, max_steps=10)
     response = agent.run(task="Go to the nottelabs/notte repo and star it. If it's already starred don't unstar it.")
 ```

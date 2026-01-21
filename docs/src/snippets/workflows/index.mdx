@@ -2,10 +2,10 @@ Given a script you want to set up as a function:
 
 ```python my_scraping_function.py
 from notte_sdk import NotteClient
-notte = NotteClient()
+client = NotteClient()
 
 def run(url: str):
-    with notte.Session() as session:
+    with client.Session() as session:
         session.execute(type="goto", url=url)
         return session.scrape()
 ```
@@ -15,7 +15,7 @@ You can create, update and run functions:
 ```python play_with_function.py
 from notte_sdk import NotteClient
 
-notte = NotteClient()
+client = NotteClient()
 
 # Create a new function from our local Python file
 function = notte.Function(

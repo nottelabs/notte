@@ -3,7 +3,7 @@ title: External Providers
 description: Connect Notte to external browser infrastructure via Chrome DevTools Protocol
 ---
 
-Notte can connect to any browser that exposes a Chrome DevTools Protocol (CDP) endpoint. This allows you to use Notte's features (Agents, Actions, Scraping) with browser infrastructure from providers like Kernel.sh, BrowserBase, or your own custom browser setup.
+Notte can connect to any browser that exposes a Chrome DevTools Protocol (CDP) endpoint. This allows you to use Notte's features (Agents, Actions, Scraping) with browser infrastructure from providers like Kernel.sh or BrowserBase.
 
 ## How It Works
 
@@ -18,19 +18,19 @@ Instead of starting a browser in Notte's cloud, you can:
   ```python Python
   from notte_sdk import NotteClient
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
   # CDP URL from any external provider
   cdp_url = "ws://external-provider.com:9222/devtools/browser/abc123"
 
   # Connect Notte to the external browser
-  with notte_client.Session(cdp_url=cdp_url) as session:
+  with client.Session(cdp_url=cdp_url) as session:
       # Use Notte's features on the external browser
       page = session.page
       page.goto("https://example.com")
 
       # Use Notte's Agent
-      agent = notte_client.Agent(session=session, max_steps=10)
+      agent = client.Agent(session=session, max_steps=10)
       result = agent.run(task="Extract all product names")
   ```
 </CodeGroup>
@@ -45,7 +45,7 @@ Kernel.sh is a browser infrastructure platform optimized for AI agents. Here's h
   from kernel import Kernel
 
   # Initialize clients
-  notte_client = NotteClient()
+  client = NotteClient()
   kernel = Kernel()
 
   # Create browser on Kernel
@@ -53,13 +53,13 @@ Kernel.sh is a browser infrastructure platform optimized for AI agents. Here's h
 
   try:
       # Connect Notte to Kernel's browser
-      with notte_client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
+      with client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
           # Use Notte's features
           page = session.page
           page.goto("https://example.com")
 
           # Run an Agent
-          agent = notte_client.Agent(session=session, max_steps=10)
+          agent = client.Agent(session=session, max_steps=10)
           result = agent.run(task="Find the contact email")
 
           print(f"Result: {result.answer}")
@@ -83,7 +83,7 @@ BrowserBase provides managed browser infrastructure. Connect it to Notte:
   from notte_sdk import NotteClient
   import requests
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
   # Create session on BrowserBase (using their API)
   browserbase_response = requests.post(
@@ -97,7 +97,7 @@ BrowserBase provides managed browser infrastructure. Connect it to Notte:
 
   try:
       # Connect Notte to BrowserBase
-      with notte_client.Session(cdp_url=cdp_url) as session:
+      with client.Session(cdp_url=cdp_url) as session:
           page = session.page
           page.goto("https://example.com")
 
@@ -115,72 +115,6 @@ BrowserBase provides managed browser infrastructure. Connect it to Notte:
           f"https://api.browserbase.com/v1/sessions/{session_data['id']}",
           headers={"Authorization": f"Bearer {BROWSERBASE_API_KEY}"}
       )
-  ```
-</CodeGroup>
-
-## Custom Browser Setup
-
-Connect Notte to your own browser running with remote debugging:
-
-<CodeGroup>
-  ```python Python - Local Chrome
-  from notte_sdk import NotteClient
-  import subprocess
-  import time
-
-  notte_client = NotteClient()
-
-  # Start Chrome with remote debugging
-  chrome_process = subprocess.Popen([
-      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-      "--remote-debugging-port=9222",
-      "--user-data-dir=/tmp/chrome-profile"
-  ])
-
-  # Wait for Chrome to start
-  time.sleep(2)
-
-  # Connect Notte to local Chrome
-  cdp_url = "http://localhost:9222"
-
-  with notte_client.Session(cdp_url=cdp_url) as session:
-      page = session.page
-      page.goto("https://example.com")
-
-      # Use Notte's features
-      agent = notte_client.Agent(session=session)
-      result = agent.run(task="Extract page title")
-
-  # Clean up
-  chrome_process.terminate()
-  ```
-
-  ```python Python - Docker Browser
-  from notte_sdk import NotteClient
-  import docker
-
-  notte_client = NotteClient()
-  client = docker.from_env()
-
-  # Start Chrome in Docker
-  container = client.containers.run(
-      "browserless/chrome:latest",
-      detach=True,
-      ports={"3000/tcp": 9222}
-  )
-
-  try:
-      # Connect Notte to Docker browser
-      cdp_url = "ws://localhost:9222"
-
-      with notte_client.Session(cdp_url=cdp_url) as session:
-          page = session.page
-          page.goto("https://example.com")
-
-  finally:
-      # Clean up container
-      container.stop()
-      container.remove()
   ```
 </CodeGroup>
 
@@ -237,15 +171,15 @@ Run the same automation across different providers:
   from kernel import Kernel
   from typing import Literal
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
   def run_automation(provider: Literal["notte", "kernel"], task: str):
       """Run automation on different browser providers"""
 
       if provider == "notte":
           # Use Notte's browser
-          with notte_client.Session() as session:
-              agent = notte_client.Agent(session=session)
+          with client.Session() as session:
+              agent = client.Agent(session=session)
               result = agent.run(task=task)
               return result
 
@@ -255,8 +189,8 @@ Run the same automation across different providers:
           kernel_browser = kernel.browsers.create()
 
           try:
-              with notte_client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
-                  agent = notte_client.Agent(session=session)
+              with client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
+                  agent = client.Agent(session=session)
                   result = agent.run(task=task)
                   return result
           finally:
@@ -285,13 +219,13 @@ When using external browsers, Notte supports:
 - Screenshot capture
 - JavaScript execution
 - Cookie management
+- Session replay recording
+- Live viewer
 
 ❌ **Not Available**:
 - Notte's built-in anti-detection (use provider's features instead)
 - Notte's captcha solving (use provider's features instead)
 - Notte's proxy management (use provider's proxies)
-- Session replay recording
-- Live viewer (use provider's viewer if available)
 
 ## Troubleshooting
 
@@ -308,7 +242,7 @@ If connection fails, verify:
   ```python Python
   # Add timeout and error handling
   try:
-      with notte_client.Session(
+      with client.Session(
           cdp_url=cdp_url,
           timeout_minutes=15  # Longer timeout
       ) as session:
@@ -338,7 +272,7 @@ Some providers require authentication in the CDP URL:
   # CDP URL with authentication
   cdp_url = "wss://user:password@provider.com:9222/devtools/browser/abc123"
 
-  with notte_client.Session(cdp_url=cdp_url) as session:
+  with client.Session(cdp_url=cdp_url) as session:
       # Your automation
       pass
   ```
@@ -346,15 +280,15 @@ Some providers require authentication in the CDP URL:
 
 ## Provider Comparison
 
-| Feature | Notte Built-in | Kernel.sh | BrowserBase | Custom Setup |
-|---------|---------------|-----------|-------------|--------------|
-| Setup Complexity | Simple | Simple | Medium | Complex |
-| Anti-detection | ✅ Built-in | ✅ Built-in | ✅ Built-in | ❌ Manual |
-| Captcha Solving | ✅ Optional | ❌ | ❌ | ❌ |
-| Residential Proxies | ✅ Optional | ✅ | ✅ | ❌ Manual |
-| Session Replay | ✅ Yes | ❌ | ❌ | ❌ |
-| Live Viewer | ✅ Yes | ✅ Yes | ✅ Yes | Depends |
-| Pricing | Per session | Per session | Per session | Your costs |
+| Feature | Notte Built-in | Kernel.sh + Notte | BrowserBase + Notte |
+|---------|---------------|-------------------|---------------------|
+| Setup Complexity | Simple | Simple | Medium |
+| Anti-detection | ✅ Built-in | ✅ Built-in | ✅ Built-in |
+| Captcha Solving | ✅ Optional | ❌ | ❌ |
+| Residential Proxies | ✅ Optional | ✅ | ✅ |
+| Session Replay | ✅ Yes | ✅ Via Notte | ✅ Via Notte |
+| Live Viewer | ✅ Yes | ✅ Yes | ✅ Yes |
+| Pricing | Per session | Per session | Per session |
 
 ## Best Practices
 
@@ -368,7 +302,7 @@ try:
     external_browser = provider.create()
 
     # Use with Notte
-    with notte_client.Session(cdp_url=external_browser.cdp_url) as session:
+    with client.Session(cdp_url=external_browser.cdp_url) as session:
         # Your automation
         pass
 
@@ -383,7 +317,7 @@ CDP connections can fail. Always use try-except:
 
 ```python
 try:
-    with notte_client.Session(cdp_url=cdp_url) as session:
+    with client.Session(cdp_url=cdp_url) as session:
         # Your automation
         pass
 except Exception as e:
@@ -394,9 +328,8 @@ except Exception as e:
 ### 3. Choose the Right Provider
 
 - **High Volume**: Use managed providers (Kernel, BrowserBase)
-- **Custom Needs**: Use custom Docker/local setup
 - **Simplicity**: Use Notte's built-in browsers
-- **Existing Infrastructure**: Connect to your current setup
+- **Existing Infrastructure**: Connect to your current provider setup
 
 ### 4. Monitor Costs
 
@@ -407,7 +340,7 @@ import time
 
 start = time.time()
 
-with notte_client.Session(cdp_url=cdp_url) as session:
+with client.Session(cdp_url=cdp_url) as session:
     # Your automation
     pass
 
@@ -430,7 +363,7 @@ print(f"Session duration: {duration:.2f} seconds")
     Use Playwright directly with sessions
   </Card>
 
-  <Card title="CDP Reference" icon="code" href="/features/sessions/cdp">
-    Learn more about CDP integration
+  <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle">
+    Manage session states
   </Card>
 </CardGroup>

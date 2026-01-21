@@ -1,5 +1,5 @@
 ---
-title: Configuring Sessions
+title: Session Configurations
 description: Learn how to create and configure Notte browser sessions
 ---
 
@@ -178,57 +178,14 @@ Control whether to run the browser visibly or in the background:
 
 Route sessions through residential proxies for geo-targeting and enhanced stealth:
 
-<CodeGroup>
-  ```python Python - Default Proxies
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  # Use default residential proxies
-  with client.Session(proxies=True) as session:
-      page = session.page
-      page.goto("https://example.com")
-  ```
-
-  ```python Python - Country-Specific
-  from notte_sdk import NotteClient
-  from notte_sdk.types import NotteProxy, ProxyGeolocation, ProxyGeolocationCountry
-
-  client = NotteClient()
-
-  # Use proxies from a specific country
-  proxy = NotteProxy(
-      geolocation=ProxyGeolocation(
-          country=ProxyGeolocationCountry("US")
-      )
-  )
-
-  with client.Session(proxies=[proxy]) as session:
-      page = session.page
-      page.goto("https://example.com")
-  ```
-
-  ```python Python - External Proxy
-  from notte_sdk import NotteClient
-  from notte_sdk.types import ExternalProxy
-
-  client = NotteClient()
-
-  # Use your own proxy
-  proxy = ExternalProxy(
-      server="http://proxy.example.com:8080",
-      username="user",
-      password="pass"
-  )
-
-  with client.Session(proxies=[proxy]) as session:
-      page = session.page
-      page.goto("https://example.com")
-  ```
-</CodeGroup>
+```python
+with client.Session(proxies=True) as session:
+    page = session.page
+    page.goto("https://example.com")
+```
 
 <Note>
-  See the [Proxies Guide](/features/sessions/proxies) for advanced proxy configuration and troubleshooting.
+  See the [Proxies Guide](/features/sessions/proxies) for country-specific proxies, custom proxies, and troubleshooting.
 </Note>
 
 ## Captcha Solving
@@ -257,7 +214,7 @@ Automatically detect and solve captchas during automation:
 </Warning>
 
 <Note>
-  See the [Captcha Guide](/features/sessions/captchas) for more details on captcha solving.
+  See the [Captcha Solving](/features/sessions/captcha-solving) guide for more details.
 </Note>
 
 ## Session Timeout
@@ -301,48 +258,18 @@ Set custom screen dimensions for specific testing scenarios:
 
 ## Cookie Management
 
-Automatically load and save cookies across sessions:
+Automatically load and save cookies across sessions using the `cookie_file` parameter:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+with client.Session(cookie_file="cookies.json") as session:
+    page = session.page
+    page.goto("https://example.com")
+    # Cookies auto-loaded at start, auto-saved when session ends
+```
 
-  client = NotteClient()
-
-  # Cookies automatically loaded from file at start
-  # and saved back to file when session ends
-  with client.Session(cookie_file="cookies.json") as session:
-      page = session.page
-      page.goto("https://example.com")
-      # Log in, navigate, etc.
-      # Cookies are automatically saved when exiting
-  ```
-</CodeGroup>
-
-Manual cookie management:
-
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  import json
-
-  client = NotteClient()
-
-  with client.Session() as session:
-      # Set cookies manually
-      with open("cookies.json", "r") as f:
-          cookies = json.load(f)
-      session.set_cookies(cookies=cookies)
-
-      page = session.page
-      page.goto("https://example.com")
-
-      # Get cookies and save
-      cookies = session.get_cookies()
-      with open("cookies_new.json", "w") as f:
-          json.dump(cookies, f)
-  ```
-</CodeGroup>
+<Note>
+  See the [Cookies Guide](/features/sessions/cookies) for manual cookie management and best practices.
+</Note>
 
 ## External Providers (CDP)
 
@@ -353,14 +280,14 @@ Use Notte with external browser providers like Kernel.sh:
   from notte_sdk import NotteClient
   from kernel import Kernel
 
-  notte = NotteClient()
+  client = NotteClient()
   kernel = Kernel()
 
   # Create browser on Kernel
   kernel_browser = kernel.browsers.create()
 
   # Connect Notte to Kernel's browser
-  with notte.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
+  with client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
       page = session.page
       page.goto("https://example.com")
   ```
@@ -373,19 +300,19 @@ Use Notte with external browser providers like Kernel.sh:
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Session Replay" icon="video" href="/features/sessions/session-replay">
+  <Card title="Recordings" icon="video" href="/features/sessions/recordings">
     Watch recorded sessions and debug issues
   </Card>
 
-  <Card title="Advanced Stealth" icon="user-secret" href="/features/sessions/proxies">
+  <Card title="Proxies" icon="user-secret" href="/features/sessions/proxies">
     Configure proxies and anti-detection features
   </Card>
 
-  <Card title="CDP Integration" icon="code" href="/features/sessions/cdp">
-    Connect Playwright or Puppeteer directly
+  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+    Watch sessions in real-time
   </Card>
 
-  <Card title="Cookie Management" icon="cookie-bite" href="/features/sessions/cookies">
+  <Card title="Cookies" icon="cookie-bite" href="/features/sessions/cookies">
     Persist authentication across sessions
   </Card>
 </CardGroup>

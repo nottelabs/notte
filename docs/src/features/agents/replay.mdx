@@ -160,7 +160,7 @@ replay.save("missing_element.mp4")
 task = "Wait for the page to load, then click the blue 'Submit' button at the bottom"
 
 # Or use session actions first
-session.execute(actions.Goto(url="https://example.com"))
+session.execute(type="goto", url="https://example.com")
 time.sleep(2)  # Wait for load
 result = agent.run(task="Click submit button")
 ```

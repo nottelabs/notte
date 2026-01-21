@@ -107,7 +107,7 @@ curl -X POST https://api.notte.cc/workflows/workflow_abc123/runs/start \
 Get the exact cURL command for your Function:
 
 ```python
-function = client.Workflow(workflow_id="workflow_abc123")
+function = client.Function(function_id="func_abc123")
 
 # Generate cURL command
 curl_command = function.get_curl(
@@ -381,7 +381,7 @@ else:
 ### Sequential Invocations
 
 ```python
-function = client.Workflow(workflow_id="workflow_abc123")
+function = client.Function(function_id="func_abc123")
 
 results = []
 for url in urls:
@@ -412,11 +412,16 @@ result = function.run(
 ### Local Execution
 
 ```python
+# Load function with decryption key for local execution
+function = client.Function(
+    function_id="func_abc123",
+    decryption_key="your-key"  # Required for local execution
+)
+
 # Runs on your machine
 result = function.run(
     url="https://example.com",
-    local=True,
-    decryption_key="your-key"  # Required for local
+    local=True
 )
 ```
 
@@ -426,7 +431,7 @@ result = function.run(
 - No cloud execution costs
 
 **Requirements:**
-- Decryption key (from Console)
+- Decryption key (from Console) - passed when creating Function instance
 - Function code accessible locally
 
 ## Rate Limits

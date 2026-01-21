@@ -3,8 +3,8 @@
 ```python page_control.py
 from notte_sdk import NotteClient
 
-notte = NotteClient()
-with notte.Session(timeout_minutes=10) as session:
+client = NotteClient()
+with client.Session(timeout_minutes=10) as session:
 	# Observe the state of a webpage
 	_ = session.execute(type="goto", url="https://google.com/travel/flights")
 	obs = session.observe()
@@ -44,13 +44,13 @@ with notte.Session(timeout_minutes=10) as session:
 ```python page_control_with_agent.py
 from notte_sdk import NotteClient
 
-notte = NotteClient()
-with notte.Session() as session:
+client = NotteClient()
+with client.Session() as session:
     # Observe the state of a webpage
     _ = session.execute(type="goto", url="https://google.com/travel/flights")
     _ = session.observe()
     # And let an agent automate the rest of the task
-    agent = notte.Agent(session=session, max_steps=15)
+    agent = client.Agent(session=session, max_steps=15)
     res = agent.run(
         task="Check the prices for a flight from San Francisco to Paris on 14th of November 2025",
     )

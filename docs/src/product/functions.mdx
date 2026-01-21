@@ -21,14 +21,14 @@ Deploy your first function:
 
 <CodeGroup>
   ```python Python
-  from notte_sdk import NotteClient, actions
+  from notte_sdk import NotteClient
 
   client = NotteClient()
 
   # Define your automation
   def scrape_prices():
       with client.Session() as session:
-          session.execute(actions.Goto(url="https://example.com/products"))
+          session.execute(type="goto", url="https://example.com/products")
           data = session.scrape(instructions="Extract all product prices")
           return data
 
@@ -106,15 +106,15 @@ Pass parameters to functions:
 
 <CodeGroup>
   ```python Python
-  from notte_sdk import NotteClient, actions
+  from notte_sdk import NotteClient
 
   client = NotteClient()
 
   def search_products(query: str, max_results: int = 10):
       with client.Session() as session:
-          session.execute(actions.Goto(url="https://example.com"))
-          session.execute(actions.Fill(selector="input[name='search']", value=query))
-          session.execute(actions.Click(selector="button.search"))
+          session.execute(type="goto", url="https://example.com")
+          session.execute(type="fill", selector="input[name='search']", value=query)
+          session.execute(type="click", selector="button.search")
 
           results = session.scrape(
               instructions=f"Extract the first {max_results} product names"
@@ -161,7 +161,7 @@ Scrape data on a schedule:
 
   def daily_price_check():
       with client.Session() as session:
-          session.execute(actions.Goto(url="https://competitor.com/pricing"))
+          session.execute(type="goto", url="https://competitor.com/pricing")
           prices = session.scrape(instructions="Extract all plan prices")
           return {"timestamp": datetime.now(), "prices": prices}
 
@@ -186,8 +186,8 @@ Trigger automations from webhooks:
 
   def process_order(order_id: str):
       with client.Session() as session:
-          session.execute(actions.Goto(url=f"https://admin.example.com/orders/{order_id}"))
-          session.execute(actions.Click(selector="button.process"))
+          session.execute(type="goto", url=f"https://admin.example.com/orders/{order_id}")
+          session.execute(type="click", selector="button.process")
           return {"order_id": order_id, "status": "processed"}
 
   function = client.functions.create(
@@ -211,7 +211,7 @@ Expose automations as APIs:
 
   def get_stock_price(symbol: str):
       with client.Session() as session:
-          session.execute(actions.Goto(url=f"https://finance.example.com/{symbol}"))
+          session.execute(type="goto", url=f"https://finance.example.com/{symbol}")
           price = session.scrape(instructions="Get the current stock price")
           return {"symbol": symbol, "price": price}
 
@@ -236,7 +236,7 @@ Monitor websites for changes:
 
   def check_availability(product_url: str):
       with client.Session() as session:
-          session.execute(actions.Goto(url=product_url))
+          session.execute(type="goto", url=product_url)
           in_stock = session.scrape(instructions="Is the product in stock?")
           return {"url": product_url, "in_stock": in_stock}
 
@@ -374,7 +374,7 @@ Handle function errors gracefully:
   def robust_scraper(url: str):
       try:
           with client.Session() as session:
-              session.execute(actions.Goto(url=url))
+              session.execute(type="goto", url=url)
               data = session.scrape()
               return {"success": True, "data": data}
       except Exception as e:
@@ -486,15 +486,15 @@ Check your plan for function limits and pricing.
     Extract structured data
   </Card>
 
-  <Card title="Workflows" icon="sitemap" href="/concepts/workflows">
-    Build complex workflows
+  <Card title="Functions Documentation" icon="function" href="/concepts/functions">
+    Learn about Functions
   </Card>
 
   <Card title="API Reference" icon="code" href="/api-reference">
     Explore the Functions API
   </Card>
 
-  <Card title="Scheduling" icon="clock" href="/concepts/workflows">
+  <Card title="Scheduling" icon="clock" href="/features/functions/schedules">
     Schedule recurring executions
   </Card>
 </CardGroup>

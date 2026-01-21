@@ -2,8 +2,8 @@
 from patchright.sync_api import sync_playwright
 from notte_sdk import NotteClient
 
-notte = NotteClient()
-with notte.Session(proxies=False) as session:
+client = NotteClient()
+with client.Session(proxies=False) as session:
     # get cdp url
     cdp_url = session.cdp_url()
     with sync_playwright() as p:

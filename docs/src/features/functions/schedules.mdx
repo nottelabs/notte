@@ -161,12 +161,12 @@ Collect data every hour:
 # data_collector.py
 def run(source_url: str):
     """Collect data every hour."""
-    from notte_sdk import NotteClient, actions
+    from notte_sdk import NotteClient
 
     client = NotteClient()
 
     with client.Session() as session:
-        session.execute(actions.Goto(url=source_url))
+        session.execute(type="goto", url=source_url)
         data = session.scrape()
 
     return {"data": data, "timestamp": datetime.now().isoformat()}
@@ -184,7 +184,7 @@ Generate reports every Monday:
 # weekly_report.py
 def run():
     """Generate weekly report."""
-    from notte_sdk import NotteClient, actions
+    from notte_sdk import NotteClient
 
     client = NotteClient()
 
@@ -198,7 +198,7 @@ def run():
 
     for url in sources:
         with client.Session() as session:
-            session.execute(actions.Goto(url=url))
+            session.execute(type="goto", url=url)
             data = session.scrape(
                 instructions="Extract weekly metrics"
             )

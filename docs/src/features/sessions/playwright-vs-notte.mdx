@@ -1,5 +1,5 @@
 ---
-title: Playwright vs Notte SDK
+title: Playwright vs Notte Controls
 description: Understanding the difference between direct Playwright control and Notte's AI-enabled SDK
 ---
 
@@ -23,7 +23,7 @@ This gives you the full Playwright API - everything you can do with Playwright w
 Notte provides high-level methods designed for AI agents and structured automation:
 
 ```python
-session.execute(actions.Goto(url="https://example.com"))
+session.execute(type="goto", url="https://example.com")
 obs = session.observe(instructions="Fill the email input")
 action = obs.space.first()  # AI finds the right element
 session.execute(action.with_value("user@example.com"))
@@ -101,7 +101,7 @@ Choose `session.execute()`, `observe()`, and `scrape()` when you need:
       price: float
 
   with client.Session() as session:
-      session.execute(actions.Goto(url="https://example.com/products"))
+      session.execute(type="goto", url="https://example.com/products")
 
       # AI understands the page
       obs = session.observe(instructions="Find the search box")
@@ -132,7 +132,7 @@ You can combine both methods in the same session:
 
   with client.Session() as session:
       # Use Notte for high-level navigation
-      session.execute(actions.Goto(url="https://example.com"))
+      session.execute(type="goto", url="https://example.com")
 
       # Switch to Playwright for network control
       page = session.page
@@ -181,7 +181,7 @@ You can combine both methods in the same session:
     Explore all available Notte actions
   </Card>
 
-  <Card title="Session Replay" icon="video" href="/features/sessions/session-replay">
-    Debug with session replays and live viewer
+  <Card title="Recordings" icon="video" href="/features/sessions/recordings">
+    Debug with session replays
   </Card>
 </CardGroup>

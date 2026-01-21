@@ -1,57 +1,75 @@
 ---
 title: Browser Sessions
-description: 'Cloud hosted browser sessions'
+description: 'Cloud-hosted browser instances for automation'
 ---
 
 import SessionsPython from '/snippets/sessions/index.mdx';
+import LinkedInStep from '/snippets/pages/linkedin_step.mdx';
 
-# Overview
+Sessions are isolated browser instances running in the cloud that you can control programmatically. Think of them as headless Chrome browsers, but managed, scalable, and equipped with anti-detection, proxies, and captcha solving out of the box.
 
-Sessions are the heart of our ecosystem. They maintain browser states and provide a reliable foundation for executing web-based operations.
-Every operation in the Notte ecosystem is performed on behalf of a session (agent, scrape, vault, etc.)
+Every operation in Notte—whether you're running an AI agent, scraping data, or automating a workflow—happens within a session.
 
-# Session Management
+## Quick Start
 
-This shows how to manage your browser sessions using the Notte Python SDK
+Create a session and start automating:
+
 <SessionsPython />
 
-<Info>
-We strongly recommend using the API using a `with` statement to manage the session lifecycle and ensure it is stopped when the context manager is exited.
-</Info>
+<Tip>
+  We strongly recommend using the `with` statement (context manager) to ensure sessions are automatically stopped when done. This prevents orphaned sessions and unexpected costs. See [Session Lifecycle](/features/sessions/lifecycle) for manual management options.
+</Tip>
 
-### Key points
+## Core Operations
 
-* **Timeouts:** Use the `timeout_minutes` parameter to specify when a session should be stopped if no actions are performed on it (no activity). Note that by default, sessions are stopped after 3 minutes of inactivity.
-* **Session IDs:** Each session is uniquely identified, e.g. `5767be3c-aef5-47f8-bcb0-4f9f80fa66a3` and is tied to an API Key.
+Sessions provide three methods for interacting with the browser:
 
-# Session Features
+| Method | Purpose |
+|--------|---------|
+| `observe()` | Get the current page state and available actions |
+| `execute()` | Perform an action on the page |
+| `scrape()` | Extract structured data from the page |
 
-For more information on the additional features that are available for sessions, see the following guides:
+<LinkedInStep/>
+
+## Session Capabilities
+
+Sessions come with powerful built-in capabilities:
 
 <CardGroup cols={2}>
-  <Card title="Proxies" icon="stop" href="/features/sessions/proxies">
-    Avoid being blocked by CAPTCHAs and other anti-bot measures.
+  <Card title="Proxies" icon="globe" href="/features/sessions/proxies">
+    Route traffic through residential proxies for geo-targeting
   </Card>
-  <Card title="CDP" icon="square-terminal" href="/features/sessions/cdp">
-    Connect to remote sessions through `playwright`.
+  <Card title="Captcha Solving" icon="robot" href="/features/sessions/captcha-solving">
+    Automatically solve reCAPTCHA and hCaptcha
   </Card>
-  <Card title="Replays" icon="play" href="/features/sessions/session-replay">
-    Replay your sessions and debug them with ease.
+  <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">
+    Evade bot detection with fingerprint randomization
   </Card>
-  <Card title="Cookies" icon="cookie" href="/features/sessions/cookies">
-    Update cookies and other session data.
+  <Card title="Recordings" icon="video" href="/features/sessions/recordings">
+    Record sessions for debugging and replay
+  </Card>
+  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+    Watch sessions execute in real-time
+  </Card>
+  <Card title="Browser Profiles" icon="user" href="/features/sessions/browser-profiles">
+    Persist browser state across sessions
   </Card>
 </CardGroup>
 
-# Operations
+## Next Steps
 
-import ScrapePython from '/snippets/pages/scrape.mdx';
-import LinkedInStep from '/snippets/pages/linkedin_step.mdx';
-
-Operations provide granular control on the browser session:
-
-* `observe()` To get the current state of a page and its available actions
-* `execute()` To execute an action you've previously observed on a page
-* `scrape()` To extract structured data from a page
-
-<LinkedInStep/>
+<CardGroup cols={2}>
+  <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle">
+    Create, manage, and stop sessions
+  </Card>
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    All configuration options
+  </Card>
+  <Card title="Browser Controls" icon="hand-pointer" href="/features/sessions/browser-controls">
+    Complete action reference
+  </Card>
+  <Card title="Connect with Playwright" icon="code" href="/features/sessions/playwright">
+    Use Playwright via CDP
+  </Card>
+</CardGroup>

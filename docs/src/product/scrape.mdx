@@ -26,7 +26,7 @@ Extract data with a simple instruction:
   client = NotteClient()
 
   with client.Session() as session:
-      session.execute(actions.Goto(url="https://example.com/products"))
+      session.execute(type="goto", url="https://example.com/products")
 
       # Extract data with natural language
       data = session.scrape(
@@ -55,7 +55,7 @@ Define the exact structure you want:
       in_stock: bool
 
   with client.Session() as session:
-      session.execute(actions.Goto(url="https://example.com/products"))
+      session.execute(type="goto", url="https://example.com/products")
 
       # Extract into structured format
       products = session.scrape(
@@ -81,7 +81,7 @@ Get raw markdown content:
   client = NotteClient()
 
   with client.Session() as session:
-      session.execute(actions.Goto(url="https://example.com"))
+      session.execute(type="goto", url="https://example.com")
 
       # Get markdown of the page
       markdown = session.scrape()
@@ -101,7 +101,7 @@ Use natural language to guide extraction:
   client = NotteClient()
 
   with client.Session() as session:
-      session.execute(actions.Goto(url="https://example.com/blog"))
+      session.execute(type="goto", url="https://example.com/blog")
 
       # Use instructions
       articles = session.scrape(
@@ -131,7 +131,7 @@ Extract into Pydantic models for type safety:
       summary: str
 
   with client.Session() as session:
-      session.execute(actions.Goto(url="https://example.com/blog"))
+      session.execute(type="goto", url="https://example.com/blog")
 
       articles = session.scrape(
           response_format=list[Article],
@@ -164,7 +164,7 @@ Extract product information:
       in_stock: bool
 
   with client.Session() as session:
-      session.execute(actions.Goto(url="https://example.com/category/laptops"))
+      session.execute(type="goto", url="https://example.com/category/laptops")
 
       products = session.scrape(
           response_format=list[Product],
@@ -195,7 +195,7 @@ Extract contact information:
       address: str | None
 
   with client.Session() as session:
-      session.execute(actions.Goto(url="https://directory.example.com"))
+      session.execute(type="goto", url="https://directory.example.com")
 
       companies = session.scrape(
           response_format=list[Company],
@@ -231,7 +231,7 @@ Track competitor prices:
 
   for url in competitors:
       with client.Session() as session:
-          session.execute(actions.Goto(url=url))
+          session.execute(type="goto", url=url)
 
           prices = session.scrape(
               response_format=list[PriceSnapshot],
@@ -264,7 +264,7 @@ Collect articles or news:
       url: str
 
   with client.Session() as session:
-      session.execute(actions.Goto(url="https://news.example.com"))
+      session.execute(type="goto", url="https://news.example.com")
 
       articles = session.scrape(
           response_format=list[NewsArticle],
@@ -284,14 +284,14 @@ Scrape across multiple pages:
 
 <CodeGroup>
   ```python Python
-  from notte_sdk import NotteClient, actions
+  from notte_sdk import NotteClient
 
   client = NotteClient()
 
   all_products = []
 
   with client.Session() as session:
-      session.execute(actions.Goto(url="https://example.com/products"))
+      session.execute(type="goto", url="https://example.com/products")
 
       for page in range(1, 6):  # Scrape 5 pages
           products = session.scrape(
@@ -301,7 +301,7 @@ Scrape across multiple pages:
           all_products.extend(products)
 
           # Go to next page
-          session.execute(actions.Click(selector="a.next-page"))
+          session.execute(type="click", selector="a.next-page")
 
   print(f"Total products: {len(all_products)}")
   ```
@@ -318,7 +318,7 @@ Extract only relevant data:
   client = NotteClient()
 
   with client.Session() as session:
-      session.execute(actions.Goto(url="https://example.com/jobs"))
+      session.execute(type="goto", url="https://example.com/jobs")
 
       jobs = session.scrape(
           instructions="Extract only remote software engineering jobs posted in the last 7 days"
@@ -348,7 +348,7 @@ Extract complex hierarchical data:
       reviews: list[Review]
 
   with client.Session() as session:
-      session.execute(actions.Goto(url="https://example.com/product/123"))
+      session.execute(type="goto", url="https://example.com/product/123")
 
       product = session.scrape(
           response_format=Product,
@@ -462,7 +462,7 @@ Scrape multiple pages in one session:
 ```python
 with client.Session() as session:
     for url in urls:
-        session.execute(actions.Goto(url=url))
+        session.execute(type="goto", url=url)
         data = session.scrape(...)
         # Process data
 ```

@@ -3,283 +3,201 @@ title: Recordings
 description: Record and replay your browser sessions for debugging and analysis
 ---
 
-Notte automatically records every action in your browser sessions, allowing you to replay them as video for debugging and analysis.
+Notte automatically records every action in your browser sessions, allowing you to download video replays for debugging and analysis.
 
-## How Session Recording Works
+## Quick Start
 
-Every action executed during a session is automatically recorded. After the session ends, you can download a video replay.
+Get a recording after your session ends:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+from notte_sdk import NotteClient
 
-  client = NotteClient()
+client = NotteClient()
 
-  with client.Session() as session:
-      page = session.page
-      page.goto("https://example.com")
-      page.click("button.submit")
-      page.fill("input[name='email']", "user@example.com")
-      # All actions automatically recorded
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
+    session.execute(type="click", selector="button.submit")
+    session.execute(type="fill", selector="input[name='email']", value="user@example.com")
+    # All actions automatically recorded
 
-  # Get replay after session ends
-  replay = session.replay()
-  replay.save("session_recording.mp4")
-  print("Recording saved!")
-  ```
-</CodeGroup>
+# Get replay after session ends
+replay = session.replay()
+replay.save("session_recording.mp4")
+```
 
 ## What Gets Recorded
 
 Session recordings capture:
 
-- ✅ **Page navigation** - All page loads and URL changes
-- ✅ **User interactions** - Clicks, fills, scrolls, key presses
-- ✅ **DOM changes** - Dynamic content updates
-- ✅ **Visual state** - What the user would see
-- ✅ **Timing** - Real-time playback speed
+- **Page navigation** - All page loads and URL changes
+- **User interactions** - Clicks, fills, scrolls, key presses
+- **DOM changes** - Dynamic content updates
+- **Visual state** - What the browser displays
+- **Timing** - Real-time playback speed
 
-## Downloading Replays
+## Session Replays
 
-Download session recordings in MP4 format:
+### Download as MP4
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+from notte_sdk import NotteClient
 
-  client = NotteClient()
+client = NotteClient()
 
-  with client.Session() as session:
-      page = session.page
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
+    session.execute(type="click", selector="a.link")
 
-      # Your automation
-      page.goto("https://example.com")
-      page.click("a.link")
-      page.screenshot(path="screenshot.png")
+# Download recording
+replay = session.replay()
 
-  # Download recording
-  replay = session.replay()
+# Save to file
+replay.save("my_automation.mp4")
 
-  # Save to file
-  replay.save("my_automation.mp4")
+# Or get raw bytes
+video_bytes = replay.bytes()
+```
 
-  # Or get bytes
-  video_bytes = replay.bytes()
-  ```
-</CodeGroup>
+### Replay by Session ID
 
-## Replay Analysis
+Get a replay for any session using its ID:
 
-Use recordings to debug and analyze automation:
+```python
+from notte_sdk import NotteClient
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+client = NotteClient()
 
-  client = NotteClient()
+# Get replay for a specific session
+replay = client.sessions.replay(session_id="your-session-id")
+replay.save("session_replay.mp4")
+```
 
-  session_id = None
+## Agent Replays
 
-  try:
-      with client.Session() as session:
-          session_id = session.session_id
-          page = session.page
+Agents have their own replay method for convenience:
 
-          # Automation that might fail
-          page.goto("https://example.com")
-          page.click("button.sometimes-missing")
+```python
+from notte_sdk import NotteClient
 
-  except Exception as e:
-      print(f"Automation failed: {e}")
+client = NotteClient()
 
-      if session_id:
-          # Get recording to see what happened
-          replay = client.sessions.replay(session_id)
-          replay.save(f"failed_{session_id}.mp4")
-          print("Replay saved for analysis")
-  ```
-</CodeGroup>
+with client.Session() as session:
+    agent = client.Agent(session=session, max_steps=10)
+    result = agent.run(task="Find the contact email on example.com")
 
-## Batch Recording
+# Get agent replay directly
+replay = agent.replay()
+replay.save("agent_run.mp4")
+```
 
-Record multiple sessions for comparison:
+You can also get the replay from the session:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+# Alternative: get from session
+replay = session.replay()
+replay.save("agent_run.mp4")
+```
 
-  client = NotteClient()
+## Debugging Failed Runs
 
-  test_scenarios = [
-      {"name": "scenario_1", "url": "https://example.com/page1"},
-      {"name": "scenario_2", "url": "https://example.com/page2"},
-      {"name": "scenario_3", "url": "https://example.com/page3"}
-  ]
+Use recordings to understand what went wrong:
 
-  for scenario in test_scenarios:
-      with client.Session() as session:
-          page = session.page
-          page.goto(scenario["url"])
-          # ... test automation ...
+```python
+from notte_sdk import NotteClient
 
-      # Save each recording
-      replay = session.replay()
-      replay.save(f"recording_{scenario['name']}.mp4")
-  ```
-</CodeGroup>
+client = NotteClient()
 
-## Recording with Agent Runs
+session_id = None
 
-Agent executions are also recorded:
+try:
+    with client.Session() as session:
+        session_id = session.session_id
+        session.execute(type="goto", url="https://example.com")
+        session.execute(type="click", selector="button.sometimes-missing")
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+except Exception as e:
+    print(f"Automation failed: {e}")
 
-  client = NotteClient()
+    if session_id:
+        # Get recording to see what happened
+        replay = client.sessions.replay(session_id=session_id)
+        replay.save(f"failed_{session_id}.mp4")
+        print("Replay saved for analysis")
+```
 
-  with client.Session() as session:
-      # Run an agent
-      agent = client.Agent(session=session, max_steps=10)
-      result = agent.run(task="Find the contact email on example.com")
-
-      # Agent's actions are recorded
-
-  # Get recording of agent's work
-  replay = session.replay()
-  replay.save("agent_run.mp4")
-  ```
-</CodeGroup>
-
-## Recording Best Practices
+## Best Practices
 
 ### 1. Name Recordings Meaningfully
 
 Use descriptive filenames:
 
 ```python
-# Good: Descriptive names
-replay.save(f"login_test_{session.session_id}_{timestamp}.mp4")
+from datetime import datetime
 
-# Bad: Generic names
-replay.save("recording.mp4")
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+replay.save(f"login_test_{session.session_id}_{timestamp}.mp4")
 ```
 
-### 2. Store Recordings Securely
+### 2. Record Only on Failures
 
-Recordings may contain sensitive information:
+For production, save recordings only when something goes wrong:
 
 ```python
-from pathlib import Path
-
-# Create secure recordings directory
-recordings_dir = Path("recordings")
-recordings_dir.mkdir(exist_ok=True)
-
-replay.save(recordings_dir / f"{session.session_id}.mp4")
+try:
+    with client.Session() as session:
+        session.execute(type="goto", url="https://example.com")
+        # ... automation ...
+except Exception as e:
+    replay = session.replay()
+    replay.save(f"error_{session.session_id}.mp4")
+    raise
 ```
 
 ### 3. Clean Up Old Recordings
 
-Remove old recordings to save space:
+Remove old recordings to save disk space:
 
 ```python
 import time
 from pathlib import Path
 
-def cleanup_old_recordings(directory, days=7):
-    """Remove recordings older than specified days"""
+def cleanup_old_recordings(directory: str, days: int = 7):
+    """Remove recordings older than specified days."""
     cutoff = time.time() - (days * 86400)
 
     for recording in Path(directory).glob("*.mp4"):
         if recording.stat().st_mtime < cutoff:
             recording.unlink()
-            print(f"Deleted old recording: {recording}")
+            print(f"Deleted: {recording}")
 
 cleanup_old_recordings("recordings/", days=7)
 ```
 
-### 4. Record Only When Needed
-
-For production, consider recording only on failures:
-
-```python
-record_on_failure = True
-
-try:
-    with client.Session() as session:
-        # Your automation
-        pass
-except Exception as e:
-    if record_on_failure:
-        replay = session.replay()
-        replay.save(f"error_{session.session_id}.mp4")
-    raise
-```
-
-## Replay vs Live View
-
-| Feature | Recordings | Live View |
-|---------|-----------|-----------|
-| **Timing** | After session ends | During session execution |
-| **Format** | MP4 video file | Browser-based stream |
-| **Use Case** | Debugging, archiving | Real-time monitoring |
-| **Storage** | Requires file storage | No storage needed |
-| **Sharing** | Easy to share file | Requires live access |
-
 ## Recording Limitations
 
-### What's Recorded:
-- ✅ All page interactions
-- ✅ Visual state changes
-- ✅ Navigation and reloads
-- ✅ Dynamic content
+### What's Recorded
+- All page interactions
+- Visual state changes
+- Navigation and reloads
+- Dynamic content
 
-### What's NOT Recorded:
-- ❌ Audio
-- ❌ Network requests (use browser DevTools)
-- ❌ Console logs (use CDP or logging)
-- ❌ Session before first action
+### What's NOT Recorded
+- Audio
+- Network request details (use CDP for this)
+- Console logs (use logging)
+- Session state before first action
 
-## Recording Storage
+## Storage
 
 Recordings are:
 - Stored temporarily on Notte's servers
 - Available after session ends
-- Retained for 24 hours
+- **Retained for 24 hours**
 - Downloadable as MP4
 
 <Warning>
   Recordings are deleted after 24 hours. Download them promptly if needed for later analysis.
 </Warning>
-
-## Sharing Recordings
-
-Share recordings with your team:
-
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  import boto3
-
-  client = NotteClient()
-
-  with client.Session() as session:
-      # Your automation
-      pass
-
-  # Download recording
-  replay = session.replay()
-
-  # Upload to S3 for team access
-  s3 = boto3.client('s3')
-  s3.upload_file(
-      Filename="local_recording.mp4",
-      Bucket="team-recordings",
-      Key=f"recordings/{session.session_id}.mp4"
-  )
-  ```
-</CodeGroup>
 
 ## Next Steps
 
@@ -288,15 +206,15 @@ Share recordings with your team:
     Watch sessions in real-time
   </Card>
 
-  <Card title="Session Replay" icon="video" href="/features/sessions/session-replay">
-    Complete guide to session replay
-  </Card>
-
   <Card title="Session Lifecycle" icon="clock" href="/features/sessions/lifecycle">
     Understand session management
   </Card>
 
-  <Card title="CDP Integration" icon="code" href="/features/sessions/cdp">
-    Access browser debugging tools
+  <Card title="Playwright" icon="code" href="/features/sessions/playwright">
+    Connect with Playwright via CDP
+  </Card>
+
+  <Card title="Agent Replay" icon="robot" href="/features/agents/replay">
+    Agent-specific replay features
   </Card>
 </CardGroup>

@@ -33,21 +33,12 @@
                 "icon": "tv",
                 "pages": [
                   "concepts/sessions",
-                  "features/sessions/configuration",
                   "features/sessions/lifecycle",
+                  "features/sessions/configuration",
                   "features/sessions/browser-controls",
+                  "features/sessions/playwright-vs-notte",
                   {
-                    "group": "Connect over CDP",
-                    "collapsed": true,
-                    "pages": [
-                      "features/sessions/playwright",
-                      "features/sessions/puppeteer",
-                      "features/sessions/selenium",
-                      "features/sessions/external-providers"
-                    ]
-                  },
-                  {
-                    "group": "Session Configuration",
+                    "group": "Session Capabilities",
                     "collapsed": true,
                     "pages": [
                       "features/sessions/browser-types",
@@ -62,19 +53,17 @@
                       "features/sessions/recordings",
                       "features/sessions/live-view",
                       "features/sessions/browser-extensions",
-                      "features/sessions/file-uploads-downloads"
+                      "features/sessions/cookies"
                     ]
                   },
                   {
-                    "group": "Additional",
+                    "group": "Connect over CDP",
                     "collapsed": true,
                     "pages": [
-                      "features/sessions/playwright-vs-notte",
-                      "features/sessions/session-replay",
-                      "features/sessions/storage",
-                      "features/sessions/cdp",
-                      "features/sessions/captchas",
-                      "features/sessions/cookies"
+                      "features/sessions/playwright",
+                      "features/sessions/puppeteer",
+                      "features/sessions/selenium",
+                      "features/sessions/external-providers"
                     ]
                   }
                 ]
@@ -114,7 +103,7 @@
               },
               {
                 "group": "Functions",
-                "icon": "function",
+                "icon": "flower",
                 "pages": [
                   "concepts/functions",
                   "features/functions/creating",
@@ -126,19 +115,184 @@
               {
                 "group": "Agent Tools",
                 "pages": [
-                  "concepts/scraping",
+                  "concepts/file-storage",
                   "concepts/vaults",
                   "concepts/personas"
+                ]
+              },
+              {
+                "group": "Scraping",
+                "icon": "database",
+                "pages": [
+                  "concepts/scraping"
                 ]
               }
             ]
           },
           {
             "tab": "API",
-            "openapi": {
-              "source": "https://api.notte.cc/openapi.json",
-              "directory": "api-reference"
-            }
+            "groups": [
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "api/authentication",
+                  "api/errors",
+                  "api/rate-limits"
+                ]
+              },
+              {
+                "group": "Health",
+                "openapi": "https://api.notte.cc/openapi.json",
+                "pages": [
+                  "GET /health"
+                ]
+              },
+              {
+                "group": "Sessions",
+                "openapi": "https://api.notte.cc/openapi.json",
+                "pages": [
+                  "GET /sessions",
+                  "POST /sessions/start",
+                  "GET /sessions/{session_id}",
+                  "GET /sessions/{session_id}/workflow/code",
+                  "DELETE /sessions/{session_id}/stop",
+                  "POST /sessions/{session_id}/cookies",
+                  "GET /sessions/{session_id}/cookies"
+                ]
+              },
+              {
+                "group": "Page",
+                "openapi": "https://api.notte.cc/openapi.json",
+                "pages": [
+                  "POST /sessions/{session_id}/page/observe",
+                  "POST /sessions/{session_id}/page/execute",
+                  "POST /sessions/{session_id}/page/scrape"
+                ]
+              },
+              {
+                "group": "Agents",
+                "openapi": "https://api.notte.cc/openapi.json",
+                "pages": [
+                  "POST /agents/start",
+                  "GET /agents/{agent_id}",
+                  "GET /agents/{agent_id}/workflow/code",
+                  "DELETE /agents/{agent_id}/stop",
+                  "GET /agents/{agent_id}/replay",
+                  "GET /agents"
+                ]
+              },
+              {
+                "group": "Workflows",
+                "openapi": "https://api.notte.cc/openapi.json",
+                "pages": [
+                  "POST /workflows",
+                  "GET /workflows",
+                  "POST /workflows/{workflow_id}",
+                  "GET /workflows/{workflow_id}",
+                  "DELETE /workflows/{workflow_id}",
+                  "POST /workflows/{workflow_id}/fork",
+                  "POST /workflows/{workflow_id}/schedule",
+                  "DELETE /workflows/{workflow_id}/schedule",
+                  "POST /workflows/{workflow_id}/runs/start",
+                  "GET /workflows/{workflow_id}/runs/{run_id}",
+                  "PATCH /workflows/{workflow_id}/runs/{run_id}",
+                  "DELETE /workflows/{workflow_id}/runs/{run_id}",
+                  "GET /workflows/{workflow_id}/runs"
+                ]
+              },
+              {
+                "group": "Vaults",
+                "openapi": "https://api.notte.cc/openapi.json",
+                "pages": [
+                  "POST /vaults/create",
+                  "POST /vaults/{vault_id}/credentials",
+                  "GET /vaults/{vault_id}/credentials",
+                  "DELETE /vaults/{vault_id}/credentials",
+                  "GET /vaults/{vault_id}",
+                  "PATCH /vaults/{vault_id}",
+                  "DELETE /vaults/{vault_id}",
+                  "POST /vaults/{vault_id}/card",
+                  "GET /vaults/{vault_id}/card",
+                  "DELETE /vaults/{vault_id}/card",
+                  "GET /vaults"
+                ]
+              },
+              {
+                "group": "Personas",
+                "openapi": "https://api.notte.cc/openapi.json",
+                "pages": [
+                  "POST /personas/create",
+                  "DELETE /personas/{persona_id}",
+                  "GET /personas/{persona_id}",
+                  "GET /personas/{persona_id}/emails",
+                  "POST /personas/{persona_id}/sms/number",
+                  "DELETE /personas/{persona_id}/sms/number",
+                  "GET /personas",
+                  "GET /personas/{persona_id}/sms"
+                ]
+              },
+              {
+                "group": "Profiles",
+                "openapi": "https://api.notte.cc/openapi.json",
+                "pages": [
+                  "POST /profiles/create",
+                  "GET /profiles/{profile_id}",
+                  "DELETE /profiles/{profile_id}",
+                  "GET /profiles"
+                ]
+              },
+              {
+                "group": "Storage",
+                "openapi": "https://api.notte.cc/openapi.json",
+                "pages": [
+                  "GET /storage/{session_id}/downloads/{filename}",
+                  "POST /storage/{session_id}/downloads/{filename}",
+                  "GET /storage/{session_id}/downloads",
+                  "POST /storage/uploads/{filename}",
+                  "GET /storage/uploads"
+                ]
+              },
+              {
+                "group": "Scrape",
+                "openapi": "https://api.notte.cc/openapi.json",
+                "pages": [
+                  "POST /scrape",
+                  "POST /scrape_from_html"
+                ]
+              },
+              {
+                "group": "Usage",
+                "openapi": "https://api.notte.cc/openapi.json",
+                "pages": [
+                  "GET /usage",
+                  "GET /usage/logs"
+                ]
+              },
+              {
+                "group": "Debug",
+                "openapi": "https://api.notte.cc/openapi.json",
+                "pages": [
+                  "GET /sessions/{session_id}/debug",
+                  "GET /sessions/{session_id}/replay",
+                  "GET /sessions/{session_id}/offset"
+                ]
+              },
+              {
+                "group": "Network",
+                "openapi": "https://api.notte.cc/openapi.json",
+                "pages": [
+                  "GET /sessions/{session_id}/network/logs"
+                ]
+              },
+              {
+                "group": "Prompts",
+                "openapi": "https://api.notte.cc/openapi.json",
+                "pages": [
+                  "POST /prompts/improve",
+                  "POST /prompts/nudge"
+                ]
+              }
+            ]
           },
           {
             "tab": "SDK",
@@ -147,8 +301,9 @@
                 "group": "Getting Started",
                 "pages": [
                   "sdk-reference/manual/index",
-                  "sdk-reference/notteclient/scrape",
-                  "sdk-reference/notteclient/health_check"
+                  "sdk-reference/authentication",
+                  "sdk-reference/errors",
+                  "sdk-reference/rate-limits"
                 ]
               },
               {
@@ -277,6 +432,12 @@
             "tab": "Products",
             "groups": [
               {
+                "group": "Overview",
+                "pages": [
+                  "product/index"
+                ]
+              },
+              {
                 "group": "Build",
                 "pages": [
                   "product/agent-mode",
@@ -292,7 +453,7 @@
                 ]
               },
               {
-                "group": "Overview",
+                "group": "Tools",
                 "pages": [
                   "product/scrape"
                 ]
@@ -303,15 +464,20 @@
             "tab": "Resources",
             "groups": [
               {
-                "group": "Pricing",
+                "group": "Resources",
                 "pages": [
-                  "pricing"
+                  "pricing",
+                  "rate-limits",
+                  "python-sdk",
+                  "guides/vibe-coding"
                 ]
               },
               {
-                "group": "SDK",
+                "group": "Legal",
                 "pages": [
-                  "python-sdk"
+                  "trust-center",
+                  "legal/terms",
+                  "legal/privacy"
                 ]
               },
               {
@@ -346,6 +512,19 @@
                   "integrations/stagehand",
                   "integrations/val-town"
                 ]
+              },
+              {
+                "group": "Community",
+                "pages": [
+                  "community/github",
+                  "community/slack",
+                  "community/x",
+                  "community/linkedin",
+                  "community/yc",
+                  "community/featurebase",
+                  "community/trustpilot",
+                  "community/producthunt"
+                ]
               }
             ]
           }
@@ -353,19 +532,14 @@
         "global": {
           "anchors": [
             {
-              "anchor": "Playground",
-              "href": "https://console.notte.cc/playground",
-              "icon": "sparkle"
-            },
-            {
-              "anchor": "Slack Community",
+              "anchor": "Slack Support",
               "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA",
-              "icon": "slack"
+              "icon": "heart"
             },
             {
-              "anchor": "GitHub Opensource",
-              "href": "https://github.com/nottelabs",
-              "icon": "github"
+              "anchor": "Submit Feedback",
+              "href": "https://notte.featurebase.app/",
+              "icon": "comments"
             }
           ]
         }

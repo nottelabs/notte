@@ -23,10 +23,10 @@ Retrieve specific Function information:
 
 ```python
 # Get function by ID
-function = client.Workflow(workflow_id="workflow_abc123")
+function = client.Function(function_id="func_abc123")
 
 # Access function properties
-print(f"Function ID: {function.workflow_id}")
+print(f"Function ID: {function.function_id}")
 print(f"Name: {function.response.name}")
 print(f"Description: {function.response.description}")
 print(f"Latest Version: {function.response.latest_version}")
@@ -40,7 +40,7 @@ print(f"Versions: {function.response.versions}")
 Deploy a new version of your Function:
 
 ```python
-function = client.Workflow(workflow_id="workflow_abc123")
+function = client.Function(function_id="func_abc123")
 
 # Update with new code
 function.update(
@@ -68,7 +68,7 @@ Change Function name or description:
 Functions automatically version on each update:
 
 ```python
-function = client.Workflow(workflow_id="workflow_abc123")
+function = client.Function(function_id="func_abc123")
 
 # Get all versions
 print(f"Available versions: {function.response.versions}")
@@ -173,24 +173,23 @@ for run in active_runs.runs:
 Watch MP4 replay of Function execution:
 
 ```python
-function = client.Workflow(workflow_id="workflow_abc123")
+function = client.Function(function_id="func_abc123")
 
-# Get replay for specific run
-replay = function.replay(workflow_run_id="run_xyz789")
+# Run the function first
+result = function.run(url="https://example.com")
 
-print(f"Replay URL: {replay.url}")
-print(f"Expires: {replay.expires_at}")
+# Get replay for this run (uses the session from the last run)
+replay = function.replay()
 
-# Open in browser
-import webbrowser
-webbrowser.open(replay.url)
+# Save the replay
+replay.save("function_replay.mp4")
 ```
 
 **Replay features:**
 - Video recording of browser session
 - Shows all actions taken
 - Useful for debugging failures
-- Time-limited access URL
+- Available after running a function
 
 ### Replay After Run
 
@@ -200,10 +199,11 @@ Get replay immediately after execution:
 # Run function
 result = function.run(url="https://example.com")
 
-# Get replay for this run
-replay = function.replay(workflow_run_id=result.workflow_run_id)
+# Get replay for this run (automatically uses the session from the run)
+replay = function.replay()
 
-print(f"Watch execution: {replay.url}")
+# Save the video
+replay.save("execution_replay.mp4")
 ```
 
 ## Managing Runs
@@ -236,10 +236,11 @@ Create your own copy of a shared Function:
 
 ```python
 # Fork a function from marketplace or teammate
-forked_function = client.Workflow(workflow_id="workflow_abc123").fork()
+original = client.Function(function_id="func_abc123")
+forked_function = original.fork()
 
-print(f"Forked function ID: {forked_function.workflow_id}")
-print(f"Original ID: workflow_abc123")
+print(f"Forked function ID: {forked_function.function_id}")
+print(f"Original ID: func_abc123")
 ```
 
 **Use cases:**
@@ -254,7 +255,8 @@ After forking, update as needed:
 
 ```python
 # Fork function
-forked = client.Workflow(workflow_id="shared_function").fork()
+original = client.Function(function_id="shared_function_id")
+forked = original.fork()
 
 # Update your copy
 forked.update(workflow_path="my_modified_version.py")
@@ -270,20 +272,22 @@ result = forked.run(url="https://example.com")
 Retrieve Function source code:
 
 ```python
-function = client.Workflow(workflow_id="workflow_abc123")
+function = client.Function(
+    function_id="func_abc123",
+    decryption_key="your-decryption-key"  # Required for downloading
+)
 
 # Download function code
-code = function.download(decryption_key="your-decryption-key")
+code = function.download()
 
 print(code)  # Function source code
 
-# Save to file
-with open("downloaded_function.py", "w") as f:
-    f.write(code)
+# Or download directly to a file
+code = function.download(workflow_path="downloaded_function.py")
 ```
 
 **Requirements:**
-- Decryption key (available in Console)
+- Decryption key (available in Console) - passed when creating Function instance
 - Only works for Functions you own or have access to
 
 ### Download for Backup
@@ -293,24 +297,27 @@ Back up all your Functions:
 ```python
 import os
 
-workflows = client.workflows.list()
+functions = client.functions.list()
 
 # Create backup directory
 os.makedirs("function_backups", exist_ok=True)
 
-for workflow in workflows.workflows:
-    function = client.Workflow(workflow_id=workflow.workflow_id)
+for func in functions.workflows:
+    function = client.Function(
+        function_id=func.workflow_id,
+        decryption_key="your-key"
+    )
 
     try:
-        code = function.download(decryption_key="your-key")
+        code = function.download()
 
-        filename = f"function_backups/{workflow.name}_{workflow.latest_version}.py"
+        filename = f"function_backups/{func.name}_{func.latest_version}.py"
         with open(filename, "w") as f:
             f.write(code)
 
-        print(f"Backed up: {workflow.name}")
+        print(f"Backed up: {func.name}")
     except Exception as e:
-        print(f"Failed to backup {workflow.name}: {e}")
+        print(f"Failed to backup {func.name}: {e}")
 ```
 
 ## Deleting Functions
@@ -320,7 +327,7 @@ for workflow in workflows.workflows:
 Remove a Function permanently:
 
 ```python
-function = client.Workflow(workflow_id="workflow_abc123")
+function = client.Function(function_id="func_abc123")
 
 # Delete function
 function.delete()
@@ -334,23 +341,6 @@ print("Function deleted")
 - Run history is preserved
 - Cannot be undone
 
-### Delete with Confirmation
-
-Safe deletion pattern:
-
-```python
-function = client.Workflow(workflow_id="workflow_abc123")
-
-# Confirm before deleting
-response = input(f"Delete function '{function.response.name}'? (yes/no): ")
-
-if response.lower() == "yes":
-    function.delete()
-    print("Function deleted")
-else:
-    print("Deletion cancelled")
-```
-
 ## Sharing Functions
 
 ### Make Function Public
@@ -359,7 +349,7 @@ Share Functions with others:
 
 ```python
 # Deploy as shared
-function = client.Workflow(
+function = client.Function(
     workflow_path="my_function.py",
     name="Public Scraper",
     shared=True  # Make publicly accessible
@@ -377,7 +367,7 @@ function = client.Workflow(
 Keep Functions private (default):
 
 ```python
-function = client.Workflow(
+function = client.Function(
     workflow_path="my_function.py",
     name="Private Automation",
     shared=False  # Private (default)
@@ -454,7 +444,7 @@ Keep change log for Function updates:
 # changelog.py
 """
 Function: Data Scraper
-Workflow ID: workflow_abc123
+Function ID: func_abc123
 
 Version History:
 - v1 (2024-01-15): Initial release
@@ -473,14 +463,16 @@ def run(url: str):
 Validate updates before deploying:
 
 ```python
-# Test locally first
-function = client.Workflow(workflow_id="workflow_abc123")
+# Test locally first - decryption key needed for local execution
+function = client.Function(
+    function_id="func_abc123",
+    decryption_key="your-key"
+)
 
 # Run with local=True for testing
 test_result = function.run(
     url="https://test-site.com",
-    local=True,
-    decryption_key="your-key"
+    local=True
 )
 
 if test_result.status == "closed":

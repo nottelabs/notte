@@ -1,13 +1,13 @@
 ---
-title: Agent to Workflow Conversion
-description: Convert agent executions into reusable workflow code
+title: Agent to Function Conversion
+description: Convert agent executions into reusable function code
 ---
 
-Convert successful agent runs into deterministic workflow code that can be executed faster and cheaper than agents.
+Convert successful agent runs into deterministic function code that can be executed faster and cheaper than agents.
 
 ## Overview
 
-After an agent completes a task, you can extract the steps as workflow code:
+After an agent completes a task, you can extract the steps as function code:
 
 ```python
 from notte_sdk import NotteClient
@@ -19,14 +19,14 @@ with client.Session() as session:
     result = agent.run(task="Navigate to pricing page and extract plans")
 
     if result.success:
-        # Convert to workflow code
-        workflow_code = agent.workflow.code()
-        print(workflow_code.python_script)
+        # Convert to function code
+        function_code = agent.workflow.code()
+        print(function_code.python_script)
 ```
 
-## Why Convert to Workflows?
+## Why Convert to Functions?
 
-| Aspect | Agent | Workflow |
+| Aspect | Agent | Function |
 |--------|-------|----------|
 | **Execution** | AI decides each step | Predefined steps |
 | **Speed** | Slower (LLM reasoning) | Faster (direct execution) |
@@ -34,13 +34,13 @@ with client.Session() as session:
 | **Reliability** | Can vary | Deterministic |
 | **Adaptability** | Handles changes | Breaks if page changes |
 
-**Use workflows when:**
+**Use functions when:**
 - The task is well-defined and repeatable
 - Page structure is stable
 - Speed and cost matter
 - You need predictable execution
 
-## Getting Workflow Code
+## Getting Function Code
 
 ### As Python Script
 
@@ -51,7 +51,7 @@ agent = client.Agent(session=session)
 result = agent.run(task="Login and navigate to dashboard")
 
 if result.success:
-    # Get workflow code
+    # Get function code
     code = agent.workflow.code(as_workflow=True)
 
     print(code.python_script)
@@ -60,52 +60,46 @@ if result.success:
 Example output:
 
 ```python
-from notte_sdk import NotteClient, actions
+from notte_sdk import NotteClient
 
 client = NotteClient()
 
 with client.Session() as session:
     # Step 1: Navigate to login page
-    session.execute(actions.Goto(url="https://example.com/login"))
+    session.execute(type="goto", url="https://example.com/login")
 
     # Step 2: Fill email field
-    session.execute(actions.Fill(
-        selector="input[name='email']",
-        value="user@example.com"
-    ))
+    session.execute(type="fill", selector="input[name='email']", value="user@example.com")
 
     # Step 3: Fill password field
-    session.execute(actions.Fill(
-        selector="input[name='password']",
-        value="********"
-    ))
+    session.execute(type="fill", selector="input[name='password']", value="********")
 
     # Step 4: Click login button
-    session.execute(actions.Click(selector="button[type='submit']"))
+    session.execute(type="click", selector="button[type='submit']")
 
     # Step 5: Wait for dashboard
-    session.execute(actions.Goto(url="https://example.com/dashboard"))
+    session.execute(type="goto", url="https://example.com/dashboard")
 ```
 
-### As Workflow Object
+### As Function Object
 
-Create a reusable workflow:
+Create a reusable function:
 
 ```python
 agent = client.Agent(session=session)
 result = agent.run(task="Extract product data")
 
 if result.success:
-    # Create workflow from agent
-    workflow = agent.workflow.create()
+    # Create function from agent
+    function = agent.workflow.create()
 
-    print(f"Created workflow: {workflow.workflow_id}")
+    print(f"Created function: {function.function_id}")
 
-    # Run workflow later
-    workflow_result = workflow.run()
+    # Run function later
+    function_result = function.run()
 ```
 
-## Running Workflows
+## Running Functions
 
 ### Execute Generated Code
 
@@ -113,33 +107,30 @@ Copy and run the generated Python:
 
 ```python
 # Generated from agent
-from notte_sdk import NotteClient, actions
+from notte_sdk import NotteClient
 
 client = NotteClient()
 
 with client.Session() as session:
-    session.execute(actions.Goto(url="https://example.com"))
-    session.execute(actions.Click(selector="button.search"))
-    session.execute(actions.Fill(
-        selector="input[name='query']",
-        value="laptop"
-    ))
+    session.execute(type="goto", url="https://example.com")
+    session.execute(type="click", selector="button.search")
+    session.execute(type="fill", selector="input[name='query']", value="laptop")
     data = session.scrape(instructions="Extract product names")
 
 print(data)
 ```
 
-### Use Workflow API
+### Use Function API
 
-Run via the workflow endpoint:
+Run via the function endpoint:
 
 ```python
-# Create workflow from successful agent
-workflow = agent.workflow.create()
+# Create function from successful agent
+function = agent.workflow.create()
 
 # Run multiple times
 for query in ["laptop", "phone", "tablet"]:
-    result = workflow.run(parameters={"query": query})
+    result = function.run(query=query)
     print(result)
 ```
 
@@ -147,7 +138,7 @@ for query in ["laptop", "phone", "tablet"]:
 
 ### 1. Prototyping with Agents
 
-Use agents to figure out the workflow, then convert:
+Use agents to figure out the automation, then convert:
 
 ```python
 # Phase 1: Prototype with agent
@@ -155,50 +146,50 @@ agent = client.Agent(session=session)
 result = agent.run(task="Find all products under $100")
 
 if result.success:
-    # Phase 2: Convert to workflow for production
+    # Phase 2: Convert to function for production
     code = agent.workflow.code()
 
     # Save for production use
-    with open("production_workflow.py", "w") as f:
+    with open("production_function.py", "w") as f:
         f.write(code.python_script)
 ```
 
 ### 2. Scheduled Tasks
 
-Convert one-time agent runs to scheduled workflows:
+Convert one-time agent runs to scheduled functions:
 
 ```python
 # Manual run to figure out the task
 agent = client.Agent(session=session)
 result = agent.run(task="Extract daily price changes")
 
-# Convert to workflow
-workflow = agent.workflow.create()
+# Convert to function
+function = agent.workflow.create()
 
 # Schedule to run daily (via API or console)
-# workflow.schedule(cron="0 9 * * *")
+# function.schedule(cron="0 9 * * *")
 ```
 
 ### 3. Cost Optimization
 
-Run agents once, then use cheaper workflows:
+Run agents once, then use cheaper functions:
 
 ```python
 # One-time: Use agent to solve the task ($0.20)
 agent = client.Agent(session=session)
 result = agent.run(task="Complex data extraction")
 
-# Recurring: Use workflow ($0.05 per run)
-workflow = agent.workflow.create()
+# Recurring: Use function ($0.05 per run)
+function = agent.workflow.create()
 
 # Run 100 times - save $15 vs running agent each time
 for i in range(100):
-    workflow.run()
+    function.run()
 ```
 
 ### 4. Testing Variations
 
-Create workflow templates from agents:
+Create function templates from agents:
 
 ```python
 # Base workflow from agent
@@ -217,7 +208,7 @@ code = agent.workflow.code()
 
 ### Add Parameters
 
-Make workflows reusable with parameters:
+Make functions reusable with parameters:
 
 ```python
 # Agent-generated base code
@@ -239,17 +230,17 @@ Enhance with production-ready error handling:
 base_code = agent.workflow.code()
 
 enhanced_code = f"""
-from notte_sdk import NotteClient, actions
+from notte_sdk import NotteClient
 import logging
 
-def run_workflow():
+def run_function():
     client = NotteClient()
     try:
         with client.Session() as session:
             {base_code.python_script}
             return {{"success": True, "data": result}}
     except Exception as e:
-        logging.error(f"Workflow failed: {{e}}")
+        logging.error(f"Function failed: {{e}}")
         return {{"success": False, "error": str(e)}}
 """
 ```
@@ -260,20 +251,20 @@ Review and improve generated selectors:
 
 ```python
 # Generated code might use:
-session.execute(actions.Click(selector="div.container > button:nth-child(3)"))
+session.execute(type="click", selector="div.container > button:nth-child(3)")
 
 # Optimize to:
-session.execute(actions.Click(selector="button[data-testid='submit']"))
+session.execute(type="click", selector="button[data-testid='submit']")
 ```
 
 ## Best Practices
 
-### 1. Test Generated Workflows
+### 1. Test Generated Functions
 
 Always test before production:
 
 ```python
-# Generate workflow
+# Generate function code
 code = agent.workflow.code()
 
 # Test in fresh session
@@ -284,10 +275,10 @@ with client.Session() as session:
 
 ### 2. Document the Source
 
-Track which agent generated the workflow:
+Track which agent generated the function:
 
 ```python
-workflow = agent.workflow.create()
+function = agent.workflow.create()
 
 # Add metadata
 metadata = {
@@ -297,77 +288,77 @@ metadata = {
     "success_rate": result.success
 }
 
-# Save with workflow
+# Save with function
 ```
 
 ### 3. Version Control
 
-Store workflows in git:
+Store functions in git:
 
 ```python
-# Save workflow code
+# Save function code
 code = agent.workflow.code()
 
-workflow_path = Path("workflows/extract_products.py")
-workflow_path.write_text(code.python_script)
+function_path = Path("functions/extract_products.py")
+function_path.write_text(code.python_script)
 
 # Commit to git
-# git add workflows/extract_products.py
-# git commit -m "Add product extraction workflow from agent run"
+# git add functions/extract_products.py
+# git commit -m "Add product extraction function from agent run"
 ```
 
-### 4. Monitor Workflow Success
+### 4. Monitor Function Success
 
-Track if workflows continue to work:
+Track if functions continue to work:
 
 ```python
 from datetime import datetime
 
-def run_monitored_workflow():
+def run_monitored_function():
     try:
-        workflow = client.workflows.get("workflow_id")
-        result = workflow.run()
+        function = client.Function(function_id="func_abc123")
+        result = function.run()
 
-        if result.success:
+        if result.status == "closed":
             log_success(datetime.now())
         else:
-            alert_failure(result.error)
+            alert_failure(result.result)
 
     except Exception as e:
-        # Workflow broken - maybe page changed?
+        # Function broken - maybe page changed?
         # Time to re-run agent and regenerate
-        alert_workflow_broken(e)
+        alert_function_broken(e)
 ```
 
 ### 5. Regenerate When Pages Change
 
-When workflows break, use agents to update:
+When functions break, use agents to update:
 
 ```python
-# Old workflow failing
+# Old function failing
 try:
-    old_workflow.run()
+    old_function.run()
 except Exception as e:
-    print("Workflow broken, regenerating...")
+    print("Function broken, regenerating...")
 
-    # Use agent to figure out new workflow
+    # Use agent to figure out new function
     agent = client.Agent(session=session)
     result = agent.run(task=original_task_description)
 
     if result.success:
-        # Generate new workflow
-        new_workflow = agent.workflow.create()
-        print(f"New workflow created: {new_workflow.workflow_id}")
+        # Generate new function
+        new_function = agent.workflow.create()
+        print(f"New function created: {new_function.function_id}")
 ```
 
 ## Limitations
 
-Workflows work best for:
+Functions work best for:
 - ✅ Stable, unchanging pages
 - ✅ Deterministic tasks
 - ✅ Known sequences of actions
 
-Workflows are not suitable for:
+Functions are not suitable for:
 - ❌ Pages that change frequently
 - ❌ Tasks requiring adaptation
 - ❌ Complex decision-making
@@ -377,8 +368,8 @@ When pages change or tasks become complex, revert to agents.
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Workflows Concept" icon="sitemap" href="/concepts/workflows">
-    Learn more about workflows
+  <Card title="Functions" icon="function" href="/concepts/functions">
+    Deploy automations as serverless APIs
   </Card>
 
   <Card title="Actions" icon="hand-pointer" href="/sdk-reference/manual/session">
@@ -389,7 +380,7 @@ When pages change or tasks become complex, revert to agents.
     Optimize agent runs
   </Card>
 
-  <Card title="Functions" icon="bolt" href="/product/functions">
-    Deploy workflows as APIs
+  <Card title="Console Functions" icon="bolt" href="/product/functions">
+    Deploy functions from the console
   </Card>
 </CardGroup>

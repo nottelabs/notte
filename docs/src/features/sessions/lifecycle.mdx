@@ -220,29 +220,6 @@ Here's a complete example demonstrating best practices for session management:
   ```
 </CodeGroup>
 
-## Automatic Timeout
-
-Sessions automatically close after a period of inactivity. The default timeout is 3 minutes, but you can configure it up to 30 minutes:
-
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  # Set custom timeout (1-30 minutes)
-  with client.Session(timeout_minutes=15) as session:
-      page = session.page
-      page.goto("https://example.com")
-
-      # Session will automatically close after 15 minutes of inactivity
-  ```
-</CodeGroup>
-
-<Warning>
-  Don't rely solely on automatic timeouts. Always explicitly stop sessions using the context manager or `session.stop()` to avoid unexpected resource usage.
-</Warning>
-
 ## Connecting to Existing Sessions
 
 You can reconnect to an existing session using its session_id:
@@ -320,144 +297,6 @@ The context manager automatically handles cleanup, even when errors occur:
   ```
 </CodeGroup>
 
-## Cookie Persistence
-
-Automatically persist cookies across sessions for maintaining authentication:
-
-<CodeGroup>
-  ```python Python - Automatic Persistence
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  # Cookies automatically loaded at start and saved at stop
-  with client.Session(cookie_file="auth_cookies.json") as session:
-      page = session.page
-      page.goto("https://example.com/login")
-
-      # Log in, cookies are automatically captured
-      page.fill('input[name="email"]', "user@example.com")
-      page.fill('input[name="password"]', "password")
-      page.click('button[type="submit"]')
-
-      # Cookies automatically saved when session ends
-
-  # Next time, cookies are automatically loaded
-  with client.Session(cookie_file="auth_cookies.json") as session:
-      page = session.page
-      page.goto("https://example.com/dashboard")
-      # Already logged in!
-  ```
-
-  ```python Python - Manual Cookie Management
-  from notte_sdk import NotteClient
-  import json
-
-  client = NotteClient()
-
-  with client.Session() as session:
-      page = session.page
-      page.goto("https://example.com")
-
-      # Get cookies manually
-      cookies = session.get_cookies()
-      with open("cookies.json", "w") as f:
-          json.dump(cookies, f)
-
-  # Later session: load cookies manually
-  with client.Session() as session:
-      with open("cookies.json", "r") as f:
-          cookies = json.load(f)
-      session.set_cookies(cookies=cookies)
-
-      page = session.page
-      page.goto("https://example.com")
-  ```
-</CodeGroup>
-
-## Session Viewer
-
-Monitor your sessions in real-time:
-
-<CodeGroup>
-  ```python Python - Auto-open Viewer
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  # Viewer opens automatically when headless=False
-  with client.Session(headless=False) as session:
-      page = session.page
-      page.goto("https://example.com")
-      # Watch the automation in your browser
-  ```
-
-  ```python Python - Manual Viewer Control
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  with client.Session(headless=True) as session:
-      # Open viewer manually
-      session.viewer()  # Opens in browser
-
-      # Or open CDP debugger
-      session.viewer_cdp()
-
-      # Or for Jupyter notebooks
-      session.viewer_notebook()
-
-      page = session.page
-      page.goto("https://example.com")
-  ```
-</CodeGroup>
-
-## Connect with External Browsers
-
-Use Notte sessions with external browser providers:
-
-<CodeGroup>
-  ```python Python - Kernel.sh Integration
-  from notte_sdk import NotteClient
-  from kernel import Kernel
-
-  notte = NotteClient()
-  kernel = Kernel()
-
-  # Create browser on Kernel
-  kernel_browser = kernel.browsers.create()
-
-  # Connect Notte to Kernel's browser
-  with notte.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
-      page = session.page
-      page.goto("https://example.com")
-
-      # Session still benefits from Notte's features:
-      # - observe() and execute() actions
-      # - scrape() for data extraction
-      # - Agent integration
-  ```
-
-  ```python Python - Direct CDP Connection
-  from notte_sdk import NotteClient
-  from playwright.sync_api import sync_playwright
-
-  notte_client = NotteClient()
-
-  with notte_client.Session() as session:
-      # Get CDP URL for external connection
-      cdp_url = session.cdp_url()
-
-      # Connect external Playwright instance
-      with sync_playwright() as p:
-          browser = p.chromium.connect_over_cdp(cdp_url)
-          page = browser.contexts[0].pages[0]
-
-          page.goto("https://example.com")
-          print(page.title())
-  ```
-</CodeGroup>
-
 ## Best Practices
 
 Follow these patterns to build reliable, cost-effective automation:
@@ -486,17 +325,7 @@ with client.Session(timeout_minutes=15) as session:
     pass
 ```
 
-### 3. Use Cookie Persistence for Auth
-
-Avoid repeated logins by persisting cookies:
-
-```python
-with client.Session(cookie_file="cookies.json") as session:
-    # Cookies auto-loaded and auto-saved
-    pass
-```
-
-### 4. Monitor Session State
+### 3. Monitor Session State
 
 Check session status before long-running operations:
 
@@ -509,7 +338,7 @@ with client.Session() as session:
     # Continue with operations
 ```
 
-### 5. Handle Cleanup Gracefully
+### 4. Handle Cleanup Gracefully
 
 Even with context managers, handle interrupts:
 
@@ -526,36 +355,6 @@ signal.signal(signal.SIGINT, signal_handler)
 with client.Session() as session:
     # Your automation
     pass
-```
-
-### 6. Use Session Replay for Debugging
-
-Review sessions after completion:
-
-```python
-with client.Session() as session:
-    page = session.page
-    page.goto("https://example.com")
-    # ... automation
-
-# After session ends, get replay
-replay = session.replay()
-replay.save("session_recording.mp4")
-```
-
-### 7. Leverage File Storage for Downloads
-
-Integrate file storage for handling uploads/downloads:
-
-```python
-storage = client.FileStorage()
-
-with client.Session(storage=storage) as session:
-    page = session.page
-    page.goto("https://example.com/download")
-
-    # Files automatically available in storage
-    files = storage.list_downloaded_files()
 ```
 
 ## Session Lifecycle Diagram
@@ -611,15 +410,15 @@ with client.Session(storage=storage) as session:
     Configure sessions with advanced options
   </Card>
 
-  <Card title="Session Replay" icon="video" href="/features/sessions/session-replay">
+  <Card title="Recordings" icon="video" href="/features/sessions/recordings">
     Record and replay session activity
   </Card>
 
-  <Card title="CDP Integration" icon="code" href="/features/sessions/cdp">
-    Connect Playwright or Puppeteer directly
+  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+    Watch sessions in real-time
   </Card>
 
-  <Card title="Cookie Management" icon="cookie-bite" href="/features/sessions/cookies">
+  <Card title="Cookies" icon="cookie-bite" href="/features/sessions/cookies">
     Persist authentication across sessions
   </Card>
 </CardGroup>

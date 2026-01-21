@@ -4,9 +4,9 @@
 ```python session.py
 from notte_sdk import NotteClient
 
-notte = NotteClient()
+client = NotteClient()
 
-with notte.Session() as session:
+with client.Session() as session:
     _ = session.observe(url="https://duckduckgo.com")
 # Save the replay to a file
 replay = session.replay()
@@ -17,9 +17,9 @@ replay.save("replay.mp4")
 ```python agent.py
 from notte_sdk import NotteClient
 
-notte = NotteClient()
-with notte.Session() as session:
-    agent = notte.Agent(session=session)
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
     results = agent.run(task="go to duckduckgo")
 # Save the replay to a file
 replay = agent.replay()

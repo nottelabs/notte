@@ -1,14 +1,14 @@
 ```python solve_captchas.py
 from notte_sdk import NotteClient
 
-notte = NotteClient()
-with notte.Session(
+client = NotteClient()
+with client.Session(
     solve_captchas=True,
     browser_type="firefox",
     headless=False,
 ) as session:
     # Navigate to a page with a CAPTCHA
-    agent = notte.Agent(session=session, max_steps=5)
+    agent = client.Agent(session=session, max_steps=5)
     resp = agent.run(
         task=(
             "Try to solve the CAPTCHA using internal tools. "

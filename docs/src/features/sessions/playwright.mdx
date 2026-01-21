@@ -22,10 +22,10 @@ Get the CDP URL from a Notte session and connect Playwright to it:
   from notte_sdk import NotteClient
   from playwright.sync_api import sync_playwright
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
   # Start a Notte session
-  with notte_client.Session() as session:
+  with client.Session() as session:
       # Get CDP WebSocket URL
       cdp_url = session.cdp_url()
       print(f"CDP URL: {cdp_url}")
@@ -60,9 +60,9 @@ You can use both the Notte session API and Playwright simultaneously:
   from notte_sdk import NotteClient
   from playwright.sync_api import sync_playwright
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
-  with notte_client.Session() as session:
+  with client.Session() as session:
       # Use Notte's built-in page
       notte_page = session.page
       notte_page.goto("https://example.com")
@@ -99,9 +99,9 @@ Notte works with both sync and async Playwright:
   from playwright.async_api import async_playwright
 
   async def main():
-      notte_client = NotteClient()
+      client = NotteClient()
 
-      with notte_client.Session() as session:
+      with client.Session() as session:
           cdp_url = session.cdp_url()
 
           async with async_playwright() as p:
@@ -128,9 +128,9 @@ Create additional pages or contexts using Playwright:
   from notte_sdk import NotteClient
   from playwright.sync_api import sync_playwright
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
-  with notte_client.Session() as session:
+  with client.Session() as session:
       cdp_url = session.cdp_url()
 
       with sync_playwright() as p:
@@ -163,9 +163,9 @@ Use Playwright's powerful network interception with Notte sessions:
   from notte_sdk import NotteClient
   from playwright.sync_api import sync_playwright
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
-  with notte_client.Session() as session:
+  with client.Session() as session:
       cdp_url = session.cdp_url()
 
       with sync_playwright() as p:
@@ -197,9 +197,9 @@ Listen to browser events using Playwright:
   from notte_sdk import NotteClient
   from playwright.sync_api import sync_playwright
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
-  with notte_client.Session() as session:
+  with client.Session() as session:
       cdp_url = session.cdp_url()
 
       with sync_playwright() as p:
@@ -229,7 +229,7 @@ Listen to browser events using Playwright:
 Always use context managers for both Notte and Playwright to ensure proper cleanup:
 
 ```python
-with notte_client.Session() as session:
+with client.Session() as session:
     with sync_playwright() as p:
         # Your code here
         pass
@@ -244,7 +244,7 @@ For simple automation, use `session.page` directly. Only connect Playwright when
 Remember that Notte sessions have a timeout. For long-running Playwright operations, increase the timeout:
 
 ```python
-with notte_client.Session(timeout_minutes=20) as session:
+with client.Session(timeout_minutes=20) as session:
     # Long Playwright automation
     pass
 ```
@@ -288,7 +288,7 @@ For most automation tasks, `session.page` (which is already Playwright-compatibl
     Configure session settings and features
   </Card>
 
-  <Card title="CDP Reference" icon="code" href="/features/sessions/cdp">
-    Learn more about Chrome DevTools Protocol
+  <Card title="External Providers" icon="plug" href="/features/sessions/external-providers">
+    Connect to Kernel.sh and other providers
   </Card>
 </CardGroup>

@@ -7,45 +7,38 @@ Live View allows you to watch your browser sessions in real-time as they execute
 
 ## Quick Start
 
-Open a live viewer automatically by setting `headless=False`:
+Open a live viewer automatically when the session starts:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+from notte_sdk import NotteClient
 
-  client = NotteClient()
+client = NotteClient()
 
-  # Live viewer opens automatically
-  with client.Session(headless=False) as session:
-      page = session.page
-      page.goto("https://example.com")
-      page.click("button.submit")
-      # Watch it happen in your browser!
-  ```
-</CodeGroup>
+# Live viewer opens automatically
+with client.Session(open_viewer=True) as session:
+    session.execute(type="goto", url="https://example.com")
+    session.execute(type="click", selector="button.submit")
+    # Watch it happen in your browser!
+```
 
 ## Manual Live View
 
-Open the live viewer manually for headless sessions:
+Open the live viewer manually at any point during the session:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+from notte_sdk import NotteClient
 
-  client = NotteClient()
+client = NotteClient()
 
-  with client.Session(headless=True) as session:
-      # Start automation
-      page = session.page
-      page.goto("https://example.com")
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
 
-      # Open live viewer
-      session.viewer()
+    # Open live viewer
+    session.viewer()
 
-      # Continue automation while watching
-      page.click("button.submit")
-  ```
-</CodeGroup>
+    # Continue automation while watching
+    session.execute(type="click", selector="button.submit")
+```
 
 ## Viewer Types
 
@@ -55,151 +48,103 @@ Notte supports multiple viewer types:
 
 Frame-by-frame replay in your browser:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
 
-  client = NotteClient()
-
-  with client.Session() as session:
-      page = session.page
-      page.goto("https://example.com")
-
-      # Opens browser viewer
-      session.viewer_browser()
-  ```
-</CodeGroup>
+    # Opens browser viewer
+    session.viewer_browser()
+```
 
 ### CDP Viewer
 
 Chrome DevTools Protocol debugger:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
 
-  client = NotteClient()
-
-  with client.Session() as session:
-      page = session.page
-      page.goto("https://example.com")
-
-      # Opens CDP debugger
-      session.viewer_cdp()
-  ```
-</CodeGroup>
+    # Opens CDP debugger
+    session.viewer_cdp()
+```
 
 ### Jupyter Notebook Viewer
 
 Display live view directly in Jupyter notebooks:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
 
-  client = NotteClient()
-
-  with client.Session() as session:
-      page = session.page
-      page.goto("https://example.com")
-
-      # Display in notebook cell
-      session.viewer_notebook()
-  ```
-</CodeGroup>
-
-## Live Debugging
-
-Use live view to debug automation issues:
-
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  import time
-
-  client = NotteClient()
-
-  with client.Session(headless=False) as session:
-      page = session.page
-
-      # Watch the automation
-      page.goto("https://example.com/complex-form")
-
-      # Add pauses to observe
-      time.sleep(2)
-
-      page.fill('input[name="email"]', "user@example.com")
-      time.sleep(1)
-
-      page.click('button[type="submit"]')
-      time.sleep(2)
-
-      # See what happened
-  ```
-</CodeGroup>
-
-## Monitoring Multiple Sessions
-
-Monitor several sessions simultaneously:
-
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  import time
-
-  client = NotteClient()
-
-  sessions = []
-
-  # Start multiple sessions
-  for i in range(3):
-      session = client.Session()
-      session.start()
-      sessions.append(session)
-
-      # Open viewer for each
-      session.viewer()
-
-      # Start automation
-      page = session.page
-      page.goto(f"https://example.com/page{i}")
-
-  # Let them run
-  time.sleep(30)
-
-  # Clean up
-  for session in sessions:
-      session.stop()
-  ```
-</CodeGroup>
+    # Display in notebook cell
+    session.viewer_notebook()
+```
 
 ## Live View for Agents
 
 Watch AI agents make decisions in real-time:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+```python
+from notte_sdk import NotteClient
 
-  client = NotteClient()
+client = NotteClient()
 
-  # Watch the agent work
-  with client.Session(headless=False) as session:
-      agent = client.Agent(session=session, max_steps=10)
+with client.Session(open_viewer=True) as session:
+    agent = client.Agent(session=session, max_steps=10)
 
-      result = agent.run(
-          task="Find the pricing page and extract all plan prices"
-      )
+    result = agent.run(
+        task="Find the pricing page and extract all plan prices"
+    )
 
-      print(f"Agent completed: {result.answer}")
-  ```
-</CodeGroup>
+    print(f"Agent completed: {result.answer}")
+```
 
-## Live View Best Practices
+## Sharing Live View
 
-### 1. Use for Development, Not Production
+Share the viewer URL with your team for collaborative debugging:
 
-Live view is great for development and debugging:
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
+
+    # Get viewer URL
+    debug_info = session.debug_info()
+    print(f"Share this URL with your team: {debug_info.debug_url}")
+
+    # Team can watch live while you continue
+    session.execute(type="click", selector="button.submit")
+```
+
+## Viewer Configuration
+
+Set a default viewer type for all sessions:
+
+```python
+from notte_sdk import NotteClient
+from notte_sdk.endpoints.sessions import SessionViewerType
+
+# Set default viewer to CDP
+client = NotteClient(viewer_type=SessionViewerType.CDP)
+
+with client.Session(open_viewer=True) as session:
+    # Opens CDP viewer by default
+    session.execute(type="goto", url="https://example.com")
+```
+
+Available viewer types:
+- `SessionViewerType.BROWSER` - Frame-by-frame browser viewer (default)
+- `SessionViewerType.CDP` - Chrome DevTools Protocol debugger
+- `SessionViewerType.JUPYTER` - Jupyter notebook display
+
+## Best Practices
+
+### 1. Use for Development
+
+Live view is ideal for development and debugging:
 
 ```python
 import os
@@ -207,66 +152,36 @@ import os
 # Only use live view in development
 is_dev = os.getenv("ENV") == "development"
 
-with client.Session(headless=not is_dev) as session:
-    # Live view in dev, headless in prod
-    pass
+with client.Session(open_viewer=is_dev) as session:
+    session.execute(type="goto", url="https://example.com")
 ```
 
-### 2. Combine with Pauses
+### 2. Combine with Recordings
 
-Add strategic pauses to observe behavior:
-
-```python
-import time
-
-with client.Session(headless=False) as session:
-    page = session.page
-
-    page.goto("https://example.com")
-    time.sleep(2)  # Pause to observe
-
-    page.click("button.load-more")
-    time.sleep(3)  # Watch content load
-
-    page.screenshot(path="result.png")
-```
-
-### 3. Use for Complex Workflows
-
-Live view is especially useful for complex automations:
+Use live view during development, recordings for later analysis:
 
 ```python
-with client.Session(headless=False) as session:
-    page = session.page
-
-    # Complex multi-step workflow
-    page.goto("https://example.com/wizard")
-
-    # Step 1
-    page.fill('input[name="step1"]', "value1")
-    page.click('button.next')
-
-    # Step 2
-    page.fill('input[name="step2"]', "value2")
-    page.click('button.next')
-
-    # Watch each step execute
-```
-
-### 4. Record While Viewing
-
-Combine live view with recording:
-
-```python
-with client.Session(headless=False) as session:
+with client.Session(open_viewer=True) as session:
     # Watch it live
-    page = session.page
-    page.goto("https://example.com")
-    # ... automation ...
+    session.execute(type="goto", url="https://example.com")
+    session.execute(type="click", selector="button.submit")
 
-# Get recording after
+# Get recording after session ends
 replay = session.replay()
 replay.save("recording.mp4")
+```
+
+### 3. Multiple Viewers
+
+Open multiple viewer types simultaneously:
+
+```python
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
+
+    # Open both viewers
+    session.viewer_browser()  # Frame-by-frame
+    session.viewer_cdp()      # DevTools
 ```
 
 ## Live View vs Recordings
@@ -274,113 +189,9 @@ replay.save("recording.mp4")
 | Feature | Live View | Recordings |
 |---------|-----------|------------|
 | **Timing** | Real-time during execution | After session ends |
-| **Interactivity** | Can pause/observe | Playback only |
+| **Interactivity** | Can observe as it happens | Playback only |
 | **Use Case** | Debugging, monitoring | Archiving, sharing |
-| **Performance Impact** | Minimal | None |
-| **Availability** | During session | 24 hours after |
-
-## Viewer Configuration
-
-Set default viewer type:
-
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  from notte_sdk.endpoints.sessions import SessionViewerType
-
-  # Set default viewer to CDP
-  client = NotteClient(viewer_type=SessionViewerType.CDP)
-
-  with client.Session() as session:
-      session.viewer()  # Opens CDP viewer by default
-  ```
-</CodeGroup>
-
-## Live View for Captcha Solving
-
-Watch captchas being solved in real-time:
-
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  with client.Session(
-      browser_type="firefox",
-      solve_captchas=True,
-      headless=False  # Watch captcha solving
-  ) as session:
-      page = session.page
-      page.goto("https://www.google.com/recaptcha/api2/demo")
-      # Watch the captcha being solved automatically
-  ```
-</CodeGroup>
-
-## Remote Team Collaboration
-
-Share live view URLs with your team:
-
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  with client.Session() as session:
-      page = session.page
-      page.goto("https://example.com")
-
-      # Get viewer URL
-      debug_info = session.debug_info()
-      viewer_url = debug_info.debug_url
-
-      print(f"Share this URL with your team: {viewer_url}")
-
-      # Team can watch live
-      # ... continue automation ...
-  ```
-</CodeGroup>
-
-## Viewer Performance
-
-Live view has minimal performance impact:
-- ✅ Negligible CPU overhead
-- ✅ Small network bandwidth
-- ✅ No impact on automation timing
-- ✅ Works with all session features
-
-## Troubleshooting
-
-### Viewer Won't Open
-
-If the viewer doesn't open automatically:
-
-```python
-import webbrowser
-
-with client.Session() as session:
-    debug_info = session.debug_info()
-
-    # Manually open viewer
-    webbrowser.open(debug_info.debug_url)
-```
-
-### Multiple Viewers
-
-You can open multiple viewer types simultaneously:
-
-```python
-with client.Session() as session:
-    page = session.page
-    page.goto("https://example.com")
-
-    # Open both viewers
-    session.viewer_browser()  # Frame-by-frame
-    session.viewer_cdp()      # DevTools
-
-    # Continue automation
-```
+| **Availability** | During session only | 24 hours after session |
 
 ## Next Steps
 
@@ -389,15 +200,15 @@ with client.Session() as session:
     Record sessions for later analysis
   </Card>
 
-  <Card title="Session Replay" icon="play" href="/features/sessions/session-replay">
-    Complete guide to session replay
-  </Card>
-
-  <Card title="CDP Integration" icon="code" href="/features/sessions/cdp">
-    Use Chrome DevTools Protocol
+  <Card title="Playwright" icon="code" href="/features/sessions/playwright">
+    Connect with Playwright via CDP
   </Card>
 
   <Card title="Session Lifecycle" icon="clock" href="/features/sessions/lifecycle">
     Understand session management
+  </Card>
+
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Configure session parameters
   </Card>
 </CardGroup>

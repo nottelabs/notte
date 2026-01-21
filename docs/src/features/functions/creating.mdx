@@ -49,7 +49,7 @@ Use Notte SDK for browser automation:
 
 ```python
 # scraper_function.py
-from notte_sdk import NotteClient, actions
+from notte_sdk import NotteClient
 
 def run(url: str, selector: str):
     """
@@ -65,7 +65,7 @@ def run(url: str, selector: str):
     client = NotteClient()
 
     with client.Session() as session:
-        session.execute(actions.Goto(url=url))
+        session.execute(type="goto", url=url)
         data = session.scrape(
             instructions=f"Extract content from {selector}"
         )
@@ -85,20 +85,20 @@ from notte_sdk import NotteClient
 client = NotteClient()
 
 # Deploy function
-function = client.Workflow(
+function = client.Function(
     workflow_path="scraper_function.py",
     name="Website Scraper",
     description="Scrapes data from websites"
 )
 
-print(f"Function deployed: {function.workflow_id}")
-print(f"Function name: {function.response.latest_version}")
+print(f"Function deployed: {function.function_id}")
+print(f"Version: {function.response.latest_version}")
 ```
 
 ### Deployment Options
 
 ```python
-function = client.Workflow(
+function = client.Function(
     workflow_path="my_function.py",
     name="My Function",  # Display name
     description="What this function does",  # Description
@@ -142,7 +142,7 @@ import json
 from datetime import datetime
 
 # Notte SDK
-from notte_sdk import NotteClient, actions
+from notte_sdk import NotteClient
 from pydantic import BaseModel
 
 # Third-party (common libraries available)
@@ -256,7 +256,7 @@ def run(url: str):
     try:
         client = NotteClient()
         with client.Session() as session:
-            session.execute(actions.Goto(url=url))
+            session.execute(type="goto", url=url)
             data = session.scrape()
 
         return {
@@ -312,8 +312,11 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-# Load and test function
-function = client.Workflow(workflow_path="my_function.py")
+# Load existing function with decryption key for local execution
+function = client.Function(
+    function_id="func_abc123",
+    decryption_key="your-decryption-key"  # Required for local execution
+)
 
 # Run locally (not on cloud)
 result = function.run(
@@ -383,7 +386,7 @@ def run(url: str):
     client = NotteClient()
     with client.Session() as session:
         logger.info("Session created")
-        session.execute(actions.Goto(url=url))
+        session.execute(type="goto", url=url)
         logger.info("Page loaded")
 
         data = session.scrape()
@@ -402,7 +405,7 @@ def run(url: str):
 
     # Set session timeout
     with client.Session(timeout_minutes=5) as session:
-        session.execute(actions.Goto(url=url))
+        session.execute(type="goto", url=url)
         data = session.scrape()
 
     return data
@@ -430,14 +433,14 @@ def run(url: str, count: int):
 ### Simple Scraper
 
 ```python
-from notte_sdk import NotteClient, actions
+from notte_sdk import NotteClient
 
 def run(url: str):
     """Scrape page content."""
     client = NotteClient()
 
     with client.Session() as session:
-        session.execute(actions.Goto(url=url))
+        session.execute(type="goto", url=url)
         content = session.scrape()
 
     return content

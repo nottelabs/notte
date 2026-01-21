@@ -244,20 +244,20 @@ Combine agent autonomy with manual control:
 
 <CodeGroup>
   ```python Python
-  from notte_sdk import NotteClient, actions
+  from notte_sdk import NotteClient
 
   client = NotteClient()
 
   with client.Session() as session:
       # Manual navigation
-      session.execute(actions.Goto(url="https://example.com"))
+      session.execute(type="goto", url="https://example.com")
 
       # Let agent handle complex task
       agent = client.Agent(session=session)
       result = agent.run(task="Find and click the signup button")
 
       # Continue manually
-      session.execute(actions.Fill(selector="input[name='email']", value="user@example.com"))
+      session.execute(type="fill", selector="input[name='email']", value="user@example.com")
   ```
 </CodeGroup>
 
@@ -418,11 +418,11 @@ Check your plan for details on agent usage limits.
     Learn about agent architecture
   </Card>
 
-  <Card title="Workflows" icon="sitemap" href="/concepts/workflows">
-    Combine agents with workflows
+  <Card title="Functions" icon="function" href="/concepts/functions">
+    Deploy agents as serverless APIs
   </Card>
 
-  <Card title="Session Replay" icon="video" href="/features/sessions/session-replay">
+  <Card title="Recordings" icon="video" href="/features/sessions/recordings">
     Review agent execution
   </Card>
 </CardGroup>

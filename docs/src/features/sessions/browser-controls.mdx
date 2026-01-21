@@ -19,12 +19,12 @@ Sessions provide a comprehensive set of browser actions for interacting with web
 Navigate to a URL.
 
 ```python
-from notte_sdk import NotteClient, actions
+from notte_sdk import NotteClient
 
 client = NotteClient()
 
 with client.Session() as session:
-    session.execute(actions.Goto(url="https://example.com"))
+    session.execute(type="goto", url="https://example.com")
 ```
 
 **Parameters:**
@@ -39,7 +39,7 @@ with client.Session() as session:
 Open a URL in a new browser tab.
 
 ```python
-session.execute(actions.GotoNewTab(url="https://example.com/products"))
+session.execute(type="goto_new_tab", url="https://example.com/products")
 ```
 
 **Parameters:**
@@ -55,11 +55,11 @@ Switch to a different browser tab.
 
 ```python
 # Open multiple tabs
-session.execute(actions.Goto(url="https://example.com"))
-session.execute(actions.GotoNewTab(url="https://example.com/products"))
+session.execute(type="goto", url="https://example.com")
+session.execute(type="goto_new_tab", url="https://example.com/products")
 
 # Switch back to first tab
-session.execute(actions.SwitchTab(tab_index=0))
+session.execute(type="switch_tab", tab_index=0)
 ```
 
 **Parameters:**
@@ -74,11 +74,11 @@ session.execute(actions.SwitchTab(tab_index=0))
 Navigate back to the previous page.
 
 ```python
-session.execute(actions.Goto(url="https://example.com"))
-session.execute(actions.Goto(url="https://example.com/products"))
+session.execute(type="goto", url="https://example.com")
+session.execute(type="goto", url="https://example.com/products")
 
 # Go back to homepage
-session.execute(actions.GoBack())
+session.execute(type="go_back")
 ```
 
 **Use for:** Browser back button functionality, returning to previous pages
@@ -90,9 +90,9 @@ session.execute(actions.GoBack())
 Navigate forward in browser history.
 
 ```python
-session.execute(actions.GoBack())
+session.execute(type="go_back")
 # Now go forward again
-session.execute(actions.GoForward())
+session.execute(type="go_forward")
 ```
 
 **Use for:** Browser forward button functionality
@@ -104,7 +104,7 @@ session.execute(actions.GoForward())
 Reload the current page.
 
 ```python
-session.execute(actions.Reload())
+session.execute(type="reload")
 ```
 
 **Use for:** Refreshing page content, retrying after errors
@@ -119,13 +119,13 @@ Click on an element.
 
 ```python
 # Click by CSS selector
-session.execute(actions.Click(selector="button#submit"))
+session.execute(type="click", selector="button#submit")
 
 # Click by ID
-session.execute(actions.Click(id="submit-btn"))
+session.execute(type="click", id="submit-btn")
 
 # Click by text content
-session.execute(actions.Click(text="Submit"))
+session.execute(type="click", text="Submit")
 ```
 
 **Parameters:**
@@ -146,22 +146,21 @@ Fill a text input or textarea.
 
 ```python
 # Fill by selector
-session.execute(actions.Fill(
+session.execute(
+    type="fill",
     selector="input[name='email']",
     value="user@example.com"
-))
+)
 
 # Fill by ID
-session.execute(actions.Fill(
-    id="email-input",
-    value="user@example.com"
-))
+session.execute(type="fill", id="email-input", value="user@example.com")
 
 # Fill by placeholder
-session.execute(actions.Fill(
+session.execute(
+    type="fill",
     placeholder="Enter your email",
     value="user@example.com"
-))
+)
 ```
 
 **Parameters:**
@@ -181,16 +180,18 @@ Check or uncheck a checkbox.
 
 ```python
 # Check a checkbox
-session.execute(actions.Check(
+session.execute(
+    type="check",
     selector="input[type='checkbox']#terms",
     checked=True
-))
+)
 
 # Uncheck a checkbox
-session.execute(actions.Check(
+session.execute(
+    type="check",
     selector="input[type='checkbox']#newsletter",
     checked=False
-))
+)
 ```
 
 **Parameters:**
@@ -208,16 +209,18 @@ Select an option from a dropdown.
 
 ```python
 # Select by visible text
-session.execute(actions.SelectDropdownOption(
+session.execute(
+    type="select_dropdown_option",
     selector="select#country",
     option_text="United States"
-))
+)
 
 # Select by value
-session.execute(actions.SelectDropdownOption(
+session.execute(
+    type="select_dropdown_option",
     selector="select#country",
     option_value="us"
-))
+)
 ```
 
 **Parameters:**
@@ -235,13 +238,13 @@ Press a keyboard key.
 
 ```python
 # Press Enter
-session.execute(actions.PressKey(key="Enter"))
+session.execute(type="press_key", key="Enter")
 
 # Press Escape
-session.execute(actions.PressKey(key="Escape"))
+session.execute(type="press_key", key="Escape")
 
 # Press Tab
-session.execute(actions.PressKey(key="Tab"))
+session.execute(type="press_key", key="Tab")
 ```
 
 **Parameters:**
@@ -260,7 +263,7 @@ session.execute(actions.PressKey(key="Tab"))
 Scroll up on the page.
 
 ```python
-session.execute(actions.ScrollUp())
+session.execute(type="scroll_up")
 ```
 
 **Use for:** Scrolling to top of page, revealing content above
@@ -272,7 +275,7 @@ session.execute(actions.ScrollUp())
 Scroll down on the page.
 
 ```python
-session.execute(actions.ScrollDown())
+session.execute(type="scroll_down")
 ```
 
 **Use for:** Loading lazy content, revealing content below, pagination
@@ -287,16 +290,14 @@ Upload a file to a file input.
 
 ```python
 # Upload from local file
-session.execute(actions.UploadFile(
+session.execute(
+    type="upload_file",
     selector="input[type='file']",
     file_path="/path/to/document.pdf"
-))
+)
 
 # Upload with ID
-session.execute(actions.UploadFile(
-    id="file-upload",
-    file_path="/path/to/image.jpg"
-))
+session.execute(type="upload_file", id="file-upload", file_path="/path/to/image.jpg")
 ```
 
 **Parameters:**
@@ -313,9 +314,7 @@ session.execute(actions.UploadFile(
 Download a file from a link.
 
 ```python
-session.execute(actions.DownloadFile(
-    selector="a.download-link"
-))
+session.execute(type="download_file", selector="a.download-link")
 
 # Access downloaded file
 downloaded_files = session.storage.list_downloaded_files()
@@ -339,14 +338,14 @@ Pause execution for a specified duration.
 
 ```python
 # Wait 2 seconds
-session.execute(actions.Wait(duration=2))
+session.execute(type="wait", duration=2000)
 
 # Wait 5 seconds for page to load
-session.execute(actions.Wait(duration=5))
+session.execute(type="wait", duration=5000)
 ```
 
 **Parameters:**
-- `duration` (int | float): Time to wait in seconds
+- `duration` (int): Time to wait in milliseconds
 
 **Use for:** Waiting for page loads, animations, dynamic content
 
@@ -409,16 +408,15 @@ number = persona.create_number(country="US")
 # Use in session
 with client.Session() as session:
     # Trigger SMS (e.g., 2FA code)
-    session.execute(actions.Fill(
+    session.execute(
+        type="fill",
         selector="input[name='phone']",
         value=number.phone_number
-    ))
-    session.execute(actions.Click(selector="button.send-code"))
+    )
+    session.execute(type="click", selector="button.send-code")
 
     # Read SMS
-    messages = session.execute(actions.SmsRead(
-        persona_id=persona.persona_id
-    ))
+    messages = session.execute(type="sms_read", persona_id=persona.persona_id)
 
     # Extract verification code
     code = extract_code(messages)
@@ -445,16 +443,15 @@ emails = persona.emails()
 # Use in session
 with client.Session() as session:
     # Trigger email (e.g., verification email)
-    session.execute(actions.Fill(
+    session.execute(
+        type="fill",
         selector="input[name='email']",
         value=emails[0]
-    ))
-    session.execute(actions.Click(selector="button.send-verification"))
+    )
+    session.execute(type="click", selector="button.send-verification")
 
     # Read email
-    messages = session.execute(actions.EmailRead(
-        persona_id=persona.persona_id
-    ))
+    messages = session.execute(type="email_read", persona_id=persona.persona_id)
 
     # Extract verification link
     link = extract_link(messages)
@@ -490,13 +487,14 @@ Execute actions based on conditions:
 ```python
 # Check if element exists
 result = session.execute(
-    actions.Click(selector="button.optional"),
+    type="click",
+    selector="button.optional",
     raise_on_failure=False
 )
 
 if result.success:
     # Element was there and clicked
-    session.execute(actions.Click(selector="button.next"))
+    session.execute(type="click", selector="button.next")
 else:
     # Element wasn't there, skip
     print("Optional button not found, continuing...")
@@ -510,19 +508,19 @@ Most flexible and commonly used:
 
 ```python
 # By ID
-actions.Click(selector="#submit-button")
+session.execute(type="click", selector="#submit-button")
 
 # By class
-actions.Click(selector=".btn-primary")
+session.execute(type="click", selector=".btn-primary")
 
 # By attribute
-actions.Click(selector="button[type='submit']")
+session.execute(type="click", selector="button[type='submit']")
 
 # By combination
-actions.Click(selector="form#login button.submit")
+session.execute(type="click", selector="form#login button.submit")
 
 # By nth-child
-actions.Click(selector="ul li:nth-child(2)")
+session.execute(type="click", selector="ul li:nth-child(2)")
 ```
 
 ### Direct Attributes
@@ -531,16 +529,16 @@ Use direct attribute parameters when available:
 
 ```python
 # By ID (cleaner)
-actions.Click(id="submit-button")
+session.execute(type="click", id="submit-button")
 
 # By text content
-actions.Click(text="Submit")
+session.execute(type="click", text="Submit")
 
 # By placeholder
-actions.Fill(placeholder="Enter email", value="user@example.com")
+session.execute(type="fill", placeholder="Enter email", value="user@example.com")
 
 # By ARIA label
-actions.Click(aria_label="Close dialog")
+session.execute(type="click", aria_label="Close dialog")
 ```
 
 ### Best Practices
@@ -549,23 +547,23 @@ actions.Click(aria_label="Close dialog")
 
 ```python
 # Good - uses ID (stable)
-actions.Click(id="submit-btn")
+session.execute(type="click", id="submit-btn")
 
 # Good - uses data attribute
-actions.Click(selector="button[data-testid='submit']")
+session.execute(type="click", selector="button[data-testid='submit']")
 
 # Avoid - fragile position-based
-actions.Click(selector="div > div > button:nth-child(3)")
+session.execute(type="click", selector="div > div > button:nth-child(3)")
 ```
 
 **Use specific selectors:**
 
 ```python
 # Good - specific
-actions.Fill(selector="form#login input[name='email']", value="user@example.com")
+session.execute(type="fill", selector="form#login input[name='email']", value="user@example.com")
 
 # Less specific - might match wrong element
-actions.Fill(selector="input", value="user@example.com")
+session.execute(type="fill", selector="input", value="user@example.com")
 ```
 
 ## Common Workflows

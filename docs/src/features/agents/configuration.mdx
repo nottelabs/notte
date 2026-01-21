@@ -178,23 +178,25 @@ result = agent.run(
 )
 ```
 
-### session_offset
+<Accordion title="Advanced Configuration">
+  ### session_offset
 
-<ParamField path="session_offset" type="int">
-  **Experimental** - The step number from which the agent should gather information from the session history. If not provided, the agent has fresh memory. Use this to make the agent aware of previous actions.
-</ParamField>
+  <ParamField path="session_offset" type="int">
+    **Experimental** - The step number from which the agent should gather information from the session history. If not provided, the agent has fresh memory. Use this to make the agent aware of previous actions.
+  </ParamField>
 
-```python
-# Execute some actions first
-session.execute(actions.Goto(url="https://example.com"))
-session.execute(actions.Click(selector="button.search"))
+  ```python
+  # Execute some actions first
+  session.execute(type="goto", url="https://example.com")
+  session.execute(type="click", selector="button.search")
 
-# Agent remembers actions from step 0
-result = agent.run(
-    task="Continue from where we left off",
-    session_offset=0
-)
-```
+  # Agent remembers actions from step 0
+  result = agent.run(
+      task="Continue from where we left off",
+      session_offset=0
+  )
+  ```
+</Accordion>
 
 ## Configuration Examples
 

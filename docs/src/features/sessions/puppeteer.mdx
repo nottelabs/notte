@@ -27,9 +27,9 @@ Start a Notte session in Python and connect Puppeteer to it:
   import subprocess
   import json
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
-  with notte_client.Session(timeout_minutes=10) as session:
+  with client.Session(timeout_minutes=10) as session:
       cdp_url = session.cdp_url()
 
       # Pass CDP URL to Node.js script

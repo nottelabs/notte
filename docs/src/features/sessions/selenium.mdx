@@ -27,10 +27,10 @@ Start a Notte session and connect Selenium to it using the CDP URL:
   from selenium import webdriver
   from selenium.webdriver.chrome.options import Options
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
   # Start Notte session
-  with notte_client.Session() as session:
+  with client.Session() as session:
       # Get CDP URL
       cdp_url = session.cdp_url()
 
@@ -70,9 +70,9 @@ A more reliable way to connect Selenium is by using the Remote WebDriver with st
   from selenium.webdriver.chrome.options import Options
   from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
-  with notte_client.Session() as session:
+  with client.Session() as session:
       # Access the Playwright page directly
       # (Notte sessions include a Playwright-compatible page)
       page = session.page
@@ -102,9 +102,9 @@ If you're using Selenium with Notte, here's a basic example:
   from selenium.webdriver.support.ui import WebDriverWait
   from selenium.webdriver.support import expected_conditions as EC
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
-  with notte_client.Session() as session:
+  with client.Session() as session:
       # For this example, we'll use the Playwright page
       # which has better integration with Notte
       page = session.page
@@ -134,9 +134,9 @@ Use Selenium-style element selection with Notte's Playwright page:
   ```python Python
   from notte_sdk import NotteClient
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
-  with notte_client.Session() as session:
+  with client.Session() as session:
       page = session.page
 
       page.goto("https://example.com")
@@ -165,9 +165,9 @@ Wait for elements to appear or conditions to be met:
   ```python Python
   from notte_sdk import NotteClient
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
-  with notte_client.Session() as session:
+  with client.Session() as session:
       page = session.page
 
       page.goto("https://example.com")
@@ -195,9 +195,9 @@ Capture screenshots during automation:
   ```python Python
   from notte_sdk import NotteClient
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
-  with notte_client.Session() as session:
+  with client.Session() as session:
       page = session.page
 
       page.goto("https://example.com")
@@ -222,9 +222,9 @@ Run custom JavaScript in the page context:
   ```python Python
   from notte_sdk import NotteClient
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
-  with notte_client.Session() as session:
+  with client.Session() as session:
       page = session.page
 
       page.goto("https://example.com")
@@ -256,9 +256,9 @@ Manage browser dialogs using Playwright:
   ```python Python
   from notte_sdk import NotteClient
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
-  with notte_client.Session() as session:
+  with client.Session() as session:
       page = session.page
 
       # Set up dialog handler before triggering
@@ -281,9 +281,9 @@ Access iframe content:
   ```python Python
   from notte_sdk import NotteClient
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
-  with notte_client.Session() as session:
+  with client.Session() as session:
       page = session.page
 
       page.goto("https://example.com")
@@ -343,10 +343,10 @@ Here's a complete example using Playwright with Notte (recommended approach):
   ```python Python
   from notte_sdk import NotteClient
 
-  notte_client = NotteClient()
+  client = NotteClient()
 
   def automate_form():
-      with notte_client.Session(headless=False) as session:
+      with client.Session(headless=False) as session:
           page = session.page
 
           # Navigate to form
