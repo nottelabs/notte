@@ -46,10 +46,11 @@ def get_documented_methods_from_docs_json(docs_json_path: Path) -> set[str]:
 
         # Navigate to the SDK Reference section
         # Handle both old format (navigation.tabs) and new format (navigation.languages[0].tabs)
-        navigation = docs_data.get("navigation", {})
+        navigation: dict[str, Any] = docs_data.get("navigation", {})
+        tabs: list[dict[str, Any]]
         if "languages" in navigation:
             # New format: navigation.languages[0].tabs
-            languages = navigation.get("languages", [])
+            languages: list[dict[str, Any]] = navigation.get("languages", [])
             tabs = languages[0].get("tabs", []) if languages else []
         else:
             # Old format: navigation.tabs
@@ -57,7 +58,7 @@ def get_documented_methods_from_docs_json(docs_json_path: Path) -> set[str]:
 
         for tab in tabs:
             if tab.get("tab") == "SDK":
-                groups = tab.get("groups", [])
+                groups: list[dict[str, Any] | list[dict[str, Any]]] = tab.get("groups", [])
                 documented_methods.update(extract_methods_from_groups(groups))
                 break
 
