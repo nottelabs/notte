@@ -237,8 +237,17 @@ def test_replay_response_from_replay():
     assert replay.model_dump_json() == f'{{"replay":"{encoded_replay}"}}'
 
 
-@pytest.mark.parametrize("proxies", [True, [{"type": "notte"}], [{"type": "notte", "geolocation": {"country": "us"}}]])
+@pytest.mark.parametrize(
+    "proxies",
+    [
+        True,
+        [{"type": "notte"}],
+        [{"type": "notte", "country": "us"}],
+        [{"type": "notte", "geolocation": {"country": "us"}}],  # Backward compatibility with old syntax
+    ],
+)
 def test_default_proxy_settings_notte(proxies: list[dict[str, Any]]):
+    """Test Notte proxy settings including backward compatibility with old geolocation syntax."""
     proxy_settings = SessionStartRequest.model_validate({"proxies": proxies})
     with pytest.raises(NotImplementedError, match="Notte proxy only supported in cloud"):
         proxy_settings.playwright_proxy

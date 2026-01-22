@@ -287,6 +287,17 @@ class NotteProxy(SdkRequest):
     # TODO: enable domainPattern later on
     # domainPattern: str | None = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def handle_legacy_geolocation(cls, values: Any) -> dict[str, Any]:
+        """Handle backward compatibility with old geolocation.country syntax."""
+        if isinstance(values, dict) and "geolocation" in values:
+            geolocation: Any = values.pop("geolocation")  # type: ignore[reportUnknownMemberType]
+            # Only set country if it's not already provided
+            if "country" not in values and isinstance(geolocation, dict) and "country" in geolocation:
+                values["country"] = geolocation["country"]
+        return values  # type: ignore[return-value]
+
     @staticmethod
     def from_country(country: str, id: str | None = None) -> "NotteProxy":
         return NotteProxy(id=id, country=ProxyGeolocationCountry(country))
@@ -615,7 +626,8 @@ class SessionStartRequest(SdkRequest):
         return self
 
     @field_validator("proxies", mode="before")
-    def validate_str_proxy_settings(self, value: Any) -> Any:
+    @classmethod
+    def validate_str_proxy_settings(cls, value: Any) -> Any:
         if isinstance(value, str):
             return [NotteProxy.from_country(value)]
         return value
