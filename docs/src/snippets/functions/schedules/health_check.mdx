@@ -8,12 +8,12 @@
       client = NotteClient()
 
       # Get all workflow runs from last 24 hours
-      workflows = client.workflows.list()
+      workflows = client.functions.list()
 
       health_report = []
       for workflow in workflows.workflows:
-          runs = client.workflows.list_runs(
-              workflow_id=workflow.workflow_id
+          runs = client.functions.list_runs(
+              function_id=workflow.function_id
           )
 
           # Check recent runs
@@ -23,7 +23,7 @@
           ]
 
           health_report.append({
-              "workflow_id": workflow.workflow_id,
+              "function_id": workflow.function_id,
               "recent_failures": len(recent_failures)
           })
 

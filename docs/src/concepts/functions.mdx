@@ -61,11 +61,11 @@ print(result.result)
 
 ```bash
 # Via cURL
-curl -X POST https://api.notte.cc/workflows/{workflow_id}/runs/start \
+curl -X POST https://api.notte.cc/functions/{function_id}/runs/start \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "workflow_id": "workflow_123",
+    "function_id": "workflow_123",
     "variables": {
       "url": "https://example.com",
       "search_query": "laptop"

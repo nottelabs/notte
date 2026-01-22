@@ -1,15 +1,10 @@
 ```python basic_function.py
 from notte_sdk import NotteClient
 
-def run(url: str, search_query: str):
-    """
-    Search a website and extract results.
+client = NotteClient()
 
-    Args:
-        url: The website URL
-        search_query: Search term
-    """
-    client = NotteClient()
+def run(url: str, search_query: str):
+    """Search a website url and extract results. """
 
     with client.Session() as session:
         # Navigate to site

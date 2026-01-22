@@ -1,11 +1,11 @@
 <CodeGroup>
   ```bash Output
-  curl --location 'https://api.notte.cc/workflows/workflow_abc123/runs/start' \
+  curl --location 'https://api.notte.cc/functions/workflow_abc123/runs/start' \
   --header 'x-notte-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --header 'Authorization: Bearer YOUR_API_KEY' \
   --data '{
-      "workflow_id": "workflow_abc123",
+      "function_id": "workflow_abc123",
       "variables": {
           "url": "https://example.com",
           "search_query": "laptop"

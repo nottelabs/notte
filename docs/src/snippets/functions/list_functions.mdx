@@ -7,7 +7,7 @@ client = NotteClient()
 functions = client.functions.list()
 
 for func in functions.workflows:
-    print(f"ID: {func.workflow_id}")
+    print(f"ID: {func.function_id}")
     print(f"Name: {func.name}")
     print(f"Version: {func.latest_version}")
     print(f"Created: {func.created_at}")

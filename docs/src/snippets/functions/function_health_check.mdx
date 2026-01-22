@@ -6,7 +6,7 @@ client = NotteClient()
 def check_function_health(function_id: str):
     """Check recent run success rate."""
     runs = client.functions.list_runs(
-        workflow_id=function_id,
+        function_id=function_id,
         only_active=False
     )
 

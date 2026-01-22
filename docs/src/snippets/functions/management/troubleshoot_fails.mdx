@@ -1,7 +1,7 @@
 <CodeGroup>
   ```python Python
-  run = client.workflows.get_run(
-      workflow_id="workflow_abc123",
+  run = client.functions.get_run(
+      function_id="workflow_abc123",
       run_id="run_xyz789"
   )
 
@@ -9,7 +9,7 @@
       print(f"Error: {run.result}")
 
       # Get replay for debugging
-      replay = function.replay(workflow_run_id=run.workflow_run_id)
+      replay = function.replay(function_run_id=run.function_run_id)
       print(f"Watch failure: {replay.url}")
   ```
 </CodeGroup>

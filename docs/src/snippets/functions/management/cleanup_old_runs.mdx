@@ -3,10 +3,10 @@
   import json
   from datetime import datetime, timedelta
 
-  def archive_old_runs(workflow_id: str, days_old: int = 30):
+  def archive_old_runs(function_id: str, days_old: int = 30):
       """Archive runs older than specified days."""
-      runs = client.workflows.list_runs(
-          workflow_id=workflow_id,
+      runs = client.functions.list_runs(
+          function_id=function_id,
           only_active=False
       )
 
@@ -18,14 +18,14 @@
 
           if run_date < cutoff_date:
               archive.append({
-                  "run_id": run.workflow_run_id,
+                  "run_id": run.function_run_id,
                   "status": run.status,
                   "created_at": run.created_at,
                   "result": str(run.result)[:100]  # First 100 chars
               })
 
       # Save archive
-      with open(f"archives/{workflow_id}_{datetime.now().date()}.json", "w") as f:
+      with open(f"archives/{function_id}_{datetime.now().date()}.json", "w") as f:
           json.dump(archive, f, indent=2)
 
       print(f"Archived {len(archive)} old runs")

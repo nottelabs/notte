@@ -7,7 +7,7 @@
 
   except FailedToRunCloudWorkflowError as e:
       print(f"Function failed: {e.message}")
-      print(f"Run ID: {e.workflow_run_id}")
+      print(f"Run ID: {e.function_run_id}")
       print(f"Result: {e.response.result}")
 
   except Exception as e:

@@ -1,6 +1,6 @@
 <CodeGroup>
   ```python Python
-  runs = client.workflows.list_runs(workflow_id="workflow_abc123")
+  runs = client.functions.list_runs(function_id="workflow_abc123")
 
   failures = [r for r in runs.runs if r.status == "failed"]
 
@@ -8,7 +8,7 @@
 
   # Analyze failure reasons
   for run in failures[:5]:  # Last 5 failures
-      print(f"Run {run.workflow_run_id}:")
+      print(f"Run {run.function_run_id}:")
       print(f"  Error: {run.result}")
       print(f"  Time: {run.created_at}")
   ```
