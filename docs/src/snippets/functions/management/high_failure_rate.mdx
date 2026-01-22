@@ -1,6 +1,6 @@
 <CodeGroup>
   ```python Python
-  runs = client.functions.list_runs(function_id="workflow_abc123")
+  runs = client.functions.list_runs(function_id="function_abc123")
 
   failures = [r for r in runs.runs if r.status == "failed"]
 

@@ -1,5 +1,10 @@
 <CodeGroup>
   ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+  function = client.Function(function_id="function_abc123")
+
   # Short task
   result = function.run(url="https://example.com", timeout=60)
 

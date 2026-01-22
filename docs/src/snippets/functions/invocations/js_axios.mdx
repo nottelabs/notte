@@ -3,9 +3,9 @@
   const axios = require('axios');
 
   const result = await axios.post(
-    'https://api.notte.cc/functions/workflow_abc123/runs/start',
+    'https://api.notte.cc/functions/function_abc123/runs/start',
     {
-      function_id: 'workflow_abc123',
+      function_id: 'function_abc123',
       variables: {
         url: 'https://example.com',
         search_query: 'laptop'

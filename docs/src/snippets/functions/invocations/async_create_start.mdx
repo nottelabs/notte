@@ -2,7 +2,7 @@
   ```python Python
   # Create a run (returns immediately)
   run_response = client.functions.create_run(
-      function_id="workflow_abc123",
+      function_id="function_abc123",
       local=False
   )
 
@@ -12,7 +12,7 @@
   # Start the run
   client.functions.run(
       function_run_id=run_id,
-      function_id="workflow_abc123",
+      function_id="function_abc123",
       variables={"url": "https://example.com"}
   )
   ```
