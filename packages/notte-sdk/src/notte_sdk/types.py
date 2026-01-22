@@ -280,28 +280,16 @@ class ProxyGeolocationCountry(StrEnum):
     ZIMBABWE = "zw"
 
 
-class ProxyGeolocation(SdkRequest):
-    """
-    Geolocation settings for the proxy.
-    E.g. "New York, NY, US"
-    """
-
-    country: ProxyGeolocationCountry
-    # TODO: enable city & state later on
-    # city: str
-    # state: str
-
-
 class NotteProxy(SdkRequest):
     type: Literal["notte"] = "notte"
     id: str | None = None
-    geolocation: ProxyGeolocation | None = None
+    country: ProxyGeolocationCountry | None = None
     # TODO: enable domainPattern later on
     # domainPattern: str | None = None
 
     @staticmethod
     def from_country(country: str, id: str | None = None) -> "NotteProxy":
-        return NotteProxy(id=id, geolocation=ProxyGeolocation(country=ProxyGeolocationCountry(country)))
+        return NotteProxy(id=id, country=ProxyGeolocationCountry(country))
 
 
 class ExternalProxy(SdkRequest):
@@ -328,7 +316,22 @@ class ExternalProxy(SdkRequest):
         )
 
 
+class ExternalProxyDict(TypedDict, total=False):
+    type: Literal["external"]
+    server: Required[str]
+    username: Required[str | None]
+    password: Required[str | None]
+    bypass: NotRequired[str | None]
+
+
+class NotteProxyDict(TypedDict, total=False):
+    type: Literal["notte"]
+    id: str | None
+    country: ProxyGeolocationCountry | None
+
+
 ProxySettings = Annotated[NotteProxy | ExternalProxy, Field(discriminator="type")]
+ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict, Field(discriminator="type")]
 
 
 class Cookie(SdkRequest):
@@ -472,7 +475,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     solve_captchas: bool
     max_duration_minutes: int
     idle_timeout_minutes: int
-    proxies: list[ProxySettings] | bool
+    proxies: list[ProxySettings] | ProxySettingsDict | bool | ProxyGeolocationCountry
     browser_type: BrowserType
     user_agent: str | None
     chrome_args: list[str] | None
