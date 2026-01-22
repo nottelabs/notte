@@ -1,12 +1,18 @@
 ```python
 from pydantic import BaseModel
+from notte_sdk import NotteClient
+
+client = NotteClient()
 
 class ContactInfo(BaseModel):
     email: str
     phone: str | None
 
-result = agent.run(
-    task="Extract contact information",
-    response_format=ContactInfo
-)
+
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(
+        task="Extract contact information",
+        response_format=ContactInfo
+    )
 ```
