@@ -1,5 +1,11 @@
 <CodeGroup>
   ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  function = client.Function(function_id="workflow_abc123")
+
   # Don't raise exception on failure
   result = function.run(
       url="https://example.com",

@@ -1,5 +1,9 @@
 <CodeGroup>
   ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
   # Load function with decryption key for local execution
   function = client.Function(
       function_id="func_abc123",

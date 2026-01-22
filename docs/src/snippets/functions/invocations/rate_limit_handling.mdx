@@ -1,6 +1,12 @@
 <CodeGroup>
   ```python Python
   import time
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  function = client.Function(function_id="workflow_abc123")
+
 
   def invoke_with_retry(function, **variables):
       max_retries = 3

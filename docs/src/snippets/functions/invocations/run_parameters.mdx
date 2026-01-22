@@ -1,5 +1,10 @@
 <CodeGroup>
   ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  function = client.Function(function_id="workflow_abc123")
   result = function.run(
       # Your function parameters (passed as variables)
       url="https://example.com",

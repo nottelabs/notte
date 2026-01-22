@@ -1,5 +1,8 @@
 <CodeGroup>
   ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
   # Check run status
   run_status = client.functions.get_run(
       function_id="function_abc123",

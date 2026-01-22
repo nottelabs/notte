@@ -1,5 +1,9 @@
 <CodeGroup>
   ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
   # Stop a long-running function
   client.functions.stop_run(
       function_id="function_abc123",
