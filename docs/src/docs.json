@@ -145,7 +145,7 @@
           },
           {
             "tab": "API",
-            "openapi": "https://api.notte.cc/openapi.json",
+            "openapi": "https://us-staging.notte.cc/openapi.json",
             "groups": [
               {
                 "group": "Getting Started",
@@ -193,21 +193,21 @@
                 ]
               },
               {
-                "group": "Workflows",
+                "group": "Functions",
                 "pages": [
-                  "POST /workflows",
-                  "GET /workflows",
-                  "POST /workflows/{workflow_id}",
-                  "GET /workflows/{workflow_id}",
-                  "DELETE /workflows/{workflow_id}",
-                  "POST /workflows/{workflow_id}/fork",
-                  "POST /workflows/{workflow_id}/schedule",
-                  "DELETE /workflows/{workflow_id}/schedule",
-                  "POST /workflows/{workflow_id}/runs/start",
-                  "GET /workflows/{workflow_id}/runs/{run_id}",
-                  "PATCH /workflows/{workflow_id}/runs/{run_id}",
-                  "DELETE /workflows/{workflow_id}/runs/{run_id}",
-                  "GET /workflows/{workflow_id}/runs"
+                  "POST /functions",
+                  "GET /functions",
+                  "POST /functions/{function_id}",
+                  "GET /functions/{function_id}",
+                  "DELETE /functions/{function_id}",
+                  "POST /functions/{function_id}/fork",
+                  "POST /functions/{function_id}/schedule",
+                  "DELETE /functions/{function_id}/schedule",
+                  "POST /functions/{function_id}/runs/start",
+                  "GET /functions/{function_id}/runs/{run_id}",
+                  "PATCH /functions/{function_id}/runs/{run_id}",
+                  "DELETE /functions/{function_id}/runs/{run_id}",
+                  "GET /functions/{function_id}/runs"
                 ]
               },
               {
