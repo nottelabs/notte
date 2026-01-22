@@ -6,7 +6,7 @@ client = NotteClient()
 vault = client.Vault(vault_id="prod_vault")
 persona = client.Persona(persona_id="prod_persona")
 
-with client.Session(headless=True, proxies="us") as session:
+with client.Session(headless=True, proxies=True) as session:
     agent = client.Agent(
         session=session,
         reasoning_model="anthropic/claude-3.5-sonnet",
