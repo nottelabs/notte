@@ -24,7 +24,7 @@ with client.Session() as session:
     )
 
     if result.success:
-        company = result.answer
+        company = CompanyInfo.model_validate_json(result.answer)
         print(f"Company: {company.name}")
         print(f"Email: {company.email}")
         print(f"Phone: {company.phone}")
