@@ -11,8 +11,12 @@ description: ""
   The ID of the session (created or existing). Use this ID to interact with the session for the next operation.
 </ParamField>
 
-<ParamField path="timeout_minutes" type="int" required>
-  Session timeout in minutes. Will timeout if now() > last access time + timeout_minutes
+<ParamField path="idle_timeout_minutes" type="int" required>
+  Session idle timeout in minutes. Will timeout if now() > last access time + idle_timeout_minutes
+</ParamField>
+
+<ParamField path="max_duration_minutes" type="int" default="15">
+  Session max duration in minutes. Will timeout if now() > creation time + max_duration_minutes
 </ParamField>
 
 <ParamField path="created_at" type="datetime" required>
@@ -51,7 +55,7 @@ description: ""
   Whether proxies were used for the session. True if any proxy was applied during session creation.
 </ParamField>
 
-<ParamField path="browser_type" type="Literal['chromium', 'chrome', 'firefox', 'chrome-nightly']" default="chromium">
+<ParamField path="browser_type" type="Literal['chromium', 'chrome', 'firefox', 'chrome-nightly', 'chrome-turbo']" default="chromium">
 </ParamField>
 
 <ParamField path="use_file_storage" type="bool" default="False">
@@ -64,6 +68,30 @@ description: ""
 
 <ParamField path="network_response_bytes" type="int" default="0">
   Total byte usage for network responses.
+</ParamField>
+
+<ParamField path="user_agent" type="UnionType[str, None]">
+  The user agent to use for the session
+</ParamField>
+
+<ParamField path="viewport_width" type="UnionType[int, None]">
+  The width of the viewport
+</ParamField>
+
+<ParamField path="viewport_height" type="UnionType[int, None]">
+  The height of the viewport
+</ParamField>
+
+<ParamField path="headless" type="bool" default="True">
+  Whether to run the session in headless mode.
+</ParamField>
+
+<ParamField path="solve_captchas" type="UnionType[bool, None]">
+  Whether to solve captchas.
+</ParamField>
+
+<ParamField path="cdp_url" type="UnionType[str, None]">
+  The URL to connect to the CDP server.
 </ParamField>
 
 

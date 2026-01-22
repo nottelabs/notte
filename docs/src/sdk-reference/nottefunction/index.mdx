@@ -1,13 +1,14 @@
 ---
-title: "RemoteWorkflow"
-description: "Notte workflow that can be run on the cloud or locally"
+title: "NotteFunction"
+description: "Notte function that can be run on the cloud or locally"
 ---
 
-# RemoteWorkflow
+# NotteFunction
 
-Notte workflow that can be run on the cloud or locally.
+Notte function that can be run on the cloud or locally.
 
-Workflows are saved in the notte console for easy access and versioning for users.
+Functions are saved in the notte console for easy access and versioning for users.
+This is a wrapper around RemoteWorkflow that uses function_id terminology.
 
 ## Methods
 
@@ -15,77 +16,77 @@ Workflows are saved in the notte console for easy access and versioning for user
   <Card
     title="__init__"
     icon="function"
-    href="/sdk-reference/remoteworkflow/__init__"
+    href="/sdk-reference/nottefunction/__init__"
   >
     Initialize self
   </Card>
   <Card
     title="delete"
     icon="function"
-    href="/sdk-reference/remoteworkflow/delete"
+    href="/sdk-reference/nottefunction/delete"
   >
     Delete the workflow from the notte console
   </Card>
   <Card
     title="download"
     icon="function"
-    href="/sdk-reference/remoteworkflow/download"
+    href="/sdk-reference/nottefunction/download"
   >
     Download the function code from the notte console as a python file
   </Card>
   <Card
     title="fork"
     icon="function"
-    href="/sdk-reference/remoteworkflow/fork"
+    href="/sdk-reference/nottefunction/fork"
   >
-    Fork a shared workflow into your own private workflow
+    Fork a shared function into your own private function
   </Card>
   <Card
     title="get_curl"
     icon="function"
-    href="/sdk-reference/remoteworkflow/get_curl"
+    href="/sdk-reference/nottefunction/get_curl"
   >
     Convert the workflow/run to a curl request
   </Card>
   <Card
     title="get_run"
     icon="function"
-    href="/sdk-reference/remoteworkflow/get_run"
+    href="/sdk-reference/nottefunction/get_run"
   >
     Get a function run by its ID
   </Card>
   <Card
     title="get_url"
     icon="function"
-    href="/sdk-reference/remoteworkflow/get_url"
+    href="/sdk-reference/nottefunction/get_url"
   >
     No description available
   </Card>
   <Card
     title="replay"
     icon="function"
-    href="/sdk-reference/remoteworkflow/replay"
+    href="/sdk-reference/nottefunction/replay"
   >
     Replay the workflow run
   </Card>
   <Card
     title="run"
     icon="function"
-    href="/sdk-reference/remoteworkflow/run"
+    href="/sdk-reference/nottefunction/run"
   >
     Run the function code using the specified version and variables
   </Card>
   <Card
     title="stop_run"
     icon="function"
-    href="/sdk-reference/remoteworkflow/stop_run"
+    href="/sdk-reference/nottefunction/stop_run"
   >
     Manually stop a function run by its ID
   </Card>
   <Card
     title="update"
     icon="function"
-    href="/sdk-reference/remoteworkflow/update"
+    href="/sdk-reference/nottefunction/update"
   >
     Update the workflow with a a new code version
   </Card>
@@ -94,6 +95,6 @@ Workflows are saved in the notte console for easy access and versioning for user
 ## Class Information
 
 <Info>
-**Module:** `notte_sdk.endpoints.workflows`
-**Inheritance:** RemoteWorkflow
+**Module:** `notte_sdk.endpoints.functions`
+**Inheritance:** NotteFunction → RemoteWorkflow
 </Info>

@@ -6,8 +6,8 @@ description: "Run an agent with the specified request parameters and wait for co
 
 
 ```python
-with client.Session() as session:
-    agent = client.Agent(session=session)
+with notte.Session() as session:
+    agent = notte.Agent(session=session)
     agent.run(task="go to notte.cc and explain what their product is")
 ```
 

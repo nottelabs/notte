@@ -10,6 +10,8 @@ like clicking, filling forms, navigating, scrolling, and more. You can provide
 actions either as structured action objects or by specifying action parameters directly.
 
 ```python
+from notte_sdk import actions
+
 # Execute an action from observe() results
 obs = session.observe()
 action = obs.space.first()  # Get first available action
@@ -47,7 +49,7 @@ result = session.execute(type="goto", url="https://example.com")
 Instead of element IDs, you can use Playwright selectors to target elements:
 
 ```python
-session.execute(type="fill", selector="internal:text=\"Email\"", value="test@example.com")
+session.execute(type="fill", selector="internal:text="Email"", value="test@example.com")
 ```
 
 This syntax also supports Xpath (e.g. `xpath=/html/body/div[3]/div/button[1]`) or CSS selectors (e.g. `css=button.submit`).

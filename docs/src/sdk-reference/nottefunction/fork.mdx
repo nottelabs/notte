@@ -1,0 +1,19 @@
+---
+title: "fork"
+description: "Fork a shared function into your own private function"
+---
+
+
+
+```python
+function = notte.Function("<user-shared-function-id>")
+forked_function = function.fork()
+forked_function.run()
+```
+
+The forked function is only accessible to you and you can update it as you want
+
+
+## Returns
+
+[`NotteFunction`](/sdk-reference/misc/nottefunction)

@@ -1,11 +1,12 @@
 ---
-title: "RemoteWorkflow"
-description: "Notte workflow that can be run on the cloud or locally"
+title: "NotteFunction"
+description: "Notte function that can be run on the cloud or locally"
 ---
 
 
 
-Workflows are saved in the notte console for easy access and versioning for users
+Functions are saved in the notte console for easy access and versioning for users.
+This is a wrapper around RemoteWorkflow that uses function_id terminology
 
 ## Methods
 
@@ -36,14 +37,14 @@ Download the function code from the notte console as a python file
 ### fork
 
 ```python
-fork() -> 'RemoteWorkflow'
+fork() -> 'NotteFunction'
 ```
 
-Fork a shared workflow into your own private workflow
+Fork a shared function into your own private function
 
 **Returns:**
 
-[`RemoteWorkflow`](/sdk-reference/misc/remoteworkflow)
+[`NotteFunction`](/sdk-reference/misc/nottefunction)
 
 ---
 
@@ -140,7 +141,11 @@ Update the workflow with a a new code version
 ---
 
 
+## Inheritance
+
+Inherits from: RemoteWorkflow
+
 
 ## Module
 
-`notte_sdk.endpoints.workflows`
+`notte_sdk.endpoints.functions`

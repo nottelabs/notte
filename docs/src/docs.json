@@ -370,16 +370,16 @@
                     ]
                   },
                   {
-                    "group": "Workflow",
+                    "group": "Function",
                     "collapsed": true,
                     "pages": [
                       "sdk-reference/manual/workflow",
-                      "sdk-reference/remoteworkflow/run",
-                      "sdk-reference/remoteworkflow/update",
-                      "sdk-reference/remoteworkflow/delete",
-                      "sdk-reference/remoteworkflow/download",
-                      "sdk-reference/remoteworkflow/fork",
-                      "sdk-reference/remoteworkflow/get_curl"
+                      "sdk-reference/nottefunction/run",
+                      "sdk-reference/nottefunction/update",
+                      "sdk-reference/nottefunction/delete",
+                      "sdk-reference/nottefunction/download",
+                      "sdk-reference/nottefunction/fork",
+                      "sdk-reference/nottefunction/get_curl"
                     ]
                   }
                 ]

@@ -40,15 +40,19 @@ RemoteSession instance configured with the specified parameters.
   Whether to try to automatically solve captchas
 </ParamField>
 
-<ParamField path="timeout_minutes" type="int">
-  Session timeout in minutes. Cannot exceed the global timeout.
+<ParamField path="max_duration_minutes" type="int">
+  Maximum session lifetime in minutes (absolute maximum).
+</ParamField>
+
+<ParamField path="idle_timeout_minutes" type="int">
+  Idle timeout in minutes. Session closes after this period of inactivity.
 </ParamField>
 
 <ParamField path="proxies" type="list[typing.Annotated[notte_sdk.types.NotteProxy | notte_sdk.types.ExternalProxy, FieldInfo(annotation=NoneType, required=True, discriminator='type')]] | bool">
   List of custom proxies to use for the session. If True, the default proxies will be used.
 </ParamField>
 
-<ParamField path="browser_type" type="typing.Literal['chromium', 'chrome', 'firefox', 'chrome-nightly']">
+<ParamField path="browser_type" type="typing.Literal['chromium', 'chrome', 'firefox', 'chrome-nightly', 'chrome-turbo']">
   The browser type to use. Can be chromium, chrome or firefox.
 </ParamField>
 
@@ -78,6 +82,10 @@ RemoteSession instance configured with the specified parameters.
 
 <ParamField path="screenshot_type" type="typing.Literal['raw', 'full', 'last_action']">
   The type of screenshot to use for the session.
+</ParamField>
+
+<ParamField path="profile" type="notte_sdk.types.SessionProfileDict | notte_sdk.types.SessionProfile | None">
+  Browser profile configuration for state persistence.
 </ParamField>
 
 ## Returns

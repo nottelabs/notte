@@ -233,7 +233,7 @@ Complete walkthrough from installation to your first API call in under 10 minute
 </Card>
 
 <CardGroup cols={2}>
-<Card title="Authentication" icon="key" href="/auth">
+<Card title="Authentication" icon="key" href="/sdk-reference/authentication">
   Learn how to authenticate requests using API keys or JWT tokens.
 </Card>
 
