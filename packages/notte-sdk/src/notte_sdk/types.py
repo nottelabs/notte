@@ -475,7 +475,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     solve_captchas: bool
     max_duration_minutes: int
     idle_timeout_minutes: int
-    proxies: list[ProxySettings] | ProxySettingsDict | bool | ProxyGeolocationCountry
+    proxies: list[ProxySettings] | list[ProxySettingsDict] | bool | ProxyGeolocationCountry
     browser_type: BrowserType
     user_agent: str | None
     chrome_args: list[str] | None
@@ -613,6 +613,12 @@ class SessionStartRequest(SdkRequest):
                 f"idle_timeout_minutes ({self.idle_timeout_minutes}) cannot exceed max_duration_minutes ({self.max_duration_minutes})"
             )
         return self
+
+    @field_validator("proxies", mode="before")
+    def validate_str_proxy_settings(self, value: Any) -> Any:
+        if isinstance(value, str):
+            return [NotteProxy.from_country(value)]
+        return value
 
     @property
     def playwright_proxy(self) -> PlaywrightProxySettings | None:
