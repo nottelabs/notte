@@ -269,7 +269,7 @@ with client.Session(cdp_url=cdp_url) as session:
     response = agent.run(task="extract pricing plans from https://www.notte.cc/")
 ```
 
-# Workflows
+# Hybrid workflows
 
 Notte's close compatibility with Playwright allows you to mix web automation primitives with agents for specific parts that require reasoning and adaptability. This hybrid approach cuts LLM costs and is much faster by using scripting for deterministic parts and agents only when needed.
 
@@ -278,21 +278,18 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-with client.Session(open_viewer=True, perception_type="fast") as session:
-    # Script execution for deterministic navigation
-    session.execute(type="goto", url="https://www.quince.com/women/organic-stretch-cotton-chino-short")
-    session.observe()
-
-    # Agent for reasoning-based selection
-    agent = client.Agent(session=session)
-    agent.run(task="just select the ivory color in size 6 option")
-
-    # Script execution for deterministic actions
-    session.execute(type="click", selector="internal:role=button[name=\"ADD TO CART\"i]")
-    session.execute(type="click", selector="internal:role=button[name=\"CHECKOUT\"i]")
+with client.Session(open_viewer=True) as session:
+    # Start with a deterministic navigation
+    session.execute(type="goto", url="https://duckduckgo.com/")
+    session.execute(type="fill", selector="internal:role=combobox[name=\"Search with DuckDuckGo\"i]", value="nottelabs")
+    agent = client.Agent(session=session, max_steps=3)
+    # Use an agent to reason about the next step
+    agent.run(task="Open nottelabs github repository")
+    # Use a scraping endpoint to extract data
+    data = session.scrape(instructions="Extract number of stars")
 ```
 
-# Agent fallback for Workflows
+# Agent fallback
 
 Workflows are a powerful way to combine scripting and agents to reduce costs and improve reliability. However, deterministic parts of the workflow can still fail. To gracefully handle these failures with agents, you can use the `AgentFallback` class: 
 
