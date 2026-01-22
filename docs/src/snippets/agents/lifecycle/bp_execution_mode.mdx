@@ -1,16 +1,23 @@
 ```python
-# Simple tasks: Use run()
-result = agent.run(task="Quick task")
+from notte_sdk import NotteClient
 
-# Multiple agents: Use async
-results = await asyncio.gather(
-    agent1.arun(task="Task 1"),
-    agent2.arun(task="Task 2")
-)
+client = NotteClient()
 
-# Long tasks with monitoring: Use start() + polling
-agent.start(task="Long task")
-while not done:
-    status = agent.status()
-    # Update UI, log progress, etc.
+with client.Session() as session:
+    agent = client.Agent(session=session)
+
+    # Simple tasks: Use run()
+    result = agent.run(task="Quick task")
+
+    # Multiple agents: Use async
+    results = await asyncio.gather(
+        agent1.arun(task="Task 1"),
+        agent2.arun(task="Task 2")
+    )
+
+    # Long tasks with monitoring: Use start() + polling
+    agent.start(task="Long task")
+    while not done:
+        status = agent.status()
+        # Update UI, log progress, etc.
 ```

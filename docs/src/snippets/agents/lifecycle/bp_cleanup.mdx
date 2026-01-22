@@ -1,4 +1,8 @@
 ```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
 # Use context managers for automatic cleanup
 with client.Session() as session:
     agent = client.Agent(session=session)

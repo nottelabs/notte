@@ -24,5 +24,5 @@ with client.Session(headless=True, proxies=True) as session:
     if result.success:
         print(f"Order completed: {result.answer}")
     else:
-        print(f"Failed: {result.error}")
+        print(f"Failed: {result.answer}")
 ```

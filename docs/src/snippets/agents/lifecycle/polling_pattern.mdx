@@ -1,16 +1,22 @@
 ```python
 import time
+from notte_sdk import NotteClient
 
-agent.start(task="Long task")
+client = NotteClient()
 
-while True:
-    status = agent.status()
+with client.Session() as session:
 
-    if status.status == "closed":
-        break
+    agent = client.Agent(session=session)
+    agent.start(task="Long task")
 
-    print(f"Progress: {len(status.steps)} steps completed")
-    time.sleep(5)  # Check every 5 seconds
+    while True:
+        status = agent.status()
 
-print(f"Final result: {status.success}")
+        if status.status == "closed":
+            break
+
+        print(f"Progress: {len(status.steps)} steps completed")
+        time.sleep(5)  # Check every 5 seconds
+
+    print(f"Final result: {status.answer}")
 ```

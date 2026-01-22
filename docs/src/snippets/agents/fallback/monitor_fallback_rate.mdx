@@ -1,10 +1,14 @@
 ```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
 fallback_invoked_count = 0
 total_runs = 0
 
 for _ in range(100):
-    with client.AgentFallback(session, task="Task") as fb:
-        session.execute(type="click", selector="#button")
+    with client.Session() as session:
+        with client.AgentFallback(session, task="Task") as fb:
+            session.execute(type="click", selector="#button")
 
     total_runs += 1
     if fb.agent_invoked:

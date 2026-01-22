@@ -1,8 +1,13 @@
 ```python
-agent.start(task="Long task")
+from notte_sdk import NotteClient
 
-# Do something...
+client = NotteClient()
 
-# Stop the agent
-agent.stop()
+with client.Session() as session:
+	agent.start(task="Long task")
+
+	# Do something...
+
+	# Stop the agent
+	agent.stop()
 ```

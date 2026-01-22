@@ -1,13 +1,18 @@
 ```python
-result = agent.run(task="Complete task")
+from notte_sdk import NotteClient
 
-if result.success:
-    # Process successful result
-    process_data(result.answer)
-else:
-    # Handle failure
-    logger.error(f"Agent failed: {result.error}")
+client = NotteClient()
 
-    # Fallback strategy
-    fallback_approach()
+with client.Session() as session:
+    result = agent.run(task="Complete task")
+
+    if result.success:
+        # Process successful result
+        process_data(result.answer)
+    else:
+        # Handle failure
+        logger.error(f"Agent failed: {result.answer}")
+
+        # Fallback strategy
+        fallback_approach()
 ```
