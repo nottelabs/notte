@@ -1,0 +1,10 @@
+```python
+result = agent.run(task="Critical task")
+
+if not result.success:
+    # Don't proceed if agent failed
+    raise RuntimeError(f"Critical task failed: {result.error}")
+
+# Safe to proceed
+process_result(result)
+```

@@ -1,0 +1,22 @@
+<CodeGroup>
+  ```python Python
+  def run(url: str):
+      try:
+          # Perform automation
+          data = scrape_url(url)
+
+          return {
+              "success": True,
+              "data": data,
+              "url": url,
+              "timestamp": datetime.now().isoformat()
+          }
+
+      except Exception as e:
+          return {
+              "success": False,
+              "error": str(e),
+              "url": url
+          }
+  ```
+</CodeGroup>

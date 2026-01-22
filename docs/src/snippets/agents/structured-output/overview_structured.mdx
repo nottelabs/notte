@@ -1,0 +1,15 @@
+```python
+from pydantic import BaseModel
+
+class ContactInfo(BaseModel):
+    email: str
+    phone: str | None
+
+result = agent.run(
+    task="Extract contact information",
+    response_format=ContactInfo
+)
+
+print(result.answer.email)  # Type-safe access
+print(result.answer.phone)  # None if not found
+```

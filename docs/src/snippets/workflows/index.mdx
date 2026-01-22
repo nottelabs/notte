@@ -1,48 +1,37 @@
-Define your function handler as a regular python function.
+Given a script you want to set up as a function:
 
 ```python my_scraping_function.py
 from notte_sdk import NotteClient
+client = NotteClient()
 
-notte = NotteClient()
-# define your function variables as arguments
 def run(url: str):
-    with notte.Session() as session:
+    with client.Session() as session:
         session.execute(type="goto", url=url)
         return session.scrape()
 ```
 
-<Tip>
-Each handler function must be named `run`.
-</Tip>
+You can create, update and run functions:
 
-You can create, update and run deployed functions:
-
-```python deploy_function.py
-from notte_sdk import NotteClient
-from pathlib import Path
-
-code = """
+```python play_with_function.py
 from notte_sdk import NotteClient
 
-notte = NotteClient()
-# define your function variables as arguments
-def run(url: str):
-    with notte.Session() as session:
-        session.execute(type="goto", url=url)
-        return session.scrape()
-"""
+client = NotteClient()
 
-# create a local python file with your function code
-with Path("my_scraping_function.py").open("w") as f:
-    f.write(code)
-
-notte = NotteClient()
-
-# Use your local python file to deploy a new function
+# Create a new function from our local Python file
 function = notte.Function(
-    path="my_scraping_function.py",
-    name="My Scraping Flow",
-    description="A flow for scraping the web"
+    workflow_path="my_scraping_function.py",
+    name="My Scraping Function",
+    description="A function for scraping the web"
 )
-print(f"Function created with ID: {function.response.function_id}. You can reference it using `notte.Function(<function_id>)`")
+print(f"Function created with ID: {function.function_id}. You can reference it using `notte.Function(<function_id>)`")
+
+# Run the function, providing variables
+response = function.run(url="https://shop.notte.cc/")
+print(f"Function completed with result: {response.result}")
+
+# Update function with new version, from our local python file
+function.update(workflow_path="my_scraping_function.py")
+
+# List all functions
+functions = notte.functions.list()
 ```

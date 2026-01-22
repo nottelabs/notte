@@ -1,51 +1,155 @@
 ---
 title: 'Cookies'
-description: 'Upload and manage cookies for your sessions'
+description: 'Persist authentication and manage cookies across sessions'
 ---
 
 import UploadCookies from '/snippets/sessions/upload_cookies.mdx';
 import ExtractCookiesManual from '/snippets/sessions/extract_cookies_manual.mdx';
 import ExtractCookiesNotte from '/snippets/sessions/extract_cookies_notte.mdx';
 
-## Overview
+Cookies allow you to persist authentication state across sessions, avoiding repeated logins and maintaining session continuity.
 
-Cookies provide a flexible way to authenticate your sessions in Notte. While we recommend using the secure vault for credential management, cookies offer an alternative approach that might be more convenient for certain use cases.
+## Automatic Persistence
 
-## Uploading Cookies to Your Session
+The simplest approach is automatic cookie persistence using `cookie_file`:
 
-Here's how to upload cookies to your Notte session:
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Cookies automatically loaded at start, saved when session ends
+with client.Session(cookie_file="cookies.json") as session:
+    page = session.page
+    page.goto("https://example.com/login")
+
+    # Log in once, cookies are captured
+    page.fill('input[name="email"]', "user@example.com")
+    page.fill('input[name="password"]', "password")
+    page.click('button[type="submit"]')
+
+# Next time: already logged in!
+with client.Session(cookie_file="cookies.json") as session:
+    page = session.page
+    page.goto("https://example.com/dashboard")
+    # Authentication persisted from previous session
+```
+
+<Tip>
+  The `cookie_file` parameter handles everything automatically - loading cookies when the session starts and saving them when it ends.
+</Tip>
+
+## Manual Cookie Management
+
+For more control, use `set_cookies()` and `get_cookies()`:
+
+```python
+from notte_sdk import NotteClient
+import json
+
+client = NotteClient()
+
+# Save cookies from a session
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
+
+    # Perform login...
+
+    # Get and save cookies
+    cookies = session.get_cookies()
+    with open("cookies.json", "w") as f:
+        json.dump(cookies, f)
+
+# Load cookies in a new session
+with client.Session() as session:
+    with open("cookies.json", "r") as f:
+        cookies = json.load(f)
+    session.set_cookies(cookies=cookies)
+
+    page = session.page
+    page.goto("https://example.com/dashboard")
+    # Already authenticated
+```
+
+## Uploading Cookies
+
+Upload cookies from an existing file:
 
 <UploadCookies/>
 
-### Important Notes
-- The cookies file must be a valid JSON file
-- Cookies are available for all sessions started after upload
-- You need to manage cookie expiration manually
-- Upload new cookies when they expire
+### Cookie File Format
 
-## Extracting Cookies from Your Browser
+Cookies must be a valid JSON array:
 
-Here's a step-by-step guide to extract cookies from your browser:
+```json
+[
+  {
+    "name": "session_id",
+    "value": "abc123",
+    "domain": ".example.com",
+    "path": "/",
+    "expires": 1735689600,
+    "httpOnly": true,
+    "secure": true
+  }
+]
+```
+
+## Extracting Cookies
+
+### From Your Browser
+
+Export cookies from Chrome, Firefox, or other browsers:
 
 <ExtractCookiesManual />
 
-Of course, you can also get them from your Notte session:
+### From a Notte Session
+
+Extract cookies programmatically:
 
 <ExtractCookiesNotte />
 
 ## Best Practices
 
-1. **Security**
-   - Store cookie files securely
-   - Don't commit cookie files to version control
-   - Regularly rotate cookies for sensitive services
+### Security
 
-2. **Maintenance**
-   - Monitor cookie expiration dates
-   - Set up reminders to refresh cookies
-   - Keep backup copies of valid cookies
+- Store cookie files securely outside version control
+- Add `*.json` cookie files to `.gitignore`
+- Rotate cookies regularly for sensitive services
+- Use environment-specific cookie files
 
-3. **Troubleshooting**
-   - If a session fails, try uploading fresh cookies
-   - Check if cookies are still valid
-   - Verify the cookie file format is correct
+### Maintenance
+
+- Monitor cookie expiration dates
+- Set up automated refresh for long-running systems
+- Keep backup copies of valid cookies
+
+### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Session not authenticated | Verify cookies haven't expired |
+| Cookies not loading | Check JSON format is valid |
+| Partial authentication | Ensure all required cookies are included |
+| Domain mismatch | Verify cookie domains match target site |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Configure sessions with all options
+  </Card>
+
+  <Card title="Browser Profiles" icon="user" href="/features/sessions/browser-profiles">
+    Persist full browser state
+  </Card>
+
+  <Card title="Vaults" icon="lock" href="/concepts/vaults">
+    Secure credential storage
+  </Card>
+
+  <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle">
+    Manage session states
+  </Card>
+</CardGroup>

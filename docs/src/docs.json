@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "willow",
+  "theme": "palm",
   "name": "Notte",
   "colors": {
     "primary": "#00b85c",
@@ -13,230 +13,520 @@
   },
   "favicon": "/favicon.ico",
   "navigation": {
-    "tabs": [
+    "languages": [
       {
-        "tab": "Documentation",
-        "groups": [
+        "language": "en",
+        "tabs": [
           {
-            "group": "Introduction",
-            "pages": [
-              "intro/what-is-notte",
-              "intro/quickstart",
-              "intro/python-sdk",
-              "intro/pricing"
+            "tab": "Documentation",
+            "groups": [
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "index",
+                  "quickstart",
+                  "concepts"
+                ]
+              },
+              {
+                "group": "Sessions",
+                "icon": "tv",
+                "pages": [
+                  "concepts/sessions",
+                  "features/sessions/lifecycle",
+                  "features/sessions/configuration",
+                  "features/sessions/browser-controls",
+                  "features/sessions/playwright-vs-notte",
+                  {
+                    "group": "Session Capabilities",
+                    "collapsed": true,
+                    "pages": [
+                      "features/sessions/browser-types",
+                      "features/sessions/browser-pools",
+                      "features/sessions/stealth-mode",
+                      "features/sessions/proxies",
+                      "features/sessions/multi-region",
+                      "features/sessions/captcha-solving",
+                      "features/sessions/ad-blocking",
+                      "features/sessions/browser-profiles",
+                      "features/sessions/static-ips",
+                      "features/sessions/recordings",
+                      "features/sessions/live-view",
+                      "features/sessions/browser-extensions",
+                      "features/sessions/cookies"
+                    ]
+                  },
+                  {
+                    "group": "Connect over CDP",
+                    "collapsed": true,
+                    "pages": [
+                      "features/sessions/playwright",
+                      "features/sessions/puppeteer",
+                      "features/sessions/selenium",
+                      "features/sessions/external-providers"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Agents",
+                "icon": "sparkles",
+                "pages": [
+                  "concepts/agents",
+                  "features/agents/configuration",
+                  "features/agents/lifecycle",
+                  {
+                    "group": "Advanced",
+                    "collapsed": true,
+                    "pages": [
+                      "features/agents/structured-output",
+                      "features/agents/replay",
+                      "features/agents/workflows",
+                      "features/agents/fallback",
+                      "features/agents/batch"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Functions",
+                "icon": "flower",
+                "pages": [
+                  "concepts/functions",
+                  "features/functions/creating",
+                  "features/functions/invocations",
+                  "features/functions/schedules",
+                  "features/functions/management"
+                ]
+              },
+              {
+                "group": "Agent Tools",
+                "icon": "link",
+                "pages": [
+                  "concepts/file-storage",
+                  "concepts/vaults",
+                  "concepts/personas"
+                ]
+              },
+              {
+                "group": "Scraping",
+                "icon": "database",
+                "pages": [
+                  "concepts/scraping"
+                ]
+              },
+              {
+                "group": "Guides",
+                "icon": "book-open",
+                "pages": [
+                  "guides/reliability",
+                  "guides/scraping",
+                  "guides/stealth",
+                  "guides/account_creation"
+                ]
+              },
+              {
+                "group": "Integrations",
+                "icon": "plug",
+                "pages": [
+                  {
+                    "group": "MCP",
+                    "collapsed": true,
+                    "pages": [
+                      "integrations/mcp",
+                      "guides/vibe-coding"
+                    ]
+                  },
+                  "integrations/kernel",
+                  "integrations/openai-cua"
+                ]
+              }
             ]
           },
           {
-            "group": "Concepts",
-            "pages": [
-              "concepts/sessions",
-              "concepts/agents",
-              "concepts/functions",
-              "concepts/vaults",
-              "concepts/personas",
-              "concepts/bua"
+            "tab": "API",
+            "openapi": "https://api.notte.cc/openapi.json",
+            "groups": [
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "api-reference/authentication",
+                  "api-reference/errors",
+                  "api-reference/rate-limits"
+                ]
+              },
+              {
+                "group": "Health",
+                "pages": [
+                  "GET /health"
+                ]
+              },
+              {
+                "group": "Sessions",
+                "pages": [
+                  "GET /sessions",
+                  "POST /sessions/start",
+                  "GET /sessions/{session_id}",
+                  "GET /sessions/{session_id}/workflow/code",
+                  "DELETE /sessions/{session_id}/stop",
+                  "POST /sessions/{session_id}/cookies",
+                  "GET /sessions/{session_id}/cookies"
+                ]
+              },
+              {
+                "group": "Page",
+                "pages": [
+                  "POST /sessions/{session_id}/page/observe",
+                  "POST /sessions/{session_id}/page/execute",
+                  "POST /sessions/{session_id}/page/scrape"
+                ]
+              },
+              {
+                "group": "Agents",
+                "pages": [
+                  "POST /agents/start",
+                  "GET /agents/{agent_id}",
+                  "GET /agents/{agent_id}/workflow/code",
+                  "DELETE /agents/{agent_id}/stop",
+                  "GET /agents/{agent_id}/replay",
+                  "GET /agents"
+                ]
+              },
+              {
+                "group": "Workflows",
+                "pages": [
+                  "POST /workflows",
+                  "GET /workflows",
+                  "POST /workflows/{workflow_id}",
+                  "GET /workflows/{workflow_id}",
+                  "DELETE /workflows/{workflow_id}",
+                  "POST /workflows/{workflow_id}/fork",
+                  "POST /workflows/{workflow_id}/schedule",
+                  "DELETE /workflows/{workflow_id}/schedule",
+                  "POST /workflows/{workflow_id}/runs/start",
+                  "GET /workflows/{workflow_id}/runs/{run_id}",
+                  "PATCH /workflows/{workflow_id}/runs/{run_id}",
+                  "DELETE /workflows/{workflow_id}/runs/{run_id}",
+                  "GET /workflows/{workflow_id}/runs"
+                ]
+              },
+              {
+                "group": "Vaults",
+                "pages": [
+                  "POST /vaults/create",
+                  "POST /vaults/{vault_id}/credentials",
+                  "GET /vaults/{vault_id}/credentials",
+                  "DELETE /vaults/{vault_id}/credentials",
+                  "GET /vaults/{vault_id}",
+                  "PATCH /vaults/{vault_id}",
+                  "DELETE /vaults/{vault_id}",
+                  "POST /vaults/{vault_id}/card",
+                  "GET /vaults/{vault_id}/card",
+                  "DELETE /vaults/{vault_id}/card",
+                  "GET /vaults"
+                ]
+              },
+              {
+                "group": "Personas",
+                "pages": [
+                  "POST /personas/create",
+                  "DELETE /personas/{persona_id}",
+                  "GET /personas/{persona_id}",
+                  "GET /personas/{persona_id}/emails",
+                  "POST /personas/{persona_id}/sms/number",
+                  "DELETE /personas/{persona_id}/sms/number",
+                  "GET /personas",
+                  "GET /personas/{persona_id}/sms"
+                ]
+              },
+              {
+                "group": "Profiles",
+                "pages": [
+                  "POST /profiles/create",
+                  "GET /profiles/{profile_id}",
+                  "DELETE /profiles/{profile_id}",
+                  "GET /profiles"
+                ]
+              },
+              {
+                "group": "Storage",
+                "pages": [
+                  "GET /storage/{session_id}/downloads/{filename}",
+                  "POST /storage/{session_id}/downloads/{filename}",
+                  "GET /storage/{session_id}/downloads",
+                  "POST /storage/uploads/{filename}",
+                  "GET /storage/uploads"
+                ]
+              },
+              {
+                "group": "Scrape",
+                "pages": [
+                  "POST /scrape",
+                  "POST /scrape_from_html"
+                ]
+              },
+              {
+                "group": "Usage",
+                "pages": [
+                  "GET /usage",
+                  "GET /usage/logs"
+                ]
+              },
+              {
+                "group": "Debug",
+                "pages": [
+                  "GET /sessions/{session_id}/debug",
+                  "GET /sessions/{session_id}/replay",
+                  "GET /sessions/{session_id}/offset"
+                ]
+              },
+              {
+                "group": "Network",
+                "pages": [
+                  "GET /sessions/{session_id}/network/logs"
+                ]
+              },
+              {
+                "group": "Prompts",
+                "pages": [
+                  "POST /prompts/improve",
+                  "POST /prompts/nudge"
+                ]
+              }
             ]
           },
           {
-            "group": "Guides",
-            "pages": [
-              "guides/reliability",
-              "guides/scraping",
-              "guides/stealth",
-              "guides/account_creation",
-              "guides/web_automation_tips"
+            "tab": "SDK",
+            "groups": [
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "sdk-reference/manual/index",
+                  "sdk-reference/authentication",
+                  "sdk-reference/errors",
+                  "sdk-reference/rate-limits"
+                ]
+              },
+              {
+                "group": "Core Features",
+                "pages": [
+                  "sdk-reference/notteclient/scrape",
+                  {
+                    "group": "Session",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/manual/session",
+                      "sdk-reference/remotesession/start",
+                      "sdk-reference/remotesession/stop",
+                      "sdk-reference/remotesession/observe",
+                      "sdk-reference/remotesession/execute",
+                      "sdk-reference/remotesession/scrape",
+                      "sdk-reference/remotesession/replay",
+                      "sdk-reference/remotesession/cdp_url",
+                      "sdk-reference/remotesession/set_cookies",
+                      "sdk-reference/remotesession/get_cookies",
+                      "sdk-reference/remotesession/viewer_browser",
+                      "sdk-reference/remotesession/viewer_cdp",
+                      "sdk-reference/remotesession/viewer",
+                      "sdk-reference/remotesession/status"
+                    ]
+                  },
+                  {
+                    "group": "Actions",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/misc/gotoaction",
+                      "sdk-reference/misc/gotonewtabaction",
+                      "sdk-reference/misc/switchtabaction",
+                      "sdk-reference/misc/gobackaction",
+                      "sdk-reference/misc/goforwardaction",
+                      "sdk-reference/misc/reloadaction",
+                      "sdk-reference/misc/waitaction",
+                      "sdk-reference/misc/presskeyaction",
+                      "sdk-reference/misc/scrollupaction",
+                      "sdk-reference/misc/scrolldownaction",
+                      "sdk-reference/misc/clickaction",
+                      "sdk-reference/misc/fillaction",
+                      "sdk-reference/misc/checkaction",
+                      "sdk-reference/misc/selectdropdownoptionaction",
+                      "sdk-reference/misc/uploadfileaction",
+                      "sdk-reference/misc/downloadfileaction",
+                      "sdk-reference/misc/scrapeaction",
+                      "sdk-reference/misc/smsreadaction",
+                      "sdk-reference/misc/emailreadaction"
+                    ]
+                  },
+                  {
+                    "group": "Agent",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/manual/agent",
+                      "sdk-reference/remoteagent/run",
+                      "sdk-reference/remoteagent/replay",
+                      "sdk-reference/remoteagent/start",
+                      "sdk-reference/remoteagent/stop",
+                      "sdk-reference/remoteagent/status",
+                      "sdk-reference/manual/agent_fallback"
+                    ]
+                  },
+                  {
+                    "group": "Workflow",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/manual/workflow",
+                      "sdk-reference/remoteworkflow/run",
+                      "sdk-reference/remoteworkflow/update",
+                      "sdk-reference/remoteworkflow/delete",
+                      "sdk-reference/remoteworkflow/download",
+                      "sdk-reference/remoteworkflow/fork",
+                      "sdk-reference/remoteworkflow/get_curl"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Tooling",
+                "pages": [
+                  {
+                    "group": "Vault",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/manual/vault",
+                      "sdk-reference/nottevault/add_credentials",
+                      "sdk-reference/nottevault/get_credentials",
+                      "sdk-reference/nottevault/delete_credentials",
+                      "sdk-reference/nottevault/list_credentials",
+                      "sdk-reference/nottevault/set_credit_card",
+                      "sdk-reference/nottevault/get_credit_card",
+                      "sdk-reference/nottevault/delete_credit_card",
+                      "sdk-reference/nottevault/generate_password"
+                    ]
+                  },
+                  {
+                    "group": "Persona",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/manual/persona",
+                      "sdk-reference/nottepersona/delete",
+                      "sdk-reference/nottepersona/add_credentials",
+                      "sdk-reference/nottepersona/create_number",
+                      "sdk-reference/nottepersona/delete_number",
+                      "sdk-reference/nottepersona/emails",
+                      "sdk-reference/nottepersona/sms"
+                    ]
+                  },
+                  {
+                    "group": "File Storage",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/manual/file_storage",
+                      "sdk-reference/remotefilestorage/download",
+                      "sdk-reference/remotefilestorage/upload",
+                      "sdk-reference/remotefilestorage/list_downloaded_files",
+                      "sdk-reference/remotefilestorage/list_uploaded_files"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Debug",
+                "pages": [
+                  {
+                    "group": "Debug Methods",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/notteclient/health_check",
+                      "sdk-reference/remotesession/debug_info",
+                      "sdk-reference/remotesession/offset"
+                    ]
+                  }
+                ]
+              }
             ]
           },
           {
-            "group": "Session Features",
-            "pages": [
-              "features/sessions/proxies",
-              "features/sessions/captchas",
-              "features/sessions/cdp",
-              "features/sessions/session-replay",
-              "features/sessions/cookies",
-              "features/sessions/storage"
+            "tab": "Products",
+            "groups": [
+              {
+                "group": "Products",
+                "pages": [
+                  "product/agent-mode",
+                  "product/demonstrate-mode",
+                  "product/studio"
+                ]
+              }
             ]
           },
           {
-            "group": "Integrations",
-            "pages": [
-              "integrations/mcp",
-              "integrations/openai-cua",
-              "integrations/cursor",
-              "integrations/kernel"
+            "tab": "Resources",
+            "groups": [
+              {
+                "group": "Resources",
+                "pages": [
+                  "pricing",
+                  "rate-limits",
+                  "guides/vibe-coding"
+                ]
+              },
+              {
+                "group": "Legal",
+                "pages": [
+                  "trust-center",
+                  "legal/terms",
+                  "legal/privacy"
+                ]
+              },
+              {
+                "group": "Community",
+                "pages": [
+                  "community/github",
+                  "community/slack",
+                  "community/x",
+                  "community/linkedin",
+                  "community/yc",
+                  "community/featurebase",
+                  "community/trustpilot",
+                  "community/producthunt",
+                  "community/youtube"
+                ]
+              }
             ]
           }
-        ]
-      },
-      {
-        "tab": "API Reference",
-        "openapi": {
-          "source": "https://us-staging.notte.cc/openapi.json",
-          "directory": "api-reference"
+        ],
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Slack Support",
+              "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA",
+              "icon": "heart"
+            },
+            {
+              "anchor": "Submit Feedback",
+              "href": "https://notte.featurebase.app/",
+              "icon": "message"
+            }
+          ]
         }
-      },
-      {
-        "tab": "SDK Reference",
-        "groups": [
-          {
-            "group": "Getting Started",
-            "pages": [
-              "sdk-reference/manual/index",
-              "sdk-reference/notteclient/scrape",
-              "sdk-reference/notteclient/health_check"
-            ]
-          },
-          {
-            "group": "Core Features",
-            "pages": [
-              {
-                "group": "Session",
-                "collapsed": true,
-                "pages": [
-                  "sdk-reference/manual/session",
-                  "sdk-reference/remotesession/start",
-                  "sdk-reference/remotesession/stop",
-                  "sdk-reference/remotesession/observe",
-                  "sdk-reference/remotesession/execute",
-                  "sdk-reference/remotesession/scrape",
-                  "sdk-reference/remotesession/replay",
-                  "sdk-reference/remotesession/cdp_url",
-                  "sdk-reference/remotesession/set_cookies",
-                  "sdk-reference/remotesession/get_cookies",
-                  "sdk-reference/remotesession/viewer_browser",
-                  "sdk-reference/remotesession/viewer_cdp",
-                  "sdk-reference/remotesession/viewer",
-                  "sdk-reference/remotesession/status"
-                ]
-              },
-              {
-                "group": "Actions",
-                "collapsed": true,
-                "pages": [
-                  "sdk-reference/misc/gotoaction",
-                  "sdk-reference/misc/gotonewtabaction",
-                  "sdk-reference/misc/switchtabaction",
-                  "sdk-reference/misc/gobackaction",
-                  "sdk-reference/misc/goforwardaction",
-                  "sdk-reference/misc/reloadaction",
-                  "sdk-reference/misc/waitaction",
-                  "sdk-reference/misc/presskeyaction",
-                  "sdk-reference/misc/scrollupaction",
-                  "sdk-reference/misc/scrolldownaction",
-                  "sdk-reference/misc/clickaction",
-                  "sdk-reference/misc/fillaction",
-                  "sdk-reference/misc/checkaction",
-                  "sdk-reference/misc/selectdropdownoptionaction",
-                  "sdk-reference/misc/uploadfileaction",
-                  "sdk-reference/misc/downloadfileaction",
-                  "sdk-reference/misc/scrapeaction",
-                  "sdk-reference/misc/smsreadaction",
-                  "sdk-reference/misc/emailreadaction"
-                ]
-              },
-              {
-                "group": "Agent",
-                "collapsed": true,
-                "pages": [
-                  "sdk-reference/manual/agent",
-                  "sdk-reference/remoteagent/run",
-                  "sdk-reference/remoteagent/replay",
-                  "sdk-reference/remoteagent/start",
-                  "sdk-reference/remoteagent/stop",
-                  "sdk-reference/remoteagent/status",
-                  "sdk-reference/manual/agent_fallback"
-                ]
-              },
-              {
-                "group": "Workflow",
-                "collapsed": true,
-                "pages": [
-                  "sdk-reference/manual/workflow",
-                  "sdk-reference/remoteworkflow/run",
-                  "sdk-reference/remoteworkflow/update",
-                  "sdk-reference/remoteworkflow/delete",
-                  "sdk-reference/remoteworkflow/download",
-                  "sdk-reference/remoteworkflow/fork",
-                  "sdk-reference/remoteworkflow/get_curl"
-                ]
-              }
-            ]
-          },
-          {
-            "group": "Tooling",
-            "pages": [
-              {
-                "group": "Vault",
-                "collapsed": true,
-                "pages": [
-                  "sdk-reference/manual/vault",
-                  "sdk-reference/nottevault/add_credentials",
-                  "sdk-reference/nottevault/get_credentials",
-                  "sdk-reference/nottevault/delete_credentials",
-                  "sdk-reference/nottevault/list_credentials",
-                  "sdk-reference/nottevault/set_credit_card",
-                  "sdk-reference/nottevault/get_credit_card",
-                  "sdk-reference/nottevault/delete_credit_card",
-                  "sdk-reference/nottevault/generate_password"
-                ]
-              },
-              {
-                "group": "Persona",
-                "collapsed": true,
-                "pages": [
-                  "sdk-reference/manual/persona",
-                  "sdk-reference/nottepersona/delete",
-                  "sdk-reference/nottepersona/add_credentials",
-                  "sdk-reference/nottepersona/create_number",
-                  "sdk-reference/nottepersona/delete_number",
-                  "sdk-reference/nottepersona/emails",
-                  "sdk-reference/nottepersona/sms"
-                ]
-              },
-              {
-                "group": "File Storage",
-                "collapsed": true,
-                "pages": [
-                  "sdk-reference/manual/file_storage",
-                  "sdk-reference/remotefilestorage/download",
-                  "sdk-reference/remotefilestorage/upload",
-                  "sdk-reference/remotefilestorage/list_downloaded_files",
-                  "sdk-reference/remotefilestorage/list_uploaded_files"
-                ]
-              }
-            ]
-          }
-        ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Get an API key",
-          "href": "https://console.notte.cc/?ref=docs",
-          "icon": "key"
-        },
-        {
-          "anchor": "Support on Slack",
-          "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA",
-          "icon": "slack"
-        }
-      ]
-    }
+    ]
+  },
+  "topbarCtaButton": {
+    "name": "Book a Demo",
+    "url": "https://cal.com/team/notte/demo"
   },
   "navbar": {
     "links": [
       {
-        "label": "Contact us",
-        "href": "mailto:hello@notte.cc"
+        "label": "Book Demo",
+        "href": "https://cal.com/team/notte/demo",
+        "icon": "arrow-up-right-from-square"
+      },
+      {
+        "label": "Sign In",
+        "href": "https://console.notte.cc",
+        "icon": "arrow-up-right-from-square"
       }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Open Console",
-      "href": "https://console.notte.cc"
-    }
+    ]
   },
   "footer": {
     "socials": {
@@ -249,20 +539,8 @@
     "options": [
       "copy",
       "chatgpt",
-      "cursor",
-      "vscode",
-      {
-        "title": "Report an issue",
-        "description": "Report a bug or request a feature on GitHub",
-        "icon": "github",
-        "href": "https://github.com/nottelabs/notte/issues/new"
-      },
-      {
-        "title": "Join Slack",
-        "description": "Get help and connect with the Notte community",
-        "icon": "slack",
-        "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA"
-      }
+      "claude",
+      "cursor"
     ]
   }
 }

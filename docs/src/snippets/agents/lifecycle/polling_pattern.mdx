@@ -1,0 +1,16 @@
+```python
+import time
+
+agent.start(task="Long task")
+
+while True:
+    status = agent.status()
+
+    if status.status == "closed":
+        break
+
+    print(f"Progress: {len(status.steps)} steps completed")
+    time.sleep(5)  # Check every 5 seconds
+
+print(f"Final result: {status.success}")
+```

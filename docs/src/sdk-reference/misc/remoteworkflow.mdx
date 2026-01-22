@@ -1,11 +1,11 @@
 ---
-title: "RemoteWorkflow"
-description: "Notte workflow that can be run on the cloud or locally"
+title: "NotteFunction"
+description: "Notte function that can be run on the cloud or locally"
 ---
 
 
 
-Workflows are saved in the notte console for easy access and versioning for users
+Functions are saved in the notte console for easy access and versioning for users.
 
 ## Methods
 
@@ -15,7 +15,7 @@ Workflows are saved in the notte console for easy access and versioning for user
 delete() -> None
 ```
 
-Delete the workflow from the notte console
+Delete the function from the notte console
 
 ---
 
@@ -25,7 +25,7 @@ Delete the workflow from the notte console
 download(workflow_path: str | None, version: str | None = None, decryption_key: str | None = None) -> str
 ```
 
-Download the workflow code from the notte console as a python file
+Download the function code from the notte console as a python file
 
 **Returns:**
 
@@ -36,14 +36,14 @@ Download the workflow code from the notte console as a python file
 ### fork
 
 ```python
-fork() -> 'RemoteWorkflow'
+fork() -> 'NotteFunction'
 ```
 
-Fork a shared workflow into your own private workflow
+Fork a shared function into your own private function
 
 **Returns:**
 
-[`RemoteWorkflow`](/sdk-reference/misc/remoteworkflow)
+[`NotteFunction`](/sdk-reference/misc/remoteworkflow)
 
 ---
 
@@ -53,7 +53,7 @@ Fork a shared workflow into your own private workflow
 get_curl(variables: Any) -> str
 ```
 
-Convert the workflow/run to a curl request
+Convert the function run to a curl request
 
 **Returns:**
 
@@ -67,7 +67,7 @@ Convert the workflow/run to a curl request
 get_run(run_id: str) -> GetWorkflowRunResponse
 ```
 
-Get a workflow run by its ID
+Get a function run by its ID
 
 **Returns:**
 
@@ -93,7 +93,7 @@ get_url(version: str | None = None, decryption_key: str | None = None) -> str
 replay() -> MP4Replay
 ```
 
-Replay the workflow run
+Replay the function run
 
 **Returns:**
 
@@ -107,7 +107,7 @@ Replay the workflow run
 run(version: str | None = None, local: bool = False, restricted: bool = True, timeout: int | None = None, stream: bool = True, raise_on_failure: bool = True, workflow_run_id: str | None = None, log_callback: Callable[[str], None] | None = None, variables: Any) -> WorkflowRunResponse
 ```
 
-Run the workflow using the specified version and variables
+Run the function using the specified version and variables
 
 **Returns:**
 
@@ -121,7 +121,7 @@ Run the workflow using the specified version and variables
 stop_run(run_id: str) -> UpdateWorkflowRunResponse
 ```
 
-Manually stop a workflow run by its ID
+Manually stop a function run by its ID
 
 **Returns:**
 
@@ -135,7 +135,7 @@ Manually stop a workflow run by its ID
 update(workflow_path: str, version: str | None = None, restricted: bool = True) -> None
 ```
 
-Update the workflow with a a new code version
+Update the function with a new code version
 
 ---
 
@@ -143,4 +143,4 @@ Update the workflow with a a new code version
 
 ## Module
 
-`notte_sdk.endpoints.workflows`
+`notte_sdk.endpoints.functions`

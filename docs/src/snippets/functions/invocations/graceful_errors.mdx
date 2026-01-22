@@ -1,0 +1,10 @@
+<CodeGroup>
+  ```python Python
+  try:
+      result = function.run(url="https://example.com")
+      process_result(result.result)
+  except FailedToRunCloudWorkflowError as e:
+      log_error(e)
+      send_alert(e.message)
+  ```
+</CodeGroup>

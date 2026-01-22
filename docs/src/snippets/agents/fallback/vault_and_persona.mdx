@@ -1,0 +1,15 @@
+```python
+vault = client.Vault(vault_id="vault_123")
+
+with client.AgentFallback(
+    session,
+    task="Login and navigate to settings",
+    vault=vault
+) as fb:
+    # Try logging in with deterministic actions
+    session.execute(type="fill", selector="#email", value="user@example.com")
+    session.execute(type="fill", selector="#password", value="password123")
+    session.execute(type="click", selector="#login")
+
+    # If login flow changed, agent uses vault credentials
+```

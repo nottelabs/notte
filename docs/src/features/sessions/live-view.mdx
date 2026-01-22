@@ -1,0 +1,160 @@
+---
+title: Live View
+description: Watch your browser sessions in real-time as they execute
+---
+
+import QuickStart from '/snippets/sessions/live-view/quick_start.mdx';
+import ManualViewer from '/snippets/sessions/live-view/manual.mdx';
+import AgentViewer from '/snippets/sessions/live-view/agent.mdx';
+import SharingViewer from '/snippets/sessions/live-view/sharing.mdx';
+import ViewerConfig from '/snippets/sessions/live-view/configuration.mdx';
+
+Live View allows you to watch your browser sessions in real-time as they execute, making it easy to debug and monitor automation.
+
+## Quick Start
+
+Open a live viewer automatically when the session starts:
+
+<QuickStart />
+
+## Manual Live View
+
+Open the live viewer manually at any point during the session:
+
+<ManualViewer />
+
+## Viewer Types
+
+Notte supports multiple viewer types:
+
+### Browser Viewer (Default)
+
+Frame-by-frame replay in your browser:
+
+```python
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
+
+    # Opens browser viewer
+    session.viewer_browser()
+```
+
+### CDP Viewer
+
+Chrome DevTools Protocol debugger:
+
+```python
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
+
+    # Opens CDP debugger
+    session.viewer_cdp()
+```
+
+### Jupyter Notebook Viewer
+
+Display live view directly in Jupyter notebooks:
+
+```python
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
+
+    # Display in notebook cell
+    session.viewer_notebook()
+```
+
+## Live View for Agents
+
+Watch AI agents make decisions in real-time:
+
+<AgentViewer />
+
+## Sharing Live View
+
+Share the viewer URL with your team for collaborative debugging:
+
+<SharingViewer />
+
+## Viewer Configuration
+
+Set a default viewer type for all sessions:
+
+<ViewerConfig />
+
+Available viewer types:
+- `SessionViewerType.BROWSER` - Frame-by-frame browser viewer (default)
+- `SessionViewerType.CDP` - Chrome DevTools Protocol debugger
+- `SessionViewerType.JUPYTER` - Jupyter notebook display
+
+## Best Practices
+
+### 1. Use for Development
+
+Live view is ideal for development and debugging:
+
+```python
+import os
+
+# Only use live view in development
+is_dev = os.getenv("ENV") == "development"
+
+with client.Session(open_viewer=is_dev) as session:
+    session.execute(type="goto", url="https://example.com")
+```
+
+### 2. Combine with Recordings
+
+Use live view during development, recordings for later analysis:
+
+```python
+with client.Session(open_viewer=True) as session:
+    # Watch it live
+    session.execute(type="goto", url="https://example.com")
+    session.execute(type="click", selector="button.submit")
+
+# Get recording after session ends
+replay = session.replay()
+replay.save("recording.mp4")
+```
+
+### 3. Multiple Viewers
+
+Open multiple viewer types simultaneously:
+
+```python
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
+
+    # Open both viewers
+    session.viewer_browser()  # Frame-by-frame
+    session.viewer_cdp()      # DevTools
+```
+
+## Live View vs Recordings
+
+| Feature | Live View | Recordings |
+|---------|-----------|------------|
+| **Timing** | Real-time during execution | After session ends |
+| **Interactivity** | Can observe as it happens | Playback only |
+| **Use Case** | Debugging, monitoring | Archiving, sharing |
+| **Availability** | During session only | 24 hours after session |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Recordings" icon="video" href="/features/sessions/recordings">
+    Record sessions for later analysis
+  </Card>
+
+  <Card title="Playwright" icon="code" href="/features/sessions/playwright">
+    Connect with Playwright via CDP
+  </Card>
+
+  <Card title="Session Lifecycle" icon="clock" href="/features/sessions/lifecycle">
+    Understand session management
+  </Card>
+
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Configure session parameters
+  </Card>
+</CardGroup>

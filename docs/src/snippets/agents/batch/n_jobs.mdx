@@ -1,0 +1,10 @@
+```python
+# Light parallelism (2-3 agents)
+result = await batch_agent.run(task="Task", n_jobs=2)
+
+# Medium parallelism (3-5 agents)
+result = await batch_agent.run(task="Task", n_jobs=5)
+
+# Heavy parallelism (5-10 agents)
+result = await batch_agent.run(task="Task", n_jobs=10)
+```

@@ -1,0 +1,33 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from selenium import webdriver
+  from selenium.webdriver.chrome.options import Options
+
+  client = NotteClient()
+
+  # Start Notte session
+  with client.Session() as session:
+      # Get CDP URL
+      cdp_url = session.cdp_url()
+
+      # Configure Selenium options
+      chrome_options = Options()
+      chrome_options.add_experimental_option("debuggerAddress", cdp_url.replace("ws://", "").replace("wss://", ""))
+
+      # Connect Selenium to Notte session
+      driver = webdriver.Remote(
+          command_executor=cdp_url,
+          options=chrome_options
+      )
+
+      # Use Selenium WebDriver API
+      driver.get("https://example.com")
+      print(f"Title: {driver.title}")
+
+      # Take screenshot
+      driver.save_screenshot("screenshot.png")
+
+      driver.quit()
+  ```
+</CodeGroup>

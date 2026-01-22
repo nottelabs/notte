@@ -1,0 +1,8 @@
+```python
+with client.AgentFallback(session, task="Extract data") as fb:
+    session.execute(type="click", selector="#button")
+
+if fb.agent_invoked:
+    print(f"Agent answer: {fb.agent_response.answer}")
+    print(f"Agent steps: {len(fb.agent_response.steps)}")
+```

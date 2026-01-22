@@ -1,0 +1,21 @@
+```python
+# Create persona with email
+persona = client.Persona()
+emails = persona.emails()
+
+# Use in session
+with client.Session() as session:
+    # Trigger email (e.g., verification email)
+    session.execute(
+        type="fill",
+        selector="input[name='email']",
+        value=emails[0]
+    )
+    session.execute(type="click", selector="button.send-verification")
+
+    # Read email
+    messages = session.execute(type="email_read", persona_id=persona.persona_id)
+
+    # Extract verification link
+    link = extract_link(messages)
+```

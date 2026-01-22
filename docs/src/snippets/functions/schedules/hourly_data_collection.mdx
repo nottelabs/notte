@@ -1,0 +1,16 @@
+<CodeGroup>
+  ```python Python
+  # data_collector.py
+  def run(source_url: str):
+      """Collect data every hour."""
+      from notte_sdk import NotteClient
+
+      client = NotteClient()
+
+      with client.Session() as session:
+          session.execute(type="goto", url=source_url)
+          data = session.scrape()
+
+      return {"data": data, "timestamp": datetime.now().isoformat()}
+  ```
+</CodeGroup>

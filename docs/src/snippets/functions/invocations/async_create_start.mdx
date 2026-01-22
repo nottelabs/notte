@@ -1,0 +1,19 @@
+<CodeGroup>
+  ```python Python
+  # Create a run (returns immediately)
+  run_response = client.workflows.create_run(
+      workflow_id="workflow_abc123",
+      local=False
+  )
+
+  run_id = run_response.workflow_run_id
+  print(f"Run created: {run_id}")
+
+  # Start the run
+  client.workflows.run(
+      workflow_run_id=run_id,
+      workflow_id="workflow_abc123",
+      variables={"url": "https://example.com"}
+  )
+  ```
+</CodeGroup>

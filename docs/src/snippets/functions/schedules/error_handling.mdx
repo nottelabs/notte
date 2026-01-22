@@ -1,0 +1,11 @@
+<CodeGroup>
+  ```python Python
+  def run():
+      try:
+          result = perform_automation()
+          return {"success": True, "data": result}
+      except Exception as e:
+          # Log error, send alert
+          return {"success": False, "error": str(e)}
+  ```
+</CodeGroup>

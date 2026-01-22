@@ -1,0 +1,16 @@
+<CodeGroup>
+  ```python Python
+  # Get recent runs
+  runs = client.workflows.list_runs(
+      workflow_id="workflow_abc123",
+      only_active=False  # Include completed runs
+  )
+
+  for run in runs.runs:
+      print(f"Run ID: {run.workflow_run_id}")
+      print(f"Status: {run.status}")
+      print(f"Created: {run.created_at}")
+      print(f"Updated: {run.updated_at}")
+      print("---")
+  ```
+</CodeGroup>

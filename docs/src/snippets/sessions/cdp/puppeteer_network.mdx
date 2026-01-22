@@ -1,0 +1,35 @@
+<CodeGroup>
+  ```javascript Node.js
+  const puppeteer = require('puppeteer-core');
+
+  async function main() {
+    const cdpUrl = process.argv[2]; // From Python or API
+
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: cdpUrl
+    });
+
+    const pages = await browser.pages();
+    const page = pages[0];
+
+    // Enable request interception
+    await page.setRequestInterception(true);
+
+    // Block images and stylesheets
+    page.on('request', (request) => {
+      if (['image', 'stylesheet', 'font'].includes(request.resourceType())) {
+        request.abort();
+      } else {
+        request.continue();
+      }
+    });
+
+    await page.goto('https://example.com');
+    console.log('Page loaded without images');
+
+    await browser.disconnect();
+  }
+
+  main().catch(console.error);
+  ```
+</CodeGroup>

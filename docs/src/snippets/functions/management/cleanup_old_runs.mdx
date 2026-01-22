@@ -1,0 +1,35 @@
+<CodeGroup>
+  ```python Python
+  import json
+  from datetime import datetime, timedelta
+
+  def archive_old_runs(workflow_id: str, days_old: int = 30):
+      """Archive runs older than specified days."""
+      runs = client.workflows.list_runs(
+          workflow_id=workflow_id,
+          only_active=False
+      )
+
+      cutoff_date = datetime.now() - timedelta(days=days_old)
+      archive = []
+
+      for run in runs.runs:
+          run_date = datetime.fromisoformat(run.created_at.replace('Z', '+00:00'))
+
+          if run_date < cutoff_date:
+              archive.append({
+                  "run_id": run.workflow_run_id,
+                  "status": run.status,
+                  "created_at": run.created_at,
+                  "result": str(run.result)[:100]  # First 100 chars
+              })
+
+      # Save archive
+      with open(f"archives/{workflow_id}_{datetime.now().date()}.json", "w") as f:
+          json.dump(archive, f, indent=2)
+
+      print(f"Archived {len(archive)} old runs")
+
+  archive_old_runs("workflow_abc123")
+  ```
+</CodeGroup>

@@ -1,0 +1,12 @@
+```python
+from pydantic import BaseModel
+
+class ContactInfo(BaseModel):
+    email: str
+    phone: str | None
+
+result = agent.run(
+    task="Extract contact information",
+    response_format=ContactInfo
+)
+```

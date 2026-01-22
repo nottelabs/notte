@@ -1,9 +1,9 @@
 ```python fork_function.py
 from notte_sdk import NotteClient
 
-notte = NotteClient()
+client = NotteClient()
 
 function = notte.Function("<any-public-function-id>")
 # creates a private copy of the function (only works for public functions)
-function = function.fork()
+forked = function.fork()
 ```

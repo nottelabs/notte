@@ -1,0 +1,218 @@
+---
+title: Creating Functions
+description: Write and deploy browser automation Functions
+---
+
+import FormSubmission from "/snippets/functions/form_submission.mdx";
+import StructuredExtraction from "/snippets/functions/structured_extraction.mdx";
+import BasicFunction from "/snippets/functions/creating/basic_function.mdx";
+import FunctionWithParams from "/snippets/functions/creating/function_with_params.mdx";
+import BrowserAutomationFunction from "/snippets/functions/creating/browser_automation_function.mdx";
+import DeploySdk from "/snippets/functions/creating/deploy_sdk.mdx";
+import DeploymentOptions from "/snippets/functions/creating/deployment_options.mdx";
+import HandlerExamples from "/snippets/functions/creating/handler_examples.mdx";
+import Dependencies from "/snippets/functions/creating/dependencies.mdx";
+import ReturnValues from "/snippets/functions/creating/return_values.mdx";
+import ParameterTypes from "/snippets/functions/creating/parameter_types.mdx";
+import TypeValidation from "/snippets/functions/creating/type_validation.mdx";
+import ComplexTypes from "/snippets/functions/creating/complex_types.mdx";
+import EnvironmentVariables from "/snippets/functions/creating/environment_variables.mdx";
+import GracefulErrors from "/snippets/functions/creating/graceful_errors.mdx";
+import RaisingExceptions from "/snippets/functions/creating/raising_exceptions.mdx";
+import TestLocally from "/snippets/functions/creating/test_locally.mdx";
+import MockApiCalls from "/snippets/functions/creating/mock_api_calls.mdx";
+import DocumentParams from "/snippets/functions/creating/document_params.mdx";
+import ReturnStructured from "/snippets/functions/creating/return_structured.mdx";
+import AddLogging from "/snippets/functions/creating/add_logging.mdx";
+import SetTimeouts from "/snippets/functions/creating/set_timeouts.mdx";
+import ValidateInputs from "/snippets/functions/creating/validate_inputs.mdx";
+import SimpleScraper from "/snippets/functions/creating/simple_scraper.mdx";
+
+Learn how to write Function scripts and deploy them to Notte's serverless infrastructure.
+
+## Writing a Function
+
+Functions are Python scripts with a `run()` function that serves as the entry point.
+
+### Basic Function
+
+The minimal Function structure:
+
+<BasicFunction />
+
+### Function with Parameters
+
+Accept input parameters:
+
+<FunctionWithParams />
+
+### Browser Automation Function
+
+Use Notte SDK for browser automation:
+
+<BrowserAutomationFunction />
+
+## Deploying Functions
+
+### Via SDK
+
+Deploy from Python:
+
+<DeploySdk />
+
+### Deployment Options
+
+<DeploymentOptions />
+
+**Parameters:**
+- `workflow_path` (str, required): Path to your Python file
+- `name` (str, optional): Function display name
+- `description` (str, optional): What the function does
+- `shared` (bool, default=False): Whether function is publicly accessible
+
+## Function Requirements
+
+### The Handler
+
+Must have a `run()` function:
+
+<HandlerExamples />
+
+### Dependencies
+
+Import Notte SDK and standard libraries:
+
+<Dependencies />
+
+**Available packages:**
+- `notte-sdk` - Notte SDK
+- `requests` - HTTP client
+- `pydantic` - Data validation
+- Standard Python library
+- Most common packages
+
+### Return Values
+
+Return JSON-serializable data:
+
+<ReturnValues />
+
+## Parameter Types
+
+### Supported Types
+
+<ParameterTypes />
+
+### Type Validation
+
+Use type hints for automatic validation:
+
+<TypeValidation />
+
+### Complex Types
+
+Use Pydantic for structured parameters:
+
+<ComplexTypes />
+
+## Environment Variables
+
+Access secrets securely:
+
+<EnvironmentVariables />
+
+Set environment variables in Console or locally for testing.
+
+## Error Handling
+
+### Graceful Errors
+
+Return error information in results:
+
+<GracefulErrors />
+
+### Raising Exceptions
+
+Let Functions fail explicitly:
+
+<RaisingExceptions />
+
+## Testing Locally
+
+### Test Before Deploying
+
+Run your function locally:
+
+<TestLocally />
+
+### Mock API Calls
+
+Test without deploying:
+
+<MockApiCalls />
+
+## Best Practices
+
+### 1. Document Parameters
+
+Use clear docstrings:
+
+<DocumentParams />
+
+### 2. Return Structured Data
+
+Use consistent return formats:
+
+<ReturnStructured />
+
+### 3. Add Logging
+
+Log key steps for debugging:
+
+<AddLogging />
+
+### 4. Set Timeouts
+
+Prevent functions from hanging:
+
+<SetTimeouts />
+
+### 5. Validate Inputs
+
+Check parameters before processing:
+
+<ValidateInputs />
+
+## Examples
+
+### Simple Scraper
+
+<SimpleScraper />
+
+### Form Submission
+
+<FormSubmission />
+
+### Data Extraction
+
+<StructuredExtraction />
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Invocations" icon="play" href="/features/functions/invocations">
+    Learn how to call your Functions
+  </Card>
+
+  <Card title="Schedules" icon="clock" href="/features/functions/schedules">
+    Schedule Functions to run automatically
+  </Card>
+
+  <Card title="Management" icon="sliders" href="/features/functions/management">
+    Update and manage Functions
+  </Card>
+
+  <Card title="Functions Concept" icon="lightbulb" href="/concepts/functions">
+    Back to Functions overview
+  </Card>
+</CardGroup>

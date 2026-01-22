@@ -1,0 +1,12 @@
+<CodeGroup>
+  ```python Python
+  function = client.Function(function_id="func_abc123")
+
+  results = []
+  for url in urls:
+      result = function.run(url=url)
+      results.append(result.result)
+
+  print(results)
+  ```
+</CodeGroup>
