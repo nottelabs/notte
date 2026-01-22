@@ -145,7 +145,6 @@
           },
           {
             "tab": "API",
-            "openapi": "https://us-staging.notte.cc/openapi.json",
             "groups": [
               {
                 "group": "Getting Started",
@@ -154,146 +153,9 @@
                   "api-reference/errors",
                   "api-reference/rate-limits"
                 ]
-              },
-              {
-                "group": "Health",
-                "pages": [
-                  "GET /health"
-                ]
-              },
-              {
-                "group": "Sessions",
-                "pages": [
-                  "GET /sessions",
-                  "POST /sessions/start",
-                  "GET /sessions/{session_id}",
-                  "GET /sessions/{session_id}/workflow/code",
-                  "DELETE /sessions/{session_id}/stop",
-                  "POST /sessions/{session_id}/cookies",
-                  "GET /sessions/{session_id}/cookies"
-                ]
-              },
-              {
-                "group": "Page",
-                "pages": [
-                  "POST /sessions/{session_id}/page/observe",
-                  "POST /sessions/{session_id}/page/execute",
-                  "POST /sessions/{session_id}/page/scrape"
-                ]
-              },
-              {
-                "group": "Agents",
-                "pages": [
-                  "POST /agents/start",
-                  "GET /agents/{agent_id}",
-                  "GET /agents/{agent_id}/workflow/code",
-                  "DELETE /agents/{agent_id}/stop",
-                  "GET /agents/{agent_id}/replay",
-                  "GET /agents"
-                ]
-              },
-              {
-                "group": "Functions",
-                "pages": [
-                  "POST /functions",
-                  "GET /functions",
-                  "POST /functions/{function_id}",
-                  "GET /functions/{function_id}",
-                  "DELETE /functions/{function_id}",
-                  "POST /functions/{function_id}/fork",
-                  "POST /functions/{function_id}/schedule",
-                  "DELETE /functions/{function_id}/schedule",
-                  "POST /functions/{function_id}/runs/start",
-                  "GET /functions/{function_id}/runs/{run_id}",
-                  "PATCH /functions/{function_id}/runs/{run_id}",
-                  "DELETE /functions/{function_id}/runs/{run_id}",
-                  "GET /functions/{function_id}/runs"
-                ]
-              },
-              {
-                "group": "Vaults",
-                "pages": [
-                  "POST /vaults/create",
-                  "POST /vaults/{vault_id}/credentials",
-                  "GET /vaults/{vault_id}/credentials",
-                  "DELETE /vaults/{vault_id}/credentials",
-                  "GET /vaults/{vault_id}",
-                  "PATCH /vaults/{vault_id}",
-                  "DELETE /vaults/{vault_id}",
-                  "POST /vaults/{vault_id}/card",
-                  "GET /vaults/{vault_id}/card",
-                  "DELETE /vaults/{vault_id}/card",
-                  "GET /vaults"
-                ]
-              },
-              {
-                "group": "Personas",
-                "pages": [
-                  "POST /personas/create",
-                  "DELETE /personas/{persona_id}",
-                  "GET /personas/{persona_id}",
-                  "GET /personas/{persona_id}/emails",
-                  "POST /personas/{persona_id}/sms/number",
-                  "DELETE /personas/{persona_id}/sms/number",
-                  "GET /personas",
-                  "GET /personas/{persona_id}/sms"
-                ]
-              },
-              {
-                "group": "Profiles",
-                "pages": [
-                  "POST /profiles/create",
-                  "GET /profiles/{profile_id}",
-                  "DELETE /profiles/{profile_id}",
-                  "GET /profiles"
-                ]
-              },
-              {
-                "group": "Storage",
-                "pages": [
-                  "GET /storage/{session_id}/downloads/{filename}",
-                  "POST /storage/{session_id}/downloads/{filename}",
-                  "GET /storage/{session_id}/downloads",
-                  "POST /storage/uploads/{filename}",
-                  "GET /storage/uploads"
-                ]
-              },
-              {
-                "group": "Scrape",
-                "pages": [
-                  "POST /scrape",
-                  "POST /scrape_from_html"
-                ]
-              },
-              {
-                "group": "Usage",
-                "pages": [
-                  "GET /usage",
-                  "GET /usage/logs"
-                ]
-              },
-              {
-                "group": "Debug",
-                "pages": [
-                  "GET /sessions/{session_id}/debug",
-                  "GET /sessions/{session_id}/replay",
-                  "GET /sessions/{session_id}/offset"
-                ]
-              },
-              {
-                "group": "Network",
-                "pages": [
-                  "GET /sessions/{session_id}/network/logs"
-                ]
-              },
-              {
-                "group": "Prompts",
-                "pages": [
-                  "POST /prompts/improve",
-                  "POST /prompts/nudge"
-                ]
               }
-            ]
+            ],
+            "openapi": "https://us-staging.notte.cc/openapi.json"
           },
           {
             "tab": "SDK",
