@@ -1,8 +1,13 @@
 ```python
-result = agent.run(task="Complete task")
+from notte_sdk import NotteClient
 
-if result.success:
-    print(result.answer)
-else:
-    print(f"Agent failed: {result.error}")
+client = NotteClient()
+
+with client.Session() as session:
+    result = agent.run(task="Complete task")
+
+    if result.success:
+        print(result.answer)
+    else:
+        print(f"Agent failed: {result.answer}")
 ```

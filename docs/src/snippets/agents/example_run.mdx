@@ -1,8 +1,8 @@
 ```python
-import os
 from notte_sdk import NotteClient
 
-notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+client = NotteClient()
+
 with client.Session() as session:
     agent = client.Agent(session=session, max_steps=5)
     response = agent.run(
