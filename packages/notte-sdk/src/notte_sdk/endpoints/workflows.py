@@ -784,7 +784,7 @@ class RemoteWorkflow:
 
         > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
         """
-        if function_run_id is not None and workflow_run_id is not None:
+        if (function_run_id is not None and workflow_run_id is not None) and function_run_id != workflow_run_id:
             raise ValueError("Cannot specify both 'function_run_id' and 'workflow_run_id' with different values")
         function_run_id = function_run_id or workflow_run_id
         # first create the run on DB
