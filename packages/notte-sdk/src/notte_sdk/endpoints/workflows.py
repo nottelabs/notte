@@ -768,6 +768,7 @@ class RemoteWorkflow:
         stream: bool = True,
         raise_on_failure: bool = True,
         function_run_id: str | None = None,
+        workflow_run_id: str | None = None,
         log_callback: Callable[[str], None] | None = None,
         **variables: Any,
     ) -> FunctionRunResponse:
@@ -783,6 +784,9 @@ class RemoteWorkflow:
 
         > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
         """
+        if function_run_id is not None and workflow_run_id is not None:
+            raise ValueError("Cannot specify both 'function_run_id' and 'workflow_run_id' with different values")
+        function_run_id = function_run_id or workflow_run_id
         # first create the run on DB
         if function_run_id is None:
             create_run_response = self.client.create_run(self.function_id, local=local)
