@@ -1,0 +1,29 @@
+---
+title: "function_code"
+description: "Retrieves a script that reproduces the steps of the specified agent"
+---
+
+
+
+Queries the API using a validated agent ID.
+The provided ID is confirmed (or obtained from the last response if needed), and the
+resulting script is stored internally before being returned.
+
+
+
+## Parameters
+
+<ParamField path="agent_id" type="str" required>
+  Unique identifier of the agent to check.
+</ParamField>
+
+<ParamField path="as_workflow" type="bool" default="True">
+</ParamField>
+
+## Returns
+
+[`AgentFunctionCodeResponse`](/sdk-reference/misc/agentfunctioncoderesponse): The script that reproduces the steps of the specified agent
+
+## Raises
+
+- `ValueError`: If no valid agent ID can be determined.

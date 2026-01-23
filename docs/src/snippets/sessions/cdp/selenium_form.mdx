@@ -1,0 +1,39 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  def automate_form():
+      with client.Session(headless=False) as session:
+          page = session.page
+
+          # Navigate to form
+          page.goto("https://example.com/contact")
+
+          # Fill form fields
+          page.fill('input[name="name"]', "John Doe")
+          page.fill('input[name="email"]', "john@example.com")
+          page.fill('textarea[name="message"]', "Hello, this is a test message")
+
+          # Select from dropdown
+          page.select_option('select[name="topic"]', "support")
+
+          # Check checkbox
+          page.check('input[name="subscribe"]')
+
+          # Submit form
+          page.click('button[type="submit"]')
+
+          # Wait for success message
+          page.wait_for_selector("div.success")
+
+          success_message = page.locator("div.success").inner_text()
+          print(f"Success: {success_message}")
+
+          # Take screenshot
+          page.screenshot(path="success.png")
+
+  automate_form()
+  ```
+</CodeGroup>

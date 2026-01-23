@@ -15,12 +15,12 @@ cookies = [
     )
 ]
 # create a new session
-notte = NotteClient()
-with notte.Session() as session:
-	session.set_cookies(cookies=cookies)  # can also set cookie_file="path/to/cookies.json"
+client = NotteClient()
+with client.Session() as session:
+	_ = session.set_cookies(cookies=cookies) # can also set cookie_file="path/to/cookies.json"
 
 	# Use the cookies in your session
-	agent = notte.Agent(session=session, max_steps=5)
+	agent = client.Agent(session=session, max_steps=5)
 	res = agent.run(
 		task="go to nottelabs/notte get repo info. Fail if you are not logged in",
 		url="https://github.com/nottelabs/notte",

@@ -7,6 +7,34 @@ description: "Base class for storage implementations that handle upload and down
 
 ## Methods
 
+### alist_downloaded_files
+
+```python
+alist_downloaded_files() -> list[str]
+```
+
+List files that have been downloaded into storage by the agents
+
+**Returns:**
+
+`list`
+
+---
+
+### alist_uploaded_files
+
+```python
+alist_uploaded_files() -> list[str]
+```
+
+List files that have been uploaded to storage
+
+**Returns:**
+
+`list`
+
+---
+
 ### download
 
 ```python
@@ -55,11 +83,11 @@ Return LLM instructions to append to the prompt
 list_downloaded_files() -> list[str]
 ```
 
-List files that have been downloaded into storage by the agents
+List all files in the download_dir
 
 **Returns:**
 
-`list`
+`list`[`str`]
 
 ---
 
@@ -69,11 +97,11 @@ List files that have been downloaded into storage by the agents
 list_uploaded_files() -> list[str]
 ```
 
-List files that have been uploaded to storage
+List all files from the upload_dir
 
 **Returns:**
 
-`list`
+`list`[`str`]
 
 ---
 

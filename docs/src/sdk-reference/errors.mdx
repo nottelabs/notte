@@ -1,0 +1,65 @@
+---
+title: Error Handling
+description: Handle errors in the Notte SDK
+---
+
+The SDK raises specific exceptions for different error types.
+
+## Exception types
+
+```python
+from notte_sdk.errors import (
+    AuthenticationError,
+    NotteAPIError,
+    NotteAPIExecutionError,
+    InvalidRequestError,
+)
+```
+
+| Exception | When raised |
+|-----------|-------------|
+| `AuthenticationError` | API key is missing or invalid |
+| `InvalidRequestError` | Request parameters are invalid |
+| `NotteAPIExecutionError` | Operation failed during execution |
+| `NotteAPIError` | General API error (base class) |
+
+## Handling errors
+
+```python
+from notte_sdk import NotteClient
+from notte_sdk.errors import (
+    AuthenticationError,
+    NotteAPIError,
+    NotteAPIExecutionError,
+    InvalidRequestError,
+)
+
+client = NotteClient()
+
+try:
+    with client.Session() as session:
+        session.execute(type="goto", url="https://example.com")
+except AuthenticationError as e:
+    print(f"Auth error: {e}")
+except InvalidRequestError as e:
+    print(f"Invalid request: {e}")
+except NotteAPIExecutionError as e:
+    print(f"Execution error: {e}")
+except NotteAPIError as e:
+    print(f"API error (status {e.status_code}): {e.error}")
+```
+
+## SDK version mismatch
+
+If you see validation errors about "extra inputs not permitted," upgrade your SDK:
+
+```bash
+pip install --upgrade notte-sdk
+```
+
+The SDK warns you when updates are available:
+
+```
+You are using notte-sdk version 1.7.3, but version 1.7.4 is available.
+Run 'pip install notte-sdk==1.7.4' to avoid any interruptions.
+```

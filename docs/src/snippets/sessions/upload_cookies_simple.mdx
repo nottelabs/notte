@@ -1,5 +1,5 @@
 ```python upload_cookies.py
-from notte_sdk import NotteClient, actions
+from notte_sdk import NotteClient
 
 # Upload cookies for github.com to automatically login
 cookies = [
@@ -15,8 +15,8 @@ cookies = [
     )
 ]
 
-notte = NotteClient()
-with notte.Session() as session:
-    session.set_cookies(cookies=cookies)  # can also set cookie_file="path/to/cookies.json"
+client = NotteClient()
+with client.Session() as session:
+    _ = session.set_cookies(cookies=cookies) # can also set cookie_file="path/to/cookies.json"
     session.execute(type="goto", url="https://github.com/nottelabs/notte")
 ```

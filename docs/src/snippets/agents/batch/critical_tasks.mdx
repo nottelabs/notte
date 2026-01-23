@@ -1,0 +1,13 @@
+```python
+# Critical: Use batch
+with client.Session() as session:
+    batch_agent = BatchRemoteAgent(session=session, _client=client)
+    result = await batch_agent.run(
+        task="Process payment",
+        n_jobs=3
+    )
+
+# Non-critical: Use single agent
+agent = client.Agent(session=session)
+result = agent.run(task="Nice-to-have data")
+```

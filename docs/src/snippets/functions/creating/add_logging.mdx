@@ -1,0 +1,19 @@
+<CodeGroup>
+  ```python Python
+  from loguru import logger
+
+  def run(url: str):
+      logger.info(f"Starting scrape of {url}")
+
+      client = NotteClient()
+      with client.Session() as session:
+          logger.info("Session created")
+          session.execute(type="goto", url=url)
+          logger.info("Page loaded")
+
+          data = session.scrape()
+          logger.info(f"Extracted {len(data)} items")
+
+      return data
+  ```
+</CodeGroup>

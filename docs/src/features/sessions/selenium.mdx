@@ -1,0 +1,341 @@
+---
+title: Connect with Selenium
+description: Use Selenium with Notte sessions via Chrome DevTools Protocol
+---
+
+import SeleniumConnect from '/snippets/sessions/cdp/selenium_connect.mdx';
+import SeleniumForm from '/snippets/sessions/cdp/selenium_form.mdx';
+
+Notte sessions can be controlled with Selenium 4's CDP support. This allows you to use Selenium's WebDriver API while benefiting from Notte's cloud infrastructure, anti-detection features, and session management.
+
+## Prerequisites
+
+Install Selenium 4+ alongside the Notte SDK:
+
+```bash
+pip install notte-sdk selenium>=4.0.0
+```
+
+<Note>
+  Selenium 4 or higher is required for CDP support. Earlier versions do not support connecting to remote browsers via CDP.
+</Note>
+
+## Connect Selenium to Notte Session
+
+Start a Notte session and connect Selenium to it using the CDP URL:
+
+<SeleniumConnect />
+
+<Warning>
+  The CDP connection approach shown above works in most cases, but Selenium's CDP support may vary by version. For more reliable connections, consider using the Remote WebDriver approach below.
+</Warning>
+
+## Alternative: Using Notte's Built-in Page
+
+A more reliable way is to use Notte's built-in Playwright page directly:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    # Access the Playwright page directly
+    page = session.page
+
+    # Use Playwright for automation
+    page.goto("https://example.com")
+    print(f"Title: {page.title()}")
+```
+
+<Tip>
+  For Python-based automation with Notte, we recommend using **Playwright** instead of Selenium. Notte sessions include a built-in Playwright page (`session.page`) that's easier to use and better integrated.
+</Tip>
+
+## Basic Web Automation
+
+If you're using Selenium with Notte, here's a basic example using Playwright (recommended):
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    page = session.page
+
+    # Navigate
+    page.goto("https://example.com/login")
+
+    # Fill form
+    page.fill('input[name="email"]', "user@example.com")
+    page.fill('input[name="password"]', "password123")
+
+    # Click submit
+    page.click('button[type="submit"]')
+
+    # Wait for navigation
+    page.wait_for_url("**/dashboard")
+
+    print(f"Logged in: {page.title()}")
+```
+
+## Finding Elements
+
+Use Playwright-style element selection with Notte's page:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
+
+    # CSS selectors
+    element = page.query_selector("div.content")
+
+    # XPath (use locator with xpath)
+    element = page.locator("xpath=//div[@class='content']")
+
+    # Get text content
+    text = page.locator("h1").inner_text()
+    print(f"Heading: {text}")
+
+    # Get attribute
+    href = page.locator("a.link").get_attribute("href")
+    print(f"Link: {href}")
+```
+
+## Waiting for Elements
+
+Wait for elements to appear or conditions to be met:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
+
+    # Wait for element to be visible
+    page.wait_for_selector("div.content", state="visible")
+
+    # Wait for element to be hidden
+    page.wait_for_selector("div.loading", state="hidden")
+
+    # Wait for URL pattern
+    page.click("a.next")
+    page.wait_for_url("**/page2")
+
+    # Wait with timeout
+    page.wait_for_selector("div.result", timeout=10000)  # 10 seconds
+```
+
+## Taking Screenshots
+
+Capture screenshots during automation:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
+
+    # Full page screenshot
+    page.screenshot(path="screenshot.png", full_page=True)
+
+    # Screenshot of specific element
+    element = page.locator("div.content")
+    element.screenshot(path="element.png")
+
+    # Screenshot to bytes
+    screenshot_bytes = page.screenshot()
+```
+
+## Executing JavaScript
+
+Run custom JavaScript in the page context:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
+
+    # Execute JavaScript
+    result = page.evaluate("document.title")
+    print(f"Title: {result}")
+
+    # Execute complex script
+    data = page.evaluate("""
+        () => {
+            const items = document.querySelectorAll('.item');
+            return Array.from(items).map(item => item.textContent);
+        }
+    """)
+    print(f"Items: {data}")
+
+    # Pass arguments to JavaScript
+    result = page.evaluate("x => x * 2", 5)
+    print(f"Result: {result}")  # 10
+```
+
+## Handling Alerts and Dialogs
+
+Manage browser dialogs using Playwright:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    page = session.page
+
+    # Set up dialog handler before triggering
+    page.on("dialog", lambda dialog: dialog.accept())
+
+    page.goto("https://example.com")
+
+    # Click button that shows alert
+    page.click("button#show-alert")
+
+    # Dialog is automatically accepted
+```
+
+## Working with Frames
+
+Access iframe content:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
+
+    # Get frame by selector
+    frame = page.frame_locator("iframe#content")
+
+    # Interact with elements inside frame
+    frame.locator("button").click()
+
+    # Get text from frame
+    text = frame.locator("h1").inner_text()
+    print(f"Frame heading: {text}")
+```
+
+## Why Use Playwright Instead of Selenium?
+
+For Notte sessions, **Playwright is recommended over Selenium** because:
+
+1. **Native Integration**: Notte sessions include a built-in Playwright page (`session.page`)
+2. **Better API**: Playwright has a modern, async-friendly API with better selectors
+3. **Auto-waiting**: Playwright automatically waits for elements to be ready
+4. **Network Control**: Built-in network interception and mocking
+5. **Multiple Contexts**: Easier to manage multiple browser contexts
+6. **Better Performance**: Playwright is generally faster and more reliable
+
+### Selenium is best when:
+- You have existing Selenium test suites you want to migrate
+- Your team is already trained in Selenium
+- You're using Selenium Grid infrastructure
+
+### Playwright is best when:
+- You're starting a new automation project
+- You want modern browser automation features
+- You value simplicity and better debugging
+
+## Migration from Selenium
+
+If you're migrating from Selenium, here's a quick comparison:
+
+| Selenium | Playwright (Notte) |
+|----------|-------------------|
+| `driver.get(url)` | `page.goto(url)` |
+| `driver.find_element(By.CSS_SELECTOR, "button")` | `page.locator("button")` |
+| `element.click()` | `page.click("button")` |
+| `element.send_keys("text")` | `page.fill("input", "text")` |
+| `driver.execute_script("...")` | `page.evaluate("...")` |
+| `WebDriverWait(driver, 10).until(...)` | `page.wait_for_selector("...")` |
+| `driver.save_screenshot("path")` | `page.screenshot(path="path")` |
+
+## Complete Example: Form Automation
+
+Here's a complete example using Playwright with Notte (recommended approach):
+
+<SeleniumForm />
+
+## Best Practices
+
+### 1. Use Playwright Instead
+
+For new projects with Notte, use Playwright instead of Selenium:
+
+```python
+page = session.page  # Built-in Playwright page
+```
+
+### 2. Explicit Waits
+
+Always wait for elements before interacting:
+
+```python
+page.wait_for_selector("button")
+page.click("button")
+```
+
+### 3. Unique Selectors
+
+Use unique, stable selectors:
+
+```python
+# Good
+page.click('button[data-testid="submit"]')
+
+# Avoid
+page.click('button:nth-child(3)')
+```
+
+### 4. Error Handling
+
+Wrap operations in try-except blocks:
+
+```python
+try:
+    page.click("button", timeout=5000)
+except Exception as e:
+    print(f"Click failed: {e}")
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Connect with Playwright" icon="p" href="/features/sessions/playwright">
+    Use Playwright with Notte (Recommended)
+  </Card>
+
+  <Card title="Connect with Puppeteer" icon="node-js" href="/features/sessions/puppeteer">
+    Use Puppeteer with Notte sessions
+  </Card>
+
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Configure session settings
+  </Card>
+
+  <Card title="External Browser Providers" icon="cloud" href="/features/sessions/external-providers">
+    Connect Notte to Kernel.sh and other providers
+  </Card>
+</CardGroup>

@@ -208,6 +208,7 @@ interviews/
 # docs ignored files
 docs/src/sdk-reference/misc/title.mdx
 docs/src/sdk-reference/misc/element.mdx
+docs/src/openapi.json
 
 # Observability / Profiling outputs
 *.svg

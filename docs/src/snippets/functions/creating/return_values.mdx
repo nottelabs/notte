@@ -1,0 +1,14 @@
+<CodeGroup>
+  ```python Python
+  # ✅ Valid returns
+  return "string"
+  return 123
+  return {"key": "value"}
+  return ["item1", "item2"]
+  return None
+
+  # ❌ Invalid returns
+  return datetime.now()  # Not JSON serializable
+  return lambda x: x  # Functions not serializable
+  ```
+</CodeGroup>

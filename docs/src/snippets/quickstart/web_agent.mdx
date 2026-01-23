@@ -1,0 +1,19 @@
+<CodeGroup>
+```python Python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session(open_viewer=True) as session:
+    agent = client.Agent(session=session, max_steps=5)
+
+    response = agent.run(
+        task="Browse on Notte docs and book a demo for me",
+        url="https://docs.notte.cc"
+    )
+    print(response)
+```
+```javascript JavaScript
+// Coming soon
+```
+</CodeGroup>

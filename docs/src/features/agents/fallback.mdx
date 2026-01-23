@@ -1,0 +1,212 @@
+---
+title: Agent Fallback
+description: Automatically recover from script failures with AI agents
+---
+
+import AgentFallbackExample from "/snippets/agents/agent_fallback_example.mdx";
+import NormalExecution from "/snippets/agents/fallback/normal_execution.mdx";
+import AutomaticRecovery from "/snippets/agents/fallback/automatic_recovery.mdx";
+import Continuation from "/snippets/agents/fallback/continuation.mdx";
+import FragileSelectors from "/snippets/agents/fallback/fragile_selectors.mdx";
+import DynamicContent from "/snippets/agents/fallback/dynamic_content.mdx";
+import AbTesting from "/snippets/agents/fallback/ab_testing.mdx";
+import GracefulDegradation from "/snippets/agents/fallback/graceful_degradation.mdx";
+import TaskDescription from "/snippets/agents/fallback/task_description.mdx";
+import AgentParameters from "/snippets/agents/fallback/agent_parameters.mdx";
+import VaultAndPersona from "/snippets/agents/fallback/vault_and_persona.mdx";
+import FallbackProperties from "/snippets/agents/fallback/fallback_properties.mdx";
+import SuccessProperty from "/snippets/agents/fallback/success_property.mdx";
+import AgentResponse from "/snippets/agents/fallback/agent_response.mdx";
+import InspectingSteps from "/snippets/agents/fallback/inspecting_steps.mdx";
+import BrittleWorkflows from "/snippets/agents/fallback/brittle_workflows.mdx";
+import SpecificTasks from "/snippets/agents/fallback/specific_tasks.mdx";
+import FastPathFirst from "/snippets/agents/fallback/fast_path_first.mdx";
+import ComplexLogic from "/snippets/agents/fallback/complex_logic.mdx";
+import MonitorFallbackRate from "/snippets/agents/fallback/monitor_fallback_rate.mdx";
+import NotSupported from "/snippets/agents/fallback/not_supported.mdx";
+import ErrorHandling from "/snippets/agents/fallback/error_handling.mdx";
+
+Agent Fallback automatically spawns an AI agent when deterministic script execution fails, providing intelligent error recovery without manual intervention.
+
+## Overview
+
+When executing session actions, failures can occur due to:
+- Elements not found
+- Unexpected page changes
+- Timing issues
+- Dynamic content
+
+Agent Fallback catches these failures and uses an agent to recover:
+
+<AgentFallbackExample />
+
+## How It Works
+
+### 1. Normal Execution
+
+Actions execute normally when they succeed:
+
+<NormalExecution />
+
+### 2. Automatic Recovery
+
+When an action fails, the agent spawns:
+
+<AutomaticRecovery />
+
+### 3. Continuation
+
+After agent recovery, remaining actions are skipped:
+
+<Continuation />
+
+## Use Cases
+
+### 1. Fragile Selectors
+
+Handle pages with frequently changing selectors:
+
+<FragileSelectors />
+
+### 2. Dynamic Content
+
+Handle dynamically loaded content:
+
+<DynamicContent />
+
+### 3. A/B Testing
+
+Handle pages with multiple variations:
+
+<AbTesting />
+
+### 4. Graceful Degradation
+
+Start with fast scripts, fall back to AI when needed:
+
+<GracefulDegradation />
+
+## Configuration
+
+### Task Description
+
+The task guides the agent when it's invoked:
+
+<TaskDescription />
+
+### Agent Parameters
+
+Pass agent configuration:
+
+<AgentParameters />
+
+### Vault and Persona
+
+Provide credentials to the agent:
+
+<VaultAndPersona />
+
+## Fallback Properties
+
+Access information about the fallback execution:
+
+<FallbackProperties />
+
+### Success
+
+Whether the task was completed successfully:
+
+<SuccessProperty />
+
+### Agent Response
+
+Details from the agent if it was invoked:
+
+<AgentResponse />
+
+<Accordion title="Inspecting Individual Steps">
+  Access detailed information about each execution attempt:
+
+  <InspectingSteps />
+
+  This is useful for debugging which specific action triggered the agent fallback.
+</Accordion>
+
+## Best Practices
+
+### 1. Use for Brittle Workflows
+
+Ideal for pages that change frequently:
+
+<BrittleWorkflows />
+
+### 2. Be Specific in Tasks
+
+Clear tasks help the agent understand what to do:
+
+<SpecificTasks />
+
+### 3. Try Fast Path First
+
+Put cheap, fast actions inside the fallback:
+
+<FastPathFirst />
+
+### 4. Don't Use for Complex Logic
+
+Fallback is for single-goal recovery, not complex workflows:
+
+<ComplexLogic />
+
+### 5. Monitor Fallback Rate
+
+Track how often agents are invoked:
+
+<MonitorFallbackRate />
+
+## Limitations
+
+### Not Supported
+
+Agent Fallback does not support:
+
+- `session.scrape()` calls
+- `raise_on_failure=True` on actions
+- Multiple nested fallbacks
+
+<NotSupported />
+
+### When Not to Use
+
+Don't use Agent Fallback for:
+
+- Tasks that always fail (fix the script instead)
+- Complex multi-step workflows (use full agent)
+- Scraping/data extraction (use session.scrape or agents)
+- When you need structured output (use agent with response_format)
+
+## Error Handling
+
+Handle failures gracefully:
+
+<ErrorHandling />
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle">
+    Understand agent execution modes
+  </Card>
+
+  <Card title="Configuration" icon="sliders" href="/features/agents/configuration">
+    Configure agent parameters
+  </Card>
+
+  <Card title="Session Actions" icon="hand-pointer" href="/sdk-reference/manual/session">
+    Learn about session actions
+  </Card>
+
+  <Card title="Best Practices" icon="lightbulb" href="/guides/reliability">
+    Build reliable automations
+  </Card>
+</CardGroup>

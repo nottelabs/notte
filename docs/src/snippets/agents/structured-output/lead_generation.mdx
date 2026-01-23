@@ -1,0 +1,17 @@
+```python
+from pydantic import BaseModel
+
+class Lead(BaseModel):
+    company_name: str
+    contact_person: str | None
+    email: str
+    phone: str | None
+    industry: str | None
+    website: str
+
+result = agent.run(
+    task="Extract company contact details",
+    url="https://example.com/about",
+    response_format=Lead
+)
+```

@@ -1,0 +1,15 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+  # Check run status
+  run_status = client.functions.get_run(
+      function_id="function_abc123",
+      run_id=run_id
+  )
+
+  print(f"Status: {run_status.status}")  # "active", "closed", "failed"
+  print(f"Result: {run_status.result}")
+  ```
+</CodeGroup>

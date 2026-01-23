@@ -1,0 +1,21 @@
+```python
+# Get page markdown
+markdown = session.scrape()
+
+# Extract with instructions
+data = session.scrape(
+    instructions="Extract all product names and prices"
+)
+
+# Structured extraction
+from pydantic import BaseModel
+
+class Product(BaseModel):
+    name: str
+    price: float
+
+products = session.scrape(
+    response_format=list[Product],
+    instructions="Extract all products"
+)
+```

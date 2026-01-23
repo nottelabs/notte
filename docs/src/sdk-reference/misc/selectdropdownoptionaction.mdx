@@ -37,6 +37,10 @@ session.execute(type="select_dropdown_option", id="size-select", value="Large")
 <ParamField path="param" type="UnionType[ActionParameter, None]" default="name=&#x27;value&#x27; type=&#x27;str&#x27; default=None values=[]">
 </ParamField>
 
+<ParamField path="timeout" type="int" default="5000">
+  Action timeout in milliseconds
+</ParamField>
+
 <ParamField path="value" type="UnionType[str, ValueWithPlaceholder]" required>
 </ParamField>
 

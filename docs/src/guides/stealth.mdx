@@ -41,12 +41,12 @@ Different browsers have varying levels of detection resistance. Experiment with 
 ```python
 from notte_sdk import NotteClient
 
-notte = NotteClient()
+client = NotteClient()
 
 # Try different browser types
 browsers = ["chromium", "chrome", "firefox"]
 for browser in browsers:
-	with notte.Session(
+	with client.Session(
 		browser_type=browser,
 		proxies=True,
 		solve_captchas=True

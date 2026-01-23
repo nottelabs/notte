@@ -1,0 +1,400 @@
+---
+title: Scraping
+description: Extract content and structured data from web pages
+---
+
+Extract web page content as markdown or structured data using LLM-powered extraction.
+
+## Quick Start
+
+Scrape any URL in one line:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+markdown = client.scrape("https://example.com")
+print(markdown)
+```
+
+## Scraping Methods
+
+Notte provides two ways to scrape:
+
+| Method | Use Case |
+|--------|----------|
+| `client.scrape(url)` | Quick, one-off scrapes |
+| `session.scrape()` | Scraping after navigation or authentication |
+
+### Quick Scrape
+
+For simple scraping without session management:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Returns markdown content
+markdown = client.scrape("https://example.com")
+```
+
+### Session-Based Scrape
+
+For scraping after authentication or navigation:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    # Navigate and authenticate
+    session.execute(type="goto", url="https://example.com/login")
+    session.execute(type="fill", selector="input[name='email']", value="user@example.com")
+    session.execute(type="fill", selector="input[name='password']", value="password")
+    session.execute(type="click", selector="button[type='submit']")
+
+    # Navigate to protected page
+    session.execute(type="goto", url="https://example.com/dashboard")
+
+    # Scrape the page
+    content = session.scrape()
+```
+
+## Structured Extraction
+
+Extract data into typed Python objects using Pydantic models. The extraction is powered by an LLM that understands the page content and extracts the specified fields.
+
+### Using Pydantic Models
+
+Define a schema and extract matching data:
+
+```python
+from pydantic import BaseModel
+from notte_sdk import NotteClient
+
+class Product(BaseModel):
+    name: str
+    price: float
+    description: str
+
+client = NotteClient()
+result = client.scrape(
+    "https://example.com/product",
+    response_format=Product,
+    instructions="Extract the product details"
+)
+
+print(result.data.name)
+print(result.data.price)
+```
+
+### Using Instructions Only
+
+For flexible extraction without a strict schema:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+result = client.scrape(
+    "https://example.com/article",
+    instructions="Extract the article title, author, and publication date"
+)
+
+print(result.data)
+```
+
+### Extracting Lists
+
+Extract multiple items from a page:
+
+```python
+from pydantic import BaseModel
+from notte_sdk import NotteClient
+
+class Article(BaseModel):
+    title: str
+    url: str
+    summary: str
+
+class ArticleList(BaseModel):
+    articles: list[Article]
+
+client = NotteClient()
+result = client.scrape(
+    "https://news.example.com",
+    response_format=ArticleList,
+    instructions="Extract all articles from the homepage"
+)
+
+for article in result.data.articles:
+    print(f"{article.title}: {article.url}")
+```
+
+### Nested Structures
+
+Handle complex, nested data:
+
+```python
+from pydantic import BaseModel
+from notte_sdk import NotteClient
+
+class Address(BaseModel):
+    street: str
+    city: str
+    country: str
+
+class Company(BaseModel):
+    name: str
+    description: str
+    address: Address
+    employee_count: int | None
+
+client = NotteClient()
+result = client.scrape(
+    "https://example.com/about",
+    response_format=Company,
+    instructions="Extract company information including address"
+)
+
+print(result.data.address.city)
+```
+
+## Image Extraction
+
+Extract all images from a page:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+images = client.scrape("https://example.com/gallery", only_images=True)
+
+for image in images:
+    print(f"URL: {image.url}")
+    print(f"Alt text: {image.alt}")
+```
+
+## Configuration Options
+
+### Content Filtering
+
+Control what content gets extracted:
+
+```python
+# Only main content (excludes navbars, footers, sidebars)
+markdown = client.scrape(url, only_main_content=True)  # Default
+
+# Include all page content
+markdown = client.scrape(url, only_main_content=False)
+```
+
+### Links and Images
+
+Control link and image extraction:
+
+```python
+# Include links (default)
+markdown = client.scrape(url, scrape_links=True)
+
+# Exclude links
+markdown = client.scrape(url, scrape_links=False)
+
+# Include images in markdown
+markdown = client.scrape(url, scrape_images=True)
+
+# Exclude images (default)
+markdown = client.scrape(url, scrape_images=False)
+```
+
+### Scoped Scraping
+
+Scrape only a specific section of the page:
+
+```python
+# Scrape content within a specific selector
+content = session.scrape(selector="article.main-content")
+
+# Scrape a specific container
+content = session.scrape(selector="#product-details")
+```
+
+### Link Placeholders
+
+Reduce output size by using placeholders:
+
+```python
+# Use placeholders for links and images
+markdown = client.scrape(url, use_link_placeholders=True)
+```
+
+## Return Types
+
+The scrape method returns different types based on parameters:
+
+| Parameters | Return Type |
+|------------|-------------|
+| None | `str` (markdown) |
+| `instructions` | `StructuredData[BaseModel]` |
+| `response_format` | `StructuredData[YourModel]` |
+| `only_images=True` | `list[ImageData]` |
+
+### StructuredData Response
+
+When using structured extraction:
+
+```python
+result = client.scrape(url, response_format=Product)
+
+# Access the extracted data
+product = result.data  # Your Pydantic model instance
+
+# Access raw response
+print(result.raw)
+```
+
+## Use Cases
+
+### Data Collection
+
+Collect product information:
+
+```python
+from pydantic import BaseModel
+from notte_sdk import NotteClient
+
+class ProductInfo(BaseModel):
+    name: str
+    price: float
+    rating: float | None
+    reviews_count: int | None
+
+client = NotteClient()
+
+urls = [
+    "https://store.example.com/product/1",
+    "https://store.example.com/product/2",
+]
+
+products = []
+for url in urls:
+    result = client.scrape(url, response_format=ProductInfo)
+    products.append(result.data)
+```
+
+### Content Monitoring
+
+Track content changes:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Get current content
+content = client.scrape(
+    "https://example.com/pricing",
+    instructions="Extract all pricing tiers and their features"
+)
+
+# Compare with previous version
+# ...
+```
+
+### Research and Analysis
+
+Extract structured research data:
+
+```python
+from pydantic import BaseModel
+from notte_sdk import NotteClient
+
+class ResearchPaper(BaseModel):
+    title: str
+    authors: list[str]
+    abstract: str
+    publication_date: str | None
+    citations: int | None
+
+client = NotteClient()
+result = client.scrape(
+    "https://papers.example.com/paper/123",
+    response_format=ResearchPaper
+)
+```
+
+## Best Practices
+
+### 1. Use Specific Instructions
+
+Clear instructions improve extraction accuracy:
+
+```python
+# Good
+instructions = "Extract the product name, price in USD, and availability status"
+
+# Vague
+instructions = "Get product info"
+```
+
+### 2. Define Precise Schemas
+
+Match your schema to the actual page content:
+
+```python
+# Good - matches page structure
+class Product(BaseModel):
+    name: str
+    price: float
+    in_stock: bool
+
+# Bad - fields that may not exist
+class Product(BaseModel):
+    name: str
+    price: float
+    manufacturer: str  # Page might not have this
+    warranty: str      # Page might not have this
+```
+
+### 3. Handle Missing Data
+
+Use optional fields for data that might not exist:
+
+```python
+class Product(BaseModel):
+    name: str
+    price: float
+    discount_price: float | None = None  # Optional
+    rating: float | None = None          # Optional
+```
+
+### 4. Scope Your Scrapes
+
+Use selectors to focus on relevant content:
+
+```python
+# Scrape only the main article, not comments or sidebar
+content = session.scrape(selector="article.main")
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Browser Sessions" icon="browser" href="/concepts/sessions">
+    Learn about session management
+  </Card>
+
+  <Card title="Browser Agents" icon="robot" href="/concepts/agents">
+    Use AI agents for complex scraping
+  </Card>
+
+  <Card title="Vaults" icon="lock" href="/concepts/vaults">
+    Store credentials for authenticated scraping
+  </Card>
+
+  <Card title="Functions" icon="function" href="/concepts/functions">
+    Deploy scraping as serverless functions
+  </Card>
+</CardGroup>

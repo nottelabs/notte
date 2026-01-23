@@ -1,0 +1,146 @@
+---
+title: Browser Types
+description: Choose between Chromium, Chrome, and Firefox for your sessions
+---
+
+Notte supports multiple browser engines, allowing you to choose the right browser for your automation needs.
+
+## Supported Browsers
+
+### Chromium (Default)
+
+Chromium is the open-source browser that powers Chrome. It's the default and recommended option for most use cases.
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  with client.Session(browser_type="chromium") as session:
+      page = session.page
+      page.goto("https://example.com")
+  ```
+</CodeGroup>
+
+**Best for:**
+- General web automation
+- Fast performance
+- Wide compatibility
+
+### Chrome
+
+Google Chrome with additional Google-specific features and branding.
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  with client.Session(browser_type="chrome") as session:
+      page = session.page
+      page.goto("https://example.com")
+  ```
+</CodeGroup>
+
+**Best for:**
+- Sites that detect Chromium vs Chrome
+- Google service automation
+- Maximum compatibility
+
+### Firefox
+
+Mozilla Firefox browser engine.
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  with client.Session(browser_type="firefox") as session:
+      page = session.page
+      page.goto("https://example.com")
+  ```
+</CodeGroup>
+
+**Best for:**
+- Sites that work better on Firefox
+- Different fingerprinting profile
+- **Required for captcha solving**
+
+<Warning>
+  Captcha solving is only available with Firefox. Set `browser_type="firefox"` and `solve_captchas=True` to enable automatic captcha solving.
+</Warning>
+
+## Browser Comparison
+
+| Feature | Chromium | Chrome | Firefox |
+|---------|----------|--------|---------|
+| **Performance** | Fast | Fast | Medium |
+| **Stealth** | Good | Best | Good |
+| **Captcha Solving** | ❌ | ❌ | ✅ |
+| **Default** | ✅ | ❌ | ❌ |
+| **Playwright Support** | Full | Full | Full |
+
+## Choosing the Right Browser
+
+### Use Chromium when:
+- Starting a new project (it's the default)
+- You need fast performance
+- Standard web automation
+
+### Use Chrome when:
+- Sites specifically check for Chrome vs Chromium
+- Automating Google services
+- You need maximum compatibility
+
+### Use Firefox when:
+- You need captcha solving capabilities
+- Sites work better on Firefox
+- You want different browser fingerprints
+
+## Example: Browser-Specific Automation
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  # Use Firefox for captcha-heavy sites
+  with client.Session(
+      browser_type="firefox",
+      solve_captchas=True
+  ) as session:
+      page = session.page
+      page.goto("https://www.google.com/recaptcha/api2/demo")
+      # Captchas automatically solved
+
+  # Use Chrome for Google services
+  with client.Session(browser_type="chrome") as session:
+      page = session.page
+      page.goto("https://mail.google.com")
+  ```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">
+    Configure anti-detection features
+  </Card>
+
+  <Card title="CAPTCHA Solving" icon="shield-check" href="/features/sessions/captcha-solving">
+    Automatically solve captchas with Firefox
+  </Card>
+
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    All session configuration options
+  </Card>
+
+  <Card title="Browser Profiles" icon="user" href="/features/sessions/browser-profiles">
+    Use persistent browser profiles
+  </Card>
+</CardGroup>

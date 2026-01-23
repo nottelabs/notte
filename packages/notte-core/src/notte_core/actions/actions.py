@@ -520,7 +520,7 @@ class ScrollUpAction(BrowserAction):
     **Example:**
     ```python
     session.execute(type="scroll_up", amount=500)  # Scroll up 500 pixels
-    session.execute(type="scroll_up", amount=None)  # Scroll up one page
+    session.execute(type="scroll_up")  # Scroll up one page
     ```
     """
 
@@ -551,7 +551,7 @@ class ScrollDownAction(BrowserAction):
     **Example:**
     ```python
     session.execute(type="scroll_down", amount=500)  # Scroll down 500 pixels
-    session.execute(type="scroll_down", amount=None)  # Scroll down one page
+    session.execute(type="scroll_down")  # Scroll down one page
     ```
     """
 

@@ -262,3 +262,38 @@ def test_agent_fallback_parameters_in_sync():
             f"Parameter synchronization failed between {agent_fallback_file} and {factory_file}:\n"
             + "\n".join(error_messages)
         )
+
+
+def test_function_parameters_in_sync():
+    """
+    Test that parameters in sdk/manual/function.mdx are synchronized with
+    the source parameters in sdk/nottefunction/__init__.mdx
+    """
+    function_file = SDK_DIR / "manual" / "function.mdx"
+    factory_file = SDK_DIR / "nottefunction" / "__init__.mdx"
+
+    assert function_file.exists(), f"Function file not found: {function_file}"
+    assert factory_file.exists(), f"Factory file not found: {factory_file}"
+
+    function_content = function_file.read_text("utf-8")
+    factory_content = factory_file.read_text("utf-8")
+
+    # Extract parameter sections from both files
+    function_params = extract_param_fields(function_content)
+    factory_params = extract_param_fields(factory_content)
+
+    # Compare the normalized parameter lists
+    missing_in_function = set(factory_params) - set(function_params)
+    extra_in_function = set(function_params) - set(factory_params)
+
+    error_messages = []
+    if missing_in_function:
+        error_messages.append(f"Parameters missing in function.mdx: {missing_in_function}")
+    if extra_in_function:
+        error_messages.append(f"Extra parameters in function.mdx: {extra_in_function}")
+
+    if error_messages:
+        pytest.fail(
+            f"Parameter synchronization failed between {function_file} and {factory_file}:\n"
+            + "\n".join(error_messages)
+        )

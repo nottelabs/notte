@@ -2,7 +2,7 @@
 from notte_sdk import NotteClient
 from notte_sdk.types import ExternalProxy
 
-notte = NotteClient()
+client = NotteClient()
 
 # Configure custom proxy settings
 proxy_settings = ExternalProxy(
@@ -12,7 +12,7 @@ proxy_settings = ExternalProxy(
 )
 
 # Start a session with custom proxy
-with notte.Session(proxies=[proxy_settings]) as session:
+with client.Session(proxies=[proxy_settings]) as session:
     # use your session
     pass
 ```

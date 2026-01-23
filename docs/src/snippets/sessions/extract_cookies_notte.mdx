@@ -2,8 +2,8 @@
 from notte_sdk import NotteClient
 import json
 
-notte = NotteClient()
-with notte.Session() as session:
+client = NotteClient()
+with client.Session() as session:
     # Observe the state of a webpage
     obs = session.observe(url="https://google.com/travel/flights")
 

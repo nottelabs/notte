@@ -4,11 +4,11 @@ you can also always list all your sessions using the `sessions.list` method:
 ```python
 from notte_sdk import NotteClient
 
-notte = NotteClient()
+client = NotteClient()
 
 # list only active sessions
-sessions = notte.sessions.list()
+sessions = client.sessions.list()
 
 # list all sessions
-sessions = notte.sessions.list(only_active=False)
+sessions = client.sessions.list(only_active=False)
 ```

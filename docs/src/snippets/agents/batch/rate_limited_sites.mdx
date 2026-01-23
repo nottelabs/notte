@@ -1,0 +1,16 @@
+```python
+# Some agents might get rate limited
+with client.Session(proxies="residential") as session:
+    batch_agent = BatchRemoteAgent(
+        session=session,
+        max_steps=15,
+        _client=client
+    )
+
+    # Run 5 agents from different IPs
+    result = await batch_agent.run(
+        task="Extract product data",
+        n_jobs=5,
+        strategy="first_success"
+    )
+```

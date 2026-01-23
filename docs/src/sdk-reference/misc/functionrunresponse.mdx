@@ -1,0 +1,33 @@
+---
+title: "FunctionRunResponse"
+description: ""
+---
+
+
+
+## Fields
+
+<ParamField path="function_id" type="str" required>
+  The ID of the function
+</ParamField>
+
+<ParamField path="function_run_id" type="str" required>
+  The ID of the function run
+</ParamField>
+
+<ParamField path="session_id" type="UnionType[str, None]" required>
+  The ID of the session
+</ParamField>
+
+<ParamField path="result" type="Any" required>
+  The result of the workflow run
+</ParamField>
+
+<ParamField path="status" type="Literal['closed', 'active', 'failed']" required>
+  The status of the workflow run (closed, active, failed)
+</ParamField>
+
+
+## Module
+
+`notte_sdk.types`

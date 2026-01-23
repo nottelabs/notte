@@ -1,0 +1,529 @@
+---
+title: Browser Controls
+description: Complete reference of all browser actions available in sessions
+---
+
+import ActionChaining from "/snippets/browser-controls/action_chaining.mdx";
+import BrowserFormSubmission from "/snippets/browser-controls/form_submission.mdx";
+import SearchExtract from "/snippets/browser-controls/search_extract.mdx";
+import MultiTab from "/snippets/browser-controls/multi_tab.mdx";
+import FileUploadDownload from "/snippets/browser-controls/file_upload_download.mdx";
+import ErrorHandling from "/snippets/browser-controls/error_handling.mdx";
+import GotoExample from "/snippets/browser-controls/goto.mdx";
+import ScrapeExample from "/snippets/browser-controls/scrape.mdx";
+import SmsReadExample from "/snippets/browser-controls/sms_read.mdx";
+import EmailReadExample from "/snippets/browser-controls/email_read.mdx";
+import ConditionalActions from "/snippets/browser-controls/conditional_actions.mdx";
+
+Sessions provide a comprehensive set of browser actions for interacting with web pages. All actions are executed through `session.execute()`.
+
+## Navigation Actions
+
+### Goto
+
+Navigate to a URL.
+
+<GotoExample />
+
+**Parameters:**
+- `url` (str): The URL to navigate to
+
+**Use for:** Opening pages, navigating between pages
+
+---
+
+### GotoNewTab
+
+Open a URL in a new browser tab.
+
+```python
+session.execute(type="goto_new_tab", url="https://example.com/products")
+```
+
+**Parameters:**
+- `url` (str): The URL to open in a new tab
+
+**Use for:** Opening multiple pages simultaneously, preserving context
+
+---
+
+### SwitchTab
+
+Switch to a different browser tab.
+
+```python
+# Open multiple tabs
+session.execute(type="goto", url="https://example.com")
+session.execute(type="goto_new_tab", url="https://example.com/products")
+
+# Switch back to first tab
+session.execute(type="switch_tab", tab_index=0)
+```
+
+**Parameters:**
+- `tab_index` (int): Zero-based index of the tab to switch to
+
+**Use for:** Managing multiple tabs, comparing content across pages
+
+---
+
+### GoBack
+
+Navigate back to the previous page.
+
+```python
+session.execute(type="goto", url="https://example.com")
+session.execute(type="goto", url="https://example.com/products")
+
+# Go back to homepage
+session.execute(type="go_back")
+```
+
+**Use for:** Browser back button functionality, returning to previous pages
+
+---
+
+### GoForward
+
+Navigate forward in browser history.
+
+```python
+session.execute(type="go_back")
+# Now go forward again
+session.execute(type="go_forward")
+```
+
+**Use for:** Browser forward button functionality
+
+---
+
+### Reload
+
+Reload the current page.
+
+```python
+session.execute(type="reload")
+```
+
+**Use for:** Refreshing page content, retrying after errors
+
+---
+
+## Interaction Actions
+
+### Click
+
+Click on an element.
+
+```python
+# Click by CSS selector
+session.execute(type="click", selector="button#submit")
+
+# Click by ID
+session.execute(type="click", id="submit-btn")
+
+# Click by text content
+session.execute(type="click", text="Submit")
+```
+
+**Parameters:**
+- `selector` (str): CSS selector for the element
+- `id` (str): Element ID
+- `text` (str): Exact text content
+- `aria_label` (str): ARIA label attribute
+- `placeholder` (str): Placeholder text
+- `title` (str): Title attribute
+
+**Use for:** Clicking buttons, links, checkboxes, any clickable element
+
+---
+
+### Fill
+
+Fill a text input or textarea.
+
+```python
+# Fill by selector
+session.execute(
+    type="fill",
+    selector="input[name='email']",
+    value="user@example.com"
+)
+
+# Fill by ID
+session.execute(type="fill", id="email-input", value="user@example.com")
+
+# Fill by placeholder
+session.execute(
+    type="fill",
+    placeholder="Enter your email",
+    value="user@example.com"
+)
+```
+
+**Parameters:**
+- `selector` (str): CSS selector for the input
+- `id` (str): Element ID
+- `placeholder` (str): Placeholder text
+- `aria_label` (str): ARIA label
+- `value` (str): The text to fill
+
+**Use for:** Filling forms, search boxes, text inputs
+
+---
+
+### Check
+
+Check or uncheck a checkbox.
+
+```python
+# Check a checkbox
+session.execute(
+    type="check",
+    selector="input[type='checkbox']#terms",
+    checked=True
+)
+
+# Uncheck a checkbox
+session.execute(
+    type="check",
+    selector="input[type='checkbox']#newsletter",
+    checked=False
+)
+```
+
+**Parameters:**
+- `selector` (str): CSS selector for the checkbox
+- `id` (str): Element ID
+- `checked` (bool): True to check, False to uncheck
+
+**Use for:** Toggling checkboxes, accepting terms, selecting options
+
+---
+
+### SelectDropdownOption
+
+Select an option from a dropdown.
+
+```python
+# Select by visible text
+session.execute(
+    type="select_dropdown_option",
+    selector="select#country",
+    option_text="United States"
+)
+
+# Select by value
+session.execute(
+    type="select_dropdown_option",
+    selector="select#country",
+    option_value="us"
+)
+```
+
+**Parameters:**
+- `selector` (str): CSS selector for the select element
+- `option_text` (str): Visible text of the option
+- `option_value` (str): Value attribute of the option
+
+**Use for:** Selecting from dropdowns, choosing options
+
+---
+
+### PressKey
+
+Press a keyboard key.
+
+```python
+# Press Enter
+session.execute(type="press_key", key="Enter")
+
+# Press Escape
+session.execute(type="press_key", key="Escape")
+
+# Press Tab
+session.execute(type="press_key", key="Tab")
+```
+
+**Parameters:**
+- `key` (str): Key name (e.g., "Enter", "Escape", "Tab", "ArrowDown")
+
+**Use for:** Keyboard navigation, submitting forms, triggering shortcuts
+
+**Common keys:** Enter, Escape, Tab, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Backspace, Delete
+
+---
+
+## Scrolling Actions
+
+### ScrollUp
+
+Scroll up on the page.
+
+```python
+session.execute(type="scroll_up")
+```
+
+**Use for:** Scrolling to top of page, revealing content above
+
+---
+
+### ScrollDown
+
+Scroll down on the page.
+
+```python
+session.execute(type="scroll_down")
+```
+
+**Use for:** Loading lazy content, revealing content below, pagination
+
+---
+
+## File Actions
+
+### UploadFile
+
+Upload a file to a file input.
+
+```python
+# Upload from local file
+session.execute(
+    type="upload_file",
+    selector="input[type='file']",
+    file_path="/path/to/document.pdf"
+)
+
+# Upload with ID
+session.execute(type="upload_file", id="file-upload", file_path="/path/to/image.jpg")
+```
+
+**Parameters:**
+- `selector` (str): CSS selector for the file input
+- `id` (str): Element ID
+- `file_path` (str): Path to the file to upload
+
+**Use for:** Uploading documents, images, any file input
+
+---
+
+### DownloadFile
+
+Download a file from a link.
+
+```python
+session.execute(type="download_file", selector="a.download-link")
+
+# Access downloaded file
+downloaded_files = session.storage.list_downloaded_files()
+for file in downloaded_files:
+    content = session.storage.download(file.file_id)
+```
+
+**Parameters:**
+- `selector` (str): CSS selector for the download link
+- `id` (str): Element ID
+
+**Use for:** Downloading files, reports, documents
+
+---
+
+## Wait Action
+
+### Wait
+
+Pause execution for a specified duration.
+
+```python
+# Wait 2 seconds
+session.execute(type="wait", duration=2000)
+
+# Wait 5 seconds for page to load
+session.execute(type="wait", duration=5000)
+```
+
+**Parameters:**
+- `duration` (int): Time to wait in milliseconds
+
+**Use for:** Waiting for page loads, animations, dynamic content
+
+<Note>
+**Tip:** Use sparingly. Notte automatically waits for page loads and element visibility. Only use Wait for specific timing requirements.
+</Note>
+
+---
+
+## Data Extraction
+
+### Scrape
+
+Extract data from the current page.
+
+<ScrapeExample />
+
+**Parameters:**
+- `instructions` (str): Natural language extraction instructions
+- `response_format` (type[BaseModel]): Pydantic model for structured output
+- `only_main_content` (bool): Extract only main content, ignore headers/footers
+
+**Use for:** Data extraction, web scraping, content analysis
+
+See [Scraping](/concepts/scraping) for detailed documentation.
+
+---
+
+## Communication Actions
+
+### SmsRead
+
+Read SMS messages from a persona's phone number.
+
+<SmsReadExample />
+
+**Parameters:**
+- `persona_id` (str): Persona ID with phone number
+
+**Use for:** Reading 2FA codes, SMS verification, phone-based authentication
+
+See [Personas](/concepts/personas) for details.
+
+---
+
+### EmailRead
+
+Read emails from a persona's email address.
+
+<EmailReadExample />
+
+**Parameters:**
+- `persona_id` (str): Persona ID with email address
+
+**Use for:** Reading verification emails, email-based authentication
+
+See [Personas](/concepts/personas) for details.
+
+---
+
+## Action Patterns
+
+### Chaining Actions
+
+Execute multiple actions in sequence:
+
+<ActionChaining />
+
+### Error Handling
+
+Handle action failures:
+
+<ErrorHandling />
+
+### Conditional Actions
+
+Execute actions based on conditions:
+
+<ConditionalActions />
+
+## Selector Strategies
+
+### CSS Selectors
+
+Most flexible and commonly used:
+
+```python
+# By ID
+session.execute(type="click", selector="#submit-button")
+
+# By class
+session.execute(type="click", selector=".btn-primary")
+
+# By attribute
+session.execute(type="click", selector="button[type='submit']")
+
+# By combination
+session.execute(type="click", selector="form#login button.submit")
+
+# By nth-child
+session.execute(type="click", selector="ul li:nth-child(2)")
+```
+
+### Direct Attributes
+
+Use direct attribute parameters when available:
+
+```python
+# By ID (cleaner)
+session.execute(type="click", id="submit-button")
+
+# By text content
+session.execute(type="click", text="Submit")
+
+# By placeholder
+session.execute(type="fill", placeholder="Enter email", value="user@example.com")
+
+# By ARIA label
+session.execute(type="click", aria_label="Close dialog")
+```
+
+### Best Practices
+
+**Prefer stable selectors:**
+
+```python
+# Good - uses ID (stable)
+session.execute(type="click", id="submit-btn")
+
+# Good - uses data attribute
+session.execute(type="click", selector="button[data-testid='submit']")
+
+# Avoid - fragile position-based
+session.execute(type="click", selector="div > div > button:nth-child(3)")
+```
+
+**Use specific selectors:**
+
+```python
+# Good - specific
+session.execute(type="fill", selector="form#login input[name='email']", value="user@example.com")
+
+# Less specific - might match wrong element
+session.execute(type="fill", selector="input", value="user@example.com")
+```
+
+## Common Workflows
+
+### Form Submission
+
+<BrowserFormSubmission />
+
+### Search and Extract
+
+<SearchExtract />
+
+### Multi-Tab Workflow
+
+<MultiTab />
+
+### File Upload and Download
+
+<FileUploadDownload />
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Session Configuration" icon="sliders" href="/features/sessions/configuration">
+    Configure session behavior
+  </Card>
+
+  <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle">
+    Manage session states
+  </Card>
+
+  <Card title="SDK Actions Reference" icon="code" href="/sdk-reference/manual/session">
+    Detailed API documentation
+  </Card>
+
+  <Card title="Agent Mode" icon="sparkles" href="/concepts/agents">
+    Let AI handle actions automatically
+  </Card>
+</CardGroup>

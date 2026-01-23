@@ -1,0 +1,27 @@
+---
+title: "UpdateFunctionRunResponse"
+description: ""
+---
+
+
+
+## Fields
+
+<ParamField path="function_id" type="str" required>
+  The ID of the function
+</ParamField>
+
+<ParamField path="function_run_id" type="str" required>
+  The ID of the function run
+</ParamField>
+
+<ParamField path="updated_at" type="datetime" required>
+</ParamField>
+
+<ParamField path="status" type="Literal['updated', 'stopped']" default="updated">
+</ParamField>
+
+
+## Module
+
+`notte_sdk.types`
