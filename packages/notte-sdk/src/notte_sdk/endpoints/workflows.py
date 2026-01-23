@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import traceback
+import warnings
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar, Unpack, final, overload
 
@@ -768,6 +769,7 @@ class RemoteWorkflow:
         stream: bool = True,
         raise_on_failure: bool = True,
         function_run_id: str | None = None,
+        workflow_run_id: str | None = None,
         log_callback: Callable[[str], None] | None = None,
         **variables: Any,
     ) -> FunctionRunResponse:
@@ -783,6 +785,15 @@ class RemoteWorkflow:
 
         > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
         """
+        if workflow_run_id is not None:
+            warnings.warn(
+                "'workflow_run_id' is deprecated, use 'function_run_id' instead",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        if function_run_id is not None and workflow_run_id is not None and function_run_id != workflow_run_id:
+            raise ValueError("Cannot specify both 'function_run_id' and 'workflow_run_id' with different values")
+        function_run_id = function_run_id or workflow_run_id
         # first create the run on DB
         if function_run_id is None:
             create_run_response = self.client.create_run(self.function_id, local=local)
