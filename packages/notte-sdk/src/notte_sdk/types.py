@@ -280,28 +280,27 @@ class ProxyGeolocationCountry(StrEnum):
     ZIMBABWE = "zw"
 
 
-class ProxyGeolocation(SdkRequest):
-    """
-    Geolocation settings for the proxy.
-    E.g. "New York, NY, US"
-    """
-
-    country: ProxyGeolocationCountry
-    # TODO: enable city & state later on
-    # city: str
-    # state: str
-
-
 class NotteProxy(SdkRequest):
     type: Literal["notte"] = "notte"
     id: str | None = None
-    geolocation: ProxyGeolocation | None = None
+    country: ProxyGeolocationCountry | None = None
     # TODO: enable domainPattern later on
     # domainPattern: str | None = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def handle_legacy_geolocation(cls, values: Any) -> dict[str, Any]:
+        """Handle backward compatibility with old geolocation.country syntax."""
+        if isinstance(values, dict) and "geolocation" in values:
+            geolocation: Any = values.pop("geolocation")  # type: ignore[reportUnknownMemberType]
+            # Only set country if it's not already provided
+            if "country" not in values and isinstance(geolocation, dict) and "country" in geolocation:
+                values["country"] = geolocation["country"]
+        return values  # type: ignore[return-value]
+
     @staticmethod
     def from_country(country: str, id: str | None = None) -> "NotteProxy":
-        return NotteProxy(id=id, geolocation=ProxyGeolocation(country=ProxyGeolocationCountry(country)))
+        return NotteProxy(id=id, country=ProxyGeolocationCountry(country))
 
 
 class ExternalProxy(SdkRequest):
@@ -328,7 +327,22 @@ class ExternalProxy(SdkRequest):
         )
 
 
+class ExternalProxyDict(TypedDict, total=False):
+    type: Literal["external"]
+    server: Required[str]
+    username: str | None
+    password: str | None
+    bypass: str | None
+
+
+class NotteProxyDict(TypedDict, total=False):
+    type: Literal["notte"]
+    id: str | None
+    country: ProxyGeolocationCountry | None
+
+
 ProxySettings = Annotated[NotteProxy | ExternalProxy, Field(discriminator="type")]
+ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict, Field(discriminator="type")]
 
 
 class Cookie(SdkRequest):
@@ -472,7 +486,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     solve_captchas: bool
     max_duration_minutes: int
     idle_timeout_minutes: int
-    proxies: list[ProxySettings] | bool
+    proxies: list[ProxySettings] | list[ProxySettingsDict] | bool | ProxyGeolocationCountry
     browser_type: BrowserType
     user_agent: str | None
     chrome_args: list[str] | None
@@ -610,6 +624,13 @@ class SessionStartRequest(SdkRequest):
                 f"idle_timeout_minutes ({self.idle_timeout_minutes}) cannot exceed max_duration_minutes ({self.max_duration_minutes})"
             )
         return self
+
+    @field_validator("proxies", mode="before")
+    @classmethod
+    def validate_str_proxy_settings(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            return [NotteProxy.from_country(value)]
+        return value
 
     @property
     def playwright_proxy(self) -> PlaywrightProxySettings | None:

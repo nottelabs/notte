@@ -120,7 +120,7 @@ def _test_request_dict_alignment(base_request: type[BaseModel], base_request_dic
                 dict_type = next(t for t in dict_type_args if t is not type(None))
 
         # Compare the types
-        if field_name not in ("selector", "profile"):
+        if field_name not in ("selector", "profile", "proxies"):
             assert request_type == dict_type, (
                 f"Type mismatch for field {field_name}: "
                 f"{base_request.__name__} has {request_type} but {base_request_dict.__name__} has {dict_type}"
@@ -138,6 +138,12 @@ def _test_request_dict_alignment(base_request: type[BaseModel], base_request_dic
                     f"Type mismatch for field {field_name}: "
                     f"{base_request.__name__} has {request_type} but {base_request_dict.__name__} has {dict_type}"
                 )
+        elif field_name == "proxies":
+            # Special case: proxies field in TypedDict accepts multiple formats
+            # BaseModel: list[ProxySettings] | bool
+            # TypedDict: list[ProxySettings] | list[ProxySettingsDict] | bool | ProxyGeolocationCountry
+            # We allow the TypedDict to have additional accepted types for user convenience
+            pass  # Skip type checking for proxies field
 
     # Check that all fields in TypedDict are present in BaseModel
     for field_name in dict_fields:
