@@ -330,9 +330,9 @@ class ExternalProxy(SdkRequest):
 class ExternalProxyDict(TypedDict, total=False):
     type: Literal["external"]
     server: Required[str]
-    username: Required[str | None]
-    password: Required[str | None]
-    bypass: NotRequired[str | None]
+    username: str | None
+    password: str | None
+    bypass: str | None
 
 
 class NotteProxyDict(TypedDict, total=False):
