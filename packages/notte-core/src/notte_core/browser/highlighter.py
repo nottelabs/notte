@@ -1,7 +1,8 @@
 import io
+from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum
-from typing import ClassVar
+from typing import Any, ClassVar, cast
 
 from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel
@@ -141,8 +142,13 @@ class ColorAnalyzer:
         if region.mode != "RGB":
             region = region.convert("RGB")
 
-        # Get pixel data
-        pixels: list[list[int]] = list(region.getdata())  # pyright: ignore [reportUnknownArgumentType, reportUnknownMemberType]
+        # Get pixel data.
+        # Note: Pillow's Image.getdata() returns an internal ImagingCore type whose
+        # typing is not mode-aware; stubs expose it with unknown member types.
+        # For RGB images, elements are 3-tuples[int, int, int]. We cast via Any
+        # and add a targeted ignore to satisfy the type checker without changing behavior.
+        data_any: Any = region.getdata()  # pyright: ignore[reportUnknownMemberType]
+        pixels: list[tuple[int, int, int]] = list(cast(Iterable[tuple[int, int, int]], data_any))
         if not pixels:
             return True
 
