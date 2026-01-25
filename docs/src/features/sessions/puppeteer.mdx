@@ -11,6 +11,7 @@ import PuppeteerMultiplePages from '/snippets/sessions/cdp/puppeteer_multiple_pa
 import PuppeteerEvents from '/snippets/sessions/cdp/puppeteer_events.mdx';
 import PuppeteerScreenshots from '/snippets/sessions/cdp/puppeteer_screenshots.mdx';
 import PuppeteerComplete from '/snippets/sessions/cdp/puppeteer_complete.mdx';
+import PuppeteerSessionTimeout from '/snippets/sessions/cdp/puppeteer_session_timeout.mdx';
 
 Notte sessions expose a Chrome DevTools Protocol (CDP) endpoint that you can connect to with Puppeteer. Since Puppeteer is a Node.js library and Notte SDK is Python-based, this guide shows how to connect them together.
 
@@ -109,12 +110,7 @@ try {
 
 Remember that Notte sessions have a timeout. Set an appropriate value when creating the session:
 
-```python
-# In Python
-with client.Session(timeout_minutes=20) as session:
-    # Long Puppeteer operations
-    pass
-```
+<PuppeteerSessionTimeout />
 
 ### 5. Environment Variables
 

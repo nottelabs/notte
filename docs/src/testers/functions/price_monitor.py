@@ -1,0 +1,18 @@
+# @sniptest filename=price_monitor.py
+from datetime import datetime
+
+from notte_sdk import NotteClient
+
+
+def run(competitor_urls: list[str]):
+    """Monitor competitor prices daily."""
+    client = NotteClient()
+    prices = []
+
+    for url in competitor_urls:
+        with client.Session() as session:
+            session.execute(type="goto", url=url)
+            price = session.scrape(instructions="Extract product price")
+            prices.append({"url": url, "price": price})
+
+    return {"prices": prices, "checked_at": datetime.now().isoformat()}

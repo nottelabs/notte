@@ -1,0 +1,7 @@
+# Generate function code
+code = agent.workflow.code()
+
+# Test in fresh session
+with client.Session() as session:
+    exec(code.python_script)
+    # Verify it works

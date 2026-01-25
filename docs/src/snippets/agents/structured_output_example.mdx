@@ -1,8 +1,12 @@
-```python
-from pydantic import BaseModel
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/structured_output_example.py */}
+
+```python structured_output_example.py
 from notte_sdk import NotteClient
+from pydantic import BaseModel
 
 client = NotteClient()
+
 
 class ContactInfo(BaseModel):
     email: str
@@ -11,8 +15,5 @@ class ContactInfo(BaseModel):
 
 with client.Session() as session:
     agent = client.Agent(session=session)
-    result = agent.run(
-        task="Extract contact information",
-        response_format=ContactInfo
-    )
+    result = agent.run(task="Extract contact information", response_format=ContactInfo)
 ```

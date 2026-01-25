@@ -1,0 +1,11 @@
+# Good - task matches response_format
+result = agent.run(
+    task="Extract the product name, price, and stock status",
+    response_format=Product,
+)
+
+# Less clear - agent might not fill all fields
+result = agent.run(
+    task="Tell me about this product",
+    response_format=Product,
+)

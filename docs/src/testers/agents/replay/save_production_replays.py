@@ -1,0 +1,10 @@
+import logging
+
+try:
+    result = agent.run(task="Production task")
+    if not result.success:
+        replay = agent.replay()
+        replay.save(f"prod_failure_{agent.agent_id}.mp4")
+        logging.error(f"Agent failed, replay saved: prod_failure_{agent.agent_id}.mp4")
+except Exception as e:
+    logging.error(f"Agent exception: {e}")

@@ -1,0 +1,19 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/capabilities/rotate_proxies.py */}
+
+```python rotate_proxies.py
+from notte_sdk import NotteClient
+from notte_sdk.types import NotteProxy, ProxyGeolocation
+
+client = NotteClient()
+
+# Session 1 with US proxy
+with client.Session(proxies=[NotteProxy(geolocation=ProxyGeolocation(country="US"))]) as session:
+    # automation
+    pass
+
+# Session 2 with UK proxy
+with client.Session(proxies=[NotteProxy(geolocation=ProxyGeolocation(country="GB"))]) as session:
+    # automation
+    pass
+```

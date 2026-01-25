@@ -14,6 +14,25 @@ import ScrapeExample from "/snippets/browser-controls/scrape.mdx";
 import SmsReadExample from "/snippets/browser-controls/sms_read.mdx";
 import EmailReadExample from "/snippets/browser-controls/email_read.mdx";
 import ConditionalActions from "/snippets/browser-controls/conditional_actions.mdx";
+import GotoNewTab from "/snippets/browser-controls/goto_new_tab.mdx";
+import SwitchTab from "/snippets/browser-controls/switch_tab.mdx";
+import GoBack from "/snippets/browser-controls/go_back.mdx";
+import GoForward from "/snippets/browser-controls/go_forward.mdx";
+import Reload from "/snippets/browser-controls/reload.mdx";
+import Click from "/snippets/browser-controls/click.mdx";
+import Fill from "/snippets/browser-controls/fill.mdx";
+import Check from "/snippets/browser-controls/check.mdx";
+import SelectDropdownOption from "/snippets/browser-controls/select_dropdown_option.mdx";
+import PressKey from "/snippets/browser-controls/press_key.mdx";
+import ScrollUp from "/snippets/browser-controls/scroll_up.mdx";
+import ScrollDown from "/snippets/browser-controls/scroll_down.mdx";
+import UploadFile from "/snippets/browser-controls/upload_file.mdx";
+import DownloadFile from "/snippets/browser-controls/download_file.mdx";
+import Wait from "/snippets/browser-controls/wait.mdx";
+import CssSelectors from "/snippets/browser-controls/css_selectors.mdx";
+import DirectAttributes from "/snippets/browser-controls/direct_attributes.mdx";
+import StableSelectors from "/snippets/browser-controls/stable_selectors.mdx";
+import SpecificSelectors from "/snippets/browser-controls/specific_selectors.mdx";
 
 Sessions provide a comprehensive set of browser actions for interacting with web pages. All actions are executed through `session.execute()`.
 
@@ -36,9 +55,7 @@ Navigate to a URL.
 
 Open a URL in a new browser tab.
 
-```python
-session.execute(type="goto_new_tab", url="https://example.com/products")
-```
+<GotoNewTab />
 
 **Parameters:**
 - `url` (str): The URL to open in a new tab
@@ -51,14 +68,7 @@ session.execute(type="goto_new_tab", url="https://example.com/products")
 
 Switch to a different browser tab.
 
-```python
-# Open multiple tabs
-session.execute(type="goto", url="https://example.com")
-session.execute(type="goto_new_tab", url="https://example.com/products")
-
-# Switch back to first tab
-session.execute(type="switch_tab", tab_index=0)
-```
+<SwitchTab />
 
 **Parameters:**
 - `tab_index` (int): Zero-based index of the tab to switch to
@@ -71,13 +81,7 @@ session.execute(type="switch_tab", tab_index=0)
 
 Navigate back to the previous page.
 
-```python
-session.execute(type="goto", url="https://example.com")
-session.execute(type="goto", url="https://example.com/products")
-
-# Go back to homepage
-session.execute(type="go_back")
-```
+<GoBack />
 
 **Use for:** Browser back button functionality, returning to previous pages
 
@@ -87,11 +91,7 @@ session.execute(type="go_back")
 
 Navigate forward in browser history.
 
-```python
-session.execute(type="go_back")
-# Now go forward again
-session.execute(type="go_forward")
-```
+<GoForward />
 
 **Use for:** Browser forward button functionality
 
@@ -101,9 +101,7 @@ session.execute(type="go_forward")
 
 Reload the current page.
 
-```python
-session.execute(type="reload")
-```
+<Reload />
 
 **Use for:** Refreshing page content, retrying after errors
 
@@ -115,16 +113,7 @@ session.execute(type="reload")
 
 Click on an element.
 
-```python
-# Click by CSS selector
-session.execute(type="click", selector="button#submit")
-
-# Click by ID
-session.execute(type="click", id="submit-btn")
-
-# Click by text content
-session.execute(type="click", text="Submit")
-```
+<Click />
 
 **Parameters:**
 - `selector` (str): CSS selector for the element
@@ -142,24 +131,7 @@ session.execute(type="click", text="Submit")
 
 Fill a text input or textarea.
 
-```python
-# Fill by selector
-session.execute(
-    type="fill",
-    selector="input[name='email']",
-    value="user@example.com"
-)
-
-# Fill by ID
-session.execute(type="fill", id="email-input", value="user@example.com")
-
-# Fill by placeholder
-session.execute(
-    type="fill",
-    placeholder="Enter your email",
-    value="user@example.com"
-)
-```
+<Fill />
 
 **Parameters:**
 - `selector` (str): CSS selector for the input
@@ -176,21 +148,7 @@ session.execute(
 
 Check or uncheck a checkbox.
 
-```python
-# Check a checkbox
-session.execute(
-    type="check",
-    selector="input[type='checkbox']#terms",
-    checked=True
-)
-
-# Uncheck a checkbox
-session.execute(
-    type="check",
-    selector="input[type='checkbox']#newsletter",
-    checked=False
-)
-```
+<Check />
 
 **Parameters:**
 - `selector` (str): CSS selector for the checkbox
@@ -205,21 +163,7 @@ session.execute(
 
 Select an option from a dropdown.
 
-```python
-# Select by visible text
-session.execute(
-    type="select_dropdown_option",
-    selector="select#country",
-    option_text="United States"
-)
-
-# Select by value
-session.execute(
-    type="select_dropdown_option",
-    selector="select#country",
-    option_value="us"
-)
-```
+<SelectDropdownOption />
 
 **Parameters:**
 - `selector` (str): CSS selector for the select element
@@ -234,16 +178,7 @@ session.execute(
 
 Press a keyboard key.
 
-```python
-# Press Enter
-session.execute(type="press_key", key="Enter")
-
-# Press Escape
-session.execute(type="press_key", key="Escape")
-
-# Press Tab
-session.execute(type="press_key", key="Tab")
-```
+<PressKey />
 
 **Parameters:**
 - `key` (str): Key name (e.g., "Enter", "Escape", "Tab", "ArrowDown")
@@ -260,9 +195,7 @@ session.execute(type="press_key", key="Tab")
 
 Scroll up on the page.
 
-```python
-session.execute(type="scroll_up")
-```
+<ScrollUp />
 
 **Use for:** Scrolling to top of page, revealing content above
 
@@ -272,9 +205,7 @@ session.execute(type="scroll_up")
 
 Scroll down on the page.
 
-```python
-session.execute(type="scroll_down")
-```
+<ScrollDown />
 
 **Use for:** Loading lazy content, revealing content below, pagination
 
@@ -286,17 +217,7 @@ session.execute(type="scroll_down")
 
 Upload a file to a file input.
 
-```python
-# Upload from local file
-session.execute(
-    type="upload_file",
-    selector="input[type='file']",
-    file_path="/path/to/document.pdf"
-)
-
-# Upload with ID
-session.execute(type="upload_file", id="file-upload", file_path="/path/to/image.jpg")
-```
+<UploadFile />
 
 **Parameters:**
 - `selector` (str): CSS selector for the file input
@@ -311,14 +232,7 @@ session.execute(type="upload_file", id="file-upload", file_path="/path/to/image.
 
 Download a file from a link.
 
-```python
-session.execute(type="download_file", selector="a.download-link")
-
-# Access downloaded file
-downloaded_files = session.storage.list_downloaded_files()
-for file in downloaded_files:
-    content = session.storage.download(file.file_id)
-```
+<DownloadFile />
 
 **Parameters:**
 - `selector` (str): CSS selector for the download link
@@ -334,13 +248,7 @@ for file in downloaded_files:
 
 Pause execution for a specified duration.
 
-```python
-# Wait 2 seconds
-session.execute(type="wait", duration=2000)
-
-# Wait 5 seconds for page to load
-session.execute(type="wait", duration=5000)
-```
+<Wait />
 
 **Parameters:**
 - `duration` (int): Time to wait in milliseconds
@@ -430,65 +338,23 @@ Execute actions based on conditions:
 
 Most flexible and commonly used:
 
-```python
-# By ID
-session.execute(type="click", selector="#submit-button")
-
-# By class
-session.execute(type="click", selector=".btn-primary")
-
-# By attribute
-session.execute(type="click", selector="button[type='submit']")
-
-# By combination
-session.execute(type="click", selector="form#login button.submit")
-
-# By nth-child
-session.execute(type="click", selector="ul li:nth-child(2)")
-```
+<CssSelectors />
 
 ### Direct Attributes
 
 Use direct attribute parameters when available:
 
-```python
-# By ID (cleaner)
-session.execute(type="click", id="submit-button")
-
-# By text content
-session.execute(type="click", text="Submit")
-
-# By placeholder
-session.execute(type="fill", placeholder="Enter email", value="user@example.com")
-
-# By ARIA label
-session.execute(type="click", aria_label="Close dialog")
-```
+<DirectAttributes />
 
 ### Best Practices
 
 **Prefer stable selectors:**
 
-```python
-# Good - uses ID (stable)
-session.execute(type="click", id="submit-btn")
-
-# Good - uses data attribute
-session.execute(type="click", selector="button[data-testid='submit']")
-
-# Avoid - fragile position-based
-session.execute(type="click", selector="div > div > button:nth-child(3)")
-```
+<StableSelectors />
 
 **Use specific selectors:**
 
-```python
-# Good - specific
-session.execute(type="fill", selector="form#login input[name='email']", value="user@example.com")
-
-# Less specific - might match wrong element
-session.execute(type="fill", selector="input", value="user@example.com")
-```
+<SpecificSelectors />
 
 ## Common Workflows
 

@@ -1,0 +1,17 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/capabilities/ip_allowlisting.py */}
+
+```python ip_allowlisting.py
+from notte_sdk import NotteClient
+from notte_sdk.types import ExternalProxy
+
+client = NotteClient()
+
+# Your server's IP is 203.0.113.1 and it's allowlisted
+proxy = ExternalProxy(server="http://203.0.113.1:8080", username="user", password="pass")
+
+with client.Session(proxies=[proxy]) as session:
+    page = session.page
+    page.goto("https://admin.example.com")
+    # Access granted due to allowlisted IP
+```

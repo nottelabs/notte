@@ -1,11 +1,15 @@
-<CodeGroup>
-  ```python Python
-  def run():
-      client = NotteClient()
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/schedules/set_timeouts.py */}
 
-      # Set timeout appropriate for schedule
-      with client.Session(timeout_minutes=10) as session:
-          # Your automation
-          pass
-  ```
-</CodeGroup>
+```python set_timeouts.py
+from notte_sdk import NotteClient
+
+
+def run():
+    client = NotteClient()
+
+    # Set timeout appropriate for schedule
+    with client.Session(timeout_minutes=10) as session:
+        # Your automation
+        pass
+```

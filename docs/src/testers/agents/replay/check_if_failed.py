@@ -1,0 +1,10 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    result = agent.run(task="Complete task")
+
+    if not result.success:
+        print(f"Agent failed: {result.answer}")
+    print(f"Completed {len(result.steps)} steps")

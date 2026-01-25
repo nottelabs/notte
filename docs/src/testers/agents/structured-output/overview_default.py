@@ -1,0 +1,2 @@
+result = agent.run(task="Find the contact email")
+print(result.answer)  # "contact@example.com"

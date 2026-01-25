@@ -1,10 +1,15 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/browser-controls/multi_tab.py */}
+
 ```python multi_tab.py
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
+
 def process_data(data):
     print(f"Processed: {data[:100]}...")
+
 
 with client.Session() as session:
     # Open multiple tabs

@@ -1,6 +1,9 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/structured-output/ecommerce_extraction.py */}
+
 ```python
 from pydantic import BaseModel
-from datetime import date
+
 
 class ProductListing(BaseModel):
     name: str
@@ -11,9 +14,10 @@ class ProductListing(BaseModel):
     availability: str
     seller: str
 
+
 result = agent.run(
     task="Extract product listing information",
     url="https://store.example.com/products/laptop",
-    response_format=ProductListing
+    response_format=ProductListing,
 )
 ```

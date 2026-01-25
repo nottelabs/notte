@@ -1,0 +1,10 @@
+# @sniptest filename=content_filtering.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Only main content (excludes navbars, footers, sidebars)
+markdown = client.scrape(url, only_main_content=True)  # Default
+
+# Include all page content
+markdown = client.scrape(url, only_main_content=False)

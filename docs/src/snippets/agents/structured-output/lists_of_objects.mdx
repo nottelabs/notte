@@ -1,14 +1,19 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/structured-output/lists_of_objects.py */}
+
 ```python
 from pydantic import BaseModel
+
 
 class Review(BaseModel):
     author: str
     rating: int
     comment: str
 
+
 result = agent.run(
     task="Extract all product reviews",
-    response_format=list[Review]
+    response_format=list[Review],
 )
 
 # Iterate over reviews

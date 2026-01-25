@@ -3,6 +3,13 @@ title: CAPTCHA Solving
 description: Automatically detect and solve captchas during browser automation
 ---
 
+import RealisticDelays from "/snippets/sessions/captcha/realistic_delays.mdx";
+import MonitorFailures from "/snippets/sessions/captcha/monitor_failures.mdx";
+import HeadlessDebug from "/snippets/sessions/captcha/headless_debug.mdx";
+import CombineStealth from "/snippets/sessions/captcha/combine_stealth.mdx";
+import EnsureRequirements from "/snippets/sessions/captcha/ensure_requirements.mdx";
+import TimeoutHandling from "/snippets/sessions/captcha/timeout_handling.mdx";
+
 Notte can automatically detect and solve captchas including reCAPTCHA v2, reCAPTCHA v3, and hCaptcha during your browser automation.
 
 <Warning>
@@ -105,65 +112,25 @@ Combine captcha solving with proxies for better success rates:
 
 Add human-like delays before and after captcha-protected actions:
 
-```python
-import time
-
-# Navigate to page
-page.goto("https://example.com/protected")
-
-# Wait for page to load
-time.sleep(2)
-
-# Fill form
-page.fill('input[name="email"]', "user@example.com")
-time.sleep(1)
-
-# Submit (captcha will be solved)
-page.click('button[type="submit"]')
-```
+<RealisticDelays />
 
 ### 2. Monitor for Failures
 
 Check if captcha solving failed:
 
-```python
-try:
-    page.click('button[type="submit"]')
-    page.wait_for_url("**/success", timeout=30000)  # 30 seconds
-except Exception as e:
-    print(f"Captcha solving may have failed: {e}")
-    # Handle failure
-```
+<MonitorFailures />
 
 ### 3. Use Headless=False for Debugging
 
 Watch captcha solving in action:
 
-```python
-with client.Session(
-    browser_type="firefox",
-    solve_captchas=True,
-    headless=False  # Opens live viewer
-) as session:
-    # You can watch captchas being solved
-    pass
-```
+<HeadlessDebug />
 
 ### 4. Combine with Stealth
 
 Use stealth features for better success rates:
 
-```python
-with client.Session(
-    browser_type="firefox",
-    solve_captchas=True,
-    proxies=True,
-    viewport_width=1920,
-    viewport_height=1080
-) as session:
-    # Maximum captcha success rate
-    pass
-```
+<CombineStealth />
 
 ## Limitations
 
@@ -191,28 +158,14 @@ with client.Session(
 - Site has additional bot detection
 
 **Solution:**
-```python
-# Ensure all requirements are met
-with client.Session(
-    browser_type="firefox",  # Must be Firefox
-    solve_captchas=True,     # Must be enabled
-    proxies=True             # Helps with detection
-) as session:
-    pass
-```
+
+<EnsureRequirements />
 
 ### Issue: Timeout Waiting for Captcha
 
 Increase session timeout for captcha-heavy workflows:
 
-```python
-with client.Session(
-    browser_type="firefox",
-    solve_captchas=True,
-    timeout_minutes=15  # Longer timeout
-) as session:
-    pass
-```
+<TimeoutHandling />
 
 ## Testing CAPTCHA Solving
 

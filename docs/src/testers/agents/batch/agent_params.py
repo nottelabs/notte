@@ -1,0 +1,12 @@
+# @sniptest filename=agent_params.py
+from notte_sdk.agents import BatchRemoteAgent
+
+batch_agent = BatchRemoteAgent(
+    session=session,
+    reasoning_model="anthropic/claude-3.5-sonnet",
+    max_steps=20,
+    use_vision=True,
+    vault=vault,
+    persona=persona,
+    _client=client,
+)

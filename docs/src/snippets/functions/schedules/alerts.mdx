@@ -1,23 +1,24 @@
-<CodeGroup>
-  ```python Python
-  def run():
-      import requests
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/schedules/alerts.py */}
 
-      try:
-          # Your automation
-          result = perform_automation()
-          return result
+```python alerts.py
+import os
 
-      except Exception as e:
-          # Send to Slack/Discord/Email
-          requests.post(
-              os.getenv("WEBHOOK_URL"),
-              json={
-                  "text": f"Scheduled function failed: {str(e)}",
-                  "function_id": "function_abc123"
-              }
-          )
+import requests
 
-          raise  # Re-raise to mark run as failed
-  ```
-</CodeGroup>
+
+def run():
+    try:
+        # Your automation
+        result = perform_automation()
+        return result
+
+    except Exception as e:
+        # Send to Slack/Discord/Email
+        requests.post(
+            os.getenv("WEBHOOK_URL"),
+            json={"text": f"Scheduled function failed: {str(e)}", "function_id": "function_abc123"},
+        )
+
+        raise  # Re-raise to mark run as failed
+```

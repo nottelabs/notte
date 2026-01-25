@@ -1,0 +1,16 @@
+# @sniptest filename=fill.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
+
+    # Fill by selector
+    session.execute(type="fill", selector="input[name='email']", value="user@example.com")
+
+    # Fill by ID
+    session.execute(type="fill", id="email-input", value="user@example.com")
+
+    # Fill by placeholder
+    session.execute(type="fill", placeholder="Enter your email", value="user@example.com")

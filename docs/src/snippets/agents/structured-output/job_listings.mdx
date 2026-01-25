@@ -1,5 +1,9 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/structured-output/job_listings.py */}
+
 ```python
 from pydantic import BaseModel
+
 
 class JobPosting(BaseModel):
     title: str
@@ -10,8 +14,9 @@ class JobPosting(BaseModel):
     posted_date: str
     requirements: list[str]
 
+
 result = agent.run(
     task="Extract job posting information",
-    response_format=JobPosting
+    response_format=JobPosting,
 )
 ```

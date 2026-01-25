@@ -1,0 +1,18 @@
+from pydantic import BaseModel
+
+
+class ProductListing(BaseModel):
+    name: str
+    price: float
+    original_price: float | None
+    rating: float
+    review_count: int
+    availability: str
+    seller: str
+
+
+result = agent.run(
+    task="Extract product listing information",
+    url="https://store.example.com/products/laptop",
+    response_format=ProductListing,
+)

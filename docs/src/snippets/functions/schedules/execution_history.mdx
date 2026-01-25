@@ -1,19 +1,20 @@
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/schedules/execution_history.py */}
 
-  client = NotteClient()
+```python execution_history.py
+from notte_sdk import NotteClient
 
-  # List recent runs
-  runs = client.functions.list_runs(
-      function_id="function_abc123",
-      only_active=False  # Include completed runs
-  )
+client = NotteClient()
 
-  for run in runs.runs:
-      print(f"Run {run.function_run_id}:")
-      print(f"  Status: {run.status}")
-      print(f"  Created: {run.created_at}")
-      print(f"  Updated: {run.updated_at}")
-  ```
-</CodeGroup>
+# List recent runs
+runs = client.functions.list_runs(
+    function_id="function_abc123",
+    only_active=False,  # Include completed runs
+)
+
+for run in runs.runs:
+    print(f"Run {run.function_run_id}:")
+    print(f"  Status: {run.status}")
+    print(f"  Created: {run.created_at}")
+    print(f"  Updated: {run.updated_at}")
+```

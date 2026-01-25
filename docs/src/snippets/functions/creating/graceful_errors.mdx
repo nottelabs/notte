@@ -1,22 +1,19 @@
-<CodeGroup>
-  ```python Python
-  def run(url: str):
-      try:
-          client = NotteClient()
-          with client.Session() as session:
-              session.execute(type="goto", url=url)
-              data = session.scrape()
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/creating/graceful_errors.py */}
 
-          return {
-              "success": True,
-              "data": data
-          }
+```python graceful_errors.py
+from notte_sdk import NotteClient
 
-      except Exception as e:
-          return {
-              "success": False,
-              "error": str(e),
-              "error_type": type(e).__name__
-          }
-  ```
-</CodeGroup>
+
+def run(url: str):
+    try:
+        client = NotteClient()
+        with client.Session() as session:
+            session.execute(type="goto", url=url)
+            data = session.scrape()
+
+        return {"success": True, "data": data}
+
+    except Exception as e:
+        return {"success": False, "error": str(e), "error_type": type(e).__name__}
+```

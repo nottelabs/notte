@@ -1,10 +1,15 @@
-<CodeGroup>
-  ```python Python
-  function = client.Function(function_id="func_abc123")
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/delete_function.py */}
 
-  # Delete function
-  function.delete()
+```python delete_function.py
+from notte_sdk import NotteClient
 
-  print("Function deleted")
-  ```
-</CodeGroup>
+client = NotteClient()
+
+function = client.Function(function_id="func_abc123")
+
+# Delete function
+function.delete()
+
+print("Function deleted")
+```

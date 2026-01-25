@@ -1,0 +1,23 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/capabilities/consistent_identity.py */}
+
+```python consistent_identity.py
+from notte_sdk import NotteClient
+from notte_sdk.types import ExternalProxy
+
+client = NotteClient()
+
+static_proxy = ExternalProxy(server="http://static-ip.example.com:8080", username="user", password="pass")
+
+# Day 1: Setup account
+with client.Session(proxies=[static_proxy], cookie_file="account.json") as session:
+    page = session.page
+    page.goto("https://example.com/register")
+    # Register account
+
+# Day 2: Use account (same IP)
+with client.Session(proxies=[static_proxy], cookie_file="account.json") as session:
+    page = session.page
+    page.goto("https://example.com/dashboard")
+    # Account recognizes same IP + cookies
+```

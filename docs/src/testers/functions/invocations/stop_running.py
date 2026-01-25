@@ -1,0 +1,7 @@
+# @sniptest filename=stop_running.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Stop a long-running function
+client.functions.stop_run(function_id="function_abc123", run_id=run_id)

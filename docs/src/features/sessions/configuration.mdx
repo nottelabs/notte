@@ -10,6 +10,9 @@ import CaptchaSolving from '/snippets/sessions/configuration/captcha_solving.mdx
 import Timeout from '/snippets/sessions/configuration/timeout.mdx';
 import Viewport from '/snippets/sessions/configuration/viewport.mdx';
 import ExternalCdp from '/snippets/sessions/configuration/external_cdp.mdx';
+import SessionResponse from '/snippets/sessions/configuration/session_response.mdx';
+import ProxiesSimple from '/snippets/sessions/configuration/proxies_simple.mdx';
+import CookieFile from '/snippets/sessions/configuration/cookie_file.mdx';
 
 Sessions are isolated browser instances running in the cloud that you can control programmatically. Each session provides a Playwright-compatible page that you can automate using familiar browser automation APIs.
 
@@ -100,31 +103,7 @@ Customize your session with these options:
 
 When you start a session, you get access to these properties and methods:
 
-```python
-session = client.Session()
-session.start()
-
-# Session properties
-session_id = session.session_id  # Unique identifier
-cdp_url = session.cdp_url()      # Chrome DevTools Protocol URL
-page = session.page              # Playwright page object
-
-# Session status
-status = session.status()        # Get current status
-
-# Viewing
-session.viewer()                 # Open live viewer in browser
-session.viewer_cdp()            # Open CDP debugger
-session.viewer_notebook()       # Display in Jupyter notebook
-
-# Cookies
-cookies = session.get_cookies()
-session.set_cookies(cookies=cookies)
-
-# Replay
-replay = session.replay()       # Get MP4 replay after session ends
-replay.save("session.mp4")
-```
+<SessionResponse />
 
 ## Headless Mode
 
@@ -140,11 +119,7 @@ Control whether to run the browser visibly or in the background:
 
 Route sessions through residential proxies for geo-targeting and enhanced stealth:
 
-```python
-with client.Session(proxies=True) as session:
-    page = session.page
-    page.goto("https://example.com")
-```
+<ProxiesSimple />
 
 <Note>
   See the [Proxies Guide](/features/sessions/proxies) for country-specific proxies, custom proxies, and troubleshooting.
@@ -182,12 +157,7 @@ Set custom screen dimensions for specific testing scenarios:
 
 Automatically load and save cookies across sessions using the `cookie_file` parameter:
 
-```python
-with client.Session(cookie_file="cookies.json") as session:
-    page = session.page
-    page.goto("https://example.com")
-    # Cookies auto-loaded at start, auto-saved when session ends
-```
+<CookieFile />
 
 <Note>
   See the [Cookies Guide](/features/sessions/cookies) for manual cookie management and best practices.

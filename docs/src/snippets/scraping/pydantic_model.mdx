@@ -1,0 +1,22 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/scraping/pydantic_model.py */}
+
+```python pydantic_model.py
+from notte_sdk import NotteClient
+from pydantic import BaseModel
+
+
+class Product(BaseModel):
+    name: str
+    price: float
+    description: str
+
+
+client = NotteClient()
+result = client.scrape(
+    "https://example.com/product", response_format=Product, instructions="Extract the product details"
+)
+
+print(result.data.name)
+print(result.data.price)
+```

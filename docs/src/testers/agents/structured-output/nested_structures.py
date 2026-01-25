@@ -1,0 +1,19 @@
+from pydantic import BaseModel
+
+
+class Address(BaseModel):
+    street: str
+    city: str
+    zip_code: str
+
+
+class Company(BaseModel):
+    name: str
+    address: Address
+    employees: int | None
+
+
+result = agent.run(task="Extract company information", response_format=Company)
+
+print(result.answer.name)
+print(result.answer.address.city)

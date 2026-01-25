@@ -1,0 +1,12 @@
+# @sniptest filename=error_handling.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    result = agent.run(task="Complete task")
+
+    if result.success:
+        print(result.answer)
+    else:
+        print(f"Agent failed: {result.answer}")

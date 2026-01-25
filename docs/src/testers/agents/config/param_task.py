@@ -1,0 +1,2 @@
+# @sniptest filename=param_task.py
+result = agent.run(task="Find the cheapest laptop under $1000 and add it to cart")

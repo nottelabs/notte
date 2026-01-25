@@ -1,0 +1,17 @@
+# @sniptest filename=graceful_degradation.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    result = agent.run(task="Complete task")
+
+    if result.success:
+        # Process successful result
+        process_data(result.answer)
+    else:
+        # Handle failure
+        logger.error(f"Agent failed: {result.answer}")
+
+        # Fallback strategy
+        fallback_approach()

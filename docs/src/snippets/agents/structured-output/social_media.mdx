@@ -1,5 +1,9 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/structured-output/social_media.py */}
+
 ```python
 from pydantic import BaseModel
+
 
 class SocialProfile(BaseModel):
     username: str
@@ -10,8 +14,9 @@ class SocialProfile(BaseModel):
     post_count: int
     verified: bool
 
+
 result = agent.run(
     task="Extract social media profile information",
-    response_format=SocialProfile
+    response_format=SocialProfile,
 )
 ```

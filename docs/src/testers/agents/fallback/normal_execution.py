@@ -1,0 +1,11 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    with client.AgentFallback(session, task="Submit form") as fb:
+        session.execute(type="fill", selector="input[name='email']", value="user@example.com")
+        session.execute(type="click", selector="button[type='submit']")
+
+    # No agent spawned if all actions succeed
+    print(f"Agent invoked: {fb.agent_invoked}")  # False

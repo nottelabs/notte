@@ -1,0 +1,6 @@
+replay = agent.replay()
+replay.save(f"feature_test_{agent.agent_id}.mp4")
+
+# Share file with team
+# Or share console link
+print(f"Console replay: https://console.notte.cc/agents/{agent.agent_id}")

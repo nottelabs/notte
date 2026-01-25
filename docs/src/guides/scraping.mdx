@@ -6,6 +6,7 @@ description: 'How to build reliable web scrapers with Notte'
 import SimpleScrape from '/snippets/scraping/simple.mdx';
 import StructuredScrape from '/snippets/scraping/structured.mdx';
 import AgentScrape from '/snippets/scraping/agent.mdx';
+import SchemaDesign from '/snippets/guides/schema_design.mdx';
 
 ## Scrape any page and get formatted data
 
@@ -79,16 +80,4 @@ Use `response_format` whenever possible to yield the best & most reliable result
 
 **Example of good schema design:**
 
-```python
-from pydantic import BaseModel
-
-class Product(BaseModel):
-    product_url: str
-    name: str
-    price: float | None = None
-    description: str | None = None
-    image_url: str | None = None
-
-class ProductList(BaseModel):
-    products: list[Product]
-```
+<SchemaDesign />

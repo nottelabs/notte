@@ -1,0 +1,9 @@
+# @sniptest filename=param_notifier.py
+from notte_core.common.notifier import EmailNotifier
+
+notifier = EmailNotifier(email="user@example.com")
+
+agent = client.Agent(
+    session=session,
+    notifier=notifier,  # Get email when agent finishes
+)

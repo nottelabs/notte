@@ -1,0 +1,15 @@
+# @sniptest filename=status_checking.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    agent.start(task="Long running task")
+
+    # Check status
+    status = agent.status()
+
+    print(f"Agent ID: {status.agent_id}")
+    print(f"Current state: {status.status}")
+    print(f"Steps completed: {len(status.steps)}")
+    print(f"Success: {status.success}")

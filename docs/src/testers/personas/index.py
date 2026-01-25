@@ -1,0 +1,23 @@
+# @sniptest filename=personas.py
+import datetime as dt
+
+from notte_sdk.client import NotteClient
+
+client = NotteClient()
+
+persona = client.Persona(create_vault=True)
+print(f"Persona email: {persona.info.email}")
+
+# add a credential to the persona: password is generated automatically and email is the persona's email
+persona.add_credentials(url="https://github.com/")
+
+# read recent emails
+recent_emails = persona.emails(only_unread=True, limit=10, timedelta=dt.timedelta(minutes=5))
+print(f"Recent emails: {recent_emails}")
+
+# get your persona in subsequent scripts
+same_persona = client.Persona(persona.info.persona_id)
+assert same_persona.info == persona.info
+
+# delete the persona when you don't need it anymore
+persona.delete()

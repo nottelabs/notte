@@ -1,0 +1,10 @@
+# @sniptest filename=example_run.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    agent = client.Agent(session=session, max_steps=5)
+    response = agent.run(
+        task="Find the latest job openings on notte.cc",
+    )

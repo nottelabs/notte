@@ -1,10 +1,13 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/structured-output/error_handling.py */}
+
 ```python
 from pydantic import ValidationError
 
 try:
     result = agent.run(
         task="Extract product data",
-        response_format=Product
+        response_format=Product,
     )
     product = result.answer
 except ValidationError as e:

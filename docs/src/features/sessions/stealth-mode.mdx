@@ -3,6 +3,11 @@ title: Stealth Mode
 description: Configure anti-detection features for your browser sessions
 ---
 
+import RealisticBehavior from "/snippets/sessions/stealth/realistic_behavior.mdx";
+import RotateProxies from "/snippets/sessions/stealth/rotate_proxies.mdx";
+import MatchViewport from "/snippets/sessions/stealth/match_viewport.mdx";
+import CombineTechniques from "/snippets/sessions/stealth/combine_techniques.mdx";
+
 Notte sessions include built-in stealth features to help your automations avoid detection by anti-bot systems.
 
 ## Built-in Stealth Features
@@ -76,67 +81,25 @@ Override the default user agent for specific requirements:
 
 Avoid patterns that look automated:
 
-```python
-import time
-import random
-
-# Bad: Instant actions
-page.click("button")
-page.fill("input", "text")
-
-# Good: Human-like delays
-page.click("button")
-time.sleep(random.uniform(0.5, 1.5))
-page.fill("input", "text")
-```
+<RealisticBehavior />
 
 ### 2. Rotate Proxies
 
 Use different proxies for different sessions:
 
-```python
-# Session 1 with US proxy
-with client.Session(
-    proxies=[NotteProxy(geolocation=ProxyGeolocation(country="US"))]
-) as session:
-    # automation
-
-# Session 2 with UK proxy
-with client.Session(
-    proxies=[NotteProxy(geolocation=ProxyGeolocation(country="GB"))]
-) as session:
-    # automation
-```
+<RotateProxies />
 
 ### 3. Match Viewport to Real Devices
 
 Use common screen resolutions:
 
-```python
-# Desktop
-with client.Session(viewport_width=1920, viewport_height=1080) as session:
-    pass
-
-# Laptop
-with client.Session(viewport_width=1366, viewport_height=768) as session:
-    pass
-```
+<MatchViewport />
 
 ### 4. Combine Multiple Techniques
 
 Layer stealth features for best results:
 
-```python
-with client.Session(
-    browser_type="chrome",
-    proxies=True,
-    viewport_width=1920,
-    viewport_height=1080,
-    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-) as session:
-    # Maximum stealth configuration
-    pass
-```
+<CombineTechniques />
 
 ## Testing Stealth
 

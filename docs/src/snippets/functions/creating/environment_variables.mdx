@@ -1,16 +1,20 @@
-<CodeGroup>
-  ```python Python
-  import os
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/creating/environment_variables.py */}
 
-  def run():
-      # Access environment variables
-      api_key = os.getenv("MY_API_KEY")
-      webhook_url = os.getenv("WEBHOOK_URL")
+```python environment_variables.py
+import os
 
-      if not api_key:
-          return {"error": "API key not configured"}
+from notte_sdk import NotteClient
 
-      # Use in automation
-      client = NotteClient(api_key=api_key)
-  ```
-</CodeGroup>
+
+def run():
+    # Access environment variables
+    api_key = os.getenv("MY_API_KEY")
+    webhook_url = os.getenv("WEBHOOK_URL")
+
+    if not api_key:
+        return {"error": "API key not configured"}
+
+    # Use in automation
+    client = NotteClient(api_key=api_key)
+```

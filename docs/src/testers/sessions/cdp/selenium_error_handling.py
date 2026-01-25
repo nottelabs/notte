@@ -1,0 +1,13 @@
+# @sniptest filename=selenium_error_handling.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
+
+    try:
+        page.click("button", timeout=5000)
+    except Exception as e:
+        print(f"Click failed: {e}")

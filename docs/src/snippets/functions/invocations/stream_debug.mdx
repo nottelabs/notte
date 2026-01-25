@@ -1,15 +1,16 @@
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/invocations/stream_debug.py */}
 
-  client = NotteClient()
+```python stream_debug.py
+from notte_sdk import NotteClient
 
-  function = client.Function(function_id="function_abc123")
+client = NotteClient()
 
-  # Development - stream logs
-  result = function.run(url="https://example.com", stream=True)
+function = client.Function(function_id="function_abc123")
 
-  # Production - no streaming
-  result = function.run(url="https://example.com", stream=False)
-  ```
-</CodeGroup>
+# Development - stream logs
+result = function.run(url="https://example.com", stream=True)
+
+# Production - no streaming
+result = function.run(url="https://example.com", stream=False)
+```

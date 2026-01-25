@@ -1,15 +1,16 @@
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/invocations/sequential.py */}
 
-  client = NotteClient()
-  function = client.Function(function_id="func_abc123")
+```python sequential.py
+from notte_sdk import NotteClient
 
-  results = []
-  for url in urls:
-      result = function.run(url=url)
-      results.append(result.result)
+client = NotteClient()
+function = client.Function(function_id="func_abc123")
 
-  print(results)
-  ```
-</CodeGroup>
+results = []
+for url in urls:
+    result = function.run(url=url)
+    results.append(result.result)
+
+print(results)
+```

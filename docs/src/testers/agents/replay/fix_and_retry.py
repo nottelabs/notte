@@ -1,0 +1,10 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    # Maybe increase max_steps
+    agent = client.Agent(session=session, max_steps=25)
+
+    # Or adjust the task
+    result = agent.run(task="Click the 'View Pricing' button in the main navigation")

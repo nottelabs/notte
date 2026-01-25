@@ -8,6 +8,10 @@ import ExternalKernel from '/snippets/sessions/cdp/external_kernel.mdx';
 import ExternalBrowserbase from '/snippets/sessions/cdp/external_browserbase.mdx';
 import ExternalMultiProvider from '/snippets/sessions/cdp/external_multi_provider.mdx';
 import ExternalTroubleshooting from '/snippets/sessions/cdp/external_troubleshooting.mdx';
+import ExternalCdpAuth from '/snippets/sessions/cdp/external_cdp_auth.mdx';
+import ExternalCleanup from '/snippets/sessions/cdp/external_cleanup.mdx';
+import ExternalErrorHandling from '/snippets/sessions/cdp/external_error_handling.mdx';
+import ExternalMonitorCosts from '/snippets/sessions/cdp/external_monitor_costs.mdx';
 
 Notte can connect to any browser that exposes a Chrome DevTools Protocol (CDP) endpoint. This allows you to use Notte's features (Agents, Actions, Scraping) with browser infrastructure from providers like Kernel.sh or BrowserBase.
 
@@ -134,14 +138,7 @@ When using external browsers:
 
 Some providers require authentication in the CDP URL:
 
-```python
-# CDP URL with authentication
-cdp_url = "wss://user:password@provider.com:9222/devtools/browser/abc123"
-
-with client.Session(cdp_url=cdp_url) as session:
-    # Your automation
-    pass
-```
+<ExternalCdpAuth />
 
 ## Provider Comparison
 
@@ -161,34 +158,13 @@ with client.Session(cdp_url=cdp_url) as session:
 
 Always clean up external browser sessions:
 
-```python
-try:
-    # Create external browser
-    external_browser = provider.create()
-
-    # Use with Notte
-    with client.Session(cdp_url=external_browser.cdp_url) as session:
-        # Your automation
-        pass
-
-finally:
-    # Always clean up
-    provider.delete(external_browser.id)
-```
+<ExternalCleanup />
 
 ### 2. Handle Errors Gracefully
 
 CDP connections can fail. Always use try-except:
 
-```python
-try:
-    with client.Session(cdp_url=cdp_url) as session:
-        # Your automation
-        pass
-except Exception as e:
-    print(f"Automation failed: {e}")
-    # Implement retry logic or fallback
-```
+<ExternalErrorHandling />
 
 ### 3. Choose the Right Provider
 
@@ -200,18 +176,7 @@ except Exception as e:
 
 External providers typically charge per session or minute. Monitor usage:
 
-```python
-import time
-
-start = time.time()
-
-with client.Session(cdp_url=cdp_url) as session:
-    # Your automation
-    pass
-
-duration = time.time() - start
-print(f"Session duration: {duration:.2f} seconds")
-```
+<ExternalMonitorCosts />
 
 ## Next Steps
 

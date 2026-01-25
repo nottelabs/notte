@@ -1,0 +1,14 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/cdp/playwright_context_managers.py */}
+
+```python playwright_context_managers.py
+from notte_sdk import NotteClient
+from playwright.sync_api import sync_playwright
+
+client = NotteClient()
+
+with client.Session() as session:
+    with sync_playwright() as p:
+        # Your code here
+        pass
+```

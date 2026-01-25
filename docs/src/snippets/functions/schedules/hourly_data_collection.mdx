@@ -1,16 +1,19 @@
-<CodeGroup>
-  ```python Python
-  # data_collector.py
-  def run(source_url: str):
-      """Collect data every hour."""
-      from notte_sdk import NotteClient
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/schedules/hourly_data_collection.py */}
 
-      client = NotteClient()
+```python data_collector.py
+from datetime import datetime
 
-      with client.Session() as session:
-          session.execute(type="goto", url=source_url)
-          data = session.scrape()
+from notte_sdk import NotteClient
 
-      return {"data": data, "timestamp": datetime.now().isoformat()}
-  ```
-</CodeGroup>
+
+def run(source_url: str):
+    """Collect data every hour."""
+    client = NotteClient()
+
+    with client.Session() as session:
+        session.execute(type="goto", url=source_url)
+        data = session.scrape()
+
+    return {"data": data, "timestamp": datetime.now().isoformat()}
+```

@@ -1,0 +1,14 @@
+# Old function failing
+try:
+    old_function.run()
+except Exception:
+    print("Function broken, regenerating...")
+
+    # Use agent to figure out new function
+    agent = client.Agent(session=session)
+    result = agent.run(task=original_task_description)
+
+    if result.success:
+        # Generate new function
+        new_function = agent.workflow.create()
+        print(f"New function created: {new_function.function_id}")

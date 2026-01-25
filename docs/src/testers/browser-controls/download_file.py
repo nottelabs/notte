@@ -1,0 +1,13 @@
+# @sniptest filename=download_file.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
+    session.execute(type="download_file", selector="a.download-link")
+
+    # Access downloaded file
+    downloaded_files = session.storage.list_downloaded_files()
+    for file in downloaded_files:
+        content = session.storage.download(file.file_id)

@@ -1,22 +1,17 @@
-<CodeGroup>
-  ```python Python
-  def run(url: str):
-      try:
-          # Perform automation
-          data = scrape_url(url)
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/creating/return_structured.py */}
 
-          return {
-              "success": True,
-              "data": data,
-              "url": url,
-              "timestamp": datetime.now().isoformat()
-          }
+```python return_structured.py
+from datetime import datetime
 
-      except Exception as e:
-          return {
-              "success": False,
-              "error": str(e),
-              "url": url
-          }
-  ```
-</CodeGroup>
+
+def run(url: str):
+    try:
+        # Perform automation
+        data = scrape_url(url)
+
+        return {"success": True, "data": data, "url": url, "timestamp": datetime.now().isoformat()}
+
+    except Exception as e:
+        return {"success": False, "error": str(e), "url": url}
+```

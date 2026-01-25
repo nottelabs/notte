@@ -1,16 +1,21 @@
-<CodeGroup>
-  ```python Python
-  function = client.Function(
-      function_id="func_abc123",
-      decryption_key="your-decryption-key"  # Required for downloading
-  )
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/download_code.py */}
 
-  # Download function code
-  code = function.download()
+```python download_code.py
+from notte_sdk import NotteClient
 
-  print(code)  # Function source code
+client = NotteClient()
 
-  # Or download directly to a file
-  code = function.download(workflow_path="downloaded_function.py")
-  ```
-</CodeGroup>
+function = client.Function(
+    function_id="func_abc123",
+    decryption_key="your-decryption-key",  # Required for downloading
+)
+
+# Download function code
+code = function.download()
+
+print(code)  # Function source code
+
+# Or download directly to a file
+code = function.download(workflow_path="downloaded_function.py")
+```

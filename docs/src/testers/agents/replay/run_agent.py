@@ -1,0 +1,2 @@
+agent = client.Agent(session=session, max_steps=15)
+result = agent.run(task="Find and click the pricing button")

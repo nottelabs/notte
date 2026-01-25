@@ -6,6 +6,8 @@ description: Understanding the difference between direct Playwright control and 
 import PlaywrightExample from '/snippets/sessions/playwright-vs-notte/playwright_example.mdx';
 import NotteSdkExample from '/snippets/sessions/playwright-vs-notte/notte_sdk_example.mdx';
 import MixBoth from '/snippets/sessions/playwright-vs-notte/mix_both.mdx';
+import PlaywrightDirect from '/snippets/sessions/playwright-vs-notte/playwright_direct.mdx';
+import NotteSdkMethods from '/snippets/sessions/playwright-vs-notte/notte_sdk_methods.mdx';
 
 When working with Notte sessions, you have two ways to interact with the browser: using Playwright directly via CDP, or using Notte's AI-enabled SDK methods. Both approaches work with the same session, and you can even mix them in your automation.
 
@@ -13,12 +15,7 @@ When working with Notte sessions, you have two ways to interact with the browser
 
 When you access `session.page`, you get a Playwright-compatible page object that connects directly to the browser via Chrome DevTools Protocol:
 
-```python
-page = session.page
-page.goto("https://example.com")
-page.fill("input[name='email']", "user@example.com")
-page.click("button[type='submit']")
-```
+<PlaywrightDirect />
 
 This gives you the full Playwright API - everything you can do with Playwright works here. You control the browser directly through WebSocket connections with low latency.
 
@@ -26,13 +23,7 @@ This gives you the full Playwright API - everything you can do with Playwright w
 
 Notte provides high-level methods designed for AI agents and structured automation:
 
-```python
-session.execute(type="goto", url="https://example.com")
-obs = session.observe(instructions="Fill the email input")
-action = obs.space.first()  # AI finds the right element
-session.execute(action.with_value("user@example.com"))
-data = session.scrape(instructions="Extract all product names")
-```
+<NotteSdkMethods />
 
 These methods use Notte's backend to execute actions, with built-in AI capabilities, observability, and error handling.
 

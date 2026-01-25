@@ -17,4 +17,3 @@ with client.Session() as session:
 # Hidden test code below
 if __name__ == "__main__":
     print("Testing...")
-

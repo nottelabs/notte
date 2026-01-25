@@ -1,10 +1,19 @@
-```python
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/lifecycle/handle_interrupts.py */}
+
+```python handle_interrupts.py
 import signal
 import sys
 
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+
 def signal_handler(sig, frame):
-    print('Interrupt received, cleaning up...')
+    print("Interrupt received, cleaning up...")
     sys.exit(0)
+
 
 signal.signal(signal.SIGINT, signal_handler)
 

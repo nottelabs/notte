@@ -1,18 +1,13 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/structured-output/optional_fields.py */}
+
 ```python
 from pydantic import BaseModel
 
-class Product(BaseModel):
-    name: str
-    price: float
-    discount: float | None = None  # Optional
-    shipping_cost: float | None = None  # Optional
 
-result = agent.run(
-    task="Extract product details",
-    response_format=Product
-)
-
-# Safe to access optional fields
-if result.answer.discount:
-    final_price = result.answer.price - result.answer.discount
+class Article(BaseModel):
+    title: str
+    author: str | None  # May not always be present
+    date: str | None
+    content: str
 ```

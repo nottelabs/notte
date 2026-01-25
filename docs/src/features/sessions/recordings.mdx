@@ -9,6 +9,9 @@ import ReplayById from '/snippets/sessions/recordings/replay_by_id.mdx';
 import AgentReplay from '/snippets/sessions/recordings/agent_replay.mdx';
 import DebugFailed from '/snippets/sessions/recordings/debug_failed.mdx';
 import CleanupOld from '/snippets/sessions/recordings/cleanup_old.mdx';
+import AgentReplayAlt from '/snippets/sessions/capabilities/agent_replay_alt.mdx';
+import NameRecordings from '/snippets/sessions/capabilities/name_recordings.mdx';
+import RecordOnFailures from '/snippets/sessions/capabilities/record_on_failures.mdx';
 
 Notte automatically records every action in your browser sessions, allowing you to download video replays for debugging and analysis.
 
@@ -48,11 +51,7 @@ Agents have their own replay method for convenience:
 
 You can also get the replay from the session:
 
-```python
-# Alternative: get from session
-replay = session.replay()
-replay.save("agent_run.mp4")
-```
+<AgentReplayAlt />
 
 ## Debugging Failed Runs
 
@@ -66,27 +65,13 @@ Use recordings to understand what went wrong:
 
 Use descriptive filenames:
 
-```python
-from datetime import datetime
-
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-replay.save(f"login_test_{session.session_id}_{timestamp}.mp4")
-```
+<NameRecordings />
 
 ### 2. Record Only on Failures
 
 For production, save recordings only when something goes wrong:
 
-```python
-try:
-    with client.Session() as session:
-        session.execute(type="goto", url="https://example.com")
-        # ... automation ...
-except Exception as e:
-    replay = session.replay()
-    replay.save(f"error_{session.session_id}.mp4")
-    raise
-```
+<RecordOnFailures />
 
 ### 3. Clean Up Old Recordings
 

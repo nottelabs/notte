@@ -9,6 +9,9 @@ import PlaywrightAsync from '/snippets/sessions/cdp/playwright_async.mdx';
 import PlaywrightMultiplePages from '/snippets/sessions/cdp/playwright_multiple_pages.mdx';
 import PlaywrightNetwork from '/snippets/sessions/cdp/playwright_network.mdx';
 import PlaywrightEvents from '/snippets/sessions/cdp/playwright_events.mdx';
+import PlaywrightContextManagers from '/snippets/sessions/cdp/playwright_context_managers.mdx';
+import PlaywrightTimeout from '/snippets/sessions/cdp/playwright_timeout.mdx';
+import PlaywrightCdpErrorHandling from '/snippets/sessions/cdp/playwright_cdp_error_handling.mdx';
 
 Notte sessions expose a Chrome DevTools Protocol (CDP) endpoint that you can connect to with Playwright. This allows you to use Playwright's API directly while still benefiting from Notte's cloud infrastructure, anti-detection features, and session management.
 
@@ -66,12 +69,7 @@ Listen to browser events using Playwright:
 
 Always use context managers for both Notte and Playwright to ensure proper cleanup:
 
-```python
-with client.Session() as session:
-    with sync_playwright() as p:
-        # Your code here
-        pass
-```
+<PlaywrightContextManagers />
 
 ### 2. Prefer Notte's Built-in Page
 
@@ -81,23 +79,13 @@ For simple automation, use `session.page` directly. Only connect Playwright when
 
 Remember that Notte sessions have a timeout. For long-running Playwright operations, increase the timeout:
 
-```python
-with client.Session(timeout_minutes=20) as session:
-    # Long Playwright automation
-    pass
-```
+<PlaywrightTimeout />
 
 ### 4. Handle CDP Disconnections
 
 CDP connections can be interrupted. Wrap operations in try-except blocks:
 
-```python
-try:
-    browser = p.chromium.connect_over_cdp(cdp_url)
-    # ... operations
-except Exception as e:
-    print(f"CDP connection failed: {e}")
-```
+<PlaywrightCdpErrorHandling />
 
 ## When to Use Playwright with Notte
 

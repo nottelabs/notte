@@ -1,5 +1,9 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/retry_pattern.py */}
+
 ```python agent_retry.py
 import time
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -16,7 +20,7 @@ for attempt in range(MAX_RETRIES):
             break
 
         print(f"Attempt {attempt + 1} failed, retrying...")
-        time.sleep(2 ** attempt)  # Exponential backoff
+        time.sleep(2**attempt)  # Exponential backoff
 else:
     raise RuntimeError("Agent failed after all retries")
 ```

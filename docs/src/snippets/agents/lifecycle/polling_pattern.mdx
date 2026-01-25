@@ -1,11 +1,14 @@
-```python
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/lifecycle/polling_pattern.py */}
+
+```python polling_pattern.py
 import time
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
 with client.Session() as session:
-
     agent = client.Agent(session=session)
     agent.start(task="Long task")
 

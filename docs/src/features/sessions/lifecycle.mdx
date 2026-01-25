@@ -11,6 +11,9 @@ import CompleteExample from '/snippets/sessions/lifecycle/complete_example.mdx';
 import ConnectExisting from '/snippets/sessions/lifecycle/connect_existing.mdx';
 import ErrorHandling from '/snippets/sessions/lifecycle/error_handling.mdx';
 import HandleInterrupts from '/snippets/sessions/lifecycle/handle_interrupts.mdx';
+import ContextManager from '/snippets/sessions/lifecycle/context_manager.mdx';
+import TimeoutExample from '/snippets/sessions/lifecycle/timeout_example.mdx';
+import MonitorState from '/snippets/sessions/lifecycle/monitor_state.mdx';
 
 Every Notte session follows a predictable lifecycle from creation to termination. Understanding this lifecycle helps you build reliable automation workflows and manage resources effectively.
 
@@ -109,11 +112,7 @@ Follow these patterns to build reliable, cost-effective automation:
 
 The `with` statement guarantees cleanup:
 
-```python
-with client.Session() as session:
-    # ... use session
-# Automatically stopped here
-```
+<ContextManager />
 
 ### 2. Set Appropriate Timeouts
 
@@ -123,24 +122,13 @@ Match timeout to task duration with a buffer for delays:
 * **Data scraping**: 10-15 minutes
 * **Long workflows**: 20-30 minutes
 
-```python
-with client.Session(timeout_minutes=15) as session:
-    # Complex automation
-    pass
-```
+<TimeoutExample />
 
 ### 3. Monitor Session State
 
 Check session status before long-running operations:
 
-```python
-with client.Session() as session:
-    status = session.status()
-    if status.status != 'active':
-        raise Exception('Session is no longer active')
-
-    # Continue with operations
-```
+<MonitorState />
 
 ### 4. Handle Cleanup Gracefully
 

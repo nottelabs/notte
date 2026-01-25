@@ -1,0 +1,18 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    # Bad - too complex for fallback
+    with client.AgentFallback(session, task="Complete entire checkout process") as fb:
+        session.execute(type="click", selector="#cart")
+        session.execute(type="click", selector="#checkout")
+        session.execute(type="fill", selector="#address", value="123 Main St")
+        # ... many more steps
+
+    # Better - break into smaller fallbacks
+    with client.AgentFallback(session, task="Click cart") as fb:
+        session.execute(type="click", selector="#cart")
+
+    with client.AgentFallback(session, task="Proceed to checkout") as fb:
+        session.execute(type="click", selector="#checkout")

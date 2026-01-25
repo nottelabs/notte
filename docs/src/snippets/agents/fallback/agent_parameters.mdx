@@ -1,3 +1,6 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/fallback/agent_parameters.py */}
+
 ```python
 from notte_sdk import NotteClient
 
@@ -9,7 +12,7 @@ with client.Session() as session:
         task="Complete signup",
         max_steps=15,  # Agent parameters
         reasoning_model="anthropic/claude-3.5-sonnet",
-        use_vision=True
+        use_vision=True,
     ) as fb:
         session.execute(type="click", selector="#signup")
 ```

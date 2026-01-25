@@ -1,17 +1,17 @@
-<CodeGroup>
-  ```python Python
-  import os
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/missing_env_vars.py */}
 
-  def run():
-      required_vars = ["API_KEY", "WEBHOOK_URL"]
+```python missing_env_vars.py
+import os
 
-      missing = [var for var in required_vars if not os.getenv(var)]
 
-      if missing:
-          return {
-              "error": f"Missing environment variables: {', '.join(missing)}"
-          }
+def run():
+    required_vars = ["API_KEY", "WEBHOOK_URL"]
 
-      # Continue with automation
-  ```
-</CodeGroup>
+    missing = [var for var in required_vars if not os.getenv(var)]
+
+    if missing:
+        return {"error": f"Missing environment variables: {', '.join(missing)}"}
+
+    # Continue with automation
+```

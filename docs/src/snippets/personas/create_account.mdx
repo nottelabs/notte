@@ -1,3 +1,6 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/personas/create_account.py */}
+
 ```python create_account.py
 from notte_sdk import NotteClient
 
@@ -13,7 +16,9 @@ url = "https://console.notte.cc"
 persona.add_credentials(url=url)
 
 with notte.Session(open_viewer=True) as session:
-	agent = notte.Agent(session=session, persona=persona)
-	response = agent.run(task=f"Go to {url} and create an account. Go create an API key and return the API key.", url=url)
-	print(response.answer)
+    agent = notte.Agent(session=session, persona=persona)
+    response = agent.run(
+        task=f"Go to {url} and create an account. Go create an API key and return the API key.", url=url
+    )
+    print(response.answer)
 ```

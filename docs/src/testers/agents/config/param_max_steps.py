@@ -1,0 +1,5 @@
+# @sniptest filename=param_max_steps.py
+agent = client.Agent(
+    session=session,
+    max_steps=20,  # Allow up to 20 actions
+)

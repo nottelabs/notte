@@ -1,24 +1,21 @@
-<CodeGroup>
-  ```python Python
-  # In your function
-  def run():
-      try:
-          # Your automation
-          result = perform_automation()
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/schedules/failed_runs.py */}
 
-          # Send success notification
-          notify_success(result)
+```python failed_runs.py
+def run():
+    try:
+        # Your automation
+        result = perform_automation()
 
-          return result
+        # Send success notification
+        notify_success(result)
 
-      except Exception as e:
-          # Send failure alert
-          notify_failure(str(e))
+        return result
 
-          # Return error info
-          return {
-              "success": False,
-              "error": str(e)
-          }
-  ```
-</CodeGroup>
+    except Exception as e:
+        # Send failure alert
+        notify_failure(str(e))
+
+        # Return error info
+        return {"success": False, "error": str(e)}
+```

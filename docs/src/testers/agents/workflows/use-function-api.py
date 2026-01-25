@@ -1,0 +1,7 @@
+# Create function from successful agent
+function = agent.workflow.create()
+
+# Run multiple times
+for query in ["laptop", "phone", "tablet"]:
+    result = function.run(query=query)
+    print(result)

@@ -1,10 +1,15 @@
-<CodeGroup>
-  ```python Python
-  workflows = client.functions.list()
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/version_history.py */}
 
-  for workflow in workflows.workflows:
-      print(f"Function: {workflow.name}")
-      print(f"Versions: {', '.join(workflow.versions)}")
-      print(f"Latest: {workflow.latest_version}")
-  ```
-</CodeGroup>
+```python version_history.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+workflows = client.functions.list()
+
+for workflow in workflows.workflows:
+    print(f"Function: {workflow.name}")
+    print(f"Versions: {', '.join(workflow.versions)}")
+    print(f"Latest: {workflow.latest_version}")
+```

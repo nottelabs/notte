@@ -1,0 +1,31 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/return_values.py */}
+
+```python return_values.py
+from pydantic import BaseModel
+
+
+# Return string
+def run():
+    return "Task completed successfully"
+
+
+# Return dict
+def run():
+    return {"status": "success", "data": extracted_data, "count": len(extracted_data)}
+
+
+# Return list
+def run():
+    return ["item1", "item2", "item3"]
+
+
+# Return Pydantic model (serialized)
+class Result(BaseModel):
+    success: bool
+    data: list[str]
+
+
+def run():
+    return Result(success=True, data=["a", "b"]).model_dump()
+```

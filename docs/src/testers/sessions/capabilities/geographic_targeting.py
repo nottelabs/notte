@@ -1,0 +1,16 @@
+# @sniptest filename=geographic_targeting.py
+from notte_sdk import NotteClient
+from notte_sdk.types import ExternalProxy
+
+client = NotteClient()
+
+# US static IP
+us_proxy = ExternalProxy(server="http://us-static.example.com:8080", username="user", password="pass")
+
+# EU static IP
+eu_proxy = ExternalProxy(server="http://eu-static.example.com:8080", username="user", password="pass")
+
+# Access region-specific content
+with client.Session(proxies=[us_proxy]) as session:
+    page = session.page
+    page.goto("https://us.example.com")

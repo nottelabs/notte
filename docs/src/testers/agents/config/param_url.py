@@ -1,0 +1,2 @@
+# @sniptest filename=param_url.py
+result = agent.run(task="Extract pricing information", url="https://example.com/products")

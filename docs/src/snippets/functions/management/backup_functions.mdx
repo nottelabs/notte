@@ -1,27 +1,29 @@
-<CodeGroup>
-  ```python Python
-  import os
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/backup_functions.py */}
 
-  functions = client.functions.list()
+```python backup_functions.py
+import os
 
-  # Create backup directory
-  os.makedirs("function_backups", exist_ok=True)
+from notte_sdk import NotteClient
 
-  for func in functions.workflows:
-      function = client.Function(
-          function_id=func.function_id,
-          decryption_key="your-key"
-      )
+client = NotteClient()
 
-      try:
-          code = function.download()
+functions = client.functions.list()
 
-          filename = f"function_backups/{func.name}_{func.latest_version}.py"
-          with open(filename, "w") as f:
-              f.write(code)
+# Create backup directory
+os.makedirs("function_backups", exist_ok=True)
 
-          print(f"Backed up: {func.name}")
-      except Exception as e:
-          print(f"Failed to backup {func.name}: {e}")
-  ```
-</CodeGroup>
+for func in functions.workflows:
+    function = client.Function(function_id=func.function_id, decryption_key="your-key")
+
+    try:
+        code = function.download()
+
+        filename = f"function_backups/{func.name}_{func.latest_version}.py"
+        with open(filename, "w") as f:
+            f.write(code)
+
+        print(f"Backed up: {func.name}")
+    except Exception as e:
+        print(f"Failed to backup {func.name}: {e}")
+```

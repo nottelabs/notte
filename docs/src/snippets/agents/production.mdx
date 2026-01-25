@@ -1,3 +1,6 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/production.py */}
+
 ```python production_agent.py
 from notte_sdk import NotteClient
 
@@ -13,13 +16,10 @@ with client.Session(headless=True, proxies=True) as session:
         use_vision=True,
         max_steps=30,
         vault=vault,
-        persona=persona
+        persona=persona,
     )
 
-    result = agent.run(
-        task="Complete checkout process",
-        url="https://store.example.com/cart"
-    )
+    result = agent.run(task="Complete checkout process", url="https://store.example.com/cart")
 
     if result.success:
         print(f"Order completed: {result.answer}")

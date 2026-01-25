@@ -1,0 +1,11 @@
+from pydantic import BaseModel
+
+
+# Don't do this - use plain text response instead
+class Explanation(BaseModel):
+    answer: str
+
+
+# Do this instead
+result = agent.run(task="Explain how this product works")
+print(result.answer)  # Natural language explanation

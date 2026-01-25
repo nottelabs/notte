@@ -1,0 +1,10 @@
+from pydantic import BaseModel
+
+
+class ContactInfo(BaseModel):
+    email: str
+    phone: str | None
+
+
+result = agent.run(task="Find contact info", response_format=ContactInfo)
+print(result.answer.email)  # Type-safe access

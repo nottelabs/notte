@@ -1,11 +1,13 @@
-<CodeGroup>
-  ```python Python
-  # Stop specific run
-  client.functions.stop_run(
-      function_id="function_abc123",
-      run_id="run_xyz789"
-  )
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/stop_running.py */}
 
-  print("Function execution stopped")
-  ```
-</CodeGroup>
+```python stop_running.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Stop specific run
+client.functions.stop_run(function_id="function_abc123", run_id="run_xyz789")
+
+print("Function execution stopped")
+```

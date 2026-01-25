@@ -1,0 +1,2 @@
+replay = agent.replay()
+replay.show()  # Opens video player in notebook

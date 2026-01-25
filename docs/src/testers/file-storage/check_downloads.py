@@ -1,0 +1,17 @@
+# @sniptest filename=check_downloads.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+storage = client.FileStorage()
+
+with client.Session(storage=storage) as session:
+    agent = client.Agent(session=session)
+    agent.run(task="Download all invoices")
+
+# Check what was downloaded
+files = storage.list_downloaded_files()
+if not files:
+    print("No files were downloaded")
+else:
+    for f in files:
+        storage.download(file_name=f, local_dir="./invoices")

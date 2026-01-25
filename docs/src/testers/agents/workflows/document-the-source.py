@@ -1,0 +1,13 @@
+from datetime import datetime
+
+function = agent.workflow.create()
+
+# Add metadata
+metadata = {
+    "agent_id": agent.agent_id,
+    "original_task": "Extract product data",
+    "created_at": datetime.now().isoformat(),
+    "success_rate": result.success,
+}
+
+# Save with function

@@ -8,6 +8,12 @@ import ManualViewer from '/snippets/sessions/live-view/manual.mdx';
 import AgentViewer from '/snippets/sessions/live-view/agent.mdx';
 import SharingViewer from '/snippets/sessions/live-view/sharing.mdx';
 import ViewerConfig from '/snippets/sessions/live-view/configuration.mdx';
+import ViewerBrowser from '/snippets/sessions/capabilities/viewer_browser.mdx';
+import ViewerCdp from '/snippets/sessions/capabilities/viewer_cdp.mdx';
+import ViewerNotebook from '/snippets/sessions/capabilities/viewer_notebook.mdx';
+import DevEnvironment from '/snippets/sessions/capabilities/dev_environment.mdx';
+import CombineWithRecordings from '/snippets/sessions/capabilities/combine_with_recordings.mdx';
+import MultipleViewers from '/snippets/sessions/capabilities/multiple_viewers.mdx';
 
 Live View allows you to watch your browser sessions in real-time as they execute, making it easy to debug and monitor automation.
 
@@ -31,37 +37,19 @@ Notte supports multiple viewer types:
 
 Frame-by-frame replay in your browser:
 
-```python
-with client.Session() as session:
-    session.execute(type="goto", url="https://example.com")
-
-    # Opens browser viewer
-    session.viewer_browser()
-```
+<ViewerBrowser />
 
 ### CDP Viewer
 
 Chrome DevTools Protocol debugger:
 
-```python
-with client.Session() as session:
-    session.execute(type="goto", url="https://example.com")
-
-    # Opens CDP debugger
-    session.viewer_cdp()
-```
+<ViewerCdp />
 
 ### Jupyter Notebook Viewer
 
 Display live view directly in Jupyter notebooks:
 
-```python
-with client.Session() as session:
-    session.execute(type="goto", url="https://example.com")
-
-    # Display in notebook cell
-    session.viewer_notebook()
-```
+<ViewerNotebook />
 
 ## Live View for Agents
 
@@ -92,43 +80,19 @@ Available viewer types:
 
 Live view is ideal for development and debugging:
 
-```python
-import os
-
-# Only use live view in development
-is_dev = os.getenv("ENV") == "development"
-
-with client.Session(open_viewer=is_dev) as session:
-    session.execute(type="goto", url="https://example.com")
-```
+<DevEnvironment />
 
 ### 2. Combine with Recordings
 
 Use live view during development, recordings for later analysis:
 
-```python
-with client.Session(open_viewer=True) as session:
-    # Watch it live
-    session.execute(type="goto", url="https://example.com")
-    session.execute(type="click", selector="button.submit")
-
-# Get recording after session ends
-replay = session.replay()
-replay.save("recording.mp4")
-```
+<CombineWithRecordings />
 
 ### 3. Multiple Viewers
 
 Open multiple viewer types simultaneously:
 
-```python
-with client.Session() as session:
-    session.execute(type="goto", url="https://example.com")
-
-    # Open both viewers
-    session.viewer_browser()  # Frame-by-frame
-    session.viewer_cdp()      # DevTools
-```
+<MultipleViewers />
 
 ## Live View vs Recordings
 

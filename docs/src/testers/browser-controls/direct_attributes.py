@@ -1,0 +1,19 @@
+# @sniptest filename=direct_attributes.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
+
+    # By ID (cleaner)
+    session.execute(type="click", id="submit-button")
+
+    # By text content
+    session.execute(type="click", text="Submit")
+
+    # By placeholder
+    session.execute(type="fill", placeholder="Enter email", value="user@example.com")
+
+    # By ARIA label
+    session.execute(type="click", aria_label="Close dialog")

@@ -1,0 +1,24 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/capabilities/rate_limiting.py */}
+
+```python rate_limiting.py
+import time
+
+from notte_sdk import NotteClient
+from notte_sdk.types import ExternalProxy
+
+client = NotteClient()
+
+ip_pool = [
+    ExternalProxy(server="http://ip1.example.com:8080", username="user", password="pass"),
+    ExternalProxy(server="http://ip2.example.com:8080", username="user", password="pass"),
+    ExternalProxy(server="http://ip3.example.com:8080", username="user", password="pass"),
+]
+
+for ip_proxy in ip_pool:
+    with client.Session(proxies=[ip_proxy]) as session:
+        page = session.page
+        page.goto("https://api.example.com/data")
+        # Each IP has its own rate limit
+    time.sleep(1)
+```

@@ -1,0 +1,20 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/capabilities/combine_with_profiles.py */}
+
+```python combine_with_profiles.py
+from notte_sdk import NotteClient
+from notte_sdk.types import ExternalProxy
+
+client = NotteClient()
+
+us_proxy = ExternalProxy(server="http://us-static.example.com:8080", username="user", password="pass")
+eu_proxy = ExternalProxy(server="http://eu-static.example.com:8080", username="user", password="pass")
+
+# Each profile has its own static IP
+profiles = {"user1": {"ip": us_proxy, "cookies": "user1.json"}, "user2": {"ip": eu_proxy, "cookies": "user2.json"}}
+
+for user, config in profiles.items():
+    with client.Session(proxies=[config["ip"]], cookie_file=config["cookies"]) as session:
+        page = session.page
+        page.goto("https://example.com")
+```

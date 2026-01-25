@@ -1,3 +1,6 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/fallback/vault_and_persona.py */}
+
 ```python
 from notte_sdk import NotteClient
 
@@ -9,7 +12,7 @@ with client.Session() as session:
     with client.AgentFallback(
         session,
         task="Login and navigate to settings",
-        vault=vault
+        vault=vault,
     ) as fb:
         # Try logging in with deterministic actions
         session.execute(type="fill", selector="#email", value="user@example.com")

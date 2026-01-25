@@ -7,6 +7,7 @@ import DefaultProxy from '/snippets/sessions/default_proxy.mdx';
 import CountryProxy from '/snippets/sessions/country_proxy.mdx';
 import CaptchaSolving from '/snippets/sessions/solve_captchas.mdx';
 import StealthConfiguration from '/snippets/sessions/stealth_configuration.mdx';
+import BrowserTypeSelection from '/snippets/guides/browser_type_selection.mdx';
 
 ### Resolving Bot Detection Issues
 
@@ -38,22 +39,8 @@ For sites with geographic restrictions, use proxies from specific countries:
 
 Different browsers have varying levels of detection resistance. Experiment with different browser types for your specific use case:
 
-```python
-from notte_sdk import NotteClient
+<BrowserTypeSelection />
 
-client = NotteClient()
-
-# Try different browser types
-browsers = ["chromium", "chrome", "firefox"]
-for browser in browsers:
-	with client.Session(
-		browser_type=browser,
-		proxies=True,
-		solve_captchas=True
-	) as session:
-		result = session.observe(url="https://example.com")
-		print(f"Success with {browser}")
-```
 <Tip>
   `chromium` is the default browser type but is the most easily detected.
 </Tip>

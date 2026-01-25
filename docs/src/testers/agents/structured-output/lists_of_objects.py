@@ -1,0 +1,18 @@
+from pydantic import BaseModel
+
+
+class Review(BaseModel):
+    author: str
+    rating: int
+    comment: str
+
+
+result = agent.run(
+    task="Extract all product reviews",
+    response_format=list[Review],
+)
+
+# Iterate over reviews
+for review in result.answer:
+    print(f"{review.author}: {review.rating}/5")
+    print(review.comment)

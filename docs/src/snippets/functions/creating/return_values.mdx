@@ -1,14 +1,19 @@
-<CodeGroup>
-  ```python Python
-  # ✅ Valid returns
-  return "string"
-  return 123
-  return {"key": "value"}
-  return ["item1", "item2"]
-  return None
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/creating/return_values.py */}
 
-  # ❌ Invalid returns
-  return datetime.now()  # Not JSON serializable
-  return lambda x: x  # Functions not serializable
-  ```
-</CodeGroup>
+```python return_values.py
+def valid_returns():
+    # Valid return types (JSON serializable)
+    return "string"
+    return 123
+    return {"key": "value"}
+    return ["item1", "item2"]
+    return None
+
+
+def invalid_returns():
+    # Invalid returns (not JSON serializable)
+    # return datetime.now()  # datetime not serializable
+    # return lambda x: x     # functions not serializable
+    pass
+```

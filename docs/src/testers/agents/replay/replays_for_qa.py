@@ -1,0 +1,11 @@
+# Test run
+result = agent.run(task="Test checkout flow")
+
+# Review replay before production
+replay = agent.replay()
+replay.show()
+
+# Verify:
+# - All steps completed correctly
+# - No unexpected behavior
+# - Performance is acceptable

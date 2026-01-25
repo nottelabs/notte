@@ -1,0 +1,13 @@
+# @sniptest filename=return_structured.py
+from datetime import datetime
+
+
+def run(url: str):
+    try:
+        # Perform automation
+        data = scrape_url(url)
+
+        return {"success": True, "data": data, "url": url, "timestamp": datetime.now().isoformat()}
+
+    except Exception as e:
+        return {"success": False, "error": str(e), "url": url}

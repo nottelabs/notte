@@ -1,10 +1,15 @@
-<CodeGroup>
-  ```python Python
-  # Fork a function from marketplace or teammate
-  original = client.Function(function_id="func_abc123")
-  forked_function = original.fork()
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/fork_function.py */}
 
-  print(f"Forked function ID: {forked_function.function_id}")
-  print(f"Original ID: func_abc123")
-  ```
-</CodeGroup>
+```python fork_function.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Fork a function from marketplace or teammate
+original = client.Function(function_id="func_abc123")
+forked_function = original.fork()
+
+print(f"Forked function ID: {forked_function.function_id}")
+print("Original ID: func_abc123")
+```
