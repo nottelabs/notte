@@ -1,6 +1,6 @@
 # @sniptest filename=custom_proxy.py
 from notte_sdk import NotteClient
-from notte_sdk.types import ExternalProxy
+from notte_sdk.types import ExternalProxy, NotteProxy
 
 client = NotteClient()
 
@@ -12,6 +12,7 @@ proxy_settings = ExternalProxy(
 )
 
 # Start a session with custom proxy
-with client.Session(proxies=[proxy_settings]) as session:
+proxies: list[NotteProxy | ExternalProxy] = [proxy_settings]
+with client.Session(proxies=proxies) as session:
     # use your session
     pass

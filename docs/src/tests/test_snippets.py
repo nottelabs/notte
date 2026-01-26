@@ -32,6 +32,9 @@ FILES_WITH_SDK_TYPE_ISSUES = {
     "sessions/stealth_configuration.py": ["call-overload"],  # **dict unpacking
     "sessions/upload_cookies_simple.py": ["arg-type"],  # Cookie TypedDict vs dict
     "sessions/upload_cookies.py": ["arg-type"],  # Cookie TypedDict vs dict
+    # ProxyGeolocationCountry is accepted directly in PyPI SDK v1.8.0 but not local SDK
+    "stealth/rotate_proxies.py": ["call-overload"],
+    "capabilities/rotate_proxies.py": ["call-overload"],
 }
 
 SNIPPETS_DIR = Path(__file__).parent.parent / "snippets"
