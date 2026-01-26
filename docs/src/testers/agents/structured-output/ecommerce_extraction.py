@@ -1,4 +1,8 @@
+# @sniptest filename=ecommerce_extraction.py
+# @sniptest show=6-21
 from pydantic import BaseModel
+
+from notte_sdk import NotteClient
 
 
 class ProductListing(BaseModel):
@@ -11,8 +15,11 @@ class ProductListing(BaseModel):
     seller: str
 
 
-result = agent.run(
-    task="Extract product listing information",
-    url="https://store.example.com/products/laptop",
-    response_format=ProductListing,
-)
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(
+        task="Extract product listing information",
+        url="https://store.example.com/products/laptop",
+        response_format=ProductListing,
+    )

@@ -1,4 +1,11 @@
 # @sniptest filename=handler_examples.py
+# @sniptest show=3-14
+
+
+def perform_task():
+    return "result"
+
+
 # Correct
 def run(param1, param2):
     return "result"

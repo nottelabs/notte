@@ -13,4 +13,4 @@ with open(f"backups/function_v{function.response.latest_version}.py", "w") as f:
     f.write(current_code)
 
 # Update function
-function.update(workflow_path="new_version.py")
+function.update(path="new_version.py")

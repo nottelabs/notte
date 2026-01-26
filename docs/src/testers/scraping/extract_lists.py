@@ -1,4 +1,7 @@
 # @sniptest filename=extract_lists.py
+# @sniptest show=4-24
+from typing import cast
+
 from notte_sdk import NotteClient
 from pydantic import BaseModel
 
@@ -18,5 +21,6 @@ result = client.scrape(
     "https://news.example.com", response_format=ArticleList, instructions="Extract all articles from the homepage"
 )
 
-for article in result.data.articles:
+articles = cast(ArticleList, result.data)
+for article in articles.articles:
     print(f"{article.title}: {article.url}")

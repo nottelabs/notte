@@ -1,7 +1,12 @@
 # @sniptest filename=alerts.py
+# @sniptest show=8-23
 import os
 
-import requests
+import requests  # type: ignore[import-untyped]
+
+
+def perform_automation() -> dict:
+    return {"data": "scraped"}
 
 
 def run():
@@ -13,7 +18,7 @@ def run():
     except Exception as e:
         # Send to Slack/Discord/Email
         requests.post(
-            os.getenv("WEBHOOK_URL"),
+            os.getenv("WEBHOOK_URL", ""),
             json={"text": f"Scheduled function failed: {str(e)}", "function_id": "function_abc123"},
         )
 

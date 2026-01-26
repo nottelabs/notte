@@ -1,17 +1,24 @@
+# @sniptest filename=monitor_status.py
+# @sniptest show=7-21
 import time
 
-agent.start(task="Long running task")
+from notte_sdk import NotteClient
 
-while True:
-    status = agent.status()
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    agent.start(task="Long running task")
 
-    if status.status == "closed":
-        break
+    while True:
+        status = agent.status()
 
-    print(f"Steps: {len(status.steps)}")
+        if status.status == "closed":
+            break
 
-    # Get replay so far (if supported)
-    # replay = agent.replay()
-    # replay.show()
+        print(f"Steps: {len(status.steps)}")
 
-    time.sleep(5)
+        # Get replay so far (if supported)
+        # replay = agent.replay()
+        # replay.show()
+
+        time.sleep(5)

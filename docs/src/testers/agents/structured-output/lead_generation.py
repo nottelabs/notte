@@ -1,4 +1,8 @@
+# @sniptest filename=lead_generation.py
+# @sniptest show=6-20
 from pydantic import BaseModel
+
+from notte_sdk import NotteClient
 
 
 class BusinessLead(BaseModel):
@@ -10,8 +14,11 @@ class BusinessLead(BaseModel):
     employee_count: str | None
 
 
-result = agent.run(
-    task="Extract business information from this company page",
-    url="https://example.com/about",
-    response_format=BusinessLead,
-)
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(
+        task="Extract business information from this company page",
+        url="https://example.com/about",
+        response_format=BusinessLead,
+    )

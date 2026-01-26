@@ -8,5 +8,5 @@ with client.Session() as session:
 
     # Check what agent saw
     for step in result.steps:
-        print(f"Action: {step.action}")
-        print(f"Reasoning: {step.reasoning}")
+        print(f"Action: {step['action']}")
+        print(f"Reasoning: {step.get('reasoning', 'N/A')}")

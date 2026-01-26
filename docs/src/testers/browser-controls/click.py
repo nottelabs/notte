@@ -9,8 +9,8 @@ with client.Session() as session:
     # Click by CSS selector
     session.execute(type="click", selector="button#submit")
 
-    # Click by ID
-    session.execute(type="click", id="submit-btn")
+    # Click by ID from observe()
+    session.execute(type="click", id="B1")
 
-    # Click by text content
-    session.execute(type="click", text="Submit")
+    # Click by text selector
+    session.execute(type="click", selector="button:has-text('Submit')")

@@ -1,4 +1,8 @@
+# @sniptest filename=nested_structures.py
+# @sniptest show=17-22
 from pydantic import BaseModel
+
+from notte_sdk import NotteClient
 
 
 class Address(BaseModel):
@@ -13,7 +17,12 @@ class Company(BaseModel):
     employees: int | None
 
 
-result = agent.run(task="Extract company information", response_format=Company)
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(task="Extract company information", response_format=Company)
 
-print(result.answer.name)
-print(result.answer.address.city)
+    if result.success and result.answer:
+        company = Company.model_validate_json(result.answer)
+        print(company.name)
+        print(company.address.city)

@@ -1,5 +1,10 @@
 # @sniptest filename=return_structured.py
+# @sniptest show=7-18
 from datetime import datetime
+
+
+def scrape_url(url: str) -> dict:
+    return {"scraped": url}
 
 
 def run(url: str):

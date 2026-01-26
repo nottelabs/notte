@@ -1,4 +1,7 @@
 # @sniptest filename=pydantic_model.py
+# @sniptest show=4-17
+from typing import cast
+
 from notte_sdk import NotteClient
 from pydantic import BaseModel
 
@@ -14,5 +17,6 @@ result = client.scrape(
     "https://example.com/product", response_format=Product, instructions="Extract the product details"
 )
 
-print(result.data.name)
-print(result.data.price)
+product = cast(Product, result.data)
+print(product.name)
+print(product.price)

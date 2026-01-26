@@ -4,6 +4,6 @@ from notte_sdk import NotteClient
 client = NotteClient()
 
 # In Python
-with client.Session(timeout_minutes=20) as session:
+with client.Session(idle_timeout_minutes=20) as session:
     # Long Puppeteer operations
     pass

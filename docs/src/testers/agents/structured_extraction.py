@@ -19,7 +19,7 @@ with client.Session() as session:
         task="Extract company contact information", url="https://example.com/contact", response_format=CompanyInfo
     )
 
-    if result.success:
+    if result.success and result.answer:
         company = CompanyInfo.model_validate_json(result.answer)
         print(f"Company: {company.name}")
         print(f"Email: {company.email}")

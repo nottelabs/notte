@@ -5,7 +5,7 @@ client = NotteClient()
 
 # Deploy function
 function = client.Function(
-    workflow_path="scraper_function.py", name="Website Scraper", description="Scrapes data from websites"
+    path="scraper_function.py", name="Website Scraper", description="Scrapes data from websites"
 )
 
 print(f"Function deployed: {function.function_id}")

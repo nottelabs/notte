@@ -6,10 +6,10 @@ client = NotteClient()
 
 def check_function_health(function_id: str):
     """Check recent run success rate."""
-    runs = client.functions.list_runs(function_id=function_id, only_active=False)
+    runs = client.functions.list_runs(function_id, only_active=False)
 
-    total = len(runs.runs)
-    failed = sum(1 for r in runs.runs if r.status == "failed")
+    total = len(runs.items)
+    failed = sum(1 for r in runs.items if r.status == "failed")
 
     success_rate = ((total - failed) / total * 100) if total > 0 else 0
 

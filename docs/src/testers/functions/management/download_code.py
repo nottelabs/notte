@@ -14,4 +14,4 @@ code = function.download()
 print(code)  # Function source code
 
 # Or download directly to a file
-code = function.download(workflow_path="downloaded_function.py")
+code = function.download(path="downloaded_function.py")

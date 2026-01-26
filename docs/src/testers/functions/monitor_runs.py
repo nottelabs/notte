@@ -13,11 +13,11 @@ result = function.run(
     stream=False,  # Don't stream logs
 )
 
-run_id = result.function_run_id
+run_id = result.workflow_run_id
 
 # Poll status
 while True:
-    status = client.functions.get_run(function_id="func_abc123", run_id=run_id)
+    status = client.functions.get_run("func_abc123", run_id)
 
     print(f"Status: {status.status}")
 

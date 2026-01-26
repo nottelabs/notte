@@ -5,7 +5,7 @@ client = NotteClient()
 
 # Deploy function
 function = client.Function(
-    workflow_path="my_automation.py", name="Search Automation", description="Searches a website and extracts results"
+    path="my_automation.py", name="Search Automation", description="Searches a website and extracts results"
 )
 
 print(f"Function deployed: {function.function_id}")

@@ -11,12 +11,8 @@ with client.Session() as session:
     session.execute(type="click", selector="button.submit")
 
     # Wait for processing
-    session.execute(type="wait", duration=3000)
+    session.execute(type="wait", time_ms=3000)
 
     # Download result
-    session.execute(type="download_file", selector="a.download")
-
-    # Access downloaded files
-    downloaded_files = session.storage.list_downloaded_files()
-    for file in downloaded_files:
-        print(f"Downloaded: {file.file_id}")
+    result = session.execute(type="download_file", selector="a.download")
+    print(f"Downloaded: {result}")

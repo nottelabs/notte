@@ -1,8 +1,14 @@
-agent = client.Agent(session=session)
-result = agent.run(task="Login and navigate to dashboard")
+# @sniptest filename=get-python-script.py
+# @sniptest show=6-13
+from notte_sdk import NotteClient
 
-if result.success:
-    # Get function code
-    code = agent.workflow.code(as_workflow=True)
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(task="Login and navigate to dashboard")
 
-    print(code.python_script)
+    if result.success:
+        # Get function code
+        code = agent.workflow.code(as_workflow=True)
+
+        print(code.python_script)

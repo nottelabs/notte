@@ -1,4 +1,7 @@
 # @sniptest filename=nested_structures.py
+# @sniptest show=4-26
+from typing import cast
+
 from notte_sdk import NotteClient
 from pydantic import BaseModel
 
@@ -21,4 +24,5 @@ result = client.scrape(
     "https://example.com/about", response_format=Company, instructions="Extract company information including address"
 )
 
-print(result.data.address.city)
+company = cast(Company, result.data)
+print(company.address.city)

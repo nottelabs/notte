@@ -15,6 +15,6 @@ elif result.status == "failed":
     print(result.result)  # Error message
 
 # Access metadata
-print(f"Function ID: {result.function_id}")
-print(f"Run ID: {result.function_run_id}")
+print(f"Workflow ID: {result.workflow_id}")
+print(f"Run ID: {result.workflow_run_id}")
 print(f"Session ID: {result.session_id}")

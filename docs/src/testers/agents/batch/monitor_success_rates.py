@@ -1,7 +1,7 @@
 # @sniptest filename=monitor_success_rates.py
 import asyncio
 
-from notte_sdk.agents import BatchRemoteAgent
+from notte_sdk.endpoints.agents import BatchRemoteAgent
 
 
 async def main():

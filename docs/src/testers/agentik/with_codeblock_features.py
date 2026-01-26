@@ -10,8 +10,7 @@ from notte_sdk import NotteClient
 client = NotteClient()
 with client.Session() as session:
     agent = client.Agent(session=session)
-    agent.run(task="go to google, and find cat pictures")
-    result = agent.get_result()
+    result = agent.run(task="go to google, and find cat pictures")
     print(result)
 
 # Hidden test code below

@@ -3,17 +3,18 @@ from pydantic import BaseModel
 
 
 # Return string
-def run():
+def run_string():
     return "Task completed successfully"
 
 
 # Return dict
-def run():
+def run_dict():
+    extracted_data = ["item1", "item2"]
     return {"status": "success", "data": extracted_data, "count": len(extracted_data)}
 
 
 # Return list
-def run():
+def run_list():
     return ["item1", "item2", "item3"]
 
 

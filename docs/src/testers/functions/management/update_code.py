@@ -6,6 +6,6 @@ client = NotteClient()
 function = client.Function(function_id="func_abc123")
 
 # Update with new code
-function.update(workflow_path="updated_function.py")
+function.update(path="updated_function.py")
 
 print(f"Updated to version: {function.response.latest_version}")

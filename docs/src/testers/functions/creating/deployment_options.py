@@ -4,7 +4,7 @@ from notte_sdk import NotteClient
 client = NotteClient()
 
 function = client.Function(
-    workflow_path="my_function.py",
+    path="my_function.py",
     name="My Function",  # Display name
     description="What this function does",  # Description
     shared=False,  # Private by default

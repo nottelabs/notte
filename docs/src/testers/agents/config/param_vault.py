@@ -1,7 +1,12 @@
 # @sniptest filename=param_vault.py
-vault = client.Vault(vault_id="vault_123")
+# @sniptest show=6-11
+from notte_sdk import NotteClient
 
-agent = client.Agent(
-    session=session,
-    vault=vault,  # Agent can access vault credentials
-)
+client = NotteClient()
+with client.Session() as session:
+    vault = client.Vault(vault_id="vault_123")
+
+    agent = client.Agent(
+        session=session,
+        vault=vault,  # Agent can access vault credentials
+    )

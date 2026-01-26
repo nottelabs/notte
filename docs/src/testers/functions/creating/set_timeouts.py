@@ -6,7 +6,7 @@ def run(url: str):
     client = NotteClient()
 
     # Set session timeout
-    with client.Session(timeout_minutes=5) as session:
+    with client.Session(idle_timeout_minutes=5) as session:
         session.execute(type="goto", url=url)
         data = session.scrape()
 

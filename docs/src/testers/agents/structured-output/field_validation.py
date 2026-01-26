@@ -1,4 +1,8 @@
+# @sniptest filename=field_validation.py
+# @sniptest show=6-22
 from pydantic import BaseModel, Field, field_validator
+
+from notte_sdk import NotteClient
 
 
 class Product(BaseModel):
@@ -8,13 +12,16 @@ class Product(BaseModel):
 
     @field_validator("price")
     @classmethod
-    def validate_price(cls, v):
+    def validate_price(cls, v: float) -> float:
         if v > 10000:
             raise ValueError("Price seems unreasonably high")
         return v
 
 
-result = agent.run(
-    task="Extract product",
-    response_format=Product,
-)
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(
+        task="Extract product",
+        response_format=Product,
+    )

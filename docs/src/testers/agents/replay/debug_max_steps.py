@@ -10,4 +10,4 @@ with client.Session() as session:
     print(f"Max steps: {agent.request.max_steps}")
 
     replay = agent.replay()
-    replay.show()  # See where it got stuck
+    replay.save("debug_replay.mp4")  # See where it got stuck

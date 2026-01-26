@@ -1,8 +1,15 @@
+# @sniptest filename=error_handling.py
+# @sniptest show=7-18
 import logging
 
 from notte_sdk import NotteClient
 
 client = NotteClient()
+
+
+def alert_failure(message: str) -> None:
+    logging.error(message)
+
 
 try:
     with client.Session() as session:

@@ -1,9 +1,11 @@
 # @sniptest filename=param_notifier.py
-from notte_core.common.notifier import EmailNotifier
+# @sniptest show=4-9
+from notte_sdk import NotteClient
 
-notifier = EmailNotifier(email="user@example.com")
-
-agent = client.Agent(
-    session=session,
-    notifier=notifier,  # Get email when agent finishes
-)
+client = NotteClient()
+with client.Session() as session:
+    # Agent with notification via email
+    agent = client.Agent(
+        session=session,
+        # Notifications can be configured in the Notte console
+    )

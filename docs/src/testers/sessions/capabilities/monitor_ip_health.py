@@ -13,7 +13,7 @@ ip_pool = [
 
 def check_ip_health(proxy):
     try:
-        with client.Session(proxies=[proxy], timeout_minutes=2) as session:
+        with client.Session(proxies=[proxy], idle_timeout_minutes=2) as session:
             page = session.page
             page.goto("https://example.com", timeout=10000)
             return True

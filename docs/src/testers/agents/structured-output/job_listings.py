@@ -1,4 +1,8 @@
+# @sniptest filename=job_listings.py
+# @sniptest show=6-19
 from pydantic import BaseModel
+
+from notte_sdk import NotteClient
 
 
 class JobPosting(BaseModel):
@@ -11,7 +15,10 @@ class JobPosting(BaseModel):
     requirements: list[str]
 
 
-result = agent.run(
-    task="Extract job posting information",
-    response_format=JobPosting,
-)
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(
+        task="Extract job posting information",
+        response_format=JobPosting,
+    )

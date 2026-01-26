@@ -8,7 +8,7 @@ with client.Session() as session:
     with client.AgentFallback(
         session,
         task="Login and navigate to settings",
-        vault=vault,
+        vault_id=vault.vault_id,
     ) as fb:
         # Try logging in with deterministic actions
         session.execute(type="fill", selector="#email", value="user@example.com")

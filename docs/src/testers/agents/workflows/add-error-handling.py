@@ -1,7 +1,16 @@
-# Agent-generated code
-base_code = agent.workflow.code()
+# @sniptest filename=add-error-handling.py
+# @sniptest show=8-22
+from notte_sdk import NotteClient
 
-enhanced_code = f"""
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    agent.run(task="Complete task")
+
+    # Agent-generated code
+    base_code = agent.workflow.code()
+
+    enhanced_code = f"""
 from notte_sdk import NotteClient
 import logging
 

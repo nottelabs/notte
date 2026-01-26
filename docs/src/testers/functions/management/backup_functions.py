@@ -10,8 +10,8 @@ functions = client.functions.list()
 # Create backup directory
 os.makedirs("function_backups", exist_ok=True)
 
-for func in functions.workflows:
-    function = client.Function(function_id=func.function_id, decryption_key="your-key")
+for func in functions.items:
+    function = client.Function(function_id=func.workflow_id, decryption_key="your-key")
 
     try:
         code = function.download()

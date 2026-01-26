@@ -1,4 +1,8 @@
+# @sniptest filename=social_media.py
+# @sniptest show=6-20
 from pydantic import BaseModel
+
+from notte_sdk import NotteClient
 
 
 class SocialProfile(BaseModel):
@@ -11,7 +15,10 @@ class SocialProfile(BaseModel):
     verified: bool
 
 
-result = agent.run(
-    task="Extract social media profile information",
-    response_format=SocialProfile,
-)
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(
+        task="Extract social media profile information",
+        response_format=SocialProfile,
+    )

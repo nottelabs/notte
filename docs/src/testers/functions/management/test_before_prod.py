@@ -13,6 +13,6 @@ def validate_before_production():
 
     if test_result.status == "closed":
         print("Test passed, ready to update production")
-        function.update(workflow_path="tested_function.py")
+        function.update(path="tested_function.py")
     else:
         print(f"Test failed: {test_result.result}")

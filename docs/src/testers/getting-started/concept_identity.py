@@ -1,7 +1,9 @@
 # @sniptest filename=concept_identity.py
-# @sniptest show=4-5
+# @sniptest show=5-8
 from notte_sdk import NotteClient
 
 client = NotteClient()
-identity = client.identity.create()  # Generate synthetic identity
-agent.run(task="Sign up for newsletter", identity=identity)
+with client.Session() as session:
+    persona = client.Persona()  # Generate synthetic identity
+    agent = client.Agent(session=session, persona=persona)
+    agent.run(task="Sign up for newsletter")

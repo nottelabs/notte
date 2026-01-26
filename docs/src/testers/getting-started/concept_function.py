@@ -1,7 +1,8 @@
 # @sniptest filename=concept_function.py
-# @sniptest show=4-5
+# @sniptest show=5-7
 from notte_sdk import NotteClient
 
 client = NotteClient()
-function = client.functions.deploy(name="scrape-product", code=my_script)
-client.functions.invoke("scrape-product", params={"url": "https://..."})
+# Create a function from existing workflow
+function = client.Function(function_id="workflow_abc123")
+function.run(url="https://example.com")

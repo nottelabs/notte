@@ -1,3 +1,5 @@
+# @sniptest filename=fix_missing_element.py
+# @sniptest show=8-15
 import time
 
 from notte_sdk import NotteClient
@@ -5,6 +7,7 @@ from notte_sdk import NotteClient
 client = NotteClient()
 
 with client.Session() as session:
+    agent = client.Agent(session=session)
     # Be more specific in task
     task = "Wait for the page to load, then click the blue 'Submit' button at the bottom"
 
