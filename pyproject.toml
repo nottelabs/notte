@@ -98,7 +98,7 @@ filterwarnings = [
 [tool.ruff]
 line-length = 120
 indent-width = 4
-exclude = [".venv"]
+exclude = [".venv", "docs/src/testers"]
 
 [tool.ruff.lint]
 extend-select = ["I"]

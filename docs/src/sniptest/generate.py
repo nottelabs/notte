@@ -103,7 +103,6 @@ def clean_orphaned_snippets(dry_run: bool = False, verbose: bool = False) -> lis
         list of messages about removed files
     """
     messages = []
-    generated_paths = get_all_generated_snippets()
 
     # Find all MDX files in snippets directories that match tester structure
     for snippet_path in SNIPPETS_DIR.rglob("*.mdx"):
