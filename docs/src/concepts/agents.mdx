@@ -1,23 +1,168 @@
 ---
-title: Web Agents
-description: 'Run autonomous Web AI agents'
+title: Browser Agents
+description: AI-powered agents that autonomously complete browser tasks
 ---
 
-import AgentsPython from '/snippets/agents/index.mdx';
-import AgentFallback from '/snippets/agents/fallback.mdx';
+import AgentQuickstart from "/snippets/agents/quickstart.mdx";
+import NaturalLanguageTask from "/snippets/agents/natural_language_task.mdx";
+import StructuredOutputExample from "/snippets/agents/structured_output_example.mdx";
+import StartingUrl from "/snippets/agents/starting_url.mdx";
+import StepLimits from "/snippets/agents/step_limits.mdx";
+import ErrorHandling from "/snippets/agents/error_handling.mdx";
 
-## Overview
+Browser Agents are AI-powered systems that can autonomously navigate websites, complete tasks, and extract information using natural language instructions.
 
-Execute autonomous agents powered by LLMs that can navigate websites, perform complex workflows, and complete tasks through natural language instructions.
+## What is a Browser Agent?
 
-## Agent Management with Python SDK
+A Browser Agent combines:
+- **Large Language Models (LLMs)** for reasoning and decision-making
+- **Browser Sessions** for executing actions
+- **Vision capabilities** to understand web pages
+- **Autonomous planning** to complete multi-step tasks
 
-The following snippet shows how to manage your agents using the Notte Python SDK.
+Unlike scripted automation, agents can adapt to changes, handle unexpected scenarios, and complete tasks without predefined workflows.
 
-<AgentsPython />
+## Quick Start
 
-## Agent Fallbacks
+Create and run an agent in a few lines:
 
-Agents can also be used to handle script execution failures. This is useful to continue an otherwise deterministic script execution after a failure.
+<AgentQuickstart />
 
-<AgentFallback />
+<Tip>
+  Agents run within [browser sessions](/concepts/sessions). Use context managers to ensure sessions are automatically stopped when done. This prevents orphaned sessions and unexpected costs.
+</Tip>
+
+## How Agents Work
+
+### 1. Observation
+
+The agent observes the current page state:
+- Visible elements and their properties
+- Interactive components (buttons, forms, links)
+- Text content and structure
+- Current URL and page metadata
+
+### 2. Reasoning
+
+Using the LLM, the agent:
+- Understands the current page
+- Plans the next action to complete the task
+- Decides which element to interact with
+- Determines when the task is complete
+
+### 3. Action
+
+The agent executes browser actions:
+- Navigate to URLs
+- Click buttons and links
+- Fill forms
+- Extract data
+- Scroll and interact with dynamic content
+
+### 4. Iteration
+
+This cycle repeats until:
+- The task is successfully completed
+- Maximum steps are reached
+- An error occurs that can't be resolved
+
+## Agents vs Scripted Automation
+
+Both agents and scripted automation run on [browser sessions](/concepts/sessions)—the cloud browser infrastructure. The difference is how you control what happens in that session.
+
+| Aspect | Scripted Automation | Agent |
+|--------|---------------------|-------|
+| **Control** | You write the code | AI decides each step |
+| **Flexibility** | Fixed workflow | Adapts to changes |
+| **Speed** | Fast (direct execution) | Slower (LLM reasoning per step) |
+| **Cost** | Browser minutes only | Browser minutes + LLM calls |
+| **Reliability** | Deterministic | Can vary based on page state |
+| **Use Case** | Known, stable workflows | Unknown or dynamic workflows |
+
+**Use scripted automation when:**
+- You know the exact steps to take
+- Speed and cost are critical
+- The target pages rarely change
+
+**Use agents when:**
+- You don't know the exact steps
+- Pages change frequently
+- You need intelligent decision-making
+
+<Note>
+  You can combine both approaches: use an agent to figure out a workflow, then [convert it to a function](/features/agents/workflows) for faster, cheaper repeated execution.
+</Note>
+
+## Agent Capabilities
+
+Agents come with powerful built-in capabilities:
+
+<CardGroup cols={2}>
+  <Card title="Structured Output" icon="brackets-curly" href="/features/agents/structured-output">
+    Get type-safe responses using Pydantic models
+  </Card>
+  <Card title="Vaults & Personas" icon="lock" href="/concepts/vaults">
+    Use credentials and identities in automations
+  </Card>
+  <Card title="Visual Understanding" icon="eye" href="/features/agents/configuration#use_vision">
+    Analyze images and visual page elements
+  </Card>
+  <Card title="Replay & Debugging" icon="circle-play" href="/features/agents/replay">
+    Debug with MP4 replays of agent execution
+  </Card>
+  <Card title="Agent Fallback" icon="shield" href="/features/agents/fallback">
+    Automatic recovery from script failures
+  </Card>
+  <Card title="Batch Execution" icon="layer-group" href="/features/agents/batch">
+    Run multiple agents in parallel
+  </Card>
+</CardGroup>
+
+## Key Concepts
+
+### Natural Language Tasks
+
+Give instructions in plain English:
+
+<NaturalLanguageTask />
+
+### Structured Output
+
+Get responses in a specific format:
+
+<StructuredOutputExample />
+
+### Starting URL
+
+Begin at a specific page:
+
+<StartingUrl />
+
+### Step Limits
+
+Control maximum actions:
+
+<StepLimits />
+
+## Error Handling
+
+Agents can fail for various reasons. Always check the result:
+
+<ErrorHandling />
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Agent Lifecycle" icon="rotate" href="/features/agents/lifecycle">
+    Create, manage, and stop agents
+  </Card>
+  <Card title="Agent Configuration" icon="gear" href="/features/agents/configuration">
+    All configuration options
+  </Card>
+  <Card title="Structured Output" icon="brackets-curly" href="/features/agents/structured-output">
+    Get typed responses from agents
+  </Card>
+  <Card title="Convert to Functions" icon="flower" href="/features/agents/workflows">
+    Turn agent runs into reusable code
+  </Card>
+</CardGroup>

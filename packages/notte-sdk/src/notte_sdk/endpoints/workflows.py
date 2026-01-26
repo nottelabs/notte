@@ -52,7 +52,7 @@ if TYPE_CHECKING:
 
 
 @final
-class FailedToRunCloudWorkflowError(NotteBaseError):
+class FailedToRunCloudFunctionError(NotteBaseError):
     """
     Exception raised when a function run fails to run on the cloud.
     """
@@ -850,7 +850,7 @@ class RemoteWorkflow:
             variables=variables,
         )
         if raise_on_failure and res.status == "failed":
-            raise FailedToRunCloudWorkflowError(self.function_id, function_run_id, res)
+            raise FailedToRunCloudFunctionError(self.function_id, function_run_id, res)
         self._session_id = res.session_id
         return res
 

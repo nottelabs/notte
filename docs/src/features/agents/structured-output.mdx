@@ -1,0 +1,170 @@
+---
+title: Structured Output
+description: Get type-safe, structured responses from agents using Pydantic models
+---
+
+import OverviewDefault from '/snippets/agents/structured-output/overview_default.mdx';
+import OverviewStructured from '/snippets/agents/structured-output/overview_structured.mdx';
+import BasicExample from '/snippets/agents/structured-output/basic_example.mdx';
+import NestedStructures from '/snippets/agents/structured-output/nested_structures.mdx';
+import ListsOfObjects from '/snippets/agents/structured-output/lists_of_objects.mdx';
+import OptionalFields from '/snippets/agents/structured-output/optional_fields.mdx';
+import EcommerceExtraction from '/snippets/agents/structured-output/ecommerce_extraction.mdx';
+import LeadGeneration from '/snippets/agents/structured-output/lead_generation.mdx';
+import JobListings from '/snippets/agents/structured-output/job_listings.mdx';
+import SocialMedia from '/snippets/agents/structured-output/social_media.mdx';
+import FieldValidation from '/snippets/agents/structured-output/field_validation.mdx';
+import BpSpecificTask from '/snippets/agents/structured-output/bp_specific_task.mdx';
+import BpAppropriateTypes from '/snippets/agents/structured-output/bp_appropriate_types.mdx';
+import BpOptionalFields from '/snippets/agents/structured-output/bp_optional_fields.mdx';
+import BpFieldDescriptions from '/snippets/agents/structured-output/bp_field_descriptions.mdx';
+import BpStartSimple from '/snippets/agents/structured-output/bp_start_simple.mdx';
+import ErrorHandling from '/snippets/agents/structured-output/error_handling.mdx';
+import LimitationsNotSuitable from '/snippets/agents/structured-output/limitations_not_suitable.mdx';
+import LimitationsComplex from '/snippets/agents/structured-output/limitations_complex.mdx';
+
+Agents can return structured data in a specific format using Pydantic models, ensuring type safety and validation.
+
+## Overview
+
+By default, agents return unstructured text answers:
+
+<OverviewDefault />
+
+With structured output, define the exact format you want:
+
+<OverviewStructured />
+
+## Basic Example
+
+Define a Pydantic model and pass it to `response_format`:
+
+<BasicExample />
+
+## Complex Models
+
+### Nested Structures
+
+Models can contain nested objects:
+
+<NestedStructures />
+
+### Lists of Objects
+
+Extract multiple items:
+
+<ListsOfObjects />
+
+### Optional Fields
+
+Use `None` for optional fields:
+
+<OptionalFields />
+
+## Use Cases
+
+### E-commerce Data Extraction
+
+Extract structured product data:
+
+<EcommerceExtraction />
+
+### Lead Generation
+
+Extract structured contact information:
+
+<LeadGeneration />
+
+### Job Listings
+
+Extract job posting details:
+
+<JobListings />
+
+### Social Media Data
+
+Extract social media profiles:
+
+<SocialMedia />
+
+## Field Validation
+
+Use Pydantic validators for data quality:
+
+<FieldValidation />
+
+## Best Practices
+
+### 1. Be Specific in Task Description
+
+Match your task to the response format:
+
+<BpSpecificTask />
+
+### 2. Use Appropriate Types
+
+Choose Python types that match the data:
+
+<BpAppropriateTypes />
+
+### 3. Make Optional Fields Explicit
+
+Don't assume data will always be present:
+
+<BpOptionalFields />
+
+### 4. Use Field Descriptions
+
+Help the agent understand what you want:
+
+<BpFieldDescriptions />
+
+### 5. Start Simple, Then Expand
+
+Begin with basic models:
+
+<BpStartSimple />
+
+## Error Handling
+
+Handle validation errors:
+
+<ErrorHandling />
+
+## Limitations
+
+### Not Suitable For
+
+Structured output works best for data extraction, not for:
+
+- Open-ended creative tasks
+- Tasks requiring explanation or reasoning
+- When you want natural language responses
+
+<LimitationsNotSuitable />
+
+### Complex Relationships
+
+Very complex nested structures may be challenging:
+
+<LimitationsComplex />
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="sliders" href="/features/agents/configuration">
+    Configure agent parameters
+  </Card>
+
+  <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle">
+    Understand agent execution modes
+  </Card>
+
+  <Card title="Scraping" icon="database" href="/concepts/scraping">
+    Alternative data extraction methods
+  </Card>
+
+  <Card title="Best Practices" icon="lightbulb" href="/guides/scraping">
+    Data extraction best practices
+  </Card>
+</CardGroup>

@@ -1,0 +1,29 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from playwright.sync_api import sync_playwright
+
+  client = NotteClient()
+
+  # Start a Notte session
+  with client.Session() as session:
+      # Get CDP WebSocket URL
+      cdp_url = session.cdp_url()
+      print(f"CDP URL: {cdp_url}")
+
+      # Connect Playwright to the Notte session
+      with sync_playwright() as p:
+          browser = p.chromium.connect_over_cdp(cdp_url)
+
+          # Access the page (Notte sessions have one context with one page)
+          context = browser.contexts[0]
+          page = context.pages[0]
+
+          # Use Playwright API directly
+          page.goto("https://example.com")
+          print(f"Title: {page.title()}")
+
+          # Take a screenshot
+          page.screenshot(path="screenshot.png")
+  ```
+</CodeGroup>

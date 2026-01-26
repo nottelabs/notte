@@ -1,0 +1,17 @@
+# @sniptest filename=download_mp4.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
+    session.execute(type="click", selector="a.link")
+
+# Download recording
+replay = session.replay()
+
+# Save to file
+replay.save("my_automation.mp4")
+
+# Or get raw bytes from the replay attribute
+video_bytes = replay.replay

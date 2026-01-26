@@ -1,10 +1,13 @@
-```python
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/pages/linkedin_step.py */}
+
+```python linkedin_step.py
 from notte_sdk import NotteClient
 
-notte = NotteClient()
+client = NotteClient()
 
-with notte.Session() as page:
-    url="https://www.linkedin.com/"
+with client.Session() as page:
+    url = "https://www.linkedin.com/"
 
     # observe page and take a step
     page.execute(type="goto", url=url)
@@ -12,7 +15,7 @@ with notte.Session() as page:
     res = page.execute(obs.space.first())
     print(res.message)
 
-    # another one
+    # another one
     obs = page.observe(instructions="dismiss the sign in check")
     res = page.execute(obs.space.first())
     print(res.message)

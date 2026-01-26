@@ -1,0 +1,31 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/structured-output/basic_example.py */}
+
+```python
+from notte_sdk import NotteClient
+from pydantic import BaseModel
+
+client = NotteClient()
+
+
+class Product(BaseModel):
+    name: str
+    price: float
+    in_stock: bool
+
+
+with client.Session() as session:
+    agent = client.Agent(session=session)
+
+    result = agent.run(
+        task="Extract product information",
+        url="https://example.com/product/123",
+        response_format=Product,
+    )
+
+    # Type-safe access
+    product = result.answer
+    print(f"{product.name}: ${product.price}")
+    if product.in_stock:
+        print("Available!")
+```

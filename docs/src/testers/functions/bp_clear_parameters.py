@@ -1,0 +1,11 @@
+# @sniptest filename=bp_clear_parameters.py
+def run(target_url: str, max_results: int = 10, timeout_seconds: int = 30):
+    """
+    Extract data from a website.
+
+    Args:
+        target_url: The URL to scrape
+        max_results: Maximum number of results to extract
+        timeout_seconds: Session timeout
+    """
+    pass

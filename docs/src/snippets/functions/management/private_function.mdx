@@ -1,0 +1,14 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/private_function.py */}
+
+```python private_function.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+function = client.Function(
+    workflow_path="my_function.py",
+    name="Private Automation",
+    shared=False,  # Private (default)
+)
+```

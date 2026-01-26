@@ -1,0 +1,23 @@
+# @sniptest filename=monitor_success_rates.py
+import asyncio
+
+from notte_sdk.endpoints.agents import BatchRemoteAgent
+
+
+async def main():
+    # Test single agent success rate
+    successes = 0
+    for _ in range(10):
+        result = agent.run(task="Test task")
+        if result.success:
+            successes += 1
+
+    success_rate = successes / 10
+
+    if success_rate < 0.8:
+        # Use batch for low success rates
+        batch_agent = BatchRemoteAgent(session=session, _client=client)
+        result = await batch_agent.run(task="Test task", n_jobs=3)
+
+
+asyncio.run(main())

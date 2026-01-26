@@ -1,0 +1,66 @@
+<CodeGroup>
+  ```javascript Node.js
+  const puppeteer = require('puppeteer-core');
+  const fetch = require('node-fetch');
+
+  async function scrapeWithNotte() {
+    // Create Notte session
+    const sessionResponse = await fetch('https://api.notte.cc/sessions/start', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.NOTTE_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        headless: true,
+        proxies: true,  // Use residential proxies
+        solve_captchas: false,
+        timeout_minutes: 15,
+        browser_type: 'chromium'
+      })
+    });
+
+    const session = await sessionResponse.json();
+    const { cdp_url, session_id } = session;
+
+    try {
+      // Connect Puppeteer
+      const browser = await puppeteer.connect({
+        browserWSEndpoint: cdp_url
+      });
+
+      const pages = await browser.pages();
+      const page = pages[0];
+
+      // Navigate and scrape
+      await page.goto('https://example.com/products', {
+        waitUntil: 'networkidle2'
+      });
+
+      // Extract data
+      const products = await page.evaluate(() => {
+        const items = document.querySelectorAll('.product');
+        return Array.from(items).map(item => ({
+          title: item.querySelector('.title')?.textContent,
+          price: item.querySelector('.price')?.textContent,
+          url: item.querySelector('a')?.href
+        }));
+      });
+
+      console.log('Scraped products:', products);
+
+      await browser.disconnect();
+    } finally {
+      // Stop session
+      await fetch(`https://api.notte.cc/sessions/${session_id}/stop`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.NOTTE_API_KEY}`
+        }
+      });
+    }
+  }
+
+  scrapeWithNotte().catch(console.error);
+  ```
+</CodeGroup>

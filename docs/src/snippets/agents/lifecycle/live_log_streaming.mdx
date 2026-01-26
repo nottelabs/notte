@@ -1,0 +1,23 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/lifecycle/live_log_streaming.py */}
+
+```python live_log_streaming.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+
+async def monitor_agent():
+    with client.Session() as session:
+        agent.start(task="Complete task")
+
+        # Stream logs as they happen
+        await agent.watch_logs(log=True)
+
+        # Get final status
+        status = agent.status()
+        return status
+
+
+asyncio.run(monitor_agent())
+```

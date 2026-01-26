@@ -1,5 +1,8 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/upload_cookies_simple.py */}
+
 ```python upload_cookies.py
-from notte_sdk import NotteClient, actions
+from notte_sdk import NotteClient
 
 # Upload cookies for github.com to automatically login
 cookies = [
@@ -11,12 +14,12 @@ cookies = [
         expires=9778363203.913704,
         httpOnly=False,
         secure=False,
-        sameSite="Lax"
+        sameSite="Lax",
     )
 ]
 
-notte = NotteClient()
-with notte.Session() as session:
-    session.set_cookies(cookies=cookies)  # can also set cookie_file="path/to/cookies.json"
+client = NotteClient()
+with client.Session() as session:
+    _ = session.set_cookies(cookies=cookies)  # can also set cookie_file="path/to/cookies.json"
     session.execute(type="goto", url="https://github.com/nottelabs/notte")
 ```

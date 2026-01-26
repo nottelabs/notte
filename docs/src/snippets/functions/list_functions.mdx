@@ -1,0 +1,18 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/list_functions.py */}
+
+```python list_functions.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# List all functions
+functions = client.functions.list()
+
+for func in functions.workflows:
+    print(f"ID: {func.function_id}")
+    print(f"Name: {func.name}")
+    print(f"Version: {func.latest_version}")
+    print(f"Created: {func.created_at}")
+    print("---")
+```

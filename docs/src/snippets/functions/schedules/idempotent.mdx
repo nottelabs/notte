@@ -1,0 +1,37 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/schedules/idempotent.py */}
+
+```python idempotent.py
+def already_processed(date: str):
+    """Check if date has already been processed."""
+    # TODO: Implement logic to check if date has already been processed
+    False
+
+
+def process_data(date: str):
+    """Process data for the given date."""
+    # TODO: Implement logic to process data for the given date
+    "processed"
+
+
+def mark_processed(date: str):
+    """Mark date as processed."""
+    # TODO: Implement logic to mark date as processed
+    "mark_as_processed"
+
+
+def run(date: str):
+    """Idempotent function - safe to run multiple times."""
+    # Use date as unique identifier
+    # Skip if already processed
+    if already_processed(date):
+        return {"status": "already_processed", "date": date}
+
+    # Process data
+    result = process_data(date)
+
+    # Mark as processed
+    mark_processed(date)
+
+    return {"status": "processed", "date": date, "result": result}
+```

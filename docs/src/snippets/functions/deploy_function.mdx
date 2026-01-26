@@ -1,0 +1,16 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/deploy_function.py */}
+
+```python deploy_function.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Deploy function
+function = client.Function(
+    workflow_path="my_automation.py", name="Search Automation", description="Searches a website and extracts results"
+)
+
+print(f"Function deployed: {function.function_id}")
+print(f"Version: {function.response.latest_version}")
+```

@@ -1,0 +1,20 @@
+# @sniptest filename=quickstart.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+storage = client.FileStorage()
+
+# Upload a file before the session
+storage.upload("document.pdf")
+
+# Create session with storage attached
+with client.Session(storage=storage) as session:
+    agent = client.Agent(session=session)
+
+    result = agent.run(
+        task="Upload document.pdf to the portal and download the receipt", url="https://example.com/upload"
+    )
+
+# Download files the agent retrieved
+for file_name in storage.list_downloaded_files():
+    storage.download(file_name=file_name, local_dir="./downloads")

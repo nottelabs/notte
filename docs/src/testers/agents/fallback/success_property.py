@@ -1,0 +1,12 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    with client.AgentFallback(session, task="Task") as fb:
+        session.execute(type="click", selector="#button")
+
+    if fb.success:
+        print("Task completed successfully!")
+    else:
+        print("Task failed even after agent intervention")

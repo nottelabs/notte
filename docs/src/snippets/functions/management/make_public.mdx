@@ -1,0 +1,15 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/make_public.py */}
+
+```python make_public.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Deploy as shared
+function = client.Function(
+    workflow_path="my_function.py",
+    name="Public Scraper",
+    shared=True,  # Make publicly accessible
+)
+```

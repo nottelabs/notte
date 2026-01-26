@@ -1,0 +1,11 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/config/param_vault.py */}
+
+```python param_vault.py
+vault = client.Vault(vault_id="vault_123")
+
+agent = client.Agent(
+    session=session,
+    vault=vault,  # Agent can access vault credentials
+)
+```

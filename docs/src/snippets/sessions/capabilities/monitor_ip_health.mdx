@@ -1,0 +1,32 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/capabilities/monitor_ip_health.py */}
+
+```python monitor_ip_health.py
+from notte_sdk import NotteClient
+from notte_sdk.types import ExternalProxy
+
+client = NotteClient()
+
+ip_pool = [
+    ExternalProxy(server="http://ip1.example.com:8080", username="user", password="pass"),
+    ExternalProxy(server="http://ip2.example.com:8080", username="user", password="pass"),
+    ExternalProxy(server="http://ip3.example.com:8080", username="user", password="pass"),
+]
+
+
+def check_ip_health(proxy):
+    try:
+        with client.Session(proxies=[proxy], timeout_minutes=2) as session:
+            page = session.page
+            page.goto("https://example.com", timeout=10000)
+            return True
+    except Exception as e:
+        print(f"IP health check failed: {e}")
+        return False
+
+
+# Check all IPs in pool
+for proxy in ip_pool:
+    if not check_ip_health(proxy):
+        print(f"Warning: IP {proxy.server} may be blocked")
+```

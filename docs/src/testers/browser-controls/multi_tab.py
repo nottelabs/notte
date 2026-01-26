@@ -1,0 +1,21 @@
+# @sniptest filename=multi_tab.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+
+def process_data(data):
+    print(f"Processed: {data[:100]}...")
+
+
+with client.Session() as session:
+    # Open multiple tabs
+    session.execute(type="goto", url="https://site1.com")
+    session.execute(type="goto_new_tab", url="https://site2.com")
+    session.execute(type="goto_new_tab", url="https://site3.com")
+
+    # Extract from each tab
+    for tab_index in range(3):
+        session.execute(type="switch_tab", tab_index=tab_index)
+        data = session.scrape()
+        process_data(data)

@@ -1,0 +1,13 @@
+# @sniptest filename=missing_env_vars.py
+import os
+
+
+def run():
+    required_vars = ["API_KEY", "WEBHOOK_URL"]
+
+    missing = [var for var in required_vars if not os.getenv(var)]
+
+    if missing:
+        return {"error": f"Missing environment variables: {', '.join(missing)}"}
+
+    # Continue with automation

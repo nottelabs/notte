@@ -1,20 +1,24 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/scraping/structured.py */}
+
 ```python structured_scrape.py
-from pydantic import BaseModel
 from notte_sdk import NotteClient
+from pydantic import BaseModel
+
 
 class PricingPlan(BaseModel):
     name: str
     price_per_month: int | None = None
     features: list[str]
 
+
 class PricingPlans(BaseModel):
     plans: list[PricingPlan]
 
+
 client = NotteClient()
 data = client.scrape(
-    url="https://www.notte.cc",
-	instructions="Extract the pricing plans from the page",
-    response_format=PricingPlans
+    url="https://www.notte.cc", instructions="Extract the pricing plans from the page", response_format=PricingPlans
 )
 
 # plans is a PricingPlans instance

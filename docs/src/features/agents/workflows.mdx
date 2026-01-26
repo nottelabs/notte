@@ -1,0 +1,191 @@
+---
+title: Agent to Function Conversion
+description: Convert agent executions into reusable function code
+---
+
+import Overview from '/snippets/agents/workflows/overview.mdx';
+import GetPythonScript from '/snippets/agents/workflows/get-python-script.mdx';
+import ExampleOutput from '/snippets/agents/workflows/example-output.mdx';
+import CreateFunctionObject from '/snippets/agents/workflows/create-function-object.mdx';
+import ExecuteGeneratedCode from '/snippets/agents/workflows/execute-generated-code.mdx';
+import UseFunctionApi from '/snippets/agents/workflows/use-function-api.mdx';
+import PrototypingWithAgents from '/snippets/agents/workflows/prototyping-with-agents.mdx';
+import ScheduledTasks from '/snippets/agents/workflows/scheduled-tasks.mdx';
+import CostOptimization from '/snippets/agents/workflows/cost-optimization.mdx';
+import TestingVariations from '/snippets/agents/workflows/testing-variations.mdx';
+import AddParameters from '/snippets/agents/workflows/add-parameters.mdx';
+import AddErrorHandling from '/snippets/agents/workflows/add-error-handling.mdx';
+import OptimizeSelectors from '/snippets/agents/workflows/optimize-selectors.mdx';
+import TestGeneratedFunctions from '/snippets/agents/workflows/test-generated-functions.mdx';
+import DocumentTheSource from '/snippets/agents/workflows/document-the-source.mdx';
+import VersionControl from '/snippets/agents/workflows/version-control.mdx';
+import MonitorFunctionSuccess from '/snippets/agents/workflows/monitor-function-success.mdx';
+import RegenerateWhenPagesChange from '/snippets/agents/workflows/regenerate-when-pages-change.mdx';
+
+Convert successful agent runs into deterministic function code that can be executed faster and cheaper than agents.
+
+## Overview
+
+After an agent completes a task, you can extract the steps as function code:
+
+<Overview />
+
+## Why Convert to Functions?
+
+| Aspect | Agent | Function |
+|--------|-------|----------|
+| **Execution** | AI decides each step | Predefined steps |
+| **Speed** | Slower (LLM reasoning) | Faster (direct execution) |
+| **Cost** | Higher (LLM tokens) | Lower (actions only) |
+| **Reliability** | Can vary | Deterministic |
+| **Adaptability** | Handles changes | Breaks if page changes |
+
+**Use functions when:**
+- The task is well-defined and repeatable
+- Page structure is stable
+- Speed and cost matter
+- You need predictable execution
+
+## Getting Function Code
+
+### As Python Script
+
+Get executable Python code:
+
+<GetPythonScript />
+
+Example output:
+
+<ExampleOutput />
+
+### As Function Object
+
+Create a reusable function:
+
+<CreateFunctionObject />
+
+## Running Functions
+
+### Execute Generated Code
+
+Copy and run the generated Python:
+
+<ExecuteGeneratedCode />
+
+### Use Function API
+
+Run via the function endpoint:
+
+<UseFunctionApi />
+
+## Use Cases
+
+### 1. Prototyping with Agents
+
+Use agents to figure out the automation, then convert:
+
+<PrototypingWithAgents />
+
+### 2. Scheduled Tasks
+
+Convert one-time agent runs to scheduled functions:
+
+<ScheduledTasks />
+
+### 3. Cost Optimization
+
+Run agents once, then use cheaper functions:
+
+<CostOptimization />
+
+### 4. Testing Variations
+
+Create function templates from agents:
+
+<TestingVariations />
+
+## Customizing Generated Code
+
+### Add Parameters
+
+Make functions reusable with parameters:
+
+<AddParameters />
+
+### Add Error Handling
+
+Enhance with production-ready error handling:
+
+<AddErrorHandling />
+
+### Optimize Selectors
+
+Review and improve generated selectors:
+
+<OptimizeSelectors />
+
+## Best Practices
+
+### 1. Test Generated Functions
+
+Always test before production:
+
+<TestGeneratedFunctions />
+
+### 2. Document the Source
+
+Track which agent generated the function:
+
+<DocumentTheSource />
+
+### 3. Version Control
+
+Store functions in git:
+
+<VersionControl />
+
+### 4. Monitor Function Success
+
+Track if functions continue to work:
+
+<MonitorFunctionSuccess />
+
+### 5. Regenerate When Pages Change
+
+When functions break, use agents to update:
+
+<RegenerateWhenPagesChange />
+
+## Limitations
+
+Functions work best for:
+- ✅ Stable, unchanging pages
+- ✅ Deterministic tasks
+- ✅ Known sequences of actions
+
+Functions are not suitable for:
+- ❌ Pages that change frequently
+- ❌ Tasks requiring adaptation
+- ❌ Complex decision-making
+
+When pages change or tasks become complex, revert to agents.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Functions" icon="function" href="/concepts/functions">
+    Deploy automations as serverless APIs
+  </Card>
+
+  <Card title="Actions" icon="hand-pointer" href="/sdk-reference/manual/session">
+    Available session actions
+  </Card>
+
+  <Card title="Agent Configuration" icon="sliders" href="/features/agents/configuration">
+    Optimize agent runs
+  </Card>
+
+  <Card title="Functions" icon="flower" href="/concepts/functions">
+    Deploy and manage serverless functions
+  </Card>
+</CardGroup>

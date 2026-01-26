@@ -1,0 +1,50 @@
+<CodeGroup>
+  ```python Python - Start Session
+  from notte_sdk import NotteClient
+  import subprocess
+  import json
+
+  client = NotteClient()
+
+  with client.Session(timeout_minutes=10) as session:
+      cdp_url = session.cdp_url()
+
+      # Pass CDP URL to Node.js script
+      result = subprocess.run(
+          ["node", "puppeteer_script.js", cdp_url],
+          capture_output=True,
+          text=True
+      )
+
+      print(result.stdout)
+  ```
+
+  ```javascript Node.js - Connect Puppeteer
+  // puppeteer_script.js
+  const puppeteer = require('puppeteer-core');
+
+  async function main() {
+    // Get CDP URL from command line argument
+    const cdpUrl = process.argv[2];
+
+    // Connect to Notte session
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: cdpUrl
+    });
+
+    // Get the page (Notte sessions have one default page)
+    const pages = await browser.pages();
+    const page = pages[0];
+
+    // Use Puppeteer API
+    await page.goto('https://example.com');
+    console.log('Title:', await page.title());
+
+    await page.screenshot({ path: 'screenshot.png' });
+
+    await browser.disconnect();
+  }
+
+  main().catch(console.error);
+  ```
+</CodeGroup>

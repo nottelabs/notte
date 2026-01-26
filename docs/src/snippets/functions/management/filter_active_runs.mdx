@@ -1,0 +1,16 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/filter_active_runs.py */}
+
+```python filter_active_runs.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Get only active runs
+active_runs = client.functions.list_runs(function_id="function_abc123", only_active=True)
+
+print(f"Active runs: {len(active_runs.runs)}")
+
+for run in active_runs.runs:
+    print(f"Run {run.function_run_id} - {run.status}")
+```

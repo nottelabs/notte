@@ -1,8 +1,11 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/stealth_configuration.py */}
+
 ```python stealth_configuration.py
 from notte_sdk import NotteClient
 from notte_sdk.types import NotteProxy
 
-notte = NotteClient()
+client = NotteClient()
 
 # Example stealth configuration
 # this is just one possible configuration, with an obvious fingerprint
@@ -17,7 +20,7 @@ stealth_config = {
 }
 
 # Try the stealth configuration
-with notte.Session(**stealth_config) as session:
+with client.Session(**stealth_config) as session:
     result = session.observe(url="https://example.com")
     print("Success with fallback configuration")
 ```

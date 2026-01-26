@@ -1,0 +1,16 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/fallback/agent_response.py */}
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    with client.AgentFallback(session, task="Extract data") as fb:
+        session.execute(type="click", selector="#button")
+
+    if fb.agent_invoked:
+        print(f"Agent answer: {fb.agent_response.answer}")
+        print(f"Agent steps: {len(fb.agent_response.steps)}")
+```

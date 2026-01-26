@@ -28,19 +28,34 @@ MYPY_DISABLED_ERROR_CODES = [
 # Files with unavoidable SDK-level type issues
 # These files still get type checked but with relaxed rules
 FILES_WITH_SDK_TYPE_ISSUES = {
-    "agents/fallback.mdx": ["call-arg"],  # AgentFallback internal _client param
-    "sessions/stealth_configuration.mdx": ["call-overload"],  # **dict unpacking
-    "sessions/upload_cookies_simple.mdx": ["arg-type"],  # Cookie TypedDict vs dict
-    "sessions/upload_cookies.mdx": ["arg-type"],  # Cookie TypedDict vs dict
+    "agents/fallback.py": ["call-arg"],  # AgentFallback internal _client param
+    "sessions/stealth_configuration.py": ["call-overload"],  # **dict unpacking
+    "sessions/upload_cookies_simple.py": ["arg-type"],  # Cookie TypedDict vs dict
+    "sessions/upload_cookies.py": ["arg-type"],  # Cookie TypedDict vs dict
+    # ProxyGeolocationCountry is accepted directly in PyPI SDK v1.8.0 but not local SDK
+    "stealth/rotate_proxies.py": ["call-overload"],
+    "capabilities/rotate_proxies.py": ["call-overload"],
 }
 
 SNIPPETS_DIR = Path(__file__).parent.parent / "snippets"
-DOCS_DIR = Path(__file__).parent.parent / "features"
-CONCEPTS_DIR = Path(__file__).parent.parent / "concepts"
-SDK_DIR = Path(__file__).parent.parent / "sdk-reference"
+TESTERS_DIR = Path(__file__).parent.parent / "testers"
+ROOT_DIR = Path(__file__).parent.parent
+
+# Directories to check for inline code blocks
+DOCS_DIR = ROOT_DIR / "features"
+CONCEPTS_DIR = ROOT_DIR / "concepts"
+SDK_DIR = ROOT_DIR / "sdk-reference"
+GUIDES_DIR = ROOT_DIR / "guides"
+INTEGRATIONS_DIR = ROOT_DIR / "integrations"
+INTRO_DIR = ROOT_DIR / "intro"
+PRODUCT_DIR = ROOT_DIR / "product"
+TUTORIALS_DIR = ROOT_DIR / "tutorials"
 
 if not SDK_DIR.exists():
     raise FileNotFoundError(f"SDK directory not found: {SDK_DIR}")
+
+if not TESTERS_DIR.exists():
+    raise FileNotFoundError(f"Testers directory not found: {TESTERS_DIR}")
 
 if not SNIPPETS_DIR.exists():
     raise FileNotFoundError(f"Snippets directory not found: {SNIPPETS_DIR}")
@@ -48,18 +63,61 @@ if not SNIPPETS_DIR.exists():
 if not DOCS_DIR.exists():
     raise FileNotFoundError(f"Docs directory not found: {DOCS_DIR}")
 
-
 if not CONCEPTS_DIR.exists():
     raise FileNotFoundError(f"Concepts directory not found: {CONCEPTS_DIR}")
 
 
 def test_no_snippets_outside_folder():
-    all_docs = [
-        file
-        for folder in (DOCS_DIR, SDK_DIR / "manual", CONCEPTS_DIR)
-        for file in folder.glob("**/*.mdx")
-        if file.parent.name != "use-cases" and file.name != "bua.mdx"
+    # Directories to check for inline code blocks
+    # Note: sdk-reference/ is excluded as it's auto-generated API docs
+    folders_to_check = [
+        DOCS_DIR,  # features/
+        CONCEPTS_DIR,  # concepts/
+        GUIDES_DIR,  # guides/
+        INTEGRATIONS_DIR,  # integrations/
+        INTRO_DIR,  # intro/
+        PRODUCT_DIR,  # product/
+        TUTORIALS_DIR,  # tutorials/
     ]
+
+    # Files that intentionally use CodeGroup (Python/JS tabs) or are comment-only
+    # These are excluded from the inline code check
+    files_with_codegroup_or_manual = {
+        "browser-types.mdx",  # All CodeGroup wrappers (Python/JS/Bash tabs)
+        "captcha-solving.mdx",  # CodeGroup wrappers for multi-language
+        "stealth-mode.mdx",  # CodeGroup wrappers for multi-language
+        "kernel.mdx",  # Integration-specific examples
+        "schedules.mdx",  # Comment-only cron examples
+        "management.mdx",  # Comment-only metadata example
+        "quickstart.mdx",  # CodeGroup with Python/JS tabs
+        "lifecycle.mdx",  # CodeGroup wrappers
+        "configuration.mdx",  # CodeGroup wrappers
+        "playwright-vs-notte.mdx",  # CodeGroup wrappers
+        "external-providers.mdx",  # CodeGroup wrappers
+        "playwright.mdx",  # CodeGroup wrappers (in sessions/cdp)
+        "puppeteer.mdx",  # CodeGroup wrappers
+        "selenium.mdx",  # CodeGroup wrappers
+    }
+
+    # Collect all MDX files from directories
+    all_docs = []
+    for folder in folders_to_check:
+        if folder.exists():
+            all_docs.extend(
+                file
+                for file in folder.glob("**/*.mdx")
+                if file.parent.name != "use-cases"
+                and file.name != "bua.mdx"
+                and file.name not in files_with_codegroup_or_manual
+            )
+
+    # Also check root-level MDX files (excluding migration-plan.mdx and other meta files)
+    root_mdx_files = [
+        f
+        for f in ROOT_DIR.glob("*.mdx")
+        if f.name not in ("migration-plan.mdx", "zin.mdx") and f.name not in files_with_codegroup_or_manual
+    ]
+    all_docs.extend(root_mdx_files)
 
     should_raise = False
     for code in find_snippets_examples(all_docs):
@@ -69,15 +127,22 @@ def test_no_snippets_outside_folder():
     assert not should_raise
 
 
-def find_snippets_files() -> list[Path]:
+def find_tester_files() -> list[Path]:
     """
-    Find all Python files in the given directory, excluding __init__.py and test files.
-
-    Args:
-        directory: The directory to search in
+    Find all Python tester files in the testers directory.
 
     Returns:
-        A list of Path objects for Python files
+        A list of Path objects for Python tester files
+    """
+    return [file for file in TESTERS_DIR.glob("**/*.py") if file.name != "__init__.py"]
+
+
+def find_snippets_files() -> list[Path]:
+    """
+    Find all MDX snippet files in the snippets directory.
+
+    Returns:
+        A list of Path objects for MDX snippet files
     """
     return [file for file in SNIPPETS_DIR.glob("**/*.mdx")]
 
@@ -105,7 +170,7 @@ def handle_file(filepath: str):
     return decorator
 
 
-@handle_file("vaults/index.mdx")
+@handle_file("vaults/index.py")
 def handle_vault(
     eval_example: EvalExample,
     code: str,
@@ -114,7 +179,7 @@ def handle_vault(
     run_example(eval_example, code=code)
 
 
-@handle_file("agents/index.mdx")
+@handle_file("agents/index.py")
 def handle_agent(
     eval_example: EvalExample,
     code: str,
@@ -122,7 +187,7 @@ def handle_agent(
     run_example(eval_example, code=code)
 
 
-@handle_file("personas/create_account.mdx")
+@handle_file("personas/create_account.py")
 def handle_create_account(
     eval_example: EvalExample,
     code: str,
@@ -137,7 +202,7 @@ def handle_create_account(
         pass
 
 
-@handle_file("scraping/agent.mdx")
+@handle_file("scraping/agent.py")
 def handle_scraping_agent(
     eval_example: EvalExample,
     code: str,
@@ -146,7 +211,7 @@ def handle_scraping_agent(
     run_example(eval_example, code=code)
 
 
-@handle_file("vaults/manual.mdx")
+@handle_file("vaults/manual.py")
 def handle_vault_manual(
     eval_example: EvalExample,
     code: str,
@@ -161,7 +226,7 @@ def handle_vault_manual(
             raise
 
 
-@handle_file("workflows/fork.mdx")
+@handle_file("workflows/fork.py")
 def handle_workflow_fork(
     eval_example: EvalExample,
     code: str,
@@ -170,19 +235,25 @@ def handle_workflow_fork(
     run_example(eval_example, code=code)
 
 
-@handle_file("vaults/index.mdx")
+@handle_file("vaults/index.py")
 def handle_vault_index(
     eval_example: EvalExample,
     code: str,
 ) -> None:
-    _ = load_dotenv()
-    notte = NotteClient()
-    with notte.Vault() as vault:
-        code = code.replace("<your-mfa-secret>", "JBSWY3DPEHPK3PXP").replace("my_vault_id", vault.vault_id)
+    if FAST_MODE or TYPE_CHECK_MODE:
+        # Syntax/type check - don't create client
+        code = code.replace("<your-mfa-secret>", "JBSWY3DPEHPK3PXP").replace("my_vault_id", "placeholder-vault-id")
         run_example(eval_example, code=code)
+    else:
+        # Full mode: create real vault
+        _ = load_dotenv()
+        client = NotteClient()
+        with client.Vault() as vault:
+            code = code.replace("<your-mfa-secret>", "JBSWY3DPEHPK3PXP").replace("my_vault_id", vault.vault_id)
+            run_example(eval_example, code=code)
 
 
-@handle_file("sessions/file_storage_basic.mdx")
+@handle_file("sessions/file_storage_basic.py")
 def handle_storage_base_upload_file(
     eval_example: EvalExample,
     code: str,
@@ -191,7 +262,7 @@ def handle_storage_base_upload_file(
     run_example(eval_example, code=code)
 
 
-@handle_file("sessions/file_storage_upload.mdx")
+@handle_file("sessions/file_storage_upload.py")
 def handle_storage_upload_file(
     eval_example: EvalExample,
     code: str,
@@ -200,28 +271,33 @@ def handle_storage_upload_file(
     run_example(eval_example, code=code)
 
 
-@handle_file("sessions/external_cdp.mdx")
+@handle_file("sessions/external_cdp.py")
 def handle_external_cdp(
     eval_example: EvalExample,
     code: str,
 ) -> None:
-    client = NotteClient()
-    with client.Session() as session:
-        cdp_url = session.cdp_url()
-        code = code.replace("wss://your-external-cdp-url", cdp_url)
+    if FAST_MODE or TYPE_CHECK_MODE:
+        # Syntax/type check - don't create client or session
+        code = code.replace("wss://your-external-cdp-url", "wss://placeholder-cdp-url")
         run_example(eval_example, code=code)
+    else:
+        client = NotteClient()
+        with client.Session() as session:
+            cdp_url = session.cdp_url()
+            code = code.replace("wss://your-external-cdp-url", cdp_url)
+            run_example(eval_example, code=code)
 
 
-@handle_file("sessions/upload_cookies.mdx")
+@handle_file("sessions/upload_cookies.py")
 def handle_cookies_file(
     eval_example: EvalExample,
     code: str,
 ) -> None:
     code = code.replace("path/to/cookies.json", "tests/data/cookies.json")
-    run_example(eval_example, code=code, source_name="sessions/upload_cookies.mdx")
+    run_example(eval_example, code=code, source_name="sessions/upload_cookies.py")
 
 
-@handle_file("sessions/extract_cookies_manual.mdx")
+@handle_file("sessions/extract_cookies_manual.py")
 def ignore_extract_cookies(
     _eval_example: EvalExample,
     _code: str,
@@ -230,7 +306,7 @@ def ignore_extract_cookies(
     pass
 
 
-@handle_file("sessions/solve_captchas.mdx")
+@handle_file("sessions/solve_captchas.py")
 def handle_solve_captchas(
     eval_example: EvalExample,
     code: str,
@@ -245,7 +321,7 @@ def handle_solve_captchas(
         pass
 
 
-@handle_file("sessions/cdp.mdx")
+@handle_file("sessions/cdp.py")
 def handle_cdp(
     eval_example: EvalExample,
     code: str,
@@ -350,6 +426,18 @@ def mypy_check_code(code: str, source_name: str | Path) -> None:
             pass
 
 
+def strip_sniptest_comments(code: str) -> str:
+    """
+    Strip # @sniptest comments from code.
+
+    These are magic comments used for snippet generation and should be
+    removed before syntax checking or execution.
+    """
+    lines = code.split("\n")
+    filtered = [line for line in lines if not line.strip().startswith("# @sniptest")]
+    return "\n".join(filtered)
+
+
 def run_example(
     eval_example: EvalExample,
     path: Path | None = None,
@@ -357,66 +445,99 @@ def run_example(
     source_name: str | Path | None = None,
 ):
     """
-    Run or validate a code example.
+    Run or validate a code example (Python file or code string).
 
     Args:
         eval_example: pytest-examples eval instance
-        path: Path to file to run (mutually exclusive with code)
+        path: Path to Python file to run (mutually exclusive with code)
         code: Code string to run (mutually exclusive with path)
         source_name: Optional source name for error reporting when using code string
     """
     if (path is None and code is None) or (path is not None and code is not None):
         raise ValueError("Either path or code should be provided")
 
-    file: io.StringIO | Path
-    actual_source_name: str | Path
     if path is not None:
-        file = path
+        source_code = path.read_text("utf-8")
         actual_source_name = path
     else:
-        file = io.StringIO(code)
-        actual_source_name = source_name if source_name else "."
+        source_code = code  # type: ignore
+        actual_source_name = source_name if source_name else "<code>"
 
-    for example in find_snippets_examples([file]):
-        # Use actual source name for better error reporting
-        example_source = actual_source_name if isinstance(file, io.StringIO) else example.path
+    # Strip sniptest magic comments before processing
+    source_code = strip_sniptest_comments(source_code)
 
-        if FAST_MODE or TYPE_CHECK_MODE:
-            # Fast mode: compile for syntax check
+    if FAST_MODE or TYPE_CHECK_MODE:
+        # Fast mode: compile for syntax check
+        try:
+            _ = compile(source_code, f"<{actual_source_name}>", "exec")
+            logging.info(f"✓ Syntax check passed: {actual_source_name}")
+        except SyntaxError as e:
+            raise SyntaxError(f"Syntax error in {actual_source_name}: {e}")
+
+        # Type check mode: also run mypy
+        if TYPE_CHECK_MODE:
             try:
-                _ = compile(example.source, f"<{example_source}>", "exec")
-                logging.info(f"✓ Syntax check passed: {example_source}")
-            except SyntaxError as e:
-                raise SyntaxError(f"Syntax error in {example_source}: {e}")
-
-            # Type check mode: also run mypy
-            if TYPE_CHECK_MODE:
-                try:
-                    mypy_check_code(example.source, example_source)
-                    logging.info(f"✓ Type check passed: {example_source}")
-                except TypeError:
-                    raise
-        else:
-            # Full mode: actually execute the code
+                mypy_check_code(source_code, actual_source_name)
+                logging.info(f"✓ Type check passed: {actual_source_name}")
+            except TypeError:
+                raise
+    else:
+        # Full mode: actually execute the code using pytest-examples
+        file = io.StringIO(source_code)
+        for example in find_snippets_examples([file]):
             _ = eval_example.run(example)
 
 
 @pytest.mark.parametrize(
-    "snippet_file", find_snippets_files(), ids=lambda p: f"{p.parent.name}_{p.name.replace('.mdx', '')}"
+    "tester_file", find_tester_files(), ids=lambda p: f"{p.parent.name}_{p.name.replace('.py', '')}"
 )
-def test_python_snippets(snippet_file: Path, eval_example: EvalExample):
+def test_python_testers(tester_file: Path, eval_example: EvalExample):
+    """
+    Test all Python tester files in /testers/.
+
+    Testers are the source of truth for code snippets. They contain
+    actual runnable Python code with # @sniptest magic comments.
+    """
     _ = load_dotenv()
 
-    snippet_name = f"{snippet_file.parent.name}/{snippet_file.name}"
-    custom_fn = handlers.get(snippet_name)
+    tester_name = f"{tester_file.parent.name}/{tester_file.name}"
+    custom_fn = handlers.get(tester_name)
     try:
         if custom_fn is not None:
-            custom_fn(eval_example, snippet_file.read_text("utf-8"))
+            custom_fn(eval_example, tester_file.read_text("utf-8"))
         else:
-            run_example(eval_example, snippet_file)
+            run_example(eval_example, tester_file)
     except Exception as e:
         # Log the error and re-raise with context
-        error_msg = f"Test failed for {snippet_name}: {type(e).__name__}: {str(e)}"
+        error_msg = f"Test failed for {tester_name}: {type(e).__name__}: {str(e)}"
         logging.error(error_msg)
-        # Just re-raise the original exception to avoid constructor issues with custom exception types
         raise
+
+
+def test_snippets_are_autogenerated():
+    """
+    Verify all snippets in /snippets/ are auto-generated by sniptest.
+
+    Auto-generated snippets have a header comment:
+    {/* @sniptest testers/path/to/file.py */}
+
+    Exceptions:
+    - CodeGroup-wrapped snippets (multi-language) are manual and exempt
+    """
+    import re
+
+    sniptest_pattern = re.compile(r"\{/\*\s*@sniptest\s+testers/")
+
+    for snippet_file in find_snippets_files():
+        content = snippet_file.read_text("utf-8")
+
+        # Skip CodeGroup-wrapped snippets (multi-language, manually maintained)
+        if content.strip().startswith("<CodeGroup>"):
+            continue
+
+        if not sniptest_pattern.search(content):
+            pytest.fail(
+                f"Snippet {snippet_file} is not auto-generated by sniptest. "
+                f"All snippets must be generated from /testers/*.py files. "
+                f"Run 'python sniptest/generate.py' to regenerate."
+            )

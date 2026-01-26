@@ -1,0 +1,22 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/fallback/error_handling.py */}
+
+```python
+import logging
+
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+try:
+    with client.Session() as session:
+        with client.AgentFallback(session, task="Critical task") as fb:
+            session.execute(type="click", selector="#button")
+
+        if not fb.success:
+            # Even agent couldn't complete the task
+            alert_failure(f"Task failed: {fb.steps[-1].message}")
+except Exception as e:
+    # Unexpected error
+    logging.error(f"Fallback exception: {e}")
+```

@@ -77,3 +77,9 @@ repos:
         language: pygrep
         types: [python]
         exclude: 'tests/|examples/|logging.py$'
+      - id: sniptest-generate
+        name: Generate snippets from testers
+        entry: bash -c "cd docs/src && make sniptest && git add snippets/"
+        language: system
+        files: ^docs/src/testers/.*\.py$
+        pass_filenames: false

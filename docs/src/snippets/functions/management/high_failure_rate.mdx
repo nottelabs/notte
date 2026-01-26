@@ -1,0 +1,20 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/high_failure_rate.py */}
+
+```python high_failure_rate.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+runs = client.functions.list_runs(function_id="function_abc123")
+
+failures = [r for r in runs.runs if r.status == "failed"]
+
+print(f"Failed runs: {len(failures)}/{len(runs.runs)}")
+
+# Analyze failure reasons
+for run in failures[:5]:  # Last 5 failures
+    print(f"Run {run.function_run_id}:")
+    print(f"  Error: {run.result}")
+    print(f"  Time: {run.created_at}")
+```

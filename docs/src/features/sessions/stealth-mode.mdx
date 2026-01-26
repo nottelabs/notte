@@ -1,0 +1,177 @@
+---
+title: Stealth Mode
+description: Configure anti-detection features for your browser sessions
+---
+
+import RealisticBehavior from "/snippets/sessions/stealth/realistic_behavior.mdx";
+import RotateProxies from "/snippets/sessions/stealth/rotate_proxies.mdx";
+import MatchViewport from "/snippets/sessions/stealth/match_viewport.mdx";
+import CombineTechniques from "/snippets/sessions/stealth/combine_techniques.mdx";
+
+Notte sessions include built-in stealth features to help your automations avoid detection by anti-bot systems.
+
+## Built-in Stealth Features
+
+All Notte sessions automatically include:
+
+- **Clean browser fingerprints** - Realistic browser signatures
+- **Navigator properties** - Proper webdriver, plugins, and language settings
+- **Canvas fingerprinting protection** - Randomized canvas signatures
+- **WebGL fingerprinting protection** - Unique WebGL parameters
+- **Timezone and locale matching** - Consistent geolocation data
+- **Chrome DevTools Protocol hiding** - CDP detection prevention
+
+## Basic Usage
+
+Stealth features are enabled by default. Simply create a session:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  with client.Session() as session:
+      page = session.page
+      page.goto("https://bot-detection-test.com")
+      # Stealth features automatically active
+  ```
+</CodeGroup>
+
+## Enhanced Stealth with Proxies
+
+Combine stealth mode with residential proxies for maximum anonymity:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  with client.Session(
+      proxies=True,  # Enable residential proxies
+      browser_type="chrome"  # Use Chrome for best compatibility
+  ) as session:
+      page = session.page
+      page.goto("https://example.com")
+  ```
+</CodeGroup>
+
+## Custom User Agents
+
+Override the default user agent for specific requirements:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  with client.Session(
+      user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  ) as session:
+      page = session.page
+      page.goto("https://example.com")
+  ```
+</CodeGroup>
+
+## Stealth Best Practices
+
+### 1. Use Realistic Behavior
+
+Avoid patterns that look automated:
+
+<RealisticBehavior />
+
+### 2. Rotate Proxies
+
+Use different proxies for different sessions:
+
+<RotateProxies />
+
+### 3. Match Viewport to Real Devices
+
+Use common screen resolutions:
+
+<MatchViewport />
+
+### 4. Combine Multiple Techniques
+
+Layer stealth features for best results:
+
+<CombineTechniques />
+
+## Testing Stealth
+
+Test your stealth configuration against detection services:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  test_sites = [
+      "https://bot.sannysoft.com/",
+      "https://arh.antoinevastel.com/bots/areyouheadless",
+      "https://fingerprint.com/demo/"
+  ]
+
+  with client.Session(proxies=True) as session:
+      page = session.page
+
+      for site in test_sites:
+          page.goto(site)
+          page.screenshot(path=f"stealth_test_{site.split('//')[1].split('/')[0]}.png")
+  ```
+</CodeGroup>
+
+## What Stealth Can't Do
+
+Stealth features help avoid detection, but they cannot:
+
+- ❌ Bypass login rate limits (use delays between attempts)
+- ❌ Avoid behavioral analysis (act like a human)
+- ❌ Bypass IP-based blocking (use proxy rotation)
+- ❌ Solve all captchas automatically (use captcha solving)
+
+## Stealth + Captcha Solving
+
+Combine stealth with automatic captcha solving for comprehensive protection:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  with client.Session(
+      browser_type="firefox",  # Required for captcha solving
+      solve_captchas=True,
+      proxies=True
+  ) as session:
+      page = session.page
+      page.goto("https://example.com/login")
+      # Both stealth and captcha solving active
+  ```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Proxies" icon="network-wired" href="/features/sessions/proxies">
+    Configure residential proxies
+  </Card>
+
+  <Card title="CAPTCHA Solving" icon="shield-check" href="/features/sessions/captcha-solving">
+    Automatically solve captchas
+  </Card>
+
+  <Card title="Browser Types" icon="browser" href="/features/sessions/browser-types">
+    Choose the right browser engine
+  </Card>
+
+  <Card title="Multi-Region Support" icon="globe" href="/features/sessions/multi-region">
+    Run sessions in different regions
+  </Card>
+</CardGroup>

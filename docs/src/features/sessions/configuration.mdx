@@ -1,0 +1,194 @@
+---
+title: Session Configurations
+description: Learn how to create and configure Notte browser sessions
+---
+
+import QuickStart from '/snippets/sessions/configuration/quick_start.mdx';
+import FullConfig from '/snippets/sessions/configuration/full_config.mdx';
+import HeadlessMode from '/snippets/sessions/configuration/headless_mode.mdx';
+import CaptchaSolving from '/snippets/sessions/configuration/captcha_solving.mdx';
+import Timeout from '/snippets/sessions/configuration/timeout.mdx';
+import Viewport from '/snippets/sessions/configuration/viewport.mdx';
+import ExternalCdp from '/snippets/sessions/configuration/external_cdp.mdx';
+import SessionResponse from '/snippets/sessions/configuration/session_response.mdx';
+import ProxiesSimple from '/snippets/sessions/configuration/proxies_simple.mdx';
+import CookieFile from '/snippets/sessions/configuration/cookie_file.mdx';
+
+Sessions are isolated browser instances running in the cloud that you can control programmatically. Each session provides a Playwright-compatible page that you can automate using familiar browser automation APIs.
+
+## Quick Start
+
+Create a session with default settings:
+
+<QuickStart />
+
+Active sessions can be viewed and managed in the [Sessions](https://console.notte.cc/sessions) page in the console.
+
+<Tip>
+  Sessions are automatically stopped when exiting the context manager. Always use the `with` statement to ensure proper cleanup.
+</Tip>
+
+## Configuration Options
+
+Customize your session with these options:
+
+<FullConfig />
+
+### Common Parameters
+
+<ParamField path="headless" type="boolean" default={true}>
+  Whether to run the browser in headless mode. Set to `false` to open a live viewer in your browser.
+</ParamField>
+
+<ParamField path="solve_captchas" type="boolean" default={false}>
+  Automatically detect and solve captchas (reCAPTCHA, hCaptcha, etc.). Requires `browser_type="firefox"`.
+</ParamField>
+
+<ParamField path="proxies" type="boolean | list[ProxySettings]" default={false}>
+  Enable residential proxies. Set to `true` for default proxies or provide custom proxy configuration.
+  See [Proxy Configuration](#proxies) for details.
+</ParamField>
+
+<ParamField path="timeout_minutes" type="integer" default={3}>
+  Session timeout in minutes. Sessions automatically close after this duration (min: 1, max: 30).
+</ParamField>
+
+<ParamField path="viewport_width" type="integer" default={1280}>
+  Browser viewport width in pixels.
+</ParamField>
+
+<ParamField path="viewport_height" type="integer" default={1080}>
+  Browser viewport height in pixels.
+</ParamField>
+
+<ParamField path="browser_type" type="string" default={"chromium"}>
+  Browser engine to use: `"chromium"`, `"chrome"`, or `"firefox"`. Note: Captcha solving requires Firefox.
+</ParamField>
+
+### Advanced Parameters
+
+<ParamField path="user_agent" type="string">
+  Custom user agent string for the browser session.
+</ParamField>
+
+<ParamField path="chrome_args" type="list[str]">
+  Custom Chrome/Chromium launch arguments. Advanced use only.
+</ParamField>
+
+<ParamField path="cdp_url" type="string">
+  Connect to an external browser session via Chrome DevTools Protocol URL (e.g., from Kernel.sh or other providers).
+</ParamField>
+
+<ParamField path="use_file_storage" type="boolean" default={false}>
+  Enable file storage for uploading/downloading files during the session.
+</ParamField>
+
+<ParamField path="cookie_file" type="string | Path">
+  Path to a JSON file for automatic cookie loading at session start and saving at session end.
+</ParamField>
+
+<ParamField path="storage" type="RemoteFileStorage">
+  Attach a file storage instance to the session for file operations.
+</ParamField>
+
+<ParamField path="perception_type" type="string" default="fast">
+  Default perception type for observations: `"fast"` (simple) or `"deep"` (LLM-powered).
+</ParamField>
+
+<ParamField path="raise_on_failure" type="boolean" default={false}>
+  Raise exceptions when action execution fails instead of returning error results.
+</ParamField>
+
+## Session Response
+
+When you start a session, you get access to these properties and methods:
+
+<SessionResponse />
+
+## Headless Mode
+
+Control whether to run the browser visibly or in the background:
+
+<HeadlessMode />
+
+<Tip>
+  When `headless=False`, a live viewer automatically opens in your browser so you can watch the automation in real-time.
+</Tip>
+
+## Proxies
+
+Route sessions through residential proxies for geo-targeting and enhanced stealth:
+
+<ProxiesSimple />
+
+<Note>
+  See the [Proxies Guide](/features/sessions/proxies) for country-specific proxies, custom proxies, and troubleshooting.
+</Note>
+
+## Captcha Solving
+
+Automatically detect and solve captchas during automation:
+
+<CaptchaSolving />
+
+<Warning>
+  Captcha solving is only available with `browser_type="firefox"`. It supports reCAPTCHA v2, reCAPTCHA v3, and hCaptcha.
+</Warning>
+
+<Note>
+  See the [Captcha Solving](/features/sessions/captcha-solving) guide for more details.
+</Note>
+
+## Session Timeout
+
+Configure how long sessions stay active:
+
+<Timeout />
+
+The timeout range is 1-30 minutes. Sessions automatically close when the timeout is reached.
+
+## Custom Viewport Size
+
+Set custom screen dimensions for specific testing scenarios:
+
+<Viewport />
+
+## Cookie Management
+
+Automatically load and save cookies across sessions using the `cookie_file` parameter:
+
+<CookieFile />
+
+<Note>
+  See the [Cookies Guide](/features/sessions/cookies) for manual cookie management and best practices.
+</Note>
+
+## External Providers (CDP)
+
+Use Notte with external browser providers like Kernel.sh:
+
+<ExternalCdp />
+
+<Note>
+  See the [Kernel.sh Integration](/integrations/kernel) guide for complete setup instructions.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Recordings" icon="video" href="/features/sessions/recordings">
+    Watch recorded sessions and debug issues
+  </Card>
+
+  <Card title="Proxies" icon="user-secret" href="/features/sessions/proxies">
+    Configure proxies and anti-detection features
+  </Card>
+
+  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+    Watch sessions in real-time
+  </Card>
+
+  <Card title="Cookies" icon="cookie-bite" href="/features/sessions/cookies">
+    Persist authentication across sessions
+  </Card>
+</CardGroup>

@@ -1,0 +1,146 @@
+---
+title: File Storage
+description: Upload and download files for your automations
+---
+
+import Quickstart from '/snippets/file-storage/quickstart.mdx';
+import UploadingFiles from '/snippets/file-storage/uploading_files.mdx';
+import DownloadingFiles from '/snippets/file-storage/downloading_files.mdx';
+import ForceOverwrite from '/snippets/file-storage/force_overwrite.mdx';
+import UsingWithAgents from '/snippets/file-storage/using_with_agents.mdx';
+import UsingWithSessions from '/snippets/file-storage/using_with_sessions.mdx';
+import AttachBeforeStarting from '/snippets/file-storage/attach_before_starting.mdx';
+import DescriptiveFilenames from '/snippets/file-storage/descriptive_filenames.mdx';
+import CheckDownloads from '/snippets/file-storage/check_downloads.mdx';
+
+File Storage provides a cloud bucket for uploading files to use in your automations and downloading files that agents retrieve from websites.
+
+## Quick Start
+
+<Quickstart />
+
+## How It Works
+
+File Storage has two buckets:
+
+| Bucket | Purpose | API |
+|--------|---------|-----|
+| **Uploads** | Files you upload for agents to use | `storage.upload()` |
+| **Downloads** | Files agents download from websites | `storage.download()` |
+
+```
+┌─────────────┐                    ┌──────────────┐
+│ Local Files │ ── upload() ─────> │   Uploads    │
+└─────────────┘                    └──────┬───────┘
+                                         │
+                                         v
+                                  ┌──────────────┐
+                                  │   Session    │
+                                  │   / Agent    │
+                                  └──────┬───────┘
+                                         │
+                                         v
+┌─────────────┐                    ┌──────────────┐
+│ Local Files │ <── download() ─── │  Downloads   │
+└─────────────┘                    └──────────────┘
+```
+
+## Uploading Files
+
+Upload files from your local machine to make them available in sessions:
+
+<UploadingFiles />
+
+## Downloading Files
+
+Download files that agents retrieved from websites:
+
+<DownloadingFiles />
+
+### Force Overwrite
+
+Overwrite existing local files:
+
+<ForceOverwrite />
+
+## Using with Agents
+
+Agents can interact with files on websites when storage is attached:
+
+<UsingWithAgents />
+
+## Using with Sessions
+
+Use file storage with scripted automation:
+
+<UsingWithSessions />
+
+## API Reference
+
+### FileStorage Methods
+
+| Method | Description |
+|--------|-------------|
+| `upload(file_path, upload_file_name=None)` | Upload a local file to storage |
+| `download(file_name, local_dir, force=False)` | Download a file to local directory |
+| `list_uploaded_files()` | List files you've uploaded |
+| `list_downloaded_files()` | List files downloaded by agents |
+
+### Parameters
+
+**upload()**
+- `file_path` - Path to the local file to upload
+- `upload_file_name` - Optional custom name for the uploaded file
+
+**download()**
+- `file_name` - Name of the file in storage
+- `local_dir` - Local directory to save the file
+- `force` - Overwrite existing file (default: False)
+
+## Supported File Types
+
+File storage supports all common file types:
+
+- **Documents**: PDF, DOCX, XLSX, TXT, CSV
+- **Images**: PNG, JPG, JPEG, GIF, WEBP
+- **Archives**: ZIP, RAR, TAR, GZ
+- **Media**: MP4, MP3
+- **Data**: JSON, XML
+
+## Best Practices
+
+### 1. Attach Storage Before Starting
+
+Always create and attach storage before starting the session:
+
+<AttachBeforeStarting />
+
+### 2. Use Descriptive Filenames
+
+<DescriptiveFilenames />
+
+### 3. Check Downloads After Session
+
+Always check for downloaded files after the session ends:
+
+<CheckDownloads />
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Agents" icon="robot" href="/concepts/agents">
+    Use agents with file operations
+  </Card>
+
+  <Card title="Sessions" icon="browser" href="/concepts/sessions">
+    Learn about browser sessions
+  </Card>
+
+  <Card title="Vaults" icon="lock" href="/concepts/vaults">
+    Store credentials securely
+  </Card>
+
+  <Card title="Personas" icon="user" href="/concepts/personas">
+    Create browser identities
+  </Card>
+</CardGroup>

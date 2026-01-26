@@ -1,0 +1,8 @@
+# @sniptest filename=index.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session, max_steps=10)
+    response = agent.run(task="Find the best italian restaurant in SF and book a table for 2 at 7pm today")
+    print(f"Agent terminated with status: {response.success} and answer: {response.answer}")

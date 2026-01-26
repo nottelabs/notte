@@ -1,0 +1,13 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/scraping/image_extraction.py */}
+
+```python image_extraction.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+images = client.scrape("https://example.com/gallery", only_images=True)
+
+for image in images:
+    print(f"URL: {image.url}")
+    print(f"Alt text: {image.alt}")
+```

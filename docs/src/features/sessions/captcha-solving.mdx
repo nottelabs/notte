@@ -1,0 +1,222 @@
+---
+title: CAPTCHA Solving
+description: Automatically detect and solve captchas during browser automation
+---
+
+import RealisticDelays from "/snippets/sessions/captcha/realistic_delays.mdx";
+import MonitorFailures from "/snippets/sessions/captcha/monitor_failures.mdx";
+import HeadlessDebug from "/snippets/sessions/captcha/headless_debug.mdx";
+import CombineStealth from "/snippets/sessions/captcha/combine_stealth.mdx";
+import EnsureRequirements from "/snippets/sessions/captcha/ensure_requirements.mdx";
+import TimeoutHandling from "/snippets/sessions/captcha/timeout_handling.mdx";
+
+Notte can automatically detect and solve captchas including reCAPTCHA v2, reCAPTCHA v3, and hCaptcha during your browser automation.
+
+<Warning>
+  CAPTCHA solving is only available with Firefox. You must set `browser_type="firefox"` to use this feature.
+</Warning>
+
+## Quick Start
+
+Enable captcha solving when creating a session:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  with client.Session(
+      browser_type="firefox",  # Required
+      solve_captchas=True
+  ) as session:
+      page = session.page
+      page.goto("https://www.google.com/recaptcha/api2/demo")
+      # Captcha automatically solved
+  ```
+</CodeGroup>
+
+## Supported CAPTCHA Types
+
+Notte automatically detects and solves:
+
+- ✅ **reCAPTCHA v2** - Checkbox and image challenges
+- ✅ **reCAPTCHA v3** - Invisible captchas
+- ✅ **hCaptcha** - Checkbox and image challenges
+
+## How It Works
+
+When captcha solving is enabled:
+
+1. **Detection** - Notte monitors the page for captcha elements
+2. **Solving** - Captchas are solved automatically in the background
+3. **Continuation** - Your automation continues seamlessly
+
+No additional code is needed - captchas are solved automatically when encountered.
+
+## Complete Example
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  with client.Session(
+      browser_type="firefox",
+      solve_captchas=True,
+      headless=False  # Watch it solve captchas
+  ) as session:
+      page = session.page
+
+      # Navigate to a site with captcha
+      page.goto("https://example.com/login")
+
+      # Fill login form
+      page.fill('input[name="email"]', "user@example.com")
+      page.fill('input[name="password"]', "password")
+
+      # Click submit - captcha will be solved automatically
+      page.click('button[type="submit"]')
+
+      # Wait for successful login
+      page.wait_for_url("**/dashboard")
+      print("Logged in successfully!")
+  ```
+</CodeGroup>
+
+## Captcha + Proxies
+
+Combine captcha solving with proxies for better success rates:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  with client.Session(
+      browser_type="firefox",
+      solve_captchas=True,
+      proxies=True  # Use residential proxies
+  ) as session:
+      page = session.page
+      page.goto("https://example.com")
+      # Both captcha solving and proxies active
+  ```
+</CodeGroup>
+
+## Best Practices
+
+### 1. Use Realistic Delays
+
+Add human-like delays before and after captcha-protected actions:
+
+<RealisticDelays />
+
+### 2. Monitor for Failures
+
+Check if captcha solving failed:
+
+<MonitorFailures />
+
+### 3. Use Headless=False for Debugging
+
+Watch captcha solving in action:
+
+<HeadlessDebug />
+
+### 4. Combine with Stealth
+
+Use stealth features for better success rates:
+
+<CombineStealth />
+
+## Limitations
+
+### What CAPTCHA Solving Can Do:
+- ✅ Solve most reCAPTCHA v2 challenges
+- ✅ Solve reCAPTCHA v3 automatically
+- ✅ Solve most hCaptcha challenges
+- ✅ Work with residential proxies
+- ✅ Work in headless and non-headless mode
+
+### What It Cannot Do:
+- ❌ Solve 100% of captchas (some are unsolvable)
+- ❌ Work with Chromium or Chrome (Firefox only)
+- ❌ Solve custom/proprietary captcha systems
+- ❌ Bypass all bot detection (combine with stealth)
+
+## Common Issues
+
+### Issue: Captchas Not Being Solved
+
+**Possible causes:**
+- Using Chromium/Chrome instead of Firefox
+- `solve_captchas=True` not set
+- Captcha type not supported
+- Site has additional bot detection
+
+**Solution:**
+
+<EnsureRequirements />
+
+### Issue: Timeout Waiting for Captcha
+
+Increase session timeout for captcha-heavy workflows:
+
+<TimeoutHandling />
+
+## Testing CAPTCHA Solving
+
+Test captcha solving on demo sites:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  test_sites = [
+      "https://www.google.com/recaptcha/api2/demo",
+      "https://2captcha.com/demo/recaptcha-v2",
+      "https://democaptcha.com/demo-form-eng/hcaptcha.html"
+  ]
+
+  with client.Session(
+      browser_type="firefox",
+      solve_captchas=True,
+      headless=False
+  ) as session:
+      page = session.page
+
+      for site in test_sites:
+          print(f"Testing {site}")
+          page.goto(site)
+          page.screenshot(path=f"captcha_test_{test_sites.index(site)}.png")
+  ```
+</CodeGroup>
+
+## Pricing
+
+CAPTCHA solving incurs additional costs based on the number of captchas solved. Check your plan for details.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Browser Types" icon="browser" href="/features/sessions/browser-types">
+    Learn about Firefox and other browsers
+  </Card>
+
+  <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">
+    Combine with anti-detection features
+  </Card>
+
+  <Card title="Proxies" icon="network-wired" href="/features/sessions/proxies">
+    Use proxies with captcha solving
+  </Card>
+
+  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+    Watch captcha solving in real-time
+  </Card>
+</CardGroup>

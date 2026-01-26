@@ -1,0 +1,30 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from pydantic import BaseModel
+
+  client = NotteClient()
+
+  class Product(BaseModel):
+      name: str
+      price: float
+
+  with client.Session() as session:
+      session.execute(type="goto", url="https://example.com/products")
+
+      # AI understands the page
+      obs = session.observe(instructions="Find the search box")
+      action = obs.space.first()  # AI picks the right element
+      session.execute(action.with_value("laptops"))
+
+      # Structured extraction with LLM
+      products = session.scrape(
+          response_format=list[Product],
+          instructions="Extract all products with names and prices"
+      )
+
+      # Every action is recorded
+      replay = session.replay()
+      replay.save("automation.mp4")
+  ```
+</CodeGroup>

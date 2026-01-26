@@ -1,0 +1,21 @@
+# @sniptest filename=first_success_strategy.py
+import asyncio
+
+from notte_sdk.endpoints.agents import BatchRemoteAgent
+
+
+async def main():
+    batch_agent = BatchRemoteAgent(session=session, max_steps=10, _client=client)
+
+    # Run 3 agents, return first success
+    result = await batch_agent.run(
+        task="Complete task",
+        n_jobs=3,
+        strategy="first_success",  # Default
+    )
+
+    print(result.success)  # True if any agent succeeded
+    print(result.answer)  # Answer from successful agent
+
+
+asyncio.run(main())

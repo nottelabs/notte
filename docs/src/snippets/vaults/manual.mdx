@@ -1,13 +1,16 @@
-```python
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/vaults/manual.py */}
+
+```python vaults_manual.py
 from notte_sdk import NotteClient
 
-notte = NotteClient()
+client = NotteClient()
 
 # Creating a new vault
-vault = notte.Vault()
+vault = client.Vault()
 
 # Add your credentials securely
-vault.add_credentials(
+_ = vault.add_credentials(
     url="https://github.com/",
     email="<your-email>",
     password="<your-password>",
@@ -25,6 +28,6 @@ print(credentials)
 vault.delete()
 
 # you can also list your active vaults as follows:
-active_vaults = notte.vaults.list()
+active_vaults = client.vaults.list()
 print(active_vaults)
 ```

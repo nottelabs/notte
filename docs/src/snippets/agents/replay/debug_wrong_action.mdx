@@ -1,0 +1,17 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/replay/debug_wrong_action.py */}
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(task="Fill the email field")
+
+    # Check what agent saw
+    for step in result.steps:
+        print(f"Action: {step.action}")
+        print(f"Reasoning: {step.reasoning}")
+```

@@ -1,0 +1,11 @@
+# @sniptest filename=solve_captchas.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+with client.Session(solve_captchas=True, browser_type="firefox", open_viewer=True) as session:
+    # Navigate to a page with a CAPTCHA
+    agent = client.Agent(session=session, max_steps=5)
+    resp = agent.run(
+        task=("Try to solve the CAPTCHA using internal tools. If you fail, try to solve it manually."),
+        url="https://www.google.com/recaptcha/api2/demo",
+    )

@@ -1,0 +1,9 @@
+# @sniptest filename=instructions_only.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+result = client.scrape(
+    "https://example.com/article", instructions="Extract the article title, author, and publication date"
+)
+
+print(result.data)

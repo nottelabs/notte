@@ -1,9 +1,13 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/extract_cookies_notte.py */}
+
 ```python extract_cookies_notte.py
-from notte_sdk import NotteClient
 import json
 
-notte = NotteClient()
-with notte.Session() as session:
+from notte_sdk import NotteClient
+
+client = NotteClient()
+with client.Session() as session:
     # Observe the state of a webpage
     obs = session.observe(url="https://google.com/travel/flights")
 

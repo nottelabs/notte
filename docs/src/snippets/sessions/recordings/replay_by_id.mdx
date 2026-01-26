@@ -1,0 +1,12 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/recordings/replay_by_id.py */}
+
+```python replay_by_id.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Get replay for a specific session
+replay = client.sessions.replay(session_id="your-session-id")
+replay.save("session_replay.mp4")
+```

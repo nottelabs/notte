@@ -1,0 +1,15 @@
+<CodeGroup>
+  ```bash Output
+  curl --location 'https://api.notte.cc/functions/function_abc123/runs/start' \
+  --header 'x-notte-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --data '{
+      "function_id": "function_abc123",
+      "variables": {
+          "url": "https://example.com",
+          "search_query": "laptop"
+      }
+  }'
+  ```
+</CodeGroup>

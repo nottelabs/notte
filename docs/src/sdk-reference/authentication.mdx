@@ -1,0 +1,38 @@
+---
+title: Authentication
+description: Authenticate with the Notte SDK
+---
+
+The SDK handles authentication automatically using your API key.
+
+## Get your API key
+
+1. Sign in to the [Notte Console](https://console.notte.cc)
+2. Navigate to your account settings
+3. Generate or copy your API key
+
+## Environment variable (recommended)
+
+Set the `NOTTE_API_KEY` environment variable:
+
+```bash
+export NOTTE_API_KEY=your_api_key_here
+```
+
+Then initialize the client:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+```
+
+## Direct initialization
+
+Pass the API key directly:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient(api_key="your_api_key_here")
+```

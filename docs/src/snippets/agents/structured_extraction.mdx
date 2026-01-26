@@ -1,0 +1,30 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/structured_extraction.py */}
+
+```python structured_extraction.py
+from notte_sdk import NotteClient
+from pydantic import BaseModel
+
+
+class CompanyInfo(BaseModel):
+    name: str
+    email: str
+    phone: str | None
+    address: str | None
+
+
+client = NotteClient()
+
+with client.Session() as session:
+    agent = client.Agent(session=session, reasoning_model="gemini/gemini-2.0-flash", max_steps=10)
+
+    result = agent.run(
+        task="Extract company contact information", url="https://example.com/contact", response_format=CompanyInfo
+    )
+
+    if result.success:
+        company = CompanyInfo.model_validate_json(result.answer)
+        print(f"Company: {company.name}")
+        print(f"Email: {company.email}")
+        print(f"Phone: {company.phone}")
+```

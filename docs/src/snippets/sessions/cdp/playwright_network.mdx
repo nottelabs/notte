@@ -1,0 +1,29 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from playwright.sync_api import sync_playwright
+
+  client = NotteClient()
+
+  with client.Session() as session:
+      cdp_url = session.cdp_url()
+
+      with sync_playwright() as p:
+          browser = p.chromium.connect_over_cdp(cdp_url)
+          page = browser.contexts[0].pages[0]
+
+          # Block images and stylesheets for faster loading
+          page.route("**/*.{png,jpg,jpeg,css}", lambda route: route.abort())
+
+          # Modify API responses
+          def handle_route(route):
+              if "api/config" in route.request.url:
+                  route.fulfill(json={"feature_enabled": True})
+              else:
+                  route.continue_()
+
+          page.route("**/api/**", handle_route)
+
+          page.goto("https://example.com")
+  ```
+</CodeGroup>

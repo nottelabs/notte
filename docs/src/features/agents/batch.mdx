@@ -1,0 +1,234 @@
+---
+title: Batch Agents
+description: Run multiple agents in parallel for improved success rates and throughput
+---
+
+import BatchAgent from "/snippets/agents/batch_agent.mdx";
+import SuccessRateCalc from "/snippets/agents/batch/success_rate_calc.mdx";
+import TimeToSuccess from "/snippets/agents/batch/time_to_success.mdx";
+import FirstSuccessStrategy from "/snippets/agents/batch/first_success_strategy.mdx";
+import AllFinishedStrategy from "/snippets/agents/batch/all_finished_strategy.mdx";
+import SessionParams from "/snippets/agents/batch/session_params.mdx";
+import NJobs from "/snippets/agents/batch/n_jobs.mdx";
+import AgentParams from "/snippets/agents/batch/agent_params.mdx";
+import UnreliablePages from "/snippets/agents/batch/unreliable_pages.mdx";
+import RateLimitedSites from "/snippets/agents/batch/rate_limited_sites.mdx";
+import AbTesting from "/snippets/agents/batch/ab_testing.mdx";
+import ConsensusResults from "/snippets/agents/batch/consensus_results.mdx";
+import ExecutionTime from "/snippets/agents/batch/execution_time.mdx";
+import Cost from "/snippets/agents/batch/cost.mdx";
+import StartWithParallel from "/snippets/agents/batch/start_with_parallel.mdx";
+import CriticalTasks from "/snippets/agents/batch/critical_tasks.mdx";
+import MonitorSuccessRates from "/snippets/agents/batch/monitor_success_rates.mdx";
+import AppropriateStrategy from "/snippets/agents/batch/appropriate_strategy.mdx";
+import Timeout from "/snippets/agents/batch/timeout.mdx";
+import ConcurrencyLimits from "/snippets/agents/batch/concurrency_limits.mdx";
+import CostScaling from "/snippets/agents/batch/cost_scaling.mdx";
+import AsyncOnly from "/snippets/agents/batch/async_only.mdx";
+
+Batch Agents execute multiple agent instances in parallel, either returning the first successful result or collecting all results.
+
+## Overview
+
+Run multiple agents concurrently with different strategies:
+
+<BatchAgent />
+
+## Why Use Batch Agents?
+
+### Improved Success Rate
+
+Agents can fail due to:
+- Timing issues
+- Random page behavior
+- Rate limiting
+- Network issues
+
+Running multiple attempts in parallel increases success probability:
+
+<SuccessRateCalc />
+
+### Faster Time-to-Success
+
+Return as soon as any agent succeeds:
+
+<TimeToSuccess />
+
+## Strategies
+
+### First Success
+
+Return immediately when any agent succeeds:
+
+<FirstSuccessStrategy />
+
+**When to use:**
+- Non-deterministic pages
+- Tasks prone to failures
+- Time-sensitive operations
+- You only need one successful result
+
+### All Finished
+
+Wait for all agents to complete:
+
+<AllFinishedStrategy />
+
+**When to use:**
+- Comparing agent outputs
+- Gathering multiple perspectives
+- Testing different approaches
+- Statistical analysis
+
+## Configuration
+
+### Session Parameters
+
+Batch agents create multiple sessions with the same configuration:
+
+<SessionParams />
+
+### Number of Jobs
+
+Control parallelism with `n_jobs`:
+
+<NJobs />
+
+**Cost consideration:** Each agent incurs full costs, so `n_jobs=5` costs 5x a single agent.
+
+### Agent Parameters
+
+Pass any agent parameter:
+
+<AgentParams />
+
+## Use Cases
+
+### 1. Unreliable Pages
+
+Pages with random failures:
+
+<UnreliablePages />
+
+### 2. Rate-Limited Sites
+
+Avoid rate limit failures:
+
+<RateLimitedSites />
+
+### 3. A/B Testing
+
+Test which model works best:
+
+<AbTesting />
+
+### 4. Consensus Results
+
+Get multiple agent opinions:
+
+<ConsensusResults />
+
+## Performance
+
+### Execution Time
+
+With `first_success` strategy:
+
+<ExecutionTime />
+
+### Cost
+
+Batch agents cost more:
+
+<Cost />
+
+### Success Rate
+
+Probability of at least one success:
+
+| Single Agent Success | 2 Parallel | 3 Parallel | 5 Parallel |
+|---------------------|------------|------------|------------|
+| 50% | 75% | 87.5% | 96.9% |
+| 70% | 91% | 97.3% | 99.8% |
+| 80% | 96% | 99.2% | 99.97% |
+
+## Best Practices
+
+### 1. Start with 2-3 Parallel Agents
+
+Balance cost and reliability:
+
+<StartWithParallel />
+
+### 2. Use for Critical Tasks
+
+Worth the cost for important operations:
+
+<CriticalTasks />
+
+### 3. Monitor Success Rates
+
+Track if batch execution is needed:
+
+<MonitorSuccessRates />
+
+### 4. Use Appropriate Strategy
+
+Choose based on your needs:
+
+<AppropriateStrategy />
+
+### 5. Set Reasonable Timeouts
+
+Prevent hanging:
+
+<Timeout />
+
+## Limitations
+
+### Resource Usage
+
+Batch agents consume more resources:
+
+- **Sessions**: Creates n separate sessions
+- **Browsers**: Opens n browser instances
+- **Memory**: n times single agent memory
+- **API calls**: n times single agent calls
+
+### Concurrency Limits
+
+Account for rate limits:
+
+<ConcurrencyLimits />
+
+### Cost Scaling
+
+Costs multiply with `n_jobs`:
+
+<CostScaling />
+
+## Async Only
+
+Batch agents require async execution:
+
+<AsyncOnly />
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle">
+    Understand agent execution modes
+  </Card>
+
+  <Card title="Configuration" icon="sliders" href="/features/agents/configuration">
+    Configure agent parameters
+  </Card>
+
+  <Card title="Best Practices" icon="lightbulb" href="/guides/reliability">
+    Build reliable automations
+  </Card>
+
+  <Card title="Pricing" icon="dollar-sign" href="/pricing">
+    Understand cost implications
+  </Card>
+</CardGroup>

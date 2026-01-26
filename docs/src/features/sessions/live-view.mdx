@@ -1,0 +1,124 @@
+---
+title: Live View
+description: Watch your browser sessions in real-time as they execute
+---
+
+import QuickStart from '/snippets/sessions/live-view/quick_start.mdx';
+import ManualViewer from '/snippets/sessions/live-view/manual.mdx';
+import AgentViewer from '/snippets/sessions/live-view/agent.mdx';
+import SharingViewer from '/snippets/sessions/live-view/sharing.mdx';
+import ViewerConfig from '/snippets/sessions/live-view/configuration.mdx';
+import ViewerBrowser from '/snippets/sessions/capabilities/viewer_browser.mdx';
+import ViewerCdp from '/snippets/sessions/capabilities/viewer_cdp.mdx';
+import ViewerNotebook from '/snippets/sessions/capabilities/viewer_notebook.mdx';
+import DevEnvironment from '/snippets/sessions/capabilities/dev_environment.mdx';
+import CombineWithRecordings from '/snippets/sessions/capabilities/combine_with_recordings.mdx';
+import MultipleViewers from '/snippets/sessions/capabilities/multiple_viewers.mdx';
+
+Live View allows you to watch your browser sessions in real-time as they execute, making it easy to debug and monitor automation.
+
+## Quick Start
+
+Open a live viewer automatically when the session starts:
+
+<QuickStart />
+
+## Manual Live View
+
+Open the live viewer manually at any point during the session:
+
+<ManualViewer />
+
+## Viewer Types
+
+Notte supports multiple viewer types:
+
+### Browser Viewer (Default)
+
+Frame-by-frame replay in your browser:
+
+<ViewerBrowser />
+
+### CDP Viewer
+
+Chrome DevTools Protocol debugger:
+
+<ViewerCdp />
+
+### Jupyter Notebook Viewer
+
+Display live view directly in Jupyter notebooks:
+
+<ViewerNotebook />
+
+## Live View for Agents
+
+Watch AI agents make decisions in real-time:
+
+<AgentViewer />
+
+## Sharing Live View
+
+Share the viewer URL with your team for collaborative debugging:
+
+<SharingViewer />
+
+## Viewer Configuration
+
+Set a default viewer type for all sessions:
+
+<ViewerConfig />
+
+Available viewer types:
+- `SessionViewerType.BROWSER` - Frame-by-frame browser viewer (default)
+- `SessionViewerType.CDP` - Chrome DevTools Protocol debugger
+- `SessionViewerType.JUPYTER` - Jupyter notebook display
+
+## Best Practices
+
+### 1. Use for Development
+
+Live view is ideal for development and debugging:
+
+<DevEnvironment />
+
+### 2. Combine with Recordings
+
+Use live view during development, recordings for later analysis:
+
+<CombineWithRecordings />
+
+### 3. Multiple Viewers
+
+Open multiple viewer types simultaneously:
+
+<MultipleViewers />
+
+## Live View vs Recordings
+
+| Feature | Live View | Recordings |
+|---------|-----------|------------|
+| **Timing** | Real-time during execution | After session ends |
+| **Interactivity** | Can observe as it happens | Playback only |
+| **Use Case** | Debugging, monitoring | Archiving, sharing |
+| **Availability** | During session only | 24 hours after session |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Recordings" icon="video" href="/features/sessions/recordings">
+    Record sessions for later analysis
+  </Card>
+
+  <Card title="Playwright" icon="code" href="/features/sessions/playwright">
+    Connect with Playwright via CDP
+  </Card>
+
+  <Card title="Session Lifecycle" icon="clock" href="/features/sessions/lifecycle">
+    Understand session management
+  </Card>
+
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Configure session parameters
+  </Card>
+</CardGroup>

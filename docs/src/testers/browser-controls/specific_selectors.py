@@ -1,0 +1,13 @@
+# @sniptest filename=specific_selectors.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com")
+
+    # Good - specific
+    session.execute(type="fill", selector="form#login input[name='email']", value="user@example.com")
+
+    # Less specific - might match wrong element
+    session.execute(type="fill", selector="input", value="user@example.com")

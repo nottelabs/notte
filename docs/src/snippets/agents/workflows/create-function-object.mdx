@@ -1,0 +1,16 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/workflows/create-function-object.py */}
+
+```python
+agent = client.Agent(session=session)
+result = agent.run(task="Extract product data")
+
+if result.success:
+    # Create function from agent
+    function = agent.workflow.create()
+
+    print(f"Created function: {function.function_id}")
+
+    # Run function later
+    function_result = function.run()
+```

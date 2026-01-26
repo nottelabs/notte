@@ -1,0 +1,15 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/update_code.py */}
+
+```python update_code.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+function = client.Function(function_id="func_abc123")
+
+# Update with new code
+function.update(workflow_path="updated_function.py")
+
+print(f"Updated to version: {function.response.latest_version}")
+```

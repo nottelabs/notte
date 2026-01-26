@@ -1,0 +1,21 @@
+# @sniptest filename=critical_tasks.py
+import asyncio
+
+from notte_sdk import NotteClient
+from notte_sdk.endpoints.agents import BatchRemoteAgent
+
+client = NotteClient()
+
+
+async def main():
+    # Critical: Use batch
+    with client.Session() as session:
+        batch_agent = BatchRemoteAgent(session=session, _client=client)
+        result = await batch_agent.run(task="Process payment", n_jobs=3)
+
+        # Non-critical: Use single agent
+        agent = client.Agent(session=session)
+        result = agent.run(task="Nice-to-have data")
+
+
+asyncio.run(main())

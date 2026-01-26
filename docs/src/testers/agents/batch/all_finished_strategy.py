@@ -1,0 +1,18 @@
+# @sniptest filename=all_finished_strategy.py
+import asyncio
+
+from notte_sdk.endpoints.agents import BatchRemoteAgent
+
+
+async def main():
+    batch_agent = BatchRemoteAgent(session=session, _client=client)
+
+    # Run 5 agents, wait for all
+    results = await batch_agent.run(task="Extract data", n_jobs=5, strategy="all_finished")
+
+    # Returns list of results
+    for i, result in enumerate(results):
+        print(f"Agent {i + 1}: Success={result.success}")
+
+
+asyncio.run(main())

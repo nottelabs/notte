@@ -1,0 +1,13 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/invocations/check_run_status.py */}
+
+```python check_run_status.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+# Check run status
+run_status = client.functions.get_run(function_id="function_abc123", run_id=run_id)
+
+print(f"Status: {run_status.status}")  # "active", "closed", "failed"
+print(f"Result: {run_status.result}")
+```

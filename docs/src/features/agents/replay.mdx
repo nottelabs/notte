@@ -1,0 +1,217 @@
+---
+title: Replay & Debugging
+description: Debug agents with visual replays and step-by-step inspection
+---
+
+import BasicReplay from '/snippets/agents/replay/basic_replay.mdx';
+import ViewInNotebook from '/snippets/agents/replay/view_in_notebook.mdx';
+import SaveToFile from '/snippets/agents/replay/save_to_file.mdx';
+import ViewInBrowser from '/snippets/agents/replay/view_in_browser.mdx';
+import RunAgent from '/snippets/agents/replay/run_agent.mdx';
+import CheckIfFailed from '/snippets/agents/replay/check_if_failed.mdx';
+import InspectSteps from '/snippets/agents/replay/inspect_steps.mdx';
+import WatchReplay from '/snippets/agents/replay/watch_replay.mdx';
+import FixAndRetry from '/snippets/agents/replay/fix_and_retry.mdx';
+import DebugMissingElement from '/snippets/agents/replay/debug_missing_element.mdx';
+import FixMissingElement from '/snippets/agents/replay/fix_missing_element.mdx';
+import DebugWrongAction from '/snippets/agents/replay/debug_wrong_action.mdx';
+import FixWrongAction from '/snippets/agents/replay/fix_wrong_action.mdx';
+import DebugMaxSteps from '/snippets/agents/replay/debug_max_steps.mdx';
+import FixMaxSteps from '/snippets/agents/replay/fix_max_steps.mdx';
+import StepByStepAnalysis from '/snippets/agents/replay/step_by_step_analysis.mdx';
+import ComparingRuns from '/snippets/agents/replay/comparing_runs.mdx';
+import MonitorStatus from '/snippets/agents/replay/monitor_status.mdx';
+import ReviewFailedAgents from '/snippets/agents/replay/review_failed_agents.mdx';
+import SaveProductionReplays from '/snippets/agents/replay/save_production_replays.mdx';
+import ReplaysForQa from '/snippets/agents/replay/replays_for_qa.mdx';
+import ShareWithTeam from '/snippets/agents/replay/share_with_team.mdx';
+
+Debug agent executions with MP4 replays that show exactly what the agent saw and did during its run.
+
+## Agent Replay
+
+Get a visual replay of the agent's execution:
+
+<BasicReplay />
+
+## What's Included
+
+Agent replays capture:
+
+- **Visual recording** of every page the agent visited
+- **Actions taken** by the agent (clicks, fills, navigations)
+- **Page transitions** and loading states
+- **Element highlights** showing what the agent interacted with
+- **Timestamps** for each action
+
+## Viewing Replays
+
+### In Jupyter Notebook
+
+Display the replay inline:
+
+<ViewInNotebook />
+
+### Save to File
+
+Save for later viewing or sharing:
+
+<SaveToFile />
+
+### In Browser
+
+Use the Notte Console to view replays:
+
+<ViewInBrowser />
+
+## Debugging Workflow
+
+### 1. Run Agent
+
+Execute your agent task:
+
+<RunAgent />
+
+### 2. Check If Failed
+
+Identify failures:
+
+<CheckIfFailed />
+
+### 3. Inspect Steps
+
+Review what the agent did:
+
+<InspectSteps />
+
+### 4. Watch Replay
+
+See the visual execution:
+
+<WatchReplay />
+
+### 5. Fix and Retry
+
+Adjust based on findings:
+
+<FixAndRetry />
+
+## Common Issues
+
+### Agent Can't Find Element
+
+**Symptoms:**
+- Agent fails with "Element not found"
+- Replay shows element exists but wasn't clicked
+
+**Debug:**
+
+<DebugMissingElement />
+
+**Fix:**
+
+<FixMissingElement />
+
+### Agent Takes Wrong Action
+
+**Symptoms:**
+- Agent clicks wrong button
+- Agent fills wrong form field
+
+**Debug:**
+
+<DebugWrongAction />
+
+**Fix:**
+
+<FixWrongAction />
+
+### Agent Exceeds Max Steps
+
+**Symptoms:**
+- Agent stops before completing task
+- `len(result.steps) == max_steps`
+
+**Debug:**
+
+<DebugMaxSteps />
+
+**Fix:**
+
+<FixMaxSteps />
+
+## Advanced Debugging
+
+### Step-by-Step Analysis
+
+Inspect each step in detail:
+
+<StepByStepAnalysis />
+
+### Comparing Runs
+
+Compare successful vs failed runs:
+
+<ComparingRuns />
+
+### Agent Status During Execution
+
+Monitor agent in real-time:
+
+<MonitorStatus />
+
+## Best Practices
+
+### 1. Always Review Failed Agents
+
+Don't ignore failures - watch the replay:
+
+<ReviewFailedAgents />
+
+### 2. Save Replays for Production Issues
+
+Keep replays of production failures:
+
+<SaveProductionReplays />
+
+### 3. Use Replays for QA
+
+Verify agent behavior before deploying:
+
+<ReplaysForQa />
+
+### 4. Share Replays with Team
+
+Save and share for collaboration:
+
+<ShareWithTeam />
+
+## Limitations
+
+Replays are currently:
+
+- ✅ Available for all completed agents
+- ✅ Full video recording of execution
+- ✅ Include element highlights
+- ⚠️  Generated after completion (not real-time)
+- ⚠️  May be large files for long runs
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle">
+    Understand agent execution
+  </Card>
+
+  <Card title="Configuration" icon="sliders" href="/features/agents/configuration">
+    Optimize agent settings
+  </Card>
+
+  <Card title="Best Practices" icon="lightbulb" href="/guides/reliability">
+    Build reliable agents
+  </Card>
+
+  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+    Watch sessions in real-time
+  </Card>
+</CardGroup>

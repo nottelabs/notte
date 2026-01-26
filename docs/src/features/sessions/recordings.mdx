@@ -1,0 +1,126 @@
+---
+title: Recordings
+description: Record and replay your browser sessions for debugging and analysis
+---
+
+import QuickStart from '/snippets/sessions/recordings/quick_start.mdx';
+import DownloadMp4 from '/snippets/sessions/recordings/download_mp4.mdx';
+import ReplayById from '/snippets/sessions/recordings/replay_by_id.mdx';
+import AgentReplay from '/snippets/sessions/recordings/agent_replay.mdx';
+import DebugFailed from '/snippets/sessions/recordings/debug_failed.mdx';
+import CleanupOld from '/snippets/sessions/recordings/cleanup_old.mdx';
+import AgentReplayAlt from '/snippets/sessions/capabilities/agent_replay_alt.mdx';
+import NameRecordings from '/snippets/sessions/capabilities/name_recordings.mdx';
+import RecordOnFailures from '/snippets/sessions/capabilities/record_on_failures.mdx';
+
+Notte automatically records every action in your browser sessions, allowing you to download video replays for debugging and analysis.
+
+## Quick Start
+
+Get a recording after your session ends:
+
+<QuickStart />
+
+## What Gets Recorded
+
+Session recordings capture:
+
+- **Page navigation** - All page loads and URL changes
+- **User interactions** - Clicks, fills, scrolls, key presses
+- **DOM changes** - Dynamic content updates
+- **Visual state** - What the browser displays
+- **Timing** - Real-time playback speed
+
+## Session Replays
+
+### Download as MP4
+
+<DownloadMp4 />
+
+### Replay by Session ID
+
+Get a replay for any session using its ID:
+
+<ReplayById />
+
+## Agent Replays
+
+Agents have their own replay method for convenience:
+
+<AgentReplay />
+
+You can also get the replay from the session:
+
+<AgentReplayAlt />
+
+## Debugging Failed Runs
+
+Use recordings to understand what went wrong:
+
+<DebugFailed />
+
+## Best Practices
+
+### 1. Name Recordings Meaningfully
+
+Use descriptive filenames:
+
+<NameRecordings />
+
+### 2. Record Only on Failures
+
+For production, save recordings only when something goes wrong:
+
+<RecordOnFailures />
+
+### 3. Clean Up Old Recordings
+
+Remove old recordings to save disk space:
+
+<CleanupOld />
+
+## Recording Limitations
+
+### What's Recorded
+- All page interactions
+- Visual state changes
+- Navigation and reloads
+- Dynamic content
+
+### What's NOT Recorded
+- Audio
+- Network request details (use CDP for this)
+- Console logs (use logging)
+- Session state before first action
+
+## Storage
+
+Recordings are:
+- Stored temporarily on Notte's servers
+- Available after session ends
+- **Retained for 24 hours**
+- Downloadable as MP4
+
+<Warning>
+  Recordings are deleted after 24 hours. Download them promptly if needed for later analysis.
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+    Watch sessions in real-time
+  </Card>
+
+  <Card title="Session Lifecycle" icon="clock" href="/features/sessions/lifecycle">
+    Understand session management
+  </Card>
+
+  <Card title="Playwright" icon="code" href="/features/sessions/playwright">
+    Connect with Playwright via CDP
+  </Card>
+
+  <Card title="Agent Replay" icon="robot" href="/features/agents/replay">
+    Agent-specific replay features
+  </Card>
+</CardGroup>

@@ -1,0 +1,11 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/starting_url.py */}
+
+```python starting_url.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    agent.run(task="Find pricing information", url="https://example.com/products")
+```

@@ -1,0 +1,395 @@
+---
+title: Browser Controls
+description: Complete reference of all browser actions available in sessions
+---
+
+import ActionChaining from "/snippets/browser-controls/action_chaining.mdx";
+import BrowserFormSubmission from "/snippets/browser-controls/form_submission.mdx";
+import SearchExtract from "/snippets/browser-controls/search_extract.mdx";
+import MultiTab from "/snippets/browser-controls/multi_tab.mdx";
+import FileUploadDownload from "/snippets/browser-controls/file_upload_download.mdx";
+import ErrorHandling from "/snippets/browser-controls/error_handling.mdx";
+import GotoExample from "/snippets/browser-controls/goto.mdx";
+import ScrapeExample from "/snippets/browser-controls/scrape.mdx";
+import SmsReadExample from "/snippets/browser-controls/sms_read.mdx";
+import EmailReadExample from "/snippets/browser-controls/email_read.mdx";
+import ConditionalActions from "/snippets/browser-controls/conditional_actions.mdx";
+import GotoNewTab from "/snippets/browser-controls/goto_new_tab.mdx";
+import SwitchTab from "/snippets/browser-controls/switch_tab.mdx";
+import GoBack from "/snippets/browser-controls/go_back.mdx";
+import GoForward from "/snippets/browser-controls/go_forward.mdx";
+import Reload from "/snippets/browser-controls/reload.mdx";
+import Click from "/snippets/browser-controls/click.mdx";
+import Fill from "/snippets/browser-controls/fill.mdx";
+import Check from "/snippets/browser-controls/check.mdx";
+import SelectDropdownOption from "/snippets/browser-controls/select_dropdown_option.mdx";
+import PressKey from "/snippets/browser-controls/press_key.mdx";
+import ScrollUp from "/snippets/browser-controls/scroll_up.mdx";
+import ScrollDown from "/snippets/browser-controls/scroll_down.mdx";
+import UploadFile from "/snippets/browser-controls/upload_file.mdx";
+import DownloadFile from "/snippets/browser-controls/download_file.mdx";
+import Wait from "/snippets/browser-controls/wait.mdx";
+import CssSelectors from "/snippets/browser-controls/css_selectors.mdx";
+import DirectAttributes from "/snippets/browser-controls/direct_attributes.mdx";
+import StableSelectors from "/snippets/browser-controls/stable_selectors.mdx";
+import SpecificSelectors from "/snippets/browser-controls/specific_selectors.mdx";
+
+Sessions provide a comprehensive set of browser actions for interacting with web pages. All actions are executed through `session.execute()`.
+
+## Navigation Actions
+
+### Goto
+
+Navigate to a URL.
+
+<GotoExample />
+
+**Parameters:**
+- `url` (str): The URL to navigate to
+
+**Use for:** Opening pages, navigating between pages
+
+---
+
+### GotoNewTab
+
+Open a URL in a new browser tab.
+
+<GotoNewTab />
+
+**Parameters:**
+- `url` (str): The URL to open in a new tab
+
+**Use for:** Opening multiple pages simultaneously, preserving context
+
+---
+
+### SwitchTab
+
+Switch to a different browser tab.
+
+<SwitchTab />
+
+**Parameters:**
+- `tab_index` (int): Zero-based index of the tab to switch to
+
+**Use for:** Managing multiple tabs, comparing content across pages
+
+---
+
+### GoBack
+
+Navigate back to the previous page.
+
+<GoBack />
+
+**Use for:** Browser back button functionality, returning to previous pages
+
+---
+
+### GoForward
+
+Navigate forward in browser history.
+
+<GoForward />
+
+**Use for:** Browser forward button functionality
+
+---
+
+### Reload
+
+Reload the current page.
+
+<Reload />
+
+**Use for:** Refreshing page content, retrying after errors
+
+---
+
+## Interaction Actions
+
+### Click
+
+Click on an element.
+
+<Click />
+
+**Parameters:**
+- `selector` (str): CSS selector for the element
+- `id` (str): Element ID
+- `text` (str): Exact text content
+- `aria_label` (str): ARIA label attribute
+- `placeholder` (str): Placeholder text
+- `title` (str): Title attribute
+
+**Use for:** Clicking buttons, links, checkboxes, any clickable element
+
+---
+
+### Fill
+
+Fill a text input or textarea.
+
+<Fill />
+
+**Parameters:**
+- `selector` (str): CSS selector for the input
+- `id` (str): Element ID
+- `placeholder` (str): Placeholder text
+- `aria_label` (str): ARIA label
+- `value` (str): The text to fill
+
+**Use for:** Filling forms, search boxes, text inputs
+
+---
+
+### Check
+
+Check or uncheck a checkbox.
+
+<Check />
+
+**Parameters:**
+- `selector` (str): CSS selector for the checkbox
+- `id` (str): Element ID
+- `checked` (bool): True to check, False to uncheck
+
+**Use for:** Toggling checkboxes, accepting terms, selecting options
+
+---
+
+### SelectDropdownOption
+
+Select an option from a dropdown.
+
+<SelectDropdownOption />
+
+**Parameters:**
+- `selector` (str): CSS selector for the select element
+- `option_text` (str): Visible text of the option
+- `option_value` (str): Value attribute of the option
+
+**Use for:** Selecting from dropdowns, choosing options
+
+---
+
+### PressKey
+
+Press a keyboard key.
+
+<PressKey />
+
+**Parameters:**
+- `key` (str): Key name (e.g., "Enter", "Escape", "Tab", "ArrowDown")
+
+**Use for:** Keyboard navigation, submitting forms, triggering shortcuts
+
+**Common keys:** Enter, Escape, Tab, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Backspace, Delete
+
+---
+
+## Scrolling Actions
+
+### ScrollUp
+
+Scroll up on the page.
+
+<ScrollUp />
+
+**Use for:** Scrolling to top of page, revealing content above
+
+---
+
+### ScrollDown
+
+Scroll down on the page.
+
+<ScrollDown />
+
+**Use for:** Loading lazy content, revealing content below, pagination
+
+---
+
+## File Actions
+
+### UploadFile
+
+Upload a file to a file input.
+
+<UploadFile />
+
+**Parameters:**
+- `selector` (str): CSS selector for the file input
+- `id` (str): Element ID
+- `file_path` (str): Path to the file to upload
+
+**Use for:** Uploading documents, images, any file input
+
+---
+
+### DownloadFile
+
+Download a file from a link.
+
+<DownloadFile />
+
+**Parameters:**
+- `selector` (str): CSS selector for the download link
+- `id` (str): Element ID
+
+**Use for:** Downloading files, reports, documents
+
+---
+
+## Wait Action
+
+### Wait
+
+Pause execution for a specified duration.
+
+<Wait />
+
+**Parameters:**
+- `duration` (int): Time to wait in milliseconds
+
+**Use for:** Waiting for page loads, animations, dynamic content
+
+<Note>
+**Tip:** Use sparingly. Notte automatically waits for page loads and element visibility. Only use Wait for specific timing requirements.
+</Note>
+
+---
+
+## Data Extraction
+
+### Scrape
+
+Extract data from the current page.
+
+<ScrapeExample />
+
+**Parameters:**
+- `instructions` (str): Natural language extraction instructions
+- `response_format` (type[BaseModel]): Pydantic model for structured output
+- `only_main_content` (bool): Extract only main content, ignore headers/footers
+
+**Use for:** Data extraction, web scraping, content analysis
+
+See [Scraping](/concepts/scraping) for detailed documentation.
+
+---
+
+## Communication Actions
+
+### SmsRead
+
+Read SMS messages from a persona's phone number.
+
+<SmsReadExample />
+
+**Parameters:**
+- `persona_id` (str): Persona ID with phone number
+
+**Use for:** Reading 2FA codes, SMS verification, phone-based authentication
+
+See [Personas](/concepts/personas) for details.
+
+---
+
+### EmailRead
+
+Read emails from a persona's email address.
+
+<EmailReadExample />
+
+**Parameters:**
+- `persona_id` (str): Persona ID with email address
+
+**Use for:** Reading verification emails, email-based authentication
+
+See [Personas](/concepts/personas) for details.
+
+---
+
+## Action Patterns
+
+### Chaining Actions
+
+Execute multiple actions in sequence:
+
+<ActionChaining />
+
+### Error Handling
+
+Handle action failures:
+
+<ErrorHandling />
+
+### Conditional Actions
+
+Execute actions based on conditions:
+
+<ConditionalActions />
+
+## Selector Strategies
+
+### CSS Selectors
+
+Most flexible and commonly used:
+
+<CssSelectors />
+
+### Direct Attributes
+
+Use direct attribute parameters when available:
+
+<DirectAttributes />
+
+### Best Practices
+
+**Prefer stable selectors:**
+
+<StableSelectors />
+
+**Use specific selectors:**
+
+<SpecificSelectors />
+
+## Common Workflows
+
+### Form Submission
+
+<BrowserFormSubmission />
+
+### Search and Extract
+
+<SearchExtract />
+
+### Multi-Tab Workflow
+
+<MultiTab />
+
+### File Upload and Download
+
+<FileUploadDownload />
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Session Configuration" icon="sliders" href="/features/sessions/configuration">
+    Configure session behavior
+  </Card>
+
+  <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle">
+    Manage session states
+  </Card>
+
+  <Card title="SDK Actions Reference" icon="code" href="/sdk-reference/manual/session">
+    Detailed API documentation
+  </Card>
+
+  <Card title="Agent Mode" icon="sparkles" href="/concepts/agents">
+    Let AI handle actions automatically
+  </Card>
+</CardGroup>

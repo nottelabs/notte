@@ -1,0 +1,28 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agentik/fallback.py */}
+
+```python agent_fallback.py focus={11-19}
+from notte_sdk import NotteClient
+
+client = NotteClient()
+url = "https://www.linkedin.com/feed/"
+company_name = "nottelabs"
+
+# scrape all new posts (post url, date, title, content) from the company page on LinkedIn
+with client.Session() as session:
+    session.execute(type="goto", url=url)
+    # spin up agent fallback if the search for the company name fails
+    with client.AgentFallback(
+        session, task=f"Open the company page for {company_name}. Fail if user is not logged in."
+    ) as agent:
+        # search for the company name
+        session.execute(type="fill", selector='internal:role=combobox[name="Search"i]', value=company_name)
+        # press enter to search
+        session.execute(type="press_key", key="Enter")
+        # click on the company link
+        session.execute(type="click", selector=f'internal:role=link[name="{company_name}"s] >> nth=0')
+    # open the post tab on the company page
+    session.execute(type="click", selector='internal:role=link[name="Posts"i]', raise_on_failure=False)
+    data = session.scrape(instructions="scrape all new posts (post url, date, title, content)")
+    print(f"Scraped data: {data}")
+```

@@ -1,0 +1,74 @@
+---
+title: Quickstart
+description: 'Get started in a few seconds'
+---
+
+import InstallSDK from '/snippets/quickstart/install_sdk.mdx';
+import CDPSession from '/snippets/quickstart/cdp_session.mdx';
+import WebAgent from '/snippets/quickstart/web_agent.mdx';
+import ScrapingHackerNews from '/snippets/quickstart/scraping_hackernews.mdx';
+
+How do you want to get started?
+
+<CardGroup cols={3}>
+  <Card title="Browser Session" icon="tv" href="#browser-session">
+    Connect to a cloud browser via CDP
+  </Card>
+  <Card title="Web Agent" icon="microchip-ai" href="#web-agent">
+    Run an AI agent on the browser
+  </Card>
+  <Card title="Scraping" icon="database" href="#scraping">
+    Extract structured data from a page
+  </Card>
+</CardGroup>
+
+---
+
+## Prerequisites
+
+Before you start, you'll need an API key and the Notte SDK.
+
+<Steps>
+  <Step title="Get an API key">
+    Create an account on the [Console](https://console.notte.cc) to get your API key.
+  </Step>
+  <Step title="Install the SDK">
+    <InstallSDK />
+  </Step>
+</Steps>
+
+---
+
+## Browser Session
+
+Connect to a cloud browser and control it with Playwright via CDP.
+
+<CDPSession />
+
+<Card title="Learn more about Sessions" icon="arrow-right" href="/concepts/sessions">
+  Proxies, anti-detection, captcha solving, and more.
+</Card>
+
+---
+
+## Web Agent
+
+Run an AI agent that browses and completes tasks autonomously.
+
+<WebAgent />
+
+<Card title="Learn more about Agents" icon="arrow-right" href="/concepts/agents">
+  Models, reasoning, structured output, and more.
+</Card>
+
+---
+
+## Scraping
+
+Extract structured data from any page using AI.
+
+<ScrapingHackerNews />
+
+<Card title="Learn more about Scraping" icon="arrow-right" href="/concepts/scraping">
+  Structured extraction, selectors, and more.
+</Card>

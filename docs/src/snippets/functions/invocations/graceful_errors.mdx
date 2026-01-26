@@ -1,0 +1,11 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/invocations/graceful_errors.py */}
+
+```python graceful_errors.py
+try:
+    result = function.run(url="https://example.com")
+    process_result(result.result)
+except FailedToRunCloudFunctionError as e:
+    log_error(e)
+    send_alert(e.message)
+```

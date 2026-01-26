@@ -1,0 +1,30 @@
+# @sniptest filename=session_response.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+session = client.Session()
+session.start()
+
+# Session properties
+session_id = session.session_id  # Unique identifier
+cdp_url = session.cdp_url()  # Chrome DevTools Protocol URL
+page = session.page  # Playwright page object
+
+# Session status
+status = session.status()  # Get current status
+
+# Viewing
+session.viewer()  # Open live viewer in browser
+session.viewer_cdp()  # Open CDP debugger
+session.viewer_notebook()  # Display in Jupyter notebook
+
+# Cookies
+cookies = session.get_cookies()
+session.set_cookies(cookies=cookies)
+
+# Replay
+replay = session.replay()  # Get MP4 replay after session ends
+replay.save("session.mp4")
+
+session.stop()

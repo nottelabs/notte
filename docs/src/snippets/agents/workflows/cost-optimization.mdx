@@ -1,0 +1,15 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/workflows/cost-optimization.py */}
+
+```python
+# One-time: Use agent to solve the task ($0.20)
+agent = client.Agent(session=session)
+result = agent.run(task="Complex data extraction")
+
+# Recurring: Use function ($0.05 per run)
+function = agent.workflow.create()
+
+# Run 100 times - save $15 vs running agent each time
+for i in range(100):
+    function.run()
+```

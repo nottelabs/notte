@@ -1,0 +1,26 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/batch_agent.py */}
+
+```python batch_agent.py
+import asyncio
+
+from notte_sdk import NotteClient
+from notte_sdk.endpoints.agents import BatchRemoteAgent
+
+client = NotteClient()
+
+
+async def run_batch():
+    with client.Session() as session:
+        batch_agent = BatchRemoteAgent(session=session, max_steps=15, _client=client)
+
+        # Run 3 agents in parallel, return first success
+        result = await batch_agent.run(task="Find and extract pricing information", n_jobs=3, strategy="first_success")
+
+        return result
+
+
+result = asyncio.run(run_batch())
+print(f"Success: {result.success}")
+print(f"Answer: {result.answer}")
+```

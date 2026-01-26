@@ -22,10 +22,10 @@ Delete the workflow from the notte console
 ### download
 
 ```python
-download(workflow_path: str | None, version: str | None = None, decryption_key: str | None = None) -> str
+download(workflow_path: str | None = None, version: str | None = None, decryption_key: str | None = None, path: str | None = None) -> str
 ```
 
-Download the workflow code from the notte console as a python file
+Download the function code from the notte console as a python file
 
 **Returns:**
 
@@ -64,14 +64,14 @@ Convert the workflow/run to a curl request
 ### get_run
 
 ```python
-get_run(run_id: str) -> GetWorkflowRunResponse
+get_run(run_id: str) -> GetFunctionRunResponse
 ```
 
-Get a workflow run by its ID
+Get a function run by its ID
 
 **Returns:**
 
-[`GetWorkflowRunResponse`](/sdk-reference/misc/getworkflowrunresponse)
+[`GetFunctionRunResponse`](/sdk-reference/misc/getfunctionrunresponse)
 
 ---
 
@@ -104,35 +104,35 @@ Replay the workflow run
 ### run
 
 ```python
-run(version: str | None = None, local: bool = False, restricted: bool = True, timeout: int | None = None, stream: bool = True, raise_on_failure: bool = True, workflow_run_id: str | None = None, log_callback: Callable[[str], None] | None = None, variables: Any) -> WorkflowRunResponse
+run(version: str | None = None, local: bool = False, restricted: bool = True, timeout: int | None = None, stream: bool = True, raise_on_failure: bool = True, function_run_id: str | None = None, log_callback: Callable[[str], None] | None = None, variables: Any) -> FunctionRunResponse
 ```
 
-Run the workflow using the specified version and variables
+Run the function code using the specified version and variables
 
 **Returns:**
 
-[`WorkflowRunResponse`](/sdk-reference/misc/workflowrunresponse)
+[`FunctionRunResponse`](/sdk-reference/misc/functionrunresponse)
 
 ---
 
 ### stop_run
 
 ```python
-stop_run(run_id: str) -> UpdateWorkflowRunResponse
+stop_run(run_id: str) -> UpdateFunctionRunResponse
 ```
 
-Manually stop a workflow run by its ID
+Manually stop a function run by its ID
 
 **Returns:**
 
-[`UpdateWorkflowRunResponse`](/sdk-reference/misc/updateworkflowrunresponse)
+[`UpdateFunctionRunResponse`](/sdk-reference/misc/updatefunctionrunresponse)
 
 ---
 
 ### update
 
 ```python
-update(workflow_path: str, version: str | None = None, restricted: bool = True) -> None
+update(path: str | None = None, version: str | None = None, workflow_path: str | None = None, restricted: bool = True) -> None
 ```
 
 Update the workflow with a a new code version

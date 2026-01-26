@@ -1,0 +1,22 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/replay/monitor_status.py */}
+
+```python
+import time
+
+agent.start(task="Long running task")
+
+while True:
+    status = agent.status()
+
+    if status.status == "closed":
+        break
+
+    print(f"Steps: {len(status.steps)}")
+
+    # Get replay so far (if supported)
+    # replay = agent.replay()
+    # replay.show()
+
+    time.sleep(5)
+```

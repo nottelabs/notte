@@ -1,0 +1,18 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  # Headless mode (no viewer)
+  with client.Session(headless=True) as session:
+      page = session.page
+      page.goto("https://example.com")
+
+  # Non-headless (opens live viewer automatically)
+  with client.Session(headless=False) as session:
+      page = session.page
+      page.goto("https://example.com")
+      # Viewer opens automatically in your browser
+  ```
+</CodeGroup>

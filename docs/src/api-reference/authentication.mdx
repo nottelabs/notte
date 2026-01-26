@@ -1,0 +1,26 @@
+---
+title: Authentication
+description: Authenticate with the Notte API
+---
+
+All API requests require a Bearer token in the `Authorization` header.
+
+## Get your API key
+
+1. Sign in to the [Notte Console](https://console.notte.cc)
+2. Navigate to your account settings
+3. Generate or copy your API key
+
+## Using the API key
+
+```bash
+curl https://api.notte.cc/sessions \
+  -H "Authorization: Bearer $NOTTE_API_KEY"
+```
+
+## Request headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Authorization` | Yes | Bearer token with your API key |
+| `Content-Type` | Yes | `application/json` for POST/PATCH requests |

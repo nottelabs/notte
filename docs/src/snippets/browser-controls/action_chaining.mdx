@@ -1,0 +1,26 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/browser-controls/action_chaining.py */}
+
+```python action_chaining.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    # Navigation
+    session.execute(type="goto", url="https://example.com/login")
+
+    # Form filling
+    session.execute(type="fill", selector="input[name='email']", value="user@example.com")
+    session.execute(type="fill", selector="input[name='password']", value="password123")
+
+    # Submission
+    session.execute(type="click", selector="button[type='submit']")
+
+    # Wait for redirect
+    session.execute(type="wait", duration=2000)
+
+    # Verify success
+    content = session.scrape()
+    print(content)
+```

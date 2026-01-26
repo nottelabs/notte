@@ -1,0 +1,18 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/replay/debug_max_steps.py */}
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(task="Complete task")
+
+    print(f"Steps taken: {len(result.steps)}")
+    print(f"Max steps: {agent.request.max_steps}")
+
+    replay = agent.replay()
+    replay.show()  # See where it got stuck
+```

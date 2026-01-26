@@ -1,0 +1,29 @@
+# @sniptest filename=extract_cookies_local.py
+import json
+from pathlib import Path
+
+from patchright.sync_api import sync_playwright
+
+cookie_path = Path("github_cookies.json")
+# Initialize Playwright
+with sync_playwright() as playwright:
+    browser = playwright.chromium.launch(headless=False)
+    context = browser.new_context()
+    page = context.new_page()
+
+    # Navigate to login page
+    github_login_url = "https://github.com/login"
+    page.goto(github_login_url)
+
+    print("Please log into GitHub in the browser window...")
+    input("Press Enter after you've logged in...")
+
+    # Save cookies to file
+    print("Login successful. Saving cookies...")
+    cookies = context.cookies(urls=["https://github.com"])
+
+    if cookies:
+        cookie_path.write_text(json.dumps(cookies, indent=4))
+        print(f"Cookies saved to {cookie_path}")
+    else:
+        print("No cookies found to save.")

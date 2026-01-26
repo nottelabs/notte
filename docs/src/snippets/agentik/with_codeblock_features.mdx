@@ -1,0 +1,15 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agentik/with_codeblock_features.py */}
+
+```python advanced_agent.py lines expandable icon="rocket" highlight={5-7}
+from notte_sdk import NotteClient
+
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    agent.run(task="go to google, and find cat pictures")
+    result = agent.get_result()
+    print(result)
+
+# Hidden test code below
+```

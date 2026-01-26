@@ -1,0 +1,30 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/browser-controls/sms_read.py */}
+
+```python sms_read.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+
+def extract_code(messages):
+    # Extract verification code from messages
+    return "123456"
+
+
+# Create persona with phone number
+persona = client.Persona()
+number = persona.create_number(country="US")
+
+# Use in session
+with client.Session() as session:
+    # Trigger SMS (e.g., 2FA code)
+    session.execute(type="fill", selector="input[name='phone']", value=number.phone_number)
+    session.execute(type="click", selector="button.send-code")
+
+    # Read SMS
+    messages = session.execute(type="sms_read", persona_id=persona.persona_id)
+
+    # Extract verification code
+    code = extract_code(messages)
+```

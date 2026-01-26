@@ -1,0 +1,23 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/invocations/sdk_error_handling.py */}
+
+```python sdk_error_handling.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+function = client.Function(function_id="workflow_abc123")
+
+from notte_sdk.endpoints.functions import FailedToRunCloudFunctionError
+
+try:
+    result = function.run(url="https://example.com")
+
+except FailedToRunCloudFunctionError as e:
+    print(f"Function failed: {e.message}")
+    print(f"Run ID: {e.function_run_id}")
+    print(f"Result: {e.response.result}")
+
+except Exception as e:
+    print(f"Unexpected error: {e}")
+```

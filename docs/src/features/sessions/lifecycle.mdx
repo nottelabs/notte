@@ -1,0 +1,203 @@
+---
+title: Session Lifecycle
+description: Manage the lifecycle of your Notte browser sessions
+---
+
+import CreateSession from '/snippets/sessions/lifecycle/create_session.mdx';
+import GetSessionDetails from '/snippets/sessions/lifecycle/get_session_details.mdx';
+import ListSessions from '/snippets/sessions/lifecycle/list_sessions.mdx';
+import StopSession from '/snippets/sessions/lifecycle/stop_session.mdx';
+import CompleteExample from '/snippets/sessions/lifecycle/complete_example.mdx';
+import ConnectExisting from '/snippets/sessions/lifecycle/connect_existing.mdx';
+import ErrorHandling from '/snippets/sessions/lifecycle/error_handling.mdx';
+import HandleInterrupts from '/snippets/sessions/lifecycle/handle_interrupts.mdx';
+import ContextManager from '/snippets/sessions/lifecycle/context_manager.mdx';
+import TimeoutExample from '/snippets/sessions/lifecycle/timeout_example.mdx';
+import MonitorState from '/snippets/sessions/lifecycle/monitor_state.mdx';
+
+Every Notte session follows a predictable lifecycle from creation to termination. Understanding this lifecycle helps you build reliable automation workflows and manage resources effectively.
+
+## Session States
+
+Sessions transition through these states:
+
+* **`active`** - Session is running and ready to accept operations
+* **`closed`** - Session has been terminated normally
+* **`error`** - Session encountered an error and terminated unexpectedly
+* **`timed_out`** - Session exceeded its timeout duration
+
+## Creating a Session
+
+Create a new session using the context manager pattern (recommended):
+
+<CreateSession />
+
+<Tip>
+  Always use the context manager (`with` statement) to ensure sessions are properly stopped, even if errors occur.
+</Tip>
+
+## Getting Session Details
+
+Retrieve current information about your session:
+
+<GetSessionDetails />
+
+<ResponseField name="session_id" type="string">
+  Unique identifier for the session
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current status: `active`, `closed`, `error`, or `timed_out`
+</ResponseField>
+
+<ResponseField name="created_at" type="datetime">
+  Session creation timestamp
+</ResponseField>
+
+<ResponseField name="closed_at" type="datetime | None">
+  Session closure timestamp (None if still active)
+</ResponseField>
+
+<ResponseField name="last_accessed_at" type="datetime">
+  Last operation timestamp
+</ResponseField>
+
+<ResponseField name="timeout_minutes" type="integer">
+  Session timeout in minutes
+</ResponseField>
+
+<ResponseField name="duration" type="timedelta">
+  Total session duration
+</ResponseField>
+
+## Listing Sessions
+
+Query all your active sessions:
+
+<ListSessions />
+
+## Stopping a Session
+
+Sessions are automatically stopped when using the context manager, but you can also stop them manually:
+
+<StopSession />
+
+<Tip>
+  Stopping a session is idempotent - you can safely call it multiple times without errors.
+</Tip>
+
+## Complete Lifecycle Example
+
+Here's a complete example demonstrating best practices for session management:
+
+<CompleteExample />
+
+## Connecting to Existing Sessions
+
+You can reconnect to an existing session using its session_id:
+
+<ConnectExisting />
+
+## Error Handling
+
+The context manager automatically handles cleanup, even when errors occur:
+
+<ErrorHandling />
+
+## Best Practices
+
+Follow these patterns to build reliable, cost-effective automation:
+
+### 1. Always Use Context Managers
+
+The `with` statement guarantees cleanup:
+
+<ContextManager />
+
+### 2. Set Appropriate Timeouts
+
+Match timeout to task duration with a buffer for delays:
+
+* **Quick tasks**: 3-5 minutes (default is 3)
+* **Data scraping**: 10-15 minutes
+* **Long workflows**: 20-30 minutes
+
+<TimeoutExample />
+
+### 3. Monitor Session State
+
+Check session status before long-running operations:
+
+<MonitorState />
+
+### 4. Handle Cleanup Gracefully
+
+Even with context managers, handle interrupts:
+
+<HandleInterrupts />
+
+## Session Lifecycle Diagram
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ 1. CREATE                                               │
+│    session = client.Session(timeout_minutes=10)         │
+│    Status: Not started (response = None)                │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│ 2. START                                                │
+│    with session: / session.start()                      │
+│    Status: active                                       │
+│    - Creates remote browser                             │
+│    - Opens viewer if headless=False                     │
+│    - Loads cookies from cookie_file                     │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│ 3. ACTIVE OPERATIONS                                    │
+│    - session.execute(action)                            │
+│    - session.observe()                                  │
+│    - session.scrape()                                   │
+│    - session.page.goto(url)                             │
+│    Status: active                                       │
+└────────────────────┬────────────────────────────────────┘
+                     │
+            ┌────────┴────────┐
+            ▼                 ▼
+┌──────────────────┐  ┌──────────────────┐
+│ 4a. TIMEOUT      │  │ 4b. STOP         │
+│ (after N mins)   │  │ session.stop()   │
+│ Status: timed_out│  │ Status: closed   │
+└──────────────────┘  └──────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│ 5. CLEANUP                                              │
+│    - Saves cookies to cookie_file                       │
+│    - Closes Playwright connections                      │
+│    - Releases cloud resources                           │
+└─────────────────────────────────────────────────────────┘
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Configure sessions with advanced options
+  </Card>
+
+  <Card title="Recordings" icon="video" href="/features/sessions/recordings">
+    Record and replay session activity
+  </Card>
+
+  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+    Watch sessions in real-time
+  </Card>
+
+  <Card title="Cookies" icon="cookie-bite" href="/features/sessions/cookies">
+    Persist authentication across sessions
+  </Card>
+</CardGroup>

@@ -1,24 +1,27 @@
 ---
 title: "Get started"
-description: "Create, manage, and execute automated web workflows"
+description: "Create, manage, and execute automated web functions"
 ---
 
-Workflows enable hybrid automation by combining the precision of scripting with the adaptability of AI agents. They allow you to script the predictable parts of your automation while leveraging agents only when needed, resulting in more reliable and cost-effective automations.
+Functions enable hybrid automation by combining the precision of scripting with the adaptability of AI agents. They allow you to script the predictable parts of your automation while leveraging agents only when needed, resulting in more reliable and cost-effective automations.
 
-import WorkflowsPython from '/snippets/workflows/index.mdx';
+import FunctionsPython from '/snippets/workflows/index.mdx';
 
-<WorkflowsPython />
+<FunctionsPython />
 
 ## Parameters
 
-<ParamField path="workflow_id" type="str | None" default="None">
+<ParamField path="function_id" type="str | None" default="None">
 </ParamField>
 
 <ParamField path="decryption_key" type="str | None" default="None">
 </ParamField>
 
-<ParamField path="workflow_path" type="str" required>
-  The path to the workflow to upload.
+<ParamField path="workflow_path" type="str | None" default="None">
+</ParamField>
+
+<ParamField path="path" type="str" required>
+  The path to the function to upload.
 </ParamField>
 
 <ParamField path="name" type="str | None">

@@ -1,0 +1,159 @@
+---
+title: Connect with Puppeteer
+description: Use Puppeteer with Notte sessions via Chrome DevTools Protocol
+---
+
+import PuppeteerPythonStart from '/snippets/sessions/cdp/puppeteer_python_start.mdx';
+import PuppeteerRestApi from '/snippets/sessions/cdp/puppeteer_rest_api.mdx';
+import PuppeteerNetwork from '/snippets/sessions/cdp/puppeteer_network.mdx';
+import PuppeteerManipulation from '/snippets/sessions/cdp/puppeteer_manipulation.mdx';
+import PuppeteerMultiplePages from '/snippets/sessions/cdp/puppeteer_multiple_pages.mdx';
+import PuppeteerEvents from '/snippets/sessions/cdp/puppeteer_events.mdx';
+import PuppeteerScreenshots from '/snippets/sessions/cdp/puppeteer_screenshots.mdx';
+import PuppeteerComplete from '/snippets/sessions/cdp/puppeteer_complete.mdx';
+import PuppeteerSessionTimeout from '/snippets/sessions/cdp/puppeteer_session_timeout.mdx';
+
+Notte sessions expose a Chrome DevTools Protocol (CDP) endpoint that you can connect to with Puppeteer. Since Puppeteer is a Node.js library and Notte SDK is Python-based, this guide shows how to connect them together.
+
+## Prerequisites
+
+Install Puppeteer in your Node.js project:
+
+```bash
+npm install puppeteer-core
+```
+
+<Note>
+  Use `puppeteer-core` instead of `puppeteer` since you're connecting to a remote browser rather than launching a local one.
+</Note>
+
+## Approach 1: Start Session from Python
+
+Start a Notte session in Python and connect Puppeteer to it:
+
+<PuppeteerPythonStart />
+
+## Approach 2: Use Notte REST API
+
+Call the Notte API directly from Node.js to create sessions:
+
+<PuppeteerRestApi />
+
+## Network Interception
+
+Use Puppeteer's request interception with Notte sessions:
+
+<PuppeteerNetwork />
+
+## Page Manipulation
+
+Use Puppeteer's API for advanced page interactions:
+
+<PuppeteerManipulation />
+
+## Multiple Pages
+
+Create and manage multiple pages with Puppeteer:
+
+<PuppeteerMultiplePages />
+
+## Event Monitoring
+
+Listen to browser events using Puppeteer:
+
+<PuppeteerEvents />
+
+## Screenshots and PDFs
+
+Generate screenshots and PDFs using Puppeteer:
+
+<PuppeteerScreenshots />
+
+## Best Practices
+
+### 1. Use puppeteer-core
+
+Always use `puppeteer-core` instead of `puppeteer` since you're connecting to a remote browser:
+
+```bash
+npm install puppeteer-core
+```
+
+### 2. Handle Disconnections
+
+CDP connections can be interrupted. Always wrap operations in try-catch:
+
+```javascript
+try {
+  const browser = await puppeteer.connect({
+    browserWSEndpoint: cdpUrl
+  });
+  // ... operations
+} catch (error) {
+  console.error('Connection failed:', error);
+}
+```
+
+### 3. Disconnect Properly
+
+Always disconnect the browser when done:
+
+```javascript
+try {
+  // ... operations
+} finally {
+  await browser.disconnect();
+}
+```
+
+### 4. Session Timeout
+
+Remember that Notte sessions have a timeout. Set an appropriate value when creating the session:
+
+<PuppeteerSessionTimeout />
+
+### 5. Environment Variables
+
+Store your Notte API key in environment variables:
+
+```javascript
+const API_KEY = process.env.NOTTE_API_KEY;
+```
+
+## Complete Example: Web Scraping
+
+Here's a complete example combining Notte and Puppeteer for web scraping:
+
+<PuppeteerComplete />
+
+## When to Use Puppeteer with Notte
+
+Use Puppeteer directly when you need:
+
+- **Node.js ecosystem**: Integrate with Node.js applications and packages
+- **Familiar Puppeteer API**: You're already comfortable with Puppeteer's API
+- **Request interception**: Block resources or modify requests
+- **Performance monitoring**: Track page metrics and performance
+- **PDF generation**: Create PDFs from web pages
+
+For Python-based automation, consider using Playwright with Notte instead, as it has better Python integration.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Connect with Playwright" icon="p" href="/features/sessions/playwright">
+    Use Playwright with Notte sessions
+  </Card>
+
+  <Card title="Connect with Selenium" icon="globe" href="/features/sessions/selenium">
+    Use Selenium with Notte sessions
+  </Card>
+
+  <Card title="External Browser Providers" icon="cloud" href="/features/sessions/external-providers">
+    Connect Notte to Kernel.sh and other providers
+  </Card>
+
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Explore the Notte REST API
+  </Card>
+</CardGroup>

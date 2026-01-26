@@ -1,0 +1,21 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/view_run_history.py */}
+
+```python view_run_history.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Get recent runs
+runs = client.functions.list_runs(
+    function_id="function_abc123",
+    only_active=False,  # Include completed runs
+)
+
+for run in runs.runs:
+    print(f"Run ID: {run.function_run_id}")
+    print(f"Status: {run.status}")
+    print(f"Created: {run.created_at}")
+    print(f"Updated: {run.updated_at}")
+    print("---")
+```

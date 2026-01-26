@@ -1,0 +1,16 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/invocations/async_create_start.py */}
+
+```python async_create_start.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+# Create a run (returns immediately)
+run_response = client.functions.create_run(function_id="function_abc123", local=False)
+
+run_id = run_response.function_run_id
+print(f"Run created: {run_id}")
+
+# Start the run
+client.functions.run(function_run_id=run_id, function_id="function_abc123", variables={"url": "https://example.com"})
+```

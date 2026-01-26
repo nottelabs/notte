@@ -3,7 +3,6 @@ title: 'Proxies'
 description: 'Route your automation traffic with precision & control'
 ---
 
-import { Callout } from 'nextra/components'
 import DefaultProxy from '/snippets/sessions/default_proxy.mdx';
 import CustomProxy from '/snippets/sessions/custom_proxy.mdx';
 import CountryProxy from '/snippets/sessions/country_proxy.mdx';
@@ -30,9 +29,9 @@ Setting `proxies=True` will make a best-effort attempt to use a US-based proxy. 
 
 <DefaultProxy/>
 
-<Callout type="warning">
+<Warning>
   `ERR_TUNNEL_CONNECTION_FAILED` indicates either a temporary proxy hiccup or a site unsupported by our built-in proxies. Please try again or email support@notte.com.
-</Callout>
+</Warning>
 
 the `proxies` parameter can also be customized to use a specific country proxy as follows:
 
@@ -45,9 +44,9 @@ Notte supports custom proxy configurations, allowing you to route traffic throug
 
 <CustomProxy/>
 
-<Callout type="warning">
+<Warning>
   Notte validates proxy connections at session creation time. If we are unable to connect to the specified proxy, an error will be thrown. Ensure that your proxy server is accessible and the provided credentials are correct before creating a session. We also do not support all proxy providers.
-</Callout>
+</Warning>
 
 ## Usage Measurement
 

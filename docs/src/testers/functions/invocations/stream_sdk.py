@@ -1,0 +1,11 @@
+# @sniptest filename=stream_sdk.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+function = client.Function(function_id="workflow_abc123")
+# Stream logs while running
+result = function.run(
+    url="https://example.com",
+    stream=True,  # Logs printed to console
+)

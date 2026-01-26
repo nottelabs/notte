@@ -1,0 +1,151 @@
+---
+title: "NotteFunction"
+description: "Notte function that can be run on the cloud or locally"
+---
+
+
+
+Functions are saved in the notte console for easy access and versioning for users.
+This is a wrapper around RemoteWorkflow that uses function_id terminology
+
+## Methods
+
+### delete
+
+```python
+delete() -> None
+```
+
+Delete the workflow from the notte console
+
+---
+
+### download
+
+```python
+download(workflow_path: str | None = None, version: str | None = None, decryption_key: str | None = None, path: str | None = None) -> str
+```
+
+Download the function code from the notte console as a python file
+
+**Returns:**
+
+`str`
+
+---
+
+### fork
+
+```python
+fork() -> 'NotteFunction'
+```
+
+Fork a shared function into your own private function
+
+**Returns:**
+
+[`NotteFunction`](/sdk-reference/misc/nottefunction)
+
+---
+
+### get_curl
+
+```python
+get_curl(variables: Any) -> str
+```
+
+Convert the workflow/run to a curl request
+
+**Returns:**
+
+`str`
+
+---
+
+### get_run
+
+```python
+get_run(run_id: str) -> GetFunctionRunResponse
+```
+
+Get a function run by its ID
+
+**Returns:**
+
+[`GetFunctionRunResponse`](/sdk-reference/misc/getfunctionrunresponse)
+
+---
+
+### get_url
+
+```python
+get_url(version: str | None = None, decryption_key: str | None = None) -> str
+```
+
+**Returns:**
+
+`str`
+
+---
+
+### replay
+
+```python
+replay() -> MP4Replay
+```
+
+Replay the workflow run
+
+**Returns:**
+
+[`MP4Replay`](/sdk-reference/misc/mp4replay)
+
+---
+
+### run
+
+```python
+run(version: str | None = None, local: bool = False, restricted: bool = True, timeout: int | None = None, stream: bool = True, raise_on_failure: bool = True, function_run_id: str | None = None, log_callback: Callable[[str], None] | None = None, variables: Any) -> FunctionRunResponse
+```
+
+Run the function code using the specified version and variables
+
+**Returns:**
+
+[`FunctionRunResponse`](/sdk-reference/misc/functionrunresponse)
+
+---
+
+### stop_run
+
+```python
+stop_run(run_id: str) -> UpdateFunctionRunResponse
+```
+
+Manually stop a function run by its ID
+
+**Returns:**
+
+[`UpdateFunctionRunResponse`](/sdk-reference/misc/updatefunctionrunresponse)
+
+---
+
+### update
+
+```python
+update(path: str | None = None, version: str | None = None, workflow_path: str | None = None, restricted: bool = True) -> None
+```
+
+Update the workflow with a a new code version
+
+---
+
+
+## Inheritance
+
+Inherits from: RemoteWorkflow
+
+
+## Module
+
+`notte_sdk.endpoints.functions`

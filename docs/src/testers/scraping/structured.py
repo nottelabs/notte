@@ -1,0 +1,24 @@
+# @sniptest filename=structured_scrape.py
+from notte_sdk import NotteClient
+from pydantic import BaseModel
+
+
+class PricingPlan(BaseModel):
+    name: str
+    price_per_month: int | None = None
+    features: list[str]
+
+
+class PricingPlans(BaseModel):
+    plans: list[PricingPlan]
+
+
+client = NotteClient()
+data = client.scrape(
+    url="https://www.notte.cc", instructions="Extract the pricing plans from the page", response_format=PricingPlans
+)
+
+# plans is a PricingPlans instance
+# > note that the following line can raise an exception
+# in case of a scraping error
+plans = data.get()

@@ -1,0 +1,26 @@
+# @sniptest filename=rotate_ips_usage.py
+from notte_sdk import NotteClient
+from notte_sdk.types import ExternalProxy
+
+client = NotteClient()
+
+ip_pool = [
+    ExternalProxy(server="http://ip1.example.com:8080", username="user", password="pass"),
+    ExternalProxy(server="http://ip2.example.com:8080", username="user", password="pass"),
+    ExternalProxy(server="http://ip3.example.com:8080", username="user", password="pass"),
+]
+
+# Track usage per IP
+ip_usage = {ip.server: 0 for ip in ip_pool}
+
+
+def get_least_used_ip():
+    return min(ip_pool, key=lambda ip: ip_usage[ip.server])
+
+
+# Use least-used IP
+proxy = get_least_used_ip()
+ip_usage[proxy.server] += 1
+
+with client.Session(proxies=[proxy]) as session:
+    pass

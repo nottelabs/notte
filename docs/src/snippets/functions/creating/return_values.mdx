@@ -1,0 +1,19 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/creating/return_values.py */}
+
+```python return_values.py
+def valid_returns():
+    # Valid return types (JSON serializable)
+    return "string"
+    return 123
+    return {"key": "value"}
+    return ["item1", "item2"]
+    return None
+
+
+def invalid_returns():
+    # Invalid returns (not JSON serializable)
+    # return datetime.now()  # datetime not serializable
+    # return lambda x: x     # functions not serializable
+    pass
+```

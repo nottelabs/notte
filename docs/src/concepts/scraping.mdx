@@ -1,0 +1,197 @@
+---
+title: Scraping
+description: Extract content and structured data from web pages
+---
+
+import Quickstart from '/snippets/scraping/quickstart.mdx';
+import QuickScrape from '/snippets/scraping/quick_scrape.mdx';
+import SessionBased from '/snippets/scraping/session_based.mdx';
+import PydanticModel from '/snippets/scraping/pydantic_model.mdx';
+import InstructionsOnly from '/snippets/scraping/instructions_only.mdx';
+import ExtractLists from '/snippets/scraping/extract_lists.mdx';
+import NestedStructures from '/snippets/scraping/nested_structures.mdx';
+import ImageExtraction from '/snippets/scraping/image_extraction.mdx';
+import ContentFiltering from '/snippets/scraping/content_filtering.mdx';
+import LinksAndImages from '/snippets/scraping/links_and_images.mdx';
+import ScopedScraping from '/snippets/scraping/scoped_scraping.mdx';
+import LinkPlaceholders from '/snippets/scraping/link_placeholders.mdx';
+import StructuredDataResponse from '/snippets/scraping/structured_data_response.mdx';
+import DataCollection from '/snippets/scraping/data_collection.mdx';
+import ContentMonitoring from '/snippets/scraping/content_monitoring.mdx';
+import ResearchAnalysis from '/snippets/scraping/research_analysis.mdx';
+import SpecificInstructions from '/snippets/scraping/specific_instructions.mdx';
+import PreciseSchemas from '/snippets/scraping/precise_schemas.mdx';
+import HandleMissingData from '/snippets/scraping/handle_missing_data.mdx';
+import ScopeScrapes from '/snippets/scraping/scope_scrapes.mdx';
+
+Extract web page content as markdown or structured data using LLM-powered extraction.
+
+## Quick Start
+
+Scrape any URL in one line:
+
+<Quickstart />
+
+## Scraping Methods
+
+Notte provides two ways to scrape:
+
+| Method | Use Case |
+|--------|----------|
+| `client.scrape(url)` | Quick, one-off scrapes |
+| `session.scrape()` | Scraping after navigation or authentication |
+
+### Quick Scrape
+
+For simple scraping without session management:
+
+<QuickScrape />
+
+### Session-Based Scrape
+
+For scraping after authentication or navigation:
+
+<SessionBased />
+
+## Structured Extraction
+
+Extract data into typed Python objects using Pydantic models. The extraction is powered by an LLM that understands the page content and extracts the specified fields.
+
+### Using Pydantic Models
+
+Define a schema and extract matching data:
+
+<PydanticModel />
+
+### Using Instructions Only
+
+For flexible extraction without a strict schema:
+
+<InstructionsOnly />
+
+### Extracting Lists
+
+Extract multiple items from a page:
+
+<ExtractLists />
+
+### Nested Structures
+
+Handle complex, nested data:
+
+<NestedStructures />
+
+## Image Extraction
+
+Extract all images from a page:
+
+<ImageExtraction />
+
+## Configuration Options
+
+### Content Filtering
+
+Control what content gets extracted:
+
+<ContentFiltering />
+
+### Links and Images
+
+Control link and image extraction:
+
+<LinksAndImages />
+
+### Scoped Scraping
+
+Scrape only a specific section of the page:
+
+<ScopedScraping />
+
+### Link Placeholders
+
+Reduce output size by using placeholders:
+
+<LinkPlaceholders />
+
+## Return Types
+
+The scrape method returns different types based on parameters:
+
+| Parameters | Return Type |
+|------------|-------------|
+| None | `str` (markdown) |
+| `instructions` | `StructuredData[BaseModel]` |
+| `response_format` | `StructuredData[YourModel]` |
+| `only_images=True` | `list[ImageData]` |
+
+### StructuredData Response
+
+When using structured extraction:
+
+<StructuredDataResponse />
+
+## Use Cases
+
+### Data Collection
+
+Collect product information:
+
+<DataCollection />
+
+### Content Monitoring
+
+Track content changes:
+
+<ContentMonitoring />
+
+### Research and Analysis
+
+Extract structured research data:
+
+<ResearchAnalysis />
+
+## Best Practices
+
+### 1. Use Specific Instructions
+
+Clear instructions improve extraction accuracy:
+
+<SpecificInstructions />
+
+### 2. Define Precise Schemas
+
+Match your schema to the actual page content:
+
+<PreciseSchemas />
+
+### 3. Handle Missing Data
+
+Use optional fields for data that might not exist:
+
+<HandleMissingData />
+
+### 4. Scope Your Scrapes
+
+Use selectors to focus on relevant content:
+
+<ScopeScrapes />
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Browser Sessions" icon="browser" href="/concepts/sessions">
+    Learn about session management
+  </Card>
+
+  <Card title="Browser Agents" icon="robot" href="/concepts/agents">
+    Use AI agents for complex scraping
+  </Card>
+
+  <Card title="Vaults" icon="lock" href="/concepts/vaults">
+    Store credentials for authenticated scraping
+  </Card>
+
+  <Card title="Functions" icon="function" href="/concepts/functions">
+    Deploy scraping as serverless functions
+  </Card>
+</CardGroup>
