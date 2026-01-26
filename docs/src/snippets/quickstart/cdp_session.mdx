@@ -1,0 +1,21 @@
+<CodeGroup>
+```python Python
+# You need to install: pip install playwright
+from playwright.sync_api import sync_playwright
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session(open_viewer=True) as session:
+    cdp_url = session.cdp_url()
+
+    with sync_playwright() as p:
+        browser = p.chromium.connect_over_cdp(cdp_url)
+        page = browser.contexts[0].pages[0]
+        page.goto("https://www.google.com")
+        page.screenshot(path="screenshot.png")
+```
+```javascript JavaScript
+// Coming soon
+```
+</CodeGroup>

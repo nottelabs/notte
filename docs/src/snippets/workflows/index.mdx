@@ -1,0 +1,35 @@
+<CodeGroup>
+```python my_scraping_function.py
+from notte_sdk import NotteClient
+client = NotteClient()
+
+def run(url: str):
+    with client.Session() as session:
+        session.execute(type="goto", url=url)
+        return session.scrape()
+```
+
+```python play_with_function.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Create a new function from our local Python file
+function = client.Function(
+    workflow_path="my_scraping_function.py",
+    name="My Scraping Function",
+    description="A function for scraping the web"
+)
+print(f"Function created with ID: {function.function_id}. You can reference it using `client.Function(<function_id>)`")
+
+# Run the function, providing variables
+response = function.run(url="https://shop.notte.cc/")
+print(f"Function completed with result: {response.result}")
+
+# Update function with new version, from our local python file
+function.update(workflow_path="my_scraping_function.py")
+
+# List all functions
+functions = client.functions.list()
+```
+</CodeGroup>

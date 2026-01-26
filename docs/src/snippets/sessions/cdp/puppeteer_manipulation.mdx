@@ -1,0 +1,41 @@
+<CodeGroup>
+  ```javascript Node.js
+  const puppeteer = require('puppeteer-core');
+
+  async function main() {
+    const cdpUrl = process.argv[2];
+
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: cdpUrl
+    });
+
+    const pages = await browser.pages();
+    const page = pages[0];
+
+    await page.goto('https://example.com/login');
+
+    // Type into inputs
+    await page.type('input[name="email"]', 'user@example.com');
+    await page.type('input[name="password"]', 'password123');
+
+    // Click button
+    await page.click('button[type="submit"]');
+
+    // Wait for navigation
+    await page.waitForNavigation();
+
+    // Extract data
+    const title = await page.title();
+    const content = await page.evaluate(() => {
+      return document.querySelector('h1')?.textContent;
+    });
+
+    console.log('Title:', title);
+    console.log('Content:', content);
+
+    await browser.disconnect();
+  }
+
+  main().catch(console.error);
+  ```
+</CodeGroup>

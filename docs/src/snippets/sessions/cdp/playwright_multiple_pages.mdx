@@ -1,0 +1,30 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from playwright.sync_api import sync_playwright
+
+  client = NotteClient()
+
+  with client.Session() as session:
+      cdp_url = session.cdp_url()
+
+      with sync_playwright() as p:
+          browser = p.chromium.connect_over_cdp(cdp_url)
+
+          # Create a new context with custom settings
+          context = browser.new_context(
+              viewport={"width": 1920, "height": 1080},
+              user_agent="Custom User Agent"
+          )
+
+          # Create multiple pages
+          page1 = context.new_page()
+          page2 = context.new_page()
+
+          page1.goto("https://example.com")
+          page2.goto("https://google.com")
+
+          print(f"Page 1: {page1.title()}")
+          print(f"Page 2: {page2.title()}")
+  ```
+</CodeGroup>

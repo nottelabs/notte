@@ -1,0 +1,41 @@
+<CodeGroup>
+  ```python Python - Context Manager
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  # Recommended: Use context manager for automatic cleanup
+  with client.Session(
+      headless=True,
+      timeout_minutes=10,
+      viewport_width=1920,
+      viewport_height=1080
+  ) as session:
+      print(f"Session {session.session_id} is active")
+
+      # Access Playwright page
+      page = session.page
+      page.goto("https://example.com")
+      print(f"Page title: {page.title()}")
+
+  # Session automatically stopped here
+  ```
+
+  ```python Python - Manual Management
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  # Manual management (not recommended)
+  session = client.Session(timeout_minutes=10)
+  session.start()
+
+  try:
+      print(f"Session {session.session_id} is active")
+      page = session.page
+      page.goto("https://example.com")
+  finally:
+      # Always stop the session
+      session.stop()
+  ```
+</CodeGroup>

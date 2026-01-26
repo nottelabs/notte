@@ -1,0 +1,16 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  # Captcha solving requires Firefox
+  with client.Session(
+      solve_captchas=True,
+      browser_type="firefox"
+  ) as session:
+      page = session.page
+      page.goto("https://www.google.com/recaptcha/api2/demo")
+      # Captchas are automatically solved
+  ```
+</CodeGroup>

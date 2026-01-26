@@ -1,0 +1,17 @@
+# @sniptest filename=custom_proxy.py
+from notte_sdk import NotteClient
+from notte_sdk.types import ExternalProxy
+
+client = NotteClient()
+
+# Configure custom proxy settings
+proxy_settings = ExternalProxy(
+    server="http://your-proxy-server:port",
+    username="your-username",
+    password="your-password",
+)
+
+# Start a session with custom proxy
+with client.Session(proxies=[proxy_settings]) as session:
+    # use your session
+    pass

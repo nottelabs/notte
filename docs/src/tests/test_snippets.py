@@ -68,32 +68,32 @@ def test_no_snippets_outside_folder():
     # Directories to check for inline code blocks
     # Note: sdk-reference/ is excluded as it's auto-generated API docs
     folders_to_check = [
-        DOCS_DIR,        # features/
-        CONCEPTS_DIR,    # concepts/
-        GUIDES_DIR,      # guides/
+        DOCS_DIR,  # features/
+        CONCEPTS_DIR,  # concepts/
+        GUIDES_DIR,  # guides/
         INTEGRATIONS_DIR,  # integrations/
-        INTRO_DIR,       # intro/
-        PRODUCT_DIR,     # product/
-        TUTORIALS_DIR,   # tutorials/
+        INTRO_DIR,  # intro/
+        PRODUCT_DIR,  # product/
+        TUTORIALS_DIR,  # tutorials/
     ]
 
     # Files that intentionally use CodeGroup (Python/JS tabs) or are comment-only
     # These are excluded from the inline code check
     files_with_codegroup_or_manual = {
-        "browser-types.mdx",       # All CodeGroup wrappers (Python/JS/Bash tabs)
-        "captcha-solving.mdx",     # CodeGroup wrappers for multi-language
-        "stealth-mode.mdx",        # CodeGroup wrappers for multi-language
-        "kernel.mdx",              # Integration-specific examples
-        "schedules.mdx",           # Comment-only cron examples
-        "management.mdx",          # Comment-only metadata example
-        "quickstart.mdx",          # CodeGroup with Python/JS tabs
-        "lifecycle.mdx",           # CodeGroup wrappers
-        "configuration.mdx",       # CodeGroup wrappers
-        "playwright-vs-notte.mdx", # CodeGroup wrappers
+        "browser-types.mdx",  # All CodeGroup wrappers (Python/JS/Bash tabs)
+        "captcha-solving.mdx",  # CodeGroup wrappers for multi-language
+        "stealth-mode.mdx",  # CodeGroup wrappers for multi-language
+        "kernel.mdx",  # Integration-specific examples
+        "schedules.mdx",  # Comment-only cron examples
+        "management.mdx",  # Comment-only metadata example
+        "quickstart.mdx",  # CodeGroup with Python/JS tabs
+        "lifecycle.mdx",  # CodeGroup wrappers
+        "configuration.mdx",  # CodeGroup wrappers
+        "playwright-vs-notte.mdx",  # CodeGroup wrappers
         "external-providers.mdx",  # CodeGroup wrappers
-        "playwright.mdx",          # CodeGroup wrappers (in sessions/cdp)
-        "puppeteer.mdx",           # CodeGroup wrappers
-        "selenium.mdx",            # CodeGroup wrappers
+        "playwright.mdx",  # CodeGroup wrappers (in sessions/cdp)
+        "puppeteer.mdx",  # CodeGroup wrappers
+        "selenium.mdx",  # CodeGroup wrappers
     }
 
     # Collect all MDX files from directories
@@ -101,7 +101,8 @@ def test_no_snippets_outside_folder():
     for folder in folders_to_check:
         if folder.exists():
             all_docs.extend(
-                file for file in folder.glob("**/*.mdx")
+                file
+                for file in folder.glob("**/*.mdx")
                 if file.parent.name != "use-cases"
                 and file.name != "bua.mdx"
                 and file.name not in files_with_codegroup_or_manual
@@ -109,9 +110,9 @@ def test_no_snippets_outside_folder():
 
     # Also check root-level MDX files (excluding migration-plan.mdx and other meta files)
     root_mdx_files = [
-        f for f in ROOT_DIR.glob("*.mdx")
-        if f.name not in ("migration-plan.mdx", "zin.mdx")
-        and f.name not in files_with_codegroup_or_manual
+        f
+        for f in ROOT_DIR.glob("*.mdx")
+        if f.name not in ("migration-plan.mdx", "zin.mdx") and f.name not in files_with_codegroup_or_manual
     ]
     all_docs.extend(root_mdx_files)
 
@@ -272,11 +273,16 @@ def handle_external_cdp(
     eval_example: EvalExample,
     code: str,
 ) -> None:
-    client = NotteClient()
-    with client.Session() as session:
-        cdp_url = session.cdp_url()
-        code = code.replace("wss://your-external-cdp-url", cdp_url)
+    if FAST_MODE or TYPE_CHECK_MODE:
+        # Syntax/type check - don't create client or session
+        code = code.replace("wss://your-external-cdp-url", "wss://placeholder-cdp-url")
         run_example(eval_example, code=code)
+    else:
+        client = NotteClient()
+        with client.Session() as session:
+            cdp_url = session.cdp_url()
+            code = code.replace("wss://your-external-cdp-url", cdp_url)
+            run_example(eval_example, code=code)
 
 
 @handle_file("sessions/upload_cookies.py")

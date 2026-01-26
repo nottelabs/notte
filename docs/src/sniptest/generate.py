@@ -22,12 +22,12 @@ from pathlib import Path
 
 from parser import parse_file
 
-
 # Resolve paths relative to this script
 SCRIPT_DIR = Path(__file__).parent
 ROOT_DIR = SCRIPT_DIR.parent  # /docs/src
 TESTERS_DIR = ROOT_DIR / "testers"
 SNIPPETS_DIR = ROOT_DIR / "snippets"
+
 
 # Header comment for generated files
 def make_header(source: str) -> str:
@@ -134,23 +134,13 @@ def main():
     argparser = argparse.ArgumentParser(
         description="Process tester files into MDX snippets",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__
+        epilog=__doc__,
     )
+    argparser.add_argument("--dry-run", "-n", action="store_true", help="Preview changes without writing files")
     argparser.add_argument(
-        "--dry-run", "-n",
-        action="store_true",
-        help="Preview changes without writing files"
+        "--clean", "-c", action="store_true", help="Remove orphaned snippets (generated files without testers)"
     )
-    argparser.add_argument(
-        "--clean", "-c",
-        action="store_true",
-        help="Remove orphaned snippets (generated files without testers)"
-    )
-    argparser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Show unchanged files"
-    )
+    argparser.add_argument("--verbose", "-v", action="store_true", help="Show unchanged files")
 
     args = argparser.parse_args()
 
@@ -177,11 +167,7 @@ def main():
     messages = []
 
     for tester_file in tester_files:
-        success, message = process_file(
-            tester_file,
-            dry_run=args.dry_run,
-            verbose=args.verbose
-        )
+        success, message = process_file(tester_file, dry_run=args.dry_run, verbose=args.verbose)
         if success:
             success_count += 1
         else:
@@ -191,10 +177,7 @@ def main():
 
     # Clean orphaned snippets if requested
     if args.clean:
-        clean_messages = clean_orphaned_snippets(
-            dry_run=args.dry_run,
-            verbose=args.verbose
-        )
+        clean_messages = clean_orphaned_snippets(dry_run=args.dry_run, verbose=args.verbose)
         messages.extend(clean_messages)
 
     # Print messages

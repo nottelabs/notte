@@ -29,6 +29,7 @@ from pathlib import Path
 @dataclass
 class SnippetConfig:
     """Configuration parsed from magic comments."""
+
     language: str = "python"
     filename: str | None = None
     highlight: str | None = None
@@ -285,11 +286,11 @@ def main():
     if config.filename:
         print(f"  - Filename: {config.filename}")
     if config.lines:
-        print(f"  - Lines: true")
+        print("  - Lines: true")
     if config.wrap:
-        print(f"  - Wrap: true")
+        print("  - Wrap: true")
     if config.expandable:
-        print(f"  - Expandable: true")
+        print("  - Expandable: true")
     if config.icon:
         print(f"  - Icon: {config.icon}")
     if config.focus:
