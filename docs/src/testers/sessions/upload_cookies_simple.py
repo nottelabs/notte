@@ -11,7 +11,7 @@ cookies = [
         expires=9778363203.913704,
         httpOnly=False,
         secure=False,
-        sameSite="Lax"
+        sameSite="Lax",
     )
 ]
 

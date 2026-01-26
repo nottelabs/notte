@@ -1,6 +1,6 @@
 # @sniptest filename=cdp_playwright.py
-from patchright.sync_api import sync_playwright
 from notte_sdk import NotteClient
+from patchright.sync_api import sync_playwright
 
 client = NotteClient()
 with client.Session(proxies=False) as session:

@@ -1,6 +1,7 @@
 # @sniptest filename=extract_cookies_local.py
 import json
 from pathlib import Path
+
 from patchright.sync_api import sync_playwright
 
 cookie_path = Path("github_cookies.json")

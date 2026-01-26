@@ -1,6 +1,7 @@
 # @sniptest filename=extract_cookies_notte.py
-from notte_sdk import NotteClient
 import json
+
+from notte_sdk import NotteClient
 
 client = NotteClient()
 with client.Session() as session:
