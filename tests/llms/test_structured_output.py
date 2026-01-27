@@ -24,7 +24,7 @@ def get_models() -> list[LlmModel]:
         models.append(LlmModel.groq)
     if "PERPLEXITY_API_KEY" in os.environ:
         models.append(LlmModel.perplexity)
-    if "CEBREAS_API_KEY" in os.environ:
+    if "CEREBRAS_API_KEY" in os.environ:
         models.append(LlmModel.cerebras)
     if "GEMINI_API_KEY" in os.environ:
         models.append(LlmModel.gemini)
@@ -32,6 +32,8 @@ def get_models() -> list[LlmModel]:
         models.append(LlmModel.gemma)
     if "ANTHROPIC_API_KEY" in os.environ:
         models.append(LlmModel.anthropic)
+    if "MOONSHOT_API_KEY" in os.environ:
+        models.append(LlmModel.kimi2_5)
     return models
 
 
