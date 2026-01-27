@@ -56,6 +56,7 @@ class LlmProvider(StrEnum):
     ollama = "ollama"
     together = "together_ai"
     anthropic = "anthropic"
+    moonshot = "moonshot"
 
     @property
     def context_length(self) -> int:
@@ -94,6 +95,8 @@ class LlmProvider(StrEnum):
                 return "ANTHROPIC_API_KEY"
             case LlmProvider.together:
                 return "TOGETHERAI_API_KEY"
+            case LlmProvider.moonshot:
+                return "MOONSHOT_API_KEY"
             case _:  # pyright: ignore[reportUnnecessaryComparison]
                 raise ValueError(f"No API key name found for provider: {self}")  # pyright: ignore[reportUnreachable]
 
@@ -115,6 +118,7 @@ class LlmModel(StrEnum):
     deepseek = "deepseek/deepseek-r1"
     together = "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo"
     anthropic = "anthropic/claude-sonnet-4-5-20250929"
+    kimi2_5 = "moonshot/kimi-k2.5"
 
     @property
     def provider(self) -> LlmProvider:
@@ -123,6 +127,7 @@ class LlmModel(StrEnum):
     @staticmethod
     def get_provider(model: str) -> LlmProvider:
         provider_str = model.split("/")[0]
+
         if provider_str not in list(LlmProvider):
             raise ValueError(f"Invalid provider: {provider_str}")
         return LlmProvider(provider_str)
@@ -133,7 +138,31 @@ class LlmModel(StrEnum):
 
     @staticmethod
     def use_strict_response_format(val: "str | LlmModel") -> bool:
-        return not val.startswith(str(LlmProvider.cerebras)) and "gemini-2.0-flash" not in str(val)
+        val_str = str(val)
+        # Providers that don't support strict response format or have schema size limits
+        unsupported_providers = [
+            str(LlmProvider.cerebras),
+            str(LlmProvider.moonshot),
+        ]
+        unsupported_models = [
+            "gemini-2.0-flash",
+        ]
+        return not any(val_str.startswith(p) for p in unsupported_providers) and not any(
+            m in val_str for m in unsupported_models
+        )
+
+    @staticmethod
+    def get_temperature(val: "str | LlmModel", default: float) -> float:
+        """Get the temperature for a model, with model-specific overrides."""
+        val_str = str(val)
+        # Model-specific temperature overrides
+        temperature_overrides: dict[str, float] = {
+            "kimi-k2.5": 1.0,
+        }
+        for model_pattern, temp in temperature_overrides.items():
+            if model_pattern in val_str:
+                return temp
+        return default
 
     @staticmethod
     def default() -> "LlmModel":

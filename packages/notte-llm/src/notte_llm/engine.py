@@ -170,6 +170,8 @@ class LLMEngine:
         n: int = 1,
     ) -> ModelResponse:
         model = model or self.model
+        # Apply model-specific temperature overrides
+        temperature = LlmModel.get_temperature(model, temperature)
         try:
             response = await litellm.acompletion(  # pyright: ignore [reportUnknownMemberType]
                 model,
