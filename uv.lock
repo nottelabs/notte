@@ -2915,6 +2915,7 @@ dependencies = [
     { name = "notte-llm" },
     { name = "patchright" },
     { name = "pillow" },
+    { name = "tqdm" },
 ]
 
 [package.metadata]
@@ -2925,6 +2926,7 @@ requires-dist = [
     { name = "notte-llm", editable = "packages/notte-llm" },
     { name = "patchright", specifier = "~=1.55" },
     { name = "pillow", specifier = ">=11.2.1" },
+    { name = "tqdm", specifier = ">=4.66.0" },
 ]
 
 [[package]]
