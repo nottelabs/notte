@@ -348,6 +348,7 @@ class BrowserWindow(BaseModel):
         screenshot: bool | None = None,
         retries: int = config.empty_page_max_retry,
         selector: str | None = None,
+        skip_dom: bool = False,
     ) -> BrowserSnapshot:
         if retries <= 0:
             raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
@@ -360,15 +361,20 @@ class BrowserWindow(BaseModel):
                 html_content_await = profiler.profiled(service_name="observation")(locator.inner_html)()
             else:
                 html_content_await = profiler.profiled(service_name="observation")(self.page.content)()
-            dom_tree_pipe = dom_tree_parsers["default"]
 
-            html_content, snapshot_screenshot, dom_node = await asyncio.gather(
-                html_content_await, self.screenshot(), dom_tree_pipe.forward(self.page)
-            )
+            if skip_dom:
+                # Skip expensive DOM tree computation for scraping
+                html_content, snapshot_screenshot = await asyncio.gather(html_content_await, self.screenshot())
+                dom_node = DomNode.empty_root()
+            else:
+                dom_tree_pipe = dom_tree_parsers["default"]
+                html_content, snapshot_screenshot, dom_node = await asyncio.gather(
+                    html_content_await, self.screenshot(), dom_tree_pipe.forward(self.page)
+                )
 
         except SnapshotProcessingError:
             await self.long_wait()
-            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector)
+            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector, skip_dom=skip_dom)
 
         except Exception as e:
             if "has been closed" in str(e):
@@ -395,7 +401,7 @@ class BrowserWindow(BaseModel):
             if config.verbose:
                 logger.warning(f"Empty page content for {self.page.url}. Retry in {config.wait_retry_snapshot_ms}ms")
             await self.page.wait_for_timeout(config.wait_retry_snapshot_ms)
-            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector)
+            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector, skip_dom=skip_dom)
 
         try:
             snapshot_metadata = await self.snapshot_metadata()

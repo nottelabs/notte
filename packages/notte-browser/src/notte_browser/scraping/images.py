@@ -1,41 +1,33 @@
-from notte_core.browser.dom_tree import DomNode, InteractionDomNode
-from notte_core.browser.node_type import NodeType
-from notte_core.browser.snapshot import BrowserSnapshot
+from bs4 import BeautifulSoup, Tag
 from notte_core.common.logging import logger
 from notte_core.data.space import ImageCategory, ImageData
 from notte_core.utils.image import construct_image_url
 
-from notte_browser.dom.locate import locate_element
-from notte_browser.playwright_async_api import Locator, Page
-from notte_browser.resolution import NodeResolutionPipe
+from notte_browser.playwright_async_api import Locator
 from notte_browser.window import BrowserWindow
 
 
-async def classify_image_element(node: DomNode, locator: Locator | None = None) -> ImageCategory | None:
-    """Classify an image or SVG element.
+async def classify_image_from_tag(tag_name: str, locator: Locator | None) -> ImageCategory | None:
+    """Classify an image element based on its tag name and locator.
 
     Args:
+        tag_name: The HTML tag name (img, svg, figure)
         locator: Playwright locator for the image/svg element
 
     Returns:
-        tuple[ImageType, str | None]: Element classification and source/content
+        ImageCategory classification or None
     """
-    if node.attributes is not None:
-        tag_name: str = node.attributes.tag_name
-    else:
-        if locator is None:
-            return None
-        # First check if it's an SVG
-        tag_name = await locator.evaluate("el => el.tagName.toLowerCase()")
-
     if tag_name == "svg":
         if locator is None:
             return None
         return await classify_svg(locator)
-    else:
+    elif tag_name == "img":
         if locator is None:
             return None
         return await classify_raster_image(locator)
+    elif tag_name == "figure":
+        return ImageCategory.CONTENT_IMAGE
+    return None
 
 
 async def classify_svg(
@@ -121,56 +113,52 @@ async def classify_raster_image(locator: Locator) -> ImageCategory:
     return ImageCategory.CONTENT_IMAGE
 
 
-async def resolve_image_conflict(page: Page, node: DomNode, image_node: InteractionDomNode) -> Locator | None:
-    selectors = await NodeResolutionPipe.resolve_selectors(image_node, verbose=False)
-    try:
-        locator = await locate_element(page, selectors)
-        if (await locator.count()) == 1:
-            return locator
-    except Exception as e:
-        logger.debug(f"Error locating element: {e}")
-
-    if len(image_node.text) > 0:
-        locators = await page.get_by_role(image_node.get_role_str(), name=image_node.text).all()  # type: ignore[arg-type]
-        if len(locators) == 1:
-            return locators[0]
-
-    # check by comparing the IDX position of the images
-    images = node.image_nodes()
-    locators = await page.get_by_role("img").all()
-    if len(images) != len(locators):
-        return None
-
-    for image, locator in zip(images, locators):
-        if image == image_node:
-            return locator
+def get_image_src_from_tag(element: Tag) -> str | None:
+    """Extract image source from a BeautifulSoup Tag element."""
+    # Try different common image source attributes
+    for attr in ["src", "data-src", "srcset"]:
+        src = element.get(attr)
+        if src:
+            # srcset may be a list, take the first item
+            if isinstance(src, list):
+                src = src[0] if src else None
+            if src:
+                # For srcset, take just the URL (first part before space)
+                if " " in src:
+                    src = src.split()[0]
+                return src
     return None
 
 
-async def get_image_src(node: DomNode, locator: Locator | None = None) -> str | None:
-    # first check dom node
-    if node.attributes is not None:
-        resource_url = node.attributes.get_resource_url()
-        if resource_url is not None:
-            return resource_url
-
-    if locator is None:
+def get_surrounding_text(element: Tag, max_depth: int = 3) -> str | None:
+    """Get surrounding text from a BeautifulSoup element by looking at parent/siblings."""
+    if max_depth <= 0:
         return None
-    # Try different common image source attributes
-    for attr in ["src", "data-src", "srcset"]:
-        src: str | None = await locator.get_attribute(attr)
-        if src:
-            return src
 
-    # If still no success, try evaluating directly
-    src = await locator.evaluate(
-        """element => {
-        // Get computed src
-        return element.currentSrc || element.src || element.getAttribute('data-src');
-    }"""
-    )
+    # Check for alt text first
+    alt = element.get("alt")
+    if alt and isinstance(alt, str) and alt.strip():
+        return alt.strip()
 
-    return src
+    # Check aria-label
+    aria_label = element.get("aria-label")
+    if aria_label and isinstance(aria_label, str) and aria_label.strip():
+        return aria_label.strip()
+
+    # Check title attribute
+    title = element.get("title")
+    if title and isinstance(title, str) and title.strip():
+        return title.strip()
+
+    # Try to get text from parent
+    parent = element.parent
+    if parent is not None and isinstance(parent, Tag):  # pyright: ignore [reportUnnecessaryIsInstance]
+        text = parent.get_text(strip=True)
+        if text:
+            return text[:200]  # Limit description length
+        return get_surrounding_text(parent, max_depth - 1)
+
+    return None
 
 
 async def get_svg_content(locator: Locator | None = None) -> str | None:
@@ -180,86 +168,104 @@ async def get_svg_content(locator: Locator | None = None) -> str | None:
     return await locator.evaluate("el => el.outerHTML")
 
 
-async def get_parent_inner_text(dom_node: DomNode, max_depth: int = 3) -> str | None:
-    """Get the inner text of an element."""
-    if max_depth <= 0:
-        return None
-    text = dom_node.inner_text()
-    if len(text) > 0:
-        return text
-    # check the parent
-    parent = dom_node.parent
-    if parent is not None:
-        return await get_parent_inner_text(parent, max_depth - 1)
-    return None
-
-
 class ImageScrapingPipe:
     """
-    Data scraping pipe that scrapes images from the page
+    Data scraping pipe that scrapes images from the page using BeautifulSoup.
+    No longer depends on DOM tree computation.
     """
 
     def __init__(self, verbose: bool = False) -> None:
         self.verbose: bool = verbose
 
-    async def forward(self, window: BrowserWindow, snapshot: BrowserSnapshot) -> list[ImageData]:
-        image_nodes = snapshot.dom_node.image_nodes()
+    async def forward(
+        self,
+        window: BrowserWindow,
+        html_content: str,
+        base_url: str,
+    ) -> list[ImageData]:
+        """
+        Extract images from HTML content using BeautifulSoup.
+
+        Args:
+            window: BrowserWindow for Playwright locator access (for classification)
+            html_content: The raw HTML content to parse
+            base_url: The base URL for constructing absolute image URLs
+        """
+        from notte_core.utils.url import clean_url
+
+        soup = BeautifulSoup(html_content, "html.parser")
+
+        # Find all img, svg, and figure elements
+        image_elements = soup.find_all(["img", "svg", "figure"])
+
         out_images: list[ImageData] = [
             # first image is the favicon
             ImageData(
                 category=ImageCategory.FAVICON,
-                url=f"{snapshot.metadata.url}/favicon.ico",
-                description=f"Favicon for {snapshot.clean_url}",
+                url=f"{base_url}/favicon.ico",
+                description=f"Favicon for {clean_url(base_url)}",
             )
         ]
+
+        # Get all Playwright locators for images and SVGs for classification
+        img_locators = await window.page.locator("img").all()
+        svg_locators = await window.page.locator("svg").all()
+
+        img_idx = 0
+        svg_idx = 0
+
         from tqdm import tqdm
 
-        for i, node in tqdm(enumerate(image_nodes)):
-            locator = await resolve_image_conflict(
-                page=window.page,
-                node=snapshot.dom_node,
-                image_node=InteractionDomNode(
-                    id=node.id or f"image_{i}",
-                    type=NodeType.INTERACTION,
-                    role=node.role,
-                    text=node.text,
-                    children=[],
-                    attributes=node.attributes,
-                    computed_attributes=node.computed_attributes,
-                ),
-            )
-            # if image_src is None:
-            #     logger.debug(f"No src attribute found for image node {node.id}")
-            #     continue
-            category = await classify_image_element(node, locator)
-            image_src = await get_image_src(node, locator)
+        for element in tqdm(image_elements):
+            if not isinstance(element, Tag):  # pyright: ignore [reportUnnecessaryIsInstance]
+                continue
+
+            tag_name = element.name
+            locator: Locator | None = None
+
+            # Match element to Playwright locator by index
+            if tag_name == "img" and img_idx < len(img_locators):
+                locator = img_locators[img_idx]
+                img_idx += 1
+            elif tag_name == "svg" and svg_idx < len(svg_locators):
+                locator = svg_locators[svg_idx]
+                svg_idx += 1
+
+            # Extract image source from HTML attributes
+            image_src = get_image_src_from_tag(element)
+
+            # Classify the image element
+            category = await classify_image_from_tag(tag_name, locator)
+
+            # Construct absolute URL
             if image_src is not None:
-                if len(image_src) > 0 and image_src != snapshot.metadata.url:
-                    original_url = image_src
+                if len(image_src) > 0 and image_src != base_url:
                     image_src = construct_image_url(
-                        base_page_url=snapshot.metadata.url,
+                        base_page_url=base_url,
                         image_src=image_src,
                     )
-                    if image_src == snapshot.metadata.url:
-                        raise ValueError(
-                            f"Image src is the same as the page url for image node {node.id} but original url is {original_url}"
-                        )
+                    if image_src == base_url:
+                        # Reset if it's the same as page URL
+                        image_src = None
                 else:
-                    # manually reset the image_src to None if it's empty
-                    # or the same as the page url (likely just a href)
                     image_src = None
+
+            # For SVG content, get the actual SVG markup
             if image_src is None and category is ImageCategory.SVG_CONTENT:
                 image_src = await get_svg_content(locator)
 
+            # Skip if we couldn't get useful data
             if locator is None and (category is None or image_src is None):
                 if self.verbose:
-                    logger.debug(f"No locator found for image node {node.id}")
+                    logger.debug("Skipping image element: no locator and missing category/src")
                 continue
+
             out_images.append(
                 ImageData(
                     category=category,
                     url=image_src,
-                    description=await get_parent_inner_text(node),
+                    description=get_surrounding_text(element),
                 )
             )
+
         return out_images

@@ -792,7 +792,7 @@ class NotteSession(AsyncResource, SyncResource):
             scrape_params = ScrapeParams.model_validate(params)
             return await self._data_scraping_pipe.forward(
                 window=self.window,
-                snapshot=await self.window.snapshot(selector=scrape_params.selector),
+                snapshot=await self.window.snapshot(selector=scrape_params.selector, skip_dom=True),
                 params=scrape_params,
             )
         except EmptyPageContentError as e:

@@ -154,7 +154,11 @@ class DataScrapingPipe:
         if params.only_images:
             if config.verbose:
                 logger.trace("🏞️ Scraping images with image pipe")
-            images = await self.image_pipe.forward(window, snapshot)
+            images = await self.image_pipe.forward(
+                window,
+                snapshot.html_content,
+                snapshot.metadata.url,
+            )
 
         # scrape structured data if required
         if params.requires_schema():
