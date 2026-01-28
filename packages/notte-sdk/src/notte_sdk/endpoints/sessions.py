@@ -475,15 +475,15 @@ class SessionsClient(BaseClient):
         return MP4Replay(file_bytes)
 
     @track_usage("cloud.session.viewer.browser")
-    def viewer_browser(self, session_id: str) -> None:
+    def viewer_browser(self, session_id: str, _viewer_url: str | None = None) -> None:
         """
         Opens live session replay in browser (frame by frame)
         """
-        debug_info = self.debug_info(session_id=session_id)
-
-        base_url = urljoin(self.server_url + "/", f"{self.base_endpoint_path}/{self.SESSION_VIEWER}/")
-        viewer_url = urljoin(base_url, f"index.html?ws={debug_info.ws.recording}")
-        _ = open_browser(viewer_url, new=1)
+        if _viewer_url is None:
+            debug_info = self.debug_info(session_id=session_id)
+            base_url = urljoin(self.server_url + "/", f"{self.base_endpoint_path}/{self.SESSION_VIEWER}/")
+            _viewer_url = urljoin(base_url, f"index.html?ws={debug_info.ws.recording}")
+        _ = open_browser(_viewer_url, new=1)
 
     @track_usage("cloud.session.viewer.notebook")
     def viewer_notebook(self, session_id: str) -> WebsocketService:
@@ -867,7 +867,8 @@ class RemoteSession(SyncResource):
         session.viewer_browser()
         ```
         """
-        return self.client.viewer_browser(self.session_id)
+        _viewer_url = self.response.viewer_url if self.response is not None else None
+        return self.client.viewer_browser(self.session_id, _viewer_url=_viewer_url)
 
     def viewer_notebook(self) -> WebsocketService:
         """
@@ -896,7 +897,13 @@ class RemoteSession(SyncResource):
         """
         Open the viewer for the session based on the viewer_type.
         """
-        self.client.viewer(session_id=self.session_id)
+        match self.client.viewer_type:
+            case SessionViewerType.BROWSER:
+                self.viewer_browser()
+            case SessionViewerType.JUPYTER:
+                _ = self.viewer_notebook()
+            case SessionViewerType.CDP:
+                self.viewer_cdp()
 
     def status(self) -> SessionResponse:
         """
