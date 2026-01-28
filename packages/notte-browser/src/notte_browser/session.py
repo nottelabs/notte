@@ -541,7 +541,18 @@ class NotteSession(AsyncResource, SyncResource):
 
             match resolved_action:
                 case ScrapeAction():
-                    scraped_data = await self._ascrape(instructions=resolved_action.instructions)
+                    # Note: response_format in ScrapeAction is a JSON schema dict for logging/trajectory.
+                    # Actual structured output with Pydantic classes requires calling scrape() directly.
+                    # Agents use instructions-based scraping for structured data extraction.
+                    scraped_data = await self._ascrape(
+                        instructions=resolved_action.instructions,
+                        only_main_content=resolved_action.only_main_content,
+                        selector=resolved_action.selector,
+                        only_images=resolved_action.only_images,
+                        scrape_links=resolved_action.scrape_links,
+                        scrape_images=resolved_action.scrape_images,
+                        ignored_tags=resolved_action.ignored_tags,
+                    )
                     success = True
                 case ToolAction():
                     tool_found = False
@@ -776,7 +787,53 @@ class NotteSession(AsyncResource, SyncResource):
     @timeit("scrape")
     @track_usage("local.session.scrape")
     async def ascrape(self, **params: Unpack[ScrapeParamsDict]) -> StructuredData[BaseModel] | str | list[ImageData]:
-        data = await self._ascrape(**params)
+        # Extract and convert response_format for the action (store as JSON schema)
+        response_format = params.get("response_format")
+        response_format_schema: dict[str, Any] | None = None
+        if response_format is not None:
+            response_format_schema = response_format.model_json_schema()
+
+        # Create ScrapeAction for trajectory recording
+        scrape_action = ScrapeAction(
+            instructions=params.get("instructions"),
+            only_main_content=params.get("only_main_content", True),
+            selector=params.get("selector"),
+            only_images=params.get("only_images", False),
+            scrape_links=params.get("scrape_links", True),
+            scrape_images=params.get("scrape_images", False),
+            ignored_tags=params.get("ignored_tags"),
+            response_format=response_format_schema,
+        )
+
+        exception: Exception | None = None
+        data: DataSpace | None = None
+
+        try:
+            data = await self._ascrape(**params)
+        except Exception as e:
+            exception = e
+            # Record failure to trajectory
+            execution_result = ExecutionResult(
+                action=scrape_action,
+                success=False,
+                message=scrape_action.execution_message(),
+                data=None,
+                exception=exception,
+            )
+            await self.trajectory.append(execution_result)
+            raise
+
+        # Record success to trajectory
+        execution_result = ExecutionResult(
+            action=scrape_action,
+            success=True,
+            message=scrape_action.execution_message(),
+            data=data,
+            exception=None,
+        )
+        await self.trajectory.append(execution_result)
+
+        # Return data as before (backward compatible)
         if data.images is not None:
             return data.images
         if data.structured is not None:

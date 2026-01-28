@@ -108,6 +108,12 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
             "code",
             "status",
             "param",
+            # ScrapeAction fields (have sensible defaults, don't need agent exposure)
+            "only_images",
+            "scrape_links",
+            "scrape_images",
+            "ignored_tags",
+            "response_format",
         }
         if "selector" in cls.model_fields:
             fields.remove("id")
@@ -132,7 +138,11 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
         data = self.model_dump(exclude=fields)
         selector = data.get("selector")
         if selector:
-            data["selector"] = selector["playwright_selector"] or selector["xpath_selector"]
+            # Handle both NodeSelectors (dict-like) and plain string selectors
+            if isinstance(selector, str):
+                data["selector"] = selector
+            elif isinstance(selector, dict):
+                data["selector"] = selector.get("playwright_selector") or selector.get("xpath_selector")  # pyright: ignore [reportUnknownMemberType]
         return data
 
     def model_dump_agent_json(self) -> str:
@@ -730,6 +740,8 @@ class ScrapeAction(ToolAction):
     session.execute(type="scrape", instructions="Extract product title and price")
     session.execute(type="scrape", only_main_content=True)
     session.execute(type="scrape")  # Scrape entire page
+    session.execute(type="scrape", only_images=True)  # Scrape only images
+    session.execute(type="scrape", response_format={"type": "object", "properties": {...}})  # With JSON schema
     ```
     """
 
@@ -747,10 +759,43 @@ class ScrapeAction(ToolAction):
             description="Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded."
         ),
     ] = True
+    selector: Annotated[
+        str | None,
+        Field(
+            description="Playwright selector to scope the scrape to. Only content inside this selector will be scraped."
+        ),
+    ] = None
+    only_images: Annotated[
+        bool,
+        Field(description="Whether to only scrape images from the page. If True, the page content is excluded."),
+    ] = False
+    scrape_links: Annotated[
+        bool,
+        Field(description="Whether to scrape links from the page. Links are scraped by default."),
+    ] = True
+    scrape_images: Annotated[
+        bool,
+        Field(description="Whether to scrape images from the page."),
+    ] = False
+    ignored_tags: Annotated[
+        list[str] | None,
+        Field(description="HTML tags to ignore from the page."),
+    ] = None
+    response_format: Annotated[
+        dict[str, Any] | None,
+        Field(
+            description="JSON schema dict for structured output. Agent can provide a schema to extract structured data."
+        ),
+    ] = None
 
     @override
     def execution_message(self) -> str:
-        if self.only_main_content:
+        if self.only_images:
+            return "Scraped images from the current page"
+
+        if self.selector:
+            content = f"content within selector '{self.selector}'"
+        elif self.only_main_content:
             content = "main content of the current page"
         else:
             content = "current page"
@@ -760,7 +805,11 @@ class ScrapeAction(ToolAction):
         else:
             instructions = ""
 
-        return f"Scraped the {content} in text format{instructions}"
+        format_info = ""
+        if self.response_format:
+            format_info = " with structured output"
+
+        return f"Scraped the {content} in text format{instructions}{format_info}"
 
     @override
     @staticmethod
