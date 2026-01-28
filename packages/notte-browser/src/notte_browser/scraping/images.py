@@ -7,23 +7,28 @@ from notte_browser.playwright_async_api import Locator
 from notte_browser.window import BrowserWindow
 
 
-async def classify_image_from_tag(tag_name: str, locator: Locator | None) -> ImageCategory | None:
+async def classify_image_from_tag(
+    tag_name: str, locator: Locator | None, has_src: bool = False
+) -> ImageCategory | None:
     """Classify an image element based on its tag name and locator.
 
     Args:
         tag_name: The HTML tag name (img, svg, figure)
         locator: Playwright locator for the image/svg element
+        has_src: Whether the element has a valid image source URL
 
     Returns:
         ImageCategory classification or None
     """
     if tag_name == "svg":
         if locator is None:
-            return None
+            # Fallback: if we have content but no locator, assume SVG content
+            return ImageCategory.SVG_CONTENT if has_src else None
         return await classify_svg(locator)
     elif tag_name == "img":
         if locator is None:
-            return None
+            # Fallback: if we have a src but no locator, assume content image
+            return ImageCategory.CONTENT_IMAGE if has_src else None
         return await classify_raster_image(locator)
     elif tag_name == "figure":
         return ImageCategory.CONTENT_IMAGE
@@ -115,15 +120,15 @@ async def classify_raster_image(locator: Locator) -> ImageCategory:
 
 def get_image_src_from_tag(element: Tag) -> str | None:
     """Extract image source from a BeautifulSoup Tag element."""
-    # Try different common image source attributes
-    for attr in ["src", "data-src", "srcset"]:
+    # Try different common image source attributes (including lazy-loaded variants)
+    for attr in ["src", "data-src", "srcset", "data-srcset"]:
         src = element.get(attr)
         if src:
-            # srcset may be a list, take the first item
+            # srcset/data-srcset may be a list, take the first item
             if isinstance(src, list):
                 src = src[0] if src else None
             if src:
-                # For srcset, take just the URL (first part before space)
+                # For srcset-style values, take just the URL (first part before space)
                 if " " in src:
                     src = src.split()[0]
                 return src
@@ -214,9 +219,15 @@ class ImageScrapingPipe:
         img_idx = 0
         svg_idx = 0
 
-        from tqdm import tqdm
+        # Only use tqdm progress bar when verbose
+        if self.verbose:
+            from tqdm import tqdm
 
-        for element in tqdm(image_elements):
+            elements_iter = tqdm(image_elements)
+        else:
+            elements_iter = image_elements
+
+        for element in elements_iter:
             if not isinstance(element, Tag):  # pyright: ignore [reportUnnecessaryIsInstance]
                 continue
 
@@ -237,8 +248,8 @@ class ImageScrapingPipe:
             # Extract image source from HTML attributes
             image_src = get_image_src_from_tag(element)
 
-            # Classify the image element
-            category = await classify_image_from_tag(tag_name, locator)
+            # Classify the image element (pass has_src for fallback when locator is None)
+            category = await classify_image_from_tag(tag_name, locator, has_src=image_src is not None)
 
             # Construct absolute URL
             if image_src is not None:

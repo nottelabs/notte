@@ -19,6 +19,7 @@ dependencies = [
     "markdownify>=0.14.1",
     "pillow>=11.2.1",
     "patchright~=1.55",
+    "tqdm>=4.66.0",
 ]
 
 [build-system]
