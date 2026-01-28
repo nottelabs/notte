@@ -230,6 +230,9 @@ class ImageScrapingPipe:
             elif tag_name == "svg" and svg_idx < len(svg_locators):
                 locator = svg_locators[svg_idx]
                 svg_idx += 1
+            elif tag_name == "figure":
+                # Figures don't have Playwright locators, skip index increment
+                locator = None
 
             # Extract image source from HTML attributes
             image_src = get_image_src_from_tag(element)
@@ -251,7 +254,7 @@ class ImageScrapingPipe:
                     image_src = None
 
             # For SVG content, get the actual SVG markup
-            if image_src is None and category is ImageCategory.SVG_CONTENT:
+            if image_src is None and category == ImageCategory.SVG_CONTENT:
                 image_src = await get_svg_content(locator)
 
             # Skip if we couldn't get useful data
