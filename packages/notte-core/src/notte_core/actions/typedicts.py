@@ -75,6 +75,7 @@ class FormFillActionDict(TypedDict, total=False):
                 "cc_exp",
                 "cc_cvv",
                 "username",
+                "password",  # alias for current_password (normalized by validator)
                 "current_password",
                 "new_password",
                 "totp",
