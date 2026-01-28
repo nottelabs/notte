@@ -108,6 +108,12 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
             "code",
             "status",
             "param",
+            # ScrapeAction fields (have sensible defaults, don't need agent exposure)
+            "only_images",
+            "scrape_links",
+            "scrape_images",
+            "ignored_tags",
+            "response_format",
         }
         if "selector" in cls.model_fields:
             fields.remove("id")
