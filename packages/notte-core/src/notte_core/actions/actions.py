@@ -132,7 +132,11 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
         data = self.model_dump(exclude=fields)
         selector = data.get("selector")
         if selector:
-            data["selector"] = selector["playwright_selector"] or selector["xpath_selector"]
+            # Handle both NodeSelectors (dict-like) and plain string selectors
+            if isinstance(selector, str):
+                data["selector"] = selector
+            elif isinstance(selector, dict):
+                data["selector"] = selector.get("playwright_selector") or selector.get("xpath_selector")  # pyright: ignore [reportUnknownMemberType]
         return data
 
     def model_dump_agent_json(self) -> str:
@@ -783,13 +787,12 @@ class ScrapeAction(ToolAction):
         if self.only_images:
             return "Scraped images from the current page"
 
-        if self.only_main_content:
+        if self.selector:
+            content = f"content within selector '{self.selector}'"
+        elif self.only_main_content:
             content = "main content of the current page"
         else:
             content = "current page"
-
-        if self.selector:
-            content = f"content within selector '{self.selector}'"
 
         if self.instructions:
             instructions = f" with instructions '{self.instructions}'"
