@@ -231,6 +231,7 @@ class FormFillAction(BrowserAction):
             "cc_exp",
             "cc_cvv",
             "username",
+            "password",  # alias for current_password (normalized by validator)
             "current_password",
             "new_password",
             "totp",
@@ -241,13 +242,22 @@ class FormFillAction(BrowserAction):
     @field_validator("value", mode="before")
     @classmethod
     def verify_value(cls, value: Any) -> Any:
-        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
+        """Validator necessary to ignore typing issues with ValueWithPlaceholder.
+        Also normalizes 'password' key to 'current_password' for compatibility.
+        """
         if value is None:
             allowed_keys = get_args(get_args(cls.model_fields["value"].annotation)[0])
             raise ValueError(
                 f"'value' key in form fill action has to be an object with at least one key among {allowed_keys}, but got {value}. CRITICAL: fall back to the regular fill action"
             )
-        return value
+        # Normalize "password" to "current_password" for LLM compatibility
+        if isinstance(value, dict) and "password" in value:
+            if "current_password" in value:
+                raise ValueError(
+                    "Cannot specify both 'password' and 'current_password' in form_fill. Use only 'current_password'."
+                )
+            value = {("current_password" if k == "password" else k): v for k, v in value.items()}  # pyright: ignore[reportUnknownVariableType]
+        return value  # pyright: ignore[reportUnknownVariableType]
 
     @override
     def execution_message(self) -> str:
