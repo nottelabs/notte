@@ -3,6 +3,10 @@
     "mintlify-docs": {
       "type": "http",
       "url": "https://www.mintlify.com/docs/mcp"
+    },
+    "notte-docs": {
+      "type": "http",
+      "url": "https://docs.notte.cc/mcp"
     }
   }
 }
