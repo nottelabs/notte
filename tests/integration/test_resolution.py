@@ -71,7 +71,7 @@ async def test_action_node_resolution_pipe(url: str) -> None:
                 action = ExecutionRequest.get_action(dict(type=type, id=node.id, value=param))
                 assert action is not None
                 assert len(action.id) > 0, "Action id is required"
-                action = NodeResolutionPipe.forward(action, page.snapshot)
+                action = await NodeResolutionPipe.forward(action, page.snapshot)
             except Exception as e:
                 errors.append(f"Error for node {node.id}: {e}")
 

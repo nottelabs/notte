@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import os
 import random
 import time
@@ -308,10 +309,34 @@ class BrowserWindow(BaseModel):
         )
 
     @profiler.profiled(service_name="observation")
+    async def _cdp_screenshot(self) -> bytes:
+        """Take a screenshot using CDP protocol (faster than Playwright, but no mask support)."""
+        cdp_session = await self.get_cdp_session()
+        try:
+            result: dict[str, Any] = await cdp_session.send(  # pyright: ignore [reportUnknownMemberType]
+                "Page.captureScreenshot",
+                {"format": "jpeg", "quality": 85},
+            )
+            return base64.b64decode(result["data"])
+        finally:
+            await cdp_session.detach()
+
+    @profiler.profiled(service_name="observation")
     async def screenshot(self, retries: int = config.empty_page_max_retry) -> bytes:
         if retries <= 0:
             raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
         try:
+            # Use CDP screenshot when no mask is needed (faster)
+            if self.screenshot_mask is None:
+                try:
+                    return await self._cdp_screenshot()
+                except asyncio.CancelledError:
+                    raise
+                except Exception:
+                    logger.debug(f"CDP screenshot failed for {self.page.url}, falling back to Playwright")
+                    pass  # Fall back to Playwright if CDP fails
+
+            # Fall back to Playwright screenshot when mask is needed (or CDP failed)
             mask = await self.screenshot_mask.mask(self.page) if self.screenshot_mask is not None else None
             return await self.page.screenshot(mask=mask, type="jpeg", quality=85)
 

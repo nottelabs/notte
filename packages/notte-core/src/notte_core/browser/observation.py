@@ -16,6 +16,7 @@ from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, Viewp
 from notte_core.common.config import ScreenshotType, config
 from notte_core.data.space import DataSpace
 from notte_core.errors.base import NotteBaseError
+from notte_core.profiling import profiler
 from notte_core.space import ActionSpace
 from notte_core.utils.image import draw_text_with_rounded_background
 from notte_core.utils.url import clean_url
@@ -42,19 +43,53 @@ class Screenshot(BaseModel):
 
         # replace with empty obs in case of failure
         if not v:
-            buffer = io.BytesIO()
             return Observation.empty().screenshot.raw
 
+        # Fast path: check JPEG magic bytes (FFD8) - most common case from CDP screenshots
+        # This avoids sync PIL operations for valid JPEG images
+        if len(v) >= 2 and v[0:2] == b"\xff\xd8":
+            # Valid JPEG, check if dimensions are even (required for video encoding)
+            # Only use PIL if we need to pad - this is rare
+            try:
+                # Quick dimension check using JPEG header parsing (no full decode)
+                # SOF0 marker contains dimensions
+                pos = 2
+                while pos < len(v) - 9:
+                    if v[pos] != 0xFF:
+                        break
+                    marker = v[pos + 1]
+                    # SOF markers (0xC0-0xCF except 0xC4, 0xC8, 0xCC)
+                    if marker in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+                        if pos + 8 >= len(v):  # Ensure we can read height and width
+                            break
+                        height = (v[pos + 5] << 8) | v[pos + 6]
+                        width = (v[pos + 7] << 8) | v[pos + 8]
+                        # If dimensions are even, return as-is (fast path)
+                        if width % 2 == 0 and height % 2 == 0:
+                            return v
+                        # Need to pad - fall through to PIL path
+                        break
+                    # Skip to next marker
+                    length = (v[pos + 2] << 8) | v[pos + 3]
+                    if length < 2:  # Invalid JPEG marker length
+                        break
+                    pos += 2 + length
+                else:
+                    # Couldn't parse dimensions, fall through to PIL for safety
+                    pass
+            except Exception:
+                # Parsing failed, fall through to PIL for safety
+                pass
+
+        # Slow path: use PIL for non-JPEG or images that need padding
         try:
             img = Image.open(io.BytesIO(v))
         except Exception:
             return Observation.empty().screenshot.raw
 
-        # Convert to JPEG if not already
-        img = Image.open(io.BytesIO(v))
         orig_img = img
 
-        # Pad to even width and height
+        # Pad to even width and height (required for video encoding)
         width, height = img.size
         new_width = width + (width % 2)
         new_height = height + (height % 2)
@@ -84,6 +119,7 @@ class Screenshot(BaseModel):
         data["raw"] = b64encode(self.raw).decode("utf-8")
         return data
 
+    @profiler.profiled(service_name="observation")
     def bytes(self, type: ScreenshotType | None = None, text: str | None = None) -> bytes:
         def _bytes():
             nonlocal type
