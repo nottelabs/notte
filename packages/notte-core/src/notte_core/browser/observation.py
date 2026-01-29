@@ -75,11 +75,11 @@ class Screenshot(BaseModel):
                         break
                     pos += 2 + length
                 else:
-                    # Couldn't parse dimensions, assume it's fine
-                    return v
+                    # Couldn't parse dimensions, fall through to PIL for safety
+                    pass
             except Exception:
-                # Parsing failed, assume it's fine
-                return v
+                # Parsing failed, fall through to PIL for safety
+                pass
 
         # Slow path: use PIL for non-JPEG or images that need padding
         try:

@@ -330,7 +330,10 @@ class BrowserWindow(BaseModel):
             if self.screenshot_mask is None:
                 try:
                     return await self._cdp_screenshot()
+                except asyncio.CancelledError:
+                    raise
                 except Exception:
+                    logger.debug(f"CDP screenshot failed for {self.page.url}, falling back to Playwright")
                     pass  # Fall back to Playwright if CDP fails
 
             # Fall back to Playwright screenshot when mask is needed (or CDP failed)
