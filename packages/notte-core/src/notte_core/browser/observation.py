@@ -45,9 +45,9 @@ class Screenshot(BaseModel):
         if not v:
             return Observation.empty().screenshot.raw
 
-        # Fast path: check JPEG magic bytes (FFD8FF) - most common case from CDP screenshots
+        # Fast path: check JPEG magic bytes (FFD8) - most common case from CDP screenshots
         # This avoids sync PIL operations for valid JPEG images
-        if len(v) >= 3 and v[0:2] == b"\xff\xd8":
+        if len(v) >= 2 and v[0:2] == b"\xff\xd8":
             # Valid JPEG, check if dimensions are even (required for video encoding)
             # Only use PIL if we need to pad - this is rare
             try:
