@@ -7,6 +7,6 @@
     "notte-docs": {
       "type": "http",
       "url": "https://docs.notte.cc/mcp"
-    },
+    }
   }
 }
