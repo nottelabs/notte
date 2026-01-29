@@ -328,10 +328,13 @@ class BrowserWindow(BaseModel):
         try:
             # Use CDP screenshot when no mask is needed (faster)
             if self.screenshot_mask is None:
-                return await self._cdp_screenshot()
+                try:
+                    return await self._cdp_screenshot()
+                except Exception:
+                    pass  # Fall back to Playwright if CDP fails
 
-            # Fall back to Playwright screenshot when mask is needed
-            mask = await self.screenshot_mask.mask(self.page)
+            # Fall back to Playwright screenshot when mask is needed (or CDP failed)
+            mask = await self.screenshot_mask.mask(self.page) if self.screenshot_mask is not None else None
             return await self.page.screenshot(mask=mask, type="jpeg", quality=85)
 
         except PlaywrightTimeoutError:

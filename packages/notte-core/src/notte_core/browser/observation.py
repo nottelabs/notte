@@ -60,6 +60,8 @@ class Screenshot(BaseModel):
                     marker = v[pos + 1]
                     # SOF markers (0xC0-0xCF except 0xC4, 0xC8, 0xCC)
                     if marker in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+                        if pos + 8 >= len(v):  # Ensure we can read height and width
+                            break
                         height = (v[pos + 5] << 8) | v[pos + 6]
                         width = (v[pos + 7] << 8) | v[pos + 8]
                         # If dimensions are even, return as-is (fast path)
@@ -69,6 +71,8 @@ class Screenshot(BaseModel):
                         break
                     # Skip to next marker
                     length = (v[pos + 2] << 8) | v[pos + 3]
+                    if length < 2:  # Invalid JPEG marker length
+                        break
                     pos += 2 + length
                 else:
                     # Couldn't parse dimensions, assume it's fine
