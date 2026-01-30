@@ -4,10 +4,8 @@ from notte_core.actions import ActionUnion, CaptchaSolveAction
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, TBaseModel
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel
 from typing_extensions import final
-
-from notte_core.errors.processing import ScrapeFailedError
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.errors import NotteAPIError
@@ -164,26 +162,21 @@ class PageClient(BaseClient):
         request = ScrapeRequest.model_validate(data)
         endpoint = PageClient._page_scrape_endpoint(session_id=session_id)
         response = self.request(endpoint.with_request(request))
-        # Manually override the data.structured space to better match the response format
+        # Handle images scraping
         if request.only_images and response.images is not None:
             return response.images
-        response_format = request.response_format
+        # Handle structured data scraping
         structured = response.structured
         if request.requires_schema():
             if structured is None:
                 raise ValueError("Failed to scrape structured data. This should not happen. Please report this issue.")
-            if not structured.success or structured.data is None:
-                if raise_on_failure:
-                    error_msg = structured.error or "Unknown extraction error"
-                    raise ScrapeFailedError(error_msg)
-                return structured
-            if response_format is not None:
-                structured.data = response_format.model_validate(structured.data.model_dump())
-            if isinstance(structured.data, RootModel):
-                structured.data = structured.data.root  # type: ignore[attr-defined]
-            # When raise_on_failure=True, return data directly
-            if raise_on_failure and structured.data is not None:
-                return structured.data
+            # Use structured.get() which raises ScrapeFailedError if failed, and unwraps RootModel
+            if raise_on_failure:
+                extracted_data = structured.get()
+                # Validate against response_format if provided
+                if request.response_format is not None:
+                    extracted_data = request.response_format.model_validate(extracted_data.model_dump())
+                return extracted_data
             return structured
         return response.markdown
 

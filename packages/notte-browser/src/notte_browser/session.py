@@ -71,7 +71,7 @@ from notte_sdk.types import (
     SessionStartRequest,
     SessionStartRequestDict,
 )
-from pydantic import RootModel, ValidationError
+from pydantic import ValidationError
 from typing_extensions import override
 
 from notte_browser.action_selection.pipe import ActionSelectionPipe
@@ -835,11 +835,7 @@ class NotteSession(AsyncResource, SyncResource):
         is_structured_scrape = instructions is not None or response_format is not None
         structured = data.structured
         scrape_failed = structured is not None and not structured.success
-        scrape_exception: ScrapeFailedError | None = None
-
-        if scrape_failed:
-            error_msg = structured.error or "Unknown extraction error"  # pyright: ignore [reportOptionalMemberAccess]
-            scrape_exception = ScrapeFailedError(error_msg)
+        scrape_error = structured.error if structured is not None else None
 
         # Record to trajectory
         execution_result = ExecutionResult(
@@ -847,27 +843,17 @@ class NotteSession(AsyncResource, SyncResource):
             success=not scrape_failed,
             message=scrape_action.execution_message(),
             data=data,
-            exception=scrape_exception,
+            exception=ScrapeFailedError(scrape_error or "Unknown extraction error") if scrape_failed else None,
         )
         await self.trajectory.append(execution_result)
-
-        # Handle raise_on_failure for structured scrape failures
-        if scrape_failed and scrape_exception is not None:
-            if raise_on_failure:
-                raise scrape_exception
-            # Return StructuredData with success=False so user can handle it
-            return structured  # pyright: ignore [reportReturnType]
 
         # Return data
         if data.images is not None:
             return data.images
         if structured is not None:
-            if isinstance(structured.data, RootModel):
-                # automatically unwrap the root model otherwise it makes it unclear for the user
-                structured.data = structured.data.root  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue]
-            # When raise_on_failure=True and structured scrape succeeded, return data directly
-            if raise_on_failure and is_structured_scrape and structured.data is not None:
-                return structured.data
+            # Use structured.get() which raises ScrapeFailedError if failed, and unwraps RootModel
+            if raise_on_failure and is_structured_scrape:
+                return structured.get()
             return structured
         return data.markdown
 
