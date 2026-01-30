@@ -41,7 +41,7 @@ from notte_core.common.config import CookieDict, PerceptionType, config
 from notte_core.common.logging import logger
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
-from notte_core.data.space import ImageData, StructuredData, TBaseModel
+from notte_core.data.space import ImageData, TBaseModel
 from notte_core.utils.files import create_or_append_cookies_to_file
 from notte_core.utils.webp_replay import MP4Replay
 from pydantic import BaseModel
@@ -1133,7 +1133,7 @@ class RemoteSession(SyncResource):
     @overload
     def scrape(
         self, *, instructions: str, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> StructuredData[BaseModel]: ...
+    ) -> BaseModel: ...
 
     @overload
     def scrape(
@@ -1143,14 +1143,14 @@ class RemoteSession(SyncResource):
         instructions: str | None = None,
         raise_on_failure: bool = True,
         **params: Unpack[ScrapeMarkdownParamsDict],
-    ) -> StructuredData[TBaseModel]: ...
+    ) -> TBaseModel: ...
 
     @overload
     def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
 
     def scrape(
         self, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
-    ) -> str | StructuredData[BaseModel] | list[ImageData]:
+    ) -> str | BaseModel | list[ImageData]:
         """
         Scrape the current page data.
 
@@ -1191,7 +1191,7 @@ class RemoteSession(SyncResource):
             ScrapeResponse: An Observation object containing metadata, screenshot, action space, and data space.
 
         """
-        return self.client.page.scrape(self.session_id, **data)
+        return self.client.page.scrape(self.session_id, raise_on_failure=raise_on_failure, **data)
 
     def observe(self, **data: Unpack[ObserveRequestDict]) -> ObserveResponse:
         """

@@ -3,9 +3,11 @@ from typing import TYPE_CHECKING, Literal, Unpack, overload
 from notte_core.actions import ActionUnion, CaptchaSolveAction
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
-from notte_core.data.space import ImageData, StructuredData, TBaseModel
+from notte_core.data.space import ImageData, TBaseModel
 from pydantic import BaseModel, RootModel
 from typing_extensions import final
+
+from notte_core.errors.processing import ScrapeFailedError
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.errors import NotteAPIError
@@ -103,15 +105,24 @@ class PageClient(BaseClient):
         return NotteEndpoint(path=path, response=ExecutionResponseWithSession, method="POST")
 
     @overload
-    def scrape(self, session_id: str, /, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+    def scrape(
+        self, session_id: str, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> str: ...
 
     @overload
     def scrape(
-        self, session_id: str, *, instructions: str, **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> StructuredData[BaseModel]: ...
+        self,
+        session_id: str,
+        *,
+        instructions: str,
+        raise_on_failure: bool = True,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> BaseModel: ...
 
     @overload
-    def scrape(self, session_id: str, *, only_images: Literal[True]) -> list[ImageData]: ...
+    def scrape(
+        self, session_id: str, *, only_images: Literal[True], raise_on_failure: bool = True
+    ) -> list[ImageData]: ...
 
     @overload
     def scrape(
@@ -120,13 +131,14 @@ class PageClient(BaseClient):
         *,
         response_format: type[TBaseModel],
         instructions: str | None = None,
+        raise_on_failure: bool = True,
         **params: Unpack[ScrapeMarkdownParamsDict],
-    ) -> StructuredData[TBaseModel]: ...
+    ) -> TBaseModel: ...
 
     @track_usage("cloud.session.scrape")
     def scrape(
-        self, session_id: str, **data: Unpack[ScrapeRequestDict]
-    ) -> str | StructuredData[BaseModel] | list[ImageData]:
+        self, session_id: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
+    ) -> str | BaseModel | list[ImageData]:
         """
         Scrapes a page using provided parameters via the Notte API.
 
@@ -135,14 +147,19 @@ class PageClient(BaseClient):
         scrape endpoint and the resulting response is formatted into an Observation object.
 
         Args:
-            **data: Arbitrary keyword arguments validated against ScrapeRequestDict,
-                   expecting at least one of 'url' or 'session_id'.
+            session_id: The session ID to scrape from.
+            raise_on_failure: If True (default), raises ScrapeFailedError when structured data
+                extraction fails. If False, returns the StructuredData with success=False.
+            **data: Arbitrary keyword arguments validated against ScrapeRequestDict.
 
         Returns:
-            An Observation object containing metadata, screenshot, action space, and data space.
+            When using instructions/response_format and raise_on_failure=True: returns the extracted data directly.
+            When raise_on_failure=False: returns StructuredData wrapper so user can check .success.
+            For markdown scraping: returns str.
+            For image scraping: returns list[ImageData].
 
         Raises:
-            InvalidRequestError: If neither 'url' nor 'session_id' is supplied.
+            ScrapeFailedError: If structured data extraction fails and raise_on_failure=True.
         """
         request = ScrapeRequest.model_validate(data)
         endpoint = PageClient._page_scrape_endpoint(session_id=session_id)
@@ -156,11 +173,17 @@ class PageClient(BaseClient):
             if structured is None:
                 raise ValueError("Failed to scrape structured data. This should not happen. Please report this issue.")
             if not structured.success or structured.data is None:
+                if raise_on_failure:
+                    error_msg = structured.error or "Unknown extraction error"
+                    raise ScrapeFailedError(error_msg)
                 return structured
             if response_format is not None:
                 structured.data = response_format.model_validate(structured.data.model_dump())
             if isinstance(structured.data, RootModel):
                 structured.data = structured.data.root  # type: ignore[attr-defined]
+            # When raise_on_failure=True, return data directly
+            if raise_on_failure and structured.data is not None:
+                return structured.data
             return structured
         return response.markdown
 

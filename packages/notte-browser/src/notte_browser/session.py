@@ -85,6 +85,7 @@ from notte_browser.errors import (
     NoSnapshotObservedError,
     NoStorageObjectProvidedError,
     NoToolProvidedError,
+    ScrapeFailedError,
 )
 from notte_browser.playwright import PlaywrightManager
 from notte_browser.playwright_async_api import Locator, Page
@@ -770,7 +771,7 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     async def ascrape(
         self, *, instructions: str, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> StructuredData[BaseModel]: ...
+    ) -> BaseModel: ...
 
     @overload
     async def ascrape(
@@ -780,7 +781,7 @@ class NotteSession(AsyncResource, SyncResource):
         instructions: str | None = None,
         raise_on_failure: bool = True,
         **params: Unpack[ScrapeMarkdownParamsDict],
-    ) -> StructuredData[TBaseModel]: ...
+    ) -> TBaseModel: ...
 
     @overload
     async def ascrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...
@@ -789,16 +790,17 @@ class NotteSession(AsyncResource, SyncResource):
     @track_usage("local.session.scrape")
     async def ascrape(
         self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
-    ) -> StructuredData[BaseModel] | str | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | str | list[ImageData]:
         # Extract and convert response_format for the action (store as JSON schema)
         response_format = params.get("response_format")
+        instructions = params.get("instructions")
         response_format_schema: dict[str, Any] | None = None
         if response_format is not None:
             response_format_schema = response_format.model_json_schema()
 
         # Create ScrapeAction for trajectory recording
         scrape_action = ScrapeAction(
-            instructions=params.get("instructions"),
+            instructions=instructions,
             only_main_content=params.get("only_main_content", True),
             selector=params.get("selector"),
             only_images=params.get("only_images", False),
@@ -824,26 +826,49 @@ class NotteSession(AsyncResource, SyncResource):
                 exception=exception,
             )
             await self.trajectory.append(execution_result)
+            if raise_on_failure:
+                raise
+            # Cannot return meaningful data when exception occurred
             raise
 
-        # Record success to trajectory
+        # Check for structured data extraction failure
+        is_structured_scrape = instructions is not None or response_format is not None
+        structured = data.structured
+        scrape_failed = structured is not None and not structured.success
+        scrape_exception: ScrapeFailedError | None = None
+
+        if scrape_failed:
+            error_msg = structured.error or "Unknown extraction error"  # pyright: ignore [reportOptionalMemberAccess]
+            scrape_exception = ScrapeFailedError(error_msg)
+
+        # Record to trajectory
         execution_result = ExecutionResult(
             action=scrape_action,
-            success=True,
+            success=not scrape_failed,
             message=scrape_action.execution_message(),
             data=data,
-            exception=None,
+            exception=scrape_exception,
         )
         await self.trajectory.append(execution_result)
 
-        # Return data as before (backward compatible)
+        # Handle raise_on_failure for structured scrape failures
+        if scrape_failed and scrape_exception is not None:
+            if raise_on_failure:
+                raise scrape_exception
+            # Return StructuredData with success=False so user can handle it
+            return structured  # pyright: ignore [reportReturnType]
+
+        # Return data
         if data.images is not None:
             return data.images
-        if data.structured is not None:
-            if isinstance(data.structured.data, RootModel):
+        if structured is not None:
+            if isinstance(structured.data, RootModel):
                 # automatically unwrap the root model otherwise it makes it unclear for the user
-                data.structured.data = data.structured.data.root  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue]
-            return data.structured
+                structured.data = structured.data.root  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue]
+            # When raise_on_failure=True and structured scrape succeeded, return data directly
+            if raise_on_failure and is_structured_scrape and structured.data is not None:
+                return structured.data
+            return structured
         return data.markdown
 
     @profiler.profiled(service_name="execution")
@@ -870,7 +895,7 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     def scrape(
         self, *, instructions: str, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> StructuredData[BaseModel]: ...
+    ) -> BaseModel: ...
 
     @overload
     def scrape(
@@ -880,14 +905,14 @@ class NotteSession(AsyncResource, SyncResource):
         instructions: str | None = None,
         raise_on_failure: bool = True,
         **params: Unpack[ScrapeMarkdownParamsDict],
-    ) -> StructuredData[TBaseModel]: ...
+    ) -> TBaseModel: ...
 
     @overload
     def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # type: ignore[reportOverlappingOverload]
 
     def scrape(
         self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
-    ) -> StructuredData[BaseModel] | str | list[ImageData]:
+    ) -> BaseModel | str | list[ImageData]:
         return asyncio.run(self.ascrape(raise_on_failure=raise_on_failure, **params))
 
     @timeit("reset")
