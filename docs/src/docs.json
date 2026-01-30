@@ -335,7 +335,8 @@
                 "pages": [
                   "trust-center",
                   "legal/terms",
-                  "legal/privacy"
+                  "legal/privacy",
+                  "legal/bug-bounty"
                 ]
               },
               {
