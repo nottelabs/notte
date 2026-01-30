@@ -6,14 +6,14 @@ from pydantic import BaseModel
 
 
 # Good - matches page structure
-class Product(BaseModel):
+class GoodProduct(BaseModel):
     name: str
     price: float
     in_stock: bool
 
 
 # Bad - fields that may not exist
-class Product(BaseModel):
+class BadProduct(BaseModel):
     name: str
     price: float
     manufacturer: str  # Page might not have this

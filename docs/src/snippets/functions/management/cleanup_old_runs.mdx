@@ -12,20 +12,18 @@ client = NotteClient()
 
 def archive_old_runs(function_id: str, days_old: int = 30):
     """Archive runs older than specified days."""
-    runs = client.functions.list_runs(function_id=function_id, only_active=False)
+    runs = client.functions.list_runs(function_id, only_active=False)
 
     cutoff_date = datetime.now() - timedelta(days=days_old)
     archive = []
 
-    for run in runs.runs:
-        run_date = datetime.fromisoformat(run.created_at.replace("Z", "+00:00"))
-
-        if run_date < cutoff_date:
+    for run in runs.items:
+        if run.created_at < cutoff_date:
             archive.append(
                 {
-                    "run_id": run.function_run_id,
+                    "run_id": run.workflow_run_id,
                     "status": run.status,
-                    "created_at": run.created_at,
+                    "created_at": run.created_at.isoformat(),
                     "result": str(run.result)[:100],  # First 100 chars
                 }
             )

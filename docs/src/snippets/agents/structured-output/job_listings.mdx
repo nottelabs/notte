@@ -1,10 +1,7 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/agents/structured-output/job_listings.py */}
 
-```python
-from pydantic import BaseModel
-
-
+```python job_listings.py
 class JobPosting(BaseModel):
     title: str
     company: str
@@ -15,8 +12,8 @@ class JobPosting(BaseModel):
     requirements: list[str]
 
 
-result = agent.run(
-    task="Extract job posting information",
-    response_format=JobPosting,
-)
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(
 ```

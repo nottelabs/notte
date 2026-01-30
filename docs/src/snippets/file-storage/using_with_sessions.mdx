@@ -14,7 +14,7 @@ with client.Session(storage=storage) as session:
     session.execute(type="goto", url="https://example.com/import")
 
     # Upload using the upload_file action
-    session.execute(type="upload_file", selector='input[type="file"]', filename="data.csv")
+    session.execute(type="upload_file", selector='input[type="file"]', file_path="data.csv")
 
     session.execute(type="click", selector="button.submit")
 

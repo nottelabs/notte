@@ -23,9 +23,10 @@ with client.Session() as session:
         response_format=Product,
     )
 
-    # Type-safe access
-    product = result.answer
-    print(f"{product.name}: ${product.price}")
-    if product.in_stock:
-        print("Available!")
+    # Parse and access
+    if result.success and result.answer:
+        product = Product.model_validate_json(result.answer)
+        print(f"{product.name}: ${product.price}")
+        if product.in_stock:
+            print("Available!")
 ```

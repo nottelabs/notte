@@ -2,6 +2,7 @@
 {/* @sniptest testers/getting-started/concept_identity.py */}
 
 ```python concept_identity.py
-identity = client.identity.create()  # Generate synthetic identity
-agent.run(task="Sign up for newsletter", identity=identity)
+    persona = client.Persona()  # Generate synthetic identity
+    agent = client.Agent(session=session, persona=persona)
+    agent.run(task="Sign up for newsletter")
 ```

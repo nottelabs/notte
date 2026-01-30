@@ -1,12 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/agents/replay/check_if_failed.py */}
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
+```python check_if_failed.py
+    agent = client.Agent(session=session)
     result = agent.run(task="Complete task")
 
     if not result.success:

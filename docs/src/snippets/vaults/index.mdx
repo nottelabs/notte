@@ -12,9 +12,6 @@ vault.add_credentials(
     url="https://github.com/",
     email="my_cool_email@gmail.com",
     password="my_cool_password",
-    # Check https://github.com/scito/extract_otp_secrets to extract your MFA secret
-    # from your authenticator app
-    mfa_secret="PYNT7I67RFS2EPR5",
 )
 # Run an agent with secure credential access
 with client.Session() as session:

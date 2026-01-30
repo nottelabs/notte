@@ -11,7 +11,6 @@ from notte_core.actions import ActionUnion
 from notte_core.browser.observation import ExecutionResult
 from notte_core.browser.perception import ObservationPerception
 from notte_core.common.logging import logger
-from notte_core.data.space import StructuredData
 from notte_core.utils.pydantic_schema import JsonResponseFormat, convert_response_format_to_pydantic_model
 from notte_sdk import NotteClient, __version__
 from notte_sdk.endpoints.sessions import RemoteSession
@@ -239,7 +238,7 @@ async def notte_scrape(
         str | None,
         "Additional instructions to use for the scrape (i.e specific fields or information to extract). You can use that with `response_format=None` first to try to extract some data from the page from a rough natural language description. If None and no response format is provided, the full current page will be scraped as a markdown string (useful for debugging).",
     ] = None,
-) -> str | StructuredData[BaseModel]:
+) -> str | BaseModel:
     """Scrape the current page data"""
     global current_step
     session = await get_session()

@@ -2,6 +2,8 @@
 {/* @sniptest testers/getting-started/concept_vault.py */}
 
 ```python concept_vault.py
-client.vault.store("github", {"username": "...", "password": "..."})
-agent.run(task="Login to GitHub", vault="github")
+    vault = client.Vault()
+    vault.add_credentials(url="https://github.com", email="...", password="...")
+    agent = client.Agent(session=session, vault=vault)
+    agent.run(task="Login to GitHub")
 ```
