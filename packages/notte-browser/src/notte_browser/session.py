@@ -11,6 +11,7 @@ from notte_core import enable_nest_asyncio
 from notte_core.actions import (
     ActionList,
     BaseAction,
+    FormFillAction,
     InteractionAction,
     # ReadFileAction,
     ScrapeAction,
@@ -51,6 +52,7 @@ from notte_core.common.config import CookieDict, PerceptionType, RaiseCondition,
 from notte_core.common.logging import logger, timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
+from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.data.space import DataSpace, ImageData, StructuredData, TBaseModel
 from notte_core.errors.actions import InvalidActionError
 from notte_core.errors.base import NotteBaseError
@@ -62,6 +64,7 @@ from notte_core.trajectory import Trajectory
 from notte_core.utils.files import create_or_append_cookies_to_file
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_llm.service import LLMService
+from notte_sdk.endpoints.personas import BasePersona
 from notte_sdk.types import (
     PaginationParams,
     PaginationParamsDict,
@@ -91,7 +94,7 @@ from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe
 from notte_browser.tagging.action.pipe import MainActionSpacePipe
-from notte_browser.tools.base import BaseTool
+from notte_browser.tools.base import BaseTool, PersonaTool
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
 
 enable_nest_asyncio()
@@ -111,6 +114,8 @@ class NotteSession(AsyncResource, SyncResource):
         cookie_file: str | Path | None = None,
         storage: BaseStorage | None = None,
         tools: list[BaseTool] | None = None,
+        vault: BaseVault | None = None,
+        persona: BasePersona | None = None,
         window: BrowserWindow | None = None,
         keep_alive: bool = False,
         **data: Unpack[SessionStartRequestDict],
@@ -127,6 +132,10 @@ class NotteSession(AsyncResource, SyncResource):
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, type=config.scraping_type)
         self._action_selection_pipe: ActionSelectionPipe = ActionSelectionPipe(llmserve=llmserve)
         self.tools: list[BaseTool] = tools or []
+        self.vault: BaseVault | None = vault
+        self.persona: BasePersona | None = persona
+        if persona is not None:
+            self.attach_persona(persona)
         self.default_perception_type: PerceptionType = perception_type
         self.default_raise_on_failure: bool = raise_on_failure
         self.trajectory: Trajectory = Trajectory()
@@ -134,6 +143,26 @@ class NotteSession(AsyncResource, SyncResource):
         self._cookie_file: Path | None = Path(cookie_file) if cookie_file is not None else None
         self._keep_alive: bool = keep_alive
         self._keep_alive_msg: str = "🌌 Keep alive mode enabled, skipping session stop... Use `session.close()` to manually stop the session. Never `keep_alive=True` is production."
+
+    def _has_persona_tool(self, persona: BasePersona) -> bool:
+        for tool in self.tools:
+            if not isinstance(tool, PersonaTool):
+                continue
+            try:
+                if tool.persona.info.persona_id == persona.info.persona_id:
+                    return True
+            except Exception:
+                if tool.persona is persona:
+                    return True
+        return False
+
+    def attach_persona(self, persona: BasePersona) -> None:
+        self.persona = persona
+        if not self._has_persona_tool(persona):
+            self.tools.append(PersonaTool(persona))
+
+    def set_vault(self, vault: BaseVault | None) -> None:
+        self.vault = vault
 
     @track_usage("local.session.cookies.set")
     async def aset_cookies(
@@ -373,6 +402,67 @@ class NotteSession(AsyncResource, SyncResource):
     ) -> Observation:
         return asyncio.run(self.aobserve(instructions=instructions, perception_type=perception_type, **pagination))
 
+    def _has_any_persona_tool(self) -> bool:
+        return any(isinstance(tool, PersonaTool) for tool in self.tools)
+
+    async def aread_emails(
+        self,
+        *,
+        only_unread: bool | None = None,
+        timedelta: dt.timedelta | None = None,
+        limit: int | None = None,
+    ) -> ExecutionResult:
+        if not self._has_any_persona_tool():
+            raise ValueError(
+                "No persona tool attached to session. Pass `persona=...` when creating the session or call `attach_persona(...)`."
+            )
+        payload: dict[str, Any] = {"type": "email_read"}
+        if only_unread is not None:
+            payload["only_unread"] = only_unread
+        if timedelta is not None:
+            payload["timedelta"] = timedelta
+        if limit is not None:
+            payload["limit"] = limit
+        return await self.aexecute(**payload)
+
+    def read_emails(
+        self,
+        *,
+        only_unread: bool | None = None,
+        timedelta: dt.timedelta | None = None,
+        limit: int | None = None,
+    ) -> ExecutionResult:
+        return asyncio.run(self.aread_emails(only_unread=only_unread, timedelta=timedelta, limit=limit))
+
+    async def aread_sms(
+        self,
+        *,
+        only_unread: bool | None = None,
+        timedelta: dt.timedelta | None = None,
+        limit: int | None = None,
+    ) -> ExecutionResult:
+        if not self._has_any_persona_tool():
+            raise ValueError(
+                "No persona tool attached to session. Pass `persona=...` when creating the session or call `attach_persona(...)`."
+            )
+        payload: dict[str, Any] = {"type": "sms_read"}
+        if only_unread is not None:
+            payload["only_unread"] = only_unread
+        if timedelta is not None:
+            payload["timedelta"] = timedelta
+        if limit is not None:
+            payload["limit"] = limit
+        return await self.aexecute(**payload)
+
+    def read_sms(
+        self,
+        *,
+        only_unread: bool | None = None,
+        timedelta: dt.timedelta | None = None,
+        limit: int | None = None,
+    ) -> ExecutionResult:
+        return asyncio.run(self.aread_sms(only_unread=only_unread, timedelta=timedelta, limit=limit))
+
     async def locate(self, action: BaseAction) -> Locator | None:
         action_with_selector = await NodeResolutionPipe.forward(action, self._snapshot)
         if isinstance(action_with_selector, InteractionAction) and action_with_selector.selectors is not None:
@@ -380,6 +470,25 @@ class NotteSession(AsyncResource, SyncResource):
             assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
             return locator
         return None
+
+    async def _action_with_vault(self, action: BaseAction) -> BaseAction:
+        if self.vault is None or not self.vault.contains_credentials(action):
+            return action
+
+        snapshot = self.snapshot
+        if isinstance(action, FormFillAction):
+            attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
+            return await self.vault.replace_credentials(action, attrs, snapshot)
+
+        locator = await self.locate(action)
+        attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
+        if locator is not None:
+            attrs = LocatorAttributes(
+                type=await locator.get_attribute("type"),
+                autocomplete=await locator.get_attribute("autocomplete"),
+                outerHTML=await locator.evaluate("el => el.outerHTML"),
+            )
+        return await self.vault.replace_credentials(action, attrs, snapshot)
 
     @overload
     async def aexecute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
@@ -569,6 +678,7 @@ class NotteSession(AsyncResource, SyncResource):
                     if not tool_found:
                         raise NoToolProvidedError(resolved_action)
                 case _:
+                    resolved_action = await self._action_with_vault(resolved_action)
                     success = await self.controller.execute(self.window, resolved_action, self._snapshot)
 
         except (NoSnapshotObservedError, NoStorageObjectProvidedError, NoToolProvidedError) as e:
@@ -629,7 +739,8 @@ class NotteSession(AsyncResource, SyncResource):
         await self.trajectory.append(execution_result)
 
         # add screenshot to trajectory (after the execution)
-        _ = await self.ascreenshot()
+        if self._window is not None:
+            _ = await self.ascreenshot()
 
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
         if _raise_on_failure and exception is not None:
