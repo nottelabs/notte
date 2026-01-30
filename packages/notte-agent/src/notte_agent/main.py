@@ -53,7 +53,12 @@ class Agent(BaseAgent):
         self.tools: list[BaseTool] = self.session.tools
         if persona is not None:
             self.vault = self.vault or (persona.vault if persona.has_vault else None)
-            self.tools.append(PersonaTool(persona))
+            if not any(
+                isinstance(tool, PersonaTool)
+                and getattr(tool.persona.info, "persona_id", None) == getattr(persona.info, "persona_id", None)
+                for tool in self.tools
+            ):
+                self.tools.append(PersonaTool(persona))
 
     def create_agent(
         self,
