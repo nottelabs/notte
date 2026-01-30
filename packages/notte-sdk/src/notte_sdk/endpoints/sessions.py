@@ -1128,10 +1128,12 @@ class RemoteSession(SyncResource):
     # #######################################################################
 
     @overload
-    def scrape(self, /, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+    def scrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
 
     @overload
-    def scrape(self, *, instructions: str, **params: Unpack[ScrapeMarkdownParamsDict]) -> StructuredData[BaseModel]: ...
+    def scrape(
+        self, *, instructions: str, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> StructuredData[BaseModel]: ...
 
     @overload
     def scrape(
@@ -1139,13 +1141,16 @@ class RemoteSession(SyncResource):
         *,
         response_format: type[TBaseModel],
         instructions: str | None = None,
+        raise_on_failure: bool = True,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
     @overload
-    def scrape(self, /, *, only_images: Literal[True]) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
+    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
 
-    def scrape(self, **data: Unpack[ScrapeRequestDict]) -> str | StructuredData[BaseModel] | list[ImageData]:
+    def scrape(
+        self, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
+    ) -> str | StructuredData[BaseModel] | list[ImageData]:
         """
         Scrape the current page data.
 

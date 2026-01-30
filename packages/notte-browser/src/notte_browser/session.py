@@ -765,11 +765,11 @@ class NotteSession(AsyncResource, SyncResource):
         )
 
     @overload
-    async def ascrape(self, /, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+    async def ascrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
 
     @overload
     async def ascrape(
-        self, *, instructions: str, **params: Unpack[ScrapeMarkdownParamsDict]
+        self, *, instructions: str, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
     ) -> StructuredData[BaseModel]: ...
 
     @overload
@@ -778,15 +778,18 @@ class NotteSession(AsyncResource, SyncResource):
         *,
         response_format: type[TBaseModel],
         instructions: str | None = None,
+        raise_on_failure: bool = True,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
     @overload
-    async def ascrape(self, /, *, only_images: Literal[True]) -> list[ImageData]: ...
+    async def ascrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...
 
     @timeit("scrape")
     @track_usage("local.session.scrape")
-    async def ascrape(self, **params: Unpack[ScrapeParamsDict]) -> StructuredData[BaseModel] | str | list[ImageData]:
+    async def ascrape(
+        self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
+    ) -> StructuredData[BaseModel] | str | list[ImageData]:
         # Extract and convert response_format for the action (store as JSON schema)
         response_format = params.get("response_format")
         response_format_schema: dict[str, Any] | None = None
@@ -862,10 +865,12 @@ class NotteSession(AsyncResource, SyncResource):
             raise e
 
     @overload
-    def scrape(self, /, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+    def scrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
 
     @overload
-    def scrape(self, *, instructions: str, **params: Unpack[ScrapeMarkdownParamsDict]) -> StructuredData[BaseModel]: ...
+    def scrape(
+        self, *, instructions: str, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> StructuredData[BaseModel]: ...
 
     @overload
     def scrape(
@@ -873,14 +878,17 @@ class NotteSession(AsyncResource, SyncResource):
         *,
         response_format: type[TBaseModel],
         instructions: str | None = None,
+        raise_on_failure: bool = True,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
     @overload
-    def scrape(self, /, *, only_images: Literal[True]) -> list[ImageData]: ...  # type: ignore[reportOverlappingOverload]
+    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # type: ignore[reportOverlappingOverload]
 
-    def scrape(self, **params: Unpack[ScrapeParamsDict]) -> StructuredData[BaseModel] | str | list[ImageData]:
-        return asyncio.run(self.ascrape(**params))
+    def scrape(
+        self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
+    ) -> StructuredData[BaseModel] | str | list[ImageData]:
+        return asyncio.run(self.ascrape(raise_on_failure=raise_on_failure, **params))
 
     @timeit("reset")
     @track_usage("local.session.reset")
