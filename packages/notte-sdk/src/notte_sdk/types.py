@@ -1080,6 +1080,10 @@ class ProfileResponse(SdkResponse):
     name: Annotated[str | None, Field(description="Profile name")]
     created_at: Annotated[dt.datetime, Field(description="Profile creation timestamp")]
     updated_at: Annotated[dt.datetime, Field(description="Profile last update timestamp")]
+    persisted_domains: Annotated[
+        list[str],
+        Field(description="List of domains with persisted browser state (cookies, localStorage, sessionStorage)"),
+    ] = Field(default_factory=list)
 
 
 class ProfileListRequestDict(TypedDict, total=False):
