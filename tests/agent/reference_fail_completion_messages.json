@@ -9,11 +9,11 @@
   },
   {
     "role": "assistant",
-    "content": "{\"state\":{\"previous_goal_status\":\"unknown\",\"previous_goal_eval\":\"Evaluating current state\",\"page_summary\":\"Navigating to notte.cc\",\"relevant_interactions\":[],\"memory\":\"Remembering previous actions\",\"next_goal\":\"Navigate to the website\"},\"action\":{\"type\":\"goto\",\"url\":\"https://console.notte.cc\"}}"
+    "content": "{\"state\":{\"previous_goal_status\":\"unknown\",\"previous_goal_eval\":\"Evaluating current state\",\"page_summary\":\"Navigating to notte.cc\",\"relevant_interactions\":[],\"memory\":\"Remembering previous actions\",\"next_goal\":\"Navigate to the website\"},\"action\":{\"type\":\"goto\",\"url\":\"https://console.notte.cc/signin\"}}"
   },
   {
     "role": "user",
-    "content": "\u2705 action 'goto' succeeded: 'Navigated to 'https://console.notte.cc' in current tab'"
+    "content": "\u2705 action 'goto' succeeded: 'Navigated to 'https://console.notte.cc/signin' in current tab'"
   },
   {
     "role": "assistant",

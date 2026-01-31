@@ -113,13 +113,14 @@ def test_open_viewer_false_no_viewer(client: NotteClient, session_id: str) -> No
 
 def test_session_always_headless_true_on_wire(client: NotteClient, session_id: str, headers: dict[str, str]) -> None:
     """Test that session start requests always include headless=True."""
-    with patch("requests.post") as mock_post, patch.object(client.sessions, "viewer"):
+    with patch("requests.post") as mock_post:
         mock_response = session_response_dict(session_id)
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = mock_response
 
         session = client.Session(open_viewer=True, _client=client.sessions)
-        session.start()
+        with patch.object(session, "viewer"):
+            session.start()
 
         # Verify the request was made
         assert mock_post.called
