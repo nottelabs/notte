@@ -814,6 +814,7 @@ class NotteSession(AsyncResource, SyncResource):
         response_format = params.get("response_format")
         instructions = params.get("instructions")
         response_format_schema: dict[str, Any] | None = None
+        is_structured_scrape = instructions is not None or response_format is not None
         if response_format is not None:
             response_format_schema = response_format.model_json_schema()
 
@@ -847,15 +848,18 @@ class NotteSession(AsyncResource, SyncResource):
             await self.trajectory.append(execution_result)
             if raise_on_failure:
                 raise
-            # Cannot return meaningful data when exception occurred
-            data = DataSpace(
-                markdown=f"No markdown available. Exception: {exception}",
-                images=None,
-                structured=None,
+            # return meaningful data when exception occurred
+            error_message = f"No markdown available. Exception: {exception}"
+            return (
+                DataSpace(
+                    markdown=error_message,
+                    images=None,
+                    structured=StructuredData(success=False, error=error_message, data=None),
+                )
+                if is_structured_scrape
+                else error_message
             )
 
-        # Check for structured data extraction failure
-        is_structured_scrape = instructions is not None or response_format is not None
         # Record to trajectory
         execution_result = ExecutionResult(
             action=scrape_action,
