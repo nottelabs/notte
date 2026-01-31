@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 from urllib.parse import urljoin
 from webbrowser import open as open_browser
 
-from notte_core.actions import BaseAction
+from notte_core.actions import BaseAction, InteractionActionUnion
 from notte_core.actions.typedicts import (
     CaptchaSolveActionDict,
     CheckActionDict,
@@ -56,6 +56,7 @@ from notte_sdk.types import (
     GetCookiesResponse,
     ObserveRequestDict,
     ObserveResponse,
+    PaginationParamsDict,
     ScrapeMarkdownParamsDict,
     ScrapeRequestDict,
     SessionDebugResponse,
@@ -1212,7 +1213,27 @@ class RemoteSession(SyncResource):
         """
         return self.client.page.scrape(self.session_id, raise_on_failure=raise_on_failure, **data)
 
-    def observe(self, **data: Unpack[ObserveRequestDict]) -> ObserveResponse:
+    @overload
+    def observe(
+        self,
+        *,
+        instructions: str,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> list[InteractionActionUnion]: ...
+
+    @overload
+    def observe(
+        self,
+        *,
+        instructions: None = None,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> ObserveResponse: ...
+
+    def observe(self, **data: Unpack[ObserveRequestDict]) -> ObserveResponse | list[InteractionActionUnion]:
         """
         Observes the current session page.
 
@@ -1251,9 +1272,8 @@ class RemoteSession(SyncResource):
 
         ```python
         _ = session.execute(type="goto", url="https://console.notte.cc")
-        obs = session.observe(instructions="Fill the email input")
-        action = obs.space.first()
-        print(action.model_dump())
+        actions = session.observe(instructions="Fill the email input")
+        print(actions[0].model_dump())
         ```
 
 
@@ -1261,11 +1281,12 @@ class RemoteSession(SyncResource):
             **data: Arbitrary keyword arguments corresponding to observation request fields.
 
         Returns:
-            ObserveResponse: The formatted observation result from the API response.
+            ObserveResponse: The formatted observation result from the API response when no instructions provided.
+            list[InteractionActionUnion]: The filtered list of actions when instructions is provided.
         """
         if data.get("perception_type") is None:
             data["perception_type"] = self.default_perception_type
-        return self.client.page.observe(session_id=self.session_id, **data)
+        return self.client.page.observe(session_id=self.session_id, **data)  # pyright: ignore[reportUnknownVariableType, reportArgumentType, reportCallIssue]
 
     @overload
     def execute(
