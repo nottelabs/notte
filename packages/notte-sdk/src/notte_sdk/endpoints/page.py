@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Literal, Unpack, overload
+from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 
 from notte_core.actions import ActionUnion, CaptchaSolveAction
 from notte_core.common.logging import logger
@@ -108,7 +108,7 @@ class PageClient(BaseClient):
         self, session_id: str, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
     ) -> str: ...
 
-    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
     @overload
     def scrape(
         self,
@@ -117,7 +117,7 @@ class PageClient(BaseClient):
         instructions: str,
         raise_on_failure: Literal[True] = ...,
         **params: Unpack[ScrapeMarkdownParamsDict],
-    ) -> BaseModel: ...
+    ) -> dict[str, Any]: ...
 
     # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
     @overload
@@ -162,7 +162,7 @@ class PageClient(BaseClient):
     @track_usage("cloud.session.scrape")
     def scrape(
         self, session_id: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
-    ) -> StructuredData[BaseModel] | BaseModel | str | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
         """
         Scrapes a page using provided parameters via the Notte API.
 

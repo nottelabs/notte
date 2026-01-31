@@ -902,11 +902,11 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     def scrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
 
-    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
     @overload
     def scrape(
         self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> BaseModel: ...
+    ) -> dict[str, Any]: ...
 
     # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
     @overload
@@ -938,7 +938,7 @@ class NotteSession(AsyncResource, SyncResource):
 
     def scrape(
         self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
-    ) -> StructuredData[BaseModel] | BaseModel | str | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
         return asyncio.run(self.ascrape(raise_on_failure=raise_on_failure, **params))
 
     @timeit("reset")
