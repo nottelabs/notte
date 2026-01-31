@@ -23,4 +23,4 @@ company = client.scrape(
     "https://example.com/about", response_format=Company, instructions="Extract company information including address"
 )
 
-print(Company.address.city)
+print(company.address.city)

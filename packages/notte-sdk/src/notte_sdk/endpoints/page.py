@@ -195,9 +195,10 @@ class PageClient(BaseClient):
         structured = response.structured
         if request.requires_schema():
             if structured is None:
-                raise ScrapeFailedError(
-                    "Failed to scrape structured data. This should not happen. Please report this issue."
-                )
+                error_message = "Failed to scrape structured data. This should not happen. Please report this issue."
+                if raise_on_failure:
+                    raise ScrapeFailedError(error_message)
+                return StructuredData[BaseModel](success=False, error=error_message, data=None)
             # Use structured.get() which raises ScrapeFailedError if failed, and unwraps RootModel
             if raise_on_failure:
                 extracted_data = structured.get()
