@@ -848,7 +848,11 @@ class NotteSession(AsyncResource, SyncResource):
             if raise_on_failure:
                 raise
             # Cannot return meaningful data when exception occurred
-            raise
+            data = DataSpace(
+                markdown=f"No markdown available. Exception: {exception}",
+                images=None,
+                structured=None,
+            )
 
         # Check for structured data extraction failure
         is_structured_scrape = instructions is not None or response_format is not None
