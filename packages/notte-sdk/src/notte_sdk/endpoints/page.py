@@ -4,6 +4,7 @@ from notte_core.actions import ActionUnion, CaptchaSolveAction
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
+from notte_core.errors.processing import ScrapeFailedError
 from pydantic import BaseModel
 from typing_extensions import final
 
@@ -194,13 +195,18 @@ class PageClient(BaseClient):
         structured = response.structured
         if request.requires_schema():
             if structured is None:
-                raise ValueError("Failed to scrape structured data. This should not happen. Please report this issue.")
+                raise ScrapeFailedError(
+                    "Failed to scrape structured data. This should not happen. Please report this issue."
+                )
             # Use structured.get() which raises ScrapeFailedError if failed, and unwraps RootModel
             if raise_on_failure:
                 extracted_data = structured.get()
                 # Validate against response_format if provided
                 if request.response_format is not None:
-                    extracted_data = request.response_format.model_validate(extracted_data.model_dump())
+                    extracted_data_dict = (
+                        extracted_data.model_dump() if isinstance(extracted_data, BaseModel) else extracted_data  # pyright: ignore[reportUnnecessaryIsInstance]
+                    )
+                    extracted_data = request.response_format.model_validate(extracted_data_dict)
                 return extracted_data
             return structured
         return response.markdown
