@@ -41,7 +41,7 @@ from notte_core.common.config import CookieDict, PerceptionType, config
 from notte_core.common.logging import logger
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
-from notte_core.data.space import ImageData, TBaseModel
+from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from notte_core.utils.files import create_or_append_cookies_to_file
 from notte_core.utils.webp_replay import MP4Replay
 from pydantic import BaseModel
@@ -1130,27 +1130,46 @@ class RemoteSession(SyncResource):
     @overload
     def scrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
 
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
     @overload
     def scrape(
-        self, *, instructions: str, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+        self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
     ) -> BaseModel: ...
 
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    def scrape(
+        self, *, instructions: str, raise_on_failure: Literal[False], **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> StructuredData[BaseModel]: ...
+
+    # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
     def scrape(
         self,
         *,
         response_format: type[TBaseModel],
         instructions: str | None = None,
-        raise_on_failure: bool = True,
+        raise_on_failure: Literal[True] = ...,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> TBaseModel: ...
 
+    # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
     @overload
-    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
+    def scrape(
+        self,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[TBaseModel]: ...
+
+    @overload
+    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # type: ignore[reportOverlappingOverload]
 
     def scrape(
         self, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
-    ) -> str | BaseModel | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | str | list[ImageData]:
         """
         Scrape the current page data.
 

@@ -768,20 +768,39 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     async def ascrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
 
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
     @overload
     async def ascrape(
-        self, *, instructions: str, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+        self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
     ) -> BaseModel: ...
 
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    async def ascrape(
+        self, *, instructions: str, raise_on_failure: Literal[False], **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> StructuredData[BaseModel]: ...
+
+    # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
     async def ascrape(
         self,
         *,
         response_format: type[TBaseModel],
         instructions: str | None = None,
-        raise_on_failure: bool = True,
+        raise_on_failure: Literal[True] = ...,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> TBaseModel: ...
+
+    # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
+    @overload
+    async def ascrape(
+        self,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[TBaseModel]: ...
 
     @overload
     async def ascrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...
@@ -878,27 +897,46 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     def scrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
 
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
     @overload
     def scrape(
-        self, *, instructions: str, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+        self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
     ) -> BaseModel: ...
 
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    def scrape(
+        self, *, instructions: str, raise_on_failure: Literal[False], **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> StructuredData[BaseModel]: ...
+
+    # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
     def scrape(
         self,
         *,
         response_format: type[TBaseModel],
         instructions: str | None = None,
-        raise_on_failure: bool = True,
+        raise_on_failure: Literal[True] = ...,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> TBaseModel: ...
+
+    # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
+    @overload
+    def scrape(
+        self,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[TBaseModel]: ...
 
     @overload
     def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # type: ignore[reportOverlappingOverload]
 
     def scrape(
         self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
-    ) -> BaseModel | str | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | str | list[ImageData]:
         return asyncio.run(self.ascrape(raise_on_failure=raise_on_failure, **params))
 
     @timeit("reset")

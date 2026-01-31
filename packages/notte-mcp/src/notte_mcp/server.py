@@ -249,7 +249,7 @@ async def notte_scrape(
         case None, None:
             return session.scrape()
         case None, _:
-            return session.scrape(instructions=instructions)
+            return session.scrape(instructions=instructions, raise_on_failure=False)
         case _, _:
             try:
                 _response_format = convert_response_format_to_pydantic_model(response_format.model_dump())
@@ -258,7 +258,7 @@ async def notte_scrape(
             assert _response_format is not None, (
                 f"Error converting response format to pydantic model: {response_format.model_dump_json()}"
             )
-            return session.scrape(instructions=instructions, response_format=_response_format)
+            return session.scrape(instructions=instructions, response_format=_response_format, raise_on_failure=False)
 
 
 @mcp.tool(

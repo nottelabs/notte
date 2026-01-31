@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Literal, Unpack, overload
 from notte_core.actions import ActionUnion, CaptchaSolveAction
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
-from notte_core.data.space import ImageData, TBaseModel
+from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from pydantic import BaseModel
 from typing_extensions import final
 
@@ -107,21 +107,34 @@ class PageClient(BaseClient):
         self, session_id: str, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
     ) -> str: ...
 
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
     @overload
     def scrape(
         self,
         session_id: str,
         *,
         instructions: str,
-        raise_on_failure: bool = True,
+        raise_on_failure: Literal[True] = ...,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> BaseModel: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    def scrape(
+        self,
+        session_id: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[BaseModel]: ...
 
     @overload
     def scrape(
         self, session_id: str, *, only_images: Literal[True], raise_on_failure: bool = True
     ) -> list[ImageData]: ...
 
+    # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
     def scrape(
         self,
@@ -129,14 +142,26 @@ class PageClient(BaseClient):
         *,
         response_format: type[TBaseModel],
         instructions: str | None = None,
-        raise_on_failure: bool = True,
+        raise_on_failure: Literal[True] = ...,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> TBaseModel: ...
+
+    # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
+    @overload
+    def scrape(
+        self,
+        session_id: str,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[TBaseModel]: ...
 
     @track_usage("cloud.session.scrape")
     def scrape(
         self, session_id: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
-    ) -> str | BaseModel | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | str | list[ImageData]:
         """
         Scrapes a page using provided parameters via the Notte API.
 
