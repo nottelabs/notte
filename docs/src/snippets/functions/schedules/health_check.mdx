@@ -13,13 +13,13 @@ def run():
     workflows = client.functions.list()
 
     health_report = []
-    for workflow in workflows.workflows:
-        runs = client.functions.list_runs(function_id=workflow.function_id)
+    for workflow in workflows.items:
+        runs = client.functions.list_runs(workflow.workflow_id)
 
         # Check recent runs
-        recent_failures = [r for r in runs.runs if r.status == "failed"]
+        recent_failures = [r for r in runs.items if r.status == "failed"]
 
-        health_report.append({"function_id": workflow.function_id, "recent_failures": len(recent_failures)})
+        health_report.append({"workflow_id": workflow.workflow_id, "recent_failures": len(recent_failures)})
 
     return health_report
 ```

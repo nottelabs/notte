@@ -1,18 +1,16 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/agents/workflows/document-the-source.py */}
 
-```python
-from datetime import datetime
+```python document-the-source.py
+    result = agent.run(task="Extract product data")
 
-function = agent.workflow.create()
+    function = agent.workflow.create_function()
 
-# Add metadata
-metadata = {
-    "agent_id": agent.agent_id,
-    "original_task": "Extract product data",
-    "created_at": datetime.now().isoformat(),
-    "success_rate": result.success,
-}
-
-# Save with function
+    # Add metadata
+    metadata = {
+        "agent_id": agent.agent_id,
+        "original_task": "Extract product data",
+        "created_at": datetime.now().isoformat(),
+        "success_rate": result.success,
+    }
 ```

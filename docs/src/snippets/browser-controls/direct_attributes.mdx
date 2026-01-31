@@ -9,15 +9,15 @@ client = NotteClient()
 with client.Session() as session:
     session.execute(type="goto", url="https://example.com")
 
-    # By ID (cleaner)
-    session.execute(type="click", id="submit-button")
+    # By ID from observe()
+    session.execute(type="click", id="B1")
 
-    # By text content
-    session.execute(type="click", text="Submit")
+    # By selector
+    session.execute(type="click", selector="button[type='submit']")
 
-    # By placeholder
-    session.execute(type="fill", placeholder="Enter email", value="user@example.com")
+    # By placeholder selector
+    session.execute(type="fill", selector="input[placeholder='Enter email']", value="user@example.com")
 
-    # By ARIA label
-    session.execute(type="click", aria_label="Close dialog")
+    # By ARIA label selector
+    session.execute(type="click", selector="button[aria-label='Close dialog']")
 ```

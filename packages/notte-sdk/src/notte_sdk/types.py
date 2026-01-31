@@ -1119,6 +1119,7 @@ class PersonaCreateRequest(SdkRequest):
 
 class PersonaResponse(SdkResponse):
     persona_id: Annotated[str, Field(description="ID of the created persona")]
+    created_at: Annotated[dt.datetime, Field(description="Creation timestamp")]
     status: Annotated[str, Field(description="Status of the persona (active, closed)")]
     first_name: Annotated[str, Field(description="First name of the persona")]
     last_name: Annotated[str, Field(description="Last name of the persona")]

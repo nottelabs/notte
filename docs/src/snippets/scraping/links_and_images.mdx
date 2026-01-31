@@ -2,10 +2,6 @@
 {/* @sniptest testers/scraping/links_and_images.py */}
 
 ```python links_and_images.py
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
 # Include links (default)
 markdown = client.scrape(url, scrape_links=True)
 

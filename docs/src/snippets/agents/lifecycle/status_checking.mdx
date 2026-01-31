@@ -2,11 +2,7 @@
 {/* @sniptest testers/agents/lifecycle/status_checking.py */}
 
 ```python status_checking.py
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
+    agent = client.Agent(session=session)
     agent.start(task="Long running task")
 
     # Check status

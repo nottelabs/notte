@@ -1,12 +1,12 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/agents/workflows/use-function-api.py */}
 
-```python
-# Create function from successful agent
-function = agent.workflow.create()
+```python use-function-api.py
+    agent.run(task="Complete task")
 
-# Run multiple times
-for query in ["laptop", "phone", "tablet"]:
-    result = function.run(query=query)
-    print(result)
+    # Create function from successful agent
+    function = agent.workflow.create_function()
+
+    # Run multiple times
+    for query in ["laptop", "phone", "tablet"]:
 ```

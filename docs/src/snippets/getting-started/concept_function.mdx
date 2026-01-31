@@ -2,6 +2,6 @@
 {/* @sniptest testers/getting-started/concept_function.py */}
 
 ```python concept_function.py
-function = client.functions.deploy(name="scrape-product", code=my_script)
-client.functions.invoke("scrape-product", params={"url": "https://..."})
+function = client.Function(function_id="workflow_abc123")
+function.run(url="https://example.com")
 ```

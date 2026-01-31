@@ -1,8 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/agents/structured-output/limitations_complex.py */}
 
-```python
-from pydantic import BaseModel
+```python limitations_complex.py
+    price: float
 
 
 # Difficult for agents
@@ -13,5 +13,4 @@ class ComplexStructure(BaseModel):
 # Better - flatten or simplify
 class SimplifiedStructure(BaseModel):
     products: list[Product]
-    categories: list[str]
 ```

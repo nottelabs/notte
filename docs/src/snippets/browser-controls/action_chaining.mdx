@@ -18,7 +18,7 @@ with client.Session() as session:
     session.execute(type="click", selector="button[type='submit']")
 
     # Wait for redirect
-    session.execute(type="wait", duration=2000)
+    session.execute(type="wait", time_ms=2000)
 
     # Verify success
     content = session.scrape()

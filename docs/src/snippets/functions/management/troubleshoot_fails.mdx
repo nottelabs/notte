@@ -8,12 +8,13 @@ client = NotteClient()
 
 function = client.Function(function_id="func_abc123")
 
-run = client.functions.get_run(function_id="function_abc123", run_id="run_xyz789")
+run = client.functions.get_run("func_abc123", "run_xyz789")
 
 if run.status == "failed":
     print(f"Error: {run.result}")
 
-    # Get replay for debugging
-    replay = function.replay(function_run_id=run.function_run_id)
-    print(f"Watch failure: {replay.url}")
+    # Run the function to get a replay
+    result = function.run()
+    replay = function.replay()
+    replay.save("debug_replay.mp4")
 ```

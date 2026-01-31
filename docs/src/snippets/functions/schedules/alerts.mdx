@@ -2,9 +2,6 @@
 {/* @sniptest testers/functions/schedules/alerts.py */}
 
 ```python alerts.py
-import os
-
-import requests
 
 
 def run():
@@ -16,7 +13,7 @@ def run():
     except Exception as e:
         # Send to Slack/Discord/Email
         requests.post(
-            os.getenv("WEBHOOK_URL"),
+            os.getenv("WEBHOOK_URL", ""),
             json={"text": f"Scheduled function failed: {str(e)}", "function_id": "function_abc123"},
         )
 

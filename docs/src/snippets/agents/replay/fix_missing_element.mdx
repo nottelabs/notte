@@ -1,14 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/agents/replay/fix_missing_element.py */}
 
-```python
-import time
-
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
+```python fix_missing_element.py
+    agent = client.Agent(session=session)
     # Be more specific in task
     task = "Wait for the page to load, then click the blue 'Submit' button at the bottom"
 

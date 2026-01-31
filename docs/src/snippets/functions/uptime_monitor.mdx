@@ -12,7 +12,7 @@ def run(target_url: str, expected_text: str):
     client = NotteClient()
 
     try:
-        with client.Session(timeout_minutes=2) as session:
+        with client.Session(idle_timeout_minutes=2) as session:
             session.execute(type="goto", url=target_url)
             content = session.scrape()
 
