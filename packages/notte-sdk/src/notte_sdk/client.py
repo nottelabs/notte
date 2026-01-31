@@ -123,8 +123,11 @@ class NotteClient:
         return self.sessions.health_check()
 
     @overload
-    def scrape(self, /, url: str, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+    def scrape(
+        self, /, url: str, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> str: ...
 
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
     @overload
     def scrape(  # pyright: ignore [reportOverlappingOverload]
         self,
@@ -132,9 +135,23 @@ class NotteClient:
         url: str,
         *,
         instructions: str,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> BaseModel: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    def scrape(  # pyright: ignore [reportOverlappingOverload]
+        self,
+        /,
+        url: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[False],
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[BaseModel]: ...
 
+    # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
     def scrape(  # pyright: ignore [reportOverlappingOverload]
         self,
@@ -143,15 +160,29 @@ class NotteClient:
         *,
         response_format: type[TBaseModel],
         instructions: str | None = None,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> TBaseModel: ...
+
+    # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
+    @overload
+    def scrape(  # pyright: ignore [reportOverlappingOverload]
+        self,
+        /,
+        url: str,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[False],
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
     @overload
-    def scrape(self, /, url: str, *, only_images: Literal[True]) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
+    def scrape(self, /, url: str, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
 
     def scrape(
-        self, /, url: str, **data: Unpack[ScrapeRequestDict]
-    ) -> str | StructuredData[BaseModel] | list[ImageData]:
+        self, /, url: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
+    ) -> StructuredData[BaseModel] | BaseModel | str | list[ImageData]:
         """
         Scrape the current page data.
 
@@ -183,13 +214,19 @@ class NotteClient:
 
         Args:
             url: The URL to scrape.
+            raise_on_failure: If True (default), raises ScrapeFailedError when structured data
+                extraction fails and returns the extracted data directly. If False, returns
+                the StructuredData wrapper so user can check .success.
             **data: Additional parameters for the scrape.
 
         Returns:
-            The scraped data.
+            When using instructions/response_format and raise_on_failure=True: returns the extracted data directly.
+            When raise_on_failure=False: returns StructuredData wrapper so user can check .success.
+            For markdown scraping: returns str.
+            For image scraping: returns list[ImageData].
         """
         with self.Session(open_viewer=False, perception_type="fast") as session:
             result = session.execute(GotoAction(url=url))
             if not result.success and result.exception is not None:
                 raise result.exception
-            return session.scrape(**data)
+            return session.scrape(raise_on_failure=raise_on_failure, **data)

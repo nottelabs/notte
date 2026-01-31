@@ -852,28 +852,26 @@ class NotteSession(AsyncResource, SyncResource):
 
         # Check for structured data extraction failure
         is_structured_scrape = instructions is not None or response_format is not None
-        structured = data.structured
-        scrape_failed = structured is not None and not structured.success
-        scrape_error = structured.error if structured is not None else None
-
         # Record to trajectory
         execution_result = ExecutionResult(
             action=scrape_action,
-            success=not scrape_failed,
+            # success is True if structured_scrape_failed is False, otherwise False
+            success=not data.structured_scrape_failed if is_structured_scrape else True,
             message=scrape_action.execution_message(),
             data=data,
-            exception=ScrapeFailedError(scrape_error or "Unknown extraction error") if scrape_failed else None,
+            exception=data.structured_scrape_exception if is_structured_scrape else None,
         )
         await self.trajectory.append(execution_result)
 
         # Return data
         if data.images is not None:
             return data.images
-        if structured is not None:
-            # Use structured.get() which raises ScrapeFailedError if failed, and unwraps RootModel
-            if raise_on_failure and is_structured_scrape:
-                return structured.get()
-            return structured
+        if is_structured_scrape:
+            if data.structured is None:
+                raise ScrapeFailedError("Failed to extract structured data")
+            if raise_on_failure:  # the following line raises ScrapeFailedError if failed
+                return data.structured.get()
+            return data.structured
         return data.markdown
 
     @profiler.profiled(service_name="execution")
@@ -893,6 +891,9 @@ class NotteSession(AsyncResource, SyncResource):
             return await self._ascrape(retries=retries - 1, wait_time=wait_time, **params)
         except Exception as e:
             raise e
+
+    @overload
+    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
 
     @overload
     def scrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
@@ -930,9 +931,6 @@ class NotteSession(AsyncResource, SyncResource):
         raise_on_failure: Literal[False],
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
-
-    @overload
-    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # type: ignore[reportOverlappingOverload]
 
     def scrape(
         self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]

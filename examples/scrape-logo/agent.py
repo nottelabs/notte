@@ -29,6 +29,8 @@ def scrape_logo_url(url: str) -> str | None:
             only_main_content=False,
             scrape_images=True,
             scrape_links=True,
+            # Do not raise on failure, we want to handle the case where no logo is found
+            raise_on_failure=False,
         )
         if data.success:
             # Case 1: structured output worked

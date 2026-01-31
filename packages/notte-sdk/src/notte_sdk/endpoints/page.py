@@ -130,8 +130,8 @@ class PageClient(BaseClient):
     ) -> StructuredData[BaseModel]: ...
 
     @overload
-    def scrape(
-        self, session_id: str, *, only_images: Literal[True], raise_on_failure: bool = True
+    def scrape(  # pyright: ignore[reportOverlappingOverload]
+        self, session_id: str, /, *, only_images: Literal[True], raise_on_failure: bool = True
     ) -> list[ImageData]: ...
 
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel

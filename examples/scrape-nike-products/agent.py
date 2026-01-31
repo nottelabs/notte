@@ -85,21 +85,17 @@ Your turn. Be as exhaustive as possible
 
 @retry(max_tries=3)
 def scrape_products(session: RemoteSession, cat: ProductCategory) -> ShoppingList:
-    data = session.scrape(
-        url=cat.url,
+    _ = session.execute(type="goto", url=cat.url)
+    shopping_list = session.scrape(
         response_format=ShoppingList,
         instructions=f"Get all the items from the {cat.name} category. Make sure to fill the image_src field with the correct image url",
         only_main_content=True,
         scrape_images=True,
         scrape_links=True,
-        use_llm=False,
         # /!\ Experimental feature to reduce the number of tokens and speed up the scraping process
         use_link_placeholders=True,
     )
-    if data.structured is None:
-        raise ValueError("No structured response from the agent")
-    items: ShoppingList = data.structured.get()  # type: ignore
-    return items
+    return shopping_list
 
 
 # ############################################

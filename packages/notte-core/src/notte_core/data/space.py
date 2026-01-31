@@ -117,3 +117,14 @@ class DataSpace(BaseModel):
                 error=None,
             ),
         )
+
+    @property
+    def structured_scrape_failed(self) -> bool:
+        return self.structured is not None and not self.structured.success
+
+    @property
+    def structured_scrape_exception(self) -> Exception | None:
+        if not self.structured_scrape_failed:
+            return None
+        error_msg = (self.structured.error if self.structured is not None else None) or "Unknown extraction error"
+        return ScrapeFailedError(error_msg)

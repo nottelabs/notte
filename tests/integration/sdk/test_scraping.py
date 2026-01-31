@@ -63,7 +63,9 @@ async def test_scraping_response_format():
         result = session.execute(type="goto", url="https://www.notte.cc/pricing")
         assert result.success
         structured = await session.ascrape(
-            instructions="Extract the pricing plans from the page", response_format=PricingPlans
+            instructions="Extract the pricing plans from the page",
+            response_format=PricingPlans,
+            raise_on_failure=False,
         )
         assert structured.success
         assert structured.data is not None
@@ -78,7 +80,9 @@ async def test_scraping_custom_instructions():
     async with NotteSession() as session:
         result = session.execute(type="goto", url="https://www.notte.cc/pricing")
         assert result.success
-        structured = await session.ascrape(instructions="Extract the pricing plans from the page")
+        structured = await session.ascrape(
+            instructions="Extract the pricing plans from the page", raise_on_failure=False
+        )
         assert structured.success
         assert structured.data is not None
         assert structured.get() == structured.data
