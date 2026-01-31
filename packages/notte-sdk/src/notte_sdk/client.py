@@ -1,6 +1,6 @@
 # pyright: reportImportCycles=false
 from functools import partial
-from typing import Literal, Unpack, cast, overload
+from typing import Any, Literal, Unpack, cast, overload
 
 from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
@@ -137,7 +137,7 @@ class NotteClient:
         instructions: str,
         raise_on_failure: Literal[True] = ...,
         **params: Unpack[ScrapeMarkdownParamsDict],
-    ) -> BaseModel: ...
+    ) -> dict[str, Any]: ...
 
     # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
     @overload
@@ -182,7 +182,7 @@ class NotteClient:
 
     def scrape(
         self, /, url: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
-    ) -> StructuredData[BaseModel] | BaseModel | str | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
         """
         Scrape the current page data.
 

@@ -17,7 +17,7 @@ urls = [
     "https://store.example.com/product/2",
 ]
 
-products = []
+products: list[ProductInfo] = []
 for url in urls:
-    result = client.scrape(url, response_format=ProductInfo)
-    products.append(result.data)
+    data = client.scrape(url, response_format=ProductInfo)
+    products.append(data)
