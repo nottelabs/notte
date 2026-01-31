@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 
-from notte_core.actions import ActionUnion, CaptchaSolveAction
+from notte_core.actions import ActionUnion, CaptchaSolveAction, InteractionActionUnion
+from notte_core.common.config import PerceptionType
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
@@ -15,6 +16,7 @@ from notte_sdk.types import (
     ObserveRequest,
     ObserveRequestDict,
     ObserveResponse,
+    PaginationParamsDict,
     ScrapeMarkdownParamsDict,
     ScrapeRequest,
     ScrapeRequestDict,
@@ -215,8 +217,32 @@ class PageClient(BaseClient):
             return structured
         return response.markdown
 
+    @overload
+    def observe(
+        self,
+        session_id: str,
+        *,
+        instructions: str,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> list[InteractionActionUnion]: ...
+
+    @overload
+    def observe(
+        self,
+        session_id: str,
+        *,
+        instructions: None = None,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> ObserveResponse: ...
+
     @track_usage("cloud.session.observe")
-    def observe(self, session_id: str, **data: Unpack[ObserveRequestDict]) -> ObserveResponse:
+    def observe(
+        self, session_id: str, **data: Unpack[ObserveRequestDict]
+    ) -> ObserveResponse | list[InteractionActionUnion]:
         """
         Observes a page via the Notte API.
 
@@ -225,15 +251,19 @@ class PageClient(BaseClient):
         The request is sent to the observe endpoint, and the response is formatted into an Observation object.
 
         Parameters:
+            session_id: The session ID to observe.
             **data: Arbitrary keyword arguments corresponding to observation request fields.
-                    At least one of 'url' or 'session_id' must be provided.
 
         Returns:
-            Observation: The formatted observation result from the API response.
+            ObserveResponse: The formatted observation result from the API response when no instructions provided.
+            list[InteractionActionUnion]: The filtered list of actions when instructions is provided.
         """
+        instructions = data.get("instructions")
         request = ObserveRequest.model_validate(data)
         endpoint = PageClient._page_observe_endpoint(session_id=session_id)
         obs_response = self.request(endpoint.with_request(request))
+        if instructions is not None:
+            return list(obs_response.space.interaction_actions)
         return obs_response
 
     @track_usage("cloud.session.execute")

@@ -12,6 +12,7 @@ from notte_core.actions import (
     ActionList,
     BaseAction,
     InteractionAction,
+    InteractionActionUnion,
     # ReadFileAction,
     ScrapeAction,
     ToolAction,
@@ -297,6 +298,24 @@ class NotteSession(AsyncResource, SyncResource):
     ) -> Screenshot:
         return asyncio.run(self.ascreenshot())
 
+    @overload
+    async def aobserve(
+        self,
+        *,
+        instructions: str,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> list[InteractionActionUnion]: ...
+
+    @overload
+    async def aobserve(
+        self,
+        *,
+        instructions: None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> Observation: ...
+
     @timeit("observe")
     @track_usage("local.session.observe")
     async def aobserve(
@@ -304,7 +323,7 @@ class NotteSession(AsyncResource, SyncResource):
         instructions: str | None = None,
         perception_type: PerceptionType | None = None,
         **pagination: Unpack[PaginationParamsDict],
-    ) -> Observation:
+    ) -> Observation | list[InteractionActionUnion]:
         # Profile with URL attribute
         async with profiler.profile("aobserve", service_name="observation") as span:
             if span is not None:
@@ -317,7 +336,7 @@ class NotteSession(AsyncResource, SyncResource):
         instructions: str | None = None,
         perception_type: PerceptionType | None = None,
         **pagination: Unpack[PaginationParamsDict],
-    ) -> Observation:
+    ) -> Observation | list[InteractionActionUnion]:
         # --------------------------------
         # ------ Step 1: snapshot --------
         # --------------------------------
@@ -353,9 +372,9 @@ class NotteSession(AsyncResource, SyncResource):
             selected_actions = await self._action_selection_pipe.forward(obs, instructions=instructions)
             if not selected_actions.success:
                 logger.warning(f"❌ Action selection failed: {selected_actions.reason}. Space will be empty.")
-                space = ActionSpace.empty(description=f"Action selection failed: {selected_actions.reason}")
-            else:
-                space = space.filter(action_ids=[a.action_id for a in selected_actions.actions])
+                return []
+            space = space.filter(action_ids=[a.action_id for a in selected_actions.actions])
+            return list(space.interaction_actions)
 
         # --------------------------------
         # ------- Step 3: tracing --------
@@ -366,12 +385,30 @@ class NotteSession(AsyncResource, SyncResource):
         await self.trajectory.append(obs)
         return obs
 
+    @overload
+    def observe(
+        self,
+        *,
+        instructions: str,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> list[InteractionActionUnion]: ...
+
+    @overload
+    def observe(
+        self,
+        *,
+        instructions: None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> Observation: ...
+
     def observe(
         self,
         instructions: str | None = None,
         perception_type: PerceptionType | None = None,
         **pagination: Unpack[PaginationParamsDict],
-    ) -> Observation:
+    ) -> Observation | list[InteractionActionUnion]:
         return asyncio.run(self.aobserve(instructions=instructions, perception_type=perception_type, **pagination))
 
     async def locate(self, action: BaseAction) -> Locator | None:
