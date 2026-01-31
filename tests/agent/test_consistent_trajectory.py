@@ -214,7 +214,7 @@ async def test_falco_agent_consistent_trajectory_with_completion():
     sequence = [
         # Step 1: goto: url=notte.cc
         create_agent_step_response(
-            action=GotoAction(url="https://console.notte.cc"),
+            action=GotoAction(url="https://console.notte.cc/signin"),
             page_summary="Navigating to notte.cc",
             next_goal="Navigate to the website",
         ),
@@ -349,7 +349,7 @@ async def test_falco_consistent_trajectory_failed_validation():
     sequence = [
         # Step 1: goto: url=notte.cc
         create_agent_step_response(
-            action=GotoAction(url="https://console.notte.cc"),
+            action=GotoAction(url="https://console.notte.cc/signin"),
             page_summary="Navigating to notte.cc",
             next_goal="Navigate to the website",
         ),

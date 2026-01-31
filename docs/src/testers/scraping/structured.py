@@ -14,11 +14,9 @@ class PricingPlans(BaseModel):
 
 
 client = NotteClient()
-data = client.scrape(
+
+# plans is a PricingPlans instance directly
+# > note that scrape() can raise ScrapeFailedError if extraction fails
+plans = client.scrape(
     url="https://www.notte.cc", instructions="Extract the pricing plans from the page", response_format=PricingPlans
 )
-
-# plans is a PricingPlans instance
-# > note that the following line can raise an exception
-# in case of a scraping error
-plans = data.get()

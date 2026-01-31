@@ -95,12 +95,11 @@ class CsvLogger:
 
 @retry(max_tries=3, delay_seconds=5, error_message="Failed to fetch trending repos. Try again later...")
 def fetch_trending_repos() -> list[TrendingRepo]:
-    data = client.scrape(
+    trending_repos = client.scrape(
         url="https://github.com/trending",
         response_format=TrendingRepos,
         instructions="Retrieve the top 3 trending repositories",
     )
-    trending_repos: TrendingRepos = data.get()
     return trending_repos.trending
 
 

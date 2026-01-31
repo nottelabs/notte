@@ -85,6 +85,7 @@ from notte_browser.errors import (
     NoSnapshotObservedError,
     NoStorageObjectProvidedError,
     NoToolProvidedError,
+    ScrapeFailedError,
 )
 from notte_browser.playwright import PlaywrightManager
 from notte_browser.playwright_async_api import Locator, Page
@@ -765,37 +766,61 @@ class NotteSession(AsyncResource, SyncResource):
         )
 
     @overload
-    async def ascrape(self, /, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+    async def ascrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
 
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
     @overload
     async def ascrape(
-        self, *, instructions: str, **params: Unpack[ScrapeMarkdownParamsDict]
+        self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> BaseModel: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    async def ascrape(
+        self, *, instructions: str, raise_on_failure: Literal[False], **params: Unpack[ScrapeMarkdownParamsDict]
     ) -> StructuredData[BaseModel]: ...
 
+    # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
     async def ascrape(
         self,
         *,
         response_format: type[TBaseModel],
         instructions: str | None = None,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> TBaseModel: ...
+
+    # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
+    @overload
+    async def ascrape(
+        self,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[False],
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
     @overload
-    async def ascrape(self, /, *, only_images: Literal[True]) -> list[ImageData]: ...
+    async def ascrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...
 
     @timeit("scrape")
     @track_usage("local.session.scrape")
-    async def ascrape(self, **params: Unpack[ScrapeParamsDict]) -> StructuredData[BaseModel] | str | list[ImageData]:
+    async def ascrape(
+        self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
+    ) -> StructuredData[BaseModel] | BaseModel | str | list[ImageData]:
         # Extract and convert response_format for the action (store as JSON schema)
         response_format = params.get("response_format")
+        instructions = params.get("instructions")
         response_format_schema: dict[str, Any] | None = None
+        is_structured_scrape = instructions is not None or response_format is not None
         if response_format is not None:
             response_format_schema = response_format.model_json_schema()
 
         # Create ScrapeAction for trajectory recording
         scrape_action = ScrapeAction(
-            instructions=params.get("instructions"),
+            instructions=instructions,
             only_main_content=params.get("only_main_content", True),
             selector=params.get("selector"),
             only_images=params.get("only_images", False),
@@ -821,25 +846,41 @@ class NotteSession(AsyncResource, SyncResource):
                 exception=exception,
             )
             await self.trajectory.append(execution_result)
-            raise
+            if raise_on_failure:
+                raise
+            # return meaningful data when exception occurred
+            error_message = f"No markdown available. Exception: {exception}"
+            return (
+                DataSpace(
+                    markdown=error_message,
+                    images=None,
+                    structured=StructuredData(success=False, error=error_message, data=None),
+                )
+                if is_structured_scrape
+                else error_message
+            )
 
-        # Record success to trajectory
+        # Record to trajectory
         execution_result = ExecutionResult(
             action=scrape_action,
-            success=True,
+            # success is True if structured_scrape_failed is False, otherwise False
+            success=not data.structured_scrape_failed if is_structured_scrape else True,
             message=scrape_action.execution_message(),
             data=data,
-            exception=None,
+            exception=data.structured_scrape_exception if is_structured_scrape else None,
         )
         await self.trajectory.append(execution_result)
 
-        # Return data as before (backward compatible)
+        # Return data
         if data.images is not None:
             return data.images
-        if data.structured is not None:
+        if is_structured_scrape:
+            if data.structured is None:
+                raise ScrapeFailedError("Failed to extract structured data")
+            if raise_on_failure:  # the following line raises ScrapeFailedError if failed
+                return data.structured.get()
             if isinstance(data.structured.data, RootModel):
-                # automatically unwrap the root model otherwise it makes it unclear for the user
-                data.structured.data = data.structured.data.root  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue]
+                data.structured.data = data.structured.data.root  # type: ignore[attr-defined]
             return data.structured
         return data.markdown
 
@@ -862,25 +903,49 @@ class NotteSession(AsyncResource, SyncResource):
             raise e
 
     @overload
-    def scrape(self, /, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
 
     @overload
-    def scrape(self, *, instructions: str, **params: Unpack[ScrapeMarkdownParamsDict]) -> StructuredData[BaseModel]: ...
+    def scrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
 
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
+    @overload
+    def scrape(
+        self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> dict[str, Any]: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    def scrape(
+        self, *, instructions: str, raise_on_failure: Literal[False], **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> StructuredData[BaseModel]: ...
+
+    # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
     def scrape(
         self,
         *,
         response_format: type[TBaseModel],
         instructions: str | None = None,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> TBaseModel: ...
+
+    # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
+    @overload
+    def scrape(
+        self,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[False],
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
-    @overload
-    def scrape(self, /, *, only_images: Literal[True]) -> list[ImageData]: ...  # type: ignore[reportOverlappingOverload]
-
-    def scrape(self, **params: Unpack[ScrapeParamsDict]) -> StructuredData[BaseModel] | str | list[ImageData]:
-        return asyncio.run(self.ascrape(**params))
+    def scrape(
+        self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
+        return asyncio.run(self.ascrape(raise_on_failure=raise_on_failure, **params))
 
     @timeit("reset")
     @track_usage("local.session.reset")

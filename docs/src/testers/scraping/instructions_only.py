@@ -6,4 +6,4 @@ result = client.scrape(
     "https://example.com/article", instructions="Extract the article title, author, and publication date"
 )
 
-print(result.data)
+print(result)

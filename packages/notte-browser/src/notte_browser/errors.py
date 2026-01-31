@@ -369,3 +369,11 @@ class NoToolProvidedError(NotteBaseError):
             user_message=msg,
             agent_message=msg,
         )
+
+
+# #######################################################
+# ################## Scraping errors ####################
+# #######################################################
+
+# Re-export from notte-core for backwards compatibility
+from notte_core.errors.processing import ScrapeFailedError as ScrapeFailedError  # noqa: E402, F401

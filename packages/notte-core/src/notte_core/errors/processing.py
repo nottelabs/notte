@@ -96,3 +96,13 @@ class InvalidPlaceholderError(NotteBaseError):
             user_message=user_message,
             dev_message=dev_message,
         )
+
+
+class ScrapeFailedError(NotteBaseError):
+    def __init__(self, error_message: str) -> None:
+        super().__init__(
+            dev_message=f"Structured data extraction failed: {error_message}",
+            user_message=f"Failed to extract structured data: {error_message}",
+            agent_message=f"Structured data extraction failed: {error_message}. Hint: verify the page contains the expected data or adjust your instructions.",
+            should_retry_later=True,
+        )
