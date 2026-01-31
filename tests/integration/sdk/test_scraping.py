@@ -4,7 +4,6 @@ from typing import Any
 import pytest
 from dotenv import load_dotenv
 from notte_browser.session import NotteSession
-from notte_core.data.space import StructuredData
 from notte_sdk.client import NotteClient
 from notte_sdk.types import ScrapeRequest
 from pydantic import BaseModel
@@ -81,7 +80,8 @@ async def test_scraping_custom_instructions():
         result = session.execute(type="goto", url="https://www.notte.cc/pricing")
         assert result.success
         structured = await session.ascrape(
-            instructions="Extract the pricing plans from the page", raise_on_failure=False
+            instructions="Extract the pricing plans from the page",
+            raise_on_failure=False,
         )
         assert structured.success
         assert structured.data is not None
@@ -95,11 +95,10 @@ async def test_scraping_custom_instructions_and_response_format():
         result = session.execute(type="goto", url="https://www.notte.cc/pricing")
         assert result.success
         structured = await session.ascrape(
-            instructions="Extract the pricing plans from the page", response_format=PricingPlans
+            instructions="Extract the pricing plans from the page", response_format=PricingPlans, raise_on_failure=True
         )
-        assert structured.success
-        assert structured.data is not None
-        assert structured.get() == structured.data
+        assert isinstance(structured, PricingPlans)
+        assert len(structured.plans) >= 1
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
@@ -122,10 +121,9 @@ def test_sdk_scraping_markdown_no_positional():
 def test_sdk_scraping_response_format():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    structured = client.scrape(url="https://www.notte.cc/pricing", response_format=PricingPlans)
-    assert structured.success
-    assert structured.data is not None
-    assert isinstance(structured.data, PricingPlans)
+    plans = client.scrape(url="https://www.notte.cc/pricing", response_format=PricingPlans, raise_on_failure=True)
+    assert isinstance(plans, PricingPlans)
+    assert len(plans.plans) >= 1
 
 
 def test_sdk_scraping_response_format_json(pricing_plans_json: dict[str, Any]):
@@ -133,12 +131,9 @@ def test_sdk_scraping_response_format_json(pricing_plans_json: dict[str, Any]):
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
     request = ScrapeRequest.model_validate(dict(response_format=pricing_plans_json))
     assert request.response_format is not None
-    structured = client.scrape(url="https://www.notte.cc/pricing", response_format=request.response_format)
-    assert structured.success
-    assert structured.data is not None
-    assert isinstance(structured.data, request.response_format)
-    assert structured.data.plans is not None
-    assert len(structured.data.plans) >= 1
+    plans = client.scrape(url="https://www.notte.cc/pricing", response_format=request.response_format)
+    assert isinstance(plans, request.response_format)
+    assert len(plans.plans) >= 1
 
 
 @pytest.mark.asyncio
@@ -167,7 +162,7 @@ def test_readme_sync_scraping_example():
 async def test_scraping_images_only():
     _ = load_dotenv()
     async with NotteSession() as session:
-        result = session.execute({"type": "goto", "url": "https://gymbeam.pl"})
+        result = session.execute(type="goto", url="https://gymbeam.pl")
         assert result.success
         images = await session.ascrape()
         assert len(images) > 0
@@ -178,8 +173,6 @@ async def test_scraping_structured_data():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
     with client.Session() as session:
-        _ = session.execute({"type": "goto", "url": "https://gymbeam.pl"})
+        _ = session.execute(type="goto", url="https://gymbeam.pl")
         data = session.scrape(instructions="Extract the company name")
-        assert isinstance(data, StructuredData)
-        assert data.success
-        assert isinstance(data.data, dict)
+        assert isinstance(data, dict)

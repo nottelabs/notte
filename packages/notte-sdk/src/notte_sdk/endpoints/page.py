@@ -5,7 +5,7 @@ from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from notte_core.errors.processing import ScrapeFailedError
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 from typing_extensions import final
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
@@ -208,6 +208,9 @@ class PageClient(BaseClient):
                     )
                     extracted_data = request.response_format.model_validate(extracted_data_dict)
                 return extracted_data
+            if isinstance(structured.data, RootModel):
+                # unwrap RootModel
+                structured.data = structured.data.root  # type: ignore[attr-defined]
             return structured
         return response.markdown
 

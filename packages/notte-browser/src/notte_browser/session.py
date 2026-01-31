@@ -71,7 +71,7 @@ from notte_sdk.types import (
     SessionStartRequest,
     SessionStartRequestDict,
 )
-from pydantic import ValidationError
+from pydantic import RootModel, ValidationError
 from typing_extensions import override
 
 from notte_browser.action_selection.pipe import ActionSelectionPipe
@@ -875,6 +875,8 @@ class NotteSession(AsyncResource, SyncResource):
                 raise ScrapeFailedError("Failed to extract structured data")
             if raise_on_failure:  # the following line raises ScrapeFailedError if failed
                 return data.structured.get()
+            if isinstance(data.structured.data, RootModel):
+                data.structured.data = data.structured.data.root  # type: ignore[attr-defined]
             return data.structured
         return data.markdown
 
