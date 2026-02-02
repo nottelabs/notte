@@ -345,7 +345,10 @@ ProxySettings = Annotated[NotteProxy | ExternalProxy, Field(discriminator="type"
 ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict, Field(discriminator="type")]
 
 
-class Cookie(SdkRequest):
+class Cookie(BaseModel):
+    # Allow extra fields to be present in the cookie dict
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
+
     name: str
     value: str
     domain: str
@@ -358,6 +361,7 @@ class Cookie(SdkRequest):
     session: bool | None = None
     storeId: str | None = None
     expires: float | None = Field(default=None)
+    partitionKey: str | dict[str, Any] | None = None
 
     @model_validator(mode="before")
     @classmethod
