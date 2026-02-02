@@ -35,7 +35,7 @@ class CookieDict(TypedDict, total=False):
     session: bool | None
     storeId: str | None
     expires: float | None
-    partitionKey: str | dict[str, Any] | None
+    partitionKey: str | None
 
 
 class PlaywrightProxySettings(TypedDict, total=False):
