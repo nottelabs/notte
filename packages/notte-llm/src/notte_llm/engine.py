@@ -53,7 +53,6 @@ def fix_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
     Gemini doesn't support:
     - $ref/$defs (JSON Schema references) - must be inlined
     - additionalProperties
-    - title (as schema metadata)
     - default values in schema
     - Empty object properties (must have at least one property)
     """
@@ -93,10 +92,9 @@ def fix_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
             obj_dict = cast(dict[str, Any], obj)
             cleaned: dict[str, Any] = {}
             for key, value in obj_dict.items():
-                # Skip unsupported keys
-                # Note: 'title' inside 'properties' dict values is kept (it's descriptive)
-                is_metadata_title: bool = key == "title" and parent_key != "properties"
-                if key in ["additionalProperties", "default"] or is_metadata_title:
+                # Skip keys that Gemini doesn't support
+                # Note: 'title' is kept as Gemini handles it fine and it's useful for descriptions
+                if key in ["additionalProperties", "default"]:
                     continue
 
                 cleaned_value = clean_schema(value, parent_key=key)
