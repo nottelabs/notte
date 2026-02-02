@@ -1013,9 +1013,18 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
 
     @field_validator("selector", mode="before")
     @classmethod
-    def validate_selector(cls, value: str | NodeSelectors | None) -> NodeSelectors | None:
+    def validate_selector(cls, value: str | NodeSelectors | dict[str, Any] | None) -> NodeSelectors | None:
         if isinstance(value, str):
             return NodeSelectors.from_unique_selector(value)
+        elif isinstance(value, dict):
+            # Fill in missing required fields with defaults for partial NodeSelectors dicts
+            value.setdefault("in_iframe", False)
+            value.setdefault("in_shadow_root", False)
+            value.setdefault("iframe_parent_css_selectors", [])
+            value.setdefault("css_selector", "")
+            value.setdefault("notte_selector", "")
+            value.setdefault("xpath_selector", "")
+            return NodeSelectors.model_validate(value)
         return value
 
     @staticmethod

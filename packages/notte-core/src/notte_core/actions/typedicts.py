@@ -15,6 +15,32 @@ from notte_core.credentials.types import ValueWithPlaceholder
 if TYPE_CHECKING:
     from notte_core.actions.actions import BaseAction
 
+
+class NodeSelectorsDict(TypedDict, total=False):
+    """
+    TypedDict for NodeSelectors that can be passed to interaction actions.
+
+    Only css_selector, xpath_selector, playwright_selector, or notte_selector
+    are typically needed. The other fields default to sensible values:
+    - in_iframe: False
+    - in_shadow_root: False
+    - iframe_parent_css_selectors: []
+    """
+
+    css_selector: str
+    xpath_selector: str
+    notte_selector: str | None
+    playwright_selector: str | None
+    python_selector: str | None
+    # These have defaults applied automatically if not provided
+    in_iframe: bool
+    in_shadow_root: bool
+    iframe_parent_css_selectors: list[str]
+
+
+# Type alias for selector parameter - can be a string, full NodeSelectors, or partial dict
+NodeSelector = str | NodeSelectors | NodeSelectorsDict
+
 # All action types as a Literal union for catch-all overloads
 ActionType = Literal[
     "form_fill",
@@ -205,14 +231,14 @@ class EvaluateJsActionDict(TypedDict, total=False):
 class ClickActionDict(TypedDict, total=False):
     type: Required[Literal["click"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
     timeout: NotRequired[int]
 
 
 class FillActionDict(TypedDict, total=False):
     type: Required[Literal["fill"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
     value: Required[str | ValueWithPlaceholder]
     clear_before_fill: NotRequired[bool]
     timeout: NotRequired[int]
@@ -221,7 +247,7 @@ class FillActionDict(TypedDict, total=False):
 class MultiFactorFillActionDict(TypedDict, total=False):
     type: Required[Literal["multi_factor_fill"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
     value: Required[str | ValueWithPlaceholder]
     clear_before_fill: NotRequired[bool]
     timeout: NotRequired[int]
@@ -230,7 +256,7 @@ class MultiFactorFillActionDict(TypedDict, total=False):
 class FallbackFillActionDict(TypedDict, total=False):
     type: Required[Literal["fallback_fill"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
     value: Required[str | ValueWithPlaceholder]
     clear_before_fill: NotRequired[bool]
     timeout: NotRequired[int]
@@ -239,7 +265,7 @@ class FallbackFillActionDict(TypedDict, total=False):
 class CheckActionDict(TypedDict, total=False):
     type: Required[Literal["check"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
     value: Required[bool]
     timeout: NotRequired[int]
 
@@ -247,7 +273,7 @@ class CheckActionDict(TypedDict, total=False):
 class SelectDropdownOptionActionDict(TypedDict, total=False):
     type: Required[Literal["select_dropdown_option"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
     value: Required[str | ValueWithPlaceholder]
     timeout: NotRequired[int]
 
@@ -255,7 +281,7 @@ class SelectDropdownOptionActionDict(TypedDict, total=False):
 class UploadFileActionDict(TypedDict, total=False):
     type: Required[Literal["upload_file"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
     file_path: Required[str]
     timeout: NotRequired[int]
 
@@ -263,7 +289,7 @@ class UploadFileActionDict(TypedDict, total=False):
 class DownloadFileActionDict(TypedDict, total=False):
     type: Required[Literal["download_file"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
     timeout: NotRequired[int]
 
 
