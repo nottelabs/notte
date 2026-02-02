@@ -8,11 +8,11 @@ with client.Session() as page:
 
     # observe page and take a step
     page.execute(type="goto", url=url)
-    obs = page.observe(instructions="click 'jobs'")
-    res = page.execute(obs.space.first())
+    actions = page.observe(instructions="click 'jobs'")
+    res = page.execute(actions[0])
     print(res.message)
 
     # another one
-    obs = page.observe(instructions="dismiss the sign in check")
-    res = page.execute(obs.space.first())
+    actions = page.observe(instructions="dismiss the sign in check")
+    res = page.execute(actions[0])
     print(res.message)

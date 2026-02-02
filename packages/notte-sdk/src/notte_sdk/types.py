@@ -30,6 +30,9 @@ from notte_core.common.config import (
 )
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict
 from notte_core.data.space import DataSpace
+
+# Re-export FileInfo from notte_core for use in SDK
+from notte_core.storage import FileInfo as FileInfo  # noqa: E402
 from notte_core.trajectory import ElementLiteral
 from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
 from notte_core.utils.url import get_root_domain
@@ -780,7 +783,7 @@ class SessionStatusResponse(SessionResponse, ReplayResponse):
 
 
 class ListFilesResponse(SdkResponse):
-    files: Annotated[list[str], Field(description="Names of available files")]
+    files: Annotated[list[FileInfo], Field(description="List of files with metadata")]
 
 
 class FileUploadResponse(SdkResponse):

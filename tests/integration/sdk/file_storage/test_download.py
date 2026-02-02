@@ -53,7 +53,7 @@ def test_file_storage_downloads(test: DownloadTest):
 
         # try to dowwload the file
         with tempfile.TemporaryDirectory() as tmp_dir:
-            success = storage.download(file_name=downloaded_files[0], local_dir=tmp_dir)
+            success = storage.download(file_name=downloaded_files[0].name, local_dir=tmp_dir)
             assert success
             assert Path(tmp_dir).exists()
 

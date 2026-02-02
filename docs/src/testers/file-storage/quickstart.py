@@ -16,5 +16,5 @@ with client.Session(storage=storage) as session:
     )
 
 # Download files the agent retrieved
-for file_name in storage.list_downloaded_files():
-    storage.download(file_name=file_name, local_dir="./downloads")
+for file in storage.list_downloaded_files():
+    storage.download(file_name=file.name, local_dir="./downloads")

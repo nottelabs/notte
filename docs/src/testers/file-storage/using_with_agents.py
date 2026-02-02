@@ -22,5 +22,5 @@ with client.Session(storage=storage) as session:
     )
 
 # Get the confirmation the agent downloaded
-for file_name in storage.list_downloaded_files():
-    storage.download(file_name=file_name, local_dir="./signed")
+for file in storage.list_downloaded_files():
+    storage.download(file_name=file.name, local_dir="./signed")
