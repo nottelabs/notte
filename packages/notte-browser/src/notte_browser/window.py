@@ -267,7 +267,7 @@ class BrowserWindow(BaseModel):
             await self.page.wait_for_load_state("load", timeout=config.timeout_goto_ms)
         except PlaywrightTimeoutError:
             if config.verbose:
-                logger.warning(f"Timeout while waiting for networkidle state for '{self.page.url}'")
+                logger.warning(f"Timeout while waiting for load state for '{self.page.url}'")
         await self.short_wait()
         # await self.page.wait_for_timeout(self._playwright.config.step_timeout)
         if config.verbose:
