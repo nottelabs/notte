@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 import litellm
 from litellm import (
@@ -44,6 +44,90 @@ from notte_llm.tracer import LlmTracer, LlmUsageFileTracer
 from notte_llm.types import TResponseFormat
 
 
+def fix_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
+    """
+    Convert a Pydantic JSON schema to Gemini-compatible format.
+
+    Courtesy of https://github.com/browser-use/browser-use
+
+    Gemini doesn't support:
+    - $ref/$defs (JSON Schema references) - must be inlined
+    - additionalProperties
+    - default values in schema
+    - Empty object properties (must have at least one property)
+    """
+    import copy
+
+    # Step 1: Resolve all $ref references by inlining definitions
+    defs: dict[str, Any] = schema.get("$defs", {})
+
+    def resolve_refs(obj: Any) -> Any:
+        if isinstance(obj, dict):
+            obj_dict = cast(dict[str, Any], obj)
+            if "$ref" in obj_dict:
+                ref: str = str(obj_dict["$ref"])
+                ref_name: str = ref.split("/")[-1]  # "#/$defs/MyType" -> "MyType"
+                if ref_name in defs:
+                    # Replace reference with actual definition (deep copy to avoid mutation)
+                    resolved: dict[str, Any] = copy.deepcopy(defs[ref_name])
+                    # Merge any sibling properties (except $ref)
+                    for key, value in obj_dict.items():
+                        if key != "$ref":
+                            resolved[key] = value
+                    return resolve_refs(resolved)  # Recurse in case definition has refs
+                return cast(dict[str, Any], obj)
+            else:
+                result: dict[str, Any] = {k: resolve_refs(v) for k, v in obj_dict.items()}
+                return result
+        elif isinstance(obj, list):
+            obj_list = cast(list[Any], obj)
+            return [resolve_refs(item) for item in obj_list]
+        return obj
+
+    schema = resolve_refs(schema)
+    # Remove $defs from resolved schema (now inlined)
+    schema.pop("$defs", None)
+
+    # Step 2: Remove unsupported properties and handle edge cases
+    def clean_schema(obj: Any, parent_key: str | None = None) -> Any:
+        if isinstance(obj, dict):
+            obj_dict = cast(dict[str, Any], obj)
+            cleaned: dict[str, Any] = {}
+            for key, value in obj_dict.items():
+                # Skip keys that Gemini doesn't support
+                # Note: 'title' is kept as Gemini handles it fine and it's useful for descriptions
+                if key in ["additionalProperties", "default"]:
+                    continue
+
+                cleaned_value = clean_schema(value, parent_key=key)
+
+                # Handle empty object properties - Gemini rejects these
+                if (
+                    key == "properties"
+                    and isinstance(cleaned_value, dict)
+                    and len(cast(dict[str, Any], cleaned_value)) == 0
+                    and obj_dict.get("type") == "object"
+                ):
+                    # Add a placeholder property so Gemini doesn't error
+                    cleaned["properties"] = {"_placeholder": {"type": "string"}}
+                else:
+                    cleaned[key] = cleaned_value
+
+            return cleaned
+        elif isinstance(obj, list):
+            obj_list = cast(list[Any], obj)
+            return [clean_schema(item, parent_key=parent_key) for item in obj_list]
+        return obj
+
+    return clean_schema(schema)
+
+
+def is_gemini_model(model: str) -> bool:
+    """Check if the model is a Gemini model that needs schema transformation."""
+    model_lower = model.lower()
+    return "gemini" in model_lower or "vertex_ai" in model_lower
+
+
 class LLMEngine:
     PREFIXES: list[str] = ['{"json":', '{"additionalProperties":']  # LLM Response Prefixes
 
@@ -78,10 +162,17 @@ class LLMEngine:
     ) -> TResponseFormat:
         tries = self.nb_retries_structured_output + 1
         content = None
+        effective_model = model or self.model
 
-        litellm_response_format: dict[str, str] | type[BaseModel] = dict(type="json_object")
+        litellm_response_format: dict[str, Any] | type[BaseModel] = dict(type="json_object")
         if use_strict_response_format:
-            litellm_response_format = response_format
+            # For Gemini models, transform the schema to be compatible
+            # Gemini doesn't support $ref/$defs, additionalProperties, etc.
+            if is_gemini_model(effective_model):
+                raw_schema = response_format.model_json_schema()
+                litellm_response_format = fix_schema_for_gemini(raw_schema)
+            else:
+                litellm_response_format = response_format
 
         raised_exc = None
 
@@ -126,15 +217,15 @@ class LLMEngine:
             try:
                 return response_format.model_validate_json(content)
             except ValidationError as e:
+                error_details = e.errors()
                 messages.append(
                     ChatCompletionUserMessage(
                         role="user",
-                        content=f"Error parsing LLM response: {e.errors()}, retrying",
+                        content=f"Error parsing LLM response: {error_details}, retrying",
                     )
                 )
                 raised_exc = e
-                logger.error(f"Error parsing LLM response: {e.errors()}, retrying")
-
+                logger.error(f"Error parsing LLM response: {error_details}, retrying")
                 continue
 
         error_string = (
