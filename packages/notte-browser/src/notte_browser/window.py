@@ -264,7 +264,7 @@ class BrowserWindow(BaseModel):
     async def long_wait(self) -> None:
         start_time = time.time()
         try:
-            await self.page.wait_for_load_state("networkidle", timeout=config.timeout_goto_ms)
+            await self.page.wait_for_load_state("load", timeout=config.timeout_goto_ms)
         except PlaywrightTimeoutError:
             if config.verbose:
                 logger.warning(f"Timeout while waiting for networkidle state for '{self.page.url}'")
