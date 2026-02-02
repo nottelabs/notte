@@ -13,5 +13,5 @@ downloaded = storage.list_downloaded_files()
 print(f"Downloaded: {downloaded}")
 
 # Download to local directory
-for file_name in downloaded:
-    storage.download(file_name=file_name, local_dir="./invoices")
+for file in downloaded:
+    storage.download(file_name=file.name, local_dir="./invoices")
