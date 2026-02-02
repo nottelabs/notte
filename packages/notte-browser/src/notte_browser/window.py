@@ -521,9 +521,30 @@ class BrowserWindow(BaseModel):
         if cookies is None:
             raise ValueError("No cookies provided")
 
+        # Filter cookies to only include valid Playwright SetCookieParam fields with non-None values.
+        # Playwright's add_cookies rejects extra fields (e.g., expirationDate, hostOnly, session, storeId)
+        # and fields with None values (e.g., "partitionKey: expected string, got object").
+        # Keep domain exactly as provided - don't modify it (host-only vs domain cookie semantics matter).
+        # See: patchright/_impl/_api_structures.py SetCookieParam for the full list of valid fields.
+        PLAYWRIGHT_COOKIE_FIELDS = {
+            "name",
+            "value",
+            "url",
+            "domain",
+            "path",
+            "expires",
+            "httpOnly",
+            "secure",
+            "sameSite",
+            "partitionKey",
+        }
+        filtered_cookies = [
+            {k: v for k, v in cookie.items() if v is not None and k in PLAYWRIGHT_COOKIE_FIELDS} for cookie in cookies
+        ]
+
         if config.verbose:
             logger.info("🍪 Adding cookies to browser...")
-        await self.page.context.add_cookies(cookies)  # type: ignore
+        await self.page.context.add_cookies(filtered_cookies)  # type: ignore
 
     async def get_cookies(self) -> list[CookieDict]:
         def format_cookie(data: dict[str, Any]) -> CookieDict:
