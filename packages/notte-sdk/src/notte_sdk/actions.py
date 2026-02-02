@@ -20,6 +20,9 @@ from notte_core.actions import (
     EmailReadAction as EmailRead,
 )
 from notte_core.actions import (
+    EvaluateJsAction as EvaluateJs,
+)
+from notte_core.actions import (
     FallbackFillAction as FallbackFill,
 )
 from notte_core.actions import (
@@ -101,6 +104,7 @@ __all__ = [
     "Scrape",
     "EmailRead",
     "SmsRead",
+    "EvaluateJs",
     "Click",
     "Fill",
     "MultiFactorFill",

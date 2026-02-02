@@ -10,6 +10,7 @@ from notte_core.actions import (
     CloseTabAction,
     CompletionAction,
     DownloadFileAction,
+    EvaluateJsAction,
     FallbackFillAction,
     FillAction,
     FormFillAction,
@@ -405,6 +406,10 @@ class BrowserController:
             case ScrapeAction():
                 if self.verbose:
                     logger.error("Scrape action should not be executed inside the controller")
+                pass
+            case EvaluateJsAction():
+                if self.verbose:
+                    logger.error("EvaluateJs action should not be executed inside the controller")
                 pass
             case HelpAction():
                 if self.verbose:

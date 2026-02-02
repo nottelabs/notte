@@ -909,6 +909,39 @@ class SmsReadAction(ToolAction):
         return ActionParameter(name="timedelta", type="datetime")
 
 
+class EvaluateJsAction(ToolAction):
+    """
+    Evaluate JavaScript code on the current page and return the result.
+    Useful for extracting structured data from a page without LLM processing.
+
+    **Example:**
+    ```python
+    session.execute(type="evaluate_js", code="document.title")
+    session.execute(type="evaluate_js", code="Array.from(document.querySelectorAll('a')).map(a => a.href)")
+    ```
+    """
+
+    type: Literal["evaluate_js"] = "evaluate_js"  # pyright: ignore [reportIncompatibleVariableOverride]
+    description: str = "Evaluate JavaScript code on the current page and return the result"
+    code: Annotated[str, Field(description="The JavaScript code to evaluate on the page")]
+
+    @override
+    def execution_message(self) -> str:
+        # Truncate code for display if it's too long
+        code_preview = self.code[:50] + "..." if len(self.code) > 50 else self.code
+        return f"Evaluated JavaScript code: {code_preview}"
+
+    @override
+    @staticmethod
+    def example() -> "EvaluateJsAction":
+        return EvaluateJsAction(code="document.title")
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="code", type="str")
+
+
 # ############################################################
 # Interaction actions models
 # ############################################################
