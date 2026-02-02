@@ -182,3 +182,34 @@ async def test_scroll_on_scrollable_page_should_succeed():
         assert obs3.metadata.viewport.scroll_x == obs2.metadata.viewport.scroll_x
         assert obs3.metadata.viewport.scroll_y != obs2.metadata.viewport.scroll_y
         assert obs3.metadata.viewport.scroll_y == obs.metadata.viewport.scroll_y
+
+
+@pytest.mark.asyncio
+async def test_evaluate_js_action():
+    """Test the evaluate_js action returns correct results"""
+    async with NotteSession(headless=True) as session:
+        _ = await session.aexecute(type="goto", url="https://example.com")
+
+        # Test getting page title via evaluate_js
+        result = await session.aexecute(type="evaluate_js", code="document.title")
+        assert result.success
+        assert result.data is not None
+        assert "Example Domain" in result.data.markdown
+
+        # Test getting structured data (array of links)
+        result = await session.aexecute(
+            type="evaluate_js",
+            code="Array.from(document.querySelectorAll('a')).map(a => ({href: a.href, text: a.innerText}))",
+        )
+        assert result.success
+        assert result.data is not None
+        # Result should be JSON array
+        assert "[" in result.data.markdown
+        assert "href" in result.data.markdown
+
+        # Test returning a simple number
+        result = await session.aexecute(type="evaluate_js", code="document.querySelectorAll('p').length")
+        assert result.success
+        assert result.data is not None
+        # Should be a number as string
+        assert result.data.markdown.isdigit()

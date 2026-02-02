@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
+import json
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, ClassVar, Literal, Unpack, overload
@@ -11,6 +12,7 @@ from notte_core import enable_nest_asyncio
 from notte_core.actions import (
     ActionList,
     BaseAction,
+    EvaluateJsAction,
     InteractionAction,
     InteractionActionUnion,
     # ReadFileAction,
@@ -25,6 +27,7 @@ from notte_core.actions.typedicts import (
     CompletionActionDict,
     DownloadFileActionDict,
     EmailReadActionDict,
+    EvaluateJsActionDict,
     FallbackFillActionDict,
     FillActionDict,
     FormFillActionDict,
@@ -495,6 +498,10 @@ class NotteSession(AsyncResource, SyncResource):
     ) -> ExecutionResult: ...
     @overload
     async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EvaluateJsActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ClickActionDict]
     ) -> ExecutionResult: ...
     @overload
@@ -591,6 +598,18 @@ class NotteSession(AsyncResource, SyncResource):
                         scrape_images=resolved_action.scrape_images,
                         ignored_tags=resolved_action.ignored_tags,
                     )
+                    success = True
+                case EvaluateJsAction(code=code):
+                    # Evaluate JavaScript code on the page and return the result
+                    result = await self.window.page.evaluate(code)
+                    # Convert result to string representation for markdown
+                    if result is None:
+                        result_str = "null"
+                    elif isinstance(result, (dict, list)):
+                        result_str = json.dumps(result, indent=2, default=str)
+                    else:
+                        result_str = str(result)
+                    scraped_data = DataSpace(markdown=result_str)
                     success = True
                 case ToolAction():
                     tool_found = False
@@ -755,6 +774,10 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SmsReadActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EvaluateJsActionDict]
     ) -> ExecutionResult: ...
     @overload
     def execute(
