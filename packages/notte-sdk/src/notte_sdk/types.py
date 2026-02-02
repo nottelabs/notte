@@ -364,7 +364,7 @@ class Cookie(BaseModel):
     session: bool | None = None
     storeId: str | None = None
     expires: float | None = Field(default=None)
-    partitionKey: str | dict[str, Any] | None = None
+    partitionKey: str | None = None
 
     @model_validator(mode="before")
     @classmethod
