@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
+import json
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, ClassVar, Literal, Unpack, overload
@@ -600,8 +601,6 @@ class NotteSession(AsyncResource, SyncResource):
                     success = True
                 case EvaluateJsAction(code=code):
                     # Evaluate JavaScript code on the page and return the result
-                    import json
-
                     result = await self.window.page.evaluate(code)
                     # Convert result to string representation for markdown
                     if result is None:

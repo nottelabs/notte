@@ -193,9 +193,9 @@ class SmsReadActionDict(TypedDict, total=False):
     only_unread: NotRequired[bool]
 
 
-class EvaluateJsActionDict(TypedDict):
-    type: Literal["evaluate_js"]
-    code: str
+class EvaluateJsActionDict(TypedDict, total=False):
+    type: Required[Literal["evaluate_js"]]
+    code: Required[str]
 
 
 # Interaction Actions TypedDicts
