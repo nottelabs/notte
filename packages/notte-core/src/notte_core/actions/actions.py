@@ -1017,12 +1017,19 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
         if isinstance(value, str):
             return NodeSelectors.from_unique_selector(value)
         elif isinstance(value, dict):
-            # Fill in missing required fields with defaults for partial NodeSelectors dicts
+            # Validate that at least one selector field is present to catch typos
+            selector_fields = {"css_selector", "xpath_selector", "playwright_selector", "notte_selector"}
+            if not any(k in value for k in selector_fields):
+                raise ValueError(
+                    f"selector dict must contain at least one of: {selector_fields}. Got keys: {set(value.keys())}"
+                )
+            # Copy to avoid mutating caller's dict
+            value = dict(value)
+            # Fill in missing required fields with defaults
             value.setdefault("in_iframe", False)
             value.setdefault("in_shadow_root", False)
             value.setdefault("iframe_parent_css_selectors", [])
             value.setdefault("css_selector", "")
-            value.setdefault("notte_selector", "")
             value.setdefault("xpath_selector", "")
             return NodeSelectors.model_validate(value)
         return value
