@@ -121,6 +121,7 @@ class WaitActionDict(TypedDict, total=False):
     type: Required[Literal["wait"]]
     wait_for: NotRequired[Literal["timeout", "load_state", "selector", "function"]]
     time_ms: NotRequired[int]
+    value: NotRequired[int]  # Deprecated: use time_ms instead. Runtime maps value → time_ms.
     load_state: NotRequired[Literal["load", "domcontentloaded", "networkidle"]]
     selector: NotRequired[str]
     selector_state: NotRequired[Literal["visible", "attached", "hidden", "detached"]]
