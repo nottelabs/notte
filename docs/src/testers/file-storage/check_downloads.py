@@ -14,4 +14,4 @@ if not files:
     print("No files were downloaded")
 else:
     for f in files:
-        storage.download(file_name=f, local_dir="./invoices")
+        _ = storage.download(file_name=f.name, local_dir="./invoices")

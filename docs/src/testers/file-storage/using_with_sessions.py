@@ -16,5 +16,5 @@ with client.Session(storage=storage) as session:
     session.execute(type="click", selector="button.submit")
 
 # Download any files
-for file_name in storage.list_downloaded_files():
-    storage.download(file_name=file_name, local_dir="./results")
+for file in storage.list_downloaded_files():
+    storage.download(file_name=file.name, local_dir="./results")

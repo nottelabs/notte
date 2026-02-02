@@ -51,10 +51,11 @@ def test_uploads(test: UploadTest):
             resp = storage.upload(str(DATA_DIR / f))
             assert resp
 
-        uploaded = storage.list_uploaded_files()
+        uploaded_files = storage.list_uploaded_files()
+        uploaded_file_names = [f.name for f in uploaded_files]
 
         for f in files:
-            assert f in uploaded
+            assert f in uploaded_file_names
 
         agent = notte.Agent(session=session, max_steps=test.max_steps)
         resp = agent.run(url=test.url, task=test.task)

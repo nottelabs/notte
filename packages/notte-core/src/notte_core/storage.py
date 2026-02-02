@@ -1,10 +1,12 @@
 import asyncio
 import datetime as dt
 import os
+import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 
 class FileInfo(BaseModel):
@@ -14,6 +16,14 @@ class FileInfo(BaseModel):
     size: int
     file_ext: str
     updated_at: dt.datetime | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_file_info(cls, data: dict[str, Any] | str) -> dict[str, Any]:
+        if isinstance(data, str):
+            warnings.warn("Passing a string to FileInfo is deprecated. Pass a dict[str, Any] instead.")
+            data = {"name": data, "file_ext": data.split(".")[-1], "size": 0, "updated_at": None}
+        return data
 
 
 class BaseStorage(ABC):

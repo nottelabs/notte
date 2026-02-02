@@ -628,3 +628,11 @@ def test_session_start_request_timeout_minutes_validation():
     request = SessionStartRequest.model_validate(dict(timeout_minutes=2, max_duration_minutes=10))
     assert request.idle_timeout_minutes == 2
     assert request.max_duration_minutes == 10
+
+
+def test_file_info_dict_parsing_retro_compatibility():
+    resp = ListFilesResponse.model_validate(dict(files=["test.txt", "test.pdf"]))
+    assert resp.files[0].name == "test.txt"
+    assert resp.files[0].file_ext == "txt"
+    assert resp.files[1].name == "test.pdf"
+    assert resp.files[1].file_ext == "pdf"

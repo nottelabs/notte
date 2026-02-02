@@ -116,7 +116,7 @@ def test_download_file_action_is_strictly_readonly():
             # This can trigger either "Filesystem modification denied" (mkdir) or "Write access denied" (open)
             with pytest.raises(PermissionError, match="Filesystem modification denied|Write access denied"):
                 files = storage.list_downloaded_files()
-                _ = asyncio.run(storage.get_file(files[0]))
+                _ = asyncio.run(storage.get_file(files[0].name))
 
         except PermissionError as e:
             pytest.fail(f"Read-only violation detected: {e}")
