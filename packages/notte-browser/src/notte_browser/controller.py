@@ -118,8 +118,29 @@ class BrowserController:
                 await self.switch_tab(window, tab_index)
             case CloseTabAction():
                 await window.page.close()
-            case WaitAction(time_ms=time_ms):
-                await window.page.wait_for_timeout(time_ms)
+            case WaitAction(
+                wait_for=wait_for,
+                time_ms=time_ms,
+                load_state=load_state,
+                selector=selector,
+                selector_state=selector_state,
+                expression=expression,
+                timeout_ms=timeout_ms,
+            ):
+                match wait_for:
+                    case "timeout":
+                        assert time_ms is not None  # Validated by WaitAction
+                        await window.page.wait_for_timeout(time_ms)
+                    case "load_state":
+                        assert load_state is not None  # Validated by WaitAction
+                        await window.page.wait_for_load_state(load_state, timeout=timeout_ms)
+                    case "selector":
+                        assert selector is not None  # Validated by WaitAction
+                        state = selector_state or "visible"
+                        _ = await window.page.wait_for_selector(selector, state=state, timeout=timeout_ms)
+                    case "function":
+                        assert expression is not None  # Validated by WaitAction
+                        _ = await window.page.wait_for_function(expression, timeout=timeout_ms)
             case GoBackAction():
                 await window.goto_and_wait(operation="back")
             case GoForwardAction():

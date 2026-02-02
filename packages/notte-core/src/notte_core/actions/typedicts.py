@@ -117,9 +117,15 @@ class ReloadActionDict(TypedDict):
     type: Literal["reload"]
 
 
-class WaitActionDict(TypedDict):
-    type: Literal["wait"]
-    time_ms: int
+class WaitActionDict(TypedDict, total=False):
+    type: Required[Literal["wait"]]
+    wait_for: NotRequired[Literal["timeout", "load_state", "selector", "function"]]
+    time_ms: NotRequired[int]
+    load_state: NotRequired[Literal["load", "domcontentloaded", "networkidle"]]
+    selector: NotRequired[str]
+    selector_state: NotRequired[Literal["visible", "attached", "hidden", "detached"]]
+    expression: NotRequired[str]
+    timeout_ms: NotRequired[int]
 
 
 class PressKeyActionDict(TypedDict):

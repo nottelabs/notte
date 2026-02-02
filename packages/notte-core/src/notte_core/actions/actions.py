@@ -473,25 +473,104 @@ class ReloadAction(BrowserAction):
         return None
 
 
+# Wait action type literals
+WaitForType = Literal["timeout", "load_state", "selector", "function"]
+LoadStateType = Literal["load", "domcontentloaded", "networkidle"]
+SelectorStateType = Literal["visible", "attached", "hidden", "detached"]
+
+
 class WaitAction(BrowserAction):
     """
-    Wait for a given amount of time (in milliseconds).
+    Wait for a condition: timeout, load state, selector visibility, or JS function.
 
-    **Example:**
+    **Examples:**
     ```python
+    # Wait for a fixed duration (backward compatible)
     session.execute(type="wait", time_ms=2000)
+
+    # Wait for page load state
+    session.execute(type="wait", wait_for="load_state", load_state="networkidle")
+
+    # Wait for selector to be visible
+    session.execute(type="wait", wait_for="selector", selector="button#submit", selector_state="visible")
+
+    # Wait for JS function to return truthy
+    session.execute(type="wait", wait_for="function", expression="document.querySelector('.loaded') !== null")
     ```
     """
 
     type: Literal["wait"] = "wait"  # pyright: ignore [reportIncompatibleVariableOverride]
-    description: str = "Wait for a given amount of time (in milliseconds)"
+    description: str = "Wait for a condition: timeout (ms), load state, selector visibility, or JS function"
+
+    # Discriminator field - determines which wait mode
+    wait_for: WaitForType = "timeout"
+
+    # For timeout mode (default, backward compatible)
     time_ms: Annotated[
-        int, Field(ge=0, le=30000, description="The amount of time to wait in milliseconds (max 30 seconds)")
-    ]
+        int | None,
+        Field(ge=0, le=30000, description="The amount of time to wait in milliseconds (max 30 seconds)"),
+    ] = None
+
+    # For load_state mode
+    load_state: Annotated[
+        LoadStateType | None,
+        Field(description="The load state to wait for: 'load', 'domcontentloaded', or 'networkidle'"),
+    ] = None
+
+    # For selector mode
+    selector: Annotated[
+        str | None,
+        Field(description="The CSS/Playwright selector to wait for"),
+    ] = None
+    selector_state: Annotated[
+        SelectorStateType | None,
+        Field(description="The selector state to wait for: 'visible', 'attached', 'hidden', or 'detached'"),
+    ] = None
+
+    # For function mode
+    expression: Annotated[
+        str | None,
+        Field(description="The JavaScript expression to evaluate (should return truthy when condition is met)"),
+    ] = None
+
+    # Common timeout for non-timeout wait modes
+    timeout_ms: Annotated[
+        int,
+        Field(ge=0, le=60000, description="Timeout in milliseconds for load_state, selector, and function waits"),
+    ] = 30000
+
+    @model_validator(mode="after")
+    def validate_wait_params(self) -> "WaitAction":
+        """Validate that the required fields are provided based on wait_for mode."""
+        match self.wait_for:
+            case "timeout":
+                if self.time_ms is None:
+                    raise ValueError("'time_ms' is required when wait_for='timeout'")
+            case "load_state":
+                if self.load_state is None:
+                    raise ValueError("'load_state' is required when wait_for='load_state'")
+            case "selector":
+                if self.selector is None:
+                    raise ValueError("'selector' is required when wait_for='selector'")
+                # Default selector_state to 'visible' if not provided
+                if self.selector_state is None:
+                    object.__setattr__(self, "selector_state", "visible")
+            case "function":
+                if self.expression is None:
+                    raise ValueError("'expression' is required when wait_for='function'")
+        return self
 
     @override
     def execution_message(self) -> str:
-        return f"Waited for {self.time_ms} milliseconds"
+        match self.wait_for:
+            case "timeout":
+                return f"Waited for {self.time_ms} milliseconds"
+            case "load_state":
+                return f"Waited for load state '{self.load_state}'"
+            case "selector":
+                return f"Waited for selector '{self.selector}' to be {self.selector_state}"
+            case "function":
+                return "Waited for JS function to return truthy"
 
     @override
     @staticmethod
