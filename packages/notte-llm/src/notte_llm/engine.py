@@ -59,7 +59,7 @@ def fix_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
     import copy
 
     # Step 1: Resolve all $ref references by inlining definitions
-    defs: dict[str, Any] = schema.pop("$defs", {})
+    defs: dict[str, Any] = schema.get("$defs", {})
 
     def resolve_refs(obj: Any) -> Any:
         if isinstance(obj, dict):
@@ -85,6 +85,8 @@ def fix_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
         return obj
 
     schema = resolve_refs(schema)
+    # Remove $defs from resolved schema (now inlined)
+    schema.pop("$defs", None)
 
     # Step 2: Remove unsupported properties and handle edge cases
     def clean_schema(obj: Any, parent_key: str | None = None) -> Any:
