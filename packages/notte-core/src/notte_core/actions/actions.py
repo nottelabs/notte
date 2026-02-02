@@ -1017,21 +1017,22 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
         if isinstance(value, str):
             return NodeSelectors.from_unique_selector(value)
         elif isinstance(value, dict):
-            # Validate that at least one selector field is present to catch typos
+            # Validate that at least one selector field has a non-empty value
             selector_fields = {"css_selector", "xpath_selector", "playwright_selector", "notte_selector"}
-            if not any(k in value for k in selector_fields):
+            has_valid_selector = any(value.get(k) for k in selector_fields)
+            if not has_valid_selector:
                 raise ValueError(
-                    f"selector dict must contain at least one of: {selector_fields}. Got keys: {set(value.keys())}"
+                    f"selector dict must contain at least one non-empty selector field from: {selector_fields}. Got: {value}"
                 )
             # Copy to avoid mutating caller's dict
-            value = dict(value)
+            normalized = dict(value)
             # Fill in missing required fields with defaults
-            value.setdefault("in_iframe", False)
-            value.setdefault("in_shadow_root", False)
-            value.setdefault("iframe_parent_css_selectors", [])
-            value.setdefault("css_selector", "")
-            value.setdefault("xpath_selector", "")
-            return NodeSelectors.model_validate(value)
+            normalized.setdefault("in_iframe", False)
+            normalized.setdefault("in_shadow_root", False)
+            normalized.setdefault("iframe_parent_css_selectors", [])
+            normalized.setdefault("css_selector", "")
+            normalized.setdefault("xpath_selector", "")
+            return NodeSelectors.model_validate(normalized)
         return value
 
     @staticmethod
