@@ -779,8 +779,12 @@ class SessionStatusResponse(SessionResponse, ReplayResponse):
     pass
 
 
+# Re-export FileInfo from notte_core for use in SDK
+from notte_core.storage import FileInfo as FileInfo  # noqa: E402
+
+
 class ListFilesResponse(SdkResponse):
-    files: Annotated[list[str], Field(description="Names of available files")]
+    files: Annotated[list[FileInfo], Field(description="List of files with metadata")]
 
 
 class FileUploadResponse(SdkResponse):

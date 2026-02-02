@@ -12,6 +12,7 @@ from typing_extensions import final, override
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.types import (
     DownloadFileRequest,
+    FileInfo,
     FileLinkResponse,
     FileUploadResponse,
     ListFilesResponse,
@@ -179,7 +180,7 @@ class FileStorageClient(BaseClient):
         resp: FileLinkResponse = self.request(endpoint)
         return self.request_download(resp.url, str(file_path))
 
-    def list_uploaded_files(self) -> list[str]:
+    def list_uploaded_files(self) -> list[FileInfo]:
         """
         List files in storage. 'type' can be 'uploads' or 'downloads'.
         """
@@ -187,7 +188,7 @@ class FileStorageClient(BaseClient):
         resp: ListFilesResponse = self.request(endpoint)
         return resp.files
 
-    def list_downloaded_files(self, session_id: str) -> list[str]:
+    def list_downloaded_files(self, session_id: str) -> list[FileInfo]:
         """
         List files in storage. 'type' can be 'uploads' or 'downloads'.
         """
@@ -261,7 +262,7 @@ class RemoteFileStorage(BaseStorage):
         return response.success
 
     @override
-    async def alist_uploaded_files(self) -> list[str]:
+    async def alist_uploaded_files(self) -> list[FileInfo]:
         """
         List files that have been uploaded to storage.
 
@@ -274,7 +275,7 @@ class RemoteFileStorage(BaseStorage):
         return self.client.list_uploaded_files()
 
     @override
-    async def alist_downloaded_files(self) -> list[str]:
+    async def alist_downloaded_files(self) -> list[FileInfo]:
         """
         List files that have been downloaded into storage by the agents.
 
