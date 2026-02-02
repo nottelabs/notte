@@ -7,7 +7,7 @@ import notte
 
 @pytest.fixture
 def task():
-    return "go to notte.cc and extract the pricing plans"
+    return "go to notte.cc/pricing and extract the names and monthly costs of each pricing tier"
 
 
 def test_falco_agent(task: str):
