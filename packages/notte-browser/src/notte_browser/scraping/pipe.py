@@ -125,22 +125,26 @@ class DataScrapingPipe:
                 )
             )
 
-        # Warn if URLs account for >= 50% of text and user should consider using placeholders
-        # Only show warning for text longer than 10k chars (meaningful for larger content)
-        if params.requires_schema() and not params.use_link_placeholders and len(markdown) > 10000:
-            url_percentage = _calculate_url_percentage(markdown)
-            if url_percentage >= 0.5:
-                logger.warning(
-                    (
-                        f"URLs account for {url_percentage:.1%} of your scraped content. "
-                        "Consider using `use_link_placeholders=True` to reduce token usage and improve LLM performance. "
+        # Resolve use_link_placeholders if not explicitly set (None)
+        # Auto-enable when URLs account for >= 50% of text (for text > 10k chars)
+        use_link_placeholders = params.use_link_placeholders
+        if use_link_placeholders is None:
+            if params.requires_schema() and len(markdown) > 10000:
+                url_percentage = _calculate_url_percentage(markdown)
+                if url_percentage >= 0.5:
+                    use_link_placeholders = True
+                    logger.info(
+                        f"URLs account for {url_percentage:.1%} of your scraped content. Automatically enabling `use_link_placeholders=True` to reduce token usage and improve LLM performance."
                     )
-                )
+                else:
+                    use_link_placeholders = False
+            else:
+                use_link_placeholders = False
 
         # Apply link placeholders to markdown if requested (even without schema)
         # WARNING: This is not recommended as placeholders are meant for LLM processing
         # and unmasking only happens during structured data extraction
-        if params.use_link_placeholders and not params.requires_schema():
+        if use_link_placeholders and not params.requires_schema():
             logger.warning(
                 (
                     "use_link_placeholders=True without schema extraction (response_format/instructions) is not recommended. "
@@ -170,6 +174,6 @@ class DataScrapingPipe:
                 response_format=params.response_format,
                 instructions=params.instructions,
                 verbose=config.verbose,
-                use_link_placeholders=params.use_link_placeholders,
+                use_link_placeholders=use_link_placeholders,
             )
         return DataSpace(markdown=markdown, images=images, structured=structured)
