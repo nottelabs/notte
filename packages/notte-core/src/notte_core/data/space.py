@@ -91,6 +91,7 @@ class StructuredData(BaseModel, Generic[TBaseModel]):
 
     def get(self) -> TBaseModel:
         """Get the extracted data, raising ScrapeFailedError if extraction failed."""
+
         if not self.success or self.data is None:
             raise ScrapeFailedError(self.error or "Unknown extraction error")
         if isinstance(self.data, RootModel):

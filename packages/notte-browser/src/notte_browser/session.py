@@ -881,7 +881,7 @@ class NotteSession(AsyncResource, SyncResource):
         # Create ScrapeAction for trajectory recording
         scrape_action = ScrapeAction(
             instructions=instructions,
-            only_main_content=params.get("only_main_content", True),
+            only_main_content=params.get("only_main_content", False),
             selector=params.get("selector"),
             only_images=params.get("only_images", False),
             scrape_links=params.get("scrape_links", True),
