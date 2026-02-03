@@ -7,6 +7,8 @@ from urllib.parse import parse_qs, urlparse
 from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
 from notte_core.browser.node_type import NodeRole, NodeType
 
+DEFAULT_RAW_FILE_SELECTORS = ["body", "html"]
+
 
 def match_extension(path: str) -> str | None:
     if "." in path:
@@ -99,6 +101,6 @@ def get_empty_dom_node(id: str, text: str) -> DomNode:
         computed_attributes=ComputedDomAttributes(
             is_interactive=True,
             is_top_element=True,
-            selectors=NodeSelectors.from_unique_selector("html"),
+            selectors=NodeSelectors.from_unique_selector(DEFAULT_RAW_FILE_SELECTORS[0]),
         ),
     )
