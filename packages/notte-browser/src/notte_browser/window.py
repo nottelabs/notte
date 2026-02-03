@@ -247,6 +247,11 @@ class BrowserWindow(BaseModel):
             data = response.json()
             return data["webSocketDebuggerUrl"]
 
+    @property
+    def is_chromium_based(self) -> bool:
+        """Check if the browser is Chromium-based (supports CDP)."""
+        return self.resource.options.browser_type != "firefox"
+
     async def get_cdp_session(self, tab_idx: int | None = None) -> CDPSession:
         cdp_page = self.tabs[tab_idx] if tab_idx is not None else self.page
         return await cdp_page.context.new_cdp_session(cdp_page)
@@ -326,8 +331,8 @@ class BrowserWindow(BaseModel):
         if retries <= 0:
             raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
         try:
-            # Use CDP screenshot when no mask is needed (faster)
-            if self.screenshot_mask is None:
+            # Use CDP screenshot when no mask is needed and browser supports CDP (faster)
+            if self.screenshot_mask is None and self.is_chromium_based:
                 try:
                     return await self._cdp_screenshot()
                 except asyncio.CancelledError:
@@ -336,7 +341,7 @@ class BrowserWindow(BaseModel):
                     logger.debug(f"CDP screenshot failed for {self.page.url}, falling back to Playwright")
                     pass  # Fall back to Playwright if CDP fails
 
-            # Fall back to Playwright screenshot when mask is needed (or CDP failed)
+            # Fall back to Playwright screenshot when mask is needed, CDP failed, or browser doesn't support CDP
             mask = await self.screenshot_mask.mask(self.page) if self.screenshot_mask is not None else None
             return await self.page.screenshot(mask=mask, type="jpeg", quality=85)
 
