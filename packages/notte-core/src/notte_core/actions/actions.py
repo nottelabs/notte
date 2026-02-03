@@ -1013,9 +1013,26 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
 
     @field_validator("selector", mode="before")
     @classmethod
-    def validate_selector(cls, value: str | NodeSelectors | None) -> NodeSelectors | None:
+    def validate_selector(cls, value: str | NodeSelectors | dict[str, Any] | None) -> NodeSelectors | None:
         if isinstance(value, str):
             return NodeSelectors.from_unique_selector(value)
+        elif isinstance(value, dict):
+            # Validate that at least one selector field has a non-empty value
+            selector_fields = {"css_selector", "xpath_selector", "playwright_selector", "notte_selector"}
+            has_valid_selector = any(value.get(k) for k in selector_fields)
+            if not has_valid_selector:
+                raise ValueError(
+                    f"selector dict must contain at least one non-empty selector field from: {selector_fields}. Got: {value}"
+                )
+            # Copy to avoid mutating caller's dict
+            normalized = dict(value)
+            # Fill in missing required fields with defaults
+            normalized.setdefault("in_iframe", False)
+            normalized.setdefault("in_shadow_root", False)
+            normalized.setdefault("iframe_parent_css_selectors", [])
+            normalized.setdefault("css_selector", "")
+            normalized.setdefault("xpath_selector", "")
+            return NodeSelectors.model_validate(normalized)
         return value
 
     @staticmethod
