@@ -41,6 +41,7 @@ from notte_core.profiling import profiler
 from notte_core.storage import BaseStorage
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
+from notte_core.utils.raw_file import DEFAULT_RAW_FILE_SELECTORS
 from typing_extensions import final
 
 from notte_browser.captcha import CaptchaHandler
@@ -354,9 +355,9 @@ class BrowserController:
                     with open(file_path, "wb") as f:
                         _ = f.write(file_content)
 
-                elif action.selectors.playwright_selector == "html":
+                elif action.selectors.playwright_selector in DEFAULT_RAW_FILE_SELECTORS:
                     raise ValueError(
-                        f"Action: '{action.name()}' with selector='html' can only be performed on RAW files urls but url='{window.page.url}'"
+                        f"Action: '{action.name()}' with selector='{action.selectors.playwright_selector}' can only be performed on RAW files urls but url='{window.page.url}'"
                     )
                 else:
                     async with window.page.expect_download() as dw:
