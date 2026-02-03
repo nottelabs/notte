@@ -7,7 +7,7 @@ from urllib.parse import parse_qs, urlparse
 from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
 from notte_core.browser.node_type import NodeRole, NodeType
 
-DEFAULT_RAW_FILE_SELECTORS = ["body", "html"]
+DEFAULT_RAW_FILE_SELECTORS = tuple(["body", "html"])
 
 
 def match_extension(path: str) -> str | None:
