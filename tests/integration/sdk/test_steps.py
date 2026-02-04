@@ -85,6 +85,8 @@ def test_old_session_format():
 
 
 def test_agents_in_single_session():
+    import time
+
     client = NotteClient()
     with client.Session(browser_type="chrome", open_viewer=False) as session:
         agent1 = client.Agent(session=session, max_steps=1)
@@ -96,12 +98,23 @@ def test_agents_in_single_session():
         agent3 = client.Agent(session=session, max_steps=1)
         _ = agent3.run(task="go to reddit", url="https://www.reddit.com")
 
-        # Check status before session closes to avoid timing issues
-        session_steps = len(session.status().steps)
+        # Get agent step counts FIRST (they know their own steps immediately)
         agent_1_steps = len(agent1.status().steps)
         agent_2_steps = len(agent2.status().steps)
         agent_3_steps = len(agent3.status().steps)
+        expected_total = agent_1_steps + agent_2_steps + agent_3_steps
 
-        assert session_steps == agent_1_steps + agent_2_steps + agent_3_steps
+        # Session status called LAST with retry for eventual consistency
+        # (steps may be written asynchronously to the database)
+        session_steps = 0
+        for _ in range(5):
+            session_steps = len(session.status().steps)
+            if session_steps >= expected_total:
+                break
+            time.sleep(0.3)
+
+        assert session_steps == expected_total, (
+            f"Session steps ({session_steps}) != sum of agent steps ({expected_total})"
+        )
         assert agent_1_steps == agent_2_steps
         assert agent_2_steps == agent_3_steps
