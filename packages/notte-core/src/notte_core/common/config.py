@@ -16,7 +16,7 @@ if not DEFAULT_CONFIG_PATH.exists():
     raise FileNotFoundError(f"Config file not found: {DEFAULT_CONFIG_PATH}")
 
 ScreenshotType = Literal["raw", "full", "last_action"]
-ENABLE_OPENROUTER: bool = os.environ.get("ENABLE_OPENROUTER") != "false"
+ENABLE_OPENROUTER: bool = os.environ.get("ENABLE_OPENROUTER", "false") != "false"
 
 
 class CookieDict(TypedDict, total=False):
@@ -115,7 +115,7 @@ class LlmModel(StrEnum):
     gemini = "gemini/gemini-2.5-flash"
     gemini_vertex = "vertex_ai/gemini-2.5-flash"
     gemma = "openrouter/google/gemma-3-27b-it"
-    cerebras = "cerebras/llama-3.3-70b"
+    cerebras = "cerebras/gpt-oss-120b"
     groq = "groq/llama-3.3-70b-versatile"
     perplexity = "perplexity/sonar-pro"
     deepseek = "deepseek/deepseek-r1"

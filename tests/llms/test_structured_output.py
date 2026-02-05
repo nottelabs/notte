@@ -2,7 +2,7 @@ import os
 
 import pytest
 from dotenv import load_dotenv
-from notte_core.common.config import LlmModel
+from notte_core.common.config import ENABLE_OPENROUTER, LlmModel
 from notte_llm.engine import LLMEngine
 from pydantic import BaseModel
 
@@ -14,6 +14,9 @@ class Country(BaseModel):
 
 def get_models() -> list[LlmModel]:
     _ = load_dotenv()
+    if ENABLE_OPENROUTER:
+        # enable all models
+        return list(LlmModel)
     models: list[LlmModel] = []
     if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
         models.append(LlmModel.gemini_vertex)

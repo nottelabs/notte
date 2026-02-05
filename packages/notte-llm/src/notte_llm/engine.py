@@ -284,13 +284,13 @@ class LLMEngine:
 
         except NotFoundError as e:
             raise ModelNotFoundError(model) from e
-        except RateLimitError:
+        except RateLimitError as e:
             logger.opt(exception=True).error(
                 f"Rate limit exceeded for model {model}. You should wait a few seconds before retrying..."
             )
-            raise NotteRateLimitError(provider=model)
-        except AuthenticationError:
-            raise InvalidAPIKeyError(provider=model)
+            raise NotteRateLimitError(provider=model) from e
+        except AuthenticationError as e:
+            raise InvalidAPIKeyError(provider=model) from e
         except LiteLLMContextWindowExceededError as e:
             # Try to extract size information from error message
             current_size = None
