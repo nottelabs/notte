@@ -127,7 +127,7 @@ class LlmModel(StrEnum):
     groq = "groq/gpt-oss-120b"
     perplexity = "perplexity/sonar-pro"
     deepseek = "deepseek/deepseek-r1"
-    together = "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo"
+    together = "together_ai/meta-llama/llama-3.3-70b-instruct"
     anthropic = "anthropic/claude-sonnet-4-5-20250929"
     kimi2_5 = "moonshot/kimi-k2.5"
 
@@ -168,6 +168,9 @@ class LlmModel(StrEnum):
         if "deepseek-r1" in _model:
             _model = "deepseek/deepseek-r1"
 
+        if "claude-sonnet-4-5" in _model:
+            _model = "anthropic/claude-sonnet-4-5"
+
         if "vertex_ai" in _model:
             _model = _model.replace("vertex_ai", "google")
 
@@ -175,10 +178,10 @@ class LlmModel(StrEnum):
             _model = _model.replace("gemini/", "google/")
 
         if "kimi-k2.5" in _model:
-            _model = "moonshot/kimi-k2.5"
+            _model = "moonshotai/kimi-k2.5"
 
-        if "Llama-3.3-70B-Instruct-Turbo" in _model:
-            _model = "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+        if "llama-3.3-70b-instruct" in _model:
+            _model = "meta-llama/llama-3.3-70b-instruct"
 
         return f"openrouter/{_model}"
 
