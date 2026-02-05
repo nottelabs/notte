@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from dotenv import load_dotenv
 from notte_sdk import NotteClient
@@ -85,8 +87,6 @@ def test_old_session_format():
 
 
 def test_agents_in_single_session():
-    import time
-
     client = NotteClient()
     with client.Session(browser_type="chrome", open_viewer=False) as session:
         agent1 = client.Agent(session=session, max_steps=1)
