@@ -143,6 +143,14 @@ class LlmModel(StrEnum):
             raise ValueError(f"Invalid provider: {provider_str}")
         return LlmProvider(provider_str)
 
+    @staticmethod
+    def get_openrouter_provider(model: str) -> str | None:
+        if model == LlmModel.cerebras:
+            return "Cerebras"
+        if model == LlmModel.groq:
+            return "Groq"
+        return None
+
     @property
     def context_length(self) -> int:
         return self.provider.context_length

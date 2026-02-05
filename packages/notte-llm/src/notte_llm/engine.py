@@ -254,8 +254,26 @@ class LLMEngine:
     def _get_model(self, model: str | None) -> str:
         model = model or self.model
         if enable_openrouter() and not model.startswith("openrouter/"):
-            return f"openrouter/{model}"
+            _model = model
+            _model = model.replace("cerebras", "openai")
+            _model = _model.replace("groq", "openai")
+            _model = _model.replace("vertex_ai", "google")
+            _model = _model.replace("moonshot", "moonshotai")
+            return f"openrouter/{_model}"
         return model
+
+    def _get_extra_body(self, model: str | None) -> dict[str, Any] | None:
+        if enable_openrouter():
+            provider = LlmModel.get_openrouter_provider(self._get_model(model))
+            if provider is None:
+                return None
+            return {
+                "provider": {
+                    "order": [provider],
+                    "allow_fallbacks": True,
+                }
+            }
+        return None
 
     @profiler.profiled(service_name="llm")
     async def completion(
@@ -278,6 +296,7 @@ class LLMEngine:
                 response_format=response_format,
                 max_completion_tokens=8192,
                 drop_params=True,
+                extra_body=self._get_extra_body(model),
             )
             # Cast to ModelResponse since we know it's not streaming in this case
             return cast(ModelResponse, response)
