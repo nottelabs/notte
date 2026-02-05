@@ -258,8 +258,9 @@ class LLMEngine:
         return model
 
     def _get_extra_body(self, model: str | None) -> dict[str, Any] | None:
+        model = model or self.model
         if enable_openrouter():
-            provider = LlmModel.get_openrouter_provider(self._get_model(model))
+            provider = LlmModel.get_openrouter_provider(model)
             if provider is None:
                 return None
             return {
@@ -279,6 +280,7 @@ class LLMEngine:
         response_format: dict[str, str] | type[BaseModel] | None = None,
         n: int = 1,
     ) -> ModelResponse:
+        extra_body = self._get_extra_body(model)
         model = self._get_model(model)
         # Apply model-specific temperature overrides
         temperature = LlmModel.get_temperature(model, temperature)
@@ -291,7 +293,7 @@ class LLMEngine:
                 response_format=response_format,
                 max_completion_tokens=8192,
                 drop_params=True,
-                extra_body=self._get_extra_body(model),
+                extra_body=extra_body,
             )
             # Cast to ModelResponse since we know it's not streaming in this case
             return cast(ModelResponse, response)
