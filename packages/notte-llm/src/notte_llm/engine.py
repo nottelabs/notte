@@ -253,13 +253,8 @@ class LLMEngine:
 
     def _get_model(self, model: str | None) -> str:
         model = model or self.model
-        if enable_openrouter() and not model.startswith("openrouter/"):
-            _model = model
-            _model = model.replace("cerebras", "openai")
-            _model = _model.replace("groq", "openai")
-            _model = _model.replace("vertex_ai", "google")
-            _model = _model.replace("moonshot", "moonshotai")
-            return f"openrouter/{_model}"
+        if enable_openrouter():
+            return LlmModel.get_openrouter_model(model)
         return model
 
     def _get_extra_body(self, model: str | None) -> dict[str, Any] | None:
