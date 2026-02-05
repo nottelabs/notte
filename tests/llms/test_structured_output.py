@@ -2,7 +2,7 @@ import os
 
 import pytest
 from dotenv import load_dotenv
-from notte_core.common.config import ENABLE_OPENROUTER, LlmModel
+from notte_core.common.config import LlmModel, enable_openrouter
 from notte_llm.engine import LLMEngine
 from pydantic import BaseModel
 
@@ -14,7 +14,7 @@ class Country(BaseModel):
 
 def get_models() -> list[LlmModel]:
     _ = load_dotenv()
-    if ENABLE_OPENROUTER:
+    if enable_openrouter():
         # enable all models
         return list(LlmModel)
     models: list[LlmModel] = []

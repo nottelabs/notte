@@ -21,7 +21,7 @@ from litellm.exceptions import (
     ContextWindowExceededError as LiteLLMContextWindowExceededError,
 )
 from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTypeStubs]
-from notte_core.common.config import ENABLE_OPENROUTER, LlmModel, config
+from notte_core.common.config import LlmModel, config, enable_openrouter
 from notte_core.common.logging import logger
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.llm import LLmModelOverloadedError, LLMParsingError
@@ -253,7 +253,7 @@ class LLMEngine:
 
     def _get_model(self, model: str | None) -> str:
         model = model or self.model
-        if ENABLE_OPENROUTER and not model.startswith("openrouter/"):
+        if enable_openrouter() and not model.startswith("openrouter/"):
             return f"openrouter/{model}"
         return model
 
