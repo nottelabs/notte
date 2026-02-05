@@ -23,7 +23,7 @@ def enable_openrouter() -> bool:
     global _enable_openrouter
     if _enable_openrouter is not None:
         return _enable_openrouter
-    _enable_openrouter = os.environ.get("ENABLE_OPENROUTER", "false") != "false"
+    _enable_openrouter = os.environ.get("ENABLE_OPENROUTER", "false").lower() in ("true", "1", "yes")
     return _enable_openrouter
 
 
