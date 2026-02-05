@@ -253,7 +253,7 @@ class LLMEngine:
 
     def _get_model(self, model: str | None) -> str:
         model = model or self.model
-        if ENABLE_OPENROUTER and not model.startswith("openrouter"):
+        if ENABLE_OPENROUTER and not model.startswith("openrouter/"):
             return f"openrouter/{model}"
         return model
 
