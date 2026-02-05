@@ -145,11 +145,11 @@ class LlmModel(StrEnum):
 
     @staticmethod
     def get_openrouter_provider(model: str) -> str | None:
-        if "cerebras" in model:
+        if "cerebras/" in model:
             return "Cerebras"
-        if "groq" in model:
+        if "groq/" in model:
             return "Groq"
-        if "together" in model:
+        if "together_ai/" in model:
             return "Together"
         return None
 
@@ -159,28 +159,28 @@ class LlmModel(StrEnum):
             return model
 
         _model = model
-        if "gpt-oss-120b" in _model:
+        if "/gpt-oss-120b" in _model:
             _model = "openai/gpt-oss-120b"
 
-        if "gemma-3-27b-it" in _model:
+        if "/gemma-3-27b-it" in _model:
             _model = "google/gemma-3-27b-it"
 
-        if "deepseek-r1" in _model:
+        if "/deepseek-r1" in _model:
             _model = "deepseek/deepseek-r1"
 
-        if "claude-sonnet-4-5" in _model:
+        if "/claude-sonnet-4-5" in _model:
             _model = "anthropic/claude-sonnet-4-5"
 
-        if "vertex_ai" in _model:
+        if "vertex_ai/" in _model:
             _model = _model.replace("vertex_ai", "google")
 
         if "gemini/" in _model:
             _model = _model.replace("gemini/", "google/")
 
-        if "kimi-k2.5" in _model:
+        if "/kimi-k2.5" in _model:
             _model = "moonshotai/kimi-k2.5"
 
-        if "llama-3.3-70b-instruct" in _model:
+        if "/llama-3.3-70b-instruct" in _model:
             _model = "meta-llama/llama-3.3-70b-instruct"
 
         return f"openrouter/{_model}"
