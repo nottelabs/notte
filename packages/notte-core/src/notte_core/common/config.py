@@ -16,6 +16,7 @@ if not DEFAULT_CONFIG_PATH.exists():
     raise FileNotFoundError(f"Config file not found: {DEFAULT_CONFIG_PATH}")
 
 ScreenshotType = Literal["raw", "full", "last_action"]
+ENABLE_OPENROUTER: bool = os.environ.get("ENABLE_OPENROUTER") != "false"
 
 
 class CookieDict(TypedDict, total=False):
@@ -73,6 +74,8 @@ class LlmProvider(StrEnum):
 
     @property
     def apikey_name(self) -> str:
+        if ENABLE_OPENROUTER:
+            return "OPENROUTER_API_KEY"
         match self:
             case LlmProvider.gemini:
                 return "GEMINI_API_KEY"
