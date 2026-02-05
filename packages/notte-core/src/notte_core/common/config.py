@@ -16,6 +16,15 @@ if not DEFAULT_CONFIG_PATH.exists():
     raise FileNotFoundError(f"Config file not found: {DEFAULT_CONFIG_PATH}")
 
 ScreenshotType = Literal["raw", "full", "last_action"]
+_enable_openrouter: bool | None = None
+
+
+def enable_openrouter() -> bool:
+    global _enable_openrouter
+    if _enable_openrouter is not None:
+        return _enable_openrouter
+    _enable_openrouter = os.environ.get("ENABLE_OPENROUTER", "false").lower() in ("true", "1", "yes")
+    return _enable_openrouter
 
 
 class CookieDict(TypedDict, total=False):
@@ -73,6 +82,8 @@ class LlmProvider(StrEnum):
 
     @property
     def apikey_name(self) -> str:
+        if enable_openrouter():
+            return "OPENROUTER_API_KEY"
         match self:
             case LlmProvider.gemini:
                 return "GEMINI_API_KEY"
@@ -112,11 +123,11 @@ class LlmModel(StrEnum):
     gemini = "gemini/gemini-2.5-flash"
     gemini_vertex = "vertex_ai/gemini-2.5-flash"
     gemma = "openrouter/google/gemma-3-27b-it"
-    cerebras = "cerebras/llama-3.3-70b"
-    groq = "groq/llama-3.3-70b-versatile"
+    cerebras = "cerebras/gpt-oss-120b"
+    groq = "groq/gpt-oss-120b"
     perplexity = "perplexity/sonar-pro"
     deepseek = "deepseek/deepseek-r1"
-    together = "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo"
+    together = "together_ai/meta-llama/llama-3.3-70b-instruct"
     anthropic = "anthropic/claude-sonnet-4-5-20250929"
     kimi2_5 = "moonshot/kimi-k2.5"
 
@@ -131,6 +142,48 @@ class LlmModel(StrEnum):
         if provider_str not in list(LlmProvider):
             raise ValueError(f"Invalid provider: {provider_str}")
         return LlmProvider(provider_str)
+
+    @staticmethod
+    def get_openrouter_provider(model: str) -> str | None:
+        if "cerebras/" in model:
+            return "Cerebras"
+        if "groq/" in model:
+            return "Groq"
+        if "together_ai/" in model:
+            return "Together"
+        return None
+
+    @staticmethod
+    def get_openrouter_model(model: str) -> str:
+        if model.startswith("openrouter/"):
+            return model
+
+        _model = model
+        if "/gpt-oss-120b" in _model:
+            _model = "openai/gpt-oss-120b"
+
+        if "/gemma-3-27b-it" in _model:
+            _model = "google/gemma-3-27b-it"
+
+        if "/deepseek-r1" in _model:
+            _model = "deepseek/deepseek-r1"
+
+        if "/claude-sonnet-4-5" in _model:
+            _model = "anthropic/claude-sonnet-4-5"
+
+        if "vertex_ai/" in _model:
+            _model = _model.replace("vertex_ai", "google")
+
+        if "gemini/" in _model:
+            _model = _model.replace("gemini/", "google/")
+
+        if "/kimi-k2.5" in _model:
+            _model = "moonshotai/kimi-k2.5"
+
+        if "/llama-3.3-70b-instruct" in _model:
+            _model = "meta-llama/llama-3.3-70b-instruct"
+
+        return f"openrouter/{_model}"
 
     @property
     def context_length(self) -> int:

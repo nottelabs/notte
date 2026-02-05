@@ -21,7 +21,7 @@ from litellm.exceptions import (
     ContextWindowExceededError as LiteLLMContextWindowExceededError,
 )
 from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTypeStubs]
-from notte_core.common.config import LlmModel, config
+from notte_core.common.config import LlmModel, config, enable_openrouter
 from notte_core.common.logging import logger
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.llm import LLmModelOverloadedError, LLMParsingError
@@ -251,6 +251,26 @@ class LLMEngine:
         )
         return response.choices[0].message.content  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
 
+    def _get_model(self, model: str | None) -> str:
+        model = model or self.model
+        if enable_openrouter():
+            return LlmModel.get_openrouter_model(model)
+        return model
+
+    def _get_extra_body(self, model: str | None) -> dict[str, Any] | None:
+        model = model or self.model
+        if enable_openrouter():
+            provider = LlmModel.get_openrouter_provider(model)
+            if provider is None:
+                return None
+            return {
+                "provider": {
+                    "order": [provider],
+                    "allow_fallbacks": True,
+                }
+            }
+        return None
+
     @profiler.profiled(service_name="llm")
     async def completion(
         self,
@@ -260,7 +280,8 @@ class LLMEngine:
         response_format: dict[str, str] | type[BaseModel] | None = None,
         n: int = 1,
     ) -> ModelResponse:
-        model = model or self.model
+        extra_body = self._get_extra_body(model)
+        model = self._get_model(model)
         # Apply model-specific temperature overrides
         temperature = LlmModel.get_temperature(model, temperature)
         try:
@@ -272,19 +293,20 @@ class LLMEngine:
                 response_format=response_format,
                 max_completion_tokens=8192,
                 drop_params=True,
+                extra_body=extra_body,
             )
             # Cast to ModelResponse since we know it's not streaming in this case
             return cast(ModelResponse, response)
 
         except NotFoundError as e:
             raise ModelNotFoundError(model) from e
-        except RateLimitError:
+        except RateLimitError as e:
             logger.opt(exception=True).error(
                 f"Rate limit exceeded for model {model}. You should wait a few seconds before retrying..."
             )
-            raise NotteRateLimitError(provider=model)
-        except AuthenticationError:
-            raise InvalidAPIKeyError(provider=model)
+            raise NotteRateLimitError(provider=model) from e
+        except AuthenticationError as e:
+            raise InvalidAPIKeyError(provider=model) from e
         except LiteLLMContextWindowExceededError as e:
             # Try to extract size information from error message
             current_size = None
