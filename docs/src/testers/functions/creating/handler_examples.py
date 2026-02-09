@@ -1,5 +1,5 @@
 # @sniptest filename=handler_examples.py
-# @sniptest show=3-14
+# @sniptest show=5-16
 
 
 def perform_task():

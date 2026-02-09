@@ -1,5 +1,5 @@
 # @sniptest filename=param_session_offset.py
-# @sniptest show=6-12
+# @sniptest show=6-11
 from notte_sdk import NotteClient
 
 client = NotteClient()

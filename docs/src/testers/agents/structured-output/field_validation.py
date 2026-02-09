@@ -1,8 +1,7 @@
 # @sniptest filename=field_validation.py
 # @sniptest show=6-22
-from pydantic import BaseModel, Field, field_validator
-
 from notte_sdk import NotteClient
+from pydantic import BaseModel, Field, field_validator
 
 
 class Product(BaseModel):

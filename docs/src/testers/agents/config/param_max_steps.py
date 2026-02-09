@@ -1,5 +1,5 @@
 # @sniptest filename=param_max_steps.py
-# @sniptest show=6-9
+# @sniptest show=5-8
 from notte_sdk import NotteClient
 
 client = NotteClient()

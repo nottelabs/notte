@@ -1,5 +1,5 @@
 # @sniptest filename=prototyping-with-agents.py
-# @sniptest show=6-16
+# @sniptest show=5-15
 from notte_sdk import NotteClient
 
 client = NotteClient()

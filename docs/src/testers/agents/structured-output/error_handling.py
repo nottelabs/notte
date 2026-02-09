@@ -1,8 +1,7 @@
 # @sniptest filename=error_handling.py
 # @sniptest show=13-21
-from pydantic import BaseModel, ValidationError
-
 from notte_sdk import NotteClient
+from pydantic import BaseModel, ValidationError
 
 
 class Product(BaseModel):

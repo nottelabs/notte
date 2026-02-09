@@ -1,5 +1,5 @@
 # @sniptest filename=use_variables.py
-# @sniptest show=9-13
+# @sniptest show=8-12
 from notte_sdk import NotteClient
 
 client = NotteClient()

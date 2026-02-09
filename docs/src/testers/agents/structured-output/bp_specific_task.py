@@ -1,8 +1,7 @@
 # @sniptest filename=bp_specific_task.py
-# @sniptest show=13-22
-from pydantic import BaseModel
-
+# @sniptest show=16-26
 from notte_sdk import NotteClient
+from pydantic import BaseModel
 
 
 class Product(BaseModel):

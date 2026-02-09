@@ -1,5 +1,5 @@
 # @sniptest filename=param_reasoning_model.py
-# @sniptest show=6
+# @sniptest show=5
 from notte_sdk import NotteClient
 
 client = NotteClient()

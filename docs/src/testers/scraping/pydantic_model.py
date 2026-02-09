@@ -4,10 +4,12 @@
 from notte_sdk import NotteClient
 from pydantic import BaseModel
 
+
 class Product(BaseModel):
     name: str
     price: float
     description: str
+
 
 client = NotteClient()
 product = client.scrape(

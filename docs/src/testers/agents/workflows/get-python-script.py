@@ -1,5 +1,5 @@
 # @sniptest filename=get-python-script.py
-# @sniptest show=6-13
+# @sniptest show=5-12
 from notte_sdk import NotteClient
 
 client = NotteClient()

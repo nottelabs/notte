@@ -1,8 +1,7 @@
 # @sniptest filename=ecommerce_extraction.py
 # @sniptest show=6-21
-from pydantic import BaseModel
-
 from notte_sdk import NotteClient
+from pydantic import BaseModel
 
 
 class ProductListing(BaseModel):

@@ -1,5 +1,5 @@
 # @sniptest filename=param_session.py
-# @sniptest show=5-6
+# @sniptest show=4-5
 from notte_sdk import NotteClient
 
 client = NotteClient()

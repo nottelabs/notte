@@ -1,4 +1,4 @@
-# @sniptest show=1-7
+# @sniptest show=1-6
 # @sniptest highlight=5-7
 
 from notte_sdk import NotteClient
