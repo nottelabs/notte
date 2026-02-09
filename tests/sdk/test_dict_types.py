@@ -55,6 +55,8 @@ from notte_sdk.types import (
     PersonaCreateRequestDict,
     PersonaListRequest,
     PersonaListRequestDict,
+    ProxyGeolocationCountry,
+    ProxyGeolocationCountryCode,
     RunFunctionRequest,
     RunFunctionRequestDict,
     ScrapeParams,
@@ -636,3 +638,22 @@ def test_file_info_dict_parsing_retro_compatibility():
     assert resp.files[0].file_ext == "txt"
     assert resp.files[1].name == "test.pdf"
     assert resp.files[1].file_ext == "pdf"
+
+
+def test_proxy_geolocation_country_code_literal_matches_enum():
+    """Validate that ProxyGeolocationCountryCode Literal type contains exactly the same
+    values as ProxyGeolocationCountry enum. This catches missing or extra entries when
+    the enum is updated without updating the Literal type alias."""
+    enum_values = {member.value for member in ProxyGeolocationCountry}
+    literal_values = set(get_args(ProxyGeolocationCountryCode))
+
+    missing_from_literal = enum_values - literal_values
+    extra_in_literal = literal_values - enum_values
+
+    error_messages: list[str] = []
+    if missing_from_literal:
+        error_messages.append(f"Country codes in enum but missing from Literal: {sorted(missing_from_literal)}")
+    if extra_in_literal:
+        error_messages.append(f"Country codes in Literal but missing from enum: {sorted(extra_in_literal)}")
+
+    assert not error_messages, "\n".join(error_messages)

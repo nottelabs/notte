@@ -7,10 +7,11 @@ client = NotteClient()
 vault = client.Vault()
 
 # Add your credentials securely
-vault.add_credentials(
+_ = vault.add_credentials(
     url="https://github.com/",
     email="<your-email>",
     password="<your-password>",
+    mfa_secret="<your-mfa-secret>",
 )
 
 # remove a credential from the vault
