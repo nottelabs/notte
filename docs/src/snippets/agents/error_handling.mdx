@@ -2,15 +2,11 @@
 {/* @sniptest testers/agents/error_handling.py */}
 
 ```python error_handling.py
-from notte_sdk import NotteClient
+agent = client.Agent(session=session)
+result = agent.run(task="Complete task")
 
-client = NotteClient()
-
-with client.Session() as session:
-    result = agent.run(task="Complete task")
-
-    if result.success:
-        print(result.answer)
-    else:
-        print(f"Agent failed: {result.answer}")
+if result.success:
+    print(result.answer)
+else:
+    print(f"Agent failed: {result.answer}")
 ```

@@ -2,12 +2,10 @@
 {/* @sniptest testers/agents/config/param_notifier.py */}
 
 ```python param_notifier.py
-from notte_core.common.notifier import EmailNotifier
-
-notifier = EmailNotifier(email="user@example.com")
-
-agent = client.Agent(
-    session=session,
-    notifier=notifier,  # Get email when agent finishes
-)
+with client.Session() as session:
+    # Agent with notification via email
+    agent = client.Agent(
+        session=session,
+        # Notifications can be configured in the Notte console
+    )
 ```

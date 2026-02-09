@@ -2,15 +2,11 @@
 {/* @sniptest testers/agents/lifecycle/manual_stop.py */}
 
 ```python manual_stop.py
-from notte_sdk import NotteClient
+agent = client.Agent(session=session)
+agent.start(task="Long task")
 
-client = NotteClient()
+# Do something...
 
-with client.Session() as session:
-    agent.start(task="Long task")
-
-    # Do something...
-
-    # Stop the agent
-    agent.stop()
+# Stop the agent
+agent.stop()
 ```

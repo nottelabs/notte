@@ -1,11 +1,12 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/agents/replay/watch_replay.py */}
 
-```python
+```python watch_replay.py
+agent.run(task="Complete task")
+
 replay = agent.replay()
-replay.show()
+replay.save("debug_replay.mp4")
 
 # Watch where it failed
 # Identify if element selectors were wrong
-# Check if page loaded correctly
 ```

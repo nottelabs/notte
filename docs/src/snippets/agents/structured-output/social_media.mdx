@@ -1,11 +1,7 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/agents/structured-output/social_media.py */}
 
-```python
-from pydantic import BaseModel
-
-
-class SocialProfile(BaseModel):
+```python social_media.py
     username: str
     display_name: str
     bio: str | None
@@ -15,8 +11,10 @@ class SocialProfile(BaseModel):
     verified: bool
 
 
-result = agent.run(
-    task="Extract social media profile information",
-    response_format=SocialProfile,
-)
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(
+        task="Extract social media profile information",
+        response_format=SocialProfile,
 ```
