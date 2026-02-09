@@ -2,9 +2,8 @@
 {/* @sniptest testers/agents/fallback/error_handling.py */}
 
 ```python error_handling.py
-
 def alert_failure(message: str) -> None:
-    logging.error(message)
+    logger.error(message)
 
 
 try:
@@ -14,4 +13,5 @@ try:
 
         if not fb.success:
             # Even agent couldn't complete the task
+            alert_failure(f"Task failed: {fb.steps[-1].message}")
 ```

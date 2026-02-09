@@ -76,7 +76,7 @@ repos:
         always_run: true
         language: pygrep
         types: [python]
-        exclude: 'tests/|examples/|logging.py$'
+        exclude: 'tests/|examples/|logging.py$|docs/src/testers/.*\.py$'
       - id: sniptest-generate
         name: Generate snippets from testers
         entry: bash -c "make sniptest"

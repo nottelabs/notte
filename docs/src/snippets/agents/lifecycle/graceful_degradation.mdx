@@ -2,7 +2,6 @@
 {/* @sniptest testers/agents/lifecycle/graceful_degradation.py */}
 
 ```python graceful_degradation.py
-
 with client.Session() as session:
     agent = client.Agent(session=session)
     result = agent.run(task="Complete task")
@@ -12,6 +11,7 @@ with client.Session() as session:
         print(result.answer)
     else:
         # Handle failure
-        logging.error(f"Agent failed: {result.answer}")
+        logger.error(f"Agent failed: {result.answer}")
 
+        # Fallback strategy
 ```

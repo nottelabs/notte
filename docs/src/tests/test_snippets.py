@@ -1,5 +1,4 @@
 import io
-import logging
 import os
 import subprocess
 import tempfile
@@ -10,6 +9,7 @@ from uuid import uuid4
 
 import pytest
 from dotenv import load_dotenv
+from loguru import logger
 from notte_sdk.client import NotteClient
 from pytest_examples import CodeExample, EvalExample
 from pytest_examples.find_examples import _extract_code_chunks
@@ -122,7 +122,7 @@ def test_no_snippets_outside_folder():
     should_raise = False
     for code in find_snippets_examples(all_docs):
         should_raise = True
-        logging.warning(f"Found snippet at {str(code)}")
+        logger.warning(f"Found snippet at {str(code)}")
 
     assert not should_raise
 
@@ -198,7 +198,7 @@ def handle_create_account(
         run_example(eval_example, code=code)
     else:
         # Skip execution in full mode to avoid opening viewer
-        logging.info("Skipping create_account test (requires human interaction with open_viewer)")
+        logger.info("Skipping create_account test (requires human interaction with open_viewer)")
         pass
 
 
@@ -317,7 +317,7 @@ def handle_solve_captchas(
         run_example(eval_example, code=code)
     else:
         # Skip execution in full mode to avoid opening viewer
-        logging.info("Skipping solve_captchas test (requires human interaction)")
+        logger.info("Skipping solve_captchas test (requires human interaction)")
         pass
 
 
@@ -470,7 +470,7 @@ def run_example(
         # Fast mode: compile for syntax check
         try:
             _ = compile(source_code, f"<{actual_source_name}>", "exec")
-            logging.info(f"✓ Syntax check passed: {actual_source_name}")
+            logger.info(f"✓ Syntax check passed: {actual_source_name}")
         except SyntaxError as e:
             raise SyntaxError(f"Syntax error in {actual_source_name}: {e}")
 
@@ -478,7 +478,7 @@ def run_example(
         if TYPE_CHECK_MODE:
             try:
                 mypy_check_code(source_code, actual_source_name)
-                logging.info(f"✓ Type check passed: {actual_source_name}")
+                logger.info(f"✓ Type check passed: {actual_source_name}")
             except TypeError:
                 raise
     else:
@@ -510,7 +510,7 @@ def test_python_testers(tester_file: Path, eval_example: EvalExample):
     except Exception as e:
         # Log the error and re-raise with context
         error_msg = f"Test failed for {tester_name}: {type(e).__name__}: {str(e)}"
-        logging.error(error_msg)
+        logger.error(error_msg)
         raise
 
 
