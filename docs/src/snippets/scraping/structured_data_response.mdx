@@ -2,8 +2,6 @@
 {/* @sniptest testers/scraping/structured_data_response.py */}
 
 ```python structured_data_response.py
-from notte_sdk import NotteClient
-from pydantic import BaseModel
 
 
 class Product(BaseModel):
@@ -12,11 +10,9 @@ class Product(BaseModel):
 
 
 client = NotteClient()
-result = client.scrape(url, response_format=Product)
+url = "https://example.com/product"
+product = client.scrape(url, response_format=Product)
 
 # Access the extracted data
-product = result.data  # Your Pydantic model instance
-
-# Access raw response
-print(result.raw)
+print(f"Name: {product.name}, Price: {product.price}")
 ```

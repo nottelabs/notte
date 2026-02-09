@@ -1,5 +1,5 @@
 # @sniptest filename=invoke_sdk.py
-# @sniptest show=7-10
+# @sniptest show=6-9
 from notte_sdk import NotteClient
 
 client = NotteClient()

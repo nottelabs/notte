@@ -12,7 +12,7 @@ with client.Session() as session:
 
     enhanced_code = f"""
 from notte_sdk import NotteClient
-import logging
+from loguru import logger
 
 def run_function():
     client = NotteClient()
@@ -21,6 +21,6 @@ def run_function():
             {base_code.python_script}
             return {{"success": True, "data": result}}
     except Exception as e:
-        logging.error(f"Function failed: {{e}}")
+        logger.error(f"Function failed: {{e}}")
         return {{"success": False, "error": str(e)}}
 """

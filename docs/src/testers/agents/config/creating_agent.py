@@ -1,5 +1,4 @@
 # @sniptest filename=creating_agent.py
-# @sniptest show=6-14
 from notte_sdk import NotteClient
 
 client = NotteClient()

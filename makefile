@@ -121,6 +121,18 @@ docs:
 docs-tests:
 	cd docs/src && sh tests.sh
 
+
+# Generate all snippets from testers
+.PHONY: sniptest
+sniptest:
+	cd docs/src && uv run python sniptest/generate.py
+
+# Generate snippets and remove orphans
+.PHONY: sniptest-clean
+sniptest-clean:
+	cd docs/src && uv run python sniptest/generate.py --clean
+
+
 %:
 	@:
 

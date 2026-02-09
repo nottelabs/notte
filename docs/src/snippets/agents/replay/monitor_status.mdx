@@ -1,9 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/agents/replay/monitor_status.py */}
 
-```python
-import time
-
+```python monitor_status.py
+agent = client.Agent(session=session)
 agent.start(task="Long running task")
 
 while True:
@@ -18,5 +17,4 @@ while True:
     # replay = agent.replay()
     # replay.show()
 
-    time.sleep(5)
 ```

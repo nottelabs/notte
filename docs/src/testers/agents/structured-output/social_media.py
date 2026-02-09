@@ -1,8 +1,7 @@
 # @sniptest filename=social_media.py
 # @sniptest show=6-20
-from pydantic import BaseModel
-
 from notte_sdk import NotteClient
+from pydantic import BaseModel
 
 
 class SocialProfile(BaseModel):

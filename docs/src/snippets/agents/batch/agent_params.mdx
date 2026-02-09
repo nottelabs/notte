@@ -2,7 +2,7 @@
 {/* @sniptest testers/agents/batch/agent_params.py */}
 
 ```python agent_params.py
-from notte_sdk.agents import BatchRemoteAgent
+persona = client.Persona(persona_id="persona_456")
 
 batch_agent = BatchRemoteAgent(
     session=session,
@@ -11,6 +11,4 @@ batch_agent = BatchRemoteAgent(
     use_vision=True,
     vault=vault,
     persona=persona,
-    _client=client,
-)
 ```

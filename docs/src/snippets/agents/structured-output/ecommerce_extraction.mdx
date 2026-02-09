@@ -1,10 +1,7 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/agents/structured-output/ecommerce_extraction.py */}
 
-```python
-from pydantic import BaseModel
-
-
+```python ecommerce_extraction.py
 class ProductListing(BaseModel):
     name: str
     price: float
@@ -15,9 +12,12 @@ class ProductListing(BaseModel):
     seller: str
 
 
-result = agent.run(
-    task="Extract product listing information",
-    url="https://store.example.com/products/laptop",
-    response_format=ProductListing,
-)
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(
+        task="Extract product listing information",
+        url="https://store.example.com/products/laptop",
+        response_format=ProductListing,
+    )
 ```

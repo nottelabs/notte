@@ -1,5 +1,5 @@
 # @sniptest filename=optimize-selectors.py
-# @sniptest show=6-10
+# @sniptest show=5-9
 from notte_sdk import NotteClient
 
 client = NotteClient()

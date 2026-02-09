@@ -2,8 +2,6 @@
 {/* @sniptest testers/scraping/pydantic_model.py */}
 
 ```python pydantic_model.py
-from notte_sdk import NotteClient
-from pydantic import BaseModel
 
 
 class Product(BaseModel):
@@ -13,10 +11,9 @@ class Product(BaseModel):
 
 
 client = NotteClient()
-result = client.scrape(
+product = client.scrape(
     "https://example.com/product", response_format=Product, instructions="Extract the product details"
 )
 
-print(result.data.name)
-print(result.data.price)
+print(f"Name: {product.name}, Price: {product.price}")
 ```

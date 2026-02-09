@@ -2,6 +2,7 @@
 {/* @sniptest testers/agents/config/param_response_format.py */}
 
 ```python param_response_format.py
+from notte_sdk import NotteClient
 from pydantic import BaseModel
 
 
@@ -11,5 +12,8 @@ class Product(BaseModel):
     in_stock: bool
 
 
-result = agent.run(task="Extract product information", response_format=Product)
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(task="Extract product information", response_format=Product)
 ```

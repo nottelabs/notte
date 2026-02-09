@@ -1,24 +1,12 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/agents/structured-output/nested_structures.py */}
 
-```python
-from pydantic import BaseModel
-
-
-class Address(BaseModel):
-    street: str
-    city: str
-    zip_code: str
-
-
-class Company(BaseModel):
-    name: str
-    address: Address
-    employees: int | None
-
-
+```python nested_structures.py
+agent = client.Agent(session=session)
 result = agent.run(task="Extract company information", response_format=Company)
 
-print(result.answer.name)
-print(result.answer.address.city)
+if result.success and result.answer:
+    company = Company.model_validate_json(result.answer)
+    print(company.name)
+    print(company.address.city)
 ```

@@ -22,6 +22,7 @@ Usage:
 
 import re
 import sys
+import textwrap
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -118,7 +119,12 @@ def parse_magic_comments(content: str) -> tuple[SnippetConfig, str]:
 
 
 def apply_show_range(code: str, show_range: tuple[int, int] | None) -> str:
-    """Apply the show range to extract only specific lines."""
+    """Apply the show range to extract only specific lines.
+
+    Automatically dedents the extracted code to remove common leading whitespace,
+    so that code inside indented blocks (e.g. `with` statements) can be shown
+    at the top level in documentation.
+    """
     if show_range is None:
         return code
 
@@ -129,7 +135,10 @@ def apply_show_range(code: str, show_range: tuple[int, int] | None) -> str:
     start_idx = max(0, start - 1)
     end_idx = min(len(lines), end)
 
-    return "\n".join(lines[start_idx:end_idx])
+    selected = "\n".join(lines[start_idx:end_idx])
+
+    # Auto-dedent: strip common leading whitespace from the selected lines
+    return textwrap.dedent(selected)
 
 
 def parse_line_spec(spec: str) -> list[int]:

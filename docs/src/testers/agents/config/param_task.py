@@ -1,5 +1,5 @@
 # @sniptest filename=param_task.py
-# @sniptest show=7
+# @sniptest show=6
 from notte_sdk import NotteClient
 
 client = NotteClient()

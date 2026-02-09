@@ -1,5 +1,5 @@
 # @sniptest filename=run_agent.py
-# @sniptest show=6-7
+# @sniptest show=5-6
 from notte_sdk import NotteClient
 
 client = NotteClient()

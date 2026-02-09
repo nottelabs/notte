@@ -1,8 +1,7 @@
 # @sniptest filename=lead_generation.py
-# @sniptest show=6-20
-from pydantic import BaseModel
-
+# @sniptest show=5-21
 from notte_sdk import NotteClient
+from pydantic import BaseModel
 
 
 class BusinessLead(BaseModel):

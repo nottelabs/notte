@@ -1,5 +1,5 @@
 # @sniptest filename=bp_url_context.py
-# @sniptest show=7-11
+# @sniptest show=6-10
 from notte_sdk import NotteClient
 
 client = NotteClient()

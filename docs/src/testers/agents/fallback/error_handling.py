@@ -1,14 +1,13 @@
 # @sniptest filename=error_handling.py
 # @sniptest show=7-18
-import logging
-
+from loguru import logger
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
 
 def alert_failure(message: str) -> None:
-    logging.error(message)
+    logger.error(message)
 
 
 try:
@@ -21,4 +20,4 @@ try:
             alert_failure(f"Task failed: {fb.steps[-1].message}")
 except Exception as e:
     # Unexpected error
-    logging.error(f"Fallback exception: {e}")
+    logger.error(f"Fallback exception: {e}")

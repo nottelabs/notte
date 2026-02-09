@@ -1,5 +1,5 @@
 # @sniptest filename=limitations_complex.py
-# @sniptest show=6-16
+# @sniptest show=4-20
 from pydantic import BaseModel
 
 

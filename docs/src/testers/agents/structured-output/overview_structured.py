@@ -1,8 +1,7 @@
 # @sniptest filename=overview_structured.py
-# @sniptest show=12-14
-from pydantic import BaseModel
-
+# @sniptest show=12-16
 from notte_sdk import NotteClient
+from pydantic import BaseModel
 
 
 class ContactInfo(BaseModel):

@@ -2,19 +2,14 @@
 {/* @sniptest testers/agents/lifecycle/bp_check_success.py */}
 
 ```python bp_check_success.py
-from notte_sdk import NotteClient
+agent = client.Agent(session=session)
 
-client = NotteClient()
+result = agent.run(task="Critical task")
 
-with client.Session() as session:
-    agent = client.Agent(session=session)
+if not result.success:
+    # Don't proceed if agent failed
+    raise RuntimeError(f"Critical task failed: {result.answer}")
 
-    result = agent.run(task="Critical task")
-
-    if not result.success:
-        # Don't proceed if agent failed
-        raise RuntimeError(f"Critical task failed: {result.answer}")
-
-    # Safe to proceed
-    process_result(result)
+# Safe to proceed with result
+print(result.answer)
 ```

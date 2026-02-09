@@ -1,8 +1,6 @@
 # @sniptest filename=param_response_format.py
-# @sniptest show=6-16
-from pydantic import BaseModel
-
 from notte_sdk import NotteClient
+from pydantic import BaseModel
 
 
 class Product(BaseModel):

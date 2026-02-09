@@ -76,10 +76,16 @@ repos:
         always_run: true
         language: pygrep
         types: [python]
-        exclude: 'tests/|examples/|logging.py$'
+        exclude: 'tests/|examples/|logging.py$|docs/src/testers/.*\.py$'
       - id: sniptest-generate
         name: Generate snippets from testers
-        entry: bash -c "cd docs/src && make sniptest && git add snippets/"
+        entry: bash -c "make sniptest"
+        language: system
+        files: ^docs/src/testers/.*\.py$
+        pass_filenames: false
+      - id: sniptest-verify
+        name: Verify snippet show= ranges are complete
+        entry: bash -c "cd docs/src && uv run python sniptest/verify_snippets.py"
         language: system
         files: ^docs/src/testers/.*\.py$
         pass_filenames: false

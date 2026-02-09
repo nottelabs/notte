@@ -7,9 +7,7 @@ from notte_sdk import NotteClient
 client = NotteClient()
 
 # Reuse a previously saved profile (read-only)
-with client.Session(
-    profile={"id": "notte-profile-abc123", "persist": False}
-) as session:
+with client.Session(profile={"id": "notte-profile-abc123", "persist": False}) as session:
     # Navigate directly - already authenticated!
     session.execute(type="goto", url="https://github.com")
 

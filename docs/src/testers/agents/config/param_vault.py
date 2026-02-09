@@ -1,5 +1,5 @@
 # @sniptest filename=param_vault.py
-# @sniptest show=6-11
+# @sniptest show=5-10
 from notte_sdk import NotteClient
 
 client = NotteClient()

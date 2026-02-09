@@ -8,7 +8,7 @@ client = NotteClient()
 
 # Deploy as shared
 function = client.Function(
-    workflow_path="my_function.py",
+    path="my_function.py",
     name="Public Scraper",
     shared=True,  # Make publicly accessible
 )

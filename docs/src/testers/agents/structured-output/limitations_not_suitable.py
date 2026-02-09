@@ -1,8 +1,7 @@
 # @sniptest filename=limitations_not_suitable.py
-# @sniptest show=11-13
-from pydantic import BaseModel
-
+# @sniptest show=11-15
 from notte_sdk import NotteClient
+from pydantic import BaseModel
 
 
 # Don't do this - use plain text response instead
