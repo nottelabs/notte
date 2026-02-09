@@ -2,10 +2,11 @@
 {/* @sniptest testers/agents/structured-output/nested_structures.py */}
 
 ```python nested_structures.py
-client = NotteClient()
-with client.Session() as session:
-    agent = client.Agent(session=session)
-    result = agent.run(task="Extract company information", response_format=Company)
+agent = client.Agent(session=session)
+result = agent.run(task="Extract company information", response_format=Company)
 
-    if result.success and result.answer:
+if result.success and result.answer:
+    company = Company.model_validate_json(result.answer)
+    print(company.name)
+    print(company.address.city)
 ```

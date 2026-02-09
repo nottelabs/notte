@@ -83,3 +83,9 @@ repos:
         language: system
         files: ^docs/src/testers/.*\.py$
         pass_filenames: false
+      - id: sniptest-verify
+        name: Verify snippet show= ranges are complete
+        entry: bash -c "cd docs/src && uv run python sniptest/verify_snippets.py"
+        language: system
+        files: ^docs/src/testers/.*\.py$
+        pass_filenames: false

@@ -5,4 +5,6 @@
 agent = client.Agent(session=session)
 result = agent.run(task="Find contact info", response_format=ContactInfo)
 if result.success and result.answer:
+    contact = ContactInfo.model_validate_json(result.answer)
+    print(contact.email)  # Type-safe access
 ```

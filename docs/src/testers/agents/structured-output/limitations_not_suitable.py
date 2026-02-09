@@ -1,5 +1,5 @@
 # @sniptest filename=limitations_not_suitable.py
-# @sniptest show=11-13
+# @sniptest show=11-15
 from notte_sdk import NotteClient
 from pydantic import BaseModel
 

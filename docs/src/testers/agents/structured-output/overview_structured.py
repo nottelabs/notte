@@ -1,5 +1,5 @@
 # @sniptest filename=overview_structured.py
-# @sniptest show=12-14
+# @sniptest show=12-16
 from notte_sdk import NotteClient
 from pydantic import BaseModel
 

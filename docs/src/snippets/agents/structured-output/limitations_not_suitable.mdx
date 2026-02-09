@@ -5,4 +5,6 @@
 with client.Session() as session:
     agent = client.Agent(session=session)
     # Do this instead
+    result = agent.run(task="Explain how this product works")
+    print(result.answer)  # Natural language explanation
 ```
