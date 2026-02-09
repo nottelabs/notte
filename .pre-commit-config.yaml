@@ -79,7 +79,7 @@ repos:
         exclude: 'tests/|examples/|logging.py$'
       - id: sniptest-generate
         name: Generate snippets from testers
-        entry: bash -c "cd docs/src && make sniptest && git add snippets/"
+        entry: bash -c "make sniptest"
         language: system
         files: ^docs/src/testers/.*\.py$
         pass_filenames: false
