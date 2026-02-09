@@ -1,5 +1,5 @@
 # @sniptest filename=job_listings.py
-# @sniptest show=6-19
+# @sniptest show=5-20
 from notte_sdk import NotteClient
 from pydantic import BaseModel
 

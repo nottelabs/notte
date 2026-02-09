@@ -2,6 +2,7 @@
 {/* @sniptest testers/agents/structured-output/ecommerce_extraction.py */}
 
 ```python ecommerce_extraction.py
+class ProductListing(BaseModel):
     name: str
     price: float
     original_price: float | None
@@ -18,4 +19,5 @@ with client.Session() as session:
         task="Extract product listing information",
         url="https://store.example.com/products/laptop",
         response_format=ProductListing,
+    )
 ```

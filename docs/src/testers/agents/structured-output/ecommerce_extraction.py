@@ -1,5 +1,5 @@
 # @sniptest filename=ecommerce_extraction.py
-# @sniptest show=6-21
+# @sniptest show=5-22
 from notte_sdk import NotteClient
 from pydantic import BaseModel
 

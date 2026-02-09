@@ -2,6 +2,7 @@
 {/* @sniptest testers/agents/structured-output/job_listings.py */}
 
 ```python job_listings.py
+class JobPosting(BaseModel):
     title: str
     company: str
     location: str
@@ -16,4 +17,5 @@ with client.Session() as session:
     agent = client.Agent(session=session)
     result = agent.run(
         task="Extract job posting information",
+        response_format=JobPosting,
 ```
