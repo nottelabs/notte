@@ -2,6 +2,7 @@
 {/* @sniptest testers/agents/structured-output/lead_generation.py */}
 
 ```python lead_generation.py
+class BusinessLead(BaseModel):
     company_name: str
     contact_email: str | None
     phone: str | None
@@ -17,4 +18,5 @@ with client.Session() as session:
         task="Extract business information from this company page",
         url="https://example.com/about",
         response_format=BusinessLead,
+    )
 ```

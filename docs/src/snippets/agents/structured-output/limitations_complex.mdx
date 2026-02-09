@@ -2,6 +2,8 @@
 {/* @sniptest testers/agents/structured-output/limitations_complex.py */}
 
 ```python limitations_complex.py
+class Product(BaseModel):
+    name: str
     price: float
 
 
@@ -13,4 +15,5 @@ class ComplexStructure(BaseModel):
 # Better - flatten or simplify
 class SimplifiedStructure(BaseModel):
     products: list[Product]
+    categories: list[str]
 ```
