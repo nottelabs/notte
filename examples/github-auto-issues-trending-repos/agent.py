@@ -138,7 +138,7 @@ def create_new_issues():
     issues_to_add: list[TrendingRepoWithIssue] = []
     with client.Vault() as vault:
         logger.info("Added github credentials to vault...")
-        _ = vault.add_credentials(
+        vault.add_credentials(
             url="https://github.com",
             email=os.environ["AUTO_ISSUES_GITHUB_EMAIL"],
             password=os.environ["AUTO_ISSUES_GITHUB_PASSWORD"],
