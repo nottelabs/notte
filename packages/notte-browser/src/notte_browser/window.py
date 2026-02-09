@@ -89,7 +89,6 @@ class BrowserWindowOptions(BaseModel):
             chrome_args.extend(
                 [
                     "--disable-dev-shm-usage",
-                    "--disable-extensions",
                     "--no-sandbox",
                     "--disable-setuid-sandbox",
                     "--no-zygote",
@@ -386,15 +385,13 @@ class BrowserWindow(BaseModel):
             else:
                 html_content_await = profiler.profiled(service_name="observation")(self.page.content)()
 
+            html_content = await html_content_await
+            snapshot_screenshot = await self.screenshot()
             if skip_dom:
-                # Skip expensive DOM tree computation for scraping
-                html_content, snapshot_screenshot = await asyncio.gather(html_content_await, self.screenshot())
                 dom_node = DomNode.empty_root()
             else:
                 dom_tree_pipe = dom_tree_parsers["default"]
-                html_content, snapshot_screenshot, dom_node = await asyncio.gather(
-                    html_content_await, self.screenshot(), dom_tree_pipe.forward(self.page)
-                )
+                dom_node = await dom_tree_pipe.forward(self.page)
 
         except SnapshotProcessingError:
             await self.long_wait()
