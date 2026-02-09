@@ -1,5 +1,5 @@
 # @sniptest filename=lists_of_objects.py
-# @sniptest show=17-28
+# @sniptest show=1-28
 from notte_sdk import NotteClient
 from pydantic import BaseModel
 
