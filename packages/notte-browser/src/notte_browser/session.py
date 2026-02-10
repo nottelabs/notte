@@ -642,7 +642,7 @@ class NotteSession(AsyncResource, SyncResource):
         except NotteBaseError as e:
             # When raise_on_failure is True, we use the dev message to give more details to the user
             success = False
-            message = e.agent_message
+            message = e.dev_message
             exception = e
         except ValidationError as e:
             success = False

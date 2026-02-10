@@ -30,7 +30,7 @@ def test_start_agent_with_gemini_reasoning():
     _ = load_dotenv()
     notte = NotteClient()
     with notte.Session() as session:
-        agent = notte.Agent(session=session, reasoning_model="gemini/gemini-2.0-flash", max_steps=3)
+        agent = notte.Agent(session=session, reasoning_model="gemini/gemini-2.0-flash-001", max_steps=3)
         _ = agent.run(task="Go notte.cc and describe the page")
     resp = agent.status()
     assert resp.status == "closed"

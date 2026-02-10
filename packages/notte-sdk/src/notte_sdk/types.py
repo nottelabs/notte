@@ -796,10 +796,6 @@ class SessionStartRequest(SdkRequest):
                 f"`proxies` parameter cannot be falsy when setting `solve_captchas=True` with `browser_type` '{self.browser_type}'."
             )
 
-        if self.solve_captchas and self.browser_type not in {"firefox", "chrome-nightly", "chrome-turbo"}:
-            raise ValueError(
-                "`solve_captchas=True` is currently only supported for cloud sessions with `browser_type` set to 'firefox', 'chrome-nightly', or 'chrome-turbo'."
-            )
         return self
 
     @model_validator(mode="after")

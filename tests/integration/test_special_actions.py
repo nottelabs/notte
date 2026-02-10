@@ -162,7 +162,7 @@ async def test_scroll_on_non_scrollable_page_should_fail():
         res = await session.aexecute(type="scroll_down")
         assert not res.success
         assert isinstance(res.exception, ScrollActionFailedError)
-        assert res.message == ScrollActionFailedError().agent_message
+        assert res.message == ScrollActionFailedError().dev_message
 
 
 @pytest.mark.asyncio

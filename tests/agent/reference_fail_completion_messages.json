@@ -37,7 +37,7 @@
   },
   {
     "role": "user",
-    "content": "\u274c action 'scroll_down' failed with error: Scroll failed. Either the page is not scrollable or there is a focused element blocking the scroll. Hint: check viewport dimensions or try to close modals and/or hit escape key."
+    "content": "\u274c action 'scroll_down' failed with error: Scroll failed. Either the page is not scrollable or there is a focused element blocking the scroll."
   },
   {
     "role": "assistant",
