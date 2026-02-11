@@ -1,0 +1,90 @@
+---
+title: Cloudflare Web Bot Auth
+description: Authenticate browser sessions with Cloudflare Web Bot Auth for accessing protected content
+---
+
+import QuickStart from "/snippets/sessions/web-bot-auth/quick_start.mdx";
+import CompleteExample from "/snippets/sessions/web-bot-auth/complete_example.mdx";
+import AgentExample from "/snippets/sessions/web-bot-auth/agent_example.mdx";
+import Testing from "/snippets/sessions/web-bot-auth/testing.mdx";
+
+Notte supports [Cloudflare Web Bot Auth](https://webbotauth.io) HTTP message signing for browser sessions. This allows you to identify as Notte to websites that require Cloudflare's web bot authentication, enabling access to protected content and avoiding bot detection.
+
+## How It Works
+
+1. **Session Creation** — Create a browser session with web bot auth enabled
+2. **HTTP Message Signing** — All HTTP requests are automatically signed using Notte's registered identity
+3. **Authentication** — Cloudflare validates the signatures against its verified bots registry
+4. **Access Granted** — Successfully authenticated requests can access protected content without triggering bot detection
+
+When you enable web bot auth, Notte automatically signs all HTTP requests in the browser session using our registered identity. This allows you to access protected content that requires Cloudflare's web bot authentication without any additional configuration.
+
+## Quick Start
+
+Enable web bot auth by setting `web_bot_auth=True` when creating a session:
+
+<QuickStart />
+
+## Complete Example
+
+Combine web bot auth with other session capabilities for maximum effectiveness:
+
+<CompleteExample />
+
+## Web Bot Auth + Agent
+
+You can also use web bot auth with Notte agents:
+
+<AgentExample />
+
+## Testing
+
+You can test your web bot auth configuration by visiting [https://webbotauth.io/test](https://webbotauth.io/test) in a browser session with web bot auth enabled. This site will show you whether your requests are being properly signed and authenticated.
+
+<Testing />
+
+## When to Use Web Bot Auth
+
+Web bot auth is useful when:
+
+- **Accessing Cloudflare-protected sites** that block automated traffic
+- **Scraping content** from websites using Cloudflare's bot management
+- **Running agents** that need to interact with protected web applications
+- **Building reliable automations** that won't break due to bot detection
+
+<Note>
+  Web bot auth works by cryptographically signing HTTP requests, which is different from stealth mode or proxies. For best results, consider combining all three approaches.
+</Note>
+
+## Limitations
+
+- Web bot auth only works with sites that support Cloudflare Web Bot Auth verification
+- It identifies your requests as coming from Notte — the site must recognize Notte as a verified bot
+- It does not bypass all forms of bot detection (combine with [stealth mode](/features/sessions/stealth-mode) and [proxies](/features/sessions/proxies) for comprehensive coverage)
+
+## Read More
+
+- [Cloudflare Verified Bots Blog](https://blog.cloudflare.com/verified-bots-with-cryptography/)
+- [HTTP Message Signatures (RFC 9421)](https://datatracker.ietf.org/doc/html/rfc9421)
+- [Web Bot Auth IETF Draft](https://datatracker.ietf.org/doc/html/draft-meunier-web-bot-auth-architecture)
+- [WebBotAuth.io](https://webbotauth.io)
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">
+    Combine with anti-detection features
+  </Card>
+
+  <Card title="Proxies" icon="network-wired" href="/features/sessions/proxies">
+    Route traffic through residential proxies
+  </Card>
+
+  <Card title="CAPTCHA Solving" icon="shield-check" href="/features/sessions/captcha-solving">
+    Automatically solve captchas
+  </Card>
+
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Explore all session options
+  </Card>
+</CardGroup>

@@ -53,7 +53,8 @@
                       "features/sessions/recordings",
                       "features/sessions/live-view",
                       "features/sessions/browser-extensions",
-                      "features/sessions/cookies"
+                      "features/sessions/cookies",
+                      "features/sessions/cloudflare-web-bot-auth"
                     ]
                   },
                   {
@@ -138,7 +139,8 @@
                     ]
                   },
                   "integrations/kernel",
-                  "integrations/openai-cua"
+                  "integrations/openai-cua",
+                  "integrations/cloudflare-web-bot-auth"
                 ]
               }
             ]
