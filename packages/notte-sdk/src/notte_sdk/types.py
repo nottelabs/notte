@@ -714,6 +714,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     use_file_storage: bool
     screenshot_type: ScreenshotType
     profile: SessionProfileDict | SessionProfile | None
+    web_bot_auth: bool
 
 
 class SessionStartRequest(SdkRequest):
