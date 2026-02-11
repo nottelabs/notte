@@ -176,3 +176,41 @@ async def test_scraping_structured_data():
         _ = session.execute(type="goto", url="https://gymbeam.pl")
         data = session.scrape(instructions="Extract the company name")
         assert isinstance(data, dict)
+
+
+class News(BaseModel):
+    title: str
+    link: str | None = None
+    date: str | None = None
+
+
+class WebsiteContent(BaseModel):
+    content: list[News] = []
+
+
+class SiteUpdate(BaseModel):
+    update: bool
+    update_text: str | None
+
+
+def test_scraping_structured_data_with_response_format_and_raise_on_failure_false():
+    _ = load_dotenv()
+    notte = NotteClient()
+    with notte.Session(browser_type="chrome", viewport_height=1080, viewport_width=1920) as page:
+        n_articles = 10
+        _ = page.execute(type="goto", url="http://stonewoodcapital.com/news/")
+        result = page.scrape(
+            instructions=f"""Summarize only the first {n_articles} article previews you can see on this news site.
+        Guidelines:
+        - If there are less than {n_articles} articles, return ALL the articles you can see.
+        - In particular, focus on the most recent news article.
+        - Be careful not to grab duplicate articles!
+        - Look at the ENTIRE page!
+        - Return the articles in the order they appear on the page.
+        - Be VERY careful to return the output with the correct format.""",
+            response_format=WebsiteContent,
+            only_main_content=True,
+            raise_on_failure=False,
+        )
+        content = result.get()
+        assert isinstance(content, WebsiteContent), f"Expected WebsiteContent, got {type(content)}"
