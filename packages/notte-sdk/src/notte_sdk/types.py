@@ -960,6 +960,7 @@ class SessionResponse(SdkResponse):
     solve_captchas: Annotated[bool | NoneType, Field(description="Whether to solve captchas.")] = None
     cdp_url: Annotated[str | None, Field(description="The URL to connect to the CDP server.")] = None
     viewer_url: Annotated[str | None, Field(description="The remote session viewer URL.")] = None
+    web_bot_auth: Annotated[bool, Field(description="Whether to use web bot authentication.")] = False
 
     @field_validator("closed_at", mode="before")
     @classmethod
