@@ -214,6 +214,8 @@ class PageClient(BaseClient):
             if isinstance(structured.data, RootModel):
                 # unwrap RootModel
                 structured.data = structured.data.root  # type: ignore[attr-defined]
+            if request.response_format is not None and structured.data is not None:
+                structured.data = request.response_format.model_validate(structured.data)
             return structured
         return response.markdown
 
