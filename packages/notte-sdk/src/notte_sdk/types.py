@@ -775,6 +775,8 @@ class SessionStartRequest(SdkRequest):
         SessionProfile | None, Field(description="Browser profile configuration for state persistence")
     ] = None
 
+    web_bot_auth: Annotated[bool, Field(description="Whether to use web bot authentication.")] = False
+
     @model_validator(mode="before")
     @classmethod
     def add_timeout_defaults(cls, values: Any) -> Any:
