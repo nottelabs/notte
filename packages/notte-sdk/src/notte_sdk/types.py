@@ -714,6 +714,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     use_file_storage: bool
     screenshot_type: ScreenshotType
     profile: SessionProfileDict | SessionProfile | None
+    web_bot_auth: bool
 
 
 class SessionStartRequest(SdkRequest):
@@ -774,6 +775,8 @@ class SessionStartRequest(SdkRequest):
     profile: Annotated[
         SessionProfile | None, Field(description="Browser profile configuration for state persistence")
     ] = None
+
+    web_bot_auth: Annotated[bool, Field(description="Whether to use web bot authentication.")] = False
 
     @model_validator(mode="before")
     @classmethod
@@ -958,6 +961,7 @@ class SessionResponse(SdkResponse):
     solve_captchas: Annotated[bool | NoneType, Field(description="Whether to solve captchas.")] = None
     cdp_url: Annotated[str | None, Field(description="The URL to connect to the CDP server.")] = None
     viewer_url: Annotated[str | None, Field(description="The remote session viewer URL.")] = None
+    web_bot_auth: Annotated[bool, Field(description="Whether to use web bot authentication.")] = False
 
     @field_validator("closed_at", mode="before")
     @classmethod
