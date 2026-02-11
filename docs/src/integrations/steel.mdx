@@ -1,0 +1,77 @@
+---
+title: Steel
+description: Run Notte with Steel cloud browsers (CDP)
+---
+
+## Overview
+
+Point Notte at Steel's CDP endpoint to run your agents against Steel's hosted browsers. Notte controls the browser through Chrome DevTools Protocol while your code stays unchanged - simply pass Steel's WebSocket URL into your Notte Session.
+
+## Prerequisites
+
+- **Notte SDK** installed with API key configured ([Get an API key](https://console.notte.cc))
+- **Steel account** and API key ([Get Steel API key](https://app.steel.dev/settings/api-keys))
+- (Optional) Note that some Steel endpoints require the API key as a query parameter on the WebSocket URL
+
+## Quick Start
+
+Use the Steel SDK to create a browser session, extract the WebSocket URL, and pass it to Notte.
+
+<Note>The exact API and attribute names may vary. Please refer to [Steel's documentation](https://docs.steel.dev/) for the most up-to-date information.</Note>
+
+```python
+# Install: uv add notte-sdk steel
+import os
+from notte_sdk import NotteClient
+from steel import Steel
+
+STEEL_API_KEY = os.getenv("STEEL_API_KEY")
+
+# 1) Create Steel browser session
+client = Steel(api_key=STEEL_API_KEY)  # Note: verify parameter name with Steel docs
+session = client.sessions.create()
+
+# Steel returns a websocket URL for CDP control
+# Check Steel docs for the exact attribute name and query param format
+cdp_url = session.websocket_url  # May need: f"{session.websocket_url}?apiKey={STEEL_API_KEY}"
+
+# 2) Run Notte agent against Steel's CDP browser
+notte = NotteClient()
+with notte.Session(cdp_url=cdp_url) as s:
+    agent = notte.Agent(session=s, max_steps=6)
+    agent.run(task="extract pricing plans from https://www.notte.cc/")
+```
+
+## Using an Existing Steel CDP URL
+
+If you already have a WebSocket URL from Steel, connect directly:
+
+```python
+from notte_sdk import NotteClient
+
+cdp_url = "wss://<steel-cdp-endpoint>"  # Add auth params as required by Steel
+notte = NotteClient()
+
+with notte.Session(cdp_url=cdp_url) as s:
+    agent = notte.Agent(session=s, max_steps=5)
+    agent.run(task="open the homepage and take a full-page screenshot")
+```
+
+## Authentication & Configuration
+
+- **API Key**: Steel requires an API key to create browser sessions via SDK. If using a raw WebSocket/CDP URL, include any required query parameters (like `apiKey`) in the URL.
+- **Browser Settings**: Viewport dimensions, headless mode, regions, and timeouts are configured when creating the Steel session ([see Steel Sessions docs](https://docs.steel.dev/)).
+- **Network Configuration**: If your organization enforces IP allowlists or proxies, configure those on Steel's side during session creation.
+
+## Troubleshooting
+
+- **401 / 403 errors**: Invalid or expired Steel token. Regenerate your API key or re-create the session URL
+- **WebSocket closed**: Steel session terminated or timed out. Create a new Steel session
+- **No targets/pages available**: Ensure the Steel session actually launched a page; let Notte navigate first with the Agent
+- **Connectivity/firewall**: Allow outbound WSS connections to Steel's host
+
+## See Also
+
+- [CDP Documentation](https://docs.notte.cc/features/sessions/external-providers) - Local and external CDP patterns
+- [Session Replay](https://docs.notte.cc/features/sessions/recordings) - Record and replay browser sessions
+- [Proxies](https://docs.notte.cc/features/sessions/proxies) - Configure proxy settings for sessions

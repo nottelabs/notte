@@ -140,6 +140,7 @@
                     ]
                   },
                   "integrations/kernel",
+                  "integrations/steel",
                   "integrations/massive",
                   "integrations/openai-cua",
                   "integrations/stagehand",
