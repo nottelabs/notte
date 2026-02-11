@@ -140,7 +140,7 @@
                   },
                   "integrations/kernel",
                   "integrations/openai-cua",
-                  "integrations/cloudflare-web-bot-auth"
+                  "features/sessions/cloudflare-web-bot-auth"
                 ]
               }
             ]
