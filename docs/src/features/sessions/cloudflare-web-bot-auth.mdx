@@ -1,6 +1,6 @@
 ---
 title: Cloudflare Web Bot Auth
-description: Authenticate browser sessions with Cloudflare Web Bot Auth for accessing protected content
+description: Access Cloudflare-protected websites by cryptographically signing browser requests
 ---
 
 import QuickStart from "/snippets/sessions/web-bot-auth/quick_start.mdx";
@@ -8,64 +8,65 @@ import CompleteExample from "/snippets/sessions/web-bot-auth/complete_example.md
 import AgentExample from "/snippets/sessions/web-bot-auth/agent_example.mdx";
 import Testing from "/snippets/sessions/web-bot-auth/testing.mdx";
 
-Notte supports [Cloudflare Web Bot Auth](https://webbotauth.io) HTTP message signing for browser sessions. This allows you to identify as Notte to websites that require Cloudflare's web bot authentication, enabling access to protected content and avoiding bot detection.
+Many websites use Cloudflare's [Web Bot Auth](https://webbotauth.io) protocol to distinguish between legitimate automated services and unwanted bots. Notte is registered as a verified bot in Cloudflare's registry, which means sessions can cryptographically prove their identity and gain access to otherwise restricted content.
 
 ## How It Works
 
-1. **Session Creation** — Create a browser session with web bot auth enabled
-2. **HTTP Message Signing** — All HTTP requests are automatically signed using Notte's registered identity
-3. **Authentication** — Cloudflare validates the signatures against its verified bots registry
-4. **Access Granted** — Successfully authenticated requests can access protected content without triggering bot detection
+Cloudflare's Web Bot Auth relies on [HTTP Message Signatures (RFC 9421)](https://datatracker.ietf.org/doc/html/rfc9421) to verify the origin of requests. When enabled, Notte transparently signs every outgoing HTTP request in the session with our registered cryptographic identity. Cloudflare then checks these signatures against its verified bots list and grants access accordingly.
 
-When you enable web bot auth, Notte automatically signs all HTTP requests in the browser session using our registered identity. This allows you to access protected content that requires Cloudflare's web bot authentication without any additional configuration.
+In practice, this means:
+
+1. You create a session with `web_bot_auth=True`
+2. Every HTTP request leaving the browser is signed with Notte's credentials
+3. Cloudflare verifies the signature and recognizes Notte as a trusted bot
+4. The request passes through without triggering bot challenges
+
+No extra code or configuration is needed on your side beyond flipping the flag.
 
 ## Quick Start
 
-Enable web bot auth by setting `web_bot_auth=True` when creating a session:
+Pass `web_bot_auth=True` when creating a session:
 
 <QuickStart />
 
 ## Complete Example
 
-Combine web bot auth with other session capabilities for maximum effectiveness:
+Web bot auth pairs well with other session features. Here's an example combining it with residential proxies and the live viewer:
 
 <CompleteExample />
 
-## Web Bot Auth + Agent
+## Using with Agents
 
-You can also use web bot auth with Notte agents:
+Agents automatically inherit web bot auth from the underlying session:
 
 <AgentExample />
 
-## Testing
+## Verifying Your Setup
 
-You can test your web bot auth configuration by visiting [https://webbotauth.io/test](https://webbotauth.io/test) in a browser session with web bot auth enabled. This site will show you whether your requests are being properly signed and authenticated.
+The [webbotauth.io/test](https://webbotauth.io/test) page is a handy diagnostic tool that shows whether incoming requests carry valid signatures. Point a web bot auth session at it to confirm everything is working:
 
 <Testing />
 
-## When to Use Web Bot Auth
+## Use Cases
 
-Web bot auth is useful when:
-
-- **Accessing Cloudflare-protected sites** that block automated traffic
-- **Scraping content** from websites using Cloudflare's bot management
-- **Running agents** that need to interact with protected web applications
-- **Building reliable automations** that won't break due to bot detection
+- **Scraping Cloudflare-protected sites** — bypass bot challenges on sites that recognize verified bots
+- **Reliable agent workflows** — prevent agents from getting stuck on Cloudflare interstitial pages
+- **Data pipelines** — collect data from protected endpoints without manual intervention
 
 <Note>
-  Web bot auth works by cryptographically signing HTTP requests, which is different from stealth mode or proxies. For best results, consider combining all three approaches.
+  Web bot auth proves your identity cryptographically, which is fundamentally different from [stealth mode](/features/sessions/stealth-mode) (which hides your identity) or [proxies](/features/sessions/proxies) (which mask your IP). These approaches are complementary — combining them gives you the broadest coverage.
 </Note>
 
 ## Limitations
 
-- Web bot auth only works with sites that support Cloudflare Web Bot Auth verification
-- It identifies your requests as coming from Notte — the site must recognize Notte as a verified bot
-- It does not bypass all forms of bot detection (combine with [stealth mode](/features/sessions/stealth-mode) and [proxies](/features/sessions/proxies) for comprehensive coverage)
+- Only effective on sites that participate in Cloudflare's verified bots program
+- Requests are identified as coming from Notte — the target site must trust Notte as a verified bot
+- Does not replace other anti-detection techniques for sites that don't use Cloudflare Web Bot Auth
 
-## Read More
+## Further Reading
 
-- [Cloudflare Verified Bots Blog](https://blog.cloudflare.com/verified-bots-with-cryptography/)
-- [HTTP Message Signatures (RFC 9421)](https://datatracker.ietf.org/doc/html/rfc9421)
+- [Cloudflare Blog — Verified Bots with Cryptography](https://blog.cloudflare.com/verified-bots-with-cryptography/)
+- [HTTP Message Signatures — RFC 9421](https://datatracker.ietf.org/doc/html/rfc9421)
 - [Web Bot Auth IETF Draft](https://datatracker.ietf.org/doc/html/draft-meunier-web-bot-auth-architecture)
 - [WebBotAuth.io](https://webbotauth.io)
 
