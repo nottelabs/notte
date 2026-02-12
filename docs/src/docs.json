@@ -139,6 +139,7 @@
                     ]
                   },
                   "integrations/kernel",
+                  "integrations/massive",
                   "integrations/openai-cua",
                   "features/sessions/cloudflare-web-bot-auth"
                 ]

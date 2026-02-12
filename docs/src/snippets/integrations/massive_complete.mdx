@@ -1,0 +1,37 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/integrations/massive_complete.py */}
+
+```python massive_complete.py
+import os
+
+from dotenv import load_dotenv
+from notte_sdk import NotteClient
+from notte_sdk.types import ExternalProxy
+
+load_dotenv()
+
+
+def main():
+    massive_username = os.getenv("MASSIVE_USERNAME")
+    massive_password = os.getenv("MASSIVE_PASSWORD")
+
+    client = NotteClient()
+
+    # Configure Massive proxy with US targeting
+    massive_proxy = ExternalProxy(
+        server="http://network.joinmassive.com:65534",
+        username=f"{massive_username}-country-US",
+        password=massive_password,
+    )
+
+    # Create a session with Massive proxy
+    with client.Session(proxies=[massive_proxy]) as session:
+        # Run an agent task through the proxied session
+        agent = client.Agent(session=session, max_steps=10)
+        result = agent.run(task="extract pricing information from https://www.notte.cc")
+        print(f"Task completed: {result.answer}")
+
+
+if __name__ == "__main__":
+    main()
+```
