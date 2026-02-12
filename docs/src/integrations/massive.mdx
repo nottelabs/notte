@@ -1,0 +1,67 @@
+---
+title: Massive
+description: 'Use Massive residential proxies with Notte sessions'
+---
+
+import MassiveBasic from '/snippets/integrations/massive_basic.mdx';
+import MassiveGeo from '/snippets/integrations/massive_geo.mdx';
+import MassiveComplete from '/snippets/integrations/massive_complete.mdx';
+
+[Massive](https://www.joinmassive.com/) is a residential proxy provider offering ethically-sourced IPs across 195+ countries. If you have a Massive account (or are considering one), you can plug their proxies directly into your Notte sessions using the [`ExternalProxy`](/features/sessions/proxies#custom-proxies) type.
+
+This is useful when you need residential IP rotation, geo-targeted traffic, or want to route your browser automation through a dedicated proxy provider.
+
+## Prerequisites
+
+- A Notte API key ([get one here](https://console.notte.cc))
+- A Massive account with proxy credentials — sign up at [partners.joinmassive.com](https://partners.joinmassive.com/create-account)
+
+## Setup
+
+### 1. Get your Massive credentials
+
+Log in to your [Massive dashboard](https://partners.joinmassive.com) and grab your proxy username and password. Then choose a protocol:
+
+| Protocol | Port  | Use case |
+|----------|-------|----------|
+| HTTP     | 65534 | Recommended for most use cases |
+| HTTPS    | 65535 | For encrypted proxy connections |
+| SOCKS5   | 65533 | For advanced routing needs |
+
+### 2. Install the Notte SDK
+
+```bash
+pip install notte-sdk
+```
+
+### 3. Connect Massive to your Notte session
+
+Pass your Massive proxy as an `ExternalProxy` when creating a session:
+
+<MassiveBasic />
+
+That's it — your session traffic now routes through Massive's residential network.
+
+## Geo and device targeting
+
+Massive supports geographic and device-type targeting by appending parameters to your username string. You can target by country, state, city, device type, or any combination:
+
+<MassiveGeo />
+
+<Tip>
+  See the full list of targeting parameters in the [Massive guide for Notte](https://www.joinmassive.com/guides/notte).
+</Tip>
+
+## Complete example
+
+A production-ready script using Massive proxies with a Notte agent:
+
+<MassiveComplete />
+
+Set the following environment variables in your `.env` file:
+
+```bash
+MASSIVE_USERNAME=your-massive-username
+MASSIVE_PASSWORD=your-massive-password
+NOTTE_API_KEY=your-notte-api-key
+```
