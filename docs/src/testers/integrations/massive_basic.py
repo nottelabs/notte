@@ -1,6 +1,6 @@
 # @sniptest filename=massive_basic.py
 from notte_sdk import NotteClient
-from notte_sdk.types import ExternalProxy
+from notte_sdk.types import ExternalProxy, ProxySettings
 
 client = NotteClient()
 
@@ -12,5 +12,6 @@ massive_proxy = ExternalProxy(
 )
 
 # Create a session routed through Massive
-with client.Session(proxies=[massive_proxy]) as session:
+proxies: list[ProxySettings] = [massive_proxy]
+with client.Session(proxies=proxies) as session:
     session.observe(url="https://example.com")

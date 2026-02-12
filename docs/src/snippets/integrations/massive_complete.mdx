@@ -6,7 +6,7 @@ import os
 
 from dotenv import load_dotenv
 from notte_sdk import NotteClient
-from notte_sdk.types import ExternalProxy
+from notte_sdk.types import ExternalProxy, ProxySettings
 
 load_dotenv()
 
@@ -25,7 +25,8 @@ def main():
     )
 
     # Create a session with Massive proxy
-    with client.Session(proxies=[massive_proxy]) as session:
+    proxies: list[ProxySettings] = [massive_proxy]
+    with client.Session(proxies=proxies) as session:
         # Run an agent task through the proxied session
         agent = client.Agent(session=session, max_steps=10)
         result = agent.run(task="extract pricing information from https://www.notte.cc")
