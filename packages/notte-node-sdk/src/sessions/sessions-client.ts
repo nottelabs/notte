@@ -24,6 +24,7 @@ import {
   type ExecutionResponse,
   ExecutionResponseSchema,
   type Cookie,
+  SetCookiesRequestSchema,
 } from "../types/index.js";
 
 export class SessionsClient extends BaseClient {
@@ -146,13 +147,17 @@ export class SessionsClient extends BaseClient {
     sessionId: string,
     cookies: Cookie[],
   ): Promise<SetCookiesResponse> {
+    const body = SetCookiesRequestSchema.parse({ cookies }) as Record<
+      string,
+      unknown
+    >;
     const endpoint: NotteEndpoint<SetCookiesResponse> & {
       body: Record<string, unknown>;
     } = {
       path: `${sessionId}/cookies`,
       method: "POST",
       responseSchema: SetCookiesResponseSchema,
-      body: { cookies },
+      body,
     };
     return this.request(endpoint);
   }

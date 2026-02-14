@@ -122,7 +122,7 @@ const client = new NotteClient({
 | `scrape(params?)` | Scrape current page |
 | `observe(params?)` | Observe current page |
 | `execute(action)` | Execute an action |
-| `RemoteSession.use(client, opts, fn)` | Auto-managed lifecycle |
+| `RemoteSession.use(client.sessions, opts, fn)` | Auto-managed lifecycle |
 | `RemoteSession.fromId(client, id)` | Attach to existing session |
 
 ## License

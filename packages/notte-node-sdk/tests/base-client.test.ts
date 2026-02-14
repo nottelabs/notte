@@ -10,16 +10,16 @@ class TestClient extends BaseClient {
   }
 
   // Expose protected methods for testing
-  public testGetHeaders() {
-    return this.getHeaders();
+  public testGetHeaders(includeContentType = false) {
+    return this.getHeaders(includeContentType);
   }
   public testBuildUrl(path: string) {
     return this.buildUrl(path);
   }
-  public testRequest<T>(endpoint: Parameters<BaseClient["request"]>[0]) {
+  public testRequest(endpoint: Parameters<BaseClient["request"]>[0]) {
     return this.request(endpoint);
   }
-  public testRequestList<T>(endpoint: Parameters<BaseClient["requestList"]>[0]) {
+  public testRequestList(endpoint: Parameters<BaseClient["requestList"]>[0]) {
     return this.requestList(endpoint);
   }
 }
@@ -74,6 +74,12 @@ describe("BaseClient", () => {
       expect(headers.Authorization).toBe("Bearer my-key");
       expect(headers["x-notte-sdk-version"]).toBeDefined();
       expect(headers["x-notte-request-origin"]).toBe("sdk");
+      expect(headers["Content-Type"]).toBeUndefined();
+    });
+
+    it("includes Content-Type when requested", () => {
+      const client = new TestClient({ apiKey: "my-key" });
+      const headers = client.testGetHeaders(true);
       expect(headers["Content-Type"]).toBe("application/json");
     });
   });

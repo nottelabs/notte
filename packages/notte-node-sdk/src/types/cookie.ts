@@ -20,6 +20,9 @@ export const CookieSchema = z
 
 export type Cookie = z.infer<typeof CookieSchema>;
 
+// CookieSchema uses .passthrough() intentionally — mirrors the Python SDK's
+// Cookie model which uses extra="ignore". Extra fields from browser cookie
+// exports are forwarded to the server, which also tolerates them.
 export const SetCookiesRequestSchema = z
   .object({
     cookies: z.array(CookieSchema),

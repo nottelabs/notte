@@ -24,8 +24,13 @@ describe("NotteAPIError", () => {
     expect(err.message).toContain("Internal error");
   });
 
-  it("falls back to generic message", () => {
+  it("uses string errorBody as message", () => {
     const err = new NotteAPIError(503, "plain text", "/test");
+    expect(err.message).toContain("plain text");
+  });
+
+  it("falls back to generic message for empty errorBody", () => {
+    const err = new NotteAPIError(503, "", "/test");
     expect(err.message).toContain("503");
   });
 });

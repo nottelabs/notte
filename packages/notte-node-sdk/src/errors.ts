@@ -9,7 +9,9 @@ export class NotteAPIError extends Error {
         ? String((errorBody as Record<string, unknown>).detail)
         : typeof errorBody === "object" && errorBody !== null && "message" in errorBody
           ? String((errorBody as Record<string, unknown>).message)
-          : `API request failed with status ${statusCode}`;
+          : typeof errorBody === "string" && errorBody.length > 0
+            ? errorBody
+            : `API request failed with status ${statusCode}`;
     super(`${message} (${path})`);
     this.name = "NotteAPIError";
     this.statusCode = statusCode;

@@ -39,13 +39,16 @@ export abstract class BaseClient {
     this.baseEndpointPath = baseEndpointPath;
   }
 
-  protected getHeaders(): Record<string, string> {
-    return {
+  protected getHeaders(includeContentType = false): Record<string, string> {
+    const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiKey}`,
-      "Content-Type": "application/json",
       "x-notte-sdk-version": SDK_VERSION,
       "x-notte-request-origin": "sdk",
     };
+    if (includeContentType) {
+      headers["Content-Type"] = "application/json";
+    }
+    return headers;
   }
 
   protected buildUrl(endpointPath: string): string {
@@ -75,16 +78,17 @@ export abstract class BaseClient {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
+    const hasBody =
+      (endpoint.method === "POST" || endpoint.method === "PATCH") &&
+      endpoint.body;
+
     const init: RequestInit = {
       method: endpoint.method,
-      headers: this.getHeaders(),
+      headers: this.getHeaders(!!hasBody),
       signal: controller.signal,
     };
 
-    if (
-      (endpoint.method === "POST" || endpoint.method === "PATCH") &&
-      endpoint.body
-    ) {
+    if (hasBody) {
       init.body = JSON.stringify(endpoint.body);
     }
 
@@ -92,7 +96,6 @@ export abstract class BaseClient {
     try {
       response = await fetch(url.toString(), init);
     } catch (err: unknown) {
-      clearTimeout(timer);
       if (err instanceof DOMException && err.name === "AbortError") {
         throw new NotteAPIError(
           0,
@@ -108,9 +111,14 @@ export abstract class BaseClient {
     if (!response.ok) {
       let body: unknown;
       try {
-        body = await response.json();
+        const text = await response.text();
+        try {
+          body = JSON.parse(text);
+        } catch {
+          body = text;
+        }
       } catch {
-        body = await response.text();
+        body = undefined;
       }
       throw new NotteAPIError(response.status, body, endpoint.path);
     }
@@ -157,12 +165,20 @@ export abstract class BaseClient {
 
   async healthCheck(): Promise<void> {
     const url = `${this.serverUrl.replace(/\/+$/, "")}/health`;
-    const response = await fetch(url, {
-      headers: {
-        "x-notte-sdk-version": SDK_VERSION,
-        "x-notte-request-origin": "sdk",
-      },
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        headers: {
+          "x-notte-sdk-version": SDK_VERSION,
+          "x-notte-request-origin": "sdk",
+        },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
     if (!response.ok) {
       throw new NotteAPIError(
         response.status,

@@ -25,7 +25,7 @@ const ProxySettingsSchema = z.discriminatedUnion("type", [
 
 const SessionProfileSchema = z.object({
   id: z.string(),
-  persist: z.boolean().optional().default(false),
+  persist: z.boolean().optional(),
 });
 
 // --- Session start request ---
