@@ -78,7 +78,7 @@ describe("BaseClient", () => {
     });
 
     it("includes Content-Type when requested", () => {
-      const client = new TestClient({ apiKey: "my-key" });
+      const client = new TestClient({ apiKey: "my-key" }); // pragma: allowlist secret
       const headers = client.testGetHeaders(true);
       expect(headers["Content-Type"]).toBe("application/json");
     });
@@ -86,18 +86,18 @@ describe("BaseClient", () => {
 
   describe("buildUrl", () => {
     it("combines server, base path, and endpoint", () => {
-      const client = new TestClient({ apiKey: "k" });
+      const client = new TestClient({ apiKey: "k" /* pragma: allowlist secret */ });
       expect(client.testBuildUrl("foo")).toBe("https://api.notte.cc/test/foo");
     });
 
     it("handles empty endpoint path", () => {
-      const client = new TestClient({ apiKey: "k" });
+      const client = new TestClient({ apiKey: "k" /* pragma: allowlist secret */ });
       expect(client.testBuildUrl("")).toBe("https://api.notte.cc/test");
     });
 
     it("strips duplicate slashes", () => {
       const client = new TestClient({
-        apiKey: "k",
+        apiKey: "k", // pragma: allowlist secret
         serverUrl: "https://api.notte.cc/",
       });
       expect(client.testBuildUrl("/foo")).toBe("https://api.notte.cc/test/foo");
@@ -111,7 +111,7 @@ describe("BaseClient", () => {
         new Response(JSON.stringify({ value: 42 }), { status: 200 }),
       );
 
-      const client = new TestClient({ apiKey: "k" });
+      const client = new TestClient({ apiKey: "k" /* pragma: allowlist secret */ });
       const result = await client.testRequest({
         path: "endpoint",
         method: "GET",
@@ -125,7 +125,7 @@ describe("BaseClient", () => {
         new Response(JSON.stringify({ detail: "Not found" }), { status: 404 }),
       );
 
-      const client = new TestClient({ apiKey: "k" });
+      const client = new TestClient({ apiKey: "k" /* pragma: allowlist secret */ });
       await expect(
         client.testRequest({
           path: "missing",
@@ -141,7 +141,7 @@ describe("BaseClient", () => {
         new Response(JSON.stringify({ value: "not-a-number" }), { status: 200 }),
       );
 
-      const client = new TestClient({ apiKey: "k" });
+      const client = new TestClient({ apiKey: "k" /* pragma: allowlist secret */ });
       await expect(
         client.testRequest({
           path: "bad",
@@ -159,7 +159,7 @@ describe("BaseClient", () => {
         new Response(JSON.stringify([{ id: 1 }, { id: 2 }]), { status: 200 }),
       );
 
-      const client = new TestClient({ apiKey: "k" });
+      const client = new TestClient({ apiKey: "k" /* pragma: allowlist secret */ });
       const result = await client.testRequestList({
         path: "list",
         method: "GET",
@@ -177,7 +177,7 @@ describe("BaseClient", () => {
         ),
       );
 
-      const client = new TestClient({ apiKey: "k" });
+      const client = new TestClient({ apiKey: "k" /* pragma: allowlist secret */ });
       const result = await client.testRequestList({
         path: "list",
         method: "GET",
@@ -192,7 +192,7 @@ describe("BaseClient", () => {
       vi.spyOn(globalThis, "fetch").mockResolvedValue(
         new Response("ok", { status: 200 }),
       );
-      const client = new TestClient({ apiKey: "k" });
+      const client = new TestClient({ apiKey: "k" /* pragma: allowlist secret */ });
       await expect(client.healthCheck()).resolves.toBeUndefined();
     });
 
@@ -200,7 +200,7 @@ describe("BaseClient", () => {
       vi.spyOn(globalThis, "fetch").mockResolvedValue(
         new Response("fail", { status: 503 }),
       );
-      const client = new TestClient({ apiKey: "k" });
+      const client = new TestClient({ apiKey: "k" /* pragma: allowlist secret */ });
       await expect(client.healthCheck()).rejects.toThrow(NotteAPIError);
     });
   });
