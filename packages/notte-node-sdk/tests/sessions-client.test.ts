@@ -23,7 +23,7 @@ describe("SessionsClient", () => {
   let client: SessionsClient;
 
   beforeEach(() => {
-    client = new SessionsClient({ apiKey: "test-key" });
+    client = new SessionsClient({ apiKey: "test-key" }); // pragma: allowlist secret
   });
 
   afterEach(() => {

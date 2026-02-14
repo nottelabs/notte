@@ -28,7 +28,7 @@ describe("BaseClient", () => {
   const originalEnv = process.env.NOTTE_API_KEY;
 
   beforeEach(() => {
-    process.env.NOTTE_API_KEY = "test-key";
+    process.env.NOTTE_API_KEY = "test-key"; // pragma: allowlist secret
   });
 
   afterEach(() => {
@@ -52,7 +52,7 @@ describe("BaseClient", () => {
     });
 
     it("prefers explicit API key over env", () => {
-      const client = new TestClient({ apiKey: "explicit-key" });
+      const client = new TestClient({ apiKey: "explicit-key" }); // pragma: allowlist secret
       expect(client.apiKey).toBe("explicit-key");
     });
 
@@ -69,7 +69,7 @@ describe("BaseClient", () => {
 
   describe("getHeaders", () => {
     it("includes Authorization and SDK headers", () => {
-      const client = new TestClient({ apiKey: "my-key" });
+      const client = new TestClient({ apiKey: "my-key" }); // pragma: allowlist secret
       const headers = client.testGetHeaders();
       expect(headers.Authorization).toBe("Bearer my-key");
       expect(headers["x-notte-sdk-version"]).toBeDefined();
