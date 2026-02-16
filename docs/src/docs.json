@@ -200,6 +200,7 @@
                     "group": "Actions",
                     "collapsed": true,
                     "pages": [
+                      "sdk-reference/misc/gotoaction",
                       "sdk-reference/misc/gotonewtabaction",
                       "sdk-reference/misc/switchtabaction",
                       "sdk-reference/misc/gobackaction",
