@@ -1,6 +1,79 @@
 ---
 title: Stagehand
-description: Integration with Stagehand
+description: 'Use Notte cloud browsers with Stagehand browser automation'
 ---
 
-Todo
+import StagehandBasic from '/snippets/integrations/stagehand_basic.mdx';
+import StagehandComplete from '/snippets/integrations/stagehand_complete.mdx';
+
+[Stagehand](https://github.com/browserbase/stagehand) is an open source AI browser automation framework that lets you choose what to write in code vs. natural language. By integrating with Notte, you can run Stagehand automations on cloud-hosted browsers with built-in anti-detection, captcha solving, and residential proxies.
+
+<Note>
+  This guide is compatible with Stagehand v3. If you're using an earlier version, refer to the [Stagehand migration guide](https://docs.stagehand.dev/v3/migrations/v2).
+</Note>
+
+## Prerequisites
+
+- A Notte API key ([get one here](https://console.notte.cc))
+- An LLM API key (e.g., OpenAI)
+- Stagehand v3
+
+## Adding Notte to existing Stagehand implementations
+
+If you already have a Stagehand v3 implementation, you can switch to using Notte's cloud browsers by updating your browser configuration.
+
+### 1. Install the SDKs
+
+```bash
+pip install notte-sdk stagehand
+```
+
+### 2. Connect Stagehand to a Notte browser
+
+Create a Notte cloud browser session and pass its CDP URL to Stagehand:
+
+<StagehandBasic />
+
+That's it — Stagehand is now running on a Notte cloud browser with built-in stealth and anti-detection.
+
+## Complete example
+
+A production-ready script using Stagehand's `observe`, `act`, and `extract` on a Notte browser:
+
+<StagehandComplete />
+
+Set the following environment variables in your `.env` file:
+
+```bash
+NOTTE_API_KEY=your-notte-api-key
+MODEL_API_KEY=your-openai-api-key
+```
+
+## Benefits of using Notte with Stagehand
+
+- **Anti-detection**: Notte's [stealth mode](/features/sessions/stealth-mode) keeps your automations undetected
+- **Captcha solving**: Built-in [captcha solving](/features/sessions/captcha-solving) handles CAPTCHAs automatically
+- **Residential proxies**: Route traffic through [residential proxies](/features/sessions/proxies) in 195+ countries
+- **Live view**: Debug automations in real-time with [live view](/features/sessions/live-view)
+- **Session replay**: Record and review runs with [session recordings](/features/sessions/recordings)
+- **No local browser**: Run automations without installing or maintaining browsers locally
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Customize browser settings, proxies, and more
+  </Card>
+
+  <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">
+    Configure anti-detection for your automations
+  </Card>
+
+  <Card title="External Providers" icon="plug" href="/features/sessions/external-providers">
+    Learn about CDP connections and external browsers
+  </Card>
+
+  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+    Debug your automations in real-time
+  </Card>
+</CardGroup>

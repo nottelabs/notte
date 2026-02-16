@@ -271,6 +271,30 @@ def handle_storage_upload_file(
     run_example(eval_example, code=code)
 
 
+@handle_file("integrations/stagehand_basic.py")
+def handle_stagehand_basic(
+    eval_example: EvalExample,
+    code: str,
+) -> None:
+    """Skip execution for stagehand examples (requires stagehand package)."""
+    if FAST_MODE or TYPE_CHECK_MODE:
+        run_example(eval_example, code=code)
+    else:
+        logger.info("Skipping stagehand_basic test (requires stagehand package)")
+
+
+@handle_file("integrations/stagehand_complete.py")
+def handle_stagehand_complete(
+    eval_example: EvalExample,
+    code: str,
+) -> None:
+    """Skip execution for stagehand examples (requires stagehand package)."""
+    if FAST_MODE or TYPE_CHECK_MODE:
+        run_example(eval_example, code=code)
+    else:
+        logger.info("Skipping stagehand_complete test (requires stagehand package)")
+
+
 @handle_file("sessions/external_cdp.py")
 def handle_external_cdp(
     eval_example: EvalExample,

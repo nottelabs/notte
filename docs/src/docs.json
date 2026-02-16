@@ -142,6 +142,7 @@
                   "integrations/kernel",
                   "integrations/massive",
                   "integrations/openai-cua",
+                  "integrations/stagehand",
                   "features/sessions/cloudflare-web-bot-auth"
                 ]
               }
