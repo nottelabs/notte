@@ -271,7 +271,7 @@ class LLMEngine:
             result = response_format.model_validate_json(repaired_str)
             logger.debug("Recovered malformed JSON via json_repair")
             return result
-        except (ValidationError, Exception):
+        except Exception:
             return None
 
     @profiler.profiled(service_name="llm")

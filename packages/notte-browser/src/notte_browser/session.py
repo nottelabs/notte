@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import datetime as dt
 import json
+import re
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, ClassVar, Literal, Unpack, overload
@@ -51,7 +52,7 @@ from notte_core.actions.typedicts import (
 )
 from notte_core.browser.observation import ExecutionResult, Observation, Screenshot
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import CookieDict, PerceptionType, RaiseCondition, ScreenshotType, config
+from notte_core.common.config import BrowserBackend, CookieDict, PerceptionType, RaiseCondition, ScreenshotType, config
 from notte_core.common.logging import logger, timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
@@ -607,10 +608,13 @@ class NotteSession(AsyncResource, SyncResource):
                     # Skip wrapping if the code is already a function/IIFE.
                     stripped = code.strip()
                     is_already_function = stripped.startswith(("(", "function", "async"))
-                    needs_wrap = "return" in code and not is_already_function
+                    needs_wrap = bool(re.search(r"\breturn\b", stripped)) and not is_already_function
                     js_code = f"(() => {{\n{code}\n}})()" if needs_wrap else code
                     try:
-                        result = await self.window.page.evaluate(js_code, isolated_context=False)
+                        evaluate_kwargs: dict[str, bool] = {}
+                        if config.browser_backend == BrowserBackend.PATCHRIGHT:
+                            evaluate_kwargs["isolated_context"] = False
+                        result = await self.window.page.evaluate(js_code, **evaluate_kwargs)
                     except PlaywrightError as js_err:
                         success = False
                         message = f"JavaScript evaluation failed: {js_err}"
