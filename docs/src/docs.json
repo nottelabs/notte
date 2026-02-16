@@ -200,7 +200,6 @@
                     "group": "Actions",
                     "collapsed": true,
                     "pages": [
-                      "sdk-reference/misc/gotoaction",
                       "sdk-reference/misc/gotonewtabaction",
                       "sdk-reference/misc/switchtabaction",
                       "sdk-reference/misc/gobackaction",
@@ -213,10 +212,13 @@
                       "sdk-reference/misc/clickaction",
                       "sdk-reference/misc/fillaction",
                       "sdk-reference/misc/checkaction",
+                      "sdk-reference/misc/formfillaction",
+                      "sdk-reference/misc/evaluatejsaction",
                       "sdk-reference/misc/selectdropdownoptionaction",
                       "sdk-reference/misc/uploadfileaction",
                       "sdk-reference/misc/downloadfileaction",
                       "sdk-reference/misc/scrapeaction",
+                      "sdk-reference/misc/captchasolveaction",
                       "sdk-reference/misc/smsreadaction",
                       "sdk-reference/misc/emailreadaction"
                     ]

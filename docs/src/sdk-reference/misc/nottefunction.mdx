@@ -105,7 +105,7 @@ Replay the workflow run
 ### run
 
 ```python
-run(version: str | None = None, local: bool = False, restricted: bool = True, timeout: int | None = None, stream: bool = True, raise_on_failure: bool = True, function_run_id: str | None = None, log_callback: Callable[[str], None] | None = None, variables: Any) -> FunctionRunResponse
+run(version: str | None = None, local: bool = False, restricted: bool = True, timeout: int | None = None, stream: bool = True, raise_on_failure: bool = True, function_run_id: str | None = None, workflow_run_id: str | None = None, log_callback: Callable[[str], None] | None = None, variables: Any) -> FunctionRunResponse
 ```
 
 Run the function code using the specified version and variables

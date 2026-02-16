@@ -39,6 +39,9 @@ with client.Session() as session:
 
 ## Parameters
 
+<ParamField path="raise_on_failure" type="bool" default="True">
+</ParamField>
+
 <ParamField path="selector" type="str | None">
 </ParamField>
 
@@ -68,4 +71,4 @@ with client.Session() as session:
 
 ## Returns
 
-`UnionType`[`str`, [`StructuredData[BaseModel]`](/sdk-reference/misc/structureddata), `list`[[`ImageData`](/sdk-reference/misc/imagedata)]]: An Observation object containing metadata, screenshot, action space, and data space.
+`UnionType`[[`StructuredData[BaseModel]`](/sdk-reference/misc/structureddata), [`BaseModel`](/sdk-reference/misc/basemodel), `Dict`[`str`, `Any`], `str`, `list`[[`ImageData`](/sdk-reference/misc/imagedata)]]: An Observation object containing metadata, screenshot, action space, and data space.

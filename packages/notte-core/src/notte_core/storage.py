@@ -39,6 +39,11 @@ class BaseStorage(ABC):
         if download_dir is not None:
             self.download_dir = f"{str(Path(download_dir))}{os.sep}"
 
+    @property
+    def is_remote(self) -> bool:
+        """Whether this storage implementation requires a remote server."""
+        return False
+
     @abstractmethod
     async def get_file(self, name: str) -> str | None:
         """Returns the local path for a file"""

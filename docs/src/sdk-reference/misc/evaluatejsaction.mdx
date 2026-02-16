@@ -1,0 +1,33 @@
+---
+title: "EvaluateJsAction"
+description: "Evaluate JavaScript code on the current page and return the result"
+---
+
+
+Useful for extracting structured data from a page without LLM processing.
+
+**Example:**
+```python
+session.execute(type="evaluate_js", code="document.title")
+session.execute(type="evaluate_js", code="Array.from(document.querySelectorAll('a')).map(a => a.href)")
+```
+
+## Fields
+
+<ParamField path="type" type="Literal['evaluate_js']" default="evaluate_js">
+</ParamField>
+
+<ParamField path="category" type="str" default="Special Browser Actions">
+</ParamField>
+
+<ParamField path="description" type="str" default="Evaluate JavaScript code on the current page and return the result">
+</ParamField>
+
+<ParamField path="code" type="str" required>
+  The JavaScript code to evaluate on the page
+</ParamField>
+
+
+## Module
+
+`notte_core.actions.actions`

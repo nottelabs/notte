@@ -96,7 +96,7 @@ The response containing the list of cookies in the session.
 ### observe
 
 ```python
-observe(data: *<class 'notte_sdk.types.ObserveRequestDict'>) -> <class 'notte_sdk.types.ObserveResponse'>
+observe(data: *<class 'notte_sdk.types.ObserveRequestDict'>) -> notte_sdk.types.ObserveResponse | list[typing.Annotated[notte_core.actions.actions.ClickAction | notte_core.actions.actions.FillAction | notte_core.actions.actions.MultiFactorFillAction | notte_core.actions.actions.FallbackFillAction | notte_core.actions.actions.CheckAction | notte_core.actions.actions.SelectDropdownOptionAction | notte_core.actions.actions.UploadFileAction | notte_core.actions.actions.DownloadFileAction, FieldInfo(annotation=NoneType, required=True, discriminator='type')]]
 ```
 
 Observes the current session page
@@ -107,7 +107,7 @@ Observes the current session page
 
 **Returns:**
 
-The formatted observation result from the API response.
+The formatted observation result from the API response when no instructions provided. list[InteractionActionUnion]: The filtered list of actions when instructions is provided.
 
 ---
 
@@ -163,7 +163,7 @@ Resets the resource to its initial state
 ### scrape
 
 ```python
-scrape(data: *<class 'notte_sdk.types.ScrapeRequestDict'>) -> str | notte_core.data.space.StructuredData[BaseModel] | list[notte_core.data.space.ImageData]
+scrape(raise_on_failure: <class 'bool'> = True, data: *<class 'notte_sdk.types.ScrapeRequestDict'>) -> notte_core.data.space.StructuredData[BaseModel] | pydantic.main.BaseModel | dict[str, typing.Any] | str | list[notte_core.data.space.ImageData]
 ```
 
 Scrape the current page data

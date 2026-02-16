@@ -206,6 +206,11 @@ class RemoteFileStorage(BaseStorage):
         super().__init__(upload_dir=str(NOTTE_CACHE_DIR / "uploads"), download_dir=str(NOTTE_CACHE_DIR / "downloads"))
         self._session_id: str | None = session_id
 
+    @property
+    @override
+    def is_remote(self) -> bool:
+        return True
+
     def set_session_id(self, id: str) -> None:
         self._session_id = id
 

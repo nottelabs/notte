@@ -122,6 +122,10 @@ class NotteSession(AsyncResource, SyncResource):
         keep_alive: bool = False,
         **data: Unpack[SessionStartRequestDict],
     ) -> None:
+        if storage is not None and storage.is_remote:
+            raise ValueError(
+                "RemoteFileStorage is not supported for local sessions. Use a local storage implementation instead."
+            )
         self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
         if self._request.solve_captchas and not CaptchaHandler.is_available:
             raise CaptchaSolverNotAvailableError()
