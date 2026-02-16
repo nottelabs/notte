@@ -40,9 +40,8 @@ Additionally, you can use the `instructions` parameter to narrow down the action
 
 ```python
 _ = session.execute(type="goto", url="https://console.notte.cc")
-obs = session.observe(instructions="Fill the email input")
-action = obs.space.first()
-print(action.model_dump())
+actions = session.observe(instructions="Fill the email input")
+print(actions[0].model_dump())
 ```
 
 
@@ -71,4 +70,4 @@ print(action.model_dump())
 
 ## Returns
 
-[`ObserveResponse`](/sdk-reference/misc/observeresponse): The formatted observation result from the API response.
+`UnionType`[[`ObserveResponse`](/sdk-reference/misc/observeresponse), `list`[`Annotated`[`UnionType`[[`ClickAction`](/sdk-reference/misc/clickaction), [`FillAction`](/sdk-reference/misc/fillaction), [`MultiFactorFillAction`](/sdk-reference/misc/multifactorfillaction), [`FallbackFillAction`](/sdk-reference/misc/fallbackfillaction), [`CheckAction`](/sdk-reference/misc/checkaction), [`SelectDropdownOptionAction`](/sdk-reference/misc/selectdropdownoptionaction), [`UploadFileAction`](/sdk-reference/misc/uploadfileaction), [`DownloadFileAction`](/sdk-reference/misc/downloadfileaction)], `annotation=NoneType required=True discriminator='type'`]]]: The formatted observation result from the API response when no instructions provided.     list[InteractionActionUnion]: The filtered list of actions when instructions is provided.

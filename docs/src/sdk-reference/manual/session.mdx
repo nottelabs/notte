@@ -76,7 +76,7 @@ You can use the default parameters to create your session, or customize them:
   Idle timeout in minutes. Session closes after this period of inactivity.
 </ParamField>
 
-<ParamField path="proxies" type="list[typing.Annotated[notte_sdk.types.NotteProxy | notte_sdk.types.ExternalProxy, FieldInfo(annotation=NoneType, required=True, discriminator='type')]] | bool">
+<ParamField path="proxies" type="typing.Union[list[typing.Annotated[notte_sdk.types.NotteProxy | notte_sdk.types.ExternalProxy, FieldInfo(annotation=NoneType, required=True, discriminator='type')]], list[typing.Annotated[notte_sdk.types.NotteProxyDict | notte_sdk.types.ExternalProxyDict, FieldInfo(annotation=NoneType, required=True, discriminator='type')]], bool, notte_sdk.types.ProxyGeolocationCountry, typing.Literal['ad', 'ae', 'af', 'ag', 'ai', 'al', 'am', 'ao', 'ar', 'at', 'au', 'aw', 'az', 'ba', 'bb', 'bd', 'be', 'bf', 'bg', 'bh', 'bi', 'bj', 'bm', 'bn', 'bo', 'bq', 'br', 'bs', 'bt', 'bw', 'by', 'bz', 'ca', 'cd', 'cg', 'ch', 'ci', 'cl', 'cm', 'cn', 'co', 'cr', 'cu', 'cv', 'cw', 'cy', 'cz', 'de', 'dj', 'dk', 'dm', 'do', 'dz', 'ec', 'ee', 'eg', 'es', 'et', 'fi', 'fj', 'fr', 'ga', 'gb', 'gd', 'ge', 'gf', 'gg', 'gh', 'gi', 'gm', 'gn', 'gp', 'gq', 'gr', 'gt', 'gu', 'gw', 'gy', 'hk', 'hn', 'hr', 'ht', 'hu', 'id', 'ie', 'il', 'im', 'in', 'iq', 'ir', 'is', 'it', 'je', 'jm', 'jo', 'jp', 'ke', 'kg', 'kh', 'kn', 'kr', 'kw', 'ky', 'kz', 'la', 'lb', 'lc', 'lk', 'lr', 'ls', 'lt', 'lu', 'lv', 'ly', 'ma', 'md', 'me', 'mf', 'mg', 'mk', 'ml', 'mm', 'mn', 'mo', 'mq', 'mr', 'mt', 'mu', 'mv', 'mw', 'mx', 'my', 'mz', 'na', 'nc', 'ne', 'ng', 'ni', 'nl', 'no', 'np', 'nz', 'om', 'pa', 'pe', 'pf', 'pg', 'ph', 'pk', 'pl', 'pr', 'ps', 'pt', 'py', 'qa', 're', 'ro', 'rs', 'ru', 'rw', 'sa', 'sc', 'sd', 'se', 'sg', 'si', 'sk', 'sl', 'sm', 'sn', 'so', 'sr', 'ss', 'st', 'sv', 'sx', 'sy', 'sz', 'tc', 'tg', 'th', 'tj', 'tm', 'tn', 'tr', 'tt', 'tw', 'tz', 'ua', 'ug', 'us', 'uy', 'uz', 'vc', 've', 'vg', 'vi', 'vn', 'ye', 'za', 'zm', 'zw']]">
   List of custom proxies to use for the session. If True, the default proxies will be used.
 </ParamField>
 
@@ -114,4 +114,7 @@ You can use the default parameters to create your session, or customize them:
 
 <ParamField path="profile" type="notte_sdk.types.SessionProfileDict | notte_sdk.types.SessionProfile | None">
   Browser profile configuration for state persistence.
+</ParamField>
+
+<ParamField path="web_bot_auth" type="bool">
 </ParamField>

@@ -10,7 +10,7 @@ description: "Base class for storage implementations that handle upload and down
 ### alist_downloaded_files
 
 ```python
-alist_downloaded_files() -> list[str]
+alist_downloaded_files() -> list[FileInfo]
 ```
 
 List files that have been downloaded into storage by the agents
@@ -24,7 +24,7 @@ List files that have been downloaded into storage by the agents
 ### alist_uploaded_files
 
 ```python
-alist_uploaded_files() -> list[str]
+alist_uploaded_files() -> list[FileInfo]
 ```
 
 List files that have been uploaded to storage
@@ -80,28 +80,28 @@ Return LLM instructions to append to the prompt
 ### list_downloaded_files
 
 ```python
-list_downloaded_files() -> list[str]
+list_downloaded_files() -> list[notte_core.storage.FileInfo]
 ```
 
 List all files in the download_dir
 
 **Returns:**
 
-`list`[`str`]
+`list`[[`FileInfo`](/sdk-reference/misc/fileinfo)]
 
 ---
 
 ### list_uploaded_files
 
 ```python
-list_uploaded_files() -> list[str]
+list_uploaded_files() -> list[notte_core.storage.FileInfo]
 ```
 
 List all files from the upload_dir
 
 **Returns:**
 
-`list`[`str`]
+`list`[[`FileInfo`](/sdk-reference/misc/fileinfo)]
 
 ---
 

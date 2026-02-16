@@ -191,6 +191,37 @@ async def test_step_with_empty_action_id_should_fail_validation_pydantic():
         assert isinstance(res.exception, InvalidActionError)
 
 
+def test_remote_storage_raises_on_local_session():
+    """Test that passing a remote storage to a local session raises ValueError."""
+    from notte_core.storage import BaseStorage, FileInfo
+    from typing_extensions import override
+
+    class _FakeRemoteStorage(BaseStorage):
+        @property
+        @override
+        def is_remote(self) -> bool:
+            return True
+
+        @override
+        async def get_file(self, name: str) -> str | None:
+            return None
+
+        @override
+        async def set_file(self, path: str) -> bool:
+            return False
+
+        @override
+        async def alist_uploaded_files(self) -> list[FileInfo]:
+            return []
+
+        @override
+        async def alist_downloaded_files(self) -> list[FileInfo]:
+            return []
+
+    with pytest.raises(ValueError, match="RemoteFileStorage is not supported for local sessions"):
+        _ = NotteSession(storage=_FakeRemoteStorage())
+
+
 def test_captcha_solver_not_available_error():
     with pytest.raises(CaptchaSolverNotAvailableError):
         _ = NotteSession(solve_captchas=True, browser_type="firefox")

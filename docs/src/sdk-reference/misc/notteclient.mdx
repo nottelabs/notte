@@ -23,7 +23,7 @@ Health check the Notte API
 ### scrape
 
 ```python
-scrape(url: <class 'str'>, data: *<class 'notte_sdk.types.ScrapeRequestDict'>) -> str | notte_core.data.space.StructuredData[BaseModel] | list[notte_core.data.space.ImageData]
+scrape(url: <class 'str'>, raise_on_failure: <class 'bool'> = True, data: *<class 'notte_sdk.types.ScrapeRequestDict'>) -> notte_core.data.space.StructuredData[BaseModel] | pydantic.main.BaseModel | dict[str, typing.Any] | str | list[notte_core.data.space.ImageData]
 ```
 
 Scrape the current page data
@@ -31,11 +31,12 @@ Scrape the current page data
 **Parameters:**
 
 - `url`: The URL to scrape.
+- `raise_on_failure`: If True (default), raises ScrapeFailedError when structured data
 - `**data`: Additional parameters for the scrape.
 
 **Returns:**
 
-The scraped data.
+returns the extracted data directly. When raise_on_failure=False: returns StructuredData wrapper so user can check .success. For markdown scraping: returns str. For image scraping: returns list[ImageData].
 
 ---
 

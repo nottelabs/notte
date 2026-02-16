@@ -39,6 +39,10 @@ data = client.scrape(
   The URL to scrape.
 </ParamField>
 
+<ParamField path="raise_on_failure" type="bool" default="True">
+  If True (default), raises ScrapeFailedError when structured data         extraction fails and returns the extracted data directly. If False, returns         the StructuredData wrapper so user can check .success.
+</ParamField>
+
 <ParamField path="selector" type="str | None">
 </ParamField>
 
@@ -68,4 +72,4 @@ data = client.scrape(
 
 ## Returns
 
-`UnionType`[`str`, [`StructuredData[BaseModel]`](/sdk-reference/misc/structureddata), `list`[[`ImageData`](/sdk-reference/misc/imagedata)]]:     The scraped data.
+`UnionType`[[`StructuredData[BaseModel]`](/sdk-reference/misc/structureddata), [`BaseModel`](/sdk-reference/misc/basemodel), `Dict`[`str`, `Any`], `str`, `list`[[`ImageData`](/sdk-reference/misc/imagedata)]]: returns the extracted data directly.     When raise_on_failure=False: returns StructuredData wrapper so user can check .success.     For markdown scraping: returns str.     For image scraping: returns list[ImageData].
