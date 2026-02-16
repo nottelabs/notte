@@ -12,6 +12,7 @@
     "light": "/logo/logo-white.png"
   },
   "favicon": "/favicon.ico",
+  "seo.indexing": "all",
   "navigation": {
     "languages": [
       {
