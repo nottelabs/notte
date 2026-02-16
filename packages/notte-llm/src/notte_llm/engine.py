@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Literal, cast
 
 import litellm
+from json_repair import repair_json
 from litellm import (
     AllMessageValues,
     ChatCompletionUserMessage,
@@ -218,10 +219,30 @@ class LLMEngine:
                 return response_format.model_validate_json(content)
             except ValidationError as e:
                 error_details = e.errors()
+                is_json_invalid = any(err.get("type") == "json_invalid" for err in error_details)
+
+                if is_json_invalid:
+                    repaired = self._try_repair_json(content, response_format)
+                    if repaired is not None:
+                        return repaired
+
+                # Build a more helpful retry message for JSON issues
+                if is_json_invalid:
+                    retry_content = (
+                        f"Error parsing LLM response: {error_details}. "
+                        "Your response contained invalid JSON. Common causes:\n"
+                        "- Trailing characters after the closing }}. Do NOT wrap the JSON in extra quotes.\n"
+                        "- Unescaped double quotes inside string values (e.g. in JavaScript code). "
+                        'All double quotes within JSON string values MUST be escaped as \\"\n'
+                        "Please output ONLY the raw JSON object, nothing else."
+                    )
+                else:
+                    retry_content = f"Error parsing LLM response: {error_details}, retrying"
+
                 messages.append(
                     ChatCompletionUserMessage(
                         role="user",
-                        content=f"Error parsing LLM response: {error_details}, retrying",
+                        content=retry_content,
                     )
                 )
                 raised_exc = e
@@ -232,6 +253,26 @@ class LLMEngine:
             f"Error parsing LLM response into Structured Output (type: {response_format}). Content: \n\n{content}\n\n"
         )
         raise LLMParsingError(error_string) from raised_exc
+
+    @staticmethod
+    def _try_repair_json(
+        content: str,
+        response_format: type[TResponseFormat],
+    ) -> TResponseFormat | None:
+        """Attempt to recover a valid response from malformed JSON using ``json_repair``.
+
+        Handles trailing characters, unescaped quotes inside string values,
+        missing commas, unclosed brackets, and other common LLM output issues.
+
+        Returns the validated response or ``None`` if recovery failed.
+        """
+        try:
+            repaired_str = repair_json(content, return_objects=False)
+            result = response_format.model_validate_json(repaired_str)
+            logger.debug("Recovered malformed JSON via json_repair")
+            return result
+        except (ValidationError, Exception):
+            return None
 
     @profiler.profiled(service_name="llm")
     async def single_completion(

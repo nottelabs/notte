@@ -105,7 +105,6 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
             "timeout",
             # executable action fields
             "params",
-            "code",
             "status",
             "param",
             # ScrapeAction fields (have sensible defaults, don't need agent exposure)
@@ -924,16 +923,32 @@ class EvaluateJsAction(ToolAction):
     Evaluate JavaScript code on the current page and return the result.
     Useful for extracting structured data from a page without LLM processing.
 
+    The code is evaluated as a JavaScript expression. For simple cases use a single expression.
+    For multi-statement logic, use an IIFE (Immediately Invoked Function Expression):
+    ``(() => { /* statements */ return result; })()``
+
+    You will not get any output from console.log(), so simply use the return value if your goal is to gather information
+
     **Example:**
     ```python
     session.execute(type="evaluate_js", code="document.title")
     session.execute(type="evaluate_js", code="Array.from(document.querySelectorAll('a')).map(a => a.href)")
+    session.execute(type="evaluate_js", code="(() => { const els = document.querySelectorAll('a'); return els.length; })()")
     ```
     """
 
     type: Literal["evaluate_js"] = "evaluate_js"  # pyright: ignore [reportIncompatibleVariableOverride]
-    description: str = "Evaluate JavaScript code on the current page and return the result"
-    code: Annotated[str, Field(description="The JavaScript code to evaluate on the page")]
+    description: str = (
+        "Evaluate JavaScript code on the current page and return the result. "
+        "For simple cases, provide a single expression (e.g. `document.title`). "
+        "For multi-statement code, wrap in an IIFE: `(() => { ...; return result; })()`"
+    )
+    code: Annotated[
+        str,
+        Field(
+            description="The JavaScript code to evaluate on the page. Use a single expression or an IIFE for multi-statement code."
+        ),
+    ]
 
     @override
     def execution_message(self) -> str:

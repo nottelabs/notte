@@ -89,6 +89,7 @@ from notte_browser.errors import (
     NoSnapshotObservedError,
     NoStorageObjectProvidedError,
     NoToolProvidedError,
+    PlaywrightError,
     ScrapeFailedError,
 )
 from notte_browser.playwright import PlaywrightManager
@@ -600,17 +601,29 @@ class NotteSession(AsyncResource, SyncResource):
                     )
                     success = True
                 case EvaluateJsAction(code=code):
-                    # Evaluate JavaScript code on the page and return the result
-                    result = await self.window.page.evaluate(code)
-                    # Convert result to string representation for markdown
-                    if result is None:
-                        result_str = "null"
-                    elif isinstance(result, (dict, list)):
-                        result_str = json.dumps(result, indent=2, default=str)
+                    # Evaluate JavaScript code on the page and return the result.
+                    # If the code contains bare `return` statements (invalid outside
+                    # a function), wrap it in an IIFE so Playwright can evaluate it.
+                    # Skip wrapping if the code is already a function/IIFE.
+                    stripped = code.strip()
+                    is_already_function = stripped.startswith(("(", "function", "async"))
+                    needs_wrap = "return" in code and not is_already_function
+                    js_code = f"(() => {{\n{code}\n}})()" if needs_wrap else code
+                    try:
+                        result = await self.window.page.evaluate(js_code, isolated_context=False)
+                    except PlaywrightError as js_err:
+                        success = False
+                        message = f"JavaScript evaluation failed: {js_err}"
                     else:
-                        result_str = str(result)
-                    scraped_data = DataSpace(markdown=result_str)
-                    success = True
+                        # Convert result to string representation for markdown
+                        if result is None:
+                            result_str = "null"
+                        elif isinstance(result, (dict, list)):
+                            result_str = json.dumps(result, indent=2, default=str)
+                        else:
+                            result_str = str(result)
+                        scraped_data = DataSpace(markdown=result_str)
+                        success = True
                 case ToolAction():
                     tool_found = False
                     success = False
