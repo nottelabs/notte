@@ -607,7 +607,11 @@ class NotteSession(AsyncResource, SyncResource):
                     # a function), wrap it in an IIFE so Playwright can evaluate it.
                     # Skip wrapping if the code is already a function/IIFE.
                     stripped = code.strip()
-                    is_already_function = stripped.startswith(("(", "function", "async"))
+                    # Detect code that is already a function expression or IIFE:
+                    #   "("            -> grouped expression / IIFE
+                    #   "function ..." -> function declaration/expression (word boundary avoids "functionName()")
+                    #   "async function" / "async (" -> async variants (avoids "asyncio.run()", "async_helper()")
+                    is_already_function = bool(re.match(r"^(?:\(|function\b|async\s+(?:function\b|\())", stripped))
                     needs_wrap = bool(re.search(r"\breturn\b", stripped)) and not is_already_function
                     js_code = f"(() => {{\n{code}\n}})()" if needs_wrap else code
                     try:
