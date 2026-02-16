@@ -39,6 +39,7 @@ if __name__ == "__main__":
 | `wrap` | `wrap=true` | Wrap long lines |
 | `icon` | `icon=rocket` | `icon="rocket"` |
 | `show` | `show=5` or `show=5-20` | Pre-shave lines (single = that line only) |
+| `typecheck_only` | `typecheck_only=true` | Skip execution, run mypy only (for integration testers with third-party SDKs) |
 
 ### Line Number Syntax
 

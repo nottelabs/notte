@@ -1,5 +1,6 @@
 # @sniptest filename=steel_complete.py
 # @sniptest show=23-47
+# @sniptest typecheck_only=true
 import os
 
 from notte_sdk import NotteClient
