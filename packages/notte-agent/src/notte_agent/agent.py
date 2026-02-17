@@ -64,7 +64,7 @@ class NotteAgent(BaseAgent):
         self.perception: BasePerception = perception
         self.prompt: BasePrompt = prompt
         self.trajectory: Trajectory = trajectory or session.trajectory.view()
-        self.created_at: dt.datetime = dt.datetime.now()
+        self.created_at: dt.datetime = dt.datetime.now(dt.timezone.utc)
         self.max_consecutive_failures: int = config.max_consecutive_failures
         self.consecutive_failures: int = 0
         # validator a LLM as a Judge that validates the agent's attempt at completing the task (i.e. `CompletionAction`)
@@ -112,7 +112,7 @@ class NotteAgent(BaseAgent):
         self.trajectory.stop()
         return AgentResponse(
             created_at=self.created_at,
-            closed_at=dt.datetime.now(),
+            closed_at=dt.datetime.now(dt.timezone.utc),
             answer=answer,
             success=success,
             trajectory=self.trajectory,
@@ -330,7 +330,7 @@ class NotteAgent(BaseAgent):
         request = AgentRunRequest.model_validate(data)
         logger.trace(f"Running task: {request.task}")
         self.consecutive_failures = 0
-        self.created_at = dt.datetime.now()
+        self.created_at = dt.datetime.now(dt.timezone.utc)
         try:
             with ErrorConfig.message_mode("agent"):
                 return await self._run(request)

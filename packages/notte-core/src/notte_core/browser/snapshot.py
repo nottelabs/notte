@@ -1,7 +1,6 @@
 import datetime as dt
 from base64 import b64encode
 from collections.abc import Sequence
-from dataclasses import field
 
 from PIL import Image
 from pydantic import BaseModel, Field
@@ -40,7 +39,9 @@ class SnapshotMetadata(BaseModel):
     url: str
     viewport: ViewportData
     tabs: list[TabsData]
-    timestamp: dt.datetime = field(default_factory=lambda: dt.datetime.now())
+    timestamp: dt.datetime = Field(
+        default_factory=lambda: dt.datetime.now(dt.timezone.utc), description="Timestamp of the snapshot"
+    )
 
 
 class BrowserSnapshot(BaseModel):

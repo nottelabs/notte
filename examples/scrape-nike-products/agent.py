@@ -104,7 +104,7 @@ def scrape_products(session: RemoteSession, cat: ProductCategory) -> ShoppingLis
 
 
 def scrape_nike_products():
-    timestamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d_%H%M%S")
     run_dir = RESULT_DIR / timestamp
     run_dir.mkdir(exist_ok=True, parents=True)
 

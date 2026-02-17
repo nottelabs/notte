@@ -273,7 +273,7 @@ class NotteSession(AsyncResource, SyncResource):
         # TODO: improve this
         # Check if the snapshot has changed since the beginning of the trajectory
         # if it has, it means that the page was not fully loaded and that we should restart the oblisting
-        time_diff = dt.datetime.now() - self.snapshot.metadata.timestamp
+        time_diff = dt.datetime.now(dt.timezone.utc) - self.snapshot.metadata.timestamp
         if time_diff.total_seconds() > self.nb_seconds_between_snapshots_check:
             if config.verbose:
                 logger.warning(
