@@ -1,7 +1,7 @@
 import base64
+import datetime as dt
 import io
 from base64 import b64decode, b64encode
-from datetime import datetime
 from io import BytesIO
 from textwrap import dedent
 from typing import Annotated, Any
@@ -246,7 +246,7 @@ class Observation(BaseModel):
                 metadata=SnapshotMetadata(
                     url="",
                     title="",
-                    timestamp=datetime.min,
+                    timestamp=dt.datetime.min,
                     viewport=ViewportData(
                         scroll_x=0, scroll_y=0, viewport_width=0, viewport_height=0, total_width=0, total_height=0
                     ),
@@ -265,6 +265,9 @@ class ExecutionResult(BaseModel):
     message: str
     data: DataSpace | None = None
     exception: NotteBaseError | Exception | None = Field(default=None)
+    timestamp: dt.datetime = Field(
+        default_factory=lambda: dt.datetime.now(dt.timezone.utc), description="Timestamp of the execution result"
+    )
 
     @field_validator("exception", mode="before")
     @classmethod
