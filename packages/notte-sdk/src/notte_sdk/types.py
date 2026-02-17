@@ -979,7 +979,7 @@ class SessionResponse(SdkResponse):
             return value
         if data.get("status") == "closed" and data.get("closed_at") is not None:
             return data["closed_at"] - data["created_at"]
-        return dt.datetime.now() - data["created_at"]
+        return dt.datetime.now(dt.timezone.utc) - data["created_at"]
 
     @computed_field
     @property
@@ -1045,7 +1045,7 @@ class SessionDebugRecordingEvent(SdkResponse):
 
     type: ElementLiteral | Literal["error"]
     data: AgentCompletion | Observation | ExecutionResult | str
-    timestamp: dt.datetime = Field(default_factory=lambda: dt.datetime.now())
+    timestamp: dt.datetime = Field(default_factory=lambda: dt.datetime.now(dt.timezone.utc))
 
     @staticmethod
     def session_closed() -> "SessionDebugRecordingEvent":

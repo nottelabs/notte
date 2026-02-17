@@ -185,7 +185,7 @@ class LlmParsingErrorFileTracer(Tracer):
     file_path: ClassVar[Path] = TRACES_DIR / "llm_parsing_error.jsonl"
 
     class LLmParsingError(BaseModel):
-        timestamp: str = Field(default_factory=lambda: dt.datetime.now().isoformat())
+        timestamp: str = Field(default_factory=lambda: dt.datetime.now(dt.timezone.utc).isoformat())
         status: str
         pipe_name: str
         nb_retries: int
