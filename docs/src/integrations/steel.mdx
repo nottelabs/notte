@@ -1,0 +1,44 @@
+---
+title: Steel
+description: Run Notte with Steel cloud browsers (CDP)
+---
+
+import SteelInstall from '/snippets/integrations/steel/install.mdx';
+import SteelInit from '/snippets/integrations/steel/init.mdx';
+import SteelConnect from '/snippets/integrations/steel/connect.mdx';
+import SteelComplete from '/snippets/integrations/steel/complete.mdx';
+
+Steel is a developer platform that provides cloud browser infrastructure for web agents. By integrating with Notte, you can use Steel's browser infrastructure to run reliable browser agents using Chrome DevTools Protocol (CDP).
+
+## Adding Steel to existing Notte implementations
+
+### 1. Install Notte and Steel SDK
+
+<SteelInstall />
+
+### 2. Initialize Notte and Steel
+
+Import the libraries and create a cloud browser session:
+
+<SteelInit />
+
+### 3. Connect Notte to Steel's CDP endpoint
+
+Use Steel's CDP URL to create a Notte session:
+
+<SteelConnect />
+
+## Complete example script
+
+Here's a complete, runnable script that demonstrates the full integration:
+
+<SteelComplete />
+
+<Note>Steel's SDK may evolve. Refer to [Steel's documentation](https://docs.steel.dev/) for the most up-to-date API details.</Note>
+
+## Benefits of using Steel with Notte
+
+* **No local browser management**: Run agents without installing or maintaining browsers locally
+* **Cloud infrastructure**: Leverage Steel's managed browser infrastructure
+* **Scalability**: Launch multiple browser sessions in parallel for concurrent tasks
+* **Session control**: Programmatic control over browser lifecycle

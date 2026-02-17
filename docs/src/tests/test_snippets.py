@@ -1,5 +1,6 @@
 import io
 import os
+import re
 import subprocess
 import tempfile
 from collections.abc import Callable, Generator
@@ -462,6 +463,23 @@ def strip_sniptest_comments(code: str) -> str:
     return "\n".join(filtered)
 
 
+def is_typecheck_only(code: str) -> bool:
+    """Check if a tester has the # @sniptest typecheck_only=true directive."""
+    return bool(re.search(r"^#\s*@sniptest\s+typecheck_only\s*=\s*true", code, re.MULTILINE))
+
+
+def run_typecheck_only(code: str, source_name: str) -> None:
+    """Run syntax and type checks only, skip execution. Triggered by # @sniptest typecheck_only=true."""
+    code = strip_sniptest_comments(code)
+    try:
+        compile(code, f"<{source_name}>", "exec")
+        logger.info(f"✓ Syntax check passed: {source_name}")
+    except SyntaxError as e:
+        raise SyntaxError(f"Syntax error in {source_name}: {e}")
+    mypy_check_code(code, source_name)
+    logger.info(f"✓ Type check passed: {source_name}")
+
+
 def run_example(
     eval_example: EvalExample,
     path: Path | None = None,
@@ -525,10 +543,13 @@ def test_python_testers(tester_file: Path, eval_example: EvalExample):
     _ = load_dotenv()
 
     tester_name = f"{tester_file.parent.name}/{tester_file.name}"
+    code = tester_file.read_text("utf-8")
     custom_fn = handlers.get(tester_name)
     try:
         if custom_fn is not None:
-            custom_fn(eval_example, tester_file.read_text("utf-8"))
+            custom_fn(eval_example, code)
+        elif is_typecheck_only(code):
+            run_typecheck_only(code, tester_name)
         else:
             run_example(eval_example, tester_file)
     except Exception as e:

@@ -1,0 +1,13 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/integrations/steel/connect.py */}
+
+```python steel_connect.py
+
+# Connect Notte to Steel's browser via CDP
+with client.Session(cdp_url=steel_session.websocket_url) as session:
+    # Create an agent with a task
+    agent = client.Agent(session=session, max_steps=10)
+
+    # Run your automation task
+    result = agent.run(task="extract pricing plans from https://www.notte.cc")
+```
