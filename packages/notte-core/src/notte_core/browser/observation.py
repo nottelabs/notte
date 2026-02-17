@@ -246,7 +246,7 @@ class Observation(BaseModel):
                 metadata=SnapshotMetadata(
                     url="",
                     title="",
-                    timestamp=dt.datetime.min,
+                    timestamp=dt.datetime.min.replace(tzinfo=dt.timezone.utc),
                     viewport=ViewportData(
                         scroll_x=0, scroll_y=0, viewport_width=0, viewport_height=0, total_width=0, total_height=0
                     ),
