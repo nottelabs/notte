@@ -1501,13 +1501,14 @@ class ScrapeMarkdownParamsDict(TypedDict, total=False):
         scrape_images: Whether to scrape images from the page. Images are not scraped by default.
         only_main_content: Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
         use_link_placeholders: Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations.
+            If None (default), automatically set based on URL content percentage.
     """
 
     selector: str | None
     scrape_links: bool
     scrape_images: bool
     only_main_content: bool
-    use_link_placeholders: bool
+    use_link_placeholders: bool | None
 
 
 class ScrapeStructuredParamsDict(TypedDict, total=False):
@@ -1559,7 +1560,7 @@ class ScrapeParams(SdkRequest):
                 "Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded."
             ),
         ),
-    ] = True
+    ] = False
 
     only_images: Annotated[
         bool,
@@ -1581,11 +1582,14 @@ class ScrapeParams(SdkRequest):
     ] = None
 
     use_link_placeholders: Annotated[
-        bool,
+        bool | None,
         Field(
-            description="Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected."
+            description=(
+                "Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. "
+                "If None (default), automatically set to True when URLs account for >= 50% of scraped content (for text > 10k chars), otherwise False."
+            )
         ),
-    ] = False
+    ] = None
 
     def requires_schema(self) -> bool:
         return self.response_format is not None or self.instructions is not None
