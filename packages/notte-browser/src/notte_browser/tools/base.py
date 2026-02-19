@@ -208,7 +208,7 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
             return ExecutionResult(
                 action=action,
                 success=True,
-                message=f"No emails found in the inbox {time_str}",
+                message=f"No sms found in the inbox {time_str}",
                 data=DataSpace.from_structured(ListEmailResponse(emails=[])),
                 started_at=span.started_at,
                 ended_at=span.ended_at,
