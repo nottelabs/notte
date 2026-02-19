@@ -2,12 +2,14 @@ import base64
 import datetime as dt
 import io
 from base64 import b64decode, b64encode
+from collections.abc import Iterator
+from contextlib import contextmanager
 from io import BytesIO
 from textwrap import dedent
 from typing import Annotated, Any
 
 from PIL import Image, ImageDraw, ImageFont
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing_extensions import override
 
 from notte_core.actions import ActionUnion
@@ -22,6 +24,56 @@ from notte_core.utils.image import draw_text_with_rounded_background
 from notte_core.utils.url import clean_url
 
 _empty_observation_instance = None
+
+
+def utc_now() -> dt.datetime:
+    return dt.datetime.now(dt.timezone.utc)
+
+
+class TimedSpan(BaseModel):
+    started_at: dt.datetime
+    ended_at: dt.datetime | None
+
+    @model_validator(mode="after")
+    def validate_order(self) -> "TimedSpan":
+        if self.ended_at is not None and self.started_at > self.ended_at:
+            raise ValueError("started_at must be <= ended_at")
+        return self
+
+    @staticmethod
+    def start() -> "TimedSpan":
+        return TimedSpan(started_at=utc_now(), ended_at=None)
+
+    def close(self) -> "FilledTimedSpan":
+        if self.ended_at is None:
+            self.ended_at = utc_now()
+        return FilledTimedSpan(started_at=self.started_at, ended_at=self.ended_at)
+
+    def as_fields(self) -> dict[str, dt.datetime]:
+        return {
+            "started_at": self.started_at,
+            "ended_at": self.ended_at or utc_now(),
+        }
+
+    @staticmethod
+    def empty() -> "FilledTimedSpan":
+        with TimedSpan.capture() as span:
+            pass
+        return span.close()
+
+    @staticmethod
+    @contextmanager
+    def capture() -> Iterator["TimedSpan"]:
+        span = TimedSpan.start()
+        try:
+            yield span
+        finally:
+            _ = span.close()
+
+
+class FilledTimedSpan(BaseModel):
+    started_at: dt.datetime
+    ended_at: dt.datetime
 
 
 class Screenshot(BaseModel):
@@ -187,7 +239,7 @@ class TrajectoryProgress(BaseModel):
     max_steps: int
 
 
-class Observation(BaseModel):
+class Observation(FilledTimedSpan):
     metadata: Annotated[
         SnapshotMetadata, Field(description="Metadata of the current page, i.e url, page title, snapshot timestamp.")
     ]
@@ -199,12 +251,14 @@ class Observation(BaseModel):
         return clean_url(self.metadata.url)
 
     @staticmethod
-    def from_snapshot(snapshot: BrowserSnapshot, space: ActionSpace) -> "Observation":
+    def from_snapshot(snapshot: BrowserSnapshot, space: ActionSpace, span: FilledTimedSpan) -> "Observation":
         bboxes = [node.bbox.with_id(node.id) for node in snapshot.interaction_nodes() if node.bbox is not None]
         return Observation(
             metadata=snapshot.metadata,
             screenshot=Screenshot(raw=snapshot.screenshot, bboxes=bboxes, last_action_id=None),
             space=space,
+            started_at=span.started_at,
+            ended_at=span.ended_at,
         )
 
     @field_validator("screenshot", mode="before")
@@ -254,20 +308,20 @@ class Observation(BaseModel):
                 ),
                 screenshot=Screenshot(raw=generate_empty_picture(), bboxes=[], last_action_id=None),
                 space=ActionSpace(interaction_actions=[], description=""),
+                started_at=utc_now(),
+                ended_at=utc_now(),
             )
+
         return _empty_observation_instance
 
 
-class ExecutionResult(BaseModel):
+class ExecutionResult(FilledTimedSpan):
     # action: BaseAction
     action: ActionUnion
     success: bool
     message: str
     data: DataSpace | None = None
     exception: NotteBaseError | Exception | None = Field(default=None)
-    timestamp: dt.datetime = Field(
-        default_factory=lambda: dt.datetime.now(dt.timezone.utc), description="Timestamp of the execution result"
-    )
 
     @field_validator("exception", mode="before")
     @classmethod

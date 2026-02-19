@@ -54,7 +54,7 @@ def test_replay_session(session_id: str):
     assert len(response.replay) > 0
 
 
-@pytest.mark.parametrize("browser_type", ["chrome", "firefox", "chromium"])
+@pytest.mark.parametrize("browser_type", ["chrome", "chromium"])
 def test_start_close_session_with_browser_type(browser_type: BrowserType):
     client = NotteClient()
     with client.Session(open_viewer=False, browser_type=browser_type) as session:

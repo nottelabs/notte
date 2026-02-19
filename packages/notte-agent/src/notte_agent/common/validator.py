@@ -2,7 +2,7 @@ from typing import final
 
 import chevron
 from notte_core.actions import CompletionAction
-from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
+from notte_core.browser.observation import ExecutionResult, Observation, TimedSpan, TrajectoryProgress
 from notte_core.trajectory import Trajectory
 from notte_llm.engine import LLMEngine
 from pydantic import BaseModel, ValidationError
@@ -107,29 +107,49 @@ Your turn:
         if response_format is not None:
             validation = CompletionValidator.validate_response_format(output, response_format)
             if not validation.is_valid:
-                return ExecutionResult(action=output, success=False, message=validation.reason)
+                empty_span = TimedSpan.empty()
+                return ExecutionResult(
+                    action=output,
+                    success=False,
+                    message=validation.reason,
+                    started_at=empty_span.started_at,
+                    ended_at=empty_span.ended_at,
+                )
 
         observations = list(history.observations())
         if len(observations) == 0:
-            return ExecutionResult(action=output, success=False, message="No observations")
+            with TimedSpan.capture() as span:
+                pass
+            return ExecutionResult(
+                action=output,
+                success=False,
+                message="No observations",
+                started_at=span.started_at,
+                ended_at=span.close().ended_at,
+            )
 
-        # then, validate that the answer is correct
-        last_obs = observations[-1]
+        with TimedSpan.capture() as span:
+            # then, validate that the answer is correct
+            last_obs = observations[-1]
 
-        self.conv.reset()
-        system_prompt = chevron.render(system_rules, {"task": task, "example": self.example().model_dump_json()})
-        self.conv.add_system_message(content=system_prompt)
+            self.conv.reset()
+            system_prompt = chevron.render(system_rules, {"task": task, "example": self.example().model_dump_json()})
+            self.conv.add_system_message(content=system_prompt)
 
-        validation_message = self.validation_message(output, history, progress, last_obs)
+            validation_message = self.validation_message(output, history, progress, last_obs)
 
-        self.conv.add_user_message(
-            content=validation_message,
-            image=(last_obs.screenshot.bytes() if self.use_vision else None),
-        )
+            self.conv.add_user_message(
+                content=validation_message,
+                image=(last_obs.screenshot.bytes() if self.use_vision else None),
+            )
 
-        answer: CompletionValidation = await self.llm.structured_completion(self.conv.messages(), CompletionValidation)
+            answer: CompletionValidation = await self.llm.structured_completion(
+                self.conv.messages(), CompletionValidation
+            )
         return ExecutionResult(
             action=output,
             success=answer.is_valid,
             message=answer.reason,
+            started_at=span.started_at,
+            ended_at=span.close().ended_at,
         )

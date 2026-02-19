@@ -50,7 +50,7 @@ from notte_core.actions.typedicts import (
     WaitActionDict,
     parse_action,
 )
-from notte_core.browser.observation import ExecutionResult, Observation, Screenshot
+from notte_core.browser.observation import ExecutionResult, Observation, Screenshot, TimedSpan
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import BrowserBackend, CookieDict, PerceptionType, RaiseCondition, ScreenshotType, config
 from notte_core.common.logging import logger, timeit
@@ -350,34 +350,35 @@ class NotteSession(AsyncResource, SyncResource):
         # ------ Step 1: snapshot --------
         # --------------------------------
 
-        # ensure we're on a page
-        is_page_default = self.window.page.url == "about:blank"
+        with TimedSpan.capture() as span:
+            # ensure we're on a page
+            is_page_default = self.window.page.url == "about:blank"
 
-        if is_page_default:
-            logger.info(
-                "Session url is 'about:blank': returning empty observation. Perform goto action before observing to get a more meaningful observation."
+            if is_page_default:
+                logger.info(
+                    "Session url is 'about:blank': returning empty observation. Perform goto action before observing to get a more meaningful observation."
+                )
+                obs = Observation.empty()
+                await self.trajectory.append(obs)
+                return obs
+
+            self.snapshot = await self.window.snapshot()
+
+            if config.verbose:
+                logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_interaction_actions or []]}")
+                logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
+
+            # --------------------------------
+            # ---- Step 2: action listing ----
+            # --------------------------------
+
+            space = await self._interaction_action_listing(
+                perception_type=perception_type or self.default_perception_type,
+                pagination=PaginationParams.model_validate(pagination),
+                retry=self.observe_max_retry_after_snapshot_update,
             )
-            obs = Observation.empty()
-            await self.trajectory.append(obs)
-            return obs
-
-        self.snapshot = await self.window.snapshot()
-
-        if config.verbose:
-            logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_interaction_actions or []]}")
-            logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
-
-        # --------------------------------
-        # ---- Step 2: action listing ----
-        # --------------------------------
-
-        space = await self._interaction_action_listing(
-            perception_type=perception_type or self.default_perception_type,
-            pagination=PaginationParams.model_validate(pagination),
-            retry=self.observe_max_retry_after_snapshot_update,
-        )
         if instructions is not None:
-            obs = Observation.from_snapshot(self.snapshot, space=space)
+            obs = Observation.from_snapshot(self.snapshot, space=space, span=span.close())
             selected_actions = await self._action_selection_pipe.forward(obs, instructions=instructions)
             if not selected_actions.success:
                 logger.warning(f"❌ Action selection failed: {selected_actions.reason}. Space will be empty.")
@@ -389,7 +390,7 @@ class NotteSession(AsyncResource, SyncResource):
         # ------- Step 3: tracing --------
         # --------------------------------
 
-        obs = Observation.from_snapshot(self.snapshot, space=space)
+        obs = Observation.from_snapshot(self.snapshot, space=space, span=span.close())
 
         await self.trajectory.append(obs)
         return obs
@@ -575,110 +576,111 @@ class NotteSession(AsyncResource, SyncResource):
         scraped_data = None
         resolved_action = None
 
-        try:
-            # --------------------------------
-            # --- Step 1: action resolution --
-            # --------------------------------
+        with TimedSpan.capture() as span:
+            try:
+                # --------------------------------
+                # --- Step 1: action resolution --
+                # --------------------------------
 
-            resolved_action = await NodeResolutionPipe.forward(step_action, self._snapshot, verbose=config.verbose)
-            if config.verbose:
-                logger.info(f"🌌 starting execution of action '{resolved_action.type}' ...")
-            # --------------------------------
-            # ----- Step 2: execution -------
-            # --------------------------------
+                resolved_action = await NodeResolutionPipe.forward(step_action, self._snapshot, verbose=config.verbose)
+                if config.verbose:
+                    logger.info(f"🌌 starting execution of action '{resolved_action.type}' ...")
+                # --------------------------------
+                # ----- Step 2: execution -------
+                # --------------------------------
 
-            message = resolved_action.execution_message()
-            exception: Exception | None = None
+                message = resolved_action.execution_message()
+                exception: Exception | None = None
 
-            match resolved_action:
-                case ScrapeAction():
-                    # Note: response_format in ScrapeAction is a JSON schema dict for logging/trajectory.
-                    # Actual structured output with Pydantic classes requires calling scrape() directly.
-                    # Agents use instructions-based scraping for structured data extraction.
-                    scraped_data = await self._ascrape(
-                        instructions=resolved_action.instructions,
-                        only_main_content=resolved_action.only_main_content,
-                        selector=resolved_action.selector,
-                        only_images=resolved_action.only_images,
-                        scrape_links=resolved_action.scrape_links,
-                        scrape_images=resolved_action.scrape_images,
-                        ignored_tags=resolved_action.ignored_tags,
-                    )
-                    success = True
-                case EvaluateJsAction(code=code):
-                    # Evaluate JavaScript code on the page and return the result.
-                    # If the code contains bare `return` statements (invalid outside
-                    # a function), wrap it in an IIFE so Playwright can evaluate it.
-                    # Skip wrapping if the code is already a function/IIFE.
-                    stripped = code.strip()
-                    # Detect code that is already a function expression or IIFE:
-                    #   "("            -> grouped expression / IIFE
-                    #   "function ..." -> function declaration/expression (word boundary avoids "functionName()")
-                    #   "async function" / "async (" -> async variants (avoids "asyncio.run()", "async_helper()")
-                    is_already_function = bool(re.match(r"^(?:\(|function\b|async\s+(?:function\b|\())", stripped))
-                    needs_wrap = bool(re.search(r"\breturn\b", stripped)) and not is_already_function
-                    js_code = f"(() => {{\n{code}\n}})()" if needs_wrap else code
-                    try:
-                        evaluate_kwargs: dict[str, bool] = {}
-                        if config.browser_backend == BrowserBackend.PATCHRIGHT:
-                            evaluate_kwargs["isolated_context"] = False
-                        result = await self.window.page.evaluate(js_code, **evaluate_kwargs)
-                    except PlaywrightError as js_err:
-                        success = False
-                        message = f"JavaScript evaluation failed: {js_err}"
-                    else:
-                        # Convert result to string representation for markdown
-                        if result is None:
-                            result_str = "null"
-                        elif isinstance(result, (dict, list)):
-                            result_str = json.dumps(result, indent=2, default=str)
-                        else:
-                            result_str = str(result)
-                        scraped_data = DataSpace(markdown=result_str)
+                match resolved_action:
+                    case ScrapeAction():
+                        # Note: response_format in ScrapeAction is a JSON schema dict for logging/trajectory.
+                        # Actual structured output with Pydantic classes requires calling scrape() directly.
+                        # Agents use instructions-based scraping for structured data extraction.
+                        scraped_data = await self._ascrape(
+                            instructions=resolved_action.instructions,
+                            only_main_content=resolved_action.only_main_content,
+                            selector=resolved_action.selector,
+                            only_images=resolved_action.only_images,
+                            scrape_links=resolved_action.scrape_links,
+                            scrape_images=resolved_action.scrape_images,
+                            ignored_tags=resolved_action.ignored_tags,
+                        )
                         success = True
-                case ToolAction():
-                    tool_found = False
-                    success = False
-                    for tool in self.tools:
-                        tool_func = tool.get_tool(type(resolved_action))
-                        if tool_func is not None:
-                            tool_found = True
-                            res = await tool_func(resolved_action)
-                            message = res.message
-                            scraped_data = res.data
-                            success = res.success
-                            break
-                    if not tool_found:
-                        raise NoToolProvidedError(resolved_action)
-                case _:
-                    success = await self.controller.execute(self.window, resolved_action, self._snapshot)
+                    case EvaluateJsAction(code=code):
+                        # Evaluate JavaScript code on the page and return the result.
+                        # If the code contains bare `return` statements (invalid outside
+                        # a function), wrap it in an IIFE so Playwright can evaluate it.
+                        # Skip wrapping if the code is already a function/IIFE.
+                        stripped = code.strip()
+                        # Detect code that is already a function expression or IIFE:
+                        #   "("            -> grouped expression / IIFE
+                        #   "function ..." -> function declaration/expression (word boundary avoids "functionName()")
+                        #   "async function" / "async (" -> async variants (avoids "asyncio.run()", "async_helper()")
+                        is_already_function = bool(re.match(r"^(?:\(|function\b|async\s+(?:function\b|\())", stripped))
+                        needs_wrap = bool(re.search(r"\breturn\b", stripped)) and not is_already_function
+                        js_code = f"(() => {{\n{code}\n}})()" if needs_wrap else code
+                        try:
+                            evaluate_kwargs: dict[str, bool] = {}
+                            if config.browser_backend == BrowserBackend.PATCHRIGHT:
+                                evaluate_kwargs["isolated_context"] = False
+                            result = await self.window.page.evaluate(js_code, **evaluate_kwargs)
+                        except PlaywrightError as js_err:
+                            success = False
+                            message = f"JavaScript evaluation failed: {js_err}"
+                        else:
+                            # Convert result to string representation for markdown
+                            if result is None:
+                                result_str = "null"
+                            elif isinstance(result, (dict, list)):
+                                result_str = json.dumps(result, indent=2, default=str)
+                            else:
+                                result_str = str(result)
+                            scraped_data = DataSpace(markdown=result_str)
+                            success = True
+                    case ToolAction():
+                        tool_found = False
+                        success = False
+                        for tool in self.tools:
+                            tool_func = tool.get_tool(type(resolved_action))
+                            if tool_func is not None:
+                                tool_found = True
+                                res = await tool_func(resolved_action)
+                                message = res.message
+                                scraped_data = res.data
+                                success = res.success
+                                break
+                        if not tool_found:
+                            raise NoToolProvidedError(resolved_action)
+                    case _:
+                        success = await self.controller.execute(self.window, resolved_action, self._snapshot)
 
-        except (NoSnapshotObservedError, NoStorageObjectProvidedError, NoToolProvidedError) as e:
-            # this should be handled by the caller
-            raise e
-        except InvalidActionError as e:
-            success = False
-            message = e.dev_message
-            exception = e
-        except RateLimitError as e:
-            success = False
-            message = "Rate limit reached. Waiting before retry."
-            exception = e
-        except NotteBaseError as e:
-            # When raise_on_failure is True, we use the dev message to give more details to the user
-            success = False
-            message = e.dev_message
-            exception = e
-        except ValidationError as e:
-            success = False
-            message = (
-                "JSON Schema Validation error: The output format is invalid. "
-                f"Please ensure your response follows the expected schema. Details: {str(e)}"
-            )
-            exception = e
-        # /!\ Never use this except block, it will catch all errors and not be able to raise them
-        # If you want an error not to be propagated to the LLM Agent. Define a NotteBaseError with the agent_message field.
-        # except Exception as e:
+            except (NoSnapshotObservedError, NoStorageObjectProvidedError, NoToolProvidedError) as e:
+                # this should be handled by the caller
+                raise e
+            except InvalidActionError as e:
+                success = False
+                message = e.dev_message
+                exception = e
+            except RateLimitError as e:
+                success = False
+                message = "Rate limit reached. Waiting before retry."
+                exception = e
+            except NotteBaseError as e:
+                # When raise_on_failure is True, we use the dev message to give more details to the user
+                success = False
+                message = e.dev_message
+                exception = e
+            except ValidationError as e:
+                success = False
+                message = (
+                    "JSON Schema Validation error: The output format is invalid. "
+                    f"Please ensure your response follows the expected schema. Details: {str(e)}"
+                )
+                exception = e
+            # /!\ Never use this except block, it will catch all errors and not be able to raise them
+            # If you want an error not to be propagated to the LLM Agent. Define a NotteBaseError with the agent_message field.
+            # except Exception as e:
 
         # --------------------------------
         # ------- Step 3: tracing --------
@@ -707,6 +709,8 @@ class NotteSession(AsyncResource, SyncResource):
             message=message,
             data=scraped_data,
             exception=exception,
+            started_at=span.started_at,
+            ended_at=span.close().ended_at,
         )
         await self.trajectory.append(execution_result)
 
@@ -917,33 +921,35 @@ class NotteSession(AsyncResource, SyncResource):
 
         exception: Exception | None = None
         data: DataSpace | None = None
-
-        try:
-            data = await self._ascrape(**params)
-        except Exception as e:
-            exception = e
-            # Record failure to trajectory
-            execution_result = ExecutionResult(
-                action=scrape_action,
-                success=False,
-                message=scrape_action.execution_message(),
-                data=None,
-                exception=exception,
-            )
-            await self.trajectory.append(execution_result)
-            if raise_on_failure:
-                raise
-            # return meaningful data when exception occurred
-            error_message = f"No markdown available. Exception: {exception}"
-            return (
-                DataSpace(
-                    markdown=error_message,
-                    images=None,
-                    structured=StructuredData(success=False, error=error_message, data=None),
+        with TimedSpan.capture() as span:
+            try:
+                data = await self._ascrape(**params)
+            except Exception as e:
+                exception = e
+                # Record failure to trajectory
+                execution_result = ExecutionResult(
+                    action=scrape_action,
+                    success=False,
+                    message=scrape_action.execution_message(),
+                    data=None,
+                    exception=exception,
+                    started_at=span.started_at,
+                    ended_at=span.close().ended_at,
                 )
-                if is_structured_scrape
-                else error_message
-            )
+                await self.trajectory.append(execution_result)
+                if raise_on_failure:
+                    raise
+                # return meaningful data when exception occurred
+                error_message = f"No markdown available. Exception: {exception}"
+                return (
+                    DataSpace(
+                        markdown=error_message,
+                        images=None,
+                        structured=StructuredData(success=False, error=error_message, data=None),
+                    )
+                    if is_structured_scrape
+                    else error_message
+                )
 
         # Record to trajectory
         execution_result = ExecutionResult(
@@ -953,6 +959,8 @@ class NotteSession(AsyncResource, SyncResource):
             message=scrape_action.execution_message(),
             data=data,
             exception=data.structured_scrape_exception if is_structured_scrape else None,
+            started_at=span.started_at,
+            ended_at=span.close().ended_at,
         )
         await self.trajectory.append(execution_result)
 
