@@ -2,6 +2,7 @@ from typing import Any
 
 from notte_browser.workflow_variables import Workflow
 from notte_core.agent_types import AgentCompletion
+from notte_core.browser.observation import TimedSpan
 from notte_core.common.logging import logger
 from notte_sdk.types import AgentRunRequest
 from typing_extensions import override
@@ -45,7 +46,9 @@ class WorkflowAgent(NotteAgent):
             return await super().observe_and_completion(request)
         step = self.workflow.steps[current_step]
         logger.info(f"💨 Workflow - reusing workflow action '{step.action.type}'")
-        return step
+        # Use fresh timing: no LLM completion is performed when replaying a workflow step,
+        # so the original step's started_at/ended_at are not relevant here.
+        return AgentCompletion.from_completion(step, TimedSpan.empty())
 
     @override
     async def arun(self, variables: dict[str, Any] | None = None):  # pyright: ignore [reportIncompatibleMethodOverride]
