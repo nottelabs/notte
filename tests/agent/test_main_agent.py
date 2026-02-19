@@ -42,6 +42,13 @@ def test_falco_agent_external_model(task: str):
     assert response.answer is not None
     assert response.answer != ""
 
+    assert len(session.trajectory) >= 4
+    completion_step = next(session.trajectory.agent_completions())
+    assert completion_step is not None
+    assert completion_step.started_at is not None
+    assert completion_step.ended_at is not None
+    assert completion_step.ended_at > completion_step.started_at
+
 
 def test_falco_agent_invalid_external_model_should_fail(task: str):
     with notte.Session() as session:

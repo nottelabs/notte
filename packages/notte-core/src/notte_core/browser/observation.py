@@ -70,6 +70,11 @@ class TimedSpan(BaseModel):
             _ = span.close()
 
 
+class FilledTimedSpan(BaseModel):
+    started_at: dt.datetime
+    ended_at: dt.datetime
+
+
 class Screenshot(BaseModel):
     raw: bytes = Field(repr=False)
     bboxes: list[BoundingBox] = Field(default_factory=list)
@@ -233,7 +238,7 @@ class TrajectoryProgress(BaseModel):
     max_steps: int
 
 
-class Observation(TimedSpan):
+class Observation(FilledTimedSpan):
     metadata: Annotated[
         SnapshotMetadata, Field(description="Metadata of the current page, i.e url, page title, snapshot timestamp.")
     ]
@@ -264,7 +269,6 @@ class Observation(TimedSpan):
             return Screenshot(raw=v, bboxes=[], last_action_id=None)
         return v
 
-    @override
     @staticmethod
     def empty() -> "Observation":
         def generate_empty_picture(width: int = 1280, height: int = 1080) -> bytes:
@@ -310,7 +314,7 @@ class Observation(TimedSpan):
         return _empty_observation_instance
 
 
-class ExecutionResult(TimedSpan):
+class ExecutionResult(FilledTimedSpan):
     # action: BaseAction
     action: ActionUnion
     success: bool
