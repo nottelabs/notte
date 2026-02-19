@@ -105,16 +105,16 @@ Your turn:
 
         # first, validate the output if provided a schema
         if response_format is not None:
-            with TimedSpan.capture() as span:
-                validation = CompletionValidator.validate_response_format(output, response_format)
-                if not validation.is_valid:
-                    return ExecutionResult(
-                        action=output,
-                        success=False,
-                        message=validation.reason,
-                        started_at=span.started_at,
-                        ended_at=span.ended_at,
-                    )
+            validation = CompletionValidator.validate_response_format(output, response_format)
+            if not validation.is_valid:
+                empty_span = TimedSpan.empty()
+                return ExecutionResult(
+                    action=output,
+                    success=False,
+                    message=validation.reason,
+                    started_at=empty_span.started_at,
+                    ended_at=empty_span.ended_at,
+                )
 
         observations = list(history.observations())
         if len(observations) == 0:

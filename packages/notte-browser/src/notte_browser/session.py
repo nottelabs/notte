@@ -920,37 +920,35 @@ class NotteSession(AsyncResource, SyncResource):
 
         exception: Exception | None = None
         data: DataSpace | None = None
-        span = TimedSpan.start()
-        try:
-            with TimedSpan.capture() as span:
+        with TimedSpan.capture() as span:
+            try:
                 data = await self._ascrape(**params)
-        except Exception as e:
-            _ = span.close()
-            exception = e
-            # Record failure to trajectory
-            execution_result = ExecutionResult(
-                action=scrape_action,
-                success=False,
-                message=scrape_action.execution_message(),
-                data=None,
-                exception=exception,
-                started_at=span.started_at,
-                ended_at=span.ended_at,
-            )
-            await self.trajectory.append(execution_result)
-            if raise_on_failure:
-                raise
-            # return meaningful data when exception occurred
-            error_message = f"No markdown available. Exception: {exception}"
-            return (
-                DataSpace(
-                    markdown=error_message,
-                    images=None,
-                    structured=StructuredData(success=False, error=error_message, data=None),
+            except Exception as e:
+                exception = e
+                # Record failure to trajectory
+                execution_result = ExecutionResult(
+                    action=scrape_action,
+                    success=False,
+                    message=scrape_action.execution_message(),
+                    data=None,
+                    exception=exception,
+                    started_at=span.started_at,
+                    ended_at=span.ended_at,
                 )
-                if is_structured_scrape
-                else error_message
-            )
+                await self.trajectory.append(execution_result)
+                if raise_on_failure:
+                    raise
+                # return meaningful data when exception occurred
+                error_message = f"No markdown available. Exception: {exception}"
+                return (
+                    DataSpace(
+                        markdown=error_message,
+                        images=None,
+                        structured=StructuredData(success=False, error=error_message, data=None),
+                    )
+                    if is_structured_scrape
+                    else error_message
+                )
 
         # Record to trajectory
         execution_result = ExecutionResult(
