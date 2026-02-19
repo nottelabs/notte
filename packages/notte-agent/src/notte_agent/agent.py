@@ -134,7 +134,7 @@ class NotteAgent(BaseAgent):
                     use_strict_response_format=LlmModel.use_strict_response_format(self.config.reasoning_model),
                 )
 
-        traj_completion = AgentCompletion.from_completion(response, span)
+        traj_completion = AgentCompletion.from_completion(response, span.close())
 
         await self.trajectory.append(traj_completion, force=True)
         return traj_completion
@@ -223,7 +223,7 @@ class NotteAgent(BaseAgent):
                         success=True,
                         message=val_result.message,
                         started_at=span.started_at,
-                        ended_at=span.ended_at,
+                        ended_at=span.close().ended_at,
                     )
                     await self.trajectory.append(result, force=True)
                     # agent and validator agree, stop with success
@@ -240,7 +240,7 @@ class NotteAgent(BaseAgent):
                     success=False,
                     message=agent_failure_msg,
                     started_at=span.started_at,
-                    ended_at=span.ended_at,
+                    ended_at=span.close().ended_at,
                 )
                 await self.trajectory.append(result, force=True)
                 # disagreement between model and validation, continue

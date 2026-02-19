@@ -173,7 +173,7 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
                     message=f"No emails found in the inbox {time_str}",
                     data=DataSpace.from_structured(ListEmailResponse(emails=[])),
                     started_at=span.started_at,
-                    ended_at=span.ended_at,
+                    ended_at=span.close().ended_at,
                 )
             emails: list[SimpleEmailResponse] = [SimpleEmailResponse.from_email(email) for email in raw_emails]
             return ExecutionResult(
@@ -182,7 +182,7 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
                 message=f"Successfully read {len(emails)} emails from the inbox {time_str}",
                 data=DataSpace.from_structured(ListEmailResponse(emails=emails)),
                 started_at=span.started_at,
-                ended_at=span.ended_at,
+                ended_at=span.close().ended_at,
             )
 
     @BaseTool.register(SmsReadAction)
@@ -211,7 +211,7 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
                     message=f"No sms found in the inbox {time_str}",
                     data=DataSpace.from_structured(ListEmailResponse(emails=[])),
                     started_at=span.started_at,
-                    ended_at=span.ended_at,
+                    ended_at=span.close().ended_at,
                 )
             sms: list[SimpleSmsResponse] = [SimpleSmsResponse.from_sms(sms) for sms in raw_sms]
             return ExecutionResult(
@@ -220,5 +220,5 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
                 message=f"Successfully read {len(sms)} sms from the inbox {time_str}",
                 data=DataSpace.from_structured(ListSmsResponse(sms=sms)),
                 started_at=span.started_at,
-                ended_at=span.ended_at,
+                ended_at=span.close().ended_at,
             )

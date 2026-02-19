@@ -125,7 +125,7 @@ Your turn:
                 success=False,
                 message="No observations",
                 started_at=span.started_at,
-                ended_at=span.ended_at,
+                ended_at=span.close().ended_at,
             )
 
         with TimedSpan.capture() as span:
@@ -151,5 +151,5 @@ Your turn:
             success=answer.is_valid,
             message=answer.reason,
             started_at=span.started_at,
-            ended_at=span.ended_at,
+            ended_at=span.close().ended_at,
         )

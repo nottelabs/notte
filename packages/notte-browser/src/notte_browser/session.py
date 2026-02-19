@@ -378,7 +378,7 @@ class NotteSession(AsyncResource, SyncResource):
                 retry=self.observe_max_retry_after_snapshot_update,
             )
         if instructions is not None:
-            obs = Observation.from_snapshot(self.snapshot, space=space, span=span)
+            obs = Observation.from_snapshot(self.snapshot, space=space, span=span.close())
             selected_actions = await self._action_selection_pipe.forward(obs, instructions=instructions)
             if not selected_actions.success:
                 logger.warning(f"❌ Action selection failed: {selected_actions.reason}. Space will be empty.")
@@ -390,7 +390,7 @@ class NotteSession(AsyncResource, SyncResource):
         # ------- Step 3: tracing --------
         # --------------------------------
 
-        obs = Observation.from_snapshot(self.snapshot, space=space, span=span)
+        obs = Observation.from_snapshot(self.snapshot, space=space, span=span.close())
 
         await self.trajectory.append(obs)
         return obs
@@ -710,7 +710,7 @@ class NotteSession(AsyncResource, SyncResource):
             data=scraped_data,
             exception=exception,
             started_at=span.started_at,
-            ended_at=span.ended_at,
+            ended_at=span.close().ended_at,
         )
         await self.trajectory.append(execution_result)
 
@@ -934,7 +934,7 @@ class NotteSession(AsyncResource, SyncResource):
                     data=None,
                     exception=exception,
                     started_at=span.started_at,
-                    ended_at=span.ended_at,
+                    ended_at=span.close().ended_at,
                 )
                 await self.trajectory.append(execution_result)
                 if raise_on_failure:
@@ -960,7 +960,7 @@ class NotteSession(AsyncResource, SyncResource):
             data=data,
             exception=data.structured_scrape_exception if is_structured_scrape else None,
             started_at=span.started_at,
-            ended_at=span.ended_at,
+            ended_at=span.close().ended_at,
         )
         await self.trajectory.append(execution_result)
 

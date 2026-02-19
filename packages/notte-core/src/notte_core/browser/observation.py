@@ -44,9 +44,10 @@ class TimedSpan(BaseModel):
     def start() -> "TimedSpan":
         return TimedSpan(started_at=utc_now(), ended_at=None)
 
-    def close(self) -> "TimedSpan":
-        self.ended_at = utc_now()
-        return self
+    def close(self) -> "FilledTimedSpan":
+        if self.ended_at is None:
+            self.ended_at = utc_now()
+        return FilledTimedSpan(started_at=self.started_at, ended_at=self.ended_at)
 
     def as_fields(self) -> dict[str, dt.datetime]:
         return {
@@ -55,10 +56,10 @@ class TimedSpan(BaseModel):
         }
 
     @staticmethod
-    def empty() -> "TimedSpan":
+    def empty() -> "FilledTimedSpan":
         with TimedSpan.capture() as span:
             pass
-        return span
+        return span.close()
 
     @staticmethod
     @contextmanager
@@ -250,14 +251,14 @@ class Observation(FilledTimedSpan):
         return clean_url(self.metadata.url)
 
     @staticmethod
-    def from_snapshot(snapshot: BrowserSnapshot, space: ActionSpace, span: TimedSpan) -> "Observation":
+    def from_snapshot(snapshot: BrowserSnapshot, space: ActionSpace, span: FilledTimedSpan) -> "Observation":
         bboxes = [node.bbox.with_id(node.id) for node in snapshot.interaction_nodes() if node.bbox is not None]
         return Observation(
             metadata=snapshot.metadata,
             screenshot=Screenshot(raw=snapshot.screenshot, bboxes=bboxes, last_action_id=None),
             space=space,
             started_at=span.started_at,
-            ended_at=span.ended_at or utc_now(),
+            ended_at=span.ended_at,
         )
 
     @field_validator("screenshot", mode="before")

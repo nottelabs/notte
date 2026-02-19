@@ -3,7 +3,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, field_serializer
 
 from notte_core.actions import ActionUnion, BaseAction, BrowserAction, CompletionAction, GotoAction, InteractionAction
-from notte_core.browser.observation import FilledTimedSpan, TimedSpan
+from notte_core.browser.observation import FilledTimedSpan
 from notte_core.common.logging import logger
 
 
@@ -135,9 +135,7 @@ class AgentCompletion(_AgentCompletion, FilledTimedSpan):
         pass
 
     @staticmethod
-    def from_completion(completion: _AgentCompletion, timed_span: TimedSpan) -> "AgentCompletion":
-        if timed_span.ended_at is None:
-            raise ValueError("Timed span must have an ended_at time")
+    def from_completion(completion: _AgentCompletion, timed_span: FilledTimedSpan) -> "AgentCompletion":
         return AgentCompletion(
             state=completion.state,
             action=completion.action,
