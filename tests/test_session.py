@@ -12,6 +12,7 @@ from notte_core.actions import (
     SwitchTabAction,
     WaitAction,
 )
+from notte_core.actions.actions import ScrapeAction
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.errors.actions import InvalidActionError
 from notte_llm.service import LLMService
@@ -143,6 +144,25 @@ async def test_step_should_succeed_after_observation() -> None:
         _ = await page.aexecute(type="goto", value="https://www.example.com")
         _ = await page.aobserve(perception_type="fast")
         _ = await page.aexecute(ClickAction(id="L1"))
+
+
+@pytest.mark.asyncio
+async def test_step_should_return_valid_timed_span() -> None:
+    """Test that step should fail without observation"""
+    async with NotteSession() as page:
+        _ = await page.aexecute(type="goto", value="https://www.notte.cc")
+        obs = await page.aobserve(perception_type="fast")
+        assert obs.started_at is not None
+        assert obs.ended_at is not None
+        assert obs.ended_at > obs.started_at
+        res = await page.aexecute(ClickAction(id="L1"))
+        assert res.started_at is not None
+        assert res.ended_at is not None
+        assert res.ended_at > res.started_at
+        data = await page.aexecute(ScrapeAction(instructions="Extract the title of the page"))
+        assert data.started_at is not None
+        assert data.ended_at is not None
+        assert data.ended_at > data.started_at
 
 
 @pytest.mark.asyncio
