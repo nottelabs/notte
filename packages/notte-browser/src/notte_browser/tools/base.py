@@ -166,24 +166,24 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
                 )
                 time.sleep(5)
 
-        if len(raw_emails) == 0:
+            if len(raw_emails) == 0:
+                return ExecutionResult(
+                    action=action,
+                    success=True,
+                    message=f"No emails found in the inbox {time_str}",
+                    data=DataSpace.from_structured(ListEmailResponse(emails=[])),
+                    started_at=span.started_at,
+                    ended_at=span.ended_at,
+                )
+            emails: list[SimpleEmailResponse] = [SimpleEmailResponse.from_email(email) for email in raw_emails]
             return ExecutionResult(
                 action=action,
                 success=True,
-                message=f"No emails found in the inbox {time_str}",
-                data=DataSpace.from_structured(ListEmailResponse(emails=[])),
+                message=f"Successfully read {len(emails)} emails from the inbox {time_str}",
+                data=DataSpace.from_structured(ListEmailResponse(emails=emails)),
                 started_at=span.started_at,
                 ended_at=span.ended_at,
             )
-        emails: list[SimpleEmailResponse] = [SimpleEmailResponse.from_email(email) for email in raw_emails]
-        return ExecutionResult(
-            action=action,
-            success=True,
-            message=f"Successfully read {len(emails)} emails from the inbox {time_str}",
-            data=DataSpace.from_structured(ListEmailResponse(emails=emails)),
-            started_at=span.started_at,
-            ended_at=span.ended_at,
-        )
 
     @BaseTool.register(SmsReadAction)
     async def read_sms(self, action: SmsReadAction) -> ExecutionResult:
@@ -198,27 +198,27 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
                 )
                 if len(raw_sms) > 0:
                     break
-                # if we have not found any emails, we wait for 5 seconds and retry
+                # if we have not found any sms, we wait for 5 seconds and retry
                 logger.warning(
                     f"No sms found in the inbox {time_str}, waiting for 5 seconds and retrying {self.nb_retries} times"
                 )
                 time.sleep(5)
 
-        if len(raw_sms) == 0:
+            if len(raw_sms) == 0:
+                return ExecutionResult(
+                    action=action,
+                    success=True,
+                    message=f"No sms found in the inbox {time_str}",
+                    data=DataSpace.from_structured(ListEmailResponse(emails=[])),
+                    started_at=span.started_at,
+                    ended_at=span.ended_at,
+                )
+            sms: list[SimpleSmsResponse] = [SimpleSmsResponse.from_sms(sms) for sms in raw_sms]
             return ExecutionResult(
                 action=action,
                 success=True,
-                message=f"No sms found in the inbox {time_str}",
-                data=DataSpace.from_structured(ListEmailResponse(emails=[])),
+                message=f"Successfully read {len(sms)} sms from the inbox {time_str}",
+                data=DataSpace.from_structured(ListSmsResponse(sms=sms)),
                 started_at=span.started_at,
                 ended_at=span.ended_at,
             )
-        sms: list[SimpleSmsResponse] = [SimpleSmsResponse.from_sms(sms) for sms in raw_sms]
-        return ExecutionResult(
-            action=action,
-            success=True,
-            message=f"Successfully read {len(sms)} sms from the inbox {time_str}",
-            data=DataSpace.from_structured(ListSmsResponse(sms=sms)),
-            started_at=span.started_at,
-            ended_at=span.ended_at,
-        )
