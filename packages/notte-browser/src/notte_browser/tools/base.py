@@ -1,5 +1,5 @@
+import asyncio
 import datetime as dt
-import time
 from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Mapping, Sequence
 from typing import Annotated, Any, Callable, TypeVar, Unpack, final
@@ -164,7 +164,7 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
                 logger.warning(
                     f"No emails found in the inbox {time_str}, waiting for 5 seconds and retrying {self.nb_retries} times"
                 )
-                time.sleep(5)
+                await asyncio.sleep(5)
 
             if len(raw_emails) == 0:
                 return ExecutionResult(
@@ -202,7 +202,7 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
                 logger.warning(
                     f"No sms found in the inbox {time_str}, waiting for 5 seconds and retrying {self.nb_retries} times"
                 )
-                time.sleep(5)
+                await asyncio.sleep(5)
 
             if len(raw_sms) == 0:
                 return ExecutionResult(
