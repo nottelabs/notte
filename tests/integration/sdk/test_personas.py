@@ -299,7 +299,7 @@ def test_persona_form_filling():
 
     with client.Persona(create_vault=False, create_phone_number=False) as persona:
         with client.Session(
-            browser_type="firefox", viewport_width=1280, viewport_height=1080, open_viewer=False
+            browser_type="chrome", viewport_width=1280, viewport_height=1080, open_viewer=False
         ) as session:
             agent = client.Agent(
                 session=session,
