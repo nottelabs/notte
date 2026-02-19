@@ -12,7 +12,7 @@ from typing_extensions import final
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
-    ExecutionResponseWithSession,
+    ExecutionResultResponse,
     ObserveRequest,
     ObserveRequestDict,
     ObserveResponse,
@@ -94,7 +94,7 @@ class PageClient(BaseClient):
         return NotteEndpoint(path=path, response=ObserveResponse, method="POST")
 
     @staticmethod
-    def _page_execute_endpoint(session_id: str | None = None) -> NotteEndpoint[ExecutionResponseWithSession]:
+    def _page_execute_endpoint(session_id: str | None = None) -> NotteEndpoint[ExecutionResultResponse]:
         """
         Creates a NotteEndpoint for initiating a step action.
 
@@ -103,7 +103,7 @@ class PageClient(BaseClient):
         path = PageClient.PAGE_EXECUTE
         if session_id is not None:
             path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=ExecutionResponseWithSession, method="POST")
+        return NotteEndpoint(path=path, response=ExecutionResultResponse, method="POST")
 
     @overload
     def scrape(
@@ -269,7 +269,7 @@ class PageClient(BaseClient):
         return obs_response
 
     @track_usage("cloud.session.execute")
-    def execute(self, session_id: str, action: ActionUnion) -> ExecutionResponseWithSession:
+    def execute(self, session_id: str, action: ActionUnion) -> ExecutionResultResponse:
         """
         Sends a step action request and returns an ExecutionResponseWithSession.
 

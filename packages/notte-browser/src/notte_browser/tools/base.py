@@ -6,7 +6,7 @@ from typing import Annotated, Any, Callable, TypeVar, Unpack, final
 
 import markdownify  # type: ignore[import]
 from notte_core.actions import EmailReadAction, SmsReadAction, ToolAction
-from notte_core.browser.observation import ExecutionResult
+from notte_core.browser.observation import ExecutionResult, TimedSpan
 from notte_core.common.logging import logger
 from notte_core.data.space import DataSpace
 from notte_sdk.endpoints.personas import BasePersona
@@ -149,21 +149,22 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
 
     @BaseTool.register(EmailReadAction)
     async def read_emails(self, action: EmailReadAction) -> ExecutionResult:
-        raw_emails: Sequence[EmailResponse] = []
-        time_str = f"in the last {action.timedelta}" if action.timedelta is not None else ""
-        for _ in range(self.nb_retries):
-            raw_emails = await self.persona.aemails(
-                only_unread=action.only_unread,
-                timedelta=action.timedelta,
-                limit=action.limit,
-            )
-            if len(raw_emails) > 0:
-                break
-            # if we have not found any emails, we wait for 5 seconds and retry
-            logger.warning(
-                f"No emails found in the inbox {time_str}, waiting for 5 seconds and retrying {self.nb_retries} times"
-            )
-            time.sleep(5)
+        with TimedSpan.capture() as span:
+            raw_emails: Sequence[EmailResponse] = []
+            time_str = f"in the last {action.timedelta}" if action.timedelta is not None else ""
+            for _ in range(self.nb_retries):
+                raw_emails = await self.persona.aemails(
+                    only_unread=action.only_unread,
+                    timedelta=action.timedelta,
+                    limit=action.limit,
+                )
+                if len(raw_emails) > 0:
+                    break
+                # if we have not found any emails, we wait for 5 seconds and retry
+                logger.warning(
+                    f"No emails found in the inbox {time_str}, waiting for 5 seconds and retrying {self.nb_retries} times"
+                )
+                time.sleep(5)
 
         if len(raw_emails) == 0:
             return ExecutionResult(
@@ -171,6 +172,8 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
                 success=True,
                 message=f"No emails found in the inbox {time_str}",
                 data=DataSpace.from_structured(ListEmailResponse(emails=[])),
+                started_at=span.started_at,
+                ended_at=span.ended_at,
             )
         emails: list[SimpleEmailResponse] = [SimpleEmailResponse.from_email(email) for email in raw_emails]
         return ExecutionResult(
@@ -178,25 +181,28 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
             success=True,
             message=f"Successfully read {len(emails)} emails from the inbox {time_str}",
             data=DataSpace.from_structured(ListEmailResponse(emails=emails)),
+            started_at=span.started_at,
+            ended_at=span.ended_at,
         )
 
     @BaseTool.register(SmsReadAction)
     async def read_sms(self, action: SmsReadAction) -> ExecutionResult:
-        raw_sms: Sequence[SMSResponse] = []
-        time_str = f"in the last {action.timedelta}" if action.timedelta is not None else ""
-        for _ in range(self.nb_retries):
-            raw_sms = await self.persona.asms(
-                only_unread=action.only_unread,
-                timedelta=action.timedelta,
-                limit=action.limit,
-            )
-            if len(raw_sms) > 0:
-                break
-            # if we have not found any emails, we wait for 5 seconds and retry
-            logger.warning(
-                f"No sms found in the inbox {time_str}, waiting for 5 seconds and retrying {self.nb_retries} times"
-            )
-            time.sleep(5)
+        with TimedSpan.capture() as span:
+            raw_sms: Sequence[SMSResponse] = []
+            time_str = f"in the last {action.timedelta}" if action.timedelta is not None else ""
+            for _ in range(self.nb_retries):
+                raw_sms = await self.persona.asms(
+                    only_unread=action.only_unread,
+                    timedelta=action.timedelta,
+                    limit=action.limit,
+                )
+                if len(raw_sms) > 0:
+                    break
+                # if we have not found any emails, we wait for 5 seconds and retry
+                logger.warning(
+                    f"No sms found in the inbox {time_str}, waiting for 5 seconds and retrying {self.nb_retries} times"
+                )
+                time.sleep(5)
 
         if len(raw_sms) == 0:
             return ExecutionResult(
@@ -204,6 +210,8 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
                 success=True,
                 message=f"No emails found in the inbox {time_str}",
                 data=DataSpace.from_structured(ListEmailResponse(emails=[])),
+                started_at=span.started_at,
+                ended_at=span.ended_at,
             )
         sms: list[SimpleSmsResponse] = [SimpleSmsResponse.from_sms(sms) for sms in raw_sms]
         return ExecutionResult(
@@ -211,4 +219,6 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
             success=True,
             message=f"Successfully read {len(sms)} sms from the inbox {time_str}",
             data=DataSpace.from_structured(ListSmsResponse(sms=sms)),
+            started_at=span.started_at,
+            ended_at=span.ended_at,
         )

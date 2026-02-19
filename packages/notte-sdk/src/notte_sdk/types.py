@@ -1707,29 +1707,9 @@ class ExecutionRequest(SdkRequest):
         )
 
 
-class ExecutionResponseWithSession(ExecutionResult):
-    """Used for session.execute calls"""
-
-    session: Annotated[SessionResponse, Field(description="Browser session information")]
-
-
-class ScrapeResponse(DataSpace):
-    session: Annotated[SessionResponse, Field(description="Browser session information")]
-
-
-class ObserveResponse(Observation):
-    session: Annotated[SessionResponse, Field(description="Browser session information")]
-
-    @staticmethod
-    def from_obs(obs: Observation, session: SessionResponse) -> "ObserveResponse":
-        return ObserveResponse(
-            metadata=obs.metadata,
-            space=obs.space,
-            screenshot=obs.screenshot,
-            session=session,
-        )
-
-
+ObserveResponse = Observation
+ScrapeResponse = DataSpace
+ExecutionResultResponse = ExecutionResult
 # ############################################################
 # Agent endpoints
 # ############################################################

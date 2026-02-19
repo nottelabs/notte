@@ -3,6 +3,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, field_serializer
 
 from notte_core.actions import ActionUnion, BaseAction, BrowserAction, CompletionAction, GotoAction, InteractionAction
+from notte_core.browser.observation import TimedSpan
 from notte_core.common.logging import logger
 
 
@@ -65,7 +66,7 @@ def render_agent_status(
     return to_log
 
 
-class AgentCompletion(BaseModel):
+class _AgentCompletion(BaseModel):
     state: AgentState
     action: ActionUnion
 
@@ -126,4 +127,18 @@ class AgentCompletion(BaseModel):
                 next_goal="Start working on the task",
             ),
             action=GotoAction(url=url),
+        )
+
+
+class AgentCompletion(_AgentCompletion, TimedSpan):
+    class InnerLlmCompletion(_AgentCompletion):
+        pass
+
+    @staticmethod
+    def from_completion(completion: _AgentCompletion, timed_span: TimedSpan) -> "AgentCompletion":
+        return AgentCompletion(
+            state=completion.state,
+            action=completion.action,
+            started_at=timed_span.started_at,
+            ended_at=timed_span.ended_at,
         )

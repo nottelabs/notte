@@ -14,7 +14,7 @@ from notte_core.actions import (
     HelpAction,
 )
 from notte_core.agent_types import AgentCompletion
-from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
+from notte_core.browser.observation import ExecutionResult, Observation, TimedSpan, TrajectoryProgress
 from notte_core.common.config import LlmModel, NotteConfig, RaiseCondition
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
@@ -123,18 +123,21 @@ class NotteAgent(BaseAgent):
     async def observe_and_completion(self, request: AgentRunRequest) -> AgentCompletion:
         _ = await self.session.aobserve(perception_type=self.perception.perception_type)
 
-        # Get messages with the current observation included
-        messages = await self.get_messages(request)
+        with TimedSpan.capture() as span:
+            # Get messages with the current observation included
+            messages = await self.get_messages(request)
 
-        with ErrorConfig.message_mode("developer"):
-            response: AgentCompletion = await self.llm.structured_completion(
-                messages,
-                response_format=AgentCompletion,
-                use_strict_response_format=LlmModel.use_strict_response_format(self.config.reasoning_model),
-            )
+            with ErrorConfig.message_mode("developer"):
+                response: AgentCompletion.InnerLlmCompletion = await self.llm.structured_completion(
+                    messages,
+                    response_format=AgentCompletion.InnerLlmCompletion,
+                    use_strict_response_format=LlmModel.use_strict_response_format(self.config.reasoning_model),
+                )
 
-        await self.trajectory.append(response, force=True)
-        return response
+        traj_completion = AgentCompletion.from_completion(response, span)
+
+        await self.trajectory.append(traj_completion, force=True)
+        return traj_completion
 
     @profiler.profiled()
     @track_usage("local.agent.step")
@@ -160,40 +163,68 @@ class NotteAgent(BaseAgent):
         match response.action:
             case HelpAction(reason=reason):
                 # Human in the loop is not implemented yet => fail immediately
+                empty_span = TimedSpan.empty()
                 error_msg = f"Agent requested human help: {reason}"
-                ex_res = ExecutionResult(action=response.action, success=False, message=error_msg)
+                ex_res = ExecutionResult(
+                    action=response.action,
+                    success=False,
+                    message=error_msg,
+                    started_at=empty_span.started_at,
+                    ended_at=empty_span.ended_at,
+                )
                 await self.trajectory.append(ex_res, force=True)
                 return CompletionAction(success=False, answer=error_msg)
             case CaptchaSolveAction(captcha_type=captcha_type) if (
                 not self.session.window.resource.options.solve_captchas
             ):
                 # if the session doesnt solve captchas => fail immediately
+                empty_span = TimedSpan.empty()
                 error_msg = f"Agent encountered {captcha_type} captcha but session doesnt solve captchas: create a session with solve_captchas=True"
-                ex_res = ExecutionResult(action=response.action, success=False, message=error_msg)
+                ex_res = ExecutionResult(
+                    action=response.action,
+                    success=False,
+                    message=error_msg,
+                    started_at=empty_span.started_at,
+                    ended_at=empty_span.ended_at,
+                )
                 await self.trajectory.append(ex_res, force=True)
                 return CompletionAction(success=False, answer=error_msg)
 
             case CompletionAction(success=False, answer=answer):
                 # agent decided to stop with failure
                 logger.info(f"😭 Agent stopped with failure:\n{answer}")
-                result = ExecutionResult(action=response.action, success=False, message=answer)
+                empty_span = TimedSpan.empty()
+                result = ExecutionResult(
+                    action=response.action,
+                    success=False,
+                    message=answer,
+                    started_at=empty_span.started_at,
+                    ended_at=empty_span.ended_at,
+                )
                 await self.trajectory.append(result, force=True)
                 return response.action
 
             case CompletionAction(success=True, answer=answer) as output:
                 # need to validate the agent output
                 logger.info(f"🔥 Validating agent output:\n{answer}")
-                val_result = await self.validator.validate(
-                    output=output,
-                    history=self.trajectory,
-                    task=request.task,
-                    progress=self.progress,
-                    response_format=request.response_format,
-                )
+                with TimedSpan.capture() as span:
+                    val_result = await self.validator.validate(
+                        output=output,
+                        history=self.trajectory,
+                        task=request.task,
+                        progress=self.progress,
+                        response_format=request.response_format,
+                    )
                 if val_result.success:
                     # Successfully validated the output
                     logger.info(f"✅ Task completed successfully: {val_result.message}")
-                    result = ExecutionResult(action=response.action, success=True, message=val_result.message)
+                    result = ExecutionResult(
+                        action=response.action,
+                        success=True,
+                        message=val_result.message,
+                        started_at=span.started_at,
+                        ended_at=span.ended_at,
+                    )
                     await self.trajectory.append(result, force=True)
                     # agent and validator agree, stop with success
                     return response.action
@@ -204,7 +235,13 @@ class NotteAgent(BaseAgent):
                     "CRITICAL: If you think this validation is wrong: argue why the task is finished, or "
                     "perform actions that would prove it is."
                 )
-                result = ExecutionResult(action=response.action, success=False, message=agent_failure_msg)
+                result = ExecutionResult(
+                    action=response.action,
+                    success=False,
+                    message=agent_failure_msg,
+                    started_at=span.started_at,
+                    ended_at=span.ended_at,
+                )
                 await self.trajectory.append(result, force=True)
                 # disagreement between model and validation, continue
                 return None

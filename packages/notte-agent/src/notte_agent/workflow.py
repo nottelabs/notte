@@ -2,6 +2,7 @@ from typing import Any
 
 from notte_browser.workflow_variables import Workflow
 from notte_core.agent_types import AgentCompletion
+from notte_core.browser.observation import TimedSpan
 from notte_core.common.logging import logger
 from notte_sdk.types import AgentRunRequest
 from typing_extensions import override
@@ -30,25 +31,23 @@ class WorkflowAgent(NotteAgent):
 
     @override
     async def observe_and_completion(self, request: AgentRunRequest) -> AgentCompletion:
-        current_step = len(self.trajectory)
-        nb_workflow_steps = len(self.workflow.steps)
+        with TimedSpan.capture() as span:
+            current_step = len(self.trajectory)
+            nb_workflow_steps = len(self.workflow.steps)
 
-        if current_step == 0 or (
-            current_step >= nb_workflow_steps
-            or self.trajectory.last_result is None
-            or not self.trajectory.last_result.success
-        ):
-            logger.info("💨 Workflow - using agent mode to complete the trajectory")
-            # if the trajectory is complete or the last step failed, reason about the next step
-            if current_step == nb_workflow_steps and self.workflow.steps[-1].action.type != "completion":
-                request.task = f"{request.task}\n\n CRITICAL: your next action should be a completion action."
-            return await super().observe_and_completion(request)
-        step = self.workflow.steps[current_step]
-        logger.info(f"💨 Workflow - reusing workflow action '{step.action.type}'")
-        return AgentCompletion(
-            state=step.state,
-            action=step.action,
-        )
+            if current_step == 0 or (
+                current_step >= nb_workflow_steps
+                or self.trajectory.last_result is None
+                or not self.trajectory.last_result.success
+            ):
+                logger.info("💨 Workflow - using agent mode to complete the trajectory")
+                # if the trajectory is complete or the last step failed, reason about the next step
+                if current_step == nb_workflow_steps and self.workflow.steps[-1].action.type != "completion":
+                    request.task = f"{request.task}\n\n CRITICAL: your next action should be a completion action."
+                return await super().observe_and_completion(request)
+            step = self.workflow.steps[current_step]
+            logger.info(f"💨 Workflow - reusing workflow action '{step.action.type}'")
+        return AgentCompletion.from_completion(step, span)
 
     @override
     async def arun(self, variables: dict[str, Any] | None = None):  # pyright: ignore [reportIncompatibleMethodOverride]

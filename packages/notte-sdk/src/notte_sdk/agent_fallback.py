@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, Unpack
 
 from notte_core.actions import BaseAction
 from notte_core.actions.typedicts import parse_action
-from notte_core.browser.observation import ExecutionResult
+from notte_core.browser.observation import ExecutionResult, TimedSpan
 from notte_core.common.logging import logger
 
 from notte_sdk.endpoints.agents import RemoteAgent
@@ -122,13 +122,15 @@ class RemoteAgentFallback:
 
             if self.agent_invoked and self.agent_response is not None:
                 logger.warning(f"⚠️ Skipping action: {action_parsed} because agent fallback has been invoked.")
-
+                empty_span = TimedSpan.empty()
                 return ExecutionResult(
                     action=action_parsed,
                     success=True,
                     message="Action skipped because agent fallback has been invoked.",
                     data=None,
                     exception=None,
+                    started_at=empty_span.started_at,
+                    ended_at=empty_span.ended_at,
                 )
             # logger.info(f"✏️ Agent fallback executing action: {action_log}")
             # Delegate to original execute and do not raise on failure
