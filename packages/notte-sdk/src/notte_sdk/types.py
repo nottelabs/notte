@@ -1467,10 +1467,6 @@ class PaginationParams(SdkRequest):
 
 
 class ObserveRequest(PaginationParams):
-    url: Annotated[
-        str | None,
-        Field(description="The URL to observe. If not provided, uses the current page URL."),
-    ] = None
     instructions: Annotated[
         str | None,
         Field(description="Additional instructions to use for the observation."),

@@ -245,14 +245,14 @@ class Observation(TimedSpan):
         return clean_url(self.metadata.url)
 
     @staticmethod
-    def from_snapshot(snapshot: BrowserSnapshot, space: ActionSpace) -> "Observation":
+    def from_snapshot(snapshot: BrowserSnapshot, space: ActionSpace, span: TimedSpan) -> "Observation":
         bboxes = [node.bbox.with_id(node.id) for node in snapshot.interaction_nodes() if node.bbox is not None]
         return Observation(
             metadata=snapshot.metadata,
             screenshot=Screenshot(raw=snapshot.screenshot, bboxes=bboxes, last_action_id=None),
             space=space,
-            started_at=snapshot.metadata.timestamp,
-            ended_at=utc_now(),
+            started_at=span.started_at,
+            ended_at=span.ended_at or utc_now(),
         )
 
     @field_validator("screenshot", mode="before")

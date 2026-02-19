@@ -350,34 +350,35 @@ class NotteSession(AsyncResource, SyncResource):
         # ------ Step 1: snapshot --------
         # --------------------------------
 
-        # ensure we're on a page
-        is_page_default = self.window.page.url == "about:blank"
+        with TimedSpan.capture() as span:
+            # ensure we're on a page
+            is_page_default = self.window.page.url == "about:blank"
 
-        if is_page_default:
-            logger.info(
-                "Session url is 'about:blank': returning empty observation. Perform goto action before observing to get a more meaningful observation."
+            if is_page_default:
+                logger.info(
+                    "Session url is 'about:blank': returning empty observation. Perform goto action before observing to get a more meaningful observation."
+                )
+                obs = Observation.empty()
+                await self.trajectory.append(obs)
+                return obs
+
+            self.snapshot = await self.window.snapshot()
+
+            if config.verbose:
+                logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_interaction_actions or []]}")
+                logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
+
+            # --------------------------------
+            # ---- Step 2: action listing ----
+            # --------------------------------
+
+            space = await self._interaction_action_listing(
+                perception_type=perception_type or self.default_perception_type,
+                pagination=PaginationParams.model_validate(pagination),
+                retry=self.observe_max_retry_after_snapshot_update,
             )
-            obs = Observation.empty()
-            await self.trajectory.append(obs)
-            return obs
-
-        self.snapshot = await self.window.snapshot()
-
-        if config.verbose:
-            logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_interaction_actions or []]}")
-            logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
-
-        # --------------------------------
-        # ---- Step 2: action listing ----
-        # --------------------------------
-
-        space = await self._interaction_action_listing(
-            perception_type=perception_type or self.default_perception_type,
-            pagination=PaginationParams.model_validate(pagination),
-            retry=self.observe_max_retry_after_snapshot_update,
-        )
         if instructions is not None:
-            obs = Observation.from_snapshot(self.snapshot, space=space)
+            obs = Observation.from_snapshot(self.snapshot, space=space, span=span)
             selected_actions = await self._action_selection_pipe.forward(obs, instructions=instructions)
             if not selected_actions.success:
                 logger.warning(f"❌ Action selection failed: {selected_actions.reason}. Space will be empty.")
@@ -389,7 +390,7 @@ class NotteSession(AsyncResource, SyncResource):
         # ------- Step 3: tracing --------
         # --------------------------------
 
-        obs = Observation.from_snapshot(self.snapshot, space=space)
+        obs = Observation.from_snapshot(self.snapshot, space=space, span=span)
 
         await self.trajectory.append(obs)
         return obs
