@@ -1484,7 +1484,6 @@ class ObserveRequestDict(PaginationParamsDict, total=False):
         instructions: Additional instructions to use for the observation.
     """
 
-    url: str | None
     instructions: str | None
     perception_type: PerceptionType | None
 
