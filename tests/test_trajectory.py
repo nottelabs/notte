@@ -4,7 +4,7 @@ import pytest
 from notte_agent.falco.agent import FalcoAgent
 from notte_core.actions import ClickAction, FillAction
 from notte_core.agent_types import AgentCompletion
-from notte_core.browser.observation import ExecutionResult, Observation, Screenshot
+from notte_core.browser.observation import ExecutionResult, Observation, Screenshot, TimedSpan
 from notte_core.trajectory import AgentStepStart, AgentStepStop, StepBundle, TrajectoryHoldee
 
 import notte
@@ -25,11 +25,18 @@ async def test_trajectory_and_view():
 
         # second view
         second_view = session.trajectory.view()
-
+        span = TimedSpan.empty()
         # step 2
         _ = await original_view.start_step()
         await original_view.append(
-            ExecutionResult(action=ClickAction(id="B1"), success=True, message="clicked"), force=True
+            ExecutionResult(
+                action=ClickAction(id="B1"),
+                success=True,
+                message="clicked",
+                started_at=span.started_at,
+                ended_at=span.ended_at,
+            ),
+            force=True,
         )
         await original_view.append(Observation.empty(), force=True)
         await original_view.append(Observation.empty(), force=True)
@@ -85,9 +92,15 @@ async def test_trajectory_callbacks():
         view = session.trajectory.view()
 
         callback_calls: dict[str, int] = defaultdict(lambda: 0)
-
+        span = TimedSpan.empty()
         init_comp = AgentCompletion.initial(url="https://www.google.com")
-        init_exec = ExecutionResult(action=ClickAction(id="B1"), success=True, message="clicked")
+        init_exec = ExecutionResult(
+            action=ClickAction(id="B1"),
+            success=True,
+            message="clicked",
+            started_at=span.started_at,
+            ended_at=span.ended_at,
+        )
         init_obs = Observation.empty()
 
         async def observe_call(obs: Observation):
@@ -187,7 +200,7 @@ async def test_trajectory_callback_from_session():
         view.set_callback("any", any_call)
 
         _ = session.observe()
-        _ = session.execute(type="goto", value="https://www.google.com")
+        _ = session.execute(type="goto", url="https://www.google.com")
         _ = session.observe()
         _ = session.execute(type="reload")
         _ = session.observe()
@@ -202,7 +215,7 @@ async def test_trajectory_callback_from_session():
 @pytest.mark.asyncio
 async def test_agent_observes_page_correctly():
     with notte.Session(headless=True) as session:
-        _ = session.execute(type="goto", value="https://duckduckgo.com")
+        _ = session.execute(type="goto", url="https://duckduckgo.com")
         agent = notte.Agent(session=session, max_steps=1).create_agent()
         assert isinstance(agent, FalcoAgent)
         task = "fill in the search bar with 'einstein'"
