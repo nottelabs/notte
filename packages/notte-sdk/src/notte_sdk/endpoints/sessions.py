@@ -43,6 +43,7 @@ from notte_core.common.logging import logger
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
+from notte_core.errors.base import NotteBaseError
 from notte_core.utils.files import create_or_append_cookies_to_file
 from notte_core.utils.webp_replay import MP4Replay
 from pydantic import BaseModel
@@ -77,6 +78,13 @@ from notte_sdk.websockets.jupyter import display_image_in_notebook
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
+
+_GENERIC_UNEXPECTED_MESSAGES: frozenset[str] = frozenset(
+    {
+        "An unexpected error occurred. Our team has been notified.",
+        "An unexpected error occurred.",
+    }
+)
 
 # Retry configuration constants
 CLUSTER_OVERLOAD_RETRY_DELAY = 30  # seconds to wait before retrying on 529 errors
@@ -1483,5 +1491,17 @@ class RemoteSession(SyncResource):
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
         if _raise_on_failure and result.exception is not None:
             logger.error(f"🚨 Execution failed with message: '{result.message}'")
-            raise result.exception
+            exception_to_raise: Exception = result.exception
+            if isinstance(exception_to_raise, NotteBaseError):
+                result_message = str(result.message).strip()
+                raised_message = str(exception_to_raise).strip()
+                if result_message and raised_message in _GENERIC_UNEXPECTED_MESSAGES:
+                    # Prefer the action-specific server message when the serialized exception
+                    # was reduced to a generic user-safe string.
+                    exception_to_raise = NotteBaseError(
+                        dev_message=result_message,
+                        user_message=result_message,
+                        agent_message=result_message,
+                    )
+            raise exception_to_raise
         return result
