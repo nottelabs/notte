@@ -19,7 +19,7 @@ from notte_core.actions import (
 )
 from notte_core.agent_types import AgentCompletion as AgentStepResponse
 from notte_core.agent_types import AgentState, RelevantInteraction
-from notte_core.browser.observation import ExecutionResult, TrajectoryProgress
+from notte_core.browser.observation import ExecutionResult, TimedSpan, TrajectoryProgress
 from notte_core.trajectory import Trajectory
 from notte_sdk.types import AgentRunRequest
 from pydantic import BaseModel
@@ -111,10 +111,13 @@ class MockValidator:
         response_format: type[BaseModel] | None = None,
     ) -> ExecutionResult:
         """Always return a successful validation"""
+        span = TimedSpan.empty()
         return ExecutionResult(
             action=output,
             success=True,
             message="Mock validator always returns success for testing purposes",
+            started_at=span.started_at,
+            ended_at=span.ended_at,
         )
 
 
@@ -133,14 +136,23 @@ class MockSecondTimeValidator:
         response_format: type[BaseModel] | None = None,
     ) -> ExecutionResult:
         """Always return a successful validation"""
+        span = TimedSpan.empty()
         if self.first_time:
             self.first_time = False
             return ExecutionResult(
                 action=output,
                 success=False,
                 message="Mock validator fails the first time",
+                started_at=span.started_at,
+                ended_at=span.ended_at,
             )
-        return ExecutionResult(action=output, success=True, message="Mock validator succeeds the second time")
+        return ExecutionResult(
+            action=output,
+            success=True,
+            message="Mock validator succeeds the second time",
+            started_at=span.started_at,
+            ended_at=span.ended_at,
+        )
 
 
 class MockLLMService:
@@ -169,6 +181,8 @@ def create_agent_step_response(
     if relevant_interactions is None:
         relevant_interactions = []
 
+    span = TimedSpan.empty()
+
     return AgentStepResponse(
         state=AgentState(
             previous_goal_status=previous_goal_status,
@@ -179,6 +193,8 @@ def create_agent_step_response(
             next_goal=next_goal,
         ),
         action=action,
+        started_at=span.started_at,
+        ended_at=span.ended_at,
     )
 
 
