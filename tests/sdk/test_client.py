@@ -235,7 +235,8 @@ def test_observe(
     if start_session:
         _ = _start_session(mock_post, client, session_id)
     mock_response = {
-        "session": session_response_dict(session_id),
+        "started_at": dt.datetime.now(),
+        "ended_at": dt.datetime.now(),
         "metadata": {
             "title": "Test Page",
             "url": "https://example.com",
@@ -305,7 +306,8 @@ def test_step(
     if start_session:
         _ = _start_session(mock_post, client, session_id)
     mock_response = {
-        "session": session_response_dict(session_id),
+        "started_at": dt.datetime.now(),
+        "ended_at": dt.datetime.now(),
         "data": {
             "markdown": "test data",
         },
@@ -343,7 +345,8 @@ def test_step(
 def test_format_observe_response(client: NotteClient, session_id: str) -> None:
     response_dict = {
         "status": 200,
-        "session": session_response_dict(session_id),
+        "started_at": dt.datetime.now(),
+        "ended_at": dt.datetime.now(),
         "metadata": {
             "title": "Test Page",
             "url": "https://example.com",

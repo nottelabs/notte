@@ -13,7 +13,6 @@ from notte_sdk.types import (
     AgentStatusResponse,
     ObserveResponse,
     ReplayResponse,
-    SessionResponse,
     SessionStartRequest,
 )
 from pydantic import BaseModel, ValidationError
@@ -58,14 +57,8 @@ def test_observation_fields_match_response_types():
 
     # Try to create ObserveResponseDict with these fields
     response_dict = {
-        "session": {
-            "session_id": "test_session",  # Required by ResponseDict
-            "timeout_minutes": 100,
-            "created_at": dt.datetime.now(),
-            "last_accessed_at": dt.datetime.now(),
-            "duration": dt.timedelta(seconds=100),
-            "status": "active",
-        },
+        "started_at": dt.datetime.now(),
+        "ended_at": dt.datetime.now(),
         **sample_data,
         "space": {
             "description": "test space",
@@ -96,6 +89,8 @@ class TestSchemaList(BaseModel):
 
 def test_observe_response_from_observation():
     obs = Observation(
+        started_at=dt.datetime.now(),
+        ended_at=dt.datetime.now(),
         metadata=SnapshotMetadata(
             url="https://www.google.com",
             title="Google",
@@ -128,26 +123,8 @@ def test_observe_response_from_observation():
             ],
         ),
     )
-    dt_now = dt.datetime.now()
-    session = SessionResponse(
-        session_id="test_session",
-        timeout_minutes=100,
-        created_at=dt_now,
-        last_accessed_at=dt_now,
-        duration=dt.timedelta(seconds=100),
-        status="active",
-    )
 
-    response = ObserveResponse.from_obs(
-        session=session,
-        obs=obs,
-    )
-    assert response.session.session_id == "test_session"
-    assert response.session.timeout_minutes == 100
-    assert response.session.created_at == dt_now
-    assert response.session.last_accessed_at == dt_now
-    assert response.session.duration == dt.timedelta(seconds=100)
-    assert response.session.status == "active"
+    response = obs
     assert response.metadata.title == "Google"
     assert response.metadata.url == "https://www.google.com"
     assert response.screenshot.raw == Observation.empty().screenshot.raw

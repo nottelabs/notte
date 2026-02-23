@@ -92,7 +92,7 @@ def test_download_file_action_is_strictly_readonly():
 
             # Test 1: pathlib.write_text (caught by open)
             with pytest.raises(PermissionError, match="Write access denied"):
-                test_path.write_text("should fail")
+                _ = test_path.write_text("should fail")
 
             # Test 2: pathlib.mkdir (caught by os.mkdir)
             with pytest.raises(PermissionError, match="Filesystem modification denied"):
@@ -110,7 +110,7 @@ def test_download_file_action_is_strictly_readonly():
 
                 # This action triggers a remote download.
                 # If it attempts to create a local folder or save the file, this will FAIL.
-                session.execute(type="download_file", selector="body")
+                _ = session.execute(type="download_file", selector="body")
 
             # Verify that accessing the file locally triggers a permission error
             # This can trigger either "Filesystem modification denied" (mkdir) or "Write access denied" (open)
