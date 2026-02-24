@@ -112,9 +112,9 @@ def generate_cookies(session: RemoteSession, url: str, output_path: str) -> None
 
     warnings.warn(
         "generate_cookies() is handling credentials outside the Notte vault. "
-        "Your password will NOT benefit from enterprise-grade encryption or access controls. "
-        "For production workloads, store credentials via the vault instead "
-        "(see https://docs.notte.cc/credentials).",
+        + "Your password will NOT benefit from enterprise-grade encryption or access controls. "
+        + "For production workloads, store credentials via the vault instead "
+        + "(see https://docs.notte.cc/credentials).",
         UserWarning,
         stacklevel=2,
     )
