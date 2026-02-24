@@ -2,6 +2,7 @@ import getpass
 import json
 import re
 import sys
+import warnings
 from collections.abc import Callable
 from io import StringIO
 from pathlib import Path
@@ -9,6 +10,8 @@ from typing import Any, final
 
 from notte_core.actions import FormFillAction
 from notte_core.common.logging import logger
+from notte_core.credentials.base import PasswordField
+from notte_core.credentials.types import ValueWithPlaceholder
 
 from notte_sdk.endpoints.sessions import RemoteSession
 
@@ -107,12 +110,22 @@ def generate_cookies(session: RemoteSession, url: str, output_path: str) -> None
     if not output_path.endswith(".json"):
         raise ValueError(f"Output path must end with .json: {output_path}")
 
+    warnings.warn(
+        "generate_cookies() is handling credentials outside the Notte vault. "
+        "Your password will NOT benefit from enterprise-grade encryption or access controls. "
+        "For production workloads, store credentials via the vault instead "
+        "(see https://docs.notte.cc/credentials).",
+        UserWarning,
+        stacklevel=2,
+    )
+
     _ = session.execute(type="goto", url=url)
 
     email = input("Enter your email: ")
     password = getpass.getpass(prompt="Enter your password: ")
 
-    form_fill_action = FormFillAction(value=dict(email=email, current_password=password))  # type: ignore
+    masked_password = ValueWithPlaceholder(password, PasswordField.placeholder_value)
+    form_fill_action = FormFillAction(value=dict(email=email, current_password=masked_password))  # type: ignore
 
     res = session.execute(form_fill_action)
     if not res.success:
