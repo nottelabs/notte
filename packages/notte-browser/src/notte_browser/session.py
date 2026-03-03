@@ -460,7 +460,7 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         only_unread: bool | None = None,
-        timedelta: dt.timedelta | None = None,
+        time_window: dt.timedelta | None = None,
         limit: int | None = None,
     ) -> ExecutionResult:
         if not self._has_any_persona_tool():
@@ -470,8 +470,8 @@ class NotteSession(AsyncResource, SyncResource):
         payload: dict[str, Any] = {"type": "email_read"}
         if only_unread is not None:
             payload["only_unread"] = only_unread
-        if timedelta is not None:
-            payload["timedelta"] = timedelta
+        if time_window is not None:
+            payload["timedelta"] = time_window
         if limit is not None:
             payload["limit"] = limit
         return await self.aexecute(**payload)
@@ -480,16 +480,16 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         only_unread: bool | None = None,
-        timedelta: dt.timedelta | None = None,
+        time_window: dt.timedelta | None = None,
         limit: int | None = None,
     ) -> ExecutionResult:
-        return asyncio.run(self.aread_emails(only_unread=only_unread, timedelta=timedelta, limit=limit))
+        return asyncio.run(self.aread_emails(only_unread=only_unread, time_window=time_window, limit=limit))
 
     async def aread_sms(
         self,
         *,
         only_unread: bool | None = None,
-        timedelta: dt.timedelta | None = None,
+        time_window: dt.timedelta | None = None,
         limit: int | None = None,
     ) -> ExecutionResult:
         if not self._has_any_persona_tool():
@@ -499,8 +499,8 @@ class NotteSession(AsyncResource, SyncResource):
         payload: dict[str, Any] = {"type": "sms_read"}
         if only_unread is not None:
             payload["only_unread"] = only_unread
-        if timedelta is not None:
-            payload["timedelta"] = timedelta
+        if time_window is not None:
+            payload["timedelta"] = time_window
         if limit is not None:
             payload["limit"] = limit
         return await self.aexecute(**payload)
@@ -509,10 +509,10 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         only_unread: bool | None = None,
-        timedelta: dt.timedelta | None = None,
+        time_window: dt.timedelta | None = None,
         limit: int | None = None,
     ) -> ExecutionResult:
-        return asyncio.run(self.aread_sms(only_unread=only_unread, timedelta=timedelta, limit=limit))
+        return asyncio.run(self.aread_sms(only_unread=only_unread, time_window=time_window, limit=limit))
 
     async def locate(self, action: BaseAction) -> Locator | None:
         action_with_selector = await NodeResolutionPipe.forward(action, self._snapshot)
