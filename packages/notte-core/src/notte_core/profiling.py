@@ -3,6 +3,7 @@ import csv
 import functools
 import inspect
 import json
+import os
 import time
 from collections import defaultdict
 from typing import Any, Callable, ParamSpec, TypeVar, cast
@@ -33,14 +34,19 @@ class NotteProfiler:
     Supports multiple service names with separate TracerProviders for each service.
     """
 
-    def __init__(self, default_service_name: str = "default"):
+    def __init__(self, default_service_name: str | None = None):
         """
         Initialize the OpenTelemetry profiler.
 
         Args:
-            default_service_name (str): Default service name for general tracing
+            default_service_name (str): Default service name for general tracing.
+                If None, uses OTEL_SERVICE_NAME env var, or "default" as fallback.
         """
         self.enable: bool = config.enable_profiling
+        # Allow service name to be configured via environment variable
+        # This enables setting the service name before notte_core is imported
+        if default_service_name is None:
+            default_service_name = os.getenv("OTEL_SERVICE_NAME", "default")
         self.default_service_name: str = default_service_name
 
         # Multiple tracer providers for different services
