@@ -2,7 +2,7 @@ from enum import StrEnum
 from typing import Unpack
 
 from notte_browser.session import NotteSession
-from notte_browser.tools.base import BaseTool, PersonaTool
+from notte_browser.tools.base import BaseTool
 from notte_core.common.notifier import BaseNotifier
 from notte_core.credentials.base import BaseVault
 from notte_core.trajectory import Trajectory
@@ -44,23 +44,20 @@ class Agent(BaseAgent):
         super().__init__(session=session)
         # just validate the request to create type dependency
         self.data: AgentCreateRequestDict = data
-        self.vault: BaseVault | None = vault
         self.notifier: BaseNotifier | None = notifier
         self.session: NotteSession = session
         self.agent_type: AgentType = agent_type
         self.trajectory: Trajectory | None = trajectory or session.trajectory.view()
 
-        self.tools: list[BaseTool] = self.session.tools
+        # Delegate vault and persona attachment to session (handles tools, vault extraction, etc.)
+        if vault is not None:
+            self.session.set_vault(vault)
         if persona is not None:
-            self.vault = self.vault or (persona.vault if persona.has_vault else None)
-            if not any(
-                isinstance(tool, PersonaTool) and tool.persona.info.persona_id == persona.info.persona_id
-                for tool in self.tools
-            ):
-                self.tools.append(PersonaTool(persona))
-        # Propagate vault to session for _action_with_vault (handles both direct vault and persona vault)
-        if self.vault is not None:
-            self.session.set_vault(self.vault)
+            self.session.attach_persona(persona)
+
+        # Get final vault and tools from session (persona may have contributed vault)
+        self.vault: BaseVault | None = self.session.vault
+        self.tools: list[BaseTool] = self.session.tools
 
     def create_agent(
         self,
