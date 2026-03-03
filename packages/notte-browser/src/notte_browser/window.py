@@ -341,8 +341,17 @@ class BrowserWindow(BaseModel):
                     pass  # Fall back to Playwright if CDP fails
 
             # Fall back to Playwright screenshot when mask is needed, CDP failed, or browser doesn't support CDP
-            mask = await self.screenshot_mask.mask(self.page) if self.screenshot_mask is not None else None
-            return await self.page.screenshot(mask=mask, type="jpeg", quality=85)
+            # Retry up to 2 times - DOM may change between mask creation and screenshot
+            last_error: Exception | None = None
+            for _ in range(3):
+                try:
+                    mask = await self.screenshot_mask.mask(self.page) if self.screenshot_mask is not None else None
+                    return await self.page.screenshot(mask=mask, type="jpeg", quality=85)
+                except PlaywrightTimeoutError:
+                    raise  # Let outer handler deal with timeouts
+                except Exception as e:
+                    last_error = e
+            raise last_error  # type: ignore[misc]
 
         except PlaywrightTimeoutError:
             if config.verbose:
