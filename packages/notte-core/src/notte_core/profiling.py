@@ -1155,4 +1155,4 @@ SERVICE_OBSERVATION = "observation"
 SERVICE_LLM = "llm"
 
 # Global profiler instance
-profiler = NotteProfiler(default_service_name=SERVICE_DEFAULT)
+profiler = NotteProfiler()  # Let it use OTEL_SERVICE_NAME env var
