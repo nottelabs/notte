@@ -529,19 +529,25 @@ class NotteSession(AsyncResource, SyncResource):
             return action
 
         snapshot = self.snapshot
-        if isinstance(action, FormFillAction):
-            attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
-            return await self.vault.replace_credentials(action, attrs, snapshot)
+        try:
+            if isinstance(action, FormFillAction):
+                attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
+                return await self.vault.replace_credentials(action, attrs, snapshot)
 
-        locator = await self.locate(action)
-        attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
-        if locator is not None:
-            attrs = LocatorAttributes(
-                type=await locator.get_attribute("type"),
-                autocomplete=await locator.get_attribute("autocomplete"),
-                outerHTML=await locator.evaluate("el => el.outerHTML"),
-            )
-        return await self.vault.replace_credentials(action, attrs, snapshot)
+            locator = await self.locate(action)
+            attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
+            if locator is not None:
+                attrs = LocatorAttributes(
+                    type=await locator.get_attribute("type"),
+                    autocomplete=await locator.get_attribute("autocomplete"),
+                    outerHTML=await locator.evaluate("el => el.outerHTML"),
+                )
+            return await self.vault.replace_credentials(action, attrs, snapshot)
+        except ValueError as e:
+            # Credential field not found in vault (e.g., vault has email but action needs username)
+            # Return original action - it will fail at execution with a clearer error
+            logger.warning(f"Vault credential replacement failed: {e}")
+            return action
 
     @overload
     async def aexecute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
