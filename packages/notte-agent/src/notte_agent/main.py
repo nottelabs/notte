@@ -53,13 +53,14 @@ class Agent(BaseAgent):
         self.tools: list[BaseTool] = self.session.tools
         if persona is not None:
             self.vault = self.vault or (persona.vault if persona.has_vault else None)
-            if self.vault is not None:
-                self.session.set_vault(self.vault)  # propagate vault to session for _action_with_vault
             if not any(
                 isinstance(tool, PersonaTool) and tool.persona.info.persona_id == persona.info.persona_id
                 for tool in self.tools
             ):
                 self.tools.append(PersonaTool(persona))
+        # Propagate vault to session for _action_with_vault (handles both direct vault and persona vault)
+        if self.vault is not None:
+            self.session.set_vault(self.vault)
 
     def create_agent(
         self,
