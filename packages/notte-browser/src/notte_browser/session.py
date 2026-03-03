@@ -144,9 +144,10 @@ class NotteSession(AsyncResource, SyncResource):
         self._action_selection_pipe: ActionSelectionPipe = ActionSelectionPipe(llmserve=llmserve)
         self.tools: list[BaseTool] = tools or []
         self.vault: BaseVault | None = vault
-        self.persona: BasePersona | None = persona
         if persona is not None:
             self.attach_persona(persona)
+        else:
+            self.persona: BasePersona | None = None
         self.default_perception_type: PerceptionType = perception_type
         self.default_raise_on_failure: bool = raise_on_failure
         self.trajectory: Trajectory = Trajectory()
