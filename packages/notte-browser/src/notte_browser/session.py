@@ -14,11 +14,15 @@ from notte_core.actions import (
     ActionList,
     BaseAction,
     EvaluateJsAction,
+    FallbackFillAction,
+    FillAction,
     FormFillAction,
     InteractionAction,
     InteractionActionUnion,
+    MultiFactorFillAction,
     # ReadFileAction,
     ScrapeAction,
+    SelectDropdownOptionAction,
     ToolAction,
 )
 from notte_core.actions.typedicts import (
@@ -519,7 +523,9 @@ class NotteSession(AsyncResource, SyncResource):
         return None
 
     async def _action_with_vault(self, action: BaseAction) -> BaseAction:
-        if self.vault is None or not self.vault.contains_credentials(action):
+        # Only fill-type actions support credential replacement
+        _SUPPORTED = (FormFillAction, FillAction, FallbackFillAction, MultiFactorFillAction, SelectDropdownOptionAction)
+        if self.vault is None or not isinstance(action, _SUPPORTED) or not self.vault.contains_credentials(action):
             return action
 
         snapshot = self.snapshot
