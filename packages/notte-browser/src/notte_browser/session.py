@@ -14,6 +14,7 @@ from notte_core.actions import (
     ActionList,
     BaseAction,
     EvaluateJsAction,
+    FormFillAction,
     InteractionAction,
     InteractionActionUnion,
     # ReadFileAction,
@@ -158,16 +159,14 @@ class NotteSession(AsyncResource, SyncResource):
         for tool in self.tools:
             if not isinstance(tool, PersonaTool):
                 continue
-            try:
-                if tool.persona.info.persona_id == persona.info.persona_id:
-                    return True
-            except Exception:
-                if tool.persona is persona:
-                    return True
+            if tool.persona.info.persona_id == persona.info.persona_id:
+                return True
         return False
 
     def attach_persona(self, persona: BasePersona) -> None:
         self.persona = persona
+        if self.vault is None and persona.has_vault:
+            self.vault = persona.vault
         if not self._has_persona_tool(persona):
             self.tools.append(PersonaTool(persona))
 

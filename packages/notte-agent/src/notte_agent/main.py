@@ -54,8 +54,7 @@ class Agent(BaseAgent):
         if persona is not None:
             self.vault = self.vault or (persona.vault if persona.has_vault else None)
             if not any(
-                isinstance(tool, PersonaTool)
-                and getattr(tool.persona.info, "persona_id", None) == getattr(persona.info, "persona_id", None)
+                isinstance(tool, PersonaTool) and tool.persona.info.persona_id == persona.info.persona_id
                 for tool in self.tools
             ):
                 self.tools.append(PersonaTool(persona))
