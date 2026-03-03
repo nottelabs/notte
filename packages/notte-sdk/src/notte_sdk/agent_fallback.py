@@ -6,6 +6,7 @@ from notte_core.actions import BaseAction
 from notte_core.actions.typedicts import parse_action
 from notte_core.browser.observation import ExecutionResult, TimedSpan
 from notte_core.common.logging import logger
+from pydantic import BaseModel
 
 from notte_sdk.endpoints.agents import RemoteAgent
 from notte_sdk.endpoints.sessions import RemoteSession as NotteSession
@@ -49,6 +50,7 @@ class RemoteAgentFallback:
         session: NotteSession,
         task: str,
         _client: "NotteClient | None" = None,
+        response_format: type[BaseModel] | None = None,
         **agent_params: Unpack[AgentCreateRequestDict],
     ) -> None:
         if _client is None:
@@ -56,6 +58,7 @@ class RemoteAgentFallback:
         self.client: "NotteClient" = _client
         self.session: NotteSession = session
         self.task: str = task
+        self.response_format: type[BaseModel] | None = response_format
         self.steps: list[ExecutionResult] = []
         self.success: bool = True
         self.agent_response: AgentStatusResponse | None = None
@@ -164,6 +167,7 @@ class RemoteAgentFallback:
         self._agent = self.client.Agent(session=self.session, **self.agent_params)
         self.agent_response = self._agent.run(
             task=AGENT_FALLBACK_INSTRUCTIONS.format(task=self.task, error=self.steps[-1].message),
+            response_format=self.response_format,
             session_offset=self.session_offset,
         )
         if self.agent_response.success:

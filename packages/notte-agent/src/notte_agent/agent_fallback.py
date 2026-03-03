@@ -9,6 +9,7 @@ from notte_core.browser.observation import ExecutionResult, TimedSpan
 from notte_core.common.logging import logger
 from notte_core.trajectory import Trajectory
 from notte_sdk.types import AgentCreateRequestDict, ExecutionRequestDict
+from pydantic import BaseModel
 
 from notte_agent.common.types import AgentResponse
 from notte_agent.main import Agent
@@ -39,10 +40,17 @@ class AgentFallback:
     The task is the natural language task of the agent (only to be executed if the steps in the context manager fail).
     """
 
-    def __init__(self, session: NotteSession, task: str, **agent_params: Unpack[AgentCreateRequestDict]) -> None:
+    def __init__(
+        self,
+        session: NotteSession,
+        task: str,
+        response_format: type[BaseModel] | None = None,
+        **agent_params: Unpack[AgentCreateRequestDict],
+    ) -> None:
         self.session: NotteSession = session
         self.trajectory: Trajectory = session.trajectory.view()
         self.task: str = task
+        self.response_format: type[BaseModel] | None = response_format
         self.steps: list[ExecutionResult] = []
         self.success: bool = True
         self.agent_response: AgentResponse | None = None
@@ -148,7 +156,8 @@ class AgentFallback:
         self._agent_invoked = True
         agent = Agent(session=self.session, trajectory=self.trajectory, **self.agent_params)
         self.agent_response = await agent.arun(
-            task=AGENT_FALLBACK_INSTRUCTIONS.format(task=self.task, error=self.steps[-1].message)
+            task=AGENT_FALLBACK_INSTRUCTIONS.format(task=self.task, error=self.steps[-1].message),
+            response_format=self.response_format,
         )
         if self.agent_response.success:
             logger.info("🔥 Agent succeeded in fixing the execution failure")
