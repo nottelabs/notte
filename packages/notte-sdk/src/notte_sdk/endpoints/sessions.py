@@ -1,4 +1,4 @@
-import time
+import asyncio
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
@@ -308,6 +308,10 @@ class SessionsClient(BaseClient):
 
     @track_usage("cloud.session.start")
     def start(self, **data: Unpack[SessionStartRequestDict]) -> SessionResponse:
+        """Starts a new session. See astart() for full documentation."""
+        return asyncio.run(self.astart(**data))
+
+    async def astart(self, **data: Unpack[SessionStartRequestDict]) -> SessionResponse:
         """
         Starts a new session using the provided keyword arguments.
 
@@ -326,6 +330,10 @@ class SessionsClient(BaseClient):
 
     @track_usage("cloud.session.stop")
     def stop(self, session_id: str) -> SessionResponse:
+        """Stops an active session. See astop() for full documentation."""
+        return asyncio.run(self.astop(session_id))
+
+    async def astop(self, session_id: str) -> SessionResponse:
         """
         Stops an active session.
 
@@ -351,6 +359,10 @@ class SessionsClient(BaseClient):
 
     @track_usage("cloud.session.status")
     def status(self, session_id: str) -> SessionResponse:
+        """Retrieves the current status of a session. See astatus() for full documentation."""
+        return asyncio.run(self.astatus(session_id))
+
+    async def astatus(self, session_id: str) -> SessionResponse:
         """
         Retrieves the current status of a session.
 
@@ -364,6 +376,15 @@ class SessionsClient(BaseClient):
 
     @track_usage("cloud.session.cookies.set")
     def set_cookies(
+        self,
+        session_id: str,
+        cookies: list[CookieDict] | None = None,
+        cookie_file: str | Path | None = None,
+    ) -> SetCookiesResponse:
+        """Uploads cookies to the session. See aset_cookies() for full documentation."""
+        return asyncio.run(self.aset_cookies(session_id, cookies=cookies, cookie_file=cookie_file))
+
+    async def aset_cookies(
         self,
         session_id: str,
         cookies: list[CookieDict] | None = None,
@@ -397,6 +418,10 @@ class SessionsClient(BaseClient):
 
     @track_usage("cloud.session.cookies.get")
     def get_cookies(self, session_id: str) -> GetCookiesResponse:
+        """Gets cookies from the session. See aget_cookies() for full documentation."""
+        return asyncio.run(self.aget_cookies(session_id))
+
+    async def aget_cookies(self, session_id: str) -> GetCookiesResponse:
         """
         Gets cookies from the session.
 
@@ -408,6 +433,10 @@ class SessionsClient(BaseClient):
 
     @track_usage("cloud.session.list")
     def list(self, **data: Unpack[SessionListRequestDict]) -> Sequence[SessionResponse]:
+        """Retrieves a list of sessions. See alist() for full documentation."""
+        return asyncio.run(self.alist(**data))
+
+    async def alist(self, **data: Unpack[SessionListRequestDict]) -> Sequence[SessionResponse]:
         """
         Retrieves a list of sessions from the API.
 
@@ -420,6 +449,10 @@ class SessionsClient(BaseClient):
 
     @track_usage("cloud.session.debug")
     def debug_info(self, session_id: str) -> SessionDebugResponse:
+        """Retrieves debug information. See adebug_info() for full documentation."""
+        return asyncio.run(self.adebug_info(session_id))
+
+    async def adebug_info(self, session_id: str) -> SessionDebugResponse:
         """
         Retrieves debug information for a session.
 
@@ -437,6 +470,10 @@ class SessionsClient(BaseClient):
 
     @track_usage("cloud.session.debug.tab")
     def debug_tab_info(self, session_id: str, tab_idx: int | None = None) -> TabSessionDebugResponse:
+        """Retrieves debug information for a tab. See adebug_tab_info() for full documentation."""
+        return asyncio.run(self.adebug_tab_info(session_id, tab_idx=tab_idx))
+
+    async def adebug_tab_info(self, session_id: str, tab_idx: int | None = None) -> TabSessionDebugResponse:
         """
         Retrieves debug information for a specific tab in the current session.
 
@@ -456,6 +493,10 @@ class SessionsClient(BaseClient):
 
     @track_usage("cloud.session.offset")
     def offset(self, session_id: str) -> SessionOffsetResponse:
+        """Gets the trajectory offset. See aoffset() for full documentation."""
+        return asyncio.run(self.aoffset(session_id))
+
+    async def aoffset(self, session_id: str) -> SessionOffsetResponse:
         """
         Get the trajectory offset for the specified session.
 
@@ -471,6 +512,10 @@ class SessionsClient(BaseClient):
 
     @track_usage("cloud.session.replay")
     def replay(self, session_id: str) -> MP4Replay:
+        """Downloads the replay. See areplay() for full documentation."""
+        return asyncio.run(self.areplay(session_id))
+
+    async def areplay(self, session_id: str) -> MP4Replay:
         """
         Downloads the replay for the specified session in mp4 format.
 
@@ -694,6 +739,10 @@ class RemoteSession(SyncResource):
 
     @override
     def start(self, tries: int = 3) -> None:
+        """Start the session. See astart() for full documentation."""
+        asyncio.run(self.astart(tries=tries))
+
+    async def astart(self, tries: int = 3) -> None:
         """
         Start the session using the configured request.
 
@@ -731,7 +780,7 @@ class RemoteSession(SyncResource):
         while tries > 0:
             tries -= 1
             try:
-                self.response = self.client.start(**self.request.model_dump())
+                self.response = await self.client.astart(**self.request.model_dump())
                 break
             except NotteAPIError as e:
                 # retry if 5XX error
@@ -751,7 +800,7 @@ class RemoteSession(SyncResource):
                     logger.warning(
                         f"Failed to start session due to cluster overload, retrying in {CLUSTER_OVERLOAD_RETRY_DELAY} seconds ({retry_str})..."
                     )
-                    time.sleep(CLUSTER_OVERLOAD_RETRY_DELAY)
+                    await asyncio.sleep(CLUSTER_OVERLOAD_RETRY_DELAY)
                 else:
                     logger.warning(f"Failed to start session: retrying ({retry_str})")
 
@@ -765,12 +814,16 @@ class RemoteSession(SyncResource):
         if self._cookie_file is not None:
             if Path(self._cookie_file).exists():
                 logger.info(f"🍪 Automatically loading cookies from {self._cookie_file}")
-                _ = self.set_cookies(cookie_file=self._cookie_file)
+                _ = await self.aset_cookies(cookie_file=self._cookie_file)
             else:
                 logger.warning(f"🍪 Cookie file {self._cookie_file} not found, skipping cookie loading")
 
     @override
     def stop(self) -> None:
+        """Stop the session. See astop() for full documentation."""
+        asyncio.run(self.astop())
+
+    async def astop(self) -> None:
         """
         Stop the session and clean up resources.
 
@@ -805,11 +858,11 @@ class RemoteSession(SyncResource):
         """
         if self._cookie_file is not None:
             try:
-                cookies = self.get_cookies()
+                cookies = await self.aget_cookies()
                 create_or_append_cookies_to_file(self._cookie_file, cookies)
             except Exception as e:
                 logger.error(f"🍪 Error saving cookies to {self._cookie_file}: {e}")
-        self.response = self.client.stop(session_id=self.session_id)
+        self.response = await self.client.astop(session_id=self.session_id)
 
     @property
     def session_id(self) -> str:
@@ -827,6 +880,10 @@ class RemoteSession(SyncResource):
         return self.response.session_id
 
     def offset(self) -> int:
+        """Get the trajectory offset. See aoffset() for full documentation."""
+        return asyncio.run(self.aoffset())
+
+    async def aoffset(self) -> int:
         """
         Get the trajectory offset of the session
 
@@ -844,9 +901,14 @@ class RemoteSession(SyncResource):
         Raises:
             ValueError: If the session hasn't been started yet (no session_id available).
         """
-        return self.client.offset(session_id=self.session_id).offset
+        response = await self.client.aoffset(session_id=self.session_id)
+        return response.offset
 
     def replay(self) -> MP4Replay:
+        """Get a replay. See areplay() for full documentation."""
+        return asyncio.run(self.areplay())
+
+    async def areplay(self) -> MP4Replay:
         """
         Get a replay of the session's execution in MP4 format.
 
@@ -866,7 +928,7 @@ class RemoteSession(SyncResource):
         Raises:
             ValueError: If the session hasn't been started yet (no session_id available).
         """
-        return self.client.replay(session_id=self.session_id)
+        return await self.client.areplay(session_id=self.session_id)
 
     def viewer_browser(self) -> None:
         """
@@ -916,6 +978,10 @@ class RemoteSession(SyncResource):
                 self.viewer_cdp()
 
     def status(self) -> SessionResponse:
+        """Get the current status. See astatus() for full documentation."""
+        return asyncio.run(self.astatus())
+
+    async def astatus(self) -> SessionResponse:
         """
         Get the current status of the session.
 
@@ -932,9 +998,17 @@ class RemoteSession(SyncResource):
         Raises:
             ValueError: If the session hasn't been started yet (no session_id available).
         """
-        return self.client.status(session_id=self.session_id)
+        return await self.client.astatus(session_id=self.session_id)
 
     def set_cookies(
+        self,
+        cookies: list[CookieDict] | None = None,
+        cookie_file: str | Path | None = None,
+    ) -> SetCookiesResponse:
+        """Uploads cookies. See aset_cookies() for full documentation."""
+        return asyncio.run(self.aset_cookies(cookies=cookies, cookie_file=cookie_file))
+
+    async def aset_cookies(
         self,
         cookies: list[CookieDict] | None = None,
         cookie_file: str | Path | None = None,
@@ -959,9 +1033,13 @@ class RemoteSession(SyncResource):
             ValueError: If both cookies and cookie_file are provided, or if neither is provided.
             ValueError: If the session hasn't been started yet (no session_id available).
         """
-        return self.client.set_cookies(session_id=self.session_id, cookies=cookies, cookie_file=cookie_file)
+        return await self.client.aset_cookies(session_id=self.session_id, cookies=cookies, cookie_file=cookie_file)
 
     def get_cookies(self) -> list[CookieDict]:
+        """Gets cookies from the session. See aget_cookies() for full documentation."""
+        return asyncio.run(self.aget_cookies())
+
+    async def aget_cookies(self) -> list[CookieDict]:
         """
         Gets cookies from the session.
 
@@ -978,10 +1056,14 @@ class RemoteSession(SyncResource):
         Raises:
             ValueError: If the session hasn't been started yet (no session_id available).
         """
-        cookies = self.client.get_cookies(session_id=self.session_id).cookies
-        return [cookie.model_dump() for cookie in cookies]  # type: ignore
+        response = await self.client.aget_cookies(session_id=self.session_id)
+        return [cookie.model_dump() for cookie in response.cookies]  # type: ignore
 
     def debug_info(self) -> SessionDebugResponse:
+        """Get debug information. See adebug_info() for full documentation."""
+        return asyncio.run(self.adebug_info())
+
+    async def adebug_info(self) -> SessionDebugResponse:
         """
         Get detailed debug information for the session.
 
@@ -991,7 +1073,7 @@ class RemoteSession(SyncResource):
         Raises:
             ValueError: If the session hasn't been started yet (no session_id available).
         """
-        return self.client.debug_info(session_id=self.session_id)
+        return await self.client.adebug_info(session_id=self.session_id)
 
     def cdp_url(self) -> str:
         """
@@ -1180,6 +1262,52 @@ class RemoteSession(SyncResource):
     def scrape(
         self, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
     ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
+        """Scrape the current page. See ascrape() for full documentation."""
+        return asyncio.run(self.ascrape(raise_on_failure=raise_on_failure, **data))
+
+    @overload
+    async def ascrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
+    @overload
+    async def ascrape(
+        self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> dict[str, Any]: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    async def ascrape(
+        self, *, instructions: str, raise_on_failure: Literal[False], **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> StructuredData[BaseModel]: ...
+
+    # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
+    @overload
+    async def ascrape(
+        self,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> TBaseModel: ...
+
+    # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
+    @overload
+    async def ascrape(
+        self,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[TBaseModel]: ...
+
+    @overload
+    async def ascrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...
+
+    async def ascrape(
+        self, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
         """
         Scrape the current page data.
 
@@ -1220,7 +1348,7 @@ class RemoteSession(SyncResource):
             ScrapeResponse: An Observation object containing metadata, screenshot, action space, and data space.
 
         """
-        return self.client.page.scrape(self.session_id, raise_on_failure=raise_on_failure, **data)
+        return await self.client.page.ascrape(self.session_id, raise_on_failure=raise_on_failure, **data)
 
     @overload
     def observe(
@@ -1243,6 +1371,30 @@ class RemoteSession(SyncResource):
     ) -> ObserveResponse: ...
 
     def observe(self, **data: Unpack[ObserveRequestDict]) -> ObserveResponse | list[InteractionActionUnion]:
+        """Observes the current session page. See aobserve() for full documentation."""
+        return asyncio.run(self.aobserve(**data))  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType, reportUnknownArgumentType]
+
+    @overload
+    async def aobserve(
+        self,
+        *,
+        instructions: str,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> list[InteractionActionUnion]: ...
+
+    @overload
+    async def aobserve(
+        self,
+        *,
+        instructions: None = None,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> ObserveResponse: ...
+
+    async def aobserve(self, **data: Unpack[ObserveRequestDict]) -> ObserveResponse | list[InteractionActionUnion]:
         """
         Observes the current session page.
 
@@ -1295,7 +1447,7 @@ class RemoteSession(SyncResource):
         """
         if data.get("perception_type") is None:
             data["perception_type"] = self.default_perception_type
-        return self.client.page.observe(session_id=self.session_id, **data)  # pyright: ignore[reportUnknownVariableType, reportArgumentType, reportCallIssue]
+        return await self.client.page.aobserve(session_id=self.session_id, **data)  # pyright: ignore[reportUnknownVariableType, reportArgumentType, reportCallIssue]
 
     @overload
     def execute(
@@ -1407,6 +1559,127 @@ class RemoteSession(SyncResource):
         raise_on_failure: bool | None = None,
         **kwargs: Any,
     ) -> ExecutionResult:
+        """Executes an action. See aexecute() for full documentation."""
+        return asyncio.run(self.aexecute(action, raise_on_failure=raise_on_failure, **kwargs))  # pyright: ignore[reportArgumentType]
+
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FormFillActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GotoActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GotoNewTabActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CloseTabActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SwitchTabActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GoBackActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GoForwardActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ReloadActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[WaitActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[PressKeyActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrollUpActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrollDownActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CaptchaSolveActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[HelpActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CompletionActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrapeActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailReadActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SmsReadActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EvaluateJsActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ClickActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FillActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[MultiFactorFillActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FallbackFillActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CheckActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SelectDropdownOptionActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[UploadFileActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[DownloadFileActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
+
+    async def aexecute(
+        self,
+        action: BaseAction | None = None,
+        *,
+        raise_on_failure: bool | None = None,
+        **kwargs: Any,
+    ) -> ExecutionResult:
         """
         Executes an action on the current session page.
 
@@ -1486,7 +1759,7 @@ class RemoteSession(SyncResource):
             # Fallback for dict (shouldn't happen with new API, but kept for compatibility)
             action_obj = ExecutionRequest.get_action(action=action, data=None)  # pyright: ignore [reportUnreachable]
 
-        result = self.client.page.execute(session_id=self.session_id, action=action_obj)
+        result = await self.client.page.aexecute(session_id=self.session_id, action=action_obj)
         # raise exception if needed
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
         if _raise_on_failure and result.exception is not None:

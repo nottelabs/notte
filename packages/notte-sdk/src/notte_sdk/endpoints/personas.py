@@ -166,6 +166,10 @@ class PersonasClient(BaseClient):
 
     @track_usage("cloud.personas.create")
     def create(self, **data: Unpack[PersonaCreateRequestDict]) -> PersonaResponse:
+        """Create persona. See acreate() for full documentation."""
+        return asyncio.run(self.acreate(**data))
+
+    async def acreate(self, **data: Unpack[PersonaCreateRequestDict]) -> PersonaResponse:
         """
         Create persona
 
@@ -180,6 +184,10 @@ class PersonasClient(BaseClient):
 
     @track_usage("cloud.personas.get")
     def get(self, persona_id: str) -> PersonaResponse:
+        """Get persona. See aget() for full documentation."""
+        return asyncio.run(self.aget(persona_id))
+
+    async def aget(self, persona_id: str) -> PersonaResponse:
         """
         Get persona
         """
@@ -188,6 +196,10 @@ class PersonasClient(BaseClient):
 
     @track_usage("cloud.personas.delete")
     def delete(self, persona_id: str) -> DeletePersonaResponse:
+        """Delete persona. See adelete() for full documentation."""
+        return asyncio.run(self.adelete(persona_id))
+
+    async def adelete(self, persona_id: str) -> DeletePersonaResponse:
         """
         Delete persona
         """
@@ -196,6 +208,12 @@ class PersonasClient(BaseClient):
 
     @track_usage("cloud.personas.create_number")
     def create_number(self, persona_id: str, **data: Unpack[CreatePhoneNumberRequestDict]) -> CreatePhoneNumberResponse:
+        """Create phone number. See acreate_number() for full documentation."""
+        return asyncio.run(self.acreate_number(persona_id, **data))
+
+    async def acreate_number(
+        self, persona_id: str, **data: Unpack[CreatePhoneNumberRequestDict]
+    ) -> CreatePhoneNumberResponse:
         """
         Create phone number for persona (if one didn't exist before)
 
@@ -210,6 +228,10 @@ class PersonasClient(BaseClient):
 
     @track_usage("cloud.personas.delete_number")
     def delete_number(self, persona_id: str) -> DeletePhoneNumberResponse:
+        """Delete phone number. See adelete_number() for full documentation."""
+        return asyncio.run(self.adelete_number(persona_id))
+
+    async def adelete_number(self, persona_id: str) -> DeletePhoneNumberResponse:
         """
         Delete phone number for persona
         """
@@ -217,6 +239,10 @@ class PersonasClient(BaseClient):
 
     @track_usage("cloud.personas.emails.list")
     def list_emails(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
+        """List emails. See alist_emails() for full documentation."""
+        return asyncio.run(self.alist_emails(persona_id, **data))
+
+    async def alist_emails(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
         """
         Reads recent emails sent to the persona
 
@@ -231,6 +257,10 @@ class PersonasClient(BaseClient):
 
     @track_usage("cloud.personas.sms.list")
     def list_sms(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
+        """List SMS messages. See alist_sms() for full documentation."""
+        return asyncio.run(self.alist_sms(persona_id, **data))
+
+    async def alist_sms(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
         """
         Reads recent sms messages sent to the persona
 
@@ -244,6 +274,10 @@ class PersonasClient(BaseClient):
         return self.request_list(PersonasClient._list_sms_endpoint(persona_id).with_params(request))
 
     def list(self, **data: Unpack[PersonaListRequestDict]) -> Sequence[PersonaResponse]:
+        """List personas. See alist() for full documentation."""
+        return asyncio.run(self.alist(**data))
+
+    async def alist(self, **data: Unpack[PersonaListRequestDict]) -> Sequence[PersonaResponse]:
         """
         List personas
         """

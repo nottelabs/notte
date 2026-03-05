@@ -2,7 +2,6 @@ import asyncio
 import json
 import sys
 import tempfile
-import time
 import traceback
 from collections.abc import Coroutine, Sequence
 from pathlib import Path
@@ -215,6 +214,10 @@ class AgentsClient(BaseClient):
         )
 
     def start(self, **data: Unpack[SdkAgentStartRequestDict]) -> AgentResponse:
+        """Start an agent. See astart() for full documentation."""
+        return asyncio.run(self.astart(**data))
+
+    async def astart(self, **data: Unpack[SdkAgentStartRequestDict]) -> AgentResponse:
         """
         Start an agent with the specified request parameters.
 
@@ -237,6 +240,17 @@ class AgentsClient(BaseClient):
         polling_interval_seconds: int = 10,
         max_attempts: int = 30,
     ) -> AgentStatusResponse:
+        """Wait for an agent. See await_() for full documentation."""
+        return asyncio.run(
+            self.await_(agent_id, polling_interval_seconds=polling_interval_seconds, max_attempts=max_attempts)
+        )
+
+    async def await_(
+        self,
+        agent_id: str,
+        polling_interval_seconds: int = 10,
+        max_attempts: int = 30,
+    ) -> AgentStatusResponse:
         """
         Waits for the specified agent to complete.
 
@@ -250,7 +264,7 @@ class AgentsClient(BaseClient):
         """
         last_step = 0
         for _ in range(max_attempts):
-            response = self.status(agent_id=agent_id)
+            response = await self.astatus(agent_id=agent_id)
             if len(response.steps) > last_step:
                 for _step in response.steps[last_step:]:
                     step = AgentCompletion.model_validate(_step)
@@ -270,7 +284,7 @@ class AgentsClient(BaseClient):
                     spinner = Halo(
                         text=f"Waiting {polling_interval_seconds} seconds for agent to complete (current step: {last_step})...",
                     )
-                time.sleep(polling_interval_seconds)
+                await asyncio.sleep(polling_interval_seconds)
 
             finally:
                 if spinner is not None:
@@ -518,6 +532,10 @@ class AgentsClient(BaseClient):
         )
 
     def function_code(self, agent_id: str, as_workflow: bool = True) -> AgentFunctionCodeResponse:
+        """Get function code. See afunction_code() for full documentation."""
+        return asyncio.run(self.afunction_code(agent_id, as_workflow=as_workflow))
+
+    async def afunction_code(self, agent_id: str, as_workflow: bool = True) -> AgentFunctionCodeResponse:
         """
         Retrieves a script that reproduces the steps of the specified agent.
 
@@ -540,6 +558,10 @@ class AgentsClient(BaseClient):
         return response
 
     def create_function(self, agent_id: str) -> GetFunctionResponse:
+        """Create a function. See acreate_function() for full documentation."""
+        return asyncio.run(self.acreate_function(agent_id))
+
+    async def acreate_function(self, agent_id: str) -> GetFunctionResponse:
         """
         Creates a function that reproduces the steps of the specified agent.
 
@@ -556,15 +578,19 @@ class AgentsClient(BaseClient):
         Raises:
             ValueError: If no valid agent ID can be determined.
         """
-        script = self.function_code(agent_id, as_workflow=True)
+        script = await self.afunction_code(agent_id, as_workflow=True)
         with tempfile.TemporaryDirectory() as tmp_dir:
             filename = Path(tmp_dir) / "code.py"
             with open(filename, "w") as f:
                 _ = f.write(script.python_script)
 
-            return self.root_client.functions.create(path=str(filename))
+            return await self.root_client.functions.acreate(path=str(filename))
 
     def status(self, agent_id: str) -> LegacyAgentStatusResponse:
+        """Get agent status. See astatus() for full documentation."""
+        return asyncio.run(self.astatus(agent_id))
+
+    async def astatus(self, agent_id: str) -> LegacyAgentStatusResponse:
         """
         Retrieves the status of the specified agent.
 
@@ -587,6 +613,10 @@ class AgentsClient(BaseClient):
         return response
 
     def list(self, **data: Unpack[AgentListRequestDict]) -> Sequence[AgentResponse]:
+        """List agents. See alist() for full documentation."""
+        return asyncio.run(self.alist(**data))
+
+    async def alist(self, **data: Unpack[AgentListRequestDict]) -> Sequence[AgentResponse]:
         """
         Lists agents matching specified criteria.
 
@@ -605,6 +635,10 @@ class AgentsClient(BaseClient):
         return self.request_list(endpoint)
 
     def replay(self, agent_id: str) -> MP4Replay:
+        """Download replay. See areplay() for full documentation."""
+        return asyncio.run(self.areplay(agent_id))
+
+    async def areplay(self, agent_id: str) -> MP4Replay:
         """
         Downloads the replay for the specified agent in mp4 format.
 
@@ -890,6 +924,10 @@ class RemoteAgent:
             self.agent_id: str = agent_id
 
         def code(self, as_workflow: bool = True) -> AgentFunctionCodeResponse:
+            """Get agent code. See acode() for full documentation."""
+            return asyncio.run(self.acode(as_workflow=as_workflow))
+
+        async def acode(self, as_workflow: bool = True) -> AgentFunctionCodeResponse:
             """
             Retrieves a script that reproduces the steps of the specified agent.
 
@@ -906,9 +944,13 @@ class RemoteAgent:
             Raises:
                 ValueError: If no valid agent ID can be determined.
             """
-            return self.client.function_code(self.agent_id, as_workflow=as_workflow)
+            return await self.client.afunction_code(self.agent_id, as_workflow=as_workflow)
 
         def create_function(self) -> NotteFunction:
+            """Create function. See acreate_function() for full documentation."""
+            return asyncio.run(self.acreate_function())
+
+        async def acreate_function(self) -> NotteFunction:
             """
             Creates a function that reproduces the steps of the specified agent.
 
@@ -923,7 +965,7 @@ class RemoteAgent:
                 ValueError: If no valid agent ID can be determined.
             """
 
-            function_resp = self.client.create_function(self.agent_id)
+            function_resp = await self.client.acreate_function(self.agent_id)
             return NotteFunction(function_id=function_resp.function_id, _client=self.client.root_client)
 
     @overload
@@ -1054,6 +1096,10 @@ class RemoteAgent:
 
     @track_usage("cloud.agent.start")
     def start(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
+        """Start the agent. See astart() for full documentation."""
+        return asyncio.run(self.astart(**data))
+
+    async def astart(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
         """
         Start the agent with the specified request parameters.
 
@@ -1069,10 +1115,14 @@ class RemoteAgent:
         if self.existing_agent:
             raise ValueError("You cannot call run() on an agent instantiated from agent id")
 
-        self.response = self.client.start(**self.request.model_dump(), **data)
+        self.response = await self.client.astart(**self.request.model_dump(), **data)
         return self.response
 
     def wait(self) -> AgentStatusResponse:
+        """Wait for the agent. See await_() for full documentation."""
+        return asyncio.run(self.await_())
+
+    async def await_(self) -> AgentStatusResponse:
         """
         Wait for the agent to complete its current task.
 
@@ -1089,7 +1139,7 @@ class RemoteAgent:
         if self.existing_agent:
             raise ValueError("You cannot call wait() on an agent instantiated from agent id")
 
-        return self.client.wait(agent_id=self.agent_id)
+        return await self.client.await_(agent_id=self.agent_id)
 
     async def watch_logs(self, log: bool = False) -> AgentStatusResponse | None:
         """
@@ -1111,6 +1161,10 @@ class RemoteAgent:
 
     @track_usage("cloud.agent.stop")
     def stop(self) -> AgentResponse:
+        """Stop the agent. See astop() for full documentation."""
+        return asyncio.run(self.astop())
+
+    async def astop(self) -> AgentResponse:
         """
         Stop the currently running agent.
 
@@ -1183,6 +1237,10 @@ class RemoteAgent:
 
     @track_usage("cloud.agent.status")
     def status(self) -> LegacyAgentStatusResponse:
+        """Get agent status. See astatus() for full documentation."""
+        return asyncio.run(self.astatus())
+
+    async def astatus(self) -> LegacyAgentStatusResponse:
         """
         Get the current status of the agent.
 
@@ -1200,7 +1258,7 @@ class RemoteAgent:
         Raises:
             ValueError: If the agent hasn't been run yet (no agent_id available).
         """
-        return self.client.status(agent_id=self.agent_id)
+        return await self.client.astatus(agent_id=self.agent_id)
 
     @property
     @track_usage("cloud.agent.workflow")
@@ -1223,6 +1281,10 @@ class RemoteAgent:
 
     @track_usage("cloud.agent.replay")
     def replay(self) -> MP4Replay:
+        """Get agent replay. See areplay() for full documentation."""
+        return asyncio.run(self.areplay())
+
+    async def areplay(self) -> MP4Replay:
         """
         Get a replay of the agent's execution in MP4 format.
 
@@ -1240,4 +1302,4 @@ class RemoteAgent:
         Raises:
             ValueError: If the agent hasn't been run yet (no agent_id available).
         """
-        return self.client.replay(agent_id=self.agent_id)
+        return await self.client.areplay(agent_id=self.agent_id)

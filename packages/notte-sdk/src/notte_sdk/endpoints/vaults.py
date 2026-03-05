@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import secrets
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Unpack, final, overload
@@ -382,6 +383,10 @@ class VaultsClient(BaseClient):
 
     @track_usage("cloud.vault.create")
     def create(self, **data: Unpack[VaultCreateRequestDict]) -> Vault:
+        """Create vault. See acreate() for full documentation."""
+        return asyncio.run(self.acreate(**data))
+
+    async def acreate(self, **data: Unpack[VaultCreateRequestDict]) -> Vault:
         """
         Create vault
 
@@ -395,13 +400,23 @@ class VaultsClient(BaseClient):
         return self.request(VaultsClient._create_vault_endpoint().with_request(params))
 
     def get(self, vault_id: str) -> str:
+        """Get a vault by ID. See aget() for full documentation."""
+        return asyncio.run(self.aget(vault_id))
+
+    async def aget(self, vault_id: str) -> str:
         if len(vault_id) == 0:
             raise ValueError("Vault ID cannot be empty")
-        _ = self.list_credentials(vault_id)
+        _ = await self.alist_credentials(vault_id)
         return vault_id
 
     @track_usage("cloud.vault.credentials.add")
     def add_or_update_credentials(
+        self, vault_id: str, **data: Unpack[AddCredentialsRequestDict]
+    ) -> AddCredentialsResponse:
+        """Adds or updates credentials. See aadd_or_update_credentials() for full documentation."""
+        return asyncio.run(self.aadd_or_update_credentials(vault_id, **data))
+
+    async def aadd_or_update_credentials(
         self, vault_id: str, **data: Unpack[AddCredentialsRequestDict]
     ) -> AddCredentialsResponse:
         """
@@ -420,6 +435,12 @@ class VaultsClient(BaseClient):
 
     @track_usage("cloud.vault.credentials.get")
     def get_credentials(self, vault_id: str, **data: Unpack[GetCredentialsRequestDict]) -> GetCredentialsResponse:
+        """Retrieves credentials. See aget_credentials() for full documentation."""
+        return asyncio.run(self.aget_credentials(vault_id, **data))
+
+    async def aget_credentials(
+        self, vault_id: str, **data: Unpack[GetCredentialsRequestDict]
+    ) -> GetCredentialsResponse:
         """
         Retrieves credentials from a vault.
 
@@ -438,6 +459,12 @@ class VaultsClient(BaseClient):
     def delete_credentials(
         self, vault_id: str, **data: Unpack[DeleteCredentialsRequestDict]
     ) -> DeleteCredentialsResponse:
+        """Deletes credentials. See adelete_credentials() for full documentation."""
+        return asyncio.run(self.adelete_credentials(vault_id, **data))
+
+    async def adelete_credentials(
+        self, vault_id: str, **data: Unpack[DeleteCredentialsRequestDict]
+    ) -> DeleteCredentialsResponse:
         """
         Deletes credentials from a vault.
 
@@ -454,6 +481,10 @@ class VaultsClient(BaseClient):
 
     @track_usage("cloud.vault.delete")
     def delete(self, vault_id: str, **data: Unpack[DeleteVaultRequestDict]) -> DeleteVaultResponse:
+        """Deletes a vault. See adelete() for full documentation."""
+        return asyncio.run(self.adelete(vault_id, **data))
+
+    async def adelete(self, vault_id: str, **data: Unpack[DeleteVaultRequestDict]) -> DeleteVaultResponse:
         """
         Deletes a vault.
 
@@ -470,6 +501,12 @@ class VaultsClient(BaseClient):
 
     @track_usage("cloud.vault.credentials.list")
     def list_credentials(self, vault_id: str, **data: Unpack[ListCredentialsRequestDict]) -> ListCredentialsResponse:
+        """Lists credentials. See alist_credentials() for full documentation."""
+        return asyncio.run(self.alist_credentials(vault_id, **data))
+
+    async def alist_credentials(
+        self, vault_id: str, **data: Unpack[ListCredentialsRequestDict]
+    ) -> ListCredentialsResponse:
         """
         Lists credentials in a vault.
 
@@ -486,6 +523,10 @@ class VaultsClient(BaseClient):
 
     @track_usage("cloud.vault.list")
     def list(self, **data: Unpack[VaultListRequestDict]) -> Sequence[Vault]:
+        """Lists all vaults. See alist() for full documentation."""
+        return asyncio.run(self.alist(**data))
+
+    async def alist(self, **data: Unpack[VaultListRequestDict]) -> Sequence[Vault]:
         """
         Lists all available vaults.
 
@@ -501,6 +542,12 @@ class VaultsClient(BaseClient):
 
     @track_usage("cloud.vault.credit_card.delete")
     def delete_credit_card(
+        self, vault_id: str, **data: Unpack[DeleteCreditCardRequestDict]
+    ) -> DeleteCreditCardResponse:
+        """Deletes a credit card. See adelete_credit_card() for full documentation."""
+        return asyncio.run(self.adelete_credit_card(vault_id, **data))
+
+    async def adelete_credit_card(
         self, vault_id: str, **data: Unpack[DeleteCreditCardRequestDict]
     ) -> DeleteCreditCardResponse:
         """
@@ -519,6 +566,10 @@ class VaultsClient(BaseClient):
 
     @track_usage("cloud.vault.credit_card.get")
     def get_credit_card(self, vault_id: str, **data: Unpack[GetCreditCardRequestDict]) -> GetCreditCardResponse:
+        """Retrieves a credit card. See aget_credit_card() for full documentation."""
+        return asyncio.run(self.aget_credit_card(vault_id, **data))
+
+    async def aget_credit_card(self, vault_id: str, **data: Unpack[GetCreditCardRequestDict]) -> GetCreditCardResponse:
         """
         Retrieves a credit card from a vault.
 
@@ -535,6 +586,10 @@ class VaultsClient(BaseClient):
 
     @track_usage("cloud.vault.credit_card.set")
     def set_credit_card(self, vault_id: str, **data: Unpack[AddCreditCardRequestDict]) -> AddCreditCardResponse:
+        """Sets a credit card. See aset_credit_card() for full documentation."""
+        return asyncio.run(self.aset_credit_card(vault_id, **data))
+
+    async def aset_credit_card(self, vault_id: str, **data: Unpack[AddCreditCardRequestDict]) -> AddCreditCardResponse:
         """
         Sets a credit card in a vault.
 

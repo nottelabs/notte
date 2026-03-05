@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -125,6 +126,10 @@ class FileStorageClient(BaseClient):
 
     @track_usage("cloud.files.upload")
     def upload(self, file_path: str, upload_file_name: str | None = None) -> FileUploadResponse:
+        """Upload a file. See aupload() for full documentation."""
+        return asyncio.run(self.aupload(file_path, upload_file_name=upload_file_name))
+
+    async def aupload(self, file_path: str, upload_file_name: str | None = None) -> FileUploadResponse:
         """
         Upload a file to storage.
 
@@ -137,6 +142,12 @@ class FileStorageClient(BaseClient):
 
     @track_usage("cloud.files.upload_downloaded_file")
     def upload_downloaded_file(
+        self, session_id: str, file_path: str, upload_file_name: str | None = None
+    ) -> FileUploadResponse:
+        """Upload a downloaded file. See aupload_downloaded_file() for full documentation."""
+        return asyncio.run(self.aupload_downloaded_file(session_id, file_path, upload_file_name=upload_file_name))
+
+    async def aupload_downloaded_file(
         self, session_id: str, file_path: str, upload_file_name: str | None = None
     ) -> FileUploadResponse:
         """
@@ -154,6 +165,10 @@ class FileStorageClient(BaseClient):
 
     @track_usage("cloud.files.download")
     def download(self, session_id: str, file_name: str, local_dir: str, force: bool = False) -> bool:
+        """Downloads a file. See adownload() for full documentation."""
+        return asyncio.run(self.adownload(session_id, file_name, local_dir, force=force))
+
+    async def adownload(self, session_id: str, file_name: str, local_dir: str, force: bool = False) -> bool:
         """
         Downloads a file from storage for the current session.
 
@@ -181,6 +196,10 @@ class FileStorageClient(BaseClient):
         return self.request_download(resp.url, str(file_path))
 
     def list_uploaded_files(self) -> list[FileInfo]:
+        """List uploaded files. See alist_uploaded_files() for full documentation."""
+        return asyncio.run(self._alist_uploaded_files())
+
+    async def _alist_uploaded_files(self) -> list[FileInfo]:
         """
         List files in storage. 'type' can be 'uploads' or 'downloads'.
         """
@@ -189,6 +208,10 @@ class FileStorageClient(BaseClient):
         return resp.files
 
     def list_downloaded_files(self, session_id: str) -> list[FileInfo]:
+        """List downloaded files. See alist_downloaded_files() for full documentation."""
+        return asyncio.run(self._alist_downloaded_files(session_id))
+
+    async def _alist_downloaded_files(self, session_id: str) -> list[FileInfo]:
         """
         List files in storage. 'type' can be 'uploads' or 'downloads'.
         """

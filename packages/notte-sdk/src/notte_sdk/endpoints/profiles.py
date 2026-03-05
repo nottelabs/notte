@@ -1,5 +1,6 @@
 """Profiles endpoint client for the Notte SDK."""
 
+import asyncio
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Unpack
 
@@ -91,6 +92,10 @@ class ProfilesClient(BaseClient):
 
     @track_usage("cloud.profile.create")
     def create(self, **data: Unpack[ProfileCreateRequestDict]) -> ProfileResponse:
+        """Create a new browser profile. See acreate() for full documentation."""
+        return asyncio.run(self.acreate(**data))
+
+    async def acreate(self, **data: Unpack[ProfileCreateRequestDict]) -> ProfileResponse:
         """Create a new browser profile.
 
         Args:
@@ -110,6 +115,10 @@ class ProfilesClient(BaseClient):
 
     @track_usage("cloud.profile.get")
     def get(self, profile_id: str) -> ProfileResponse:
+        """Get a profile by ID. See aget() for full documentation."""
+        return asyncio.run(self.aget(profile_id))
+
+    async def aget(self, profile_id: str) -> ProfileResponse:
         """Get a profile by ID.
 
         Args:
@@ -125,6 +134,10 @@ class ProfilesClient(BaseClient):
 
     @track_usage("cloud.profile.delete")
     def delete(self, profile_id: str) -> bool:
+        """Delete a profile. See adelete() for full documentation."""
+        return asyncio.run(self.adelete(profile_id))
+
+    async def adelete(self, profile_id: str) -> bool:
         """Delete a profile.
 
         Args:
@@ -141,6 +154,10 @@ class ProfilesClient(BaseClient):
 
     @track_usage("cloud.profile.list")
     def list(self, **data: Unpack[ProfileListRequestDict]) -> Sequence[ProfileResponse]:
+        """List all profiles. See alist() for full documentation."""
+        return asyncio.run(self.alist(**data))
+
+    async def alist(self, **data: Unpack[ProfileListRequestDict]) -> Sequence[ProfileResponse]:
         """List all profiles for the authenticated user.
 
         Args:

@@ -1,3 +1,4 @@
+import asyncio
 from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 
 from notte_core.actions import ActionUnion, CaptchaSolveAction, InteractionActionUnion
@@ -165,6 +166,68 @@ class PageClient(BaseClient):
     def scrape(
         self, session_id: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
     ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
+        """Scrapes a page. See ascrape() for full documentation."""
+        return asyncio.run(self.ascrape(session_id, raise_on_failure=raise_on_failure, **data))
+
+    @overload
+    async def ascrape(
+        self, session_id: str, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> str: ...
+
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
+    @overload
+    async def ascrape(
+        self,
+        session_id: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> dict[str, Any]: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    async def ascrape(
+        self,
+        session_id: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[BaseModel]: ...
+
+    @overload
+    async def ascrape(
+        self, session_id: str, /, *, only_images: Literal[True], raise_on_failure: bool = True
+    ) -> list[ImageData]: ...
+
+    # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
+    @overload
+    async def ascrape(
+        self,
+        session_id: str,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> TBaseModel: ...
+
+    # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
+    @overload
+    async def ascrape(
+        self,
+        session_id: str,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[TBaseModel]: ...
+
+    async def ascrape(
+        self, session_id: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
         """
         Scrapes a page using provided parameters via the Notte API.
 
@@ -245,6 +308,34 @@ class PageClient(BaseClient):
     def observe(
         self, session_id: str, **data: Unpack[ObserveRequestDict]
     ) -> ObserveResponse | list[InteractionActionUnion]:
+        """Observes a page. See aobserve() for full documentation."""
+        return asyncio.run(self.aobserve(session_id, **data))  # pyright: ignore[reportCallIssue, reportArgumentType, reportUnknownVariableType, reportUnknownArgumentType]
+
+    @overload
+    async def aobserve(
+        self,
+        session_id: str,
+        *,
+        instructions: str,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> list[InteractionActionUnion]: ...
+
+    @overload
+    async def aobserve(
+        self,
+        session_id: str,
+        *,
+        instructions: None = None,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> ObserveResponse: ...
+
+    async def aobserve(
+        self, session_id: str, **data: Unpack[ObserveRequestDict]
+    ) -> ObserveResponse | list[InteractionActionUnion]:
         """
         Observes a page via the Notte API.
 
@@ -270,6 +361,10 @@ class PageClient(BaseClient):
 
     @track_usage("cloud.session.execute")
     def execute(self, session_id: str, action: ActionUnion) -> ExecutionResultResponse:
+        """Executes an action. See aexecute() for full documentation."""
+        return asyncio.run(self.aexecute(session_id, action))
+
+    async def aexecute(self, session_id: str, action: ActionUnion) -> ExecutionResultResponse:
         """
         Sends a step action request and returns an ExecutionResponseWithSession.
 

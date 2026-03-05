@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 import traceback
@@ -287,6 +288,10 @@ class WorkflowsClient(BaseClient):
 
     @track_usage("cloud.workflow.create")
     def create(self, **data: Unpack[CreateFunctionRequestDict]) -> GetFunctionResponse:
+        """Create a workflow. See acreate() for full documentation."""
+        return asyncio.run(self.acreate(**data))
+
+    async def acreate(self, **data: Unpack[CreateFunctionRequestDict]) -> GetFunctionResponse:
         """
         Create a new workflow.
 
@@ -303,6 +308,10 @@ class WorkflowsClient(BaseClient):
 
     @track_usage("cloud.workflow.fork")
     def fork(self, function_id: str) -> GetFunctionResponse:
+        """Fork a workflow. See afork() for full documentation."""
+        return asyncio.run(self.afork(function_id))
+
+    async def afork(self, function_id: str) -> GetFunctionResponse:
         """
         Fork a workflow.
         """
@@ -314,6 +323,12 @@ class WorkflowsClient(BaseClient):
 
     @track_usage("cloud.workflow.update")
     def update(
+        self, function_id: str, restricted: bool = True, **data: Unpack[UpdateFunctionRequestDict]
+    ) -> GetFunctionResponse:
+        """Update a workflow. See aupdate() for full documentation."""
+        return asyncio.run(self.aupdate(function_id, restricted=restricted, **data))
+
+    async def aupdate(
         self, function_id: str, restricted: bool = True, **data: Unpack[UpdateFunctionRequestDict]
     ) -> GetFunctionResponse:
         """
@@ -335,6 +350,10 @@ class WorkflowsClient(BaseClient):
 
     @track_usage("cloud.workflow.get")
     def get(self, function_id: str, **data: Unpack[GetFunctionRequestDict]) -> GetFunctionWithLinkResponse:
+        """Get a workflow. See aget() for full documentation."""
+        return asyncio.run(self.aget(function_id, **data))
+
+    async def aget(self, function_id: str, **data: Unpack[GetFunctionRequestDict]) -> GetFunctionWithLinkResponse:
         """
         Get a workflow with download URL.
 
@@ -351,6 +370,10 @@ class WorkflowsClient(BaseClient):
 
     @track_usage("cloud.workflow.delete")
     def delete(self, function_id: str) -> DeleteFunctionResponse:
+        """Delete a workflow. See adelete() for full documentation."""
+        return asyncio.run(self.adelete(function_id))
+
+    async def adelete(self, function_id: str) -> DeleteFunctionResponse:
         """
         Delete a workflow.
 
@@ -361,6 +384,10 @@ class WorkflowsClient(BaseClient):
 
     @track_usage("cloud.workflow.list")
     def list(self, **data: Unpack[ListFunctionsRequestDict]) -> ListFunctionsResponse:
+        """List workflows. See alist() for full documentation."""
+        return asyncio.run(self.alist(**data))
+
+    async def alist(self, **data: Unpack[ListFunctionsRequestDict]) -> ListFunctionsResponse:
         """
         List all available workflows.
 
@@ -374,22 +401,46 @@ class WorkflowsClient(BaseClient):
         return self.request(self._list_workflows_endpoint().with_params(params))
 
     def create_run(self, function_id: str, local: bool = False) -> CreateFunctionRunResponse:
+        """Create a workflow run. See acreate_run() for full documentation."""
+        return asyncio.run(self.acreate_run(function_id, local=local))
+
+    async def acreate_run(self, function_id: str, local: bool = False) -> CreateFunctionRunResponse:
         request = CreateFunctionRunRequest(local=local)
         return self.request(self._create_workflow_run_endpoint(function_id).with_request(request))
 
     def stop_run(self, function_id: str, run_id: str) -> UpdateFunctionRunResponse:
+        """Stop a workflow run. See astop_run() for full documentation."""
+        return asyncio.run(self.astop_run(function_id, run_id))
+
+    async def astop_run(self, function_id: str, run_id: str) -> UpdateFunctionRunResponse:
         return self.request(self._stop_workflow_run_endpoint(function_id, run_id))
 
     def get_run(self, function_id: str, run_id: str) -> GetFunctionRunResponse:
+        """Get a workflow run. See aget_run() for full documentation."""
+        return asyncio.run(self.aget_run(function_id, run_id))
+
+    async def aget_run(self, function_id: str, run_id: str) -> GetFunctionRunResponse:
         return self.request(self._get_workflow_run_endpoint(function_id, run_id))
 
     def update_run(
+        self, function_id: str, run_id: str, **data: Unpack[FunctionRunUpdateRequestDict]
+    ) -> UpdateFunctionRunResponse:
+        """Update a workflow run. See aupdate_run() for full documentation."""
+        return asyncio.run(self.aupdate_run(function_id, run_id, **data))
+
+    async def aupdate_run(
         self, function_id: str, run_id: str, **data: Unpack[FunctionRunUpdateRequestDict]
     ) -> UpdateFunctionRunResponse:
         request = FunctionRunUpdateRequest.model_validate(data)
         return self.request(self._update_workflow_run_endpoint(function_id, run_id).with_request(request))
 
     def list_runs(self, function_id: str, **data: Unpack[ListFunctionRunsRequestDict]) -> ListFunctionRunsResponse:
+        """List workflow runs. See alist_runs() for full documentation."""
+        return asyncio.run(self.alist_runs(function_id, **data))
+
+    async def alist_runs(
+        self, function_id: str, **data: Unpack[ListFunctionRunsRequestDict]
+    ) -> ListFunctionRunsResponse:
         """
         List all workflow runs.
 
@@ -472,6 +523,12 @@ class WorkflowsClient(BaseClient):
     def run(
         self, function_run_id: str, timeout: int | None = None, **data: Unpack[RunFunctionRequestDict]
     ) -> FunctionRunResponse:
+        """Run a workflow. See arun() for full documentation."""
+        return asyncio.run(self.arun(function_run_id, timeout=timeout, **data))
+
+    async def arun(
+        self, function_run_id: str, timeout: int | None = None, **data: Unpack[RunFunctionRequestDict]
+    ) -> FunctionRunResponse:
         _request = RunFunctionRequest.model_validate(data)
         request = StartFunctionRunRequest(
             function_id=_request.function_id,
@@ -535,6 +592,10 @@ class WorkflowsClient(BaseClient):
         return FunctionRunResponse.model_validate_json(result)
 
     def get_curl(self, function_id: str, **variables: Any) -> str:
+        """Get curl command. See aget_curl() for full documentation."""
+        return asyncio.run(self.aget_curl(function_id, **variables))
+
+    async def aget_curl(self, function_id: str, **variables: Any) -> str:
         endpoint = self._start_workflow_run_endpoint_without_run_id(function_id=function_id)
         path = self.request_path(endpoint)
         variables_str = json.dumps(variables, indent=4)
@@ -621,6 +682,10 @@ class RemoteWorkflow:
         return self._response
 
     def fork(self) -> "RemoteWorkflow":
+        """Fork a workflow. See afork() for full documentation."""
+        return asyncio.run(self.afork())
+
+    async def afork(self) -> "RemoteWorkflow":
         """
         Fork a shared workflow into your own private workflow.
 
@@ -632,7 +697,7 @@ class RemoteWorkflow:
 
         The forked workflow is only accessible to you and you can update it as you want.
         """
-        fork_response = self.client.fork(function_id=self._function_id)
+        fork_response = await self.client.afork(function_id=self._function_id)
         return RemoteWorkflow(workflow_id=fork_response.function_id, _client=self.root_client)  # pyright: ignore[reportDeprecated]
 
     @property
@@ -644,6 +709,10 @@ class RemoteWorkflow:
         return self.response.workflow_id
 
     def replay(self) -> MP4Replay:
+        """Replay the workflow run. See areplay() for full documentation."""
+        return asyncio.run(self.areplay())
+
+    async def areplay(self) -> MP4Replay:
         """
         Replay the workflow run.
 
@@ -662,9 +731,19 @@ class RemoteWorkflow:
             raise ValueError(
                 f"Session ID not found in your function run {self._function_run_id}. Please check that your workflow is creating at least one `client.Session` in the `run` function."
             )
-        return self.root_client.sessions.replay(session_id=self._session_id)
+        return await self.root_client.sessions.areplay(session_id=self._session_id)
 
     def update(
+        self,
+        path: str | None = None,
+        version: str | None = None,
+        workflow_path: str | None = None,
+        restricted: bool = True,
+    ) -> None:
+        """Update the workflow. See aupdate() for full documentation."""
+        asyncio.run(self.aupdate(path=path, version=version, workflow_path=workflow_path, restricted=restricted))
+
+    async def aupdate(
         self,
         path: str | None = None,
         version: str | None = None,
@@ -682,7 +761,7 @@ class RemoteWorkflow:
         If you set a version, only that version will be updated.
         """
         path = self._get_final_path(path, workflow_path)
-        self._response = self.client.update(
+        self._response = await self.client.aupdate(
             function_id=self.response.function_id, path=path, version=version, restricted=restricted
         )
         logger.info(
@@ -690,6 +769,10 @@ class RemoteWorkflow:
         )
 
     def delete(self) -> None:
+        """Delete the workflow. See adelete() for full documentation."""
+        asyncio.run(self.adelete())
+
+    async def adelete(self) -> None:
         """
         Delete the workflow from the notte console.
 
@@ -698,7 +781,7 @@ class RemoteWorkflow:
         function.delete()
         ```
         """
-        _ = self.client.delete(function_id=self.response.function_id)
+        _ = await self.client.adelete(function_id=self.response.function_id)
         logger.info(f"[Function] {self.response.function_id} deleted successfully.")
 
     def get_url(self, version: str | None = None, decryption_key: str | None = None) -> str:
@@ -726,6 +809,18 @@ class RemoteWorkflow:
         return url
 
     def download(
+        self,
+        workflow_path: str | None = None,
+        version: str | None = None,
+        decryption_key: str | None = None,
+        path: str | None = None,
+    ) -> str:
+        """Download the function code. See adownload() for full documentation."""
+        return asyncio.run(
+            self.adownload(workflow_path=workflow_path, version=version, decryption_key=decryption_key, path=path)
+        )
+
+    async def adownload(
         self,
         workflow_path: str | None = None,
         version: str | None = None,
@@ -773,6 +868,35 @@ class RemoteWorkflow:
         log_callback: Callable[[str], None] | None = None,
         **variables: Any,
     ) -> FunctionRunResponse:
+        """Run the function. See arun() for full documentation."""
+        return asyncio.run(
+            self.arun(
+                version=version,
+                local=local,
+                restricted=restricted,
+                timeout=timeout,
+                stream=stream,
+                raise_on_failure=raise_on_failure,
+                function_run_id=function_run_id,
+                workflow_run_id=workflow_run_id,
+                log_callback=log_callback,
+                **variables,
+            )
+        )
+
+    async def arun(
+        self,
+        version: str | None = None,
+        local: bool = False,
+        restricted: bool = True,
+        timeout: int | None = None,
+        stream: bool = True,
+        raise_on_failure: bool = True,
+        function_run_id: str | None = None,
+        workflow_run_id: str | None = None,
+        log_callback: Callable[[str], None] | None = None,
+        **variables: Any,
+    ) -> FunctionRunResponse:
         """
         Run the function code using the specified version and variables.
 
@@ -796,7 +920,7 @@ class RemoteWorkflow:
         function_run_id = function_run_id or workflow_run_id
         # first create the run on DB
         if function_run_id is None:
-            create_run_response = self.client.create_run(self.function_id, local=local)
+            create_run_response = await self.client.acreate_run(self.function_id, local=local)
             function_run_id = create_run_response.function_run_id
 
         if log_callback is not None and not local:
@@ -807,7 +931,7 @@ class RemoteWorkflow:
             f"[Function Run] {function_run_id} created and scheduled for {'local' if local else 'cloud'} execution with raise_on_failure={raise_on_failure}."
         )
         if local:
-            code = self.download(workflow_path=None, version=version)
+            code = await self.adownload(workflow_path=None, version=version)
             exception: Exception | None = None
             log_capture = LogCapture(write_callback=log_callback)
             try:
@@ -823,7 +947,7 @@ class RemoteWorkflow:
                 exception = e
             # update the run with the result
             self._session_id = log_capture.session_id
-            _ = self.client.update_run(
+            _ = await self.client.aupdate_run(
                 function_id=self.function_id,
                 run_id=function_run_id,
                 result=str(result),
@@ -842,7 +966,7 @@ class RemoteWorkflow:
                 status=status,
             )
         # run on cloud
-        res = self.client.run(
+        res = await self.client.arun(
             function_id=self.response.function_id,
             function_run_id=function_run_id,
             stream=stream,
@@ -855,22 +979,34 @@ class RemoteWorkflow:
         return res
 
     def stop_run(self, run_id: str) -> UpdateFunctionRunResponse:
+        """Stop a function run. See astop_run() for full documentation."""
+        return asyncio.run(self.astop_run(run_id))
+
+    async def astop_run(self, run_id: str) -> UpdateFunctionRunResponse:
         """
         Manually stop a function run by its ID.
 
         """
-        return self.client.stop_run(function_id=self.function_id, run_id=run_id)
+        return await self.client.astop_run(function_id=self.function_id, run_id=run_id)
 
     def get_run(self, run_id: str) -> GetFunctionRunResponse:
+        """Get a function run. See aget_run() for full documentation."""
+        return asyncio.run(self.aget_run(run_id))
+
+    async def aget_run(self, run_id: str) -> GetFunctionRunResponse:
         """
         Get a function run by its ID.
 
         """
-        return self.client.get_run(function_id=self.function_id, run_id=run_id)
+        return await self.client.aget_run(function_id=self.function_id, run_id=run_id)
 
     def get_curl(self, **variables: Any) -> str:
+        """Get curl command. See aget_curl() for full documentation."""
+        return asyncio.run(self.aget_curl(**variables))
+
+    async def aget_curl(self, **variables: Any) -> str:
         """
         Convert the workflow/run to a curl request.
 
         """
-        return self.client.get_curl(function_id=self.function_id, **variables)
+        return await self.client.aget_curl(function_id=self.function_id, **variables)
