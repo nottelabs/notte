@@ -35,7 +35,7 @@ notte-mcp = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*", "."]
-exclude = ["packages/notte-bua"]
+exclude = ["packages/notte-bua", "packages/notte-node-sdk"]
 
 [build-system]
 requires = ["hatchling"]

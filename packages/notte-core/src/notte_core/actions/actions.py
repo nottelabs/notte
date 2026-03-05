@@ -260,7 +260,10 @@ class FormFillAction(BrowserAction):
 
     @override
     def execution_message(self) -> str:
-        return f"Filled the form with the value(s): '{self.value}'"
+        # str() on ValueWithPlaceholder returns the placeholder, not the secret,
+        # so sensitive fields are never emitted verbatim in the trajectory.
+        safe_value = {k: str(v) for k, v in self.value.items()}
+        return f"Filled the form with the value(s): '{safe_value}'"
 
     @override
     @staticmethod
