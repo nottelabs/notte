@@ -61,9 +61,9 @@ def enable_openrouter_for_module():
     notte_config._enable_openrouter = None  # Reset cached value
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def session():
-    """Create a notte session for testing."""
+    """Create a notte session for testing (module-scoped for efficiency)."""
     with notte.Session(headless=True) as s:
         # Navigate to a simple page first
         s.execute(type="goto", url="https://example.com")

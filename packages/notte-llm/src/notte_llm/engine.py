@@ -171,12 +171,14 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
         "items",
         "enum",
         "anyOf",
+        "allOf",
         "const",
         "description",
         "title",
         "additionalProperties",
         "minItems",
         "maxItems",
+        "prefixItems",
     }
 
     def clean_schema(obj: Any, *, is_properties_map: bool = False) -> Any:
@@ -200,9 +202,12 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
                 if not is_properties_map and key not in allowed_schema_keys:
                     continue
 
-                # Recursively clean - pass flag for "properties" key
+                # Recursively clean - only pass is_properties_map=True when we're at a schema-level
+                # "properties" key (not when a property is named "properties")
                 if isinstance(value, (dict, list)):
-                    cleaned[key] = clean_schema(value, is_properties_map=(key == "properties"))
+                    cleaned[key] = clean_schema(
+                        value, is_properties_map=(not is_properties_map and key == "properties")
+                    )
                 else:
                     cleaned[key] = value
 
