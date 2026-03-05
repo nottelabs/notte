@@ -84,6 +84,10 @@ def test_single_agent_step_with_openrouter_model(session, model: str):
     2. Runs the agent for just 1 step
     3. Verifies the agent successfully completed the step (no errors)
     """
+    # Reset to known page state before each test to avoid cross-test pollution
+    # (a previous agent may have navigated away from example.com)
+    session.execute(type="goto", url="https://example.com")
+
     openrouter_model = to_openrouter_model(model)
     agent = notte.Agent(
         session=session,
