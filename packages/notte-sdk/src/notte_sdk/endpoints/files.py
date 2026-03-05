@@ -197,9 +197,9 @@ class FileStorageClient(BaseClient):
 
     def list_uploaded_files(self) -> list[FileInfo]:
         """List uploaded files. See alist_uploaded_files() for full documentation."""
-        return asyncio.run(self._alist_uploaded_files())
+        return asyncio.run(self.alist_uploaded_files())
 
-    async def _alist_uploaded_files(self) -> list[FileInfo]:
+    async def alist_uploaded_files(self) -> list[FileInfo]:
         """
         List files in storage. 'type' can be 'uploads' or 'downloads'.
         """
@@ -209,9 +209,9 @@ class FileStorageClient(BaseClient):
 
     def list_downloaded_files(self, session_id: str) -> list[FileInfo]:
         """List downloaded files. See alist_downloaded_files() for full documentation."""
-        return asyncio.run(self._alist_downloaded_files(session_id))
+        return asyncio.run(self.alist_downloaded_files(session_id))
 
-    async def _alist_downloaded_files(self, session_id: str) -> list[FileInfo]:
+    async def alist_downloaded_files(self, session_id: str) -> list[FileInfo]:
         """
         List files in storage. 'type' can be 'uploads' or 'downloads'.
         """
