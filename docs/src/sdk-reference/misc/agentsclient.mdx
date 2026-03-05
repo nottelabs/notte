@@ -24,7 +24,7 @@ Run an async agent with the specified request parameters
 ### arun_custom
 
 ```python
-arun_custom(request: <class 'pydantic.main.BaseModel'>, parallel_attempts: <class 'int'> = 1, viewer: <class 'bool'> = False) -> <class 'notte_sdk.types.AgentStatusResponse'>
+arun_custom(request: <class 'pydantic.main.BaseModel'>, viewer: <class 'bool'> = False) -> <class 'notte_sdk.types.AgentStatusResponse'>
 ```
 
 **Returns:**
@@ -200,7 +200,7 @@ Run an agent with the specified request parameters
 ### run_custom
 
 ```python
-run_custom(request: <class 'pydantic.main.BaseModel'>, parallel_attempts: <class 'int'> = 1, viewer: <class 'bool'> = False) -> <class 'notte_sdk.types.AgentStatusResponse'>
+run_custom(request: <class 'pydantic.main.BaseModel'>, viewer: <class 'bool'> = False) -> <class 'notte_sdk.types.AgentStatusResponse'>
 ```
 
 Run an custom agent with the specified request parameters

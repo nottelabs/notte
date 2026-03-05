@@ -15,7 +15,6 @@ import StateMaxSteps from "/snippets/agents/lifecycle/state_max_steps.mdx";
 import StatusChecking from "/snippets/agents/lifecycle/status_checking.mdx";
 import LiveLogStreaming from "/snippets/agents/lifecycle/live_log_streaming.mdx";
 import PollingPattern from "/snippets/agents/lifecycle/polling_pattern.mdx";
-import BatchExecution from "/snippets/agents/lifecycle/batch_execution.mdx";
 import ManualStop from "/snippets/agents/lifecycle/manual_stop.mdx";
 import TimeoutPattern from "/snippets/agents/lifecycle/timeout_pattern.mdx";
 import ResponseStructure from "/snippets/agents/lifecycle/response_structure.mdx";
@@ -136,14 +135,6 @@ Run multiple agents simultaneously:
 
 <ParallelAgents />
 
-### Batch Execution
-
-Use `BatchRemoteAgent` for parallel execution with strategies:
-
-<BatchExecution />
-
-See [Batch Agents](/features/agents/batch) for details.
-
 ## Stopping Agents
 
 ### Manual Stop
@@ -217,10 +208,6 @@ See [Agent Fallback](/features/agents/fallback) for details.
 <CardGroup cols={2}>
   <Card title="Configuration" icon="sliders" href="/features/agents/configuration">
     Configure agent parameters
-  </Card>
-
-  <Card title="Batch Agents" icon="layer-group" href="/features/agents/batch">
-    Run agents in parallel
   </Card>
 
   <Card title="Agent Fallback" icon="shield" href="/features/agents/fallback">
