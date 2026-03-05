@@ -184,7 +184,7 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
         "const",
         "description",
         "title",
-        "additionalProperties",
+        # Note: "additionalProperties" is intentionally omitted - we unconditionally set it to False
         "minItems",
         "maxItems",
         "prefixItems",
@@ -296,18 +296,24 @@ class LLMEngine:
             if (is_openrouter_model(effective_model) or enable_openrouter()) and is_anthropic_model(effective_model):
                 litellm_response_format = dict(type="json_object")
                 use_strict_response_format = False
-            # For OpenRouter models (including openrouter/google/gemini-*), use OpenAI schema format
+            # For OpenRouter-prefixed models, use OpenAI schema format
             # OpenRouter expects OpenAI-compatible json_schema wrapper, not Gemini's native format
-            elif is_openrouter_model(effective_model) or enable_openrouter():
+            elif is_openrouter_model(effective_model):
                 litellm_response_format = fix_schema_for_openai(raw_schema)
             # For direct Gemini models (not via OpenRouter), transform schema to Gemini-compatible format
             # Gemini doesn't support $ref/$defs, additionalProperties, etc.
+            # This must come BEFORE the enable_openrouter() catch-all to ensure direct Gemini models
+            # get the correct schema format even when OpenRouter is globally enabled
             elif is_gemini_model(effective_model):
                 litellm_response_format = fix_schema_for_gemini(raw_schema)
             elif is_anthropic_model(effective_model):
                 # For Anthropic models, pass the Pydantic model directly
                 # litellm handles the conversion to Anthropic's format
                 litellm_response_format = response_format
+            # Catch-all for when enable_openrouter() is globally enabled but model doesn't match above
+            # This handles non-Gemini, non-Anthropic models when OpenRouter mode is on
+            elif enable_openrouter():
+                litellm_response_format = fix_schema_for_openai(raw_schema)
             else:
                 # For OpenAI and other models, use OpenAI's json_schema format
                 litellm_response_format = fix_schema_for_openai(raw_schema)

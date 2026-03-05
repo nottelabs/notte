@@ -42,7 +42,10 @@ def to_openrouter_model(model: str) -> str:
 
 
 def check_openrouter_available() -> bool:
-    """Check if OpenRouter API key is available (read-only, no side-effects)."""
+    """Check if OpenRouter API key is available.
+
+    Note: Calls load_dotenv() to ensure .env variables are loaded before checking.
+    """
     load_dotenv()
     return os.getenv("OPENROUTER_API_KEY") is not None
 
