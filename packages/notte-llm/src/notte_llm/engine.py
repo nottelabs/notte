@@ -123,8 +123,15 @@ def fix_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
 
 
 def is_gemini_model(model: str) -> bool:
-    """Check if the model is a Gemini model that needs schema transformation."""
+    """Check if the model is a Gemini model that needs schema transformation.
+
+    Note: vertex_ai/claude-* models are Anthropic models hosted on Vertex AI,
+    not Gemini models. They should use the Anthropic path, not this one.
+    """
     model_lower = model.lower()
+    # Check for Anthropic models on Vertex AI first - they're not Gemini
+    if "vertex_ai" in model_lower and ("claude" in model_lower or "anthropic" in model_lower):
+        return False
     return "gemini" in model_lower or "vertex_ai" in model_lower
 
 
@@ -155,7 +162,9 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
     Returns the schema wrapped in OpenAI's json_schema response_format structure.
     """
     # Extract schema name (title) before processing
-    schema_name = schema.get("title", "response")
+    # OpenAI requires name to match ^[a-zA-Z0-9_-]+$ so we sanitize it
+    raw_name = schema.get("title", "response")
+    schema_name = re.sub(r"[^a-zA-Z0-9_-]", "_", raw_name)
 
     # Step 1: Resolve all $ref references by inlining definitions
     schema = _resolve_schema_refs(schema)
@@ -164,10 +173,10 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
     # OpenAI structured output only supports a limited subset of JSON Schema keywords.
     # Using a whitelist approach to only keep supported keys.
     # Ref: https://platform.openai.com/docs/guides/structured-outputs
+    # Note: "required" is intentionally omitted - we skip it explicitly and regenerate it
     allowed_schema_keys = {
         "type",
         "properties",
-        "required",
         "items",
         "enum",
         "anyOf",
