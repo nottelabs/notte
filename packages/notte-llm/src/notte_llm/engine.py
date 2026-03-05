@@ -131,7 +131,12 @@ def is_gemini_model(model: str) -> bool:
 def is_anthropic_model(model: str) -> bool:
     """Check if the model is an Anthropic model."""
     model_lower = model.lower()
-    return "anthropic" in model_lower or "claude" in model_lower
+    return (
+        model_lower.startswith("anthropic/")
+        or model_lower.startswith("claude-")
+        or "/anthropic/" in model_lower
+        or "/claude-" in model_lower
+    )
 
 
 def is_openrouter_model(model: str) -> bool:
@@ -169,7 +174,6 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
         "const",
         "description",
         "title",
-        "default",
         "additionalProperties",
         "minItems",
         "maxItems",
@@ -216,7 +220,7 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
             return cleaned
         elif isinstance(obj, list):
             obj_list = cast(list[Any], obj)
-            return [clean_schema(item, is_properties_map=is_properties_map) for item in obj_list]
+            return [clean_schema(item, is_properties_map=False) for item in obj_list]
         return obj
 
     cleaned_schema = clean_schema(schema)
