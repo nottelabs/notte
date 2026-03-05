@@ -1,0 +1,178 @@
+# pyright: reportImportCycles=false
+"""Async agent fallback context manager for the Notte SDK."""
+
+from __future__ import annotations
+
+from types import TracebackType
+from typing import TYPE_CHECKING, Any, Callable, Unpack
+
+from notte_core.actions import BaseAction
+from notte_core.actions.typedicts import parse_action
+from notte_core.browser.observation import ExecutionResult, TimedSpan
+from notte_core.common.logging import logger
+from pydantic import BaseModel
+
+from notte_sdk.types import AgentCreateRequestDict, AgentStatusResponse, ExecutionRequestDict
+
+if TYPE_CHECKING:
+    from notte_sdk._async.agents import AsyncRemoteAgent
+    from notte_sdk._async.client import AsyncNotteClient
+    from notte_sdk._async.sessions import AsyncRemoteSession
+
+AGENT_FALLBACK_INSTRUCTIONS = """
+goal: {task}
+instructions:
+- if the goal is unclear or ill-defined, fail immediately and ask the user to clarify the goal.
+- only performed the required actions to achieve the goal. Don't take any other action not intended to achieve the goal.
+- only a few number of actions should be performed.
+- don't navigate to any other page/url except if explicitly asked to do so.
+context:
+- last action failed with error: {error}
+"""
+
+
+class AsyncRemoteAgentFallback:
+    """Async context manager that observes a Session's execute calls and triggers an Agent when a step fails.
+
+    Usage:
+        ```python
+        async with notte.AgentFallback(session, "add to cart") as agent:
+            await session.execute(actions.Click(id="B1"))
+            await session.execute(actions.Click(id="L3"))
+        ```
+
+    Attributes:
+        task: The natural language task of the agent
+        steps: List of ExecutionResult for all executions within the agent
+        success: Whether all recorded steps succeeded (False if any failed or raised)
+        agent_response: The response returned by the spawned agent (if any)
+    """
+
+    def __init__(
+        self,
+        session: "AsyncRemoteSession",
+        task: str,
+        _client: "AsyncNotteClient | None" = None,
+        response_format: type[BaseModel] | None = None,
+        **agent_params: Unpack[AgentCreateRequestDict],
+    ) -> None:
+        if _client is None:
+            raise ValueError("_client argument cannot be None")
+        self.client: "AsyncNotteClient" = _client
+        self.session: "AsyncRemoteSession" = session
+        self.task: str = task
+        self.response_format: type[BaseModel] | None = response_format
+        self.steps: list[ExecutionResult] = []
+        self.success: bool = True
+        self.agent_response: AgentStatusResponse | None = None
+        self.agent_params: AgentCreateRequestDict = agent_params
+        self.session_offset: int | None = None
+
+        # Saved originals
+        self._orig_execute: Callable[..., Any] | None = None
+        self._orig_scrape: Callable[..., Any] | None = None
+        self._agent: "AsyncRemoteAgent | None" = None
+
+    # ------------------------ context manager ------------------------
+    async def __aenter__(self) -> "AsyncRemoteAgentFallback":
+        await self._patch_session()
+        return self
+
+    async def __aexit__(
+        self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None
+    ) -> None:
+        self._restore_session()
+        # If a raw exception escaped user code inside the agent fallback
+        if exc is not None and not self.agent_invoked:
+            logger.error(f"Unhandled exception in agent fallback: {exc}")
+            raise exc
+
+        if self.agent_invoked:
+            logger.info(
+                f"Agent fallback finished: {self.task} | steps={len(self.steps)} | success={self.success} | agent_invoked={self.agent_invoked}"
+            )
+        return None
+
+    @property
+    def agent_invoked(self) -> bool:
+        return self._agent is not None
+
+    # ------------------------ patching logic ------------------------
+    async def _patch_session(self) -> None:
+        # Save execute
+        self._orig_execute = self.session.execute
+        self._orig_scrape = self.session.scrape
+        self.session_offset = await self.session.offset()
+
+        # scrape is not supported inside the context manager
+        async def wrapped_scrape(*args: Any, **kwargs: Any) -> Any:  # pyright: ignore [reportUnusedParameter]
+            raise ValueError(
+                "Agent fallback does not support scrape. Please use session.scrape outside of the context manager."
+            )
+
+        # Define wrappers
+        async def wrapped_execute(
+            action: BaseAction | dict[str, Any] | None = None,
+            raise_on_failure: bool | None = None,
+            **data: Unpack[ExecutionRequestDict],
+        ) -> ExecutionResult:
+            # Enforce agent fallback constraint
+            if raise_on_failure:
+                raise ValueError("AgentFallback only supports raise_on_failure=False")
+
+            if isinstance(action, dict):
+                action_parsed = parse_action(**action, **data)
+            else:
+                action_parsed = parse_action(action, **data)
+
+            if self.agent_invoked and self.agent_response is not None:
+                logger.warning(f"Skipping action: {action_parsed} because agent fallback has been invoked.")
+                empty_span = TimedSpan.empty()
+                return ExecutionResult(
+                    action=action_parsed,
+                    success=True,
+                    message="Action skipped because agent fallback has been invoked.",
+                    data=None,
+                    exception=None,
+                    started_at=empty_span.started_at,
+                    ended_at=empty_span.ended_at,
+                )
+            # Delegate to original execute and do not raise on failure
+            result = await self._orig_execute(  # type: ignore
+                action=action_parsed, raise_on_failure=False, **data
+            )
+            # Record and maybe spawn agent
+            self._record_step(result)
+            if not result.success:
+                logger.warning(f"AgentFallback action failed with error: '{result.message}'")
+                await self._spawn_agent_if_needed()
+            return result
+
+        self.session.execute = wrapped_execute  # pyright: ignore [reportAttributeAccessIssue]
+        self.session.scrape = wrapped_scrape
+
+    def _restore_session(self) -> None:
+        if self._orig_execute is not None:
+            self.session.execute = self._orig_execute
+        if self._orig_scrape is not None:
+            self.session.scrape = self._orig_scrape
+
+    # ------------------------ recording & agent ------------------------
+    def _record_step(self, result: ExecutionResult) -> None:
+        self.steps.append(result)
+        if not result.success:
+            self.success = False
+
+    async def _spawn_agent_if_needed(self) -> None:
+        logger.info(f"Spawning agent fallback after execution failure with task: {self.task}")
+        self._agent = self.client.Agent(session=self.session, **self.agent_params)
+        self.agent_response = await self._agent.run(
+            task=AGENT_FALLBACK_INSTRUCTIONS.format(task=self.task, error=self.steps[-1].message),
+            response_format=self.response_format,
+            session_offset=self.session_offset,
+        )
+        if self.agent_response.success:
+            logger.info("Agent succeeded in fixing the execution failure")
+            self.success = True
+        else:
+            logger.error(f"Agent failed to fix the execution failure: {self.agent_response.answer}")

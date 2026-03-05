@@ -51,7 +51,7 @@ nest_asyncio_enabled: bool = False
 
 
 def enable_nest_asyncio() -> None:
-    """Enable nested event loops (required for Jupyter). Stores state if already enabled."""
+    """Enable nested event loops (required for Jupyter and sync wrappers around async code)."""
     RUNNING_IN_PYODIDE = "pyodide" in sys.modules
     global nest_asyncio_enabled
     if nest_asyncio_enabled or RUNNING_IN_PYODIDE:

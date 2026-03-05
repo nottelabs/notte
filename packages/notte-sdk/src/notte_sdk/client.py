@@ -2,7 +2,6 @@
 from functools import partial
 from typing import Any, Literal, Unpack, cast, overload
 
-from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
 from notte_core.common.config import LlmModel
 from notte_core.common.logging import logger
@@ -20,8 +19,6 @@ from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient, SessionV
 from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
 from notte_sdk.endpoints.workflows import RemoteWorkflow, WorkflowsClient
 from notte_sdk.types import ScrapeMarkdownParamsDict, ScrapeRequestDict
-
-enable_nest_asyncio()
 
 
 @final

@@ -1,4 +1,3 @@
-import asyncio
 import datetime as dt
 import os
 import warnings
@@ -55,26 +54,18 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
-    async def alist_uploaded_files(self) -> list[FileInfo]:
+    async def list_uploaded_files(self) -> list[FileInfo]:
         """List all files from the upload_dir"""
         pass
 
     @abstractmethod
-    async def alist_downloaded_files(self) -> list[FileInfo]:
+    async def list_downloaded_files(self) -> list[FileInfo]:
         """List all files in the download_dir"""
         pass
 
-    def list_uploaded_files(self) -> list[FileInfo]:
-        """List all files from the upload_dir"""
-        return asyncio.run(self.alist_uploaded_files())
-
-    def list_downloaded_files(self) -> list[FileInfo]:
-        """List all files in the download_dir"""
-        return asyncio.run(self.alist_downloaded_files())
-
     async def instructions(self) -> str:
         """Return LLM instructions to append to the prompt."""
-        file_infos = await self.alist_uploaded_files()
+        file_infos = await self.list_uploaded_files()
         files = ", ".join(f.name for f in file_infos)
 
         if len(files) > 0:

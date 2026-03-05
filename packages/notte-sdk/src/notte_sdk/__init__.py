@@ -1,5 +1,7 @@
 from notte_core import check_notte_version
 
+# Async client (new)
+from notte_sdk._async.client import AsyncNotteClient
 from notte_sdk.actions import (
     CaptchaSolve,
     Check,
@@ -28,6 +30,8 @@ from notte_sdk.actions import (
     UploadFile,
     Wait,
 )
+
+# Sync client (original, full-featured)
 from notte_sdk.client import NotteClient
 from notte_sdk.endpoints.agents import RemoteAgent
 from notte_sdk.endpoints.sessions import RemoteSession
@@ -38,6 +42,7 @@ __version__ = check_notte_version("notte_sdk")
 
 __all__ = [
     "NotteClient",
+    "AsyncNotteClient",
     "RemoteSession",
     "RemoteAgent",
     "retry",
