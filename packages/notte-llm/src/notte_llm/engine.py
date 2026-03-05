@@ -45,6 +45,34 @@ from notte_llm.tracer import LlmTracer, LlmUsageFileTracer
 from notte_llm.types import TResponseFormat
 
 
+def _resolve_schema_refs(schema: dict[str, Any]) -> dict[str, Any]:
+    """Inline all $ref/$defs references in a JSON Schema (shared utility)."""
+    import copy
+
+    defs: dict[str, Any] = schema.get("$defs", {})
+
+    def resolve_refs(obj: Any) -> Any:
+        if isinstance(obj, dict):
+            obj_dict = cast(dict[str, Any], obj)
+            if "$ref" in obj_dict:
+                ref_name = str(obj_dict["$ref"]).split("/")[-1]
+                if ref_name in defs:
+                    resolved = copy.deepcopy(defs[ref_name])
+                    for key, value in obj_dict.items():
+                        if key != "$ref":
+                            resolved[key] = value
+                    return resolve_refs(resolved)
+                return cast(dict[str, Any], obj)
+            return {k: resolve_refs(v) for k, v in obj_dict.items()}
+        elif isinstance(obj, list):
+            return [resolve_refs(item) for item in cast(list[Any], obj)]
+        return obj
+
+    resolved = resolve_refs(schema)
+    resolved.pop("$defs", None)
+    return resolved
+
+
 def fix_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
     """
     Convert a Pydantic JSON schema to Gemini-compatible format.
@@ -57,37 +85,8 @@ def fix_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
     - default values in schema
     - Empty object properties (must have at least one property)
     """
-    import copy
-
     # Step 1: Resolve all $ref references by inlining definitions
-    defs: dict[str, Any] = schema.get("$defs", {})
-
-    def resolve_refs(obj: Any) -> Any:
-        if isinstance(obj, dict):
-            obj_dict = cast(dict[str, Any], obj)
-            if "$ref" in obj_dict:
-                ref: str = str(obj_dict["$ref"])
-                ref_name: str = ref.split("/")[-1]  # "#/$defs/MyType" -> "MyType"
-                if ref_name in defs:
-                    # Replace reference with actual definition (deep copy to avoid mutation)
-                    resolved: dict[str, Any] = copy.deepcopy(defs[ref_name])
-                    # Merge any sibling properties (except $ref)
-                    for key, value in obj_dict.items():
-                        if key != "$ref":
-                            resolved[key] = value
-                    return resolve_refs(resolved)  # Recurse in case definition has refs
-                return cast(dict[str, Any], obj)
-            else:
-                result: dict[str, Any] = {k: resolve_refs(v) for k, v in obj_dict.items()}
-                return result
-        elif isinstance(obj, list):
-            obj_list = cast(list[Any], obj)
-            return [resolve_refs(item) for item in obj_list]
-        return obj
-
-    schema = resolve_refs(schema)
-    # Remove $defs from resolved schema (now inlined)
-    schema.pop("$defs", None)
+    schema = _resolve_schema_refs(schema)
 
     # Step 2: Remove unsupported properties and handle edge cases
     def clean_schema(obj: Any, parent_key: str | None = None) -> Any:
@@ -150,37 +149,11 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
 
     Returns the schema wrapped in OpenAI's json_schema response_format structure.
     """
-    import copy
-
     # Extract schema name (title) before processing
     schema_name = schema.get("title", "response")
 
     # Step 1: Resolve all $ref references by inlining definitions
-    defs: dict[str, Any] = schema.get("$defs", {})
-
-    def resolve_refs(obj: Any) -> Any:
-        if isinstance(obj, dict):
-            obj_dict = cast(dict[str, Any], obj)
-            if "$ref" in obj_dict:
-                ref: str = str(obj_dict["$ref"])
-                ref_name: str = ref.split("/")[-1]
-                if ref_name in defs:
-                    resolved: dict[str, Any] = copy.deepcopy(defs[ref_name])
-                    for key, value in obj_dict.items():
-                        if key != "$ref":
-                            resolved[key] = value
-                    return resolve_refs(resolved)
-                return cast(dict[str, Any], obj)
-            else:
-                result: dict[str, Any] = {k: resolve_refs(v) for k, v in obj_dict.items()}
-                return result
-        elif isinstance(obj, list):
-            obj_list = cast(list[Any], obj)
-            return [resolve_refs(item) for item in obj_list]
-        return obj
-
-    schema = resolve_refs(schema)
-    schema.pop("$defs", None)
+    schema = _resolve_schema_refs(schema)
 
     # Step 2: Clean schema for OpenAI strict mode
     # OpenAI structured output only supports a limited subset of JSON Schema keywords.
@@ -331,6 +304,7 @@ class LLMEngine:
                     # fallback to non-strict response format
                     litellm_response_format = dict(type="json_object")
                     use_strict_response_format = False
+                    tries += 1  # Don't consume a retry slot for the format fallback
                     continue
                 raised_exc = e
                 raise e
@@ -343,6 +317,7 @@ class LLMEngine:
                     )
                     litellm_response_format = dict(type="json_object")
                     use_strict_response_format = False
+                    tries += 1  # Don't consume a retry slot for the format fallback
                     continue
                 raised_exc = e
                 raise e

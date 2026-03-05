@@ -42,20 +42,28 @@ def to_openrouter_model(model: str) -> str:
 
 
 def check_openrouter_available() -> bool:
-    """Check if OpenRouter API key is available."""
+    """Check if OpenRouter API key is available (read-only, no side-effects)."""
     load_dotenv()
-    # Enable OpenRouter mode and reset cache
+    return os.getenv("OPENROUTER_API_KEY") is not None
+
+
+@pytest.fixture(autouse=True, scope="module")
+def enable_openrouter_for_module():
+    """Enable OpenRouter mode for this test module with proper teardown."""
+    original = os.environ.get("ENABLE_OPENROUTER")
     os.environ["ENABLE_OPENROUTER"] = "true"
     notte_config._enable_openrouter = None  # Reset cached value
-    return os.getenv("OPENROUTER_API_KEY") is not None
+    yield
+    if original is None:
+        os.environ.pop("ENABLE_OPENROUTER", None)
+    else:
+        os.environ["ENABLE_OPENROUTER"] = original
+    notte_config._enable_openrouter = None  # Reset cached value
 
 
 @pytest.fixture
 def session():
     """Create a notte session for testing."""
-    # Ensure OpenRouter mode is enabled before creating session
-    os.environ["ENABLE_OPENROUTER"] = "true"
-    notte_config._enable_openrouter = None  # Reset cached value
     with notte.Session(headless=True) as s:
         # Navigate to a simple page first
         s.execute(type="goto", url="https://example.com")
@@ -76,10 +84,6 @@ def test_single_agent_step_with_openrouter_model(session, model: str):
     2. Runs the agent for just 1 step
     3. Verifies the agent successfully completed the step (no errors)
     """
-    # Ensure OpenRouter mode is enabled
-    os.environ["ENABLE_OPENROUTER"] = "true"
-    notte_config._enable_openrouter = None  # Reset cached value
-
     openrouter_model = to_openrouter_model(model)
     agent = notte.Agent(
         session=session,
