@@ -279,14 +279,14 @@ class RemoteFileStorage(BaseStorage):
         assert self.download_dir is not None
         _ = Path(self.download_dir).mkdir(parents=True, exist_ok=True)
 
-        status = self.client.download(session_id=self.session_id, file_name=name, local_dir=self.download_dir)
+        status = await self.client.adownload(session_id=self.session_id, file_name=name, local_dir=self.download_dir)
         if not status:
             return None
         return str(Path(self.download_dir) / name)
 
     @override
     async def set_file(self, path: str) -> bool:
-        response = self.client.upload_downloaded_file(session_id=self.session_id, file_path=path)
+        response = await self.client.aupload_downloaded_file(session_id=self.session_id, file_path=path)
         return response.success
 
     @override
@@ -300,7 +300,7 @@ class RemoteFileStorage(BaseStorage):
         files = storage.list_uploaded_files()
         ```
         """
-        return self.client.list_uploaded_files()
+        return await self.client.alist_uploaded_files()
 
     @override
     async def alist_downloaded_files(self) -> list[FileInfo]:
@@ -313,4 +313,4 @@ class RemoteFileStorage(BaseStorage):
         files = storage.list_downloaded_files()
         ```
         """
-        return self.client.list_downloaded_files(session_id=self.session_id)
+        return await self.client.alist_downloaded_files(session_id=self.session_id)
