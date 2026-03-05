@@ -1503,5 +1503,5 @@ class RemoteSession(SyncResource):
                         user_message=result_message,
                         agent_message=result_message,
                     )
-            raise exception_to_raise
+            raise exception_to_raise from result.exception
         return result
