@@ -1,0 +1,143 @@
+"""
+Test agent single step with various OpenRouter models.
+
+This test verifies that the agent can successfully complete a single step
+(observe + LLM completion) with different reasoning models via OpenRouter.
+"""
+
+import os
+
+import notte_core.common.config as notte_config
+import pytest
+from dotenv import load_dotenv
+
+import notte
+
+# OpenRouter models to test - popular models from OpenRouter
+# Format: <provider>/<model> - "openrouter/" prefix is auto-added
+# Update this list as new models become available
+OPENROUTER_MODELS = [
+    "google/gemini-3-flash-preview",
+    "google/gemini-2.5-flash",
+    "anthropic/claude-opus-4.6",
+    "anthropic/claude-sonnet-4.6",
+    "anthropic/claude-haiku-4.5",
+    "openai/gpt-5.2",
+    "openai/gpt-5-nano",
+    "openai/gpt-4o-mini",
+    "minimax/minimax-m2.5",
+    "moonshotai/kimi-k2.5",
+    "deepseek/deepseek-v3.2",
+    "x-ai/grok-4.1-fast",
+    "z-ai/glm-5",
+    "qwen/qwen3.5-flash-02-23",
+]
+
+
+def to_openrouter_model(model: str) -> str:
+    """Add openrouter/ prefix if not already present."""
+    if model.startswith("openrouter/"):
+        return model
+    return f"openrouter/{model}"
+
+
+def check_openrouter_available() -> bool:
+    """Check if OpenRouter API key is available."""
+    load_dotenv()
+    # Enable OpenRouter mode and reset cache
+    os.environ["ENABLE_OPENROUTER"] = "true"
+    notte_config._enable_openrouter = None  # Reset cached value
+    return os.getenv("OPENROUTER_API_KEY") is not None
+
+
+@pytest.fixture
+def session():
+    """Create a notte session for testing."""
+    # Ensure OpenRouter mode is enabled before creating session
+    os.environ["ENABLE_OPENROUTER"] = "true"
+    notte_config._enable_openrouter = None  # Reset cached value
+    with notte.Session(headless=True) as s:
+        # Navigate to a simple page first
+        s.execute(type="goto", url="https://example.com")
+        yield s
+
+
+@pytest.mark.skipif(
+    not check_openrouter_available(),
+    reason="OPENROUTER_API_KEY not set",
+)
+@pytest.mark.parametrize("model", OPENROUTER_MODELS)
+def test_single_agent_step_with_openrouter_model(session, model: str):
+    """
+    Test that a single agent step works with the given OpenRouter model.
+
+    This test:
+    1. Creates an agent with the specified reasoning model
+    2. Runs the agent for just 1 step
+    3. Verifies the agent successfully completed the step (no errors)
+    """
+    # Ensure OpenRouter mode is enabled
+    os.environ["ENABLE_OPENROUTER"] = "true"
+    notte_config._enable_openrouter = None  # Reset cached value
+
+    openrouter_model = to_openrouter_model(model)
+    agent = notte.Agent(
+        session=session,
+        reasoning_model=openrouter_model,
+        max_steps=1,  # Only run 1 step
+        use_vision=False,  # Disable vision for models that don't support it
+    )
+
+    # Run the agent - it should complete 1 step and then stop
+    # (either by completing the task or hitting max_steps)
+    result = agent.run(task="Describe this page")
+
+    # The agent should have run at least one step
+    assert result is not None
+    assert len(result.steps) >= 1, f"Agent did not complete any steps with model {model}"
+
+    # The first step should have a valid action
+    first_step = result.steps[0]
+    assert first_step.action is not None, f"First step has no action with model {model}"
+
+
+#
+# @pytest.mark.skipif(
+#     not check_openrouter_available(),
+#     reason="OPENROUTER_API_KEY not set",
+# )
+# @pytest.mark.parametrize(
+#     "model",
+#     [
+#         "anthropic/claude-sonnet-4.6",
+#         "google/gemini-2.5-flash",
+#         "openai/gpt-4o-mini",
+#     ],
+# )
+# def test_agent_navigation_step_with_openrouter(model: str):
+#     """
+#     Test that an agent can perform a navigation step with OpenRouter models.
+#
+#     This is a more complete test that verifies:
+#     1. Agent can observe a blank page
+#     2. Agent can decide to navigate somewhere
+#     3. The navigation action is valid
+#     """
+#     openrouter_model = to_openrouter_model(model)
+#     with notte.Session(headless=True) as session:
+#         agent = notte.Agent(
+#             session=session,
+#             reasoning_model=openrouter_model,
+#             max_steps=2,  # Allow 2 steps for navigation
+#         )
+#
+#         result = agent.run(task="Go to google.com")
+#
+#         assert result is not None
+#         # Should have at least attempted to navigate
+#         assert len(result.steps) >= 1
+#
+#         # Check that the agent produced valid state and action
+#         for step in result.steps:
+#             assert step.state is not None
+#             assert step.action is not None
