@@ -181,12 +181,14 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
             cleaned: dict[str, Any] = {}
             for key, value in obj_dict.items():
                 # OpenAI strict mode doesn't support oneOf, convert to anyOf
-                if key == "oneOf":
+                # Only apply to schema keywords, not property names
+                if not is_properties_map and key == "oneOf":
                     cleaned["anyOf"] = clean_schema(value, is_properties_map=False)
                     continue
 
                 # Skip original `required` - we'll regenerate it from properties
-                if key == "required":
+                # Only apply to schema keywords, not property names
+                if not is_properties_map and key == "required":
                     continue
 
                 # If we're inside a "properties" map, keep all keys (they're property names)
@@ -276,13 +278,14 @@ class LLMEngine:
             if (is_openrouter_model(effective_model) or enable_openrouter()) and is_anthropic_model(effective_model):
                 litellm_response_format = dict(type="json_object")
                 use_strict_response_format = False
+            # For Gemini models, transform the schema to be compatible
+            # Gemini doesn't support $ref/$defs, additionalProperties, etc.
+            # Check Gemini before generic OpenRouter to ensure correct schema format
+            elif is_gemini_model(effective_model):
+                litellm_response_format = fix_schema_for_gemini(raw_schema)
             # For other OpenRouter models, use the OpenAI schema format (converts oneOf to anyOf)
             elif is_openrouter_model(effective_model) or enable_openrouter():
                 litellm_response_format = fix_schema_for_openai(raw_schema)
-            # For Gemini models, transform the schema to be compatible
-            # Gemini doesn't support $ref/$defs, additionalProperties, etc.
-            elif is_gemini_model(effective_model):
-                litellm_response_format = fix_schema_for_gemini(raw_schema)
             elif is_anthropic_model(effective_model):
                 # For Anthropic models, pass the Pydantic model directly
                 # litellm handles the conversion to Anthropic's format
