@@ -306,9 +306,8 @@ class LLMEngine:
                 litellm_response_format = fix_schema_for_openai(raw_schema)
             # For direct Gemini models (not via OpenRouter), transform schema to Gemini-compatible format
             # Gemini doesn't support $ref/$defs, additionalProperties, etc.
-            # This must come BEFORE the enable_openrouter() catch-all to ensure direct Gemini models
-            # get the correct schema format even when OpenRouter is globally enabled
-            elif is_gemini_model(effective_model):
+            # Only use Gemini schema when NOT routed via OpenRouter (OpenRouter expects OpenAI format)
+            elif is_gemini_model(effective_model) and not is_routed_via_openrouter:
                 litellm_response_format = fix_schema_for_gemini(raw_schema)
             elif is_anthropic_model(effective_model):
                 # For Anthropic models, pass the Pydantic model directly
