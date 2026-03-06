@@ -417,8 +417,7 @@ class AgentsClient(BaseClient):
             AgentStatusResponse | None: The final agent status, or None if failed.
         """
         if not RUNNING_IN_PYODIDE:
-            # For non-Pyodide environments, just run the sync version
-            return self.watch_logs(agent_id=agent_id, session_id=session_id, log=log)
+            raise NotImplementedError("async_watch_logs is only supported in Pyodide. Use watch_logs instead.")
 
         endpoint = NotteEndpoint(path=AgentsClient.AGENT_LOGS_WS, response=BaseModel, method="GET")
         wss_url = self.request_path(endpoint).format(agent_id=agent_id, token=self.token, session_id=session_id)
@@ -543,7 +542,6 @@ class AgentsClient(BaseClient):
         Returns:
             AgentStatusResponse: The response from the completed agent execution.
         """
-        status = None
         try:
             response = await self.async_watch_logs(agent_id=agent_id, session_id=session_id, log=log)
             if response is not None:
@@ -552,8 +550,7 @@ class AgentsClient(BaseClient):
             return self.status(agent_id=agent_id)
 
         except asyncio.CancelledError:
-            if status is None:
-                status = self.status(agent_id=agent_id)
+            status = self.status(agent_id=agent_id)
             if status.status != AgentStatus.closed:
                 _ = self.stop(agent_id=agent_id, session_id=session_id)
             raise
