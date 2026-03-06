@@ -1,5 +1,5 @@
 # @sniptest filename=live_log_streaming.py
-# @sniptest show=6-17
+# @sniptest show=6-15
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -10,11 +10,10 @@ def monitor_agent():
         agent = client.Agent(session=session)
         agent.start(task="Complete task")
 
-        # Stream logs as they happen
-        agent.watch_logs(log=True)
-
-        # Get final status
-        status = agent.status()
+        # Stream logs and get final status
+        status = agent.watch_logs(log=True)
+        if status is None:
+            status = agent.status()
         return status
 
 

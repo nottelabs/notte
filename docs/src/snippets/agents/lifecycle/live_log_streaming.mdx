@@ -7,11 +7,9 @@ def monitor_agent():
         agent = client.Agent(session=session)
         agent.start(task="Complete task")
 
-        # Stream logs as they happen
-        agent.watch_logs(log=True)
-
-        # Get final status
-        status = agent.status()
+        # Stream logs and get final status
+        status = agent.watch_logs(log=True)
+        if status is None:
+            status = agent.status()
         return status
-
 ```
