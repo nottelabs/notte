@@ -84,8 +84,7 @@
                       "features/agents/structured-output",
                       "features/agents/replay",
                       "features/agents/workflows",
-                      "features/agents/fallback",
-                      "features/agents/batch"
+                      "features/agents/fallback"
                     ]
                   }
                 ]

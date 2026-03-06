@@ -4,9 +4,9 @@ import sys
 import tempfile
 import time
 import traceback
-from collections.abc import Coroutine, Sequence
+from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Literal, Unpack, overload
+from typing import TYPE_CHECKING, Any, Unpack, overload
 
 # import websockets
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
@@ -24,7 +24,6 @@ from notte_sdk.endpoints.personas import NottePersona
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.types import (
-    AgentCreateRequest,
     AgentCreateRequestDict,
     AgentFunctionCodeResponse,
     AgentListRequest,
@@ -628,9 +627,7 @@ class AgentsClient(BaseClient):
         file_bytes = self._request_file(endpoint, file_type="mp4")
         return MP4Replay(file_bytes)
 
-    async def arun_custom(
-        self, request: BaseModel, parallel_attempts: int = 1, viewer: bool = False
-    ) -> AgentStatusResponse:
+    async def arun_custom(self, request: BaseModel, viewer: bool = False) -> AgentStatusResponse:
         if not self.is_custom_endpoint_available():
             raise ValueError(f"Custom endpoint is not available for this server: {self.server_url}")
 
@@ -646,210 +643,16 @@ class AgentsClient(BaseClient):
                 log=True,
             )
 
-        return await BatchRemoteAgent.run_batch(agent_task, n_jobs=parallel_attempts, strategy="first_success")
+        return await agent_task()
 
-    def run_custom(self, request: BaseModel, parallel_attempts: int = 1, viewer: bool = False) -> AgentStatusResponse:
+    def run_custom(self, request: BaseModel, viewer: bool = False) -> AgentStatusResponse:
         """
         Run an custom agent with the specified request parameters.
         and wait for completion
 
         Note: not all servers support custom agents.
         """
-        return asyncio.run(self.arun_custom(request, parallel_attempts=parallel_attempts, viewer=viewer))
-
-
-class BatchRemoteAgent:
-    """
-    A batch agent that can execute multiple instances of the same task in parallel.
-
-    This class provides functionality to run multiple agents concurrently with different strategies:
-    - "first_success": Returns as soon as any agent succeeds
-    - "all_finished": Waits for all agents to complete and returns all results
-
-    The batch agent is useful for tasks that may have non-deterministic outcomes or
-    when you want to try multiple attempts in parallel to improve success rates.
-
-    Attributes:
-        request (_AgentCreateRequest): The base configuration request for all agents
-        client (AgentsClient): The client used to communicate with the Notte API
-        response (AgentResponse | None): The latest response from any agent execution
-    """
-
-    def __init__(
-        self,
-        *,
-        session: RemoteSession,
-        vault: NotteVault | None = None,
-        notifier: BaseNotifier | None = None,
-        persona: NottePersona | None = None,
-        _client: "NotteClient | None" = None,
-        **data: Unpack[AgentCreateRequestDict],
-    ) -> None:
-        if _client is None:
-            raise ValueError("NotteClient is required")
-        request = AgentCreateRequest.model_validate(data)
-        if notifier is not None:
-            notifier_config = notifier.model_dump()
-            request.notifier_config = notifier_config
-
-        # #########################################################
-        # ###################### Vault checks #####################
-        # #########################################################
-
-        if vault is not None:
-            if len(vault.vault_id) == 0:
-                raise ValueError("Vault ID cannot be empty")
-            request.vault_id = vault.vault_id
-
-        if persona is not None:
-            if len(persona.persona_id) == 0:
-                raise ValueError("Persona ID cannot be empty")
-            request.persona_id = persona.persona_id
-
-        # #########################################################
-        # #################### Session checks #####################
-        # #########################################################
-        if not isinstance(session, RemoteSession):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise ValueError(
-                "You are trying to use a local session with a remote agent. This is not supported. Use `notte.Agent(session=session)` instead."
-            )  # pyright: ignore[reportUnreachable]
-        if session.response is not None:
-            raise ValueError(
-                "You are trying to pass a started session to BatchRemoteAgent. BatchRemoteAgent is only supposed to be provided non-running session, to get the parameters"
-            )
-        self.request: AgentCreateRequest = request
-        self.client: AgentsClient = _client.agents
-        self.root_client: NotteClient = _client
-        self.response: AgentResponse | None = None
-        self.session: RemoteSession = session
-
-    @overload
-    async def run(
-        self,
-        n_jobs: int = 2,
-        strategy: Literal["first_success"] = "first_success",
-        **args: Unpack[AgentRunRequestDict],
-    ) -> AgentStatusResponse: ...
-    @overload
-    async def run(
-        self,
-        n_jobs: int = 2,
-        strategy: Literal["all_finished"] = "all_finished",
-        **args: Unpack[AgentRunRequestDict],
-    ) -> list[AgentStatusResponse]: ...
-    async def run(
-        self,
-        n_jobs: int = 2,
-        strategy: Literal["all_finished", "first_success"] = "first_success",
-        **args: Unpack[AgentRunRequestDict],
-    ) -> AgentStatusResponse | list[AgentStatusResponse]:
-        """
-        Run multiple agents in parallel with the specified parameters.
-
-        Args:
-            n_jobs: Number of parallel agents to run
-            strategy: The execution strategy:
-                     - "first_success": Return as soon as any agent succeeds
-                     - "all_finished": Wait for all agents to complete
-            **args: Additional arguments passed to each agent's start method
-
-        Returns:
-            If strategy is "first_success": The first successful AgentStatusResponse
-            If strategy is "all_finished": List of all AgentStatusResponse objects
-        """
-
-        async def agent_task() -> AgentStatusResponse:
-            agent = None
-
-            with RemoteSession(session_id=self.session.session_id, _client=self.root_client.sessions) as session:
-                agent_request = SdkAgentCreateRequest(**self.request.model_dump(), session_id=session.session_id)
-
-                agent = RemoteAgent(session=session, _client=self.client, **agent_request.model_dump())
-                _ = agent.start(**args)
-                return await agent.watch_logs_and_wait(log=False)
-
-        return await BatchRemoteAgent.run_batch(
-            agent_task,
-            n_jobs=n_jobs,
-            strategy=strategy,
-        )
-
-    @overload
-    @staticmethod
-    async def run_batch(
-        task_creator: Callable[[], Coroutine[Any, Any, AgentStatusResponse]],
-        n_jobs: int = 2,
-        strategy: Literal["first_success"] = "first_success",
-    ) -> AgentStatusResponse: ...
-    @overload
-    @staticmethod
-    async def run_batch(
-        task_creator: Callable[[], Coroutine[Any, Any, AgentStatusResponse]],
-        n_jobs: int = 2,
-        strategy: Literal["all_finished"] = "all_finished",
-    ) -> list[AgentStatusResponse]: ...
-    @staticmethod
-    async def run_batch(
-        task_creator: Callable[[], Coroutine[Any, Any, AgentStatusResponse]],
-        n_jobs: int = 2,
-        strategy: Literal["all_finished", "first_success"] = "first_success",
-    ) -> AgentStatusResponse | list[AgentStatusResponse]:
-        """
-        Internal method to run multiple agents in batch mode.
-
-        Args:
-            request_type: Type of request ("default" or "custom")
-            request: The request parameters for each agent
-            n_jobs: Number of parallel agents to run
-            strategy: The execution strategy:
-                     - "first_success": Return as soon as any agent succeeds
-                     - "all_finished": Wait for all agents to complete
-
-        Returns:
-            If strategy is "first_success": The first successful AgentStatusResponse
-            If strategy is "all_finished": List of all AgentStatusResponse objects
-        """
-        tasks: list[asyncio.Task[AgentStatusResponse]] = []
-        results: list[AgentStatusResponse] = []
-
-        for _ in range(n_jobs):
-            task = asyncio.Task(task_creator())
-            tasks.append(task)
-
-        exception = None
-        for completed_task in asyncio.as_completed(tasks):
-            try:
-                result = await completed_task
-
-                if result.success and strategy == "first_success":
-                    for task in tasks:
-                        if not task.done():
-                            _ = task.cancel()
-
-                    return result
-                else:
-                    results.append(result)
-            except Exception as e:
-                exception = e
-                logger.error(
-                    f"Batch task failed: {exception.__class__.__qualname__} {exception} {traceback.format_exc()}"
-                )
-                continue
-
-        # if first success, all failed, can just return any
-        if strategy == "first_success":
-            if len(results) > 0:
-                result = results[0]
-                return result
-            else:
-                if exception is None:
-                    exception = ValueError(
-                        "Every run of the task failed, yet no exception found: this should not happen"
-                    )
-                raise exception
-
-        # all finished, return the list
-        return results
+        return asyncio.run(self.arun_custom(request, viewer=viewer))
 
 
 class RemoteAgent:
