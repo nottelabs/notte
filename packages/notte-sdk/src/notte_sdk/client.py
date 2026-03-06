@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from typing_extensions import final
 
 from notte_sdk.agent_fallback import RemoteAgentFallback
-from notte_sdk.endpoints.agents import AgentsClient, BatchRemoteAgent, RemoteAgent
+from notte_sdk.endpoints.agents import AgentsClient, RemoteAgent
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
 from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.personas import NottePersona, PersonasClient
@@ -87,10 +87,6 @@ class NotteClient:
     @property
     def Agent(self) -> type[RemoteAgent]:
         return cast(type[RemoteAgent], partial(RemoteAgent, _client=self.agents))
-
-    @property
-    def BatchAgent(self) -> type[BatchRemoteAgent]:
-        return cast(type[BatchRemoteAgent], partial(BatchRemoteAgent, _client=self))
 
     @property
     def Vault(self) -> type[NotteVault]:
