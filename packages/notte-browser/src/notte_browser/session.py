@@ -910,7 +910,7 @@ class NotteSession(AsyncResource, SyncResource):
         # Create ScrapeAction for trajectory recording
         scrape_action = ScrapeAction(
             instructions=instructions,
-            only_main_content=params.get("only_main_content", True),
+            only_main_content=params.get("only_main_content", False),
             selector=params.get("selector"),
             only_images=params.get("only_images", False),
             scrape_links=params.get("scrape_links", True),
@@ -939,17 +939,17 @@ class NotteSession(AsyncResource, SyncResource):
                 await self.trajectory.append(execution_result)
                 if raise_on_failure:
                     raise
+
                 # return meaningful data when exception occurred
                 error_message = f"No markdown available. Exception: {exception}"
-                return (
-                    DataSpace(
-                        markdown=error_message,
-                        images=None,
-                        structured=StructuredData(success=False, error=error_message, data=None),
-                    )
+
+                retval = (  # pyright: ignore [reportUnknownVariableType]
+                    StructuredData(success=False, error=error_message, data=None)
                     if is_structured_scrape
                     else error_message
                 )
+
+                return retval  # pyright: ignore [reportUnknownVariableType]
 
         # Record to trajectory
         execution_result = ExecutionResult(
