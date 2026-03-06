@@ -334,12 +334,14 @@ class AgentsClient(BaseClient):
                 return (None, False)
 
         if RUNNING_IN_PYODIDE:
-            raise NotImplementedError("Synchronous watch_logs is not supported in Pyodide. Use the async version.")
+            raise NotImplementedError("Synchronous watch_logs is not supported in Pyodide.")
 
         # Use native Python sync websockets library
         with sync_client.connect(  # pyright: ignore[reportPossiblyUnboundVariable]
             uri=wss_url,
             open_timeout=30,
+            ping_interval=5,
+            ping_timeout=40,
             close_timeout=5,
             max_size=5 * (2**20),  # 5MB max size
         ) as websocket:
