@@ -2,16 +2,14 @@
 {/* @sniptest testers/agents/lifecycle/live_log_streaming.py */}
 
 ```python live_log_streaming.py
-async def monitor_agent():
+def monitor_agent():
     with client.Session() as session:
         agent = client.Agent(session=session)
         agent.start(task="Complete task")
 
-        # Stream logs as they happen
-        await agent.watch_logs(log=True)
-
-        # Get final status
-        status = agent.status()
+        # Stream logs and get final status
+        status = agent.watch_logs(log=True)
+        if status is None:
+            status = agent.status()
         return status
-
 ```
