@@ -43,6 +43,11 @@ def test_agent_fallback():
         # Agent should click the add to cart button
         assert action["type"] == "click", f"Expected click, got {action}"
 
+        # Verify the cart was updated by checking the page content
+        obs = session.observe()
+        page_content = obs.space.description.lower()
+        assert "added" in page_content or "cart" in page_content, "Expected cart to be updated after adding product"
+
 
 def test_agent_fallback_scrape_should_raise_error():
     client = NotteClient()
