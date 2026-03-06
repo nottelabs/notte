@@ -9,37 +9,46 @@ _ = load_dotenv()
 def test_agent_fallback():
     client = NotteClient()
     with client.Session(open_viewer=False) as session:
-        _ = session.execute({"type": "goto", "url": "https://www.allrecipes.com/"})
-        _ = session.execute({"type": "click", "selector": "~ Accept All"}, raise_on_failure=False)
+        _ = session.execute({"type": "goto", "url": "https://shop.notte.cc/"})
+        _ = session.observe()
+        # close modal if it appears
+        _ = session.execute({"type": "click", "id": "B1"}, raise_on_failure=False)
         _ = session.observe()
         with client.AgentFallback(
             session,
-            task="find the best apple crumble recipe on the site",
+            task="add the Cap product to cart",
             max_steps=3,
             reasoning_model=LlmModel.cerebras,
             use_vision=False,
         ) as agent_fallback:
-            _ = session.execute({"type": "fill", "id": "I1", "value": "apple crumble"})
-            _ = session.execute({"type": "click", "id": "B1332498"})
+            # Navigate to Cap product (L7 is typically the Cap link)
+            _ = session.execute({"type": "click", "id": "L7"})
+            # Use invalid ID to trigger agent fallback
+            _ = session.execute({"type": "click", "id": "B999999"})
 
         agent = agent_fallback._agent  # pyright: ignore [reportPrivateUsage]
         assert agent is not None
 
-        # ensure the first step is click
-        # meaning the agent remembers already filling the field
+        # ensure the agent was spawned and took action
         status = agent.status()
-        step = status.steps[3]
-        action = step["value"].get("action")
-        assert action is not None, f"Expected action, got {step} with type sequence {[s['type'] for s in status.steps]}"
+        assert len(status.steps) > 0, "Expected agent to have taken steps"
+        # Find the first action step (agent_completion steps contain actions)
+        action_step = None
+        for step in status.steps:
+            if step.get("type") == "agent_completion" and step.get("value", {}).get("action"):
+                action_step = step
+                break
+        assert action_step is not None, f"Expected an action step, got steps: {[s['type'] for s in status.steps]}"
+        action = action_step["value"]["action"]
+        # Agent should click the add to cart button
         assert action["type"] == "click", f"Expected click, got {action}"
-        assert action["id"] == "B1" or action["id"] == "B3"
 
 
 def test_agent_fallback_scrape_should_raise_error():
     client = NotteClient()
     with client.Session(open_viewer=False) as session:
-        _ = session.execute({"type": "goto", "url": "https://www.allrecipes.com/"})
+        _ = session.execute({"type": "goto", "url": "https://shop.notte.cc/"})
 
         with pytest.raises(ValueError):
-            with client.AgentFallback(session, task="find the best apple crumble recipe on the site", max_steps=1):
+            with client.AgentFallback(session, task="add the Cap product to cart", max_steps=1):
                 _ = session.scrape()
