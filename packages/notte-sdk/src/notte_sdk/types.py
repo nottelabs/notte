@@ -1554,7 +1554,7 @@ class ScrapeParams(SdkRequest):
                 "Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded."
             ),
         ),
-    ] = True
+    ] = False
 
     only_images: Annotated[
         bool,
