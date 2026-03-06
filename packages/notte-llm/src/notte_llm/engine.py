@@ -293,7 +293,11 @@ class LLMEngine:
             # OpenRouter routes to various backends with incompatible schema support:
             # - Bedrock doesn't support oneOf at all
             # - Anthropic direct limits anyOf to 16 parameters
-            if (is_openrouter_model(effective_model) or enable_openrouter()) and is_anthropic_model(effective_model):
+            # Note: Don't apply this to vertex_ai/ models - they go direct to Vertex AI, not OpenRouter
+            is_routed_via_openrouter = is_openrouter_model(effective_model) or (
+                enable_openrouter() and not effective_model.lower().startswith("vertex_ai")
+            )
+            if is_routed_via_openrouter and is_anthropic_model(effective_model):
                 litellm_response_format = dict(type="json_object")
                 use_strict_response_format = False
             # For OpenRouter-prefixed models, use OpenAI schema format
