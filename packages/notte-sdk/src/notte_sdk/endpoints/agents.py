@@ -1,3 +1,4 @@
+import asyncio
 import json
 import sys
 import tempfile
@@ -43,7 +44,10 @@ from notte_sdk.types import (
 RUNNING_IN_PYODIDE = "pyodide" in sys.modules
 
 if RUNNING_IN_PYODIDE:
-    pass
+    import js  # pyright: ignore[reportMissingImports]
+    from pyodide.ffi import (  # pyright: ignore[reportMissingImports]
+        create_proxy,  # pyright: ignore[reportUnknownVariableType]
+    )
 else:
     from websockets.sync import client as sync_client
 
@@ -334,7 +338,9 @@ class AgentsClient(BaseClient):
                 return (None, False)
 
         if RUNNING_IN_PYODIDE:
-            raise NotImplementedError("Synchronous watch_logs is not supported in Pyodide.")
+            raise NotImplementedError(
+                "Synchronous watch_logs is not supported in Pyodide. Use async_watch_logs instead."
+            )
 
         # Use native Python sync websockets library
         with sync_client.connect(  # pyright: ignore[reportPossiblyUnboundVariable]
@@ -377,6 +383,10 @@ class AgentsClient(BaseClient):
         Returns:
             AgentStatusResponse: The response from the completed agent execution.
         """
+        # In Pyodide, use asyncio.run with the async version since sync websockets aren't supported
+        if RUNNING_IN_PYODIDE:
+            return asyncio.run(self.async_watch_logs_and_wait(agent_id=agent_id, session_id=session_id, log=log))
+
         try:
             response = self.watch_logs(agent_id=agent_id, session_id=session_id, log=log)
             if response is not None:
@@ -388,6 +398,163 @@ class AgentsClient(BaseClient):
 
         except KeyboardInterrupt:
             status = self.status(agent_id=agent_id)
+            if status.status != AgentStatus.closed:
+                _ = self.stop(agent_id=agent_id, session_id=session_id)
+            raise
+
+    async def async_watch_logs(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse | None:
+        """
+        Watch the logs of the specified agent asynchronously.
+
+        This method is required for Pyodide environments where synchronous WebSocket
+        connections are not supported.
+
+        Args:
+            agent_id (str): The agent identifier.
+            session_id (str): The session identifier.
+            log (bool): Whether to log the agent steps.
+
+        Returns:
+            AgentStatusResponse | None: The final agent status, or None if failed.
+        """
+        if not RUNNING_IN_PYODIDE:
+            # For non-Pyodide environments, just run the sync version
+            return self.watch_logs(agent_id=agent_id, session_id=session_id, log=log)
+
+        endpoint = NotteEndpoint(path=AgentsClient.AGENT_LOGS_WS, response=BaseModel, method="GET")
+        wss_url = self.request_path(endpoint).format(agent_id=agent_id, token=self.token, session_id=session_id)
+        wss_url = wss_url.replace("https://", "wss://").replace("http://", "ws://")
+
+        counter = 0
+
+        def process_message(message: str) -> tuple[AgentCompletion | AgentStatusResponse | None, bool]:
+            """Process a websocket message. Returns (response, should_stop)."""
+            nonlocal counter
+            try:
+                dic = json.loads(message)
+                response = None
+
+                if isinstance(dic, dict) and "validation" in dic:
+                    logger.opt(colors=True).info("<g>{message}</g>", message=dic["validation"])
+
+                elif isinstance(dic, dict) and "status" in dic:
+                    if dic["status"] == "agent_stop":
+                        if "agent" in dic:
+                            agent_status = AgentStatusResponse.model_validate(dic["agent"])
+                            return (agent_status, True)
+                        return (None, True)
+
+                else:
+                    if isinstance(dic, dict):
+                        response = AgentCompletion.model_validate(dic)
+                    else:
+                        logger.warning(f"Expected dict, got {type(dic).__name__}: {message[:200]}")
+                        return (None, False)
+                    if log:
+                        logger.opt(colors=True).info(
+                            "✨ <r>Step {counter}</r> <y>(agent: {agent_id})</y>",
+                            counter=(counter + 1),
+                            agent_id=agent_id,
+                        )
+                        response.live_log_state()
+                    counter += 1
+
+                return (response, False)
+
+            except (json.JSONDecodeError, ValidationError, TypeError, ValueError) as e:
+                if "error" in message and "last action failed with error" not in message:
+                    logger.error(f"Error in agent logs: {e} {agent_id} {message}")
+                elif agent_id in message and "agent_id" in message:
+                    logger.error(f"Error parsing AgentStatusResponse for message: {message}: {e}")
+                else:
+                    logger.error(f"Error parsing agent logs for message: {message}: {e}")
+                return (None, False)
+
+        # Use JavaScript WebSocket API via Pyodide FFI
+        ws = js.WebSocket.new(wss_url)  # pyright: ignore[reportPossiblyUnboundVariable, reportUnknownMemberType, reportUnknownVariableType]
+        message_queue: asyncio.Queue[str | None] = asyncio.Queue()
+
+        def on_message(event: Any) -> None:
+            message_queue.put_nowait(str(event.data))
+
+        def on_error(_event: Any) -> None:
+            logger.error("WebSocket error occurred")
+
+        def on_close(_event: Any) -> None:
+            message_queue.put_nowait(None)
+
+        on_message_proxy = create_proxy(on_message)  # pyright: ignore[reportPossiblyUnboundVariable, reportUnknownVariableType]
+        on_error_proxy = create_proxy(on_error)  # pyright: ignore[reportPossiblyUnboundVariable, reportUnknownVariableType]
+        on_close_proxy = create_proxy(on_close)  # pyright: ignore[reportPossiblyUnboundVariable, reportUnknownVariableType]
+
+        ws.addEventListener("message", on_message_proxy)  # pyright: ignore[reportUnknownMemberType]
+        ws.addEventListener("error", on_error_proxy)  # pyright: ignore[reportUnknownMemberType]
+        ws.addEventListener("close", on_close_proxy)  # pyright: ignore[reportUnknownMemberType]
+
+        # Wait for connection
+        while ws.readyState == 0:  # CONNECTING  # pyright: ignore[reportUnknownMemberType]
+            await asyncio.sleep(0.1)
+
+        try:
+            while True:
+                message = await message_queue.get()
+                if message is None:
+                    break
+
+                assert isinstance(message, str), f"Expected str, got {type(message)}"
+                response, should_stop = process_message(message)
+
+                if should_stop:
+                    if isinstance(response, AgentStatusResponse):
+                        return response
+                    return None
+
+        except ConnectionError as e:
+            logger.error(f"Connection error: {agent_id} {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Error: {agent_id} {e} {traceback.format_exc()}")
+            return None
+        finally:
+            try:
+                ws.removeEventListener("message", on_message_proxy)  # pyright: ignore[reportUnknownMemberType]
+                ws.removeEventListener("error", on_error_proxy)  # pyright: ignore[reportUnknownMemberType]
+                ws.removeEventListener("close", on_close_proxy)  # pyright: ignore[reportUnknownMemberType]
+            except Exception:
+                pass
+            on_message_proxy.destroy()  # pyright: ignore[reportUnknownMemberType]
+            on_error_proxy.destroy()  # pyright: ignore[reportUnknownMemberType]
+            on_close_proxy.destroy()  # pyright: ignore[reportUnknownMemberType]
+            ws.close()  # pyright: ignore[reportUnknownMemberType]
+
+        return None
+
+    async def async_watch_logs_and_wait(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse:
+        """
+        Execute a task with the agent and wait for completion asynchronously.
+
+        This method is required for Pyodide environments where synchronous WebSocket
+        connections are not supported.
+
+        Args:
+            agent_id (str): The agent identifier.
+            session_id (str): The session identifier.
+            log (bool): Whether to log the agent steps.
+
+        Returns:
+            AgentStatusResponse: The response from the completed agent execution.
+        """
+        status = None
+        try:
+            response = await self.async_watch_logs(agent_id=agent_id, session_id=session_id, log=log)
+            if response is not None:
+                return response
+            logger.warning(f"[Agent] {agent_id} did not return status response. Fetching status as fallback.")
+            return self.status(agent_id=agent_id)
+
+        except asyncio.CancelledError:
+            if status is None:
+                status = self.status(agent_id=agent_id)
             if status.status != AgentStatus.closed:
                 _ = self.stop(agent_id=agent_id, session_id=session_id)
             raise
