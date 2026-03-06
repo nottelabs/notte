@@ -1,5 +1,5 @@
 # @sniptest filename=live_log_streaming.py
-# @sniptest show=6-15
+# @sniptest show=6-17
 from notte_sdk import NotteClient
 
 client = NotteClient()
