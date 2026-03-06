@@ -44,10 +44,13 @@ def to_openrouter_model(model: str) -> str:
 def check_openrouter_available() -> bool:
     """Check if OpenRouter API key is available.
 
-    Note: Calls load_dotenv() to ensure .env variables are loaded before checking.
+    Note: Relies on load_dotenv() having been called at module import time.
     """
-    load_dotenv()
     return os.getenv("OPENROUTER_API_KEY") is not None
+
+
+# Load .env at module import time (before pytest collection evaluates skipif)
+load_dotenv()
 
 
 @pytest.fixture(autouse=True, scope="module")

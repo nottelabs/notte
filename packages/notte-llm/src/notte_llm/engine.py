@@ -162,9 +162,9 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
     Returns the schema wrapped in OpenAI's json_schema response_format structure.
     """
     # Extract schema name (title) before processing
-    # OpenAI requires name to match ^[a-zA-Z0-9_-]+$ so we sanitize it
+    # OpenAI requires name to match ^[a-zA-Z0-9_-]{1,64}$ so we sanitize and truncate it
     raw_name = schema.get("title", "response")
-    schema_name = re.sub(r"[^a-zA-Z0-9_-]", "_", raw_name)
+    schema_name = re.sub(r"[^a-zA-Z0-9_-]", "_", raw_name)[:64]
 
     # Step 1: Resolve all $ref references by inlining definitions
     schema = _resolve_schema_refs(schema)
@@ -310,12 +310,8 @@ class LLMEngine:
                 # For Anthropic models, pass the Pydantic model directly
                 # litellm handles the conversion to Anthropic's format
                 litellm_response_format = response_format
-            # Catch-all for when enable_openrouter() is globally enabled but model doesn't match above
-            # This handles non-Gemini, non-Anthropic models when OpenRouter mode is on
-            elif enable_openrouter():
-                litellm_response_format = fix_schema_for_openai(raw_schema)
             else:
-                # For OpenAI and other models, use OpenAI's json_schema format
+                # For OpenAI and other models (including via OpenRouter), use OpenAI's json_schema format
                 litellm_response_format = fix_schema_for_openai(raw_schema)
 
         raised_exc = None
