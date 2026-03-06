@@ -343,15 +343,15 @@ class AgentsClient(BaseClient):
             )
 
         # Use native Python sync websockets library
-        with sync_client.connect(  # pyright: ignore[reportPossiblyUnboundVariable]
-            uri=wss_url,
-            open_timeout=30,
-            ping_interval=5,
-            ping_timeout=40,
-            close_timeout=5,
-            max_size=5 * (2**20),  # 5MB max size
-        ) as websocket:
-            try:
+        try:
+            with sync_client.connect(  # pyright: ignore[reportPossiblyUnboundVariable]
+                uri=wss_url,
+                open_timeout=30,
+                ping_interval=5,
+                ping_timeout=40,
+                close_timeout=5,
+                max_size=5 * (2**20),  # 5MB max size
+            ) as websocket:
                 for message in websocket:
                     assert isinstance(message, str), f"Expected str, got {type(message)}"
                     response, should_stop = process_message(message)
@@ -361,13 +361,12 @@ class AgentsClient(BaseClient):
                         if isinstance(response, AgentStatusResponse):
                             return response
                         return None
-
-            except ConnectionError as e:
-                logger.error(f"Connection error: {agent_id} {e}")
-                return None
-            except Exception as e:
-                logger.error(f"Error: {agent_id} {e} {traceback.format_exc()}")
-                return None
+        except ConnectionError as e:
+            logger.error(f"Connection error: {agent_id} {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Error: {agent_id} {e} {traceback.format_exc()}")
+            return None
 
         return None
 
