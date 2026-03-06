@@ -183,7 +183,7 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
         "allOf",
         "const",
         "description",
-        "title",
+        # Note: "title" is intentionally omitted - not in OpenAI's strict-mode supported keywords
         # Note: "additionalProperties" is intentionally omitted - we unconditionally set it to False
         "minItems",
         "maxItems",
@@ -293,10 +293,7 @@ class LLMEngine:
             # OpenRouter routes to various backends with incompatible schema support:
             # - Bedrock doesn't support oneOf at all
             # - Anthropic direct limits anyOf to 16 parameters
-            # Note: Don't apply this to vertex_ai/ models - they go direct to Vertex AI, not OpenRouter
-            is_routed_via_openrouter = is_openrouter_model(effective_model) or (
-                enable_openrouter() and not effective_model.lower().startswith("vertex_ai")
-            )
+            is_routed_via_openrouter = is_openrouter_model(effective_model) or enable_openrouter()
             if is_routed_via_openrouter and is_anthropic_model(effective_model):
                 litellm_response_format = dict(type="json_object")
                 use_strict_response_format = False
