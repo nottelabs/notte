@@ -144,6 +144,7 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
                 else [],
                 proxy=options.proxy,
                 user_agent=options.user_agent,
+                extra_http_headers=options.extra_http_headers,
             )
 
             if len(context.pages) == 0:

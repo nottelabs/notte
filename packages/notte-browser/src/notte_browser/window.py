@@ -64,6 +64,8 @@ class BrowserWindowOptions(BaseModel):
     debug_port: int | None
     custom_devtools_frontend: str | None
 
+    extra_http_headers: dict[str, str] | None = None
+
     def set_cdp_url(self, cdp_url: str) -> Self:
         self.cdp_url = cdp_url
         return self
@@ -141,6 +143,7 @@ class BrowserWindowOptions(BaseModel):
             web_security=config.web_security,
             debug_port=config.debug_port,
             custom_devtools_frontend=config.custom_devtools_frontend,
+            extra_http_headers=request.extra_http_headers,
         )
 
 
