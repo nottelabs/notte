@@ -715,6 +715,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     screenshot_type: ScreenshotType
     profile: SessionProfileDict | SessionProfile | None
     web_bot_auth: bool
+    extra_http_headers: dict[str, str] | None
 
 
 class SessionStartRequest(SdkRequest):
@@ -777,6 +778,11 @@ class SessionStartRequest(SdkRequest):
     ] = None
 
     web_bot_auth: Annotated[bool, Field(description="Whether to use web bot authentication.")] = False
+
+    extra_http_headers: Annotated[
+        dict[str, str] | None,
+        Field(description="Extra HTTP headers to be sent with every request."),
+    ] = None
 
     @model_validator(mode="before")
     @classmethod
