@@ -5,7 +5,7 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-with client.Session(browser_type="firefox", solve_captchas=True) as session:
+with client.Session(solve_captchas=True) as session:
     page = session.page
 
     # Navigate to page

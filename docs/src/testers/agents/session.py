@@ -3,7 +3,7 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-with client.Session(browser_type="firefox") as session:
+with client.Session() as session:
     _ = client.Agent(session=session).run(
         task="What's the weather like in SF tonight?",
     )

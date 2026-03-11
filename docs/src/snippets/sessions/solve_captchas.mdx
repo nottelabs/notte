@@ -5,7 +5,7 @@
 from notte_sdk import NotteClient
 
 client = NotteClient()
-with client.Session(solve_captchas=True, browser_type="firefox", open_viewer=True) as session:
+with client.Session(solve_captchas=True, open_viewer=True) as session:
     # Navigate to a page with a CAPTCHA
     agent = client.Agent(session=session, max_steps=5)
     resp = agent.run(

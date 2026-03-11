@@ -41,7 +41,7 @@ Customize your session with these options:
 </ParamField>
 
 <ParamField path="solve_captchas" type="boolean" default={false}>
-  Automatically detect and solve captchas (reCAPTCHA, hCaptcha, etc.). Requires `browser_type="firefox"`.
+  Automatically detect and solve captchas (reCAPTCHA, hCaptcha, etc.)
 </ParamField>
 
 <ParamField path="proxies" type="boolean | list[ProxySettings]" default={false}>
@@ -61,8 +61,8 @@ Customize your session with these options:
   Browser viewport height in pixels.
 </ParamField>
 
-<ParamField path="browser_type" type="string" default={"chromium"}>
-  Browser engine to use: `"chromium"`, `"chrome"`, or `"firefox"`. Note: Captcha solving requires Firefox.
+<ParamField path="browser_type" type="string" default={"chrome"}>
+  Browser engine to use: `"chromium"`, or `"chrome"`.
 </ParamField>
 
 ### Advanced Parameters
@@ -130,10 +130,6 @@ Route sessions through residential proxies for geo-targeting and enhanced stealt
 Automatically detect and solve captchas during automation:
 
 <CaptchaSolving />
-
-<Warning>
-  Captcha solving is only available with `browser_type="firefox"`. It supports reCAPTCHA v2, reCAPTCHA v3, and hCaptcha.
-</Warning>
 
 <Note>
   See the [Captcha Solving](/features/sessions/captcha-solving) guide for more details.

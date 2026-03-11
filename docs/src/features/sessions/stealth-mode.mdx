@@ -146,7 +146,6 @@ Combine stealth with automatic captcha solving for comprehensive protection:
   client = NotteClient()
 
   with client.Session(
-      browser_type="firefox",  # Required for captcha solving
       solve_captchas=True,
       proxies=True
   ) as session:
