@@ -320,6 +320,7 @@ class ExecutionResult(FilledTimedSpan):
     action: ActionUnion
     success: bool
     message: str
+    url: str | None = None  # URL at time of action execution
     data: DataSpace | None = None
     exception: NotteBaseError | Exception | None = Field(default=None)
 

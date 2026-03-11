@@ -575,6 +575,7 @@ class NotteSession(AsyncResource, SyncResource):
         exception = None
         scraped_data = None
         resolved_action = None
+        action_url = self.page.url  # Capture URL BEFORE action execution
 
         with TimedSpan.capture() as span:
             try:
@@ -707,6 +708,7 @@ class NotteSession(AsyncResource, SyncResource):
             action=resolved_action,
             success=success,
             message=message,
+            url=action_url,
             data=scraped_data,
             exception=exception,
             started_at=span.started_at,
@@ -921,6 +923,7 @@ class NotteSession(AsyncResource, SyncResource):
 
         exception: Exception | None = None
         data: DataSpace | None = None
+        scrape_url = self.page.url  # Capture URL BEFORE scrape execution
         with TimedSpan.capture() as span:
             try:
                 data = await self._ascrape(**params)
@@ -931,6 +934,7 @@ class NotteSession(AsyncResource, SyncResource):
                     action=scrape_action,
                     success=False,
                     message=scrape_action.execution_message(),
+                    url=scrape_url,
                     data=None,
                     exception=exception,
                     started_at=span.started_at,
@@ -957,6 +961,7 @@ class NotteSession(AsyncResource, SyncResource):
             # success is True if structured_scrape_failed is False, otherwise False
             success=not data.structured_scrape_failed if is_structured_scrape else True,
             message=scrape_action.execution_message(),
+            url=scrape_url,
             data=data,
             exception=data.structured_scrape_exception if is_structured_scrape else None,
             started_at=span.started_at,
