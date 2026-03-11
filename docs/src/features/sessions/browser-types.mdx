@@ -1,6 +1,6 @@
 ---
 title: Browser Types
-description: Choose between Chromium, Chrome, and Firefox for your sessions
+description: Choose between Chromium or Chrome for your sessions
 ---
 
 Notte supports multiple browser engines, allowing you to choose the right browser for your automation needs.
@@ -49,40 +49,6 @@ Google Chrome with additional Google-specific features and branding.
 - Google service automation
 - Maximum compatibility
 
-### Firefox
-
-Mozilla Firefox browser engine.
-
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  with client.Session(browser_type="firefox") as session:
-      page = session.page
-      page.goto("https://example.com")
-  ```
-</CodeGroup>
-
-**Best for:**
-- Sites that work better on Firefox
-- Different fingerprinting profile
-- **Required for captcha solving**
-
-<Warning>
-  Captcha solving is only available with Firefox. Set `browser_type="firefox"` and `solve_captchas=True` to enable automatic captcha solving.
-</Warning>
-
-## Browser Comparison
-
-| Feature | Chromium | Chrome | Firefox |
-|---------|----------|--------|---------|
-| **Performance** | Fast | Fast | Medium |
-| **Stealth** | Good | Best | Good |
-| **Captcha Solving** | ❌ | ❌ | ✅ |
-| **Default** | ✅ | ❌ | ❌ |
-| **Playwright Support** | Full | Full | Full |
 
 ## Choosing the Right Browser
 
@@ -96,35 +62,6 @@ Mozilla Firefox browser engine.
 - Automating Google services
 - You need maximum compatibility
 
-### Use Firefox when:
-- You need captcha solving capabilities
-- Sites work better on Firefox
-- You want different browser fingerprints
-
-## Example: Browser-Specific Automation
-
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  # Use Firefox for captcha-heavy sites
-  with client.Session(
-      browser_type="firefox",
-      solve_captchas=True
-  ) as session:
-      page = session.page
-      page.goto("https://www.google.com/recaptcha/api2/demo")
-      # Captchas automatically solved
-
-  # Use Chrome for Google services
-  with client.Session(browser_type="chrome") as session:
-      page = session.page
-      page.goto("https://mail.google.com")
-  ```
-</CodeGroup>
-
 ## Next Steps
 
 <CardGroup cols={2}>
@@ -133,7 +70,7 @@ Mozilla Firefox browser engine.
   </Card>
 
   <Card title="CAPTCHA Solving" icon="shield-check" href="/features/sessions/captcha-solving">
-    Automatically solve captchas with Firefox
+    Automatically solve captchas
   </Card>
 
   <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">

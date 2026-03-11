@@ -244,10 +244,10 @@ def test_remote_storage_raises_on_local_session():
 
 def test_captcha_solver_not_available_error():
     with pytest.raises(CaptchaSolverNotAvailableError):
-        _ = NotteSession(solve_captchas=True, browser_type="firefox")
+        _ = NotteSession(solve_captchas=True, browser_type="chrome")
 
     CaptchaHandler.is_available = True
-    _ = NotteSession(solve_captchas=True, browser_type="firefox")
+    _ = NotteSession(solve_captchas=True, browser_type="chrome")
     CaptchaHandler.is_available = False
 
 

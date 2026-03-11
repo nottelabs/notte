@@ -12,9 +12,6 @@ import TimeoutHandling from "/snippets/sessions/captcha/timeout_handling.mdx";
 
 Notte can automatically detect and solve captchas including reCAPTCHA v2, reCAPTCHA v3, and hCaptcha during your browser automation.
 
-<Warning>
-  CAPTCHA solving is only available with Firefox. You must set `browser_type="firefox"` to use this feature.
-</Warning>
 
 ## Quick Start
 
@@ -26,10 +23,7 @@ Enable captcha solving when creating a session:
 
   client = NotteClient()
 
-  with client.Session(
-      browser_type="firefox",  # Required
-      solve_captchas=True
-  ) as session:
+  with client.Session(solve_captchas=True) as session:
       page = session.page
       page.goto("https://www.google.com/recaptcha/api2/demo")
       # Captcha automatically solved
@@ -63,7 +57,6 @@ No additional code is needed - captchas are solved automatically when encountere
   client = NotteClient()
 
   with client.Session(
-      browser_type="firefox",
       solve_captchas=True,
       headless=False  # Watch it solve captchas
   ) as session:
@@ -96,7 +89,6 @@ Combine captcha solving with proxies for better success rates:
   client = NotteClient()
 
   with client.Session(
-      browser_type="firefox",
       solve_captchas=True,
       proxies=True  # Use residential proxies
   ) as session:
@@ -143,7 +135,6 @@ Use stealth features for better success rates:
 
 ### What It Cannot Do:
 - ❌ Solve 100% of captchas (some are unsolvable)
-- ❌ Work with Chromium or Chrome (Firefox only)
 - ❌ Solve custom/proprietary captcha systems
 - ❌ Bypass all bot detection (combine with stealth)
 
@@ -152,7 +143,6 @@ Use stealth features for better success rates:
 ### Issue: Captchas Not Being Solved
 
 **Possible causes:**
-- Using Chromium/Chrome instead of Firefox
 - `solve_captchas=True` not set
 - Captcha type not supported
 - Site has additional bot detection
@@ -184,7 +174,6 @@ Test captcha solving on demo sites:
   ]
 
   with client.Session(
-      browser_type="firefox",
       solve_captchas=True,
       headless=False
   ) as session:
@@ -205,7 +194,7 @@ CAPTCHA solving incurs additional costs based on the number of captchas solved. 
 
 <CardGroup cols={2}>
   <Card title="Browser Types" icon="browser" href="/features/sessions/browser-types">
-    Learn about Firefox and other browsers
+    Learn about Chrome and other browsers
   </Card>
 
   <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">
