@@ -74,3 +74,17 @@ empty_page_max_retry   = 5
 
 # [misc]
 enable_profiling = false
+
+# [replay]
+# Visual effects for video replays
+replay_highlight_elements = true         # Flash/highlight target elements before interaction
+replay_action_overlay = true             # Show action type banner during execution
+replay_smooth_scroll = true              # Animate scrolls instead of instant jumps
+replay_slow_typing = true                # Character-by-character typing with delays
+
+# Timing configuration
+replay_highlight_duration_ms = 800       # Element highlight duration
+replay_highlight_color = "#ff9800"       # Orange highlight color
+replay_scroll_duration_ms = 500          # Smooth scroll animation duration
+replay_typing_delay_ms = 50              # Delay between characters when typing
+replay_action_overlay_duration_ms = 1500 # Action banner display time

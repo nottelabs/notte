@@ -350,6 +350,17 @@ class NotteConfigDict(TypedDict, total=False):
     # [misc]
     enable_profiling: bool
 
+    # [replay]
+    replay_highlight_elements: bool
+    replay_action_overlay: bool
+    replay_smooth_scroll: bool
+    replay_slow_typing: bool
+    replay_highlight_duration_ms: int
+    replay_highlight_color: str
+    replay_scroll_duration_ms: int
+    replay_typing_delay_ms: int
+    replay_action_overlay_duration_ms: int
+
 
 class TomlConfig(BaseModel):
     @classmethod
@@ -455,6 +466,17 @@ class NotteConfig(TomlConfig):
 
     # [misc]
     enable_profiling: bool
+
+    # [replay]
+    replay_highlight_elements: bool
+    replay_action_overlay: bool
+    replay_smooth_scroll: bool
+    replay_slow_typing: bool
+    replay_highlight_duration_ms: int
+    replay_highlight_color: str
+    replay_scroll_duration_ms: int
+    replay_typing_delay_ms: int
+    replay_action_overlay_duration_ms: int
 
     @override
     def model_post_init(self, context: Any, /) -> None:

@@ -58,6 +58,7 @@ from notte_browser.errors import (
 )
 from notte_browser.form_filling import FormFiller
 from notte_browser.playwright_async_api import Locator
+from notte_browser.replay_effects import ReplayEffects
 from notte_browser.window import BrowserWindow
 
 # Installed once per download action. Wraps URL.createObjectURL so we retain a
@@ -176,17 +177,24 @@ class BrowserController:
                 await window.page.wait_for_timeout(200)
                 # compute current scroll position for comparison after execution
                 scroll_position = await window.page.evaluate("window.scrollY")
+
+                # Calculate scroll amount
                 if amount is not None:
-                    await window.page.mouse.wheel(
-                        delta_x=0, delta_y=(-amount if isinstance(action, ScrollUpAction) else amount)
-                    )
+                    scroll_delta = -amount if isinstance(action, ScrollUpAction) else amount
                 else:
                     # Calculate 70% of viewport height for scroll amount
                     viewport_height = await window.page.evaluate("window.innerHeight")
                     scroll_amount = int(viewport_height * 0.7)
-                    await window.page.mouse.wheel(
-                        delta_x=0, delta_y=(-scroll_amount if isinstance(action, ScrollUpAction) else scroll_amount)
-                    )
+                    scroll_delta = -scroll_amount if isinstance(action, ScrollUpAction) else scroll_amount
+
+                # Use smooth scroll for replay effects, otherwise instant
+                from notte_core.common.config import config
+
+                if config.replay_smooth_scroll:
+                    await ReplayEffects.smooth_scroll(window.page, scroll_delta)
+                else:
+                    await window.page.mouse.wheel(delta_x=0, delta_y=scroll_delta)
+
                 await window.page.wait_for_timeout(200)
                 new_scroll_position = await window.page.evaluate("window.scrollY")
                 if new_scroll_position == scroll_position:
@@ -212,6 +220,9 @@ class BrowserController:
             press_enter = action.press_enter
         # locate element (possibly in iframe)
         locator: Locator = await locate_element(window.page, action.selectors)
+
+        # Flash highlight on element for replay effects
+        await ReplayEffects.flash_element_highlight(locator, window.page)
 
         original_url = window.page.url
 
@@ -285,6 +296,15 @@ class BrowserController:
                     )
 
                     await window.short_wait()
+                elif ReplayEffects.should_use_slow_typing():
+                    # Slow typing for replay visibility
+                    await locator.click()
+                    if action.clear_before_fill:
+                        await window.page.keyboard.press(key=f"{platform_control_key()}+A")
+                        await window.short_wait()
+                        await window.page.keyboard.press(key="Backspace")
+                        await window.short_wait()
+                    await locator.press_sequentially(get_str_value(value), delay=ReplayEffects.get_typing_delay())
                 else:
                     await locator.fill(get_str_value(value), timeout=action_timeout, force=action.clear_before_fill)
             case MultiFactorFillAction(value=value):

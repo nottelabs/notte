@@ -102,6 +102,7 @@ from notte_browser.errors import (
 )
 from notte_browser.playwright import PlaywrightManager
 from notte_browser.playwright_async_api import Locator, Page
+from notte_browser.replay_effects import ReplayEffects
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe
 from notte_browser.tagging.action.pipe import MainActionSpacePipe
@@ -707,6 +708,10 @@ class NotteSession(AsyncResource, SyncResource):
                 resolved_action = await NodeResolutionPipe.forward(step_action, self._snapshot, verbose=config.verbose)
                 if config.verbose:
                     logger.info(f"🌌 starting execution of action '{resolved_action.type}' ...")
+
+                # Show action overlay for replay effects
+                await ReplayEffects.show_action_overlay(self.window.page, resolved_action.type)
+
                 # --------------------------------
                 # ----- Step 2: execution -------
                 # --------------------------------
@@ -856,6 +861,9 @@ class NotteSession(AsyncResource, SyncResource):
             ended_at=span.close().ended_at,
         )
         await self.trajectory.append(execution_result)
+
+        # Cleanup replay overlays before taking screenshot
+        await ReplayEffects.cleanup_overlays(self.window.page)
 
         # add screenshot to trajectory (after the execution)
         if self._window is not None:
