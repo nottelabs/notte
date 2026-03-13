@@ -1,11 +1,12 @@
 import datetime as dt
+from typing import get_origin
 
 from litellm import json
 from notte_core.common.logging import logger
 from notte_core.common.types import TResponseFormat
 from notte_core.data.space import DictBaseModel, NoStructuredData, StructuredData
 from notte_llm.service import LLMService
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 from notte_browser.scraping.pruning import MarkdownPruningPipe
 
@@ -78,6 +79,7 @@ class SchemaScrapingPipe:
         # TODO: add masking but needs more testing
         masked_document = MarkdownPruningPipe.mask(document)
         document = self.llmserve.clip_tokens(masked_document.content if use_link_placeholders else document)
+
         match (response_format, instructions):
             case (None, None):
                 raise ValueError("response_format and instructions cannot be both None")
@@ -128,18 +130,24 @@ class SchemaScrapingPipe:
                     return response
                 try:
                     if isinstance(response.data.root, list):
-                        return StructuredData(
-                            success=False,
-                            error="The response is a list, but the schema is not a list",
-                            data=None,
-                        )
-                    data: BaseModel = _response_format.model_validate(response.data.root)
+                        # allow using root models, but dont hint them anywhere
+                        if (
+                            not issubclass(_response_format, RootModel)
+                            or get_origin(_response_format.model_fields["root"].annotation) is not list
+                        ):
+                            # err message hints at using a basemodel instead of rootmodel
+                            return StructuredData(
+                                success=False,
+                                error=f"The root element from the scrape response is a list ({response.data.root}), but the schema provided does not describe a list (you probably need to use an outer basemodel with a field list[<current basemodel>]).",
+                                data=None,
+                            )
+                    data: BaseModel = _response_format.model_validate(response.data.root)  # pyright: ignore[reportUnknownVariableType]
                     if use_link_placeholders:
-                        data = MarkdownPruningPipe.unmask_pydantic(document=masked_document, data=data)
+                        data = MarkdownPruningPipe.unmask_pydantic(document=masked_document, data=data)  # pyright: ignore[reportUnknownVariableType,reportUnknownArgumentType]
                     return StructuredData[BaseModel](
                         success=response.success,
                         error=response.error,
-                        data=data,
+                        data=data,  # pyright: ignore[reportUnknownArgumentType]
                     )
                 except Exception as e:
                     if verbose:
