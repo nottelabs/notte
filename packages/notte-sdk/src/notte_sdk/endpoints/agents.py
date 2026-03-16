@@ -369,7 +369,9 @@ class AgentsClient(BaseClient):
                 max_size=5 * (2**20),  # 5MB max size
             ) as websocket:
                 for message in websocket:
-                    assert isinstance(message, str), f"Expected str, got {type(message)}"
+                    if not isinstance(message, str):
+                        logger.warning(f"Expected str message, got {type(message).__name__}. Skipping.")
+                        continue
                     response, should_stop = self._process_ws_message(message, agent_id, log, counter)
 
                     if should_stop:
@@ -381,8 +383,8 @@ class AgentsClient(BaseClient):
             logger.error(f"Connection error: {agent_id} {e}")
             return None
         except Exception as e:
-            logger.error(f"Error: {agent_id} {e} {traceback.format_exc()}")
-            return None
+            logger.error(f"Unexpected websocket processing error: {agent_id} {e} {traceback.format_exc()}")
+            raise
 
         return None
 
@@ -507,7 +509,6 @@ class AgentsClient(BaseClient):
                 if message is None:
                     break
 
-                assert isinstance(message, str), f"Expected str, got {type(message)}"
                 response, should_stop = self._process_ws_message(message, agent_id, log, counter)
 
                 if should_stop:
@@ -519,8 +520,8 @@ class AgentsClient(BaseClient):
             logger.error(f"Connection error: {agent_id} {e}")
             return None
         except Exception as e:
-            logger.error(f"Error: {agent_id} {e} {traceback.format_exc()}")
-            return None
+            logger.error(f"Unexpected websocket processing error: {agent_id} {e} {traceback.format_exc()}")
+            raise
         finally:
             cleanup_ws()
 
