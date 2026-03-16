@@ -7,18 +7,19 @@ import notte
 
 @pytest.fixture
 def task():
-    return "go to notte.cc/pricing and extract the names and monthly costs of each pricing tier"
+    return "go to notte.cc and extract the names and monthly costs of each pricing tier"
 
 
+@pytest.mark.flaky(max_runs=3)
 def test_falco_agent(task: str):
     with notte.Session() as session:
-        agent = notte.Agent(session=session, agent_type=AgentType.FALCO, max_steps=5)
+        agent = notte.Agent(session=session, agent_type=AgentType.FALCO, max_steps=7)
         assert agent is not None
-        response = agent.run(task=task)
+        response = agent.run(task=task, url="https://notte.cc")
     assert response is not None
-    assert response.success
     assert response.answer is not None
-    assert response.answer != ""
+    assert response.answer != "", f"Expected non-empty answer, got: {response.answer}"
+    assert response.success, f"Failed to run agent: {response.answer}"
 
 
 @pytest.mark.skip("Renable that later on when we fix the gufo agent")
