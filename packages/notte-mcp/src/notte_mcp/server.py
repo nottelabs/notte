@@ -295,7 +295,7 @@ async def notte_operator(
     if vizualize_in_browser:
         session.viewer()
     # wait for the agent to finish
-    response = await agent.watch_logs_and_wait()
+    response = await agent.async_watch_logs_and_wait()
     global current_step
     async with _session_lock:
         current_step += len(response.steps)
