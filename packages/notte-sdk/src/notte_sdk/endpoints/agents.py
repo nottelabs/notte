@@ -478,9 +478,9 @@ class AgentsClient(BaseClient):
                 lambda: ws.removeEventListener("message", on_message_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
                 lambda: ws.removeEventListener("error", on_error_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
                 lambda: ws.removeEventListener("close", on_close_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
-                on_message_proxy.destroy,
-                on_error_proxy.destroy,
-                on_close_proxy.destroy,
+                lambda: on_message_proxy.destroy() if on_message_proxy is not None else None,
+                lambda: on_error_proxy.destroy() if on_error_proxy is not None else None,
+                lambda: on_close_proxy.destroy() if on_close_proxy is not None else None,
                 ws.close,  # pyright: ignore[reportUnknownMemberType]
             ):
                 try:
