@@ -484,7 +484,7 @@ class AgentsClient(BaseClient):
                 ws.close,  # pyright: ignore[reportUnknownMemberType]
             ):
                 try:
-                    cleanup()
+                    _ = cleanup()  # pyright: ignore[reportUnknownVariableType]
                 except Exception as e:
                     cleanup_errors.append(str(e))
             if cleanup_errors:
