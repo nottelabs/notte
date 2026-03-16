@@ -277,6 +277,72 @@ class AgentsClient(BaseClient):
 
         raise TimeoutError("Agent did not complete in time")
 
+    def _process_ws_message(
+        self,
+        message: str,
+        agent_id: str,
+        log: bool,
+        counter: list[int],
+    ) -> tuple[AgentCompletion | AgentStatusResponse | None, bool]:
+        """
+        Process a websocket message. Returns (response, should_stop).
+
+        Args:
+            message: The raw websocket message string.
+            agent_id: The agent identifier for logging.
+            log: Whether to log the agent steps.
+            counter: A mutable list containing [step_count] to track step number.
+
+        Returns:
+            Tuple of (response, should_stop) where response is the parsed message
+            and should_stop indicates if the agent has completed.
+        """
+        try:
+            dic = json.loads(message)
+            response = None
+
+            # output from validator
+            if isinstance(dic, dict) and "validation" in dic:
+                logger.opt(colors=True).info("<g>{message}</g>", message=dic["validation"])
+
+            # termination message
+            elif isinstance(dic, dict) and "status" in dic:
+                if dic["status"] == "agent_stop":
+                    # Parse the agent status response from the message
+                    if "agent" in dic:
+                        agent_status = AgentStatusResponse.model_validate(dic["agent"])
+                        return (agent_status, True)
+                    # Fallback: no agent field, this shouldn't happen but handle gracefully
+                    return (None, True)
+
+            # actual step
+            else:
+                if isinstance(dic, dict):
+                    response = AgentCompletion.model_validate(dic)
+                else:
+                    # Unexpected: log and skip
+                    logger.warning(f"Expected dict, got {type(dic).__name__}: {message[:200]}")
+                    return (None, False)
+                if log:
+                    logger.opt(colors=True).info(
+                        "✨ <r>Step {counter}</r> <y>(agent: {agent_id})</y>",
+                        counter=(counter[0] + 1),
+                        agent_id=agent_id,
+                    )
+                    response.live_log_state()
+                counter[0] += 1
+
+            return (response, False)
+
+        except (json.JSONDecodeError, ValidationError, TypeError, ValueError) as e:
+            if "error" in message and "last action failed with error" not in message:
+                logger.error(f"Error in agent logs: {e} {agent_id} {message}")
+            elif agent_id in message and "agent_id" in message:
+                logger.error(f"Error parsing AgentStatusResponse for message: {message}: {e}")
+            else:
+                logger.error(f"Error parsing agent logs for message: {message}: {e}")
+            return (None, False)
+
     def watch_logs(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse | None:
         """
         Watch the logs of the specified agent.
@@ -285,61 +351,11 @@ class AgentsClient(BaseClient):
         wss_url = self.request_path(endpoint).format(agent_id=agent_id, token=self.token, session_id=session_id)
         wss_url = wss_url.replace("https://", "wss://").replace("http://", "ws://")
 
-        counter = 0
-
-        def process_message(message: str) -> tuple[AgentCompletion | AgentStatusResponse | None, bool]:
-            """Process a websocket message. Returns (response, should_stop)."""
-            nonlocal counter
-            try:
-                # try to json load
-                dic = json.loads(message)
-                response = None
-
-                # output from validator
-                if isinstance(dic, dict) and "validation" in dic:
-                    logger.opt(colors=True).info("<g>{message}</g>", message=dic["validation"])
-
-                # termination message
-                elif isinstance(dic, dict) and "status" in dic:
-                    if dic["status"] == "agent_stop":
-                        # Parse the agent status response from the message
-                        if "agent" in dic:
-                            agent_status = AgentStatusResponse.model_validate(dic["agent"])
-                            return (agent_status, True)
-                        # Fallback: no agent field, this shouldn't happen but handle gracefully
-                        return (None, True)
-
-                # actual step
-                else:
-                    if isinstance(dic, dict):
-                        response = AgentCompletion.model_validate(dic)
-                    else:
-                        # Unexpected: log and skip
-                        logger.warning(f"Expected dict, got {type(dic).__name__}: {message[:200]}")
-                        return (None, False)
-                    if log:
-                        logger.opt(colors=True).info(
-                            "✨ <r>Step {counter}</r> <y>(agent: {agent_id})</y>",
-                            counter=(counter + 1),
-                            agent_id=agent_id,
-                        )
-                        response.live_log_state()
-                    counter += 1
-
-                return (response, False)
-
-            except (json.JSONDecodeError, ValidationError, TypeError, ValueError) as e:
-                if "error" in message and "last action failed with error" not in message:
-                    logger.error(f"Error in agent logs: {e} {agent_id} {message}")
-                elif agent_id in message and "agent_id" in message:
-                    logger.error(f"Error parsing AgentStatusResponse for message: {message}: {e}")
-                else:
-                    logger.error(f"Error parsing agent logs for message: {message}: {e}")
-                return (None, False)
+        counter = [0]  # mutable container for step count
 
         if RUNNING_IN_PYODIDE:
             raise NotImplementedError(
-                "Synchronous watch_logs is not supported in Pyodide. Use async_watch_logs instead."
+                "Synchronous watch_logs is not supported in Pyodide. Use async_watch_logs() or async_watch_logs_and_wait() instead."
             )
 
         # Use native Python sync websockets library
@@ -354,7 +370,7 @@ class AgentsClient(BaseClient):
             ) as websocket:
                 for message in websocket:
                     assert isinstance(message, str), f"Expected str, got {type(message)}"
-                    response, should_stop = process_message(message)
+                    response, should_stop = self._process_ws_message(message, agent_id, log, counter)
 
                     if should_stop:
                         # If we got an AgentStatusResponse, return it; otherwise return None (failure)
@@ -384,7 +400,14 @@ class AgentsClient(BaseClient):
         """
         # In Pyodide, use asyncio.run with the async version since sync websockets aren't supported
         if RUNNING_IN_PYODIDE:
-            return asyncio.run(self.async_watch_logs_and_wait(agent_id=agent_id, session_id=session_id, log=log))
+            try:
+                _ = asyncio.get_running_loop()
+            except RuntimeError:
+                # No loop running, safe to use asyncio.run
+                return asyncio.run(self.async_watch_logs_and_wait(agent_id=agent_id, session_id=session_id, log=log))
+            raise RuntimeError(
+                "watch_logs_and_wait() cannot run inside an active event loop in Pyodide. Use `await async_watch_logs_and_wait(...)` instead."
+            )
 
         try:
             response = self.watch_logs(agent_id=agent_id, session_id=session_id, log=log)
@@ -423,50 +446,7 @@ class AgentsClient(BaseClient):
         wss_url = self.request_path(endpoint).format(agent_id=agent_id, token=self.token, session_id=session_id)
         wss_url = wss_url.replace("https://", "wss://").replace("http://", "ws://")
 
-        counter = 0
-
-        def process_message(message: str) -> tuple[AgentCompletion | AgentStatusResponse | None, bool]:
-            """Process a websocket message. Returns (response, should_stop)."""
-            nonlocal counter
-            try:
-                dic = json.loads(message)
-                response = None
-
-                if isinstance(dic, dict) and "validation" in dic:
-                    logger.opt(colors=True).info("<g>{message}</g>", message=dic["validation"])
-
-                elif isinstance(dic, dict) and "status" in dic:
-                    if dic["status"] == "agent_stop":
-                        if "agent" in dic:
-                            agent_status = AgentStatusResponse.model_validate(dic["agent"])
-                            return (agent_status, True)
-                        return (None, True)
-
-                else:
-                    if isinstance(dic, dict):
-                        response = AgentCompletion.model_validate(dic)
-                    else:
-                        logger.warning(f"Expected dict, got {type(dic).__name__}: {message[:200]}")
-                        return (None, False)
-                    if log:
-                        logger.opt(colors=True).info(
-                            "✨ <r>Step {counter}</r> <y>(agent: {agent_id})</y>",
-                            counter=(counter + 1),
-                            agent_id=agent_id,
-                        )
-                        response.live_log_state()
-                    counter += 1
-
-                return (response, False)
-
-            except (json.JSONDecodeError, ValidationError, TypeError, ValueError) as e:
-                if "error" in message and "last action failed with error" not in message:
-                    logger.error(f"Error in agent logs: {e} {agent_id} {message}")
-                elif agent_id in message and "agent_id" in message:
-                    logger.error(f"Error parsing AgentStatusResponse for message: {message}: {e}")
-                else:
-                    logger.error(f"Error parsing agent logs for message: {message}: {e}")
-                return (None, False)
+        counter = [0]  # mutable container for step count
 
         # Use JavaScript WebSocket API via Pyodide FFI
         ws = js.WebSocket.new(wss_url)  # pyright: ignore[reportPossiblyUnboundVariable, reportUnknownMemberType, reportUnknownVariableType]
@@ -500,7 +480,7 @@ class AgentsClient(BaseClient):
                     break
 
                 assert isinstance(message, str), f"Expected str, got {type(message)}"
-                response, should_stop = process_message(message)
+                response, should_stop = self._process_ws_message(message, agent_id, log, counter)
 
                 if should_stop:
                     if isinstance(response, AgentStatusResponse):
@@ -518,8 +498,8 @@ class AgentsClient(BaseClient):
                 ws.removeEventListener("message", on_message_proxy)  # pyright: ignore[reportUnknownMemberType]
                 ws.removeEventListener("error", on_error_proxy)  # pyright: ignore[reportUnknownMemberType]
                 ws.removeEventListener("close", on_close_proxy)  # pyright: ignore[reportUnknownMemberType]
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to remove WebSocket listeners: {e}")
             on_message_proxy.destroy()  # pyright: ignore[reportUnknownMemberType]
             on_error_proxy.destroy()  # pyright: ignore[reportUnknownMemberType]
             on_close_proxy.destroy()  # pyright: ignore[reportUnknownMemberType]
