@@ -415,11 +415,15 @@ class AgentsClient(BaseClient):
                 return response
             # If we didn't get a response, poll status until agent is closed
             logger.warning(f"[Agent] {agent_id} did not return status response. Polling status until closed.")
-            while True:
+            max_wait_secs = 300
+            waited = 0
+            while waited < max_wait_secs:
                 status = self.status(agent_id=agent_id)
                 if status.status == AgentStatus.closed:
                     return status
                 time.sleep(1)
+                waited += 1
+            raise TimeoutError(f"Agent {agent_id} did not reach a terminal state within {max_wait_secs}s")
 
         except KeyboardInterrupt:
             status = self.status(agent_id=agent_id)
@@ -542,11 +546,15 @@ class AgentsClient(BaseClient):
                 return response
             # If we didn't get a response, poll status until agent is closed
             logger.warning(f"[Agent] {agent_id} did not return status response. Polling status until closed.")
-            while True:
+            max_wait_secs = 300
+            waited = 0
+            while waited < max_wait_secs:
                 status = self.status(agent_id=agent_id)
                 if status.status == AgentStatus.closed:
                     return status
                 await asyncio.sleep(1)
+                waited += 1
+            raise TimeoutError(f"Agent {agent_id} did not reach a terminal state within {max_wait_secs}s")
 
         except asyncio.CancelledError:
             status = self.status(agent_id=agent_id)
@@ -991,11 +999,20 @@ class RemoteAgent:
         """
         Watch the logs of the agent and wait for completion asynchronously.
 
-        This method runs the synchronous watch_logs_and_wait in a thread pool
+        In Pyodide (WebAssembly), this delegates to the client's async method directly
+        since asyncio.to_thread is not supported in single-threaded environments.
+        In native Python, this runs the synchronous watch_logs_and_wait in a thread pool
         to avoid blocking the event loop.
         """
         if self.existing_agent:
             raise ValueError("You cannot call async_watch_logs_and_wait() on an agent instantiated from agent id")
+
+        if RUNNING_IN_PYODIDE:
+            return await self.client.async_watch_logs_and_wait(
+                agent_id=self.agent_id,
+                session_id=self.session_id,
+                log=log,
+            )
 
         return await asyncio.to_thread(
             self.client.watch_logs_and_wait,
