@@ -494,15 +494,14 @@ class AgentsClient(BaseClient):
         # Wait for connection with timeout
         connect_timeout = 30.0
         connect_waited = 0.0
-        while ws.readyState == 0:  # CONNECTING  # pyright: ignore[reportUnknownMemberType]
-            if connect_waited >= connect_timeout:
-                logger.error(f"[Agent] {agent_id} websocket connection timed out after {connect_timeout}s")
-                cleanup_ws()
-                return None
-            await asyncio.sleep(0.1)
-            connect_waited += 0.1
 
         try:
+            while ws.readyState == 0:  # CONNECTING  # pyright: ignore[reportUnknownMemberType]
+                if connect_waited >= connect_timeout:
+                    logger.error(f"[Agent] {agent_id} websocket connection timed out after {connect_timeout}s")
+                    return None
+                await asyncio.sleep(0.1)
+                connect_waited += 0.1
             while True:
                 message = await message_queue.get()
                 if message is None:
