@@ -464,6 +464,7 @@ class AgentsClient(BaseClient):
 
         def on_error(_event: Any) -> None:
             logger.error("WebSocket error occurred")
+            message_queue.put_nowait(None)  # Signal consumer to stop on error
 
         def on_close(_event: Any) -> None:
             message_queue.put_nowait(None)
@@ -476,9 +477,15 @@ class AgentsClient(BaseClient):
         ws.addEventListener("error", on_error_proxy)  # pyright: ignore[reportUnknownMemberType]
         ws.addEventListener("close", on_close_proxy)  # pyright: ignore[reportUnknownMemberType]
 
-        # Wait for connection
+        # Wait for connection with timeout
+        connect_timeout = 30.0
+        connect_waited = 0.0
         while ws.readyState == 0:  # CONNECTING  # pyright: ignore[reportUnknownMemberType]
+            if connect_waited >= connect_timeout:
+                logger.error(f"[Agent] {agent_id} websocket connection timed out after {connect_timeout}s")
+                return None
             await asyncio.sleep(0.1)
+            connect_waited += 0.1
 
         try:
             while True:
