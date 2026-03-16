@@ -11,7 +11,7 @@ async def run_with_timeout(agent, timeout_seconds=60):
             result = await agent.async_watch_logs_and_wait()
         return result
     except TimeoutError:
-        agent.stop()
+        # agent.stop() is already called internally by async_watch_logs_and_wait on cancellation
         raise TimeoutError(f"Agent exceeded {timeout_seconds}s timeout")
 
 

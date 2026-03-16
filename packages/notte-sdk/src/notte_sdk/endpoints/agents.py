@@ -1010,6 +1010,12 @@ class RemoteAgent:
         since asyncio.to_thread is not supported in single-threaded environments.
         In native Python, this runs the synchronous watch_logs_and_wait in a thread pool
         to avoid blocking the event loop.
+
+        Note: When cancelled (e.g., via asyncio.timeout), this method stops the agent
+        gracefully. However, in native Python the underlying thread cannot be interrupted
+        immediately - it will continue until the server processes the stop signal and
+        closes the WebSocket connection. This is not a leak, but cancellation may not
+        be instantaneous under high load.
         """
         if self.existing_agent:
             raise ValueError("You cannot call async_watch_logs_and_wait() on an agent instantiated from agent id")
