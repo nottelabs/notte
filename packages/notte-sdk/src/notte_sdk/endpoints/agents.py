@@ -618,6 +618,16 @@ class AgentsClient(BaseClient):
         > Websockets are used to stream the agent logs to the standard output to provide live logs to the user.
         """
         response = self.start(**data)
+
+        if RUNNING_IN_PYODIDE:
+            # In Pyodide, use the async path - asyncio.run works with Pyodide's WebLoop
+            return asyncio.run(
+                self.async_watch_logs_and_wait(
+                    agent_id=response.agent_id,
+                    session_id=response.session_id,
+                )
+            )
+
         return self.watch_logs_and_wait(
             agent_id=response.agent_id,
             session_id=response.session_id,
@@ -747,6 +757,16 @@ class AgentsClient(BaseClient):
 
         if viewer:
             self.root_client.sessions.viewer(response.session_id)
+
+        if RUNNING_IN_PYODIDE:
+            # In Pyodide, use the async path - asyncio.run works with Pyodide's WebLoop
+            return asyncio.run(
+                self.async_watch_logs_and_wait(
+                    agent_id=response.agent_id,
+                    session_id=response.session_id,
+                    log=True,
+                )
+            )
 
         return self.watch_logs_and_wait(
             agent_id=response.agent_id,
@@ -1103,7 +1123,12 @@ class RemoteAgent:
 
         self.response = self.start(**data)
         logger.info(f"[Agent] {self.agent_id} started with model: {self.request.reasoning_model}")
-        status_response = self.watch_logs_and_wait()
+
+        if RUNNING_IN_PYODIDE:
+            # In Pyodide, use the async path - asyncio.run works with Pyodide's WebLoop
+            status_response = asyncio.run(self.async_watch_logs_and_wait())
+        else:
+            status_response = self.watch_logs_and_wait()
         prefix = "✅ Agent returned with success:" if status_response.success else "❌ Agent returned with failure:"
         logger.info(f"{prefix} {status_response.answer}")
         return status_response
