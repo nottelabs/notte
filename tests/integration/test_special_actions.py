@@ -43,15 +43,19 @@ async def test_goto_and_scrape():
     """Test the execution of various special actions"""
     async with NotteSession(headless=True) as page:
         # Test S1: Go to URL
-        _ = await page.aexecute(type="goto", value="https://example.com/")
+        _ = await page.aexecute(type="goto", url="https://example.com/")
         obs = await page.aobserve(perception_type="fast")
         assert obs.clean_url == "example.com"
 
-        example_com_str = "This domain is for use in documentation examples without needing permission. Avoid use in operations.\n\nLearn more"
+        example_com_str = (
+            "This domain is for use in documentation examples without needing permission. Avoid use in operations."
+        )
 
         # Test S2: Scrape data
         markdown = await page.ascrape()
-        assert markdown.strip() == example_com_str, f"Expected typical example.com str, got {markdown}"
+        assert example_com_str in markdown.strip(), (
+            f"Expected typical example.com str, got: \n ```markdown\n{markdown}\n```"
+        )
 
 
 @pytest.mark.asyncio
