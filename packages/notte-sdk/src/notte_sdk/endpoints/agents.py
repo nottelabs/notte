@@ -413,10 +413,13 @@ class AgentsClient(BaseClient):
             response = self.watch_logs(agent_id=agent_id, session_id=session_id, log=log)
             if response is not None:
                 return response
-            # If we didn't get a response, it means something failed
-            # Try to get the status once as a fallback
-            logger.warning(f"[Agent] {agent_id} did not return status response. Fetching status as fallback.")
-            return self.status(agent_id=agent_id)
+            # If we didn't get a response, poll status until agent is closed
+            logger.warning(f"[Agent] {agent_id} did not return status response. Polling status until closed.")
+            while True:
+                status = self.status(agent_id=agent_id)
+                if status.status == AgentStatus.closed:
+                    return status
+                time.sleep(1)
 
         except KeyboardInterrupt:
             status = self.status(agent_id=agent_id)
@@ -494,16 +497,22 @@ class AgentsClient(BaseClient):
             logger.error(f"Error: {agent_id} {e} {traceback.format_exc()}")
             return None
         finally:
-            try:
-                ws.removeEventListener("message", on_message_proxy)  # pyright: ignore[reportUnknownMemberType]
-                ws.removeEventListener("error", on_error_proxy)  # pyright: ignore[reportUnknownMemberType]
-                ws.removeEventListener("close", on_close_proxy)  # pyright: ignore[reportUnknownMemberType]
-                on_message_proxy.destroy()  # pyright: ignore[reportUnknownMemberType]
-                on_error_proxy.destroy()  # pyright: ignore[reportUnknownMemberType]
-                on_close_proxy.destroy()  # pyright: ignore[reportUnknownMemberType]
-                ws.close()  # pyright: ignore[reportUnknownMemberType]
-            except Exception as e:
-                logger.debug(f"Failed to clean up WebSocket resources: {e}")
+            cleanup_errors: list[str] = []
+            for cleanup in (  # pyright: ignore[reportUnknownVariableType]
+                lambda: ws.removeEventListener("message", on_message_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
+                lambda: ws.removeEventListener("error", on_error_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
+                lambda: ws.removeEventListener("close", on_close_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
+                on_message_proxy.destroy,  # pyright: ignore[reportUnknownMemberType]
+                on_error_proxy.destroy,  # pyright: ignore[reportUnknownMemberType]
+                on_close_proxy.destroy,  # pyright: ignore[reportUnknownMemberType]
+                ws.close,  # pyright: ignore[reportUnknownMemberType]
+            ):
+                try:
+                    cleanup()
+                except Exception as e:
+                    cleanup_errors.append(str(e))
+            if cleanup_errors:
+                logger.debug(f"Failed to clean up WebSocket resources: {'; '.join(cleanup_errors)}")
 
         return None
 
@@ -531,8 +540,13 @@ class AgentsClient(BaseClient):
             response = await self.async_watch_logs(agent_id=agent_id, session_id=session_id, log=log)
             if response is not None:
                 return response
-            logger.warning(f"[Agent] {agent_id} did not return status response. Fetching status as fallback.")
-            return self.status(agent_id=agent_id)
+            # If we didn't get a response, poll status until agent is closed
+            logger.warning(f"[Agent] {agent_id} did not return status response. Polling status until closed.")
+            while True:
+                status = self.status(agent_id=agent_id)
+                if status.status == AgentStatus.closed:
+                    return status
+                await asyncio.sleep(1)
 
         except asyncio.CancelledError:
             status = self.status(agent_id=agent_id)
@@ -972,6 +986,23 @@ class RemoteAgent:
             raise ValueError("You cannot call watch_logs_and_wait() on an agent instantiated from agent id")
 
         return self.client.watch_logs_and_wait(agent_id=self.agent_id, session_id=self.session_id, log=log)
+
+    async def async_watch_logs_and_wait(self, log: bool = True) -> AgentStatusResponse:
+        """
+        Watch the logs of the agent and wait for completion asynchronously.
+
+        This method runs the synchronous watch_logs_and_wait in a thread pool
+        to avoid blocking the event loop.
+        """
+        if self.existing_agent:
+            raise ValueError("You cannot call async_watch_logs_and_wait() on an agent instantiated from agent id")
+
+        return await asyncio.to_thread(
+            self.client.watch_logs_and_wait,
+            agent_id=self.agent_id,
+            session_id=self.session_id,
+            log=log,
+        )
 
     @track_usage("cloud.agent.stop")
     def stop(self) -> AgentResponse:
