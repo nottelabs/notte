@@ -12,7 +12,8 @@ client = NotteClient()
 async def run_agent_task():
     with client.Session() as session:
         agent = client.Agent(session=session)
-        result = await agent.arun(task="Extract data from the page")
+        agent.start(task="Extract data from the page")
+        result = await agent.async_watch_logs_and_wait()
         return result
 
 

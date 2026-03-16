@@ -16,7 +16,12 @@ async def main():
         # Multiple agents: Use async
         agent1 = client.Agent(session=session)
         agent2 = client.Agent(session=session)
-        results = await asyncio.gather(agent1.arun(task="Task 1"), agent2.arun(task="Task 2"))
+        agent1.start(task="Task 1")
+        agent2.start(task="Task 2")
+        results = await asyncio.gather(
+            agent1.async_watch_logs_and_wait(),
+            agent2.async_watch_logs_and_wait(),
+        )
 
         # Long tasks with monitoring: Use start() + polling
         agent.start(task="Long task")

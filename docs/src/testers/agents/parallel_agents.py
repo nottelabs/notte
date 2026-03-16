@@ -7,15 +7,16 @@ client = NotteClient()
 
 
 async def run_multiple_agents():
-    tasks = []
+    agents = []
 
     for task_description in ["Task 1", "Task 2", "Task 3"]:
         with client.Session() as session:
             agent = client.Agent(session=session)
-            tasks.append(agent.arun(task=task_description))
+            agent.start(task=task_description)
+            agents.append(agent)
 
     # Run all agents in parallel
-    results = await asyncio.gather(*tasks)
+    results = await asyncio.gather(*[a.async_watch_logs_and_wait() for a in agents])
     return results
 
 

@@ -6,7 +6,8 @@ from notte_sdk import NotteClient
 
 async def run_with_timeout(agent, timeout_seconds=60):
     try:
-        result = await asyncio.wait_for(agent.arun(task="Complete task"), timeout=timeout_seconds)
+        agent.start(task="Complete task")
+        result = await asyncio.wait_for(agent.async_watch_logs_and_wait(), timeout=timeout_seconds)
         return result
     except asyncio.TimeoutError:
         agent.stop()
