@@ -498,12 +498,12 @@ class AgentsClient(BaseClient):
                 ws.removeEventListener("message", on_message_proxy)  # pyright: ignore[reportUnknownMemberType]
                 ws.removeEventListener("error", on_error_proxy)  # pyright: ignore[reportUnknownMemberType]
                 ws.removeEventListener("close", on_close_proxy)  # pyright: ignore[reportUnknownMemberType]
+                on_message_proxy.destroy()  # pyright: ignore[reportUnknownMemberType]
+                on_error_proxy.destroy()  # pyright: ignore[reportUnknownMemberType]
+                on_close_proxy.destroy()  # pyright: ignore[reportUnknownMemberType]
+                ws.close()  # pyright: ignore[reportUnknownMemberType]
             except Exception as e:
-                logger.debug(f"Failed to remove WebSocket listeners: {e}")
-            on_message_proxy.destroy()  # pyright: ignore[reportUnknownMemberType]
-            on_error_proxy.destroy()  # pyright: ignore[reportUnknownMemberType]
-            on_close_proxy.destroy()  # pyright: ignore[reportUnknownMemberType]
-            ws.close()  # pyright: ignore[reportUnknownMemberType]
+                logger.debug(f"Failed to clean up WebSocket resources: {e}")
 
         return None
 
@@ -522,6 +522,11 @@ class AgentsClient(BaseClient):
         Returns:
             AgentStatusResponse: The response from the completed agent execution.
         """
+        if not RUNNING_IN_PYODIDE:
+            raise NotImplementedError(
+                "async_watch_logs_and_wait is only supported in Pyodide. Use watch_logs_and_wait instead."
+            )
+
         try:
             response = await self.async_watch_logs(agent_id=agent_id, session_id=session_id, log=log)
             if response is not None:
