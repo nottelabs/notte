@@ -13,9 +13,9 @@ async def run_with_timeout(agent, timeout_seconds=60):
             agent.start(task="Complete task")
             result = await agent.async_watch_logs_and_wait()
         return result
-    except TimeoutError:
+    except TimeoutError as e:
         # agent.stop() is already called internally by async_watch_logs_and_wait on cancellation
-        raise TimeoutError(f"Agent exceeded {timeout_seconds}s timeout")
+        raise TimeoutError(f"Agent exceeded {timeout_seconds}s timeout") from e
 
 
 client = NotteClient()

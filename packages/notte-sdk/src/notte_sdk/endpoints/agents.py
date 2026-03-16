@@ -466,24 +466,21 @@ class AgentsClient(BaseClient):
         def on_close(_event: Any) -> None:
             message_queue.put_nowait(None)
 
-        on_message_proxy = create_proxy(on_message)  # pyright: ignore[reportPossiblyUnboundVariable, reportUnknownVariableType]
-        on_error_proxy = create_proxy(on_error)  # pyright: ignore[reportPossiblyUnboundVariable, reportUnknownVariableType]
-        on_close_proxy = create_proxy(on_close)  # pyright: ignore[reportPossiblyUnboundVariable, reportUnknownVariableType]
+        # Initialize proxies to None for cleanup handling
+        on_message_proxy: Any = None
+        on_error_proxy: Any = None
+        on_close_proxy: Any = None
 
-        ws.addEventListener("message", on_message_proxy)  # pyright: ignore[reportUnknownMemberType]
-        ws.addEventListener("error", on_error_proxy)  # pyright: ignore[reportUnknownMemberType]
-        ws.addEventListener("close", on_close_proxy)  # pyright: ignore[reportUnknownMemberType]
-
-        # Helper to clean up WebSocket resources
+        # Helper to clean up WebSocket resources (tolerates partially initialized state)
         def cleanup_ws() -> None:
             cleanup_errors: list[str] = []
             for cleanup in (  # pyright: ignore[reportUnknownVariableType]
                 lambda: ws.removeEventListener("message", on_message_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
                 lambda: ws.removeEventListener("error", on_error_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
                 lambda: ws.removeEventListener("close", on_close_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
-                on_message_proxy.destroy,  # pyright: ignore[reportUnknownMemberType]
-                on_error_proxy.destroy,  # pyright: ignore[reportUnknownMemberType]
-                on_close_proxy.destroy,  # pyright: ignore[reportUnknownMemberType]
+                on_message_proxy.destroy,
+                on_error_proxy.destroy,
+                on_close_proxy.destroy,
                 ws.close,  # pyright: ignore[reportUnknownMemberType]
             ):
                 try:
@@ -498,6 +495,15 @@ class AgentsClient(BaseClient):
         connect_waited = 0.0
 
         try:
+            # Create proxies and register event listeners inside try block for proper cleanup
+            on_message_proxy = create_proxy(on_message)  # pyright: ignore[reportPossiblyUnboundVariable]
+            on_error_proxy = create_proxy(on_error)  # pyright: ignore[reportPossiblyUnboundVariable]
+            on_close_proxy = create_proxy(on_close)  # pyright: ignore[reportPossiblyUnboundVariable]
+
+            ws.addEventListener("message", on_message_proxy)  # pyright: ignore[reportUnknownMemberType]
+            ws.addEventListener("error", on_error_proxy)  # pyright: ignore[reportUnknownMemberType]
+            ws.addEventListener("close", on_close_proxy)  # pyright: ignore[reportUnknownMemberType]
+
             while ws.readyState == 0:  # CONNECTING  # pyright: ignore[reportUnknownMemberType]
                 if connect_waited >= connect_timeout:
                     logger.error(f"[Agent] {agent_id} websocket connection timed out after {connect_timeout}s")
