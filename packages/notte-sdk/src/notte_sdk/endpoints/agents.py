@@ -570,9 +570,13 @@ class AgentsClient(BaseClient):
             raise TimeoutError(f"Agent {agent_id} did not reach a terminal state within {max_wait_secs}s")
 
         except asyncio.CancelledError:
-            status = self.status(agent_id=agent_id)
-            if status.status != AgentStatus.closed:
-                _ = self.stop(agent_id=agent_id, session_id=session_id)
+            # Best-effort cleanup: don't let HTTP failures mask the CancelledError
+            try:
+                status = self.status(agent_id=agent_id)
+                if status.status != AgentStatus.closed:
+                    _ = self.stop(agent_id=agent_id, session_id=session_id)
+            except Exception:
+                pass
             raise
 
     def stop(self, agent_id: str, session_id: str) -> AgentResponse:
@@ -1042,9 +1046,13 @@ class RemoteAgent:
             )
         except asyncio.CancelledError:
             # Gracefully stop the agent on cancellation (mirrors KeyboardInterrupt handling in sync version)
-            status = self.client.status(agent_id=self.agent_id)
-            if status.status != AgentStatus.closed:
-                _ = self.client.stop(agent_id=self.agent_id, session_id=self.session_id)
+            # Best-effort cleanup: don't let HTTP failures mask the CancelledError
+            try:
+                status = self.client.status(agent_id=self.agent_id)
+                if status.status != AgentStatus.closed:
+                    _ = self.client.stop(agent_id=self.agent_id, session_id=self.session_id)
+            except Exception:
+                pass
             raise
 
     @track_usage("cloud.agent.stop")
