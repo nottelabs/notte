@@ -477,12 +477,32 @@ class AgentsClient(BaseClient):
         ws.addEventListener("error", on_error_proxy)  # pyright: ignore[reportUnknownMemberType]
         ws.addEventListener("close", on_close_proxy)  # pyright: ignore[reportUnknownMemberType]
 
+        # Helper to clean up WebSocket resources
+        def cleanup_ws() -> None:
+            cleanup_errors: list[str] = []
+            for cleanup in (  # pyright: ignore[reportUnknownVariableType]
+                lambda: ws.removeEventListener("message", on_message_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
+                lambda: ws.removeEventListener("error", on_error_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
+                lambda: ws.removeEventListener("close", on_close_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
+                on_message_proxy.destroy,  # pyright: ignore[reportUnknownMemberType]
+                on_error_proxy.destroy,  # pyright: ignore[reportUnknownMemberType]
+                on_close_proxy.destroy,  # pyright: ignore[reportUnknownMemberType]
+                ws.close,  # pyright: ignore[reportUnknownMemberType]
+            ):
+                try:
+                    cleanup()
+                except Exception as e:
+                    cleanup_errors.append(str(e))
+            if cleanup_errors:
+                logger.debug(f"Failed to clean up WebSocket resources: {'; '.join(cleanup_errors)}")
+
         # Wait for connection with timeout
         connect_timeout = 30.0
         connect_waited = 0.0
         while ws.readyState == 0:  # CONNECTING  # pyright: ignore[reportUnknownMemberType]
             if connect_waited >= connect_timeout:
                 logger.error(f"[Agent] {agent_id} websocket connection timed out after {connect_timeout}s")
+                cleanup_ws()
                 return None
             await asyncio.sleep(0.1)
             connect_waited += 0.1
@@ -508,22 +528,7 @@ class AgentsClient(BaseClient):
             logger.error(f"Error: {agent_id} {e} {traceback.format_exc()}")
             return None
         finally:
-            cleanup_errors: list[str] = []
-            for cleanup in (  # pyright: ignore[reportUnknownVariableType]
-                lambda: ws.removeEventListener("message", on_message_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
-                lambda: ws.removeEventListener("error", on_error_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
-                lambda: ws.removeEventListener("close", on_close_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
-                on_message_proxy.destroy,  # pyright: ignore[reportUnknownMemberType]
-                on_error_proxy.destroy,  # pyright: ignore[reportUnknownMemberType]
-                on_close_proxy.destroy,  # pyright: ignore[reportUnknownMemberType]
-                ws.close,  # pyright: ignore[reportUnknownMemberType]
-            ):
-                try:
-                    cleanup()
-                except Exception as e:
-                    cleanup_errors.append(str(e))
-            if cleanup_errors:
-                logger.debug(f"Failed to clean up WebSocket resources: {'; '.join(cleanup_errors)}")
+            cleanup_ws()
 
         return None
 
