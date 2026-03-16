@@ -398,15 +398,10 @@ class AgentsClient(BaseClient):
         Returns:
             AgentStatusResponse: The response from the completed agent execution.
         """
-        # In Pyodide, use asyncio.run with the async version since sync websockets aren't supported
+        # In Pyodide, sync WebSocket connections aren't supported and there's always a running event loop
         if RUNNING_IN_PYODIDE:
-            try:
-                _ = asyncio.get_running_loop()
-            except RuntimeError:
-                # No loop running, safe to use asyncio.run
-                return asyncio.run(self.async_watch_logs_and_wait(agent_id=agent_id, session_id=session_id, log=log))
             raise RuntimeError(
-                "watch_logs_and_wait() cannot run inside an active event loop in Pyodide. Use `await async_watch_logs_and_wait(...)` instead."
+                "watch_logs_and_wait() cannot be used in Pyodide. Use `await async_watch_logs_and_wait(...)` instead."
             )
 
         try:
@@ -1026,12 +1021,19 @@ class RemoteAgent:
                 log=log,
             )
 
-        return await asyncio.to_thread(
-            self.client.watch_logs_and_wait,
-            agent_id=self.agent_id,
-            session_id=self.session_id,
-            log=log,
-        )
+        try:
+            return await asyncio.to_thread(
+                self.client.watch_logs_and_wait,
+                agent_id=self.agent_id,
+                session_id=self.session_id,
+                log=log,
+            )
+        except asyncio.CancelledError:
+            # Gracefully stop the agent on cancellation (mirrors KeyboardInterrupt handling in sync version)
+            status = self.client.status(agent_id=self.agent_id)
+            if status.status != AgentStatus.closed:
+                _ = self.client.stop(agent_id=self.agent_id, session_id=self.session_id)
+            raise
 
     @track_usage("cloud.agent.stop")
     def stop(self) -> AgentResponse:
