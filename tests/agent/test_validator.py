@@ -213,7 +213,8 @@ def test_validator_system_prompt_has_multipage_context():
     assert "reset" in system_rules.lower()
 
 
-def test_validator_receives_url_in_action_history():
+@pytest.mark.asyncio
+async def test_validator_receives_url_in_action_history():
     """
     Integration test: Verify that when the validator receives action history,
     each action includes the URL where it was executed.
@@ -246,10 +247,7 @@ def test_validator_receives_url_in_action_history():
     )
 
     trajectory = Trajectory()
-
-    import asyncio
-
-    asyncio.run(trajectory.append(click_result))
+    await trajectory.append(click_result)
 
     # Create perception and verify it includes URL in output
     perception = FalcoPerception()
@@ -283,6 +281,7 @@ def test_validator_receives_url_in_action_history():
     )
 
 
+@pytest.mark.integration
 def test_validator_accepts_completion_after_page_navigation():
     """
     End-to-end test with real LLM and AgentFallback: Verify that the validator

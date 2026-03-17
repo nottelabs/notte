@@ -64,7 +64,7 @@ def test_agent_fallback_validator_with_page_navigation():
     Test that the validator correctly handles page navigation scenarios.
 
     NOTE: This test uses the remote SDK client. The fix for this bug is in the local
-    notte-agent package. Use test_agent_fallback_validator_with_page_navigation_local
-    for testing the local fix.
+    notte-agent package. Use test_validator_accepts_completion_after_page_navigation
+    in tests/agent/test_validator.py for testing the local fix.
     """
     pytest.skip("This test uses remote SDK - use the local test instead for validating the fix")
