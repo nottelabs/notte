@@ -819,7 +819,7 @@ class SessionStartRequest(SdkRequest):
             if not self.headless:
                 raise ValueError(
                     "When cdp_url is provided, headless must be True. "
-                    + "The headless option only works with a local browser."
+                    + "Headed mode (headless=False) only works with a local browser."
                 )
             if self.user_agent is not None:
                 raise ValueError(
