@@ -816,6 +816,11 @@ class SessionStartRequest(SdkRequest):
             ValueError: If cdp_url is provided but other fields are not set to defaults.
         """
         if self.cdp_url is not None:
+            if not self.headless:
+                raise ValueError(
+                    "When cdp_url is provided, headless must be True. "
+                    + "The headless option only works with a local browser."
+                )
             if self.user_agent is not None:
                 raise ValueError(
                     "When cdp_url is provided, user_agent must be None. Set the user agent with your external session CDP provider."

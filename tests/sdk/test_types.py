@@ -254,3 +254,8 @@ def test_multiple_proxies_should_raise_error():
 def test_unknown_proxy_type_should_raise_error():
     with pytest.raises(ValidationError, match="validation errors for SessionStartRequest"):
         _ = SessionStartRequest.model_validate({"proxies": [{"type": "unknown"}]})
+
+
+def test_cdp_url_with_headless_false_should_raise_error():
+    with pytest.raises(ValidationError, match="headless must be True.*only works with a local browser"):
+        _ = SessionStartRequest.model_validate({"cdp_url": "ws://localhost:9222", "headless": False})
