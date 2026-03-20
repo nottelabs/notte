@@ -75,6 +75,7 @@ class TestStructuredContent:
                 structure.extract(text)
         assert "No content found within ```python``` blocks" in str(exc_info.value)
 
+
 class TestFixSchemaForGemini:
     """Tests for fix_schema_for_gemini to prevent regressions in schema transformation."""
 

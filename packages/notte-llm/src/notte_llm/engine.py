@@ -97,22 +97,19 @@ def fix_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
             # true/false) together with propertyNames, Gemini cannot represent this
             # pattern.  Convert it into explicit ``properties`` so the model knows
             # what keys and value types are expected.
-            additional = obj_dict.get("additionalProperties")
-            property_names_enum = None
+            additional: Any = obj_dict.get("additionalProperties")
+            property_names_enum: list[str] | None = None
             pn = obj_dict.get("propertyNames")
             if isinstance(pn, dict):
-                property_names_enum = pn.get("enum")
+                pn_dict = cast(dict[str, Any], pn)
+                property_names_enum = cast(list[str] | None, pn_dict.get("enum"))
 
-            if (
-                isinstance(additional, dict)
-                and property_names_enum is not None
-                and obj_dict.get("type") == "object"
-            ):
+            if isinstance(additional, dict) and property_names_enum is not None and obj_dict.get("type") == "object":
                 # Build explicit properties from the enum keys + value schema
-                value_schema = clean_schema(additional, parent_key="additionalProperties")
+                value_schema: dict[str, Any] = clean_schema(additional, parent_key="additionalProperties")
                 explicit_props: dict[str, Any] = {}
                 for prop_name in property_names_enum:
-                    explicit_props[str(prop_name)] = value_schema
+                    explicit_props[prop_name] = value_schema
                 # Rebuild the object schema with explicit properties, all optional
                 cleaned: dict[str, Any] = {}
                 for key, value in obj_dict.items():
@@ -225,16 +222,15 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
         info, expand into explicit properties so downstream transforms can handle it."""
         additional = obj_dict.get("additionalProperties")
         pn = obj_dict.get("propertyNames")
-        property_names_enum = pn.get("enum") if isinstance(pn, dict) else None
-        if (
-            isinstance(additional, dict)
-            and property_names_enum is not None
-            and obj_dict.get("type") == "object"
-        ):
-            value_schema = additional
+        property_names_enum: list[str] | None = None
+        if isinstance(pn, dict):
+            pn_dict = cast(dict[str, Any], pn)
+            property_names_enum = cast(list[str] | None, pn_dict.get("enum"))
+        if isinstance(additional, dict) and property_names_enum is not None and obj_dict.get("type") == "object":
+            value_schema: dict[str, Any] = additional
             explicit_props: dict[str, Any] = {}
             for prop_name in property_names_enum:
-                explicit_props[str(prop_name)] = value_schema
+                explicit_props[prop_name] = value_schema
             # Rebuild without propertyNames/minProperties/additionalProperties
             rebuilt: dict[str, Any] = {}
             for k, v in obj_dict.items():
