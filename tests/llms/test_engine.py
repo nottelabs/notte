@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 import pytest
 from litellm import Message
 from notte_core.errors.base import ErrorConfig
-from notte_llm.engine import LLMEngine, StructuredContent
+from notte_llm.engine import LLMEngine, StructuredContent, fix_schema_for_gemini, fix_schema_for_openai
 
 
 @pytest.fixture
@@ -75,6 +75,142 @@ class TestStructuredContent:
                 structure.extract(text)
         assert "No content found within ```python``` blocks" in str(exc_info.value)
 
+class TestFixSchemaForGemini:
+    """Tests for fix_schema_for_gemini to prevent regressions in schema transformation."""
+
+    def test_strips_boolean_additional_properties(self):
+        schema = {
+            "type": "object",
+            "properties": {"x": {"type": "string"}},
+            "additionalProperties": True,
+        }
+        result = fix_schema_for_gemini(schema)
+        assert "additionalProperties" not in result
+
+    def test_strips_default_values(self):
+        schema = {
+            "type": "object",
+            "properties": {"x": {"type": "string", "default": "foo"}},
+        }
+        result = fix_schema_for_gemini(schema)
+        assert "default" not in result["properties"]["x"]
+
+    def test_expands_property_names_with_additional_properties(self):
+        """When additionalProperties has type info + propertyNames enum, expand into explicit properties."""
+        schema = {
+            "type": "object",
+            "propertyNames": {"enum": ["email", "password"]},
+            "additionalProperties": {"type": "string"},
+            "minProperties": 1,
+        }
+        result = fix_schema_for_gemini(schema)
+        assert "properties" in result
+        assert "email" in result["properties"]
+        assert "password" in result["properties"]
+        assert result["properties"]["email"] == {"type": "string"}
+        # propertyNames and minProperties should be removed after expansion
+        assert "propertyNames" not in result
+        assert "minProperties" not in result
+        assert "additionalProperties" not in result
+
+    def test_empty_object_gets_placeholder(self):
+        schema = {"type": "object", "properties": {}}
+        result = fix_schema_for_gemini(schema)
+        assert "_placeholder" in result["properties"]
+
+    def test_form_fill_action_schema_roundtrip(self):
+        """The actual FormFillAction schema must survive Gemini transformation with proper type info."""
+        from notte_core.actions.actions import FormFillAction
+
+        schema = FormFillAction.model_json_schema()
+        result = fix_schema_for_gemini(schema)
+        value_schema = result["properties"]["value"]
+        assert "properties" in value_schema
+        assert "email" in value_schema["properties"]
+        assert "username" in value_schema["properties"]
+        assert "password" in value_schema["properties"]
+        assert len(value_schema["properties"]) > 10
+
+    def test_inner_llm_completion_schema_roundtrip(self):
+        """The full InnerLlmCompletion schema must have form_fill value properties after Gemini transform."""
+        from notte_core.agent_types import AgentCompletion
+
+        schema = AgentCompletion.InnerLlmCompletion.model_json_schema()
+        result = fix_schema_for_gemini(schema)
+        # Find form_fill in oneOf
+        form_fill = None
+        for item in result["properties"]["action"]["oneOf"]:
+            if item.get("properties", {}).get("type", {}).get("const") == "form_fill":
+                form_fill = item
+                break
+        assert form_fill is not None, "form_fill action not found in schema"
+        value_schema = form_fill["properties"]["value"]
+        assert "properties" in value_schema
+        assert len(value_schema["properties"]) > 10
+
+
+class TestFixSchemaForOpenai:
+    """Tests for fix_schema_for_openai to prevent regressions in schema transformation."""
+
+    def test_expands_property_names_with_additional_properties(self):
+        schema = {
+            "type": "object",
+            "title": "test",
+            "properties": {
+                "value": {
+                    "type": "object",
+                    "propertyNames": {"enum": ["email", "password"]},
+                    "additionalProperties": {"type": "string"},
+                    "minProperties": 1,
+                },
+            },
+            "required": ["value"],
+        }
+        result = fix_schema_for_openai(schema)
+        inner = result["json_schema"]["schema"]
+        value_schema = inner["properties"]["value"]
+        assert "email" in value_schema["properties"]
+        assert "password" in value_schema["properties"]
+        # Expanded properties should be optional (empty required)
+        assert value_schema["required"] == []
+
+    def test_form_fill_action_schema_roundtrip(self):
+        """The full InnerLlmCompletion schema must have form_fill value properties after OpenAI transform."""
+        from notte_core.agent_types import AgentCompletion
+
+        schema = AgentCompletion.InnerLlmCompletion.model_json_schema()
+        result = fix_schema_for_openai(schema)
+        inner = result["json_schema"]["schema"]
+        # Find form_fill in anyOf (oneOf is converted to anyOf)
+        form_fill = None
+        for item in inner["properties"]["action"]["anyOf"]:
+            if item.get("properties", {}).get("type", {}).get("const") == "form_fill":
+                form_fill = item
+                break
+        assert form_fill is not None, "form_fill action not found in schema"
+        value_schema = form_fill["properties"]["value"]
+        assert "properties" in value_schema
+        assert "email" in value_schema["properties"]
+        assert len(value_schema["properties"]) > 10
+        # Expanded properties should be optional
+        assert value_schema["required"] == []
+
+    def test_regular_object_properties_all_required(self):
+        """Normal objects (not expanded from propertyNames) should have all properties required."""
+        schema = {
+            "type": "object",
+            "title": "test",
+            "properties": {
+                "name": {"type": "string"},
+                "age": {"type": "integer"},
+            },
+        }
+        result = fix_schema_for_openai(schema)
+        inner = result["json_schema"]["schema"]
+        assert set(inner["required"]) == {"name", "age"}
+
+
+class TestStructuredContentExtended:
     def test_extract_with_fail_if_final_tag(self):
         response_text = """
 Step 4: Process relevant elements.

@@ -92,7 +92,37 @@ def fix_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
     def clean_schema(obj: Any, parent_key: str | None = None) -> Any:
         if isinstance(obj, dict):
             obj_dict = cast(dict[str, Any], obj)
-            cleaned: dict[str, Any] = {}
+
+            # When an object uses additionalProperties with real type info (not just
+            # true/false) together with propertyNames, Gemini cannot represent this
+            # pattern.  Convert it into explicit ``properties`` so the model knows
+            # what keys and value types are expected.
+            additional = obj_dict.get("additionalProperties")
+            property_names_enum = None
+            pn = obj_dict.get("propertyNames")
+            if isinstance(pn, dict):
+                property_names_enum = pn.get("enum")
+
+            if (
+                isinstance(additional, dict)
+                and property_names_enum is not None
+                and obj_dict.get("type") == "object"
+            ):
+                # Build explicit properties from the enum keys + value schema
+                value_schema = clean_schema(additional, parent_key="additionalProperties")
+                explicit_props: dict[str, Any] = {}
+                for prop_name in property_names_enum:
+                    explicit_props[str(prop_name)] = value_schema
+                # Rebuild the object schema with explicit properties, all optional
+                cleaned: dict[str, Any] = {}
+                for key, value in obj_dict.items():
+                    if key in ["additionalProperties", "default", "propertyNames", "minProperties"]:
+                        continue
+                    cleaned[key] = clean_schema(value, parent_key=key)
+                cleaned["properties"] = explicit_props
+                return cleaned
+
+            cleaned = {}
             for key, value in obj_dict.items():
                 # Skip keys that Gemini doesn't support
                 # Note: 'title' is kept as Gemini handles it fine and it's useful for descriptions
@@ -190,9 +220,45 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
         "prefixItems",
     }
 
+    def _expand_property_names(obj_dict: dict[str, Any]) -> dict[str, Any] | None:
+        """When an object uses propertyNames + additionalProperties with real type
+        info, expand into explicit properties so downstream transforms can handle it."""
+        additional = obj_dict.get("additionalProperties")
+        pn = obj_dict.get("propertyNames")
+        property_names_enum = pn.get("enum") if isinstance(pn, dict) else None
+        if (
+            isinstance(additional, dict)
+            and property_names_enum is not None
+            and obj_dict.get("type") == "object"
+        ):
+            value_schema = additional
+            explicit_props: dict[str, Any] = {}
+            for prop_name in property_names_enum:
+                explicit_props[str(prop_name)] = value_schema
+            # Rebuild without propertyNames/minProperties/additionalProperties
+            rebuilt: dict[str, Any] = {}
+            for k, v in obj_dict.items():
+                if k in ("additionalProperties", "propertyNames", "minProperties"):
+                    continue
+                rebuilt[k] = v
+            rebuilt["properties"] = explicit_props
+            return rebuilt
+        return None
+
     def clean_schema(obj: Any, *, is_properties_map: bool = False) -> Any:
         if isinstance(obj, dict):
             obj_dict = cast(dict[str, Any], obj)
+
+            # Expand propertyNames + additionalProperties pattern into explicit
+            # properties before applying the whitelist, otherwise the keys get
+            # stripped and the object ends up empty.
+            was_expanded = False
+            if not is_properties_map:
+                expanded = _expand_property_names(obj_dict)
+                if expanded is not None:
+                    obj_dict = expanded
+                    was_expanded = True
+
             cleaned: dict[str, Any] = {}
             for key, value in obj_dict.items():
                 # OpenAI strict mode doesn't support oneOf, convert to anyOf
@@ -229,7 +295,12 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
                 # Ensure properties exists (OpenAI requires it for objects)
                 if "properties" not in cleaned:
                     cleaned["properties"] = {}
-                cleaned["required"] = list(cast(dict[str, Any], cleaned["properties"]).keys())
+                # For expanded propertyNames objects, all properties are optional
+                # (the original schema used minProperties, not required)
+                if was_expanded:
+                    cleaned["required"] = []
+                else:
+                    cleaned["required"] = list(cast(dict[str, Any], cleaned["properties"]).keys())
 
             return cleaned
         elif isinstance(obj, list):
