@@ -116,14 +116,17 @@ def fix_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
                     if key in ["additionalProperties", "default", "propertyNames", "minProperties"]:
                         continue
                     cleaned[key] = clean_schema(value, parent_key=key)
-                cleaned["properties"] = explicit_props if explicit_props else {"_placeholder": {"type": "string"}}
+                # Merge with any pre-existing static properties rather than overwriting
+                existing_props = cast(dict[str, Any], cleaned.get("properties", {}))
+                merged = {**existing_props, **explicit_props}
+                cleaned["properties"] = merged if merged else {"_placeholder": {"type": "string"}}
                 return cleaned
 
             cleaned = {}
             for key, value in obj_dict.items():
                 # Skip keys that Gemini doesn't support
                 # Note: 'title' is kept as Gemini handles it fine and it's useful for descriptions
-                if key in ["additionalProperties", "default"]:
+                if key in ["additionalProperties", "default", "propertyNames", "minProperties"]:
                     continue
 
                 cleaned_value = clean_schema(value, parent_key=key)
@@ -237,7 +240,9 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
                 if k in ("additionalProperties", "propertyNames", "minProperties"):
                     continue
                 rebuilt[k] = v
-            rebuilt["properties"] = explicit_props
+            # Merge with any pre-existing static properties rather than overwriting
+            existing_props = cast(dict[str, Any], rebuilt.get("properties", {}))
+            rebuilt["properties"] = {**existing_props, **explicit_props}
             return rebuilt
         return None
 
@@ -298,7 +303,11 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
                     props = cast(dict[str, Any], cleaned["properties"])
                     for prop_key in list(props.keys()):
                         original: dict[str, Any] = cast(dict[str, Any], props[prop_key])
-                        props[prop_key] = {"anyOf": [original, {"type": "null"}]}
+                        if "anyOf" in original:
+                            branches: list[Any] = list(original["anyOf"]) + [{"type": "null"}]
+                            props[prop_key] = {"anyOf": branches}
+                        else:
+                            props[prop_key] = {"anyOf": [original, {"type": "null"}]}
                 cleaned["required"] = list(cast(dict[str, Any], cleaned["properties"]).keys())
 
             return cleaned
