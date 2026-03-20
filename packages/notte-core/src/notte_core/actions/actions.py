@@ -249,6 +249,9 @@ class FormFillAction(BrowserAction):
             raise ValueError(
                 f"'value' key in form fill action has to be an object with at least one key among {allowed_keys}, but got {value}. CRITICAL: fall back to the regular fill action"
             )
+        # Strip null values — Gemini fills all expanded properties with null for unused fields
+        if isinstance(value, dict):
+            value = {k: v for k, v in value.items() if v is not None}  # pyright: ignore[reportUnknownVariableType]
         # Normalize "password" to "current_password" for LLM compatibility
         if isinstance(value, dict) and "password" in value:
             if "current_password" in value:
