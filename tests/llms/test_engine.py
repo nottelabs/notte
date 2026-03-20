@@ -108,7 +108,7 @@ class TestFixSchemaForGemini:
         assert "properties" in result
         assert "email" in result["properties"]
         assert "password" in result["properties"]
-        assert result["properties"]["email"] == {"type": "string"}
+        assert result["properties"]["email"] == {"type": "string", "nullable": True}
         # propertyNames and minProperties should be removed after expansion
         assert "propertyNames" not in result
         assert "minProperties" not in result
@@ -131,6 +131,28 @@ class TestFixSchemaForGemini:
         assert "username" in value_schema["properties"]
         assert "password" in value_schema["properties"]
         assert len(value_schema["properties"]) > 10
+
+    def test_expanded_properties_are_nullable(self):
+        """Expanded properties from propertyNames must be nullable so Gemini doesn't fill all with null."""
+        schema = {
+            "type": "object",
+            "propertyNames": {"enum": ["email", "password"]},
+            "additionalProperties": {"type": "string"},
+            "minProperties": 1,
+        }
+        result = fix_schema_for_gemini(schema)
+        assert result["properties"]["email"].get("nullable") is True
+        assert result["properties"]["password"].get("nullable") is True
+
+    def test_form_fill_expanded_properties_are_nullable(self):
+        """FormFillAction expanded properties must be nullable for Gemini."""
+        from notte_core.actions.actions import FormFillAction
+
+        schema = FormFillAction.model_json_schema()
+        result = fix_schema_for_gemini(schema)
+        value_schema = result["properties"]["value"]
+        for prop_name, prop_schema in value_schema["properties"].items():
+            assert prop_schema.get("nullable") is True, f"Property '{prop_name}' should be nullable"
 
     def test_inner_llm_completion_schema_roundtrip(self):
         """The full InnerLlmCompletion schema must have form_fill value properties after Gemini transform."""

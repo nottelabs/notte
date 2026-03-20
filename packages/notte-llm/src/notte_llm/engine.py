@@ -109,7 +109,7 @@ def fix_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
                 value_schema: dict[str, Any] = clean_schema(additional, parent_key="additionalProperties")
                 explicit_props: dict[str, Any] = {}
                 for prop_name in property_names_enum:
-                    explicit_props[prop_name] = dict(value_schema)
+                    explicit_props[prop_name] = {**value_schema, "nullable": True}
                 # Rebuild the object schema with explicit properties, all optional
                 cleaned: dict[str, Any] = {}
                 for key, value in obj_dict.items():
