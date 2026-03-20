@@ -109,14 +109,14 @@ def fix_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
                 value_schema: dict[str, Any] = clean_schema(additional, parent_key="additionalProperties")
                 explicit_props: dict[str, Any] = {}
                 for prop_name in property_names_enum:
-                    explicit_props[prop_name] = value_schema
+                    explicit_props[prop_name] = dict(value_schema)
                 # Rebuild the object schema with explicit properties, all optional
                 cleaned: dict[str, Any] = {}
                 for key, value in obj_dict.items():
                     if key in ["additionalProperties", "default", "propertyNames", "minProperties"]:
                         continue
                     cleaned[key] = clean_schema(value, parent_key=key)
-                cleaned["properties"] = explicit_props
+                cleaned["properties"] = explicit_props if explicit_props else {"_placeholder": {"type": "string"}}
                 return cleaned
 
             cleaned = {}
@@ -230,7 +230,7 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
             value_schema: dict[str, Any] = additional
             explicit_props: dict[str, Any] = {}
             for prop_name in property_names_enum:
-                explicit_props[prop_name] = value_schema
+                explicit_props[prop_name] = dict(value_schema)
             # Rebuild without propertyNames/minProperties/additionalProperties
             rebuilt: dict[str, Any] = {}
             for k, v in obj_dict.items():
@@ -291,12 +291,15 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
                 # Ensure properties exists (OpenAI requires it for objects)
                 if "properties" not in cleaned:
                     cleaned["properties"] = {}
-                # For expanded propertyNames objects, all properties are optional
-                # (the original schema used minProperties, not required)
+                # For expanded propertyNames objects, make properties optional via
+                # nullable anyOf — OpenAI strict mode requires ALL properties in
+                # required, so we can't use required=[] with non-empty properties.
                 if was_expanded:
-                    cleaned["required"] = []
-                else:
-                    cleaned["required"] = list(cast(dict[str, Any], cleaned["properties"]).keys())
+                    props = cast(dict[str, Any], cleaned["properties"])
+                    for prop_key in list(props.keys()):
+                        original: dict[str, Any] = cast(dict[str, Any], props[prop_key])
+                        props[prop_key] = {"anyOf": [original, {"type": "null"}]}
+                cleaned["required"] = list(cast(dict[str, Any], cleaned["properties"]).keys())
 
             return cleaned
         elif isinstance(obj, list):

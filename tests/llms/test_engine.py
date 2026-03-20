@@ -172,8 +172,9 @@ class TestFixSchemaForOpenai:
         value_schema = inner["properties"]["value"]
         assert "email" in value_schema["properties"]
         assert "password" in value_schema["properties"]
-        # Expanded properties should be optional (empty required)
-        assert value_schema["required"] == []
+        # Expanded properties are nullable (anyOf with null) and all listed in required
+        assert set(value_schema["required"]) == {"email", "password"}
+        assert value_schema["properties"]["email"]["anyOf"][1] == {"type": "null"}
 
     def test_form_fill_action_schema_roundtrip(self):
         """The full InnerLlmCompletion schema must have form_fill value properties after OpenAI transform."""
@@ -193,8 +194,8 @@ class TestFixSchemaForOpenai:
         assert "properties" in value_schema
         assert "email" in value_schema["properties"]
         assert len(value_schema["properties"]) > 10
-        # Expanded properties should be optional
-        assert value_schema["required"] == []
+        # All expanded properties should be in required (nullable via anyOf)
+        assert len(value_schema["required"]) == len(value_schema["properties"])
 
     def test_regular_object_properties_all_required(self):
         """Normal objects (not expanded from propertyNames) should have all properties required."""
