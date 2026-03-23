@@ -1,5 +1,39 @@
 import pytest
-from notte_core.common.config import LlmModel
+from notte_core.common.config import LlmModel, LlmProvider
+
+from tests.llms.test_openrouter_models import OPENROUTER_MODELS
+
+# Mapping from OpenRouter provider names that differ from LlmProvider enum values.
+# e.g. OpenRouter uses "google" but LlmProvider uses "gemini".
+OPENROUTER_PROVIDER_ALIASES: dict[str, LlmProvider] = {
+    "google": LlmProvider.gemini,
+    "moonshotai": LlmProvider.moonshot,
+    "x-ai": LlmProvider.xai,
+    "z-ai": LlmProvider.zai,
+}
+
+
+def _resolve_openrouter_provider(model: str) -> LlmProvider:
+    """Resolve the OpenRouter provider prefix to a LlmProvider."""
+    prefix = model.split("/")[0]
+    if prefix in OPENROUTER_PROVIDER_ALIASES:
+        return OPENROUTER_PROVIDER_ALIASES[prefix]
+    # Try direct match against LlmProvider values
+    if prefix in list(LlmProvider):
+        return LlmProvider(prefix)
+    raise ValueError(
+        f"OpenRouter provider '{prefix}' (from model '{model}') "
+        f"has no matching LlmProvider and no alias in OPENROUTER_PROVIDER_ALIASES."
+    )
+
+
+class TestOpenrouterModelsHaveProvider:
+    """Ensure every provider in OPENROUTER_MODELS maps to a known LlmProvider."""
+
+    @pytest.mark.parametrize("model", OPENROUTER_MODELS)
+    def test_openrouter_model_has_known_provider(self, model: str) -> None:
+        provider = _resolve_openrouter_provider(model)
+        assert isinstance(provider, LlmProvider)
 
 
 class TestGetOpenrouterProvider:

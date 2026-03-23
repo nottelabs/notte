@@ -67,6 +67,10 @@ class LlmProvider(StrEnum):
     together = "together_ai"
     anthropic = "anthropic"
     moonshot = "moonshot"
+    xai = "xai"
+    zai = "zai"
+    qwen = "qwen"
+    minimax = "minimax"
 
     @property
     def context_length(self) -> int:
@@ -109,6 +113,14 @@ class LlmProvider(StrEnum):
                 return "TOGETHERAI_API_KEY"
             case LlmProvider.moonshot:
                 return "MOONSHOT_API_KEY"
+            case LlmProvider.xai:
+                return "XAI_API_KEY"
+            case LlmProvider.zai:
+                return "ZAI_API_KEY"
+            case LlmProvider.qwen:
+                return "QWEN_API_KEY"
+            case LlmProvider.minimax:
+                return "MINIMAX_API_KEY"
             case _:  # pyright: ignore[reportUnnecessaryComparison]
                 raise ValueError(f"No API key name found for provider: {self}")  # pyright: ignore[reportUnreachable]
 
@@ -130,6 +142,8 @@ class LlmModel(StrEnum):
     together = "together_ai/meta-llama/llama-3.3-70b-instruct"
     anthropic = "anthropic/claude-sonnet-4-5-20250929"
     kimi2_5 = "moonshot/kimi-k2.5"
+    grok = "x-ai/grok-4.1-fast"
+    minimax = "minimax/minimax-m2.5"
 
     @property
     def provider(self) -> LlmProvider:
