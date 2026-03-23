@@ -142,7 +142,7 @@ class LlmModel(StrEnum):
     together = "together_ai/meta-llama/llama-3.3-70b-instruct"
     anthropic = "anthropic/claude-sonnet-4-5-20250929"
     kimi2_5 = "moonshot/kimi-k2.5"
-    grok = "xai/grok-4.1-fast"
+    grok = "xai/grok-4-1-fast-non-reasoning"
     minimax = "minimax/minimax-m2.5"
 
     @property
@@ -197,7 +197,9 @@ class LlmModel(StrEnum):
         if "/llama-3.3-70b-instruct" in _model:
             _model = "meta-llama/llama-3.3-70b-instruct"
 
-        if "xai/" in _model:
+        if "/grok-4-1-fast-non-reasoning" in _model:
+            _model = "x-ai/grok-4.1-fast"
+        elif "xai/" in _model:
             _model = _model.replace("xai/", "x-ai/")
 
         if "zai/" in _model:
