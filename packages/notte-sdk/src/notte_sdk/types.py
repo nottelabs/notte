@@ -2,7 +2,6 @@ import datetime as dt
 import json
 import os
 import re
-from base64 import b64decode, b64encode
 from enum import StrEnum
 from pathlib import Path
 from types import NoneType
@@ -638,31 +637,15 @@ class SessionOffsetResponse(SdkResponse):
 
 
 class ReplayResponse(SdkResponse):
-    replay: Annotated[bytes | None, Field(description="The session replay in `.webp` format", repr=False)] = None
+    """Response containing presigned URLs for session replay."""
 
-    model_config = {  # type: ignore[reportUnknownMemberType]
-        "json_encoders": {
-            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
-        }
-    }
-
-    @field_validator("replay", mode="before")
-    @classmethod
-    def decode_replay(cls, value: str | None) -> bytes | None:
-        if value is None:
-            return None
-        if isinstance(value, bytes):
-            return value
-        if not isinstance(value, str):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise ValueError("replay must be a bytes or a base64 encoded string")  # pyright: ignore[reportUnreachable]
-        return b64decode(value.encode("utf-8"))
-
-    @override
-    def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        data = super().model_dump(*args, **kwargs)
-        if self.replay is not None:
-            data["replay"] = b64encode(self.replay).decode("utf-8")
-        return data
+    playlist_content: Annotated[str | None, Field(description="HLS playlist content with presigned segment URLs")] = (
+        None
+    )
+    mp4_url: Annotated[str | None, Field(description="Presigned URL for MP4 download")] = None
+    expires_at: Annotated[str, Field(description="Expiration time of the presigned URLs")]
+    video_start_ms: Annotated[int | None, Field(description="Video start offset in milliseconds")] = None
+    video_duration_ms: Annotated[int | None, Field(description="Video duration in milliseconds")] = None
 
 
 # Profile configuration for sessions (defined before SessionStartRequest)
@@ -998,10 +981,6 @@ class SessionResponse(SdkResponse):
     def timeout_minutes(self) -> int:
         """Deprecated: Use idle_timeout_minutes instead. Kept for backward compatibility."""
         return self.idle_timeout_minutes
-
-
-class SessionStatusResponse(SessionResponse, ReplayResponse):
-    pass
 
 
 class ListFilesResponse(SdkResponse):
@@ -1943,9 +1922,10 @@ class AgentFunctionCodeResponse(SdkResponse):
     json_actions: Annotated[list[dict[str, Any]], Field(description="Json actions to replicate agent steps")]
 
 
-class AgentStatusResponse(AgentResponse, ReplayResponse):
+class AgentStatusResponse(AgentResponse):
     task: Annotated[str, Field(description="The task that the agent is currently running")]
     url: Annotated[str | None, Field(description="The URL that the agent started on")] = None
+    replay: Annotated[bytes | None, Field(description="The session replay in `.webp` format", repr=False)] = None
 
     success: Annotated[
         bool | None,

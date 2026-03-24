@@ -45,7 +45,6 @@ from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from notte_core.errors.base import NotteBaseError
 from notte_core.utils.files import create_or_append_cookies_to_file
-from notte_core.utils.webp_replay import MP4Replay
 from pydantic import BaseModel
 from typing_extensions import final, override
 
@@ -59,6 +58,7 @@ from notte_sdk.types import (
     ObserveRequestDict,
     ObserveResponse,
     PaginationParamsDict,
+    ReplayResponse,
     ScrapeMarkdownParamsDict,
     ScrapeRequestDict,
     SessionDebugResponse,
@@ -267,14 +267,14 @@ class SessionsClient(BaseClient):
         )
 
     @staticmethod
-    def _session_debug_replay_endpoint(session_id: str | None = None) -> NotteEndpoint[BaseModel]:
+    def _session_debug_replay_endpoint(session_id: str | None = None) -> NotteEndpoint[ReplayResponse]:
         """
         Returns an endpoint for retrieving the replay for a session.
         """
         path = SessionsClient.SESSION_DEBUG_REPLAY
         if session_id is not None:
             path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=BaseModel, method="GET")
+        return NotteEndpoint(path=path, response=ReplayResponse, method="GET")
 
     @staticmethod
     def _session_debug_offset_endpoint(session_id: str | None = None) -> NotteEndpoint[SessionOffsetResponse]:
@@ -470,19 +470,18 @@ class SessionsClient(BaseClient):
         return offset
 
     @track_usage("cloud.session.replay")
-    def replay(self, session_id: str) -> MP4Replay:
+    def replay(self, session_id: str) -> ReplayResponse:
         """
-        Downloads the replay for the specified session in mp4 format.
+        Get presigned URLs for session replay.
 
         Args:
-            session_id: The identifier of the session to download the replay for.
+            session_id: The identifier of the session to get the replay for.
 
         Returns:
-            MP4Replay: The replay file in mp4 format.
+            ReplayResponse: Presigned URLs for HLS playlist and MP4 download.
         """
         endpoint = SessionsClient._session_debug_replay_endpoint(session_id=session_id)
-        file_bytes = self._request_file(endpoint, file_type="mp4")
-        return MP4Replay(file_bytes)
+        return self.request(endpoint)
 
     @track_usage("cloud.session.viewer.browser")
     def viewer_browser(self, session_id: str, _viewer_url: str | None = None) -> None:
@@ -846,14 +845,14 @@ class RemoteSession(SyncResource):
         """
         return self.client.offset(session_id=self.session_id).offset
 
-    def replay(self) -> MP4Replay:
+    def replay(self) -> ReplayResponse:
         """
-        Get a replay of the session's execution in MP4 format.
+        Get presigned URLs for the session replay.
 
         **Example:**
         ```python
         replay = session.replay()
-        replay.save(f"{session.session_id}_replay.mp4")
+        print(replay.mp4_url)  # Presigned URL for MP4 download
         ```
 
         > Note that the replay is only available after the session has been stopped.
@@ -861,7 +860,7 @@ class RemoteSession(SyncResource):
         Also you need to perform at least one action for the replay to be available.
 
         Returns:
-            MP4Replay: The replay data in MP4 format.
+            ReplayResponse: Presigned URLs for HLS playlist and MP4 download.
 
         Raises:
             ValueError: If the session hasn't been started yet (no session_id available).

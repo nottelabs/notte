@@ -13,7 +13,6 @@ from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.errors.base import NotteBaseError
 from notte_core.utils.encryption import Encryption
-from notte_core.utils.webp_replay import MP4Replay
 from typing_extensions import deprecated
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
@@ -38,6 +37,7 @@ from notte_sdk.types import (
     ListFunctionsRequest,
     ListFunctionsRequestDict,
     ListFunctionsResponse,
+    ReplayResponse,
     RunFunctionRequest,
     RunFunctionRequestDict,
     StartFunctionRunRequest,
@@ -643,15 +643,15 @@ class RemoteWorkflow:
     def workflow_id(self) -> str:
         return self.response.workflow_id
 
-    def replay(self) -> MP4Replay:
+    def replay(self) -> ReplayResponse:
         """
-        Replay the workflow run.
+        Get presigned URLs for the workflow run replay.
 
         ```python
         function = notte.Function("<your-function-id>")
         function.run()
         replay = function.replay()
-        replay.save("run_replay.webp")
+        print(replay.mp4_url)  # Presigned URL for MP4 download
         ```
         """
         if self._function_run_id is None:

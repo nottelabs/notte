@@ -14,7 +14,7 @@ from notte_core.agent_types import AgentCompletion
 from notte_core.common.logging import logger
 from notte_core.common.notifier import BaseNotifier
 from notte_core.common.telemetry import track_usage
-from notte_core.utils.webp_replay import MP4Replay, WebpReplay
+from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel, Field, ValidationError
 from typing_extensions import final
 
@@ -86,8 +86,6 @@ class AgentsClient(BaseClient):
     AGENT_STATUS = "{agent_id}"
     AGENT_FUNCTION = "{agent_id}/workflow/code"
     AGENT_LIST = ""
-    # The following endpoints downloads a MP4 file
-    AGENT_REPLAY = "{agent_id}/replay"
     AGENT_LOGS_WS = "{agent_id}/debug/logs?token={token}&session_id={session_id}"
 
     def __init__(
@@ -186,16 +184,6 @@ class AgentsClient(BaseClient):
         if agent_id is not None:
             path = path.format(agent_id=agent_id)
         return NotteEndpoint(path=path, response=AgentFunctionCodeResponse, method="GET")
-
-    @staticmethod
-    def _agent_replay_endpoint(agent_id: str | None = None) -> NotteEndpoint[BaseModel]:
-        """
-        Creates an endpoint for downloading an agent's replay.
-        """
-        path = AgentsClient.AGENT_REPLAY
-        if agent_id is not None:
-            path = path.format(agent_id=agent_id)
-        return NotteEndpoint(path=path, response=BaseModel, method="GET")
 
     @staticmethod
     def _agent_list_endpoint(params: AgentListRequest | None = None) -> NotteEndpoint[AgentResponse]:
@@ -720,30 +708,6 @@ class AgentsClient(BaseClient):
         endpoint = AgentsClient._agent_list_endpoint(params=params)
         return self.request_list(endpoint)
 
-    def replay(self, agent_id: str) -> MP4Replay:
-        """
-        Downloads the replay for the specified agent in mp4 format.
-
-        ```python
-        replay = agent.replay()
-        ```
-
-        The replay is a mp4 file that can be displayed in a browser.
-
-        ```python
-        replay.show()
-        ```
-
-        Args:
-            agent_id: The identifier of the agent to download the replay for.
-
-        Returns:
-            MP4Replay: The replay file in mp4 format.
-        """
-        endpoint = AgentsClient._agent_replay_endpoint(agent_id=agent_id)
-        file_bytes = self._request_file(endpoint, file_type="mp4")
-        return MP4Replay(file_bytes)
-
     def run_custom(self, request: BaseModel, viewer: bool = False) -> AgentStatusResponse:
         """
         Run a custom agent with the specified request parameters and wait for completion.
@@ -1172,24 +1136,3 @@ class RemoteAgent:
             ValueError: If the agent hasn't been run yet (no agent_id available).
         """
         return RemoteAgent.AgentWorkflow(self.client, self.agent_id)
-
-    @track_usage("cloud.agent.replay")
-    def replay(self) -> MP4Replay:
-        """
-        Get a replay of the agent's execution in MP4 format.
-
-        This method downloads a visual replay of the agent's actions, which can be
-        useful for debugging or understanding the agent's behavior.
-
-        ```python
-        replay = agent.replay()
-        replay.save(f"{agent.agent_id}_replay.mp4")
-        ```
-
-        Returns:
-            MP4Replay: The replay data in MP4 format.
-
-        Raises:
-            ValueError: If the agent hasn't been run yet (no agent_id available).
-        """
-        return self.client.replay(agent_id=self.agent_id)
