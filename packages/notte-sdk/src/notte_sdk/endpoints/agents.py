@@ -4,6 +4,7 @@ import sys
 import tempfile
 import time
 import traceback
+import warnings
 from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Unpack, overload
@@ -36,6 +37,7 @@ from notte_sdk.types import (
     AgentStatusResponse,
     AgentWorkflowCodeRequest,
     GetFunctionResponse,
+    ReplayResponse,
     SdkAgentCreateRequest,
     SdkAgentStartRequestDict,
 )
@@ -685,7 +687,7 @@ class AgentsClient(BaseClient):
         Raises:
             ValueError: If no valid agent ID can be determined.
         """
-        request = AgentStatusRequest(agent_id=agent_id, replay=False)
+        request = AgentStatusRequest(agent_id=agent_id)
         endpoint = AgentsClient._agent_status_endpoint(agent_id=agent_id).with_params(request)
         response = self.request(endpoint)
         return response
@@ -743,19 +745,17 @@ class RemoteAgent:
     """
     A remote agent that can execute tasks through the Notte API.
 
-    This class provides an interface for running tasks, checking status, and managing replays
-    of agent executions. It maintains state about the current agent execution and provides
+    This class provides an interface for running tasks, checking status, and managing
+    agent executions. It maintains state about the current agent execution and provides
     methods to interact with the agent through an AgentsClient.
 
     The agent can be started, monitored, and controlled through various methods. It supports
-    both synchronous and asynchronous execution modes, and can provide visual replays of
-    its actions in MP4 format.
+    both synchronous and asynchronous execution modes.
 
     Key Features:
     - Start and stop agent execution
     - Monitor agent status and progress
     - Wait for task completion with progress updates
-    - Get visual replays of agent actions
     - Support for both sync and async execution
 
     Attributes:
@@ -1117,6 +1117,24 @@ class RemoteAgent:
             ValueError: If the agent hasn't been run yet (no agent_id available).
         """
         return self.client.status(agent_id=self.agent_id)
+
+    def replay(self) -> ReplayResponse:
+        """
+        Get the replay for the agent's session.
+
+        .. deprecated::
+            Use ``session.replay()`` instead. Agent replay is deprecated
+            in favor of session-level replay with presigned URLs.
+
+        Returns:
+            ReplayResponse: Presigned URLs for HLS playlist and MP4 download.
+        """
+        warnings.warn(
+            "agent.replay() is deprecated. Use session.replay() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.client.root_client.sessions.replay(session_id=self.session_id)
 
     @property
     @track_usage("cloud.agent.workflow")

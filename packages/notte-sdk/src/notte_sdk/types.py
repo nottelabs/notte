@@ -639,11 +639,11 @@ class SessionOffsetResponse(SdkResponse):
 class ReplayResponse(SdkResponse):
     """Response containing presigned URLs for session replay."""
 
-    playlist_content: Annotated[str | None, Field(description="HLS playlist content with presigned segment URLs")] = (
-        None
-    )
-    mp4_url: Annotated[str | None, Field(description="Presigned URL for MP4 download")] = None
-    expires_at: Annotated[str, Field(description="Expiration time of the presigned URLs")]
+    playlist_content: Annotated[
+        str | None, Field(description="HLS playlist content with presigned segment URLs", repr=False)
+    ] = None
+    mp4_url: Annotated[str | None, Field(description="Presigned URL for MP4 download", repr=False)] = None
+    expires_at: Annotated[str | None, Field(description="Expiration time of the presigned URLs")] = None
     video_start_ms: Annotated[int | None, Field(description="Video start offset in milliseconds")] = None
     video_duration_ms: Annotated[int | None, Field(description="Video duration in milliseconds")] = None
 
@@ -1858,15 +1858,13 @@ class AgentStatusRequestDict(TypedDict, total=False):
 
     Args:
         agent_id: The ID of the agent for which to get the status.
-        replay: Whether to include the replay in the response.
     """
 
     agent_id: Required[Annotated[str, Field(description="The ID of the agent for which to get the status")]]
-    replay: bool
 
 
 class AgentStatusRequest(AgentSessionRequest):
-    replay: Annotated[bool, Field(description="Whether to include the replay in the response")] = False
+    pass
 
 
 class AgentListRequestDict(SessionListRequestDict, total=False):
@@ -1925,7 +1923,6 @@ class AgentFunctionCodeResponse(SdkResponse):
 class AgentStatusResponse(AgentResponse):
     task: Annotated[str, Field(description="The task that the agent is currently running")]
     url: Annotated[str | None, Field(description="The URL that the agent started on")] = None
-    replay: Annotated[bytes | None, Field(description="The session replay in `.webp` format", repr=False)] = None
 
     success: Annotated[
         bool | None,
@@ -1939,8 +1936,6 @@ class AgentStatusResponse(AgentResponse):
         list[dict[str, Any]],
         Field(description="The steps that the agent has currently taken"),
     ] = Field(default_factory=lambda: [])
-    replay_start_offset: Annotated[int, Field(description="The start offset of the replay")]
-    replay_stop_offset: Annotated[int, Field(description="The stop offset of the replay")]
 
 
 # ############################################################

@@ -1,4 +1,3 @@
-import base64
 import datetime as dt
 from typing import Any
 
@@ -135,83 +134,47 @@ def test_observe_response_from_observation():
     assert response.space.interaction_actions == obs.space.interaction_actions
 
 
-def test_agent_status_response_replay():
-    # Test case 1: Base64 encoded string
-    sample_webp_data = b"fake_webp_data"
-    base64_encoded = base64.b64encode(sample_webp_data).decode("utf-8")
+def test_agent_status_response():
+    # Test basic AgentStatusResponse without replay fields
     response = AgentStatusResponse.model_validate(
         {
             "agent_id": "test_agent",
             "created_at": "2024-03-20",
             "session_id": "test_session",
             "status": AgentStatus.active,
-            "replay": base64_encoded,
             "task": "test_task",
             "url": "https://www.google.com",
-            "replay_start_offset": -1,
-            "replay_stop_offset": -1,
         }
     )
-    assert response.replay == sample_webp_data
-
-    # Test case 2: Direct bytes input
-    response = AgentStatusResponse.model_validate(
-        {
-            "agent_id": "test_agent",
-            "created_at": "2024-03-20",
-            "session_id": "test_session",
-            "status": AgentStatus.active,
-            "replay": sample_webp_data,
-            "task": "test_task",
-            "url": "https://www.google.com",
-            "replay_start_offset": -1,
-            "replay_stop_offset": -1,
-        }
-    )
-    assert response.replay == sample_webp_data
-
-    # Test case 3: None input
-    response = AgentStatusResponse.model_validate(
-        {
-            "agent_id": "test_agent",
-            "created_at": "2024-03-20",
-            "session_id": "test_session",
-            "status": AgentStatus.active,
-            "replay": None,
-            "task": "test_task",
-            "url": "https://www.google.com",
-            "replay_start_offset": -1,
-            "replay_stop_offset": -1,
-        }
-    )
-    assert response.replay is None
-
-    # Test case 4: Invalid input
-    with pytest.raises(ValueError, match="replay must be a bytes or a base64 encoded string"):
-        _ = AgentStatusResponse.model_validate(
-            {
-                "agent_id": "test_agent",
-                "created_at": "2024-03-20",
-                "session_id": "test_session",
-                "status": AgentStatus.active,
-                "replay": 123,
-                "task": "test_task",
-                "url": "https://www.google.com",
-                "replay_start_offset": -1,
-                "replay_stop_offset": -1,
-            }
-        )
+    assert response.task == "test_task"
+    assert response.url == "https://www.google.com"
+    assert response.success is None
+    assert response.answer is None
 
 
-def test_replay_response_from_replay():
+def test_replay_response():
     replay = ReplayResponse(
-        replay=b"fake_replay_data",
+        mp4_url="https://example.com/replay.mp4",
+        playlist_content="#EXTM3U\n#EXT-X-VERSION:3",
+        expires_at="2024-03-21T00:00:00Z",
+        video_start_ms=0,
+        video_duration_ms=5000,
     )
-    assert replay.replay == b"fake_replay_data"
-    encoded_replay = "ZmFrZV9yZXBsYXlfZGF0YQ=="
-    # this should not raise an error
-    assert replay.model_dump() == {"replay": encoded_replay}
-    assert replay.model_dump_json() == f'{{"replay":"{encoded_replay}"}}'
+    assert replay.mp4_url == "https://example.com/replay.mp4"
+    assert replay.playlist_content == "#EXTM3U\n#EXT-X-VERSION:3"
+    assert replay.expires_at == "2024-03-21T00:00:00Z"
+    assert replay.video_start_ms == 0
+    assert replay.video_duration_ms == 5000
+
+    # Presigned URLs should be hidden from repr
+    r = repr(replay)
+    assert "example.com/replay.mp4" not in r
+    assert "#EXTM3U" not in r
+
+    # All fields optional except inheriting from SdkResponse
+    minimal = ReplayResponse()
+    assert minimal.mp4_url is None
+    assert minimal.expires_at is None
 
 
 @pytest.mark.parametrize(
