@@ -206,8 +206,7 @@ async def run_task_with_sdk(
                     screenshots = mp4_bytes_to_frame_bytes(video_replay)
                 elif replay.playlist_content is not None:
                     logger.warning(
-                        "Replay returned playlist_content without mp4_url; "
-                        "WebVoyager replay extraction does not support HLS playlists yet."
+                        "Replay returned playlist_content without mp4_url; WebVoyager replay extraction does not support HLS playlists yet."
                     )
                     screenshots = []
                 else:
