@@ -114,8 +114,8 @@ class TestWorkflowsClient:
         assert isinstance(response, GetFunctionWithLinkResponse)
         assert response.function_id == TestWorkflowsClient._test_workflow_id
         assert response.url is not None
-        # URL should be encrypted
-        assert not response.url.startswith(("http://", "https://"))
+        # URL should be a valid pre-signed S3 URL
+        assert response.url.startswith(("http://", "https://"))
 
     def test_list_workflows(self, client: NotteClient):
         """Test listing all workflows."""
