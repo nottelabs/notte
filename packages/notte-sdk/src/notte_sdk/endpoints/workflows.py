@@ -643,7 +643,12 @@ class RemoteWorkflow:
     def workflow_id(self) -> str:
         return self.response.workflow_id
 
-    def replay(self) -> ReplayResponse:
+    def replay(
+        self,
+        wait: bool = True,
+        timeout: float = 120.0,
+        poll_interval: float = 2.0,
+    ) -> ReplayResponse:
         """
         Get presigned URLs for the workflow run replay.
 
@@ -652,7 +657,13 @@ class RemoteWorkflow:
         function.run()
         replay = function.replay()
         print(replay.mp4_url)  # Presigned URL for MP4 download
+        replay.download("workflow.mp4")
         ```
+
+        Args:
+            wait: If True (default), poll until the replay is ready.
+            timeout: Maximum seconds to wait (default 120).
+            poll_interval: Seconds between polling attempts (default 2).
         """
         if self._function_run_id is None:
             raise ValueError(
@@ -662,7 +673,12 @@ class RemoteWorkflow:
             raise ValueError(
                 f"Session ID not found in your function run {self._function_run_id}. Please check that your workflow is creating at least one `client.Session` in the `run` function."
             )
-        return self.root_client.sessions.replay(session_id=self._session_id)
+        return self.root_client.sessions.replay(
+            session_id=self._session_id,
+            wait=wait,
+            timeout=timeout,
+            poll_interval=poll_interval,
+        )
 
     def update(
         self,

@@ -1118,13 +1118,23 @@ class RemoteAgent:
         """
         return self.client.status(agent_id=self.agent_id)
 
-    def replay(self) -> ReplayResponse:
+    def replay(
+        self,
+        wait: bool = True,
+        timeout: float = 240.0,
+        poll_interval: float = 5.0,
+    ) -> ReplayResponse:
         """
         Get the replay for the agent's session.
 
         .. deprecated::
             Use ``session.replay()`` instead. Agent replay is deprecated
             in favor of session-level replay with presigned URLs.
+
+        Args:
+            wait: If True (default), poll until the replay is ready.
+            timeout: Maximum seconds to wait (default 120).
+            poll_interval: Seconds between polling attempts (default 2).
 
         Returns:
             ReplayResponse: Presigned URLs for HLS playlist and MP4 download.
@@ -1134,7 +1144,12 @@ class RemoteAgent:
             DeprecationWarning,
             stacklevel=2,
         )
-        return self.client.root_client.sessions.replay(session_id=self.session_id)
+        return self.client.root_client.sessions.replay(
+            session_id=self.session_id,
+            wait=wait,
+            timeout=timeout,
+            poll_interval=poll_interval,
+        )
 
     @property
     @track_usage("cloud.agent.workflow")

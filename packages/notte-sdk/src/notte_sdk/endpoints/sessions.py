@@ -470,18 +470,53 @@ class SessionsClient(BaseClient):
         return offset
 
     @track_usage("cloud.session.replay")
-    def replay(self, session_id: str) -> ReplayResponse:
+    def replay(
+        self,
+        session_id: str,
+        wait: bool = True,
+        timeout: float = 240.0,
+        poll_interval: float = 5.0,
+    ) -> ReplayResponse:
         """
         Get presigned URLs for session replay.
 
         Args:
             session_id: The identifier of the session to get the replay for.
+            wait: If True (default), poll until the replay is ready instead of
+                raising on 404.
+            timeout: Maximum seconds to wait for the replay to become available.
+            poll_interval: Seconds between polling attempts.
 
         Returns:
             ReplayResponse: Presigned URLs for HLS playlist and MP4 download.
+
+        Raises:
+            NotteAPIError: If the replay is not found and ``wait`` is False, or
+                if the timeout is exceeded.
+            TimeoutError: If the replay does not become available within ``timeout`` seconds.
         """
         endpoint = SessionsClient._session_debug_replay_endpoint(session_id=session_id)
-        return self.request(endpoint)
+        if not wait:
+            return self.request(endpoint)
+
+        logger.info(f"Waiting for replay of session {session_id} to be ready (timeout={timeout}s)...")
+        deadline = time.monotonic() + timeout
+        while True:
+            try:
+                response = self.request(endpoint)
+                logger.info(f"Replay for session {session_id} is ready")
+                return response
+            except NotteAPIError as e:
+                if e.status_code != 404:
+                    raise
+                error_msg = e.error.get("message", "") or e.error.get("detail", "")
+                if "still active" in error_msg:
+                    raise ValueError(
+                        f"Session {session_id} is still active — close the session first to generate the replay."
+                    ) from e
+                if time.monotonic() + poll_interval > deadline:
+                    raise TimeoutError(f"Replay for session {session_id} not ready within {timeout}s") from e
+                time.sleep(poll_interval)
 
     @track_usage("cloud.session.viewer.browser")
     def viewer_browser(self, session_id: str, _viewer_url: str | None = None) -> None:
@@ -845,7 +880,12 @@ class RemoteSession(SyncResource):
         """
         return self.client.offset(session_id=self.session_id).offset
 
-    def replay(self) -> ReplayResponse:
+    def replay(
+        self,
+        wait: bool = True,
+        timeout: float = 240.0,
+        poll_interval: float = 5.0,
+    ) -> ReplayResponse:
         """
         Get presigned URLs for the session replay.
 
@@ -853,19 +893,30 @@ class RemoteSession(SyncResource):
         ```python
         replay = session.replay()
         print(replay.mp4_url)  # Presigned URL for MP4 download
+        replay.download("session.mp4")
         ```
 
-        > Note that the replay is only available after the session has been stopped.
+        By default this polls until the replay is ready. Set ``wait=False``
+        to fail immediately if the replay is not yet available.
 
-        Also you need to perform at least one action for the replay to be available.
+        Args:
+            wait: If True (default), poll until the replay is ready.
+            timeout: Maximum seconds to wait (default 120).
+            poll_interval: Seconds between polling attempts (default 2).
 
         Returns:
             ReplayResponse: Presigned URLs for HLS playlist and MP4 download.
 
         Raises:
             ValueError: If the session hasn't been started yet (no session_id available).
+            TimeoutError: If the replay does not become available within ``timeout`` seconds.
         """
-        return self.client.replay(session_id=self.session_id)
+        return self.client.replay(
+            session_id=self.session_id,
+            wait=wait,
+            timeout=timeout,
+            poll_interval=poll_interval,
+        )
 
     def viewer_browser(self) -> None:
         """

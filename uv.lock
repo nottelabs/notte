@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -3022,6 +3022,7 @@ version = "1.4.4.dev0"
 source = { editable = "packages/notte-eval" }
 dependencies = [
     { name = "cloudpickle" },
+    { name = "httpx" },
     { name = "notte-agent" },
     { name = "notte-browser" },
     { name = "notte-core" },
@@ -3054,6 +3055,7 @@ lint = [
 [package.metadata]
 requires-dist = [
     { name = "cloudpickle", specifier = ">=3.1.1" },
+    { name = "httpx" },
     { name = "notte-agent", editable = "packages/notte-agent" },
     { name = "notte-browser", editable = "packages/notte-browser" },
     { name = "notte-core", editable = "packages/notte-core" },

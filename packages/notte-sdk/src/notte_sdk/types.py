@@ -647,6 +647,29 @@ class ReplayResponse(SdkResponse):
     video_start_ms: Annotated[int | None, Field(description="Video start offset in milliseconds")] = None
     video_duration_ms: Annotated[int | None, Field(description="Video duration in milliseconds")] = None
 
+    def download(self, path: str | Path = "replay.mp4") -> Path:
+        """Download the MP4 replay to a local file.
+
+        Args:
+            path: Destination file path. Defaults to ``replay.mp4`` in the current directory.
+
+        Returns:
+            The resolved path to the downloaded file.
+
+        Raises:
+            ValueError: If no ``mp4_url`` is available.
+        """
+        if self.mp4_url is None:
+            raise ValueError("No mp4_url available for download")
+
+        import requests
+
+        response = requests.get(self.mp4_url)
+        response.raise_for_status()
+        dest = Path(path)
+        _ = dest.write_bytes(response.content)
+        return dest
+
 
 # Profile configuration for sessions (defined before SessionStartRequest)
 
