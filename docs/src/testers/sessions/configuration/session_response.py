@@ -24,7 +24,7 @@ cookies = session.get_cookies()
 session.set_cookies(cookies=cookies)
 
 # Replay
-replay = session.replay()  # Get MP4 replay after session ends
-replay.save("session.mp4")
+replay = session.replay()  # Get replay after session ends
+replay.download("session.mp4")
 
 session.stop()

@@ -102,18 +102,18 @@ A sequence of AgentResponse objects.
 ### replay
 
 ```python
-replay(agent_id: <class 'str'>) -> <class 'notte_core.utils.webp_replay.MP4Replay'>
+replay(agent_id: str, wait: bool = True, timeout: float = 240.0, poll_interval: float = 5.0) -> ReplayResponse
 ```
 
-Downloads the replay for the specified agent in mp4 format
+Get presigned URLs for the specified agent's session replay. Deprecated — use `sessions.replay()` instead.
 
 **Parameters:**
 
-- `agent_id`: The identifier of the agent to download the replay for.
+- `agent_id`: The identifier of the agent to get the replay for.
 
 **Returns:**
 
-The replay file in mp4 format.
+[`ReplayResponse`](/sdk-reference/misc/replayresponse): Contains presigned URLs for MP4 download and HLS playlist.
 
 ---
 

@@ -12,5 +12,5 @@ with client.Session() as session:
     session.execute(type="goto", url="https://example.com")
     replay = session.replay()
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    replay.save(f"login_test_{session.session_id}_{timestamp}.mp4")
+    replay.download(f"login_test_{session.session_id}_{timestamp}.mp4")
 ```

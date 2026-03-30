@@ -2,8 +2,8 @@
 {/* @sniptest testers/agents/replay/view_in_notebook.py */}
 
 ```python view_in_notebook.py
-agent.run(task="Complete task")
+    agent.run(task="Complete task")
 
-replay = agent.replay()
-replay.save("notebook_replay.mp4")
+replay = session.replay()
+replay.download("notebook_replay.mp4")
 ```

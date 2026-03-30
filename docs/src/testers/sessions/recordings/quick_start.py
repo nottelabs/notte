@@ -11,4 +11,4 @@ with client.Session() as session:
 
 # Get replay after session ends
 replay = session.replay()
-replay.save("session_recording.mp4")
+replay.download("session_recording.mp4")

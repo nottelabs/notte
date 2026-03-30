@@ -7,5 +7,5 @@ with client.Session() as session:
     agent = client.Agent(session=session)
     agent.run(task="Complete task")
 
-    replay = agent.replay()
-    replay.save("notebook_replay.mp4")
+replay = session.replay()
+replay.download("notebook_replay.mp4")

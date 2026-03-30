@@ -2,10 +2,10 @@
 {/* @sniptest testers/agents/replay/review_failed_agents.py */}
 
 ```python review_failed_agents.py
-result = agent.run(task="Critical task")
+    result = agent.run(task="Critical task")
 
 if not result.success:
-    replay = agent.replay()
-    replay.save(f"failure_{agent.agent_id}.mp4")
+    replay = session.replay()
+    replay.download(f"failure_{agent.agent_id}.mp4")
     print(f"Saved replay for debugging: failure_{agent.agent_id}.mp4")
 ```

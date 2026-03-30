@@ -2,12 +2,12 @@
 {/* @sniptest testers/agents/replay/replays_for_qa.py */}
 
 ```python replays_for_qa.py
-# Test run
-result = agent.run(task="Test checkout flow")
+    # Test run
+    result = agent.run(task="Test checkout flow")
 
 # Review replay before production
-replay = agent.replay()
-replay.save("qa_replay.mp4")
+replay = session.replay()
+replay.download("qa_replay.mp4")
 
 # Verify:
 # - All steps completed correctly

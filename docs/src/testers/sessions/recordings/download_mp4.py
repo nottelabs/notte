@@ -11,7 +11,8 @@ with client.Session() as session:
 replay = session.replay()
 
 # Save to file
-replay.save("my_automation.mp4")
+replay.download("my_automation.mp4")
 
-# Or get raw bytes from the replay attribute
-video_bytes = replay.replay
+# Or access the presigned URL directly
+print(f"MP4 URL: {replay.mp4_url}")
+print(f"Expires at: {replay.expires_at}")

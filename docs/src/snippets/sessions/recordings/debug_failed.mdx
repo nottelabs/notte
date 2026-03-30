@@ -20,6 +20,6 @@ except Exception as e:
     if session_id:
         # Get recording to see what happened
         replay = client.sessions.replay(session_id=session_id)
-        replay.save(f"failed_{session_id}.mp4")
+        replay.download(f"failed_{session_id}.mp4")
         print("Replay saved for analysis")
 ```

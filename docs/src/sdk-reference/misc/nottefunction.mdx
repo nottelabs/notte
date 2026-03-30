@@ -91,14 +91,14 @@ get_url(version: str | None = None, decryption_key: str | None = None) -> str
 ### replay
 
 ```python
-replay() -> MP4Replay
+replay(wait: bool = True, timeout: float = 120.0, poll_interval: float = 2.0) -> ReplayResponse
 ```
 
-Replay the workflow run
+Get presigned URLs for the workflow run replay.
 
 **Returns:**
 
-[`MP4Replay`](/sdk-reference/misc/mp4replay)
+[`ReplayResponse`](/sdk-reference/misc/replayresponse): Contains presigned URLs for MP4 download and HLS playlist.
 
 ---
 

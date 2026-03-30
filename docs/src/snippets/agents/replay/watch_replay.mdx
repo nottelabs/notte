@@ -2,10 +2,10 @@
 {/* @sniptest testers/agents/replay/watch_replay.py */}
 
 ```python watch_replay.py
-agent.run(task="Complete task")
+    agent.run(task="Complete task")
 
-replay = agent.replay()
-replay.save("debug_replay.mp4")
+replay = session.replay()
+replay.download("debug_replay.mp4")
 
 # Watch where it failed
 # Identify if element selectors were wrong

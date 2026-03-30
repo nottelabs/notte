@@ -17,8 +17,8 @@ with client.Session() as session:
 
         print(f"Steps: {len(status.steps)}")
 
-        # Get replay so far (if supported)
-        # replay = agent.replay()
-        # replay.show()
+        # Get replay after completion
+        # replay = session.replay()
+        # replay.download("replay.mp4")
 
         time.sleep(5)

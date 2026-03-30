@@ -8,11 +8,11 @@ with client.Session() as session:
     # Test run
     result = agent.run(task="Test checkout flow")
 
-    # Review replay before production
-    replay = agent.replay()
-    replay.save("qa_replay.mp4")
+# Review replay before production
+replay = session.replay()
+replay.download("qa_replay.mp4")
 
-    # Verify:
-    # - All steps completed correctly
-    # - No unexpected behavior
-    # - Performance is acceptable
+# Verify:
+# - All steps completed correctly
+# - No unexpected behavior
+# - Performance is acceptable

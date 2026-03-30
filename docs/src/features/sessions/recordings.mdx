@@ -13,7 +13,7 @@ import AgentReplayAlt from '/snippets/sessions/capabilities/agent_replay_alt.mdx
 import NameRecordings from '/snippets/sessions/capabilities/name_recordings.mdx';
 import RecordOnFailures from '/snippets/sessions/capabilities/record_on_failures.mdx';
 
-Notte automatically records every action in your browser sessions, allowing you to download video replays for debugging and analysis.
+Notte automatically records every action in your browser sessions, allowing you to download video replays for debugging and analysis. Calling `session.replay()` returns a `ReplayResponse` containing a presigned URL for the MP4 file, which you can download with `replay.download()`.
 
 ## Quick Start
 
@@ -45,11 +45,9 @@ Get a replay for any session using its ID:
 
 ## Agent Replays
 
-Agents have their own replay method for convenience:
+After running an agent, get the replay from the session:
 
 <AgentReplay />
-
-You can also get the replay from the session:
 
 <AgentReplayAlt />
 
@@ -96,13 +94,14 @@ Remove old recordings to save disk space:
 ## Storage
 
 Recordings are:
-- Stored temporarily on Notte's servers
-- Available after session ends
+- Stored on Notte's servers after the session ends
+- Accessed via presigned URLs (returned by `session.replay()`)
 - **Retained for 24 hours**
-- Downloadable as MP4
+- Downloadable as MP4 via `replay.download()`
 
 <Warning>
   Recordings are deleted after 24 hours. Download them promptly if needed for later analysis.
+  Presigned URLs also expire — check `replay.expires_at` for the expiration time.
 </Warning>
 
 ## Next Steps

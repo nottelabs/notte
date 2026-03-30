@@ -135,18 +135,19 @@ The session trajectory offset
 ### replay
 
 ```python
-replay() -> <class 'notte_core.utils.webp_replay.MP4Replay'>
+replay(wait: bool = True, timeout: float = 240.0, poll_interval: float = 5.0) -> ReplayResponse
 ```
 
-Get a replay of the session's execution in MP4 format
+Get presigned URLs for the session's MP4 replay. See [`replay()`](/sdk-reference/remotesession/replay) for full documentation.
 
 **Returns:**
 
-The replay data in MP4 format.
+[`ReplayResponse`](/sdk-reference/misc/replayresponse): Contains presigned URLs for MP4 download and HLS playlist.
 
 **Raises:**
 
 - `ValueError`: If the session hasn't been started yet (no session_id available).
+- `TimeoutError`: If the replay does not become available within `timeout` seconds.
 
 ---
 

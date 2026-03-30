@@ -9,5 +9,5 @@ try:
         # ... automation ...
 except Exception:
     replay = session.replay()
-    replay.save(f"error_{session.session_id}.mp4")
+    replay.download(f"error_{session.session_id}.mp4")
     raise

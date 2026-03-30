@@ -9,10 +9,10 @@ with client.Session() as session:
     agent = client.Agent(session=session)
     agent.run(task="Complete task")
 
-    replay = agent.replay()
-    replay.save("debug_run.mp4")
+replay = session.replay()
+replay.download("debug_run.mp4")
 
-    # With custom path
-    output_dir = Path("./replays")
-    output_dir.mkdir(exist_ok=True)
-    replay.save(str(output_dir / f"agent_{agent.agent_id}.mp4"))
+# With custom path
+output_dir = Path("./replays")
+output_dir.mkdir(exist_ok=True)
+replay.download(output_dir / f"agent_{agent.agent_id}.mp4")

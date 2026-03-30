@@ -1,18 +1,32 @@
 ---
 title: "replay"
-description: "Replay the workflow run"
+description: "Get presigned URLs for the workflow run replay"
 ---
 
 
 
 ```python
-function = notte.Function("<your-function-id>")
+function = client.Function("<your-function-id>")
 function.run()
 replay = function.replay()
-replay.save("run_replay.webp")
+replay.download("run_replay.mp4")
 ```
 
 
+## Parameters
+
+<ParamField path="wait" type="bool" default="True">
+  If `True`, polls until the replay is ready instead of raising on 404.
+</ParamField>
+
+<ParamField path="timeout" type="float" default="120.0">
+  Maximum seconds to wait for the replay to become available.
+</ParamField>
+
+<ParamField path="poll_interval" type="float" default="2.0">
+  Seconds between polling attempts.
+</ParamField>
+
 ## Returns
 
-[`MP4Replay`](/sdk-reference/misc/mp4replay)
+[`ReplayResponse`](/sdk-reference/misc/replayresponse): Contains presigned URLs for MP4 download and HLS playlist.

@@ -7,9 +7,9 @@ with client.Session() as session:
     agent = client.Agent(session=session)
     agent.run(task="Feature test")
 
-    replay = agent.replay()
-    replay.save(f"feature_test_{agent.agent_id}.mp4")
+replay = session.replay()
+replay.download(f"feature_test_{agent.agent_id}.mp4")
 
-    # Share file with team
-    # Or share console link
-    print(f"Console replay: https://console.notte.cc/agents/{agent.agent_id}")
+# Share file with team
+# Or share console link
+print(f"Console replay: https://console.notte.cc/agents/{agent.agent_id}")

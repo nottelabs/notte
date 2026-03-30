@@ -11,5 +11,5 @@ result = function.run(url="https://example.com")
 # Get replay for this run (automatically uses the session from the run)
 replay = function.replay()
 
-# Save the video
-replay.save("execution_replay.mp4")
+# Download the video
+replay.download("execution_replay.mp4")

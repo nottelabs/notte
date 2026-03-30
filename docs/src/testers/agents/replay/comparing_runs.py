@@ -2,18 +2,19 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-with client.Session() as session:
-    agent = client.Agent(session=session)
+# Successful run
+with client.Session() as session_1:
+    agent_1 = client.Agent(session=session_1)
+    result_success = agent_1.run(task="Working task")
+replay_success = session_1.replay()
+replay_success.download("success.mp4")
 
-    # Successful run
-    result_success = agent.run(task="Working task")
-    replay_success = agent.replay()
-    replay_success.save("success.mp4")
+# Failed run
+with client.Session() as session_2:
+    agent_2 = client.Agent(session=session_2)
+    result_fail = agent_2.run(task="Failing task")
+replay_fail = session_2.replay()
+replay_fail.download("failure.mp4")
 
-    # Failed run
-    result_fail = agent.run(task="Failing task")
-    replay_fail = agent.replay()
-    replay_fail.save("failure.mp4")
-
-    # Compare side-by-side
-    # Identify where behavior diverges
+# Compare side-by-side
+# Identify where behavior diverges

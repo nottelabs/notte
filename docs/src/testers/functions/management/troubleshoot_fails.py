@@ -13,4 +13,4 @@ if run.status == "failed":
     # Run the function to get a replay
     result = function.run()
     replay = function.replay()
-    replay.save("debug_replay.mp4")
+    replay.download("debug_replay.mp4")

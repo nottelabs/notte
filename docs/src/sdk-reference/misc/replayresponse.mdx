@@ -1,0 +1,62 @@
+---
+title: "ReplayResponse"
+description: "Response containing presigned URLs for session replay"
+---
+
+
+
+Contains presigned URLs for downloading or streaming a session replay. Returned by
+[`session.replay()`](/sdk-reference/remotesession/replay) and
+[`client.sessions.replay()`](/sdk-reference/sessionsclient/replay).
+
+## Properties
+
+<ParamField path="mp4_url" type="str | None">
+  Presigned URL for downloading the MP4 replay file.
+</ParamField>
+
+<ParamField path="playlist_content" type="str | None">
+  HLS playlist content with presigned segment URLs, for streaming playback.
+</ParamField>
+
+<ParamField path="expires_at" type="str | None">
+  Expiration time of the presigned URLs.
+</ParamField>
+
+<ParamField path="video_start_ms" type="int | None">
+  Video start offset in milliseconds.
+</ParamField>
+
+<ParamField path="video_duration_ms" type="int | None">
+  Video duration in milliseconds.
+</ParamField>
+
+## Methods
+
+### download
+
+```python
+download(path: str | Path = "replay.mp4") -> Path
+```
+
+Download the MP4 replay to a local file via the presigned URL.
+
+**Parameters:**
+
+- `path`: Destination file path. Defaults to `replay.mp4` in the current directory.
+
+**Returns:**
+
+The resolved path to the downloaded file.
+
+**Raises:**
+
+- `ValueError`: If no `mp4_url` is available.
+
+---
+
+
+
+## Module
+
+`notte_sdk.types`

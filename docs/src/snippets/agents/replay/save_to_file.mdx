@@ -2,10 +2,10 @@
 {/* @sniptest testers/agents/replay/save_to_file.py */}
 
 ```python save_to_file.py
-agent.run(task="Complete task")
+    agent.run(task="Complete task")
 
-replay = agent.replay()
-replay.save("debug_run.mp4")
+replay = session.replay()
+replay.download("debug_run.mp4")
 
 # With custom path
 output_dir = Path("./replays")
