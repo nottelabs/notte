@@ -2,6 +2,8 @@
 {/* @sniptest testers/agents/replay/view_in_notebook.py */}
 
 ```python view_in_notebook.py
+with client.Session() as session:
+    agent = client.Agent(session=session)
     agent.run(task="Complete task")
 
 replay = session.replay()

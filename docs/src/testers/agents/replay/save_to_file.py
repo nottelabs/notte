@@ -1,5 +1,5 @@
 # @sniptest filename=save_to_file.py
-# @sniptest show=8-15
+# @sniptest show=6-18
 from pathlib import Path
 
 from notte_sdk import NotteClient

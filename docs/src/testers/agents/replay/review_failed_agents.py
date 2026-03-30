@@ -1,5 +1,5 @@
 # @sniptest filename=review_failed_agents.py
-# @sniptest show=6-11
+# @sniptest show=4-13
 from notte_sdk import NotteClient
 
 client = NotteClient()

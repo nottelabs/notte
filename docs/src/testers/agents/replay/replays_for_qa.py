@@ -1,5 +1,5 @@
 # @sniptest filename=replays_for_qa.py
-# @sniptest show=6-16
+# @sniptest show=4-18
 from notte_sdk import NotteClient
 
 client = NotteClient()

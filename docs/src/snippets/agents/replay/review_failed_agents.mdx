@@ -2,6 +2,8 @@
 {/* @sniptest testers/agents/replay/review_failed_agents.py */}
 
 ```python review_failed_agents.py
+with client.Session() as session:
+    agent = client.Agent(session=session)
     result = agent.run(task="Critical task")
 
 if not result.success:

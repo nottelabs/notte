@@ -1,5 +1,5 @@
 # @sniptest filename=view_in_notebook.py
-# @sniptest show=6-9
+# @sniptest show=4-11
 from notte_sdk import NotteClient
 
 client = NotteClient()
