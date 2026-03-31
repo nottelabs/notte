@@ -95,6 +95,12 @@ replay(wait: bool = True, timeout: float = 120.0, poll_interval: float = 2.0) ->
 
 Get presigned URLs for the workflow run replay.
 
+**Parameters:**
+
+- `wait`: If `True` (default), poll until the replay is ready.
+- `timeout`: Maximum seconds to wait for the replay to become available. Defaults to `120.0`.
+- `poll_interval`: Seconds between polling attempts. Defaults to `2.0`.
+
 **Returns:**
 
 [`ReplayResponse`](/sdk-reference/misc/replayresponse): Contains presigned URLs for MP4 download and HLS playlist.

@@ -41,5 +41,5 @@ Also you need to perform at least one action for the replay to be available.
 ## Raises
 
 - `ValueError`: If the session hasn't been started yet (no session_id available).
-- `ValueError`: If the session is still active (must be stopped first).
+- `ValueError`: If the session is still active — close the session first to generate the replay.
 - `TimeoutError`: If the replay does not become available within `timeout` seconds.

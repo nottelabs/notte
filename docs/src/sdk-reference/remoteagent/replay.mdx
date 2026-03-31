@@ -39,3 +39,5 @@ replay.download(f"{agent.agent_id}_replay.mp4")
 ## Raises
 
 - `ValueError`: If the agent hasn't been run yet (no agent_id available).
+- `ValueError`: If the session is still active (must be stopped first).
+- `TimeoutError`: If the replay does not become available within `timeout` seconds.

@@ -4,6 +4,8 @@ from notte_sdk import NotteClient
 client = NotteClient()
 
 with client.Session() as session:
-    # Get replay from session
-    replay = session.replay()
-    replay.download("agent_run.mp4")
+    pass  # session actions here
+
+# Get replay after session ends
+replay = session.replay()
+replay.download("agent_run.mp4")

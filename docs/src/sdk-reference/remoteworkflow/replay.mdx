@@ -30,3 +30,8 @@ replay.download("run_replay.mp4")
 ## Returns
 
 [`ReplayResponse`](/sdk-reference/misc/replayresponse): Contains presigned URLs for MP4 download and HLS playlist.
+
+## Raises
+
+- `ValueError`: If no workflow run/session is available for replay.
+- `TimeoutError`: If the replay is not ready within `timeout` seconds.

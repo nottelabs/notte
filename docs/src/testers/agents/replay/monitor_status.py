@@ -1,5 +1,5 @@
 # @sniptest filename=monitor_status.py
-# @sniptest show=7-21
+# @sniptest show=6-22
 import time
 
 from notte_sdk import NotteClient
@@ -17,8 +17,8 @@ with client.Session() as session:
 
         print(f"Steps: {len(status.steps)}")
 
-        # Get replay after completion
-        # replay = session.replay()
-        # replay.download("replay.mp4")
-
         time.sleep(5)
+
+# Get replay after completion
+# replay = session.replay()
+# replay.download("replay.mp4")

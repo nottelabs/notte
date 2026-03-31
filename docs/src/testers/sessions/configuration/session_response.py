@@ -23,8 +23,8 @@ session.viewer_notebook()  # Display in Jupyter notebook
 cookies = session.get_cookies()
 session.set_cookies(cookies=cookies)
 
+session.stop()
+
 # Replay
 replay = session.replay()  # Get replay after session ends
 replay.download("session.mp4")
-
-session.stop()

@@ -105,11 +105,14 @@ A sequence of AgentResponse objects.
 replay(agent_id: str, wait: bool = True, timeout: float = 240.0, poll_interval: float = 5.0) -> ReplayResponse
 ```
 
-Get presigned URLs for the specified agent's session replay. Deprecated — use `sessions.replay()` instead.
+Get presigned URLs for the specified agent's session replay. Deprecated — use `session.replay()` instead.
 
 **Parameters:**
 
 - `agent_id`: The identifier of the agent to get the replay for.
+- `wait`: If `True` (default), poll until the replay is ready.
+- `timeout`: Maximum seconds to wait for the replay to become available. Defaults to `240.0`.
+- `poll_interval`: Seconds between polling attempts. Defaults to `5.0`.
 
 **Returns:**
 

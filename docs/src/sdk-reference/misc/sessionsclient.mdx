@@ -144,6 +144,9 @@ Get presigned URLs for session replay.
 **Parameters:**
 
 - `session_id`: The identifier of the session to get the replay for.
+- `wait`: If `True` (default), poll until the replay is ready instead of raising on 404.
+- `timeout`: Maximum seconds to wait for the replay to become available. Defaults to `240.0`.
+- `poll_interval`: Seconds between polling attempts. Defaults to `5.0`.
 
 **Returns:**
 

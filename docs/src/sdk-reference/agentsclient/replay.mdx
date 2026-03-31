@@ -8,7 +8,7 @@ description: "Get presigned URLs for the specified agent's session replay"
 </Warning>
 
 ```python
-# Deprecated — prefer client.sessions.replay(session_id=...)
+# Deprecated — prefer session.replay()
 replay = client.agents.replay(agent_id="your-agent-id")
 replay.download("replay.mp4")
 ```
