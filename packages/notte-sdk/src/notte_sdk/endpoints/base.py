@@ -288,7 +288,7 @@ class BaseClient(ABC):
         try:
             response = requests.get(
                 f"{self.server_url}/{self.HEALTH_CHECK_ENDPOINT}",
-                headers={"x-notte-request-origin": "sdk", "x-notte-sdk-version": notte_core_version},
+                headers={"x-notte-request-origin": "sdk-python", "x-notte-sdk-version": notte_core_version},
             )
             if response.status_code != 200:
                 logger.error(f"⚠️ Health check failed with status code {response.status_code}.")
@@ -313,7 +313,7 @@ class BaseClient(ABC):
         return {
             "Authorization": f"Bearer {self.token}",
             "x-notte-sdk-version": notte_core_version,
-            "x-notte-request-origin": "sdk",
+            "x-notte-request-origin": "sdk-python",
             **(headers or {}),
         }
 

@@ -41,7 +41,7 @@ def headers(api_key: str) -> dict[str, str]:
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "x-notte-sdk-version": notte_core_version,
-        "x-notte-request-origin": "sdk",
+        "x-notte-request-origin": "sdk-python",
     }
 
 
