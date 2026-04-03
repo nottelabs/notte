@@ -89,9 +89,19 @@ async def test_wikipedia_search():
         perception_type = "fast"
         _ = await page.aexecute(GotoAction(url="https://www.wikipedia.org/"))
         _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(FillAction(id="I1", value="Nadal"))
-        _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(ClickAction(id="L11"))
+        # Find search input dynamically instead of hardcoding ID
+        search_input = None
+        for node in page.snapshot.dom_node.flatten(keep_filter=lambda n: n.is_interaction()):
+            if node.role in ("textbox", "searchbox") or (
+                hasattr(node, "attributes")
+                and node.attributes
+                and getattr(node.attributes, "placeholder", None)
+                and "search" in str(getattr(node.attributes, "placeholder", "")).lower()
+            ):
+                search_input = node
+                break
+        assert search_input is not None, "Could not find search input on Wikipedia"
+        _ = await page.aexecute(FillAction(id=search_input.id, value="Nadal", press_enter=True))
         _ = await page.aobserve(perception_type=perception_type)
         _ = await page.aexecute(ScrapeAction())
 

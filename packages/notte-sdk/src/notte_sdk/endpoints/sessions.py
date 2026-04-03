@@ -843,7 +843,13 @@ class RemoteSession(SyncResource):
                 create_or_append_cookies_to_file(self._cookie_file, cookies)
             except Exception as e:
                 logger.error(f"🍪 Error saving cookies to {self._cookie_file}: {e}")
-        self.response = self.client.stop(session_id=self.session_id)
+        try:
+            self.response = self.client.stop(session_id=self.session_id)
+        except Exception as e:
+            if "already stopped" in str(e).lower() or "already closed" in str(e).lower():
+                logger.warning(f"Session {self.session_id} was already stopped")
+            else:
+                raise
 
     @property
     def session_id(self) -> str:

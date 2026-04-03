@@ -354,8 +354,14 @@ class NottePersona(SyncResource, BasePersona):
 
     @override
     def stop(self) -> None:
-        logger.info(f"[Persona] {self.persona_id} deleted.")
-        _ = self.delete()
+        try:
+            _ = self.delete()
+            logger.info(f"[Persona] {self.persona_id} deleted.")
+        except Exception as e:
+            if "already" in str(e).lower() and ("deleted" in str(e).lower() or "not found" in str(e).lower()):
+                logger.warning(f"[Persona] {self.persona_id} was already deleted.")
+            else:
+                raise
 
     @override
     def _get_vault(self) -> NotteVault | None:

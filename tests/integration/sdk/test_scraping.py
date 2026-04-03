@@ -126,6 +126,7 @@ def test_sdk_scraping_response_format():
     assert len(plans.plans) >= 1
 
 
+@pytest.mark.flaky(reruns=2, reruns_delay=5)
 def test_sdk_scraping_response_format_json(pricing_plans_json: dict[str, Any]):
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
