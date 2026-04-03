@@ -8,6 +8,7 @@ from notte_core.actions import (
     ScrollDownAction,
     WaitAction,
 )
+from notte_core.browser.node_type import NodeRole
 
 # .set_user_agent(
 #             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -92,7 +93,7 @@ async def test_wikipedia_search():
         # Find search input dynamically instead of hardcoding ID
         search_input = None
         for node in page.snapshot.dom_node.flatten(keep_filter=lambda n: n.is_interaction()):
-            if node.role in ("textbox", "searchbox") or (
+            if node.role in (NodeRole.TEXTBOX, NodeRole.SEARCHBOX) or (
                 hasattr(node, "attributes")
                 and node.attributes
                 and getattr(node.attributes, "placeholder", None)
@@ -101,6 +102,7 @@ async def test_wikipedia_search():
                 search_input = node
                 break
         assert search_input is not None, "Could not find search input on Wikipedia"
+        assert search_input.id is not None, "Search input found but has no actionable id"
         _ = await page.aexecute(FillAction(id=search_input.id, value="Nadal", press_enter=True))
         _ = await page.aobserve(perception_type=perception_type)
         _ = await page.aexecute(ScrapeAction())
