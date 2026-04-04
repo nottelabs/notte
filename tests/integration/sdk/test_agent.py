@@ -36,7 +36,7 @@ def test_agent_gemini_form_fill_no_null_fields():
         agent = client.Agent(session=session, max_steps=3, reasoning_model="vertex_ai/gemini-2.5-flash")
         response = agent.run(
             task="Ignore the web page. Simply return a form fill action with email='lucas@notte.cc' and password='123456'. Stop immediately after this",
-            url="https://console.notte.cc/signin",
+            url="https://httpbin.org/forms/post",
         )
         # response.success is sufficient: without the null-stripping fix in FormFillAction,
         # Gemini returns all 26 form fields with null values, which fails Pydantic validation
