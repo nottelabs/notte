@@ -27,16 +27,16 @@ def test_agent_ff():
         _ = agent.run(task="Go to google image and find a dog picture")
 
 
-@pytest.mark.flaky(reruns=3, reruns_delay=2)
+@pytest.mark.flaky(reruns=3, reruns_delay=5)
 def test_agent_gemini_form_fill_no_null_fields():
     """Gemini should only fill requested fields, not all fields with null."""
     _ = load_dotenv()
     client = NotteClient()
     with client.Session() as session:
-        agent = client.Agent(session=session, max_steps=5, reasoning_model="vertex_ai/gemini-2.5-flash")
+        agent = client.Agent(session=session, max_steps=3, reasoning_model="vertex_ai/gemini-2.5-flash")
         response = agent.run(
-            task="Return a form fill action with email='lucas@notte.cc' and password='123456'. Stop immediately after this",
-            url="https://app.gusto.com/login",
+            task="Ignore the web page. Simply return a form fill action with email='lucas@notte.cc' and password='123456'. Stop immediately after this",
+            url="https://console.notte.cc/signin",
         )
         # response.success is sufficient: without the null-stripping fix in FormFillAction,
         # Gemini returns all 26 form fields with null values, which fails Pydantic validation

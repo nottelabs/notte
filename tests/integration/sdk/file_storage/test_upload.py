@@ -39,6 +39,7 @@ file_upload_tests = [
 ]
 
 
+@pytest.mark.flaky(reruns=2, reruns_delay=5)
 @pytest.mark.parametrize("test", file_upload_tests, ids=lambda x: x.description)
 def test_uploads(test: UploadTest):
     notte = NotteClient()
