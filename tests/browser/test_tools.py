@@ -52,7 +52,7 @@ def test_tool_execution_in_session(persona: NottePersona, action: EmailReadActio
         assert len(out.data.structured.get().emails) > 0
 
 
-@pytest.mark.flaky(reruns=2, reruns_delay=5)
+@pytest.mark.flaky(reruns=3, reruns_delay=5)
 def test_signup_email_extraction(persona: NottePersona):
     with notte.Session(headless=True) as session:
         agent = notte.Agent(session=session, persona=persona, max_steps=15)

@@ -49,6 +49,7 @@ async def upload_screenshot_to_0x0(screenshot_bytes: bytes) -> str:
             return screenshot_url.strip()
 
 
+@pytest.mark.flaky(reruns=2, reruns_delay=5)
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "url",
