@@ -772,7 +772,7 @@ class SessionStartRequest(SdkRequest):
     )
 
     use_file_storage: Annotated[bool, Field(description="Whether FileStorage should be attached to the session.")] = (
-        False
+        True
     )
 
     screenshot_type: Annotated[ScreenshotType, Field(description="The type of screenshot to use for the session.")] = (
