@@ -203,7 +203,11 @@ class NotteProvider(CloudBrowserProvider):
                 return True
             else:
                 logger.warning(
-                    "Failed to close Notte session (id hash %s): HTTP %s",
+            session_id_hash = hashlib.sha256(session_id.encode("utf-8")).hexdigest()[:8]
+            logger.warning(
+                "Cannot emergency-cleanup Notte session (id hash %s) — missing credentials",
+                session_id_hash,
+            )
                     id_hash,
                     response.status_code,
                 )
