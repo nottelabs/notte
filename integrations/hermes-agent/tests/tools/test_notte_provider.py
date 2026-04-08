@@ -284,8 +284,8 @@ class TestNotteProviderRegistry:
 
     @pytest.mark.skip(reason="Requires browser_tool.py registry patch applied in hermes-agent")
     def test_notte_in_provider_registry(self):
-        from tools.browser_tool import _PROVIDER_REGISTRY
         from tools.browser_providers.notte import NotteProvider
+        from tools.browser_tool import _PROVIDER_REGISTRY
 
         assert "notte" in _PROVIDER_REGISTRY
         assert _PROVIDER_REGISTRY["notte"] is NotteProvider
@@ -324,7 +324,7 @@ class TestNotteCreateSessionEdgeCases:
             mock_requests.get.return_value = debug_response
             mock_requests.delete.return_value = Mock(status_code=200)
 
-            with pytest.raises(RuntimeError, match="missing 'ws.cdp'"):
+            with pytest.raises(RuntimeError, match=r"missing 'ws\.cdp'"):
                 NotteProvider().create_session("task_no_cdp")
 
             # Verify cleanup was attempted
@@ -354,5 +354,21 @@ class TestNotteCreateSessionEdgeCases:
         monkeypatch.setenv("NOTTE_TIMEOUT_MINUTES", "15m")
         from tools.browser_providers.notte import NotteProvider
 
-        with pytest.raises(ValueError, match="NOTTE_TIMEOUT_MINUTES must be an integer"):
+        with pytest.raises(ValueError, match="NOTTE_TIMEOUT_MINUTES must be a positive integer"):
             NotteProvider().create_session("task_bad_timeout")
+
+    def test_zero_timeout_minutes(self, monkeypatch):
+        monkeypatch.setenv("NOTTE_API_KEY", "nk-test")
+        monkeypatch.setenv("NOTTE_TIMEOUT_MINUTES", "0")
+        from tools.browser_providers.notte import NotteProvider
+
+        with pytest.raises(ValueError, match="NOTTE_TIMEOUT_MINUTES must be a positive integer"):
+            NotteProvider().create_session("task_zero_timeout")
+
+    def test_negative_timeout_minutes(self, monkeypatch):
+        monkeypatch.setenv("NOTTE_API_KEY", "nk-test")
+        monkeypatch.setenv("NOTTE_TIMEOUT_MINUTES", "-5")
+        from tools.browser_providers.notte import NotteProvider
+
+        with pytest.raises(ValueError, match="NOTTE_TIMEOUT_MINUTES must be a positive integer"):
+            NotteProvider().create_session("task_neg_timeout")

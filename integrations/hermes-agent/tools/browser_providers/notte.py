@@ -1,10 +1,10 @@
 """Notte cloud browser provider."""
 
+import hashlib
 import logging
 import os
 import uuid
-from typing import Any, Dict, Optional
-import hashlib
+from typing import Any, Dict, Optional, TypedDict
 
 import requests
 
@@ -14,6 +14,18 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_BASE_URL = "https://api.notte.cc"
 _DEFAULT_TIMEOUT_MINUTES = 15
+
+
+class NotteFeatures(TypedDict):
+    proxies: bool
+    solve_captchas: bool
+
+
+class NotteSession(TypedDict):
+    session_name: str
+    bb_session_id: str
+    cdp_url: str
+    features: NotteFeatures
 
 
 class NotteProvider(CloudBrowserProvider):
@@ -66,7 +78,7 @@ class NotteProvider(CloudBrowserProvider):
     # Session lifecycle
     # ------------------------------------------------------------------
 
-    def create_session(self, task_id: str) -> Dict[str, object]:
+    def create_session(self, task_id: str) -> NotteSession:
         config = self._get_config()
 
         enable_proxies = os.environ.get("NOTTE_PROXIES", "true").lower() != "false"
@@ -77,7 +89,11 @@ class NotteProvider(CloudBrowserProvider):
             timeout_minutes = int(raw_timeout)
         except ValueError:
             raise ValueError(
-                f"NOTTE_TIMEOUT_MINUTES must be an integer, got: {raw_timeout!r}"
+                f"NOTTE_TIMEOUT_MINUTES must be a positive integer, got: {raw_timeout!r}"
+            )
+        if timeout_minutes <= 0:
+            raise ValueError(
+                f"NOTTE_TIMEOUT_MINUTES must be a positive integer, got: {raw_timeout!r}"
             )
 
         payload: Dict[str, object] = {
@@ -89,7 +105,7 @@ class NotteProvider(CloudBrowserProvider):
         if enable_captchas:
             payload["solve_captchas"] = True
 
-        features_enabled: Dict[str, object] = {
+        features_enabled: NotteFeatures = {
             "proxies": enable_proxies,
             "solve_captchas": enable_captchas,
         }
