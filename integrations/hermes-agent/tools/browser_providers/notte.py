@@ -153,12 +153,12 @@ class NotteProvider(CloudBrowserProvider):
                 return True
             else:
                 logger.warning(
-                    "Failed to close Notte session %s: HTTP %s - %s",
+                    "Failed to close Notte session %s: HTTP %s",
                     session_id,
                     response.status_code,
-                    response.text[:200],
                 )
                 return False
+
         except Exception as e:
             logger.error("Exception closing Notte session %s: %s", session_id, e)
             return False
