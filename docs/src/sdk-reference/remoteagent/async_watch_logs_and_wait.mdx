@@ -1,0 +1,27 @@
+---
+title: "async_watch_logs_and_wait"
+description: "Watch the logs of the agent and wait for completion asynchronously"
+---
+
+
+
+In Pyodide (WebAssembly), this delegates to the client's async method directly
+since asyncio.to_thread is not supported in single-threaded environments.
+In native Python, this runs the synchronous watch_logs_and_wait in a thread pool
+to avoid blocking the event loop.
+
+Note: When cancelled (e.g., via asyncio.timeout), this method stops the agent
+gracefully. However, in native Python the underlying thread cannot be interrupted
+immediately - it will continue until the server processes the stop signal and
+closes the WebSocket connection. This is not a leak, but cancellation may not
+be instantaneous under high load
+
+
+## Parameters
+
+<ParamField path="log" type="bool" default="True">
+</ParamField>
+
+## Returns
+
+[`AgentStatusResponse`](/sdk-reference/misc/agentstatusresponse)

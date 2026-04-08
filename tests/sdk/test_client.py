@@ -170,7 +170,7 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, session_id: st
         "browser_type": "chromium",
         "viewport_width": 1920,
         "viewport_height": 1080,
-        "use_file_storage": False,
+        "use_file_storage": True,
     }
     response = _start_session(mock_post=mock_post, client=client, session_id=session_id)
     assert response.session_id == session_id

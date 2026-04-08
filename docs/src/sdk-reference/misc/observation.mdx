@@ -1,0 +1,31 @@
+---
+title: "Observation"
+description: ""
+---
+
+
+
+## Fields
+
+<ParamField path="started_at" type="datetime" required>
+</ParamField>
+
+<ParamField path="ended_at" type="datetime" required>
+</ParamField>
+
+<ParamField path="metadata" type="SnapshotMetadata" required>
+  Metadata of the current page, i.e url, page title, snapshot timestamp.
+</ParamField>
+
+<ParamField path="screenshot" type="Screenshot" required>
+  Base64 encoded screenshot of the current page
+</ParamField>
+
+<ParamField path="space" type="ActionSpace" required>
+  Available actions in the current state
+</ParamField>
+
+
+## Module
+
+`notte_core.browser.observation`
