@@ -46,6 +46,15 @@ class NotteProvider(CloudBrowserProvider):
         return self._get_config_or_none() is not None
 
     # ------------------------------------------------------------------
+    # Logging helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _hash_id(session_id: str) -> str:
+        """Return a short hash of a session ID for safe logging."""
+        return hashlib.sha256(session_id.encode("utf-8")).hexdigest()[:8]
+
+    # ------------------------------------------------------------------
     # Config helpers
     # ------------------------------------------------------------------
 
@@ -163,7 +172,10 @@ class NotteProvider(CloudBrowserProvider):
         session_name = f"hermes_{task_id}_{uuid.uuid4().hex[:8]}"
 
         feature_str = ", ".join(k for k, v in features_enabled.items() if v)
-        logger.info("Created Notte session %s with features: %s", session_name, feature_str)
+        logger.info(
+            "Created Notte session %s (id hash %s) with features: %s",
+            session_name, self._hash_id(notte_session_id), feature_str,
+        )
 
         return {
             "session_name": session_name,
@@ -173,10 +185,11 @@ class NotteProvider(CloudBrowserProvider):
         }
 
     def close_session(self, session_id: str) -> bool:
+        id_hash = self._hash_id(session_id)
         try:
             config = self._get_config()
         except ValueError:
-            logger.warning("Cannot close Notte session %s — missing credentials", session_id)
+            logger.warning("Cannot close Notte session (id hash %s) — missing credentials", id_hash)
             return False
 
         try:
@@ -186,24 +199,25 @@ class NotteProvider(CloudBrowserProvider):
                 timeout=10,
             )
             if response.status_code in (200, 201, 204):
-                logger.debug("Successfully closed Notte session %s", session_id)
+                logger.debug("Successfully closed Notte session (id hash %s)", id_hash)
                 return True
             else:
                 logger.warning(
-                    "Failed to close Notte session %s: HTTP %s",
-                    session_id,
+                    "Failed to close Notte session (id hash %s): HTTP %s",
+                    id_hash,
                     response.status_code,
                 )
                 return False
 
         except Exception as e:
-            logger.error("Exception closing Notte session %s: %s", session_id, e)
+            logger.error("Exception closing Notte session (id hash %s): %s", id_hash, e)
             return False
 
     def emergency_cleanup(self, session_id: str) -> None:
+        id_hash = self._hash_id(session_id)
         config = self._get_config_or_none()
         if config is None:
-            logger.warning("Cannot emergency-cleanup Notte session %s — missing credentials", session_id)
+            logger.warning("Cannot emergency-cleanup Notte session (id hash %s) — missing credentials", id_hash)
             return
         try:
             requests.delete(
@@ -212,9 +226,8 @@ class NotteProvider(CloudBrowserProvider):
                 timeout=5,
             )
         except Exception as e:
-            session_id_hash = hashlib.sha256(session_id.encode("utf-8")).hexdigest()[:8]
             logger.debug(
                 "Emergency cleanup failed for Notte session (id hash %s): %s",
-                session_id_hash,
+                id_hash,
                 e,
             )
