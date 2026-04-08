@@ -1,3 +1,5 @@
+from typing import Unpack
+
 from notte_core.credentials.base import BaseVault, Credential, CredentialsDict, CreditCardDict
 
 
@@ -18,7 +20,7 @@ class MockVault(BaseVault):
     async def delete_credentials_async(self, url: str) -> None:
         self._creds_by_url.pop(url, None)
 
-    async def set_credit_card_async(self, **kwargs: CreditCardDict) -> None:
+    async def set_credit_card_async(self, **kwargs: Unpack[CreditCardDict]) -> None:
         self._card = kwargs
 
     async def get_credit_card_async(self) -> CreditCardDict:

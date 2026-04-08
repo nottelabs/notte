@@ -5,10 +5,6 @@ import pytest
 from notte_browser.session import NotteSession
 from notte_browser.tools.base import PersonaTool
 from notte_core.actions import FormFillAction
-from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode
-from notte_core.browser.node_type import NodeType
-from notte_core.browser.observation import Observation
-from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
 from notte_core.credentials import EMAIL, PASSWORD
 from notte_core.credentials.base import BaseVault
 from notte_core.credentials.types import ValueWithPlaceholder
@@ -16,6 +12,7 @@ from notte_sdk.endpoints.personas import BasePersona
 from notte_sdk.types import EmailResponse, PersonaResponse, SMSResponse
 
 from tests.mock.mock_vault import MockVault
+from tests.mock.snapshot_factory import make_snapshot
 
 
 class StubPersona(BasePersona):
@@ -50,36 +47,6 @@ class StubPersona(BasePersona):
 
     def _get_vault(self):  # type: ignore[override]
         return self._vault
-
-
-def make_snapshot(url: str) -> BrowserSnapshot:
-    return BrowserSnapshot(
-        metadata=SnapshotMetadata(
-            title="mock",
-            url=url,
-            viewport=ViewportData(
-                scroll_x=0,
-                scroll_y=0,
-                viewport_width=1000,
-                viewport_height=1000,
-                total_width=1000,
-                total_height=1000,
-            ),
-            tabs=[],
-        ),
-        html_content="<html></html>",
-        a11y_tree=None,
-        dom_node=DomNode(
-            id="root",
-            type=NodeType.OTHER,
-            role="WebArea",
-            text="",
-            children=[],
-            attributes=DomAttributes.safe_init(tag_name="div"),
-            computed_attributes=ComputedDomAttributes(),
-        ),
-        screenshot=Observation.empty().screenshot.raw,
-    )
 
 
 def test_session_read_emails_and_sms() -> None:
