@@ -80,7 +80,7 @@ You can use the default parameters to create your session, or customize them:
   List of custom proxies to use for the session. If True, the default proxies will be used.
 </ParamField>
 
-<ParamField path="browser_type" type="typing.Literal['chromium', 'chrome', 'chrome-nightly', 'chrome-turbo']">
+<ParamField path="browser_type" type="typing.Literal['chromium', 'chrome', 'firefox', 'chrome-nightly', 'chrome-turbo']">
   The browser type to use. Can be chromium or chrome.
 </ParamField>
 
@@ -117,4 +117,7 @@ You can use the default parameters to create your session, or customize them:
 </ParamField>
 
 <ParamField path="web_bot_auth" type="bool">
+</ParamField>
+
+<ParamField path="extra_http_headers" type="dict[str, str] | None">
 </ParamField>
