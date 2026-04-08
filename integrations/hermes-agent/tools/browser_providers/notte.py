@@ -129,7 +129,7 @@ class NotteProvider(CloudBrowserProvider):
 
             session_data = response.json()
             notte_session_id = session_data.get("session_id")
-            if not notte_session_id:
+            if not isinstance(notte_session_id, str) or not notte_session_id:
                 raise RuntimeError(
                     f"Notte API returned unexpected response (missing 'session_id'): "
                     f"{response.text}"
@@ -150,7 +150,7 @@ class NotteProvider(CloudBrowserProvider):
 
             debug_data = debug_response.json()
             cdp_url = debug_data.get("ws", {}).get("cdp")
-            if not cdp_url:
+            if not isinstance(cdp_url, str) or not cdp_url:
                 raise RuntimeError(
                     f"Notte API returned unexpected debug response (missing 'ws.cdp'): "
                     f"{debug_response.text}"
