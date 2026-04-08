@@ -959,7 +959,6 @@ class SessionResponse(SdkResponse):
 
     # TODO: discuss if this is the best way to handle errors
     error: Annotated[str | None, Field(description="Error message if the operation failed to complete")] = None
-    credit_usage: Annotated[float | None, Field(description="Credit usage for the session. None")] = None
     proxies: Annotated[
         bool,
         Field(
@@ -1914,9 +1913,6 @@ class AgentResponse(SdkResponse):
     status: Annotated[AgentStatus, Field(description="The status of the agent (active or closed)")]
     closed_at: Annotated[dt.datetime | None, Field(description="The closing time of the agent")] = None
     saved: Annotated[bool, Field(description="Whether the agent is saved as a workflow")] = False
-    credit_usage: Annotated[
-        float | None, Field(description="Credit usage for the agent. None if the agent is still running")
-    ] = None
 
 
 class AgentWorkflowCodeRequestDict(TypedDict):
