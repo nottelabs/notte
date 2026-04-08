@@ -71,7 +71,14 @@ class NotteProvider(CloudBrowserProvider):
 
         enable_proxies = os.environ.get("NOTTE_PROXIES", "true").lower() != "false"
         enable_captchas = os.environ.get("NOTTE_SOLVE_CAPTCHAS", "false").lower() == "true"
-        timeout_minutes = int(os.environ.get("NOTTE_TIMEOUT_MINUTES", str(_DEFAULT_TIMEOUT_MINUTES)))
+
+        raw_timeout = os.environ.get("NOTTE_TIMEOUT_MINUTES", str(_DEFAULT_TIMEOUT_MINUTES))
+        try:
+            timeout_minutes = int(raw_timeout)
+        except ValueError:
+            raise ValueError(
+                f"NOTTE_TIMEOUT_MINUTES must be an integer, got: {raw_timeout!r}"
+            )
 
         payload: Dict[str, object] = {
             "headless": True,
@@ -85,44 +92,57 @@ class NotteProvider(CloudBrowserProvider):
         features_enabled: Dict[str, object] = {
             "proxies": enable_proxies,
             "solve_captchas": enable_captchas,
-            "stealth": True,
         }
 
         # Step 1: Create session
         headers = self._headers(config)
-        response = requests.post(
-            f"{config['base_url']}/sessions/start",
-            headers=headers,
-            json=payload,
-            timeout=60,
-        )
-
-        if not response.ok:
-            raise RuntimeError(
-                f"Failed to create Notte session: "
-                f"{response.status_code} {response.text}"
+        notte_session_id = None
+        try:
+            response = requests.post(
+                f"{config['base_url']}/sessions/start",
+                headers=headers,
+                json=payload,
+                timeout=60,
             )
 
-        session_data = response.json()
-        notte_session_id = session_data["session_id"]
+            if not response.ok:
+                raise RuntimeError(
+                    f"Failed to create Notte session: "
+                    f"{response.status_code} {response.text}"
+                )
 
-        # Step 2: Get CDP WebSocket URL
-        debug_response = requests.get(
-            f"{config['base_url']}/sessions/{notte_session_id}/debug",
-            headers=headers,
-            timeout=60,
-        )
+            session_data = response.json()
+            notte_session_id = session_data.get("session_id")
+            if not notte_session_id:
+                raise RuntimeError(
+                    f"Notte API returned unexpected response (missing 'session_id'): "
+                    f"{response.text}"
+                )
 
-        if not debug_response.ok:
-            # Best-effort cleanup if we can't get the CDP URL
-            self.emergency_cleanup(notte_session_id)
-            raise RuntimeError(
-                f"Failed to get Notte session CDP URL: "
-                f"{debug_response.status_code} {debug_response.text}"
+            # Step 2: Get CDP WebSocket URL
+            debug_response = requests.get(
+                f"{config['base_url']}/sessions/{notte_session_id}/debug",
+                headers=headers,
+                timeout=60,
             )
 
-        debug_data = debug_response.json()
-        cdp_url = debug_data["ws"]["cdp"]
+            if not debug_response.ok:
+                raise RuntimeError(
+                    f"Failed to get Notte session CDP URL: "
+                    f"{debug_response.status_code} {debug_response.text}"
+                )
+
+            debug_data = debug_response.json()
+            cdp_url = debug_data.get("ws", {}).get("cdp")
+            if not cdp_url:
+                raise RuntimeError(
+                    f"Notte API returned unexpected debug response (missing 'ws.cdp'): "
+                    f"{debug_response.text}"
+                )
+        except Exception:
+            if notte_session_id:
+                self.emergency_cleanup(notte_session_id)
+            raise
 
         session_name = f"hermes_{task_id}_{uuid.uuid4().hex[:8]}"
 

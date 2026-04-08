@@ -35,7 +35,7 @@ _PROVIDER_REGISTRY: Dict[str, type] = {
 ```
 
 Add to the Environment Variables docstring:
-```
+```text
 - NOTTE_API_KEY: API key for Notte cloud mode (https://console.notte.cc)
 ```
 
@@ -89,7 +89,7 @@ The provider uses `requests` (already a hermes-agent dependency) to call the Not
 
 ### Suggested PR description
 
-```
+```markdown
 ## Summary
 
 - Add Notte (https://notte.cc) as a cloud browser provider alongside Browserbase, Browser Use, and Firecrawl
