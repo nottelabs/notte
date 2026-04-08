@@ -7,6 +7,12 @@ description: ""
 
 ## Fields
 
+<ParamField path="started_at" type="datetime" required>
+</ParamField>
+
+<ParamField path="ended_at" type="datetime" required>
+</ParamField>
+
 <ParamField path="action" type="UnionType[FormFillAction, GotoAction, GotoNewTabAction, CloseTabAction, SwitchTabAction, GoBackAction, GoForwardAction, ReloadAction, WaitAction, PressKeyAction, ScrollUpAction, ScrollDownAction, CaptchaSolveAction, HelpAction, CompletionAction, ScrapeAction, EmailReadAction, SmsReadAction, EvaluateJsAction, ClickAction, FillAction, MultiFactorFillAction, FallbackFillAction, CheckAction, SelectDropdownOptionAction, UploadFileAction, DownloadFileAction]" required>
 </ParamField>
 

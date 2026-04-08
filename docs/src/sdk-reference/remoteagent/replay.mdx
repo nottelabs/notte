@@ -1,43 +1,30 @@
 ---
 title: "replay"
-description: "Get presigned URLs for the agent's session replay"
+description: "Get the replay for the agent's session"
 ---
 
-<Warning>
-  `agent.replay()` is deprecated. Use `session.replay()` instead.
-</Warning>
 
-This method returns presigned URLs for the agent's session replay. It delegates
-to [`session.replay()`](/sdk-reference/remotesession/replay).
 
-```python
-# Preferred: use session.replay()
-replay = session.replay()
-replay.download(f"{agent.agent_id}_replay.mp4")
-```
+.. deprecated::
+    Use ``session.replay()`` instead. Agent replay is deprecated
+    in favor of session-level replay with presigned URLs.
 
 
 
 ## Parameters
 
 <ParamField path="wait" type="bool" default="True">
-  If `True`, polls until the replay is ready instead of raising on 404.
+  If True (default), poll until the replay is ready.
 </ParamField>
 
 <ParamField path="timeout" type="float" default="240.0">
-  Maximum seconds to wait for the replay to become available.
+  Maximum seconds to wait (default 120).
 </ParamField>
 
 <ParamField path="poll_interval" type="float" default="5.0">
-  Seconds between polling attempts.
+  Seconds between polling attempts (default 2).
 </ParamField>
 
 ## Returns
 
-[`ReplayResponse`](/sdk-reference/misc/replayresponse): Contains presigned URLs for MP4 download and HLS playlist.
-
-## Raises
-
-- `ValueError`: If the agent hasn't been run yet (no agent_id available).
-- `ValueError`: If the session is still active (must be stopped first).
-- `TimeoutError`: If the replay does not become available within `timeout` seconds.
+[`ReplayResponse`](/sdk-reference/misc/replayresponse): Presigned URLs for HLS playlist and MP4 download.

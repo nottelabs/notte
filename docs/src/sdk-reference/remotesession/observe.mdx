@@ -57,10 +57,6 @@ print(actions[0].model_dump())
   The maximum number of actions to list after which the listing will stop. Used when min_nb_actions is not provided.
 </ParamField>
 
-<ParamField path="url" type="str | None">
-  The URL to observe. If not provided, uses the current page URL.
-</ParamField>
-
 <ParamField path="instructions" type="str | None">
   Additional instructions to use for the observation.
 </ParamField>
@@ -70,4 +66,4 @@ print(actions[0].model_dump())
 
 ## Returns
 
-`UnionType`[[`ObserveResponse`](/sdk-reference/misc/observeresponse), `list`[`Annotated`[`UnionType`[[`ClickAction`](/sdk-reference/misc/clickaction), [`FillAction`](/sdk-reference/misc/fillaction), [`MultiFactorFillAction`](/sdk-reference/misc/multifactorfillaction), [`FallbackFillAction`](/sdk-reference/misc/fallbackfillaction), [`CheckAction`](/sdk-reference/misc/checkaction), [`SelectDropdownOptionAction`](/sdk-reference/misc/selectdropdownoptionaction), [`UploadFileAction`](/sdk-reference/misc/uploadfileaction), [`DownloadFileAction`](/sdk-reference/misc/downloadfileaction)], `annotation=NoneType required=True discriminator='type'`]]]: The formatted observation result from the API response when no instructions provided.     list[InteractionActionUnion]: The filtered list of actions when instructions is provided.
+`UnionType`[[`Observation`](/sdk-reference/misc/observation), `list`[`Annotated`[`UnionType`[[`ClickAction`](/sdk-reference/misc/clickaction), [`FillAction`](/sdk-reference/misc/fillaction), [`MultiFactorFillAction`](/sdk-reference/misc/multifactorfillaction), [`FallbackFillAction`](/sdk-reference/misc/fallbackfillaction), [`CheckAction`](/sdk-reference/misc/checkaction), [`SelectDropdownOptionAction`](/sdk-reference/misc/selectdropdownoptionaction), [`UploadFileAction`](/sdk-reference/misc/uploadfileaction), [`DownloadFileAction`](/sdk-reference/misc/downloadfileaction)], `annotation=NoneType required=True discriminator='type'`]]]: The formatted observation result from the API response when no instructions provided.     list[InteractionActionUnion]: The filtered list of actions when instructions is provided.

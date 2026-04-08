@@ -47,15 +47,11 @@ description: ""
   Error message if the operation failed to complete
 </ParamField>
 
-<ParamField path="credit_usage" type="UnionType[float, None]">
-  Credit usage for the session. None
-</ParamField>
-
 <ParamField path="proxies" type="bool" default="False">
   Whether proxies were used for the session. True if any proxy was applied during session creation.
 </ParamField>
 
-<ParamField path="browser_type" type="Literal['chromium', 'chrome', 'chrome-nightly', 'chrome-turbo']" default="chromium">
+<ParamField path="browser_type" type="Literal['chromium', 'chrome', 'firefox', 'chrome-nightly', 'chrome-turbo']" default="chromium">
 </ParamField>
 
 <ParamField path="use_file_storage" type="bool" default="False">

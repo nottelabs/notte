@@ -96,7 +96,7 @@ The response containing the list of cookies in the session.
 ### observe
 
 ```python
-observe(data: *<class 'notte_sdk.types.ObserveRequestDict'>) -> notte_sdk.types.ObserveResponse | list[typing.Annotated[notte_core.actions.actions.ClickAction | notte_core.actions.actions.FillAction | notte_core.actions.actions.MultiFactorFillAction | notte_core.actions.actions.FallbackFillAction | notte_core.actions.actions.CheckAction | notte_core.actions.actions.SelectDropdownOptionAction | notte_core.actions.actions.UploadFileAction | notte_core.actions.actions.DownloadFileAction, FieldInfo(annotation=NoneType, required=True, discriminator='type')]]
+observe(data: *<class 'notte_sdk.types.ObserveRequestDict'>) -> notte_core.browser.observation.Observation | list[typing.Annotated[notte_core.actions.actions.ClickAction | notte_core.actions.actions.FillAction | notte_core.actions.actions.MultiFactorFillAction | notte_core.actions.actions.FallbackFillAction | notte_core.actions.actions.CheckAction | notte_core.actions.actions.SelectDropdownOptionAction | notte_core.actions.actions.UploadFileAction | notte_core.actions.actions.DownloadFileAction, FieldInfo(annotation=NoneType, required=True, discriminator='type')]]
 ```
 
 Observes the current session page
@@ -135,19 +135,25 @@ The session trajectory offset
 ### replay
 
 ```python
-replay(wait: bool = True, timeout: float = 240.0, poll_interval: float = 5.0) -> ReplayResponse
+replay(wait: <class 'bool'> = True, timeout: <class 'float'> = 240.0, poll_interval: <class 'float'> = 5.0) -> <class 'notte_sdk.types.ReplayResponse'>
 ```
 
-Get presigned URLs for the session's MP4 replay. See [`replay()`](/sdk-reference/remotesession/replay) for full documentation.
+Get presigned URLs for the session replay
+
+**Parameters:**
+
+- `wait`: If True (default), poll until the replay is ready.
+- `timeout`: Maximum seconds to wait (default 120).
+- `poll_interval`: Seconds between polling attempts (default 2).
 
 **Returns:**
 
-[`ReplayResponse`](/sdk-reference/misc/replayresponse): Contains presigned URLs for MP4 download and HLS playlist.
+Presigned URLs for HLS playlist and MP4 download.
 
 **Raises:**
 
 - `ValueError`: If the session hasn't been started yet (no session_id available).
-- `TimeoutError`: If the replay does not become available within `timeout` seconds.
+- `TimeoutError`: If the replay does not become available within ``timeout`` seconds.
 
 ---
 

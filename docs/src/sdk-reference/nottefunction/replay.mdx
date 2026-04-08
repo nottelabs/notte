@@ -6,27 +6,29 @@ description: "Get presigned URLs for the workflow run replay"
 
 
 ```python
-function = client.Function("<your-function-id>")
+function = notte.Function("<your-function-id>")
 function.run()
 replay = function.replay()
-replay.download("run_replay.mp4")
+print(replay.mp4_url)  # Presigned URL for MP4 download
+replay.download("workflow.mp4")
 ```
+
 
 
 ## Parameters
 
 <ParamField path="wait" type="bool" default="True">
-  If `True`, polls until the replay is ready instead of raising on 404.
+  If True (default), poll until the replay is ready.
 </ParamField>
 
 <ParamField path="timeout" type="float" default="120.0">
-  Maximum seconds to wait for the replay to become available.
+  Maximum seconds to wait (default 120).
 </ParamField>
 
 <ParamField path="poll_interval" type="float" default="2.0">
-  Seconds between polling attempts.
+  Seconds between polling attempts (default 2).
 </ParamField>
 
 ## Returns
 
-[`ReplayResponse`](/sdk-reference/misc/replayresponse): Contains presigned URLs for MP4 download and HLS playlist.
+[`ReplayResponse`](/sdk-reference/misc/replayresponse)

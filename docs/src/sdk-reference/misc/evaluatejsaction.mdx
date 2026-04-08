@@ -6,10 +6,17 @@ description: "Evaluate JavaScript code on the current page and return the result
 
 Useful for extracting structured data from a page without LLM processing.
 
+The code is evaluated as a JavaScript expression. For simple cases use a single expression.
+For multi-statement logic, use an IIFE (Immediately Invoked Function Expression):
+``(() => { /* statements */ return result; })()``
+
+You will not get any output from console.log(), so simply use the return value if your goal is to gather information
+
 **Example:**
 ```python
 session.execute(type="evaluate_js", code="document.title")
 session.execute(type="evaluate_js", code="Array.from(document.querySelectorAll('a')).map(a => a.href)")
+session.execute(type="evaluate_js", code="(() => { const els = document.querySelectorAll('a'); return els.length; })()")
 ```
 
 ## Fields
@@ -20,11 +27,11 @@ session.execute(type="evaluate_js", code="Array.from(document.querySelectorAll('
 <ParamField path="category" type="str" default="Special Browser Actions">
 </ParamField>
 
-<ParamField path="description" type="str" default="Evaluate JavaScript code on the current page and return the result">
+<ParamField path="description" type="str" default="Evaluate JavaScript code on the current page and return the result. For simple cases, provide a single expression (e.g. `document.title`). For multi-statement code, wrap in an IIFE: `(() => { ...; return result; })()`">
 </ParamField>
 
 <ParamField path="code" type="str" required>
-  The JavaScript code to evaluate on the page
+  The JavaScript code to evaluate on the page. Use a single expression or an IIFE for multi-statement code.
 </ParamField>
 
 

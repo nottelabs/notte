@@ -94,11 +94,17 @@ get_url(version: str | None = None, decryption_key: str | None = None) -> str
 replay(wait: bool = True, timeout: float = 120.0, poll_interval: float = 2.0) -> ReplayResponse
 ```
 
-Get presigned URLs for the workflow run replay.
+Get presigned URLs for the workflow run replay
+
+**Parameters:**
+
+- `wait`: If True (default), poll until the replay is ready.
+- `timeout`: Maximum seconds to wait (default 120).
+- `poll_interval`: Seconds between polling attempts (default 2).
 
 **Returns:**
 
-[`ReplayResponse`](/sdk-reference/misc/replayresponse): Contains presigned URLs for MP4 download and HLS playlist.
+[`ReplayResponse`](/sdk-reference/misc/replayresponse)
 
 ---
 

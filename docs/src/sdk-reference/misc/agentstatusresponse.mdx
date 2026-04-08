@@ -7,10 +7,6 @@ description: ""
 
 ## Fields
 
-<ParamField path="replay" type="UnionType[bytes, None]">
-  The session replay in `.webp` format
-</ParamField>
-
 <ParamField path="agent_id" type="str" required>
   The ID of the agent
 </ParamField>
@@ -35,10 +31,6 @@ description: ""
   Whether the agent is saved as a workflow
 </ParamField>
 
-<ParamField path="credit_usage" type="UnionType[float, None]">
-  Credit usage for the agent. None if the agent is still running
-</ParamField>
-
 <ParamField path="task" type="str" required>
   The task that the agent is currently running
 </ParamField>
@@ -57,14 +49,6 @@ description: ""
 
 <ParamField path="steps" type="list[Dict[str, Any]]" required>
   The steps that the agent has currently taken
-</ParamField>
-
-<ParamField path="replay_start_offset" type="int" required>
-  The start offset of the replay
-</ParamField>
-
-<ParamField path="replay_stop_offset" type="int" required>
-  The stop offset of the replay
 </ParamField>
 
 

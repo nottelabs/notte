@@ -14,6 +14,9 @@ See help(type(self)) for accurate signature
 <ParamField path="task" type="str" required>
 </ParamField>
 
+<ParamField path="response_format" type="UnionType[type[BaseModel], None]" default="None">
+</ParamField>
+
 <ParamField path="reasoning_model" type="notte_core.common.config.LlmModel | str">
   The language model to use for agent reasoning.
 </ParamField>
