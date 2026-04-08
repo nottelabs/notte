@@ -4,6 +4,7 @@ import logging
 import os
 import uuid
 from typing import Any, Dict, Optional
+import hashlib
 
 import requests
 
@@ -175,4 +176,9 @@ class NotteProvider(CloudBrowserProvider):
                 timeout=5,
             )
         except Exception as e:
-            logger.debug("Emergency cleanup failed for Notte session %s: %s", session_id, e)
+            session_id_hash = hashlib.sha256(session_id.encode("utf-8")).hexdigest()[:8]
+            logger.debug(
+                "Emergency cleanup failed for Notte session (id hash %s): %s",
+                session_id_hash,
+                e,
+            )
