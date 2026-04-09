@@ -722,6 +722,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     profile: SessionProfileDict | SessionProfile | None
     web_bot_auth: bool
     extra_http_headers: dict[str, str] | None
+    vault_id: str | None
 
 
 class SessionStartRequest(SdkRequest):
@@ -789,6 +790,8 @@ class SessionStartRequest(SdkRequest):
         dict[str, str] | None,
         Field(description="Extra HTTP headers to be sent with every request."),
     ] = None
+
+    vault_id: Annotated[str | None, Field(description="The vault to use for the session")] = None
 
     @model_validator(mode="before")
     @classmethod
