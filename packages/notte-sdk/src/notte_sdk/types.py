@@ -541,7 +541,7 @@ class ExternalProxy(SdkRequest):
 class TailnetProxy(SdkRequest):
     type: Literal["tailnet"] = "tailnet"
     oauth_client_id: str
-    oauth_client_secret: str
+    oauth_client_secret: str | None = None
 
 
 class ExternalProxyDict(TypedDict, total=False):
@@ -561,7 +561,7 @@ class NotteProxyDict(TypedDict, total=False):
 class TailnetProxyDict(TypedDict, total=False):
     type: Literal["tailnet"]
     oauth_client_id: Required[str]
-    oauth_client_secret: Required[str]
+    oauth_client_secret: str | None
 
 
 ProxySettings = Annotated[NotteProxy | ExternalProxy | TailnetProxy, Field(discriminator="type")]
