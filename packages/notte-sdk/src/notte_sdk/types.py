@@ -538,6 +538,12 @@ class ExternalProxy(SdkRequest):
         )
 
 
+class TailnetProxy(SdkRequest):
+    type: Literal["tailnet"] = "tailnet"
+    oauth_client_id: str
+    oauth_client_secret: str
+
+
 class ExternalProxyDict(TypedDict, total=False):
     type: Literal["external"]
     server: Required[str]
@@ -552,8 +558,14 @@ class NotteProxyDict(TypedDict, total=False):
     country: ProxyGeolocationCountry | None
 
 
-ProxySettings = Annotated[NotteProxy | ExternalProxy, Field(discriminator="type")]
-ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict, Field(discriminator="type")]
+class TailnetProxyDict(TypedDict, total=False):
+    type: Literal["tailnet"]
+    oauth_client_id: Required[str]
+    oauth_client_secret: Required[str]
+
+
+ProxySettings = Annotated[NotteProxy | ExternalProxy | TailnetProxy, Field(discriminator="type")]
+ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict | TailnetProxyDict, Field(discriminator="type")]
 
 
 class Cookie(BaseModel):
@@ -894,6 +906,10 @@ class SessionStartRequest(SdkRequest):
                     bypass=base_proxy.bypass,
                     username=base_proxy.username,
                     password=base_proxy.password,
+                )
+            case "tailnet":
+                raise NotImplementedError(
+                    "Tailnet proxy only supported in cloud browser sessions. Please use our API to create a session with a tailnet proxy."
                 )
         raise ValueError(f"Unsupported proxy type: {base_proxy.type}")  # pyright: ignore[reportUnreachable]
 
