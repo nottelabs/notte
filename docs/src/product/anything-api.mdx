@@ -3,6 +3,9 @@ title: Anything API
 description: Build and run web automations from a single API call
 ---
 
+import RunFunction from '/snippets/anything-api/run_function.mdx';
+import ConsumeSSE from '/snippets/anything-api/consume_sse.mdx';
+
 The Anything API lets you describe a task in plain English, and Notte will build, deploy, and run a web automation function for you -- all through a single HTTP request. The response is an SSE stream so you can follow the agent's progress in real time.
 
 <CardGroup cols={2}>
@@ -98,41 +101,14 @@ notte functions run \
   -o json
 ```
 
-```python Python SDK
-from notte import NotteClient
-
-client = NotteClient()
-result = client.functions.run(
-    function_id="d3c31289-f28b-49bd-a340-95e071cfef7e",
-    variables={"count": "3"},
-)
-print(result)
-```
+<RunFunction />
 </CodeGroup>
 
 ## Consuming the SSE stream
 
 ### Python
 
-```python
-import requests
-
-response = requests.post(
-    "https://anything.notte.cc/api/anything/start",
-    headers={
-        "Authorization": f"Bearer {NOTTE_API_KEY}",
-        "Content-Type": "application/json",
-    },
-    json={"query": "fetch the top 3 hacker news posts"},
-    stream=True,
-)
-
-for line in response.iter_lines():
-    if line:
-        decoded = line.decode("utf-8")
-        if decoded.startswith("data: "):
-            print(decoded[6:])
-```
+<ConsumeSSE />
 
 ### TypeScript
 
@@ -146,15 +122,27 @@ const response = await fetch("https://anything.notte.cc/api/anything/start", {
   body: JSON.stringify({ query: "fetch the top 3 hacker news posts" }),
 });
 
-const reader = response.body!.getReader();
+if (!response.ok) {
+  throw new Error(`HTTP ${response.status}`);
+}
+if (!response.body) {
+  throw new Error("ReadableStream not available");
+}
+
+const reader = response.body.getReader();
 const decoder = new TextDecoder();
+const terminal = new Set(["done", "error", "timeout", "cancelled"]);
+let buffer = "";
 
 while (true) {
   const { done, value } = await reader.read();
   if (done) break;
 
-  const text = decoder.decode(value, { stream: true });
-  for (const line of text.split("\n")) {
+  buffer += decoder.decode(value, { stream: true });
+  const lines = buffer.split("\n");
+  buffer = lines.pop()!;
+
+  for (const line of lines) {
     if (line.startsWith("data: ")) {
       const event = JSON.parse(line.slice(6));
       console.log(event.type, event);
@@ -162,6 +150,11 @@ while (true) {
       if (event.type === "done") {
         console.log("Function ID:", event.function_id);
         console.log("Cost:", event.total_cost_usd);
+      }
+
+      if (terminal.has(event.type)) {
+        reader.cancel();
+        break;
       }
     }
   }
