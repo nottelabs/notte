@@ -10,7 +10,7 @@ def task():
     return "go to notte.cc and extract the names and monthly costs of each pricing tier"
 
 
-@pytest.mark.flaky(reruns=2, reruns_delay=5)
+@pytest.mark.flaky(reruns=3, reruns_delay=5)
 def test_falco_agent(task: str):
     with notte.Session() as session:
         agent = notte.Agent(session=session, agent_type=AgentType.FALCO, max_steps=7)
