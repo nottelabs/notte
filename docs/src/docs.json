@@ -323,7 +323,8 @@
                 "pages": [
                   "product/agent-mode",
                   "product/demonstrate-mode",
-                  "product/studio"
+                  "product/studio",
+                  "product/anything-api"
                 ]
               }
             ]
