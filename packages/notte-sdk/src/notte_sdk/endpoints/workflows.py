@@ -16,6 +16,7 @@ from notte_core.utils.encryption import Encryption
 from typing_extensions import deprecated
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.endpoints.sessions import CONSOLE_VIEWER_URL
 from notte_sdk.types import (
     CreateFunctionRequest,
     CreateFunctionRequestDict,
@@ -521,9 +522,8 @@ class WorkflowsClient(BaseClient):
                             result = log_msg
                         elif message["type"] == "session_start":
                             session_id = log_msg
-
                             logger.info(
-                                f"Live viewer for session available at: https://api.notte.cc/sessions/viewer/index.html?ws=wss://api.notte.cc/sessions/{session_id}/debug/recording?token={self.token}"
+                                f"Live viewer for session available at: {CONSOLE_VIEWER_URL.format(session_id=session_id, token=self.token)}"
                             )
 
                 except json.JSONDecodeError:

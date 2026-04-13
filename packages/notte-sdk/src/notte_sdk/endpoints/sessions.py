@@ -3,7 +3,6 @@ from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
-from urllib.parse import urljoin
 from webbrowser import open as open_browser
 
 from notte_core.actions import BaseAction, InteractionActionUnion
@@ -88,7 +87,9 @@ _GENERIC_UNEXPECTED_MESSAGES: frozenset[str] = frozenset(
 
 # Retry configuration constants
 CLUSTER_OVERLOAD_RETRY_DELAY = 30  # seconds to wait before retrying on 529 errors
-
+CONSOLE_VIEWER_URL = (
+    "https://console.notte.cc/static/viewer?ws=wss://api.notte.cc/sessions/{session_id}/debug/recording?token={token}"
+)
 _playwright_available = False
 _async_playwright_available = False
 
@@ -519,14 +520,14 @@ class SessionsClient(BaseClient):
                 time.sleep(poll_interval)
 
     @track_usage("cloud.session.viewer.browser")
-    def viewer_browser(self, session_id: str, _viewer_url: str | None = None) -> None:
+    def viewer_browser(self, session_id: str, _viewer_url: str | None) -> None:
         """
         Opens live session replay in browser (frame by frame)
         """
         if _viewer_url is None:
-            debug_info = self.debug_info(session_id=session_id)
-            base_url = urljoin(self.server_url + "/", f"{self.base_endpoint_path}/{self.SESSION_VIEWER}/")
-            _viewer_url = urljoin(base_url, f"index.html?ws={debug_info.ws.recording}")
+            _viewer_url = self.status(session_id=session_id).viewer_url
+            if _viewer_url is None:
+                raise ValueError("Viewer URL is not available. Session might be stopped.")
         _ = open_browser(_viewer_url, new=1)
 
     @track_usage("cloud.session.viewer.notebook")
@@ -557,13 +558,13 @@ class SessionsClient(BaseClient):
         _ = open_browser(debug_info.debug_url)
 
     @track_usage("cloud.session.viewer")
-    def viewer(self, session_id: str) -> None:
+    def viewer(self, session_id: str, _viewer_url: str | None = None) -> None:
         """
         Open the viewer for the session based on the viewer_type.
         """
         match self.viewer_type:
             case SessionViewerType.BROWSER:
-                self.viewer_browser(session_id=session_id)
+                self.viewer_browser(session_id=session_id, _viewer_url=_viewer_url)
             case SessionViewerType.JUPYTER:
                 _ = self.viewer_notebook(session_id=session_id)
             case SessionViewerType.CDP:

@@ -8,4 +8,4 @@ with client.Session() as session:
     result = agent.run(task="Complete task")
 
     # Get replay URL
-    print(f"View replay: https://console.notte.cc/agents/{result.agent_id}/replay")
+    print(f"View replay: https://console.notte.cc/sessions/{session.session_id}")
