@@ -67,6 +67,6 @@ def test_chapter_with_agent_fix():
 
         with notte.AgentFallback(session, "Add Cap to cart", max_steps=3) as chapter:
             _ = session.execute(type="click", id="L7")
-            _ = session.execute(type="click", id="X1")  # force agent to spawn because ID is not found
-            # res.success may be True if agent fallback was already invoked (action skipped)
+            res = session.execute(type="click", id="X1")  # force agent to spawn because ID is not found
+            assert res.success is False
         assert chapter.success is True
