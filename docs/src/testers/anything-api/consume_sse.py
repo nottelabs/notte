@@ -14,6 +14,7 @@ response = requests.post(
     },
     json={"query": "fetch the top 3 hacker news posts"},
     stream=True,
+    timeout=(10, 300),
 )
 response.raise_for_status()
 
