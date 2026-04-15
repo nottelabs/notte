@@ -3,3 +3,4 @@ halo
 typer
 python-dotenv
 tqdm
+textual
