@@ -24,5 +24,11 @@ for line in response.iter_lines():
     if line:
         decoded = line.decode("utf-8")
         if decoded.startswith("data: "):
-            print(decoded[6:])
+            import json
+
+            event = json.loads(decoded[6:])
+            print(event["type"], event)
+            if event["type"] == "done":
+                print("Function ID:", event.get("function_id"))
+                print("Cost:", event.get("total_cost_usd"))
 ```
