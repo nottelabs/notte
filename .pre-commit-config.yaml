@@ -70,6 +70,12 @@ repos:
         types: [python, text]
         files: ^(examples/|docs/src/|packages/notte-sdk/src/).*\.(py|mdx)$
         pass_filenames: false
+      - id: docs-sdk-generate
+        name: Regenerate SDK reference docs
+        entry: bash -c "make docs-sdk"
+        language: system
+        files: ^(packages/notte-sdk/src/|docs/sphinx/conf\.py)
+        pass_filenames: false
       - id: no-loguru-logger-import
         name: Check for loguru logger imports
         entry: 'from loguru import logger'
