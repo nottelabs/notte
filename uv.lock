@@ -7804,16 +7804,16 @@ wheels = [
 
 [[package]]
 name = "sphinx-mintlify"
-version = "0.1.0"
+version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
     { name = "sphinx" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/15/8e/7f126175cf1352c8f8382bbb11a14fbe61ed35b735e2e99e9665f3ed9f30/sphinx_mintlify-0.1.0.tar.gz", hash = "sha256:ae18ee42407d0ab66d33a7ca7ea0fd7c10d5d0210d6124bf3efcd89ed20055a7", size = 19273, upload-time = "2026-04-15T22:42:13.176Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/a1/6eb6cfbd41e520f746c762bdc0373bf6b4853b4db4a2dd635c54daf32ae5/sphinx_mintlify-0.1.1.tar.gz", hash = "sha256:e04fd6bba69c198c2965992664f2808830070839afdfa539d885fbe73d1c20e0", size = 20295, upload-time = "2026-04-15T23:02:37.958Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/87/19/6d930cdab3c8f10b1f51a4d53bc837860c91fbc742a902fc2d222799348b/sphinx_mintlify-0.1.0-py3-none-any.whl", hash = "sha256:32655b1cfbd90fc257c15d7831ff7bd54805ece80f60cfa5646117afa84448fb", size = 20049, upload-time = "2026-04-15T22:42:11.767Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/b4/30f62774e9f9bd2c63b97c5834173f612970a8a56389f605f3d6c15b85fb/sphinx_mintlify-0.1.1-py3-none-any.whl", hash = "sha256:618bc2ee32deb350169d6310d9b4dca6533de3dec438943368de4f9762a958cb", size = 21100, upload-time = "2026-04-15T23:02:36.781Z" },
 ]
 
 [[package]]
