@@ -3,6 +3,10 @@ title: Introduction
 description: Notte - The best place to automate the browser
 ---
 
+import InstallSDK from '/snippets/quickstart/install_sdk.mdx';
+import SetApiKey from '/snippets/quickstart/set_api_key.mdx';
+import CDPSession from '/snippets/quickstart/cdp_session.mdx';
+
 You're at the best place to automate your browser. Notte is a unified platform to build, run, and deploy AI agents and web automation scripts. Browser infrastructure, agents framework, serverless functions, and observability, all in one single place.
 
 ## Overview
@@ -10,6 +14,44 @@ You're at the best place to automate your browser. Notte is a unified platform t
 The **Platform** API services provides the infrastructure and the primitives to run your automations — browser sessions, web agents framework, serverless functions, and scraping APIs. This documentation covers the technical reference for the Platform.
 
 The **Products** help you build faster. Create automation scripts with our AI assistant, teach by workflow demonstration (screen recording), orcode in our automation studio. See the product guides below or jump straight into the [Console](https://console.notte.cc) to get started.
+
+## Getting Started
+
+Start here if you want to go from zero to a working Notte integration as quickly as possible.
+
+### Browser Session Quickstart
+
+The shortest path to a working Notte integration is to create a cloud browser session and connect to it over CDP. If this works, your API key, SDK install, and browser connection are all set up correctly.
+
+<Steps>
+  <Step title="Get an API key">
+    Create an account on the [Console](https://console.notte.cc) to get your API key.
+  </Step>
+  <Step title="Export your API key">
+    <SetApiKey />
+  </Step>
+  <Step title="Install the SDK">
+    <InstallSDK />
+  </Step>
+</Steps>
+
+<CDPSession />
+
+<CardGroup cols={3}>
+  <Card title="Quickstart" icon="square-arrow-up-right" href="/quickstart">
+    Continue to the full quickstart for Agents, Scraping, and additional examples.
+  </Card>
+
+  <Card title="SDK Reference" icon="book" href="/sdk-reference/manual/index">
+    Start from the SDK entrypoint for Sessions, Agents, Vaults, Personas, and Functions.
+  </Card>
+
+  <Card title="OpenAPI Spec" icon="code" href="/openapi.json">
+    Access the machine-readable API contract directly from the docs domain.
+  </Card>
+</CardGroup>
+
+If you want the API surface directly, go to [API Reference](/api-reference/authentication). If you want the SDK entrypoint, go to [SDK Reference](/sdk-reference/manual/index).
 
 ## Platform
 
@@ -62,17 +104,5 @@ Empower your agents with secure credentials and authentic identities.
 
   <Card title="Identities" icon="fingerprint" href="/concepts/personas">
     Emails and phone numbers for agents. Verified identities to interact authentically across platforms.
-  </Card>
-</CardGroup>
-
-## Get started
-
-<CardGroup cols={2}>
-  <Card title="Quickstart" icon="square-arrow-up-right" href="/quickstart">
-    Go from zero to your first automation in minutes.
-  </Card>
-
-  <Card title="Concepts" icon="book" href="/concepts">
-    Understand the core building blocks of the platform.
   </Card>
 </CardGroup>

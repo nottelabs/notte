@@ -161,7 +161,7 @@
                 ]
               }
             ],
-            "openapi": "https://us-staging.notte.cc/openapi.json"
+            "openapi": "https://api.notte.cc/openapi.json"
           },
           {
             "tab": "SDK",

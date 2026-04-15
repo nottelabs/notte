@@ -4,6 +4,7 @@ description: 'Get started in a few seconds'
 ---
 
 import InstallSDK from '/snippets/quickstart/install_sdk.mdx';
+import SetApiKey from '/snippets/quickstart/set_api_key.mdx';
 import CDPSession from '/snippets/quickstart/cdp_session.mdx';
 import WebAgent from '/snippets/quickstart/web_agent.mdx';
 import ScrapingHackerNews from '/snippets/quickstart/scraping_hackernews.mdx';
@@ -26,22 +27,27 @@ How do you want to get started?
 
 ## Prerequisites
 
-Before you start, you'll need an API key and the Notte SDK.
+Before you start, you'll need an API key and a local environment configured to use it.
 
 <Steps>
   <Step title="Get an API key">
     Create an account on the [Console](https://console.notte.cc) to get your API key.
+  </Step>
+  <Step title="Export your API key">
+    <SetApiKey />
   </Step>
   <Step title="Install the SDK">
     <InstallSDK />
   </Step>
 </Steps>
 
+Both Python and JavaScript quickstarts below use the official Notte SDK. Start with Browser Session if you want the shortest path to a working integration.
+
 ---
 
 ## Browser Session
 
-Connect to a cloud browser and control it with Playwright via CDP.
+Create a cloud browser session and control it with Playwright over CDP.
 
 <CDPSession />
 

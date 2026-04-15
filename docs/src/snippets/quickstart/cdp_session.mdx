@@ -1,6 +1,5 @@
 <CodeGroup>
 ```python Python
-# You need to install: pip install playwright
 from playwright.sync_api import sync_playwright
 from notte_sdk import NotteClient
 
@@ -16,6 +15,36 @@ with client.Session(open_viewer=True) as session:
         page.screenshot(path="screenshot.png")
 ```
 ```javascript JavaScript
-// Coming soon
+import { chromium } from 'playwright-core';
+import { NotteClient } from 'notte-sdk';
+
+const notte = new NotteClient({
+  apiKey: process.env.NOTTE_API_KEY,
+});
+
+await notte.Session({ open_viewer: true }).use(async (session) => {
+  const status = await session.status();
+  const cdpUrl = status.cdp_url;
+
+  if (!cdpUrl) {
+    throw new Error('Session did not return a cdp_url');
+  }
+
+  const browser = await chromium.connectOverCDP(cdpUrl);
+
+  try {
+    const page = browser.contexts()[0].pages()[0];
+    await page.goto('https://news.ycombinator.com');
+
+    const topStories = await page.locator('.titleline > a').allInnerTexts();
+
+    console.log('Top 5 Hacker News stories:');
+    topStories.slice(0, 5).forEach((title, index) => {
+      console.log(`${index + 1}. ${title}`);
+    });
+  } finally {
+    await browser.close();
+  }
+});
 ```
 </CodeGroup>
