@@ -334,6 +334,7 @@
 - [Agent Mode](https://docs.notte.cc/product/agent-mode): Bootstrap automations from natural language prompts
 - [Demonstrate Mode](https://docs.notte.cc/product/demonstrate-mode): Record browser actions and generate automation code instantly
 - [Automation Studio](https://docs.notte.cc/product/studio): A dedicated IDE for browser agents and automations
+- [Anything API](https://docs.notte.cc/product/anything-api): Build and run web automations from a single API call
 
 
 # Resources

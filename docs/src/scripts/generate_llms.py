@@ -42,23 +42,25 @@ def fetch_openapi(url: str) -> dict:
 
 def render_openapi(spec: dict) -> list[str]:
     """Group operations by first tag, emit H2 per tag, bullet per operation."""
-    by_tag: dict[str, list[tuple[str, str, str]]] = defaultdict(list)
+    by_tag: dict[str, list[tuple[str, str, str, str]]] = defaultdict(list)
     for path, methods in spec.get("paths", {}).items():
         for method, op in methods.items():
             if method.lower() not in HTTP_METHODS:
                 continue
             tags = op.get("tags") or ["misc"]
             tag = tags[0]
-            summary = op.get("summary") or op.get("operationId") or f"{method.upper()} {path}"
+            op_id = op.get("operationId") or ""
+            display = op.get("summary") or op_id or f"{method.upper()} {path}"
             desc = (op.get("description") or "").strip().split("\n")[0]
-            by_tag[tag].append((method.upper(), summary, desc))
+            by_tag[tag].append((method.upper(), display, desc, op_id))
 
     lines: list[str] = []
     for tag in sorted(by_tag):
         lines += [f"## {tag.title()}", ""]
-        for method, summary, desc in sorted(by_tag[tag], key=lambda x: x[1]):
-            url = f"{SITE_URL}/api-reference/{tag}/{slugify(summary)}"
-            line = f"- [{method} {summary}]({url})"
+        for method, display, desc, op_id in sorted(by_tag[tag], key=lambda x: x[1]):
+            slug = slugify(op_id) if op_id else slugify(display)
+            url = f"{SITE_URL}/api-reference/{slugify(tag)}/{slug}"
+            line = f"- [{method} {display}]({url})"
             if desc:
                 line += f": {desc}"
             lines.append(line)
@@ -76,7 +78,7 @@ def read_frontmatter(page_path: str) -> tuple[str, str]:
         print(f"  warning: no file for '{page_path}'", file=sys.stderr)
         return page_path, ""
 
-    text = file.read_text()
+    text = file.read_text(encoding="utf-8")
     if not text.startswith("---"):
         return page_path, ""
 
@@ -84,7 +86,11 @@ def read_frontmatter(page_path: str) -> tuple[str, str]:
     if end == -1:
         return page_path, ""
 
-    fm = yaml.safe_load(text[3:end]) or {}
+    try:
+        fm = yaml.safe_load(text[3:end]) or {}
+    except yaml.YAMLError as e:
+        print(f"  warning: bad frontmatter in '{page_path}': {e}", file=sys.stderr)
+        return page_path, ""
     return str(fm.get("title", page_path)), str(fm.get("description", "")).strip()
 
 
@@ -127,7 +133,11 @@ def main() -> int:
     if intro:
         out += [f"> {intro}", ""]
 
-    tabs = config["navigation"]["languages"][0]["tabs"]
+    languages = config.get("navigation", {}).get("languages", [])
+    if not languages:
+        print("error: no languages found in docs.json navigation", file=sys.stderr)
+        return 1
+    tabs = languages[0].get("tabs", [])
     for tab in tabs:
         out += ["", f"# {tab['tab']}", ""]
         for group in tab.get("groups", []):
