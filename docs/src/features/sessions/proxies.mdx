@@ -6,6 +6,7 @@ description: 'Route your automation traffic with precision & control'
 import DefaultProxy from '/snippets/sessions/default_proxy.mdx';
 import CustomProxy from '/snippets/sessions/custom_proxy.mdx';
 import CountryProxy from '/snippets/sessions/country_proxy.mdx';
+import TailnetProxy from '/snippets/sessions/tailnet_proxy.mdx';
 
 ## Overview
 
@@ -47,6 +48,20 @@ Notte supports custom proxy configurations, allowing you to route traffic throug
 <Warning>
   Notte validates proxy connections at session creation time. If we are unable to connect to the specified proxy, an error will be thrown. Ensure that your proxy server is accessible and the provided credentials are correct before creating a session. We also do not support all proxy providers.
 </Warning>
+
+## Tailscale (tsnet) Proxies
+
+Notte can join your [Tailscale](https://tailscale.com) tailnet directly from within a cloud session, letting the browser reach any private service exposed on your tailnet (internal dashboards, staging environments, MagicDNS hosts) without exposing them to the public internet.
+
+Authentication uses [Tailscale OAuth client credentials](https://tailscale.com/kb/1215/oauth-clients). Create an OAuth client in your tailnet admin console with the `devices:core` scope and pass the credentials when creating the session.
+
+<TailnetProxy/>
+
+Once the session is created, you can navigate to any hostname reachable on your tailnet — for example a MagicDNS name like `https://grafana.your-tailnet.ts.net/`.
+
+<Note>
+  Tailnet proxies are only supported in cloud browser sessions. The `oauth_client_secret` can be omitted if it is configured server-side for your workspace.
+</Note>
 
 ## Usage Measurement
 
