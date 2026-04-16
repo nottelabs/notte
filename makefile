@@ -106,9 +106,14 @@ profile-imports:
 
 
 .PHONY: docs-sdk
-docs-sdk:
+docs-sdk: docs-llms
 	cd docs && uv run sphinx-build -b mdx sphinx _build
 	rm -rf docs/src/sdk-reference/baseaction
+
+
+.PHONY: docs-llms
+docs-llms:
+	cd docs/src && uv run python scripts/generate_llms.py
 
 
 .PHONY: docs-check
