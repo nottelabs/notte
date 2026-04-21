@@ -1,3 +1,5 @@
+import datetime as dt
+
 import pytest
 from notte_browser.errors import NoToolProvidedError
 from notte_browser.tools.base import EmailReadAction, PersonaTool
@@ -52,8 +54,22 @@ def test_tool_execution_in_session(persona: NottePersona, action: EmailReadActio
         assert len(out.data.structured.get().emails) > 0
 
 
+@pytest.fixture
+def assert_mail_service_ready(persona: NottePersona):
+    """Verify the staging mail service is reachable before running the test.
+
+    Calls persona.emails() with a short window. An empty response is fine
+    (service is up, just no mail yet). An exception means the service is
+    unreachable, so we skip instead of burning 15 agent steps × 3 reruns.
+    """
+    try:
+        persona.emails(timedelta=dt.timedelta(seconds=10), only_unread=False)
+    except Exception as exc:
+        pytest.skip(f"Staging mail service unreachable: {exc}")
+
+
 @pytest.mark.flaky(reruns=3, reruns_delay=5)
-def test_signup_email_extraction(persona: NottePersona):
+def test_signup_email_extraction(persona: NottePersona, assert_mail_service_ready: None):
     with notte.Session(headless=True) as session:
         agent = notte.Agent(session=session, persona=persona, max_steps=15)
         resp = agent.run(
