@@ -16,12 +16,12 @@ with client.Session(open_viewer=True) as session:
 ```javascript JavaScript
 import { NotteClient } from 'notte-sdk';
 
-const notte = new NotteClient({
+const client = new NotteClient({
   apiKey: process.env.NOTTE_API_KEY,
 });
 
-await notte.Session({ open_viewer: true }).use(async (session) => {
-  const agent = notte.Agent({ session, max_steps: 5 });
+await client.Session({ open_viewer: true }).use(async (session) => {
+  const agent = client.Agent({ session, max_steps: 5 });
 
   const response = await agent.run({
     task: 'Browse on Notte docs and book a demo for me',
