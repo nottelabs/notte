@@ -14,8 +14,10 @@ jobs:
     steps:
       - name: Check if user is external
         id: check_user
+        env:
+          ACTOR: ${{ github.actor }}
         run: |
-          actor="${{ github.actor }}"
+          actor="$ACTOR"
           team_members=("andreakiro" "giordano-lucas" "leo-notte" "jose-notte" "coderabbitai[bot]")
           is_external="true"
           for member in "${team_members[@]}"; do
@@ -58,8 +60,9 @@ jobs:
 
       - name: Format payload
         id: format_payload
+        env:
+          EVENT_BODY: ${{ github.event.issue.body || github.event.pull_request.body || github.event.comment.body || github.event.review.body || '' }}
         run: |
-          EVENT_BODY="${{ github.event.issue.body || github.event.pull_request.body || github.event.comment.body || github.event.review.body || '' }}"
           ESCAPED_BODY=$(echo "$EVENT_BODY" | sed 's/"/\\"/g' | sed 's/$/\\n/g' | tr -d '\n')
           echo "formatted_body=$ESCAPED_BODY" >> $GITHUB_OUTPUT
 
