@@ -73,4 +73,6 @@ jobs:
               "text": "Opensource user activity `${{ steps.set_action_type.outputs.action_label }}` by <https://github.com/${{ github.actor }}|@${{ github.actor }}>\n${{ github.event.issue.title || github.event.pull_request.title || 'Comment' }}\n${{ steps.format_payload.outputs.formatted_body }}\n${{ github.event.issue.html_url || github.event.pull_request.html_url || github.event.comment.html_url || github.event.review.html_url }}"
             }
         env:
+          # Slack Incoming Webhook URL — regenerate at https://api.slack.com/apps
+          # under "Incoming Webhooks" if notifications start returning 404.
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
