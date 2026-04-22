@@ -148,7 +148,7 @@ jobs:
           uv run pytest -n 1 \
             tests/integration/test_webvoyager_scripts.py \
             tests/browser/test_tools.py \
-            --durations=10 | tee -a pytest-coverage.txt
+            --durations=10 --cov-report=term-missing:skip-covered --cov=packages --cov-append | tee -a pytest-coverage.txt
 
       - name: Pytest coverage comment
         if: ${{ always() && github.ref != 'refs/heads/main' }}
