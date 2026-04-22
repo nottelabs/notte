@@ -53,15 +53,16 @@ Notte supports custom proxy configurations, allowing you to route traffic throug
 
 Notte can join your [Tailscale](https://tailscale.com) tailnet directly from within a cloud session, letting the browser reach any private service exposed on your tailnet (internal dashboards, staging environments, MagicDNS hosts) without exposing them to the public internet.
 
-Authentication uses [Tailscale OAuth client credentials](https://tailscale.com/kb/1215/oauth-clients). Create an OAuth client in your tailnet admin console with the `devices:core` scope and pass the credentials when creating the session.
+Authentication uses [Tailscale OAuth client credentials](https://tailscale.com/kb/1215/oauth-clients). In your Tailscale admin console:
+
+1. Under **Settings → Trust credentials**, create an OAuth client with write access to the `auth_keys` scope and tag it with `tag:notte`.
+2. In the **Access controls** tab, grant `tag:notte` access to the resources you want to reach from the session.
+
+Pass the client ID and secret when creating the session:
 
 <TailnetProxy/>
 
 Once the session is created, you can navigate to any hostname reachable on your tailnet — for example a MagicDNS name like `https://grafana.your-tailnet.ts.net/`.
-
-<Note>
-  Tailnet proxies are only supported in cloud browser sessions. The `oauth_client_secret` can be omitted if it is configured server-side for your workspace.
-</Note>
 
 ## Usage Measurement
 
