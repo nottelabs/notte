@@ -30,10 +30,10 @@ jobs:
 
       - name: Set action type
         id: set_action_type
+        env:
+          EVENT: ${{ github.event_name }}
+          ACTION: ${{ github.event.action }}
         run: |
-          EVENT="${{ github.event_name }}"
-          ACTION="${{ github.event.action }}"
-
           if [[ "$EVENT" == "issues" && "$ACTION" == "opened" ]]; then
             echo "action_label=issue-opened" >> $GITHUB_OUTPUT
           elif [[ "$EVENT" == "issues" && "$ACTION" == "closed" ]]; then
@@ -62,9 +62,12 @@ jobs:
         id: format_payload
         env:
           EVENT_BODY: ${{ github.event.issue.body || github.event.pull_request.body || github.event.comment.body || github.event.review.body || '' }}
+          EVENT_TITLE: ${{ github.event.issue.title || github.event.pull_request.title || 'Comment' }}
         run: |
           ESCAPED_BODY=$(echo "$EVENT_BODY" | sed 's/"/\\"/g' | sed 's/$/\\n/g' | tr -d '\n')
+          ESCAPED_TITLE=$(echo "$EVENT_TITLE" | sed 's/"/\\"/g' | sed 's/$/\\n/g' | tr -d '\n')
           echo "formatted_body=$ESCAPED_BODY" >> $GITHUB_OUTPUT
+          echo "formatted_title=$ESCAPED_TITLE" >> $GITHUB_OUTPUT
 
       - name: Send Slack Notification if External
         if: steps.check_user.outputs.is_external == 'true'
@@ -73,7 +76,7 @@ jobs:
           payload: |
             {
               "username": "GitHub Activity (${{ steps.timestamp.outputs.timestamp }})",
-              "text": "Opensource user activity `${{ steps.set_action_type.outputs.action_label }}` by <https://github.com/${{ github.actor }}|@${{ github.actor }}>\n${{ github.event.issue.title || github.event.pull_request.title || 'Comment' }}\n${{ steps.format_payload.outputs.formatted_body }}\n${{ github.event.issue.html_url || github.event.pull_request.html_url || github.event.comment.html_url || github.event.review.html_url }}"
+              "text": "Opensource user activity `${{ steps.set_action_type.outputs.action_label }}` by <https://github.com/${{ github.actor }}|@${{ github.actor }}>\n${{ steps.format_payload.outputs.formatted_title }}\n${{ steps.format_payload.outputs.formatted_body }}\n${{ github.event.issue.html_url || github.event.pull_request.html_url || github.event.comment.html_url || github.event.review.html_url }}"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
