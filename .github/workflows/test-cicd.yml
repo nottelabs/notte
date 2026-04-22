@@ -133,7 +133,22 @@ jobs:
       - name: Run unit tests
         run: |
           set -o pipefail
-          uv run pytest -n logical tests --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/integration/test_e2e.py --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages | tee pytest-coverage.txt
+          uv run pytest -n logical tests \
+            --ignore=tests/integration/test_webvoyager_resolution.py \
+            --ignore=tests/integration/test_e2e.py \
+            --ignore=tests/examples/test_examples.py \
+            --ignore=tests/examples/test_readme.py \
+            --ignore=tests/integration/test_webvoyager_scripts.py \
+            --ignore=tests/browser/test_tools.py \
+            --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages | tee pytest-coverage.txt
+
+      - name: Run browser integration tests (sequential)
+        run: |
+          set -o pipefail
+          uv run pytest -n 1 \
+            tests/integration/test_webvoyager_scripts.py \
+            tests/browser/test_tools.py \
+            --durations=10 | tee -a pytest-coverage.txt
 
       - name: Pytest coverage comment
         if: ${{ always() && github.ref != 'refs/heads/main' }}
