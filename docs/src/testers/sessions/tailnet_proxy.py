@@ -1,7 +1,7 @@
 # @sniptest filename=tailnet_proxy.py
 # @sniptest typecheck_only=true
 from notte_sdk import NotteClient
-from notte_sdk.types import ExternalProxy, NotteProxy, TailnetProxy
+from notte_sdk.types import ProxySettings, TailnetProxy
 
 client = NotteClient()
 
@@ -12,7 +12,7 @@ tailnet_proxy = TailnetProxy(
 )
 
 # Start a session routed through your tailnet
-proxies: list[NotteProxy | ExternalProxy | TailnetProxy] = [tailnet_proxy]
+proxies: list[ProxySettings] = [tailnet_proxy]
 with client.Session(proxies=proxies) as session:
     _ = session.execute(type="goto", url="https://grafana.your-tailnet.ts.net/")
     _ = session.observe().screenshot.bytes()
