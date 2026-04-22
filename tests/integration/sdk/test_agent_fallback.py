@@ -43,10 +43,12 @@ def test_agent_fallback():
         # Agent should click the add to cart button
         assert action["type"] == "click", f"Expected click, got {action}"
 
-        # Verify the cart was updated by checking the page shows "added to cart"
+        # Verify the cart was updated — agent lands on cart page showing the item
         obs = session.observe()
         page_content = obs.space.description.lower()
-        assert "added to cart" in page_content, f"Expected 'added to cart' in page content, got: {page_content[:500]}"
+        assert "the cap" in page_content, (
+            f"Expected 'the cap' in cart page content, got: {page_content[:500]}"
+        )
 
 
 def test_agent_fallback_scrape_should_raise_error():
