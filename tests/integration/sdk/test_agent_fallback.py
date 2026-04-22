@@ -46,9 +46,7 @@ def test_agent_fallback():
         # Verify the cart was updated — agent lands on cart page showing the item
         obs = session.observe()
         page_content = obs.space.description.lower()
-        assert "the cap" in page_content, (
-            f"Expected 'the cap' in cart page content, got: {page_content[:500]}"
-        )
+        assert "the cap" in page_content, f"Expected 'the cap' in cart page content, got: {page_content[:500]}"
 
 
 def test_agent_fallback_scrape_should_raise_error():
