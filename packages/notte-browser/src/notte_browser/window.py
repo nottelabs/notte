@@ -377,12 +377,13 @@ class BrowserWindow(BaseModel):
         return await asyncio.wait_for(_run(), timeout=self.CDP_SCREENSHOT_TIMEOUT_S)
 
     @profiler.profiled(service_name="observation")
-    async def screenshot(self, retries: int = config.empty_page_max_retry) -> bytes:
+    async def screenshot(self, retries: int = config.empty_page_max_retry, *, _skip_cdp: bool = False) -> bytes:
         if retries <= 0:
             raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
+        cdp_exhausted = _skip_cdp
         try:
             # Use CDP screenshot when no mask is needed and browser supports CDP (faster)
-            if self.screenshot_mask is None and self.is_chromium_based:
+            if not _skip_cdp and self.screenshot_mask is None and self.is_chromium_based:
                 cdp_start = time.monotonic()
                 for attempt in range(1, self.CDP_SCREENSHOT_MAX_ATTEMPTS + 1):
                     attempt_start = time.monotonic()
@@ -406,6 +407,7 @@ class BrowserWindow(BaseModel):
                 logger.warning(
                     f"CDP screenshot exhausted {self.CDP_SCREENSHOT_MAX_ATTEMPTS} attempts ({total_ms:.0f}ms total) for {self.page.url}, falling back to Playwright"
                 )
+                cdp_exhausted = True
 
             # Fall back to Playwright screenshot when mask is needed, CDP failed, or browser doesn't support CDP
             # Retry up to 2 times - DOM may change between mask creation and screenshot
@@ -442,7 +444,9 @@ class BrowserWindow(BaseModel):
                 f"Playwright screenshot timeout for {self.page.url}, retrying (remaining outer retries: {retries - 1})"
             )
             await self.short_wait()
-            return await self.screenshot(retries=retries - 1)
+            # Skip CDP on recursion if already exhausted — otherwise up to 30s of CDP retries
+            # compound on every outer retry (5 × 30s = 150s worst case).
+            return await self.screenshot(retries=retries - 1, _skip_cdp=cdp_exhausted)
 
     async def a11y(self) -> A11yTree | None:
         a11y_simple: A11yNode | None = await profiler.profiled(service_name="observation")(
