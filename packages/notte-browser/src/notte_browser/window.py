@@ -348,8 +348,6 @@ class BrowserWindow(BaseModel):
                 # hung detach can't live forever in the background task set.
                 try:
                     await asyncio.shield(asyncio.wait_for(cdp_session.detach(), timeout=2.0))
-                except asyncio.CancelledError:
-                    pass
                 except Exception as e:
                     logger.warning(f"CDP session detach for {self.page.url} failed: {type(e).__name__}: {e}")
                 detach_ms = (time.monotonic() - t_detach) * 1000
