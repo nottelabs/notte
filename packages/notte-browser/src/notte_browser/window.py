@@ -342,10 +342,17 @@ class BrowserWindow(BaseModel):
                 return data
             finally:
                 t_detach = time.monotonic()
-                await cdp_session.detach()
+                # Shield detach from outer wait_for cancellation — otherwise a timeout here
+                # would skip detach and leak the CDP session, which is the exact contention
+                # this path is trying to surface. Inner wait_for bounds detach itself so a
+                # hung detach can't live forever in the background task set.
+                try:
+                    await asyncio.shield(asyncio.wait_for(cdp_session.detach(), timeout=2.0))
+                except asyncio.CancelledError:
+                    pass
+                except Exception as e:
+                    logger.warning(f"CDP session detach for {self.page.url} failed: {type(e).__name__}: {e}")
                 detach_ms = (time.monotonic() - t_detach) * 1000
-                # Detach is normally <5ms — log anything slower so we can spot contention
-                # between concurrent CDP sessions sharing the same page.
                 if detach_ms > 500:
                     logger.warning(
                         f"CDP session detach for {self.page.url} took {detach_ms:.0f}ms (attach={attach_ms:.0f}ms)"
