@@ -5,7 +5,7 @@ import re
 from enum import StrEnum
 from pathlib import Path
 from types import NoneType
-from typing import Annotated, Any, ClassVar, Literal, Required
+from typing import Annotated, Any, ClassVar, Literal, Required, cast
 
 from notte_core.actions import (
     ActionUnion,
@@ -55,6 +55,14 @@ DEFAULT_HEADLESS_VIEWPORT_HEIGHT = 1080
 
 DEFAULT_VIEWPORT_WIDTH = config.viewport_width
 DEFAULT_VIEWPORT_HEIGHT = config.viewport_height
+
+AspectRatio = Literal["5:4", "16:9"]
+
+ASPECT_RATIO_VIEWPORTS: dict[AspectRatio, tuple[int, int]] = {
+    "5:4": (1280, 1024),
+    "16:9": (1920, 1080),
+}
+
 DEFAULT_BROWSER_TYPE = config.browser_type
 DEFAULT_USER_AGENT = config.user_agent
 DEFAULT_CHROME_ARGS = config.chrome_args
@@ -710,6 +718,7 @@ class SessionStartRequestDict(TypedDict, total=False):
         chrome_args: Overwrite the chrome instance arguments
         viewport_width: The width of the viewport
         viewport_height: The height of the viewport
+        aspect_ratio: Viewport shape preset ("5:4" or "16:9"). Cannot be combined with viewport_width/viewport_height.
         cdp_url: The CDP URL of another remote session provider.
         use_file_storage: Whether FileStorage should be attached to the session.
         screenshot_type: The type of screenshot to use for the session.
@@ -728,6 +737,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     chrome_args: list[str] | None
     viewport_width: int | None
     viewport_height: int | None
+    aspect_ratio: AspectRatio | None
     cdp_url: str | None
     use_file_storage: bool
     screenshot_type: ScreenshotType
@@ -779,6 +789,12 @@ class SessionStartRequest(SdkRequest):
     )
     viewport_width: Annotated[int | None, Field(description="The width of the viewport")] = DEFAULT_VIEWPORT_WIDTH
     viewport_height: Annotated[int | None, Field(description="The height of the viewport")] = DEFAULT_VIEWPORT_HEIGHT
+    aspect_ratio: Annotated[
+        AspectRatio | None,
+        Field(
+            description="Viewport shape preset. When set, populates viewport_width/viewport_height with sensible defaults. Cannot be combined with explicit viewport_width/viewport_height.",
+        ),
+    ] = None
 
     cdp_url: Annotated[str | None, Field(description="The CDP URL of another remote session provider.")] = (
         config.cdp_url
@@ -812,6 +828,24 @@ class SessionStartRequest(SdkRequest):
             if "max_duration_minutes" not in values:
                 values["max_duration_minutes"] = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
         return values  # pyright: ignore[reportUnknownVariableType]
+
+    @model_validator(mode="before")
+    @classmethod
+    def expand_aspect_ratio(cls, values: Any) -> Any:
+        if not isinstance(values, dict):
+            return values
+        data = cast(dict[str, Any], values)
+        aspect = data.get("aspect_ratio")
+        if aspect is None:
+            return data
+        if data.get("viewport_width") is not None or data.get("viewport_height") is not None:
+            raise ValueError("aspect_ratio cannot be set together with viewport_width or viewport_height")
+        if aspect not in ASPECT_RATIO_VIEWPORTS:
+            raise ValueError(f"Unsupported aspect_ratio {aspect!r}; expected one of {list(ASPECT_RATIO_VIEWPORTS)}")
+        width, height = ASPECT_RATIO_VIEWPORTS[aspect]
+        data["viewport_width"] = width
+        data["viewport_height"] = height
+        return data
 
     @model_validator(mode="after")
     def check_viewport(self) -> "SessionStartRequest":
