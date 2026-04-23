@@ -96,7 +96,7 @@ repos:
         files: ^docs/src/testers/.*\.py$
         pass_filenames: false
       - id: session-docs-sync
-        name: Check session.mdx is in sync with SDK
+        name: Check SDK reference docs are in sync with SDK
         entry: bash -c "cd docs/src && uv run python -m pytest tests/test_docs_generation.py -x -q"
         language: system
         pass_filenames: false
