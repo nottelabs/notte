@@ -5,7 +5,7 @@ import re
 from enum import StrEnum
 from pathlib import Path
 from types import NoneType
-from typing import Annotated, Any, ClassVar, Literal, Required, cast
+from typing import Annotated, Any, ClassVar, Literal, Required, cast, get_args
 
 from notte_core.actions import (
     ActionUnion,
@@ -57,11 +57,6 @@ DEFAULT_VIEWPORT_WIDTH = config.viewport_width
 DEFAULT_VIEWPORT_HEIGHT = config.viewport_height
 
 AspectRatio = Literal["5:4", "16:9"]
-
-ASPECT_RATIO_VIEWPORTS: dict[AspectRatio, tuple[int, int]] = {
-    "5:4": (1280, 1024),
-    "16:9": (1920, 1080),
-}
 
 DEFAULT_BROWSER_TYPE = config.browser_type
 DEFAULT_USER_AGENT = config.user_agent
@@ -792,7 +787,7 @@ class SessionStartRequest(SdkRequest):
     aspect_ratio: Annotated[
         AspectRatio | None,
         Field(
-            description="Viewport shape preset. When set, populates viewport_width/viewport_height with sensible defaults. Cannot be combined with explicit viewport_width/viewport_height.",
+            description="Viewport shape preset. When set, the backend fits the largest rectangle of this aspect ratio inside the sampled available screen area. Cannot be combined with explicit viewport_width/viewport_height.",
         ),
     ] = None
 
@@ -831,7 +826,7 @@ class SessionStartRequest(SdkRequest):
 
     @model_validator(mode="before")
     @classmethod
-    def expand_aspect_ratio(cls, values: Any) -> Any:
+    def check_aspect_ratio(cls, values: Any) -> Any:
         if not isinstance(values, dict):
             return values
         data = cast(dict[str, Any], values)
@@ -840,11 +835,9 @@ class SessionStartRequest(SdkRequest):
             return data
         if data.get("viewport_width") is not None or data.get("viewport_height") is not None:
             raise ValueError("aspect_ratio cannot be set together with viewport_width or viewport_height")
-        if aspect not in ASPECT_RATIO_VIEWPORTS:
-            raise ValueError(f"Unsupported aspect_ratio {aspect!r}; expected one of {list(ASPECT_RATIO_VIEWPORTS)}")
-        width, height = ASPECT_RATIO_VIEWPORTS[aspect]
-        data["viewport_width"] = width
-        data["viewport_height"] = height
+        allowed = get_args(AspectRatio)
+        if aspect not in allowed:
+            raise ValueError(f"Unsupported aspect_ratio {aspect!r}; expected one of {list(allowed)}")
         return data
 
     @model_validator(mode="after")
