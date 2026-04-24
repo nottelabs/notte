@@ -12,6 +12,10 @@ DEFAULT_RAW_FILE_SELECTORS = tuple(["body", "html"])
 # Web-page / server-rendered extensions — these URLs serve HTML, not files.
 _EXCLUDED_PATH_EXTS = frozenset({"html", "htm", "xhtml", "aspx", "asp", "php", "jsp", "cfm"})
 
+# Query-param keys worth probing for a filename. Scanning every value leads to
+# false positives from opaque tokens (session IDs, signatures, etc.).
+_FILENAME_QUERY_KEYS = frozenset({"file", "filename", "name", "download", "attachment"})
+
 
 def match_extension(path: str) -> str | None:
     # Extract extension from a filesystem-like path deterministically (no
@@ -48,12 +52,13 @@ def get_file_ext(headers: dict[str, Any] | None, url: str | None) -> str | None:
         return None
 
     # Fallback used when the response object is gone: try the URL path first,
-    # then values of query parameters (some download URLs stash the filename
-    # in a query param, e.g. ?file=report.pdf).
+    # then values of filename-shaped query parameters (some download URLs stash
+    # the filename in a query param, e.g. ?file=report.pdf).
     parsed_url = urlparse(url)
     candidates: list[str] = [parsed_url.path]
-    for values in parse_qs(parsed_url.query).values():
-        candidates.extend(v.strip() for v in values)
+    for key, values in parse_qs(parsed_url.query).items():
+        if key.lower() in _FILENAME_QUERY_KEYS:
+            candidates.extend(v.strip() for v in values)
 
     for candidate in candidates:
         ext = match_extension(candidate)
