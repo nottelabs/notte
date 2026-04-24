@@ -374,7 +374,10 @@ class BrowserWindow(BaseModel):
                 data = base64.b64decode(result["data"])
                 logger.trace(f"CDP screenshot for {self.page.url}: send={send_ms:.0f}ms size={len(data)}B")
                 return data
-            except Exception:
+            except BaseException:
+                # Must be BaseException, not Exception: asyncio.wait_for on timeout
+                # raises CancelledError (BaseException since 3.8) and we'd otherwise
+                # leave a stale session in the cache.
                 self._invalidate_cdp_session()
                 raise
 
