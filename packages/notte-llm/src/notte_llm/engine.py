@@ -567,6 +567,10 @@ class LLMEngine:
                 max_completion_tokens=8192,
                 drop_params=True,
                 extra_body=extra_body,
+                # Bound the HTTP call so a stalled upstream stream cannot park the event loop
+                # indefinitely. Without this, httpx has no read timeout and silent server
+                # stalls hang the whole agent run.
+                timeout=60,
             )
             # Cast to ModelResponse since we know it's not streaming in this case
             return cast(ModelResponse, response)

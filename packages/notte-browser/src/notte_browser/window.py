@@ -29,7 +29,7 @@ from notte_sdk.types import (
     Cookie,
     SessionStartRequest,
 )
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from typing_extensions import override
 
 from notte_browser.dom.parsing import dom_tree_parsers
@@ -170,6 +170,12 @@ class BrowserWindow(BaseModel):
 
     model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
+    # Cache of CDP sessions keyed by id(page). CDP sessions survive navigations on
+    # the same Page target, so creating/detaching per call raced with Chromium's
+    # target lifecycle after navigation and could park subsequent operations on a
+    # dead socket.
+    _cdp_sessions: dict[int, CDPSession] = PrivateAttr(default_factory=dict)
+
     @override
     def model_post_init(self, __context: Any) -> None:
         self.resource.page.set_default_timeout(config.timeout_default_ms)
@@ -206,6 +212,7 @@ class BrowserWindow(BaseModel):
     async def close(self) -> None:
         if self.on_close is not None:
             await self.on_close()
+        await self._close_all_cdp_sessions()
         for page in self.resource.page.context.pages:
             if not page.is_closed():
                 await page.close()
@@ -256,7 +263,26 @@ class BrowserWindow(BaseModel):
 
     async def get_cdp_session(self, tab_idx: int | None = None) -> CDPSession:
         cdp_page = self.tabs[tab_idx] if tab_idx is not None else self.page
-        return await cdp_page.context.new_cdp_session(cdp_page)
+        key = id(cdp_page)
+        cached = self._cdp_sessions.get(key)
+        if cached is not None:
+            return cached
+        session = await cdp_page.context.new_cdp_session(cdp_page)
+        self._cdp_sessions[key] = session
+        return session
+
+    def _invalidate_cdp_session(self, tab_idx: int | None = None) -> None:
+        cdp_page = self.tabs[tab_idx] if tab_idx is not None else self.page
+        _ = self._cdp_sessions.pop(id(cdp_page), None)
+
+    async def _close_all_cdp_sessions(self) -> None:
+        sessions = list(self._cdp_sessions.values())
+        self._cdp_sessions.clear()
+        for session in sessions:
+            try:
+                _ = await asyncio.wait_for(session.detach(), timeout=2.0)
+            except Exception:
+                pass
 
     async def page_id(self, tab_idx: int | None = None) -> str:
         session = await self.get_cdp_session(tab_idx)
@@ -322,12 +348,15 @@ class BrowserWindow(BaseModel):
 
     @profiler.profiled(service_name="observation")
     async def _cdp_screenshot(self) -> bytes:
-        """Take a screenshot using CDP protocol (faster than Playwright, but no mask support)."""
+        """Take a screenshot using CDP protocol (faster than Playwright, but no mask support).
+
+        The CDP session is cached on the window and reused across calls; it survives
+        navigations on the same Page target. On any error the cached session is dropped
+        so the outer retry loop in `screenshot()` gets a fresh one.
+        """
 
         async def _run() -> bytes:
-            t_attach = time.monotonic()
             cdp_session = await self.get_cdp_session()
-            attach_ms = (time.monotonic() - t_attach) * 1000
             try:
                 t_send = time.monotonic()
                 result: dict[str, Any] = await cdp_session.send(  # pyright: ignore [reportUnknownMemberType]
@@ -336,43 +365,11 @@ class BrowserWindow(BaseModel):
                 )
                 send_ms = (time.monotonic() - t_send) * 1000
                 data = base64.b64decode(result["data"])
-                logger.trace(
-                    f"CDP screenshot for {self.page.url}: attach={attach_ms:.0f}ms send={send_ms:.0f}ms size={len(data)}B"
-                )
+                logger.trace(f"CDP screenshot for {self.page.url}: send={send_ms:.0f}ms size={len(data)}B")
                 return data
-            finally:
-                t_detach = time.monotonic()
-                url = self.page.url
-                # Shield detach from outer wait_for cancellation — otherwise a timeout here
-                # would skip detach and leak the CDP session, which is the exact contention
-                # this path is trying to surface. Inner wait_for bounds detach itself so a
-                # hung detach can't live forever in the background task set. Attach a done
-                # callback so the task's result is still logged if the outer await is
-                # cancelled and leaves it running unobserved.
-                detach_task: asyncio.Task[None] = asyncio.ensure_future(
-                    asyncio.wait_for(cdp_session.detach(), timeout=2.0)
-                )
-
-                def _log_detach(task: "asyncio.Task[None]") -> None:
-                    elapsed_ms = (time.monotonic() - t_detach) * 1000
-                    if task.cancelled():
-                        logger.warning(f"CDP session detach for {url} was cancelled after {elapsed_ms:.0f}ms")
-                        return
-                    exc = task.exception()
-                    if exc is not None:
-                        logger.warning(
-                            f"CDP session detach for {url} failed after {elapsed_ms:.0f}ms: {type(exc).__name__}: {exc}"
-                        )
-                    elif elapsed_ms > 500:
-                        logger.warning(
-                            f"CDP session detach for {url} took {elapsed_ms:.0f}ms (attach={attach_ms:.0f}ms)"
-                        )
-
-                detach_task.add_done_callback(_log_detach)
-                try:
-                    await asyncio.shield(detach_task)
-                except Exception:
-                    pass  # _log_detach handles logging via the done callback
+            except Exception:
+                self._invalidate_cdp_session()
+                raise
 
         return await asyncio.wait_for(_run(), timeout=self.CDP_SCREENSHOT_TIMEOUT_S)
 
