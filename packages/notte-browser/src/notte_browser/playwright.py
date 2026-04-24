@@ -164,6 +164,7 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
             # Chromium's download dispatcher. Without this, the blob URL can be
             # revoked before Chromium fetches it, and downloads land as 0 bytes.
             await context.add_init_script(_DEFER_BLOB_REVOKE_INIT_SCRIPT)
+            logger.info("🔧 installed defer-blob-revoke init script on new browser context")
 
             if len(context.pages) == 0:
                 page = await context.new_page()
