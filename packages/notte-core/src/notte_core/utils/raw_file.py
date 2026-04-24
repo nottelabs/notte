@@ -9,37 +9,45 @@ from notte_core.browser.node_type import NodeRole, NodeType
 
 DEFAULT_RAW_FILE_SELECTORS = tuple(["body", "html"])
 
-# Web-page / server-rendered extensions — these URLs serve HTML, not files.
-_EXCLUDED_PATH_EXTS = frozenset({"html", "htm", "xhtml", "aspx", "asp", "php", "jsp", "cfm"})
-
-# Query-param keys worth probing for a filename. Scanning every value leads to
-# false positives from opaque tokens (session IDs, signatures, etc.).
-_FILENAME_QUERY_KEYS = frozenset({"file", "filename", "name", "download", "attachment"})
+# Best-effort allowlist of extensions we treat as "downloadable raw files".
+# This drives a synthetic "download this page" hint surfaced to the agent when
+# it lands on a non-HTML URL (see `window.snapshot`). A miss just means the
+# agent fumbles the DOM for a step or two; a false positive writes junk bytes
+# the agent discards. It is not safety-critical, so keep this list short and
+# don't try to be exhaustive.
+_KNOWN_FILE_EXTS: frozenset[str] = frozenset(
+    {
+        # documents
+        "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+        # text / structured data
+        "txt", "md", "csv", "json", "xml", "yaml", "yml",
+        # images
+        "png", "jpg", "jpeg", "gif", "bmp", "tiff", "webp", "svg", "ico",
+        # archives
+        "zip", "tar", "gz", "bz2", "7z", "rar",
+        # audio / video
+        "mp3", "wav", "ogg", "mp4", "webm", "mov", "avi", "mkv", "flv", "wmv", "mpeg", "mpg",
+    }
+)  # fmt: skip
 
 
 def match_extension(path: str) -> str | None:
-    # Extract extension from a filesystem-like path deterministically (no
-    # OS-dependent mimetypes round-trip: `guess_extension("text/plain")`
-    # returns ".ksh" on Linux vs ".txt" on macOS).
     if "." not in path:
         return None
     ext = path.rsplit(".", 1)[-1].lower()
-    # Reject non-alphabetic leading chars to avoid treating version segments
-    # like `/api/v1.0` or `/price/99.99` as extensions "0"/"99".
-    if not ext or "/" in ext or len(ext) > 10 or ext in _EXCLUDED_PATH_EXTS or not ext[0].isalpha():
-        return None
-    return ext
+    return ext if ext in _KNOWN_FILE_EXTS else None
 
 
 def _ext_from_content_type(content_type: str) -> str | None:
     # Strip parameters like "; charset=utf-8" before looking up.
     primary = content_type.split(";", 1)[0].strip().lower()
-    if not primary or primary.startswith("text/html") or primary.startswith("application/xhtml"):
+    if not primary:
         return None
-    ext = mimetypes.guess_extension(primary)
-    # Normalise to dotless to match `match_extension`, so `get_filename`
-    # concatenation produces the same shape regardless of branch taken.
-    return ext.lstrip(".") if ext else None
+    guessed = mimetypes.guess_extension(primary)
+    if not guessed:
+        return None
+    ext = guessed.lstrip(".").lower()
+    return ext if ext in _KNOWN_FILE_EXTS else None
 
 
 def get_file_ext(headers: dict[str, Any] | None, url: str | None) -> str | None:
@@ -51,14 +59,13 @@ def get_file_ext(headers: dict[str, Any] | None, url: str | None) -> str | None:
     if url is None:
         return None
 
-    # Fallback used when the response object is gone: try the URL path first,
-    # then values of filename-shaped query parameters (some download URLs stash
-    # the filename in a query param, e.g. ?file=report.pdf).
+    # URL-only fallback when the response object is gone. The allowlist makes
+    # this safe to run against every query value — opaque tokens won't collide
+    # with known file extensions.
     parsed_url = urlparse(url)
     candidates: list[str] = [parsed_url.path]
-    for key, values in parse_qs(parsed_url.query).items():
-        if key.lower() in _FILENAME_QUERY_KEYS:
-            candidates.extend(v.strip() for v in values)
+    for values in parse_qs(parsed_url.query).values():
+        candidates.extend(v.strip() for v in values)
 
     for candidate in candidates:
         ext = match_extension(candidate)
