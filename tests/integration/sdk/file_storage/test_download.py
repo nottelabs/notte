@@ -19,6 +19,8 @@ FIXTURE_HOST = "https://test-resources-lovat.vercel.app"
 def test_download_file_action_fails_no_storage():
     with notte.Session() as session:
         _ = session.execute(type="goto", url=f"{FIXTURE_HOST}/resume.pdf")
+        # Observe to populate the snapshot so the bare-id action can resolve.
+        _ = session.observe()
         action = DownloadFileAction(id="I0")
         with pytest.raises(NoStorageObjectProvidedError):
             _ = session.execute(action)
