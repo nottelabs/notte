@@ -335,6 +335,7 @@ def test_does_nothing_expect_cleanup_personas():
         "46d0649e-1d13-47be-a21f-703ce4cf02ea",  # ok
         # Monorepo
         "7abb4f37-25a1-4409-98d9-c4c916918254",  # ok
+        "0a0a0a0a-4444-5555-6666-777777777701",  # ok
         # others
         "23ae78af-93b4-4aeb-ba21-d18e1496bdd9",  # ok
         "4e9faffa-ae3e-4a86-a87f-584bf77794e0",  # ok
