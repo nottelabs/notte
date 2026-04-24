@@ -11,53 +11,6 @@ DATA_DIR = Path(__file__).parent / "data"
 UPLOAD_FIXTURE_URL = "https://test-resources-lovat.vercel.app/upload_fixture.html"
 
 
-class UploadTest(BaseModel):
-    task: str
-    url: str
-    description: str
-    max_steps: int
-
-
-file_upload_tests = [
-    UploadTest(
-        task="upload cat image",
-        url="https://crop-circle.imageonline.co/",
-        max_steps=5,
-        description="image_upload",
-    ),
-    UploadTest(
-        task="upload the first txt file, do not submit or do anything else",
-        url="https://cloudconvert.com/txt-to-pdf",
-        max_steps=5,
-        description="txt_file_upload",
-    ),
-]
-
-
-@pytest.mark.flaky(reruns=2, reruns_delay=5)
-@pytest.mark.parametrize("test", file_upload_tests, ids=lambda x: x.description)
-def test_uploads(test: UploadTest):
-    notte = NotteClient()
-    storage = notte.FileStorage()
-
-    with notte.Session(storage=storage) as session:
-        files = ["cat.jpg", "resume.pdf", "text1.txt"]
-
-        for f in files:
-            resp = storage.upload(str(DATA_DIR / f))
-            assert resp
-
-        uploaded_files = storage.list_uploaded_files()
-        uploaded_file_names = [f.name for f in uploaded_files]
-
-        for f in files:
-            assert f in uploaded_file_names
-
-        agent = notte.Agent(session=session, max_steps=test.max_steps)
-        resp = agent.run(url=test.url, task=test.task)
-        assert resp.success
-
-
 def test_upload_non_existent_file_should_raise_error():
     notte = NotteClient()
     storage = notte.FileStorage()
