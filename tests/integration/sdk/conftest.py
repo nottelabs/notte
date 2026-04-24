@@ -23,10 +23,12 @@ IMPORTANT_PERSONAS = {
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_all_personas():
-    """Delete all non-important active personas before the test session.
+    """Delete all non-important active personas before and after the test session.
 
-    This prevents accumulated leaked personas from previous (possibly crashed)
+    Setup: prevents accumulated leaked personas from previous (possibly crashed)
     CI runs from exhausting the staging account's 10-persona limit.
+    Teardown: cleans up personas leaked by the current run so overlapping or
+    subsequent runs don't hit the cap.
     """
     _ = load_dotenv()
     api_key = os.getenv("NOTTE_API_KEY")
@@ -37,14 +39,18 @@ def cleanup_all_personas():
         return
 
     client = NotteClient(api_key=api_key)
-    try:
-        for persona in client.personas.list(page_size=100):
-            if persona.persona_id not in IMPORTANT_PERSONAS:
-                try:
-                    client.personas.delete(persona.persona_id)
-                except Exception:
-                    pass  # best-effort cleanup
-    except Exception:
-        pass  # don't block the test suite if cleanup itself fails
 
+    def _delete_non_important_personas(phase: str) -> None:
+        try:
+            for persona in client.personas.list(page_size=100):
+                if persona.persona_id not in IMPORTANT_PERSONAS:
+                    try:
+                        client.personas.delete(persona.persona_id)
+                    except Exception as e:
+                        print(f"[cleanup_all_personas] {phase}: failed to delete {persona.persona_id}: {e}")
+        except Exception as e:
+            print(f"[cleanup_all_personas] {phase}: persona listing failed, skipping cleanup: {e}")
+
+    _delete_non_important_personas("setup")
     yield
+    _delete_non_important_personas("teardown")
