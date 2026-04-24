@@ -20,7 +20,9 @@ def match_extension(path: str) -> str | None:
     if "." not in path:
         return None
     ext = path.rsplit(".", 1)[-1].lower()
-    if not ext or "/" in ext or len(ext) > 10 or ext in _EXCLUDED_PATH_EXTS:
+    # Reject non-alphabetic leading chars to avoid treating version segments
+    # like `/api/v1.0` or `/price/99.99` as extensions "0"/"99".
+    if not ext or "/" in ext or len(ext) > 10 or ext in _EXCLUDED_PATH_EXTS or not ext[0].isalpha():
         return None
     return ext
 
