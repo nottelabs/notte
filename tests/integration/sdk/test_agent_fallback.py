@@ -6,6 +6,7 @@ from notte_sdk.client import NotteClient
 _ = load_dotenv()
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_agent_fallback():
     client = NotteClient()
     with client.Session(open_viewer=False) as session:
