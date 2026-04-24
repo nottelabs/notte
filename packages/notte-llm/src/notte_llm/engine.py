@@ -17,6 +17,7 @@ from litellm.exceptions import (
     BadRequestError,
     NotFoundError,
     RateLimitError,
+    Timeout,
 )
 from litellm.exceptions import (
     ContextWindowExceededError as LiteLLMContextWindowExceededError,
@@ -577,6 +578,14 @@ class LLMEngine:
 
         except NotFoundError as e:
             raise ModelNotFoundError(model) from e
+        except Timeout as e:
+            logger.warning(f"LLM request to {model} timed out after 60s: {e}")
+            raise LLMProviderError(
+                dev_message=f"LLM request to {model} timed out: {str(e)}",
+                user_message="The LLM provider did not respond in time.",
+                agent_message=None,
+                should_retry_later=True,
+            ) from e
         except RateLimitError as e:
             logger.opt(exception=True).error(
                 f"Rate limit exceeded for model {model}. You should wait a few seconds before retrying..."

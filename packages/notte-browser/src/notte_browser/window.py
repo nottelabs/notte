@@ -219,6 +219,11 @@ class BrowserWindow(BaseModel):
 
     @page.setter
     def page(self, page: Page) -> None:
+        # Drop the displaced page's cached CDP session so it doesn't linger until
+        # window close. The on-close handler on the new page will handle eviction
+        # when it closes; the previous page may still be alive but no longer
+        # referenced by this window.
+        _ = self._cdp_sessions.pop(id(self.resource.page), None)
         self.resource.page = page
         self.apply_page_callbacks()
 
