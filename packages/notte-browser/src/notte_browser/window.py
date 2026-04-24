@@ -288,8 +288,8 @@ class BrowserWindow(BaseModel):
         for session in sessions:
             try:
                 _ = await asyncio.wait_for(session.detach(), timeout=2.0)
-            except Exception:
-                pass
+            except Exception as e:  # noqa: BLE001 - best-effort cleanup on shutdown
+                logger.debug(f"CDP session detach failed during close: {type(e).__name__}: {e}")
 
     async def page_id(self, tab_idx: int | None = None) -> str:
         session = await self.get_cdp_session(tab_idx)
