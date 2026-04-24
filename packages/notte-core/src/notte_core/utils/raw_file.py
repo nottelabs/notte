@@ -30,7 +30,10 @@ def _ext_from_content_type(content_type: str) -> str | None:
     primary = content_type.split(";", 1)[0].strip().lower()
     if not primary or primary.startswith("text/html") or primary.startswith("application/xhtml"):
         return None
-    return mimetypes.guess_extension(primary)
+    ext = mimetypes.guess_extension(primary)
+    # Normalise to dotless to match `match_extension`, so `get_filename`
+    # concatenation produces the same shape regardless of branch taken.
+    return ext.lstrip(".") if ext else None
 
 
 def get_file_ext(headers: dict[str, Any] | None, url: str | None) -> str | None:
@@ -68,7 +71,8 @@ def get_filename(headers: dict[str, Any], url: str) -> str:
         filename = filename.replace("/", "-")
     else:
         host = urlparse(url).hostname
-        filename = (host or "") + (get_file_ext(headers, url) or "")
+        ext = get_file_ext(headers, url)
+        filename = (host or "") + (f".{ext}" if ext else "")
     now = dt.datetime.now(dt.timezone.utc)
     filename = f"{now.strftime('%Y_%m_%d_%H_%M_%S')}-{filename}"
     return filename

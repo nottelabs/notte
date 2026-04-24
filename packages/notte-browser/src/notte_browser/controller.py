@@ -422,7 +422,13 @@ class BrowserController:
                     if not file_bytes:
                         raise FailedToDownloadFileError()
 
-                    file_path = Path(self.storage.download_dir) / download.suggested_filename
+                    # Sanitize: Playwright does not strip path separators from
+                    # Content-Disposition-derived filenames, so a malicious
+                    # header can escape download_dir. Take basename only.
+                    safe_name = Path(download.suggested_filename).name
+                    if not safe_name:
+                        raise FailedToDownloadFileError()
+                    file_path = Path(self.storage.download_dir) / safe_name
                     with open(file_path, "wb") as f:
                         _ = f.write(file_bytes)
 
