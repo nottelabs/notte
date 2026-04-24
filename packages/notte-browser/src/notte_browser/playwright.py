@@ -19,6 +19,18 @@ from notte_browser.playwright_async_api import (
 )
 from notte_browser.window import BrowserResource, BrowserWindow, BrowserWindowOptions
 
+_DEFER_BLOB_REVOKE_INIT_SCRIPT = """
+(function () {
+  if (typeof URL === 'undefined' || !URL.revokeObjectURL) return;
+  if (URL.__notte_revoke_deferred__) return;
+  URL.__notte_revoke_deferred__ = true;
+  const original = URL.revokeObjectURL.bind(URL);
+  URL.revokeObjectURL = function (url) {
+    setTimeout(function () { original(url); }, 1000);
+  };
+})();
+"""
+
 
 class BaseWindowManager(AsyncResource, ABC):
     @abstractmethod
@@ -146,6 +158,12 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
                 user_agent=options.user_agent,
                 extra_http_headers=options.extra_http_headers,
             )
+
+            # Defer URL.revokeObjectURL so that the file-saver.js-style pattern
+            # (create blob, anchor.click(), revoke on next tick) does not race
+            # Chromium's download dispatcher. Without this, the blob URL can be
+            # revoked before Chromium fetches it, and downloads land as 0 bytes.
+            await context.add_init_script(_DEFER_BLOB_REVOKE_INIT_SCRIPT)
 
             if len(context.pages) == 0:
                 page = await context.new_page()
