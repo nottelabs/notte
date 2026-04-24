@@ -366,6 +366,22 @@ class BrowserController:
                     file_path = f"{self.storage.download_dir}{download.suggested_filename}"
                     await download.save_as(file_path)
 
+                    saved = Path(file_path)
+                    size = saved.stat().st_size if saved.exists() else -1
+                    if size <= 0:
+                        failure = await download.failure()
+                        pw_path = await download.path()
+                        pw_size = pw_path.stat().st_size if pw_path and pw_path.exists() else "missing"
+                        msg = (
+                            f"0-byte download via expect_download(): url={download.url!r}"
+                            f" suggested={download.suggested_filename!r}"
+                            f" playwright_path={str(pw_path)!r}"
+                            f" playwright_path_size={pw_size}"
+                            f" failure={failure!r}"
+                            f" saved_path={file_path!r} saved_size={size}"
+                        )
+                        raise ValueError(msg)
+
                 res = await self.storage.set_file(str(file_path))
 
                 if not res:
