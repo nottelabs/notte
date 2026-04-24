@@ -269,6 +269,13 @@ class BrowserWindow(BaseModel):
             return cached
         session = await cdp_page.context.new_cdp_session(cdp_page)
         self._cdp_sessions[key] = session
+
+        # Prune on close so a later Page object reusing the same id() cannot
+        # inherit a stale, already-detached session from the dict.
+        def _drop_on_close(_page: Page) -> None:
+            _ = self._cdp_sessions.pop(key, None)
+
+        cdp_page.on("close", _drop_on_close)
         return session
 
     def _invalidate_cdp_session(self, tab_idx: int | None = None) -> None:
