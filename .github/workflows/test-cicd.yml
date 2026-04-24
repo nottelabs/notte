@@ -37,7 +37,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  tests:
+  unit-tests:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     steps:
@@ -133,7 +133,15 @@ jobs:
       - name: Run unit tests
         run: |
           set -o pipefail
-          uv run pytest -n logical tests --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/integration/test_e2e.py --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages | tee pytest-coverage.txt
+          uv run pytest -n logical tests \
+            --ignore=tests/integration \
+            --ignore=tests/browser \
+            --ignore=tests/chapter \
+            --ignore=tests/examples \
+            --ignore=tests/mcp \
+            --durations=10 --junitxml=pytest.xml \
+            --cov-report=term-missing:skip-covered --cov=packages \
+            | tee pytest-coverage.txt
 
       - name: Pytest coverage comment
         if: ${{ always() && github.ref != 'refs/heads/main' }}
@@ -141,3 +149,77 @@ jobs:
         with:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml
+
+  integration-tests:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - name: Checkout code (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+
+      - name: Checkout code (PR or push)
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+            ref: ${{ github.event.pull_request.head.sha }}
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: ${{ secrets.VERTEX_AI }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+            enable-cache: true
+            cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+          cache: ${{ env.CACHE_TYPE }}
+
+      - name: Cache patchright
+        id: cache-patchright
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.playwright-browsers
+          key: ${{ runner.os }}-patchright-${{ hashFiles('**/uv.lock') }}-v2
+          restore-keys: |
+            ${{ runner.os }}-patchright-${{ hashFiles('**/uv.lock') }}-
+            ${{ runner.os }}-patchright-
+
+      - name: Install dependencies
+        run: uv sync --dev --all-extras
+
+      - name: Install patchright
+        if: steps.cache-patchright.outputs.cache-hit != 'true'
+        run: |
+          echo "Cache miss - installing patchright"
+          uv run patchright install --with-deps chromium --no-shell
+
+      - name: Verify environment variables
+        run: |
+          if [ -z "$NOTTE_API_KEY" ]; then
+            echo "NOTTE_API_KEY is not set. Consider triggering the workflow manually if this is a PR from an external contributor."
+            exit 1
+          fi
+          if [ -z "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
+            echo "GOOGLE_APPLICATION_CREDENTIALS is not set"
+            exit 1
+          fi
+          echo "Environment variables are set"
+
+      - name: Run integration tests
+        run: |
+          set -o pipefail
+          uv run pytest -n logical \
+            tests/integration tests/browser tests/chapter \
+            --ignore=tests/integration/test_webvoyager_resolution.py \
+            --ignore=tests/integration/test_e2e.py \
+            --reruns 3 --reruns-delay 5 \
+            --durations=10 --junitxml=pytest-integration.xml \
+            | tee pytest-integration.txt

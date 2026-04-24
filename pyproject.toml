@@ -85,6 +85,10 @@ timeout_method = "thread"
 asyncio_mode = "strict"
 log_cli = true
 log_cli_level = "INFO"
+markers = [
+    "unit: fast, deterministic tests with no external dependencies",
+    "integration: tests that require live external services",
+]
 filterwarnings = [
     "ignore::DeprecationWarning:sklearn.utils.fixes:",
     "ignore::DeprecationWarning:pandas.core.common:",
