@@ -322,4 +322,3 @@ def test_persona_form_filling():
             assert persona.info.last_name in response.answer, (
                 f"Last name {persona.info.last_name} not in {response.answer}"
             )
-
