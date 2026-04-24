@@ -10,67 +10,55 @@ from notte_core.browser.node_type import NodeRole, NodeType
 DEFAULT_RAW_FILE_SELECTORS = tuple(["body", "html"])
 
 
+def _normalize_ext(ext: str | None) -> str | None:
+    if not ext:
+        return None
+    return ext.lstrip(".").lower() or None
+
+
+def _ext_from_content_type(content_type: str) -> str | None:
+    # Strip parameters like "; charset=utf-8" before looking up.
+    primary = content_type.split(";", 1)[0].strip().lower()
+    if not primary or primary.startswith("text/html") or primary.startswith("application/xhtml"):
+        return None
+    return _normalize_ext(mimetypes.guess_extension(primary))
+
+
+def _ext_from_path(path: str) -> str | None:
+    # mimetypes.guess_type covers hundreds of extensions via IANA + system
+    # mime.types; drop the hardcoded allowlist in favor of it.
+    guessed_type, _ = mimetypes.guess_type(path)
+    if guessed_type is None:
+        return None
+    return _ext_from_content_type(guessed_type)
+
+
 def match_extension(path: str) -> str | None:
-    if "." in path:
-        extension = path.split(".")[-1].lower()
-        if extension.lower() in [
-            "pdf",
-            "doc",
-            "docx",
-            "xls",
-            "xlsx",
-            "ppt",
-            "pptx",
-            "png",
-            "jpg",
-            "jpeg",
-            "gif",
-            "bmp",
-            "tiff",
-            "ico",
-            "webp",
-            "mp4",
-            "mp3",
-            "wav",
-            "ogg",
-            "avi",
-            "mov",
-            "wmv",
-            "flv",
-            "webm",
-            "mkv",
-            "mpeg",
-            "mpg",
-        ]:
-            return extension
-    return None
+    return _ext_from_path(path)
 
 
 def get_file_ext(headers: dict[str, Any] | None, url: str | None) -> str | None:
-    if headers is None:
-        if url is None:
+    if headers is not None:
+        if "content-type" not in headers:
             return None
-        # Parse URL to get the path component, ignoring queries and fragments
-        parsed_url = urlparse(url)
-        params = parse_qs(parsed_url.query)
-        param_values: list[str] = [value.strip() for _, values in params.items() for value in values]
-        path = parsed_url.path
+        return _ext_from_content_type(headers["content-type"])
 
-        trials = [
-            path,
-            *param_values,
-        ]
-
-        # Extract extension from the path
-        for trial in trials:
-            extension = match_extension(trial)
-            if extension:
-                return extension
+    if url is None:
         return None
 
-    if "content-type" not in headers:
-        return None
-    return mimetypes.guess_extension(headers["content-type"])
+    # Fallback used when the response object is gone: try the URL path first,
+    # then values of query parameters (some download URLs stash the filename
+    # in a query param, e.g. ?file=report.pdf).
+    parsed_url = urlparse(url)
+    candidates: list[str] = [parsed_url.path]
+    for values in parse_qs(parsed_url.query).values():
+        candidates.extend(v.strip() for v in values)
+
+    for candidate in candidates:
+        ext = _ext_from_path(candidate)
+        if ext:
+            return ext
+    return None
 
 
 def get_filename(headers: dict[str, Any], url: str) -> str:
