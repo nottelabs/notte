@@ -1,3 +1,4 @@
+import base64
 import traceback
 from pathlib import Path
 
@@ -58,6 +59,41 @@ from notte_browser.errors import (
 from notte_browser.form_filling import FormFiller
 from notte_browser.playwright_async_api import Locator
 from notte_browser.window import BrowserWindow
+
+# Installed once per download action. Wraps URL.createObjectURL so we retain a
+# strong JS reference to each Blob under its URL key, which lets us read the
+# bytes even after the page's URL.revokeObjectURL runs (file-saver.js pattern).
+# Revocation only removes the URL->Blob mapping in the browser's registry;
+# our Map keeps the Blob object alive.
+_BLOB_CAPTURE_HOOK = """
+(() => {
+  if (window.__notte_blob_capture) return;
+  const origCreate = URL.createObjectURL.bind(URL);
+  const blobs = new Map();
+  URL.createObjectURL = function (obj) {
+    const url = origCreate(obj);
+    try { blobs.set(url, obj); } catch (e) {}
+    return url;
+  };
+  window.__notte_blob_capture = { get: (url) => blobs.get(url) || null };
+})();
+"""
+
+# Returns base64 so we can ferry bytes safely across CDP.
+_BLOB_READ_SCRIPT = """
+async (url) => {
+  const blob = window.__notte_blob_capture && window.__notte_blob_capture.get(url);
+  if (!blob) return null;
+  const buf = await blob.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
+"""
 
 
 @final
@@ -360,27 +396,35 @@ class BrowserController:
                         f"Action: '{action.name()}' with selector='{action.selectors.playwright_selector}' can only be performed on RAW files urls but url='{window.page.url}'"
                     )
                 else:
+                    # Install the blob-capture hook before the click so any
+                    # URL.createObjectURL call inside the click handler has
+                    # its Blob retained in our side map.
+                    _ = await window.page.evaluate(_BLOB_CAPTURE_HOOK)
+
                     async with window.page.expect_download() as dw:
                         await locator.click()
                     download = await dw.value
-                    file_path = f"{self.storage.download_dir}{download.suggested_filename}"
-                    await download.save_as(file_path)
 
-                    saved = Path(file_path)
-                    size = saved.stat().st_size if saved.exists() else -1
-                    if size <= 0:
-                        failure = await download.failure()
-                        pw_path = await download.path()
-                        pw_size = pw_path.stat().st_size if pw_path and pw_path.exists() else "missing"
-                        msg = (
-                            f"0-byte download via expect_download(): url={download.url!r}"
-                            f" suggested={download.suggested_filename!r}"
-                            f" playwright_path={str(pw_path)!r}"
-                            f" playwright_path_size={pw_size}"
-                            f" failure={failure!r}"
-                            f" saved_path={file_path!r} saved_size={size}"
-                        )
-                        raise ValueError(msg)
+                    dl_url = download.url
+                    if dl_url.startswith("blob:"):
+                        b64 = await window.page.evaluate(_BLOB_READ_SCRIPT, dl_url)
+                        if b64 is None:
+                            raise FailedToDownloadFileError()
+                        file_bytes = base64.b64decode(b64)
+                    else:
+                        # page.request shares cookies/auth with the page, so
+                        # same-origin protected downloads work.
+                        resp = await window.page.request.get(dl_url)
+                        if resp.status >= 400:
+                            raise FailedToDownloadFileError()
+                        file_bytes = await resp.body()
+
+                    if not file_bytes:
+                        raise FailedToDownloadFileError()
+
+                    file_path = f"{self.storage.download_dir}{download.suggested_filename}"
+                    with open(file_path, "wb") as f:
+                        _ = f.write(file_bytes)
 
                 res = await self.storage.set_file(str(file_path))
 
