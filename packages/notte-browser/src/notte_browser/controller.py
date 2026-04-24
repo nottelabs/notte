@@ -422,7 +422,7 @@ class BrowserController:
                     if not file_bytes:
                         raise FailedToDownloadFileError()
 
-                    file_path = f"{self.storage.download_dir}{download.suggested_filename}"
+                    file_path = Path(self.storage.download_dir) / download.suggested_filename
                     with open(file_path, "wb") as f:
                         _ = f.write(file_bytes)
 

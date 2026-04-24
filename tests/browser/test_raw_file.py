@@ -31,8 +31,9 @@ from notte_core.utils.raw_file import get_file_ext, get_filename
         ("https://example.com/file", None),
         ("https://example.com/file?query=value", None),
         ("https://example.com/file#fragment", None),
-        # URLs with unsupported extensions
-        ("https://example.com/file.txt", None),
+        # Text files are now recognised (downloadable raw files).
+        ("https://example.com/file.txt", "txt"),
+        # HTML pages are not raw files.
         ("https://example.com/file.html", None),
         # Edge cases
         (None, None),

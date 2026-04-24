@@ -9,11 +9,20 @@ from notte_core.browser.node_type import NodeRole, NodeType
 
 DEFAULT_RAW_FILE_SELECTORS = tuple(["body", "html"])
 
+# Web-page / server-rendered extensions — these URLs serve HTML, not files.
+_EXCLUDED_PATH_EXTS = frozenset({"html", "htm", "xhtml", "aspx", "asp", "php", "jsp", "cfm"})
 
-def _normalize_ext(ext: str | None) -> str | None:
-    if not ext:
+
+def match_extension(path: str) -> str | None:
+    # Extract extension from a filesystem-like path deterministically (no
+    # OS-dependent mimetypes round-trip: `guess_extension("text/plain")`
+    # returns ".ksh" on Linux vs ".txt" on macOS).
+    if "." not in path:
         return None
-    return ext.lstrip(".").lower() or None
+    ext = path.rsplit(".", 1)[-1].lower()
+    if not ext or "/" in ext or len(ext) > 10 or ext in _EXCLUDED_PATH_EXTS:
+        return None
+    return ext
 
 
 def _ext_from_content_type(content_type: str) -> str | None:
@@ -21,20 +30,7 @@ def _ext_from_content_type(content_type: str) -> str | None:
     primary = content_type.split(";", 1)[0].strip().lower()
     if not primary or primary.startswith("text/html") or primary.startswith("application/xhtml"):
         return None
-    return _normalize_ext(mimetypes.guess_extension(primary))
-
-
-def _ext_from_path(path: str) -> str | None:
-    # mimetypes.guess_type covers hundreds of extensions via IANA + system
-    # mime.types; drop the hardcoded allowlist in favor of it.
-    guessed_type, _ = mimetypes.guess_type(path)
-    if guessed_type is None:
-        return None
-    return _ext_from_content_type(guessed_type)
-
-
-def match_extension(path: str) -> str | None:
-    return _ext_from_path(path)
+    return mimetypes.guess_extension(primary)
 
 
 def get_file_ext(headers: dict[str, Any] | None, url: str | None) -> str | None:
@@ -55,7 +51,7 @@ def get_file_ext(headers: dict[str, Any] | None, url: str | None) -> str | None:
         candidates.extend(v.strip() for v in values)
 
     for candidate in candidates:
-        ext = _ext_from_path(candidate)
+        ext = match_extension(candidate)
         if ext:
             return ext
     return None
