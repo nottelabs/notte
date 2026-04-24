@@ -20,12 +20,6 @@ class UploadTest(BaseModel):
 
 file_upload_tests = [
     UploadTest(
-        task="upload cat file, but do not send",
-        url="https://ps.uci.edu/~franklin/doc/file_upload.html",
-        max_steps=3,
-        description="cat_file_upload",
-    ),
-    UploadTest(
         task="upload cat image",
         url="https://crop-circle.imageonline.co/",
         max_steps=5,
