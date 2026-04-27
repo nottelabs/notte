@@ -71,6 +71,7 @@ dev = [
     "pytest-xdist[psutil]>=3.8.0",
     "sphinx>=8.2.3",
     "sphinx-mintlify>=0.1.0",
+    "textual>=1.0.0",
     "twine>=6.1.0",
 ]
 lint = [
