@@ -242,6 +242,14 @@ def test_remote_storage_raises_on_local_session():
         _ = NotteSession(storage=_FakeRemoteStorage())
 
 
+@pytest.mark.parametrize("open_viewer", [True, False])
+def test_open_viewer_does_not_raise_validation_error(open_viewer: bool):
+    """open_viewer must be consumed before **data reaches SessionStartRequest.model_validate()."""
+    session = NotteSession(open_viewer=open_viewer)
+    # If we get here, no ValidationError was raised
+    assert session is not None
+
+
 def test_captcha_solver_not_available_error():
     with pytest.raises(CaptchaSolverNotAvailableError):
         _ = NotteSession(solve_captchas=True, browser_type="chrome")
