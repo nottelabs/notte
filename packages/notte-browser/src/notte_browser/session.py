@@ -129,6 +129,7 @@ class NotteSession(AsyncResource, SyncResource):
         persona: BasePersona | None = None,
         window: BrowserWindow | None = None,
         keep_alive: bool = False,
+        open_viewer: bool = False,
         **data: Unpack[SessionStartRequestDict],
     ) -> None:
         if storage is not None and storage.is_remote:
