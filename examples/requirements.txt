@@ -2,5 +2,5 @@ notte-sdk
 halo
 typer
 python-dotenv
-textual
+textual>=1.0.0
 tqdm
