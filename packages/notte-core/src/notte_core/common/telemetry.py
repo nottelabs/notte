@@ -237,13 +237,13 @@ def track_usage(method_name: str) -> Callable[[F], F]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             event_name = method_name
+            filtered_kwargs = {k: v for k, v in kwargs.items() if k not in exclude_kwargs}
             try:
                 result = func(*args, **kwargs)
-                filtered_kwargs = {k: v for k, v in kwargs.items() if k not in exclude_kwargs}
                 capture_event(event_name, properties={"input": {"args": args, "kwargs": filtered_kwargs}})
                 return result
             except Exception as e:
-                capture_event(event_name, properties={"input": {"args": args, "kwargs": kwargs}, "error": str(e)})
+                capture_event(event_name, properties={"input": {"args": args, "kwargs": filtered_kwargs}, "error": str(e)})
                 raise e
 
         return wrapper  # type: ignore
