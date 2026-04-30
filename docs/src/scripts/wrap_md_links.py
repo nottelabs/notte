@@ -36,17 +36,30 @@ ROOT = Path(__file__).resolve().parent.parent  # docs/src
 EXCLUDE_DIR_NAMES = {"sdk-reference", "snippets", "images", "logo", "sniptest", "testers", "tests", "scripts"}
 AUTO_GEN_MARKER = "{/* Auto-generated mdx file. Do not edit! */}"
 
+# Hrefs whose .md export doesn't exist on the deployed site, so wrapping
+# would produce broken links. /api-reference is OpenAPI-rendered by Mintlify
+# at runtime — only the 3 hand-authored subpages have .md exports.
+EXCLUDE_HREFS = {"/api-reference"}
+
 VIS_HUMANS_OPEN = '<Visibility for="humans">'
 VIS_AGENTS_OPEN = '<Visibility for="agents">'
 VIS_CLOSE = "</Visibility>"
 
-INLINE_LINK_RE = re.compile(r"\[(?P<text>[^\]\n]+)\]\((?P<path>/[^)\s]*)\)")
+# Negative lookbehind on `!` so we don't match the `[alt](src)` portion of
+# an `![alt](src)` image — those should stay as plain markdown images.
+INLINE_LINK_RE = re.compile(r"(?<!!)\[(?P<text>[^\]\n]+)\]\((?P<path>/[^)\s]*)\)")
 CARD_OPEN_RE = re.compile(r'<Card\b[^>]*?\shref="(?P<path>/[^"]+)"[^>]*>')
 VIS_OPEN_RE = re.compile(r'<Visibility\s+for="[^"]+"\s*>')
 
 
 def is_external(path: str) -> bool:
     return "://" in path or path.startswith(("mailto:", "tel:", "#"))
+
+
+def is_excluded(path: str) -> bool:
+    """Path resolves to a page that doesn't have a working .md export."""
+    base = path.split("#", 1)[0].split("?", 1)[0]
+    return base in EXCLUDE_HREFS
 
 
 def add_md_suffix(path: str) -> str:
@@ -113,7 +126,7 @@ def transform_inline_links(text: str) -> tuple[str, int]:
         if in_any_region(idx, code_regions) or in_any_region(idx, vis_regions):
             continue
         path = m.group("path")
-        if is_external(path):
+        if is_external(path) or is_excluded(path):
             continue
         text_part = m.group("text")
         md_path = add_md_suffix(path)
@@ -164,7 +177,7 @@ def transform_cards(text: str) -> tuple[str, int]:
         if in_any_region(open_start, code_regions) or in_any_region(open_start, vis_regions):
             continue
         path = m.group("path")
-        if is_external(path):
+        if is_external(path) or is_excluded(path):
             continue
         close_start = find_matching_card_close(new, m.end())
         if close_start == -1:
