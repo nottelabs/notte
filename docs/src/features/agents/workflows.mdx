@@ -173,19 +173,47 @@ When pages change or tasks become complex, revert to agents.
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Functions" icon="function" href="/concepts/functions">
-    Deploy automations as serverless APIs
-  </Card>
+  <Visibility for="humans">
+    <Card title="Functions" icon="function" href="/concepts/functions">
+      Deploy automations as serverless APIs
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Functions" icon="function" href="/concepts/functions.md">
+      Deploy automations as serverless APIs
+    </Card>
+  </Visibility>
 
-  <Card title="Actions" icon="hand-pointer" href="/sdk-reference/manual/session">
-    Available session actions
-  </Card>
+  <Visibility for="humans">
+    <Card title="Actions" icon="hand-pointer" href="/sdk-reference/manual/session">
+      Available session actions
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Actions" icon="hand-pointer" href="/sdk-reference/manual/session.md">
+      Available session actions
+    </Card>
+  </Visibility>
 
-  <Card title="Agent Configuration" icon="sliders" href="/features/agents/configuration">
-    Optimize agent runs
-  </Card>
+  <Visibility for="humans">
+    <Card title="Agent Configuration" icon="sliders" href="/features/agents/configuration">
+      Optimize agent runs
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Agent Configuration" icon="sliders" href="/features/agents/configuration.md">
+      Optimize agent runs
+    </Card>
+  </Visibility>
 
-  <Card title="Functions" icon="flower" href="/concepts/functions">
-    Deploy and manage serverless functions
-  </Card>
+  <Visibility for="humans">
+    <Card title="Functions" icon="flower" href="/concepts/functions">
+      Deploy and manage serverless functions
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Functions" icon="flower" href="/concepts/functions.md">
+      Deploy and manage serverless functions
+    </Card>
+  </Visibility>
 </CardGroup>

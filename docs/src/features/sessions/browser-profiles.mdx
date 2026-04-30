@@ -148,19 +148,47 @@ Use profiles when you need complete browser state preservation. Use cookies when
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle">
-    Manage session lifecycle
-  </Card>
+  <Visibility for="humans">
+    <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle">
+      Manage session lifecycle
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle.md">
+      Manage session lifecycle
+    </Card>
+  </Visibility>
 
-  <Card title="Cookies" icon="cookie" href="/features/sessions/cookies">
-    Manual cookie management
-  </Card>
+  <Visibility for="humans">
+    <Card title="Cookies" icon="cookie" href="/features/sessions/cookies">
+      Manual cookie management
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Cookies" icon="cookie" href="/features/sessions/cookies.md">
+      Manual cookie management
+    </Card>
+  </Visibility>
 
-  <Card title="Vaults" icon="lock" href="/concepts/vaults">
-    Secure credential storage
-  </Card>
+  <Visibility for="humans">
+    <Card title="Vaults" icon="lock" href="/concepts/vaults">
+      Secure credential storage
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Vaults" icon="lock" href="/concepts/vaults.md">
+      Secure credential storage
+    </Card>
+  </Visibility>
 
-  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
-    All session options
-  </Card>
+  <Visibility for="humans">
+    <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+      All session options
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration.md">
+      All session options
+    </Card>
+  </Visibility>
 </CardGroup>

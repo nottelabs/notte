@@ -226,17 +226,38 @@ Functions have rate limits based on your plan:
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Schedules" icon="clock" href="/features/functions/schedules">
-    Schedule Functions automatically
-  </Card>
+  <Visibility for="humans">
+    <Card title="Schedules" icon="clock" href="/features/functions/schedules">
+      Schedule Functions automatically
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Schedules" icon="clock" href="/features/functions/schedules.md">
+      Schedule Functions automatically
+    </Card>
+  </Visibility>
 
-  <Card title="Management" icon="sliders" href="/features/functions/management">
-    Update and monitor Functions
-  </Card>
+  <Visibility for="humans">
+    <Card title="Management" icon="sliders" href="/features/functions/management">
+      Update and monitor Functions
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Management" icon="sliders" href="/features/functions/management.md">
+      Update and monitor Functions
+    </Card>
+  </Visibility>
 
-  <Card title="Creating Functions" icon="file-code" href="/features/functions/creating">
-    Learn to write Functions
-  </Card>
+  <Visibility for="humans">
+    <Card title="Creating Functions" icon="file-code" href="/features/functions/creating">
+      Learn to write Functions
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Creating Functions" icon="file-code" href="/features/functions/creating.md">
+      Learn to write Functions
+    </Card>
+  </Visibility>
 
   <Card title="API Reference" icon="code" href="/api-reference">
     Full API documentation

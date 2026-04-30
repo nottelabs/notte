@@ -65,19 +65,47 @@ Google Chrome with additional Google-specific features and branding.
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">
-    Configure anti-detection features
-  </Card>
+  <Visibility for="humans">
+    <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">
+      Configure anti-detection features
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode.md">
+      Configure anti-detection features
+    </Card>
+  </Visibility>
 
-  <Card title="CAPTCHA Solving" icon="shield-check" href="/features/sessions/captcha-solving">
-    Automatically solve captchas
-  </Card>
+  <Visibility for="humans">
+    <Card title="CAPTCHA Solving" icon="shield-check" href="/features/sessions/captcha-solving">
+      Automatically solve captchas
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="CAPTCHA Solving" icon="shield-check" href="/features/sessions/captcha-solving.md">
+      Automatically solve captchas
+    </Card>
+  </Visibility>
 
-  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
-    All session configuration options
-  </Card>
+  <Visibility for="humans">
+    <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+      All session configuration options
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration.md">
+      All session configuration options
+    </Card>
+  </Visibility>
 
-  <Card title="Browser Profiles" icon="user" href="/features/sessions/browser-profiles">
-    Use persistent browser profiles
-  </Card>
+  <Visibility for="humans">
+    <Card title="Browser Profiles" icon="user" href="/features/sessions/browser-profiles">
+      Use persistent browser profiles
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Browser Profiles" icon="user" href="/features/sessions/browser-profiles.md">
+      Use persistent browser profiles
+    </Card>
+  </Visibility>
 </CardGroup>

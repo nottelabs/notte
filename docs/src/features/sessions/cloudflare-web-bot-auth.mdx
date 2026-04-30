@@ -54,7 +54,7 @@ The [webbotauth.io/test](https://webbotauth.io/test) page is a handy diagnostic 
 - **Data pipelines** — collect data from protected endpoints without manual intervention
 
 <Note>
-  Web bot auth proves your identity cryptographically, which is fundamentally different from [stealth mode](/features/sessions/stealth-mode) (which hides your identity) or [proxies](/features/sessions/proxies) (which mask your IP). These approaches are complementary — combining them gives you the broadest coverage.
+  Web bot auth proves your identity cryptographically, which is fundamentally different from <Visibility for="humans">[stealth mode](/features/sessions/stealth-mode)</Visibility><Visibility for="agents">[stealth mode](/features/sessions/stealth-mode.md)</Visibility> (which hides your identity) or <Visibility for="humans">[proxies](/features/sessions/proxies)</Visibility><Visibility for="agents">[proxies](/features/sessions/proxies.md)</Visibility> (which mask your IP). These approaches are complementary — combining them gives you the broadest coverage.
 </Note>
 
 ## Limitations
@@ -73,19 +73,47 @@ The [webbotauth.io/test](https://webbotauth.io/test) page is a handy diagnostic 
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">
-    Combine with anti-detection features
-  </Card>
+  <Visibility for="humans">
+    <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">
+      Combine with anti-detection features
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode.md">
+      Combine with anti-detection features
+    </Card>
+  </Visibility>
 
-  <Card title="Proxies" icon="network-wired" href="/features/sessions/proxies">
-    Route traffic through residential proxies
-  </Card>
+  <Visibility for="humans">
+    <Card title="Proxies" icon="network-wired" href="/features/sessions/proxies">
+      Route traffic through residential proxies
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Proxies" icon="network-wired" href="/features/sessions/proxies.md">
+      Route traffic through residential proxies
+    </Card>
+  </Visibility>
 
-  <Card title="CAPTCHA Solving" icon="shield-check" href="/features/sessions/captcha-solving">
-    Automatically solve captchas
-  </Card>
+  <Visibility for="humans">
+    <Card title="CAPTCHA Solving" icon="shield-check" href="/features/sessions/captcha-solving">
+      Automatically solve captchas
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="CAPTCHA Solving" icon="shield-check" href="/features/sessions/captcha-solving.md">
+      Automatically solve captchas
+    </Card>
+  </Visibility>
 
-  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
-    Explore all session options
-  </Card>
+  <Visibility for="humans">
+    <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+      Explore all session options
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration.md">
+      Explore all session options
+    </Card>
+  </Visibility>
 </CardGroup>

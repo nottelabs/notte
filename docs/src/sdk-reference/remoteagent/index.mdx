@@ -31,76 +31,186 @@ concurrent agents, create separate RemoteAgent instances.
 ## Methods
 
 <CardGroup cols={2}>
-  <Card
-    title="__init__"
-    icon="function"
-    href="/sdk-reference/remoteagent/__init__"
-  >
-    Create a new RemoteAgent instance with the specified configuration
-  </Card>
-  <Card
-    title="async_watch_logs_and_wait"
-    icon="function"
-    href="/sdk-reference/remoteagent/async_watch_logs_and_wait"
-  >
-    Watch the logs of the agent and wait for completion asynchronously
-  </Card>
-  <Card
-    title="replay"
-    icon="function"
-    href="/sdk-reference/remoteagent/replay"
-  >
-    Get the replay for the agent's session
-  </Card>
-  <Card
-    title="run"
-    icon="function"
-    href="/sdk-reference/remoteagent/run"
-  >
-    Run an agent with the specified request parameters and wait for completion
-  </Card>
-  <Card
-    title="start"
-    icon="function"
-    href="/sdk-reference/remoteagent/start"
-  >
-    Start the agent with the specified request parameters
-  </Card>
-  <Card
-    title="status"
-    icon="function"
-    href="/sdk-reference/remoteagent/status"
-  >
-    Get the current status of the agent
-  </Card>
-  <Card
-    title="stop"
-    icon="function"
-    href="/sdk-reference/remoteagent/stop"
-  >
-    Stop the currently running agent
-  </Card>
-  <Card
-    title="wait"
-    icon="function"
-    href="/sdk-reference/remoteagent/wait"
-  >
-    Wait for the agent to complete its current task
-  </Card>
-  <Card
-    title="watch_logs"
-    icon="function"
-    href="/sdk-reference/remoteagent/watch_logs"
-  >
-    Watch the logs of the agent
-  </Card>
-  <Card
-    title="watch_logs_and_wait"
-    icon="function"
-    href="/sdk-reference/remoteagent/watch_logs_and_wait"
-  >
-    Watch the logs of the agent and wait for completion
-  </Card>
+  <Visibility for="humans">
+    <Card
+      title="__init__"
+      icon="function"
+      href="/sdk-reference/remoteagent/__init__"
+    >
+      Create a new RemoteAgent instance with the specified configuration
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="__init__"
+      icon="function"
+      href="/sdk-reference/remoteagent/__init__.md"
+    >
+      Create a new RemoteAgent instance with the specified configuration
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="async_watch_logs_and_wait"
+      icon="function"
+      href="/sdk-reference/remoteagent/async_watch_logs_and_wait"
+    >
+      Watch the logs of the agent and wait for completion asynchronously
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="async_watch_logs_and_wait"
+      icon="function"
+      href="/sdk-reference/remoteagent/async_watch_logs_and_wait.md"
+    >
+      Watch the logs of the agent and wait for completion asynchronously
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="replay"
+      icon="function"
+      href="/sdk-reference/remoteagent/replay"
+    >
+      Get the replay for the agent's session
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="replay"
+      icon="function"
+      href="/sdk-reference/remoteagent/replay.md"
+    >
+      Get the replay for the agent's session
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="run"
+      icon="function"
+      href="/sdk-reference/remoteagent/run"
+    >
+      Run an agent with the specified request parameters and wait for completion
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="run"
+      icon="function"
+      href="/sdk-reference/remoteagent/run.md"
+    >
+      Run an agent with the specified request parameters and wait for completion
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="start"
+      icon="function"
+      href="/sdk-reference/remoteagent/start"
+    >
+      Start the agent with the specified request parameters
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="start"
+      icon="function"
+      href="/sdk-reference/remoteagent/start.md"
+    >
+      Start the agent with the specified request parameters
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="status"
+      icon="function"
+      href="/sdk-reference/remoteagent/status"
+    >
+      Get the current status of the agent
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="status"
+      icon="function"
+      href="/sdk-reference/remoteagent/status.md"
+    >
+      Get the current status of the agent
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="stop"
+      icon="function"
+      href="/sdk-reference/remoteagent/stop"
+    >
+      Stop the currently running agent
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="stop"
+      icon="function"
+      href="/sdk-reference/remoteagent/stop.md"
+    >
+      Stop the currently running agent
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="wait"
+      icon="function"
+      href="/sdk-reference/remoteagent/wait"
+    >
+      Wait for the agent to complete its current task
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="wait"
+      icon="function"
+      href="/sdk-reference/remoteagent/wait.md"
+    >
+      Wait for the agent to complete its current task
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="watch_logs"
+      icon="function"
+      href="/sdk-reference/remoteagent/watch_logs"
+    >
+      Watch the logs of the agent
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="watch_logs"
+      icon="function"
+      href="/sdk-reference/remoteagent/watch_logs.md"
+    >
+      Watch the logs of the agent
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="watch_logs_and_wait"
+      icon="function"
+      href="/sdk-reference/remoteagent/watch_logs_and_wait"
+    >
+      Watch the logs of the agent and wait for completion
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="watch_logs_and_wait"
+      icon="function"
+      href="/sdk-reference/remoteagent/watch_logs_and_wait.md"
+    >
+      Watch the logs of the agent and wait for completion
+    </Card>
+  </Visibility>
 </CardGroup>
 
 ## Class Information

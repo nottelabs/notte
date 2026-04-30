@@ -51,29 +51,57 @@ MODEL_API_KEY=your-openai-api-key
 
 ## Benefits of using Notte with Stagehand
 
-- **Anti-detection**: Notte's [stealth mode](/features/sessions/stealth-mode) keeps your automations undetected
-- **Captcha solving**: Built-in [captcha solving](/features/sessions/captcha-solving) handles CAPTCHAs automatically
-- **Residential proxies**: Route traffic through [residential proxies](/features/sessions/proxies) in 195+ countries
-- **Live view**: Debug automations in real-time with [live view](/features/sessions/live-view)
-- **Session replay**: Record and review runs with [session recordings](/features/sessions/recordings)
+- **Anti-detection**: Notte's <Visibility for="humans">[stealth mode](/features/sessions/stealth-mode)</Visibility><Visibility for="agents">[stealth mode](/features/sessions/stealth-mode.md)</Visibility> keeps your automations undetected
+- **Captcha solving**: Built-in <Visibility for="humans">[captcha solving](/features/sessions/captcha-solving)</Visibility><Visibility for="agents">[captcha solving](/features/sessions/captcha-solving.md)</Visibility> handles CAPTCHAs automatically
+- **Residential proxies**: Route traffic through <Visibility for="humans">[residential proxies](/features/sessions/proxies)</Visibility><Visibility for="agents">[residential proxies](/features/sessions/proxies.md)</Visibility> in 195+ countries
+- **Live view**: Debug automations in real-time with <Visibility for="humans">[live view](/features/sessions/live-view)</Visibility><Visibility for="agents">[live view](/features/sessions/live-view.md)</Visibility>
+- **Session replay**: Record and review runs with <Visibility for="humans">[session recordings](/features/sessions/recordings)</Visibility><Visibility for="agents">[session recordings](/features/sessions/recordings.md)</Visibility>
 - **No local browser**: Run automations without installing or maintaining browsers locally
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
-    Customize browser settings, proxies, and more
-  </Card>
+  <Visibility for="humans">
+    <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+      Customize browser settings, proxies, and more
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration.md">
+      Customize browser settings, proxies, and more
+    </Card>
+  </Visibility>
 
-  <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">
-    Configure anti-detection for your automations
-  </Card>
+  <Visibility for="humans">
+    <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">
+      Configure anti-detection for your automations
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode.md">
+      Configure anti-detection for your automations
+    </Card>
+  </Visibility>
 
-  <Card title="External Providers" icon="plug" href="/features/sessions/external-providers">
-    Learn about CDP connections and external browsers
-  </Card>
+  <Visibility for="humans">
+    <Card title="External Providers" icon="plug" href="/features/sessions/external-providers">
+      Learn about CDP connections and external browsers
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="External Providers" icon="plug" href="/features/sessions/external-providers.md">
+      Learn about CDP connections and external browsers
+    </Card>
+  </Visibility>
 
-  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
-    Debug your automations in real-time
-  </Card>
+  <Visibility for="humans">
+    <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+      Debug your automations in real-time
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Live View" icon="eye" href="/features/sessions/live-view.md">
+      Debug your automations in real-time
+    </Card>
+  </Visibility>
 </CardGroup>

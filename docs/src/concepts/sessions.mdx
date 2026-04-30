@@ -17,7 +17,7 @@ Create a session and start automating:
 <SessionsPython />
 
 <Tip>
-  We strongly recommend using the `with` statement (context manager) to ensure sessions are automatically stopped when done. This prevents orphaned sessions and unexpected costs. See [Session Lifecycle](/features/sessions/lifecycle) for manual management options.
+  We strongly recommend using the `with` statement (context manager) to ensure sessions are automatically stopped when done. This prevents orphaned sessions and unexpected costs. See <Visibility for="humans">[Session Lifecycle](/features/sessions/lifecycle)</Visibility><Visibility for="agents">[Session Lifecycle](/features/sessions/lifecycle.md)</Visibility> for manual management options.
 </Tip>
 
 ## Core Operations
@@ -37,39 +37,109 @@ Sessions provide three methods for interacting with the browser:
 Sessions come with powerful built-in capabilities:
 
 <CardGroup cols={2}>
-  <Card title="Proxies" icon="globe" href="/features/sessions/proxies">
-    Route traffic through residential proxies for geo-targeting
-  </Card>
-  <Card title="Captcha Solving" icon="robot" href="/features/sessions/captcha-solving">
-    Automatically solve reCAPTCHA and hCaptcha
-  </Card>
-  <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">
-    Evade bot detection with fingerprint randomization
-  </Card>
-  <Card title="Recordings" icon="video" href="/features/sessions/recordings">
-    Record sessions for debugging and replay
-  </Card>
-  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
-    Watch sessions execute in real-time
-  </Card>
-  <Card title="Browser Profiles" icon="user" href="/features/sessions/browser-profiles">
-    Persist browser state across sessions
-  </Card>
+  <Visibility for="humans">
+    <Card title="Proxies" icon="globe" href="/features/sessions/proxies">
+      Route traffic through residential proxies for geo-targeting
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Proxies" icon="globe" href="/features/sessions/proxies.md">
+      Route traffic through residential proxies for geo-targeting
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card title="Captcha Solving" icon="robot" href="/features/sessions/captcha-solving">
+      Automatically solve reCAPTCHA and hCaptcha
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Captcha Solving" icon="robot" href="/features/sessions/captcha-solving.md">
+      Automatically solve reCAPTCHA and hCaptcha
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">
+      Evade bot detection with fingerprint randomization
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode.md">
+      Evade bot detection with fingerprint randomization
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card title="Recordings" icon="video" href="/features/sessions/recordings">
+      Record sessions for debugging and replay
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Recordings" icon="video" href="/features/sessions/recordings.md">
+      Record sessions for debugging and replay
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+      Watch sessions execute in real-time
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Live View" icon="eye" href="/features/sessions/live-view.md">
+      Watch sessions execute in real-time
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card title="Browser Profiles" icon="user" href="/features/sessions/browser-profiles">
+      Persist browser state across sessions
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Browser Profiles" icon="user" href="/features/sessions/browser-profiles.md">
+      Persist browser state across sessions
+    </Card>
+  </Visibility>
 </CardGroup>
 
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle">
-    Create, manage, and stop sessions
-  </Card>
-  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
-    All configuration options
-  </Card>
-  <Card title="Browser Controls" icon="hand-pointer" href="/features/sessions/browser-controls">
-    Complete action reference
-  </Card>
-  <Card title="Connect with Playwright" icon="code" href="/features/sessions/playwright">
-    Use Playwright via CDP
-  </Card>
+  <Visibility for="humans">
+    <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle">
+      Create, manage, and stop sessions
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle.md">
+      Create, manage, and stop sessions
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+      All configuration options
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration.md">
+      All configuration options
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card title="Browser Controls" icon="hand-pointer" href="/features/sessions/browser-controls">
+      Complete action reference
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Browser Controls" icon="hand-pointer" href="/features/sessions/browser-controls.md">
+      Complete action reference
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card title="Connect with Playwright" icon="code" href="/features/sessions/playwright">
+      Use Playwright via CDP
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Connect with Playwright" icon="code" href="/features/sessions/playwright.md">
+      Use Playwright via CDP
+    </Card>
+  </Visibility>
 </CardGroup>

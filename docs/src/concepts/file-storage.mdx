@@ -128,19 +128,47 @@ Always check for downloaded files after the session ends:
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Agents" icon="robot" href="/concepts/agents">
-    Use agents with file operations
-  </Card>
+  <Visibility for="humans">
+    <Card title="Agents" icon="robot" href="/concepts/agents">
+      Use agents with file operations
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Agents" icon="robot" href="/concepts/agents.md">
+      Use agents with file operations
+    </Card>
+  </Visibility>
 
-  <Card title="Sessions" icon="browser" href="/concepts/sessions">
-    Learn about browser sessions
-  </Card>
+  <Visibility for="humans">
+    <Card title="Sessions" icon="browser" href="/concepts/sessions">
+      Learn about browser sessions
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Sessions" icon="browser" href="/concepts/sessions.md">
+      Learn about browser sessions
+    </Card>
+  </Visibility>
 
-  <Card title="Vaults" icon="lock" href="/concepts/vaults">
-    Store credentials securely
-  </Card>
+  <Visibility for="humans">
+    <Card title="Vaults" icon="lock" href="/concepts/vaults">
+      Store credentials securely
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Vaults" icon="lock" href="/concepts/vaults.md">
+      Store credentials securely
+    </Card>
+  </Visibility>
 
-  <Card title="Personas" icon="user" href="/concepts/personas">
-    Create browser identities
-  </Card>
+  <Visibility for="humans">
+    <Card title="Personas" icon="user" href="/concepts/personas">
+      Create browser identities
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Personas" icon="user" href="/concepts/personas.md">
+      Create browser identities
+    </Card>
+  </Visibility>
 </CardGroup>
