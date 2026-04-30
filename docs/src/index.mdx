@@ -38,20 +38,34 @@ The shortest path to a working Notte integration is to create a cloud browser se
 <CDPSession />
 
 <CardGroup cols={3}>
-  <Card title="Quickstart" icon="square-arrow-up-right" href="/quickstart">
-    Continue to the full quickstart for Agents, Scraping, and additional examples.
-  </Card>
+  <Visibility for="humans">
+    <Card title="Quickstart" icon="square-arrow-up-right" href="/quickstart">
+      Continue to the full quickstart for Agents, Scraping, and additional examples.
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Quickstart" icon="square-arrow-up-right" href="/quickstart.md">
+      Continue to the full quickstart for Agents, Scraping, and additional examples.
+    </Card>
+  </Visibility>
 
-  <Card title="SDK Reference" icon="book" href="/sdk-reference/manual/index">
-    Start from the SDK entrypoint for Sessions, Agents, Vaults, Personas, and Functions.
-  </Card>
+  <Visibility for="humans">
+    <Card title="SDK Reference" icon="book" href="/sdk-reference/manual/index">
+      Start from the SDK entrypoint for Sessions, Agents, Vaults, Personas, and Functions.
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="SDK Reference" icon="book" href="/sdk-reference/manual/index.md">
+      Start from the SDK entrypoint for Sessions, Agents, Vaults, Personas, and Functions.
+    </Card>
+  </Visibility>
 
   <Card title="OpenAPI Spec" icon="code" href="https://api.notte.cc/openapi.json">
     Access the machine-readable API contract directly from the Notte API.
   </Card>
 </CardGroup>
 
-For the API surface, see <Visibility for="humans">[API Reference](/api-reference/authentication)</Visibility><Visibility for="agents">[API Reference](/api-reference/authentication.md)</Visibility>; for the SDK entrypoint, see [SDK Reference](/sdk-reference/manual/index).
+For the API surface, see <Visibility for="humans">[API Reference](/api-reference/authentication)</Visibility><Visibility for="agents">[API Reference](/api-reference/authentication.md)</Visibility>; for the SDK entrypoint, see <Visibility for="humans">[SDK Reference](/sdk-reference/manual/index)</Visibility><Visibility for="agents">[SDK Reference](/sdk-reference/manual/index.md)</Visibility>.
 
 ## Platform
 
@@ -69,17 +83,38 @@ The building blocks for your web agents and automations.
     </Card>
   </Visibility>
 
-  <Card title="Web Agents" icon="microchip-ai" href="/concepts/agents">
-    AI web agents & automation framework. Build agents that browse, understand, and complete tasks autonomously.
-  </Card>
+  <Visibility for="humans">
+    <Card title="Web Agents" icon="microchip-ai" href="/concepts/agents">
+      AI web agents & automation framework. Build agents that browse, understand, and complete tasks autonomously.
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Web Agents" icon="microchip-ai" href="/concepts/agents.md">
+      AI web agents & automation framework. Build agents that browse, understand, and complete tasks autonomously.
+    </Card>
+  </Visibility>
 
-  <Card title="Functions" icon="flower" href="/concepts/functions">
-    Deploy your scripts as API endpoints. Serverless automations and agents you can invoke and schedule anywhere.
-  </Card>
+  <Visibility for="humans">
+    <Card title="Functions" icon="flower" href="/concepts/functions">
+      Deploy your scripts as API endpoints. Serverless automations and agents you can invoke and schedule anywhere.
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Functions" icon="flower" href="/concepts/functions.md">
+      Deploy your scripts as API endpoints. Serverless automations and agents you can invoke and schedule anywhere.
+    </Card>
+  </Visibility>
 
-  <Card title="Scraping" icon="database" href="/concepts/scraping">
-    Extract structured data with AI. Turn any website into structured data. Use agents or direct scrape endpoints.
-  </Card>
+  <Visibility for="humans">
+    <Card title="Scraping" icon="database" href="/concepts/scraping">
+      Extract structured data with AI. Turn any website into structured data. Use agents or direct scrape endpoints.
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Scraping" icon="database" href="/concepts/scraping.md">
+      Extract structured data with AI. Turn any website into structured data. Use agents or direct scrape endpoints.
+    </Card>
+  </Visibility>
 </CardGroup>
 
 ## Products
@@ -87,17 +122,38 @@ The building blocks for your web agents and automations.
 Tools to speed up the build, debug, and deploy automations lifecycle.
 
 <CardGroup cols={3}>
-  <Card title="Agent Builder" icon="sparkles" href="/product/agent-mode">
-    Create automation scripts with an AI conversation.
-  </Card>
+  <Visibility for="humans">
+    <Card title="Agent Builder" icon="sparkles" href="/product/agent-mode">
+      Create automation scripts with an AI conversation.
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Agent Builder" icon="sparkles" href="/product/agent-mode.md">
+      Create automation scripts with an AI conversation.
+    </Card>
+  </Visibility>
 
-  <Card title="Demonstrate Mode" icon="hand-pointer" href="/product/demonstrate-mode">
-    Record workflows and get automation scripts automatically.
-  </Card>
+  <Visibility for="humans">
+    <Card title="Demonstrate Mode" icon="hand-pointer" href="/product/demonstrate-mode">
+      Record workflows and get automation scripts automatically.
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Demonstrate Mode" icon="hand-pointer" href="/product/demonstrate-mode.md">
+      Record workflows and get automation scripts automatically.
+    </Card>
+  </Visibility>
 
-  <Card title="Studio" icon="code" href="/product/studio">
-    Edit & debug in live browser enabled IDE and one-click deploy.
-  </Card>
+  <Visibility for="humans">
+    <Card title="Studio" icon="code" href="/product/studio">
+      Edit & debug in live browser enabled IDE and one-click deploy.
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Studio" icon="code" href="/product/studio.md">
+      Edit & debug in live browser enabled IDE and one-click deploy.
+    </Card>
+  </Visibility>
 </CardGroup>
 
 ## Agent Tools
@@ -105,11 +161,25 @@ Tools to speed up the build, debug, and deploy automations lifecycle.
 Empower your agents with secure credentials and authentic identities.
 
 <CardGroup cols={2}>
-  <Card title="Vaults" icon="lock" href="/concepts/vaults">
-    Secure credential storage. Keep passwords, API keys, and sensitive data encrypted.
-  </Card>
+  <Visibility for="humans">
+    <Card title="Vaults" icon="lock" href="/concepts/vaults">
+      Secure credential storage. Keep passwords, API keys, and sensitive data encrypted.
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Vaults" icon="lock" href="/concepts/vaults.md">
+      Secure credential storage. Keep passwords, API keys, and sensitive data encrypted.
+    </Card>
+  </Visibility>
 
-  <Card title="Identities" icon="fingerprint" href="/concepts/personas">
-    Emails and phone numbers for agents. Verified identities to interact authentically across platforms.
-  </Card>
+  <Visibility for="humans">
+    <Card title="Identities" icon="fingerprint" href="/concepts/personas">
+      Emails and phone numbers for agents. Verified identities to interact authentically across platforms.
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Identities" icon="fingerprint" href="/concepts/personas.md">
+      Emails and phone numbers for agents. Verified identities to interact authentically across platforms.
+    </Card>
+  </Visibility>
 </CardGroup>

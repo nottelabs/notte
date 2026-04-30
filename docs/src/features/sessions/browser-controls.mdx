@@ -290,7 +290,7 @@ Extract data from the current page.
 
 **Use for:** Data extraction, web scraping, content analysis
 
-See [Scraping](/concepts/scraping) for detailed documentation.
+See <Visibility for="humans">[Scraping](/concepts/scraping)</Visibility><Visibility for="agents">[Scraping](/concepts/scraping.md)</Visibility> for detailed documentation.
 
 ---
 
@@ -307,7 +307,7 @@ Read SMS messages from a persona's phone number.
 
 **Use for:** Reading 2FA codes, SMS verification, phone-based authentication
 
-See [Personas](/concepts/personas) for details.
+See <Visibility for="humans">[Personas](/concepts/personas)</Visibility><Visibility for="agents">[Personas](/concepts/personas.md)</Visibility> for details.
 
 ---
 
@@ -322,7 +322,7 @@ Read emails from a persona's email address.
 
 **Use for:** Reading verification emails, email-based authentication
 
-See [Personas](/concepts/personas) for details.
+See <Visibility for="humans">[Personas](/concepts/personas)</Visibility><Visibility for="agents">[Personas](/concepts/personas.md)</Visibility> for details.
 
 ---
 
@@ -391,19 +391,47 @@ Use direct attribute parameters when available:
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Session Configuration" icon="sliders" href="/features/sessions/configuration">
-    Configure session behavior
-  </Card>
+  <Visibility for="humans">
+    <Card title="Session Configuration" icon="sliders" href="/features/sessions/configuration">
+      Configure session behavior
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Session Configuration" icon="sliders" href="/features/sessions/configuration.md">
+      Configure session behavior
+    </Card>
+  </Visibility>
 
-  <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle">
-    Manage session states
-  </Card>
+  <Visibility for="humans">
+    <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle">
+      Manage session states
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle.md">
+      Manage session states
+    </Card>
+  </Visibility>
 
-  <Card title="SDK Actions Reference" icon="code" href="/sdk-reference/manual/session">
-    Detailed API documentation
-  </Card>
+  <Visibility for="humans">
+    <Card title="SDK Actions Reference" icon="code" href="/sdk-reference/manual/session">
+      Detailed API documentation
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="SDK Actions Reference" icon="code" href="/sdk-reference/manual/session.md">
+      Detailed API documentation
+    </Card>
+  </Visibility>
 
-  <Card title="Agent Mode" icon="sparkles" href="/concepts/agents">
-    Let AI handle actions automatically
-  </Card>
+  <Visibility for="humans">
+    <Card title="Agent Mode" icon="sparkles" href="/concepts/agents">
+      Let AI handle actions automatically
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Agent Mode" icon="sparkles" href="/concepts/agents.md">
+      Let AI handle actions automatically
+    </Card>
+  </Visibility>
 </CardGroup>

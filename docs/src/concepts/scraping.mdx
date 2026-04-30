@@ -179,19 +179,47 @@ Use selectors to focus on relevant content:
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Browser Sessions" icon="browser" href="/concepts/sessions">
-    Learn about session management
-  </Card>
+  <Visibility for="humans">
+    <Card title="Browser Sessions" icon="browser" href="/concepts/sessions">
+      Learn about session management
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Browser Sessions" icon="browser" href="/concepts/sessions.md">
+      Learn about session management
+    </Card>
+  </Visibility>
 
-  <Card title="Browser Agents" icon="robot" href="/concepts/agents">
-    Use AI agents for complex scraping
-  </Card>
+  <Visibility for="humans">
+    <Card title="Browser Agents" icon="robot" href="/concepts/agents">
+      Use AI agents for complex scraping
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Browser Agents" icon="robot" href="/concepts/agents.md">
+      Use AI agents for complex scraping
+    </Card>
+  </Visibility>
 
-  <Card title="Vaults" icon="lock" href="/concepts/vaults">
-    Store credentials for authenticated scraping
-  </Card>
+  <Visibility for="humans">
+    <Card title="Vaults" icon="lock" href="/concepts/vaults">
+      Store credentials for authenticated scraping
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Vaults" icon="lock" href="/concepts/vaults.md">
+      Store credentials for authenticated scraping
+    </Card>
+  </Visibility>
 
-  <Card title="Functions" icon="function" href="/concepts/functions">
-    Deploy scraping as serverless functions
-  </Card>
+  <Visibility for="humans">
+    <Card title="Functions" icon="function" href="/concepts/functions">
+      Deploy scraping as serverless functions
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Functions" icon="function" href="/concepts/functions.md">
+      Deploy scraping as serverless functions
+    </Card>
+  </Visibility>
 </CardGroup>

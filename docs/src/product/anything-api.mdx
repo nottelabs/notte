@@ -26,7 +26,7 @@ curl -N -X POST https://anything.notte.cc/api/anything/start \
   -d '{"query": "fetch the top 3 hacker news posts"}'
 ```
 
-The API streams back SSE events as the agent works. When it's done, the final `done` event contains the `function_id` of the created function, which you can re-run later via the [Notte CLI](https://github.com/nottelabs/notte-cli) or [SDK](/quickstart).
+The API streams back SSE events as the agent works. When it's done, the final `done` event contains the `function_id` of the created function, which you can re-run later via the [Notte CLI](https://github.com/nottelabs/notte-cli) or <Visibility for="humans">[SDK](/quickstart)</Visibility><Visibility for="agents">[SDK](/quickstart.md)</Visibility>.
 
 ## Request
 

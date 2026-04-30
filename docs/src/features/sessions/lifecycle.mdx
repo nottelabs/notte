@@ -185,19 +185,47 @@ Even with context managers, handle interrupts:
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
-    Configure sessions with advanced options
-  </Card>
+  <Visibility for="humans">
+    <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+      Configure sessions with advanced options
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration.md">
+      Configure sessions with advanced options
+    </Card>
+  </Visibility>
 
-  <Card title="Recordings" icon="video" href="/features/sessions/recordings">
-    Record and replay session activity
-  </Card>
+  <Visibility for="humans">
+    <Card title="Recordings" icon="video" href="/features/sessions/recordings">
+      Record and replay session activity
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Recordings" icon="video" href="/features/sessions/recordings.md">
+      Record and replay session activity
+    </Card>
+  </Visibility>
 
-  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
-    Watch sessions in real-time
-  </Card>
+  <Visibility for="humans">
+    <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+      Watch sessions in real-time
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Live View" icon="eye" href="/features/sessions/live-view.md">
+      Watch sessions in real-time
+    </Card>
+  </Visibility>
 
-  <Card title="Cookies" icon="cookie-bite" href="/features/sessions/cookies">
-    Persist authentication across sessions
-  </Card>
+  <Visibility for="humans">
+    <Card title="Cookies" icon="cookie-bite" href="/features/sessions/cookies">
+      Persist authentication across sessions
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Cookies" icon="cookie-bite" href="/features/sessions/cookies.md">
+      Persist authentication across sessions
+    </Card>
+  </Visibility>
 </CardGroup>

@@ -319,17 +319,38 @@ Or handle timezone in function:
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Invocations" icon="play" href="/features/functions/invocations">
-    Learn how to invoke Functions manually
-  </Card>
+  <Visibility for="humans">
+    <Card title="Invocations" icon="play" href="/features/functions/invocations">
+      Learn how to invoke Functions manually
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Invocations" icon="play" href="/features/functions/invocations.md">
+      Learn how to invoke Functions manually
+    </Card>
+  </Visibility>
 
-  <Card title="Management" icon="sliders" href="/features/functions/management">
-    Update and monitor Functions
-  </Card>
+  <Visibility for="humans">
+    <Card title="Management" icon="sliders" href="/features/functions/management">
+      Update and monitor Functions
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Management" icon="sliders" href="/features/functions/management.md">
+      Update and monitor Functions
+    </Card>
+  </Visibility>
 
-  <Card title="Creating Functions" icon="file-code" href="/features/functions/creating">
-    Write schedulable Functions
-  </Card>
+  <Visibility for="humans">
+    <Card title="Creating Functions" icon="file-code" href="/features/functions/creating">
+      Write schedulable Functions
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Creating Functions" icon="file-code" href="/features/functions/creating.md">
+      Write schedulable Functions
+    </Card>
+  </Visibility>
 
   <Card title="Console" icon="browser" href="https://console.notte.cc">
     Configure schedules in Console

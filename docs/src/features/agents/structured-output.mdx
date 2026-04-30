@@ -152,19 +152,47 @@ Very complex nested structures may be challenging:
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Configuration" icon="sliders" href="/features/agents/configuration">
-    Configure agent parameters
-  </Card>
+  <Visibility for="humans">
+    <Card title="Configuration" icon="sliders" href="/features/agents/configuration">
+      Configure agent parameters
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Configuration" icon="sliders" href="/features/agents/configuration.md">
+      Configure agent parameters
+    </Card>
+  </Visibility>
 
-  <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle">
-    Understand agent execution modes
-  </Card>
+  <Visibility for="humans">
+    <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle">
+      Understand agent execution modes
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle.md">
+      Understand agent execution modes
+    </Card>
+  </Visibility>
 
-  <Card title="Scraping" icon="database" href="/concepts/scraping">
-    Alternative data extraction methods
-  </Card>
+  <Visibility for="humans">
+    <Card title="Scraping" icon="database" href="/concepts/scraping">
+      Alternative data extraction methods
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Scraping" icon="database" href="/concepts/scraping.md">
+      Alternative data extraction methods
+    </Card>
+  </Visibility>
 
-  <Card title="Best Practices" icon="lightbulb" href="/guides/scraping">
-    Data extraction best practices
-  </Card>
+  <Visibility for="humans">
+    <Card title="Best Practices" icon="lightbulb" href="/guides/scraping">
+      Data extraction best practices
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Best Practices" icon="lightbulb" href="/guides/scraping.md">
+      Data extraction best practices
+    </Card>
+  </Visibility>
 </CardGroup>

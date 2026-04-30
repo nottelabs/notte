@@ -183,7 +183,7 @@ Use `AgentFallback` for automatic error recovery:
 
 <AgentFallbackExample />
 
-See [Agent Fallback](/features/agents/fallback) for details.
+See <Visibility for="humans">[Agent Fallback](/features/agents/fallback)</Visibility><Visibility for="agents">[Agent Fallback](/features/agents/fallback.md)</Visibility> for details.
 
 ## Best Practices
 
@@ -206,15 +206,36 @@ See [Agent Fallback](/features/agents/fallback) for details.
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Configuration" icon="sliders" href="/features/agents/configuration">
-    Configure agent parameters
-  </Card>
+  <Visibility for="humans">
+    <Card title="Configuration" icon="sliders" href="/features/agents/configuration">
+      Configure agent parameters
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Configuration" icon="sliders" href="/features/agents/configuration.md">
+      Configure agent parameters
+    </Card>
+  </Visibility>
 
-  <Card title="Agent Fallback" icon="shield" href="/features/agents/fallback">
-    Automatic error recovery
-  </Card>
+  <Visibility for="humans">
+    <Card title="Agent Fallback" icon="shield" href="/features/agents/fallback">
+      Automatic error recovery
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Agent Fallback" icon="shield" href="/features/agents/fallback.md">
+      Automatic error recovery
+    </Card>
+  </Visibility>
 
-  <Card title="Replay" icon="circle-play" href="/features/agents/replay">
-    Debug with visual replays
-  </Card>
+  <Visibility for="humans">
+    <Card title="Replay" icon="circle-play" href="/features/agents/replay">
+      Debug with visual replays
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Replay" icon="circle-play" href="/features/agents/replay.md">
+      Debug with visual replays
+    </Card>
+  </Visibility>
 </CardGroup>

@@ -107,19 +107,47 @@ Recordings are:
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
-    Watch sessions in real-time
-  </Card>
+  <Visibility for="humans">
+    <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+      Watch sessions in real-time
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Live View" icon="eye" href="/features/sessions/live-view.md">
+      Watch sessions in real-time
+    </Card>
+  </Visibility>
 
-  <Card title="Session Lifecycle" icon="clock" href="/features/sessions/lifecycle">
-    Understand session management
-  </Card>
+  <Visibility for="humans">
+    <Card title="Session Lifecycle" icon="clock" href="/features/sessions/lifecycle">
+      Understand session management
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Session Lifecycle" icon="clock" href="/features/sessions/lifecycle.md">
+      Understand session management
+    </Card>
+  </Visibility>
 
-  <Card title="Playwright" icon="code" href="/features/sessions/playwright">
-    Connect with Playwright via CDP
-  </Card>
+  <Visibility for="humans">
+    <Card title="Playwright" icon="code" href="/features/sessions/playwright">
+      Connect with Playwright via CDP
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Playwright" icon="code" href="/features/sessions/playwright.md">
+      Connect with Playwright via CDP
+    </Card>
+  </Visibility>
 
-  <Card title="Agent Replay" icon="robot" href="/features/agents/replay">
-    Agent-specific replay features
-  </Card>
+  <Visibility for="humans">
+    <Card title="Agent Replay" icon="robot" href="/features/agents/replay">
+      Agent-specific replay features
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Agent Replay" icon="robot" href="/features/agents/replay.md">
+      Agent-specific replay features
+    </Card>
+  </Visibility>
 </CardGroup>

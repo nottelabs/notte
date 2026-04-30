@@ -106,19 +106,47 @@ Open multiple viewer types simultaneously:
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Recordings" icon="video" href="/features/sessions/recordings">
-    Record sessions for later analysis
-  </Card>
+  <Visibility for="humans">
+    <Card title="Recordings" icon="video" href="/features/sessions/recordings">
+      Record sessions for later analysis
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Recordings" icon="video" href="/features/sessions/recordings.md">
+      Record sessions for later analysis
+    </Card>
+  </Visibility>
 
-  <Card title="Playwright" icon="code" href="/features/sessions/playwright">
-    Connect with Playwright via CDP
-  </Card>
+  <Visibility for="humans">
+    <Card title="Playwright" icon="code" href="/features/sessions/playwright">
+      Connect with Playwright via CDP
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Playwright" icon="code" href="/features/sessions/playwright.md">
+      Connect with Playwright via CDP
+    </Card>
+  </Visibility>
 
-  <Card title="Session Lifecycle" icon="clock" href="/features/sessions/lifecycle">
-    Understand session management
-  </Card>
+  <Visibility for="humans">
+    <Card title="Session Lifecycle" icon="clock" href="/features/sessions/lifecycle">
+      Understand session management
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Session Lifecycle" icon="clock" href="/features/sessions/lifecycle.md">
+      Understand session management
+    </Card>
+  </Visibility>
 
-  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
-    Configure session parameters
-  </Card>
+  <Visibility for="humans">
+    <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+      Configure session parameters
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration.md">
+      Configure session parameters
+    </Card>
+  </Visibility>
 </CardGroup>

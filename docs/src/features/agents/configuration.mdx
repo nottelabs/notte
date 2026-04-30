@@ -70,7 +70,7 @@ Parameters set when creating the agent instance.
 ### vault
 
 <ParamField path="vault" type="NotteVault">
-  Optional vault instance containing credentials the agent can use for authentication. See [Vaults](/concepts/vaults) for details.
+  Optional vault instance containing credentials the agent can use for authentication. See <Visibility for="humans">[Vaults](/concepts/vaults)</Visibility><Visibility for="agents">[Vaults](/concepts/vaults.md)</Visibility> for details.
 </ParamField>
 
 <ParamVault />
@@ -78,7 +78,7 @@ Parameters set when creating the agent instance.
 ### persona
 
 <ParamField path="persona" type="NottePersona">
-  Optional persona providing the agent with phone numbers, email addresses, and other identity information. See [Personas](/concepts/personas) for details.
+  Optional persona providing the agent with phone numbers, email addresses, and other identity information. See <Visibility for="humans">[Personas](/concepts/personas)</Visibility><Visibility for="agents">[Personas](/concepts/personas.md)</Visibility> for details.
 </ParamField>
 
 <ParamPersona />
@@ -114,7 +114,7 @@ Parameters provided when running the agent.
 ### response_format
 
 <ParamField path="response_format" type="type[BaseModel]">
-  Optional Pydantic model defining the structure of the agent's response. Use this to get type-safe, structured output. See [Structured Output](/features/agents/structured-output) for details.
+  Optional Pydantic model defining the structure of the agent's response. Use this to get type-safe, structured output. See <Visibility for="humans">[Structured Output](/features/agents/structured-output)</Visibility><Visibility for="agents">[Structured Output](/features/agents/structured-output.md)</Visibility> for details.
 </ParamField>
 
 <ParamResponseFormat />
@@ -178,19 +178,47 @@ Start agents at the right page:
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle">
-    Learn about agent execution modes
-  </Card>
+  <Visibility for="humans">
+    <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle">
+      Learn about agent execution modes
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle.md">
+      Learn about agent execution modes
+    </Card>
+  </Visibility>
 
-  <Card title="Replay & Debugging" icon="circle-play" href="/features/agents/replay">
-    Debug agents with visual replays
-  </Card>
+  <Visibility for="humans">
+    <Card title="Replay & Debugging" icon="circle-play" href="/features/agents/replay">
+      Debug agents with visual replays
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Replay & Debugging" icon="circle-play" href="/features/agents/replay.md">
+      Debug agents with visual replays
+    </Card>
+  </Visibility>
 
-  <Card title="Structured Output" icon="brackets-curly" href="/features/agents/structured-output">
-    Get typed responses from agents
-  </Card>
+  <Visibility for="humans">
+    <Card title="Structured Output" icon="brackets-curly" href="/features/agents/structured-output">
+      Get typed responses from agents
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Structured Output" icon="brackets-curly" href="/features/agents/structured-output.md">
+      Get typed responses from agents
+    </Card>
+  </Visibility>
 
-  <Card title="Vaults" icon="vault" href="/concepts/vaults">
-    Store credentials for agent use
-  </Card>
+  <Visibility for="humans">
+    <Card title="Vaults" icon="vault" href="/concepts/vaults">
+      Store credentials for agent use
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Vaults" icon="vault" href="/concepts/vaults.md">
+      Store credentials for agent use
+    </Card>
+  </Visibility>
 </CardGroup>

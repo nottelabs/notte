@@ -122,7 +122,7 @@ Route sessions through residential proxies for geo-targeting and enhanced stealt
 <ProxiesSimple />
 
 <Note>
-  See the [Proxies Guide](/features/sessions/proxies) for country-specific proxies, custom proxies, and troubleshooting.
+  See the <Visibility for="humans">[Proxies Guide](/features/sessions/proxies)</Visibility><Visibility for="agents">[Proxies Guide](/features/sessions/proxies.md)</Visibility> for country-specific proxies, custom proxies, and troubleshooting.
 </Note>
 
 ## Captcha Solving
@@ -132,7 +132,7 @@ Automatically detect and solve captchas during automation:
 <CaptchaSolving />
 
 <Note>
-  See the [Captcha Solving](/features/sessions/captcha-solving) guide for more details.
+  See the <Visibility for="humans">[Captcha Solving](/features/sessions/captcha-solving)</Visibility><Visibility for="agents">[Captcha Solving](/features/sessions/captcha-solving.md)</Visibility> guide for more details.
 </Note>
 
 ## Session Timeout
@@ -156,7 +156,7 @@ Automatically load and save cookies across sessions using the `cookie_file` para
 <CookieFile />
 
 <Note>
-  See the [Cookies Guide](/features/sessions/cookies) for manual cookie management and best practices.
+  See the <Visibility for="humans">[Cookies Guide](/features/sessions/cookies)</Visibility><Visibility for="agents">[Cookies Guide](/features/sessions/cookies.md)</Visibility> for manual cookie management and best practices.
 </Note>
 
 ## External Providers (CDP)
@@ -166,25 +166,53 @@ Use Notte with external browser providers like Kernel.sh:
 <ExternalCdp />
 
 <Note>
-  See the [Kernel.sh Integration](/integrations/kernel) guide for complete setup instructions.
+  See the <Visibility for="humans">[Kernel.sh Integration](/integrations/kernel)</Visibility><Visibility for="agents">[Kernel.sh Integration](/integrations/kernel.md)</Visibility> guide for complete setup instructions.
 </Note>
 
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Recordings" icon="video" href="/features/sessions/recordings">
-    Watch recorded sessions and debug issues
-  </Card>
+  <Visibility for="humans">
+    <Card title="Recordings" icon="video" href="/features/sessions/recordings">
+      Watch recorded sessions and debug issues
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Recordings" icon="video" href="/features/sessions/recordings.md">
+      Watch recorded sessions and debug issues
+    </Card>
+  </Visibility>
 
-  <Card title="Proxies" icon="user-secret" href="/features/sessions/proxies">
-    Configure proxies and anti-detection features
-  </Card>
+  <Visibility for="humans">
+    <Card title="Proxies" icon="user-secret" href="/features/sessions/proxies">
+      Configure proxies and anti-detection features
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Proxies" icon="user-secret" href="/features/sessions/proxies.md">
+      Configure proxies and anti-detection features
+    </Card>
+  </Visibility>
 
-  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
-    Watch sessions in real-time
-  </Card>
+  <Visibility for="humans">
+    <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+      Watch sessions in real-time
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Live View" icon="eye" href="/features/sessions/live-view.md">
+      Watch sessions in real-time
+    </Card>
+  </Visibility>
 
-  <Card title="Cookies" icon="cookie-bite" href="/features/sessions/cookies">
-    Persist authentication across sessions
-  </Card>
+  <Visibility for="humans">
+    <Card title="Cookies" icon="cookie-bite" href="/features/sessions/cookies">
+      Persist authentication across sessions
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card title="Cookies" icon="cookie-bite" href="/features/sessions/cookies.md">
+      Persist authentication across sessions
+    </Card>
+  </Visibility>
 </CardGroup>
