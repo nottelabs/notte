@@ -33,7 +33,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent  # docs/src
 
-EXCLUDE_DIR_NAMES = {"sdk-reference", "snippets", "images", "logo", "sniptest", "testers", "tests", "scripts"}
+# sdk-reference/ is intentionally NOT excluded: the bulk is sphinx_mintlify
+# auto-gen (already wrapped post-regen, so idempotency skips it) and the
+# rest is hand-authored (sdk-reference/*.mdx, sdk-reference/manual/**) which
+# we DO want to wrap.
+EXCLUDE_DIR_NAMES = {"snippets", "images", "logo", "sniptest", "testers", "tests", "scripts"}
 AUTO_GEN_MARKER = "{/* Auto-generated mdx file. Do not edit! */}"
 
 # Hrefs whose .md export doesn't exist on the deployed site, so wrapping
@@ -115,6 +119,14 @@ def in_any_region(idx: int, regions: list[tuple[int, int]]) -> bool:
     return any(s <= idx < e for s, e in regions)
 
 
+def overlaps_any_region(start: int, end: int, regions: list[tuple[int, int]]) -> bool:
+    """True if [start, end) overlaps any region. Catches matches that span
+    a Visibility-wrapper boundary, which happens when sphinx_mintlify emits
+    e.g. `list[<Visibility>...</Visibility>, <Visibility>...</Visibility>]` —
+    the outer `[` is unwrapped but the inner `]` is inside a wrapper."""
+    return any(s < end and start < e for s, e in regions)
+
+
 def transform_inline_links(text: str) -> tuple[str, int]:
     code_regions = find_code_regions(text)
     vis_regions = find_visibility_regions(text)
@@ -123,7 +135,11 @@ def transform_inline_links(text: str) -> tuple[str, int]:
     count = 0
     for m in INLINE_LINK_RE.finditer(text):
         idx = m.start()
-        if in_any_region(idx, code_regions) or in_any_region(idx, vis_regions):
+        if in_any_region(idx, code_regions):
+            continue
+        # Use overlap (not just start) for vis_regions: a match that begins
+        # outside a wrapper but extends into one is matching across boundaries.
+        if overlaps_any_region(idx, m.end(), vis_regions):
             continue
         path = m.group("path")
         if is_external(path) or is_excluded(path):
