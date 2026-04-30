@@ -59,7 +59,7 @@ def render_openapi(spec: dict) -> list[str]:
         lines += [f"## {tag.title()}", ""]
         for method, display, desc, op_id in sorted(by_tag[tag], key=lambda x: x[1]):
             slug = slugify(op_id) if op_id else slugify(display)
-            url = f"{SITE_URL}/api-reference/{slugify(tag)}/{slug}"
+            url = f"{SITE_URL}/api-reference/{slugify(tag)}/{slug}.md"
             line = f"- [{method} {display}]({url})"
             if desc:
                 line += f": {desc}"
@@ -68,40 +68,41 @@ def render_openapi(spec: dict) -> list[str]:
     return lines
 
 
-def read_frontmatter(page_path: str) -> tuple[str, str]:
-    """Return (title, description) for a nav page path."""
+def read_frontmatter(page_path: str) -> dict:
+    """Return parsed frontmatter dict for a nav page path."""
     for ext in (".mdx", ".md"):
         file = SRC_DIR / f"{page_path}{ext}"
         if file.exists():
             break
     else:
         print(f"  warning: no file for '{page_path}'", file=sys.stderr)
-        return page_path, ""
+        return {}
 
     text = file.read_text(encoding="utf-8")
     if not text.startswith("---"):
-        return page_path, ""
+        return {}
 
     end = text.find("\n---", 3)
     if end == -1:
-        return page_path, ""
+        return {}
 
     try:
-        fm = yaml.safe_load(text[3:end]) or {}
+        return yaml.safe_load(text[3:end]) or {}
     except yaml.YAMLError as e:
         print(f"  warning: bad frontmatter in '{page_path}': {e}", file=sys.stderr)
-        return page_path, ""
-    return str(fm.get("title", page_path)), str(fm.get("description", "")).strip()
+        return {}
 
 
 def page_url(page_path: str) -> str:
-    if page_path == "index":
-        return f"{SITE_URL}/"
-    return f"{SITE_URL}/{page_path}"
+    return f"{SITE_URL}/{page_path}.md"
 
 
-def render_page(page_path: str) -> str:
-    title, desc = read_frontmatter(page_path)
+def render_page(page_path: str) -> str | None:
+    fm = read_frontmatter(page_path)
+    if fm.get("url"):
+        return None
+    title = str(fm.get("title", page_path))
+    desc = str(fm.get("description", "")).strip()
     line = f"- [{title}]({page_url(page_path)})"
     if desc:
         line += f": {desc}"
@@ -114,7 +115,9 @@ def render_pages(pages: list, depth: int) -> list[str]:
     heading = "#" * depth
     for entry in pages:
         if isinstance(entry, str):
-            lines.append(render_page(entry))
+            line = render_page(entry)
+            if line is not None:
+                lines.append(line)
         elif isinstance(entry, dict) and "group" in entry:
             lines.append("")
             lines.append(f"{heading} {entry['group']}")
@@ -127,7 +130,7 @@ def main() -> int:
     config = json.loads(DOCS_JSON.read_text())
     site_name = config.get("name", "Docs")
 
-    _, intro = read_frontmatter("index")
+    intro = str(read_frontmatter("index").get("description", "")).strip()
 
     out: list[str] = [f"# {site_name}", ""]
     if intro:
