@@ -100,7 +100,9 @@ filterwarnings = [
 [tool.ruff]
 line-length = 120
 indent-width = 4
-exclude = [".venv"]
+# integrations/hermes-agent/ holds files staged for an external repo (NousResearch/hermes-agent);
+# their import organization is dictated by that repo's structure, not ours.
+exclude = [".venv", "integrations/hermes-agent"]
 
 [tool.ruff.lint]
 extend-select = ["I"]
