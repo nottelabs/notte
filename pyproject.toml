@@ -112,7 +112,10 @@ extend-select = ["I"]
 "docs/src/testers/**/*.py" = ["F821", "F841"]
 
 [tool.basedpyright]
-exclude = [".venv", "uv-cache", "**/site-packages/**", "**/dist-packages/**", "tests", "old", "notebook", "dist", ".github"]
+# integrations/hermes-agent/ holds files staged for an external repo (NousResearch/hermes-agent)
+# whose modules (tools.browser_tool, tools.browser_providers.base) only exist there. Type-checking
+# them in this repo produces unresolved-import errors that don't reflect real bugs.
+exclude = [".venv", "uv-cache", "**/site-packages/**", "**/dist-packages/**", "tests", "old", "notebook", "dist", ".github", "integrations/hermes-agent"]
 enableTypeIgnoreComments = true
 reportIgnoreCommentWithoutRule = false
 failOnWarnings = true

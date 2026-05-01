@@ -19,7 +19,7 @@ repos:
       - id: basedpyright
         args: ["--project", "."]
         verbose: true
-        exclude: ^(docs/src/|examples/)
+        exclude: ^(docs/src/|examples/|integrations/hermes-agent/)
 
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
