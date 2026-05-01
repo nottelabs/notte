@@ -1,0 +1,30 @@
+<CodeGroup>
+  ```javascript Node.js
+  const puppeteer = require('puppeteer-core');
+
+  async function main() {
+    const cdpUrl = process.argv[2];
+
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: cdpUrl
+    });
+
+    // Create new pages
+    const page1 = await browser.newPage();
+    const page2 = await browser.newPage();
+
+    await page1.goto('https://example.com');
+    await page2.goto('https://google.com');
+
+    console.log('Page 1:', await page1.title());
+    console.log('Page 2:', await page2.title());
+
+    // Close specific pages
+    await page2.close();
+
+    await browser.disconnect();
+  }
+
+  main().catch(console.error);
+  ```
+</CodeGroup>

@@ -1,0 +1,42 @@
+<CodeGroup>
+  ```javascript Node.js
+  const puppeteer = require('puppeteer-core');
+
+  async function main() {
+    const cdpUrl = process.argv[2];
+
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: cdpUrl
+    });
+
+    const pages = await browser.pages();
+    const page = pages[0];
+
+    // Listen to console messages
+    page.on('console', (msg) => {
+      console.log('Browser console:', msg.text());
+    });
+
+    // Listen to page errors
+    page.on('pageerror', (error) => {
+      console.error('Page error:', error.message);
+    });
+
+    // Listen to requests
+    page.on('request', (request) => {
+      console.log('Request:', request.url());
+    });
+
+    // Listen to responses
+    page.on('response', (response) => {
+      console.log('Response:', response.url(), response.status());
+    });
+
+    await page.goto('https://example.com');
+
+    await browser.disconnect();
+  }
+
+  main().catch(console.error);
+  ```
+</CodeGroup>

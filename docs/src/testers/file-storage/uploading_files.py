@@ -1,0 +1,15 @@
+# @sniptest filename=uploading_files.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+storage = client.FileStorage()
+
+# Upload a file (uses the original filename)
+storage.upload("report.pdf")
+
+# Upload with a custom name
+storage.upload("report.pdf", upload_file_name="quarterly_report.pdf")
+
+# List uploaded files
+files = storage.list_uploaded_files()
+print(f"Uploaded: {files}")

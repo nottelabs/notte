@@ -237,9 +237,9 @@ class InvalidLocatorRuntimeError(NotteBaseError):
     def __init__(self, message: str, selector: str) -> None:
         super().__init__(
             dev_message=(
-                f"Invalid Playwright locator='{selector}'. Interactive element is not found or not visible. Error:\n{message}"
+                f"Invalid Playwright locator='{selector}'. Interactive element could not be located. Error:\n{message}"
             ),
-            user_message=f"Execution failed because interactive element is not found or not visible (locator='{selector}')",
+            user_message=f"Execution failed because interactive element could not be located (locator='{selector}')",
             agent_message=(
                 "Execution failed because interactive element is not found or not visible"
                 "Hint: wait 5s and try again, check for any modal/dialog/popup that might be blocking the element,"
@@ -369,3 +369,11 @@ class NoToolProvidedError(NotteBaseError):
             user_message=msg,
             agent_message=msg,
         )
+
+
+# #######################################################
+# ################## Scraping errors ####################
+# #######################################################
+
+# Re-export from notte-core for backwards compatibility
+from notte_core.errors.processing import ScrapeFailedError as ScrapeFailedError  # noqa: E402, F401

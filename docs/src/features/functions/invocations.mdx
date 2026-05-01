@@ -1,0 +1,244 @@
+---
+title: Function Invocations
+description: Call Functions via API, SDK, cURL, or webhooks
+---
+
+import InvokeFunction from "/snippets/functions/invoke_function.mdx";
+import BatchInvocation from "/snippets/functions/batch_invocation.mdx";
+import RunParameters from "/snippets/functions/invocations/run_parameters.mdx";
+import HandlingResults from "/snippets/functions/invocations/handling_results.mdx";
+import HttpPost from "/snippets/functions/invocations/http_post.mdx";
+import HttpResponse from "/snippets/functions/invocations/http_response.mdx";
+import CurlBasic from "/snippets/functions/invocations/curl_basic.mdx";
+import GenerateCurl from "/snippets/functions/invocations/generate_curl.mdx";
+import CurlOutput from "/snippets/functions/invocations/curl_output.mdx";
+import JsFetch from "/snippets/functions/invocations/js_fetch.mdx";
+import JsAxios from "/snippets/functions/invocations/js_axios.mdx";
+import StreamSdk from "/snippets/functions/invocations/stream_sdk.mdx";
+import StreamHttp from "/snippets/functions/invocations/stream_http.mdx";
+import StreamResponse from "/snippets/functions/invocations/stream_response.mdx";
+import AsyncCreateStart from "/snippets/functions/invocations/async_create_start.mdx";
+import CheckRunStatus from "/snippets/functions/invocations/check_run_status.mdx";
+import StopRunning from "/snippets/functions/invocations/stop_running.mdx";
+import WebhookHandler from "/snippets/functions/invocations/webhook_handler.mdx";
+import TestWebhook from "/snippets/functions/invocations/test_webhook.mdx";
+import SdkErrorHandling from "/snippets/functions/invocations/sdk_error_handling.mdx";
+import DisableRaise from "/snippets/functions/invocations/disable_raise.mdx";
+import HttpErrorHandling from "/snippets/functions/invocations/http_error_handling.mdx";
+import Sequential from "/snippets/functions/invocations/sequential.mdx";
+import CloudExecution from "/snippets/functions/invocations/cloud_execution.mdx";
+import LocalExecution from "/snippets/functions/invocations/local_execution.mdx";
+import RateLimitHandling from "/snippets/functions/invocations/rate_limit_handling.mdx";
+import TimeoutExamples from "/snippets/functions/invocations/timeout_examples.mdx";
+import StreamDebug from "/snippets/functions/invocations/stream_debug.mdx";
+import GracefulErrors from "/snippets/functions/invocations/graceful_errors.mdx";
+import UseVariables from "/snippets/functions/invocations/use_variables.mdx";
+
+Functions can be invoked in multiple ways - through the Python SDK, HTTP API, cURL commands, or as webhook endpoints.
+
+## Via Python SDK
+
+The simplest way to call a Function:
+
+<InvokeFunction />
+
+### Run Parameters
+
+<RunParameters />
+
+### Handling Results
+
+<HandlingResults />
+
+## Via HTTP API
+
+Call Functions as HTTP endpoints:
+
+### POST Request
+
+<HttpPost />
+
+### Response
+
+<HttpResponse />
+
+## Via cURL
+
+### Basic cURL Request
+
+<CurlBasic />
+
+### Generate cURL Command
+
+Get the exact cURL command for your Function:
+
+<GenerateCurl />
+
+Output:
+
+<CurlOutput />
+
+## Via JavaScript/Node.js
+
+Call from JavaScript applications:
+
+<JsFetch />
+
+### With Axios
+
+<JsAxios />
+
+## Streaming Logs
+
+Watch function execution in real-time:
+
+### Via SDK
+
+<StreamSdk />
+
+### Via HTTP (Server-Sent Events)
+
+<StreamHttp />
+
+Response streams:
+
+<StreamResponse />
+
+## Async Invocation
+
+### Create and Start Separately
+
+For long-running functions:
+
+<AsyncCreateStart />
+
+### Check Run Status
+
+<CheckRunStatus />
+
+### Stop a Running Function
+
+<StopRunning />
+
+## Webhook Integration
+
+### As Webhook Endpoint
+
+Use Functions as webhook receivers:
+
+<WebhookHandler />
+
+Configure webhook in external service:
+
+```
+Webhook URL: https://api.notte.cc/functions/function_abc123/runs/start
+Method: POST
+Headers: Authorization: Bearer YOUR_API_KEY
+```
+
+### Testing Webhooks
+
+Test webhook locally:
+
+<TestWebhook />
+
+## Error Handling
+
+### SDK Error Handling
+
+<SdkErrorHandling />
+
+### Disable Raise on Failure
+
+<DisableRaise />
+
+### HTTP Error Handling
+
+<HttpErrorHandling />
+
+## Batch Invocations
+
+### Run Multiple Functions
+
+<BatchInvocation />
+
+### Sequential Invocations
+
+<Sequential />
+
+## Local vs Cloud Execution
+
+### Cloud Execution (Default)
+
+<CloudExecution />
+
+**Advantages:**
+- Scalable
+- No local resources needed
+- Built-in logging
+- Session replays available
+
+### Local Execution
+
+<LocalExecution />
+
+**Advantages:**
+- Debugging
+- Development/testing
+- No cloud execution costs
+
+**Requirements:**
+- Decryption key (from Console) - passed when creating Function instance
+- Function code accessible locally
+
+## Rate Limits
+
+### Account Limits
+
+Functions have rate limits based on your plan:
+
+- **Free**: 10 concurrent runs
+- **Pro**: 50 concurrent runs
+- **Enterprise**: Custom limits
+
+### Handling Rate Limits
+
+<RateLimitHandling />
+
+## Best Practices
+
+### 1. Use Appropriate Timeout
+
+<TimeoutExamples />
+
+### 2. Stream Logs for Debugging
+
+<StreamDebug />
+
+### 3. Handle Errors Gracefully
+
+<GracefulErrors />
+
+### 4. Use Variables for Dynamic Data
+
+<UseVariables />
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Schedules" icon="clock" href="/features/functions/schedules">
+    Schedule Functions automatically
+  </Card>
+
+  <Card title="Management" icon="sliders" href="/features/functions/management">
+    Update and monitor Functions
+  </Card>
+
+  <Card title="Creating Functions" icon="file-code" href="/features/functions/creating">
+    Learn to write Functions
+  </Card>
+
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Full API documentation
+  </Card>
+</CardGroup>

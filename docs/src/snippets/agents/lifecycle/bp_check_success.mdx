@@ -1,0 +1,15 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/lifecycle/bp_check_success.py */}
+
+```python bp_check_success.py
+agent = client.Agent(session=session)
+
+result = agent.run(task="Critical task")
+
+if not result.success:
+    # Don't proceed if agent failed
+    raise RuntimeError(f"Critical task failed: {result.answer}")
+
+# Safe to proceed with result
+print(result.answer)
+```

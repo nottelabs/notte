@@ -196,9 +196,21 @@ async def run_task_with_sdk(
 
             video_replay = b""
             try:
-                replay = agent.replay()
-                video_replay = replay.replay
-                screenshots = mp4_bytes_to_frame_bytes(replay.replay)
+                replay = session.replay()
+                if replay.mp4_url is not None:
+                    import httpx
+
+                    response = httpx.get(replay.mp4_url)
+                    _ = response.raise_for_status()
+                    video_replay = response.content
+                    screenshots = mp4_bytes_to_frame_bytes(video_replay)
+                elif replay.playlist_content is not None:
+                    logger.warning(
+                        "Replay returned playlist_content without mp4_url; WebVoyager replay extraction does not support HLS playlists yet."
+                    )
+                    screenshots = []
+                else:
+                    screenshots = []
             except Exception as e:
                 logger.opt(exception=True).error(str(e))
                 screenshots = []

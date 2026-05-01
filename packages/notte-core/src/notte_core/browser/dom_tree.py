@@ -467,6 +467,19 @@ class DomNode:
             return False
         return self.role.category().value == NodeCategory.IMAGE.value
 
+    @classmethod
+    def empty_root(cls) -> "DomNode":
+        """Create an empty root DomNode for scraping (skips DOM tree computation)."""
+        return cls(
+            id=None,
+            type=NodeType.OTHER,
+            role=NodeRole.GENERIC,
+            text="",
+            children=[],
+            attributes=None,
+            computed_attributes=ComputedDomAttributes(),
+        )
+
     def flatten(self, keep_filter: Callable[["DomNode"], bool] | None = None) -> list["DomNode"]:
         def inner(node: DomNode, acc: list["DomNode"]) -> list["DomNode"]:
             if keep_filter is None or keep_filter(node):

@@ -4,10 +4,12 @@ from typing import Any, Callable, Unpack
 
 from notte_browser.session import NotteSession
 from notte_core.actions import BaseAction
-from notte_core.browser.observation import ExecutionResult
+from notte_core.actions.typedicts import parse_action
+from notte_core.browser.observation import ExecutionResult, TimedSpan
 from notte_core.common.logging import logger
 from notte_core.trajectory import Trajectory
 from notte_sdk.types import AgentCreateRequestDict, ExecutionRequestDict
+from pydantic import BaseModel
 
 from notte_agent.common.types import AgentResponse
 from notte_agent.main import Agent
@@ -38,10 +40,17 @@ class AgentFallback:
     The task is the natural language task of the agent (only to be executed if the steps in the context manager fail).
     """
 
-    def __init__(self, session: NotteSession, task: str, **agent_params: Unpack[AgentCreateRequestDict]) -> None:
+    def __init__(
+        self,
+        session: NotteSession,
+        task: str,
+        response_format: type[BaseModel] | None = None,
+        **agent_params: Unpack[AgentCreateRequestDict],
+    ) -> None:
         self.session: NotteSession = session
         self.trajectory: Trajectory = session.trajectory.view()
         self.task: str = task
+        self.response_format: type[BaseModel] | None = response_format
         self.steps: list[ExecutionResult] = []
         self.success: bool = True
         self.agent_response: AgentResponse | None = None
@@ -94,20 +103,28 @@ class AgentFallback:
             # Enforce agent fallback constraint
             if raise_on_failure:
                 raise ValueError("AgentFallback only supports raise_on_failure=False")
-            action_log = action.model_dump_agent() if isinstance(action, BaseAction) else action
+
+            if isinstance(action, dict):
+                action_parsed = parse_action(**action, **data)
+            else:
+                action_parsed = parse_action(action, **data)
+
             if self._agent_invoked and self.agent_response is not None:
-                logger.warning(f"⚠️ Skipping action: {action_log} because agent fallback has been invoked.")
+                logger.warning(f"⚠️ Skipping action: {action_parsed} because agent fallback has been invoked.")
+                empty_span = TimedSpan.empty()
                 return ExecutionResult(
-                    action=action,
+                    action=action_parsed,
                     success=True,
                     message="Action skipped because agent fallback has been invoked.",
                     data=None,
                     exception=None,
+                    started_at=empty_span.started_at,
+                    ended_at=empty_span.ended_at,
                 )
             # logger.info(f"✏️ Agent fallback executing action: {action_log}")
             # Delegate to original aexecute and do not raise on failure
             result = await self._orig_aexecute(  # type: ignore[misc]
-                action=action, raise_on_failure=False, **data
+                action=action_parsed, raise_on_failure=False, **data
             )
             # Record and maybe spawn agent
             self._record_step(result)
@@ -139,7 +156,8 @@ class AgentFallback:
         self._agent_invoked = True
         agent = Agent(session=self.session, trajectory=self.trajectory, **self.agent_params)
         self.agent_response = await agent.arun(
-            task=AGENT_FALLBACK_INSTRUCTIONS.format(task=self.task, error=self.steps[-1].message)
+            task=AGENT_FALLBACK_INSTRUCTIONS.format(task=self.task, error=self.steps[-1].message),
+            response_format=self.response_format,
         )
         if self.agent_response.success:
             logger.info("🔥 Agent succeeded in fixing the execution failure")

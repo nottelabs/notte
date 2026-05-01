@@ -1,0 +1,37 @@
+<CodeGroup>
+  ```javascript Node.js
+  const puppeteer = require('puppeteer-core');
+
+  async function main() {
+    const cdpUrl = process.argv[2];
+
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: cdpUrl
+    });
+
+    const pages = await browser.pages();
+    const page = pages[0];
+
+    await page.goto('https://example.com');
+
+    // Take screenshot
+    await page.screenshot({
+      path: 'screenshot.png',
+      fullPage: true
+    });
+
+    // Generate PDF
+    await page.pdf({
+      path: 'page.pdf',
+      format: 'A4',
+      printBackground: true
+    });
+
+    console.log('Screenshot and PDF saved');
+
+    await browser.disconnect();
+  }
+
+  main().catch(console.error);
+  ```
+</CodeGroup>

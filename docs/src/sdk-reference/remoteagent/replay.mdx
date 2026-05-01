@@ -1,24 +1,30 @@
 ---
 title: "replay"
-description: "Get a replay of the agent's execution in MP4 format"
+description: "Get the replay for the agent's session"
 ---
 
 
 
-This method downloads a visual replay of the agent's actions, which can be
-useful for debugging or understanding the agent's behavior.
-
-```python
-replay = agent.replay()
-replay.save(f"{agent.agent_id}_replay.mp4")
-```
+.. deprecated::
+    Use ``session.replay()`` instead. Agent replay is deprecated
+    in favor of session-level replay with presigned URLs.
 
 
+
+## Parameters
+
+<ParamField path="wait" type="bool" default="True">
+  If True (default), poll until the replay is ready.
+</ParamField>
+
+<ParamField path="timeout" type="float" default="240.0">
+  Maximum seconds to wait (default 120).
+</ParamField>
+
+<ParamField path="poll_interval" type="float" default="5.0">
+  Seconds between polling attempts (default 2).
+</ParamField>
 
 ## Returns
 
-[`MP4Replay`](/sdk-reference/misc/mp4replay): The replay data in MP4 format.
-
-## Raises
-
-- `ValueError`: If the agent hasn't been run yet (no agent_id available).
+[`ReplayResponse`](/sdk-reference/misc/replayresponse): Presigned URLs for HLS playlist and MP4 download.

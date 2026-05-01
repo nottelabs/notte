@@ -1,0 +1,14 @@
+# @sniptest filename=run_blocking.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    agent = client.Agent(session=session, max_steps=10)
+
+    result = agent.run(task="Go to example.com and find the contact email")
+
+    if result.success:
+        print(result.answer)
+    else:
+        print(f"Failed: {result.answer}")

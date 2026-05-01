@@ -1,8 +1,10 @@
 from typing import Any, Literal
 
 from pydantic import BaseModel, field_serializer
+from typing_extensions import override
 
 from notte_core.actions import ActionUnion, BaseAction, BrowserAction, CompletionAction, GotoAction, InteractionAction
+from notte_core.browser.observation import FilledTimedSpan, TimedSpan
 from notte_core.common.logging import logger
 
 
@@ -65,7 +67,7 @@ def render_agent_status(
     return to_log
 
 
-class AgentCompletion(BaseModel):
+class _AgentCompletion(BaseModel):
     state: AgentState
     action: ActionUnion
 
@@ -117,6 +119,38 @@ class AgentCompletion(BaseModel):
     @classmethod
     def initial(cls, url: str):
         return cls(
+            state=AgentState(
+                previous_goal_status="success",
+                previous_goal_eval="Nothing performed yet",
+                page_summary="No page summary yet",
+                relevant_interactions=[],
+                memory="No memory yet",
+                next_goal="Start working on the task",
+            ),
+            action=GotoAction(url=url),
+        )
+
+
+class AgentCompletion(_AgentCompletion, FilledTimedSpan):
+    class InnerLlmCompletion(_AgentCompletion):
+        pass
+
+    @staticmethod
+    def from_completion(completion: _AgentCompletion, timed_span: FilledTimedSpan) -> "AgentCompletion":
+        return AgentCompletion(
+            state=completion.state,
+            action=completion.action,
+            started_at=timed_span.started_at,
+            ended_at=timed_span.ended_at,
+        )
+
+    @override
+    @classmethod
+    def initial(cls, url: str) -> "AgentCompletion":
+        span = TimedSpan.empty()
+        return cls(
+            started_at=span.started_at,
+            ended_at=span.ended_at,
             state=AgentState(
                 previous_goal_status="success",
                 previous_goal_eval="Nothing performed yet",

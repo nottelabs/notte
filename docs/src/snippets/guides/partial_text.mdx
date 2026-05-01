@@ -1,0 +1,12 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/guides/partial_text.py */}
+
+```python partial_text.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    # Partial text match (more robust)
+    session.execute(type="click", selector="button:has-text('Submit')")
+```

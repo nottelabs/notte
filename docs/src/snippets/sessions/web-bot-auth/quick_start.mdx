@@ -1,0 +1,13 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/web-bot-auth/quick_start.py */}
+
+```python quick_start.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session(web_bot_auth=True) as session:
+    page = session.page
+    page.goto("https://example.com")
+    # All requests are automatically signed
+```

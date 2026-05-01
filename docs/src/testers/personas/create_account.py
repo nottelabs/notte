@@ -1,0 +1,20 @@
+# @sniptest filename=create_account.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+# retrieve the persona from the Notte console
+# if you don't have a persona id, you can create a new persona using:
+# persona = client.Persona(create_vault=True)
+# print(f"Persona id: {persona.info.persona_id}")
+persona = client.Persona("<your-persona-id>")
+
+url = "https://console.notte.cc"
+# create credentials for the persona (automatically generates a password and stores it in the vault)
+persona.add_credentials(url=url)
+
+with client.Session() as session:
+    agent = client.Agent(session=session, persona=persona)
+    response = agent.run(
+        task=f"Go to {url} and create an account. Go create an API key and return the API key.", url=url
+    )
+    print(response.answer)

@@ -1,0 +1,21 @@
+# @sniptest filename=selenium_waiting_elements.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
+
+    # Wait for element to be visible
+    page.wait_for_selector("div.content", state="visible")
+
+    # Wait for element to be hidden
+    page.wait_for_selector("div.loading", state="hidden")
+
+    # Wait for URL pattern
+    page.click("a.next")
+    page.wait_for_url("**/page2")
+
+    # Wait with timeout
+    page.wait_for_selector("div.result", timeout=10000)  # 10 seconds

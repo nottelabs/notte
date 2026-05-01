@@ -1,0 +1,18 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+vault = client.Vault(vault_id="vault_123")
+
+with client.Session() as session:
+    with client.AgentFallback(
+        session,
+        task="Login and navigate to settings",
+        vault_id=vault.vault_id,
+    ) as fb:
+        # Try logging in with deterministic actions
+        session.execute(type="fill", selector="#email", value="user@example.com")
+        session.execute(type="fill", selector="#password", value="password123")
+        session.execute(type="click", selector="#login")
+
+        # If login flow changed, agent uses vault credentials

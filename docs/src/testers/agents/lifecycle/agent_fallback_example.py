@@ -1,0 +1,14 @@
+# @sniptest filename=agent_fallback_example.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    with client.AgentFallback(session, task="Add item to cart") as agent_fb:
+        # Try deterministic actions first
+        session.execute(type="click", selector="#add-to-cart")
+        session.execute(type="click", selector="#checkout")
+        # Agent automatically handles any failures
+
+if agent_fb.success:
+    print("Task completed (possibly with agent help)")

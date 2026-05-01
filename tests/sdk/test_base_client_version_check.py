@@ -343,6 +343,7 @@ class TestBaseClientVersionCheck:
         import notte_sdk.endpoints.base as base_module
 
         base_module._cached_pypi_version = "1.7.0"
+        base_module._version_check_performed = True  # Prevent real PyPI request
 
         with patch("notte_sdk.endpoints.base.notte_core_version", "1.8.0"):  # Current version is newer
             with patch.object(BaseClient, "_request") as mock_request:

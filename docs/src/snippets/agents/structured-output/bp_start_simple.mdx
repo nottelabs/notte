@@ -1,0 +1,20 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/structured-output/bp_start_simple.py */}
+
+```python
+from pydantic import BaseModel
+
+
+# Start with minimal model
+class Product(BaseModel):
+    name: str
+    price: float
+
+
+# Add fields as needed
+class DetailedProduct(BaseModel):
+    name: str
+    price: float
+    description: str | None
+    specs: dict[str, str] | None
+```

@@ -1,0 +1,5 @@
+# Editor/IDE directories
+.cursor
+
+# SDK validation (not part of docs)
+notte-sdk-val

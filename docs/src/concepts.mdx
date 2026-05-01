@@ -1,0 +1,54 @@
+---
+title: Concepts
+description: Core concepts in the Notte platform
+---
+
+import ConceptSession from '/snippets/getting-started/concept_session.mdx';
+import ConceptObservation from '/snippets/getting-started/concept_observation.mdx';
+import ConceptAction from '/snippets/getting-started/concept_action.mdx';
+import ConceptAgent from '/snippets/getting-started/concept_agent.mdx';
+import ConceptFunction from '/snippets/getting-started/concept_function.mdx';
+import ConceptVault from '/snippets/getting-started/concept_vault.mdx';
+import ConceptIdentity from '/snippets/getting-started/concept_identity.mdx';
+
+## Session
+
+A `Session` is a cloud-based browser instance managed by Notte. Sessions are Playwright-compatible and support built-in anti-detection, residential proxies, and captcha solving. You can control sessions programmatically via the Notte SDK or connect to them via Chrome DevTools Protocol.
+
+<ConceptSession />
+
+## Observation
+
+An `Observation` is an AI-powered analysis of a web page's content and structure. Observations extract meaningful information about what's visible on the page, helping agents and automations understand context and make decisions.
+
+<ConceptObservation />
+
+## Action
+
+An `Action` is a high-level browser operation that you can execute on a session. Actions abstract common browser tasks like navigation, clicking, filling forms, and data extraction. Actions can be executed individually or chained together in Functions.
+
+<ConceptAction />
+
+## Agent
+
+An `Agent` is an AI-powered browser automation that can understand web pages, make decisions, and complete complex tasks using natural language instructions. Agents use LLMs to interpret pages and determine the best actions to take.
+
+<ConceptAgent />
+
+## Function
+
+A `Function` is a browser automation or agent deployed as a serverless API endpoint. Functions are reusable automations that chain multiple actions together. They can be saved, versioned, shared, invoked via HTTP requests, and scheduled to run automatically. Functions turn your scripts into production APIs without managing infrastructure.
+
+<ConceptFunction />
+
+## Vault
+
+A `Vault` is a secure storage system for credentials, API keys, and sensitive data used in your automations. Vaults allow agents to access authentication information without exposing secrets in your code.
+
+<ConceptVault />
+
+## Agent Identity
+
+An `Agent Identity` is a synthetic identity that agents can use for testing and automation. Agent Identities include email addresses, phone numbers, and other identity attributes needed for account creation and testing flows.
+
+<ConceptIdentity />

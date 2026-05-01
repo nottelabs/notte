@@ -1,0 +1,19 @@
+# @sniptest filename=async_agent.py
+import asyncio
+
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+
+async def run_agent_task():
+    with client.Session() as session:
+        agent = client.Agent(session=session)
+        agent.start(task="Extract data from the page")
+        result = await agent.async_watch_logs_and_wait()
+        return result
+
+
+# Run async
+result = asyncio.run(run_agent_task())
+print(result.answer)

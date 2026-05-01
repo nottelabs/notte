@@ -66,7 +66,7 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
             raise ValueError("CDP URL is required to connect to a browser over CDP")
         try:
             match options.browser_type:
-                case "chromium" | "chrome" | "chrome-nightly":
+                case "chromium" | "chrome" | "chrome-nightly" | "chrome-turbo":
                     return await self.playwright.chromium.connect_over_cdp(options.cdp_url)
                 case "firefox":
                     return await self.playwright.firefox.connect(options.cdp_url)
@@ -144,6 +144,7 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
                 else [],
                 proxy=options.proxy,
                 user_agent=options.user_agent,
+                extra_http_headers=options.extra_http_headers,
             )
 
             if len(context.pages) == 0:

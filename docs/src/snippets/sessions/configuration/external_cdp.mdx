@@ -1,0 +1,17 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from kernel import Kernel
+
+  client = NotteClient()
+  kernel = Kernel()
+
+  # Create browser on Kernel
+  kernel_browser = kernel.browsers.create()
+
+  # Connect Notte to Kernel's browser
+  with client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
+      page = session.page
+      page.goto("https://example.com")
+  ```
+</CodeGroup>

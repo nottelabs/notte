@@ -1,20 +1,87 @@
 ---
-title: "Get started"
-description: "File storage for your agents"
+title: "FileStorage"
+description: "Upload and download files for your automations"
 ---
 
-import FileStorageBasic from '/snippets/sessions/file_storage_basic.mdx';
+File storage allows agents to upload and download files from websites. Storage is persistent and session-scoped so you can retrieve files after the session ends.
 
-File storage allows agents to upload and download files from websites.
+```python
+from notte_sdk import NotteClient
 
-Storage is persistent and session-scoped so that you can always download files after the session is closed.
+client = NotteClient()
+storage = client.FileStorage()
 
+# Upload files before the session
+storage.upload("document.pdf")
 
-<FileStorageBasic/>
+# Attach storage to session
+with client.Session(storage=storage) as session:
+    agent = client.Agent(session=session)
+    agent.run(task="Upload document.pdf and download the receipt")
+
+# Download files after the session
+for file_name in storage.list_downloaded_files():
+    storage.download(file_name=file_name, local_dir="./downloads")
+```
+
+## Methods
+
+### upload
+
+```python
+upload(file_path: str, upload_file_name: str | None = None) -> bool
+```
+
+Upload a local file to storage.
+
+**Parameters:**
+- `file_path` - Path to the local file
+- `upload_file_name` - Optional custom name for the file in storage
+
+**Returns:** `bool` - Success status
+
+---
+
+### download
+
+```python
+download(file_name: str, local_dir: str, force: bool = False) -> bool
+```
+
+Download a file from storage to a local directory.
+
+**Parameters:**
+- `file_name` - Name of the file in storage
+- `local_dir` - Local directory to save the file
+- `force` - Overwrite existing file (default: False)
+
+**Returns:** `bool` - Success status
+
+---
+
+### list_uploaded_files
+
+```python
+list_uploaded_files() -> list[str]
+```
+
+List files you've uploaded to storage.
+
+**Returns:** `list[str]` - List of uploaded filenames
+
+---
+
+### list_downloaded_files
+
+```python
+list_downloaded_files() -> list[str]
+```
+
+List files downloaded by agents during sessions.
+
+**Returns:** `list[str]` - List of downloaded filenames
 
 ## Parameters
 
 <ParamField path="session_id" type="UnionType[str, None]" default="None">
 </ParamField>
-
-## Returns

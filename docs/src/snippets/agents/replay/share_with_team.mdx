@@ -1,0 +1,15 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/replay/share_with_team.py */}
+
+```python share_with_team.py
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    agent.run(task="Feature test")
+
+replay = session.replay()
+replay.download(f"feature_test_{agent.agent_id}.mp4")
+
+# Share file with team
+# Or share console link
+print(f"Console replay: https://console.notte.cc/sessions/{session.session_id}")
+```

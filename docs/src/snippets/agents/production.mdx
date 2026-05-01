@@ -1,0 +1,28 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/production.py */}
+
+```python production_agent.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+vault = client.Vault(vault_id="prod_vault")
+persona = client.Persona(persona_id="prod_persona")
+
+with client.Session(headless=True, proxies=True) as session:
+    agent = client.Agent(
+        session=session,
+        reasoning_model="anthropic/claude-3.5-sonnet",
+        use_vision=True,
+        max_steps=30,
+        vault=vault,
+        persona=persona,
+    )
+
+    result = agent.run(task="Complete checkout process", url="https://store.example.com/cart")
+
+    if result.success:
+        print(f"Order completed: {result.answer}")
+    else:
+        print(f"Failed: {result.answer}")
+```

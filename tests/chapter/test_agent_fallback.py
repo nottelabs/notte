@@ -54,17 +54,16 @@ def test_chapter_failure_triggers_agent(mock_agent_run):
     assert len(chapter.steps) == 1, chapter.steps
 
 
+# might fail because of captcha
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_chapter_with_agent_fix():
     with notte.Session() as session:
-        _ = session.execute(type="goto", value="https://shop.notte.cc/")
-        _ = session.observe()
-
-        # close modal if it appears but don't fail if it doesn't
-        _ = session.execute(type="click", id="B1", raise_on_failure=False)
+        _ = session.execute(type="goto", url="https://shop.notte.cc/")
         _ = session.observe()
 
         with notte.AgentFallback(session, "Add Cap to cart", max_steps=3) as chapter:
-            _ = session.execute(type="click", id="L7")
+            # Navigate to cap product page (always succeeds, no fragile element IDs)
+            _ = session.execute(type="goto", url="https://shop.notte.cc/products/cap")
             res = session.execute(type="click", id="X1")  # force agent to spawn because ID is not found
             assert res.success is False
         assert chapter.success is True

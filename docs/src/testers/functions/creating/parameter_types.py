@@ -1,0 +1,12 @@
+# @sniptest filename=parameter_types.py
+def run(
+    text: str,  # String
+    number: int,  # Integer
+    decimal: float,  # Float
+    flag: bool,  # Boolean
+    items: list,  # List
+    data: dict,  # Dictionary
+    optional: str | None = None,  # Optional
+    with_default: int = 10,  # Default value
+):
+    pass

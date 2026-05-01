@@ -1,0 +1,44 @@
+---
+title: Rate Limits
+description: API rate limiting and response headers
+---
+
+The API implements rate limiting to ensure fair usage and platform stability.
+
+## Rate limit headers
+
+Every response includes headers with your current rate limit status:
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Maximum requests allowed per window |
+| `X-RateLimit-Remaining` | Requests remaining in current window |
+| `X-RateLimit-Reset` | Unix timestamp when the window resets |
+
+## Rate limit exceeded (429)
+
+```json
+{
+  "message": "Rate limit exceeded",
+  "detail": "Please wait before making more requests"
+}
+```
+
+## Checking your limits
+
+```bash
+curl -I https://api.notte.cc/health \
+  -H "Authorization: Bearer $NOTTE_API_KEY"
+```
+
+Response headers:
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1704067200
+```
+
+## Increasing limits
+
+Need higher limits? [Contact us](https://cal.com/team/notte/demo) to discuss enterprise options.

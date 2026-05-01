@@ -1,0 +1,32 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from playwright.sync_api import sync_playwright
+
+  client = NotteClient()
+
+  with client.Session() as session:
+      # Use Notte's built-in page
+      notte_page = session.page
+      notte_page.goto("https://example.com")
+
+      # Also connect Playwright for advanced features
+      cdp_url = session.cdp_url()
+
+      with sync_playwright() as p:
+          browser = p.chromium.connect_over_cdp(cdp_url)
+          playwright_page = browser.contexts[0].pages[0]
+
+          # Use Playwright's advanced features
+          playwright_page.route("**/*.{png,jpg,jpeg}", lambda route: route.abort())
+
+          # Navigate with route interception active
+          playwright_page.goto("https://example.com/gallery")
+
+          # Use Playwright's network monitoring
+          with playwright_page.expect_response("**/api/data") as response_info:
+              playwright_page.click("button#load-data")
+          response = response_info.value
+          print(f"API Response: {response.status()}")
+  ```
+</CodeGroup>

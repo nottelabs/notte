@@ -1,0 +1,40 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from kernel import Kernel
+  from typing import Literal
+
+  client = NotteClient()
+
+  def run_automation(provider: Literal["notte", "kernel"], task: str):
+      """Run automation on different browser providers"""
+
+      if provider == "notte":
+          # Use Notte's browser
+          with client.Session() as session:
+              agent = client.Agent(session=session)
+              result = agent.run(task=task)
+              return result
+
+      elif provider == "kernel":
+          # Use Kernel's browser
+          kernel = Kernel()
+          kernel_browser = kernel.browsers.create()
+
+          try:
+              with client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
+                  agent = client.Agent(session=session)
+                  result = agent.run(task=task)
+                  return result
+          finally:
+              kernel.browsers.delete_by_id(kernel_browser.session_id)
+
+  # Run on Notte's infrastructure
+  result1 = run_automation("notte", "Get the latest news from example.com")
+  print(f"Notte result: {result1.answer}")
+
+  # Run on Kernel's infrastructure
+  result2 = run_automation("kernel", "Get the latest news from example.com")
+  print(f"Kernel result: {result2.answer}")
+  ```
+</CodeGroup>

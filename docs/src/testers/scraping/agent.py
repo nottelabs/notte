@@ -1,0 +1,20 @@
+# @sniptest filename=agent_scrape.py
+from notte_sdk import NotteClient
+from pydantic import BaseModel
+
+
+class LinkedInConversation(BaseModel):
+    recipient: str
+    messages: list[str]
+
+
+client = NotteClient()
+vault = client.Vault(vault_id="<your-vault-id>")
+
+with client.Session() as session:
+    agent = client.Agent(session=session, vault=vault, max_steps=15)
+    response = agent.run(
+        task="Got to linkedin.com, login with the credentials and extract the last 10 messages from my most recent conversation",
+        response_format=LinkedInConversation,
+    )
+print(response.answer)

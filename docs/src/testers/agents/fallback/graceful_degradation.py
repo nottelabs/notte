@@ -1,0 +1,10 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    with client.AgentFallback(session, task="Navigate to pricing") as fb:
+        # Fast path - direct navigation
+        session.execute(type="click", selector="nav a[href='/pricing']")
+
+        # Slow path - agent finds the pricing link if layout changed

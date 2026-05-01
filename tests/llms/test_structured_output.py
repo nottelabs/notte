@@ -2,7 +2,7 @@ import os
 
 import pytest
 from dotenv import load_dotenv
-from notte_core.common.config import LlmModel
+from notte_core.common.config import LlmModel, enable_openrouter
 from notte_llm.engine import LLMEngine
 from pydantic import BaseModel
 
@@ -14,17 +14,19 @@ class Country(BaseModel):
 
 def get_models() -> list[LlmModel]:
     _ = load_dotenv()
+    if enable_openrouter():
+        # enable all models
+        return list(LlmModel)
     models: list[LlmModel] = []
     if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
         models.append(LlmModel.gemini_vertex)
-        models.append(LlmModel.gemini_2_5_vertex)
     if "OPENAI_API_KEY" in os.environ:
         models.append(LlmModel.openai)
     if "GROQ_API_KEY" in os.environ:
         models.append(LlmModel.groq)
     if "PERPLEXITY_API_KEY" in os.environ:
         models.append(LlmModel.perplexity)
-    if "CEBREAS_API_KEY" in os.environ:
+    if "CEREBRAS_API_KEY" in os.environ:
         models.append(LlmModel.cerebras)
     if "GEMINI_API_KEY" in os.environ:
         models.append(LlmModel.gemini)
@@ -32,6 +34,8 @@ def get_models() -> list[LlmModel]:
         models.append(LlmModel.gemma)
     if "ANTHROPIC_API_KEY" in os.environ:
         models.append(LlmModel.anthropic)
+    if "MOONSHOT_API_KEY" in os.environ:
+        models.append(LlmModel.kimi2_5)
     return models
 
 

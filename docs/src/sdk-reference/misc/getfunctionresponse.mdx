@@ -1,0 +1,57 @@
+---
+title: "GetFunctionResponse"
+description: ""
+---
+
+
+
+## Fields
+
+<ParamField path="function_id" type="str" required>
+  The ID of the function
+</ParamField>
+
+<ParamField path="variables" type="UnionType[list[ParameterInfo], None]">
+  The variables to run the workflow with
+</ParamField>
+
+<ParamField path="created_at" type="datetime" required>
+  The creation time of the workflow
+</ParamField>
+
+<ParamField path="updated_at" type="datetime" required>
+  The last update time of the workflow
+</ParamField>
+
+<ParamField path="latest_version" type="str" required>
+  The version of the workflow
+</ParamField>
+
+<ParamField path="versions" type="list[str]" required>
+  The versions of the workflow
+</ParamField>
+
+<ParamField path="status" type="str" required>
+  The status of the workflow
+</ParamField>
+
+<ParamField path="name" type="UnionType[str, None]">
+  The name of the workflow
+</ParamField>
+
+<ParamField path="description" type="UnionType[str, None]">
+  The description of the workflow
+</ParamField>
+
+<ParamField path="shared" type="bool" default="False">
+  Whether the workflow is public and can beshared with other users
+</ParamField>
+
+<ParamField path="reference_workflow_id" type="UnionType[str, None]">
+  The ID of the reference workflow (i.e wether the workflow was forked from another workflow or not)
+</ParamField>
+
+
+## Module
+
+`notte_sdk.types`

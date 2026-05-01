@@ -1,0 +1,12 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/error_handling.py */}
+
+```python error_handling.py
+agent = client.Agent(session=session)
+result = agent.run(task="Complete task")
+
+if result.success:
+    print(result.answer)
+else:
+    print(f"Agent failed: {result.answer}")
+```

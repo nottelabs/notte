@@ -1,0 +1,12 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  # Session closes after 10 minutes of inactivity
+  with client.Session(timeout_minutes=10) as session:
+      page = session.page
+      page.goto("https://example.com")
+  ```
+</CodeGroup>

@@ -1,0 +1,196 @@
+---
+title: Agent Configuration
+description: Configure agent behavior with creation and runtime parameters
+---
+
+import ProductionAgent from "/snippets/agents/production.mdx";
+import StructuredExtraction from "/snippets/agents/structured_extraction.mdx";
+import CreatingAgent from "/snippets/agents/config/creating_agent.mdx";
+import ParamSession from "/snippets/agents/config/param_session.mdx";
+import ParamReasoningModel from "/snippets/agents/config/param_reasoning_model.mdx";
+import ParamUseVision from "/snippets/agents/config/param_use_vision.mdx";
+import ParamMaxSteps from "/snippets/agents/config/param_max_steps.mdx";
+import ParamVault from "/snippets/agents/config/param_vault.mdx";
+import ParamPersona from "/snippets/agents/config/param_persona.mdx";
+import ParamNotifier from "/snippets/agents/config/param_notifier.mdx";
+import ParamTask from "/snippets/agents/config/param_task.mdx";
+import ParamUrl from "/snippets/agents/config/param_url.mdx";
+import ParamResponseFormat from "/snippets/agents/config/param_response_format.mdx";
+import ParamSessionOffset from "/snippets/agents/config/param_session_offset.mdx";
+import SimpleAgent from "/snippets/agents/config/simple_agent.mdx";
+import BpStepLimits from "/snippets/agents/config/bp_step_limits.mdx";
+import BpModelSelection from "/snippets/agents/config/bp_model_selection.mdx";
+import BpVision from "/snippets/agents/config/bp_vision.mdx";
+import BpUrlContext from "/snippets/agents/config/bp_url_context.mdx";
+
+Configure agents with parameters that control their reasoning model, step limits, vision capabilities, and more.
+
+## Creating an Agent
+
+Create an agent with configuration parameters:
+
+<CreatingAgent />
+
+## Agent Creation Parameters
+
+Parameters set when creating the agent instance.
+
+### session
+
+<ParamField path="session" type="RemoteSession" required>
+  The browser session the agent will use to execute actions. Must be a Notte session instance.
+</ParamField>
+
+<ParamSession />
+
+### reasoning_model
+
+<ParamField path="reasoning_model" type="str" default="gemini/gemini-2.0-flash">
+  The large language model used for agent reasoning and decision-making. Supported models include `gemini/gemini-2.0-flash`, `anthropic/claude-3.5-sonnet`, `anthropic/claude-3.5-haiku`, `openai/gpt-4o`, and `openai/gpt-4o-mini`.
+</ParamField>
+
+<ParamReasoningModel />
+
+### use_vision
+
+<ParamField path="use_vision" type="boolean" default={true}>
+  Whether to enable vision capabilities for the agent. Vision allows the agent to analyze images, screenshots, and visual page elements. Not all models support vision.
+</ParamField>
+
+<ParamUseVision />
+
+### max_steps
+
+<ParamField path="max_steps" type="int" default="varies">
+  Maximum number of actions the agent can take before stopping. Must be between 1 and 50. Higher values allow more complex tasks but increase cost and execution time.
+</ParamField>
+
+<ParamMaxSteps />
+
+### vault
+
+<ParamField path="vault" type="NotteVault">
+  Optional vault instance containing credentials the agent can use for authentication. See [Vaults](/concepts/vaults) for details.
+</ParamField>
+
+<ParamVault />
+
+### persona
+
+<ParamField path="persona" type="NottePersona">
+  Optional persona providing the agent with phone numbers, email addresses, and other identity information. See [Personas](/concepts/personas) for details.
+</ParamField>
+
+<ParamPersona />
+
+### notifier
+
+<ParamField path="notifier" type="BaseNotifier">
+  Optional notifier that sends notifications when the agent completes or fails. Useful for long-running tasks.
+</ParamField>
+
+<ParamNotifier />
+
+## Agent Runtime Parameters
+
+Parameters provided when running the agent.
+
+### task
+
+<ParamField path="task" type="str" required>
+  Natural language description of what the agent should accomplish. Be specific and clear for best results.
+</ParamField>
+
+<ParamTask />
+
+### url
+
+<ParamField path="url" type="str">
+  Optional starting URL for the agent. If not provided, the agent starts from the current page in the session.
+</ParamField>
+
+<ParamUrl />
+
+### response_format
+
+<ParamField path="response_format" type="type[BaseModel]">
+  Optional Pydantic model defining the structure of the agent's response. Use this to get type-safe, structured output. See [Structured Output](/features/agents/structured-output) for details.
+</ParamField>
+
+<ParamResponseFormat />
+
+<Accordion title="Advanced Configuration">
+  ### session_offset
+
+  <ParamField path="session_offset" type="int">
+    **Experimental** - The step number from which the agent should gather information from the session history. If not provided, the agent has fresh memory. Use this to make the agent aware of previous actions.
+  </ParamField>
+
+  <ParamSessionOffset />
+</Accordion>
+
+## Configuration Examples
+
+### Simple Agent
+
+Minimal configuration for basic tasks:
+
+<SimpleAgent />
+
+### Production Agent
+
+Full configuration for production use:
+
+<ProductionAgent />
+
+### Structured Data Extraction
+
+Agent configured for data extraction:
+
+<StructuredExtraction />
+
+## Best Practices
+
+### 1. Choose Appropriate Step Limits
+
+Match `max_steps` to task complexity:
+
+<BpStepLimits />
+
+### 2. Balance Cost and Capability
+
+Use cheaper models for simple tasks:
+
+<BpModelSelection />
+
+### 3. Use Vision Selectively
+
+Disable vision when not needed to reduce costs:
+
+<BpVision />
+
+### 4. Provide Context via URL
+
+Start agents at the right page:
+
+<BpUrlContext />
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle">
+    Learn about agent execution modes
+  </Card>
+
+  <Card title="Replay & Debugging" icon="circle-play" href="/features/agents/replay">
+    Debug agents with visual replays
+  </Card>
+
+  <Card title="Structured Output" icon="brackets-curly" href="/features/agents/structured-output">
+    Get typed responses from agents
+  </Card>
+
+  <Card title="Vaults" icon="vault" href="/concepts/vaults">
+    Store credentials for agent use
+  </Card>
+</CardGroup>

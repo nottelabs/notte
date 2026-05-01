@@ -1,0 +1,13 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(task="Navigate and extract data")
+
+# Get MP4 replay (returns presigned URL)
+replay = session.replay()
+
+# Download to file
+replay.download("agent_run.mp4")

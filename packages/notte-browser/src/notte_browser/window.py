@@ -1,5 +1,5 @@
 import asyncio
-import io
+import base64
 import os
 import random
 import time
@@ -29,8 +29,7 @@ from notte_sdk.types import (
     Cookie,
     SessionStartRequest,
 )
-from PIL import Image
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from typing_extensions import override
 
 from notte_browser.dom.parsing import dom_tree_parsers
@@ -65,6 +64,8 @@ class BrowserWindowOptions(BaseModel):
     debug_port: int | None
     custom_devtools_frontend: str | None
 
+    extra_http_headers: dict[str, str] | None = None
+
     def set_cdp_url(self, cdp_url: str) -> Self:
         self.cdp_url = cdp_url
         return self
@@ -90,7 +91,6 @@ class BrowserWindowOptions(BaseModel):
             chrome_args.extend(
                 [
                     "--disable-dev-shm-usage",
-                    "--disable-extensions",
                     "--no-sandbox",
                     "--disable-setuid-sandbox",
                     "--no-zygote",
@@ -143,6 +143,7 @@ class BrowserWindowOptions(BaseModel):
             web_security=config.web_security,
             debug_port=config.debug_port,
             custom_devtools_frontend=config.custom_devtools_frontend,
+            extra_http_headers=request.extra_http_headers,
         )
 
 
@@ -168,6 +169,12 @@ class BrowserWindow(BaseModel):
     goto_response: Response | None = Field(exclude=True, default=None)
 
     model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
+
+    # Cache of CDP sessions keyed by id(page). CDP sessions survive navigations on
+    # the same Page target, so creating/detaching per call raced with Chromium's
+    # target lifecycle after navigation and could park subsequent operations on a
+    # dead socket.
+    _cdp_sessions: dict[int, CDPSession] = PrivateAttr(default_factory=dict)
 
     @override
     def model_post_init(self, __context: Any) -> None:
@@ -205,12 +212,18 @@ class BrowserWindow(BaseModel):
     async def close(self) -> None:
         if self.on_close is not None:
             await self.on_close()
+        await self._close_all_cdp_sessions()
         for page in self.resource.page.context.pages:
             if not page.is_closed():
                 await page.close()
 
     @page.setter
     def page(self, page: Page) -> None:
+        # Drop the displaced page's cached CDP session so it doesn't linger until
+        # window close. The on-close handler on the new page will handle eviction
+        # when it closes; the previous page may still be alive but no longer
+        # referenced by this window.
+        _ = self._cdp_sessions.pop(id(self.resource.page), None)
         self.resource.page = page
         self.apply_page_callbacks()
 
@@ -248,9 +261,40 @@ class BrowserWindow(BaseModel):
             data = response.json()
             return data["webSocketDebuggerUrl"]
 
+    @property
+    def is_chromium_based(self) -> bool:
+        """Check if the browser is Chromium-based (supports CDP)."""
+        return self.resource.options.browser_type != "firefox"
+
     async def get_cdp_session(self, tab_idx: int | None = None) -> CDPSession:
         cdp_page = self.tabs[tab_idx] if tab_idx is not None else self.page
-        return await cdp_page.context.new_cdp_session(cdp_page)
+        key = id(cdp_page)
+        cached = self._cdp_sessions.get(key)
+        if cached is not None:
+            return cached
+        session = await cdp_page.context.new_cdp_session(cdp_page)
+        self._cdp_sessions[key] = session
+
+        # Prune on close so a later Page object reusing the same id() cannot
+        # inherit a stale, already-detached session from the dict.
+        def _drop_on_close(_page: Page) -> None:
+            _ = self._cdp_sessions.pop(key, None)
+
+        cdp_page.on("close", _drop_on_close)
+        return session
+
+    def _invalidate_cdp_session(self, tab_idx: int | None = None) -> None:
+        cdp_page = self.tabs[tab_idx] if tab_idx is not None else self.page
+        _ = self._cdp_sessions.pop(id(cdp_page), None)
+
+    async def _close_all_cdp_sessions(self) -> None:
+        sessions = list(self._cdp_sessions.values())
+        self._cdp_sessions.clear()
+        for session in sessions:
+            try:
+                _ = await asyncio.wait_for(session.detach(), timeout=2.0)
+            except Exception as e:  # noqa: BLE001 - best-effort cleanup on shutdown
+                logger.debug(f"CDP session detach failed during close: {type(e).__name__}: {e}")
 
     async def page_id(self, tab_idx: int | None = None) -> str:
         session = await self.get_cdp_session(tab_idx)
@@ -309,23 +353,112 @@ class BrowserWindow(BaseModel):
             tabs=[await self.tab_metadata(i) for i, _ in enumerate(self.tabs)],
         )
 
+    # Per-attempt timeout for a single CDP screenshot (attach + capture + detach).
+    # Bounds hangs so the retry loop can actually retry instead of blocking on a stuck session.
+    CDP_SCREENSHOT_TIMEOUT_S: ClassVar[float] = 10.0
+    CDP_SCREENSHOT_MAX_ATTEMPTS: ClassVar[int] = 3
+
     @profiler.profiled(service_name="observation")
-    async def screenshot(self, retries: int = config.empty_page_max_retry) -> bytes:
+    async def _cdp_screenshot(self) -> bytes:
+        """Take a screenshot using CDP protocol (faster than Playwright, but no mask support).
+
+        The CDP session is cached on the window and reused across calls; it survives
+        navigations on the same Page target. On any error the cached session is dropped
+        so the outer retry loop in `screenshot()` gets a fresh one.
+        """
+
+        async def _run() -> bytes:
+            cdp_session = await self.get_cdp_session()
+            try:
+                t_send = time.monotonic()
+                result: dict[str, Any] = await cdp_session.send(  # pyright: ignore [reportUnknownMemberType]
+                    "Page.captureScreenshot",
+                    {"format": "jpeg", "quality": 85},
+                )
+                send_ms = (time.monotonic() - t_send) * 1000
+                data = base64.b64decode(result["data"])
+                logger.trace(f"CDP screenshot for {self.page.url}: send={send_ms:.0f}ms size={len(data)}B")
+                return data
+            except BaseException:
+                # Must be BaseException, not Exception: asyncio.wait_for on timeout
+                # raises CancelledError (BaseException since 3.8) and we'd otherwise
+                # leave a stale session in the cache.
+                self._invalidate_cdp_session()
+                raise
+
+        return await asyncio.wait_for(_run(), timeout=self.CDP_SCREENSHOT_TIMEOUT_S)
+
+    @profiler.profiled(service_name="observation")
+    async def screenshot(self, retries: int = config.empty_page_max_retry, *, _skip_cdp: bool = False) -> bytes:
         if retries <= 0:
             raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
+        cdp_exhausted = _skip_cdp
         try:
-            mask = await self.screenshot_mask.mask(self.page) if self.screenshot_mask is not None else None
-            screenshot_png = await self.page.screenshot(mask=mask)
-            image = Image.open(io.BytesIO(screenshot_png)).convert("RGB")
-            output = io.BytesIO()
-            image.save(output, format="JPEG")
-            return output.getvalue()
+            # Use CDP screenshot when no mask is needed and browser supports CDP (faster)
+            if not _skip_cdp and self.screenshot_mask is None and self.is_chromium_based:
+                cdp_start = time.monotonic()
+                for attempt in range(1, self.CDP_SCREENSHOT_MAX_ATTEMPTS + 1):
+                    attempt_start = time.monotonic()
+                    try:
+                        return await self._cdp_screenshot()
+                    except asyncio.CancelledError:
+                        raise
+                    except asyncio.TimeoutError:
+                        attempt_ms = (time.monotonic() - attempt_start) * 1000
+                        logger.warning(
+                            f"CDP screenshot timed out after {attempt_ms:.0f}ms for {self.page.url} (attempt {attempt}/{self.CDP_SCREENSHOT_MAX_ATTEMPTS}, budget={self.CDP_SCREENSHOT_TIMEOUT_S}s)"
+                        )
+                    except Exception as e:
+                        attempt_ms = (time.monotonic() - attempt_start) * 1000
+                        logger.opt(exception=True).warning(
+                            f"CDP screenshot failed after {attempt_ms:.0f}ms for {self.page.url} (attempt {attempt}/{self.CDP_SCREENSHOT_MAX_ATTEMPTS}): {type(e).__name__}: {e}"
+                        )
+                    if attempt < self.CDP_SCREENSHOT_MAX_ATTEMPTS:
+                        await self.short_wait()
+                total_ms = (time.monotonic() - cdp_start) * 1000
+                logger.warning(
+                    f"CDP screenshot exhausted {self.CDP_SCREENSHOT_MAX_ATTEMPTS} attempts ({total_ms:.0f}ms total) for {self.page.url}, falling back to Playwright"
+                )
+                cdp_exhausted = True
+
+            # Fall back to Playwright screenshot when mask is needed, CDP failed, or browser doesn't support CDP
+            # Retry up to 2 times - DOM may change between mask creation and screenshot
+            last_error: Exception | None = None
+            for pw_attempt in range(1, 4):
+                pw_start = time.monotonic()
+                try:
+                    t_mask = time.monotonic()
+                    mask = await self.screenshot_mask.mask(self.page) if self.screenshot_mask is not None else None
+                    mask_ms = (time.monotonic() - t_mask) * 1000
+                    t_shot = time.monotonic()
+                    data = await self.page.screenshot(mask=mask, type="jpeg", quality=85)
+                    shot_ms = (time.monotonic() - t_shot) * 1000
+                    logger.trace(
+                        f"Playwright screenshot for {self.page.url}: mask={mask_ms:.0f}ms shot={shot_ms:.0f}ms size={len(data)}B attempt={pw_attempt}"
+                    )
+                    return data
+                except PlaywrightTimeoutError:
+                    pw_ms = (time.monotonic() - pw_start) * 1000
+                    logger.warning(
+                        f"Playwright screenshot timed out after {pw_ms:.0f}ms for {self.page.url} (attempt {pw_attempt}/3)"
+                    )
+                    raise  # Let outer handler deal with timeouts
+                except Exception as e:
+                    pw_ms = (time.monotonic() - pw_start) * 1000
+                    logger.opt(exception=True).warning(
+                        f"Playwright screenshot failed after {pw_ms:.0f}ms for {self.page.url} (attempt {pw_attempt}/3): {type(e).__name__}: {e}"
+                    )
+                    last_error = e
+            raise last_error  # type: ignore[misc]
 
         except PlaywrightTimeoutError:
-            if config.verbose:
-                logger.debug(f"Timeout while taking screenshot for {self.page.url}. Retrying...")
+            logger.warning(
+                f"Playwright screenshot timeout for {self.page.url}, retrying (remaining outer retries: {retries - 1})"
+            )
             await self.short_wait()
-            return await self.screenshot(retries=retries - 1)
+            # Skip CDP on recursion if already exhausted — otherwise up to 30s of CDP retries
+            # compound on every outer retry (5 × 30s = 150s worst case).
+            return await self.screenshot(retries=retries - 1, _skip_cdp=cdp_exhausted)
 
     async def a11y(self) -> A11yTree | None:
         a11y_simple: A11yNode | None = await profiler.profiled(service_name="observation")(
@@ -348,6 +481,7 @@ class BrowserWindow(BaseModel):
         screenshot: bool | None = None,
         retries: int = config.empty_page_max_retry,
         selector: str | None = None,
+        skip_dom: bool = False,
     ) -> BrowserSnapshot:
         if retries <= 0:
             raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
@@ -360,15 +494,18 @@ class BrowserWindow(BaseModel):
                 html_content_await = profiler.profiled(service_name="observation")(locator.inner_html)()
             else:
                 html_content_await = profiler.profiled(service_name="observation")(self.page.content)()
-            dom_tree_pipe = dom_tree_parsers["default"]
 
-            html_content, snapshot_screenshot, dom_node = await asyncio.gather(
-                html_content_await, self.screenshot(), dom_tree_pipe.forward(self.page)
-            )
+            html_content = await html_content_await
+            snapshot_screenshot = await self.screenshot()
+            if skip_dom:
+                dom_node = DomNode.empty_root()
+            else:
+                dom_tree_pipe = dom_tree_parsers["default"]
+                dom_node = await dom_tree_pipe.forward(self.page)
 
         except SnapshotProcessingError:
             await self.long_wait()
-            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector)
+            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector, skip_dom=skip_dom)
 
         except Exception as e:
             if "has been closed" in str(e):
@@ -395,7 +532,7 @@ class BrowserWindow(BaseModel):
             if config.verbose:
                 logger.warning(f"Empty page content for {self.page.url}. Retry in {config.wait_retry_snapshot_ms}ms")
             await self.page.wait_for_timeout(config.wait_retry_snapshot_ms)
-            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector)
+            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector, skip_dom=skip_dom)
 
         try:
             snapshot_metadata = await self.snapshot_metadata()
@@ -496,9 +633,30 @@ class BrowserWindow(BaseModel):
         if cookies is None:
             raise ValueError("No cookies provided")
 
+        # Filter cookies to only include valid Playwright SetCookieParam fields with non-None values.
+        # Playwright's add_cookies rejects extra fields (e.g., expirationDate, hostOnly, session, storeId)
+        # and fields with None values (e.g., "partitionKey: expected string, got object").
+        # Keep domain exactly as provided - don't modify it (host-only vs domain cookie semantics matter).
+        # See: patchright/_impl/_api_structures.py SetCookieParam for the full list of valid fields.
+        PLAYWRIGHT_COOKIE_FIELDS = {
+            "name",
+            "value",
+            "url",
+            "domain",
+            "path",
+            "expires",
+            "httpOnly",
+            "secure",
+            "sameSite",
+            "partitionKey",
+        }
+        filtered_cookies = [
+            {k: v for k, v in cookie.items() if v is not None and k in PLAYWRIGHT_COOKIE_FIELDS} for cookie in cookies
+        ]
+
         if config.verbose:
             logger.info("🍪 Adding cookies to browser...")
-        await self.page.context.add_cookies(cookies)  # type: ignore
+        await self.page.context.add_cookies(filtered_cookies)  # type: ignore
 
     async def get_cookies(self) -> list[CookieDict]:
         def format_cookie(data: dict[str, Any]) -> CookieDict:

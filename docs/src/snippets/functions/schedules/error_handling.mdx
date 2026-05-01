@@ -1,0 +1,12 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/schedules/error_handling.py */}
+
+```python error_handling.py
+def run():
+    try:
+        result = perform_automation()
+        return {"success": True, "data": result}
+    except Exception as e:
+        # Log error, send alert
+        return {"success": False, "error": str(e)}
+```

@@ -6,13 +6,40 @@ type-safe keyword argument passing to execute methods.
 """
 
 import datetime as dt
-from typing import TYPE_CHECKING, Literal, NotRequired, Required, TypedDict
+from typing import TYPE_CHECKING, Any, Literal, NotRequired, Required, TypedDict
 
+from notte_core.actions.actions import ActionUnion
 from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.credentials.types import ValueWithPlaceholder
 
 if TYPE_CHECKING:
     from notte_core.actions.actions import BaseAction
+
+
+class NodeSelectorsDict(TypedDict, total=False):
+    """
+    TypedDict for NodeSelectors that can be passed to interaction actions.
+
+    Only css_selector, xpath_selector, playwright_selector, or notte_selector
+    are typically needed. The other fields default to sensible values:
+    - in_iframe: False
+    - in_shadow_root: False
+    - iframe_parent_css_selectors: []
+    """
+
+    css_selector: str
+    xpath_selector: str
+    notte_selector: str | None
+    playwright_selector: str | None
+    python_selector: str | None
+    # These have defaults applied automatically if not provided
+    in_iframe: bool
+    in_shadow_root: bool
+    iframe_parent_css_selectors: list[str]
+
+
+# Type alias for selector parameter - can be a string, full NodeSelectors, or partial dict
+NodeSelector = str | NodeSelectors | NodeSelectorsDict
 
 # All action types as a Literal union for catch-all overloads
 ActionType = Literal[
@@ -34,6 +61,7 @@ ActionType = Literal[
     "scrape",
     "email_read",
     "sms_read",
+    "evaluate_js",
     "click",
     "fill",
     "multi_factor_fill",
@@ -74,6 +102,7 @@ class FormFillActionDict(TypedDict, total=False):
                 "cc_exp",
                 "cc_cvv",
                 "username",
+                "password",  # alias for current_password (normalized by validator)
                 "current_password",
                 "new_password",
                 "totp",
@@ -169,6 +198,12 @@ class ScrapeActionDict(TypedDict, total=False):
     type: Required[Literal["scrape"]]
     instructions: NotRequired[str | None]
     only_main_content: NotRequired[bool]
+    selector: NotRequired[str | None]
+    only_images: NotRequired[bool]
+    scrape_links: NotRequired[bool]
+    scrape_images: NotRequired[bool]
+    ignored_tags: NotRequired[list[str] | None]
+    response_format: NotRequired[dict[str, Any] | None]
 
 
 class EmailReadActionDict(TypedDict, total=False):
@@ -185,64 +220,77 @@ class SmsReadActionDict(TypedDict, total=False):
     only_unread: NotRequired[bool]
 
 
+class EvaluateJsActionDict(TypedDict, total=False):
+    type: Required[Literal["evaluate_js"]]
+    code: Required[str]
+
+
 # Interaction Actions TypedDicts
 
 
 class ClickActionDict(TypedDict, total=False):
     type: Required[Literal["click"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
+    timeout: NotRequired[int]
 
 
 class FillActionDict(TypedDict, total=False):
     type: Required[Literal["fill"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
     value: Required[str | ValueWithPlaceholder]
     clear_before_fill: NotRequired[bool]
+    timeout: NotRequired[int]
 
 
 class MultiFactorFillActionDict(TypedDict, total=False):
     type: Required[Literal["multi_factor_fill"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
     value: Required[str | ValueWithPlaceholder]
     clear_before_fill: NotRequired[bool]
+    timeout: NotRequired[int]
 
 
 class FallbackFillActionDict(TypedDict, total=False):
     type: Required[Literal["fallback_fill"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
     value: Required[str | ValueWithPlaceholder]
     clear_before_fill: NotRequired[bool]
+    timeout: NotRequired[int]
 
 
 class CheckActionDict(TypedDict, total=False):
     type: Required[Literal["check"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
     value: Required[bool]
+    timeout: NotRequired[int]
 
 
 class SelectDropdownOptionActionDict(TypedDict, total=False):
     type: Required[Literal["select_dropdown_option"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
     value: Required[str | ValueWithPlaceholder]
+    timeout: NotRequired[int]
 
 
 class UploadFileActionDict(TypedDict, total=False):
     type: Required[Literal["upload_file"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
     file_path: Required[str]
+    timeout: NotRequired[int]
 
 
 class DownloadFileActionDict(TypedDict, total=False):
     type: Required[Literal["download_file"]]
     id: NotRequired[str]
-    selector: NotRequired[str | NodeSelectors]
+    selector: NotRequired[NodeSelector]
+    timeout: NotRequired[int]
 
 
 # Union type for all action TypedDicts
@@ -265,6 +313,7 @@ ActionDict = (
     | ScrapeActionDict
     | EmailReadActionDict
     | SmsReadActionDict
+    | EvaluateJsActionDict
     | ClickActionDict
     | FillActionDict
     | MultiFactorFillActionDict
@@ -340,3 +389,32 @@ def action_dict_to_base_action(data: ActionDict) -> "BaseAction":
 
     # Fallback: use ActionValidation for validation
     return ActionValidation.model_validate({"action": data}).action
+
+
+def parse_action(action: "BaseAction | None" = None, **kwargs: Any) -> "BaseAction | ActionUnion":
+    from notte_core.actions.actions import (
+        ActionValidation,
+        BaseAction,
+    )
+
+    # Fast path: if action is already a BaseAction, use it directly
+    if isinstance(action, BaseAction):
+        step_action = action
+    elif kwargs:
+        if "type" not in kwargs:
+            raise ValueError("Missing required action field: 'type'")
+        # Convert kwargs to BaseAction using fast mapping
+        step_action = action_dict_to_base_action(kwargs)  # type: ignore[arg-type]
+    elif action is None:
+        raise ValueError("No action provided")
+    else:
+        # Fallback for dict (shouldn't happen with new API, but kept for compatibility)
+        # Handle selector without id case
+        if isinstance(action, dict):  # pyright: ignore[reportUnreachable]
+            if "selector" in action and "id" not in action:  # pyright: ignore[reportUnreachable]
+                action["id"] = ""  # pyright: ignore[reportUnreachable]
+            step_action = ActionValidation.model_validate({"action": action}).action
+        else:
+            raise ValueError(f"Invalid action type: {type(action)}")  # pyright: ignore[reportUnreachable]
+
+    return step_action

@@ -14,13 +14,13 @@ class VaultSecretsScreenshotMask(ScreenshotMask):
     @override
     async def mask(self, page: Page) -> list[Locator]:
         hidden_values = set(self.vault.get_replacement_map())
-        hidden_locators: list[Locator] = []
-        if len(hidden_values) > 0:
-            # might be able to evaluate all locators, at once
-            # fine for now
-            for input_el in await page.locator("input").all():
-                input_val = await input_el.evaluate("el => el.value")
+        if len(hidden_values) == 0:
+            return []
 
-                if input_val in hidden_values:
-                    hidden_locators.append(input_el)
-        return hidden_locators
+        input_locator = page.locator("input")
+        hidden_values_list = list(hidden_values)
+        matching_indices: list[int] = await input_locator.evaluate_all(
+            "(elements, hiddenValues) => elements.flatMap((el, i) => hiddenValues.includes(el.value) ? [i] : [])",
+            hidden_values_list,
+        )
+        return [input_locator.nth(i) for i in matching_indices]

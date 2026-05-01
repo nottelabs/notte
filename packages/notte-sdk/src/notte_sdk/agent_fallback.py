@@ -3,8 +3,10 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Any, Callable, Unpack
 
 from notte_core.actions import BaseAction
-from notte_core.browser.observation import ExecutionResult
+from notte_core.actions.typedicts import parse_action
+from notte_core.browser.observation import ExecutionResult, TimedSpan
 from notte_core.common.logging import logger
+from pydantic import BaseModel
 
 from notte_sdk.endpoints.agents import RemoteAgent
 from notte_sdk.endpoints.sessions import RemoteSession as NotteSession
@@ -48,6 +50,7 @@ class RemoteAgentFallback:
         session: NotteSession,
         task: str,
         _client: "NotteClient | None" = None,
+        response_format: type[BaseModel] | None = None,
         **agent_params: Unpack[AgentCreateRequestDict],
     ) -> None:
         if _client is None:
@@ -55,6 +58,7 @@ class RemoteAgentFallback:
         self.client: "NotteClient" = _client
         self.session: NotteSession = session
         self.task: str = task
+        self.response_format: type[BaseModel] | None = response_format
         self.steps: list[ExecutionResult] = []
         self.success: bool = True
         self.agent_response: AgentStatusResponse | None = None
@@ -79,6 +83,7 @@ class RemoteAgentFallback:
         if exc is not None and not self.agent_invoked:
             logger.error(f"❌ Unhandled exception in agent fallback: {exc}")
             raise exc
+
         if self.agent_invoked:
             logger.info(
                 f"📚 Agent fallback finished: {self.task} | steps={len(self.steps)} | success={self.success} | agent_invoked={self.agent_invoked}"
@@ -112,20 +117,28 @@ class RemoteAgentFallback:
             # Enforce agent fallback constraint
             if raise_on_failure:
                 raise ValueError("AgentFallback only supports raise_on_failure=False")
-            action_log = action.model_dump_agent() if isinstance(action, BaseAction) else action
+
+            if isinstance(action, dict):
+                action_parsed = parse_action(**action, **data)
+            else:
+                action_parsed = parse_action(action, **data)
+
             if self.agent_invoked and self.agent_response is not None:
-                logger.warning(f"⚠️ Skipping action: {action_log} because agent fallback has been invoked.")
+                logger.warning(f"⚠️ Skipping action: {action_parsed} because agent fallback has been invoked.")
+                empty_span = TimedSpan.empty()
                 return ExecutionResult(
-                    action=action,
+                    action=action_parsed,
                     success=True,
                     message="Action skipped because agent fallback has been invoked.",
                     data=None,
                     exception=None,
+                    started_at=empty_span.started_at,
+                    ended_at=empty_span.ended_at,
                 )
             # logger.info(f"✏️ Agent fallback executing action: {action_log}")
             # Delegate to original execute and do not raise on failure
             result = self._orig_execute(  # type: ignore
-                action=action, raise_on_failure=False, **data
+                action=action_parsed, raise_on_failure=False, **data
             )
             # Record and maybe spawn agent
             self._record_step(result)
@@ -154,6 +167,7 @@ class RemoteAgentFallback:
         self._agent = self.client.Agent(session=self.session, **self.agent_params)
         self.agent_response = self._agent.run(
             task=AGENT_FALLBACK_INSTRUCTIONS.format(task=self.task, error=self.steps[-1].message),
+            response_format=self.response_format,
             session_offset=self.session_offset,
         )
         if self.agent_response.success:

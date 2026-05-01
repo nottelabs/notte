@@ -1,0 +1,199 @@
+---
+title: External Providers
+description: Connect Notte to external browser infrastructure via Chrome DevTools Protocol
+---
+
+import ExternalBasic from '/snippets/sessions/cdp/external_basic.mdx';
+import ExternalKernel from '/snippets/sessions/cdp/external_kernel.mdx';
+import ExternalBrowserbase from '/snippets/sessions/cdp/external_browserbase.mdx';
+import ExternalMultiProvider from '/snippets/sessions/cdp/external_multi_provider.mdx';
+import ExternalTroubleshooting from '/snippets/sessions/cdp/external_troubleshooting.mdx';
+import ExternalCdpAuth from '/snippets/sessions/cdp/external_cdp_auth.mdx';
+import ExternalCleanup from '/snippets/sessions/cdp/external_cleanup.mdx';
+import ExternalErrorHandling from '/snippets/sessions/cdp/external_error_handling.mdx';
+import ExternalMonitorCosts from '/snippets/sessions/cdp/external_monitor_costs.mdx';
+
+Notte can connect to any browser that exposes a Chrome DevTools Protocol (CDP) endpoint. This allows you to use Notte's features (Agents, Actions, Scraping) with browser infrastructure from providers like Kernel.sh or BrowserBase.
+
+## How It Works
+
+Instead of starting a browser in Notte's cloud, you can:
+
+1. Create a browser session with an external provider
+2. Get the CDP WebSocket URL from that provider
+3. Pass the CDP URL to Notte when creating a session
+4. Use Notte's features on the external browser
+
+<ExternalBasic />
+
+## Kernel.sh Integration
+
+Kernel.sh is a browser infrastructure platform optimized for AI agents. Here's how to use it with Notte:
+
+<ExternalKernel />
+
+<Tip>
+  See the [Kernel.sh Integration](/integrations/kernel) guide for complete setup instructions and examples.
+</Tip>
+
+## BrowserBase Integration
+
+BrowserBase provides managed browser infrastructure. Connect it to Notte:
+
+<ExternalBrowserbase />
+
+## Benefits of External Providers
+
+### When to Use External Providers
+
+Use external browser providers when you need:
+
+1. **Specialized Infrastructure**: Provider-specific optimizations or features
+2. **Existing Setup**: You already use a browser provider and want to add Notte's features
+3. **Compliance**: Browsers must run in specific regions or under specific conditions
+4. **Custom Configuration**: Complex browser setups or extensions
+5. **Cost Optimization**: Leverage existing browser infrastructure contracts
+
+### When to Use Notte's Browsers
+
+Use Notte's built-in browsers when you want:
+
+1. **Simplicity**: One-line session creation without managing external services
+2. **Built-in Features**: Anti-detection, captcha solving, proxies included
+3. **Integrated Management**: Session replay, cookie management, file storage
+4. **Fast Setup**: No additional configuration or API keys needed
+
+## What Notte Adds to External Browsers
+
+When you connect Notte to an external browser, you get:
+
+<CardGroup cols={2}>
+  <Card title="AI Agents" icon="sparkles">
+    Use Notte's Agent to automate complex tasks with natural language
+  </Card>
+
+  <Card title="Smart Actions" icon="hand-pointer">
+    Execute high-level actions with automatic element detection
+  </Card>
+
+  <Card title="Structured Scraping" icon="database">
+    Extract data into structured formats with AI-powered scraping
+  </Card>
+
+  <Card title="Observation API" icon="eye">
+    Get AI-powered page understanding and element analysis
+  </Card>
+</CardGroup>
+
+## Complete Example: Multi-Provider Setup
+
+Run the same automation across different providers:
+
+<ExternalMultiProvider />
+
+## Supported CDP Features
+
+When using external browsers, Notte supports:
+
+✅ **Supported**:
+- Page navigation and interaction via Playwright
+- Agent-based automation
+- Structured scraping with `scrape()`
+- Action execution with `execute()`
+- Page observation with `observe()`
+- Screenshot capture
+- JavaScript execution
+- Cookie management
+- Session replay recording
+- Live viewer
+
+❌ **Not Available**:
+- Notte's built-in anti-detection (use provider's features instead)
+- Notte's captcha solving (use provider's features instead)
+- Notte's proxy management (use provider's proxies)
+
+## Troubleshooting
+
+### CDP Connection Failures
+
+If connection fails, verify:
+
+1. **URL Format**: Ensure the CDP URL is correct (`ws://` or `wss://` prefix)
+2. **Network Access**: Check firewalls and network policies
+3. **Browser Availability**: Verify the browser is running and accessible
+4. **Timeout**: Increase session timeout for slow connections
+
+<ExternalTroubleshooting />
+
+### Browser State Issues
+
+When using external browsers:
+
+1. **Start Fresh**: Create new browser instances for each session
+2. **Clean State**: Clear cookies and cache between runs
+3. **Session Cleanup**: Always close/delete external browser sessions
+4. **Resource Limits**: Monitor memory and CPU usage
+
+### Authentication
+
+Some providers require authentication in the CDP URL:
+
+<ExternalCdpAuth />
+
+## Provider Comparison
+
+| Feature | Notte Built-in | Kernel.sh + Notte | BrowserBase + Notte |
+|---------|---------------|-------------------|---------------------|
+| Setup Complexity | Simple | Simple | Medium |
+| Anti-detection | ✅ Built-in | ✅ Built-in | ✅ Built-in |
+| Captcha Solving | ✅ Optional | ❌ | ❌ |
+| Residential Proxies | ✅ Optional | ✅ | ✅ |
+| Session Replay | ✅ Yes | ✅ Via Notte | ✅ Via Notte |
+| Live Viewer | ✅ Yes | ✅ Yes | ✅ Yes |
+| Pricing | Per session | Per session | Per session |
+
+## Best Practices
+
+### 1. Clean Up Resources
+
+Always clean up external browser sessions:
+
+<ExternalCleanup />
+
+### 2. Handle Errors Gracefully
+
+CDP connections can fail. Always use try-except:
+
+<ExternalErrorHandling />
+
+### 3. Choose the Right Provider
+
+- **High Volume**: Use managed providers (Kernel, BrowserBase)
+- **Simplicity**: Use Notte's built-in browsers
+- **Existing Infrastructure**: Connect to your current provider setup
+
+### 4. Monitor Costs
+
+External providers typically charge per session or minute. Monitor usage:
+
+<ExternalMonitorCosts />
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Kernel.sh Integration" icon="k" href="/integrations/kernel">
+    Complete Kernel.sh integration guide
+  </Card>
+
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Learn about session configuration options
+  </Card>
+
+  <Card title="Connect with Playwright" icon="p" href="/features/sessions/playwright">
+    Use Playwright directly with sessions
+  </Card>
+
+  <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle">
+    Manage session states
+  </Card>
+</CardGroup>

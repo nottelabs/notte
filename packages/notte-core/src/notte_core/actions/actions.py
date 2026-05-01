@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import override
 
 from notte_core.browser.dom_tree import NodeSelectors
+from notte_core.common.config import config
 from notte_core.credentials.types import ValueWithPlaceholder
 
 warnings.filterwarnings(
@@ -101,11 +102,17 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
             "press_enter",
             "option_selector",
             "text_label",
+            "timeout",
             # executable action fields
             "params",
-            "code",
             "status",
             "param",
+            # ScrapeAction fields (have sensible defaults, don't need agent exposure)
+            "only_images",
+            "scrape_links",
+            "scrape_images",
+            "ignored_tags",
+            "response_format",
         }
         if "selector" in cls.model_fields:
             fields.remove("id")
@@ -130,7 +137,11 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
         data = self.model_dump(exclude=fields)
         selector = data.get("selector")
         if selector:
-            data["selector"] = selector["playwright_selector"] or selector["xpath_selector"]
+            # Handle both NodeSelectors (dict-like) and plain string selectors
+            if isinstance(selector, str):
+                data["selector"] = selector
+            elif isinstance(selector, dict):
+                data["selector"] = selector.get("playwright_selector") or selector.get("xpath_selector")  # pyright: ignore [reportUnknownMemberType]
         return data
 
     def model_dump_agent_json(self) -> str:
@@ -219,6 +230,7 @@ class FormFillAction(BrowserAction):
             "cc_exp",
             "cc_cvv",
             "username",
+            "password",  # alias for current_password (normalized by validator)
             "current_password",
             "new_password",
             "totp",
@@ -229,13 +241,25 @@ class FormFillAction(BrowserAction):
     @field_validator("value", mode="before")
     @classmethod
     def verify_value(cls, value: Any) -> Any:
-        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
+        """Validator necessary to ignore typing issues with ValueWithPlaceholder.
+        Also normalizes 'password' key to 'current_password' for compatibility.
+        """
         if value is None:
             allowed_keys = get_args(get_args(cls.model_fields["value"].annotation)[0])
             raise ValueError(
                 f"'value' key in form fill action has to be an object with at least one key among {allowed_keys}, but got {value}. CRITICAL: fall back to the regular fill action"
             )
-        return value
+        # Strip null values — Gemini fills all expanded properties with null for unused fields
+        if isinstance(value, dict):
+            value = {k: v for k, v in value.items() if v is not None}  # pyright: ignore[reportUnknownVariableType]
+        # Normalize "password" to "current_password" for LLM compatibility
+        if isinstance(value, dict) and "password" in value:
+            if "current_password" in value:
+                raise ValueError(
+                    "Cannot specify both 'password' and 'current_password' in form_fill. Use only 'current_password'."
+                )
+            value = {("current_password" if k == "password" else k): v for k, v in value.items()}  # pyright: ignore[reportUnknownVariableType]
+        return value  # pyright: ignore[reportUnknownVariableType]
 
     @override
     def execution_message(self) -> str:
@@ -518,7 +542,7 @@ class ScrollUpAction(BrowserAction):
     **Example:**
     ```python
     session.execute(type="scroll_up", amount=500)  # Scroll up 500 pixels
-    session.execute(type="scroll_up", amount=None)  # Scroll up one page
+    session.execute(type="scroll_up")  # Scroll up one page
     ```
     """
 
@@ -549,7 +573,7 @@ class ScrollDownAction(BrowserAction):
     **Example:**
     ```python
     session.execute(type="scroll_down", amount=500)  # Scroll down 500 pixels
-    session.execute(type="scroll_down", amount=None)  # Scroll down one page
+    session.execute(type="scroll_down")  # Scroll down one page
     ```
     """
 
@@ -728,6 +752,8 @@ class ScrapeAction(ToolAction):
     session.execute(type="scrape", instructions="Extract product title and price")
     session.execute(type="scrape", only_main_content=True)
     session.execute(type="scrape")  # Scrape entire page
+    session.execute(type="scrape", only_images=True)  # Scrape only images
+    session.execute(type="scrape", response_format={"type": "object", "properties": {...}})  # With JSON schema
     ```
     """
 
@@ -745,10 +771,43 @@ class ScrapeAction(ToolAction):
             description="Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded."
         ),
     ] = True
+    selector: Annotated[
+        str | None,
+        Field(
+            description="Playwright selector to scope the scrape to. Only content inside this selector will be scraped."
+        ),
+    ] = None
+    only_images: Annotated[
+        bool,
+        Field(description="Whether to only scrape images from the page. If True, the page content is excluded."),
+    ] = False
+    scrape_links: Annotated[
+        bool,
+        Field(description="Whether to scrape links from the page. Links are scraped by default."),
+    ] = True
+    scrape_images: Annotated[
+        bool,
+        Field(description="Whether to scrape images from the page."),
+    ] = False
+    ignored_tags: Annotated[
+        list[str] | None,
+        Field(description="HTML tags to ignore from the page."),
+    ] = None
+    response_format: Annotated[
+        dict[str, Any] | None,
+        Field(
+            description="JSON schema dict for structured output. Agent can provide a schema to extract structured data."
+        ),
+    ] = None
 
     @override
     def execution_message(self) -> str:
-        if self.only_main_content:
+        if self.only_images:
+            return "Scraped images from the current page"
+
+        if self.selector:
+            content = f"content within selector '{self.selector}'"
+        elif self.only_main_content:
             content = "main content of the current page"
         else:
             content = "current page"
@@ -758,7 +817,11 @@ class ScrapeAction(ToolAction):
         else:
             instructions = ""
 
-        return f"Scraped the {content} in text format{instructions}"
+        format_info = ""
+        if self.response_format:
+            format_info = " with structured output"
+
+        return f"Scraped the {content} in text format{instructions}{format_info}"
 
     @override
     @staticmethod
@@ -858,6 +921,55 @@ class SmsReadAction(ToolAction):
         return ActionParameter(name="timedelta", type="datetime")
 
 
+class EvaluateJsAction(ToolAction):
+    """
+    Evaluate JavaScript code on the current page and return the result.
+    Useful for extracting structured data from a page without LLM processing.
+
+    The code is evaluated as a JavaScript expression. For simple cases use a single expression.
+    For multi-statement logic, use an IIFE (Immediately Invoked Function Expression):
+    ``(() => { /* statements */ return result; })()``
+
+    You will not get any output from console.log(), so simply use the return value if your goal is to gather information
+
+    **Example:**
+    ```python
+    session.execute(type="evaluate_js", code="document.title")
+    session.execute(type="evaluate_js", code="Array.from(document.querySelectorAll('a')).map(a => a.href)")
+    session.execute(type="evaluate_js", code="(() => { const els = document.querySelectorAll('a'); return els.length; })()")
+    ```
+    """
+
+    type: Literal["evaluate_js"] = "evaluate_js"  # pyright: ignore [reportIncompatibleVariableOverride]
+    description: str = (
+        "Evaluate JavaScript code on the current page and return the result. "
+        "For simple cases, provide a single expression (e.g. `document.title`). "
+        "For multi-statement code, wrap in an IIFE: `(() => { ...; return result; })()`"
+    )
+    code: Annotated[
+        str,
+        Field(
+            description="The JavaScript code to evaluate on the page. Use a single expression or an IIFE for multi-statement code."
+        ),
+    ]
+
+    @override
+    def execution_message(self) -> str:
+        # Truncate code for display if it's too long
+        code_preview = self.code[:50] + "..." if len(self.code) > 50 else self.code
+        return f"Evaluated JavaScript code: {code_preview}"
+
+    @override
+    @staticmethod
+    def example() -> "EvaluateJsAction":
+        return EvaluateJsAction(code="document.title")
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="code", type="str")
+
+
 # ############################################################
 # Interaction actions models
 # ############################################################
@@ -870,6 +982,7 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
     press_enter: bool | None = Field(default=None)
     text_label: str | None = Field(default=None)
     param: ActionParameter | None = Field(default=None, exclude=True)
+    timeout: int = Field(default=config.timeout_action_ms, description="Action timeout in milliseconds")
 
     INTERACTION_ACTION_REGISTRY: ClassVar[dict[str, typeAlias["InteractionAction"]]] = {}
 
@@ -918,9 +1031,26 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
 
     @field_validator("selector", mode="before")
     @classmethod
-    def validate_selector(cls, value: str | NodeSelectors | None) -> NodeSelectors | None:
+    def validate_selector(cls, value: str | NodeSelectors | dict[str, Any] | None) -> NodeSelectors | None:
         if isinstance(value, str):
             return NodeSelectors.from_unique_selector(value)
+        elif isinstance(value, dict):
+            # Validate that at least one selector field has a non-empty value
+            selector_fields = {"css_selector", "xpath_selector", "playwright_selector", "notte_selector"}
+            has_valid_selector = any(value.get(k) for k in selector_fields)
+            if not has_valid_selector:
+                raise ValueError(
+                    f"selector dict must contain at least one non-empty selector field from: {selector_fields}. Got: {value}"
+                )
+            # Copy to avoid mutating caller's dict
+            normalized = dict(value)
+            # Fill in missing required fields with defaults
+            normalized.setdefault("in_iframe", False)
+            normalized.setdefault("in_shadow_root", False)
+            normalized.setdefault("iframe_parent_css_selectors", [])
+            normalized.setdefault("css_selector", "")
+            normalized.setdefault("xpath_selector", "")
+            return NodeSelectors.model_validate(normalized)
         return value
 
     @staticmethod
@@ -929,12 +1059,13 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
         value: bool | str | int | None = None,
         id: str | None = None,
         selector: str | NodeSelectors | None = None,
+        timeout: int = config.timeout_action_ms,
     ) -> "InteractionAction":
         action_cls = InteractionAction.INTERACTION_ACTION_REGISTRY.get(action_type)
         if action_cls is None:
             raise ValueError(f"Invalid action type: {action_type}")
 
-        action_params: dict[str, Any] = {"id": id or ""}
+        action_params: dict[str, Any] = {"id": id or "", "timeout": timeout}
         if value is not None:
             action_params["value"] = value
 

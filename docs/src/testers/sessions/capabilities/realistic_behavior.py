@@ -1,0 +1,20 @@
+# @sniptest filename=realistic_behavior.py
+import random
+import time
+
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
+
+    # Bad: Instant actions
+    page.click("button")
+    page.fill("input", "text")
+
+    # Good: Human-like delays
+    page.click("button")
+    time.sleep(random.uniform(0.5, 1.5))
+    page.fill("input", "text")

@@ -56,10 +56,10 @@ The first request will contain the initial state of the environment, which is a 
 ```python
 from notte import NotteClient
 
-notte = NotteClient()
+client = NotteClient()
 
 # only for reference, this response will not work
-response = notte.bua.responses.create(
+response = client.bua.responses.create(
     params=[{
         "display_width": 1024,
         "display_height": 768,

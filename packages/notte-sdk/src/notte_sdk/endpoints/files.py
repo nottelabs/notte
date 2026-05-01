@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from notte_core.common.cache import CacheDirectory, ensure_cache_directory
 from notte_core.common.telemetry import track_usage
 from notte_core.storage import BaseStorage
 from typing_extensions import final, override
@@ -10,6 +12,7 @@ from typing_extensions import final, override
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.types import (
     DownloadFileRequest,
+    FileInfo,
     FileLinkResponse,
     FileUploadResponse,
     ListFilesResponse,
@@ -17,6 +20,19 @@ from notte_sdk.types import (
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
+
+
+def _get_cache_dir() -> Path:
+    """Get cache directory with NOTTE_CACHE_DIR override support."""
+    # Support NOTTE_CACHE_DIR override for backward compatibility
+    env_cache_dir = os.getenv("NOTTE_CACHE_DIR")
+    if env_cache_dir:
+        return Path(env_cache_dir)
+    # Use centralized cache directory
+    return ensure_cache_directory(CacheDirectory.FILES)
+
+
+NOTTE_CACHE_DIR: Path = _get_cache_dir()
 
 
 @final
@@ -164,7 +180,7 @@ class FileStorageClient(BaseClient):
         resp: FileLinkResponse = self.request(endpoint)
         return self.request_download(resp.url, str(file_path))
 
-    def list_uploaded_files(self) -> list[str]:
+    def list_uploaded_files(self) -> list[FileInfo]:
         """
         List files in storage. 'type' can be 'uploads' or 'downloads'.
         """
@@ -172,7 +188,7 @@ class FileStorageClient(BaseClient):
         resp: ListFilesResponse = self.request(endpoint)
         return resp.files
 
-    def list_downloaded_files(self, session_id: str) -> list[str]:
+    def list_downloaded_files(self, session_id: str) -> list[FileInfo]:
         """
         List files in storage. 'type' can be 'uploads' or 'downloads'.
         """
@@ -187,13 +203,13 @@ class RemoteFileStorage(BaseStorage):
         if _client is None:
             raise ValueError("FileStorageClient is required")
         self.client: FileStorageClient = _client
-        cache_dir = Path(__file__).parent.parent.parent.parent / ".notte.cache"
-        upload_dir = cache_dir / "uploads"
-        download_dir = cache_dir / "downloads"
-        upload_dir.mkdir(parents=True, exist_ok=True)
-        download_dir.mkdir(parents=True, exist_ok=True)
-        super().__init__(upload_dir=str(upload_dir), download_dir=str(download_dir))
+        super().__init__(upload_dir=str(NOTTE_CACHE_DIR / "uploads"), download_dir=str(NOTTE_CACHE_DIR / "downloads"))
         self._session_id: str | None = session_id
+
+    @property
+    @override
+    def is_remote(self) -> bool:
+        return True
 
     def set_session_id(self, id: str) -> None:
         self._session_id = id
@@ -236,8 +252,9 @@ class RemoteFileStorage(BaseStorage):
         return response.success
 
     @override
-    def get_file(self, name: str) -> str | None:
+    async def get_file(self, name: str) -> str | None:
         assert self.download_dir is not None
+        _ = Path(self.download_dir).mkdir(parents=True, exist_ok=True)
 
         status = self.client.download(session_id=self.session_id, file_name=name, local_dir=self.download_dir)
         if not status:
@@ -245,12 +262,12 @@ class RemoteFileStorage(BaseStorage):
         return str(Path(self.download_dir) / name)
 
     @override
-    def set_file(self, path: str) -> bool:
+    async def set_file(self, path: str) -> bool:
         response = self.client.upload_downloaded_file(session_id=self.session_id, file_path=path)
         return response.success
 
     @override
-    def list_uploaded_files(self) -> list[str]:
+    async def alist_uploaded_files(self) -> list[FileInfo]:
         """
         List files that have been uploaded to storage.
 
@@ -263,7 +280,7 @@ class RemoteFileStorage(BaseStorage):
         return self.client.list_uploaded_files()
 
     @override
-    def list_downloaded_files(self) -> list[str]:
+    async def alist_downloaded_files(self) -> list[FileInfo]:
         """
         List files that have been downloaded into storage by the agents.
 

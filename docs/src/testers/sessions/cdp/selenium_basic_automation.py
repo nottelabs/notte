@@ -1,0 +1,22 @@
+# @sniptest filename=selenium_basic_automation.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    page = session.page
+
+    # Navigate
+    page.goto("https://example.com/login")
+
+    # Fill form
+    page.fill('input[name="email"]', "user@example.com")
+    page.fill('input[name="password"]', "password123")
+
+    # Click submit
+    page.click('button[type="submit"]')
+
+    # Wait for navigation
+    page.wait_for_url("**/dashboard")
+
+    print(f"Logged in: {page.title()}")

@@ -3,6 +3,7 @@ import csv
 import functools
 import inspect
 import json
+import os
 import time
 from collections import defaultdict
 from typing import Any, Callable, ParamSpec, TypeVar, cast
@@ -16,6 +17,7 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.trace import Status, StatusCode, Tracer
 
+from notte_core.common.cache import CacheDirectory, ensure_cache_directory
 from notte_core.common.config import config
 from notte_core.common.logging import logger
 
@@ -32,14 +34,19 @@ class NotteProfiler:
     Supports multiple service names with separate TracerProviders for each service.
     """
 
-    def __init__(self, default_service_name: str = "default"):
+    def __init__(self, default_service_name: str | None = None):
         """
         Initialize the OpenTelemetry profiler.
 
         Args:
-            default_service_name (str): Default service name for general tracing
+            default_service_name (str): Default service name for general tracing.
+                If None, uses OTEL_SERVICE_NAME env var, or "default" as fallback.
         """
         self.enable: bool = config.enable_profiling
+        # Allow service name to be configured via environment variable
+        # This enables setting the service name before notte_core is imported
+        if default_service_name is None:
+            default_service_name = os.getenv("OTEL_SERVICE_NAME", "default")
         self.default_service_name: str = default_service_name
 
         # Multiple tracer providers for different services
@@ -454,10 +461,21 @@ class NotteProfiler:
         traverse_spans(hierarchy)
         return flamegraph_data
 
-    def save_results(self, output_file: str = "otel_profile_results.csv") -> None:
-        """Save profiling results to CSV."""
+    def save_results(self, output_file: str | None = None) -> None:
+        """Save profiling results to CSV.
+
+        Args:
+            output_file: Path to output CSV file. If None, uses cache directory.
+                        If relative path, uses it relative to cwd.
+                        If absolute path, uses it as-is.
+        """
         if not self.enable:
             raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
+
+        # Use cache directory if no output file specified
+        if output_file is None:
+            profiling_dir = ensure_cache_directory(CacheDirectory.PROFILING)
+            output_file = str(profiling_dir / "otel_profile_results.csv")
 
         span_data = self.get_span_data()
         flamegraph_data = self.generate_stack_paths(span_data)
@@ -489,12 +507,23 @@ class NotteProfiler:
             name = f"{indent}{item['name']}"
             print(f"{name:<40} {item['start_time']:<10.6f} {item['end_time']:<10.6f} {item['duration']:<12.6f}")
 
-    def generate_flamegraph_svg(
-        self, output_file: str = "flamegraph.svg", width: int = 1200, height: int = 600
-    ) -> None:
-        """Generate a traditional dark flamegraph with compact layout."""
+    def generate_flamegraph_svg(self, output_file: str | None = None, width: int = 1200, height: int = 600) -> None:
+        """Generate a traditional dark flamegraph with compact layout.
+
+        Args:
+            output_file: Path to output SVG file. If None, uses cache directory.
+                        If relative path, uses it relative to cwd.
+                        If absolute path, uses it as-is.
+            width: Width of the SVG in pixels.
+            height: Height of the SVG in pixels.
+        """
         if not self.enable:
             raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
+
+        # Use cache directory if no output file specified
+        if output_file is None:
+            profiling_dir = ensure_cache_directory(CacheDirectory.PROFILING)
+            output_file = str(profiling_dir / "flamegraph.svg")
 
         span_data = self.get_span_data()
         flamegraph_data = self.generate_stack_paths(span_data)
@@ -1074,10 +1103,21 @@ class NotteProfiler:
         except Exception as e:
             logger.error(f"Error generating flamegraph: {e}")
 
-    def save_trace_json(self, output_file: str = "trace.json") -> None:
-        """Save trace data in JSON format for external tools."""
+    def save_trace_json(self, output_file: str | None = None) -> None:
+        """Save trace data in JSON format for external tools.
+
+        Args:
+            output_file: Path to output JSON file. If None, uses cache directory.
+                        If relative path, uses it relative to cwd.
+                        If absolute path, uses it as-is.
+        """
         if not self.enable:
             raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
+
+        # Use cache directory if no output file specified
+        if output_file is None:
+            profiling_dir = ensure_cache_directory(CacheDirectory.PROFILING)
+            output_file = str(profiling_dir / "trace.json")
 
         span_data = self.get_span_data()
 
@@ -1115,4 +1155,4 @@ SERVICE_OBSERVATION = "observation"
 SERVICE_LLM = "llm"
 
 # Global profiler instance
-profiler = NotteProfiler(default_service_name=SERVICE_DEFAULT)
+profiler = NotteProfiler()  # Let it use OTEL_SERVICE_NAME env var

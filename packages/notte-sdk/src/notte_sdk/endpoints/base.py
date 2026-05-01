@@ -83,6 +83,7 @@ class BaseClient(ABC):
     DEFAULT_FILE_CHUNK_SIZE: ClassVar[int] = 8192
 
     HEALTH_CHECK_ENDPOINT: ClassVar[str] = "health"
+    REQUEST_ORIGIN: ClassVar[str] = "sdk-python"
 
     def __init__(
         self,
@@ -288,7 +289,7 @@ class BaseClient(ABC):
         try:
             response = requests.get(
                 f"{self.server_url}/{self.HEALTH_CHECK_ENDPOINT}",
-                headers={"x-notte-request-origin": "sdk", "x-notte-sdk-version": notte_core_version},
+                headers={"x-notte-request-origin": self.REQUEST_ORIGIN, "x-notte-sdk-version": notte_core_version},
             )
             if response.status_code != 200:
                 logger.error(f"⚠️ Health check failed with status code {response.status_code}.")
@@ -313,7 +314,7 @@ class BaseClient(ABC):
         return {
             "Authorization": f"Bearer {self.token}",
             "x-notte-sdk-version": notte_core_version,
-            "x-notte-request-origin": "sdk",
+            "x-notte-request-origin": self.REQUEST_ORIGIN,
             **(headers or {}),
         }
 

@@ -1,0 +1,21 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  # Connect to existing session
+  session_id = "550e8400-e29b-41d4-a716-446655440000"
+
+  with client.Session(session_id) as session:
+      print(f"Connected to session: {session.session_id}")
+
+      # Get current status
+      status = session.status()
+      print(f"Session status: {status.status}")
+
+      # Continue using the session
+      page = session.page
+      page.goto("https://example.com")
+  ```
+</CodeGroup>

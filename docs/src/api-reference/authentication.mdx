@@ -1,0 +1,44 @@
+---
+title: Authentication
+description: Authenticate with the Notte API
+---
+
+All API requests require a Bearer token in the `Authorization` header.
+
+## Get your API key
+
+1. Sign in to the [Notte Console](https://console.notte.cc)
+2. Navigate to your account settings
+3. Generate or copy your API key
+
+## Using the API key
+
+Set your API key locally before calling the REST API or using the Python SDK:
+
+```bash
+export NOTTE_API_KEY=your_api_key_here
+```
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()  # reads NOTTE_API_KEY automatically
+```
+
+If you want the full machine-readable API contract, the OpenAPI spec is available at:
+
+```text
+https://api.notte.cc/openapi.json
+```
+
+```bash
+curl https://api.notte.cc/sessions \
+  -H "Authorization: Bearer $NOTTE_API_KEY"
+```
+
+## Request headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Authorization` | Yes | Bearer token with your API key |
+| `Content-Type` | Yes | `application/json` for POST/PATCH requests |

@@ -1,0 +1,15 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/invocations/webhook_handler.py */}
+
+```python webhook_handler.py
+def run(event_type: str, data: dict):
+    """Handle webhook events."""
+    if event_type == "order.created":
+        # Process new order
+        process_order(data)
+    elif event_type == "user.signup":
+        # Welcome new user
+        send_welcome_email(data)
+
+    return {"status": "processed", "event": event_type}
+```

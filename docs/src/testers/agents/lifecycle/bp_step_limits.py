@@ -1,0 +1,11 @@
+# @sniptest filename=bp_step_limits.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    # Match max_steps to expected complexity
+    agent = client.Agent(
+        session=session,
+        max_steps=10,  # For tasks requiring 5-8 steps
+    )

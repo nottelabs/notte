@@ -1,0 +1,19 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/fallback/inspecting_steps.py */}
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    with client.AgentFallback(session, task="Task") as fb:
+        session.execute(type="click", selector="#btn1")
+        session.execute(type="click", selector="#btn2")  # Fails
+
+    for step in fb.steps:
+        print(f"Action: {step.action}")  # The action type and parameters
+        print(f"Success: {step.success}")  # Whether this step succeeded
+        if not step.success:
+            print(f"Error: {step.message}")  # Error message if failed
+```

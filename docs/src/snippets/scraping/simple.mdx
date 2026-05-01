@@ -1,10 +1,13 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/scraping/simple.py */}
+
 ```python simple_scrape.py
 from notte_sdk import NotteClient
 
 client = NotteClient()
 markdown = client.scrape(
-	url="https://www.notte.cc",
-	only_main_content=True,
+    url="https://www.notte.cc",
+    only_main_content=True,
 )
 print(markdown)
 ```

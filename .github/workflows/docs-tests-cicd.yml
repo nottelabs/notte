@@ -12,17 +12,12 @@ on:
     paths:
       - 'docs/**'
 
-env:
-  NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
-  NOTTE_GITHUB_COM_EMAIL: ${{ secrets.NOTTE_GITHUB_COM_EMAIL }}
-  NOTTE_GITHUB_COM_PASSWORD: ${{ secrets.NOTTE_GITHUB_COM_PASSWORD }}
-  NOTTE_GITHUB_COM_MFA_SECRET: ${{ secrets.NOTTE_GITHUB_COM_MFA_SECRET }}
-  DOCS_TEST_TYPE_CHECK: "true"  # Run mypy type checking on examples
-
 jobs:
-  snippets-tests:
+  syntax-check:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
+    env:
+      DOCS_TEST_FAST_MODE: "true"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -41,7 +36,68 @@ jobs:
           source .venv/bin/activate
 
       - name: Install dependencies
-        run: uv pip install notte-sdk pytest-examples patchright mypy
+        run: uv pip install notte-sdk pytest-examples
+
+      - name: Run syntax checks
+        run: cd docs/src && uv run pytest -v --tb=no
+
+  type-check:
+    needs: syntax-check
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 20
+    env:
+      DOCS_TEST_TYPE_CHECK: "true"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Create virtual environment
+        run: |
+          uv venv --python 3.11
+          source .venv/bin/activate
+
+      - name: Install dependencies
+        run: uv pip install notte-sdk pytest-examples mypy
+
+      - name: Run type checks
+        run: cd docs/src && uv run pytest -v --tb=no
+
+  execution:
+    needs: type-check
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 30
+    env:
+      NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+      NOTTE_GITHUB_COM_EMAIL: ${{ secrets.NOTTE_GITHUB_COM_EMAIL }}
+      NOTTE_GITHUB_COM_PASSWORD: ${{ secrets.NOTTE_GITHUB_COM_PASSWORD }}
+      NOTTE_GITHUB_COM_MFA_SECRET: ${{ secrets.NOTTE_GITHUB_COM_MFA_SECRET }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Create virtual environment
+        run: |
+          uv venv --python 3.11
+          source .venv/bin/activate
+
+      - name: Install dependencies
+        run: uv pip install notte-sdk pytest-examples patchright
 
       - name: Install patchright
         run: uv run patchright install --no-shell
@@ -54,5 +110,5 @@ jobs:
           fi
           echo "Environment variables are set"
 
-      - name: Run snippets tests
+      - name: Run execution tests
         run: cd docs/src && uv run pytest -v --tb=no

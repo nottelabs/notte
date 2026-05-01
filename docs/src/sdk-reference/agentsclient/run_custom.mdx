@@ -1,10 +1,9 @@
 ---
 title: "run_custom"
-description: "Run an custom agent with the specified request parameters"
+description: "Run a custom agent with the specified request parameters and wait for completion"
 ---
 
 
-and wait for completion
 
 Note: not all servers support custom agents
 
@@ -12,9 +11,6 @@ Note: not all servers support custom agents
 ## Parameters
 
 <ParamField path="request" type="BaseModel" required>
-</ParamField>
-
-<ParamField path="parallel_attempts" type="int" default="1">
 </ParamField>
 
 <ParamField path="viewer" type="bool" default="False">

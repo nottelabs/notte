@@ -12,7 +12,8 @@ from notte_core.space import SpaceCategory
 from notte_sdk.client import NotteClient
 from notte_sdk.errors import AuthenticationError
 from notte_sdk.types import (
-    DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
+    DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES,
+    DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
     ExecutionRequest,
     ExecutionRequestDict,
     ObserveResponse,
@@ -40,7 +41,7 @@ def headers(api_key: str) -> dict[str, str]:
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "x-notte-sdk-version": notte_core_version,
-        "x-notte-request-origin": "sdk",
+        "x-notte-request-origin": "sdk-python",
     }
 
 
@@ -73,7 +74,8 @@ def session_id() -> str:
 def session_response_dict(session_id: str, close: bool = False) -> dict[str, Any]:
     return {
         "session_id": session_id,
-        "timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
+        "idle_timeout_minutes": DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES,
+        "max_duration_minutes": DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
         "created_at": dt.datetime.now(),
         "last_accessed_at": dt.datetime.now(),
         "duration": dt.timedelta(seconds=100),
@@ -111,13 +113,14 @@ def test_open_viewer_false_no_viewer(client: NotteClient, session_id: str) -> No
 
 def test_session_always_headless_true_on_wire(client: NotteClient, session_id: str, headers: dict[str, str]) -> None:
     """Test that session start requests always include headless=True."""
-    with patch("requests.post") as mock_post, patch.object(client.sessions, "viewer"):
+    with patch("requests.post") as mock_post:
         mock_response = session_response_dict(session_id)
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = mock_response
 
         session = client.Session(open_viewer=True, _client=client.sessions)
-        session.start()
+        with patch.object(session, "viewer"):
+            session.start()
 
         # Verify the request was made
         assert mock_post.called
@@ -161,12 +164,13 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, session_id: st
     session_data: SessionStartRequestDict = {
         "headless": True,
         "solve_captchas": False,
-        "timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
+        "idle_timeout_minutes": DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES,
+        "max_duration_minutes": DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
         "proxies": False,
         "browser_type": "chromium",
         "viewport_width": 1920,
         "viewport_height": 1080,
-        "use_file_storage": False,
+        "use_file_storage": True,
     }
     response = _start_session(mock_post=mock_post, client=client, session_id=session_id)
     assert response.session_id == session_id
@@ -231,7 +235,8 @@ def test_observe(
     if start_session:
         _ = _start_session(mock_post, client, session_id)
     mock_response = {
-        "session": session_response_dict(session_id),
+        "started_at": dt.datetime.now(),
+        "ended_at": dt.datetime.now(),
         "metadata": {
             "title": "Test Page",
             "url": "https://example.com",
@@ -301,7 +306,8 @@ def test_step(
     if start_session:
         _ = _start_session(mock_post, client, session_id)
     mock_response = {
-        "session": session_response_dict(session_id),
+        "started_at": dt.datetime.now(),
+        "ended_at": dt.datetime.now(),
         "data": {
             "markdown": "test data",
         },
@@ -339,7 +345,8 @@ def test_step(
 def test_format_observe_response(client: NotteClient, session_id: str) -> None:
     response_dict = {
         "status": 200,
-        "session": session_response_dict(session_id),
+        "started_at": dt.datetime.now(),
+        "ended_at": dt.datetime.now(),
         "metadata": {
             "title": "Test Page",
             "url": "https://example.com",
@@ -391,3 +398,90 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
         ),
     ]
     assert obs.space.category == SpaceCategory.HOMEPAGE
+
+
+# ============================================================================
+# Timeout Parameters Tests
+# ============================================================================
+
+
+def test_new_timeout_parameters_with_defaults() -> None:
+    """Test new timeout parameters use correct defaults."""
+    request = SessionStartRequest()
+    assert request.max_duration_minutes == DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
+    assert request.idle_timeout_minutes == DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES
+
+
+def test_new_timeout_parameters_explicit() -> None:
+    """Test new explicit timeout parameters."""
+    request = SessionStartRequest(max_duration_minutes=10, idle_timeout_minutes=5)
+    assert request.max_duration_minutes == 10
+    assert request.idle_timeout_minutes == 5
+
+
+def test_timeout_minutes_backward_compatibility() -> None:
+    """Test that old timeout_minutes parameter maps to idle_timeout_minutes."""
+    import warnings
+
+    with warnings.catch_warnings(record=True):
+        request = SessionStartRequest.model_validate(dict(timeout_minutes=7))
+    # Should map to idle_timeout_minutes
+    assert request.idle_timeout_minutes == 7
+    assert request.max_duration_minutes == DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
+
+
+def test_max_duration_validation() -> None:
+    """Test max_duration_minutes validation (must be <= 60)."""
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError) as exc_info:
+        test_max_duration = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES + 1
+        _ = SessionStartRequest(max_duration_minutes=test_max_duration)
+
+    # Check that the error is about the max_duration_minutes field
+    assert "max_duration_minutes" in str(exc_info.value)
+
+    # Should work with valid value
+    request = SessionStartRequest(max_duration_minutes=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES)
+    assert request.max_duration_minutes == DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
+
+
+def test_idle_timeout_validation() -> None:
+    """Test idle_timeout_minutes validation (must be > 0)."""
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        _ = SessionStartRequest(idle_timeout_minutes=0)
+
+    with pytest.raises(ValidationError):
+        _ = SessionStartRequest(idle_timeout_minutes=-5)
+
+
+def test_session_start_with_new_timeout_params(client: NotteClient, session_id: str) -> None:
+    """Test session start with new timeout parameters."""
+    max_duration_minutes = 10
+    idle_timeout_minutes = 5
+    with patch("requests.post") as mock_post:
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {
+            "session_id": session_id,
+            "max_duration_minutes": max_duration_minutes,
+            "idle_timeout_minutes": idle_timeout_minutes,
+            "status": "active",
+            "created_at": dt.datetime.now().isoformat(),
+            "last_accessed_at": dt.datetime.now().isoformat(),
+        }
+
+        session = client.Session(
+            max_duration_minutes=max_duration_minutes,
+            idle_timeout_minutes=idle_timeout_minutes,
+            _client=client.sessions,
+        )
+        session.start()
+
+        # Verify the request was made with correct params
+        assert mock_post.called
+        call_args = mock_post.call_args
+        request_data = json.loads(call_args[1]["data"])
+        assert request_data["max_duration_minutes"] == max_duration_minutes
+        assert request_data["idle_timeout_minutes"] == idle_timeout_minutes

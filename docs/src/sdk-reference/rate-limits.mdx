@@ -1,0 +1,40 @@
+---
+title: Rate Limits
+description: Handle rate limits in the Notte SDK
+---
+
+When you exceed rate limits, the API returns a `429` status code. Implement backoff to handle this gracefully.
+
+## Exponential backoff
+
+```python
+import time
+from notte_sdk import NotteClient
+from notte_sdk.errors import NotteAPIError
+
+client = NotteClient()
+
+def request_with_backoff(max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            with client.Session() as session:
+                return session.scrape(url="https://example.com")
+        except NotteAPIError as e:
+            if e.status_code == 429:
+                wait_time = 2 ** attempt  # 1, 2, 4 seconds
+                print(f"Rate limited. Waiting {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                raise
+    raise Exception("Max retries exceeded")
+```
+
+## Best practices
+
+1. **Implement backoff** — Always handle 429 responses with exponential backoff
+2. **Batch requests** — Combine multiple operations when possible
+3. **Cache responses** — Avoid redundant API calls by caching results
+
+## Increasing limits
+
+Need higher limits? [Contact us](https://cal.com/team/notte/demo) to discuss enterprise options.

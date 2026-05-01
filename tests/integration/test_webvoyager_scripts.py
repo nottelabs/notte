@@ -96,6 +96,7 @@ async def test_wikipedia_search():
         _ = await page.aexecute(ScrapeAction())
 
 
+@pytest.mark.skip(reason="Bot detection http 402")
 @pytest.mark.asyncio
 async def test_allrecipes_search():
     async with NotteSession() as page:
@@ -106,6 +107,7 @@ async def test_allrecipes_search():
         if consent_cookie and "Consent" in consent_cookie.text:
             _ = await page.aexecute(ClickAction(id="B3"))
             _ = await page.aobserve(perception_type=perception_type)
+
         _ = await page.aexecute(FillAction(id="I1", value="chicken breast and quinoa"))
         _ = await page.aobserve(perception_type=perception_type)
         _ = await page.aexecute(ClickAction(id="B1"))

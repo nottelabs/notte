@@ -1,0 +1,17 @@
+from datetime import datetime
+
+
+def run_monitored_function():
+    try:
+        function = client.Function(function_id="func_abc123")
+        result = function.run()
+
+        if result.status == "closed":
+            log_success(datetime.now())
+        else:
+            alert_failure(result.result)
+
+    except Exception as e:
+        # Function broken - maybe page changed?
+        # Time to re-run agent and regenerate
+        alert_function_broken(e)

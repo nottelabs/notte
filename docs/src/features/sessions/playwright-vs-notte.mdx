@@ -1,0 +1,114 @@
+---
+title: Playwright vs Notte Controls
+description: Understanding the difference between direct Playwright control and Notte's AI-enabled SDK
+---
+
+import PlaywrightExample from '/snippets/sessions/playwright-vs-notte/playwright_example.mdx';
+import NotteSdkExample from '/snippets/sessions/playwright-vs-notte/notte_sdk_example.mdx';
+import MixBoth from '/snippets/sessions/playwright-vs-notte/mix_both.mdx';
+import PlaywrightDirect from '/snippets/sessions/playwright-vs-notte/playwright_direct.mdx';
+import NotteSdkMethods from '/snippets/sessions/playwright-vs-notte/notte_sdk_methods.mdx';
+
+When working with Notte sessions, you have two ways to interact with the browser: using Playwright directly via CDP, or using Notte's AI-enabled SDK methods. Both approaches work with the same session, and you can even mix them in your automation.
+
+## Direct Playwright Control
+
+When you access `session.page`, you get a Playwright-compatible page object that connects directly to the browser via Chrome DevTools Protocol:
+
+<PlaywrightDirect />
+
+This gives you the full Playwright API - everything you can do with Playwright works here. You control the browser directly through WebSocket connections with low latency.
+
+## Notte SDK Methods
+
+Notte provides high-level methods designed for AI agents and structured automation:
+
+<NotteSdkMethods />
+
+These methods use Notte's backend to execute actions, with built-in AI capabilities, observability, and error handling.
+
+## Key Differences
+
+| Feature | Playwright (`session.page`) | Notte SDK (`execute/observe/scrape`) |
+|---------|---------------------------|--------------------------------------|
+| **API Surface** | Full Playwright API | Streamlined action-based API |
+| **Dependencies** | Requires `playwright` package | Just `notte-sdk` |
+| **Element Selection** | Manual CSS/XPath selectors | AI-powered natural language + selectors |
+| **Page Understanding** | Manual interpretation | AI describes page with `observe()` |
+| **Data Extraction** | Manual parsing | Structured LLM-powered `scrape()` |
+| **Observability** | Manual logging | Session replay, action recording, live viewer |
+| **Error Handling** | Manual try/except | Automatic retries and validation |
+| **Network Control** | ✅ Intercept, modify requests | ❌ Not available |
+| **Latency** | Lower (WebSocket) | Higher (HTTP API) |
+| **Action Coverage** | Everything | Everything via extensive action library |
+
+## Why Use Playwright?
+
+Choose `session.page` when you need:
+
+- **Network control** - Intercept, block, or modify requests and responses
+- **Event monitoring** - Listen to console logs, network events, page errors
+- **Lowest latency** - Direct WebSocket communication for high-speed operations
+- **Standard patterns** - Use familiar Playwright code and examples
+- **Fine-grained control** - Access to every Playwright feature
+
+<PlaywrightExample />
+
+## Why Use Notte SDK?
+
+Choose `session.execute()`, `observe()`, and `scrape()` when you need:
+
+- **AI-powered automation** - Let AI find elements and understand pages
+- **Structured data extraction** - Extract data into Pydantic models automatically
+- **Built-in observability** - Session replays, trajectory tracking, live viewer
+- **Simpler API** - Smaller learning curve, no Playwright knowledge required
+- **Production reliability** - Automatic retries, error handling, validation
+- **Agent workflows** - Designed for AI agents with semantic action spaces
+
+<NotteSdkExample />
+
+## Mix Both Approaches
+
+You can combine both methods in the same session:
+
+<MixBoth />
+
+## When to Choose What
+
+### Use Playwright if:
+- You need network interception or request modification
+- You're integrating existing Playwright scripts
+- Performance is critical (milliseconds matter)
+- You need to listen to browser events
+
+### Use Notte SDK if:
+- Building AI agents that understand web pages
+- You want structured data extraction
+- You need session replay and debugging features
+- You prefer simpler, action-based API
+- Building production systems with error handling
+
+### Use Both if:
+- You need network control AND AI features
+- Complex workflows with different requirements
+- You want the flexibility of both approaches
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Connect with Playwright" icon="p" href="/features/sessions/playwright">
+    Learn how to use Playwright with Notte sessions
+  </Card>
+
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Configure sessions with advanced options
+  </Card>
+
+  <Card title="Actions Reference" icon="hand-pointer" href="/sdk-reference/misc/gotoaction">
+    Explore all available Notte actions
+  </Card>
+
+  <Card title="Recordings" icon="video" href="/features/sessions/recordings">
+    Debug with session replays
+  </Card>
+</CardGroup>

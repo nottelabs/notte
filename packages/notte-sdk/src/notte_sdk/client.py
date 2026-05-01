@@ -1,6 +1,6 @@
 # pyright: reportImportCycles=false
 from functools import partial
-from typing import Literal, Unpack, cast, overload
+from typing import Any, Literal, Unpack, cast, overload
 
 from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
@@ -11,9 +11,11 @@ from pydantic import BaseModel
 from typing_extensions import final
 
 from notte_sdk.agent_fallback import RemoteAgentFallback
-from notte_sdk.endpoints.agents import AgentsClient, BatchRemoteAgent, RemoteAgent
+from notte_sdk.endpoints.agents import AgentsClient, RemoteAgent
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
+from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.personas import NottePersona, PersonasClient
+from notte_sdk.endpoints.profiles import ProfilesClient
 from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
 from notte_sdk.endpoints.workflows import RemoteWorkflow, WorkflowsClient
@@ -59,12 +61,17 @@ class NotteClient:
         self.vaults: VaultsClient = VaultsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
+        self.profiles: ProfilesClient = ProfilesClient(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
         self.files: FileStorageClient = FileStorageClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
         self.workflows: WorkflowsClient = WorkflowsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
+
+        self.functions = self.workflows
 
         if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
             logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
@@ -80,10 +87,6 @@ class NotteClient:
     @property
     def Agent(self) -> type[RemoteAgent]:
         return cast(type[RemoteAgent], partial(RemoteAgent, _client=self.agents))
-
-    @property
-    def BatchAgent(self) -> type[BatchRemoteAgent]:
-        return cast(type[BatchRemoteAgent], partial(BatchRemoteAgent, _client=self))
 
     @property
     def Vault(self) -> type[NotteVault]:
@@ -102,6 +105,10 @@ class NotteClient:
         return cast(type[RemoteWorkflow], partial(RemoteWorkflow, _client=self))
 
     @property
+    def Function(self) -> type[NotteFunction]:
+        return cast(type[NotteFunction], partial(NotteFunction, _client=self))
+
+    @property
     def AgentFallback(self) -> type[RemoteAgentFallback]:
         return cast(type[RemoteAgentFallback], partial(RemoteAgentFallback, _client=self))
 
@@ -112,8 +119,11 @@ class NotteClient:
         return self.sessions.health_check()
 
     @overload
-    def scrape(self, /, url: str, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+    def scrape(
+        self, /, url: str, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> str: ...
 
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
     @overload
     def scrape(  # pyright: ignore [reportOverlappingOverload]
         self,
@@ -121,9 +131,23 @@ class NotteClient:
         url: str,
         *,
         instructions: str,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> dict[str, Any]: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    def scrape(  # pyright: ignore [reportOverlappingOverload]
+        self,
+        /,
+        url: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[False],
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[BaseModel]: ...
 
+    # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
     def scrape(  # pyright: ignore [reportOverlappingOverload]
         self,
@@ -132,15 +156,29 @@ class NotteClient:
         *,
         response_format: type[TBaseModel],
         instructions: str | None = None,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> TBaseModel: ...
+
+    # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
+    @overload
+    def scrape(  # pyright: ignore [reportOverlappingOverload]
+        self,
+        /,
+        url: str,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[False],
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
     @overload
-    def scrape(self, /, url: str, *, only_images: Literal[True]) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
+    def scrape(self, /, url: str, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
 
     def scrape(
-        self, /, url: str, **data: Unpack[ScrapeRequestDict]
-    ) -> str | StructuredData[BaseModel] | list[ImageData]:
+        self, /, url: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
         """
         Scrape the current page data.
 
@@ -172,13 +210,19 @@ class NotteClient:
 
         Args:
             url: The URL to scrape.
+            raise_on_failure: If True (default), raises ScrapeFailedError when structured data
+                extraction fails and returns the extracted data directly. If False, returns
+                the StructuredData wrapper so user can check .success.
             **data: Additional parameters for the scrape.
 
         Returns:
-            The scraped data.
+            When using instructions/response_format and raise_on_failure=True: returns the extracted data directly.
+            When raise_on_failure=False: returns StructuredData wrapper so user can check .success.
+            For markdown scraping: returns str.
+            For image scraping: returns list[ImageData].
         """
         with self.Session(open_viewer=False, perception_type="fast") as session:
             result = session.execute(GotoAction(url=url))
             if not result.success and result.exception is not None:
                 raise result.exception
-            return session.scrape(**data)
+            return session.scrape(raise_on_failure=raise_on_failure, **data)

@@ -1,0 +1,23 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/scraping/extract_lists.py */}
+
+```python extract_lists.py
+
+class Article(BaseModel):
+    title: str
+    url: str
+    summary: str
+
+
+class ArticleList(BaseModel):
+    articles: list[Article]
+
+
+client = NotteClient()
+articles = client.scrape(
+    "https://news.example.com", response_format=ArticleList, instructions="Extract all articles from the homepage"
+)
+
+for article in articles.articles:
+    print(f"{article.title}: {article.url}")
+```

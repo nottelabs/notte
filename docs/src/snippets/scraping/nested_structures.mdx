@@ -1,0 +1,25 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/scraping/nested_structures.py */}
+
+```python nested_structures.py
+
+class Address(BaseModel):
+    street: str
+    city: str
+    country: str
+
+
+class Company(BaseModel):
+    name: str
+    description: str
+    address: Address
+    employee_count: int | None
+
+
+client = NotteClient()
+company = client.scrape(
+    "https://example.com/about", response_format=Company, instructions="Extract company information including address"
+)
+
+print(company.address.city)
+```

@@ -24,7 +24,7 @@ Run an async agent with the specified request parameters
 ### arun_custom
 
 ```python
-arun_custom(request: <class 'pydantic.main.BaseModel'>, parallel_attempts: <class 'int'> = 1, viewer: <class 'bool'> = False) -> <class 'notte_sdk.types.AgentStatusResponse'>
+arun_custom(request: <class 'pydantic.main.BaseModel'>, viewer: <class 'bool'> = False) -> <class 'notte_sdk.types.AgentStatusResponse'>
 ```
 
 **Returns:**
@@ -102,18 +102,21 @@ A sequence of AgentResponse objects.
 ### replay
 
 ```python
-replay(agent_id: <class 'str'>) -> <class 'notte_core.utils.webp_replay.MP4Replay'>
+replay(agent_id: str, wait: bool = True, timeout: float = 240.0, poll_interval: float = 5.0) -> ReplayResponse
 ```
 
-Downloads the replay for the specified agent in mp4 format
+Get presigned URLs for the specified agent's session replay. Deprecated — use `session.replay()` instead.
 
 **Parameters:**
 
-- `agent_id`: The identifier of the agent to download the replay for.
+- `agent_id`: The identifier of the agent to get the replay for.
+- `wait`: If `True` (default), poll until the replay is ready.
+- `timeout`: Maximum seconds to wait for the replay to become available. Defaults to `240.0`.
+- `poll_interval`: Seconds between polling attempts. Defaults to `5.0`.
 
 **Returns:**
 
-The replay file in mp4 format.
+[`ReplayResponse`](/sdk-reference/misc/replayresponse): Contains presigned URLs for MP4 download and HLS playlist.
 
 ---
 
@@ -200,7 +203,7 @@ Run an agent with the specified request parameters
 ### run_custom
 
 ```python
-run_custom(request: <class 'pydantic.main.BaseModel'>, parallel_attempts: <class 'int'> = 1, viewer: <class 'bool'> = False) -> <class 'notte_sdk.types.AgentStatusResponse'>
+run_custom(request: <class 'pydantic.main.BaseModel'>, viewer: <class 'bool'> = False) -> <class 'notte_sdk.types.AgentStatusResponse'>
 ```
 
 Run an custom agent with the specified request parameters

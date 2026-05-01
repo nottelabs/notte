@@ -1,0 +1,12 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/replay/save_production_replays.py */}
+
+```python save_production_replays.py
+    result = agent.run(task="Production task")
+    if not result.success:
+        replay = session.replay()
+        replay.download(f"prod_failure_{agent.agent_id}.mp4")
+        logger.error(f"Agent failed, replay saved: prod_failure_{agent.agent_id}.mp4")
+except Exception as e:
+    logger.error(f"Agent exception: {e}")
+```

@@ -1,0 +1,26 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/cdp/selenium_finding_elements.py */}
+
+```python selenium_finding_elements.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
+
+    # CSS selectors
+    element = page.query_selector("div.content")
+
+    # XPath (use locator with xpath)
+    element = page.locator("xpath=//div[@class='content']")
+
+    # Get text content
+    text = page.locator("h1").inner_text()
+    print(f"Heading: {text}")
+
+    # Get attribute
+    href = page.locator("a.link").get_attribute("href")
+    print(f"Link: {href}")
+```

@@ -43,15 +43,19 @@ async def test_goto_and_scrape():
     """Test the execution of various special actions"""
     async with NotteSession(headless=True) as page:
         # Test S1: Go to URL
-        _ = await page.aexecute(type="goto", value="https://example.com/")
+        _ = await page.aexecute(type="goto", url="https://example.com/")
         obs = await page.aobserve(perception_type="fast")
         assert obs.clean_url == "example.com"
 
-        example_com_str = "This domain is for use in documentation examples without needing permission. Avoid use in operations.\n\nLearn more"
+        example_com_str = (
+            "This domain is for use in documentation examples without needing permission. Avoid use in operations."
+        )
 
         # Test S2: Scrape data
         markdown = await page.ascrape()
-        assert markdown.strip() == example_com_str, f"Expected typical example.com str, got {markdown}"
+        assert example_com_str in markdown.strip(), (
+            f"Expected typical example.com str, got: \n ```markdown\n{markdown}\n```"
+        )
 
 
 @pytest.mark.asyncio
@@ -162,7 +166,7 @@ async def test_scroll_on_non_scrollable_page_should_fail():
         res = await session.aexecute(type="scroll_down")
         assert not res.success
         assert isinstance(res.exception, ScrollActionFailedError)
-        assert res.message == ScrollActionFailedError().agent_message
+        assert res.message == ScrollActionFailedError().dev_message
 
 
 @pytest.mark.asyncio
@@ -182,3 +186,34 @@ async def test_scroll_on_scrollable_page_should_succeed():
         assert obs3.metadata.viewport.scroll_x == obs2.metadata.viewport.scroll_x
         assert obs3.metadata.viewport.scroll_y != obs2.metadata.viewport.scroll_y
         assert obs3.metadata.viewport.scroll_y == obs.metadata.viewport.scroll_y
+
+
+@pytest.mark.asyncio
+async def test_evaluate_js_action():
+    """Test the evaluate_js action returns correct results"""
+    async with NotteSession(headless=True) as session:
+        _ = await session.aexecute(type="goto", url="https://example.com")
+
+        # Test getting page title via evaluate_js
+        result = await session.aexecute(type="evaluate_js", code="document.title")
+        assert result.success
+        assert result.data is not None
+        assert "Example Domain" in result.data.markdown
+
+        # Test getting structured data (array of links)
+        result = await session.aexecute(
+            type="evaluate_js",
+            code="Array.from(document.querySelectorAll('a')).map(a => ({href: a.href, text: a.innerText}))",
+        )
+        assert result.success
+        assert result.data is not None
+        # Result should be JSON array
+        assert "[" in result.data.markdown
+        assert "href" in result.data.markdown
+
+        # Test returning a simple number
+        result = await session.aexecute(type="evaluate_js", code="document.querySelectorAll('p').length")
+        assert result.success
+        assert result.data is not None
+        # Should be a number as string
+        assert result.data.markdown.isdigit()

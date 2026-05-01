@@ -1,0 +1,30 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from kernel import Kernel
+
+  # Initialize clients
+  client = NotteClient()
+  kernel = Kernel()
+
+  # Create browser on Kernel
+  kernel_browser = kernel.browsers.create()
+
+  try:
+      # Connect Notte to Kernel's browser
+      with client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
+          # Use Notte's features
+          page = session.page
+          page.goto("https://example.com")
+
+          # Run an Agent
+          agent = client.Agent(session=session, max_steps=10)
+          result = agent.run(task="Find the contact email")
+
+          print(f"Result: {result.answer}")
+
+  finally:
+      # Clean up Kernel browser
+      kernel.browsers.delete_by_id(kernel_browser.session_id)
+  ```
+</CodeGroup>

@@ -1,0 +1,22 @@
+# @sniptest filename=order_processor.py
+from notte_sdk import NotteClient
+
+
+# order_processor.py
+def run(order_id: str, action: str):
+    client = NotteClient()
+
+    with client.Session() as session:
+        # Login to admin panel
+        session.execute(type="goto", url="https://admin.example.com")
+
+        # Process order
+        if action == "fulfill":
+            session.execute(type="click", selector=f"button[data-order='{order_id}'].fulfill")
+        elif action == "refund":
+            session.execute(type="click", selector=f"button[data-order='{order_id}'].refund")
+
+    return {"order_id": order_id, "action": action, "status": "completed"}
+
+
+# Called via webhook from your e-commerce platform

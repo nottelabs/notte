@@ -1,0 +1,10 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/structured-output/overview_structured.py */}
+
+```python overview_structured.py
+agent = client.Agent(session=session)
+result = agent.run(task="Find contact info", response_format=ContactInfo)
+if result.success and result.answer:
+    contact = ContactInfo.model_validate_json(result.answer)
+    print(contact.email)  # Type-safe access
+```

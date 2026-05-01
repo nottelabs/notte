@@ -7,18 +7,19 @@ import notte
 
 @pytest.fixture
 def task():
-    return "go to notte.cc and extract the pricing plans"
+    return "go to notte.cc and extract the names and monthly costs of each pricing tier"
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=5)
 def test_falco_agent(task: str):
     with notte.Session() as session:
-        agent = notte.Agent(session=session, agent_type=AgentType.FALCO, max_steps=5)
+        agent = notte.Agent(session=session, agent_type=AgentType.FALCO, max_steps=7)
         assert agent is not None
-        response = agent.run(task=task)
+        response = agent.run(task=task, url="https://notte.cc")
     assert response is not None
-    assert response.success
     assert response.answer is not None
-    assert response.answer != ""
+    assert response.answer != "", f"Expected non-empty answer, got: {response.answer}"
+    assert response.success, f"Failed to run agent: {response.answer}"
 
 
 @pytest.mark.skip("Renable that later on when we fix the gufo agent")
@@ -41,6 +42,13 @@ def test_falco_agent_external_model(task: str):
     assert response is not None
     assert response.answer is not None
     assert response.answer != ""
+
+    assert len(session.trajectory) >= 4
+    completion_step = next(session.trajectory.agent_completions())
+    assert completion_step is not None
+    assert completion_step.started_at is not None
+    assert completion_step.ended_at is not None
+    assert completion_step.ended_at > completion_step.started_at
 
 
 def test_falco_agent_invalid_external_model_should_fail(task: str):

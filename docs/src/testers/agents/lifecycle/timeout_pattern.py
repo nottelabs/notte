@@ -1,0 +1,23 @@
+# @sniptest filename=timeout_pattern.py
+import asyncio
+
+from notte_sdk import NotteClient
+
+
+async def run_with_timeout(agent, timeout_seconds=60):
+    try:
+        async with asyncio.timeout(timeout_seconds):
+            agent.start(task="Complete task")
+            result = await agent.async_watch_logs_and_wait()
+        return result
+    except TimeoutError as e:
+        # agent.stop() is already called internally by async_watch_logs_and_wait on cancellation
+        raise TimeoutError(f"Agent exceeded {timeout_seconds}s timeout") from e
+
+
+client = NotteClient()
+
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    # Run with 60 second timeout
+    result = asyncio.run(run_with_timeout(agent, timeout_seconds=60))

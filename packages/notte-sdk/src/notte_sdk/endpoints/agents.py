@@ -4,9 +4,10 @@ import sys
 import tempfile
 import time
 import traceback
-from collections.abc import Coroutine, Sequence
+import warnings
+from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Literal, Unpack, overload
+from typing import TYPE_CHECKING, Any, Unpack, overload
 
 # import websockets
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
@@ -14,18 +15,18 @@ from notte_core.agent_types import AgentCompletion
 from notte_core.common.logging import logger
 from notte_core.common.notifier import BaseNotifier
 from notte_core.common.telemetry import track_usage
-from notte_core.utils.webp_replay import MP4Replay, WebpReplay
+from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel, Field, ValidationError
 from typing_extensions import final
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.personas import NottePersona
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.endpoints.vaults import NotteVault
-from notte_sdk.endpoints.workflows import RemoteWorkflow
 from notte_sdk.types import (
-    AgentCreateRequest,
     AgentCreateRequestDict,
+    AgentFunctionCodeResponse,
     AgentListRequest,
     AgentListRequestDict,
     AgentResponse,
@@ -35,8 +36,8 @@ from notte_sdk.types import (
     AgentStatusRequest,
     AgentStatusResponse,
     AgentWorkflowCodeRequest,
-    AgentWorkflowCodeResponse,
-    GetWorkflowResponse,
+    GetFunctionResponse,
+    ReplayResponse,
     SdkAgentCreateRequest,
     SdkAgentStartRequestDict,
 )
@@ -46,11 +47,11 @@ RUNNING_IN_PYODIDE = "pyodide" in sys.modules
 
 if RUNNING_IN_PYODIDE:
     import js  # pyright: ignore[reportMissingImports]
-    from pyodide.ffi import (  # pyright: ignore [reportMissingImports]
-        create_proxy,  # pyright: ignore [reportUnknownVariableType]
+    from pyodide.ffi import (  # pyright: ignore[reportMissingImports]
+        create_proxy,  # pyright: ignore[reportUnknownVariableType]
     )
 else:
-    from websockets.asyncio import client
+    from websockets.sync import client as sync_client
 
 
 if TYPE_CHECKING:
@@ -85,10 +86,8 @@ class AgentsClient(BaseClient):
     AGENT_START_CUSTOM = "start/custom"
     AGENT_STOP = "{agent_id}/stop?session_id={session_id}"
     AGENT_STATUS = "{agent_id}"
-    AGENT_WORKFLOW = "{agent_id}/workflow/code"
+    AGENT_FUNCTION = "{agent_id}/workflow/code"
     AGENT_LIST = ""
-    # The following endpoints downloads a MP4 file
-    AGENT_REPLAY = "{agent_id}/replay"
     AGENT_LOGS_WS = "{agent_id}/debug/logs?token={token}&session_id={session_id}"
 
     def __init__(
@@ -171,7 +170,7 @@ class AgentsClient(BaseClient):
         return NotteEndpoint(path=path, response=LegacyAgentStatusResponse, method="GET")
 
     @staticmethod
-    def _agent_workflow_endpoint(agent_id: str | None = None) -> NotteEndpoint[AgentWorkflowCodeResponse]:
+    def _agent_function_endpoint(agent_id: str | None = None) -> NotteEndpoint[AgentFunctionCodeResponse]:
         """
         Creates an endpoint for retrieving an agent's script.
 
@@ -181,22 +180,12 @@ class AgentsClient(BaseClient):
             agent_id: Optional identifier of the agent; if specified, the endpoint path will include this ID.
 
         Returns:
-            NotteEndpoint configured with the GET method and AgentWorkflowCodeResponse as the expected response.
+            NotteEndpoint configured with the GET method and AgentFunctionCodeResponse as the expected response.
         """
-        path = AgentsClient.AGENT_WORKFLOW
+        path = AgentsClient.AGENT_FUNCTION
         if agent_id is not None:
             path = path.format(agent_id=agent_id)
-        return NotteEndpoint(path=path, response=AgentWorkflowCodeResponse, method="GET")
-
-    @staticmethod
-    def _agent_replay_endpoint(agent_id: str | None = None) -> NotteEndpoint[BaseModel]:
-        """
-        Creates an endpoint for downloading an agent's replay.
-        """
-        path = AgentsClient.AGENT_REPLAY
-        if agent_id is not None:
-            path = path.format(agent_id=agent_id)
-        return NotteEndpoint(path=path, response=BaseModel, method="GET")
+        return NotteEndpoint(path=path, response=AgentFunctionCodeResponse, method="GET")
 
     @staticmethod
     def _agent_list_endpoint(params: AgentListRequest | None = None) -> NotteEndpoint[AgentResponse]:
@@ -278,7 +267,73 @@ class AgentsClient(BaseClient):
 
         raise TimeoutError("Agent did not complete in time")
 
-    async def watch_logs(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse | None:
+    def _process_ws_message(
+        self,
+        message: str,
+        agent_id: str,
+        log: bool,
+        counter: list[int],
+    ) -> tuple[AgentCompletion | AgentStatusResponse | None, bool]:
+        """
+        Process a websocket message. Returns (response, should_stop).
+
+        Args:
+            message: The raw websocket message string.
+            agent_id: The agent identifier for logging.
+            log: Whether to log the agent steps.
+            counter: A mutable list containing [step_count] to track step number.
+
+        Returns:
+            Tuple of (response, should_stop) where response is the parsed message
+            and should_stop indicates if the agent has completed.
+        """
+        try:
+            dic = json.loads(message)
+            response = None
+
+            # output from validator
+            if isinstance(dic, dict) and "validation" in dic:
+                logger.opt(colors=True).info("<g>{message}</g>", message=dic["validation"])
+
+            # termination message
+            elif isinstance(dic, dict) and "status" in dic:
+                if dic["status"] == "agent_stop":
+                    # Parse the agent status response from the message
+                    if "agent" in dic:
+                        agent_status = AgentStatusResponse.model_validate(dic["agent"])
+                        return (agent_status, True)
+                    # Fallback: no agent field, this shouldn't happen but handle gracefully
+                    return (None, True)
+
+            # actual step
+            else:
+                if isinstance(dic, dict):
+                    response = AgentCompletion.model_validate(dic)
+                else:
+                    # Unexpected: log and skip
+                    logger.warning(f"Expected dict, got {type(dic).__name__}: {message[:200]}")
+                    return (None, False)
+                if log:
+                    logger.opt(colors=True).info(
+                        "✨ <r>Step {counter}</r> <y>(agent: {agent_id})</y>",
+                        counter=(counter[0] + 1),
+                        agent_id=agent_id,
+                    )
+                    response.live_log_state()
+                counter[0] += 1
+
+            return (response, False)
+
+        except (json.JSONDecodeError, ValidationError, TypeError, ValueError) as e:
+            if "error" in message and "last action failed with error" not in message:
+                logger.error(f"Error in agent logs: {e} {agent_id} {message}")
+            elif agent_id in message and "agent_id" in message:
+                logger.error(f"Error parsing AgentStatusResponse for message: {message}: {e}")
+            else:
+                logger.error(f"Error parsing agent logs for message: {message}: {e}")
+            return (None, False)
+
+    def watch_logs(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse | None:
         """
         Watch the logs of the specified agent.
         """
@@ -286,154 +341,46 @@ class AgentsClient(BaseClient):
         wss_url = self.request_path(endpoint).format(agent_id=agent_id, token=self.token, session_id=session_id)
         wss_url = wss_url.replace("https://", "wss://").replace("http://", "ws://")
 
-        async def get_messages() -> AgentStatusResponse | None:
-            counter = 0
+        counter = [0]  # mutable container for step count
 
-            def process_message(message: str) -> tuple[AgentCompletion | AgentStatusResponse | None, bool]:
-                """Process a websocket message. Returns (response, should_stop)."""
-                nonlocal counter
-                try:
-                    # try to json load
-                    dic = json.loads(message)
-                    response = None
+        if RUNNING_IN_PYODIDE:
+            raise NotImplementedError(
+                "Synchronous watch_logs is not supported in Pyodide. Use async_watch_logs() or async_watch_logs_and_wait() instead."
+            )
 
-                    # output from validator
-                    if isinstance(dic, dict) and "validation" in dic:
-                        logger.opt(colors=True).info("<g>{message}</g>", message=dic["validation"])
+        # Use native Python sync websockets library
+        try:
+            with sync_client.connect(  # pyright: ignore[reportPossiblyUnboundVariable]
+                uri=wss_url,
+                open_timeout=30,
+                ping_interval=5,
+                ping_timeout=40,
+                close_timeout=5,
+                max_size=5 * (2**20),  # 5MB max size
+            ) as websocket:
+                for message in websocket:
+                    if not isinstance(message, str):
+                        logger.warning(f"Expected str message, got {type(message).__name__}. Skipping.")
+                        continue
+                    response, should_stop = self._process_ws_message(message, agent_id, log, counter)
 
-                    # termination message
-                    elif isinstance(dic, dict) and "status" in dic:
-                        if dic["status"] == "agent_stop":
-                            # Parse the agent status response from the message
-                            if "agent" in dic:
-                                agent_status = AgentStatusResponse.model_validate(dic["agent"])
-                                return (agent_status, True)
-                            # Fallback: no agent field, this shouldn't happen but handle gracefully
-                            return (None, True)
-
-                    # actual step
-                    else:
-                        if isinstance(dic, dict):
-                            response = AgentCompletion.model_validate(dic)
-                        else:
-                            # Unexpected: log and skip
-                            logger.warning(f"Expected dict, got {type(dic).__name__}: {message[:200]}")
-                            return (None, False)
-                        if log:
-                            logger.opt(colors=True).info(
-                                "✨ <r>Step {counter}</r> <y>(agent: {agent_id})</y>",
-                                counter=(counter + 1),
-                                agent_id=agent_id,
-                            )
-                            response.live_log_state()
-                        counter += 1
-
-                    return (response, False)
-
-                except (json.JSONDecodeError, ValidationError, TypeError, ValueError) as e:
-                    if "error" in message and "last action failed with error" not in message:
-                        logger.error(f"Error in agent logs: {e} {agent_id} {message}")
-                    elif agent_id in message and "agent_id" in message:
-                        logger.error(f"Error parsing AgentStatusResponse for message: {message}: {e}")
-                    else:
-                        logger.error(f"Error parsing agent logs for message: {message}: {e}")
-                    return (None, False)
-
-            if RUNNING_IN_PYODIDE:
-                # Use JavaScript WebSocket API via Pyodide FFI
-                ws = js.WebSocket.new(wss_url)  # pyright: ignore [reportPossiblyUnboundVariable, reportUnknownMemberType, reportUnknownVariableType]
-                message_queue: asyncio.Queue[str | None] = asyncio.Queue()
-
-                # Create proxies for event handlers
-                def on_message(event: Any) -> None:
-                    message_queue.put_nowait(str(event.data))
-
-                def on_error(_event: Any) -> None:
-                    logger.error("WebSocket error occurred")
-
-                def on_close(_event: Any) -> None:
-                    message_queue.put_nowait(None)  # Signal end
-
-                on_message_proxy = create_proxy(on_message)  # pyright: ignore [reportPossiblyUnboundVariable, reportUnknownVariableType]
-                on_error_proxy = create_proxy(on_error)  # pyright: ignore [reportUnknownVariableType, reportPossiblyUnboundVariable]
-                on_close_proxy = create_proxy(on_close)  # pyright: ignore [reportUnknownVariableType, reportPossiblyUnboundVariable]
-
-                ws.addEventListener("message", on_message_proxy)  # pyright: ignore[reportUnknownMemberType]
-                ws.addEventListener("error", on_error_proxy)  # pyright: ignore[reportUnknownMemberType]
-                ws.addEventListener("close", on_close_proxy)  # pyright: ignore[reportUnknownMemberType]
-
-                # Wait for connection
-                while ws.readyState == 0:  # CONNECTING  # pyright: ignore [reportUnknownMemberType]
-                    await asyncio.sleep(0.1)
-
-                try:
-                    while True:
-                        message = await message_queue.get()
-                        if message is None:  # Connection closed
-                            break
-
-                        assert isinstance(message, str), f"Expected str, got {type(message)}"
-                        response, should_stop = process_message(message)
-
-                        if should_stop:
-                            # If we got an AgentStatusResponse, return it; otherwise return None (failure)
-                            if isinstance(response, AgentStatusResponse):
-                                return response
-                            return None
-
-                except ConnectionError as e:
-                    logger.error(f"Connection error: {agent_id} {e}")
-                    return None
-                except Exception as e:
-                    logger.error(f"Error: {agent_id} {e} {traceback.format_exc()}")
-                    return None
-                finally:
-                    try:
-                        ws.removeEventListener("message", on_message_proxy)  # pyright: ignore[reportUnknownMemberType]
-                        ws.removeEventListener("error", on_error_proxy)  # pyright: ignore[reportUnknownMemberType]
-                        ws.removeEventListener("close", on_close_proxy)  # pyright: ignore[reportUnknownMemberType]
-                    except Exception:
-                        pass
-                    on_message_proxy.destroy()  # pyright: ignore [reportUnknownMemberType]
-                    on_error_proxy.destroy()  # pyright: ignore [reportUnknownMemberType]
-                    on_close_proxy.destroy()  # pyright: ignore [reportUnknownMemberType]
-                    ws.close()  # pyright: ignore[reportUnknownMemberType]
-
-            else:
-                # Use native Python websockets library
-                async with client.connect(  # pyright: ignore[reportPossiblyUnboundVariable]
-                    uri=wss_url,
-                    open_timeout=30,
-                    ping_interval=5,
-                    ping_timeout=40,
-                    close_timeout=5,
-                    max_size=5 * (2**20),  # 5MB max size
-                ) as websocket:
-                    try:
-                        async for message in websocket:
-                            assert isinstance(message, str), f"Expected str, got {type(message)}"
-                            response, should_stop = process_message(message)
-
-                            if should_stop:
-                                # If we got an AgentStatusResponse, return it; otherwise return None (failure)
-                                if isinstance(response, AgentStatusResponse):
-                                    return response
-                                return None
-
-                    except ConnectionError as e:
-                        logger.error(f"Connection error: {agent_id} {e}")
+                    if should_stop:
+                        # If we got an AgentStatusResponse, return it; otherwise return None (failure)
+                        if isinstance(response, AgentStatusResponse):
+                            return response
                         return None
-                    except Exception as e:
-                        logger.error(f"Error: {agent_id} {e} {traceback.format_exc()}")
-                        return None
+        except ConnectionError as e:
+            logger.error(f"Connection error: {agent_id} {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected websocket processing error: {agent_id} {e} {traceback.format_exc()}")
+            raise
 
-        return await get_messages()
+        return None
 
-    async def watch_logs_and_wait(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse:
+    def watch_logs_and_wait(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse:
         """
         Execute a task with the agent and wait for completion.
-
-        This is an async method that watches logs and waits for the agent to complete.
 
         Args:
             agent_id (str): The agent identifier.
@@ -443,22 +390,183 @@ class AgentsClient(BaseClient):
         Returns:
             AgentStatusResponse: The response from the completed agent execution.
         """
-        status = None
+        # In Pyodide, sync WebSocket connections aren't supported and there's always a running event loop
+        if RUNNING_IN_PYODIDE:
+            raise RuntimeError(
+                "watch_logs_and_wait() cannot be used in Pyodide. Use `await async_watch_logs_and_wait(...)` instead."
+            )
+
         try:
-            response = await self.watch_logs(agent_id=agent_id, session_id=session_id, log=log)
+            response = self.watch_logs(agent_id=agent_id, session_id=session_id, log=log)
             if response is not None:
                 return response
-            # If we didn't get a response, it means something failed
-            # Try to get the status once as a fallback
-            logger.warning(f"[Agent] {agent_id} did not return status response. Fetching status as fallback.")
-            return self.status(agent_id=agent_id)
-
-        except asyncio.CancelledError:
-            if status is None:
+            # If we didn't get a response, poll status until agent is closed
+            logger.warning(f"[Agent] {agent_id} did not return status response. Polling status until closed.")
+            max_wait_secs = 300
+            waited = 0
+            while waited < max_wait_secs:
                 status = self.status(agent_id=agent_id)
+                if status.status == AgentStatus.closed:
+                    return status
+                time.sleep(1)
+                waited += 1
+            raise TimeoutError(f"Agent {agent_id} did not reach a terminal state within {max_wait_secs}s")
 
+        except KeyboardInterrupt:
+            status = self.status(agent_id=agent_id)
             if status.status != AgentStatus.closed:
                 _ = self.stop(agent_id=agent_id, session_id=session_id)
+            raise
+
+    async def async_watch_logs(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse | None:
+        """
+        Watch the logs of the specified agent asynchronously.
+
+        This method is required for Pyodide environments where synchronous WebSocket
+        connections are not supported.
+
+        Args:
+            agent_id (str): The agent identifier.
+            session_id (str): The session identifier.
+            log (bool): Whether to log the agent steps.
+
+        Returns:
+            AgentStatusResponse | None: The final agent status, or None if failed.
+        """
+        if not RUNNING_IN_PYODIDE:
+            raise NotImplementedError("async_watch_logs is only supported in Pyodide. Use watch_logs instead.")
+
+        endpoint = NotteEndpoint(path=AgentsClient.AGENT_LOGS_WS, response=BaseModel, method="GET")
+        wss_url = self.request_path(endpoint).format(agent_id=agent_id, token=self.token, session_id=session_id)
+        wss_url = wss_url.replace("https://", "wss://").replace("http://", "ws://")
+
+        counter = [0]  # mutable container for step count
+
+        # Use JavaScript WebSocket API via Pyodide FFI
+        ws = js.WebSocket.new(wss_url)  # pyright: ignore[reportPossiblyUnboundVariable, reportUnknownMemberType, reportUnknownVariableType]
+        message_queue: asyncio.Queue[str | None] = asyncio.Queue()
+
+        def on_message(event: Any) -> None:
+            message_queue.put_nowait(str(event.data))
+
+        def on_error(_event: Any) -> None:
+            logger.error("WebSocket error occurred")
+            message_queue.put_nowait(None)  # Signal consumer to stop on error
+
+        def on_close(_event: Any) -> None:
+            message_queue.put_nowait(None)
+
+        # Initialize proxies to None for cleanup handling
+        on_message_proxy: Any = None
+        on_error_proxy: Any = None
+        on_close_proxy: Any = None
+
+        # Helper to clean up WebSocket resources (tolerates partially initialized state)
+        def cleanup_ws() -> None:
+            cleanup_errors: list[str] = []
+            for cleanup in (  # pyright: ignore[reportUnknownVariableType]
+                lambda: ws.removeEventListener("message", on_message_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
+                lambda: ws.removeEventListener("error", on_error_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
+                lambda: ws.removeEventListener("close", on_close_proxy),  # pyright: ignore[reportUnknownMemberType, reportUnknownLambdaType]
+                lambda: on_message_proxy.destroy() if on_message_proxy is not None else None,
+                lambda: on_error_proxy.destroy() if on_error_proxy is not None else None,
+                lambda: on_close_proxy.destroy() if on_close_proxy is not None else None,
+                ws.close,  # pyright: ignore[reportUnknownMemberType]
+            ):
+                try:
+                    _ = cleanup()  # pyright: ignore[reportUnknownVariableType]
+                except Exception as e:
+                    cleanup_errors.append(str(e))
+            if cleanup_errors:
+                logger.debug(f"Failed to clean up WebSocket resources: {'; '.join(cleanup_errors)}")
+
+        # Wait for connection with timeout
+        connect_timeout = 30.0
+        connect_waited = 0.0
+
+        try:
+            # Create proxies and register event listeners inside try block for proper cleanup
+            on_message_proxy = create_proxy(on_message)  # pyright: ignore[reportPossiblyUnboundVariable]
+            on_error_proxy = create_proxy(on_error)  # pyright: ignore[reportPossiblyUnboundVariable]
+            on_close_proxy = create_proxy(on_close)  # pyright: ignore[reportPossiblyUnboundVariable]
+
+            ws.addEventListener("message", on_message_proxy)  # pyright: ignore[reportUnknownMemberType]
+            ws.addEventListener("error", on_error_proxy)  # pyright: ignore[reportUnknownMemberType]
+            ws.addEventListener("close", on_close_proxy)  # pyright: ignore[reportUnknownMemberType]
+
+            while ws.readyState == 0:  # CONNECTING  # pyright: ignore[reportUnknownMemberType]
+                if connect_waited >= connect_timeout:
+                    logger.error(f"[Agent] {agent_id} websocket connection timed out after {connect_timeout}s")
+                    return None
+                await asyncio.sleep(0.1)
+                connect_waited += 0.1
+            while True:
+                message = await message_queue.get()
+                if message is None:
+                    break
+
+                response, should_stop = self._process_ws_message(message, agent_id, log, counter)
+
+                if should_stop:
+                    if isinstance(response, AgentStatusResponse):
+                        return response
+                    return None
+
+        except ConnectionError as e:
+            logger.error(f"Connection error: {agent_id} {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected websocket processing error: {agent_id} {e} {traceback.format_exc()}")
+            raise
+        finally:
+            cleanup_ws()
+
+        return None
+
+    async def async_watch_logs_and_wait(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse:
+        """
+        Execute a task with the agent and wait for completion asynchronously.
+
+        This method is required for Pyodide environments where synchronous WebSocket
+        connections are not supported.
+
+        Args:
+            agent_id (str): The agent identifier.
+            session_id (str): The session identifier.
+            log (bool): Whether to log the agent steps.
+
+        Returns:
+            AgentStatusResponse: The response from the completed agent execution.
+        """
+        if not RUNNING_IN_PYODIDE:
+            raise NotImplementedError(
+                "async_watch_logs_and_wait is only supported in Pyodide. Use watch_logs_and_wait instead."
+            )
+
+        try:
+            response = await self.async_watch_logs(agent_id=agent_id, session_id=session_id, log=log)
+            if response is not None:
+                return response
+            # If we didn't get a response, poll status until agent is closed
+            logger.warning(f"[Agent] {agent_id} did not return status response. Polling status until closed.")
+            max_wait_secs = 300
+            waited = 0
+            while waited < max_wait_secs:
+                status = self.status(agent_id=agent_id)
+                if status.status == AgentStatus.closed:
+                    return status
+                await asyncio.sleep(1)
+                waited += 1
+            raise TimeoutError(f"Agent {agent_id} did not reach a terminal state within {max_wait_secs}s")
+
+        except asyncio.CancelledError:
+            # Best-effort cleanup: don't let HTTP failures mask the CancelledError
+            try:
+                status = self.status(agent_id=agent_id)
+                if status.status != AgentStatus.closed:
+                    _ = self.stop(agent_id=agent_id, session_id=session_id)
+            except Exception:
+                pass
             raise
 
     def stop(self, agent_id: str, session_id: str) -> AgentResponse:
@@ -499,25 +607,23 @@ class AgentsClient(BaseClient):
 
         > Websockets are used to stream the agent logs to the standard output to provide live logs to the user.
         """
-        return asyncio.run(self.arun(**data))
-
-    async def arun(self, **data: Unpack[SdkAgentStartRequestDict]) -> AgentStatusResponse:
-        """
-        Run an async agent with the specified request parameters.
-        and wait for completion
-
-        Validates the provided data using the AgentCreateRequest model, sends a run request through the
-        designated endpoint, updates the last agent response, and returns the resulting AgentResponse.
-        """
         response = self.start(**data)
-        # wait for completion
 
-        return await self.watch_logs_and_wait(
+        if RUNNING_IN_PYODIDE:
+            # In Pyodide, use the async path - asyncio.run works with Pyodide's WebLoop
+            return asyncio.run(
+                self.async_watch_logs_and_wait(
+                    agent_id=response.agent_id,
+                    session_id=response.session_id,
+                )
+            )
+
+        return self.watch_logs_and_wait(
             agent_id=response.agent_id,
             session_id=response.session_id,
         )
 
-    def workflow_code(self, agent_id: str, as_workflow: bool = True) -> AgentWorkflowCodeResponse:
+    def function_code(self, agent_id: str, as_workflow: bool = True) -> AgentFunctionCodeResponse:
         """
         Retrieves a script that reproduces the steps of the specified agent.
 
@@ -529,19 +635,19 @@ class AgentsClient(BaseClient):
             agent_id: Unique identifier of the agent to check.
 
         Returns:
-            AgentWorkflowCodeResponse: The script that reproduces the steps of the specified agent
+            AgentFunctionCodeResponse: The script that reproduces the steps of the specified agent
 
         Raises:
             ValueError: If no valid agent ID can be determined.
         """
         request = AgentWorkflowCodeRequest(as_workflow=as_workflow)
-        endpoint = AgentsClient._agent_workflow_endpoint(agent_id=agent_id).with_params(request)
+        endpoint = AgentsClient._agent_function_endpoint(agent_id=agent_id).with_params(request)
         response = self.request(endpoint)
         return response
 
-    def workflow_create(self, agent_id: str) -> GetWorkflowResponse:
+    def create_function(self, agent_id: str) -> GetFunctionResponse:
         """
-        Creates a workflow that reproduces the steps of the specified agent.
+        Creates a function that reproduces the steps of the specified agent.
 
         Queries the API using a validated agent ID.
         The provided ID is confirmed (or obtained from the last response if needed), and the
@@ -551,18 +657,18 @@ class AgentsClient(BaseClient):
             agent_id: Unique identifier of the agent to check.
 
         Returns:
-            GetWorkflowResponse: The workflow that reproduces the steps of the agent
+            GetFunctionResponse: The workflow that reproduces the steps of the agent
 
         Raises:
             ValueError: If no valid agent ID can be determined.
         """
-        script = self.workflow_code(agent_id, as_workflow=True)
+        script = self.function_code(agent_id, as_workflow=True)
         with tempfile.TemporaryDirectory() as tmp_dir:
             filename = Path(tmp_dir) / "code.py"
             with open(filename, "w") as f:
                 _ = f.write(script.python_script)
 
-            return self.root_client.workflows.create(workflow_path=str(filename))
+            return self.root_client.functions.create(path=str(filename))
 
     def status(self, agent_id: str) -> LegacyAgentStatusResponse:
         """
@@ -581,7 +687,7 @@ class AgentsClient(BaseClient):
         Raises:
             ValueError: If no valid agent ID can be determined.
         """
-        request = AgentStatusRequest(agent_id=agent_id, replay=False)
+        request = AgentStatusRequest(agent_id=agent_id)
         endpoint = AgentsClient._agent_status_endpoint(agent_id=agent_id).with_params(request)
         response = self.request(endpoint)
         return response
@@ -604,271 +710,52 @@ class AgentsClient(BaseClient):
         endpoint = AgentsClient._agent_list_endpoint(params=params)
         return self.request_list(endpoint)
 
-    def replay(self, agent_id: str) -> MP4Replay:
+    def run_custom(self, request: BaseModel, viewer: bool = False) -> AgentStatusResponse:
         """
-        Downloads the replay for the specified agent in mp4 format.
-
-        ```python
-        replay = agent.replay()
-        ```
-
-        The replay is a mp4 file that can be displayed in a browser.
-
-        ```python
-        replay.show()
-        ```
-
-        Args:
-            agent_id: The identifier of the agent to download the replay for.
-
-        Returns:
-            MP4Replay: The replay file in mp4 format.
-        """
-        endpoint = AgentsClient._agent_replay_endpoint(agent_id=agent_id)
-        file_bytes = self._request_file(endpoint, file_type="mp4")
-        return MP4Replay(file_bytes)
-
-    async def arun_custom(
-        self, request: BaseModel, parallel_attempts: int = 1, viewer: bool = False
-    ) -> AgentStatusResponse:
-        if not self.is_custom_endpoint_available():
-            raise ValueError(f"Custom endpoint is not available for this server: {self.server_url}")
-
-        async def agent_task() -> AgentStatusResponse:
-            response = self.request(AgentsClient._agent_start_custom_endpoint().with_request(request))
-
-            if viewer:
-                self.root_client.sessions.viewer(response.session_id)
-
-            return await self.watch_logs_and_wait(
-                agent_id=response.agent_id,
-                session_id=response.session_id,
-                log=True,
-            )
-
-        return await BatchRemoteAgent.run_batch(agent_task, n_jobs=parallel_attempts, strategy="first_success")
-
-    def run_custom(self, request: BaseModel, parallel_attempts: int = 1, viewer: bool = False) -> AgentStatusResponse:
-        """
-        Run an custom agent with the specified request parameters.
-        and wait for completion
+        Run a custom agent with the specified request parameters and wait for completion.
 
         Note: not all servers support custom agents.
         """
-        return asyncio.run(self.arun_custom(request, parallel_attempts=parallel_attempts, viewer=viewer))
+        if not self.is_custom_endpoint_available():
+            raise ValueError(f"Custom endpoint is not available for this server: {self.server_url}")
 
+        response = self.request(AgentsClient._agent_start_custom_endpoint().with_request(request))
 
-class BatchRemoteAgent:
-    """
-    A batch agent that can execute multiple instances of the same task in parallel.
+        if viewer:
+            self.root_client.sessions.viewer(response.session_id)
 
-    This class provides functionality to run multiple agents concurrently with different strategies:
-    - "first_success": Returns as soon as any agent succeeds
-    - "all_finished": Waits for all agents to complete and returns all results
-
-    The batch agent is useful for tasks that may have non-deterministic outcomes or
-    when you want to try multiple attempts in parallel to improve success rates.
-
-    Attributes:
-        request (_AgentCreateRequest): The base configuration request for all agents
-        client (AgentsClient): The client used to communicate with the Notte API
-        response (AgentResponse | None): The latest response from any agent execution
-    """
-
-    def __init__(
-        self,
-        *,
-        session: RemoteSession,
-        vault: NotteVault | None = None,
-        notifier: BaseNotifier | None = None,
-        persona: NottePersona | None = None,
-        _client: "NotteClient | None" = None,
-        **data: Unpack[AgentCreateRequestDict],
-    ) -> None:
-        if _client is None:
-            raise ValueError("NotteClient is required")
-        request = AgentCreateRequest.model_validate(data)
-        if notifier is not None:
-            notifier_config = notifier.model_dump()
-            request.notifier_config = notifier_config
-
-        # #########################################################
-        # ###################### Vault checks #####################
-        # #########################################################
-
-        if vault is not None:
-            if len(vault.vault_id) == 0:
-                raise ValueError("Vault ID cannot be empty")
-            request.vault_id = vault.vault_id
-
-        if persona is not None:
-            if len(persona.persona_id) == 0:
-                raise ValueError("Persona ID cannot be empty")
-            request.persona_id = persona.persona_id
-
-        # #########################################################
-        # #################### Session checks #####################
-        # #########################################################
-        if not isinstance(session, RemoteSession):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise ValueError(
-                "You are trying to use a local session with a remote agent. This is not supported. Use `notte.Agent(session=session)` instead."
-            )  # pyright: ignore[reportUnreachable]
-        if session.response is not None:
-            raise ValueError(
-                "You are trying to pass a started session to BatchRemoteAgent. BatchRemoteAgent is only supposed to be provided non-running session, to get the parameters"
-            )
-        self.request: AgentCreateRequest = request
-        self.client: AgentsClient = _client.agents
-        self.root_client: NotteClient = _client
-        self.response: AgentResponse | None = None
-        self.session: RemoteSession = session
-
-    @overload
-    async def run(
-        self,
-        n_jobs: int = 2,
-        strategy: Literal["first_success"] = "first_success",
-        **args: Unpack[AgentRunRequestDict],
-    ) -> AgentStatusResponse: ...
-    @overload
-    async def run(
-        self,
-        n_jobs: int = 2,
-        strategy: Literal["all_finished"] = "all_finished",
-        **args: Unpack[AgentRunRequestDict],
-    ) -> list[AgentStatusResponse]: ...
-    async def run(
-        self,
-        n_jobs: int = 2,
-        strategy: Literal["all_finished", "first_success"] = "first_success",
-        **args: Unpack[AgentRunRequestDict],
-    ) -> AgentStatusResponse | list[AgentStatusResponse]:
-        """
-        Run multiple agents in parallel with the specified parameters.
-
-        Args:
-            n_jobs: Number of parallel agents to run
-            strategy: The execution strategy:
-                     - "first_success": Return as soon as any agent succeeds
-                     - "all_finished": Wait for all agents to complete
-            **args: Additional arguments passed to each agent's start method
-
-        Returns:
-            If strategy is "first_success": The first successful AgentStatusResponse
-            If strategy is "all_finished": List of all AgentStatusResponse objects
-        """
-
-        async def agent_task() -> AgentStatusResponse:
-            agent = None
-
-            with RemoteSession(session_id=self.session.session_id, _client=self.root_client.sessions) as session:
-                agent_request = SdkAgentCreateRequest(**self.request.model_dump(), session_id=session.session_id)
-
-                agent = RemoteAgent(session=session, _client=self.client, **agent_request.model_dump())
-                _ = agent.start(**args)
-                return await agent.watch_logs_and_wait(log=False)
-
-        return await BatchRemoteAgent.run_batch(
-            agent_task,
-            n_jobs=n_jobs,
-            strategy=strategy,
-        )
-
-    @overload
-    @staticmethod
-    async def run_batch(
-        task_creator: Callable[[], Coroutine[Any, Any, AgentStatusResponse]],
-        n_jobs: int = 2,
-        strategy: Literal["first_success"] = "first_success",
-    ) -> AgentStatusResponse: ...
-    @overload
-    @staticmethod
-    async def run_batch(
-        task_creator: Callable[[], Coroutine[Any, Any, AgentStatusResponse]],
-        n_jobs: int = 2,
-        strategy: Literal["all_finished"] = "all_finished",
-    ) -> list[AgentStatusResponse]: ...
-    @staticmethod
-    async def run_batch(
-        task_creator: Callable[[], Coroutine[Any, Any, AgentStatusResponse]],
-        n_jobs: int = 2,
-        strategy: Literal["all_finished", "first_success"] = "first_success",
-    ) -> AgentStatusResponse | list[AgentStatusResponse]:
-        """
-        Internal method to run multiple agents in batch mode.
-
-        Args:
-            request_type: Type of request ("default" or "custom")
-            request: The request parameters for each agent
-            n_jobs: Number of parallel agents to run
-            strategy: The execution strategy:
-                     - "first_success": Return as soon as any agent succeeds
-                     - "all_finished": Wait for all agents to complete
-
-        Returns:
-            If strategy is "first_success": The first successful AgentStatusResponse
-            If strategy is "all_finished": List of all AgentStatusResponse objects
-        """
-        tasks: list[asyncio.Task[AgentStatusResponse]] = []
-        results: list[AgentStatusResponse] = []
-
-        for _ in range(n_jobs):
-            task = asyncio.Task(task_creator())
-            tasks.append(task)
-
-        exception = None
-        for completed_task in asyncio.as_completed(tasks):
-            try:
-                result = await completed_task
-
-                if result.success and strategy == "first_success":
-                    for task in tasks:
-                        if not task.done():
-                            _ = task.cancel()
-
-                    return result
-                else:
-                    results.append(result)
-            except Exception as e:
-                exception = e
-                logger.error(
-                    f"Batch task failed: {exception.__class__.__qualname__} {exception} {traceback.format_exc()}"
+        if RUNNING_IN_PYODIDE:
+            # In Pyodide, use the async path - asyncio.run works with Pyodide's WebLoop
+            return asyncio.run(
+                self.async_watch_logs_and_wait(
+                    agent_id=response.agent_id,
+                    session_id=response.session_id,
+                    log=True,
                 )
-                continue
+            )
 
-        # if first success, all failed, can just return any
-        if strategy == "first_success":
-            if len(results) > 0:
-                result = results[0]
-                return result
-            else:
-                if exception is None:
-                    exception = ValueError(
-                        "Every run of the task failed, yet no exception found: this should not happen"
-                    )
-                raise exception
-
-        # all finished, return the list
-        return results
+        return self.watch_logs_and_wait(
+            agent_id=response.agent_id,
+            session_id=response.session_id,
+            log=True,
+        )
 
 
 class RemoteAgent:
     """
     A remote agent that can execute tasks through the Notte API.
 
-    This class provides an interface for running tasks, checking status, and managing replays
-    of agent executions. It maintains state about the current agent execution and provides
+    This class provides an interface for running tasks, checking status, and managing
+    agent executions. It maintains state about the current agent execution and provides
     methods to interact with the agent through an AgentsClient.
 
     The agent can be started, monitored, and controlled through various methods. It supports
-    both synchronous and asynchronous execution modes, and can provide visual replays of
-    its actions in MP4 format.
+    both synchronous and asynchronous execution modes.
 
     Key Features:
     - Start and stop agent execution
     - Monitor agent status and progress
     - Wait for task completion with progress updates
-    - Get visual replays of agent actions
     - Support for both sync and async execution
 
     Attributes:
@@ -889,7 +776,7 @@ class RemoteAgent:
             self.client: AgentsClient = client
             self.agent_id: str = agent_id
 
-        def code(self, as_workflow: bool = True) -> AgentWorkflowCodeResponse:
+        def code(self, as_workflow: bool = True) -> AgentFunctionCodeResponse:
             """
             Retrieves a script that reproduces the steps of the specified agent.
 
@@ -901,30 +788,30 @@ class RemoteAgent:
                 as_workflow: Whether to return a full standalone workflow script or just the relevant steps
 
             Returns:
-                AgentWorkflowCodeResponse: The script that reproduces the steps of the specified agent
+                AgentFunctionCodeResponse: The script that reproduces the steps of the specified agent
 
             Raises:
                 ValueError: If no valid agent ID can be determined.
             """
-            return self.client.workflow_code(self.agent_id, as_workflow=as_workflow)
+            return self.client.function_code(self.agent_id, as_workflow=as_workflow)
 
-        def create(self) -> RemoteWorkflow:
+        def create_function(self) -> NotteFunction:
             """
-            Creates a workflow that reproduces the steps of the specified agent.
+            Creates a function that reproduces the steps of the specified agent.
 
             Queries the API using a validated agent ID.
             The provided ID is confirmed (or obtained from the last response if needed), and the
             resulting script is stored internally before being returned.
 
             Returns:
-                RemoteWorkflow: The workflow that reproduces the steps of the agent
+                NotteFunction: The workflow that reproduces the steps of the agent
 
             Raises:
                 ValueError: If no valid agent ID can be determined.
             """
 
-            workflow_resp = self.client.workflow_create(self.agent_id)
-            return RemoteWorkflow(workflow_id=workflow_resp.workflow_id, _client=self.client.root_client)
+            function_resp = self.client.create_function(self.agent_id)
+            return NotteFunction(function_id=function_resp.function_id, _client=self.client.root_client)
 
     @overload
     def __init__(
@@ -1091,23 +978,66 @@ class RemoteAgent:
 
         return self.client.wait(agent_id=self.agent_id)
 
-    async def watch_logs(self, log: bool = False) -> AgentStatusResponse | None:
+    def watch_logs(self, log: bool = False) -> AgentStatusResponse | None:
         """
         Watch the logs of the agent.
         """
         if self.existing_agent:
             raise ValueError("You cannot call watch_logs() on an agent instantiated from agent id")
 
-        return await self.client.watch_logs(agent_id=self.agent_id, session_id=self.session_id, log=log)
+        return self.client.watch_logs(agent_id=self.agent_id, session_id=self.session_id, log=log)
 
-    async def watch_logs_and_wait(self, log: bool = True) -> AgentStatusResponse:
+    def watch_logs_and_wait(self, log: bool = True) -> AgentStatusResponse:
         """
         Watch the logs of the agent and wait for completion.
         """
         if self.existing_agent:
             raise ValueError("You cannot call watch_logs_and_wait() on an agent instantiated from agent id")
 
-        return await self.client.watch_logs_and_wait(agent_id=self.agent_id, session_id=self.session_id, log=log)
+        return self.client.watch_logs_and_wait(agent_id=self.agent_id, session_id=self.session_id, log=log)
+
+    async def async_watch_logs_and_wait(self, log: bool = True) -> AgentStatusResponse:
+        """
+        Watch the logs of the agent and wait for completion asynchronously.
+
+        In Pyodide (WebAssembly), this delegates to the client's async method directly
+        since asyncio.to_thread is not supported in single-threaded environments.
+        In native Python, this runs the synchronous watch_logs_and_wait in a thread pool
+        to avoid blocking the event loop.
+
+        Note: When cancelled (e.g., via asyncio.timeout), this method stops the agent
+        gracefully. However, in native Python the underlying thread cannot be interrupted
+        immediately - it will continue until the server processes the stop signal and
+        closes the WebSocket connection. This is not a leak, but cancellation may not
+        be instantaneous under high load.
+        """
+        if self.existing_agent:
+            raise ValueError("You cannot call async_watch_logs_and_wait() on an agent instantiated from agent id")
+
+        if RUNNING_IN_PYODIDE:
+            return await self.client.async_watch_logs_and_wait(
+                agent_id=self.agent_id,
+                session_id=self.session_id,
+                log=log,
+            )
+
+        try:
+            return await asyncio.to_thread(
+                self.client.watch_logs_and_wait,
+                agent_id=self.agent_id,
+                session_id=self.session_id,
+                log=log,
+            )
+        except asyncio.CancelledError:
+            # Gracefully stop the agent on cancellation (mirrors KeyboardInterrupt handling in sync version)
+            # Best-effort cleanup: don't let HTTP failures mask the CancelledError
+            try:
+                status = self.client.status(agent_id=self.agent_id)
+                if status.status != AgentStatus.closed:
+                    _ = self.client.stop(agent_id=self.agent_id, session_id=self.session_id)
+            except Exception:
+                pass
+            raise
 
     @track_usage("cloud.agent.stop")
     def stop(self) -> AgentResponse:
@@ -1155,28 +1085,14 @@ class RemoteAgent:
         if self.existing_agent:
             raise ValueError("You cannot call run() on an agent instantiated from agent id")
 
-        return asyncio.run(self.arun(**data))
-
-    @track_usage("cloud.agent.arun")
-    async def arun(self, **data: Unpack[AgentRunRequestDict]) -> AgentStatusResponse:
-        """
-        Asynchronously execute a task with the agent.
-
-        This is currently a wrapper around the synchronous run method.
-        In future versions, this might be implemented as a true async operation.
-
-        Args:
-            **data: Keyword arguments representing the fields of an AgentRunRequest.
-
-        Returns:
-            AgentStatusResponse: The final status response after task completion.
-        """
-        if self.existing_agent:
-            raise ValueError("You cannot call arun() on an agent instantiated from agent id")
-
         self.response = self.start(**data)
         logger.info(f"[Agent] {self.agent_id} started with model: {self.request.reasoning_model}")
-        status_response = await self.watch_logs_and_wait()
+
+        if RUNNING_IN_PYODIDE:
+            # In Pyodide, use the async path - asyncio.run works with Pyodide's WebLoop
+            status_response = asyncio.run(self.async_watch_logs_and_wait())
+        else:
+            status_response = self.watch_logs_and_wait()
         prefix = "✅ Agent returned with success:" if status_response.success else "❌ Agent returned with failure:"
         logger.info(f"{prefix} {status_response.answer}")
         return status_response
@@ -1202,6 +1118,39 @@ class RemoteAgent:
         """
         return self.client.status(agent_id=self.agent_id)
 
+    def replay(
+        self,
+        wait: bool = True,
+        timeout: float = 240.0,
+        poll_interval: float = 5.0,
+    ) -> ReplayResponse:
+        """
+        Get the replay for the agent's session.
+
+        .. deprecated::
+            Use ``session.replay()`` instead. Agent replay is deprecated
+            in favor of session-level replay with presigned URLs.
+
+        Args:
+            wait: If True (default), poll until the replay is ready.
+            timeout: Maximum seconds to wait (default 120).
+            poll_interval: Seconds between polling attempts (default 2).
+
+        Returns:
+            ReplayResponse: Presigned URLs for HLS playlist and MP4 download.
+        """
+        warnings.warn(
+            "agent.replay() is deprecated. Use session.replay() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.client.root_client.sessions.replay(
+            session_id=self.session_id,
+            wait=wait,
+            timeout=timeout,
+            poll_interval=poll_interval,
+        )
+
     @property
     @track_usage("cloud.agent.workflow")
     def workflow(self) -> AgentWorkflow:
@@ -1220,24 +1169,3 @@ class RemoteAgent:
             ValueError: If the agent hasn't been run yet (no agent_id available).
         """
         return RemoteAgent.AgentWorkflow(self.client, self.agent_id)
-
-    @track_usage("cloud.agent.replay")
-    def replay(self) -> MP4Replay:
-        """
-        Get a replay of the agent's execution in MP4 format.
-
-        This method downloads a visual replay of the agent's actions, which can be
-        useful for debugging or understanding the agent's behavior.
-
-        ```python
-        replay = agent.replay()
-        replay.save(f"{agent.agent_id}_replay.mp4")
-        ```
-
-        Returns:
-            MP4Replay: The replay data in MP4 format.
-
-        Raises:
-            ValueError: If the agent hasn't been run yet (no agent_id available).
-        """
-        return self.client.replay(agent_id=self.agent_id)

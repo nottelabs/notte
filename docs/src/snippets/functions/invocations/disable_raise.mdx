@@ -1,0 +1,19 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/invocations/disable_raise.py */}
+
+```python disable_raise.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+function = client.Function(function_id="workflow_abc123")
+
+# Don't raise exception on failure
+result = function.run(url="https://example.com", raise_on_failure=False)
+
+# Check status manually
+if result.status == "failed":
+    print(f"Function failed: {result.result}")
+else:
+    print(f"Success: {result.result}")
+```

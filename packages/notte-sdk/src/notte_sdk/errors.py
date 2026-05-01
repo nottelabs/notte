@@ -16,9 +16,15 @@ class NotteAPIError(NotteBaseError):
         try:
             self.error = response.json()
         except Exception:
+            # Don't re-raise here: non-JSON responses (502s, empty bodies, HTML error
+            # pages) must still produce a proper NotteAPIError so callers can rely on
+            # `status_code` and catch NotteBaseError.  Previously this raised a raw
+            # ValueError(response), which bypassed super().__init__() and caused
+            # downstream TypeError crashes in user error-handling code.
             if hasattr(response, "text"):
                 self.error["message"] = response.text
-            raise ValueError(response)
+            else:
+                logger.error(f"Response is not a valid JSON: {response}")
 
         super().__init__(
             dev_message=f"Request to `{path}` failed with status code {self.status_code}: {self.error}",
@@ -34,9 +40,10 @@ class NotteAPIExecutionError(NotteBaseError):
         try:
             error = response.json()
         except Exception:
-            if hasattr(response, "text"):
-                error = response.text
-            raise ValueError(response)
+            # Same fix as NotteAPIError: don't re-raise a ValueError when the
+            # response body isn't valid JSON.  Fall through so super().__init__()
+            # is always called and callers get a proper NotteAPIExecutionError.
+            error = response.text if hasattr(response, "text") else str(response)
 
         message = f"Error on {path}: {error}"
         super().__init__(

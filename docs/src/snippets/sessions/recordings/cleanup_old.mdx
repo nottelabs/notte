@@ -1,0 +1,20 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/recordings/cleanup_old.py */}
+
+```python cleanup_old.py
+import time
+from pathlib import Path
+
+
+def cleanup_old_recordings(directory: str, days: int = 7):
+    """Remove recordings older than specified days."""
+    cutoff = time.time() - (days * 86400)
+
+    for recording in Path(directory).glob("*.mp4"):
+        if recording.stat().st_mtime < cutoff:
+            recording.unlink()
+            print(f"Deleted: {recording}")
+
+
+cleanup_old_recordings("recordings/", days=7)
+```

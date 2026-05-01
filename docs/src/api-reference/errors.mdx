@@ -1,0 +1,61 @@
+---
+title: API Error Codes
+description: API error responses and status codes
+---
+
+The API uses standard HTTP status codes and returns structured error responses.
+
+## HTTP status codes
+
+| Status | Description |
+|--------|-------------|
+| `200` | Success |
+| `401` | Authentication failed — invalid or missing API key |
+| `422` | Validation error — malformed request or invalid parameters |
+| `429` | Rate limit exceeded |
+| `500` | Internal server error |
+| `529` | Cluster overloaded - Too many sessions|
+
+## Error response format
+
+```json
+{
+  "message": "Description of what went wrong",
+  "detail": "Additional context about the error"
+}
+```
+
+## Common errors
+
+### Authentication (401)
+
+```json
+{
+  "message": "Authentication failed. Please check your credentials."
+}
+```
+
+### Validation (422)
+
+```json
+{
+  "message": "Validation error",
+  "detail": [
+    {
+      "loc": ["body", "url"],
+      "msg": "field required",
+      "type": "value_error.missing"
+    }
+  ]
+}
+```
+
+### Execution errors
+
+Returned when an operation fails. Includes the `x-error-class: NotteApiExecutionError` header.
+
+```json
+{
+  "message": "Error executing the requested operation"
+}
+```

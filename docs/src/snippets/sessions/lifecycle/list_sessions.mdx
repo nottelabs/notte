@@ -1,0 +1,20 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  # List all sessions
+  sessions = client.sessions.list()
+  print(f"Total sessions: {len(sessions)}")
+
+  for session in sessions:
+      print(f"- {session.session_id} ({session.status})")
+      print(f"  Created: {session.created_at}")
+      print(f"  Duration: {session.duration}")
+
+  # Filter by status
+  active_sessions = client.sessions.list(status="active")
+  print(f"Active sessions: {len(active_sessions)}")
+  ```
+</CodeGroup>

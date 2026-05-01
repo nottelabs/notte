@@ -1,0 +1,291 @@
+---
+title: Function Management
+description: Update, version, monitor, and manage your deployed Functions
+---
+
+import ListFunctions from "/snippets/functions/list_functions.mdx";
+import MonitorRuns from "/snippets/functions/monitor_runs.mdx";
+import FunctionHealthCheck from "/snippets/functions/function_health_check.mdx";
+import GetFunctionDetails from "/snippets/functions/management/get_function_details.mdx";
+import UpdateCode from "/snippets/functions/management/update_code.mdx";
+import VersionManagement from "/snippets/functions/management/version_management.mdx";
+import RunSpecificVersion from "/snippets/functions/management/run_specific_version.mdx";
+import VersionHistory from "/snippets/functions/management/version_history.mdx";
+import ViewRunHistory from "/snippets/functions/management/view_run_history.mdx";
+import CheckRunStatus from "/snippets/functions/management/check_run_status.mdx";
+import FilterActiveRuns from "/snippets/functions/management/filter_active_runs.mdx";
+import AccessReplay from "/snippets/functions/management/access_replay.mdx";
+import ReplayAfterRun from "/snippets/functions/management/replay_after_run.mdx";
+import StopRunning from "/snippets/functions/management/stop_running.mdx";
+import ForkFunction from "/snippets/functions/management/fork_function.mdx";
+import ModifyForked from "/snippets/functions/management/modify_forked.mdx";
+import DownloadCode from "/snippets/functions/management/download_code.mdx";
+import BackupFunctions from "/snippets/functions/management/backup_functions.mdx";
+import DeleteFunction from "/snippets/functions/management/delete_function.mdx";
+import MakePublic from "/snippets/functions/management/make_public.mdx";
+import PrivateFunction from "/snippets/functions/management/private_function.mdx";
+import VersionBackup from "/snippets/functions/management/version_backup.mdx";
+import CleanupOldRuns from "/snippets/functions/management/cleanup_old_runs.mdx";
+import DocumentChanges from "/snippets/functions/management/document_changes.mdx";
+import TestBeforeProd from "/snippets/functions/management/test_before_prod.mdx";
+import TroubleshootFails from "/snippets/functions/management/troubleshoot_fails.mdx";
+import MissingEnvVars from "/snippets/functions/management/missing_env_vars.mdx";
+import HighFailureRate from "/snippets/functions/management/high_failure_rate.mdx";
+
+Manage the lifecycle of your Functions including updates, versioning, monitoring executions, and viewing replays.
+
+## Viewing Functions
+
+### List All Functions
+
+View all deployed Functions:
+
+<ListFunctions />
+
+### Get Function Details
+
+Retrieve specific Function information:
+
+<GetFunctionDetails />
+
+## Updating Functions
+
+### Update Function Code
+
+Deploy a new version of your Function:
+
+<UpdateCode />
+
+### Update Function Metadata
+
+Change Function name or description:
+
+```python
+# Update metadata (via console or API)
+# Name and description updates are available through the Console
+```
+
+**Note:** Function updates create new versions automatically. Previous versions remain accessible for rollback.
+
+## Versioning
+
+### Version Management
+
+Functions automatically version on each update:
+
+<VersionManagement />
+
+### Run Specific Version
+
+Execute a specific Function version:
+
+<RunSpecificVersion />
+
+### Version History
+
+Track changes across versions:
+
+<VersionHistory />
+
+## Monitoring Executions
+
+### View Run History
+
+List recent Function executions:
+
+<ViewRunHistory />
+
+### Check Run Status
+
+Monitor specific execution:
+
+<CheckRunStatus />
+
+**Status values:**
+- `active` - Function is currently running
+- `closed` - Function completed successfully
+- `failed` - Function encountered an error
+
+### Filter Active Runs
+
+View only running executions:
+
+<FilterActiveRuns />
+
+## Viewing Replays
+
+### Access Function Replay
+
+Watch MP4 replay of Function execution:
+
+<AccessReplay />
+
+**Replay features:**
+- Video recording of browser session
+- Shows all actions taken
+- Useful for debugging failures
+- Available after running a function
+
+### Replay After Run
+
+Get replay immediately after execution:
+
+<ReplayAfterRun />
+
+## Managing Runs
+
+### Stop Running Function
+
+Cancel a long-running execution:
+
+<StopRunning />
+
+### Monitoring Long Runs
+
+Track execution progress:
+
+<MonitorRuns />
+
+## Forking Functions
+
+### Fork Shared Function
+
+Create your own copy of a shared Function:
+
+<ForkFunction />
+
+**Use cases:**
+- Customize shared Functions
+- Create templates from marketplace
+- Copy teammate's Functions
+- Experiment without affecting original
+
+### Modify Forked Function
+
+After forking, update as needed:
+
+<ModifyForked />
+
+## Downloading Functions
+
+### Download Function Code
+
+Retrieve Function source code:
+
+<DownloadCode />
+
+**Requirements:**
+- Decryption key (available in Console) - passed when creating Function instance
+- Only works for Functions you own or have access to
+
+### Download for Backup
+
+Back up all your Functions:
+
+<BackupFunctions />
+
+## Deleting Functions
+
+### Delete Function
+
+Remove a Function permanently:
+
+<DeleteFunction />
+
+**Warning:**
+- Deletion is permanent
+- All versions are deleted
+- Run history is preserved
+- Cannot be undone
+
+## Sharing Functions
+
+### Make Function Public
+
+Share Functions with others:
+
+<MakePublic />
+
+**Shared Functions:**
+- ✅ Others can view and fork
+- ✅ Original remains under your control
+- ❌ Others cannot modify your version
+- ✅ Usage tracked to your account
+
+### Private Functions
+
+Keep Functions private (default):
+
+<PrivateFunction />
+
+## Best Practices
+
+### 1. Version Your Functions
+
+Update incrementally with clear changes:
+
+<VersionBackup />
+
+### 2. Monitor Function Health
+
+Regular health checks:
+
+<FunctionHealthCheck />
+
+### 3. Clean Up Old Runs
+
+Archive or analyze old execution data:
+
+<CleanupOldRuns />
+
+### 4. Document Changes
+
+Keep change log for Function updates:
+
+<DocumentChanges />
+
+### 5. Test Before Production
+
+Validate updates before deploying:
+
+<TestBeforeProd />
+
+## Troubleshooting
+
+### Function Fails to Run
+
+Check run details for errors:
+
+<TroubleshootFails />
+
+### Missing Environment Variables
+
+Verify configuration:
+
+<MissingEnvVars />
+
+### High Failure Rate
+
+Analyze failure patterns:
+
+<HighFailureRate />
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Creating Functions" icon="file-code" href="/features/functions/creating">
+    Learn how to write Functions
+  </Card>
+
+  <Card title="Invocations" icon="play" href="/features/functions/invocations">
+    Call Functions via API or SDK
+  </Card>
+
+  <Card title="Schedules" icon="clock" href="/features/functions/schedules">
+    Schedule Functions with cron
+  </Card>
+
+  <Card title="Functions Concept" icon="lightbulb" href="/concepts/functions">
+    Back to Functions overview
+  </Card>
+</CardGroup>

@@ -1,0 +1,12 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    # This will raise an error
+    with client.AgentFallback(session, task="Task") as fb:
+        data = session.scrape()  # Not allowed
+
+    # This will raise an error
+    with client.AgentFallback(session, task="Task") as fb:
+        session.execute(type="click", selector="#btn", raise_on_failure=True)  # Not allowed

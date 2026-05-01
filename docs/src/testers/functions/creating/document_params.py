@@ -1,0 +1,13 @@
+# @sniptest filename=document_params.py
+def run(url: str, max_retries: int = 3):
+    """
+    Fetch data from a website with retries.
+
+    Args:
+        url: The website URL to scrape
+        max_retries: Number of retry attempts on failure (default: 3)
+
+    Returns:
+        Dict with 'success' (bool) and 'data' (any) keys
+    """
+    pass

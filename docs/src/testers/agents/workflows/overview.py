@@ -1,0 +1,12 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(task="Navigate to pricing page and extract plans")
+
+    if result.success:
+        # Convert to function code
+        function_code = agent.workflow.code()
+        print(function_code.python_script)

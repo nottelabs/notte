@@ -136,18 +136,21 @@ The session offset
 ### replay
 
 ```python
-replay(session_id: <class 'str'>) -> <class 'notte_core.utils.webp_replay.MP4Replay'>
+replay(session_id: str, wait: bool = True, timeout: float = 240.0, poll_interval: float = 5.0) -> ReplayResponse
 ```
 
-Downloads the replay for the specified session in mp4 format
+Get presigned URLs for session replay.
 
 **Parameters:**
 
-- `session_id`: The identifier of the session to download the replay for.
+- `session_id`: The identifier of the session to get the replay for.
+- `wait`: If `True` (default), poll until the replay is ready instead of raising on 404.
+- `timeout`: Maximum seconds to wait for the replay to become available. Defaults to `240.0`.
+- `poll_interval`: Seconds between polling attempts. Defaults to `5.0`.
 
 **Returns:**
 
-The replay file in mp4 format.
+[`ReplayResponse`](/sdk-reference/misc/replayresponse): Contains presigned URLs for MP4 download and HLS playlist.
 
 ---
 

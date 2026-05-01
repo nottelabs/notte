@@ -1,13 +1,15 @@
 import base64
+import datetime as dt
 import io
 from base64 import b64decode, b64encode
-from datetime import datetime
+from collections.abc import Iterator
+from contextlib import contextmanager
 from io import BytesIO
 from textwrap import dedent
 from typing import Annotated, Any
 
 from PIL import Image, ImageDraw, ImageFont
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing_extensions import override
 
 from notte_core.actions import ActionUnion
@@ -16,11 +18,62 @@ from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, Viewp
 from notte_core.common.config import ScreenshotType, config
 from notte_core.data.space import DataSpace
 from notte_core.errors.base import NotteBaseError
+from notte_core.profiling import profiler
 from notte_core.space import ActionSpace
 from notte_core.utils.image import draw_text_with_rounded_background
 from notte_core.utils.url import clean_url
 
 _empty_observation_instance = None
+
+
+def utc_now() -> dt.datetime:
+    return dt.datetime.now(dt.timezone.utc)
+
+
+class TimedSpan(BaseModel):
+    started_at: dt.datetime
+    ended_at: dt.datetime | None
+
+    @model_validator(mode="after")
+    def validate_order(self) -> "TimedSpan":
+        if self.ended_at is not None and self.started_at > self.ended_at:
+            raise ValueError("started_at must be <= ended_at")
+        return self
+
+    @staticmethod
+    def start() -> "TimedSpan":
+        return TimedSpan(started_at=utc_now(), ended_at=None)
+
+    def close(self) -> "FilledTimedSpan":
+        if self.ended_at is None:
+            self.ended_at = utc_now()
+        return FilledTimedSpan(started_at=self.started_at, ended_at=self.ended_at)
+
+    def as_fields(self) -> dict[str, dt.datetime]:
+        return {
+            "started_at": self.started_at,
+            "ended_at": self.ended_at or utc_now(),
+        }
+
+    @staticmethod
+    def empty() -> "FilledTimedSpan":
+        with TimedSpan.capture() as span:
+            pass
+        return span.close()
+
+    @staticmethod
+    @contextmanager
+    def capture() -> Iterator["TimedSpan"]:
+        span = TimedSpan.start()
+        try:
+            yield span
+        finally:
+            _ = span.close()
+
+
+class FilledTimedSpan(BaseModel):
+    started_at: dt.datetime
+    ended_at: dt.datetime
 
 
 class Screenshot(BaseModel):
@@ -42,19 +95,53 @@ class Screenshot(BaseModel):
 
         # replace with empty obs in case of failure
         if not v:
-            buffer = io.BytesIO()
             return Observation.empty().screenshot.raw
 
+        # Fast path: check JPEG magic bytes (FFD8) - most common case from CDP screenshots
+        # This avoids sync PIL operations for valid JPEG images
+        if len(v) >= 2 and v[0:2] == b"\xff\xd8":
+            # Valid JPEG, check if dimensions are even (required for video encoding)
+            # Only use PIL if we need to pad - this is rare
+            try:
+                # Quick dimension check using JPEG header parsing (no full decode)
+                # SOF0 marker contains dimensions
+                pos = 2
+                while pos < len(v) - 9:
+                    if v[pos] != 0xFF:
+                        break
+                    marker = v[pos + 1]
+                    # SOF markers (0xC0-0xCF except 0xC4, 0xC8, 0xCC)
+                    if marker in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+                        if pos + 8 >= len(v):  # Ensure we can read height and width
+                            break
+                        height = (v[pos + 5] << 8) | v[pos + 6]
+                        width = (v[pos + 7] << 8) | v[pos + 8]
+                        # If dimensions are even, return as-is (fast path)
+                        if width % 2 == 0 and height % 2 == 0:
+                            return v
+                        # Need to pad - fall through to PIL path
+                        break
+                    # Skip to next marker
+                    length = (v[pos + 2] << 8) | v[pos + 3]
+                    if length < 2:  # Invalid JPEG marker length
+                        break
+                    pos += 2 + length
+                else:
+                    # Couldn't parse dimensions, fall through to PIL for safety
+                    pass
+            except Exception:
+                # Parsing failed, fall through to PIL for safety
+                pass
+
+        # Slow path: use PIL for non-JPEG or images that need padding
         try:
             img = Image.open(io.BytesIO(v))
         except Exception:
             return Observation.empty().screenshot.raw
 
-        # Convert to JPEG if not already
-        img = Image.open(io.BytesIO(v))
         orig_img = img
 
-        # Pad to even width and height
+        # Pad to even width and height (required for video encoding)
         width, height = img.size
         new_width = width + (width % 2)
         new_height = height + (height % 2)
@@ -84,6 +171,7 @@ class Screenshot(BaseModel):
         data["raw"] = b64encode(self.raw).decode("utf-8")
         return data
 
+    @profiler.profiled(service_name="observation")
     def bytes(self, type: ScreenshotType | None = None, text: str | None = None) -> bytes:
         def _bytes():
             nonlocal type
@@ -151,7 +239,7 @@ class TrajectoryProgress(BaseModel):
     max_steps: int
 
 
-class Observation(BaseModel):
+class Observation(FilledTimedSpan):
     metadata: Annotated[
         SnapshotMetadata, Field(description="Metadata of the current page, i.e url, page title, snapshot timestamp.")
     ]
@@ -163,12 +251,14 @@ class Observation(BaseModel):
         return clean_url(self.metadata.url)
 
     @staticmethod
-    def from_snapshot(snapshot: BrowserSnapshot, space: ActionSpace) -> "Observation":
+    def from_snapshot(snapshot: BrowserSnapshot, space: ActionSpace, span: FilledTimedSpan) -> "Observation":
         bboxes = [node.bbox.with_id(node.id) for node in snapshot.interaction_nodes() if node.bbox is not None]
         return Observation(
             metadata=snapshot.metadata,
             screenshot=Screenshot(raw=snapshot.screenshot, bboxes=bboxes, last_action_id=None),
             space=space,
+            started_at=span.started_at,
+            ended_at=span.ended_at,
         )
 
     @field_validator("screenshot", mode="before")
@@ -210,7 +300,7 @@ class Observation(BaseModel):
                 metadata=SnapshotMetadata(
                     url="",
                     title="",
-                    timestamp=datetime.min,
+                    timestamp=dt.datetime.min.replace(tzinfo=dt.timezone.utc),
                     viewport=ViewportData(
                         scroll_x=0, scroll_y=0, viewport_width=0, viewport_height=0, total_width=0, total_height=0
                     ),
@@ -218,11 +308,14 @@ class Observation(BaseModel):
                 ),
                 screenshot=Screenshot(raw=generate_empty_picture(), bboxes=[], last_action_id=None),
                 space=ActionSpace(interaction_actions=[], description=""),
+                started_at=utc_now(),
+                ended_at=utc_now(),
             )
+
         return _empty_observation_instance
 
 
-class ExecutionResult(BaseModel):
+class ExecutionResult(FilledTimedSpan):
     # action: BaseAction
     action: ActionUnion
     success: bool

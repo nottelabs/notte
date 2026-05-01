@@ -1,0 +1,17 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/browser-controls/upload_file.py */}
+
+```python upload_file.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com/upload")
+
+    # Upload from local file
+    session.execute(type="upload_file", selector="input[type='file']", file_path="/path/to/document.pdf")
+
+    # Upload with ID
+    session.execute(type="upload_file", id="file-upload", file_path="/path/to/image.jpg")
+```

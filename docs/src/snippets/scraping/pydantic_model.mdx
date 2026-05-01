@@ -1,0 +1,19 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/scraping/pydantic_model.py */}
+
+```python pydantic_model.py
+
+
+class Product(BaseModel):
+    name: str
+    price: float
+    description: str
+
+
+client = NotteClient()
+product = client.scrape(
+    "https://example.com/product", response_format=Product, instructions="Extract the product details"
+)
+
+print(f"Name: {product.name}, Price: {product.price}")
+```

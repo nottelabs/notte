@@ -1,0 +1,52 @@
+---
+title: "run"
+description: "Run the function code using the specified version and variables"
+---
+
+
+
+If no version is provided, the latest version is used.
+
+```python
+function = notte.Function("<your-function-id>")
+function.run(variable1="value1", variable2="value2")
+```
+
+> Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail
+
+
+## Parameters
+
+<ParamField path="version" type="UnionType[str, None]" default="None">
+</ParamField>
+
+<ParamField path="local" type="bool" default="False">
+</ParamField>
+
+<ParamField path="restricted" type="bool" default="True">
+</ParamField>
+
+<ParamField path="timeout" type="UnionType[int, None]" default="None">
+</ParamField>
+
+<ParamField path="stream" type="bool" default="True">
+</ParamField>
+
+<ParamField path="raise_on_failure" type="bool" default="True">
+</ParamField>
+
+<ParamField path="function_run_id" type="UnionType[str, None]" default="None">
+</ParamField>
+
+<ParamField path="workflow_run_id" type="UnionType[str, None]" default="None">
+</ParamField>
+
+<ParamField path="log_callback" type="UnionType[Callable[[str], None], None]" default="None">
+</ParamField>
+
+<ParamField path="variables" type="Any" required>
+</ParamField>
+
+## Returns
+
+[`FunctionRunResponse`](/sdk-reference/misc/functionrunresponse)

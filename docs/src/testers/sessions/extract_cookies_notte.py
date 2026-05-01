@@ -1,0 +1,14 @@
+# @sniptest filename=extract_cookies_notte.py
+import json
+
+from notte_sdk import NotteClient
+
+client = NotteClient()
+with client.Session() as session:
+    # Observe the state of a webpage
+    obs = session.observe(url="https://google.com/travel/flights")
+
+    # Get and save cookies from the session
+    with open("cookies.json", "w") as f:
+        cookies = session.get_cookies()
+        json.dump(cookies, f)

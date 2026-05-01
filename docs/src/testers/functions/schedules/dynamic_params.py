@@ -1,0 +1,15 @@
+# @sniptest filename=dynamic_params.py
+import os
+from datetime import datetime
+
+
+def run():
+    # Access environment variables
+    api_key = os.getenv("API_KEY")
+    webhook_url = os.getenv("WEBHOOK_URL")
+
+    # Use current date
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    # Your automation
+    pass

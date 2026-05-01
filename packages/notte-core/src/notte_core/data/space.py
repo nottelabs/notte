@@ -4,7 +4,7 @@ from typing import Annotated, Any, Generic, Self, TypeVar
 import requests
 from pydantic import BaseModel, Field, RootModel, model_serializer, model_validator
 
-from notte_core.errors.processing import InvalidInternalCheckError
+from notte_core.errors.processing import InvalidInternalCheckError, ScrapeFailedError
 
 TBaseModel = TypeVar("TBaseModel", bound=BaseModel, covariant=True)
 DictBaseModel = RootModel[dict[str, Any] | list[dict[str, Any]]]
@@ -90,8 +90,9 @@ class StructuredData(BaseModel, Generic[TBaseModel]):
         return result
 
     def get(self) -> TBaseModel:
-        if self.data is None:
-            raise ValueError(f"Failed to scrape data. With error: {self.error or 'unknown error'}")
+        """Get the extracted data, raising ScrapeFailedError if extraction failed."""
+        if not self.success or self.data is None:
+            raise ScrapeFailedError(self.error or "Unknown extraction error")
         if isinstance(self.data, RootModel):
             return self.data.root  # type: ignore[attr-defined]
         return self.data
@@ -116,3 +117,14 @@ class DataSpace(BaseModel):
                 error=None,
             ),
         )
+
+    @property
+    def structured_scrape_failed(self) -> bool:
+        return self.structured is not None and not self.structured.success
+
+    @property
+    def structured_scrape_exception(self) -> Exception | None:
+        if not self.structured_scrape_failed:
+            return None
+        error_msg = (self.structured.error if self.structured is not None else None) or "Unknown extraction error"
+        return ScrapeFailedError(error_msg)

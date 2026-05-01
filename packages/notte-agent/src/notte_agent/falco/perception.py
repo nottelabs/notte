@@ -67,15 +67,27 @@ class FalcoPerception(BasePerception):
             return ""
         if only_structured:
             structured_data = data.structured
-            if structured_data is None or not structured_data.success or structured_data.data is None:
-                error_msg = f" with error: {structured_data.error}" if structured_data is not None else ""
-                return f"Scraping failed{error_msg}. Please try again with different instructions."
-            return f"""
+            if structured_data is not None and structured_data.success and structured_data.data is not None:
+                return f"""
 Extracted JSON data:
 ```json
 {structured_data.data.model_dump_json()}
 ```
 """
+            # If structured scraping was attempted and failed, report the failure
+            # (don't fall through to markdown which may just contain the error message)
+            if structured_data is not None and not structured_data.success:
+                error_msg = f" with error: {structured_data.error}" if structured_data.error else ""
+                return f"Scraping failed{error_msg}. Please try again with different instructions."
+            # No structured data at all — fall back to markdown (e.g. from evaluate_js)
+            if data.markdown:
+                return f"""
+Extracted data:
+```
+{data.markdown}
+```
+"""
+            return ""
         return f"""
 Data scraped from current page view:
 ```markdown

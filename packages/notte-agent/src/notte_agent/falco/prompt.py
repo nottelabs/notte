@@ -134,7 +134,7 @@ class FalcoPrompt(BasePrompt):
     "next_goal": "What needs to be done with the next actions"
   },
   "action": {
-      "type: "one_action_type",
+      "type": "one_action_type",
       // action-specific parameter
       ...
    }

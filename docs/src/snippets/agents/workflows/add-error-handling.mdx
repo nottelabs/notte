@@ -1,0 +1,20 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/workflows/add-error-handling.py */}
+
+```python add-error-handling.py
+    # Agent-generated code
+    base_code = agent.workflow.code()
+
+    enhanced_code = f"""
+from notte_sdk import NotteClient
+from loguru import logger
+
+def run_function():
+    client = NotteClient()
+    try:
+        with client.Session() as session:
+            {base_code.python_script}
+            return {{"success": True, "data": result}}
+    except Exception as e:
+        logger.error(f"Function failed: {{e}}")
+```

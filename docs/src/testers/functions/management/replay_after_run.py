@@ -1,0 +1,15 @@
+# @sniptest filename=replay_after_run.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+function = client.Function(function_id="func_abc123")
+
+# Run function
+result = function.run(url="https://example.com")
+
+# Get replay for this run (automatically uses the session from the run)
+replay = function.replay()
+
+# Download the video
+replay.download("execution_replay.mp4")

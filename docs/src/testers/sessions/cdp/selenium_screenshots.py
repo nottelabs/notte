@@ -1,0 +1,18 @@
+# @sniptest filename=selenium_screenshots.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    page = session.page
+    page.goto("https://example.com")
+
+    # Full page screenshot
+    page.screenshot(path="screenshot.png", full_page=True)
+
+    # Screenshot of specific element
+    element = page.locator("div.content")
+    element.screenshot(path="element.png")
+
+    # Screenshot to bytes
+    screenshot_bytes = page.screenshot()

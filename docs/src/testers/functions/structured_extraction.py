@@ -1,0 +1,21 @@
+# @sniptest filename=structured_extraction.py
+from notte_sdk import NotteClient
+from pydantic import BaseModel
+
+
+class Product(BaseModel):
+    name: str
+    price: float
+    in_stock: bool
+
+
+def run(product_url: str):
+    """Extract structured product data."""
+    client = NotteClient()
+
+    with client.Session() as session:
+        session.execute(type="goto", url=product_url)
+
+        product = session.scrape(response_format=Product, instructions="Extract product details")
+
+    return product.model_dump()

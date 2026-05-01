@@ -95,12 +95,11 @@ class CsvLogger:
 
 @retry(max_tries=3, delay_seconds=5, error_message="Failed to fetch trending repos. Try again later...")
 def fetch_trending_repos() -> list[TrendingRepo]:
-    data = client.scrape(
+    trending_repos = client.scrape(
         url="https://github.com/trending",
         response_format=TrendingRepos,
         instructions="Retrieve the top 3 trending repositories",
     )
-    trending_repos: TrendingRepos = data.get()
     return trending_repos.trending
 
 
@@ -139,7 +138,7 @@ def create_new_issues():
     issues_to_add: list[TrendingRepoWithIssue] = []
     with client.Vault() as vault:
         logger.info("Added github credentials to vault...")
-        _ = vault.add_credentials(
+        vault.add_credentials(
             url="https://github.com",
             email=os.environ["AUTO_ISSUES_GITHUB_EMAIL"],
             password=os.environ["AUTO_ISSUES_GITHUB_PASSWORD"],

@@ -3,9 +3,10 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 import litellm
+from json_repair import repair_json
 from litellm import (
     AllMessageValues,
     ChatCompletionUserMessage,
@@ -16,12 +17,13 @@ from litellm.exceptions import (
     BadRequestError,
     NotFoundError,
     RateLimitError,
+    Timeout,
 )
 from litellm.exceptions import (
     ContextWindowExceededError as LiteLLMContextWindowExceededError,
 )
 from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTypeStubs]
-from notte_core.common.config import LlmModel, config
+from notte_core.common.config import LlmModel, config, enable_openrouter
 from notte_core.common.logging import logger
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.llm import LLmModelOverloadedError, LLMParsingError
@@ -42,6 +44,290 @@ from pydantic import BaseModel, ValidationError, create_model
 from notte_llm.logging import trace_llm_usage
 from notte_llm.tracer import LlmTracer, LlmUsageFileTracer
 from notte_llm.types import TResponseFormat
+
+
+def _resolve_schema_refs(schema: dict[str, Any]) -> dict[str, Any]:
+    """Inline all $ref/$defs references in a JSON Schema (shared utility)."""
+    import copy
+
+    defs: dict[str, Any] = schema.get("$defs", {})
+
+    def resolve_refs(obj: Any) -> Any:
+        if isinstance(obj, dict):
+            obj_dict = cast(dict[str, Any], obj)
+            if "$ref" in obj_dict:
+                ref_name = str(obj_dict["$ref"]).split("/")[-1]
+                if ref_name in defs:
+                    resolved = copy.deepcopy(defs[ref_name])
+                    for key, value in obj_dict.items():
+                        if key != "$ref":
+                            resolved[key] = value
+                    return resolve_refs(resolved)
+                return cast(dict[str, Any], obj)
+            return {k: resolve_refs(v) for k, v in obj_dict.items()}
+        elif isinstance(obj, list):
+            return [resolve_refs(item) for item in cast(list[Any], obj)]
+        return obj
+
+    resolved = resolve_refs(schema)
+    resolved.pop("$defs", None)
+    return resolved
+
+
+def fix_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
+    """
+    Convert a Pydantic JSON schema to Gemini-compatible format.
+
+    Courtesy of https://github.com/browser-use/browser-use
+
+    Gemini doesn't support:
+    - $ref/$defs (JSON Schema references) - must be inlined
+    - additionalProperties
+    - default values in schema
+    - Empty object properties (must have at least one property)
+    """
+    # Step 1: Resolve all $ref references by inlining definitions
+    schema = _resolve_schema_refs(schema)
+
+    # Step 2: Remove unsupported properties and handle edge cases
+    def clean_schema(obj: Any, parent_key: str | None = None) -> Any:
+        if isinstance(obj, dict):
+            obj_dict = cast(dict[str, Any], obj)
+
+            # When an object uses additionalProperties with real type info (not just
+            # true/false) together with propertyNames, Gemini cannot represent this
+            # pattern.  Convert it into explicit ``properties`` so the model knows
+            # what keys and value types are expected.
+            additional: Any = obj_dict.get("additionalProperties")
+            property_names_enum: list[str] | None = None
+            pn = obj_dict.get("propertyNames")
+            if isinstance(pn, dict):
+                pn_dict = cast(dict[str, Any], pn)
+                property_names_enum = cast(list[str] | None, pn_dict.get("enum"))
+
+            if isinstance(additional, dict) and property_names_enum is not None and obj_dict.get("type") == "object":
+                # Build explicit properties from the enum keys + value schema
+                value_schema: dict[str, Any] = clean_schema(additional, parent_key="additionalProperties")
+                explicit_props: dict[str, Any] = {}
+                for prop_name in property_names_enum:
+                    explicit_props[prop_name] = {**value_schema, "nullable": True}
+                # Rebuild the object schema with explicit properties, all optional
+                cleaned: dict[str, Any] = {}
+                for key, value in obj_dict.items():
+                    if key in ["additionalProperties", "default", "propertyNames", "minProperties"]:
+                        continue
+                    cleaned[key] = clean_schema(value, parent_key=key)
+                # Merge with any pre-existing static properties rather than overwriting
+                existing_props = cast(dict[str, Any], cleaned.get("properties", {}))
+                merged = {**existing_props, **explicit_props}
+                cleaned["properties"] = merged if merged else {"_placeholder": {"type": "string"}}
+                return cleaned
+
+            cleaned = {}
+            for key, value in obj_dict.items():
+                # Skip keys that Gemini doesn't support
+                # Note: 'title' is kept as Gemini handles it fine and it's useful for descriptions
+                if key in ["additionalProperties", "default", "propertyNames", "minProperties"]:
+                    continue
+
+                cleaned_value = clean_schema(value, parent_key=key)
+
+                # Handle empty object properties - Gemini rejects these
+                if (
+                    key == "properties"
+                    and isinstance(cleaned_value, dict)
+                    and len(cast(dict[str, Any], cleaned_value)) == 0
+                    and obj_dict.get("type") == "object"
+                ):
+                    # Add a placeholder property so Gemini doesn't error
+                    cleaned["properties"] = {"_placeholder": {"type": "string"}}
+                else:
+                    cleaned[key] = cleaned_value
+
+            return cleaned
+        elif isinstance(obj, list):
+            obj_list = cast(list[Any], obj)
+            return [clean_schema(item, parent_key=parent_key) for item in obj_list]
+        return obj
+
+    return clean_schema(schema)
+
+
+def is_gemini_model(model: str) -> bool:
+    """Check if the model is a Gemini model that needs schema transformation.
+
+    Note: vertex_ai/claude-* models are Anthropic models hosted on Vertex AI,
+    not Gemini models. They should use the Anthropic path, not this one.
+    """
+    model_lower = model.lower()
+    # Check for Anthropic models on Vertex AI first - they're not Gemini
+    if "vertex_ai" in model_lower and ("claude" in model_lower or "anthropic" in model_lower):
+        return False
+    return "gemini" in model_lower or "vertex_ai" in model_lower
+
+
+def is_anthropic_model(model: str) -> bool:
+    """Check if the model is an Anthropic model."""
+    model_lower = model.lower()
+    return (
+        model_lower.startswith("anthropic/")
+        or model_lower.startswith("claude-")
+        or "/anthropic/" in model_lower
+        or "/claude-" in model_lower
+    )
+
+
+def is_openrouter_model(model: str) -> bool:
+    """Check if the model is routed through OpenRouter."""
+    return model.lower().startswith("openrouter/")
+
+
+def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
+    """
+    Convert a Pydantic JSON schema to OpenAI-compatible structured output format.
+
+    OpenAI structured output doesn't support:
+    - Certain formats like "password", "writeOnly"
+    - $ref/$defs (must be inlined for strict mode)
+
+    Returns the schema wrapped in OpenAI's json_schema response_format structure.
+    """
+    # Extract schema name (title) before processing
+    # OpenAI requires name to match ^[a-zA-Z0-9_-]{1,64}$ so we sanitize and truncate it
+    raw_name = schema.get("title", "response")
+    schema_name = re.sub(r"[^a-zA-Z0-9_-]", "_", raw_name)[:64]
+
+    # Step 1: Resolve all $ref references by inlining definitions
+    schema = _resolve_schema_refs(schema)
+
+    # Step 2: Clean schema for OpenAI strict mode
+    # OpenAI structured output only supports a limited subset of JSON Schema keywords.
+    # Using a whitelist approach to only keep supported keys.
+    # Ref: https://platform.openai.com/docs/guides/structured-outputs
+    # Note: "required" is intentionally omitted - we skip it explicitly and regenerate it
+    allowed_schema_keys = {
+        "type",
+        "properties",
+        "items",
+        "enum",
+        "anyOf",
+        "allOf",
+        "const",
+        "description",
+        # Note: "title" is intentionally omitted - not in OpenAI's strict-mode supported keywords
+        # Note: "additionalProperties" is intentionally omitted - we unconditionally set it to False
+        "minItems",
+        "maxItems",
+        "prefixItems",
+    }
+
+    def _expand_property_names(obj_dict: dict[str, Any]) -> dict[str, Any] | None:
+        """When an object uses propertyNames + additionalProperties with real type
+        info, expand into explicit properties so downstream transforms can handle it."""
+        additional = obj_dict.get("additionalProperties")
+        pn = obj_dict.get("propertyNames")
+        property_names_enum: list[str] | None = None
+        if isinstance(pn, dict):
+            pn_dict = cast(dict[str, Any], pn)
+            property_names_enum = cast(list[str] | None, pn_dict.get("enum"))
+        if isinstance(additional, dict) and property_names_enum is not None and obj_dict.get("type") == "object":
+            value_schema: dict[str, Any] = additional
+            explicit_props: dict[str, Any] = {}
+            for prop_name in property_names_enum:
+                explicit_props[prop_name] = dict(value_schema)
+            # Rebuild without propertyNames/minProperties/additionalProperties
+            rebuilt: dict[str, Any] = {}
+            for k, v in obj_dict.items():
+                if k in ("additionalProperties", "propertyNames", "minProperties"):
+                    continue
+                rebuilt[k] = v
+            # Merge with any pre-existing static properties rather than overwriting
+            existing_props = cast(dict[str, Any], rebuilt.get("properties", {}))
+            rebuilt["properties"] = {**existing_props, **explicit_props}
+            return rebuilt
+        return None
+
+    def clean_schema(obj: Any, *, is_properties_map: bool = False) -> Any:
+        if isinstance(obj, dict):
+            obj_dict = cast(dict[str, Any], obj)
+
+            # Expand propertyNames + additionalProperties pattern into explicit
+            # properties before applying the whitelist, otherwise the keys get
+            # stripped and the object ends up empty.
+            was_expanded = False
+            if not is_properties_map:
+                expanded = _expand_property_names(obj_dict)
+                if expanded is not None:
+                    obj_dict = expanded
+                    was_expanded = True
+
+            cleaned: dict[str, Any] = {}
+            for key, value in obj_dict.items():
+                # OpenAI strict mode doesn't support oneOf, convert to anyOf
+                # Only apply to schema keywords, not property names
+                if not is_properties_map and key == "oneOf":
+                    cleaned["anyOf"] = clean_schema(value, is_properties_map=False)
+                    continue
+
+                # Skip original `required` - we'll regenerate it from properties
+                # Only apply to schema keywords, not property names
+                if not is_properties_map and key == "required":
+                    continue
+
+                # If we're inside a "properties" map, keep all keys (they're property names)
+                # Only apply the whitelist to JSON Schema keywords
+                if not is_properties_map and key not in allowed_schema_keys:
+                    continue
+
+                # Recursively clean - only pass is_properties_map=True when we're at a schema-level
+                # "properties" key (not when a property is named "properties")
+                if isinstance(value, (dict, list)):
+                    cleaned[key] = clean_schema(
+                        value, is_properties_map=(not is_properties_map and key == "properties")
+                    )
+                else:
+                    cleaned[key] = value
+
+            # OpenAI strict mode requires:
+            # 1. additionalProperties: false on all objects
+            # 2. properties must be defined (even if empty)
+            # 3. required must include exactly all property keys
+            if "properties" in cleaned or cleaned.get("type") == "object":
+                cleaned["additionalProperties"] = False
+                # Ensure properties exists (OpenAI requires it for objects)
+                if "properties" not in cleaned:
+                    cleaned["properties"] = {}
+                # For expanded propertyNames objects, make properties optional via
+                # nullable anyOf — OpenAI strict mode requires ALL properties in
+                # required, so we can't use required=[] with non-empty properties.
+                if was_expanded:
+                    props = cast(dict[str, Any], cleaned["properties"])
+                    for prop_key in list(props.keys()):
+                        original: dict[str, Any] = cast(dict[str, Any], props[prop_key])
+                        if "anyOf" in original:
+                            branches: list[Any] = list(original["anyOf"]) + [{"type": "null"}]
+                            props[prop_key] = {"anyOf": branches}
+                        else:
+                            props[prop_key] = {"anyOf": [original, {"type": "null"}]}
+                cleaned["required"] = list(cast(dict[str, Any], cleaned["properties"]).keys())
+
+            return cleaned
+        elif isinstance(obj, list):
+            obj_list = cast(list[Any], obj)
+            return [clean_schema(item, is_properties_map=False) for item in obj_list]
+        return obj
+
+    cleaned_schema = clean_schema(schema)
+
+    # Step 3: Wrap in OpenAI's json_schema response_format structure
+    return {
+        "type": "json_schema",
+        "json_schema": {
+            "name": schema_name,
+            "strict": True,
+            "schema": cleaned_schema,
+        },
+    }
 
 
 class LLMEngine:
@@ -78,10 +364,35 @@ class LLMEngine:
     ) -> TResponseFormat:
         tries = self.nb_retries_structured_output + 1
         content = None
+        effective_model = model or self.model
 
-        litellm_response_format: dict[str, str] | type[BaseModel] = dict(type="json_object")
+        litellm_response_format: dict[str, Any] | type[BaseModel] = dict(type="json_object")
         if use_strict_response_format:
-            litellm_response_format = response_format
+            raw_schema = response_format.model_json_schema()
+            # For Anthropic models via OpenRouter, use non-strict json_object format
+            # OpenRouter routes to various backends with incompatible schema support:
+            # - Bedrock doesn't support oneOf at all
+            # - Anthropic direct limits anyOf to 16 parameters
+            is_routed_via_openrouter = is_openrouter_model(effective_model) or enable_openrouter()
+            if is_routed_via_openrouter and is_anthropic_model(effective_model):
+                litellm_response_format = dict(type="json_object")
+                use_strict_response_format = False
+            # For OpenRouter-prefixed models, use OpenAI schema format
+            # OpenRouter expects OpenAI-compatible json_schema wrapper, not Gemini's native format
+            elif is_openrouter_model(effective_model):
+                litellm_response_format = fix_schema_for_openai(raw_schema)
+            # For direct Gemini models (not via OpenRouter), transform schema to Gemini-compatible format
+            # Gemini doesn't support $ref/$defs, additionalProperties, etc.
+            # Only use Gemini schema when NOT routed via OpenRouter (OpenRouter expects OpenAI format)
+            elif is_gemini_model(effective_model) and not is_routed_via_openrouter:
+                litellm_response_format = fix_schema_for_gemini(raw_schema)
+            elif is_anthropic_model(effective_model):
+                # For Anthropic models, pass the Pydantic model directly
+                # litellm handles the conversion to Anthropic's format
+                litellm_response_format = response_format
+            else:
+                # For OpenAI and other models (including via OpenRouter), use OpenAI's json_schema format
+                litellm_response_format = fix_schema_for_openai(raw_schema)
 
         raised_exc = None
 
@@ -96,6 +407,20 @@ class LLMEngine:
                     # fallback to non-strict response format
                     litellm_response_format = dict(type="json_object")
                     use_strict_response_format = False
+                    tries += 1  # Don't consume a retry slot for the format fallback
+                    continue
+                raised_exc = e
+                raise e
+            except ModelNotFoundError as e:
+                # Some models (especially via OpenRouter) don't support strict json_schema
+                # When we get a 404, retry with non-strict json_object format
+                if use_strict_response_format:
+                    logger.warning(
+                        f"Model {effective_model} returned 404 with strict response_format, retrying with json_object format"
+                    )
+                    litellm_response_format = dict(type="json_object")
+                    use_strict_response_format = False
+                    tries += 1  # Don't consume a retry slot for the format fallback
                     continue
                 raised_exc = e
                 raise e
@@ -126,21 +451,61 @@ class LLMEngine:
             try:
                 return response_format.model_validate_json(content)
             except ValidationError as e:
+                error_details = e.errors()
+                is_json_invalid = any(err.get("type") == "json_invalid" for err in error_details)
+
+                if is_json_invalid:
+                    repaired = self._try_repair_json(content, response_format)
+                    if repaired is not None:
+                        return repaired
+
+                # Build a more helpful retry message for JSON issues
+                if is_json_invalid:
+                    retry_content = (
+                        f"Error parsing LLM response: {error_details}. "
+                        "Your response contained invalid JSON. Common causes:\n"
+                        "- Trailing characters after the closing }}. Do NOT wrap the JSON in extra quotes.\n"
+                        "- Unescaped double quotes inside string values (e.g. in JavaScript code). "
+                        'All double quotes within JSON string values MUST be escaped as \\"\n'
+                        "Please output ONLY the raw JSON object, nothing else."
+                    )
+                else:
+                    retry_content = f"Error parsing LLM response: {error_details}, retrying"
+
                 messages.append(
                     ChatCompletionUserMessage(
                         role="user",
-                        content=f"Error parsing LLM response: {e.errors()}, retrying",
+                        content=retry_content,
                     )
                 )
                 raised_exc = e
-                logger.error(f"Error parsing LLM response: {e.errors()}, retrying")
-
+                logger.error(f"Error parsing LLM response: {error_details}, retrying")
                 continue
 
         error_string = (
             f"Error parsing LLM response into Structured Output (type: {response_format}). Content: \n\n{content}\n\n"
         )
         raise LLMParsingError(error_string) from raised_exc
+
+    @staticmethod
+    def _try_repair_json(
+        content: str,
+        response_format: type[TResponseFormat],
+    ) -> TResponseFormat | None:
+        """Attempt to recover a valid response from malformed JSON using ``json_repair``.
+
+        Handles trailing characters, unescaped quotes inside string values,
+        missing commas, unclosed brackets, and other common LLM output issues.
+
+        Returns the validated response or ``None`` if recovery failed.
+        """
+        try:
+            repaired_str = repair_json(content, return_objects=False)
+            result = response_format.model_validate_json(repaired_str)
+            logger.debug("Recovered malformed JSON via json_repair")
+            return result
+        except Exception:
+            return None
 
     @profiler.profiled(service_name="llm")
     async def single_completion(
@@ -160,6 +525,26 @@ class LLMEngine:
         )
         return response.choices[0].message.content  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
 
+    def _get_model(self, model: str | None) -> str:
+        model = model or self.model
+        if enable_openrouter():
+            return LlmModel.get_openrouter_model(model)
+        return model
+
+    def _get_extra_body(self, model: str | None) -> dict[str, Any]:
+        model = model or self.model
+        if enable_openrouter():
+            provider = LlmModel.get_openrouter_provider(model)
+            if provider is None:
+                return {}
+            return {
+                "provider": {
+                    "order": [provider],
+                    "allow_fallbacks": True,
+                }
+            }
+        return {}
+
     @profiler.profiled(service_name="llm")
     async def completion(
         self,
@@ -169,7 +554,10 @@ class LLMEngine:
         response_format: dict[str, str] | type[BaseModel] | None = None,
         n: int = 1,
     ) -> ModelResponse:
-        model = model or self.model
+        extra_body = self._get_extra_body(model)
+        model = self._get_model(model)
+        # Apply model-specific temperature overrides
+        temperature = LlmModel.get_temperature(model, temperature)
         try:
             response = await litellm.acompletion(  # pyright: ignore [reportUnknownMemberType]
                 model,
@@ -179,19 +567,32 @@ class LLMEngine:
                 response_format=response_format,
                 max_completion_tokens=8192,
                 drop_params=True,
+                extra_body=extra_body,
+                # Bound the HTTP call so a stalled upstream stream cannot park the event loop
+                # indefinitely. Without this, httpx has no read timeout and silent server
+                # stalls hang the whole agent run.
+                timeout=60,
             )
             # Cast to ModelResponse since we know it's not streaming in this case
             return cast(ModelResponse, response)
 
         except NotFoundError as e:
             raise ModelNotFoundError(model) from e
-        except RateLimitError:
+        except Timeout as e:
+            logger.warning(f"LLM request to {model} timed out after 60s: {e}")
+            raise LLMProviderError(
+                dev_message=f"LLM request to {model} timed out: {str(e)}",
+                user_message="The LLM provider did not respond in time.",
+                agent_message=None,
+                should_retry_later=True,
+            ) from e
+        except RateLimitError as e:
             logger.opt(exception=True).error(
                 f"Rate limit exceeded for model {model}. You should wait a few seconds before retrying..."
             )
-            raise NotteRateLimitError(provider=model)
-        except AuthenticationError:
-            raise InvalidAPIKeyError(provider=model)
+            raise NotteRateLimitError(provider=model) from e
+        except AuthenticationError as e:
+            raise InvalidAPIKeyError(provider=model) from e
         except LiteLLMContextWindowExceededError as e:
             # Try to extract size information from error message
             current_size = None

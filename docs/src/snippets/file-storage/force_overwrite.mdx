@@ -1,0 +1,15 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/file-storage/force_overwrite.py */}
+
+```python force_overwrite.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+storage = client.FileStorage()
+
+storage.download(
+    file_name="report.pdf",
+    local_dir="./downloads",
+    force=True,  # Overwrite if exists
+)
+```

@@ -1,0 +1,65 @@
+---
+title: Vibe Coding
+description: 'Connect documentation to your AI coding assistant with MCP'
+---
+
+Connect documentation MCP servers to your IDE so AI assistants can search docs while helping you code.
+
+<CodeGroup>
+```bash Notte Docs MCP Server
+https://docs.notte.cc/mcp
+```
+</CodeGroup>
+
+## Vibe Setup
+
+<Tabs>
+  <Tab title="Cursor">
+    Open command palette → **"Open MCP settings"** → add to `mcp.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "notte-docs": {
+          "url": "https://docs.notte.cc/mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http notte-docs https://docs.notte.cc/mcp
+    ```
+
+    Verify with `claude mcp list`.
+  </Tab>
+  <Tab title="VS Code">
+    Create `.vscode/mcp.json`:
+
+    ```json
+    {
+      "servers": {
+        "notte-docs": {
+          "type": "http",
+          "url": "https://docs.notte.cc/mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Project Configuration
+
+Commit a `.mcp.json` file to share with your team:
+
+```json
+{
+  "mcpServers": {
+    "notte-docs": {
+      "url": "https://docs.notte.cc/mcp"
+    }
+  }
+}
+```

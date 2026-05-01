@@ -1,11 +1,11 @@
+import time
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
-from urllib.parse import urljoin
 from webbrowser import open as open_browser
 
-from notte_core.actions import BaseAction
+from notte_core.actions import BaseAction, InteractionActionUnion
 from notte_core.actions.typedicts import (
     CaptchaSolveActionDict,
     CheckActionDict,
@@ -14,6 +14,7 @@ from notte_core.actions.typedicts import (
     CompletionActionDict,
     DownloadFileActionDict,
     EmailReadActionDict,
+    EvaluateJsActionDict,
     FallbackFillActionDict,
     FillActionDict,
     FormFillActionDict,
@@ -41,8 +42,8 @@ from notte_core.common.logging import logger
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
+from notte_core.errors.base import NotteBaseError
 from notte_core.utils.files import create_or_append_cookies_to_file
-from notte_core.utils.webp_replay import MP4Replay
 from pydantic import BaseModel
 from typing_extensions import final, override
 
@@ -55,6 +56,8 @@ from notte_sdk.types import (
     GetCookiesResponse,
     ObserveRequestDict,
     ObserveResponse,
+    PaginationParamsDict,
+    ReplayResponse,
     ScrapeMarkdownParamsDict,
     ScrapeRequestDict,
     SessionDebugResponse,
@@ -75,6 +78,18 @@ from notte_sdk.websockets.jupyter import display_image_in_notebook
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
 
+_GENERIC_UNEXPECTED_MESSAGES: frozenset[str] = frozenset(
+    {
+        "An unexpected error occurred. Our team has been notified.",
+        "An unexpected error occurred.",
+    }
+)
+
+# Retry configuration constants
+CLUSTER_OVERLOAD_RETRY_DELAY = 30  # seconds to wait before retrying on 529 errors
+CONSOLE_VIEWER_URL = (
+    "https://console.notte.cc/static/viewer?ws=wss://api.notte.cc/sessions/{session_id}/debug/recording?token={token}"
+)
 _playwright_available = False
 _async_playwright_available = False
 
@@ -253,14 +268,14 @@ class SessionsClient(BaseClient):
         )
 
     @staticmethod
-    def _session_debug_replay_endpoint(session_id: str | None = None) -> NotteEndpoint[BaseModel]:
+    def _session_debug_replay_endpoint(session_id: str | None = None) -> NotteEndpoint[ReplayResponse]:
         """
         Returns an endpoint for retrieving the replay for a session.
         """
         path = SessionsClient.SESSION_DEBUG_REPLAY
         if session_id is not None:
             path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=BaseModel, method="GET")
+        return NotteEndpoint(path=path, response=ReplayResponse, method="GET")
 
     @staticmethod
     def _session_debug_offset_endpoint(session_id: str | None = None) -> NotteEndpoint[SessionOffsetResponse]:
@@ -456,30 +471,64 @@ class SessionsClient(BaseClient):
         return offset
 
     @track_usage("cloud.session.replay")
-    def replay(self, session_id: str) -> MP4Replay:
+    def replay(
+        self,
+        session_id: str,
+        wait: bool = True,
+        timeout: float = 240.0,
+        poll_interval: float = 5.0,
+    ) -> ReplayResponse:
         """
-        Downloads the replay for the specified session in mp4 format.
+        Get presigned URLs for session replay.
 
         Args:
-            session_id: The identifier of the session to download the replay for.
+            session_id: The identifier of the session to get the replay for.
+            wait: If True (default), poll until the replay is ready instead of
+                raising on 404.
+            timeout: Maximum seconds to wait for the replay to become available.
+            poll_interval: Seconds between polling attempts.
 
         Returns:
-            MP4Replay: The replay file in mp4 format.
+            ReplayResponse: Presigned URLs for HLS playlist and MP4 download.
+
+        Raises:
+            NotteAPIError: If the replay is not found and ``wait`` is False, or
+                if the timeout is exceeded.
+            TimeoutError: If the replay does not become available within ``timeout`` seconds.
         """
         endpoint = SessionsClient._session_debug_replay_endpoint(session_id=session_id)
-        file_bytes = self._request_file(endpoint, file_type="mp4")
-        return MP4Replay(file_bytes)
+        if not wait:
+            return self.request(endpoint)
+
+        logger.info(f"Waiting for replay of session {session_id} to be ready (timeout={timeout}s)...")
+        deadline = time.monotonic() + timeout
+        while True:
+            try:
+                response = self.request(endpoint)
+                logger.info(f"Replay for session {session_id} is ready")
+                return response
+            except NotteAPIError as e:
+                if e.status_code != 404:
+                    raise
+                error_msg = e.error.get("message", "") or e.error.get("detail", "")
+                if "still active" in error_msg:
+                    raise ValueError(
+                        f"Session {session_id} is still active — close the session first to generate the replay."
+                    ) from e
+                if time.monotonic() + poll_interval > deadline:
+                    raise TimeoutError(f"Replay for session {session_id} not ready within {timeout}s") from e
+                time.sleep(poll_interval)
 
     @track_usage("cloud.session.viewer.browser")
-    def viewer_browser(self, session_id: str) -> None:
+    def viewer_browser(self, session_id: str, _viewer_url: str | None) -> None:
         """
         Opens live session replay in browser (frame by frame)
         """
-        debug_info = self.debug_info(session_id=session_id)
-
-        base_url = urljoin(self.server_url + "/", f"{self.base_endpoint_path}/{self.SESSION_VIEWER}/")
-        viewer_url = urljoin(base_url, f"index.html?ws={debug_info.ws.recording}")
-        _ = open_browser(viewer_url, new=1)
+        if _viewer_url is None:
+            _viewer_url = self.status(session_id=session_id).viewer_url
+            if _viewer_url is None:
+                raise ValueError("Viewer URL is not available. Session might be stopped.")
+        _ = open_browser(_viewer_url, new=1)
 
     @track_usage("cloud.session.viewer.notebook")
     def viewer_notebook(self, session_id: str) -> WebsocketService:
@@ -509,13 +558,13 @@ class SessionsClient(BaseClient):
         _ = open_browser(debug_info.debug_url)
 
     @track_usage("cloud.session.viewer")
-    def viewer(self, session_id: str) -> None:
+    def viewer(self, session_id: str, _viewer_url: str | None = None) -> None:
         """
         Open the viewer for the session based on the viewer_type.
         """
         match self.viewer_type:
             case SessionViewerType.BROWSER:
-                self.viewer_browser(session_id=session_id)
+                self.viewer_browser(session_id=session_id, _viewer_url=_viewer_url)
             case SessionViewerType.JUPYTER:
                 _ = self.viewer_notebook(session_id=session_id)
             case SessionViewerType.CDP:
@@ -720,15 +769,26 @@ class RemoteSession(SyncResource):
                 self.response = self.client.start(**self.request.model_dump())
                 break
             except NotteAPIError as e:
-                # retry if 500 error
-                status = e.error.get("status")
-                if status is None or status != 500:
-                    raise
+                # retry if 5XX error
+                status: int | None = e.error.get("status")
 
+                # raise if no tries left
                 if tries == 0:
                     raise
 
-                logger.warning(f"Failed to start session: retrying ({orig_tries - tries}/{orig_tries - 1})")
+                # raise if error is a 4XX or status is unknown
+                if status is None or 400 <= status < 500:
+                    raise
+
+                # on 529: cluster overload, retry with backoff
+                retry_str = f"{orig_tries - tries}/{orig_tries - 1}"
+                if status == 529:
+                    logger.warning(
+                        f"Failed to start session due to cluster overload, retrying in {CLUSTER_OVERLOAD_RETRY_DELAY} seconds ({retry_str})..."
+                    )
+                    time.sleep(CLUSTER_OVERLOAD_RETRY_DELAY)
+                else:
+                    logger.warning(f"Failed to start session: retrying ({retry_str})")
 
         if self.storage is not None:
             self.storage.set_session_id(self.session_id)
@@ -784,7 +844,13 @@ class RemoteSession(SyncResource):
                 create_or_append_cookies_to_file(self._cookie_file, cookies)
             except Exception as e:
                 logger.error(f"🍪 Error saving cookies to {self._cookie_file}: {e}")
-        self.response = self.client.stop(session_id=self.session_id)
+        try:
+            self.response = self.client.stop(session_id=self.session_id)
+        except Exception as e:
+            if "already stopped" in str(e).lower() or "already closed" in str(e).lower():
+                logger.warning(f"Session {self.session_id} was already stopped")
+            else:
+                raise
 
     @property
     def session_id(self) -> str:
@@ -821,27 +887,43 @@ class RemoteSession(SyncResource):
         """
         return self.client.offset(session_id=self.session_id).offset
 
-    def replay(self) -> MP4Replay:
+    def replay(
+        self,
+        wait: bool = True,
+        timeout: float = 240.0,
+        poll_interval: float = 5.0,
+    ) -> ReplayResponse:
         """
-        Get a replay of the session's execution in MP4 format.
+        Get presigned URLs for the session replay.
 
         **Example:**
         ```python
         replay = session.replay()
-        replay.save(f"{session.session_id}_replay.mp4")
+        print(replay.mp4_url)  # Presigned URL for MP4 download
+        replay.download("session.mp4")
         ```
 
-        > Note that the replay is only available after the session has been stopped.
+        By default this polls until the replay is ready. Set ``wait=False``
+        to fail immediately if the replay is not yet available.
 
-        Also you need to perform at least one action for the replay to be available.
+        Args:
+            wait: If True (default), poll until the replay is ready.
+            timeout: Maximum seconds to wait (default 120).
+            poll_interval: Seconds between polling attempts (default 2).
 
         Returns:
-            MP4Replay: The replay data in MP4 format.
+            ReplayResponse: Presigned URLs for HLS playlist and MP4 download.
 
         Raises:
             ValueError: If the session hasn't been started yet (no session_id available).
+            TimeoutError: If the replay does not become available within ``timeout`` seconds.
         """
-        return self.client.replay(session_id=self.session_id)
+        return self.client.replay(
+            session_id=self.session_id,
+            wait=wait,
+            timeout=timeout,
+            poll_interval=poll_interval,
+        )
 
     def viewer_browser(self) -> None:
         """
@@ -852,7 +934,8 @@ class RemoteSession(SyncResource):
         session.viewer_browser()
         ```
         """
-        return self.client.viewer_browser(self.session_id)
+        _viewer_url = self.response.viewer_url if self.response is not None else None
+        return self.client.viewer_browser(self.session_id, _viewer_url=_viewer_url)
 
     def viewer_notebook(self) -> WebsocketService:
         """
@@ -881,7 +964,13 @@ class RemoteSession(SyncResource):
         """
         Open the viewer for the session based on the viewer_type.
         """
-        self.client.viewer(session_id=self.session_id)
+        match self.client.viewer_type:
+            case SessionViewerType.BROWSER:
+                self.viewer_browser()
+            case SessionViewerType.JUPYTER:
+                _ = self.viewer_notebook()
+            case SessionViewerType.CDP:
+                self.viewer_cdp()
 
     def status(self) -> SessionResponse:
         """
@@ -984,6 +1073,8 @@ class RemoteSession(SyncResource):
         if self.request.cdp_url is not None:
             # cdp url from another session provider
             return self.request.cdp_url
+        if self.response.cdp_url is not None:
+            return self.response.cdp_url
         # cdp url from the session provider
         debug = self.debug_info()
         return debug.ws.cdp
@@ -1104,24 +1195,48 @@ class RemoteSession(SyncResource):
     # #######################################################################
 
     @overload
-    def scrape(self, /, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+    def scrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
 
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
     @overload
-    def scrape(self, *, instructions: str, **params: Unpack[ScrapeMarkdownParamsDict]) -> StructuredData[BaseModel]: ...
+    def scrape(
+        self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> dict[str, Any]: ...
 
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    def scrape(
+        self, *, instructions: str, raise_on_failure: Literal[False], **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> StructuredData[BaseModel]: ...
+
+    # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
     def scrape(
         self,
         *,
         response_format: type[TBaseModel],
         instructions: str | None = None,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> TBaseModel: ...
+
+    # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
+    @overload
+    def scrape(
+        self,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[False],
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
     @overload
-    def scrape(self, /, *, only_images: Literal[True]) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
+    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # type: ignore[reportOverlappingOverload]
 
-    def scrape(self, **data: Unpack[ScrapeRequestDict]) -> str | StructuredData[BaseModel] | list[ImageData]:
+    def scrape(
+        self, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
         """
         Scrape the current page data.
 
@@ -1162,9 +1277,29 @@ class RemoteSession(SyncResource):
             ScrapeResponse: An Observation object containing metadata, screenshot, action space, and data space.
 
         """
-        return self.client.page.scrape(self.session_id, **data)
+        return self.client.page.scrape(self.session_id, raise_on_failure=raise_on_failure, **data)
 
-    def observe(self, **data: Unpack[ObserveRequestDict]) -> ObserveResponse:
+    @overload
+    def observe(
+        self,
+        *,
+        instructions: str,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> list[InteractionActionUnion]: ...
+
+    @overload
+    def observe(
+        self,
+        *,
+        instructions: None = None,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> ObserveResponse: ...
+
+    def observe(self, **data: Unpack[ObserveRequestDict]) -> ObserveResponse | list[InteractionActionUnion]:
         """
         Observes the current session page.
 
@@ -1203,9 +1338,8 @@ class RemoteSession(SyncResource):
 
         ```python
         _ = session.execute(type="goto", url="https://console.notte.cc")
-        obs = session.observe(instructions="Fill the email input")
-        action = obs.space.first()
-        print(action.model_dump())
+        actions = session.observe(instructions="Fill the email input")
+        print(actions[0].model_dump())
         ```
 
 
@@ -1213,11 +1347,12 @@ class RemoteSession(SyncResource):
             **data: Arbitrary keyword arguments corresponding to observation request fields.
 
         Returns:
-            ObserveResponse: The formatted observation result from the API response.
+            ObserveResponse: The formatted observation result from the API response when no instructions provided.
+            list[InteractionActionUnion]: The filtered list of actions when instructions is provided.
         """
         if data.get("perception_type") is None:
             data["perception_type"] = self.default_perception_type
-        return self.client.page.observe(session_id=self.session_id, **data)
+        return self.client.page.observe(session_id=self.session_id, **data)  # pyright: ignore[reportUnknownVariableType, reportArgumentType, reportCallIssue]
 
     @overload
     def execute(
@@ -1284,6 +1419,10 @@ class RemoteSession(SyncResource):
     @overload
     def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SmsReadActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EvaluateJsActionDict]
     ) -> ExecutionResult: ...
     @overload
     def execute(
@@ -1409,5 +1548,17 @@ class RemoteSession(SyncResource):
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
         if _raise_on_failure and result.exception is not None:
             logger.error(f"🚨 Execution failed with message: '{result.message}'")
-            raise result.exception
+            exception_to_raise: Exception = result.exception
+            if isinstance(exception_to_raise, NotteBaseError):
+                result_message = str(result.message).strip()
+                raised_message = str(exception_to_raise).strip()
+                if result_message and raised_message in _GENERIC_UNEXPECTED_MESSAGES:
+                    # Prefer the action-specific server message when the serialized exception
+                    # was reduced to a generic user-safe string.
+                    exception_to_raise = NotteBaseError(
+                        dev_message=result_message,
+                        user_message=result_message,
+                        agent_message=result_message,
+                    )
+            raise exception_to_raise from result.exception
         return result

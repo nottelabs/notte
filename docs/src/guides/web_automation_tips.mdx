@@ -3,6 +3,14 @@ title: 'Web Automation Best Practices'
 description: 'Playwright guidelines and common pitfalls for reliable web automation'
 ---
 
+import WaitTime from "/snippets/guides/wait_time.mdx";
+import ClosePopup from "/snippets/guides/close_popup.mdx";
+import HandleOptionalPopup from "/snippets/guides/handle_optional_popup.mdx";
+import SelectElement from "/snippets/guides/select_element.mdx";
+import CombineSelectors from "/snippets/guides/combine_selectors.mdx";
+import PartialText from "/snippets/guides/partial_text.mdx";
+import PlaywrightAccess from "/snippets/guides/playwright_access.mdx";
+
 ## Web Automation Best Practices
 
 Building reliable web automation requires understanding common challenges and applying proven solutions. This guide covers essential techniques and pitfalls to avoid when working with web agents.
@@ -18,10 +26,8 @@ Most web automation issues can be prevented by understanding timing, element sel
     Web pages load asynchronously, and content may appear at different rates. While Notte handles most timing automatically, you can add explicit waits when needed.
 
     **Add custom wait times:**
-    ```python
-    # Wait 2 seconds before continuing
-    session.execute(type="wait", time_ms=2000)
-    ```
+
+    <WaitTime />
 
     **When to use explicit waits:**
     - After triggering actions that load new content
@@ -34,23 +40,14 @@ Most web automation issues can be prevented by understanding timing, element sel
     Popups, cookie banners, and modals are common obstacles in web automation. The fastest and most reliable way to dismiss them is using the Escape key.
 
     **Close popups with Escape:**
-    ```python
-    # Close any modal or popup
-    session.execute(type="press_key", key="Escape")
-    ```
+
+    <ClosePopup />
 
     **Handle optional popups:**
 
     If a popup doesn't always appear, use `raise_on_failure=False` to allow the action to fail silently:
 
-    ```python
-    # Try to close popup, continue if it's not present
-    session.execute(
-        type="press_key",
-        key="Escape",
-        raise_on_failure=False
-    )
-    ```
+    <HandleOptionalPopup />
 
     This prevents your workflow from crashing when the popup is absent.
   </Step>
@@ -70,13 +67,7 @@ Most web automation issues can be prevented by understanding timing, element sel
 
     Append `>> nth=0` to your selector to select the first matching element:
 
-    ```python
-    # Select the first "Transactions" element
-    session.execute(
-        type="click",
-        selector="text=Transactions >> nth=0"
-    )
-    ```
+    <SelectElement />
 
     **Index options:**
     - `>> nth=0` - First element
@@ -96,22 +87,13 @@ Most web automation issues can be prevented by understanding timing, element sel
 
     **Combine selectors for specificity:**
 
-    ```python
-    # More specific selector
-    session.execute(
-        type="click",
-        selector="div.container >> button:has-text('Submit')"
-    )
-    ```
+    <CombineSelectors />
 
     **Use text selectors carefully:**
 
     Text content can change or be translated. When using text selectors, consider partial matches:
 
-    ```python
-    # Partial text match (more robust)
-    session.execute(type="click", selector="button:has-text('Submit')")
-    ```
+    <PartialText />
   </Step>
 
 </Steps>
@@ -156,16 +138,7 @@ The Playwright ecosystem is mature and well-documented, with extensive resources
 
 Notte is fully Playwright-compatible, giving you direct access to the underlying Playwright page object whenever you need it:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-with client.Session() as session:
-    # Access the playwright page
-    page = session.page
-    page.goto("https://www.google.com")
-    screenshot = page.screenshot(path="screenshot.png")
-```
+<PlaywrightAccess />
 
 This means you can:
 - Use any Playwright method directly on `session.page`

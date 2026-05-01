@@ -1,0 +1,20 @@
+# @sniptest filename=complete_example.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session(
+    web_bot_auth=True,
+    proxies=True,  # Use residential proxies
+    open_viewer=True,
+) as session:
+    page = session.page
+
+    # Navigate to a Cloudflare-protected site
+    page.goto("https://example.com")
+
+    # Interact with the page normally
+    page.click("a[href='/dashboard']")
+    page.wait_for_load_state("networkidle")
+
+    print("Successfully accessed protected content!")

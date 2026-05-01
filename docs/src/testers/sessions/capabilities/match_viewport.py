@@ -1,0 +1,12 @@
+# @sniptest filename=match_viewport.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Desktop
+with client.Session(viewport_width=1920, viewport_height=1080) as session:
+    pass
+
+# Laptop
+with client.Session(viewport_width=1366, viewport_height=768) as session:
+    pass

@@ -1,0 +1,182 @@
+---
+title: Connect with Selenium
+description: Use Selenium with Notte sessions via Chrome DevTools Protocol
+---
+
+import SeleniumConnect from '/snippets/sessions/cdp/selenium_connect.mdx';
+import SeleniumForm from '/snippets/sessions/cdp/selenium_form.mdx';
+import SeleniumPlaywrightAlternative from '/snippets/sessions/cdp/selenium_playwright_alternative.mdx';
+import SeleniumBasicAutomation from '/snippets/sessions/cdp/selenium_basic_automation.mdx';
+import SeleniumFindingElements from '/snippets/sessions/cdp/selenium_finding_elements.mdx';
+import SeleniumWaitingElements from '/snippets/sessions/cdp/selenium_waiting_elements.mdx';
+import SeleniumScreenshots from '/snippets/sessions/cdp/selenium_screenshots.mdx';
+import SeleniumJavascript from '/snippets/sessions/cdp/selenium_javascript.mdx';
+import SeleniumDialogs from '/snippets/sessions/cdp/selenium_dialogs.mdx';
+import SeleniumFrames from '/snippets/sessions/cdp/selenium_frames.mdx';
+import SeleniumBuiltinPage from '/snippets/sessions/cdp/selenium_builtin_page.mdx';
+import SeleniumExplicitWaits from '/snippets/sessions/cdp/selenium_explicit_waits.mdx';
+import SeleniumUniqueSelectors from '/snippets/sessions/cdp/selenium_unique_selectors.mdx';
+import SeleniumErrorHandling from '/snippets/sessions/cdp/selenium_error_handling.mdx';
+
+Notte sessions can be controlled with Selenium 4's CDP support. This allows you to use Selenium's WebDriver API while benefiting from Notte's cloud infrastructure, anti-detection features, and session management.
+
+## Prerequisites
+
+Install Selenium 4+ alongside the Notte SDK:
+
+```bash
+pip install notte-sdk selenium>=4.0.0
+```
+
+<Note>
+  Selenium 4 or higher is required for CDP support. Earlier versions do not support connecting to remote browsers via CDP.
+</Note>
+
+## Connect Selenium to Notte Session
+
+Start a Notte session and connect Selenium to it using the CDP URL:
+
+<SeleniumConnect />
+
+<Warning>
+  The CDP connection approach shown above works in most cases, but Selenium's CDP support may vary by version. For more reliable connections, consider using the Remote WebDriver approach below.
+</Warning>
+
+## Alternative: Using Notte's Built-in Page
+
+A more reliable way is to use Notte's built-in Playwright page directly:
+
+<SeleniumPlaywrightAlternative />
+
+<Tip>
+  For Python-based automation with Notte, we recommend using **Playwright** instead of Selenium. Notte sessions include a built-in Playwright page (`session.page`) that's easier to use and better integrated.
+</Tip>
+
+## Basic Web Automation
+
+If you're using Selenium with Notte, here's a basic example using Playwright (recommended):
+
+<SeleniumBasicAutomation />
+
+## Finding Elements
+
+Use Playwright-style element selection with Notte's page:
+
+<SeleniumFindingElements />
+
+## Waiting for Elements
+
+Wait for elements to appear or conditions to be met:
+
+<SeleniumWaitingElements />
+
+## Taking Screenshots
+
+Capture screenshots during automation:
+
+<SeleniumScreenshots />
+
+## Executing JavaScript
+
+Run custom JavaScript in the page context:
+
+<SeleniumJavascript />
+
+## Handling Alerts and Dialogs
+
+Manage browser dialogs using Playwright:
+
+<SeleniumDialogs />
+
+## Working with Frames
+
+Access iframe content:
+
+<SeleniumFrames />
+
+## Why Use Playwright Instead of Selenium?
+
+For Notte sessions, **Playwright is recommended over Selenium** because:
+
+1. **Native Integration**: Notte sessions include a built-in Playwright page (`session.page`)
+2. **Better API**: Playwright has a modern, async-friendly API with better selectors
+3. **Auto-waiting**: Playwright automatically waits for elements to be ready
+4. **Network Control**: Built-in network interception and mocking
+5. **Multiple Contexts**: Easier to manage multiple browser contexts
+6. **Better Performance**: Playwright is generally faster and more reliable
+
+### Selenium is best when:
+- You have existing Selenium test suites you want to migrate
+- Your team is already trained in Selenium
+- You're using Selenium Grid infrastructure
+
+### Playwright is best when:
+- You're starting a new automation project
+- You want modern browser automation features
+- You value simplicity and better debugging
+
+## Migration from Selenium
+
+If you're migrating from Selenium, here's a quick comparison:
+
+| Selenium | Playwright (Notte) |
+|----------|-------------------|
+| `driver.get(url)` | `page.goto(url)` |
+| `driver.find_element(By.CSS_SELECTOR, "button")` | `page.locator("button")` |
+| `element.click()` | `page.click("button")` |
+| `element.send_keys("text")` | `page.fill("input", "text")` |
+| `driver.execute_script("...")` | `page.evaluate("...")` |
+| `WebDriverWait(driver, 10).until(...)` | `page.wait_for_selector("...")` |
+| `driver.save_screenshot("path")` | `page.screenshot(path="path")` |
+
+## Complete Example: Form Automation
+
+Here's a complete example using Playwright with Notte (recommended approach):
+
+<SeleniumForm />
+
+## Best Practices
+
+### 1. Use Playwright Instead
+
+For new projects with Notte, use Playwright instead of Selenium:
+
+<SeleniumBuiltinPage />
+
+### 2. Explicit Waits
+
+Always wait for elements before interacting:
+
+<SeleniumExplicitWaits />
+
+### 3. Unique Selectors
+
+Use unique, stable selectors:
+
+<SeleniumUniqueSelectors />
+
+### 4. Error Handling
+
+Wrap operations in try-except blocks:
+
+<SeleniumErrorHandling />
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Connect with Playwright" icon="p" href="/features/sessions/playwright">
+    Use Playwright with Notte (Recommended)
+  </Card>
+
+  <Card title="Connect with Puppeteer" icon="node-js" href="/features/sessions/puppeteer">
+    Use Puppeteer with Notte sessions
+  </Card>
+
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Configure session settings
+  </Card>
+
+  <Card title="External Browser Providers" icon="cloud" href="/features/sessions/external-providers">
+    Connect Notte to Kernel.sh and other providers
+  </Card>
+</CardGroup>

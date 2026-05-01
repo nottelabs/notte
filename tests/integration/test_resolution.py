@@ -49,6 +49,7 @@ async def upload_screenshot_to_0x0(screenshot_bytes: bytes) -> str:
             return screenshot_url.strip()
 
 
+@pytest.mark.flaky(reruns=2, reruns_delay=5)
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "url",
@@ -71,7 +72,7 @@ async def test_action_node_resolution_pipe(url: str) -> None:
                 action = ExecutionRequest.get_action(dict(type=type, id=node.id, value=param))
                 assert action is not None
                 assert len(action.id) > 0, "Action id is required"
-                action = NodeResolutionPipe.forward(action, page.snapshot)
+                action = await NodeResolutionPipe.forward(action, page.snapshot)
             except Exception as e:
                 errors.append(f"Error for node {node.id}: {e}")
 

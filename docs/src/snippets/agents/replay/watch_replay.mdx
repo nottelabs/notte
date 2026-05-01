@@ -1,0 +1,15 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/replay/watch_replay.py */}
+
+```python watch_replay.py
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    agent.run(task="Complete task")
+
+replay = session.replay()
+replay.download("debug_replay.mp4")
+
+# Watch where it failed
+# Identify if element selectors were wrong
+# Check if page loaded correctly
+```

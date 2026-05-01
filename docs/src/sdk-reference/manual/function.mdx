@@ -1,0 +1,31 @@
+---
+title: "Get started"
+description: "Create, manage, and execute Notte functions"
+---
+
+Functions are serverless deployments of your browser automations that can be invoked via API, scheduled to run automatically, or triggered by events.
+
+import FunctionsPython from '/snippets/workflows/index.mdx';
+
+<FunctionsPython />
+
+## Parameters
+
+<ParamField path="function_id" type="str | None" default="None">
+</ParamField>
+
+<ParamField path="decryption_key" type="str | None" default="None">
+</ParamField>
+
+<ParamField path="path" type="str" required>
+  The path to the function to upload.
+</ParamField>
+
+<ParamField path="name" type="str | None">
+</ParamField>
+
+<ParamField path="description" type="str | None">
+</ParamField>
+
+<ParamField path="shared" type="bool">
+</ParamField>

@@ -1,3 +1,4 @@
+import base64
 import traceback
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from notte_core.actions import (
     CloseTabAction,
     CompletionAction,
     DownloadFileAction,
+    EvaluateJsAction,
     FallbackFillAction,
     FillAction,
     FormFillAction,
@@ -33,7 +35,6 @@ from notte_core.actions import (
     # WriteFileAction,
 )
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import ActionExecutionError
@@ -41,6 +42,7 @@ from notte_core.profiling import profiler
 from notte_core.storage import BaseStorage
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
+from notte_core.utils.raw_file import DEFAULT_RAW_FILE_SELECTORS
 from typing_extensions import final
 
 from notte_browser.captcha import CaptchaHandler
@@ -58,6 +60,41 @@ from notte_browser.form_filling import FormFiller
 from notte_browser.playwright_async_api import Locator
 from notte_browser.window import BrowserWindow
 
+# Installed once per download action. Wraps URL.createObjectURL so we retain a
+# strong JS reference to each Blob under its URL key, which lets us read the
+# bytes even after the page's URL.revokeObjectURL runs (file-saver.js pattern).
+# Revocation only removes the URL->Blob mapping in the browser's registry;
+# our Map keeps the Blob object alive.
+_BLOB_CAPTURE_HOOK = """
+(() => {
+  if (window.__notte_blob_capture) return;
+  const origCreate = URL.createObjectURL.bind(URL);
+  const blobs = new Map();
+  URL.createObjectURL = function (obj) {
+    const url = origCreate(obj);
+    try { blobs.set(url, obj); } catch (e) {}
+    return url;
+  };
+  window.__notte_blob_capture = { get: (url) => blobs.get(url) || null };
+})();
+"""
+
+# Returns base64 so we can ferry bytes safely across CDP.
+_BLOB_READ_SCRIPT = """
+async (url) => {
+  const blob = window.__notte_blob_capture && window.__notte_blob_capture.get(url);
+  if (!blob) return null;
+  const buf = await blob.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
+"""
+
 
 @final
 class BrowserController:
@@ -68,6 +105,22 @@ class BrowserController:
     ) -> None:
         self.verbose: bool = verbose
         self.storage: BaseStorage | None = storage
+
+    def _can_create_tab(self, action: BaseAction) -> bool:
+        """
+        Check if an action can potentially create a new browser tab.
+        Only actions that can open links or navigate can create tabs.
+        """
+        match action:
+            case ClickAction() | GotoAction() | GotoNewTabAction() | PressKeyAction():
+                # these actions can potentially create a new tab
+                # click -> button can open in new tab (target="_blank")
+                # goto -> navigation can potentially open in new tab
+                # goto_new_tab -> explicitly creates a new tab
+                # press_key -> pressing a key can potentially open a new tab (i.e press enter to submit a form)
+                return True
+            case _:
+                return False
 
     async def switch_tab(self, window: BrowserWindow, tab_index: int) -> None:
         context = window.page.context
@@ -120,7 +173,7 @@ class BrowserController:
                         document.activeElement.blur();
                     }
                 """)
-                await window.short_wait()
+                await window.page.wait_for_timeout(200)
                 # compute current scroll position for comparison after execution
                 scroll_position = await window.page.evaluate("window.scrollY")
                 if amount is not None:
@@ -134,7 +187,7 @@ class BrowserController:
                     await window.page.mouse.wheel(
                         delta_x=0, delta_y=(-scroll_amount if isinstance(action, ScrollUpAction) else scroll_amount)
                     )
-                await window.short_wait()
+                await window.page.wait_for_timeout(200)
                 new_scroll_position = await window.page.evaluate("window.scrollY")
                 if new_scroll_position == scroll_position:
                     logger.info(
@@ -147,7 +200,10 @@ class BrowserController:
 
     @profiler.profiled(service_name="execution")
     async def execute_interaction_action(
-        self, window: BrowserWindow, action: InteractionAction, prev_snapshot: BrowserSnapshot | None = None
+        self,
+        window: BrowserWindow,
+        action: InteractionAction,
+        prev_snapshot: BrowserSnapshot | None = None,
     ) -> bool:
         if action.selectors is None:
             raise ValueError(f"Selector is required for {action.name()}")
@@ -159,7 +215,8 @@ class BrowserController:
 
         original_url = window.page.url
 
-        action_timeout = config.timeout_action_ms
+        # Use action's timeout (defaults to config.timeout_action_ms)
+        action_timeout = action.timeout
 
         match action:
             # Interaction actions
@@ -204,7 +261,6 @@ class BrowserController:
                     await window.short_wait()
                 else:
                     await locator.fill(get_str_value(value), timeout=action_timeout, force=action.clear_before_fill)
-                    await window.short_wait()
             case MultiFactorFillAction(value=value):
                 # click the locator, then fill in one number at a time
                 await locator.click()
@@ -237,7 +293,7 @@ class BrowserController:
                     raise NoStorageObjectProvidedError(action.name())
 
                 file_chooser_flag = False
-                upload_file_path = self.storage.get_file(file_path)
+                upload_file_path = await self.storage.get_file(file_path)
 
                 if upload_file_path is None:
                     raise FailedToGetFileError(action.id, file_path)
@@ -335,18 +391,48 @@ class BrowserController:
                     with open(file_path, "wb") as f:
                         _ = f.write(file_content)
 
-                elif action.selectors.playwright_selector == "html":
+                elif action.selectors.playwright_selector in DEFAULT_RAW_FILE_SELECTORS:
                     raise ValueError(
-                        f"Action: '{action.name()}' with selector='html' can only be performed on RAW files urls but url='{window.page.url}'"
+                        f"Action: '{action.name()}' with selector='{action.selectors.playwright_selector}' can only be performed on RAW files urls but url='{window.page.url}'"
                     )
                 else:
+                    # Install the blob-capture hook before the click so any
+                    # URL.createObjectURL call inside the click handler has
+                    # its Blob retained in our side map.
+                    _ = await window.page.evaluate(_BLOB_CAPTURE_HOOK)
+
                     async with window.page.expect_download() as dw:
                         await locator.click()
                     download = await dw.value
-                    file_path = f"{self.storage.download_dir}{download.suggested_filename}"
-                    await download.save_as(file_path)
 
-                res = self.storage.set_file(str(file_path))
+                    dl_url = download.url
+                    if dl_url.startswith("blob:"):
+                        b64 = await window.page.evaluate(_BLOB_READ_SCRIPT, dl_url)
+                        if b64 is None:
+                            raise FailedToDownloadFileError()
+                        file_bytes = base64.b64decode(b64)
+                    else:
+                        # page.request shares cookies/auth with the page, so
+                        # same-origin protected downloads work.
+                        resp = await window.page.request.get(dl_url)
+                        if resp.status >= 400:
+                            raise FailedToDownloadFileError()
+                        file_bytes = await resp.body()
+
+                    if not file_bytes:
+                        raise FailedToDownloadFileError()
+
+                    # Sanitize: Playwright does not strip path separators from
+                    # Content-Disposition-derived filenames, so a malicious
+                    # header can escape download_dir. Take basename only.
+                    safe_name = Path(download.suggested_filename).name
+                    if not safe_name:
+                        raise FailedToDownloadFileError()
+                    file_path = Path(self.storage.download_dir) / safe_name
+                    with open(file_path, "wb") as f:
+                        _ = f.write(file_bytes)
+
+                res = await self.storage.set_file(str(file_path))
 
                 if not res:
                     raise FailedToDownloadFileError()
@@ -368,7 +454,10 @@ class BrowserController:
     @profiler.profiled(service_name="execution")
     @capture_playwright_errors()
     async def execute(
-        self, window: BrowserWindow, action: BaseAction, prev_snapshot: BrowserSnapshot | None = None
+        self,
+        window: BrowserWindow,
+        action: BaseAction,
+        prev_snapshot: BrowserSnapshot | None = None,
     ) -> bool:
         context = window.page.context
         num_pages = len(context.pages)
@@ -385,6 +474,10 @@ class BrowserController:
                 if self.verbose:
                     logger.error("Scrape action should not be executed inside the controller")
                 pass
+            case EvaluateJsAction():
+                if self.verbose:
+                    logger.error("EvaluateJs action should not be executed inside the controller")
+                pass
             case HelpAction():
                 if self.verbose:
                     logger.error("Help action should not be executed inside the controller")
@@ -393,13 +486,14 @@ class BrowserController:
                 retval = await self.execute_browser_action(window, action)
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
-        # add short wait before we check for new tabs to make sure that
-        # the page has time to be created
-        await window.short_wait()
-        await window.short_wait()
-        if len(context.pages) != num_pages:
-            if self.verbose:
-                id_str = f" id={action.id}" if isinstance(action, InteractionAction) else ""
-                logger.info(f"🪦 Action {action.type}{id_str} resulted in a new tab, switched to it...")
-            await self.switch_tab(window, -1)
+        # Only check for new tabs if the action can potentially create one
+        if self._can_create_tab(action):
+            # add short wait before we check for new tabs to make sure that
+            # the page has time to be created
+            await window.short_wait()
+            if len(context.pages) != num_pages:
+                if self.verbose:
+                    id_str = f" id={action.id}" if isinstance(action, InteractionAction) else ""
+                    logger.info(f"🪦 Action {action.type}{id_str} resulted in a new tab, switched to it...")
+                await self.switch_tab(window, -1)
         return retval

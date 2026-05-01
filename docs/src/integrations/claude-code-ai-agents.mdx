@@ -1,0 +1,52 @@
+---
+title: Claude Code & AI Agents
+description: Use Notte with AI coding assistants like Claude Code, Cursor, and Windsurf
+---
+
+## Install notte-cli
+
+The [Notte CLI](https://github.com/nottelabs/notte-cli) lets AI agents control browsers through simple shell commands.
+
+```bash
+brew tap nottelabs/notte-cli https://github.com/nottelabs/notte-cli.git
+brew install notte
+```
+
+## Install notte-skill
+
+Add the skill to your AI coding assistant for richer context:
+
+```bash
+npx skills add nottelabs/notte-cli
+```
+
+This works with Claude Code, Cursor, Windsurf, and other MCP-compatible assistants.
+
+### AGENTS.md / CLAUDE.md
+
+For more consistent results, add to your project or global instructions file:
+
+```markdown
+## Browser Automation
+
+Use `notte` for web automation. Run `notte --help` for all commands.
+
+Core workflow:
+1. `notte sessions start` - Start a browser session
+2. `notte page goto <url>` - Navigate to a URL
+3. `notte page observe` - Get interactive elements with IDs (@B1, @B2)
+4. `notte page click "@B1"` / `notte page fill "@I1" "text"` - Interact using element IDs
+5. `notte page scrape --instructions "..."` - Extract structured data
+6. `notte sessions stop` - Clean up when done
+```
+
+## Tips
+
+- **Viewing headless sessions**: When you start a session, the output includes a `ViewerUrl` - open it to watch your headless browser live
+- **Element selectors**: If element IDs from `observe` (like `@B1`) don't work, use Playwright selectors: `#id`, `.class`, `button:has-text('Submit')`
+- **Multiple matches**: Use `>> nth=0` suffix to select the first match: `button:has-text('OK') >> nth=0`
+- **Closing modals**: `notte page press "Escape"` reliably dismisses most dialogs
+
+## Skills Documentation
+
+For comprehensive documentation including templates and reference guides, see the `skills/notte-browser` folder and reference the [notte-cli open source repo](https://github.com/nottelabs/notte-cli).

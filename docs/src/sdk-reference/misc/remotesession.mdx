@@ -96,7 +96,7 @@ The response containing the list of cookies in the session.
 ### observe
 
 ```python
-observe(data: *<class 'notte_sdk.types.ObserveRequestDict'>) -> <class 'notte_sdk.types.ObserveResponse'>
+observe(data: *<class 'notte_sdk.types.ObserveRequestDict'>) -> notte_core.browser.observation.Observation | list[typing.Annotated[notte_core.actions.actions.ClickAction | notte_core.actions.actions.FillAction | notte_core.actions.actions.MultiFactorFillAction | notte_core.actions.actions.FallbackFillAction | notte_core.actions.actions.CheckAction | notte_core.actions.actions.SelectDropdownOptionAction | notte_core.actions.actions.UploadFileAction | notte_core.actions.actions.DownloadFileAction, FieldInfo(annotation=NoneType, required=True, discriminator='type')]]
 ```
 
 Observes the current session page
@@ -107,7 +107,7 @@ Observes the current session page
 
 **Returns:**
 
-The formatted observation result from the API response.
+The formatted observation result from the API response when no instructions provided. list[InteractionActionUnion]: The filtered list of actions when instructions is provided.
 
 ---
 
@@ -135,18 +135,25 @@ The session trajectory offset
 ### replay
 
 ```python
-replay() -> <class 'notte_core.utils.webp_replay.MP4Replay'>
+replay(wait: <class 'bool'> = True, timeout: <class 'float'> = 240.0, poll_interval: <class 'float'> = 5.0) -> <class 'notte_sdk.types.ReplayResponse'>
 ```
 
-Get a replay of the session's execution in MP4 format
+Get presigned URLs for the session replay
+
+**Parameters:**
+
+- `wait`: If True (default), poll until the replay is ready.
+- `timeout`: Maximum seconds to wait (default 120).
+- `poll_interval`: Seconds between polling attempts (default 2).
 
 **Returns:**
 
-The replay data in MP4 format.
+Presigned URLs for HLS playlist and MP4 download.
 
 **Raises:**
 
 - `ValueError`: If the session hasn't been started yet (no session_id available).
+- `TimeoutError`: If the replay does not become available within ``timeout`` seconds.
 
 ---
 
@@ -163,7 +170,7 @@ Resets the resource to its initial state
 ### scrape
 
 ```python
-scrape(data: *<class 'notte_sdk.types.ScrapeRequestDict'>) -> str | notte_core.data.space.StructuredData[BaseModel] | list[notte_core.data.space.ImageData]
+scrape(raise_on_failure: <class 'bool'> = True, data: *<class 'notte_sdk.types.ScrapeRequestDict'>) -> notte_core.data.space.StructuredData[BaseModel] | pydantic.main.BaseModel | dict[str, typing.Any] | str | list[notte_core.data.space.ImageData]
 ```
 
 Scrape the current page data

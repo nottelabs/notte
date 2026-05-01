@@ -1,0 +1,22 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/fallback/automatic_recovery.py */}
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    with client.AgentFallback(session, task="Add to cart") as fb:
+        # This selector is wrong - action will fail
+        session.execute(type="click", selector="#wrong-selector")
+
+        # Agent automatically:
+        # 1. Sees the failure
+        # 2. Understands the task ("Add to cart")
+        # 3. Finds the correct button
+        # 4. Completes the action
+
+    print(f"Agent invoked: {fb.agent_invoked}")  # True
+    print(f"Success: {fb.success}")  # True (agent recovered)
+```

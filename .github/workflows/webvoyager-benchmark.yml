@@ -1,8 +1,6 @@
 name: webvoyager-benchmark
 
 on:
-  schedule:
-    - cron: '0 22 * * *'  # Run at 10 PM every day
   workflow_dispatch:  # Allow manual triggering
     inputs:
         use_sdk:
@@ -55,11 +53,6 @@ on:
           required: false
           type: string
           default: "webvoyager/webvoyager_simple.jsonl"
-
-
-  push:
-    branches:
-      - main
 
 concurrency:
   group: >-

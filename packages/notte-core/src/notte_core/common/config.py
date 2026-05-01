@@ -16,6 +16,15 @@ if not DEFAULT_CONFIG_PATH.exists():
     raise FileNotFoundError(f"Config file not found: {DEFAULT_CONFIG_PATH}")
 
 ScreenshotType = Literal["raw", "full", "last_action"]
+_enable_openrouter: bool | None = None
+
+
+def enable_openrouter() -> bool:
+    global _enable_openrouter
+    if _enable_openrouter is not None:
+        return _enable_openrouter
+    _enable_openrouter = os.environ.get("ENABLE_OPENROUTER", "false").lower() in ("true", "1", "yes")
+    return _enable_openrouter
 
 
 class CookieDict(TypedDict, total=False):
@@ -35,6 +44,7 @@ class CookieDict(TypedDict, total=False):
     session: bool | None
     storeId: str | None
     expires: float | None
+    partitionKey: str | None
 
 
 class PlaywrightProxySettings(TypedDict, total=False):
@@ -56,6 +66,11 @@ class LlmProvider(StrEnum):
     ollama = "ollama"
     together = "together_ai"
     anthropic = "anthropic"
+    moonshot = "moonshot"
+    xai = "xai"
+    zai = "zai"
+    qwen = "qwen"
+    minimax = "minimax"
 
     @property
     def context_length(self) -> int:
@@ -71,6 +86,8 @@ class LlmProvider(StrEnum):
 
     @property
     def apikey_name(self) -> str:
+        if enable_openrouter():
+            return "OPENROUTER_API_KEY"
         match self:
             case LlmProvider.gemini:
                 return "GEMINI_API_KEY"
@@ -94,6 +111,16 @@ class LlmProvider(StrEnum):
                 return "ANTHROPIC_API_KEY"
             case LlmProvider.together:
                 return "TOGETHERAI_API_KEY"
+            case LlmProvider.moonshot:
+                return "MOONSHOT_API_KEY"
+            case LlmProvider.xai:
+                return "XAI_API_KEY"
+            case LlmProvider.zai:
+                return "ZAI_API_KEY"
+            case LlmProvider.qwen:
+                return "QWEN_API_KEY"
+            case LlmProvider.minimax:
+                return "MINIMAX_API_KEY"
             case _:  # pyright: ignore[reportUnnecessaryComparison]
                 raise ValueError(f"No API key name found for provider: {self}")  # pyright: ignore[reportUnreachable]
 
@@ -105,16 +132,18 @@ class LlmProvider(StrEnum):
 
 class LlmModel(StrEnum):
     openai = "openai/gpt-4o"
-    gemini = "gemini/gemini-2.0-flash"
-    gemini_vertex = "vertex_ai/gemini-2.0-flash"
-    gemini_2_5_vertex = "vertex_ai/gemini-2.5-flash"
+    gemini = "gemini/gemini-2.5-flash"
+    gemini_vertex = "vertex_ai/gemini-2.5-flash"
     gemma = "openrouter/google/gemma-3-27b-it"
-    cerebras = "cerebras/llama-3.3-70b"
-    groq = "groq/llama-3.3-70b-versatile"
+    cerebras = "cerebras/gpt-oss-120b"
+    groq = "groq/gpt-oss-120b"
     perplexity = "perplexity/sonar-pro"
     deepseek = "deepseek/deepseek-r1"
-    together = "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo"
+    together = "together_ai/meta-llama/llama-3.3-70b-instruct"
     anthropic = "anthropic/claude-sonnet-4-5-20250929"
+    kimi2_5 = "moonshot/kimi-k2.5"
+    grok = "xai/grok-4-1-fast-non-reasoning"
+    minimax = "minimax/minimax-m2.5"
 
     @property
     def provider(self) -> LlmProvider:
@@ -123,9 +152,60 @@ class LlmModel(StrEnum):
     @staticmethod
     def get_provider(model: str) -> LlmProvider:
         provider_str = model.split("/")[0]
+
         if provider_str not in list(LlmProvider):
             raise ValueError(f"Invalid provider: {provider_str}")
         return LlmProvider(provider_str)
+
+    @staticmethod
+    def get_openrouter_provider(model: str) -> str | None:
+        if "cerebras/" in model:
+            return "Cerebras"
+        if "groq/" in model:
+            return "Groq"
+        if "together_ai/" in model:
+            return "Together"
+        return None
+
+    @staticmethod
+    def get_openrouter_model(model: str) -> str:
+        if model.startswith("openrouter/"):
+            return model
+
+        _model = model
+        if "/gpt-oss-120b" in _model:
+            _model = "openai/gpt-oss-120b"
+
+        if "/gemma-3-27b-it" in _model:
+            _model = "google/gemma-3-27b-it"
+
+        if "/deepseek-r1" in _model:
+            _model = "deepseek/deepseek-r1"
+
+        if "/claude-sonnet-4-5" in _model:
+            _model = "anthropic/claude-sonnet-4-5"
+
+        if "vertex_ai/" in _model:
+            _model = _model.replace("vertex_ai", "google")
+
+        if "gemini/" in _model:
+            _model = _model.replace("gemini/", "google/")
+
+        if "/kimi-k2.5" in _model:
+            _model = "moonshotai/kimi-k2.5"
+
+        if "/llama-3.3-70b-instruct" in _model:
+            _model = "meta-llama/llama-3.3-70b-instruct"
+
+        if "/grok-4-1-fast-non-reasoning" in _model:
+            _model = "x-ai/grok-4.1-fast"
+        elif "xai/" in _model:
+            _model = _model.replace("xai/", "x-ai/")
+
+        if "zai/" in _model:
+            _model = _model.replace("zai/", "z-ai/")
+
+        return f"openrouter/{_model}"
 
     @property
     def context_length(self) -> int:
@@ -133,7 +213,31 @@ class LlmModel(StrEnum):
 
     @staticmethod
     def use_strict_response_format(val: "str | LlmModel") -> bool:
-        return not val.startswith(str(LlmProvider.cerebras)) and "gemini-2.0-flash" not in str(val)
+        val_str = str(val)
+        # Providers that don't support strict response format or have schema size limits
+        unsupported_providers = [
+            str(LlmProvider.cerebras),
+            str(LlmProvider.moonshot),
+        ]
+        unsupported_models = [
+            "gemini-2.0-flash",
+        ]
+        return not any(val_str.startswith(p) for p in unsupported_providers) and not any(
+            m in val_str for m in unsupported_models
+        )
+
+    @staticmethod
+    def get_temperature(val: "str | LlmModel", default: float) -> float:
+        """Get the temperature for a model, with model-specific overrides."""
+        val_str = str(val)
+        # Model-specific temperature overrides
+        temperature_overrides: dict[str, float] = {
+            "kimi-k2.5": 1.0,
+        }
+        for model_pattern, temp in temperature_overrides.items():
+            if model_pattern in val_str:
+                return temp
+        return default
 
     @staticmethod
     def default() -> "LlmModel":
@@ -146,7 +250,7 @@ class LlmModel(StrEnum):
         return {model.value for model in LlmModel if model.provider.has_apikey_in_env()}
 
 
-BrowserType = Literal["chromium", "chrome", "firefox", "chrome-nightly"]
+BrowserType = Literal["chromium", "chrome", "firefox", "chrome-nightly", "chrome-turbo"]
 
 
 class BrowserBackend(StrEnum):

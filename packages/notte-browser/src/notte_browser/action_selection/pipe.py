@@ -62,7 +62,7 @@ class ActionSelectionPipe:
                 "instructions": instructions,
                 "success_example": self.success_example().model_dump_json(),
                 "failure_example": self.failure_example().model_dump_json(),
-                "timestamp": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "timestamp": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
                 "schema": ActionSelectionResult.model_json_schema(),
             },
             response_format=ActionSelectionResult,

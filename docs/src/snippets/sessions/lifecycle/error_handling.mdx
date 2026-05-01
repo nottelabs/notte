@@ -1,0 +1,46 @@
+<CodeGroup>
+  ```python Python - Automatic Cleanup
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  try:
+      with client.Session() as session:
+          page = session.page
+          page.goto("https://example.com")
+
+          # Simulate an error
+          raise ValueError("Something went wrong!")
+
+  except ValueError as e:
+      print(f"Automation failed: {e}")
+      # Session is still automatically stopped
+
+  print("Session was cleaned up despite the error")
+  ```
+
+  ```python Python - Manual Error Handling
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  session = None
+
+  try:
+      session = client.Session()
+      session.start()
+
+      page = session.page
+      page.goto("https://example.com")
+
+      # Your automation code here
+
+  except Exception as error:
+      print(f"Automation failed: {error}")
+  finally:
+      # This always runs, whether success or failure
+      if session is not None:
+          session.stop()
+          print("Session stopped")
+  ```
+</CodeGroup>

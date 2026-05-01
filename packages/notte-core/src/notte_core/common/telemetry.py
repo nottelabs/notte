@@ -11,6 +11,8 @@ import posthog
 from packaging import version
 from scarf.event_logger import ScarfEventLogger  # pyright: ignore[reportMissingTypeStubs]
 
+from notte_core.common.cache import CacheDirectory, ensure_cache_directory
+
 logger = logging.getLogger("notte.telemetry")
 
 try:
@@ -19,27 +21,22 @@ except Exception:
     __version__ = "unknown"
 
 
-def get_cache_home() -> Path:
-    """Get platform-appropriate cache directory."""
-    # XDG_CACHE_HOME for Linux and manually set envs
+def _get_telemetry_dir() -> Path:
+    """Get telemetry cache directory with XDG_CACHE_HOME override support."""
+    # Check for XDG_CACHE_HOME override for backward compatibility
     env_var: str | None = os.getenv("XDG_CACHE_HOME")
     if env_var and (path := Path(env_var)).is_absolute():
-        return path
+        # Use XDG_CACHE_HOME/notte/.cache/telemetry/ to maintain structure
+        telemetry_path = path / "notte" / ".cache" / CacheDirectory.TELEMETRY.value
+        telemetry_path.mkdir(parents=True, exist_ok=True)
+        return telemetry_path
 
-    system = platform.system()
-    if system == "Windows":
-        appdata = os.getenv("LOCALAPPDATA") or os.getenv("APPDATA")
-        if appdata:
-            return Path(appdata)
-        return Path.home() / "AppData" / "Local"
-    elif system == "Darwin":  # macOS
-        return Path.home() / "Library" / "Caches"
-    else:  # Linux or other Unix
-        return Path.home() / ".cache"
+    # Use centralized cache directory
+    return ensure_cache_directory(CacheDirectory.TELEMETRY)
 
 
 DISABLE_TELEMETRY: bool = os.environ.get("DISABLE_TELEMETRY", "false").lower() == "true"
-TELEMETRY_DIR = get_cache_home() / "notte"
+TELEMETRY_DIR = _get_telemetry_dir()
 USER_ID_PATH = TELEMETRY_DIR / "telemetry_user_id"
 VERSION_DOWNLOAD_PATH = TELEMETRY_DIR / "download_version"
 POSTHOG_API_KEY: str = "phc_6U4lU1RMI2hyj9DREkuyPFFDg95b0LYkoeaZ0LfaeVb"  # pragma: allowlist secret
@@ -130,8 +127,7 @@ def track_package_download(installation_id: str, properties: dict[str, Any] | No
                 should_track = True
                 first_download = True
 
-                # Create directory and save version
-                os.makedirs(os.path.dirname(VERSION_DOWNLOAD_PATH), exist_ok=True)
+                # Save version (directory already created by ensure_cache_directory)
                 with open(VERSION_DOWNLOAD_PATH, "w") as f:
                     _ = f.write(current_version)
             else:
@@ -172,7 +168,7 @@ def get_or_create_installation_id() -> str:
         return USER_ID_PATH.read_text().strip()
 
     installation_id = str(uuid.uuid4())
-    TELEMETRY_DIR.mkdir(parents=True, exist_ok=True)
+    # TELEMETRY_DIR is already created by ensure_cache_directory
     _ = USER_ID_PATH.write_text(installation_id)  # Assign to _ to acknowledge unused result
 
     # Always check for version-based download tracking

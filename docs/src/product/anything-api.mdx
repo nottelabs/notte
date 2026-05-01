@@ -1,0 +1,176 @@
+---
+title: Anything API
+description: Build and run web automations from a single API call
+---
+
+import RunFunction from '/snippets/anything-api/run_function.mdx';
+import ConsumeSSE from '/snippets/anything-api/consume_sse.mdx';
+
+The Anything API lets you describe a task in plain English, and Notte will build, deploy, and run a web automation function for you -- all through a single HTTP request. The response is an SSE stream so you can follow the agent's progress in real time.
+
+<CardGroup cols={2}>
+  <Card title="Try it now" icon="arrow-up-right-from-square" href="https://anything.notte.cc">
+    Open the Anything API web app.
+  </Card>
+  <Card title="Get your API key" icon="key" href="https://console.notte.cc">
+    Create an account on the Console to get started.
+  </Card>
+</CardGroup>
+
+## Quick start
+
+```bash
+curl -N -X POST https://anything.notte.cc/api/anything/start \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -d '{"query": "fetch the top 3 hacker news posts"}'
+```
+
+The API streams back SSE events as the agent works. When it's done, the final `done` event contains the `function_id` of the created function, which you can re-run later via the [Notte CLI](https://github.com/nottelabs/notte-cli) or [SDK](/quickstart).
+
+## Request
+
+<ParamField path="query" type="string" required>
+  A natural-language description of the task you want automated.
+</ParamField>
+
+```json POST /api/anything/start
+{
+  "query": "fetch the top 3 hacker news posts"
+}
+```
+
+**Headers**
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Authorization` | Yes | `Bearer <NOTTE_API_KEY>` |
+| `Content-Type` | Yes | `application/json` |
+
+## Response
+
+The response is a `text/event-stream`. Each line follows the [SSE spec](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events):
+
+```
+data: {"type":"<event_type>", ...}
+```
+
+### Event types
+
+| Type | Description | Key fields |
+|------|-------------|------------|
+| `status` | Agent lifecycle updates | `status` |
+| `thinking_delta` | Agent reasoning (streamed) | `delta` |
+| `text_delta` | Agent response text (streamed) | `delta` |
+| `tool_start` | Agent started using a tool | `name` |
+| `tool_result` | Tool execution result | `content` |
+| `message_complete` | An assistant message was persisted | `role` |
+| `notte_session_data` | Browser session info | `viewer_url` |
+| `function_uploaded` | A Notte Function was created | `function_id`, `function_name`, `created_at` |
+| `done` | Agent finished | `total_cost_usd`, `function_id`, `metadata` |
+| `error` | Something went wrong | `error`, `detail` |
+| `timeout` | Agent timed out | `reason`, `detail` |
+| `cancelled` | Agent was cancelled | `reason` |
+
+### Terminal events
+
+The stream ends after one of these events: `done`, `error`, `timeout`, or `cancelled`.
+
+### Example: done event
+
+```json
+{
+  "type": "done",
+  "metadata": {
+    "thread_id": "820a7cff-613b-4529-9ba4-52c7a6777713"
+  },
+  "total_cost_usd": 0.43,
+  "function_id": "d3c31289-f28b-49bd-a340-95e071cfef7e"
+}
+```
+
+## Re-running the created function
+
+Once the agent finishes, it typically creates a reusable **Notte Function**. Use the `function_id` from the `done` event to run it again:
+
+<CodeGroup>
+```bash CLI
+notte functions run \
+  --function-id d3c31289-f28b-49bd-a340-95e071cfef7e \
+  --vars '{"count": "3"}' \
+  -o json
+```
+
+<RunFunction />
+</CodeGroup>
+
+## Consuming the SSE stream
+
+### Python
+
+<ConsumeSSE />
+
+### TypeScript
+
+```typescript
+const response = await fetch("https://anything.notte.cc/api/anything/start", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${NOTTE_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ query: "fetch the top 3 hacker news posts" }),
+});
+
+if (!response.ok) {
+  throw new Error(`HTTP ${response.status}`);
+}
+if (!response.body) {
+  throw new Error("ReadableStream not available");
+}
+
+const reader = response.body.getReader();
+const decoder = new TextDecoder();
+const terminal = new Set(["done", "error", "timeout", "cancelled"]);
+let buffer = "";
+
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+
+  buffer += decoder.decode(value, { stream: true });
+  const lines = buffer.split("\n");
+  buffer = lines.pop()!;
+
+  for (const line of lines) {
+    if (line.startsWith("data: ")) {
+      const event = JSON.parse(line.slice(6));
+      console.log(event.type, event);
+
+      if (event.type === "done") {
+        console.log("Function ID:", event.function_id);
+        console.log("Cost:", event.total_cost_usd);
+      }
+
+      if (terminal.has(event.type)) {
+        reader.cancel();
+        break;
+      }
+    }
+  }
+}
+```
+
+## Error handling
+
+| Status | Meaning |
+|--------|---------|
+| `401` | Missing or invalid API key |
+| `400` | Missing `query` field or invalid JSON |
+| `502` | Agent failed to start or SSE stream unavailable |
+
+If the stream connects successfully but the agent encounters an error, you will receive an `error` event in the SSE stream instead of an HTTP error status.
+
+## Pricing
+
+Each request is billed based on the LLM usage incurred by the agent. The `total_cost_usd` field in the `done` event reports the exact cost for that run.

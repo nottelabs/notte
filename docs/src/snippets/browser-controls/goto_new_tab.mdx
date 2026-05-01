@@ -1,0 +1,11 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/browser-controls/goto_new_tab.py */}
+
+```python goto_new_tab.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    session.execute(type="goto_new_tab", url="https://example.com/products")
+```

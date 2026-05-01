@@ -2,7 +2,6 @@ import datetime as dt
 import json
 import os
 import re
-from base64 import b64decode, b64encode
 from enum import StrEnum
 from pathlib import Path
 from types import NoneType
@@ -30,20 +29,23 @@ from notte_core.common.config import (
 )
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict
 from notte_core.data.space import DataSpace
+
+# Re-export FileInfo from notte_core for use in SDK
+from notte_core.storage import FileInfo as FileInfo  # noqa: E402
 from notte_core.trajectory import ElementLiteral
 from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
 from notte_core.utils.url import get_root_domain
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 from pyotp import TOTP
-from typing_extensions import NotRequired, TypedDict, override
+from typing_extensions import NotRequired, TypedDict, deprecated, override
 
 # ############################################################
 # Session Management
 # ############################################################
 
 
-DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES = 3
-DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES = 15
+DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES = 3
+DEFAULT_SESSION_MAX_DURATION_IN_MINUTES = 15
 DEFAULT_MAX_NB_ACTIONS = 100
 DEFAULT_LIMIT_LIST_ITEMS = 10
 DEFAULT_MAX_NB_STEPS = config.max_steps
@@ -73,6 +75,215 @@ class ExecutionResponse(SdkResponse):
 
     success: Annotated[bool, Field(description="Whether the operation was successful")]
     message: Annotated[str, Field(description="A message describing the operation")]
+
+
+ProxyGeolocationCountryCode = Literal[
+    "ad",
+    "ae",
+    "af",
+    "ag",
+    "ai",
+    "al",
+    "am",
+    "ao",
+    "ar",
+    "at",
+    "au",
+    "aw",
+    "az",
+    "ba",
+    "bb",
+    "bd",
+    "be",
+    "bf",
+    "bg",
+    "bh",
+    "bi",
+    "bj",
+    "bm",
+    "bn",
+    "bo",
+    "bq",
+    "br",
+    "bs",
+    "bt",
+    "bw",
+    "by",
+    "bz",
+    "ca",
+    "cd",
+    "cg",
+    "ch",
+    "ci",
+    "cl",
+    "cm",
+    "cn",
+    "co",
+    "cr",
+    "cu",
+    "cv",
+    "cw",
+    "cy",
+    "cz",
+    "de",
+    "dj",
+    "dk",
+    "dm",
+    "do",
+    "dz",
+    "ec",
+    "ee",
+    "eg",
+    "es",
+    "et",
+    "fi",
+    "fj",
+    "fr",
+    "ga",
+    "gb",
+    "gd",
+    "ge",
+    "gf",
+    "gg",
+    "gh",
+    "gi",
+    "gm",
+    "gn",
+    "gp",
+    "gq",
+    "gr",
+    "gt",
+    "gu",
+    "gw",
+    "gy",
+    "hk",
+    "hn",
+    "hr",
+    "ht",
+    "hu",
+    "id",
+    "ie",
+    "il",
+    "im",
+    "in",
+    "iq",
+    "ir",
+    "is",
+    "it",
+    "je",
+    "jm",
+    "jo",
+    "jp",
+    "ke",
+    "kg",
+    "kh",
+    "kn",
+    "kr",
+    "kw",
+    "ky",
+    "kz",
+    "la",
+    "lb",
+    "lc",
+    "lk",
+    "lr",
+    "ls",
+    "lt",
+    "lu",
+    "lv",
+    "ly",
+    "ma",
+    "md",
+    "me",
+    "mf",
+    "mg",
+    "mk",
+    "ml",
+    "mm",
+    "mn",
+    "mo",
+    "mq",
+    "mr",
+    "mt",
+    "mu",
+    "mv",
+    "mw",
+    "mx",
+    "my",
+    "mz",
+    "na",
+    "nc",
+    "ne",
+    "ng",
+    "ni",
+    "nl",
+    "no",
+    "np",
+    "nz",
+    "om",
+    "pa",
+    "pe",
+    "pf",
+    "pg",
+    "ph",
+    "pk",
+    "pl",
+    "pr",
+    "ps",
+    "pt",
+    "py",
+    "qa",
+    "re",
+    "ro",
+    "rs",
+    "ru",
+    "rw",
+    "sa",
+    "sc",
+    "sd",
+    "se",
+    "sg",
+    "si",
+    "sk",
+    "sl",
+    "sm",
+    "sn",
+    "so",
+    "sr",
+    "ss",
+    "st",
+    "sv",
+    "sx",
+    "sy",
+    "sz",
+    "tc",
+    "tg",
+    "th",
+    "tj",
+    "tm",
+    "tn",
+    "tr",
+    "tt",
+    "tw",
+    "tz",
+    "ua",
+    "ug",
+    "us",
+    "uy",
+    "uz",
+    "vc",
+    "ve",
+    "vg",
+    "vi",
+    "vn",
+    "ye",
+    "za",
+    "zm",
+    "zw",
+]
+"""Literal type alias for all valid proxy geolocation country codes.
+Must be kept in sync with ProxyGeolocationCountry enum values.
+"""
 
 
 class ProxyGeolocationCountry(StrEnum):
@@ -280,28 +491,27 @@ class ProxyGeolocationCountry(StrEnum):
     ZIMBABWE = "zw"
 
 
-class ProxyGeolocation(SdkRequest):
-    """
-    Geolocation settings for the proxy.
-    E.g. "New York, NY, US"
-    """
-
-    country: ProxyGeolocationCountry
-    # TODO: enable city & state later on
-    # city: str
-    # state: str
-
-
 class NotteProxy(SdkRequest):
     type: Literal["notte"] = "notte"
     id: str | None = None
-    geolocation: ProxyGeolocation | None = None
+    country: ProxyGeolocationCountry | None = None
     # TODO: enable domainPattern later on
     # domainPattern: str | None = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def handle_legacy_geolocation(cls, values: Any) -> dict[str, Any]:
+        """Handle backward compatibility with old geolocation.country syntax."""
+        if isinstance(values, dict) and "geolocation" in values:
+            geolocation: Any = values.pop("geolocation")  # type: ignore[reportUnknownMemberType]
+            # Only set country if it's not already provided
+            if "country" not in values and isinstance(geolocation, dict) and "country" in geolocation:
+                values["country"] = geolocation["country"]
+        return values  # type: ignore[return-value]
+
     @staticmethod
     def from_country(country: str, id: str | None = None) -> "NotteProxy":
-        return NotteProxy(id=id, geolocation=ProxyGeolocation(country=ProxyGeolocationCountry(country)))
+        return NotteProxy(id=id, country=ProxyGeolocationCountry(country))
 
 
 class ExternalProxy(SdkRequest):
@@ -328,10 +538,40 @@ class ExternalProxy(SdkRequest):
         )
 
 
-ProxySettings = Annotated[NotteProxy | ExternalProxy, Field(discriminator="type")]
+class TailnetProxy(SdkRequest):
+    type: Literal["tailnet"] = "tailnet"
+    oauth_client_id: str
+    oauth_client_secret: str | None = None
 
 
-class Cookie(SdkRequest):
+class ExternalProxyDict(TypedDict, total=False):
+    type: Literal["external"]
+    server: Required[str]
+    username: str | None
+    password: str | None
+    bypass: str | None
+
+
+class NotteProxyDict(TypedDict, total=False):
+    type: Literal["notte"]
+    id: str | None
+    country: ProxyGeolocationCountry | None
+
+
+class TailnetProxyDict(TypedDict, total=False):
+    type: Literal["tailnet"]
+    oauth_client_id: Required[str]
+    oauth_client_secret: str | None
+
+
+ProxySettings = Annotated[NotteProxy | ExternalProxy | TailnetProxy, Field(discriminator="type")]
+ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict | TailnetProxyDict, Field(discriminator="type")]
+
+
+class Cookie(BaseModel):
+    # Allow extra fields to be present in the cookie dict
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
+
     name: str
     value: str
     domain: str
@@ -344,6 +584,7 @@ class Cookie(SdkRequest):
     session: bool | None = None
     storeId: str | None = None
     expires: float | None = Field(default=None)
+    partitionKey: str | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -408,31 +649,51 @@ class SessionOffsetResponse(SdkResponse):
 
 
 class ReplayResponse(SdkResponse):
-    replay: Annotated[bytes | None, Field(description="The session replay in `.webp` format", repr=False)] = None
+    """Response containing presigned URLs for session replay."""
 
-    model_config = {  # type: ignore[reportUnknownMemberType]
-        "json_encoders": {
-            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
-        }
-    }
+    playlist_content: Annotated[
+        str | None, Field(description="HLS playlist content with presigned segment URLs", repr=False)
+    ] = None
+    mp4_url: Annotated[str | None, Field(description="Presigned URL for MP4 download", repr=False)] = None
+    expires_at: Annotated[str | None, Field(description="Expiration time of the presigned URLs")] = None
+    video_start_ms: Annotated[int | None, Field(description="Video start offset in milliseconds")] = None
+    video_duration_ms: Annotated[int | None, Field(description="Video duration in milliseconds")] = None
 
-    @field_validator("replay", mode="before")
-    @classmethod
-    def decode_replay(cls, value: str | None) -> bytes | None:
-        if value is None:
-            return None
-        if isinstance(value, bytes):
-            return value
-        if not isinstance(value, str):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise ValueError("replay must be a bytes or a base64 encoded string")  # pyright: ignore[reportUnreachable]
-        return b64decode(value.encode("utf-8"))
+    def download(self, path: str | Path = "replay.mp4") -> Path:
+        """Download the MP4 replay to a local file.
 
-    @override
-    def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        data = super().model_dump(*args, **kwargs)
-        if self.replay is not None:
-            data["replay"] = b64encode(self.replay).decode("utf-8")
-        return data
+        Args:
+            path: Destination file path. Defaults to ``replay.mp4`` in the current directory.
+
+        Returns:
+            The resolved path to the downloaded file.
+
+        Raises:
+            ValueError: If no ``mp4_url`` is available.
+        """
+        if self.mp4_url is None:
+            raise ValueError("No mp4_url available for download")
+
+        import requests
+
+        response = requests.get(self.mp4_url)
+        response.raise_for_status()
+        dest = Path(path)
+        _ = dest.write_bytes(response.content)
+        return dest
+
+
+# Profile configuration for sessions (defined before SessionStartRequest)
+
+
+class SessionProfileDict(TypedDict, total=False):
+    id: Required[str]
+    persist: bool
+
+
+class SessionProfile(SdkRequest):
+    id: Annotated[str, Field(description="Profile ID to use for this session")]
+    persist: Annotated[bool, Field(description="Whether to save browser state to profile on session close")] = False
 
 
 class SessionStartRequestDict(TypedDict, total=False):
@@ -441,9 +702,10 @@ class SessionStartRequestDict(TypedDict, total=False):
     Args:
         headless: Whether to run the session in headless mode.
         solve_captchas: Whether to try to automatically solve captchas
-        timeout_minutes: Session timeout in minutes. Cannot exceed the global timeout.
+        max_duration_minutes: Maximum session lifetime in minutes (absolute maximum).
+        idle_timeout_minutes: Idle timeout in minutes. Session closes after this period of inactivity.
         proxies: List of custom proxies to use for the session. If True, the default proxies will be used.
-        browser_type: The browser type to use. Can be chromium, chrome or firefox.
+        browser_type: The browser type to use. Can be chromium or chrome.
         user_agent: The user agent to use for the session
         chrome_args: Overwrite the chrome instance arguments
         viewport_width: The width of the viewport
@@ -451,12 +713,16 @@ class SessionStartRequestDict(TypedDict, total=False):
         cdp_url: The CDP URL of another remote session provider.
         use_file_storage: Whether FileStorage should be attached to the session.
         screenshot_type: The type of screenshot to use for the session.
+        profile: Browser profile configuration for state persistence.
     """
 
     headless: bool
     solve_captchas: bool
-    timeout_minutes: int
-    proxies: list[ProxySettings] | bool
+    max_duration_minutes: int
+    idle_timeout_minutes: int
+    proxies: (
+        list[ProxySettings] | list[ProxySettingsDict] | bool | ProxyGeolocationCountry | ProxyGeolocationCountryCode
+    )
     browser_type: BrowserType
     user_agent: str | None
     chrome_args: list[str] | None
@@ -465,6 +731,10 @@ class SessionStartRequestDict(TypedDict, total=False):
     cdp_url: str | None
     use_file_storage: bool
     screenshot_type: ScreenshotType
+    profile: SessionProfileDict | SessionProfile | None
+    web_bot_auth: bool
+    extra_http_headers: dict[str, str] | None
+    vault_id: str | None
 
 
 class SessionStartRequest(SdkRequest):
@@ -473,14 +743,26 @@ class SessionStartRequest(SdkRequest):
         config.solve_captchas
     )
 
-    timeout_minutes: Annotated[
+    max_duration_minutes: Annotated[
         int,
         Field(
-            description="Session timeout in minutes. Cannot exceed the global timeout.",
+            description="Maximum session lifetime in minutes (absolute maximum, not affected by activity).",
             gt=0,
-            le=DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES,
+            le=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
         ),
-    ] = DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES
+    ] = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
+
+    idle_timeout_minutes: Annotated[
+        int,
+        Field(
+            description="Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).",
+            gt=0,
+            le=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
+            validation_alias=AliasChoices(
+                "idle_timeout_minutes", "timeout_minutes"
+            ),  # Accept both names for backward compatibility
+        ),
+    ] = DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES
 
     proxies: Annotated[
         list[ProxySettings] | bool,
@@ -503,30 +785,33 @@ class SessionStartRequest(SdkRequest):
     )
 
     use_file_storage: Annotated[bool, Field(description="Whether FileStorage should be attached to the session.")] = (
-        False
+        True
     )
 
     screenshot_type: Annotated[ScreenshotType, Field(description="The type of screenshot to use for the session.")] = (
         config.screenshot_type
     )
 
-    @field_validator("timeout_minutes")
-    @classmethod
-    def validate_timeout_minutes(cls, value: int) -> int:
-        """
-        Validate that the session timeout does not exceed the allowed global limit.
+    profile: Annotated[
+        SessionProfile | None, Field(description="Browser profile configuration for state persistence")
+    ] = None
 
-        Raises:
-            ValueError: If the session's timeout_minutes exceeds DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES.
-        """
-        if value > DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES:
-            raise ValueError(
-                (
-                    "Session timeout cannot be greater than global timeout: "
-                    f"{value} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
-                )
-            )
-        return value
+    web_bot_auth: Annotated[bool, Field(description="Whether to use web bot authentication.")] = False
+
+    extra_http_headers: Annotated[
+        dict[str, str] | None,
+        Field(description="Extra HTTP headers to be sent with every request."),
+    ] = None
+
+    vault_id: Annotated[str | None, Field(description="The vault to use for the session")] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def add_timeout_defaults(cls, values: Any) -> Any:
+        if isinstance(values, dict):
+            if "max_duration_minutes" not in values:
+                values["max_duration_minutes"] = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
+        return values  # pyright: ignore[reportUnknownVariableType]
 
     @model_validator(mode="after")
     def check_viewport(self) -> "SessionStartRequest":
@@ -536,15 +821,11 @@ class SessionStartRequest(SdkRequest):
 
     @model_validator(mode="after")
     def check_solve_captchas(self) -> "SessionStartRequest":
-        if self.browser_type == "chrome-nightly" and self.solve_captchas and not self.proxies:
+        if self.browser_type in ("chrome-nightly", "chrome-turbo") and self.solve_captchas and not self.proxies:
             raise ValueError(
-                "`proxies` parameter cannot be falsy when setting `solve_captchas=True` with `browser_type` 'chrome-nightly'."
+                f"`proxies` parameter cannot be falsy when setting `solve_captchas=True` with `browser_type` '{self.browser_type}'."
             )
 
-        if self.solve_captchas and self.browser_type not in {"firefox", "chrome-nightly"}:
-            raise ValueError(
-                "`solve_captchas=True` is currently only supported for cloud sessions with `browser_type` set to 'firefox' or 'chrome-nightly'."
-            )
         return self
 
     @model_validator(mode="after")
@@ -556,6 +837,11 @@ class SessionStartRequest(SdkRequest):
             ValueError: If cdp_url is provided but other fields are not set to defaults.
         """
         if self.cdp_url is not None:
+            if not self.headless:
+                raise ValueError(
+                    "When cdp_url is provided, headless must be True. "
+                    + "Headed mode (headless=False) only works with a local browser."
+                )
             if self.user_agent is not None:
                 raise ValueError(
                     "When cdp_url is provided, user_agent must be None. Set the user agent with your external session CDP provider."
@@ -573,6 +859,27 @@ class SessionStartRequest(SdkRequest):
                     "When cdp_url is provided, viewport_height must be None. Set the viewport height with your external session CDP provider."
                 )
         return self
+
+    @model_validator(mode="after")
+    def validate_timeout_relationship(self) -> "SessionStartRequest":
+        """
+        Validate that idle_timeout_minutes does not exceed max_duration_minutes.
+
+        Raises:
+            ValueError: If idle_timeout_minutes > max_duration_minutes.
+        """
+        if self.idle_timeout_minutes > self.max_duration_minutes:
+            raise ValueError(
+                f"idle_timeout_minutes ({self.idle_timeout_minutes}) cannot exceed max_duration_minutes ({self.max_duration_minutes})"
+            )
+        return self
+
+    @field_validator("proxies", mode="before")
+    @classmethod
+    def validate_str_proxy_settings(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            return [NotteProxy.from_country(value)]
+        return value
 
     @property
     def playwright_proxy(self) -> PlaywrightProxySettings | None:
@@ -599,6 +906,10 @@ class SessionStartRequest(SdkRequest):
                     bypass=base_proxy.bypass,
                     username=base_proxy.username,
                     password=base_proxy.password,
+                )
+            case "tailnet":
+                raise NotImplementedError(
+                    "Tailnet proxy only supported in cloud browser sessions. Please use our API to create a session with a tailnet proxy."
                 )
         raise ValueError(f"Unsupported proxy type: {base_proxy.type}")  # pyright: ignore[reportUnreachable]
 
@@ -637,9 +948,19 @@ class SessionResponse(SdkResponse):
             )
         ),
     ]
-    timeout_minutes: Annotated[
+    idle_timeout_minutes: Annotated[
         int,
-        Field(description="Session timeout in minutes. Will timeout if now() > last access time + timeout_minutes"),
+        Field(
+            description="Session idle timeout in minutes. Will timeout if now() > last access time + idle_timeout_minutes",
+            validation_alias=AliasChoices("idle_timeout_minutes", "timeout_minutes"),
+        ),
+    ]
+    max_duration_minutes: Annotated[
+        int,
+        Field(
+            description="Session max duration in minutes. Will timeout if now() > creation time + max_duration_minutes",
+            default=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
+        ),
     ]
     created_at: Annotated[dt.datetime, Field(description="Session creation time")]
     closed_at: Annotated[dt.datetime | None, Field(description="Session closing time")] = None
@@ -657,7 +978,6 @@ class SessionResponse(SdkResponse):
 
     # TODO: discuss if this is the best way to handle errors
     error: Annotated[str | None, Field(description="Error message if the operation failed to complete")] = None
-    credit_usage: Annotated[float | None, Field(description="Credit usage for the session. None")] = None
     proxies: Annotated[
         bool,
         Field(
@@ -674,6 +994,9 @@ class SessionResponse(SdkResponse):
     viewport_height: Annotated[int | None, Field(description="The height of the viewport")] = None
     headless: Annotated[bool, Field(description="Whether to run the session in headless mode.")] = True
     solve_captchas: Annotated[bool | NoneType, Field(description="Whether to solve captchas.")] = None
+    cdp_url: Annotated[str | None, Field(description="The URL to connect to the CDP server.")] = None
+    viewer_url: Annotated[str | None, Field(description="The remote session viewer URL.")] = None
+    web_bot_auth: Annotated[bool, Field(description="Whether to use web bot authentication.")] = False
 
     @field_validator("closed_at", mode="before")
     @classmethod
@@ -691,15 +1014,18 @@ class SessionResponse(SdkResponse):
             return value
         if data.get("status") == "closed" and data.get("closed_at") is not None:
             return data["closed_at"] - data["created_at"]
-        return dt.datetime.now() - data["created_at"]
+        return dt.datetime.now(dt.timezone.utc) - data["created_at"]
 
-
-class SessionStatusResponse(SessionResponse, ReplayResponse):
-    pass
+    @computed_field
+    @property
+    @deprecated("Use idle_timeout_minutes instead. Kept for backward compatibility.")
+    def timeout_minutes(self) -> int:
+        """Deprecated: Use idle_timeout_minutes instead. Kept for backward compatibility."""
+        return self.idle_timeout_minutes
 
 
 class ListFilesResponse(SdkResponse):
-    files: Annotated[list[str], Field(description="Names of available files")]
+    files: Annotated[list[FileInfo], Field(description="List of files with metadata")]
 
 
 class FileUploadResponse(SdkResponse):
@@ -750,7 +1076,7 @@ class SessionDebugRecordingEvent(SdkResponse):
 
     type: ElementLiteral | Literal["error"]
     data: AgentCompletion | Observation | ExecutionResult | str
-    timestamp: dt.datetime = Field(default_factory=lambda: dt.datetime.now())
+    timestamp: dt.datetime = Field(default_factory=lambda: dt.datetime.now(dt.timezone.utc))
 
     @staticmethod
     def session_closed() -> "SessionDebugRecordingEvent":
@@ -984,6 +1310,46 @@ class DeleteCreditCardResponse(SdkResponse):
 
 
 # ############################################################
+# Browser Profiles
+# ############################################################
+
+
+class ProfileCreateRequestDict(TypedDict, total=False):
+    """Request dictionary for creating a new profile."""
+
+    name: str
+
+
+class ProfileCreateRequest(SdkRequest):
+    name: Annotated[str | None, Field(description="Name of the profile")] = None
+
+
+class ProfileResponse(SdkResponse):
+    profile_id: Annotated[str, Field(description="Profile ID (format: notte-profile-{16 hex chars})")]
+    name: Annotated[str | None, Field(description="Profile name")]
+    created_at: Annotated[dt.datetime, Field(description="Profile creation timestamp")]
+    updated_at: Annotated[dt.datetime, Field(description="Profile last update timestamp")]
+    persisted_domains: Annotated[
+        list[str],
+        Field(description="List of domains with persisted browser state (cookies, localStorage, sessionStorage)"),
+    ] = Field(default_factory=list)
+
+
+class ProfileListRequestDict(TypedDict, total=False):
+    """Request dictionary for listing profiles."""
+
+    page: int
+    page_size: int
+    name: str
+
+
+class ProfileListRequest(SdkRequest):
+    page: Annotated[int, Field(description="Page number")] = 1
+    page_size: Annotated[int, Field(description="Number of items per page")] = 20
+    name: Annotated[str | None, Field(description="Filter profiles by name")] = None
+
+
+# ############################################################
 # Persona
 # ############################################################
 
@@ -1132,10 +1498,6 @@ class PaginationParams(SdkRequest):
 
 
 class ObserveRequest(PaginationParams):
-    url: Annotated[
-        str | None,
-        Field(description="The URL to observe. If not provided, uses the current page URL."),
-    ] = None
     instructions: Annotated[
         str | None,
         Field(description="Additional instructions to use for the observation."),
@@ -1153,7 +1515,6 @@ class ObserveRequestDict(PaginationParamsDict, total=False):
         instructions: Additional instructions to use for the observation.
     """
 
-    url: str | None
     instructions: str | None
     perception_type: PerceptionType | None
 
@@ -1224,7 +1585,7 @@ class ScrapeParams(SdkRequest):
                 "Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded."
             ),
         ),
-    ] = True
+    ] = False
 
     only_images: Annotated[
         bool,
@@ -1372,29 +1733,9 @@ class ExecutionRequest(SdkRequest):
         )
 
 
-class ExecutionResponseWithSession(ExecutionResult):
-    """Used for session.execute calls"""
-
-    session: Annotated[SessionResponse, Field(description="Browser session information")]
-
-
-class ScrapeResponse(DataSpace):
-    session: Annotated[SessionResponse, Field(description="Browser session information")]
-
-
-class ObserveResponse(Observation):
-    session: Annotated[SessionResponse, Field(description="Browser session information")]
-
-    @staticmethod
-    def from_obs(obs: Observation, session: SessionResponse) -> "ObserveResponse":
-        return ObserveResponse(
-            metadata=obs.metadata,
-            space=obs.space,
-            screenshot=obs.screenshot,
-            session=session,
-        )
-
-
+ObserveResponse = Observation
+ScrapeResponse = DataSpace
+ExecutionResultResponse = ExecutionResult
 # ############################################################
 # Agent endpoints
 # ############################################################
@@ -1475,7 +1816,7 @@ class __AgentCreateRequest(SdkRequest):
     use_vision: Annotated[
         bool, Field(description="Whether to use vision for the agent. Not all reasoning models support vision.")
     ] = True
-    max_steps: Annotated[int, Field(description="The maximum number of steps the agent should take", ge=1, le=50)] = (
+    max_steps: Annotated[int, Field(description="The maximum number of steps the agent should take", ge=1, le=150)] = (
         DEFAULT_MAX_NB_STEPS
     )
     vault_id: Annotated[str | None, Field(description="The vault to use for the agent")] = None
@@ -1558,15 +1899,13 @@ class AgentStatusRequestDict(TypedDict, total=False):
 
     Args:
         agent_id: The ID of the agent for which to get the status.
-        replay: Whether to include the replay in the response.
     """
 
     agent_id: Required[Annotated[str, Field(description="The ID of the agent for which to get the status")]]
-    replay: bool
 
 
 class AgentStatusRequest(AgentSessionRequest):
-    replay: Annotated[bool, Field(description="Whether to include the replay in the response")] = False
+    pass
 
 
 class AgentListRequestDict(SessionListRequestDict, total=False):
@@ -1593,9 +1932,6 @@ class AgentResponse(SdkResponse):
     status: Annotated[AgentStatus, Field(description="The status of the agent (active or closed)")]
     closed_at: Annotated[dt.datetime | None, Field(description="The closing time of the agent")] = None
     saved: Annotated[bool, Field(description="Whether the agent is saved as a workflow")] = False
-    credit_usage: Annotated[
-        float | None, Field(description="Credit usage for the agent. None if the agent is still running")
-    ] = None
 
 
 class AgentWorkflowCodeRequestDict(TypedDict):
@@ -1617,12 +1953,12 @@ class AgentWorkflowCodeRequest(SdkRequest):
     ] = False
 
 
-class AgentWorkflowCodeResponse(SdkResponse):
+class AgentFunctionCodeResponse(SdkResponse):
     python_script: Annotated[str, Field(description="Python script to replicate agent steps")]
     json_actions: Annotated[list[dict[str, Any]], Field(description="Json actions to replicate agent steps")]
 
 
-class AgentStatusResponse(AgentResponse, ReplayResponse):
+class AgentStatusResponse(AgentResponse):
     task: Annotated[str, Field(description="The task that the agent is currently running")]
     url: Annotated[str | None, Field(description="The URL that the agent started on")] = None
 
@@ -1638,8 +1974,6 @@ class AgentStatusResponse(AgentResponse, ReplayResponse):
         list[dict[str, Any]],
         Field(description="The steps that the agent has currently taken"),
     ] = Field(default_factory=lambda: [])
-    replay_start_offset: Annotated[int, Field(description="The start offset of the replay")]
-    replay_stop_offset: Annotated[int, Field(description="The stop offset of the replay")]
 
 
 # ############################################################
@@ -1648,44 +1982,44 @@ class AgentStatusResponse(AgentResponse, ReplayResponse):
 
 
 # Workflow request dictionaries
-class CreateWorkflowRequestDict(TypedDict, total=True):
-    """Request dictionary for creating a workflow.
+class CreateFunctionRequestDict(TypedDict, total=True):
+    """Request dictionary for creating a function.
 
     Args:
-        workflow_path: The path to the workflow to upload.
+        path: The path to the function to upload.
     """
 
-    workflow_path: str
+    path: Required[str]
     name: NotRequired[str | None]
     description: NotRequired[str | None]
     shared: NotRequired[bool]
 
 
-class UpdateWorkflowRequestDict(TypedDict):
-    """Request dictionary for updating a workflow.
+class UpdateFunctionRequestDict(TypedDict):
+    """Request dictionary for updating a function.
 
     Args:
-        workflow_path: The path to the workflow to upload.
-        workflow_id: The ID of the workflow to update.
+        path: The path to the function to upload.
+        function_id: The ID of the function to update.
         version: The version of the workflow to update.
     """
 
-    workflow_path: str
+    path: str
     version: NotRequired[str | None]
 
 
-class GetWorkflowRequestDict(TypedDict, total=False):
+class GetFunctionRequestDict(TypedDict, total=False):
     """Request dictionary for getting a workflow.
 
     Args:
-        workflow_id: The ID of the workflow to get.
+        function_id: The ID of the function to get.
         version: The version of the workflow to get.
     """
 
     version: str | None
 
 
-class ListWorkflowsRequestDict(SessionListRequestDict, total=False):
+class ListFunctionsRequestDict(SessionListRequestDict, total=False):
     """Request dictionary for listing workflows.
 
     Args:
@@ -1697,39 +2031,55 @@ class ListWorkflowsRequestDict(SessionListRequestDict, total=False):
     pass
 
 
-class RunWorkflowRequestDict(TypedDict, total=False):
-    """Request dictionary for running a workflow.
+class RunFunctionRequestDict(TypedDict, total=False):
+    """Request dictionary for running a function.
 
     Args:
-        version: The version of the workflow to run.
-        local: Whether to run the workflow locally.
+        version: The version of the function to run.
+        local: Whether to run the function locally.
     """
 
-    workflow_id: str
+    function_id: str
     variables: dict[str, Any]
     stream: bool
 
 
-class RunWorkflowRequest(SdkRequest):
-    workflow_id: Annotated[str, Field(description="The ID of the workflow to run")]
+class RunFunctionRequest(SdkRequest):
+    function_id: Annotated[
+        str,
+        Field(description="The ID of the function to run", validation_alias=AliasChoices("workflow_id", "function_id")),
+    ]
     variables: Annotated[dict[str, Any], Field(description="The variables to run the workflow with")]
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = True
 
 
 # Workflow request models
-class CreateWorkflowRequest(SdkRequest):
-    workflow_path: Annotated[str, Field(description="The path to the workflow to upload")]
-    name: Annotated[str | None, Field(description="The name of the workflow run")] = None
-    description: Annotated[str | None, Field(description="The description of the workflow run")] = None
-    shared: Annotated[bool, Field(description="Whether the workflow run is public and shared with other users")] = False
+class CreateFunctionRequest(SdkRequest):
+    path: Annotated[
+        str,
+        Field(
+            description="The path to the function code to upload",
+            validation_alias=AliasChoices("workflow_path", "path"),
+        ),
+    ]
+    name: Annotated[str | None, Field(description="The name of the function")] = None
+    description: Annotated[str | None, Field(description="The description of the function")] = None
+    shared: Annotated[bool, Field(description="Whether the function is public and shared with other users")] = False
 
 
-class ForkWorkflowRequest(SdkRequest):
-    workflow_id: Annotated[str, Field(description="The ID of the workflow to fork")]
+class ForkFunctionRequest(SdkRequest):
+    function_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function to fork", validation_alias=AliasChoices("workflow_id", "function_id")
+        ),
+    ]
 
 
-class GetWorkflowResponse(SdkResponse):
-    workflow_id: Annotated[str, Field(description="The ID of the workflow")]
+class GetFunctionResponse(SdkResponse):
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
     variables: Annotated[
         list[WorkflowParameterInfo] | None, Field(description="The variables to run the workflow with")
     ] = None
@@ -1750,31 +2100,43 @@ class GetWorkflowResponse(SdkResponse):
         ),
     ] = None
 
+    @computed_field
+    @property
+    def workflow_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_id
 
-class GetWorkflowWithLinkResponse(GetWorkflowResponse, FileLinkResponse):
+
+class GetFunctionWithLinkResponse(GetFunctionResponse, FileLinkResponse):
     pass
 
 
-class UpdateWorkflowRequest(SdkRequest):
-    workflow_path: Annotated[str, Field(description="The path to the workflow to upload")]
+class UpdateFunctionRequest(SdkRequest):
+    path: Annotated[
+        str,
+        Field(
+            description="The path to the function code to upload",
+            validation_alias=AliasChoices("workflow_path", "path"),
+        ),
+    ]
     version: Annotated[str | None, Field(description="The version of the workflow to update")] = None
 
 
-class GetWorkflowRequest(SdkRequest):
-    version: Annotated[str | None, Field(description="The version of the workflow to get")] = None
+class GetFunctionRequest(SdkRequest):
+    version: Annotated[str | None, Field(description="The version of the function to get")] = None
 
 
-class DeleteWorkflowResponse(SdkResponse):
+class DeleteFunctionResponse(SdkResponse):
     status: Annotated[Literal["success", "failure"], Field(description="The status of the deletion")]
     message: Annotated[str, Field(description="The message of the deletion")]
 
 
-class ListWorkflowsRequest(SessionListRequest):
+class ListFunctionsRequest(SessionListRequest):
     pass
 
 
-class ListWorkflowsResponse(SdkResponse):
-    items: Annotated[list[GetWorkflowResponse], Field(description="The workflows")]
+class ListFunctionsResponse(SdkResponse):
+    items: Annotated[list[GetFunctionResponse], Field(description="The functions")]
     page: Annotated[int, Field(description="Current page number")]
     page_size: Annotated[int, Field(description="Number of items per page")]
     has_next: Annotated[bool, Field(description="Whether there are more pages")]
@@ -1786,38 +2148,92 @@ class ListWorkflowsResponse(SdkResponse):
 # ############################################################
 
 
-class CreateWorkflowRunRequestDict(TypedDict, total=False):
+class CreateFunctionRunRequestDict(TypedDict, total=False):
     local: bool
 
 
-class CreateWorkflowRunRequest(SdkRequest):
+class CreateFunctionRunRequest(SdkRequest):
     local: Annotated[bool, Field(description="Whether to run the workflow locally, or in cloud")] = False
 
 
-class StartWorkflowRunRequest(SdkRequest):
-    workflow_id: Annotated[str, Field(description="The ID of the workflow")]
-    workflow_run_id: Annotated[str | None, Field(description="The ID of the workflow run")] = None
-    variables: Annotated[dict[str, Any] | None, Field(description="The variables to run the workflow with")] = None
+class StartFunctionRunRequest(SdkRequest):
+    function_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function",
+            validation_alias=AliasChoices("workflow_id", "function_id"),
+            exclude=True,
+        ),
+    ]
+    function_run_id: Annotated[
+        str | None,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+            exclude=True,
+        ),
+    ] = None
+    variables: Annotated[dict[str, Any] | None, Field(description="The variables to run the function with")] = None
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = False
 
+    @computed_field
+    @property
+    def workflow_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_id
 
-WorkflowRunStatus = Literal["closed", "active", "failed"]
+    @computed_field
+    @property
+    def workflow_run_id(self) -> str | None:
+        """Legacy key for serialization"""
+        return self.function_run_id
 
 
-class WorkflowRunResponse(SdkResponse):
-    workflow_id: Annotated[str, Field(description="The ID of the workflow")]
-    workflow_run_id: Annotated[str, Field(description="The ID of the workflow run")]
+FunctionRunStatus = Literal["closed", "active", "failed"]
+
+
+class FunctionRunResponse(SdkResponse):
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ]
     session_id: Annotated[str | None, Field(description="The ID of the session")]
     result: Annotated[Any, Field(description="The result of the workflow run")]
-    status: Annotated[WorkflowRunStatus, Field(description="The status of the workflow run (closed, active, failed)")]
+    status: Annotated[FunctionRunStatus, Field(description="The status of the workflow run (closed, active, failed)")]
+
+    @computed_field
+    @property
+    def workflow_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_id
+
+    @computed_field
+    @property
+    def workflow_run_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_run_id
 
 
-class GetWorkflowRunResponse(SdkResponse):
-    workflow_id: str
-    workflow_run_id: str
+class GetFunctionRunResponse(SdkResponse):
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ]
     created_at: dt.datetime
     updated_at: dt.datetime
-    status: WorkflowRunStatus
+    status: FunctionRunStatus
     session_id: Annotated[str | None, Field(description="The ID of the session")] = None
     logs: Annotated[list[str], Field(description="The logs of the workflow run")] = Field(default_factory=list)
     variables: Annotated[dict[str, Any] | None, Field(description="The variables of the workflow run")] = Field(
@@ -1826,47 +2242,99 @@ class GetWorkflowRunResponse(SdkResponse):
     result: Annotated[str | None, Field(description="The result of the workflow run (if any)")] = None
     local: Annotated[bool, Field(description="Whether the workflow has been run locally or on the cloud")] = False
 
+    @computed_field
+    @property
+    def workflow_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_id
 
-class WorkflowRunUpdateRequestDict(TypedDict, total=False):
+    @computed_field
+    @property
+    def workflow_run_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_run_id
+
+
+class FunctionRunUpdateRequestDict(TypedDict, total=False):
     session_id: str | None
     logs: list[str]
     variables: dict[str, Any] | None
     result: Any | None
-    status: WorkflowRunStatus
+    status: FunctionRunStatus
 
 
-class WorkflowRunUpdateRequest(SdkRequest):
+class FunctionRunUpdateRequest(SdkRequest):
     session_id: Annotated[str | None, Field(description="The ID of the session")] = None
     logs: Annotated[list[str], Field(description="The logs of the workflow run")] = Field(default_factory=list)
     variables: Annotated[dict[str, Any] | None, Field(description="The variables of the workflow run")] = None
     result: Annotated[Any | None, Field(description="The result of the workflow run")] = None
-    status: Annotated[WorkflowRunStatus, Field(description="The status of the workflow run")]
+    status: Annotated[FunctionRunStatus, Field(description="The status of the workflow run")]
 
 
-class CreateWorkflowRunResponse(SdkResponse):
-    workflow_id: str
-    workflow_run_id: str
+class CreateFunctionRunResponse(SdkResponse):
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ]
     created_at: dt.datetime
     status: Literal["created"] = "created"
 
+    @computed_field
+    @property
+    def workflow_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_id
 
-class UpdateWorkflowRunResponse(SdkResponse):
-    workflow_id: str
-    workflow_run_id: str
+    @computed_field
+    @property
+    def workflow_run_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_run_id
+
+
+class UpdateFunctionRunResponse(SdkResponse):
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ]
     updated_at: dt.datetime
     status: Literal["updated", "stopped"] = "updated"
 
+    @computed_field
+    @property
+    def workflow_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_id
 
-class ListWorkflowRunsRequestDict(SessionListRequestDict, total=False):
+    @computed_field
+    @property
+    def workflow_run_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_run_id
+
+
+class ListFunctionRunsRequestDict(SessionListRequestDict, total=False):
     pass
 
 
-class ListWorkflowRunsRequest(SessionListRequest):
+class ListFunctionRunsRequest(SessionListRequest):
     pass
 
 
-class ListWorkflowRunsResponse(SdkResponse):
-    items: Annotated[list[GetWorkflowRunResponse], Field(description="The workflow runs")]
+class ListFunctionRunsResponse(SdkResponse):
+    items: Annotated[list[GetFunctionRunResponse], Field(description="The function runs")]
     page: Annotated[int, Field(description="Current page number")]
     page_size: Annotated[int, Field(description="Number of items per page")]
     has_next: Annotated[bool, Field(description="Whether there are more pages")]

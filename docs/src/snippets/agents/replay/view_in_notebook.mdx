@@ -1,0 +1,11 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/replay/view_in_notebook.py */}
+
+```python view_in_notebook.py
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    agent.run(task="Complete task")
+
+replay = session.replay()
+replay.download("notebook_replay.mp4")
+```

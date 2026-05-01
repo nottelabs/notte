@@ -89,7 +89,7 @@ class SchemaScrapingPipe:
                         "instructions": instructions,
                         "success_example": self.success_example().model_dump_json(),
                         "failure_example": self.failure_example().model_dump_json(),
-                        "timestamp": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "timestamp": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
                     },
                     response_format=StructuredData[DictBaseModel],
                     use_strict_response_format=False,
@@ -117,7 +117,7 @@ class SchemaScrapingPipe:
                         "success_example": self.success_example().model_dump_json(),
                         "schema": json.dumps(StructuredData[_response_format].model_json_schema()),
                         "content": document,
-                        "timestamp": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "timestamp": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
                         "instructions": instructions,
                     },
                 )

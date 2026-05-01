@@ -1,19 +1,22 @@
-from typing import TYPE_CHECKING, Literal, Unpack, overload
+from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 
-from notte_core.actions import ActionUnion, CaptchaSolveAction
+from notte_core.actions import ActionUnion, CaptchaSolveAction, InteractionActionUnion
+from notte_core.common.config import PerceptionType
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
+from notte_core.errors.processing import ScrapeFailedError
 from pydantic import BaseModel, RootModel
 from typing_extensions import final
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
-    ExecutionResponseWithSession,
+    ExecutionResultResponse,
     ObserveRequest,
     ObserveRequestDict,
     ObserveResponse,
+    PaginationParamsDict,
     ScrapeMarkdownParamsDict,
     ScrapeRequest,
     ScrapeRequestDict,
@@ -91,7 +94,7 @@ class PageClient(BaseClient):
         return NotteEndpoint(path=path, response=ObserveResponse, method="POST")
 
     @staticmethod
-    def _page_step_endpoint(session_id: str | None = None) -> NotteEndpoint[ExecutionResponseWithSession]:
+    def _page_execute_endpoint(session_id: str | None = None) -> NotteEndpoint[ExecutionResultResponse]:
         """
         Creates a NotteEndpoint for initiating a step action.
 
@@ -100,19 +103,41 @@ class PageClient(BaseClient):
         path = PageClient.PAGE_EXECUTE
         if session_id is not None:
             path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=ExecutionResponseWithSession, method="POST")
-
-    @overload
-    def scrape(self, session_id: str, /, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+        return NotteEndpoint(path=path, response=ExecutionResultResponse, method="POST")
 
     @overload
     def scrape(
-        self, session_id: str, *, instructions: str, **params: Unpack[ScrapeMarkdownParamsDict]
+        self, session_id: str, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> str: ...
+
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
+    @overload
+    def scrape(
+        self,
+        session_id: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> dict[str, Any]: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    def scrape(
+        self,
+        session_id: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[BaseModel]: ...
 
     @overload
-    def scrape(self, session_id: str, *, only_images: Literal[True]) -> list[ImageData]: ...
+    def scrape(  # pyright: ignore[reportOverlappingOverload]
+        self, session_id: str, /, *, only_images: Literal[True], raise_on_failure: bool = True
+    ) -> list[ImageData]: ...
 
+    # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
     def scrape(
         self,
@@ -120,13 +145,26 @@ class PageClient(BaseClient):
         *,
         response_format: type[TBaseModel],
         instructions: str | None = None,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> TBaseModel: ...
+
+    # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
+    @overload
+    def scrape(
+        self,
+        session_id: str,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[False],
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
     @track_usage("cloud.session.scrape")
     def scrape(
-        self, session_id: str, **data: Unpack[ScrapeRequestDict]
-    ) -> str | StructuredData[BaseModel] | list[ImageData]:
+        self, session_id: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
         """
         Scrapes a page using provided parameters via the Notte API.
 
@@ -135,37 +173,78 @@ class PageClient(BaseClient):
         scrape endpoint and the resulting response is formatted into an Observation object.
 
         Args:
-            **data: Arbitrary keyword arguments validated against ScrapeRequestDict,
-                   expecting at least one of 'url' or 'session_id'.
+            session_id: The session ID to scrape from.
+            raise_on_failure: If True (default), raises ScrapeFailedError when structured data
+                extraction fails. If False, returns the StructuredData with success=False.
+            **data: Arbitrary keyword arguments validated against ScrapeRequestDict.
 
         Returns:
-            An Observation object containing metadata, screenshot, action space, and data space.
+            When using instructions/response_format and raise_on_failure=True: returns the extracted data directly.
+            When raise_on_failure=False: returns StructuredData wrapper so user can check .success.
+            For markdown scraping: returns str.
+            For image scraping: returns list[ImageData].
 
         Raises:
-            InvalidRequestError: If neither 'url' nor 'session_id' is supplied.
+            ScrapeFailedError: If structured data extraction fails and raise_on_failure=True.
         """
         request = ScrapeRequest.model_validate(data)
         endpoint = PageClient._page_scrape_endpoint(session_id=session_id)
         response = self.request(endpoint.with_request(request))
-        # Manually override the data.structured space to better match the response format
+        # Handle images scraping
         if request.only_images and response.images is not None:
             return response.images
-        response_format = request.response_format
+        # Handle structured data scraping
         structured = response.structured
         if request.requires_schema():
             if structured is None:
-                raise ValueError("Failed to scrape structured data. This should not happen. Please report this issue.")
-            if not structured.success or structured.data is None:
-                return structured
-            if response_format is not None:
-                structured.data = response_format.model_validate(structured.data.model_dump())
+                error_message = "Failed to scrape structured data. This should not happen. Please report this issue."
+                if raise_on_failure:
+                    raise ScrapeFailedError(error_message)
+                return StructuredData[BaseModel](success=False, error=error_message, data=None)
+            # Use structured.get() which raises ScrapeFailedError if failed, and unwraps RootModel
+            if raise_on_failure:
+                extracted_data = structured.get()
+                # Validate against response_format if provided
+                if request.response_format is not None:
+                    extracted_data_dict = (
+                        extracted_data.model_dump() if isinstance(extracted_data, BaseModel) else extracted_data  # pyright: ignore[reportUnnecessaryIsInstance]
+                    )
+                    extracted_data = request.response_format.model_validate(extracted_data_dict)
+                return extracted_data
             if isinstance(structured.data, RootModel):
+                # unwrap RootModel
                 structured.data = structured.data.root  # type: ignore[attr-defined]
+            if request.response_format is not None and structured.data is not None:
+                structured.data = request.response_format.model_validate(structured.data)
             return structured
         return response.markdown
 
+    @overload
+    def observe(
+        self,
+        session_id: str,
+        *,
+        instructions: str,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> list[InteractionActionUnion]: ...
+
+    @overload
+    def observe(
+        self,
+        session_id: str,
+        *,
+        instructions: None = None,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> ObserveResponse: ...
+
     @track_usage("cloud.session.observe")
-    def observe(self, session_id: str, **data: Unpack[ObserveRequestDict]) -> ObserveResponse:
+    def observe(
+        self, session_id: str, **data: Unpack[ObserveRequestDict]
+    ) -> ObserveResponse | list[InteractionActionUnion]:
         """
         Observes a page via the Notte API.
 
@@ -174,19 +253,23 @@ class PageClient(BaseClient):
         The request is sent to the observe endpoint, and the response is formatted into an Observation object.
 
         Parameters:
+            session_id: The session ID to observe.
             **data: Arbitrary keyword arguments corresponding to observation request fields.
-                    At least one of 'url' or 'session_id' must be provided.
 
         Returns:
-            Observation: The formatted observation result from the API response.
+            ObserveResponse: The formatted observation result from the API response when no instructions provided.
+            list[InteractionActionUnion]: The filtered list of actions when instructions is provided.
         """
+        instructions = data.get("instructions")
         request = ObserveRequest.model_validate(data)
         endpoint = PageClient._page_observe_endpoint(session_id=session_id)
         obs_response = self.request(endpoint.with_request(request))
+        if instructions is not None:
+            return list(obs_response.space.interaction_actions)
         return obs_response
 
     @track_usage("cloud.session.execute")
-    def execute(self, session_id: str, action: ActionUnion) -> ExecutionResponseWithSession:
+    def execute(self, session_id: str, action: ActionUnion) -> ExecutionResultResponse:
         """
         Sends a step action request and returns an ExecutionResponseWithSession.
 
@@ -195,19 +278,20 @@ class PageClient(BaseClient):
         the API response into an Observation.
 
         Args:
-            **data: Arbitrary keyword arguments matching the expected structure for a
-                step request.
+            session_id: The session ID to execute the action on.
+            action: The action to execute. For InteractionActions, the timeout can be set
+                directly on the action object via the `timeout` field.
 
         Returns:
             An Observation object constructed from the API response.
         """
-        endpoint = PageClient._page_step_endpoint(session_id=session_id)
+        endpoint = PageClient._page_execute_endpoint(session_id=session_id)
         is_captcha = isinstance(action, CaptchaSolveAction)
-        timeout = 100 if is_captcha else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
+        request_timeout = 100 if is_captcha else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
 
         for _ in range(3):
             try:
-                obs_response = self.request(endpoint.with_request(action), timeout=timeout)
+                obs_response = self.request(endpoint.with_request(action), timeout=request_timeout)
                 return obs_response
             except NotteAPIError as e:
                 if e.status_code == 408 and is_captcha:

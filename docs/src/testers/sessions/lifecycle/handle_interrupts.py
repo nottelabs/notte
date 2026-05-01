@@ -1,0 +1,19 @@
+# @sniptest filename=handle_interrupts.py
+import signal
+import sys
+
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+
+def signal_handler(sig, frame):
+    print("Interrupt received, cleaning up...")
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, signal_handler)
+
+with client.Session() as session:
+    # Your automation
+    pass

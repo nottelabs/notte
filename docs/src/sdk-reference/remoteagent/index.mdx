@@ -7,19 +7,17 @@ description: "A remote agent that can execute tasks through the Notte API"
 
 A remote agent that can execute tasks through the Notte API.
 
-This class provides an interface for running tasks, checking status, and managing replays
-of agent executions. It maintains state about the current agent execution and provides
+This class provides an interface for running tasks, checking status, and managing
+agent executions. It maintains state about the current agent execution and provides
 methods to interact with the agent through an AgentsClient.
 
 The agent can be started, monitored, and controlled through various methods. It supports
-both synchronous and asynchronous execution modes, and can provide visual replays of
-its actions in MP4 format.
+both synchronous and asynchronous execution modes.
 
 Key Features:
 - Start and stop agent execution
 - Monitor agent status and progress
 - Wait for task completion with progress updates
-- Get visual replays of agent actions
 - Support for both sync and async execution
 
 Attributes:
@@ -41,18 +39,18 @@ concurrent agents, create separate RemoteAgent instances.
     Create a new RemoteAgent instance with the specified configuration
   </Card>
   <Card
-    title="arun"
+    title="async_watch_logs_and_wait"
     icon="function"
-    href="/sdk-reference/remoteagent/arun"
+    href="/sdk-reference/remoteagent/async_watch_logs_and_wait"
   >
-    Asynchronously execute a task with the agent
+    Watch the logs of the agent and wait for completion asynchronously
   </Card>
   <Card
     title="replay"
     icon="function"
     href="/sdk-reference/remoteagent/replay"
   >
-    Get a replay of the agent's execution in MP4 format
+    Get the replay for the agent's session
   </Card>
   <Card
     title="run"

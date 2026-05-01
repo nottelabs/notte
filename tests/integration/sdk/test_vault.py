@@ -208,3 +208,95 @@ def test_invalid_credentials_in_local_agent():
         agent = notte.Agent(session=session, vault=vault)
         with pytest.raises(NoCredentialsFoundError):
             _ = agent.run(task="go to console.notte.cc and login then retrieve the current active usage.")
+
+
+# ============================================
+# Session vault integration tests
+# ============================================
+
+
+@pytest.mark.asyncio
+async def test_session_set_vault_enables_credential_replacement():
+    """Test that session.set_vault() enables credential replacement via _action_with_vault."""
+    _ = load_dotenv()
+    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    EMAIL = "test@notte.cc"
+    PASSWORD = "testpass123"  # pragma: allowlist secret
+    URL = "https://github.com/"
+
+    with client.Vault() as vault, notte.Session() as session:
+        _ = vault.add_credentials(url=URL, email=EMAIL, password=PASSWORD)
+
+        # Set vault on session directly (not via agent)
+        session.set_vault(vault)
+
+        # Load a page and set up snapshot
+        file_path = "tests/data/github_signin.html"
+        _ = await session.window.page.goto(url=f"file://{os.path.abspath(file_path)}")
+        _ = await session.aexecute(WaitAction(time_ms=100))
+        _ = await session.aobserve()
+        session.snapshot.metadata.url = URL
+
+        # Test _action_with_vault replaces credentials
+        action = FormFillAction(
+            value={"email": EmailField.placeholder_value, "current_password": PasswordField.placeholder_value}
+        )
+        replaced = await session._action_with_vault(action)
+
+        assert isinstance(replaced, FormFillAction)
+        assert isinstance(replaced.value["email"], ValueWithPlaceholder)
+        assert isinstance(replaced.value["current_password"], ValueWithPlaceholder)
+        assert get_str_value(replaced.value["email"]) == EMAIL
+        assert get_str_value(replaced.value["current_password"]) == PASSWORD
+
+
+@pytest.mark.asyncio
+async def test_session_vault_in_constructor():
+    """Test that passing vault to session constructor enables credential replacement."""
+    _ = load_dotenv()
+    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    EMAIL = "constructor@notte.cc"
+    PASSWORD = "constructorpass"  # pragma: allowlist secret
+    URL = "https://github.com/"
+
+    with client.Vault() as vault:
+        _ = vault.add_credentials(url=URL, email=EMAIL, password=PASSWORD)
+
+        # Pass vault directly to session constructor
+        with notte.Session(vault=vault) as session:
+            file_path = "tests/data/github_signin.html"
+            _ = await session.window.page.goto(url=f"file://{os.path.abspath(file_path)}")
+            _ = await session.aexecute(WaitAction(time_ms=100))
+            _ = await session.aobserve()
+            session.snapshot.metadata.url = URL
+
+            action = FormFillAction(value={"email": EmailField.placeholder_value})
+            replaced = await session._action_with_vault(action)
+
+            assert isinstance(replaced.value["email"], ValueWithPlaceholder)
+            assert get_str_value(replaced.value["email"]) == EMAIL
+
+
+@pytest.mark.asyncio
+async def test_session_fill_action_with_vault():
+    """Test that FillAction credentials are replaced via session vault."""
+    _ = load_dotenv()
+    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    EMAIL = "fill@notte.cc"
+    URL = "https://github.com/"
+
+    with client.Vault() as vault, notte.Session(vault=vault) as session:
+        _ = vault.add_credentials(url=URL, email=EMAIL, password="pw")
+
+        file_path = "tests/data/github_signin.html"
+        _ = await session.window.page.goto(url=f"file://{os.path.abspath(file_path)}")
+        _ = await session.aexecute(WaitAction(time_ms=100))
+        _ = await session.aobserve()
+        session.snapshot.metadata.url = URL
+
+        fill_action = FillAction(id="I1", value=EmailField.placeholder_value)
+        replaced = await session._action_with_vault(fill_action)
+
+        assert isinstance(replaced, FillAction)
+        assert isinstance(replaced.value, ValueWithPlaceholder)
+        assert get_str_value(replaced.value) == EMAIL

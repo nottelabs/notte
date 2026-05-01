@@ -4,9 +4,30 @@ import os
 import pytest
 from notte_browser.form_filling import FormFiller
 from notte_core.actions import WaitAction
+from notte_core.actions.actions import FormFillAction
 from patchright.async_api import Locator
 
 import notte
+
+
+def test_form_fill_action_strips_null_values():
+    """Gemini returns null for unused fields — FormFillAction must strip them."""
+    action = FormFillAction(
+        value={
+            "title": None,
+            "first_name": None,
+            "email": "lucas@notte.cc",
+            "password": "123456",
+            "city": None,
+        },
+    )
+    assert action.value == {"email": "lucas@notte.cc", "current_password": "123456"}
+
+
+def test_form_fill_action_all_null_raises():
+    """If all values are null, FormFillAction should raise (min_length=1)."""
+    with pytest.raises(Exception):
+        FormFillAction(value={"title": None, "email": None})
 
 
 def get_checkout_files() -> list[str]:

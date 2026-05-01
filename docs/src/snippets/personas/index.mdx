@@ -1,10 +1,14 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/personas/index.py */}
+
 ```python personas.py
-from notte_sdk.client import NotteClient
 import datetime as dt
 
-notte = NotteClient()
+from notte_sdk.client import NotteClient
 
-persona = notte.Persona(create_vault=True)
+client = NotteClient()
+
+persona = client.Persona(create_vault=True)
 print(f"Persona email: {persona.info.email}")
 
 # add a credential to the persona: password is generated automatically and email is the persona's email
@@ -15,10 +19,9 @@ recent_emails = persona.emails(only_unread=True, limit=10, timedelta=dt.timedelt
 print(f"Recent emails: {recent_emails}")
 
 # get your persona in subsequent scripts
-same_persona = notte.Persona(persona.info.persona_id)
+same_persona = client.Persona(persona.info.persona_id)
 assert same_persona.info == persona.info
 
 # delete the persona when you don't need it anymore
 persona.delete()
-
 ```

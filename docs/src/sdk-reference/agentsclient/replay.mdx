@@ -1,18 +1,16 @@
 ---
 title: "replay"
-description: "Downloads the replay for the specified agent in mp4 format"
+description: "Get presigned URLs for the specified agent's session replay"
 ---
 
-
-
-```python
-replay = agent.replay()
-```
-
-The replay is a mp4 file that can be displayed in a browser.
+<Warning>
+  This method is deprecated. Use [`session.replay()`](/sdk-reference/remotesession/replay) instead.
+</Warning>
 
 ```python
-replay.show()
+# Deprecated — prefer session.replay()
+replay = client.agents.replay(agent_id="your-agent-id")
+replay.download("replay.mp4")
 ```
 
 
@@ -20,9 +18,21 @@ replay.show()
 ## Parameters
 
 <ParamField path="agent_id" type="str" required>
-  The identifier of the agent to download the replay for.
+  The identifier of the agent to get the replay for.
+</ParamField>
+
+<ParamField path="wait" type="bool" default="True">
+  If `True`, polls until the replay is ready instead of raising on 404.
+</ParamField>
+
+<ParamField path="timeout" type="float" default="240.0">
+  Maximum seconds to wait for the replay to become available.
+</ParamField>
+
+<ParamField path="poll_interval" type="float" default="5.0">
+  Seconds between polling attempts.
 </ParamField>
 
 ## Returns
 
-[`MP4Replay`](/sdk-reference/misc/mp4replay): The replay file in mp4 format.
+[`ReplayResponse`](/sdk-reference/misc/replayresponse): Contains presigned URLs for MP4 download and HLS playlist.

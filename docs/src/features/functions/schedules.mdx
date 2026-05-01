@@ -1,0 +1,337 @@
+---
+title: Function Schedules
+description: Schedule Functions to run automatically with cron expressions
+---
+
+import PriceMonitor from "/snippets/functions/price_monitor.mdx";
+import UptimeMonitor from "/snippets/functions/uptime_monitor.mdx";
+import HourlyDataCollection from "/snippets/functions/schedules/hourly_data_collection.mdx";
+import WeeklyReports from "/snippets/functions/schedules/weekly_reports.mdx";
+import DynamicParams from "/snippets/functions/schedules/dynamic_params.mdx";
+import ExecutionHistory from "/snippets/functions/schedules/execution_history.mdx";
+import FailedRuns from "/snippets/functions/schedules/failed_runs.mdx";
+import Alerts from "/snippets/functions/schedules/alerts.mdx";
+import ErrorHandling from "/snippets/functions/schedules/error_handling.mdx";
+import SetTimeouts from "/snippets/functions/schedules/set_timeouts.mdx";
+import HealthCheck from "/snippets/functions/schedules/health_check.mdx";
+import Idempotent from "/snippets/functions/schedules/idempotent.mdx";
+import Timezone from "/snippets/functions/schedules/timezone.mdx";
+
+Schedule Functions to run automatically at specific times using cron expressions.
+
+## Overview
+
+Function scheduling allows you to:
+- Run automations on a regular schedule (daily, weekly, hourly, etc.)
+- Execute tasks at specific times
+- Automate recurring workflows
+- Monitor websites continuously
+
+Schedules are configured in the [Notte Console](https://console.notte.cc) and run automatically on Notte's infrastructure.
+
+## Creating a Schedule
+
+### Via Console
+
+1. Go to [console.notte.cc/workflows](https://console.notte.cc/workflows)
+2. Select your Function
+3. Click "Schedule"
+4. Enter cron expression
+5. Set parameters (variables)
+6. Save schedule
+
+### Cron Expression Format
+
+Cron expressions define when Functions run:
+
+```
+* * * * *
+│ │ │ │ │
+│ │ │ │ └─── Day of week (0-6, Sunday=0)
+│ │ │ └───── Month (1-12)
+│ │ └─────── Day of month (1-31)
+│ └───────── Hour (0-23)
+└─────────── Minute (0-59)
+```
+
+## Common Schedules
+
+### Every Minute
+
+```
+* * * * *
+```
+
+Run function every minute.
+
+**Use for:** Real-time monitoring, high-frequency updates
+
+---
+
+### Every Hour
+
+```
+0 * * * *
+```
+
+Run at the start of every hour (e.g., 1:00, 2:00, 3:00).
+
+**Use for:** Hourly data collection, periodic checks
+
+---
+
+### Every Day at 9 AM
+
+```
+0 9 * * *
+```
+
+Run every day at 9:00 AM.
+
+**Use for:** Daily reports, morning data sync
+
+---
+
+### Every Monday at 8 AM
+
+```
+0 8 * * 1
+```
+
+Run every Monday at 8:00 AM.
+
+**Use for:** Weekly reports, start-of-week tasks
+
+---
+
+### First Day of Month
+
+```
+0 0 1 * *
+```
+
+Run at midnight on the 1st of every month.
+
+**Use for:** Monthly reports, billing cycles
+
+---
+
+### Every 15 Minutes
+
+```
+*/15 * * * *
+```
+
+Run every 15 minutes.
+
+**Use for:** Frequent monitoring, regular updates
+
+---
+
+### Weekdays at 6 PM
+
+```
+0 18 * * 1-5
+```
+
+Run at 6:00 PM Monday through Friday.
+
+**Use for:** End-of-day business tasks
+
+---
+
+### Multiple Times Per Day
+
+```
+0 9,12,15,18 * * *
+```
+
+Run at 9 AM, 12 PM, 3 PM, and 6 PM every day.
+
+**Use for:** Regular business hours monitoring
+
+---
+
+## Use Cases
+
+### 1. Daily Price Monitoring
+
+Monitor competitor pricing every day:
+
+<PriceMonitor />
+
+**Schedule:** `0 9 * * *` (Every day at 9 AM)
+
+---
+
+### 2. Hourly Data Collection
+
+Collect data every hour:
+
+<HourlyDataCollection />
+
+**Schedule:** `0 * * * *` (Every hour)
+
+---
+
+### 3. Weekly Reports
+
+Generate reports every Monday:
+
+<WeeklyReports />
+
+**Schedule:** `0 8 * * 1` (Every Monday at 8 AM)
+
+---
+
+### 4. Continuous Monitoring
+
+Monitor website availability every 5 minutes:
+
+<UptimeMonitor />
+
+**Schedule:** `*/5 * * * *` (Every 5 minutes)
+
+---
+
+## Schedule Parameters
+
+### Static Parameters
+
+Set fixed parameters for scheduled runs:
+
+```
+Schedule: 0 9 * * *
+Parameters:
+  url: "https://example.com"
+  max_results: 10
+```
+
+Every scheduled run uses these parameters.
+
+### Dynamic Parameters
+
+Use environment variables or context:
+
+<DynamicParams />
+
+## Managing Schedules
+
+### View Scheduled Runs
+
+Check upcoming scheduled executions in the Console:
+
+1. Go to Function details
+2. View "Scheduled Runs" section
+3. See next execution time
+4. View execution history
+
+### Pause Schedule
+
+Temporarily disable schedule:
+
+1. Go to Function schedules
+2. Toggle schedule off
+3. Resume later without losing configuration
+
+### Delete Schedule
+
+Remove schedule permanently:
+
+1. Go to Function schedules
+2. Delete schedule
+3. Function can still be invoked manually
+
+## Monitoring Scheduled Functions
+
+### Execution History
+
+View past scheduled runs:
+
+<ExecutionHistory />
+
+### Failed Runs
+
+Handle scheduled failures:
+
+<FailedRuns />
+
+### Alerts
+
+Set up alerts for failures:
+
+<Alerts />
+
+## Best Practices
+
+### 1. Use Appropriate Frequency
+
+Match schedule to data update frequency:
+
+```
+# Data updates hourly
+0 * * * *  ✅ Good
+
+# Data updates hourly, but checking every minute
+* * * * *  ❌ Wasteful
+```
+
+### 2. Add Error Handling
+
+Scheduled functions should handle errors gracefully:
+
+<ErrorHandling />
+
+### 3. Set Reasonable Timeouts
+
+<SetTimeouts />
+
+### 4. Monitor Schedule Health
+
+Check that schedules are running:
+
+<HealthCheck />
+
+**Schedule:** `0 0 * * *` (Daily health check)
+
+### 5. Use Idempotent Operations
+
+Design functions to handle duplicate runs:
+
+<Idempotent />
+
+## Timezone Considerations
+
+Schedules run in UTC by default. Convert to your timezone:
+
+```python
+# If you want 9 AM EST (UTC-5), use:
+# 14 * * * * (9 AM + 5 hours = 14:00 UTC)
+
+# If you want 9 AM PST (UTC-8), use:
+# 17 * * * * (9 AM + 8 hours = 17:00 UTC)
+```
+
+Or handle timezone in function:
+
+<Timezone />
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Invocations" icon="play" href="/features/functions/invocations">
+    Learn how to invoke Functions manually
+  </Card>
+
+  <Card title="Management" icon="sliders" href="/features/functions/management">
+    Update and monitor Functions
+  </Card>
+
+  <Card title="Creating Functions" icon="file-code" href="/features/functions/creating">
+    Write schedulable Functions
+  </Card>
+
+  <Card title="Console" icon="browser" href="https://console.notte.cc">
+    Configure schedules in Console
+  </Card>
+</CardGroup>

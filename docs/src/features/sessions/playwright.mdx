@@ -1,0 +1,120 @@
+---
+title: Connect with Playwright
+description: Use Playwright directly with Notte sessions via Chrome DevTools Protocol
+---
+
+import PlaywrightConnect from '/snippets/sessions/cdp/playwright_connect.mdx';
+import PlaywrightBothApis from '/snippets/sessions/cdp/playwright_both_apis.mdx';
+import PlaywrightAsync from '/snippets/sessions/cdp/playwright_async.mdx';
+import PlaywrightMultiplePages from '/snippets/sessions/cdp/playwright_multiple_pages.mdx';
+import PlaywrightNetwork from '/snippets/sessions/cdp/playwright_network.mdx';
+import PlaywrightEvents from '/snippets/sessions/cdp/playwright_events.mdx';
+import PlaywrightContextManagers from '/snippets/sessions/cdp/playwright_context_managers.mdx';
+import PlaywrightTimeout from '/snippets/sessions/cdp/playwright_timeout.mdx';
+import PlaywrightCdpErrorHandling from '/snippets/sessions/cdp/playwright_cdp_error_handling.mdx';
+
+Notte sessions expose a Chrome DevTools Protocol (CDP) endpoint that you can connect to with Playwright. This allows you to use Playwright's API directly while still benefiting from Notte's cloud infrastructure, anti-detection features, and session management.
+
+## Prerequisites
+
+Install Playwright alongside the Notte SDK:
+
+```bash
+pip install notte-sdk playwright
+```
+
+## Connect Playwright to Notte Session
+
+Get the CDP URL from a Notte session and connect Playwright to it:
+
+<PlaywrightConnect />
+
+<Note>
+  Notte sessions automatically create a browser context with one page. Access it via `browser.contexts[0].pages[0]`.
+</Note>
+
+## Use Both Notte and Playwright APIs
+
+You can use both the Notte session API and Playwright simultaneously:
+
+<PlaywrightBothApis />
+
+## Async Playwright Support
+
+Notte works with both sync and async Playwright:
+
+<PlaywrightAsync />
+
+## Advanced: Multiple Pages and Contexts
+
+Create additional pages or contexts using Playwright:
+
+<PlaywrightMultiplePages />
+
+## Network Interception
+
+Use Playwright's powerful network interception with Notte sessions:
+
+<PlaywrightNetwork />
+
+## Browser Events and Monitoring
+
+Listen to browser events using Playwright:
+
+<PlaywrightEvents />
+
+## Best Practices
+
+### 1. Use Context Managers
+
+Always use context managers for both Notte and Playwright to ensure proper cleanup:
+
+<PlaywrightContextManagers />
+
+### 2. Prefer Notte's Built-in Page
+
+For simple automation, use `session.page` directly. Only connect Playwright when you need advanced features like network interception or custom contexts.
+
+### 3. Session Timeout
+
+Remember that Notte sessions have a timeout. For long-running Playwright operations, increase the timeout:
+
+<PlaywrightTimeout />
+
+### 4. Handle CDP Disconnections
+
+CDP connections can be interrupted. Wrap operations in try-except blocks:
+
+<PlaywrightCdpErrorHandling />
+
+## When to Use Playwright with Notte
+
+Use Playwright directly when you need:
+
+- **Network interception**: Block resources, modify requests/responses
+- **Advanced event monitoring**: Console logs, network events, page errors
+- **Multiple contexts**: Separate browser contexts with different settings
+- **Custom browser settings**: Specific viewport, user agent, or permissions per context
+- **Playwright's testing utilities**: Screenshots with full-page scrolling, PDF generation, etc.
+
+For most automation tasks, `session.page` (which is already Playwright-compatible) is sufficient.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Connect with Puppeteer" icon="node-js" href="/features/sessions/puppeteer">
+    Use Puppeteer with Notte sessions
+  </Card>
+
+  <Card title="External Browser Providers" icon="globe" href="/features/sessions/external-providers">
+    Connect Notte to Kernel.sh and other providers
+  </Card>
+
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Configure session settings and features
+  </Card>
+
+  <Card title="External Providers" icon="plug" href="/features/sessions/external-providers">
+    Connect to Kernel.sh and other providers
+  </Card>
+</CardGroup>

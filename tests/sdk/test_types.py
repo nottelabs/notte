@@ -1,4 +1,3 @@
-import base64
 import datetime as dt
 from typing import Any
 
@@ -13,7 +12,6 @@ from notte_sdk.types import (
     AgentStatusResponse,
     ObserveResponse,
     ReplayResponse,
-    SessionResponse,
     SessionStartRequest,
 )
 from pydantic import BaseModel, ValidationError
@@ -58,14 +56,8 @@ def test_observation_fields_match_response_types():
 
     # Try to create ObserveResponseDict with these fields
     response_dict = {
-        "session": {
-            "session_id": "test_session",  # Required by ResponseDict
-            "timeout_minutes": 100,
-            "created_at": dt.datetime.now(),
-            "last_accessed_at": dt.datetime.now(),
-            "duration": dt.timedelta(seconds=100),
-            "status": "active",
-        },
+        "started_at": dt.datetime.now(),
+        "ended_at": dt.datetime.now(),
         **sample_data,
         "space": {
             "description": "test space",
@@ -96,6 +88,8 @@ class TestSchemaList(BaseModel):
 
 def test_observe_response_from_observation():
     obs = Observation(
+        started_at=dt.datetime.now(),
+        ended_at=dt.datetime.now(),
         metadata=SnapshotMetadata(
             url="https://www.google.com",
             title="Google",
@@ -128,26 +122,8 @@ def test_observe_response_from_observation():
             ],
         ),
     )
-    dt_now = dt.datetime.now()
-    session = SessionResponse(
-        session_id="test_session",
-        timeout_minutes=100,
-        created_at=dt_now,
-        last_accessed_at=dt_now,
-        duration=dt.timedelta(seconds=100),
-        status="active",
-    )
 
-    response = ObserveResponse.from_obs(
-        session=session,
-        obs=obs,
-    )
-    assert response.session.session_id == "test_session"
-    assert response.session.timeout_minutes == 100
-    assert response.session.created_at == dt_now
-    assert response.session.last_accessed_at == dt_now
-    assert response.session.duration == dt.timedelta(seconds=100)
-    assert response.session.status == "active"
+    response = obs
     assert response.metadata.title == "Google"
     assert response.metadata.url == "https://www.google.com"
     assert response.screenshot.raw == Observation.empty().screenshot.raw
@@ -158,87 +134,60 @@ def test_observe_response_from_observation():
     assert response.space.interaction_actions == obs.space.interaction_actions
 
 
-def test_agent_status_response_replay():
-    # Test case 1: Base64 encoded string
-    sample_webp_data = b"fake_webp_data"
-    base64_encoded = base64.b64encode(sample_webp_data).decode("utf-8")
+def test_agent_status_response():
+    # Test basic AgentStatusResponse without replay fields
     response = AgentStatusResponse.model_validate(
         {
             "agent_id": "test_agent",
             "created_at": "2024-03-20",
             "session_id": "test_session",
             "status": AgentStatus.active,
-            "replay": base64_encoded,
             "task": "test_task",
             "url": "https://www.google.com",
-            "replay_start_offset": -1,
-            "replay_stop_offset": -1,
         }
     )
-    assert response.replay == sample_webp_data
-
-    # Test case 2: Direct bytes input
-    response = AgentStatusResponse.model_validate(
-        {
-            "agent_id": "test_agent",
-            "created_at": "2024-03-20",
-            "session_id": "test_session",
-            "status": AgentStatus.active,
-            "replay": sample_webp_data,
-            "task": "test_task",
-            "url": "https://www.google.com",
-            "replay_start_offset": -1,
-            "replay_stop_offset": -1,
-        }
-    )
-    assert response.replay == sample_webp_data
-
-    # Test case 3: None input
-    response = AgentStatusResponse.model_validate(
-        {
-            "agent_id": "test_agent",
-            "created_at": "2024-03-20",
-            "session_id": "test_session",
-            "status": AgentStatus.active,
-            "replay": None,
-            "task": "test_task",
-            "url": "https://www.google.com",
-            "replay_start_offset": -1,
-            "replay_stop_offset": -1,
-        }
-    )
-    assert response.replay is None
-
-    # Test case 4: Invalid input
-    with pytest.raises(ValueError, match="replay must be a bytes or a base64 encoded string"):
-        _ = AgentStatusResponse.model_validate(
-            {
-                "agent_id": "test_agent",
-                "created_at": "2024-03-20",
-                "session_id": "test_session",
-                "status": AgentStatus.active,
-                "replay": 123,
-                "task": "test_task",
-                "url": "https://www.google.com",
-                "replay_start_offset": -1,
-                "replay_stop_offset": -1,
-            }
-        )
+    assert response.task == "test_task"
+    assert response.url == "https://www.google.com"
+    assert response.success is None
+    assert response.answer is None
 
 
-def test_replay_response_from_replay():
+def test_replay_response():
     replay = ReplayResponse(
-        replay=b"fake_replay_data",
+        mp4_url="https://example.com/replay.mp4",
+        playlist_content="#EXTM3U\n#EXT-X-VERSION:3",
+        expires_at="2024-03-21T00:00:00Z",
+        video_start_ms=0,
+        video_duration_ms=5000,
     )
-    assert replay.replay == b"fake_replay_data"
-    encoded_replay = "ZmFrZV9yZXBsYXlfZGF0YQ=="
-    # this should not raise an error
-    assert replay.model_dump() == {"replay": encoded_replay}
-    assert replay.model_dump_json() == f'{{"replay":"{encoded_replay}"}}'
+    assert replay.mp4_url == "https://example.com/replay.mp4"
+    assert replay.playlist_content == "#EXTM3U\n#EXT-X-VERSION:3"
+    assert replay.expires_at == "2024-03-21T00:00:00Z"
+    assert replay.video_start_ms == 0
+    assert replay.video_duration_ms == 5000
+
+    # Presigned URLs should be hidden from repr
+    r = repr(replay)
+    assert "example.com/replay.mp4" not in r
+    assert "#EXTM3U" not in r
+
+    # All fields optional except inheriting from SdkResponse
+    minimal = ReplayResponse()
+    assert minimal.mp4_url is None
+    assert minimal.expires_at is None
 
 
-@pytest.mark.parametrize("proxies", [True, [{"type": "notte"}], [{"type": "notte", "geolocation": {"country": "us"}}]])
+@pytest.mark.parametrize(
+    "proxies",
+    [
+        True,
+        [{"type": "notte"}],
+        [{"type": "notte", "country": "us"}],
+        [{"type": "notte", "geolocation": {"country": "us"}}],  # Backward compatibility with old syntax
+    ],
+)
 def test_default_proxy_settings_notte(proxies: list[dict[str, Any]]):
+    """Test Notte proxy settings including backward compatibility with old geolocation syntax."""
     proxy_settings = SessionStartRequest.model_validate({"proxies": proxies})
     with pytest.raises(NotImplementedError, match="Notte proxy only supported in cloud"):
         proxy_settings.playwright_proxy
@@ -268,3 +217,8 @@ def test_multiple_proxies_should_raise_error():
 def test_unknown_proxy_type_should_raise_error():
     with pytest.raises(ValidationError, match="validation errors for SessionStartRequest"):
         _ = SessionStartRequest.model_validate({"proxies": [{"type": "unknown"}]})
+
+
+def test_cdp_url_with_headless_false_should_raise_error():
+    with pytest.raises(ValidationError, match=r"headless must be True.*only works with a local browser"):
+        _ = SessionStartRequest.model_validate({"cdp_url": "ws://localhost:9222", "headless": False})

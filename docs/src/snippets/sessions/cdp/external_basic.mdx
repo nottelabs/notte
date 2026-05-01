@@ -1,0 +1,20 @@
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  # CDP URL from any external provider
+  cdp_url = "ws://external-provider.com:9222/devtools/browser/abc123"
+
+  # Connect Notte to the external browser
+  with client.Session(cdp_url=cdp_url) as session:
+      # Use Notte's features on the external browser
+      page = session.page
+      page.goto("https://example.com")
+
+      # Use Notte's Agent
+      agent = client.Agent(session=session, max_steps=10)
+      result = agent.run(task="Extract all product names")
+  ```
+</CodeGroup>

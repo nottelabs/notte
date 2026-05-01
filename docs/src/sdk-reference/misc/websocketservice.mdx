@@ -10,7 +10,7 @@ description: "WebSocket client for receiving session recording data in binary fo
 <ParamField path="wss_url" type="str" required>
 </ParamField>
 
-<ParamField path="process" type="Callable" required>
+<ParamField path="process" type="Callable[[bytes], Any]" required>
 </ParamField>
 
 

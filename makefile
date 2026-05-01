@@ -106,10 +106,32 @@ profile-imports:
 
 
 .PHONY: docs-sdk
-docs-sdk:
-	@uv pip install -e ../sphinx_mintlify
+docs-sdk: docs-llms
 	cd docs && uv run sphinx-build -b mdx sphinx _build
 	rm -rf docs/src/sdk-reference/baseaction
+
+
+.PHONY: docs-llms
+docs-llms:
+	cd docs/src && uv run python scripts/generate_llms.py
+
+
+.PHONY: docs-check
+docs-check:
+	@if ! git diff HEAD --quiet -- docs || [ -n "$$(git ls-files --others --exclude-standard -- docs)" ]; then \
+		echo "\033[0;31mError: docs/ has uncommitted changes or untracked files. Commit or stash them before running docs-check (it would overwrite them).\033[0m"; \
+		git --no-pager diff HEAD --stat -- docs; \
+		git ls-files --others --exclude-standard -- docs; \
+		exit 1; \
+	fi
+	@$(MAKE) --no-print-directory docs-sdk
+	@if ! git diff HEAD --quiet -- docs || [ -n "$$(git ls-files --others --exclude-standard -- docs)" ]; then \
+		echo "\033[0;31mError: 'make docs-sdk' produced changes. Run it locally and commit the result.\033[0m"; \
+		git --no-pager diff HEAD --stat -- docs; \
+		git ls-files --others --exclude-standard -- docs; \
+		exit 1; \
+	fi
+	@echo "\033[0;32mdocs are up to date\033[0m"
 
 
 .PHONY: docs
@@ -120,6 +142,18 @@ docs:
 .PHONY: docs-tests
 docs-tests:
 	cd docs/src && sh tests.sh
+
+
+# Generate all snippets from testers
+.PHONY: sniptest
+sniptest:
+	cd docs/src && uv run python sniptest/generate.py
+
+# Generate snippets and remove orphans
+.PHONY: sniptest-clean
+sniptest-clean:
+	cd docs/src && uv run python sniptest/generate.py --clean
+
 
 %:
 	@:

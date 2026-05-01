@@ -70,6 +70,7 @@ dev = [
     "pytest-timeout>=2.4.0",
     "pytest-xdist[psutil]>=3.8.0",
     "sphinx>=8.2.3",
+    "sphinx-mintlify>=0.1.0",
     "twine>=6.1.0",
 ]
 lint = [
@@ -77,9 +78,10 @@ lint = [
 ]
 
 [tool.pytest.ini_options]
-asyncio_default_fixture_loop_scope = "function"
+asyncio_default_fixture_loop_scope = "session"
 testpaths = ["tests"]
 timeout = 300
+timeout_method = "thread"
 asyncio_mode = "strict"
 log_cli = true
 log_cli_level = "INFO"
@@ -102,6 +104,12 @@ exclude = [".venv"]
 
 [tool.ruff.lint]
 extend-select = ["I"]
+
+[tool.ruff.lint.per-file-ignores]
+# Documentation snippet testers contain partial code examples
+# F821: undefined names (e.g. `agent`, `session` assumed from context)
+# F841: unused variables (e.g. `result = agent.run(...)` shown for docs)
+"docs/src/testers/**/*.py" = ["F821", "F841"]
 
 [tool.basedpyright]
 exclude = [".venv", "uv-cache", "**/site-packages/**", "**/dist-packages/**", "tests", "old", "notebook", "dist", ".github"]

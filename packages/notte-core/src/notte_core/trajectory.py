@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import datetime as dt
 from collections.abc import Awaitable, Iterator
 from typing import Callable, Literal, TypeAlias, overload
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from notte_core.agent_types import AgentCompletion
-from notte_core.browser.observation import ExecutionResult, Observation, Screenshot
+from notte_core.browser.observation import ExecutionResult, Observation, Screenshot, utc_now
 from notte_core.common.logging import logger
 from notte_core.profiling import profiler
 
@@ -15,11 +16,13 @@ from notte_core.profiling import profiler
 class AgentStepStart(BaseModel):
     step_number: int
     agent_id: str = ""
+    started_at: dt.datetime = Field(default_factory=utc_now)
 
 
 class AgentStepStop(BaseModel):
     step_number: int
     agent_id: str = ""
+    ended_at: dt.datetime = Field(default_factory=utc_now)
 
 
 TrajectoryHoldee = ExecutionResult | Observation | AgentCompletion | Screenshot | AgentStepStart | AgentStepStop

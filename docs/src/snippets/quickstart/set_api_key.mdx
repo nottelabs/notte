@@ -1,0 +1,17 @@
+<CodeGroup>
+```bash Python / Node.js
+export NOTTE_API_KEY=your_api_key_here
+```
+```python Python
+from notte_sdk import NotteClient
+
+client = NotteClient()  # reads NOTTE_API_KEY automatically
+```
+```javascript JavaScript
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient({
+  apiKey: process.env.NOTTE_API_KEY,
+});
+```
+</CodeGroup>

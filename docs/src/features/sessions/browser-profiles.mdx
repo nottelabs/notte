@@ -1,0 +1,166 @@
+---
+title: 'Browser Profiles'
+description: 'Persist browser state across sessions'
+---
+
+import CreateProfile from '/snippets/sessions/profiles/create_profile.mdx';
+import UseProfile from '/snippets/sessions/profiles/use_profile.mdx';
+import PersistProfile from '/snippets/sessions/profiles/persist_profile.mdx';
+import ReuseProfile from '/snippets/sessions/profiles/reuse_profile.mdx';
+import ListProfiles from '/snippets/sessions/profiles/list_profiles.mdx';
+import GetProfile from '/snippets/sessions/profiles/get_profile.mdx';
+import DeleteProfile from '/snippets/sessions/profiles/delete_profile.mdx';
+import ProfileWithAgent from '/snippets/sessions/profiles/profile_with_agent.mdx';
+
+Profiles let you save and reuse browser state—including cookies, local storage, session storage, and cache—across multiple sessions. This is useful for maintaining login states, preserving user preferences, or building realistic multi-session workflows.
+
+## How Profiles Work
+
+A profile is a saved snapshot of a browser's user data directory. By default, each Notte session uses a fresh browser state to ensure isolation.
+
+When you create a profile and use it in a session with `persist=True`, Notte saves that session's browser state. You can then attach the profile to future sessions to restore the saved state.
+
+## Create a Profile
+
+Create a profile to store browser state. Optionally, give it a name to keep track of different profiles:
+
+<CreateProfile />
+
+## Use a Profile in a Session
+
+Attach a profile to a session to load saved browser state:
+
+<UseProfile />
+
+### Persist Changes
+
+The `persist` parameter controls whether session changes are saved back to the profile:
+
+- `True` - Save browser state to the profile when the session ends
+- `False` (default) - Use the profile as read-only; don't save changes
+
+<Note>
+  Set `persist=True` the first time you use a new profile to save the initial browser state. After that, you can use `persist=False` to reuse the profile without modifying it.
+</Note>
+
+## Profile Login Example
+
+### Step 1: Login and Save to Profile
+
+First, create a profile and perform a login. When the session ends with `persist=True`, all cookies and browser state are saved to the profile:
+
+<PersistProfile />
+
+### Step 2: Reuse the Saved Profile
+
+Use the saved profile in a new session. The browser automatically loads the saved state, so you're already authenticated:
+
+<ReuseProfile />
+
+**What happens:**
+
+1. A new session is created using the same profile ID
+2. The browser loads saved cookies and state from the profile
+3. You navigate directly without needing to log in again
+4. The session picks up right where the previous one left off
+
+<Note>
+  This pattern is useful for:
+
+  - Avoiding repeated logins across automation runs
+  - Testing authenticated user flows
+  - Managing multiple accounts with separate profiles
+  - Maintaining session state over time
+</Note>
+
+## Using Profiles with Agents
+
+Profiles work seamlessly with Notte Agents. An agent running with a pre-authenticated profile can access authenticated resources immediately:
+
+<ProfileWithAgent />
+
+## Managing Profiles
+
+### List Profiles
+
+Retrieve all your profiles with optional filtering:
+
+<ListProfiles />
+
+### Get Profile Details
+
+Retrieve information about a specific profile:
+
+<GetProfile />
+
+### Delete a Profile
+
+Delete a profile when you no longer need it:
+
+<DeleteProfile />
+
+## Read-Only Profile Usage
+
+Load a profile without saving changes by setting `persist=False`:
+
+<UseProfile />
+
+**Use cases for read-only profiles:**
+
+- Test workflows without affecting saved state
+- Run parallel sessions with the same profile safely
+- Maintain a clean baseline profile for repeated use
+
+<Note>
+  By default, `persist` is `False`, so you don't have to explicitly specify it for read-only access.
+</Note>
+
+## Best Practices
+
+### Profile Management
+
+- Use descriptive names to identify profiles by their purpose (e.g., `github-login`, `twitter-bot-1`)
+- Create separate profiles for different accounts or services
+- Periodically verify that saved sessions are still valid
+
+### Security
+
+- Profiles contain sensitive session data; treat profile IDs as secrets
+- Delete profiles for accounts that are no longer needed
+- Use separate profiles for production and development environments
+
+### Performance
+
+- Profiles with large caches may take longer to load
+- Consider creating fresh profiles periodically if performance degrades
+
+## Comparison: Profiles vs Cookies
+
+| Feature | Profiles | Cookies |
+|---------|----------|---------|
+| **Scope** | Full browser state (cookies, storage, cache) | Cookies only |
+| **Storage** | Managed by Notte | JSON file you manage |
+| **Persistence** | Automatic on session end | Manual export/import |
+| **Use case** | Long-term state preservation | Quick cookie injection |
+
+Use profiles when you need complete browser state preservation. Use cookies when you only need to inject specific authentication tokens.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle">
+    Manage session lifecycle
+  </Card>
+
+  <Card title="Cookies" icon="cookie" href="/features/sessions/cookies">
+    Manual cookie management
+  </Card>
+
+  <Card title="Vaults" icon="lock" href="/concepts/vaults">
+    Secure credential storage
+  </Card>
+
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    All session options
+  </Card>
+</CardGroup>

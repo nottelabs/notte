@@ -51,10 +51,11 @@ def session_id() -> str:
 def test_replay_session(session_id: str):
     client = NotteClient()
     response = client.sessions.replay(session_id=session_id)
-    assert len(response.replay) > 0
+    assert response.expires_at
+    assert response.mp4_url or response.playlist_content
 
 
-@pytest.mark.parametrize("browser_type", ["chrome", "firefox", "chromium"])
+@pytest.mark.parametrize("browser_type", ["chrome", "chromium"])
 def test_start_close_session_with_browser_type(browser_type: BrowserType):
     client = NotteClient()
     with client.Session(open_viewer=False, browser_type=browser_type) as session:

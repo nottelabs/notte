@@ -1,0 +1,12 @@
+# @sniptest filename=version_management.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+function = client.Function(function_id="func_abc123")
+
+# Get all versions
+print(f"Available versions: {function.response.versions}")
+
+# Get latest version
+print(f"Latest: {function.response.latest_version}")

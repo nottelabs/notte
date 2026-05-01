@@ -1,0 +1,11 @@
+# @sniptest filename=parameters_example.py
+from notte_sdk import NotteClient
+
+
+def run(email: str, password: str, product_id: str):
+    client = NotteClient()
+
+    with client.Session() as session:
+        session.execute(type="fill", id="email", value=email)
+        session.execute(type="fill", id="password", value=password)
+        session.execute(type="goto", url=f"https://example.com/product/{product_id}")

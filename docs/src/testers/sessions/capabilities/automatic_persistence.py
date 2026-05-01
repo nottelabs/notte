@@ -1,0 +1,20 @@
+# @sniptest filename=automatic_persistence.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Cookies automatically loaded at start, saved when session ends
+with client.Session(cookie_file="cookies.json") as session:
+    page = session.page
+    page.goto("https://example.com/login")
+
+    # Log in once, cookies are captured
+    page.fill('input[name="email"]', "user@example.com")
+    page.fill('input[name="password"]', "password")
+    page.click('button[type="submit"]')
+
+# Next time: already logged in!
+with client.Session(cookie_file="cookies.json") as session:
+    page = session.page
+    page.goto("https://example.com/dashboard")
+    # Authentication persisted from previous session

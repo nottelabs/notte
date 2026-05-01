@@ -85,3 +85,29 @@ jobs:
           uv pip show notte-sdk
           uv pip show notte-browser
           uv pip show notte-agent
+
+  deploy-docs:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    name: Trigger Mintlify docs deployment
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+
+    steps:
+      - name: Trigger Mintlify deployment
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://api.mintlify.com/v1/project/update/67325cb675ec6a1a358ff41d" \
+            -H "Authorization: Bearer ${{ secrets.MINTLIFY_API_KEY }}")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          echo "Response: $body"
+          echo "HTTP Status: $http_code"
+
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "::error::Mintlify deployment trigger failed with status $http_code"
+            exit 1
+          fi
+
+          echo "Mintlify docs deployment queued successfully"
