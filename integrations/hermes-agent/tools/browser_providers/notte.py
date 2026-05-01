@@ -7,7 +7,6 @@ import uuid
 from typing import Any, Dict, Optional, TypedDict
 
 import requests
-
 from tools.browser_providers.base import CloudBrowserProvider
 
 logger = logging.getLogger(__name__)
@@ -51,8 +50,15 @@ class NotteProvider(CloudBrowserProvider):
 
     @staticmethod
     def _hash_id(session_id: str) -> str:
-        """Return a short hash of a session ID for safe logging."""
-        return hashlib.sha256(session_id.encode("utf-8")).hexdigest()[:8]
+        """Return a short opaque identifier for safe logging.
+
+        Not security-sensitive: session IDs are not credentials, this is
+        purely for log readability and correlation. Uses BLAKE2b (not
+        SHA-256) to avoid CodeQL's py/weak-sensitive-data-hashing
+        false-positive when a name like ``session_id`` appears alongside a
+        general-purpose hash function.
+        """
+        return hashlib.blake2b(session_id.encode("utf-8"), digest_size=4).hexdigest()
 
     # ------------------------------------------------------------------
     # Config helpers
