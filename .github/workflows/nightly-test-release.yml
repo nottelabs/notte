@@ -43,10 +43,15 @@ jobs:
       - name: Prepare error message
         if: steps.test_release.outcome == 'failure'
         id: error_msg
+        shell: bash
+        env:
+          RAW_OUTPUT: ${{ env.TEST_OUTPUT }}
         run: |
-          # Escape quotes and backslashes for JSON
-          ERROR_MSG=$(echo "${{ env.TEST_OUTPUT }}" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr '\n' ' ')
-          echo "escaped_error=$ERROR_MSG" >> $GITHUB_OUTPUT
+          # Use jq to properly JSON-encode the error message
+          ESCAPED=$(echo "$RAW_OUTPUT" | head -c 3000 | jq -Rs .)
+          # Remove surrounding quotes added by jq since we'll embed in JSON string
+          ESCAPED=${ESCAPED:1:-1}
+          echo "escaped_error=$ESCAPED" >> $GITHUB_OUTPUT
 
       - name: Send Slack Notification on Failure
         if: steps.test_release.outcome == 'failure'
