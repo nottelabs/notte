@@ -163,6 +163,10 @@
 - [POST Scrape From Html](https://docs.notte.cc/api-reference/scrape/scrape-from-html.md)
 - [POST Scrape Webpage](https://docs.notte.cc/api-reference/scrape/scrape-webpage.md)
 
+## Search
+
+- [POST Search Web](https://docs.notte.cc/api-reference/search/search-web.md)
+
 ## Sessions
 
 - [GET Get Session Script](https://docs.notte.cc/api-reference/sessions/get-session-script.md)
