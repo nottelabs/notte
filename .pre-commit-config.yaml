@@ -6,12 +6,15 @@ repos:
       # Run the linter.
       - id: ruff-check
         types_or: [ python, pyi ]
+        exclude: ^integrations/hermes-agent/
       - id: ruff-check
         types_or: [ python, pyi ]
         args: [ --fix ]
+        exclude: ^integrations/hermes-agent/
       # Run the formatter.
       - id: ruff-format
         types_or: [ python, pyi ]
+        exclude: ^integrations/hermes-agent/
 
   - repo: https://github.com/DetachHead/basedpyright-pre-commit-mirror
     rev: 1.27.1
