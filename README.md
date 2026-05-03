@@ -370,3 +370,55 @@ If you use notte in your research or project, please cite:
 ```
 
 Copyright © 2025 Notte Labs, Inc.
+
+# FAQ
+
+## General
+
+**What is Notte?**
+Notte is a full-stack framework for building and deploying AI agents that interact with the web. It combines AI agents with traditional scripting for maximum efficiency, letting you script deterministic parts and use AI only when needed, cutting costs by 50%+ while improving reliability.
+
+**How does Notte compare to Browser-Use or other web agents?**
+Notte benchmarks higher than Browser-Use in agent self-report (86.2% vs 77.3%), LLM evaluation (79.0% vs 60.2%), task reliability (96.6% vs 83.3%), and time per task (47s vs 113s). It also offers premium features like stealth browsers, CAPTCHA solving, and digital personas.
+
+**Is Notte open-source?**
+Yes, the core framework is open-source under SSPL-1.0 license. The API service provides additional hosted features like stealth browser sessions and secrets vaults.
+
+## Setup & Configuration
+
+**How do I install Notte?**
+Run `pip install notte` followed by `patchright install --with-deps chromium`. Requires Python 3.11+.
+
+**What's the difference between local mode and API mode?**
+Local mode runs entirely on your machine using your own LLM API keys. API mode (recommended) uses Notte's hosted browser sessions with premium features like CAPTCHA solving, proxies, and anti-detection.
+
+**How do I get an API key?**
+Sign up on the [Notte Console](https://console.notte.cc) and create a free Notte API key.
+
+## Usage
+
+**How do I run a web agent?**
+```python
+from notte_sdk import NotteClient
+client = NotteClient(api_key="your-key")
+with client.Session() as session:
+    agent = client.Agent(session=session, reasoning_model='gemini/gemini-2.5-flash')
+    response = agent.run(task="your task here")
+```
+
+**What is structured output?**
+Structured output lets you specify a Pydantic model as the response format. The agent returns data in your exact specified structure, making it easy to integrate with downstream systems.
+
+**What are Digital Personas?**
+Digital Personas are unique identities with automated emails, phone numbers, and 2FA handling for account creation workflows. Useful for workflows requiring multiple user accounts.
+
+## Troubleshooting
+
+**Chromium fails to install**
+Run `patchright install --with-deps chromium` to install Chromium with all system dependencies. On Linux, you may need additional system packages.
+
+**Session times out**
+Increase the timeout parameter or check your network connection. For complex tasks, consider using a larger `max_steps` value or breaking the task into smaller steps.
+
+**Agent fails to complete task**
+Try using a more capable reasoning model (e.g., `gemini/gemini-2.5-pro` instead of flash). Review the session viewer for visual debugging. Consider using hybrid workflows to script deterministic parts.
