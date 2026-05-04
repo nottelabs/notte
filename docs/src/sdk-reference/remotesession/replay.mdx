@@ -5,12 +5,11 @@ description: "Get presigned URLs for the session replay"
 
 
 
-**Example:**
-```python
-replay = session.replay()
-print(replay.mp4_url)  # Presigned URL for MP4 download
-replay.download("session.mp4")
-```
+Example::
+
+    replay = session.replay()
+    print(replay.mp4_url)  # Presigned URL for MP4 download
+    replay.download("session.mp4")
 
 By default this polls until the replay is ready. Set ``wait=False``
 to fail immediately if the replay is not yet available.

@@ -6,15 +6,15 @@ description: "Run an agent with the specified request parameters"
 
 and wait for completion
 
-```python
-with notte.Session() as session:
-    agent = notte.Agent(session=session)
-    agent.run(task="go to notte.cc and explain what their product is")
-```
+Example::
+
+    with notte.Session() as session:
+        agent = notte.Agent(session=session)
+        agent.run(task="go to notte.cc and explain what their product is")
 
 This function is synchronous and will block the main thread until the agent is completed.
 
-> Websockets are used to stream the agent logs to the standard output to provide live logs to the user
+Note: Websockets are used to stream the agent logs to the standard output to provide live logs to the user
 
 
 ## Parameters

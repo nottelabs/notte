@@ -182,31 +182,29 @@ class NotteClient:
         """
         Scrape the current page data.
 
-        This endpoint is a wrapper around the `session.scrape` method that automatically starts a new session, goes to the given URL, and scrapes the page.
+        This endpoint is a wrapper around the ``session.scrape`` method that automatically starts a new session, goes to the given URL, and scrapes the page.
 
-        **Example:**
-        ```python
-        from notte_sdk import NotteClient
+        Example::
 
-        client = NotteClient()
-        markdown = client.scrape("https://www.google.com", only_main_content=False)
-        ```
+            from notte_sdk import NotteClient
 
-        With structured data:
-        ```python
-        from notte_sdk import NotteClient
-        from pydantic import BaseModel
+            client = NotteClient()
+            markdown = client.scrape("https://www.google.com", only_main_content=False)
 
-        # Define your Pydantic model
-        ...
+        With structured data::
 
-        client = NotteClient()
-        data = client.scrape(
-            "https://www.notte.cc",
-            response_format=Product,
-            instructions="Extract the products names and prices"
-        )
-        ```
+            from notte_sdk import NotteClient
+            from pydantic import BaseModel
+
+            # Define your Pydantic model
+            ...
+
+            client = NotteClient()
+            data = client.scrape(
+                "https://www.notte.cc",
+                response_format=Product,
+                instructions="Extract the products names and prices"
+            )
 
         Args:
             url: The URL to scrape.

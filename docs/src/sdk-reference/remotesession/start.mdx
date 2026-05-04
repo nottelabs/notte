@@ -8,26 +8,24 @@ description: "Start the session using the configured request"
 This method sends a start request to the API and logs the session ID
 and request details upon successful start.
 
-**Example:**
+Example::
 
-```python
-from notte_sdk import NotteClient
+    from notte_sdk import NotteClient
 
-client = NotteClient()
-session = client.Session()
-session.start()
-```
+    client = NotteClient()
+    session = client.Session()
+    session.start()
 
-> Note that we strongly recommend using the `with` statement to start and stop the session to avoid any issues with session cleanup.
+Note: We strongly recommend using the ``with`` statement to start and stop the session
+to avoid any issues with session cleanup.
 
-**Example:**
-```python
-from notte_sdk import NotteClient
+Example::
 
-client = NotteClient()
-with client.Session() as session:
-    session.execute(type="goto", url="https://www.notte.cc")
-```
+    from notte_sdk import NotteClient
+
+    client = NotteClient()
+    with client.Session() as session:
+        session.execute(type="goto", url="https://www.notte.cc")
 
 
 

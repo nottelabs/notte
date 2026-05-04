@@ -9,26 +9,25 @@ This method sends a close request to the API and verifies that the session
 was properly closed. It logs the session closure and raises an error if
 the session fails to close.
 
-**Example:**
-```python
-from notte_sdk import NotteClient
+Example::
 
-client = NotteClient()
-session = client.Session()
-session.start()
-session.stop()
-```
+    from notte_sdk import NotteClient
 
-> Note that we strongly recommend using the `with` statement to start and stop the session to avoid any issues with session cleanup.
+    client = NotteClient()
+    session = client.Session()
+    session.start()
+    session.stop()
 
-**Example:**
-```python
-from notte_sdk import NotteClient
+Note: We strongly recommend using the ``with`` statement to start and stop the session
+to avoid any issues with session cleanup.
 
-client = NotteClient()
-with client.Session() as session:
-    session.execute(type="goto", url="https://www.notte.cc")
-```
+Example::
+
+    from notte_sdk import NotteClient
+
+    client = NotteClient()
+    with client.Session() as session:
+        session.execute(type="goto", url="https://www.notte.cc")
 
 
 

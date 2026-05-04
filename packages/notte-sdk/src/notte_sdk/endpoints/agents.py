@@ -597,15 +597,15 @@ class AgentsClient(BaseClient):
         Run an agent with the specified request parameters.
         and wait for completion
 
-        ```python
-        with notte.Session() as session:
-            agent = notte.Agent(session=session)
-            agent.run(task="go to notte.cc and explain what their product is")
-        ```
+        Example::
+
+            with notte.Session() as session:
+                agent = notte.Agent(session=session)
+                agent.run(task="go to notte.cc and explain what their product is")
 
         This function is synchronous and will block the main thread until the agent is completed.
 
-        > Websockets are used to stream the agent logs to the standard output to provide live logs to the user.
+        Note: Websockets are used to stream the agent logs to the standard output to provide live logs to the user.
         """
         response = self.start(**data)
 
@@ -1063,15 +1063,15 @@ class RemoteAgent:
         """
         Run an agent with the specified request parameters and wait for completion.
 
-        ```python
-        with notte.Session() as session:
-            agent = notte.Agent(session=session)
-            agent.run(task="go to notte.cc and explain what their product is")
-        ```
+        Example::
+
+            with notte.Session() as session:
+                agent = notte.Agent(session=session)
+                agent.run(task="go to notte.cc and explain what their product is")
 
         This function is synchronous and will block the main thread until the agent is completed.
 
-        > Websockets are used to stream the agent logs to the standard output to provide live logs to the user.
+        Note: Websockets are used to stream the agent logs to the standard output to provide live logs to the user.
 
         Args:
             **data: Keyword arguments representing the fields of an AgentRunRequest.
@@ -1105,9 +1105,9 @@ class RemoteAgent:
         This method retrieves the current state of the agent, including its progress,
         actions taken, and any errors or messages.
 
-        ```python
-        status = agent.status()
-        ```
+        Example::
+
+            status = agent.status()
 
 
         Returns:
@@ -1157,10 +1157,10 @@ class RemoteAgent:
         """
         Get the workflow from the completed steps of the agent.
 
-        ```python
-        agent.run(task="...")
-        workflow = agent.workflow
-        ```
+        Example::
+
+            agent.run(task="...")
+            workflow = agent.workflow
 
         Returns:
             AgentWorkflow: The agent workflow that replicates the agent steps

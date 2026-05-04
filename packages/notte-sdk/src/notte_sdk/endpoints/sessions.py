@@ -735,26 +735,24 @@ class RemoteSession(SyncResource):
         This method sends a start request to the API and logs the session ID
         and request details upon successful start.
 
-        **Example:**
+        Example::
 
-        ```python
-        from notte_sdk import NotteClient
+            from notte_sdk import NotteClient
 
-        client = NotteClient()
-        session = client.Session()
-        session.start()
-        ```
+            client = NotteClient()
+            session = client.Session()
+            session.start()
 
-        > Note that we strongly recommend using the `with` statement to start and stop the session to avoid any issues with session cleanup.
+        Note: We strongly recommend using the ``with`` statement to start and stop the session
+        to avoid any issues with session cleanup.
 
-        **Example:**
-        ```python
-        from notte_sdk import NotteClient
+        Example::
 
-        client = NotteClient()
-        with client.Session() as session:
-            session.execute(type="goto", url="https://www.notte.cc")
-        ```
+            from notte_sdk import NotteClient
+
+            client = NotteClient()
+            with client.Session() as session:
+                session.execute(type="goto", url="https://www.notte.cc")
 
         Raises:
             ValueError: If the session request is invalid.
@@ -813,26 +811,25 @@ class RemoteSession(SyncResource):
         was properly closed. It logs the session closure and raises an error if
         the session fails to close.
 
-        **Example:**
-        ```python
-        from notte_sdk import NotteClient
+        Example::
 
-        client = NotteClient()
-        session = client.Session()
-        session.start()
-        session.stop()
-        ```
+            from notte_sdk import NotteClient
 
-        > Note that we strongly recommend using the `with` statement to start and stop the session to avoid any issues with session cleanup.
+            client = NotteClient()
+            session = client.Session()
+            session.start()
+            session.stop()
 
-        **Example:**
-        ```python
-        from notte_sdk import NotteClient
+        Note: We strongly recommend using the ``with`` statement to start and stop the session
+        to avoid any issues with session cleanup.
 
-        client = NotteClient()
-        with client.Session() as session:
-            session.execute(type="goto", url="https://www.notte.cc")
-        ```
+        Example::
+
+            from notte_sdk import NotteClient
+
+            client = NotteClient()
+            with client.Session() as session:
+                session.execute(type="goto", url="https://www.notte.cc")
 
         Raises:
             ValueError: If the session hasn't been started (no session_id available).
@@ -874,10 +871,9 @@ class RemoteSession(SyncResource):
         This is useful to start an agent that remembers information about steps
         that happened before it started.
 
-        **Example:**
-        ```python
-        offset = session.offset()
-        ```
+        Example::
+
+            offset = session.offset()
 
         Returns:
             int: The session trajectory offset
@@ -896,12 +892,11 @@ class RemoteSession(SyncResource):
         """
         Get presigned URLs for the session replay.
 
-        **Example:**
-        ```python
-        replay = session.replay()
-        print(replay.mp4_url)  # Presigned URL for MP4 download
-        replay.download("session.mp4")
-        ```
+        Example::
+
+            replay = session.replay()
+            print(replay.mp4_url)  # Presigned URL for MP4 download
+            replay.download("session.mp4")
 
         By default this polls until the replay is ready. Set ``wait=False``
         to fail immediately if the replay is not yet available.
@@ -929,10 +924,9 @@ class RemoteSession(SyncResource):
         """
         Opens live session replay in browser (frame by frame) in a new browser tab.
 
-        **Example:**
-        ```python
-        session.viewer_browser()
-        ```
+        Example::
+
+            session.viewer_browser()
         """
         _viewer_url = self.response.viewer_url if self.response is not None else None
         return self.client.viewer_browser(self.session_id, _viewer_url=_viewer_url)
@@ -943,9 +937,9 @@ class RemoteSession(SyncResource):
 
         Use this method in a Jupyter notebook to display the session replay in a cell.
 
-        ```python
-        session.viewer_notebook()
-        ```
+        Example::
+
+            session.viewer_notebook()
         """
         return self.client.viewer_notebook(session_id=self.session_id)
 
@@ -978,10 +972,9 @@ class RemoteSession(SyncResource):
 
         This method is useful if you want to check if the current session is active or not (or when it has been started/stopped).
 
-        **Example:**
-        ```python
-        status = session.status()
-        ```
+        Example::
+
+            status = session.status()
 
         Returns:
             SessionResponse: The current status information of the session.
@@ -1022,12 +1015,12 @@ class RemoteSession(SyncResource):
         """
         Gets cookies from the session.
 
-        ```python
-        import json
-        cookies = session.get_cookies() # get the cookies from the session
-        with open("cookies.json", "w") as f:
-            json.dump(cookies, f) # save the cookies to a json file
-        ```
+        Example::
+
+            import json
+            cookies = session.get_cookies()  # get the cookies from the session
+            with open("cookies.json", "w") as f:
+                json.dump(cookies, f)  # save the cookies to a json file
 
         Returns:
             GetCookiesResponse: The response containing the list of cookies in the session.
@@ -1087,17 +1080,16 @@ class RemoteSession(SyncResource):
         This property provides direct access to the browser page using Playwright's API.
         The connection is established lazily on first access and cached for subsequent calls.
 
-        **Example:**
-        ```python
-        from notte_sdk import NotteClient
+        Example::
 
-        client = NotteClient()
-        with client.Session() as session:
-            # Access the playwright page
-            page = session.page
-            page.goto("https://www.google.com")
-            screenshot = page.screenshot(path="screenshot.png")
-        ```
+            from notte_sdk import NotteClient
+
+            client = NotteClient()
+            with client.Session() as session:
+                # Access the playwright page
+                page = session.page
+                page.goto("https://www.google.com")
+                screenshot = page.screenshot(path="screenshot.png")
 
         Returns:
             PlaywrightPage: A Playwright page instance connected to the session.
@@ -1143,17 +1135,16 @@ class RemoteSession(SyncResource):
         This method provides direct access to the browser page using Playwright's async API.
         The connection is established lazily on first access and cached for subsequent calls.
 
-        **Example:**
-        ```python
-        from notte_sdk import NotteClient
+        Example::
 
-        client = NotteClient()
-        async with client.Session() as session:
-            # Access the async playwright page
-            page = await session.apage()
-            await page.goto("https://www.google.com")
-            screenshot = await page.screenshot(path="screenshot.png")
-        ```
+            from notte_sdk import NotteClient
+
+            client = NotteClient()
+            async with client.Session() as session:
+                # Access the async playwright page
+                page = await session.apage()
+                await page.goto("https://www.google.com")
+                screenshot = await page.screenshot(path="screenshot.png")
 
         Returns:
             PlaywrightPage: An async Playwright page instance connected to the session.
@@ -1242,32 +1233,30 @@ class RemoteSession(SyncResource):
 
         This endpoint is a wrapper around the `session.scrape` method that automatically starts a new session, goes to the given URL, and scrapes the page.
 
-        **Example:**
-        ```python
-        from notte_sdk import NotteClient
+        Example::
 
-        client = NotteClient()
-        with client.Session() as session:
-            session.execute(type="goto", url="https://www.google.com")
-            markdown = session.scrape(only_main_content=False)
-        ```
+            from notte_sdk import NotteClient
 
-        With structured data:
-        ```python
-        from notte_sdk import NotteClient
-        from pydantic import BaseModel
+            client = NotteClient()
+            with client.Session() as session:
+                session.execute(type="goto", url="https://www.google.com")
+                markdown = session.scrape(only_main_content=False)
 
-        # Define your Pydantic model
-        ...
+        With structured data::
 
-        client = NotteClient()
-        with client.Session() as session:
-            session.execute(type="goto", url="https://www.notte.cc")
-            data = session.scrape(
-                response_format=Product,
-                instructions="Extract the products names and prices"
-            )
-        ```
+            from notte_sdk import NotteClient
+            from pydantic import BaseModel
+
+            # Define your Pydantic model
+            ...
+
+            client = NotteClient()
+            with client.Session() as session:
+                session.execute(type="goto", url="https://www.notte.cc")
+                data = session.scrape(
+                    response_format=Product,
+                    instructions="Extract the products names and prices"
+                )
 
 
         Args:
@@ -1308,39 +1297,37 @@ class RemoteSession(SyncResource):
         - a screenshot of the page (base64 encoded)
         - some metadata about the page (title, url, etc.)
 
-        ```python
-        # Observe the page
-        obs = session.observe()
-        # Select an action from the list of interactible elements on the page
-        actions = obs.space.interaction_actions
-        # display the action space as a string to be able to visualize it
-        print(obs.space.description)
-        # get the screenshot
-        screenshot = obs.screenshot.bytes()
-        ```
+        Example::
 
-        Once you have selected an action (either manually or using an LLM), you can execute it with:
-        ```python
-        session.execute(action)
-        ```
+            # Observe the page
+            obs = session.observe()
+            # Select an action from the list of interactible elements on the page
+            actions = obs.space.interaction_actions
+            # display the action space as a string to be able to visualize it
+            print(obs.space.description)
+            # get the screenshot
+            screenshot = obs.screenshot.bytes()
 
-        Note that by default, a very simple page perception is used to generate the action space (i.e `perception_type='fast'`) to make the query fast.
-        If you want a more powerful and LLM-ready action space, you can use:
+        Once you have selected an action (either manually or using an LLM), you can execute it with::
 
-        ```python
-        obs = session.observe(perception_type='deep')
-        print(obs.space.description)
-        ```
+            session.execute(action)
+
+        Note that by default, a very simple page perception is used to generate the action space
+        (i.e ``perception_type='fast'``) to make the query fast.
+        If you want a more powerful and LLM-ready action space, you can use::
+
+            obs = session.observe(perception_type='deep')
+            print(obs.space.description)
 
         At the cost of a slower query since this uses an LLM call to format the interactive elements.
 
-        Additionally, you can use the `instructions` parameter to narrow down the action space to a specific intent on a website. This is useful if you want to quickly create a workflow using natural language:
+        Additionally, you can use the ``instructions`` parameter to narrow down the action space to a
+        specific intent on a website. This is useful if you want to quickly create a workflow using
+        natural language::
 
-        ```python
-        _ = session.execute(type="goto", url="https://console.notte.cc")
-        actions = session.observe(instructions="Fill the email input")
-        print(actions[0].model_dump())
-        ```
+            _ = session.execute(type="goto", url="https://console.notte.cc")
+            actions = session.observe(instructions="Fill the email input")
+            print(actions[0].model_dump())
 
 
         Args:
@@ -1471,23 +1458,23 @@ class RemoteSession(SyncResource):
         like clicking, filling forms, navigating, scrolling, and more. You can provide
         actions either as structured action objects or by specifying action parameters directly.
 
-        ```python
-        from notte_sdk import actions
+        Example::
 
-        # Execute an action from observe() results
-        obs = session.observe()
-        action = obs.space.first()  # Get first available action
-        result = session.execute(action)
+            from notte_sdk import actions
 
-        # Execute a click action by element ID (use `obs.space.description` to checkout elements IDs)
-        result = session.execute(type="click", id="B1")
+            # Execute an action from observe() results
+            obs = session.observe()
+            action = obs.space.first()  # Get first available action
+            result = session.execute(action)
 
-        # Execute a form fill action
-        result = session.execute(type="fill", id="I1", value="user@example.com")
+            # Execute a click action by element ID (use obs.space.description to checkout elements IDs)
+            result = session.execute(type="click", id="B1")
 
-        # Execute browser navigation
-        result = session.execute(type="goto", url="https://example.com")
-        ```
+            # Execute a form fill action
+            result = session.execute(type="fill", id="I1", value="user@example.com")
+
+            # Execute browser navigation
+            result = session.execute(type="goto", url="https://example.com")
 
         **Action Types:**
 
@@ -1508,14 +1495,14 @@ class RemoteSession(SyncResource):
 
         **Using Playwright Selectors:**
 
-        Instead of element IDs, you can use Playwright selectors to target elements:
+        Instead of element IDs, you can use Playwright selectors to target elements::
 
-        ```python
-        session.execute(type="fill", selector="internal:text=\"Email\"", value="test@example.com")
-        ```
+            session.execute(type="fill", selector="internal:text=\"Email\"", value="test@example.com")
 
-        This syntax also supports Xpath (e.g. `xpath=/html/body/div[3]/div/button[1]`) or CSS selectors (e.g. `css=button.submit`).
-        > Note that we strongly advice to use selectors over IDs for workflows automation because IDs are dependent on the page structure and can change over time.
+        This syntax also supports Xpath (e.g. ``xpath=/html/body/div[3]/div/button[1]``) or CSS selectors (e.g. ``css=button.submit``).
+
+        Note: We strongly advise using selectors over IDs for workflows automation because IDs
+        are dependent on the page structure and can change over time.
 
 
         Args:

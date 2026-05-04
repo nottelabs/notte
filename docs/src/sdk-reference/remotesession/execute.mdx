@@ -9,23 +9,23 @@ This method allows you to interact with web elements by performing various actio
 like clicking, filling forms, navigating, scrolling, and more. You can provide
 actions either as structured action objects or by specifying action parameters directly.
 
-```python
-from notte_sdk import actions
+Example::
 
-# Execute an action from observe() results
-obs = session.observe()
-action = obs.space.first()  # Get first available action
-result = session.execute(action)
+    from notte_sdk import actions
 
-# Execute a click action by element ID (use `obs.space.description` to checkout elements IDs)
-result = session.execute(type="click", id="B1")
+    # Execute an action from observe() results
+    obs = session.observe()
+    action = obs.space.first()  # Get first available action
+    result = session.execute(action)
 
-# Execute a form fill action
-result = session.execute(type="fill", id="I1", value="user@example.com")
+    # Execute a click action by element ID (use obs.space.description to checkout elements IDs)
+    result = session.execute(type="click", id="B1")
 
-# Execute browser navigation
-result = session.execute(type="goto", url="https://example.com")
-```
+    # Execute a form fill action
+    result = session.execute(type="fill", id="I1", value="user@example.com")
+
+    # Execute browser navigation
+    result = session.execute(type="goto", url="https://example.com")
 
 **Action Types:**
 
@@ -46,14 +46,14 @@ result = session.execute(type="goto", url="https://example.com")
 
 **Using Playwright Selectors:**
 
-Instead of element IDs, you can use Playwright selectors to target elements:
+Instead of element IDs, you can use Playwright selectors to target elements::
 
-```python
-session.execute(type="fill", selector="internal:text="Email"", value="test@example.com")
-```
+    session.execute(type="fill", selector="internal:text="Email"", value="test@example.com")
 
-This syntax also supports Xpath (e.g. `xpath=/html/body/div[3]/div/button[1]`) or CSS selectors (e.g. `css=button.submit`).
-> Note that we strongly advice to use selectors over IDs for workflows automation because IDs are dependent on the page structure and can change over time.
+This syntax also supports Xpath (e.g. ``xpath=/html/body/div[3]/div/button[1]``) or CSS selectors (e.g. ``css=button.submit``).
+
+Note: We strongly advise using selectors over IDs for workflows automation because IDs
+are dependent on the page structure and can change over time.
 
 
 
