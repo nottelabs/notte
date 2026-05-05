@@ -100,6 +100,10 @@ You can use the default parameters to create your session, or customize them:
   The height of the viewport
 </ParamField>
 
+<ParamField path="aspect_ratio" type="typing.Optional[typing.Literal['5:4', '16:9']]">
+  Viewport shape preset ("5:4" or "16:9"). Cannot be combined with viewport_width/viewport_height.
+</ParamField>
+
 <ParamField path="cdp_url" type="str | None">
   The CDP URL of another remote session provider.
 </ParamField>
