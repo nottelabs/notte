@@ -61,14 +61,23 @@ def test_signup_email_extraction(persona: NottePersona):
             task=(
                 "Go to console.notte.cc and authenticate with the persona's email. "
                 "If the account does not exist yet, sign up; if it already exists, log in. Either path is fine. "
-                "CRITICAL: never use Google sign-in, GitHub sign-in, or any other social/SSO option — "
-                "always pick the plain email flow (email + password, or email magic link). "
+                "ABSOLUTE RULE — NEVER CLICK any of the following buttons under ANY circumstances: "
+                "'Use Google', 'Continue with Google', 'Sign in with Google', 'Sign up with Google', "
+                "'Use GitHub', 'Continue with GitHub', 'Sign in with GitHub', 'Sign up with GitHub', "
+                "or any button whose visible label contains the words 'Google', 'GitHub', 'SSO', "
+                "'Microsoft', 'Apple', or 'social'. Before EVERY click, read the button's exact text "
+                "label and verify it is NOT one of the forbidden labels above. If you click one of "
+                "these by accident, the task has FAILED — you must immediately navigate back to "
+                "console.notte.cc and start over. "
+                "The ONLY acceptable authentication path is the plain email flow: enter the email "
+                "address into the email input field, then click a button labeled exactly 'Send magic link', "
+                "'Continue with email', 'Sign in with email', or 'Submit' (or a similar email-only button). "
                 "When a verification or magic-link email is required, check the persona's inbox and open "
                 "the link from that email to complete authentication. "
                 "Success = you are authenticated and have landed inside the console (any logged-in page is "
                 "acceptable, e.g. the 'One more second' interstitial, the personal/agent console, or the "
                 "dashboard). Stop as soon as you reach any logged-in page. "
-                "CRITICAL: do not fill in any onboarding form — stop immediately once authenticated."
+                "Do not fill in any onboarding form — stop immediately once authenticated."
             ),
             url="https://console.notte.cc",
         )
