@@ -1,4 +1,10 @@
+import logging
+import os
+import time
+from pathlib import Path
+
 import pytest
+from loguru import logger
 from notte_browser.errors import NoToolProvidedError
 from notte_browser.tools.base import EmailReadAction, PersonaTool
 from notte_sdk import NotteClient
@@ -55,30 +61,49 @@ def test_tool_execution_in_session(persona: NottePersona, action: EmailReadActio
 @pytest.mark.timeout(120)
 @pytest.mark.flaky(reruns=3, reruns_delay=5)
 def test_signup_email_extraction(persona: NottePersona):
-    with notte.Session(headless=True) as session:
-        agent = notte.Agent(session=session, persona=persona, max_steps=15)
-        resp = agent.run(
-            task=(
-                "Go to console.notte.cc and authenticate with the persona's email. "
-                "If the account does not exist yet, sign up; if it already exists, log in. Either path is fine. "
-                "ABSOLUTE RULE — NEVER CLICK any of the following buttons under ANY circumstances: "
-                "'Use Google', 'Continue with Google', 'Sign in with Google', 'Sign up with Google', "
-                "'Use GitHub', 'Continue with GitHub', 'Sign in with GitHub', 'Sign up with GitHub', "
-                "or any button whose visible label contains the words 'Google', 'GitHub', 'SSO', "
-                "'Microsoft', 'Apple', or 'social'. Before EVERY click, read the button's exact text "
-                "label and verify it is NOT one of the forbidden labels above. If you click one of "
-                "these by accident, the task has FAILED — you must immediately navigate back to "
-                "console.notte.cc and start over. "
-                "The ONLY acceptable authentication path is the plain email flow: enter the email "
-                "address into the email input field, then click a button labeled exactly 'Send magic link', "
-                "'Continue with email', 'Sign in with email', or 'Submit' (or a similar email-only button). "
-                "When a verification or magic-link email is required, check the persona's inbox and open "
-                "the link from that email to complete authentication. "
-                "Success = you are authenticated and have landed inside the console (any logged-in page is "
-                "acceptable, e.g. the 'One more second' interstitial, the personal/agent console, or the "
-                "dashboard). Stop as soon as you reach any logged-in page. "
-                "Do not fill in any onboarding form — stop immediately once authenticated."
-            ),
-            url="https://console.notte.cc",
-        )
-        assert resp.success, f"Failed to run agent: {resp.answer}"
+    log_dir = Path(os.getenv("SIGNUP_DEBUG_LOG_DIR", "/tmp/signup-debug"))
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"signup-{int(time.time() * 1000)}-{os.getpid()}.log"
+    loguru_sink_id = logger.add(str(log_path), level="DEBUG", enqueue=False, backtrace=True, diagnose=True)
+    stdlib_handler = logging.FileHandler(str(log_path))
+    stdlib_handler.setLevel(logging.DEBUG)
+    stdlib_handler.setFormatter(logging.Formatter("%(asctime)s [stdlib %(name)s %(levelname)s] %(message)s"))
+    logging.getLogger().addHandler(stdlib_handler)
+    logger.info(f"=== signup_email_extraction start | log_path={log_path} | pid={os.getpid()} ===")
+    try:
+        with notte.Session(headless=True) as session:
+            agent = notte.Agent(session=session, persona=persona, max_steps=15)
+            resp = agent.run(
+                task=(
+                    "Go to console.notte.cc and authenticate with the persona's email. "
+                    "If the account does not exist yet, sign up; if it already exists, log in. Either path is fine. "
+                    "ABSOLUTE RULE — NEVER CLICK any of the following buttons under ANY circumstances: "
+                    "'Use Google', 'Continue with Google', 'Sign in with Google', 'Sign up with Google', "
+                    "'Use GitHub', 'Continue with GitHub', 'Sign in with GitHub', 'Sign up with GitHub', "
+                    "or any button whose visible label contains the words 'Google', 'GitHub', 'SSO', "
+                    "'Microsoft', 'Apple', or 'social'. Before EVERY click, read the button's exact text "
+                    "label and verify it is NOT one of the forbidden labels above. If you click one of "
+                    "these by accident, the task has FAILED — you must immediately navigate back to "
+                    "console.notte.cc and start over. "
+                    "The ONLY acceptable authentication path is the plain email flow: enter the email "
+                    "address into the email input field, then click a button labeled exactly 'Send magic link', "
+                    "'Continue with email', 'Sign in with email', or 'Submit' (or a similar email-only button). "
+                    "When a verification or magic-link email is required, check the persona's inbox and open "
+                    "the link from that email to complete authentication. "
+                    "Success = you are authenticated and have landed inside the console (any logged-in page is "
+                    "acceptable, e.g. the 'One more second' interstitial, the personal/agent console, or the "
+                    "dashboard). Stop as soon as you reach any logged-in page. "
+                    "Do not fill in any onboarding form — stop immediately once authenticated."
+                ),
+                url="https://console.notte.cc",
+            )
+            logger.info(f"=== agent.run finished | success={resp.success} | answer={resp.answer!r} ===")
+            assert resp.success, f"Failed to run agent: {resp.answer}"
+    except BaseException as exc:
+        logger.exception(f"=== signup_email_extraction failed: {type(exc).__name__}: {exc} ===")
+        raise
+    finally:
+        logger.info("=== signup_email_extraction end ===")
+        logger.remove(loguru_sink_id)
+        logging.getLogger().removeHandler(stdlib_handler)
+        stdlib_handler.close()
