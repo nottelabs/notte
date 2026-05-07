@@ -565,7 +565,8 @@ class FormFiller:
             logger.debug(f"Successfully filled {field_type} field (exact match)")
             await asyncio.sleep(random.uniform(0.1, 0.5))
             return True
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Exact match failed for {field_type} field, trying case-insensitive match: {e}", exc_info=True)
             try:
                 # If exact match fails, try case-insensitive match
                 options: list[dict[str, str]] = await field.evaluate("""select => {

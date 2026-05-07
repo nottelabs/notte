@@ -1,6 +1,7 @@
 # functions from: https://github.com/browser-use/browser-use/blob/main/browser_use/browser/context.py
 import re
 
+from notte_core.common.logging import logger
 
 def xpath_to_css_path(xpath: str) -> str:
     """Converts simple XPath expressions to CSS selectors."""
@@ -150,6 +151,6 @@ def build_csspath(
 
         return css_selector
 
-    except Exception:
-        # Fallback to a more basic selector if something goes wrong
+    except Exception as e:
+        logger.debug(f"build_csspath failed, falling back to basic selector: {e}", exc_info=True)
         return f"{tag_name}[highlight_index='{highlight_index}']"
