@@ -52,15 +52,21 @@ def test_tool_execution_in_session(persona: NottePersona, action: EmailReadActio
         assert len(out.data.structured.get().emails) > 0
 
 
-@pytest.mark.flaky(reruns=3, reruns_delay=5)
 def test_signup_email_extraction(persona: NottePersona):
     with notte.Session(headless=True) as session:
         agent = notte.Agent(session=session, persona=persona, max_steps=15)
         resp = agent.run(
             task=(
-                "Go to console.notte.cc, login with the email signup email, verify the account. "
-                "Stop after the account is verified, i.e as soon as your are on the 'One more second' page."
-                "CRITICAL: do not fill the in the onboarding form, just stop after the account is verified"
+                "Go to console.notte.cc and authenticate with the persona's email. "
+                "If the account does not exist yet, sign up; if it already exists, log in. Either path is fine. "
+                "CRITICAL: never use Google sign-in, GitHub sign-in, or any other social/SSO option — "
+                "always pick the plain email flow (email + password, or email magic link). "
+                "When a verification or magic-link email is required, check the persona's inbox and open "
+                "the link from that email to complete authentication. "
+                "Success = you are authenticated and have landed inside the console (any logged-in page is "
+                "acceptable, e.g. the 'One more second' interstitial, the personal/agent console, or the "
+                "dashboard). Stop as soon as you reach any logged-in page. "
+                "CRITICAL: do not fill in any onboarding form — stop immediately once authenticated."
             ),
             url="https://console.notte.cc",
         )
