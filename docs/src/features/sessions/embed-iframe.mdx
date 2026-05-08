@@ -1,0 +1,146 @@
+---
+title: Embed in your app
+description: Drop the live browser viewer into your own web app via iframe
+---
+
+You can embed any active Notte session directly into your own web app — a Next.js dashboard, an internal tool, a customer-facing demo. The live viewer is just a URL that you render inside an `<iframe>`.
+
+<CardGroup cols={2}>
+  <Card title="Live demo" icon="globe" href="https://notte-iframe-demo.vercel.app/">
+    See it running in a minimal Next.js app
+  </Card>
+
+  <Card title="Source on GitHub" icon="github" href="https://github.com/nottelabs/notte-iframe-demo">
+    Clone the template and ship in minutes
+  </Card>
+</CardGroup>
+
+## How it works
+
+Every active session exposes a `viewer_url` on its status response. Drop that URL into an `<iframe>` and you get a live, interactive browser canvas inside your page.
+
+```ts
+const session = notte.Session({ viewport_width: 1440, viewport_height: 900 });
+await session.start();
+
+const status = await session.status();
+console.log(status.viewer_url);
+// https://console.notte.cc/static/viewer?ws=wss://...&jwt=...
+```
+
+The returned URL is signed with a short-lived JWT scoped to that session, so you can pass it straight to the browser without any extra auth handling on your side.
+
+## Quick start (Next.js)
+
+A minimal embed needs two pieces: a server route that creates a session and returns its `viewer_url`, and a client component that renders the iframe.
+
+### 1. Server route
+
+Keep the `NOTTE_API_KEY` on the server. Never ship it to the client.
+
+```ts app/api/session/route.ts
+import { NextResponse } from "next/server";
+import { NotteClient } from "notte-sdk";
+
+export async function POST() {
+  const notte = new NotteClient({ apiKey: process.env.NOTTE_API_KEY! });
+  const session = notte.Session({
+    max_duration_minutes: 15,
+    viewport_width: 1440,
+    viewport_height: 900,
+  });
+  await session.start();
+
+  const status = await session.status();
+  return NextResponse.json({
+    sessionId: session.getId(),
+    viewerUrl: status.viewer_url,
+  });
+}
+```
+
+### 2. Client component
+
+```tsx app/page.tsx
+"use client";
+import { useState } from "react";
+
+export default function Home() {
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+
+  async function start() {
+    const res = await fetch("/api/session", { method: "POST" });
+    const { viewerUrl } = await res.json();
+    setViewerUrl(viewerUrl);
+  }
+
+  return (
+    <main>
+      <button onClick={start}>Start browser</button>
+
+      {viewerUrl && (
+        <iframe
+          src={viewerUrl}
+          style={{ width: "100%", aspectRatio: "1440 / 940", border: "none" }}
+          allow="clipboard-read; clipboard-write"
+        />
+      )}
+    </main>
+  );
+}
+```
+
+That's it. Click the button, the iframe fills with a live, fully interactive remote browser.
+
+## Embed parameters
+
+The viewer accepts a few query parameters you can append to `viewer_url` to tune the experience:
+
+| Param | Values | Effect |
+|-------|--------|--------|
+| `interactive` | `true` (default) / `false` | When `false`, the viewer is read-only — clicks and keypresses no longer reach the remote browser |
+| `theme` | `light` / `dark` | Force a theme on the viewer chrome |
+
+```tsx
+<iframe src={`${viewerUrl}&interactive=false&theme=dark`} />
+```
+
+## Sizing the viewport
+
+Match the session's `viewport_width` / `viewport_height` to the iframe's aspect ratio. If the ratios diverge, the screencast canvas letterboxes inside the iframe — the page still renders correctly, just with empty bars on the sides.
+
+```ts
+notte.Session({ viewport_width: 1920, viewport_height: 1080 }); // 16:9
+```
+
+```css
+.viewer { aspect-ratio: 1920 / 1080; }
+```
+
+## Stopping the session
+
+Sessions auto-expire after `max_duration_minutes`, but always provide an explicit stop button so users don't burn quota on idle iframes.
+
+```ts
+await session.stop();
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Live View" icon="tv" href="/features/sessions/live-view">
+    The full live viewer reference
+  </Card>
+
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Viewport, proxies, browser type, and more
+  </Card>
+
+  <Card title="Recordings" icon="video" href="/features/sessions/recordings">
+    Replay sessions after they end
+  </Card>
+
+  <Card title="Demo repo" icon="github" href="https://github.com/nottelabs/notte-iframe-demo">
+    Full Next.js example with progress bar, controls, and styling
+  </Card>
+</CardGroup>

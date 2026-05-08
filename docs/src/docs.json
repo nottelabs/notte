@@ -53,6 +53,7 @@
                       "features/sessions/static-ips",
                       "features/sessions/recordings",
                       "features/sessions/live-view",
+                      "features/sessions/embed-iframe",
                       "features/sessions/browser-extensions",
                       "features/sessions/cookies",
                       "features/sessions/cloudflare-web-bot-auth"
