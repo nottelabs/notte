@@ -32,6 +32,7 @@
 - [Static IPs](https://docs.notte.cc/features/sessions/static-ips.md): Use dedicated static IP addresses for your browser sessions
 - [Recordings](https://docs.notte.cc/features/sessions/recordings.md): Record and replay your browser sessions for debugging and analysis
 - [Live View](https://docs.notte.cc/features/sessions/live-view.md): Watch your browser sessions in real-time as they execute
+- [Embed in your app](https://docs.notte.cc/features/sessions/embed-iframe.md): Drop the live browser viewer into your own web app via iframe
 - [Browser Extensions](https://docs.notte.cc/features/sessions/browser-extensions.md): Load custom browser extensions in your sessions
 - [Cookies](https://docs.notte.cc/features/sessions/cookies.md): Persist authentication and manage cookies across sessions
 - [Cloudflare Web Bot Auth](https://docs.notte.cc/features/sessions/cloudflare-web-bot-auth.md): Access Cloudflare-protected websites by cryptographically signing browser requests
