@@ -98,11 +98,12 @@ The viewer accepts a few query parameters you can append to `viewer_url` to tune
 
 | Param | Values | Effect |
 |-------|--------|--------|
-| `interactive` | `true` (default) / `false` | When `false`, the viewer is read-only — clicks and keypresses no longer reach the remote browser |
+| `mode` | `embed-minimal` | Shows only the CDP viewer. Without `mode=embed-minimal`, the iframe shows the full Notte viewer, including the step timeline and Notte branding |
+| `interactive` | `0` / `1` | `0` makes the iframe 100% non-interactive. `1` requires the user to click the iframe once before they can interact with the embedded browser |
 | `theme` | `light` / `dark` | Force a theme on the viewer chrome |
 
 ```tsx
-<iframe src={`${viewerUrl}&interactive=false&theme=dark`} />
+<iframe src={`${viewerUrl}&mode=embed-minimal&interactive=1&theme=dark`} />
 ```
 
 ## Sizing the viewport
