@@ -110,15 +110,17 @@ class RetryPipeWrapper(BaseActionListingPipe):
         previous_action_list: list[InteractionAction],
     ) -> PossibleActionSpace:
         errors: list[str] = []
-        last_error: Exception | None = None
+        _last_error: Exception | None = None
         for _ in range(self.max_tries):
             try:
                 return await self.pipe.forward_incremental(snapshot, previous_action_list)
             except Exception as e:
-                last_error = e
+                _last_error = e
                 errors.append(str(e))
                 if self.verbose:
-                    logger.debug(f"forward_incremental: failed to parse action list but retrying. Start of error msg: {str(e)[:200]}...")
+                    logger.debug(
+                        f"forward_incremental: failed to parse action list but retrying. Start of error msg: {str(e)[:200]}..."
+                    )
         if self.verbose:
             logger.debug(
                 f"Failed to get incremental action list after {self.max_tries} tries with errors: {errors} => returning previous action list"
