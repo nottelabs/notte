@@ -3,6 +3,7 @@ import re
 
 from notte_core.common.logging import logger
 
+
 def xpath_to_css_path(xpath: str) -> str:
     """Converts simple XPath expressions to CSS selectors."""
     if not xpath:

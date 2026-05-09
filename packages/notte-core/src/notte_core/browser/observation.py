@@ -12,11 +12,11 @@ from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing_extensions import override
 
-from notte_core.common.logging import logger
 from notte_core.actions import ActionUnion
 from notte_core.browser.highlighter import BoundingBox, ScreenshotHighlighter
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
 from notte_core.common.config import ScreenshotType, config
+from notte_core.common.logging import logger
 from notte_core.data.space import DataSpace
 from notte_core.errors.base import NotteBaseError
 from notte_core.profiling import profiler
@@ -137,7 +137,9 @@ class Screenshot(BaseModel):
         try:
             img = Image.open(io.BytesIO(v))
         except Exception:
-            logger.debug("PIL Image.open failed for screenshot data, returning empty observation screenshot", exc_info=True)
+            logger.debug(
+                "PIL Image.open failed for screenshot data, returning empty observation screenshot", exc_info=True
+            )
             return Observation.empty().screenshot.raw
 
         orig_img = img
