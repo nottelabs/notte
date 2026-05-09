@@ -113,7 +113,7 @@ class WorkflowsClient(BaseClient):
         """
         super().__init__(
             root_client=root_client,
-            base_endpoint_path="workflows",
+            base_endpoint_path="functions",
             server_url=server_url,
             api_key=api_key,
             verbose=verbose,
