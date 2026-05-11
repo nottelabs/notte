@@ -547,6 +547,34 @@ def run():
         _ = validator.parse_script(script)
 
 
+def test_main_guard_name_allowed():
+    """Test that scripts can include a standard Python main guard."""
+    script = """
+def run() -> str:
+    return "ok"
+
+if __name__ == "__main__":
+    print(run())
+"""
+    validator = ScriptValidator()
+    info = validator.parse_script(script)
+
+    assert info.variables == []
+
+
+def test_assigning_dunder_name_forbidden():
+    """Test that the main guard exception does not allow rebinding dunder names."""
+    script = """
+def run() -> str:
+    return "ok"
+
+__name__ = "__main__"
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match='"__name__" is an invalid variable name'):
+        _ = validator.parse_script(script)
+
+
 def test_syntax_error():
     """Test that syntax errors are caught"""
     script = """

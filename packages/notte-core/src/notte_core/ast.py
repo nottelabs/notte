@@ -178,6 +178,12 @@ class ScriptValidator(RestrictingNodeTransformer):
             raise SyntaxError(f"Access to private attribute forbidden: '{node.attr}'")
         return super().visit_Attribute(node)
 
+    @override
+    def check_name(self, node: ast.AST, name: str | None, allow_magic_methods: bool = False) -> None:
+        if name == "__name__" and isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+            return
+        return super().check_name(node, name, allow_magic_methods)  # pyright: ignore[reportUnknownMemberType]
+
     @staticmethod
     def check_valid_import(name: str, import_type: Literal["import", "import from"] = "import") -> None:
         # Allow exact matches and explicitly whitelisted submodules
