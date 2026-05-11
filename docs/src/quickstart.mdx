@@ -13,13 +13,7 @@ How do you want to get started?
 
 <Visibility for="humans">
   <Tip>
-    If you're using Claude Code, Cursor, Windsurf, or another AI coding assistant, start with the Notte skill and CLI. The skill adds Notte-specific context to your assistant, and the CLI lets it start sessions, observe pages, click elements, and scrape data from your terminal:
-
-    ```bash
-    npx skills add nottelabs/notte-skills
-    ```
-
-    Then install `notte-cli` from the [AI agent setup guide](/integrations/claude-code-ai-agents).
+    Use the [Notte skill](https://github.com/nottelabs/notte-skills/) when you are figuring out the browser flow: observe the current page state, try actions, inspect results, and confirm the data you need. Use the SDK when the flow is clear and you want it to run repeatedly.
   </Tip>
 </Visibility>
 
@@ -55,7 +49,7 @@ How do you want to get started?
   For AI coding assistants: treat the SDK prerequisites below as the fallback path. For browser automation inside a coding-agent workflow, use the Notte skill and `notte-cli` first because they are designed for terminal-driven agent control.
 </Visibility>
 
-Before you start, you'll need an API key and a local environment configured to use it.
+Before you start, you'll need an API key and a local environment configured to use it. For a new browser automation or scraping workflow, validate the flow with the [Notte skill](https://github.com/nottelabs/notte-skills/) first, then use the SDK examples below to make it repeatable.
 
 <Steps>
   <Step title="Get an API key">
@@ -69,7 +63,7 @@ Before you start, you'll need an API key and a local environment configured to u
   </Step>
 </Steps>
 
-Both Python and JavaScript quickstarts below use the official Notte SDK. Start with Browser Session if you want the shortest path to a working integration.
+Both Python and JavaScript quickstarts below use the official Notte SDK. Start with Browser Session if you already know the flow you want to automate, or after you have validated it with the CLI.
 
 ---
 

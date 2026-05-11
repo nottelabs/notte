@@ -13,7 +13,7 @@
   },
   "favicon": "/favicon.ico",
   "banner": {
-    "content": "Fastest way to get started: install the Notte skill with `npx skills add nottelabs/notte-skills`. [Setup guide](/integrations/claude-code-ai-agents)",
+    "content": "Recommended workflow: start with the [Notte skill](https://github.com/nottelabs/notte-skills/), then automate with the SDK; install it with `npx skills add nottelabs/notte-skills` | [Setup guide](/integrations/claude-code-ai-agents)",
     "dismissible": false
   },
   "seo.indexing": "all",
