@@ -744,7 +744,13 @@ class NotteSession(AsyncResource, SyncResource):
                             evaluate_kwargs: dict[str, bool] = {}
                             if config.browser_backend == BrowserBackend.PATCHRIGHT:
                                 evaluate_kwargs["isolated_context"] = False
-                            result = await self.window.page.evaluate(js_code, **evaluate_kwargs)
+                            result = await asyncio.wait_for(
+                                self.window.page.evaluate(js_code, **evaluate_kwargs),
+                                timeout=config.timeout_evaluate_js_ms / 1000.0,
+                            )
+                        except asyncio.TimeoutError:
+                            success = False
+                            message = f"JavaScript evaluation timed out after {config.timeout_evaluate_js_ms}ms"
                         except PlaywrightError as js_err:
                             success = False
                             message = f"JavaScript evaluation failed: {js_err}"

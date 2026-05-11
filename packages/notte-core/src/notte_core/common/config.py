@@ -340,6 +340,7 @@ class NotteConfigDict(TypedDict, total=False):
     timeout_goto_ms: int
     timeout_default_ms: int
     timeout_action_ms: int
+    timeout_evaluate_js_ms: int
     wait_retry_snapshot_ms: int
     wait_short_ms: int
     empty_page_max_retry: int
@@ -443,6 +444,7 @@ class NotteConfig(TomlConfig):
     timeout_goto_ms: int
     timeout_default_ms: int
     timeout_action_ms: int
+    timeout_evaluate_js_ms: int
     wait_retry_snapshot_ms: int
     wait_short_ms: int
     empty_page_max_retry: int
