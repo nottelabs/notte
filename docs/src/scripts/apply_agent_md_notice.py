@@ -17,7 +17,8 @@ from typing import Any
 
 SRC_DIR = Path(__file__).resolve().parent.parent
 DOCS_JSON = SRC_DIR / "docs.json"
-SNIPPET_PATH = "/snippets/agent-md-notice.mdx"
+SNIPPET_PATH = "/partials/agent-md-notice.mdx"
+LEGACY_SNIPPET_PATHS = {"/snippets/agent-md-notice.mdx"}
 IMPORT_LINE = f"import AgentMdNotice from '{SNIPPET_PATH}';"
 COMPONENT_LINE = "<AgentMdNotice />"
 SKIP_PAGES = {"index", "quickstart"}
@@ -76,7 +77,9 @@ def split_import_block(text: str, start: int) -> tuple[str, str]:
 
 
 def remove_notice(text: str) -> str:
-    text = re.sub(rf"^import AgentMdNotice from ['\"]{re.escape(SNIPPET_PATH)}['\"];\n*", "", text, flags=re.MULTILINE)
+    paths = {SNIPPET_PATH, *LEGACY_SNIPPET_PATHS}
+    for path in paths:
+        text = re.sub(rf"^import AgentMdNotice from ['\"]{re.escape(path)}['\"];\n*", "", text, flags=re.MULTILINE)
     text = re.sub(rf"\n*{re.escape(COMPONENT_LINE)}\n*", "\n", text)
     return text
 
