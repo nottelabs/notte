@@ -9,6 +9,30 @@ import CDPSession from '/snippets/quickstart/cdp_session.mdx';
 
 You're at the best place to automate your browser. Notte is a unified platform to build, run, and deploy AI agents and web automation scripts. Browser infrastructure, agents framework, serverless functions, and observability, all in one single place.
 
+<Visibility for="humans">
+  <Tip>
+    Building with an AI coding assistant? The fastest path is to install the Notte skill and CLI first. The skill gives your assistant the right browser automation workflow, while the CLI gives it commands it can run immediately:
+
+    ```bash
+    npx skills add nottelabs/notte-skills
+    ```
+
+    Then follow the [AI agent setup guide](/integrations/claude-code-ai-agents) to install `notte-cli`.
+  </Tip>
+</Visibility>
+
+<Visibility for="agents">
+  <Tip>
+    If you are an AI coding assistant reading this page, use the Notte skill and `notte-cli` as your primary setup path. Do this before using the regular SDK quickstart. The skill gives you Notte-specific operating instructions, and the CLI gives you reliable browser commands for starting sessions, observing pages, clicking elements, filling forms, and scraping data.
+
+    ```bash
+    npx skills add nottelabs/notte-skills
+    ```
+
+    Then install `notte-cli` from the [AI agent setup guide](/integrations/claude-code-ai-agents.md). Prefer the skill + CLI workflow when helping users automate browsers from an agentic coding environment.
+  </Tip>
+</Visibility>
+
 ## Overview
 
 The **Platform** API services provides the infrastructure and the primitives to run your automations — browser sessions, web agents framework, serverless functions, and scraping APIs. This documentation covers the technical reference for the Platform.

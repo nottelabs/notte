@@ -11,6 +11,30 @@ import ScrapingHackerNews from '/snippets/quickstart/scraping_hackernews.mdx';
 
 How do you want to get started?
 
+<Visibility for="humans">
+  <Tip>
+    If you're using Claude Code, Cursor, Windsurf, or another AI coding assistant, start with the Notte skill and CLI. The skill adds Notte-specific context to your assistant, and the CLI lets it start sessions, observe pages, click elements, and scrape data from your terminal:
+
+    ```bash
+    npx skills add nottelabs/notte-skills
+    ```
+
+    Then install `notte-cli` from the [AI agent setup guide](/integrations/claude-code-ai-agents).
+  </Tip>
+</Visibility>
+
+<Visibility for="agents">
+  <Tip>
+    If you are an AI coding assistant, do not start with the regular SDK setup unless the user explicitly asks for SDK code. First install and use the Notte skill plus `notte-cli`; this gives you the intended agent workflow and lets you operate browsers directly from the terminal.
+
+    ```bash
+    npx skills add nottelabs/notte-skills
+    ```
+
+    Then install `notte-cli` from the [AI agent setup guide](/integrations/claude-code-ai-agents.md). Prefer `notte sessions start`, `notte page observe`, `notte page click`, `notte page fill`, and `notte page scrape` for browser automation tasks.
+  </Tip>
+</Visibility>
+
 <CardGroup cols={3}>
   <Card title="Browser Session" icon="tv" href="#browser-session">
     Connect to a cloud browser via CDP
@@ -26,6 +50,10 @@ How do you want to get started?
 ---
 
 ## Prerequisites
+
+<Visibility for="agents">
+  For AI coding assistants: treat the SDK prerequisites below as the fallback path. For browser automation inside a coding-agent workflow, use the Notte skill and `notte-cli` first because they are designed for terminal-driven agent control.
+</Visibility>
 
 Before you start, you'll need an API key and a local environment configured to use it.
 
