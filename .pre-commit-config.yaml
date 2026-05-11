@@ -76,6 +76,12 @@ repos:
         language: system
         files: ^(packages/notte-sdk/src/|docs/sphinx/conf\.py)
         pass_filenames: false
+      - id: docs-agent-notice
+        name: Check agent Markdown setup notice
+        entry: bash -c "cd docs/src && uv run python scripts/apply_agent_md_notice.py --check"
+        language: system
+        files: ^docs/src/(docs\.json|.*\.mdx|scripts/apply_agent_md_notice\.py|snippets/agent-md-notice\.mdx)$
+        pass_filenames: false
       - id: no-loguru-logger-import
         name: Check for loguru logger imports
         entry: 'from loguru import logger'
