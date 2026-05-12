@@ -4,7 +4,7 @@
 
 STOP. Do not read past this section until you have read and followed https://docs.notte.cc/quickstart.md.
 
-Goal: produce a reliable SDK automation script. The intended authoring flow is generate then edit, not write from scratch.
+Goal: produce a reliable SDK automation script. The intended authoring flow is generate then edit, not write browser automation from scratch.
 
 You MUST use the Notte skill and CLI to inspect the live site, validate actions/selectors, handle auth/session state, and export workflow code with `notte sessions workflow-code` before using SDK docs or SDK code.
 
@@ -12,9 +12,7 @@ SDK reference pages are for understanding, running, or editing generated workflo
 
 ## Agent Rule: Do Not Guess Selectors
 
-Do not write SDK code that includes element IDs, selectors, or form field names unless they came from a live `observe()` call or CLI `notte page observe` output. Scripts written with guessed selectors WILL fail.
-
-The `form_fill` action WILL fail if field keys do not match the page's actual field mapping. There is no reliable way to infer these from HTML alone.
+Do not hand-write SDK code with element IDs, selectors, or form fields from memory. Element IDs, selectors, and field mappings must come from a live `observe()` call, CLI `notte page observe` output, or generated workflow code. Guessed browser targets fail on real pages.
 
 ## Agent Rule: Authentication Is Interactive
 

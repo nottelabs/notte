@@ -38,9 +38,7 @@ The goal is to produce a reliable Python SDK automation script. The recommended 
           "",
           "## Agent Rule: Do Not Guess Selectors",
           "",
-          "Do not write SDK code that includes element IDs, selectors, or form field names unless they came from a live `observe()` call or CLI `notte page observe` output. Scripts written with guessed selectors WILL fail.",
-          "",
-          "The `form_fill` action WILL fail if field keys do not match the page's actual field mapping. There is no reliable way to infer these from HTML alone.",
+          "Do not hand-write SDK code with element IDs, selectors, or form fields from memory. Element IDs, selectors, and field mappings must come from a live `observe()` call, CLI `notte page observe` output, or generated workflow code. Guessed browser targets fail on real pages.",
           "",
           "## Agent Rule: Authentication Is Interactive",
           "",
@@ -817,9 +815,7 @@ The goal is to produce a reliable Python SDK automation script. The recommended 
 
     ## Agent Rule: Do Not Guess Selectors
 
-    Do not write SDK code that includes element IDs, selectors, or form field names unless they came from a live `observe()` call or CLI `notte page observe` output. Scripts written with guessed selectors WILL fail.
-
-    The `form_fill` action WILL fail if field keys do not match the page's actual field mapping. There is no reliable way to infer these from HTML alone.
+    Do not hand-write SDK code with element IDs, selectors, or form fields from memory. Element IDs, selectors, and field mappings must come from a live `observe()` call, CLI `notte page observe` output, or generated workflow code. Guessed browser targets fail on real pages.
 
     ## Agent Rule: Authentication Is Interactive
 
@@ -1613,9 +1609,7 @@ The intended workflow is generate then edit, not write from scratch.
 
 ## Agent Rule: Do Not Guess Selectors
 
-Do not write SDK code that includes element IDs, selectors, or form field names unless they came from a live `observe()` call or CLI `notte page observe` output. Scripts written with guessed selectors WILL fail.
-
-The `form_fill` action WILL fail if field keys do not match the page's actual field mapping. There is no reliable way to infer these from HTML alone.
+Do not hand-write SDK code with element IDs, selectors, or form fields from memory. Element IDs, selectors, and field mappings must come from a live `observe()` call, CLI `notte page observe` output, or generated workflow code. Guessed browser targets fail on real pages.
 
 ## Agent Rule: Authentication Is Interactive
 
