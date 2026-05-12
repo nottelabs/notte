@@ -9,18 +9,21 @@ import SetApiKey from '/snippets/quickstart/set_api_key.mdx';
 
 <Visibility for="humans">
 
-## Fast setup
-
-The goal is to produce a reliable Python SDK automation script. The recommended path is to use the Notte skill and CLI as the authoring tool first: inspect the live site, validate actions and selectors in a real browser session, then export workflow code with `notte sessions workflow-code`. That generated script is the SDK automation you run, customize, or deploy.
+Build reliable Python SDK automation scripts by authoring in a real browser first. Use the Notte skill and CLI to inspect live sites, validate actions and selectors, then export working code with `notte sessions workflow-code` — ready to run, customize, or deploy.
 
 <div className="notte-fast-setup">
-  <div className="notte-fast-setup__body">
-    <p>
+  <div className="notte-fast-setup__header">
+    <p className="notte-fast-setup__title">Launch your AI coding agent</p>
+    <p className="notte-fast-setup__desc">
       Copy this into your AI coding agent (Codex, Claude Code, Cursor, etc.). It installs the Notte skill, checks the CLI, authenticates your account, opens a live browser session, and points the agent toward generating SDK workflow code instead of hand-writing fragile browser automation.
     </p>
-    <button
-      type="button"
-      className="notte-fast-setup__button"
+  </div>
+
+  <div className="notte-fast-setup__divider" />
+
+  <button
+    type="button"
+    className="notte-fast-setup__button"
       onClick={(event) => {
         const button = event.currentTarget;
         const label = button.querySelector(".notte-fast-setup__button-label");
@@ -794,9 +797,45 @@ The goal is to produce a reliable Python SDK automation script. The recommended 
         }, 1600);
       }}
     >
-      <span className="notte-fast-setup__button-icon" aria-hidden="true" />
-      <span className="notte-fast-setup__button-label" aria-live="polite">Copy setup prompt</span>
+      <span className="notte-fast-setup__button-icon-wrap" aria-hidden="true">
+        <Icon icon="copy" size={18} color="#00c85a" />
+      </span>
+      <span className="notte-fast-setup__button-text">
+        <span className="notte-fast-setup__button-label" aria-live="polite">Copy setup prompt</span>
+        <span className="notte-fast-setup__button-subtitle">Click to copy to your clipboard</span>
+      </span>
+      <Icon icon="chevron-right" size={16} className="notte-fast-setup__button-arrow" />
     </button>
+
+  <div className="notte-fast-setup__features">
+    <div className="notte-fast-setup__feature">
+      <Icon icon="download" size={28} color="#00c85a" />
+      <div>
+        <span className="notte-fast-setup__feature-title">Installs</span>
+        <span className="notte-fast-setup__feature-sub">Notte skill</span>
+      </div>
+    </div>
+    <div className="notte-fast-setup__feature">
+      <Icon icon="terminal" size={28} color="#00c85a" />
+      <div>
+        <span className="notte-fast-setup__feature-title">Checks</span>
+        <span className="notte-fast-setup__feature-sub">the CLI</span>
+      </div>
+    </div>
+    <div className="notte-fast-setup__feature">
+      <Icon icon="user" size={28} color="#00c85a" />
+      <div>
+        <span className="notte-fast-setup__feature-title">Authenticates</span>
+        <span className="notte-fast-setup__feature-sub">your account</span>
+      </div>
+    </div>
+    <div className="notte-fast-setup__feature">
+      <Icon icon="tv" size={28} color="#00c85a" />
+      <div>
+        <span className="notte-fast-setup__feature-title">Opens</span>
+        <span className="notte-fast-setup__feature-sub">live session</span>
+      </div>
+    </div>
   </div>
 </div>
 
