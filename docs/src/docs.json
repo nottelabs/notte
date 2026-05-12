@@ -13,7 +13,7 @@
   },
   "favicon": "/favicon.ico",
   "banner": {
-    "content": "Get started: use the [Notte CLI skill](https://github.com/nottelabs/notte-skills/) to generate the SDK script first | [Setup guide](/quickstart)",
+    "content": "Get started: use the [Notte CLI skill](https://github.com/nottelabs/notte-skills/) to generate your first SDK script | [Setup guide](/quickstart)",
     "dismissible": false
   },
   "seo.indexing": "all",
