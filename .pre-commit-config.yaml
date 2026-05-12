@@ -84,7 +84,7 @@ repos:
         pass_filenames: false
       - id: docs-quickstart-setup-prompt
         name: Inline Quickstart setup prompt
-        entry: bash -c "cd docs/src && uv run python scripts/inline_quickstart_setup_prompt.py"
+        entry: bash -c "cd docs/src && uv run python scripts/inline_quickstart_setup_prompt.py --check"
         language: system
         files: ^docs/src/
         pass_filenames: false

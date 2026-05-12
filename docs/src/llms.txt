@@ -361,7 +361,7 @@ The SDK docs below are for generated-code editing and reference. They are not th
 
 - [Get started](https://docs.notte.cc/sdk-reference/manual/workflow.md): Create, manage, and execute automated web functions
 - [run](https://docs.notte.cc/sdk-reference/nottefunction/run.md): Run the function code using the specified version and variables
-- [update](https://docs.notte.cc/sdk-reference/nottefunction/update.md): Update the workflow with a a new code version
+- [update](https://docs.notte.cc/sdk-reference/nottefunction/update.md): Update the workflow with a new code version
 - [delete](https://docs.notte.cc/sdk-reference/nottefunction/delete.md): Delete the workflow from the notte console
 - [download](https://docs.notte.cc/sdk-reference/nottefunction/download.md): Download the function code from the notte console as a python file
 - [fork](https://docs.notte.cc/sdk-reference/nottefunction/fork.md): Fork a shared function into your own private function

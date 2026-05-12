@@ -688,7 +688,7 @@ class RemoteWorkflow:
         restricted: bool = True,
     ) -> None:
         """
-        Update the workflow with a a new code version.
+        Update the workflow with a new code version.
 
         ```python
         function = notte.Function("<your-function-id>")

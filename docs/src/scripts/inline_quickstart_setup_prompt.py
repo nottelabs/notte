@@ -243,7 +243,19 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        prompt = setup_prompt(fetch_skill_docs())
+        skill_docs = fetch_skill_docs()
+    except Exception as error:
+        if args.check:
+            print(
+                f"warning: could not fetch Notte browser skill docs; skipping quickstart setup prompt check ({error})",
+                file=sys.stderr,
+            )
+            return 0
+        print(f"failed to fetch Notte browser skill docs: {error}", file=sys.stderr)
+        return 1
+
+    try:
+        prompt = setup_prompt(skill_docs)
         original = QUICKSTART.read_text(encoding="utf-8")
         updated = update_quickstart(original, prompt)
     except Exception as error:

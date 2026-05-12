@@ -1274,7 +1274,8 @@ class RemoteSession(SyncResource):
             **data: Arbitrary keyword arguments validated against ScrapeRequestDict,
 
         Returns:
-            ScrapeResponse: An Observation object containing metadata, screenshot, action space, and data space.
+            Extracted data as structured data, markdown text, image data, or a StructuredData wrapper when
+            ``raise_on_failure=False``.
 
         """
         return self.client.page.scrape(self.session_id, raise_on_failure=raise_on_failure, **data)
@@ -1480,11 +1481,13 @@ class RemoteSession(SyncResource):
         result = session.execute(action)
 
         # Execute a click action by element ID.
-        # Only use IDs that came from this observe() result; do not guess IDs like B1.
+        # Pseudo observe output: [B1] button "Submit"
+        # Only use IDs that appear in your live observe() output.
         result = session.execute(type="click", id="B1")
 
         # Execute a fill action by element ID.
-        # Only use IDs that came from this observe() result; do not guess IDs like I1.
+        # Pseudo observe output: [I1] input "Email"
+        # Only use IDs that appear in your live observe() output.
         result = session.execute(type="fill", id="I1", value="user@example.com")
 
         # Execute browser navigation
