@@ -36,12 +36,38 @@ The goal is to produce a reliable Python SDK automation script. The recommended 
           "",
           "The intended workflow is generate then edit, not write from scratch.",
           "",
+          "## Agent Rule: Authentication Is Interactive",
+          "",
+          "Before writing scripts, scaffolding fallback code, or switching approaches, check Notte authentication:",
+          "",
+          "```bash",
+          "notte auth status",
+          "```",
+          "",
+          "If authentication is missing, do not stop, do not create a fallback script, and do not ask the user for an API key first. Run the interactive login command:",
+          "",
+          "```bash",
+          "notte auth login",
+          "```",
+          "",
+          "Tell the user: \"Please complete the Notte login flow that just opened.\" Then poll every 5 seconds for up to 5 minutes:",
+          "",
+          "```bash",
+          "notte auth status",
+          "```",
+          "",
+          "Only continue to browser automation after `notte auth status` succeeds. If login does not complete after 5 minutes, ask the user whether they want to retry login or set `NOTTE_API_KEY`.",
+          "",
+          "Do not generate placeholder automation, SDK scripts, or README-only instructions merely because Notte is unauthenticated. Authentication is part of the setup workflow.",
+          "",
           "## Required CLI-to-SDK Loop",
           "",
           "Complete this loop before using SDK docs or writing SDK code:",
           "",
           "```bash",
-          "notte auth login",
+          "notte auth status || notte auth login",
+          "# If login opens an interactive flow, wait for the user to complete it.",
+          "# Then poll `notte auth status` until it succeeds before continuing.",
           "notte auth status",
           "notte sessions start",
           "notte sessions viewer",
@@ -782,12 +808,38 @@ The goal is to produce a reliable Python SDK automation script. The recommended 
 
     The intended workflow is generate then edit, not write from scratch.
 
+    ## Agent Rule: Authentication Is Interactive
+
+    Before writing scripts, scaffolding fallback code, or switching approaches, check Notte authentication:
+
+    ```bash
+    notte auth status
+    ```
+
+    If authentication is missing, do not stop, do not create a fallback script, and do not ask the user for an API key first. Run the interactive login command:
+
+    ```bash
+    notte auth login
+    ```
+
+    Tell the user: "Please complete the Notte login flow that just opened." Then poll every 5 seconds for up to 5 minutes:
+
+    ```bash
+    notte auth status
+    ```
+
+    Only continue to browser automation after `notte auth status` succeeds. If login does not complete after 5 minutes, ask the user whether they want to retry login or set `NOTTE_API_KEY`.
+
+    Do not generate placeholder automation, SDK scripts, or README-only instructions merely because Notte is unauthenticated. Authentication is part of the setup workflow.
+
     ## Required CLI-to-SDK Loop
 
     Complete this loop before using SDK docs or writing SDK code:
 
     ```bash
-    notte auth login
+    notte auth status || notte auth login
+    # If login opens an interactive flow, wait for the user to complete it.
+    # Then poll `notte auth status` until it succeeds before continuing.
     notte auth status
     notte sessions start
     notte sessions viewer
@@ -1545,12 +1597,38 @@ Use the Notte skill and CLI as the authoring and validation path: inspect the li
 
 The intended workflow is generate then edit, not write from scratch.
 
+## Agent Rule: Authentication Is Interactive
+
+Before writing scripts, scaffolding fallback code, or switching approaches, check Notte authentication:
+
+```bash
+notte auth status
+```
+
+If authentication is missing, do not stop, do not create a fallback script, and do not ask the user for an API key first. Run the interactive login command:
+
+```bash
+notte auth login
+```
+
+Tell the user: "Please complete the Notte login flow that just opened." Then poll every 5 seconds for up to 5 minutes:
+
+```bash
+notte auth status
+```
+
+Only continue to browser automation after `notte auth status` succeeds. If login does not complete after 5 minutes, ask the user whether they want to retry login or set `NOTTE_API_KEY`.
+
+Do not generate placeholder automation, SDK scripts, or README-only instructions merely because Notte is unauthenticated. Authentication is part of the setup workflow.
+
 ## Required CLI-to-SDK Loop
 
 Complete this loop before using SDK docs or writing SDK code:
 
 ```bash
-notte auth login
+notte auth status || notte auth login
+# If login opens an interactive flow, wait for the user to complete it.
+# Then poll `notte auth status` until it succeeds before continuing.
 notte auth status
 notte sessions start
 notte sessions viewer
