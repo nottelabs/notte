@@ -125,6 +125,30 @@ def unindent_visibility_child(text: str, parent_indent: str) -> str:
     return "\n".join(lines)
 
 
+def normalize_card_text_indentation(card: str, card_indent: str) -> str:
+    lines = card.splitlines()
+    in_text = False
+    normalized: list[str] = []
+    text_indent = f"{card_indent}  "
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped == ">":
+            in_text = True
+            normalized.append(line)
+            continue
+        if stripped == "</Card>":
+            in_text = False
+            normalized.append(line)
+            continue
+        if in_text and stripped and not line.startswith(text_indent):
+            normalized.append(f"{text_indent}{line.lstrip()}")
+            continue
+        normalized.append(line)
+
+    return "\n".join(normalized)
+
+
 def normalize_sdk_visibility_wrappers(text: str) -> str:
     def unwrap_card(match: re.Match[str]) -> str:
         return unindent_visibility_child(match.group("human"), match.group("indent"))
@@ -149,11 +173,11 @@ def wrap_sdk_markdown_links(text: str) -> str:
 
 def wrap_sdk_cards(text: str) -> str:
     def replace_card(match: re.Match[str]) -> str:
-        card = match.group(0)
+        indent = match.group("indent")
+        card = normalize_card_text_indentation(match.group(0), indent)
         if f'href="{SDK_REFERENCE_PREFIX}' not in card or ".md" in card:
             return card
 
-        indent = match.group("indent")
         agent_card = re.sub(
             rf'href="({re.escape(SDK_REFERENCE_PREFIX)}[^"#]+)"',
             lambda href_match: f'href="{sdk_agent_href(href_match.group(1))}"',
