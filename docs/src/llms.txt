@@ -1,13 +1,11 @@
 # Notte
 
-> Notte - The best place to automate the browser
-
 
 # Documentation
 
 ## Getting Started
 
-- [Introduction](https://docs.notte.cc/index.md): Notte - The best place to automate the browser
+- [Introduction](https://docs.notte.cc/index.md)
 - [Quickstart](https://docs.notte.cc/quickstart.md): Get started in a few seconds
 - [Concepts](https://docs.notte.cc/concepts.md): Core concepts in the Notte platform
 

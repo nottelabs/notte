@@ -10,244 +10,618 @@ Vault that fetches credentials stored using the sdk
 ## Methods
 
 <CardGroup cols={2}>
-  <Card
-    title="__init__"
-    icon="function"
-    href="/sdk-reference/nottevault/__init__"
-  >
-    Initialize the vault with an empty dictionary to track retrieved credentials
-  </Card>
-  <Card
-    title="add_credentials"
-    icon="function"
-    href="/sdk-reference/nottevault/add_credentials"
-  >
-    No description available
-  </Card>
-  <Card
-    title="add_credentials_async"
-    icon="function"
-    href="/sdk-reference/nottevault/add_credentials_async"
-  >
-    Store credentials for a given URL
-  </Card>
-  <Card
-    title="add_credentials_from_env"
-    icon="function"
-    href="/sdk-reference/nottevault/add_credentials_from_env"
-  >
-    No description available
-  </Card>
-  <Card
-    title="add_credentials_from_env_async"
-    icon="function"
-    href="/sdk-reference/nottevault/add_credentials_from_env_async"
-  >
-    Add credentials from environment variables for a given URL
-  </Card>
-  <Card
-    title="contains_credentials"
-    icon="function"
-    href="/sdk-reference/nottevault/contains_credentials"
-  >
-    Check if the action contains credentials
-  </Card>
-  <Card
-    title="credential_fields_to_dict"
-    icon="function"
-    href="/sdk-reference/nottevault/credential_fields_to_dict"
-  >
-    Convert a list of CredentialField objects to a credentials dictionary
-  </Card>
-  <Card
-    title="credentials_dict_to_field"
-    icon="function"
-    href="/sdk-reference/nottevault/credentials_dict_to_field"
-  >
-    Convert a credentials dictionary to a list of CredentialField objects
-  </Card>
-  <Card
-    title="delete"
-    icon="function"
-    href="/sdk-reference/nottevault/delete"
-  >
-    No description available
-  </Card>
-  <Card
-    title="delete_credentials"
-    icon="function"
-    href="/sdk-reference/nottevault/delete_credentials"
-  >
-    No description available
-  </Card>
-  <Card
-    title="delete_credentials_async"
-    icon="function"
-    href="/sdk-reference/nottevault/delete_credentials_async"
-  >
-    Remove credentials for a given URL
-  </Card>
-  <Card
-    title="delete_credit_card"
-    icon="function"
-    href="/sdk-reference/nottevault/delete_credit_card"
-  >
-    No description available
-  </Card>
-  <Card
-    title="delete_credit_card_async"
-    icon="function"
-    href="/sdk-reference/nottevault/delete_credit_card_async"
-  >
-    Remove saved credit card information
-  </Card>
-  <Card
-    title="generate_password"
-    icon="function"
-    href="/sdk-reference/nottevault/generate_password"
-  >
-    Generate a secure random password
-  </Card>
-  <Card
-    title="get_credentials"
-    icon="function"
-    href="/sdk-reference/nottevault/get_credentials"
-  >
-    No description available
-  </Card>
-  <Card
-    title="get_credentials_async"
-    icon="function"
-    href="/sdk-reference/nottevault/get_credentials_async"
-  >
-    Get credentials for a given URL
-  </Card>
-  <Card
-    title="get_credit_card"
-    icon="function"
-    href="/sdk-reference/nottevault/get_credit_card"
-  >
-    No description available
-  </Card>
-  <Card
-    title="get_credit_card_async"
-    icon="function"
-    href="/sdk-reference/nottevault/get_credit_card_async"
-  >
-    Retrieve credit card information (one for the whole vault)
-  </Card>
-  <Card
-    title="get_replacement_map"
-    icon="function"
-    href="/sdk-reference/nottevault/get_replacement_map"
-  >
-    Get the current map to replace text from previously used credentials back to their placeholder value
-  </Card>
-  <Card
-    title="has_credential"
-    icon="function"
-    href="/sdk-reference/nottevault/has_credential"
-  >
-    No description available
-  </Card>
-  <Card
-    title="has_credential_async"
-    icon="function"
-    href="/sdk-reference/nottevault/has_credential_async"
-  >
-    Check whether we hold a credential for a given website
-  </Card>
-  <Card
-    title="instructions"
-    icon="function"
-    href="/sdk-reference/nottevault/instructions"
-  >
-    Get detailed instructions for credential and payment handling
-  </Card>
-  <Card
-    title="list_credentials"
-    icon="function"
-    href="/sdk-reference/nottevault/list_credentials"
-  >
-    No description available
-  </Card>
-  <Card
-    title="list_credentials_async"
-    icon="function"
-    href="/sdk-reference/nottevault/list_credentials_async"
-  >
-    List urls for which we hold credentials
-  </Card>
-  <Card
-    title="past_credentials"
-    icon="function"
-    href="/sdk-reference/nottevault/past_credentials"
-  >
-    Get a copy of all previously retrieved credentials
-  </Card>
-  <Card
-    title="patch_structured_completion"
-    icon="function"
-    href="/sdk-reference/nottevault/patch_structured_completion"
-  >
-    No description available
-  </Card>
-  <Card
-    title="recursive_replace_mapping"
-    icon="function"
-    href="/sdk-reference/nottevault/recursive_replace_mapping"
-  >
-    Recursively replace strings using a mapping dictionary
-  </Card>
-  <Card
-    title="replace_credentials"
-    icon="function"
-    href="/sdk-reference/nottevault/replace_credentials"
-  >
-    Replace credentials in the action with actual values from the vault
-  </Card>
-  <Card
-    title="reset"
-    icon="function"
-    href="/sdk-reference/nottevault/reset"
-  >
-    Resets the resource to its initial state
-  </Card>
-  <Card
-    title="set_credit_card"
-    icon="function"
-    href="/sdk-reference/nottevault/set_credit_card"
-  >
-    No description available
-  </Card>
-  <Card
-    title="set_credit_card_async"
-    icon="function"
-    href="/sdk-reference/nottevault/set_credit_card_async"
-  >
-    Store credit card information (one for the whole vault)
-  </Card>
-  <Card
-    title="start"
-    icon="function"
-    href="/sdk-reference/nottevault/start"
-  >
-    No description available
-  </Card>
-  <Card
-    title="stop"
-    icon="function"
-    href="/sdk-reference/nottevault/stop"
-  >
-    No description available
-  </Card>
-  <Card
-    title="system_instructions"
-    icon="function"
-    href="/sdk-reference/nottevault/system_instructions"
-  >
-    Get system instructions for credential handling
-  </Card>
+  <Visibility for="humans">
+    <Card
+      title="__init__"
+      icon="function"
+      href="/sdk-reference/nottevault/__init__"
+    >
+      Initialize the vault with an empty dictionary to track retrieved credentials
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="__init__"
+      icon="function"
+      href="/sdk-reference/nottevault/__init__.md"
+    >
+      Initialize the vault with an empty dictionary to track retrieved credentials
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="add_credentials"
+      icon="function"
+      href="/sdk-reference/nottevault/add_credentials"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="add_credentials"
+      icon="function"
+      href="/sdk-reference/nottevault/add_credentials.md"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="add_credentials_async"
+      icon="function"
+      href="/sdk-reference/nottevault/add_credentials_async"
+    >
+      Store credentials for a given URL
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="add_credentials_async"
+      icon="function"
+      href="/sdk-reference/nottevault/add_credentials_async.md"
+    >
+      Store credentials for a given URL
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="add_credentials_from_env"
+      icon="function"
+      href="/sdk-reference/nottevault/add_credentials_from_env"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="add_credentials_from_env"
+      icon="function"
+      href="/sdk-reference/nottevault/add_credentials_from_env.md"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="add_credentials_from_env_async"
+      icon="function"
+      href="/sdk-reference/nottevault/add_credentials_from_env_async"
+    >
+      Add credentials from environment variables for a given URL
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="add_credentials_from_env_async"
+      icon="function"
+      href="/sdk-reference/nottevault/add_credentials_from_env_async.md"
+    >
+      Add credentials from environment variables for a given URL
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="contains_credentials"
+      icon="function"
+      href="/sdk-reference/nottevault/contains_credentials"
+    >
+      Check if the action contains credentials
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="contains_credentials"
+      icon="function"
+      href="/sdk-reference/nottevault/contains_credentials.md"
+    >
+      Check if the action contains credentials
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="credential_fields_to_dict"
+      icon="function"
+      href="/sdk-reference/nottevault/credential_fields_to_dict"
+    >
+      Convert a list of CredentialField objects to a credentials dictionary
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="credential_fields_to_dict"
+      icon="function"
+      href="/sdk-reference/nottevault/credential_fields_to_dict.md"
+    >
+      Convert a list of CredentialField objects to a credentials dictionary
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="credentials_dict_to_field"
+      icon="function"
+      href="/sdk-reference/nottevault/credentials_dict_to_field"
+    >
+      Convert a credentials dictionary to a list of CredentialField objects
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="credentials_dict_to_field"
+      icon="function"
+      href="/sdk-reference/nottevault/credentials_dict_to_field.md"
+    >
+      Convert a credentials dictionary to a list of CredentialField objects
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="delete"
+      icon="function"
+      href="/sdk-reference/nottevault/delete"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="delete"
+      icon="function"
+      href="/sdk-reference/nottevault/delete.md"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="delete_credentials"
+      icon="function"
+      href="/sdk-reference/nottevault/delete_credentials"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="delete_credentials"
+      icon="function"
+      href="/sdk-reference/nottevault/delete_credentials.md"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="delete_credentials_async"
+      icon="function"
+      href="/sdk-reference/nottevault/delete_credentials_async"
+    >
+      Remove credentials for a given URL
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="delete_credentials_async"
+      icon="function"
+      href="/sdk-reference/nottevault/delete_credentials_async.md"
+    >
+      Remove credentials for a given URL
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="delete_credit_card"
+      icon="function"
+      href="/sdk-reference/nottevault/delete_credit_card"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="delete_credit_card"
+      icon="function"
+      href="/sdk-reference/nottevault/delete_credit_card.md"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="delete_credit_card_async"
+      icon="function"
+      href="/sdk-reference/nottevault/delete_credit_card_async"
+    >
+      Remove saved credit card information
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="delete_credit_card_async"
+      icon="function"
+      href="/sdk-reference/nottevault/delete_credit_card_async.md"
+    >
+      Remove saved credit card information
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="generate_password"
+      icon="function"
+      href="/sdk-reference/nottevault/generate_password"
+    >
+      Generate a secure random password
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="generate_password"
+      icon="function"
+      href="/sdk-reference/nottevault/generate_password.md"
+    >
+      Generate a secure random password
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="get_credentials"
+      icon="function"
+      href="/sdk-reference/nottevault/get_credentials"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="get_credentials"
+      icon="function"
+      href="/sdk-reference/nottevault/get_credentials.md"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="get_credentials_async"
+      icon="function"
+      href="/sdk-reference/nottevault/get_credentials_async"
+    >
+      Get credentials for a given URL
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="get_credentials_async"
+      icon="function"
+      href="/sdk-reference/nottevault/get_credentials_async.md"
+    >
+      Get credentials for a given URL
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="get_credit_card"
+      icon="function"
+      href="/sdk-reference/nottevault/get_credit_card"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="get_credit_card"
+      icon="function"
+      href="/sdk-reference/nottevault/get_credit_card.md"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="get_credit_card_async"
+      icon="function"
+      href="/sdk-reference/nottevault/get_credit_card_async"
+    >
+      Retrieve credit card information (one for the whole vault)
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="get_credit_card_async"
+      icon="function"
+      href="/sdk-reference/nottevault/get_credit_card_async.md"
+    >
+      Retrieve credit card information (one for the whole vault)
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="get_replacement_map"
+      icon="function"
+      href="/sdk-reference/nottevault/get_replacement_map"
+    >
+      Get the current map to replace text from previously used credentials back to their placeholder value
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="get_replacement_map"
+      icon="function"
+      href="/sdk-reference/nottevault/get_replacement_map.md"
+    >
+      Get the current map to replace text from previously used credentials back to their placeholder value
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="has_credential"
+      icon="function"
+      href="/sdk-reference/nottevault/has_credential"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="has_credential"
+      icon="function"
+      href="/sdk-reference/nottevault/has_credential.md"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="has_credential_async"
+      icon="function"
+      href="/sdk-reference/nottevault/has_credential_async"
+    >
+      Check whether we hold a credential for a given website
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="has_credential_async"
+      icon="function"
+      href="/sdk-reference/nottevault/has_credential_async.md"
+    >
+      Check whether we hold a credential for a given website
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="instructions"
+      icon="function"
+      href="/sdk-reference/nottevault/instructions"
+    >
+      Get detailed instructions for credential and payment handling
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="instructions"
+      icon="function"
+      href="/sdk-reference/nottevault/instructions.md"
+    >
+      Get detailed instructions for credential and payment handling
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="list_credentials"
+      icon="function"
+      href="/sdk-reference/nottevault/list_credentials"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="list_credentials"
+      icon="function"
+      href="/sdk-reference/nottevault/list_credentials.md"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="list_credentials_async"
+      icon="function"
+      href="/sdk-reference/nottevault/list_credentials_async"
+    >
+      List urls for which we hold credentials
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="list_credentials_async"
+      icon="function"
+      href="/sdk-reference/nottevault/list_credentials_async.md"
+    >
+      List urls for which we hold credentials
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="past_credentials"
+      icon="function"
+      href="/sdk-reference/nottevault/past_credentials"
+    >
+      Get a copy of all previously retrieved credentials
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="past_credentials"
+      icon="function"
+      href="/sdk-reference/nottevault/past_credentials.md"
+    >
+      Get a copy of all previously retrieved credentials
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="patch_structured_completion"
+      icon="function"
+      href="/sdk-reference/nottevault/patch_structured_completion"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="patch_structured_completion"
+      icon="function"
+      href="/sdk-reference/nottevault/patch_structured_completion.md"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="recursive_replace_mapping"
+      icon="function"
+      href="/sdk-reference/nottevault/recursive_replace_mapping"
+    >
+      Recursively replace strings using a mapping dictionary
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="recursive_replace_mapping"
+      icon="function"
+      href="/sdk-reference/nottevault/recursive_replace_mapping.md"
+    >
+      Recursively replace strings using a mapping dictionary
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="replace_credentials"
+      icon="function"
+      href="/sdk-reference/nottevault/replace_credentials"
+    >
+      Replace credentials in the action with actual values from the vault
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="replace_credentials"
+      icon="function"
+      href="/sdk-reference/nottevault/replace_credentials.md"
+    >
+      Replace credentials in the action with actual values from the vault
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="reset"
+      icon="function"
+      href="/sdk-reference/nottevault/reset"
+    >
+      Resets the resource to its initial state
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="reset"
+      icon="function"
+      href="/sdk-reference/nottevault/reset.md"
+    >
+      Resets the resource to its initial state
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="set_credit_card"
+      icon="function"
+      href="/sdk-reference/nottevault/set_credit_card"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="set_credit_card"
+      icon="function"
+      href="/sdk-reference/nottevault/set_credit_card.md"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="set_credit_card_async"
+      icon="function"
+      href="/sdk-reference/nottevault/set_credit_card_async"
+    >
+      Store credit card information (one for the whole vault)
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="set_credit_card_async"
+      icon="function"
+      href="/sdk-reference/nottevault/set_credit_card_async.md"
+    >
+      Store credit card information (one for the whole vault)
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="start"
+      icon="function"
+      href="/sdk-reference/nottevault/start"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="start"
+      icon="function"
+      href="/sdk-reference/nottevault/start.md"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="stop"
+      icon="function"
+      href="/sdk-reference/nottevault/stop"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="stop"
+      icon="function"
+      href="/sdk-reference/nottevault/stop.md"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="system_instructions"
+      icon="function"
+      href="/sdk-reference/nottevault/system_instructions"
+    >
+      Get system instructions for credential handling
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="system_instructions"
+      icon="function"
+      href="/sdk-reference/nottevault/system_instructions.md"
+    >
+      Get system instructions for credential handling
+    </Card>
+  </Visibility>
 </CardGroup>
 
 ## Class Information

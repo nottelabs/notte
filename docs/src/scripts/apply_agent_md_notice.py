@@ -84,6 +84,11 @@ def remove_notice(text: str) -> str:
     return text
 
 
+def normalize_whitespace(text: str) -> str:
+    text = re.sub(r"[ \t]+$", "", text, flags=re.MULTILINE)
+    return text.rstrip("\n") + "\n"
+
+
 def ensure_notice(text: str) -> str:
     text = remove_notice(text)
 
@@ -96,7 +101,7 @@ def ensure_notice(text: str) -> str:
         import_block = text[:start].rstrip() + "\n" + IMPORT_LINE
         body = text[start:].lstrip("\n")
 
-    return import_block.rstrip() + "\n\n" + COMPONENT_LINE + "\n\n" + body.lstrip("\n")
+    return normalize_whitespace(import_block.rstrip() + "\n\n" + COMPONENT_LINE + "\n\n" + body.lstrip("\n"))
 
 
 def navigation_mdx_pages() -> list[tuple[Path, bool]]:
@@ -115,15 +120,30 @@ def navigation_mdx_pages() -> list[tuple[Path, bool]]:
     return files
 
 
+def sdk_reference_pages() -> list[Path]:
+    sdk_reference_dir = SRC_DIR / "sdk-reference"
+    if not sdk_reference_dir.exists():
+        return []
+    return sorted(sdk_reference_dir.rglob("*.mdx"))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="fail if files need updates")
     args = parser.parse_args()
 
+    updates: dict[Path, str] = {}
     changed: list[Path] = []
     for file, should_include in navigation_mdx_pages():
         original = file.read_text(encoding="utf-8")
-        updated = ensure_notice(original) if should_include else remove_notice(original)
+        updated = ensure_notice(original) if should_include else normalize_whitespace(remove_notice(original))
+        updates[file] = updated
+
+    for file in sdk_reference_pages():
+        updates.setdefault(file, normalize_whitespace(file.read_text(encoding="utf-8")))
+
+    for file, updated in updates.items():
+        original = file.read_text(encoding="utf-8")
         if updated == original:
             continue
         changed.append(file)
