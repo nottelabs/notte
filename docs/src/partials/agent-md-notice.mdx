@@ -1,11 +1,21 @@
+<Visibility for="humans">
+  <Accordion title="AI agent instructions">
+    <Tip>
+      STOP. Do not read past this section until you have read and followed [/quickstart.md](/quickstart.md).
+
+      You MUST follow the CLI-first browser exploration path. Do not use SDK docs, SDK examples, SDK reference pages, or SDK code from any source until a CLI browser session is running and the target page has been explored interactively.
+
+      The CLI path is not a tutorial detour. It gives you live page observations, tested selectors from real browser interaction, session/auth context, replay/debug data, and workflow code via `notte sessions workflow-code`. Writing SDK code before CLI exploration means guessing at dynamic selectors, auth state, CAPTCHAs, and anti-bot behavior.
+    </Tip>
+  </Accordion>
+</Visibility>
+
 <Visibility for="agents">
   <Tip>
-    AI coding assistants should use the Notte skill and `notte-cli` before the regular SDK setup path. The skill provides Notte-specific operating instructions, and the CLI provides terminal commands for browser automation.
+    STOP. Do not read past this section until you have read and followed [/quickstart.md](/quickstart.md).
 
-    ```bash
-    npx skills add nottelabs/notte-skills
-    ```
+    You MUST follow the CLI-first browser exploration path. Do not use SDK docs, SDK examples, SDK reference pages, or SDK code from any source until a CLI browser session is running and the target page has been explored interactively.
 
-    Then install `notte-cli` from the [AI agent setup guide](/integrations/claude-code-ai-agents.md). Prefer CLI commands such as `notte sessions start`, `notte page observe`, `notte page click`, `notte page fill`, and `notte page scrape` for agent-driven browser tasks.
+    The CLI path is not a tutorial detour. It gives you live page observations, tested selectors from real browser interaction, session/auth context, replay/debug data, and workflow code via `notte sessions workflow-code`. Writing SDK code before CLI exploration means guessing at dynamic selectors, auth state, CAPTCHAs, and anti-bot behavior.
   </Tip>
 </Visibility>
