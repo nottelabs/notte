@@ -1,7 +1,5 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/scraping/instructions_only.py */}
-
-```python instructions_only.py
+<CodeGroup>
+```python Python
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -11,3 +9,17 @@ result = client.scrape(
 
 print(result)
 ```
+```javascript JavaScript
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient({
+  apiKey: process.env.NOTTE_API_KEY,
+});
+
+const result = await client.scrape('https://example.com/article', {
+  instructions: 'Extract the article title, author, and publication date',
+});
+
+console.log(result);
+```
+</CodeGroup>

@@ -1,59 +1,9 @@
 ---
 title: Introduction
-description: Notte - The best place to automate the browser
+mode: "wide"
 ---
 
-import InstallSDK from '/snippets/quickstart/install_sdk.mdx';
-import SetApiKey from '/snippets/quickstart/set_api_key.mdx';
-import CDPSession from '/snippets/quickstart/cdp_session.mdx';
-
-You're at the best place to automate your browser. Notte is a unified platform to build, run, and deploy AI agents and web automation scripts. Browser infrastructure, agents framework, serverless functions, and observability, all in one single place.
-
-<Visibility for="humans">
-  <Tip>
-    The [Notte skill](https://github.com/nottelabs/notte-skills/) is best while the workflow is still unknown: use it to inspect live pages, handle dynamic UI, and discover the reliable sequence of actions. Move to the SDK once you know exactly what should run every time.
-  </Tip>
-</Visibility>
-
-<Visibility for="agents">
-  <Tip>
-    If you are an AI coding assistant reading this page, use the Notte skill and `notte-cli` as your primary setup path. Do this before using the regular SDK quickstart. The skill gives you Notte-specific operating instructions, and the CLI gives you reliable browser commands for starting sessions, observing pages, clicking elements, filling forms, and scraping data.
-
-    ```bash
-    npx skills add nottelabs/notte-skills
-    ```
-
-    Then install `notte-cli` from the [AI agent setup guide](/integrations/claude-code-ai-agents.md). Prefer the skill + CLI workflow when helping users automate browsers from an agentic coding environment.
-  </Tip>
-</Visibility>
-
-## Overview
-
-The **Platform** API services provides the infrastructure and the primitives to run your automations — browser sessions, web agents framework, serverless functions, and scraping APIs. This documentation covers the technical reference for the Platform.
-
-The **Products** help you build faster. Create automation scripts with our AI assistant, teach by workflow demonstration (screen recording), orcode in our automation studio. See the product guides below or jump straight into the [Console](https://console.notte.cc) to get started.
-
-## Getting Started
-
-Start here if you want to go from zero to a working Notte integration. For new scraping or browser automation tasks, use the [Notte skill](https://github.com/nottelabs/notte-skills/) to explore the page and prove the flow first; use the SDK when you are ready to make that flow repeatable.
-
-### Browser Session Quickstart
-
-The shortest path to a working Notte integration is to create a cloud browser session and connect to it over CDP. If this works, your API key, SDK install, and browser connection are all set up correctly.
-
-<Steps>
-  <Step title="Get an API key">
-    Create an account on the [Console](https://console.notte.cc) to get your API key.
-  </Step>
-  <Step title="Export your API key">
-    <SetApiKey />
-  </Step>
-  <Step title="Install the SDK">
-    <InstallSDK />
-  </Step>
-</Steps>
-
-<CDPSession />
+Notte is the unified platform for AI agents and automation scripts that need to use the browser. Build, debug, and deploy production workflows with cloud browsers, web agents, scraping, serverless functions, credentials, and identities in one place.
 
 <CardGroup cols={3}>
   <Card title="Quickstart" icon="square-arrow-up-right" href="/quickstart">
@@ -64,12 +14,10 @@ The shortest path to a working Notte integration is to create a cloud browser se
     Start from the SDK entrypoint for Sessions, Agents, Vaults, Personas, and Functions.
   </Card>
 
-  <Card title="OpenAPI Spec" icon="code" href="https://api.notte.cc/openapi.json">
-    Access the machine-readable API contract directly from the Notte API.
+  <Card title="API Reference" icon="code" href="/api-reference/authentication">
+    Explore authentication, endpoints, parameters, and API responses.
   </Card>
 </CardGroup>
-
-For the API surface, see [API Reference](/api-reference/authentication); for the SDK entrypoint, see [SDK Reference](/sdk-reference/manual/index).
 
 ## Platform
 

@@ -67,3 +67,132 @@ html:not(.dark) #banner a {
   color: rgb(0, 112, 56) !important;
   text-decoration-color: rgba(0, 112, 56, 0.45) !important;
 }
+
+.notte-fast-setup {
+  margin: 1rem 0 0.75rem;
+  padding: clamp(1.25rem, 3.2vw, 2.4rem);
+  border: 1px solid rgba(0, 230, 115, 0.22);
+  border-radius: 0.75rem;
+  background: rgba(0, 184, 92, 0.09);
+}
+
+.notte-fast-setup__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.notte-fast-setup__body p {
+  margin: 0;
+  max-width: 68rem;
+  color: rgb(188, 201, 194);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.notte-fast-setup__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.875rem;
+  width: 100%;
+  min-height: clamp(3.4rem, 4.8vw, 4.4rem);
+  border: 1px solid rgba(0, 230, 115, 0.46);
+  border-radius: 0.25rem;
+  background: rgb(0, 230, 115);
+  color: rgb(2, 20, 11);
+  font: inherit;
+  font-size: clamp(1rem, 1.2vw, 1.15rem);
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 0 0 0 rgba(0, 230, 115, 0);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 120ms ease;
+}
+
+.notte-fast-setup__button:hover {
+  background: rgb(89, 255, 171);
+  border-color: rgba(161, 255, 205, 0.9);
+  transform: translateY(-1px);
+}
+
+.notte-fast-setup__button:active {
+  transform: translateY(0) scale(0.985);
+  box-shadow: 0 0 0 0.35rem rgba(0, 230, 115, 0.13);
+}
+
+.notte-fast-setup__button.is-copied {
+  animation: notte-copy-confirm 260ms ease-out;
+  background: rgb(89, 255, 171);
+  border-color: rgba(161, 255, 205, 0.9);
+}
+
+.notte-fast-setup__button:focus-visible {
+  outline: 3px solid rgba(161, 255, 205, 0.62);
+  outline-offset: 4px;
+}
+
+.notte-fast-setup__button-icon {
+  position: relative;
+  width: 1.15em;
+  height: 1.15em;
+  flex: 0 0 auto;
+}
+
+.notte-fast-setup__button-icon::before,
+.notte-fast-setup__button-icon::after {
+  position: absolute;
+  width: 0.62em;
+  height: 0.72em;
+  border: 0.13em solid currentColor;
+  border-radius: 0.16em;
+  content: "";
+}
+
+.notte-fast-setup__button-icon::before {
+  top: 0.32em;
+  left: 0.08em;
+  opacity: 0.62;
+}
+
+.notte-fast-setup__button-icon::after {
+  top: 0.08em;
+  left: 0.36em;
+  background: transparent;
+}
+
+html:not(.dark) .notte-fast-setup {
+  border-color: rgba(4, 119, 59, 0.18);
+  background: rgb(237, 252, 243);
+}
+
+html:not(.dark) .notte-fast-setup__body p {
+  color: rgb(74, 85, 79);
+}
+
+@media (max-width: 720px) {
+  .notte-fast-setup {
+    padding: 1.5rem;
+  }
+
+  .notte-fast-setup__body {
+    gap: 1.25rem;
+  }
+}
+
+@keyframes notte-copy-confirm {
+  0% {
+    transform: scale(0.985);
+  }
+
+  65% {
+    transform: scale(1.012);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}

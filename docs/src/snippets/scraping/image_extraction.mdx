@@ -1,7 +1,5 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/scraping/image_extraction.py */}
-
-```python image_extraction.py
+<CodeGroup>
+```python Python
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -11,3 +9,20 @@ for image in images:
     print(f"URL: {image.url}")
     print(f"Description: {image.description}")
 ```
+```javascript JavaScript
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient({
+  apiKey: process.env.NOTTE_API_KEY,
+});
+
+const images = await client.scrape('https://example.com/gallery', {
+  only_images: true,
+});
+
+for (const image of images) {
+  console.log(`URL: ${image.url}`);
+  console.log(`Description: ${image.description}`);
+}
+```
+</CodeGroup>

@@ -1,7 +1,5 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/scraping/scoped_scraping.py */}
-
-```python scoped_scraping.py
+<CodeGroup>
+```python Python
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -13,3 +11,23 @@ with client.Session() as session:
     # Scrape a specific container
     content = session.scrape(selector="#product-details")
 ```
+```javascript JavaScript
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient({
+  apiKey: process.env.NOTTE_API_KEY,
+});
+
+await client.Session().use(async (session) => {
+  // Scrape content within a specific selector
+  const articleContent = await session.scrape({
+    selector: 'article.main-content',
+  });
+
+  // Scrape a specific container
+  const productContent = await session.scrape({
+    selector: '#product-details',
+  });
+});
+```
+</CodeGroup>
