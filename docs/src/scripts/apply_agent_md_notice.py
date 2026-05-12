@@ -22,6 +22,21 @@ LEGACY_SNIPPET_PATHS = {"/snippets/agent-md-notice.mdx"}
 IMPORT_LINE = f"import AgentMdNotice from '{SNIPPET_PATH}';"
 COMPONENT_LINE = "<AgentMdNotice />"
 SKIP_PAGES = {"index", "quickstart"}
+SDK_REFERENCE_PREFIX = "/sdk-reference/"
+INLINE_VISIBILITY_RE = re.compile(
+    r'<Visibility for="humans">(?P<human>[^<]*?/sdk-reference/[^<]*?)</Visibility>'
+    r'<Visibility for="agents">(?P<agent>[^<]*?/sdk-reference/[^<]*?)</Visibility>'
+)
+MARKDOWN_LINK_RE = re.compile(r"(?P<link>\[(?!\[)[^\n]+?\]\((?P<href>/sdk-reference/[^)\s#]+)(?P<anchor>#[^)]+)?\))")
+WRAPPED_SDK_CARD_RE = re.compile(
+    r'(?ms)^(?P<indent>[ \t]*)<Visibility for="humans">\n'
+    r"(?P<human>.*?\n(?P=indent)[ \t]*</Card>)\n"
+    r"(?P=indent)</Visibility>\n"
+    r'(?P=indent)<Visibility for="agents">\n'
+    r".*?\n(?P=indent)[ \t]*</Card>\n"
+    r"(?P=indent)</Visibility>"
+)
+SDK_CARD_RE = re.compile(r"(?ms)^(?P<indent>[ \t]*)<Card\n(?P<body>.*?\n(?P=indent)</Card>)")
 
 
 def collect_pages(node: Any, pages: set[str]) -> None:
@@ -89,6 +104,82 @@ def normalize_whitespace(text: str) -> str:
     return text.rstrip("\n") + "\n"
 
 
+def sdk_agent_href(href: str) -> str:
+    if href.endswith(".md"):
+        return href
+    return f"{href}.md"
+
+
+def shift_block(text: str, prefix: str) -> str:
+    return "\n".join(f"{prefix}{line}" if line else line for line in text.splitlines())
+
+
+def unindent_visibility_child(text: str, parent_indent: str) -> str:
+    child_indent = f"{parent_indent}  "
+    lines: list[str] = []
+    for line in text.splitlines():
+        if line.startswith(child_indent):
+            lines.append(f"{parent_indent}{line[len(child_indent) :]}")
+        else:
+            lines.append(line)
+    return "\n".join(lines)
+
+
+def normalize_sdk_visibility_wrappers(text: str) -> str:
+    def unwrap_card(match: re.Match[str]) -> str:
+        return unindent_visibility_child(match.group("human"), match.group("indent"))
+
+    text = WRAPPED_SDK_CARD_RE.sub(unwrap_card, text)
+    return INLINE_VISIBILITY_RE.sub(lambda match: match.group("human"), text)
+
+
+def wrap_sdk_markdown_links(text: str) -> str:
+    def replace_link(match: re.Match[str]) -> str:
+        href = match.group("href")
+        if href.endswith(".md"):
+            return match.group(0)
+
+        human_link = match.group("link")
+        agent_href = sdk_agent_href(href)
+        agent_link = human_link.replace(f"({href}", f"({agent_href}", 1)
+        return f'<Visibility for="humans">{human_link}</Visibility><Visibility for="agents">{agent_link}</Visibility>'
+
+    return MARKDOWN_LINK_RE.sub(replace_link, text)
+
+
+def wrap_sdk_cards(text: str) -> str:
+    def replace_card(match: re.Match[str]) -> str:
+        card = match.group(0)
+        if f'href="{SDK_REFERENCE_PREFIX}' not in card or ".md" in card:
+            return card
+
+        indent = match.group("indent")
+        agent_card = re.sub(
+            rf'href="({re.escape(SDK_REFERENCE_PREFIX)}[^"#]+)"',
+            lambda href_match: f'href="{sdk_agent_href(href_match.group(1))}"',
+            card,
+            count=1,
+        )
+        return "\n".join(
+            [
+                f'{indent}<Visibility for="humans">',
+                shift_block(card, "  "),
+                f"{indent}</Visibility>",
+                f'{indent}<Visibility for="agents">',
+                shift_block(agent_card, "  "),
+                f"{indent}</Visibility>",
+            ]
+        )
+
+    return SDK_CARD_RE.sub(replace_card, text)
+
+
+def ensure_sdk_agent_links(text: str) -> str:
+    text = normalize_sdk_visibility_wrappers(text)
+    text = wrap_sdk_markdown_links(text)
+    return wrap_sdk_cards(text)
+
+
 def ensure_notice(text: str) -> str:
     text = remove_notice(text)
 
@@ -140,7 +231,7 @@ def main() -> int:
         updates[file] = updated
 
     for file in sdk_reference_pages():
-        updates.setdefault(file, normalize_whitespace(file.read_text(encoding="utf-8")))
+        updates.setdefault(file, normalize_whitespace(ensure_sdk_agent_links(file.read_text(encoding="utf-8"))))
 
     for file, updated in updates.items():
         original = file.read_text(encoding="utf-8")
