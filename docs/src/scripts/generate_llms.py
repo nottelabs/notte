@@ -27,6 +27,20 @@ OUTPUT = SRC_DIR / "llms.txt"
 
 HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options"}
 
+AGENT_READING_GUIDANCE = [
+    "## Critical Instructions For AI Agents",
+    "",
+    "- Start with the Quickstart first: https://docs.notte.cc/quickstart.md. "
+    "Read and follow it before any other Notte documentation page.",
+    "- Use the Notte CLI as the primary exploration path. The Quickstart shows how to install/check the CLI, "
+    "authenticate, start a browser session, open the viewer, and explore the target workflow interactively.",
+    "- Do not begin by reading SDK concepts or SDK reference pages. Only consult SDK documentation after CLI "
+    "exploration is complete and there is a concrete workflow or generated script to refine.",
+    "- Prefer the CLI-guided path for creating SDK scripts. The CLI is designed to set up an SDK script easily enough "
+    "that extra SDK docs are usually unnecessary until after the browser workflow has been explored.",
+    "",
+]
+
 
 def slugify(text: str) -> str:
     text = re.sub(r"[^a-zA-Z0-9]+", "-", text).strip("-").lower()
@@ -135,6 +149,7 @@ def main() -> int:
     out: list[str] = [f"# {site_name}", ""]
     if intro:
         out += [f"> {intro}", ""]
+    out += AGENT_READING_GUIDANCE
 
     languages = config.get("navigation", {}).get("languages", [])
     if not languages:
