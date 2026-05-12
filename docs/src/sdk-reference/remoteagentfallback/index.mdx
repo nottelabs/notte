@@ -10,6 +10,7 @@ A context manager that observes a `Session`'s execute calls and triggers an Agen
 Usage:
     ```python
     with notte.AgentFallback(session, "add to cart") as agent:
+        # IDs must come from a live observe() result; do not guess IDs like B1/L3.
         session.execute(actions.Click(id="B1"))
         session.execute(actions.Click(id="L3"))
     ```
@@ -23,13 +24,24 @@ Attributes:
 ## Methods
 
 <CardGroup cols={2}>
-  <Card
-    title="__init__"
-    icon="function"
-    href="/sdk-reference/remoteagentfallback/__init__"
-  >
-    Initialize self
-  </Card>
+  <Visibility for="humans">
+    <Card
+      title="__init__"
+      icon="function"
+      href="/sdk-reference/remoteagentfallback/__init__"
+    >
+      Initialize self
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="__init__"
+      icon="function"
+      href="/sdk-reference/remoteagentfallback/__init__.md"
+    >
+      Initialize self
+    </Card>
+  </Visibility>
 </CardGroup>
 
 ## Class Information

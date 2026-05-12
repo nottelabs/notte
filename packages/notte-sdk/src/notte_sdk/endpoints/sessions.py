@@ -1479,10 +1479,12 @@ class RemoteSession(SyncResource):
         action = obs.space.first()  # Get first available action
         result = session.execute(action)
 
-        # Execute a click action by element ID (use `obs.space.description` to checkout elements IDs)
+        # Execute a click action by element ID.
+        # Only use IDs that came from this observe() result; do not guess IDs like B1.
         result = session.execute(type="click", id="B1")
 
-        # Execute a form fill action
+        # Execute a fill action by element ID.
+        # Only use IDs that came from this observe() result; do not guess IDs like I1.
         result = session.execute(type="fill", id="I1", value="user@example.com")
 
         # Execute browser navigation
@@ -1505,6 +1507,10 @@ class RemoteSession(SyncResource):
         - `fill`: Fill input fields with text
         - `upload_file`: upload files to file inputs
         - etc.
+
+        Do not write interaction code with guessed element IDs, selectors, or field names.
+        Element IDs must come from a live `observe()` call, and selectors/field names should
+        be validated against the actual page before they are used in automation.
 
         **Using Playwright Selectors:**
 
