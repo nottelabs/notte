@@ -27,7 +27,9 @@ INLINE_VISIBILITY_RE = re.compile(
     r'<Visibility for="humans">(?P<human>[^<]*?/sdk-reference/[^<]*?)</Visibility>'
     r'<Visibility for="agents">(?P<agent>[^<]*?/sdk-reference/[^<]*?)</Visibility>'
 )
-MARKDOWN_LINK_RE = re.compile(r"(?P<link>\[(?!\[)[^\n]+?\]\((?P<href>/sdk-reference/[^)\s#]+)(?P<anchor>#[^)]+)?\))")
+MARKDOWN_LINK_RE = re.compile(
+    r"(?P<link>\[(?!\[)(?:`[^`]+`|[^\]\n`\[]+)\]\((?P<href>/sdk-reference/[^)\s#]+)(?P<anchor>#[^)]+)?\))"
+)
 WRAPPED_SDK_CARD_RE = re.compile(
     r'(?ms)^(?P<indent>[ \t]*)<Visibility for="humans">\n'
     r"(?P<human>.*?\n(?P=indent)[ \t]*</Card>)\n"
@@ -255,7 +257,8 @@ def main() -> int:
         updates[file] = updated
 
     for file in sdk_reference_pages():
-        updates.setdefault(file, normalize_whitespace(ensure_sdk_agent_links(file.read_text(encoding="utf-8"))))
+        text = updates.get(file, file.read_text(encoding="utf-8"))
+        updates[file] = normalize_whitespace(ensure_sdk_agent_links(text))
 
     for file, updated in updates.items():
         original = file.read_text(encoding="utf-8")

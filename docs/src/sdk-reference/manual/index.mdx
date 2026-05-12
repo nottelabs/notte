@@ -26,52 +26,118 @@ From there, you're able to create browser sessions, run new agents, or manage cr
 ## Available Operations
 
 <CardGroup cols={3}>
-  <Card
-    title="Sessions"
-    icon="browser"
-    href="/sdk-reference/manual/session"
-  >
-    List and manage browser sessions
-  </Card>
-  <Card
-    title="Agents"
-    icon="robot"
-    href="/sdk-reference/manual/agent"
-  >
-    List and manage automation agents
-  </Card>
-  <Card
-    title="Functions"
-    icon="book"
-    href="/sdk-reference/manual/workflow"
-  >
-    Create and manage functions for your automations
-  </Card>
+  <Visibility for="humans">
+    <Card
+      title="Sessions"
+      icon="browser"
+      href="/sdk-reference/manual/session"
+    >
+      List and manage browser sessions
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="Sessions"
+      icon="browser"
+      href="/sdk-reference/manual/session.md"
+    >
+      List and manage browser sessions
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="Agents"
+      icon="robot"
+      href="/sdk-reference/manual/agent"
+    >
+      List and manage automation agents
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="Agents"
+      icon="robot"
+      href="/sdk-reference/manual/agent.md"
+    >
+      List and manage automation agents
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="Functions"
+      icon="book"
+      href="/sdk-reference/manual/workflow"
+    >
+      Create and manage functions for your automations
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="Functions"
+      icon="book"
+      href="/sdk-reference/manual/workflow.md"
+    >
+      Create and manage functions for your automations
+    </Card>
+  </Visibility>
 </CardGroup>
 
 
 ## Available Tooling for your agents
 
 <CardGroup cols={3}>
-  <Card
-    title="File Storage"
-    icon="file"
-    href="/sdk-reference/manual/file_storage"
-  >
-    Upload and download files to and from your agents
-  </Card>
-  <Card
-    title="Personas"
-    icon="user"
-    href="/sdk-reference/manual/persona"
-  >
-    Create and manage personas
-  </Card>
-  <Card
-    title="Vaults"
-    icon="lock"
-    href="/sdk-reference/manual/vault"
-  >
-    Create and manage secure credential vaults for your agents
-  </Card>
+  <Visibility for="humans">
+    <Card
+      title="File Storage"
+      icon="file"
+      href="/sdk-reference/manual/file_storage"
+    >
+      Upload and download files to and from your agents
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="File Storage"
+      icon="file"
+      href="/sdk-reference/manual/file_storage.md"
+    >
+      Upload and download files to and from your agents
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="Personas"
+      icon="user"
+      href="/sdk-reference/manual/persona"
+    >
+      Create and manage personas
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="Personas"
+      icon="user"
+      href="/sdk-reference/manual/persona.md"
+    >
+      Create and manage personas
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="Vaults"
+      icon="lock"
+      href="/sdk-reference/manual/vault"
+    >
+      Create and manage secure credential vaults for your agents
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="Vaults"
+      icon="lock"
+      href="/sdk-reference/manual/vault.md"
+    >
+      Create and manage secure credential vaults for your agents
+    </Card>
+  </Visibility>
 </CardGroup>
