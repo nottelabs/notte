@@ -835,6 +835,8 @@ class SessionStartRequest(SdkRequest):
             return data
         if data.get("viewport_width") is not None or data.get("viewport_height") is not None:
             raise ValueError("aspect_ratio cannot be set together with viewport_width or viewport_height")
+        data["viewport_width"] = None
+        data["viewport_height"] = None
         allowed = get_args(AspectRatio)
         if aspect not in allowed:
             raise ValueError(f"Unsupported aspect_ratio {aspect!r}; expected one of {list(allowed)}")
