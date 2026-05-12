@@ -147,7 +147,7 @@ html:not(.dark) #banner a {
   position: absolute;
   width: 0.62em;
   height: 0.72em;
-  border: 0.13em solid currentColor;
+  border: 0.13em solid currentcolor;
   border-radius: 0.16em;
   content: "";
 }
