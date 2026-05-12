@@ -9,7 +9,7 @@ client = NotteClient()
 with client.Session() as session:
     session.execute(type="goto", url="https://example.com")
 
-    # By ID from observe()
+    # By ID from observe(); do not guess IDs like B1.
     session.execute(type="click", id="B1")
 
     # By selector

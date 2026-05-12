@@ -38,7 +38,7 @@ Core workflow:
 1. `notte sessions start` - Start a browser session
 2. `notte page goto <url>` - Navigate to a URL
 3. `notte page observe` - Get interactive elements with IDs (@B1, @B2)
-4. `notte page click "@B1"` / `notte page fill "@I1" "text"` - Interact using element IDs
+4. `notte page click "@B1"` / `notte page fill "@I1" "text"` - Interact using element IDs from the latest observe output; do not guess IDs
 5. `notte page scrape --instructions "..."` - Extract structured data
 6. `notte sessions stop` - Clean up when done
 ```
@@ -46,7 +46,7 @@ Core workflow:
 ## Tips
 
 - **Viewing headless sessions**: When you start a session, the output includes a `ViewerUrl` - open it to watch your headless browser live
-- **Element selectors**: If element IDs from `observe` (like `@B1`) don't work, use Playwright selectors: `#id`, `.class`, `button:has-text('Submit')`
+- **Element selectors**: Use only element IDs returned by `observe` (like `@B1`). If those don't work, use Playwright selectors validated against the live page: `#id`, `.class`, `button:has-text('Submit')`
 - **Multiple matches**: Use `>> nth=0` suffix to select the first match: `button:has-text('OK') >> nth=0`
 - **Closing modals**: `notte page press "Escape"` reliably dismisses most dialogs
 

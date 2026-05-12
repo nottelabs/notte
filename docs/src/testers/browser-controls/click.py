@@ -9,7 +9,7 @@ with client.Session() as session:
     # Click by CSS selector
     session.execute(type="click", selector="button#submit")
 
-    # Click by ID from observe()
+    # Click by ID from observe(); do not guess IDs like B1.
     session.execute(type="click", id="B1")
 
     # Click by text selector

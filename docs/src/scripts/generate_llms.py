@@ -42,6 +42,14 @@ AGENT_READING_GUIDANCE = [
     "starting point for manually authoring the initial browser automation. SDK-first code is guesswork on real-world "
     "pages with dynamic selectors, auth state, CAPTCHAs, and anti-bot behavior.",
     "",
+    "## Agent Rule: Do Not Guess Selectors",
+    "",
+    "Do not write SDK code that includes element IDs, selectors, or form field names unless they came from a live "
+    "`observe()` call or CLI `notte page observe` output. Scripts written with guessed selectors WILL fail.",
+    "",
+    "The `form_fill` action WILL fail if field keys do not match the page's actual field mapping. There is no "
+    "reliable way to infer these from HTML alone.",
+    "",
     "## Agent Rule: Authentication Is Interactive",
     "",
     "Before writing scripts, scaffolding fallback code, or switching approaches, check Notte authentication:",
@@ -93,6 +101,7 @@ AGENT_READING_GUIDANCE = [
     "",
     "# 4. Observe the live page and execute actions from real browser state",
     "notte page observe",
+    "# Use element IDs only after they appear in the observe output. Do not guess IDs.",
     'notte page click "B3"',
     'notte page fill "I1" "example value"',
     'notte page scrape --instructions "Extract the relevant data"',

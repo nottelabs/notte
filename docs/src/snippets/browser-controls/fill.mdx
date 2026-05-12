@@ -12,7 +12,7 @@ with client.Session() as session:
     # Fill by selector
     session.execute(type="fill", selector="input[name='email']", value="user@example.com")
 
-    # Fill by ID from observe()
+    # Fill by ID from observe(); do not guess IDs like I1.
     session.execute(type="fill", id="I1", value="user@example.com")
 
     # Fill by placeholder selector

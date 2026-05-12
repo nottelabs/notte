@@ -36,6 +36,12 @@ The goal is to produce a reliable Python SDK automation script. The recommended 
           "",
           "The intended workflow is generate then edit, not write from scratch.",
           "",
+          "## Agent Rule: Do Not Guess Selectors",
+          "",
+          "Do not write SDK code that includes element IDs, selectors, or form field names unless they came from a live `observe()` call or CLI `notte page observe` output. Scripts written with guessed selectors WILL fail.",
+          "",
+          "The `form_fill` action WILL fail if field keys do not match the page's actual field mapping. There is no reliable way to infer these from HTML alone.",
+          "",
           "## Agent Rule: Authentication Is Interactive",
           "",
           "Before writing scripts, scaffolding fallback code, or switching approaches, check Notte authentication:",
@@ -73,6 +79,7 @@ The goal is to produce a reliable Python SDK automation script. The recommended 
           "notte sessions viewer",
           "notte page goto https://target-site.com/",
           "notte page observe",
+          "# Use element IDs only after they appear in the observe output. Do not guess IDs.",
           "notte page click \"B3\"",
           "notte page fill \"I1\" \"example value\"",
           "notte page scrape --instructions \"Extract the relevant data\"",
@@ -808,6 +815,12 @@ The goal is to produce a reliable Python SDK automation script. The recommended 
 
     The intended workflow is generate then edit, not write from scratch.
 
+    ## Agent Rule: Do Not Guess Selectors
+
+    Do not write SDK code that includes element IDs, selectors, or form field names unless they came from a live `observe()` call or CLI `notte page observe` output. Scripts written with guessed selectors WILL fail.
+
+    The `form_fill` action WILL fail if field keys do not match the page's actual field mapping. There is no reliable way to infer these from HTML alone.
+
     ## Agent Rule: Authentication Is Interactive
 
     Before writing scripts, scaffolding fallback code, or switching approaches, check Notte authentication:
@@ -845,6 +858,7 @@ The goal is to produce a reliable Python SDK automation script. The recommended 
     notte sessions viewer
     notte page goto https://target-site.com/
     notte page observe
+    # Use element IDs only after they appear in the observe output. Do not guess IDs.
     notte page click "B3"
     notte page fill "I1" "example value"
     notte page scrape --instructions "Extract the relevant data"
@@ -1597,6 +1611,12 @@ Use the Notte skill and CLI as the authoring and validation path: inspect the li
 
 The intended workflow is generate then edit, not write from scratch.
 
+## Agent Rule: Do Not Guess Selectors
+
+Do not write SDK code that includes element IDs, selectors, or form field names unless they came from a live `observe()` call or CLI `notte page observe` output. Scripts written with guessed selectors WILL fail.
+
+The `form_fill` action WILL fail if field keys do not match the page's actual field mapping. There is no reliable way to infer these from HTML alone.
+
 ## Agent Rule: Authentication Is Interactive
 
 Before writing scripts, scaffolding fallback code, or switching approaches, check Notte authentication:
@@ -1634,6 +1654,7 @@ notte sessions start
 notte sessions viewer
 notte page goto https://target-site.com/
 notte page observe
+# Use element IDs only after they appear in the observe output. Do not guess IDs.
 notte page click "B3"
 notte page fill "I1" "example value"
 notte page scrape --instructions "Extract the relevant data"
