@@ -107,13 +107,7 @@ class BrowserWindowOptions(BaseModel):
     @staticmethod
     def _fit_aspect_ratio_in_default_viewport(aspect_ratio: AspectRatio) -> tuple[int, int]:
         width_ratio, height_ratio = (int(part) for part in aspect_ratio.split(":"))
-
-        width = DEFAULT_HEADLESS_VIEWPORT_WIDTH
-        height = round(width * height_ratio / width_ratio)
-        if height > DEFAULT_HEADLESS_VIEWPORT_HEIGHT:
-            height = DEFAULT_HEADLESS_VIEWPORT_HEIGHT
-            width = round(height * width_ratio / height_ratio)
-        return width, height
+        return DEFAULT_HEADLESS_VIEWPORT_WIDTH, round(DEFAULT_HEADLESS_VIEWPORT_WIDTH * height_ratio / width_ratio)
 
     def get_chrome_args(self) -> list[str]:
         chrome_args = self.chrome_args or []
