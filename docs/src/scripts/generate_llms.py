@@ -30,23 +30,23 @@ HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options"}
 AGENT_READING_GUIDANCE = [
     "## Critical Instructions For AI Agents",
     "",
-    "STOP. Do not read past this section until you have read and followed https://docs.notte.cc/quickstart.md.",
+    "STOP. Read and follow https://docs.notte.cc/quickstart.md before using SDK docs or writing SDK code.",
     "",
-    "Goal: produce a reliable SDK automation script. The intended authoring flow is generate then edit, not write "
-    "browser automation from scratch.",
+    "Goal: generate a reliable SDK automation script, then edit it. Do not hand-author the first pass from SDK "
+    "reference pages.",
     "",
-    "You MUST use the Notte skill and CLI to inspect the live site, validate actions/selectors, handle auth/session "
-    "state, and export workflow code with `notte sessions workflow-code` before using SDK docs or SDK code.",
+    "The Notte CLI is the source of truth for real browser state. You MUST use the Notte skill and CLI to inspect "
+    "the live site, validate actions/selectors, handle auth/session state, and export workflow code with "
+    "`notte sessions workflow-code`.",
     "",
-    "SDK reference pages are for understanding, running, or editing generated workflow code. They are not the "
-    "starting point for manually authoring the initial browser automation. SDK-first code is guesswork on real-world "
-    "pages with dynamic selectors, auth state, CAPTCHAs, and anti-bot behavior.",
+    "Use SDK docs only to understand, run, or edit exported workflow code. SDK-first automation is guesswork on "
+    "real pages with dynamic selectors, auth state, CAPTCHAs, and anti-bot behavior.",
     "",
     "## Agent Rule: Do Not Guess Selectors",
     "",
-    "Do not hand-write SDK code with element IDs, selectors, or form fields from memory. Element IDs, selectors, "
-    "and field mappings must come from a live `observe()` call, CLI `notte page observe` output, or generated "
-    "workflow code. Guessed browser targets fail on real pages.",
+    "Do not hand-write SDK code with element IDs, selectors, or form fields from memory. Browser targets must come "
+    "from a live `observe()` call, CLI `notte page observe` output, or generated workflow code. Guessed targets "
+    "fail on real pages.",
     "",
     "## Agent Rule: Authentication Is Interactive",
     "",
@@ -56,8 +56,8 @@ AGENT_READING_GUIDANCE = [
     "notte auth status",
     "```",
     "",
-    "If authentication is missing, do not stop, do not create a fallback script, and do not ask the user for an API "
-    "key first. Run the interactive login command:",
+    "If authentication is missing, do not stop, create fallback code, or ask for an API key first. The CLI works in "
+    "non-interactive terminals; the human may just need to complete browser login. Run:",
     "",
     "```bash",
     "notte auth login",
@@ -70,15 +70,15 @@ AGENT_READING_GUIDANCE = [
     "notte auth status",
     "```",
     "",
-    "Only continue to browser automation after `notte auth status` succeeds. If login does not complete after 5 "
-    "minutes, ask the user whether they want to retry login or set `NOTTE_API_KEY`.",
+    "Only continue after `notte auth status` succeeds. If login does not complete after 5 minutes, ask whether to "
+    "retry login or set `NOTTE_API_KEY`.",
     "",
-    "Do not generate placeholder automation, SDK scripts, or README-only instructions merely because Notte is "
+    "Do not generate placeholder automation, SDK scripts, or README-only instructions because Notte is "
     "unauthenticated. Authentication is part of the setup workflow.",
     "",
     "## CLI-First Workflow",
     "",
-    "Complete this loop to generate the SDK script before using SDK documentation or writing SDK code:",
+    "Complete this loop to generate valid SDK code before using SDK documentation or writing SDK code:",
     "",
     "```bash",
     "# 1. Install the CLI if needed",
