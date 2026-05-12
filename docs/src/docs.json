@@ -13,7 +13,7 @@
   },
   "favicon": "/favicon.ico",
   "banner": {
-    "content": "Recommended workflow: use the [Notte CLI skill](https://github.com/nottelabs/notte-skills/) to generate and validate the SDK script first, then run or customize the generated automation; install it with `npx skills add nottelabs/notte-skills` | [Setup guide](/integrations/claude-code-ai-agents)",
+    "content": "Use the [Notte CLI skill](https://github.com/nottelabs/notte-skills/) to generate the SDK script first | [Setup guide](/quickstart)",
     "dismissible": false
   },
   "seo.indexing": "all",
