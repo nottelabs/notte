@@ -89,6 +89,14 @@ class AacVault(BaseVault, SyncResource):
                 msg = result.stderr.strip() or result.stdout.strip()
             raise RuntimeError(f"aac pairing failed: {msg}")
 
+        try:
+            data = json.loads(result.stdout)
+            if not data.get("success"):
+                msg = data.get("error", {}).get("message", result.stdout.strip())
+                raise RuntimeError(f"aac pairing failed: {msg}")
+        except (json.JSONDecodeError, TypeError):
+            pass
+
         self._paired = True
         logger.info("[AacVault] Paired successfully via aac tunnel")
 
