@@ -29,11 +29,13 @@ class BitwardenVault(BaseVault, SyncResource):
         access_token: str | None = None,
         project_id: str | None = None,
         bws_path: str = "bws",
+        timeout: int = 30,
     ):
         super().__init__()
         self._access_token: str = access_token or os.environ.get("BWS_ACCESS_TOKEN", "")
         self._project_id: str | None = project_id
         self._bws_path: str = bws_path
+        self._timeout: int = timeout
         self._secrets_cache: list[dict[str, str]] | None = None
 
     @override
@@ -54,7 +56,7 @@ class BitwardenVault(BaseVault, SyncResource):
     def _run_bws(self, *args: str) -> str:
         cmd = [self._bws_path] + list(args) + ["--output", "json"]
         env = {**os.environ, "BWS_ACCESS_TOKEN": self._access_token}
-        result = subprocess.run(cmd, capture_output=True, text=True, env=env)  # noqa: S603
+        result = subprocess.run(cmd, capture_output=True, text=True, env=env, timeout=self._timeout)  # noqa: S603
         if result.returncode != 0:
             raise RuntimeError(f"bws command failed: {result.stderr.strip()}")
         return result.stdout

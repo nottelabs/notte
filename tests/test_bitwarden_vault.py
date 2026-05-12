@@ -49,8 +49,11 @@ MISSING_PASSWORD_SECRET = {
 
 def _make_fake_bws(secrets: list[dict]) -> str:
     """Create a fake bws script that returns given secrets as JSON."""
+    data_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+    data_file.write(json.dumps(secrets))
+    data_file.close()
     f = tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False)
-    f.write(f"#!/bin/bash\necho '{json.dumps(secrets)}'\n")
+    f.write(f"#!/bin/bash\ncat {data_file.name}\n")
     f.close()
     os.chmod(f.name, stat.S_IRWXU)
     return f.name
