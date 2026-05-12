@@ -39,3 +39,24 @@ def test_explicit_viewport_takes_precedence_over_aspect_ratio_defaulting() -> No
 def test_aspect_ratio_rejects_explicit_viewport() -> None:
     with pytest.raises(ValidationError, match="aspect_ratio cannot be set together with viewport_width"):
         SessionStartRequest(headless=True, aspect_ratio="16:9", viewport_width=1000, viewport_height=500)
+
+
+def test_headless_cdp_window_options_do_not_synthesize_viewport() -> None:
+    options = BrowserWindowOptions(
+        headless=True,
+        solve_captchas=False,
+        user_agent=None,
+        proxy=None,
+        viewport_width=None,
+        viewport_height=None,
+        aspect_ratio="16:9",
+        browser_type="chromium",
+        chrome_args=None,
+        web_security=False,
+        cdp_url="ws://127.0.0.1:9222/devtools/browser/test",
+        debug_port=None,
+        custom_devtools_frontend=None,
+    )
+
+    assert options.viewport_width is None
+    assert options.viewport_height is None

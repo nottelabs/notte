@@ -79,6 +79,12 @@ class BrowserWindowOptions(BaseModel):
             raise ValueError("Both viewport_width and viewport_height must be set together or both must be None")
 
         if self.headless and self.viewport_width is None and self.viewport_height is None:
+            if self.cdp_url is not None:
+                logger.info(
+                    "🪟 Headless CDP session detected. Leaving viewport unset so the remote browser geometry is preserved."
+                )
+                return
+
             if self.aspect_ratio is not None:
                 self.viewport_width, self.viewport_height = self._fit_aspect_ratio_in_default_viewport(
                     self.aspect_ratio
