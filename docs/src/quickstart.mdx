@@ -11,12 +11,12 @@ import SetApiKey from '/snippets/quickstart/set_api_key.mdx';
 
 ## Fast setup
 
-The recommended path is to start with the Notte skill and CLI inside your AI coding agent. It helps discover browser flows, test selectors, inspect page results, and pivot to SDK code when the workflow is ready.
+The goal is to produce a reliable Python SDK automation script. The recommended path is to use the Notte skill and CLI as the authoring tool first: inspect the live site, validate actions and selectors in a real browser session, then export workflow code with `notte sessions workflow-code`. That generated script is the SDK automation you run, customize, or deploy.
 
 <div className="notte-fast-setup">
   <div className="notte-fast-setup__body">
     <p>
-      Copy this into your AI coding agent (Codex, Claude Code, Cursor, etc.). It installs the Notte skill, checks the CLI, authenticates your account, and opens a live browser session that you or your agent can control.
+      Copy this into your AI coding agent (Codex, Claude Code, Cursor, etc.). It installs the Notte skill, checks the CLI, authenticates your account, opens a live browser session, and points the agent toward generating SDK workflow code instead of hand-writing fragile browser automation.
     </p>
     <button
       type="button"
@@ -27,6 +27,31 @@ The recommended path is to start with the Notte skill and CLI inside your AI cod
 
         const notteSetupPrompt = [
           "# Setup Notte",
+          "",
+          "## Goal: Generate a Working SDK Script",
+          "",
+          "Your end goal is a reliable Python SDK automation script. Do not write the initial browser automation from memory.",
+          "",
+          "Use the Notte skill and CLI as the authoring and validation path: inspect the live site, validate actions and selectors against real browser state, handle auth/session details, then export workflow code with `notte sessions workflow-code`. That exported code is the SDK script you should run, customize, or turn into a deployed Function.",
+          "",
+          "The intended workflow is generate then edit, not write from scratch.",
+          "",
+          "## Required CLI-to-SDK Loop",
+          "",
+          "Complete this loop before using SDK docs or writing SDK code:",
+          "",
+          "```bash",
+          "notte auth login",
+          "notte auth status",
+          "notte sessions start",
+          "notte sessions viewer",
+          "notte page goto https://target-site.com/",
+          "notte page observe",
+          "notte page click \"B3\"",
+          "notte page fill \"I1\" \"example value\"",
+          "notte page scrape --instructions \"Extract the relevant data\"",
+          "notte sessions workflow-code",
+          "```",
           "",
           "## Prerequisites",
           "- Install the Notte skill globally:",
@@ -749,6 +774,31 @@ The recommended path is to start with the Notte skill and CLI inside your AI cod
     ````markdown
     # Setup Notte
 
+    ## Goal: Generate a Working SDK Script
+
+    Your end goal is a reliable Python SDK automation script. Do not write the initial browser automation from memory.
+
+    Use the Notte skill and CLI as the authoring and validation path: inspect the live site, validate actions and selectors against real browser state, handle auth/session details, then export workflow code with `notte sessions workflow-code`. That exported code is the SDK script you should run, customize, or turn into a deployed Function.
+
+    The intended workflow is generate then edit, not write from scratch.
+
+    ## Required CLI-to-SDK Loop
+
+    Complete this loop before using SDK docs or writing SDK code:
+
+    ```bash
+    notte auth login
+    notte auth status
+    notte sessions start
+    notte sessions viewer
+    notte page goto https://target-site.com/
+    notte page observe
+    notte page click "B3"
+    notte page fill "I1" "example value"
+    notte page scrape --instructions "Extract the relevant data"
+    notte sessions workflow-code
+    ```
+
     ## Prerequisites
     - Install the Notte skill globally:
 
@@ -1449,6 +1499,10 @@ The recommended path is to start with the Notte skill and CLI inside your AI cod
 
 ## SDK quickstart
 
+<Warning>
+  Use this SDK setup after the skill and CLI have explored the target site and generated workflow code with `notte sessions workflow-code`. If you are starting a browser automation from scratch, go back to the Fast setup path first. The intended workflow is generate then edit, not write from memory.
+</Warning>
+
 Prefer the old-school route? This setup is for humans who want to write code directly, avoid handing the keyboard to an LLM, and keep every import, API key, and browser session under manual control.
 
 <Steps>
@@ -1482,6 +1536,31 @@ Now that you're set up, here are the main SDK topics to start with.
 <Visibility for="agents">
 
 # Setup Notte
+
+## Goal: Generate a Working SDK Script
+
+Your end goal is a reliable Python SDK automation script. Do not write the initial browser automation from memory.
+
+Use the Notte skill and CLI as the authoring and validation path: inspect the live site, validate actions and selectors against real browser state, handle auth/session details, then export workflow code with `notte sessions workflow-code`. That exported code is the SDK script you should run, customize, or turn into a deployed Function.
+
+The intended workflow is generate then edit, not write from scratch.
+
+## Required CLI-to-SDK Loop
+
+Complete this loop before using SDK docs or writing SDK code:
+
+```bash
+notte auth login
+notte auth status
+notte sessions start
+notte sessions viewer
+notte page goto https://target-site.com/
+notte page observe
+notte page click "B3"
+notte page fill "I1" "example value"
+notte page scrape --instructions "Extract the relevant data"
+notte sessions workflow-code
+```
 
 ## Prerequisites
 - Install the Notte skill globally:

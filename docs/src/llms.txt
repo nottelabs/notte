@@ -4,13 +4,15 @@
 
 STOP. Do not read past this section until you have read and followed https://docs.notte.cc/quickstart.md.
 
-You MUST follow the CLI-first browser exploration path. Do not use SDK docs, SDK examples, SDK reference pages, or SDK code from any source until a CLI browser session is running and the target page has been explored interactively.
+Goal: produce a reliable SDK automation script. The intended authoring flow is generate then edit, not write from scratch.
 
-The CLI path is not a tutorial detour. It gives you live page observations, tested selectors from real browser interaction, session/auth context, replay/debug data, and workflow code via `notte sessions workflow-code`. Writing SDK code before CLI exploration means guessing at dynamic selectors, auth state, CAPTCHAs, and anti-bot behavior.
+You MUST use the Notte skill and CLI to inspect the live site, validate actions/selectors, handle auth/session state, and export workflow code with `notte sessions workflow-code` before using SDK docs or SDK code.
+
+SDK reference pages are for understanding, running, or editing generated workflow code. They are not the starting point for manually authoring the initial browser automation. SDK-first code is guesswork on real-world pages with dynamic selectors, auth state, CAPTCHAs, and anti-bot behavior.
 
 ## CLI-First Workflow
 
-Complete this loop before using SDK documentation or writing SDK code:
+Complete this loop to generate the SDK script before using SDK documentation or writing SDK code:
 
 ```bash
 # 1. Install the CLI if needed
@@ -255,11 +257,11 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 
 ## SDK Prerequisite Gate
 
-STOP. Do not use this SDK section yet unless you have already completed the Quickstart-led CLI workflow.
+STOP. Do not use this SDK section yet unless you have already generated workflow code from the Quickstart-led CLI workflow.
 
-Before using any SDK link below, you must have a running CLI browser session, have explored the target page interactively, and have a concrete workflow or `notte sessions workflow-code` output to refine. If you have not run `notte sessions start`, go back to https://docs.notte.cc/quickstart.md now.
+Before using any SDK link below, you must have a running CLI browser session, have explored the target page interactively, and have `notte sessions workflow-code` output to run, inspect, or refine. If you have not run `notte sessions workflow-code`, go back to https://docs.notte.cc/quickstart.md now.
 
-Use the SDK only after CLI exploration has produced live observations, tested selectors, session/auth context, and replay/debug data. SDK-first code is guesswork on real-world pages with dynamic selectors, CAPTCHAs, and anti-bot behavior.
+The SDK docs below are for generated-code editing and reference. They are not the starting point for manually authoring browser automation from scratch.
 
 ## Getting Started
 
