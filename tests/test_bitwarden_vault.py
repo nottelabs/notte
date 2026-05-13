@@ -1,77 +1,103 @@
 import asyncio
 import json
-import os
-import stat
-import tempfile
+from unittest.mock import MagicMock, patch
 
 import pytest
 from notte_core.credentials.base import Credential
 from notte_core.credentials.bitwarden import BitwardenVault
 
-GITHUB_SECRET = {
-    "id": "secret-1",
-    "key": "GitHub Login",
-    "value": json.dumps(
-        {
-            "url": "https://github.com/login",
-            "password": "gh-pass-123",  # pragma: allowlist secret
-            "username": "octocat",
-            "email": "octocat@github.com",
-        }
-    ),
-}
 
-NOTTE_SECRET = {
-    "id": "secret-2",
-    "key": "Notte",
-    "value": json.dumps(
-        {
-            "url": "https://app.notte.cc",
-            "password": "notte-pass",  # pragma: allowlist secret
-            "email": "user@notte.cc",
-            "mfa_secret": "JBSWY3DPEHPK3PXP",  # pragma: allowlist secret
-        }
-    ),
-}
-
-INVALID_SECRET = {
-    "id": "secret-3",
-    "key": "Bad Secret",
-    "value": "not-valid-json",
-}
-
-MISSING_PASSWORD_SECRET = {
-    "id": "secret-4",
-    "key": "No Password",
-    "value": json.dumps({"url": "https://example.com", "username": "test"}),
-}
+def _make_secret_response(secret_id: str, key: str, value: dict, project_id: str = "proj-1") -> MagicMock:
+    s = MagicMock()
+    s.id = secret_id
+    s.key = key
+    s.value = json.dumps(value)
+    s.project_id = project_id
+    s.note = ""
+    return s
 
 
-def _make_fake_bws(secrets: list[dict]) -> str:
-    """Create a fake bws script that returns given secrets as JSON."""
-    data_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
-    data_file.write(json.dumps(secrets))
-    data_file.close()
-    f = tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False)
-    f.write(f"#!/bin/bash\ncat {data_file.name}\n")
-    f.close()
-    os.chmod(f.name, stat.S_IRWXU)
-    return f.name
+GITHUB_SECRET = _make_secret_response(
+    "00000000-0000-0000-0000-000000000001",
+    "GitHub Login",
+    {
+        "url": "https://github.com/login",
+        "password": "gh-pass-123",  # pragma: allowlist secret
+        "username": "octocat",
+        "email": "octocat@github.com",
+    },
+)
+
+NOTTE_SECRET = _make_secret_response(
+    "00000000-0000-0000-0000-000000000002",
+    "Notte",
+    {
+        "url": "https://app.notte.cc",
+        "password": "notte-pass",  # pragma: allowlist secret
+        "email": "user@notte.cc",
+        "mfa_secret": "JBSWY3DPEHPK3PXP",  # pragma: allowlist secret
+    },
+)
+
+INVALID_SECRET = _make_secret_response("00000000-0000-0000-0000-000000000003", "Bad Secret", {})
+# Override value to be invalid JSON
+INVALID_SECRET.value = "not-valid-json"
+
+MISSING_PASSWORD_SECRET = _make_secret_response(
+    "00000000-0000-0000-0000-000000000004",
+    "No Password",  # pragma: allowlist secret
+    {"url": "https://example.com", "username": "test"},
+)
+
+ALL_SECRETS = [GITHUB_SECRET, NOTTE_SECRET, INVALID_SECRET, MISSING_PASSWORD_SECRET]
+
+
+def _mock_client(secrets: list[MagicMock] | None = None) -> MagicMock:
+    """Create a mock BitwardenClient with preset secrets."""
+    if secrets is None:
+        secrets = ALL_SECRETS
+
+    client = MagicMock()
+
+    # Mock auth
+    client.auth.return_value.login_access_token.return_value = MagicMock()
+
+    # Mock secrets().list() -> returns identifiers
+    list_response = MagicMock()
+    list_data = MagicMock()
+    list_data.data = [MagicMock(id=s.id) for s in secrets]
+    list_response.data = list_data
+    client.secrets.return_value.list.return_value = list_response
+
+    # Mock secrets().get_by_ids() -> returns full secrets
+    full_response = MagicMock()
+    full_data = MagicMock()
+    full_data.data = secrets
+    full_response.data = full_data
+    client.secrets.return_value.get_by_ids.return_value = full_response
+
+    return client
+
+
+def _mock_get_sdk(secrets: list[MagicMock] | None = None):
+    """Return a mock _get_sdk that returns (ClientClass, DeviceType, settings_fn)."""
+    client = _mock_client(secrets)
+    client_cls = MagicMock(return_value=client)
+    device_type = MagicMock()
+    settings_fn = MagicMock()
+    return client_cls, device_type, settings_fn
 
 
 @pytest.fixture()
-def fake_bws():
-    path = _make_fake_bws([GITHUB_SECRET, NOTTE_SECRET, INVALID_SECRET, MISSING_PASSWORD_SECRET])
-    yield path
-    os.unlink(path)
-
-
-@pytest.fixture()
-def vault(fake_bws: str):
-    v = BitwardenVault(access_token="fake-token", bws_path=fake_bws)
-    v.start()
-    yield v
-    v.stop()
+def vault():
+    with patch("notte_core.credentials.bitwarden._get_sdk", return_value=_mock_get_sdk()):
+        v = BitwardenVault(
+            access_token="fake-token",  # pragma: allowlist secret
+            organization_id="org-1",
+        )
+        v.start()
+        yield v
+        v.stop()
 
 
 class TestBitwardenVaultGetCredentials:
@@ -115,20 +141,22 @@ class TestBitwardenVaultListCredentials:
 
 
 class TestBitwardenVaultLifecycle:
-    def test_start_validates_bws_exists(self) -> None:
-        vault = BitwardenVault(access_token="test", bws_path="/nonexistent/bws")
-        with pytest.raises(RuntimeError, match="CLI not found"):
-            vault.start()
+    def test_start_validates_sdk_installed(self) -> None:
+        with patch("notte_core.credentials.bitwarden._get_sdk", side_effect=ImportError("bitwarden-sdk is required")):
+            vault = BitwardenVault(access_token="test")  # pragma: allowlist secret
+            with pytest.raises(ImportError, match="bitwarden-sdk is required"):
+                vault.start()
 
-    def test_start_validates_token(self, fake_bws: str) -> None:
-        vault = BitwardenVault(access_token="", bws_path=fake_bws)
+    def test_start_validates_token(self) -> None:
+        vault = BitwardenVault(access_token="")
         with pytest.raises(ValueError, match="access token required"):
             vault.start()
 
-    def test_context_manager(self, fake_bws: str) -> None:
-        with BitwardenVault(access_token="test", bws_path=fake_bws) as vault:
-            creds = asyncio.run(vault.list_credentials_async())
-            assert len(creds) == 2
+    def test_context_manager(self) -> None:
+        with patch("notte_core.credentials.bitwarden._get_sdk", return_value=_mock_get_sdk()):
+            with BitwardenVault(access_token="test", organization_id="org-1") as vault:  # pragma: allowlist secret
+                creds = asyncio.run(vault.list_credentials_async())
+                assert len(creds) == 2
 
 
 class TestBitwardenVaultReadOnly:

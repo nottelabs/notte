@@ -108,13 +108,6 @@ jobs:
           sudo mv aac /usr/local/bin/
           aac --version
 
-      - name: Install bws CLI (Bitwarden Secrets Manager)
-        run: |
-          curl -sL "https://github.com/bitwarden/sdk/releases/download/bws-v1.0.0/bws-x86_64-unknown-linux-gnu-1.0.0.zip" -o /tmp/bws.zip
-          unzip -o /tmp/bws.zip -d /tmp/bws
-          sudo mv /tmp/bws/bws /usr/local/bin/
-          bws --version
-
       - name: Install dependencies
         run: uv sync --dev --all-extras
 

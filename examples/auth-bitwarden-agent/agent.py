@@ -1,13 +1,15 @@
 """Example: Using BitwardenVault with a local notte agent.
 
 Prerequisites:
-- `bws` CLI installed (https://github.com/bitwarden/sdk/releases)
-- BWS_ACCESS_TOKEN environment variable set (or pass access_token directly)
+- pip install bitwarden-sdk
+- BWS_ACCESS_TOKEN environment variable set
+- BWS_ORGANIZATION_ID environment variable set
 - Secrets stored in Bitwarden Secrets Manager with JSON values:
   {"url": "https://github.com/login", "password": "...", "username": "...", "email": "..."}
 
 Usage:
     export BWS_ACCESS_TOKEN="0.your-token-here..."  # pragma: allowlist secret
+    export BWS_ORGANIZATION_ID="your-org-id"
     export NOTTE_API_KEY="your-notte-api-key"  # pragma: allowlist secret
     python agent.py
 """
