@@ -135,6 +135,15 @@ jobs:
           set -o pipefail
           uv run pytest -n logical tests --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/integration/test_e2e.py --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages | tee pytest-coverage.txt
 
+      - name: Upload signup email test debug logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: signup-debug-logs
+          path: /tmp/signup-debug/
+          retention-days: 7
+          if-no-files-found: ignore
+
       - name: Pytest coverage comment
         if: ${{ always() && github.ref != 'refs/heads/main' }}
         uses: MishaKav/pytest-coverage-comment@main
