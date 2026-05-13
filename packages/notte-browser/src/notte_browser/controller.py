@@ -221,6 +221,17 @@ class BrowserController:
         match action:
             # Interaction actions
             case ClickAction():
+                is_disabled = await locator.evaluate(
+                    """(el) =>
+                        el.disabled === true ||
+                        el.inert === true ||
+                        el.getAttribute('disabled') !== null ||
+                        el.getAttribute('aria-disabled') === 'true'
+                    """,
+                    timeout=action_timeout,
+                )
+                if is_disabled:
+                    raise ActionExecutionError(action.id, window.page.url, reason="Element is disabled")
                 try:
                     await locator.click(timeout=action_timeout)
                 except PlaywrightTimeoutError as e:

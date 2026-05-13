@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Unpack, overload
 # import websockets
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
 from notte_core.agent_types import AgentCompletion
+from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.common.notifier import BaseNotifier
 from notte_core.common.telemetry import track_usage
@@ -50,7 +51,10 @@ if RUNNING_IN_PYODIDE:
     from pyodide.ffi import (  # pyright: ignore[reportMissingImports]
         create_proxy,  # pyright: ignore[reportUnknownVariableType]
     )
+
+    ConnectionClosedOK = ConnectionError
 else:
+    from websockets.exceptions import ConnectionClosedOK
     from websockets.sync import client as sync_client
 
 
@@ -333,7 +337,12 @@ class AgentsClient(BaseClient):
                 logger.error(f"Error parsing agent logs for message: {message}: {e}")
             return (None, False)
 
-    def watch_logs(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse | None:
+    def watch_logs(
+        self,
+        agent_id: str,
+        session_id: str,
+        log: bool = True,
+    ) -> AgentStatusResponse | None:
         """
         Watch the logs of the specified agent.
         """
@@ -358,7 +367,16 @@ class AgentsClient(BaseClient):
                 close_timeout=5,
                 max_size=5 * (2**20),  # 5MB max size
             ) as websocket:
-                for message in websocket:
+                while True:
+                    try:
+                        message = websocket.recv(timeout=config.agent_logs_inactivity_timeout_seconds)
+                    except TimeoutError:
+                        warning_message = (
+                            f"[Agent] {agent_id} websocket had no log events for "
+                            f"{config.agent_logs_inactivity_timeout_seconds}s. Falling back to status polling."
+                        )
+                        logger.warning(warning_message)
+                        return None
                     if not isinstance(message, str):
                         logger.warning(f"Expected str message, got {type(message).__name__}. Skipping.")
                         continue
@@ -369,6 +387,8 @@ class AgentsClient(BaseClient):
                         if isinstance(response, AgentStatusResponse):
                             return response
                         return None
+        except ConnectionClosedOK:
+            return None
         except ConnectionError as e:
             logger.error(f"Connection error: {agent_id} {e}")
             return None
@@ -376,9 +396,12 @@ class AgentsClient(BaseClient):
             logger.error(f"Unexpected websocket processing error: {agent_id} {e} {traceback.format_exc()}")
             raise
 
-        return None
-
-    def watch_logs_and_wait(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse:
+    def watch_logs_and_wait(
+        self,
+        agent_id: str,
+        session_id: str,
+        log: bool = True,
+    ) -> AgentStatusResponse:
         """
         Execute a task with the agent and wait for completion.
 
@@ -397,20 +420,24 @@ class AgentsClient(BaseClient):
             )
 
         try:
-            response = self.watch_logs(agent_id=agent_id, session_id=session_id, log=log)
+            response = self.watch_logs(
+                agent_id=agent_id,
+                session_id=session_id,
+                log=log,
+            )
             if response is not None:
                 return response
             # If we didn't get a response, poll status until agent is closed
             logger.warning(f"[Agent] {agent_id} did not return status response. Polling status until closed.")
-            max_wait_secs = 300
-            waited = 0
-            while waited < max_wait_secs:
+            deadline = time.monotonic() + config.agent_status_poll_timeout_seconds
+            while time.monotonic() < deadline:
                 status = self.status(agent_id=agent_id)
                 if status.status == AgentStatus.closed:
                     return status
                 time.sleep(1)
-                waited += 1
-            raise TimeoutError(f"Agent {agent_id} did not reach a terminal state within {max_wait_secs}s")
+            raise TimeoutError(
+                f"Agent {agent_id} did not reach a terminal state within {config.agent_status_poll_timeout_seconds}s"
+            )
 
         except KeyboardInterrupt:
             status = self.status(agent_id=agent_id)
@@ -418,7 +445,12 @@ class AgentsClient(BaseClient):
                 _ = self.stop(agent_id=agent_id, session_id=session_id)
             raise
 
-    async def async_watch_logs(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse | None:
+    async def async_watch_logs(
+        self,
+        agent_id: str,
+        session_id: str,
+        log: bool = True,
+    ) -> AgentStatusResponse | None:
         """
         Watch the logs of the specified agent asynchronously.
 
@@ -501,7 +533,17 @@ class AgentsClient(BaseClient):
                 await asyncio.sleep(0.1)
                 connect_waited += 0.1
             while True:
-                message = await message_queue.get()
+                try:
+                    message = await asyncio.wait_for(
+                        message_queue.get(), timeout=config.agent_logs_inactivity_timeout_seconds
+                    )
+                except TimeoutError:
+                    warning_message = (
+                        f"[Agent] {agent_id} websocket had no log events for "
+                        f"{config.agent_logs_inactivity_timeout_seconds}s. Falling back to status polling."
+                    )
+                    logger.warning(warning_message)
+                    return None
                 if message is None:
                     break
 
@@ -523,7 +565,12 @@ class AgentsClient(BaseClient):
 
         return None
 
-    async def async_watch_logs_and_wait(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse:
+    async def async_watch_logs_and_wait(
+        self,
+        agent_id: str,
+        session_id: str,
+        log: bool = True,
+    ) -> AgentStatusResponse:
         """
         Execute a task with the agent and wait for completion asynchronously.
 
@@ -544,20 +591,24 @@ class AgentsClient(BaseClient):
             )
 
         try:
-            response = await self.async_watch_logs(agent_id=agent_id, session_id=session_id, log=log)
+            response = await self.async_watch_logs(
+                agent_id=agent_id,
+                session_id=session_id,
+                log=log,
+            )
             if response is not None:
                 return response
             # If we didn't get a response, poll status until agent is closed
             logger.warning(f"[Agent] {agent_id} did not return status response. Polling status until closed.")
-            max_wait_secs = 300
-            waited = 0
-            while waited < max_wait_secs:
+            deadline = time.monotonic() + config.agent_status_poll_timeout_seconds
+            while time.monotonic() < deadline:
                 status = self.status(agent_id=agent_id)
                 if status.status == AgentStatus.closed:
                     return status
                 await asyncio.sleep(1)
-                waited += 1
-            raise TimeoutError(f"Agent {agent_id} did not reach a terminal state within {max_wait_secs}s")
+            raise TimeoutError(
+                f"Agent {agent_id} did not reach a terminal state within {config.agent_status_poll_timeout_seconds}s"
+            )
 
         except asyncio.CancelledError:
             # Best-effort cleanup: don't let HTTP failures mask the CancelledError

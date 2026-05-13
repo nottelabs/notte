@@ -490,6 +490,38 @@
 		return cursorStates.isInteractive || cursorStates.isHoverInteractive;
 	}
 
+	const NON_INTERACTIVE_CURSORS = new Set(['not-allowed', 'no-drop', 'wait', 'progress', 'initial', 'inherit']);
+
+	function getDisabledReason(element, style) {
+		if (style?.cursor && NON_INTERACTIVE_CURSORS.has(style.cursor)) {
+			return 'DISABLED_CURSOR';
+		}
+		if (
+			element.hasAttribute('disabled') ||
+			element.getAttribute('disabled') === 'true' ||
+			element.getAttribute('disabled') === '' ||
+			element.getAttribute('aria-disabled') === 'true'
+		) {
+			return 'DISABLED_ATTRIBUTE';
+		}
+		if (element.disabled) {
+			return 'DISABLED_PROPERTY';
+		}
+		if (
+			element.hasAttribute('readonly') ||
+			element.getAttribute('readonly') === 'true' ||
+			element.getAttribute('readonly') === '' ||
+			element.getAttribute('aria-readonly') === 'true' ||
+			element.readOnly
+		) {
+			return 'DISABLED_READONLY';
+		}
+		if (element.inert || element.hasAttribute('inert') || element.getAttribute('aria-inert') === 'true') {
+			return 'DISABLED_INERT';
+		}
+		return null;
+	}
+
 
 	/**
 	 * Checks if an element is interactive (general interactivity detection).
@@ -509,6 +541,11 @@
 		// Cache the tagName and style lookups
 		const tagName = element.tagName.toLowerCase();
 		const style = getCachedComputedStyle(element);
+
+		const disabledReason = getDisabledReason(element, style);
+		if (disabledReason !== null) {
+			return disabledReason;
+		}
 
 		// Check if element has pointer cursor using the dedicated function
 		let isInteractiveCursor = isPointerElementWithHover(element);
@@ -939,6 +976,10 @@
 	 */
 	function isElementDistinctInteraction(element) {
 		if (!element || element.nodeType !== Node.ELEMENT_NODE) {
+			return false;
+		}
+
+		if (getDisabledReason(element, getCachedComputedStyle(element)) !== null) {
 			return false;
 		}
 

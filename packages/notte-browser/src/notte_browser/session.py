@@ -780,7 +780,13 @@ class NotteSession(AsyncResource, SyncResource):
                             raise NoToolProvidedError(resolved_action)
                     case _:
                         resolved_action = await self._action_with_vault(resolved_action)
-                        success = await self.controller.execute(self.window, resolved_action, self._snapshot)
+                        if isinstance(resolved_action, InteractionAction):
+                            success = await asyncio.wait_for(
+                                self.controller.execute(self.window, resolved_action, self._snapshot),
+                                timeout=resolved_action.timeout / 1000.0,
+                            )
+                        else:
+                            success = await self.controller.execute(self.window, resolved_action, self._snapshot)
 
             except (NoSnapshotObservedError, NoStorageObjectProvidedError, NoToolProvidedError) as e:
                 # this should be handled by the caller
@@ -792,6 +798,14 @@ class NotteSession(AsyncResource, SyncResource):
             except RateLimitError as e:
                 success = False
                 message = "Rate limit reached. Waiting before retry."
+                exception = e
+            except asyncio.TimeoutError as e:
+                success = False
+                message = (
+                    f"Action timed out after {resolved_action.timeout}ms"
+                    if isinstance(resolved_action, InteractionAction)
+                    else "Action timed out."
+                )
                 exception = e
             except NotteBaseError as e:
                 # When raise_on_failure is True, we use the dev message to give more details to the user
@@ -843,7 +857,10 @@ class NotteSession(AsyncResource, SyncResource):
 
         # add screenshot to trajectory (after the execution)
         if self._window is not None:
-            _ = await self.ascreenshot()
+            try:
+                _ = await self.ascreenshot()
+            except Exception as e:
+                logger.warning(f"Failed to capture post-action screenshot: {e}")
 
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
         if _raise_on_failure and exception is not None:

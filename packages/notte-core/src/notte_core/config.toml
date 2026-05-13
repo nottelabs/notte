@@ -9,6 +9,8 @@ use_vision = true
 highlight_elements = true
 # max_history_tokens = 32000
 max_steps = 20
+agent_logs_inactivity_timeout_seconds = 300.0
+agent_status_poll_timeout_seconds = 300.0
 
 # [error]
 max_error_length = 500

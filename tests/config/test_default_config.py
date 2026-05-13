@@ -11,6 +11,8 @@ def test_default_config():
     assert config.raise_condition == "retry"
     assert config.max_error_length == 500
     assert config.max_consecutive_failures == 3
+    assert config.agent_logs_inactivity_timeout_seconds == 300.0
+    assert config.agent_status_poll_timeout_seconds == 300.0
     assert config.timeout_goto_ms == 10000
     assert config.timeout_default_ms == 8000
     assert config.timeout_action_ms == 5000
