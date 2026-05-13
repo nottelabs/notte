@@ -93,7 +93,7 @@ class BitwardenVault(BaseVault, SyncResource):
 
     @override
     async def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
-        secrets = self._secrets_cache or self._fetch_secrets()
+        secrets = self._secrets_cache if self._secrets_cache is not None else self._fetch_secrets()
         target_domain = get_root_domain(url)
         for secret in secrets:
             parsed = self._parse_secret_value(secret)
@@ -114,7 +114,7 @@ class BitwardenVault(BaseVault, SyncResource):
 
     @override
     async def delete_credentials_async(self, url: str) -> None:
-        secrets = self._secrets_cache or self._fetch_secrets()
+        secrets = self._secrets_cache if self._secrets_cache is not None else self._fetch_secrets()
         target_domain = get_root_domain(url)
         for secret in secrets:
             parsed = self._parse_secret_value(secret)
@@ -129,7 +129,7 @@ class BitwardenVault(BaseVault, SyncResource):
 
     @override
     async def list_credentials_async(self) -> list[Credential]:
-        secrets = self._secrets_cache or self._fetch_secrets()
+        secrets = self._secrets_cache if self._secrets_cache is not None else self._fetch_secrets()
         credentials: list[Credential] = []
         for secret in secrets:
             parsed = self._parse_secret_value(secret)
