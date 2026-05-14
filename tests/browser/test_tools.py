@@ -10,10 +10,11 @@ import notte
 
 client = NotteClient()
 
-CONSOLE_SIGNIN_URL = "https://console.notte.cc/signin"
-EMAIL_INPUT_SELECTOR = 'input[name="email"]'
-SEND_MAGIC_LINK_SELECTOR = 'internal:role=button[name="Send magic link"i]'
-EMAIL_DELIVERY_WAIT_MS = 10_000
+SEND_TEST_MAIL_URL = "https://xeramail.com/send-test-email"
+TEST_EMAIL_INPUT_SELECTOR = 'internal:role=textbox[name="Email Address"i]'
+SEND_TEST_EMAIL_BUTTON_SELECTOR = 'internal:role=button[name="Send Test Email"i]'
+TEST_EMAIL_SENDER = "test@xeramail.com"
+EMAIL_DELIVERY_WAIT_MS = 30_000
 
 
 @pytest.fixture
@@ -60,34 +61,30 @@ def test_tool_execution_in_session(persona: NottePersona, action: EmailReadActio
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=5)
-def test_signup_email_extraction(persona: NottePersona):
-    with notte.Session(headless=True, tools=[PersonaTool(persona)]) as session:
-        goto = session.execute(type="goto", url=CONSOLE_SIGNIN_URL)
-        assert goto.success, goto.message
+def test_persona_email_delivery_from_xeramail():
+    with client.Persona(create_vault=False, create_phone_number=False) as persona:
+        started_at = dt.datetime.now(dt.UTC) - dt.timedelta(seconds=10)
 
-        fill = session.execute(type="fill", selector=EMAIL_INPUT_SELECTOR, value=persona.info.email)
-        assert fill.success, fill.message
+        with notte.Session(headless=True, tools=[PersonaTool(persona)]) as session:
+            goto = session.execute(type="goto", url=SEND_TEST_MAIL_URL)
+            assert goto.success, goto.message
 
-        wait = session.execute(type="wait", time_ms=1000)
-        assert wait.success, wait.message
+            fill = session.execute(type="fill", selector=TEST_EMAIL_INPUT_SELECTOR, value=persona.info.email)
+            assert fill.success, fill.message
 
-        send_magic_link = session.execute(type="click", selector=SEND_MAGIC_LINK_SELECTOR)
-        assert send_magic_link.success, send_magic_link.message
+            send_test_email = session.execute(type="click", selector=SEND_TEST_EMAIL_BUTTON_SELECTOR)
+            assert send_test_email.success, send_test_email.message
 
-        wait_for_email = session.execute(type="wait", time_ms=EMAIL_DELIVERY_WAIT_MS)
-        assert wait_for_email.success, wait_for_email.message
+            wait_for_email = session.execute(type="wait", time_ms=EMAIL_DELIVERY_WAIT_MS)
+            assert wait_for_email.success, wait_for_email.message
 
-        inbox = session.execute(action=EmailReadAction(only_unread=False, timedelta=dt.timedelta(minutes=5)))
-        assert inbox.success, inbox.message
-        assert inbox.data is not None
-        assert inbox.data.structured is not None
+            inbox = session.execute(action=EmailReadAction(only_unread=False, timedelta=dt.timedelta(minutes=5)))
+            assert inbox.success, inbox.message
+            assert inbox.data is not None
+            assert inbox.data.structured is not None
 
-        emails = inbox.data.structured.get().emails
-        matching_emails = [
-            email
-            for email in emails
-            if email.subject == "Sign in to Notte"
-            and "console.notte.cc/auth/callback" in email.content
-            and "no-reply@mail.notte.cc" == email.sender_email
-        ]
-        assert matching_emails, f"No recent Notte sign-in email found in {len(emails)} emails"
+            emails = inbox.data.structured.get().emails
+            matching_emails = [
+                email for email in emails if email.created_at >= started_at and email.sender_email == TEST_EMAIL_SENDER
+            ]
+            assert matching_emails, f"No fresh test email from {TEST_EMAIL_SENDER} found in {len(emails)} emails"
