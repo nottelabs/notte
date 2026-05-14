@@ -21,6 +21,7 @@ dependencies = [
 integrations = ["notte-integrations==1.4.4.dev"]
 eval = ["notte-eval==1.4.4.dev"]
 mcp = ["notte-mcp==1.4.4.dev"]
+bitwarden = ["bitwarden-sdk>=2.0.0"]
 
 [tool.uv.sources]
 notte-core = { workspace = true }
@@ -118,3 +119,4 @@ reportIgnoreCommentWithoutRule = false
 failOnWarnings = true
 reportAny = false
 reportExplicitAny = false
+reportMissingTypeStubs = false
