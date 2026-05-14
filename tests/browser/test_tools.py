@@ -141,4 +141,4 @@ def test_signup_email_extraction():
                     return
 
             subjects = [email.subject for email in emails]
-            assert False, f"No fresh SMTP test email found in {len(emails)} emails. Subjects: {subjects!r}"
+            raise AssertionError(f"No fresh SMTP test email found in {len(emails)} emails. Subjects: {subjects!r}")
