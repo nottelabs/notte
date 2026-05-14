@@ -10,6 +10,11 @@ import notte
 
 client = NotteClient()
 
+CONSOLE_SIGNIN_URL = "https://console.notte.cc/signin"
+EMAIL_INPUT_SELECTOR = 'input[name="email"]'
+SEND_MAGIC_LINK_SELECTOR = 'internal:role=button[name="Send magic link"i]'
+EMAIL_DELIVERY_WAIT_MS = 10_000
+
 
 @pytest.fixture
 def persona():
@@ -57,18 +62,20 @@ def test_tool_execution_in_session(persona: NottePersona, action: EmailReadActio
 @pytest.mark.flaky(reruns=3, reruns_delay=5)
 def test_signup_email_extraction(persona: NottePersona):
     with notte.Session(headless=True, tools=[PersonaTool(persona)]) as session:
-        goto = session.execute(type="goto", url="https://console.notte.cc/signin")
+        goto = session.execute(type="goto", url=CONSOLE_SIGNIN_URL)
         assert goto.success, goto.message
 
-        _ = session.observe()
-        fill = session.execute(type="fill", id="I1", value=persona.info.email)
+        fill = session.execute(type="fill", selector=EMAIL_INPUT_SELECTOR, value=persona.info.email)
         assert fill.success, fill.message
 
         wait = session.execute(type="wait", time_ms=1000)
         assert wait.success, wait.message
 
-        send_magic_link = session.execute(type="click", selector='internal:role=button[name="Send magic link"i]')
+        send_magic_link = session.execute(type="click", selector=SEND_MAGIC_LINK_SELECTOR)
         assert send_magic_link.success, send_magic_link.message
+
+        wait_for_email = session.execute(type="wait", time_ms=EMAIL_DELIVERY_WAIT_MS)
+        assert wait_for_email.success, wait_for_email.message
 
         inbox = session.execute(action=EmailReadAction(only_unread=False, timedelta=dt.timedelta(minutes=5)))
         assert inbox.success, inbox.message
