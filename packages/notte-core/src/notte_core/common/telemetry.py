@@ -243,7 +243,9 @@ def track_usage(method_name: str) -> Callable[[F], F]:
                 capture_event(event_name, properties={"input": {"args": args, "kwargs": filtered_kwargs}})
                 return result
             except Exception as e:
-                capture_event(event_name, properties={"input": {"args": args, "kwargs": filtered_kwargs}, "error": str(e)})
+                capture_event(
+                    event_name, properties={"input": {"args": args, "kwargs": filtered_kwargs}, "error": str(e)}
+                )
                 raise e
 
         return wrapper  # type: ignore
