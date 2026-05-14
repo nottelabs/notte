@@ -1,3 +1,5 @@
+import datetime as dt
+
 import pytest
 from notte_browser.errors import NoToolProvidedError
 from notte_browser.tools.base import EmailReadAction, PersonaTool
@@ -54,14 +56,31 @@ def test_tool_execution_in_session(persona: NottePersona, action: EmailReadActio
 
 @pytest.mark.flaky(reruns=3, reruns_delay=5)
 def test_signup_email_extraction(persona: NottePersona):
-    with notte.Session(headless=True) as session:
-        agent = notte.Agent(session=session, persona=persona, max_steps=15)
-        resp = agent.run(
-            task=(
-                "Go to console.notte.cc, login with the email signup email, verify the account. "
-                "Stop after the account is verified, i.e as soon as your are on the 'One more second' page."
-                "CRITICAL: do not fill the in the onboarding form, just stop after the account is verified"
-            ),
-            url="https://console.notte.cc",
-        )
-        assert resp.success, f"Failed to run agent: {resp.answer}"
+    with notte.Session(headless=True, tools=[PersonaTool(persona)]) as session:
+        goto = session.execute(type="goto", url="https://console.notte.cc/signin")
+        assert goto.success, goto.message
+
+        _ = session.observe()
+        fill = session.execute(type="fill", id="I1", value=persona.info.email)
+        assert fill.success, fill.message
+
+        wait = session.execute(type="wait", time_ms=1000)
+        assert wait.success, wait.message
+
+        send_magic_link = session.execute(type="click", selector='internal:role=button[name="Send magic link"i]')
+        assert send_magic_link.success, send_magic_link.message
+
+        inbox = session.execute(action=EmailReadAction(only_unread=False, timedelta=dt.timedelta(minutes=5)))
+        assert inbox.success, inbox.message
+        assert inbox.data is not None
+        assert inbox.data.structured is not None
+
+        emails = inbox.data.structured.get().emails
+        matching_emails = [
+            email
+            for email in emails
+            if email.subject == "Sign in to Notte"
+            and "console.notte.cc/auth/callback" in email.content
+            and "no-reply@mail.notte.cc" == email.sender_email
+        ]
+        assert matching_emails, f"No recent Notte sign-in email found in {len(emails)} emails"
