@@ -64,15 +64,19 @@ def test_tool_execution_in_session(persona: NottePersona, action: EmailReadActio
 def test_persona_email_delivery_from_xeramail():
     with client.Persona(create_vault=False, create_phone_number=False) as persona:
         started_at = dt.datetime.now(dt.UTC) - dt.timedelta(seconds=10)
+        print(f"Using persona {persona.persona_id}: {persona.info.email}")
 
         with notte.Session(headless=True, tools=[PersonaTool(persona)]) as session:
             goto = session.execute(type="goto", url=SEND_TEST_MAIL_URL)
+            print(f"goto: success={goto.success} message={goto.message!r}")
             assert goto.success, goto.message
 
             fill = session.execute(type="fill", selector=TEST_EMAIL_INPUT_SELECTOR, value=persona.info.email)
+            print(f"fill: success={fill.success} message={fill.message!r}")
             assert fill.success, fill.message
 
             send_test_email = session.execute(type="click", selector=SEND_TEST_EMAIL_BUTTON_SELECTOR)
+            print(f"send: success={send_test_email.success} message={send_test_email.message!r}")
             assert send_test_email.success, send_test_email.message
 
             wait_for_email = session.execute(type="wait", time_ms=EMAIL_DELIVERY_WAIT_MS)
@@ -84,6 +88,13 @@ def test_persona_email_delivery_from_xeramail():
             assert inbox.data.structured is not None
 
             emails = inbox.data.structured.get().emails
+            for email in emails:
+                print(
+                    "email:",
+                    f"subject={email.subject!r}",
+                    f"sender={email.sender_email!r}",
+                    f"created_at={email.created_at.isoformat()}",
+                )
             matching_emails = [
                 email for email in emails if email.created_at >= started_at and email.sender_email == TEST_EMAIL_SENDER
             ]
