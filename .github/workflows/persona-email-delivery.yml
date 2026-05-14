@@ -15,11 +15,9 @@ env:
   CACHE_TYPE: "pip"
   NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
   NOTTE_API_URL: "https://us-staging.notte.cc"
-  NOTTE_TEST_SMTP_HOST: ${{ secrets.NOTTE_TEST_SMTP_HOST }}
-  NOTTE_TEST_SMTP_PORT: ${{ secrets.NOTTE_TEST_SMTP_PORT }}
-  NOTTE_TEST_SMTP_USERNAME: ${{ secrets.NOTTE_TEST_SMTP_USERNAME }}
-  NOTTE_TEST_SMTP_PASSWORD: ${{ secrets.NOTTE_TEST_SMTP_PASSWORD }}
-  NOTTE_TEST_SMTP_SENDER: ${{ secrets.NOTTE_TEST_SMTP_SENDER }}
+  SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+  EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+  EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
   DISABLE_TELEMETRY: "true"
   PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright-browsers
 
@@ -69,16 +67,16 @@ jobs:
             echo "NOTTE_API_KEY is not set"
             exit 1
           fi
-          if [ -z "$NOTTE_TEST_SMTP_HOST" ]; then
-            echo "NOTTE_TEST_SMTP_HOST is not set"
+          if [ -z "$SMTP_SERVER" ]; then
+            echo "SMTP_SERVER is not set"
             exit 1
           fi
-          if [ -z "$NOTTE_TEST_SMTP_USERNAME" ]; then
-            echo "NOTTE_TEST_SMTP_USERNAME is not set"
+          if [ -z "$EMAIL_SENDER" ]; then
+            echo "EMAIL_SENDER is not set"
             exit 1
           fi
-          if [ -z "$NOTTE_TEST_SMTP_PASSWORD" ]; then
-            echo "NOTTE_TEST_SMTP_PASSWORD is not set"
+          if [ -z "$EMAIL_PASSWORD" ]; then
+            echo "EMAIL_PASSWORD is not set"
             exit 1
           fi
 

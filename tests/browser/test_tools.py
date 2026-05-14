@@ -14,12 +14,11 @@ import notte
 
 client = NotteClient()
 
-SMTP_HOST_ENV = "NOTTE_TEST_SMTP_HOST"
-SMTP_PORT_ENV = "NOTTE_TEST_SMTP_PORT"
-SMTP_USERNAME_ENV = "NOTTE_TEST_SMTP_USERNAME"
-SMTP_PASSWORD_ENV = "NOTTE_TEST_SMTP_PASSWORD"  # pragma: allowlist secret
-SMTP_SENDER_ENV = "NOTTE_TEST_SMTP_SENDER"
-SMTP_STARTTLS_ENV = "NOTTE_TEST_SMTP_STARTTLS"
+SMTP_SERVER_ENV = "SMTP_SERVER"
+SMTP_PORT_ENV = "SMTP_PORT"
+SMTP_USERNAME_ENV = "EMAIL_SENDER"
+SMTP_PASSWORD_ENV = "EMAIL_PASSWORD"  # pragma: allowlist secret
+SMTP_STARTTLS_ENV = "SMTP_STARTTLS"
 EMAIL_READ_WINDOW = dt.timedelta(minutes=10)
 EMAIL_READ_ATTEMPTS = 4
 EMAIL_READ_WAIT_MS = 10_000
@@ -69,21 +68,21 @@ def test_tool_execution_in_session(persona: NottePersona, action: EmailReadActio
 
 
 def _send_test_email(recipient: str, subject: str) -> str:
-    missing_env = [name for name in [SMTP_HOST_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV] if os.getenv(name) is None]
+    missing_env = [name for name in [SMTP_SERVER_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV] if os.getenv(name) is None]
     if missing_env:
         pytest.skip(f"{', '.join(missing_env)} required")
 
-    host = os.getenv(SMTP_HOST_ENV)
+    server = os.getenv(SMTP_SERVER_ENV)
     username = os.getenv(SMTP_USERNAME_ENV)
     password = os.getenv(SMTP_PASSWORD_ENV)
-    assert host is not None
+    assert server is not None
     assert username is not None
     assert password is not None
 
-    port = int(os.getenv(SMTP_PORT_ENV, "587"))
-    sender = os.getenv(SMTP_SENDER_ENV, username)
+    host, _, server_port = server.partition(":")
+    port = int(os.getenv(SMTP_PORT_ENV, server_port or "587"))
     message = EmailMessage()
-    message["From"] = sender
+    message["From"] = username
     message["To"] = recipient
     message["Subject"] = subject
     message.set_content(f"Notte persona email delivery test: {subject}")
@@ -99,12 +98,12 @@ def _send_test_email(recipient: str, subject: str) -> str:
             server.login(username, password)
             server.send_message(message)
 
-    return sender
+    return username
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=5)
 def test_persona_email_delivery_from_smtp():
-    missing_env = [name for name in [SMTP_HOST_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV] if os.getenv(name) is None]
+    missing_env = [name for name in [SMTP_SERVER_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV] if os.getenv(name) is None]
     if missing_env:
         pytest.skip(f"{', '.join(missing_env)} required")
 

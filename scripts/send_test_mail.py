@@ -8,24 +8,23 @@ from email.message import EmailMessage
 from dotenv import load_dotenv
 from notte_sdk import NotteClient
 
-SMTP_HOST_ENV = "NOTTE_TEST_SMTP_HOST"
-SMTP_PORT_ENV = "NOTTE_TEST_SMTP_PORT"
-SMTP_USERNAME_ENV = "NOTTE_TEST_SMTP_USERNAME"
-SMTP_PASSWORD_ENV = "NOTTE_TEST_SMTP_PASSWORD"  # pragma: allowlist secret
-SMTP_SENDER_ENV = "NOTTE_TEST_SMTP_SENDER"
-SMTP_STARTTLS_ENV = "NOTTE_TEST_SMTP_STARTTLS"
+SMTP_SERVER_ENV = "SMTP_SERVER"
+SMTP_PORT_ENV = "SMTP_PORT"
+SMTP_USERNAME_ENV = "EMAIL_SENDER"
+SMTP_PASSWORD_ENV = "EMAIL_PASSWORD"  # pragma: allowlist secret
+SMTP_STARTTLS_ENV = "SMTP_STARTTLS"
 EMAIL_READ_WINDOW = dt.timedelta(minutes=10)
 
 
 def send_test_email(recipient: str, subject: str) -> str:
-    host = os.environ[SMTP_HOST_ENV]
+    server = os.environ[SMTP_SERVER_ENV]
     username = os.environ[SMTP_USERNAME_ENV]
     password = os.environ[SMTP_PASSWORD_ENV]
-    port = int(os.getenv(SMTP_PORT_ENV, "587"))
-    sender = os.getenv(SMTP_SENDER_ENV, username)
+    host, _, server_port = server.partition(":")
+    port = int(os.getenv(SMTP_PORT_ENV, server_port or "587"))
 
     message = EmailMessage()
-    message["From"] = sender
+    message["From"] = username
     message["To"] = recipient
     message["Subject"] = subject
     message.set_content(f"Notte persona email delivery test: {subject}")
@@ -41,7 +40,7 @@ def send_test_email(recipient: str, subject: str) -> str:
             _ = server.login(username, password)
             _ = server.send_message(message)
 
-    return sender
+    return username
 
 
 def main() -> None:
