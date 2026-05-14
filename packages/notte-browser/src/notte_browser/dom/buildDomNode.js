@@ -490,7 +490,7 @@
 		return cursorStates.isInteractive || cursorStates.isHoverInteractive;
 	}
 
-	const NON_INTERACTIVE_CURSORS = new Set(['not-allowed', 'no-drop', 'wait', 'progress', 'initial', 'inherit']);
+	const NON_INTERACTIVE_CURSORS = new Set(['not-allowed', 'no-drop', 'wait', 'progress']);
 
 	function getDisabledReason(element, style) {
 		if (style?.cursor && NON_INTERACTIVE_CURSORS.has(style.cursor)) {
@@ -506,15 +506,6 @@
 		}
 		if (element.disabled) {
 			return 'DISABLED_PROPERTY';
-		}
-		if (
-			element.hasAttribute('readonly') ||
-			element.getAttribute('readonly') === 'true' ||
-			element.getAttribute('readonly') === '' ||
-			element.getAttribute('aria-readonly') === 'true' ||
-			element.readOnly
-		) {
-			return 'DISABLED_READONLY';
 		}
 		if (element.inert || element.hasAttribute('inert') || element.getAttribute('aria-inert') === 'true') {
 			return 'DISABLED_INERT';
@@ -560,9 +551,7 @@
 			'not-allowed', // Action not allowed
 			'no-drop',     // Drop not allowed
 			'wait',        // Processing
-			'progress',    // In progress
-			'initial',     // Initial value
-			'inherit'      // Inherited value
+			'progress'     // In progress
 			//? Let's just include all potentially clickable elements that are not specifically blocked
 			// 'none',        // No cursor
 			// 'default',     // Default cursor
@@ -589,7 +578,7 @@
 		const explicitDisableTags = new Set([
 			'disabled',           // Standard disabled attribute
 			// 'aria-disabled',      // ARIA disabled state
-			'readonly',          // Read-only state
+			// 'readonly',          // Read-only state
 			// 'aria-readonly',     // ARIA read-only state
 			// 'aria-hidden',       // Hidden from accessibility
 			// 'hidden',            // Hidden attribute
@@ -618,11 +607,6 @@
 			// Check for disabled property on form elements
 			if (element.disabled) {
 				return 'DISABLED_PROPERTY';
-			}
-
-			// Check for readonly property on form elements
-			if (element.readOnly) {
-				return 'DISABLED_READONLY';
 			}
 
 			// Check for inert property

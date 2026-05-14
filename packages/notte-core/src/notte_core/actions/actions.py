@@ -987,7 +987,7 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
     press_enter: bool | None = Field(default=None)
     text_label: str | None = Field(default=None)
     param: ActionParameter | None = Field(default=None, exclude=True)
-    timeout: int = Field(default=config.timeout_action_ms, description="Action timeout in milliseconds")
+    timeout: int = Field(default=config.timeout_action_ms, gt=0, description="Action timeout in milliseconds")
 
     INTERACTION_ACTION_REGISTRY: ClassVar[dict[str, typeAlias["InteractionAction"]]] = {}
 

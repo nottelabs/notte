@@ -329,7 +329,7 @@ class NotteConfigDict(TypedDict, total=False):
     # [agent]
     max_steps: int
     use_vision: bool
-    agent_logs_inactivity_timeout_seconds: float | None
+    agent_logs_inactivity_timeout_seconds: float
     agent_status_poll_timeout_seconds: float
 
     # [dom_parsing]
@@ -435,7 +435,7 @@ class NotteConfig(TomlConfig):
     # [agent]
     max_steps: int
     use_vision: bool
-    agent_logs_inactivity_timeout_seconds: float | None
+    agent_logs_inactivity_timeout_seconds: float
     agent_status_poll_timeout_seconds: float
 
     # [dom_parsing]
