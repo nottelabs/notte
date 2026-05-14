@@ -102,14 +102,14 @@ def _send_test_email(recipient: str, subject: str) -> str:
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=5)
-def test_persona_email_delivery_from_smtp():
+def test_signup_email_extraction():
     missing_env = [name for name in [SMTP_SERVER_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV] if os.getenv(name) is None]
     if missing_env:
         pytest.skip(f"{', '.join(missing_env)} required")
 
     with client.Persona(create_vault=False, create_phone_number=False) as persona:
         started_at = dt.datetime.now(dt.UTC) - dt.timedelta(seconds=10)
-        subject = f"Notte persona email delivery {uuid.uuid4()}"
+        subject = f"Notte signup persona email delivery {uuid.uuid4()}"
         sender = _send_test_email(persona.info.email, subject)
         print(f"Sent SMTP email from {sender} to persona {persona.persona_id}: {persona.info.email}")
 

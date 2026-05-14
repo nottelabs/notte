@@ -30,6 +30,9 @@ env:
   NOTTE_API_URL: "https://us-staging.notte.cc"
   NOTTE_VAULT_TEST_EMAIL: ${{ secrets.NOTTE_VAULT_TEST_EMAIL }}
   NOTTE_VAULT_TEST_PASSWORD: ${{ secrets.NOTTE_VAULT_TEST_PASSWORD }}
+  SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+  EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+  EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
   DISABLE_TELEMETRY: "true"
   PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright-browsers
 
@@ -126,6 +129,18 @@ jobs:
           fi
           if [ -z "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
             echo "GOOGLE_APPLICATION_CREDENTIALS is not set"
+            exit 1
+          fi
+          if [ -z "$SMTP_SERVER" ]; then
+            echo "SMTP_SERVER is not set"
+            exit 1
+          fi
+          if [ -z "$EMAIL_SENDER" ]; then
+            echo "EMAIL_SENDER is not set"
+            exit 1
+          fi
+          if [ -z "$EMAIL_PASSWORD" ]; then
+            echo "EMAIL_PASSWORD is not set"
             exit 1
           fi
           echo "Environment variables are set"
