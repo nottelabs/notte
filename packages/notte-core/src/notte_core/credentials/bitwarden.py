@@ -13,15 +13,15 @@ from notte_core.credentials.base import BaseVault, Credential, CredentialsDict, 
 from notte_core.utils.url import get_root_domain
 
 if TYPE_CHECKING:
-    from bitwarden_sdk import BitwardenClient
+    from bitwarden_sdk import BitwardenClient  # pyright: ignore[reportMissingTypeStubs]
 
 
 def _get_sdk() -> tuple[Any, Any, Any]:
     """Import and return (BitwardenClient, DeviceType, client_settings_from_dict)."""
     try:
-        from bitwarden_sdk import BitwardenClient as Cls
-        from bitwarden_sdk import DeviceType as DT
-        from bitwarden_sdk import client_settings_from_dict as csfd
+        from bitwarden_sdk import BitwardenClient as Cls  # pyright: ignore[reportMissingTypeStubs]
+        from bitwarden_sdk import DeviceType as DT  # pyright: ignore[reportMissingTypeStubs]
+        from bitwarden_sdk import client_settings_from_dict as csfd  # pyright: ignore[reportMissingTypeStubs]
 
         return Cls, DT, csfd
     except ImportError:

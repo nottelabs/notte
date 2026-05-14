@@ -119,4 +119,3 @@ reportIgnoreCommentWithoutRule = false
 failOnWarnings = true
 reportAny = false
 reportExplicitAny = false
-reportMissingTypeStubs = false
