@@ -1,77 +1,86 @@
 import argparse
 import datetime as dt
 import os
+import smtplib
+import uuid
+from email.message import EmailMessage
 
 from dotenv import load_dotenv
-from notte_browser.tools.base import PersonaTool
 from notte_sdk import NotteClient
 
-import notte
+SMTP_HOST_ENV = "NOTTE_TEST_SMTP_HOST"
+SMTP_PORT_ENV = "NOTTE_TEST_SMTP_PORT"
+SMTP_USERNAME_ENV = "NOTTE_TEST_SMTP_USERNAME"
+SMTP_PASSWORD_ENV = "NOTTE_TEST_SMTP_PASSWORD"  # pragma: allowlist secret
+SMTP_SENDER_ENV = "NOTTE_TEST_SMTP_SENDER"
+SMTP_STARTTLS_ENV = "NOTTE_TEST_SMTP_STARTTLS"
+EMAIL_READ_WINDOW = dt.timedelta(minutes=10)
 
-SEND_TEST_MAIL_URL = "https://xeramail.com/send-test-email"
-EMAIL_SELECTOR = 'internal:role=textbox[name="Email Address"i]'
-SEND_BUTTON_SELECTOR = 'internal:role=button[name="Send Test Email"i]'
-EMAIL_DELIVERY_WAIT_MS = 10_000
-EMAIL_READ_WINDOW = dt.timedelta(minutes=5)
+
+def send_test_email(recipient: str, subject: str) -> str:
+    host = os.environ[SMTP_HOST_ENV]
+    username = os.environ[SMTP_USERNAME_ENV]
+    password = os.environ[SMTP_PASSWORD_ENV]
+    port = int(os.getenv(SMTP_PORT_ENV, "587"))
+    sender = os.getenv(SMTP_SENDER_ENV, username)
+
+    message = EmailMessage()
+    message["From"] = sender
+    message["To"] = recipient
+    message["Subject"] = subject
+    message.set_content(f"Notte persona email delivery test: {subject}")
+
+    if port == 465:
+        with smtplib.SMTP_SSL(host, port, timeout=30) as server:
+            _ = server.login(username, password)
+            _ = server.send_message(message)
+    else:
+        with smtplib.SMTP(host, port, timeout=30) as server:
+            if os.getenv(SMTP_STARTTLS_ENV, "true").lower() != "false":
+                _ = server.starttls()
+            _ = server.login(username, password)
+            _ = server.send_message(message)
+
+    return sender
 
 
 def main() -> None:
     _ = load_dotenv(".env")
 
-    parser = argparse.ArgumentParser(description="Send a test email to a Notte persona via xeramail.com.")
+    parser = argparse.ArgumentParser(description="Send an SMTP test email to a Notte persona and read the inbox.")
     _ = parser.add_argument("--persona-id", default=os.getenv("NOTTE_TEST_PERSONA_ID"))
     _ = parser.add_argument(
         "--keep-persona",
         action="store_true",
         help="Keep the temporary persona created by this script. Ignored when --persona-id is set.",
     )
-    _ = parser.add_argument("--wait-ms", type=int, default=EMAIL_DELIVERY_WAIT_MS)
-    _ = parser.add_argument("--headful", action="store_true", help="Run with a visible browser.")
     args = parser.parse_args()
 
     client = NotteClient()
     created_persona = args.persona_id is None
-    persona = client.Persona() if created_persona else client.Persona(args.persona_id)
+    persona = (
+        client.Persona(create_vault=False, create_phone_number=False)
+        if created_persona
+        else client.Persona(args.persona_id)
+    )
 
     try:
-        email = persona.info.email
-        started_at = dt.datetime.now(dt.UTC) - dt.timedelta(seconds=10)
-        persona_mode = "temporary" if created_persona else "existing"
-        print(f"Using {persona_mode} persona {persona.persona_id}: {email}")
+        subject = f"Notte persona email delivery {uuid.uuid4()}"
+        sender = send_test_email(persona.info.email, subject)
+        print(f"Sent SMTP email from {sender} to persona {persona.persona_id}: {persona.info.email}")
 
-        with notte.Session(headless=not args.headful, tools=[PersonaTool(persona)]) as session:
-            goto = session.execute(type="goto", url=SEND_TEST_MAIL_URL)
-            print(f"goto: success={goto.success} message={goto.message!r}")
-            assert goto.success, goto.message
+        emails = persona.emails(only_unread=False, timedelta=EMAIL_READ_WINDOW)
+        for email in emails:
+            print(
+                "email:",
+                f"subject={email.subject!r}",
+                f"sender={email.sender_email!r}",
+                f"created_at={email.created_at.isoformat()}",
+            )
 
-            fill = session.execute(type="fill", selector=EMAIL_SELECTOR, value=email)
-            print(f"fill: success={fill.success} message={fill.message!r}")
-            assert fill.success, fill.message
-
-            send = session.execute(type="click", selector=SEND_BUTTON_SELECTOR)
-            print(f"send: success={send.success} message={send.message!r}")
-            assert send.success, send.message
-
-            wait = session.execute(type="wait", time_ms=args.wait_ms)
-            assert wait.success, wait.message
-
-            emails = persona.emails(only_unread=False, timedelta=EMAIL_READ_WINDOW)
-            print(f"email_read: found {len(emails)} email(s)")
-            for email_response in emails:
-                print(
-                    "email:",
-                    f"subject={email_response.subject!r}",
-                    f"sender={email_response.sender_email!r}",
-                    f"created_at={email_response.created_at.isoformat()}",
-                )
-
-            matching_emails = [
-                email_response
-                for email_response in emails
-                if email_response.created_at >= started_at and email_response.sender_email == "test@xeramail.com"
-            ]
-            assert matching_emails, f"No fresh test email found in {len(emails)} emails"
-            print(f"Received {len(matching_emails)} fresh test email(s).")
+        matching_emails = [email for email in emails if email.subject == subject]
+        assert matching_emails, f"No fresh SMTP test email found in {len(emails)} emails"
+        print(f"Received {len(matching_emails)} matching email(s).")
     finally:
         if created_persona and not args.keep_persona:
             persona.delete()

@@ -15,6 +15,11 @@ env:
   CACHE_TYPE: "pip"
   NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
   NOTTE_API_URL: "https://us-staging.notte.cc"
+  NOTTE_TEST_SMTP_HOST: ${{ secrets.NOTTE_TEST_SMTP_HOST }}
+  NOTTE_TEST_SMTP_PORT: ${{ secrets.NOTTE_TEST_SMTP_PORT }}
+  NOTTE_TEST_SMTP_USERNAME: ${{ secrets.NOTTE_TEST_SMTP_USERNAME }}
+  NOTTE_TEST_SMTP_PASSWORD: ${{ secrets.NOTTE_TEST_SMTP_PASSWORD }}
+  NOTTE_TEST_SMTP_SENDER: ${{ secrets.NOTTE_TEST_SMTP_SENDER }}
   DISABLE_TELEMETRY: "true"
   PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright-browsers
 
@@ -64,6 +69,18 @@ jobs:
             echo "NOTTE_API_KEY is not set"
             exit 1
           fi
+          if [ -z "$NOTTE_TEST_SMTP_HOST" ]; then
+            echo "NOTTE_TEST_SMTP_HOST is not set"
+            exit 1
+          fi
+          if [ -z "$NOTTE_TEST_SMTP_USERNAME" ]; then
+            echo "NOTTE_TEST_SMTP_USERNAME is not set"
+            exit 1
+          fi
+          if [ -z "$NOTTE_TEST_SMTP_PASSWORD" ]; then
+            echo "NOTTE_TEST_SMTP_PASSWORD is not set"
+            exit 1
+          fi
 
       - name: Run persona email delivery test
-        run: uv run pytest -s tests/browser/test_tools.py::test_persona_email_delivery_from_xeramail
+        run: uv run pytest -s tests/browser/test_tools.py::test_persona_email_delivery_from_smtp

@@ -1,4 +1,8 @@
 import datetime as dt
+import os
+import smtplib
+import uuid
+from email.message import EmailMessage
 
 import pytest
 from notte_browser.errors import NoToolProvidedError
@@ -10,11 +14,15 @@ import notte
 
 client = NotteClient()
 
-SEND_TEST_MAIL_URL = "https://xeramail.com/send-test-email"
-TEST_EMAIL_INPUT_SELECTOR = 'internal:role=textbox[name="Email Address"i]'
-SEND_TEST_EMAIL_BUTTON_SELECTOR = 'internal:role=button[name="Send Test Email"i]'
-TEST_EMAIL_SENDER = "test@xeramail.com"
-EMAIL_DELIVERY_WAIT_MS = 30_000
+SMTP_HOST_ENV = "NOTTE_TEST_SMTP_HOST"
+SMTP_PORT_ENV = "NOTTE_TEST_SMTP_PORT"
+SMTP_USERNAME_ENV = "NOTTE_TEST_SMTP_USERNAME"
+SMTP_PASSWORD_ENV = "NOTTE_TEST_SMTP_PASSWORD"  # pragma: allowlist secret
+SMTP_SENDER_ENV = "NOTTE_TEST_SMTP_SENDER"
+SMTP_STARTTLS_ENV = "NOTTE_TEST_SMTP_STARTTLS"
+EMAIL_READ_WINDOW = dt.timedelta(minutes=10)
+EMAIL_READ_ATTEMPTS = 4
+EMAIL_READ_WAIT_MS = 10_000
 
 
 @pytest.fixture
@@ -60,42 +68,78 @@ def test_tool_execution_in_session(persona: NottePersona, action: EmailReadActio
         assert len(out.data.structured.get().emails) > 0
 
 
+def _send_test_email(recipient: str, subject: str) -> str:
+    missing_env = [name for name in [SMTP_HOST_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV] if os.getenv(name) is None]
+    if missing_env:
+        pytest.skip(f"{', '.join(missing_env)} required")
+
+    host = os.getenv(SMTP_HOST_ENV)
+    username = os.getenv(SMTP_USERNAME_ENV)
+    password = os.getenv(SMTP_PASSWORD_ENV)
+    assert host is not None
+    assert username is not None
+    assert password is not None
+
+    port = int(os.getenv(SMTP_PORT_ENV, "587"))
+    sender = os.getenv(SMTP_SENDER_ENV, username)
+    message = EmailMessage()
+    message["From"] = sender
+    message["To"] = recipient
+    message["Subject"] = subject
+    message.set_content(f"Notte persona email delivery test: {subject}")
+
+    if port == 465:
+        with smtplib.SMTP_SSL(host, port, timeout=30) as server:
+            server.login(username, password)
+            server.send_message(message)
+    else:
+        with smtplib.SMTP(host, port, timeout=30) as server:
+            if os.getenv(SMTP_STARTTLS_ENV, "true").lower() != "false":
+                server.starttls()
+            server.login(username, password)
+            server.send_message(message)
+
+    return sender
+
+
 @pytest.mark.flaky(reruns=3, reruns_delay=5)
-def test_persona_email_delivery_from_xeramail():
+def test_persona_email_delivery_from_smtp():
+    missing_env = [name for name in [SMTP_HOST_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV] if os.getenv(name) is None]
+    if missing_env:
+        pytest.skip(f"{', '.join(missing_env)} required")
+
     with client.Persona(create_vault=False, create_phone_number=False) as persona:
         started_at = dt.datetime.now(dt.UTC) - dt.timedelta(seconds=10)
-        print(f"Using persona {persona.persona_id}: {persona.info.email}")
+        subject = f"Notte persona email delivery {uuid.uuid4()}"
+        sender = _send_test_email(persona.info.email, subject)
+        print(f"Sent SMTP email from {sender} to persona {persona.persona_id}: {persona.info.email}")
 
         with notte.Session(headless=True, tools=[PersonaTool(persona)]) as session:
-            goto = session.execute(type="goto", url=SEND_TEST_MAIL_URL)
-            print(f"goto: success={goto.success} message={goto.message!r}")
-            assert goto.success, goto.message
+            emails = []
+            for attempt in range(1, EMAIL_READ_ATTEMPTS + 1):
+                if attempt > 1:
+                    wait_for_email = session.execute(type="wait", time_ms=EMAIL_READ_WAIT_MS)
+                    assert wait_for_email.success, wait_for_email.message
 
-            fill = session.execute(type="fill", selector=TEST_EMAIL_INPUT_SELECTOR, value=persona.info.email)
-            print(f"fill: success={fill.success} message={fill.message!r}")
-            assert fill.success, fill.message
+                inbox = session.execute(action=EmailReadAction(only_unread=False, timedelta=EMAIL_READ_WINDOW))
+                assert inbox.success, inbox.message
+                assert inbox.data is not None
+                assert inbox.data.structured is not None
 
-            send_test_email = session.execute(type="click", selector=SEND_TEST_EMAIL_BUTTON_SELECTOR)
-            print(f"send: success={send_test_email.success} message={send_test_email.message!r}")
-            assert send_test_email.success, send_test_email.message
+                emails = inbox.data.structured.get().emails
+                for email in emails:
+                    print(
+                        "email:",
+                        f"subject={email.subject!r}",
+                        f"sender={email.sender_email!r}",
+                        f"created_at={email.created_at.isoformat()}",
+                    )
 
-            wait_for_email = session.execute(type="wait", time_ms=EMAIL_DELIVERY_WAIT_MS)
-            assert wait_for_email.success, wait_for_email.message
+                matching_emails = [
+                    email for email in emails if email.created_at >= started_at and email.subject == subject
+                ]
+                if matching_emails:
+                    return
 
-            inbox = session.execute(action=EmailReadAction(only_unread=False, timedelta=dt.timedelta(minutes=5)))
-            assert inbox.success, inbox.message
-            assert inbox.data is not None
-            assert inbox.data.structured is not None
-
-            emails = inbox.data.structured.get().emails
-            for email in emails:
-                print(
-                    "email:",
-                    f"subject={email.subject!r}",
-                    f"sender={email.sender_email!r}",
-                    f"created_at={email.created_at.isoformat()}",
-                )
-            matching_emails = [
-                email for email in emails if email.created_at >= started_at and email.sender_email == TEST_EMAIL_SENDER
-            ]
-            assert matching_emails, f"No fresh test email from {TEST_EMAIL_SENDER} found in {len(emails)} emails"
+            subjects = [email.subject for email in emails]
+            assert False, f"No fresh SMTP test email found in {len(emails)} emails. Subjects: {subjects!r}"
