@@ -284,6 +284,14 @@ async def test_execute_with_custom_timeout() -> None:
         assert result is not None
 
 
+def test_interaction_action_zero_timeout_uses_default_config_timeout() -> None:
+    from notte_core.common.config import config
+
+    action = ClickAction(id="B1", timeout=0)
+
+    assert action.timeout == config.timeout_action_ms
+
+
 @pytest.mark.asyncio
 async def test_click_disabled_ancestor_returns_failed_result() -> None:
     async with NotteSession(headless=True) as session:

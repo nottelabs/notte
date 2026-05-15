@@ -998,6 +998,14 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
             return value[:-3]
         return value
 
+    @field_validator("timeout")
+    @classmethod
+    def use_default_timeout_when_zero(cls, value: int) -> int:
+        # Playwright treats timeout=0 as infinite; keep LLM-provided zero bounded.
+        if value == 0:
+            return config.timeout_action_ms
+        return value
+
     @model_validator(mode="before")
     @classmethod
     def validate_id_and_selector(cls, data: Any) -> Any:
