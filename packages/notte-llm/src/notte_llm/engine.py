@@ -182,7 +182,32 @@ def is_openrouter_model(model: str) -> bool:
     return model.lower().startswith("openrouter/")
 
 
-def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
+AGENT_SCHEMA_EXCLUDED_PROPERTY_NAMES = {
+    "category",
+    "description",
+    "selector",
+    "selectors",
+    "press_enter",
+    "option_selector",
+    "text_label",
+    "timeout",
+    "params",
+    "status",
+    "param",
+    "only_images",
+    "scrape_links",
+    "scrape_images",
+    "ignored_tags",
+    "response_format",
+}
+
+
+def fix_schema_for_openai(
+    schema: dict[str, Any],
+    *,
+    require_all_properties: bool = True,
+    excluded_property_names: set[str] | None = None,
+) -> dict[str, Any]:
     """
     Convert a Pydantic JSON schema to OpenAI-compatible structured output format.
 
@@ -204,7 +229,7 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
     # OpenAI structured output only supports a limited subset of JSON Schema keywords.
     # Using a whitelist approach to only keep supported keys.
     # Ref: https://platform.openai.com/docs/guides/structured-outputs
-    # Note: "required" is intentionally omitted - we skip it explicitly and regenerate it
+    # Note: "required" is intentionally omitted from the whitelist because we handle it explicitly.
     allowed_schema_keys = {
         "type",
         "properties",
@@ -231,7 +256,7 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
             pn_dict = cast(dict[str, Any], pn)
             property_names_enum = cast(list[str] | None, pn_dict.get("enum"))
         if isinstance(additional, dict) and property_names_enum is not None and obj_dict.get("type") == "object":
-            value_schema: dict[str, Any] = additional
+            value_schema = cast(dict[str, Any], additional)
             explicit_props: dict[str, Any] = {}
             for prop_name in property_names_enum:
                 explicit_props[prop_name] = dict(value_schema)
@@ -260,16 +285,20 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
                 if expanded is not None:
                     obj_dict = expanded
                     was_expanded = True
+            original_required = obj_dict.get("required")
 
             cleaned: dict[str, Any] = {}
             for key, value in obj_dict.items():
+                if is_properties_map and excluded_property_names is not None and key in excluded_property_names:
+                    continue
+
                 # OpenAI strict mode doesn't support oneOf, convert to anyOf
                 # Only apply to schema keywords, not property names
                 if not is_properties_map and key == "oneOf":
                     cleaned["anyOf"] = clean_schema(value, is_properties_map=False)
                     continue
 
-                # Skip original `required` - we'll regenerate it from properties
+                # Skip original `required` - we'll either regenerate it from properties or preserve it below.
                 # Only apply to schema keywords, not property names
                 if not is_properties_map and key == "required":
                     continue
@@ -291,7 +320,10 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
             # OpenAI strict mode requires:
             # 1. additionalProperties: false on all objects
             # 2. properties must be defined (even if empty)
-            # 3. required must include exactly all property keys
+            # 3. required must include exactly all property keys for native OpenAI strict mode.
+            #
+            # OpenRouter's Gemini backend accepts the OpenAI-compatible json_schema
+            # wrapper while still behaving better with Gemini-style optional fields.
             if "properties" in cleaned or cleaned.get("type") == "object":
                 cleaned["additionalProperties"] = False
                 # Ensure properties exists (OpenAI requires it for objects)
@@ -309,7 +341,18 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
                             props[prop_key] = {"anyOf": branches}
                         else:
                             props[prop_key] = {"anyOf": [original, {"type": "null"}]}
-                cleaned["required"] = list(cast(dict[str, Any], cleaned["properties"]).keys())
+                properties = cast(dict[str, Any], cleaned["properties"])
+                if require_all_properties or was_expanded:
+                    cleaned["required"] = list(properties.keys())
+                else:
+                    original_required_keys = (
+                        cast(list[str], original_required) if isinstance(original_required, list) else []
+                    )
+                    required_keys = [key for key in original_required_keys if key in properties]
+                    const_keys = [
+                        key for key, value in properties.items() if isinstance(value, dict) and "const" in value
+                    ]
+                    cleaned["required"] = list(dict.fromkeys([*required_keys, *const_keys]))
 
             return cleaned
         elif isinstance(obj, list):
@@ -328,6 +371,15 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
             "schema": cleaned_schema,
         },
     }
+
+
+def fix_schema_for_openrouter_gemini(schema: dict[str, Any]) -> dict[str, Any]:
+    """Build an OpenRouter response_format for Gemini without forcing optional defaults into output."""
+    return fix_schema_for_openai(
+        schema,
+        require_all_properties=False,
+        excluded_property_names=AGENT_SCHEMA_EXCLUDED_PROPERTY_NAMES,
+    )
 
 
 class LLMEngine:
@@ -377,6 +429,10 @@ class LLMEngine:
             if is_routed_via_openrouter and is_anthropic_model(effective_model):
                 litellm_response_format = dict(type="json_object")
                 use_strict_response_format = False
+            # For Gemini through OpenRouter, keep OpenAI's transport wrapper but preserve
+            # Pydantic optional fields so Gemini does not invent defaults like timeout=0.
+            elif is_routed_via_openrouter and is_gemini_model(effective_model):
+                litellm_response_format = fix_schema_for_openrouter_gemini(raw_schema)
             # For OpenRouter-prefixed models, use OpenAI schema format
             # OpenRouter expects OpenAI-compatible json_schema wrapper, not Gemini's native format
             elif is_openrouter_model(effective_model):

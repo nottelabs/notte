@@ -3,7 +3,14 @@ from unittest.mock import Mock, patch
 import pytest
 from litellm import Message
 from notte_core.errors.base import ErrorConfig
-from notte_llm.engine import LLMEngine, StructuredContent, fix_schema_for_gemini, fix_schema_for_openai
+from notte_llm.engine import (
+    LLMEngine,
+    StructuredContent,
+    fix_schema_for_gemini,
+    fix_schema_for_openai,
+    fix_schema_for_openrouter_gemini,
+)
+from pydantic import BaseModel
 
 
 @pytest.fixture
@@ -232,6 +239,117 @@ class TestFixSchemaForOpenai:
         result = fix_schema_for_openai(schema)
         inner = result["json_schema"]["schema"]
         assert set(inner["required"]) == {"name", "age"}
+
+
+class TestFixSchemaForOpenrouterGemini:
+    """Tests for Gemini models routed through OpenRouter's OpenAI-compatible API."""
+
+    def test_preserves_original_required_fields(self):
+        schema = {
+            "type": "object",
+            "title": "test",
+            "properties": {
+                "type": {"type": "string", "const": "fill"},
+                "id": {"type": "string"},
+                "value": {"type": "string"},
+                "timeout": {"type": "integer", "default": 5000},
+            },
+            "required": ["value"],
+        }
+        result = fix_schema_for_openrouter_gemini(schema)
+        inner = result["json_schema"]["schema"]
+
+        assert result["type"] == "json_schema"
+        assert result["json_schema"]["strict"] is True
+        assert set(inner["required"]) == {"type", "value"}
+        assert "timeout" not in inner["properties"]
+        assert "category" not in inner["properties"]
+        assert "description" not in inner["properties"]
+
+    def test_preserves_missing_required_as_empty_required(self):
+        schema = {
+            "type": "object",
+            "title": "test",
+            "properties": {
+                "selector": {"type": "string", "default": None},
+                "timeout": {"type": "integer", "default": 5000},
+            },
+        }
+        result = fix_schema_for_openrouter_gemini(schema)
+        inner = result["json_schema"]["schema"]
+
+        assert inner["required"] == []
+        assert inner["properties"] == {}
+
+    def test_inner_llm_completion_fill_timeout_is_not_required(self):
+        from notte_core.agent_types import AgentCompletion
+
+        schema = AgentCompletion.InnerLlmCompletion.model_json_schema()
+        result = fix_schema_for_openrouter_gemini(schema)
+        inner = result["json_schema"]["schema"]
+
+        fill = None
+        for item in inner["properties"]["action"]["anyOf"]:
+            if item.get("properties", {}).get("type", {}).get("const") == "fill":
+                fill = item
+                break
+
+        assert fill is not None, "fill action not found in schema"
+        assert "timeout" not in fill["properties"]
+        assert "category" not in fill["properties"]
+        assert "description" not in fill["properties"]
+        assert "selector" not in fill["properties"]
+        assert "press_enter" not in fill["properties"]
+        assert "param" not in fill["properties"]
+        assert "type" in fill["required"]
+        assert "value" in fill["required"]
+
+    def test_inner_llm_completion_goto_requires_url_without_internal_fields(self):
+        from notte_core.agent_types import AgentCompletion
+
+        schema = AgentCompletion.InnerLlmCompletion.model_json_schema()
+        result = fix_schema_for_openrouter_gemini(schema)
+        inner = result["json_schema"]["schema"]
+
+        goto = None
+        for item in inner["properties"]["action"]["anyOf"]:
+            if item.get("properties", {}).get("type", {}).get("const") == "goto":
+                goto = item
+                break
+
+        assert goto is not None, "goto action not found in schema"
+        assert set(goto["required"]) == {"type", "url"}
+        assert set(goto["properties"]) == {"type", "url"}
+
+
+@pytest.mark.asyncio
+async def test_structured_completion_uses_openrouter_gemini_schema(monkeypatch):
+    from notte_llm import engine as engine_module
+
+    class Response(BaseModel):
+        value: str
+        timeout: int = 5000
+
+    llm_engine = LLMEngine(model="vertex_ai/gemini-2.5-flash")
+    seen: dict[str, object] = {}
+
+    async def fake_single_completion(*args, response_format=None, **kwargs) -> str:
+        seen["response_format"] = response_format
+        return '{"value": "ok"}'
+
+    monkeypatch.setattr(engine_module, "enable_openrouter", lambda: True)
+    monkeypatch.setattr(llm_engine, "single_completion", fake_single_completion)
+
+    response = await llm_engine.structured_completion(
+        messages=[Message(role="user", content="Hello")],
+        response_format=Response,
+    )
+
+    assert response.timeout == 5000
+    routed_schema = seen["response_format"]
+    assert isinstance(routed_schema, dict)
+    inner = routed_schema["json_schema"]["schema"]
+    assert set(inner["required"]) == {"value"}
 
 
 class TestStructuredContentExtended:
