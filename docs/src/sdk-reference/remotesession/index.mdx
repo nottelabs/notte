@@ -19,135 +19,336 @@ Attributes:
 ## Methods
 
 <CardGroup cols={2}>
-  <Card
-    title="__init__"
-    icon="function"
-    href="/sdk-reference/remotesession/__init__"
-  >
-    Create a new RemoteSession instance with the specified configuration
-  </Card>
-  <Card
-    title="cdp_url"
-    icon="function"
-    href="/sdk-reference/remotesession/cdp_url"
-  >
-    Get the Chrome DevTools Protocol WebSocket URL for the session
-  </Card>
-  <Card
-    title="debug_info"
-    icon="function"
-    href="/sdk-reference/remotesession/debug_info"
-  >
-    Get detailed debug information for the session
-  </Card>
-  <Card
-    title="execute"
-    icon="function"
-    href="/sdk-reference/remotesession/execute"
-  >
-    Executes an action on the current session page
-  </Card>
-  <Card
-    title="get_cookies"
-    icon="function"
-    href="/sdk-reference/remotesession/get_cookies"
-  >
-    Gets cookies from the session
-  </Card>
-  <Card
-    title="observe"
-    icon="function"
-    href="/sdk-reference/remotesession/observe"
-  >
-    Observes the current session page
-  </Card>
-  <Card
-    title="offset"
-    icon="function"
-    href="/sdk-reference/remotesession/offset"
-  >
-    Get the trajectory offset of the session
+  <Visibility for="humans">
+    <Card
+      title="__init__"
+      icon="function"
+      href="/sdk-reference/remotesession/__init__"
+    >
+      Create a new RemoteSession instance with the specified configuration
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="__init__"
+      icon="function"
+      href="/sdk-reference/remotesession/__init__.md"
+    >
+      Create a new RemoteSession instance with the specified configuration
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="cdp_url"
+      icon="function"
+      href="/sdk-reference/remotesession/cdp_url"
+    >
+      Get the Chrome DevTools Protocol WebSocket URL for the session
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="cdp_url"
+      icon="function"
+      href="/sdk-reference/remotesession/cdp_url.md"
+    >
+      Get the Chrome DevTools Protocol WebSocket URL for the session
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="debug_info"
+      icon="function"
+      href="/sdk-reference/remotesession/debug_info"
+    >
+      Get detailed debug information for the session
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="debug_info"
+      icon="function"
+      href="/sdk-reference/remotesession/debug_info.md"
+    >
+      Get detailed debug information for the session
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="execute"
+      icon="function"
+      href="/sdk-reference/remotesession/execute"
+    >
+      Executes an action on the current session page
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="execute"
+      icon="function"
+      href="/sdk-reference/remotesession/execute.md"
+    >
+      Executes an action on the current session page
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="get_cookies"
+      icon="function"
+      href="/sdk-reference/remotesession/get_cookies"
+    >
+      Gets cookies from the session
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="get_cookies"
+      icon="function"
+      href="/sdk-reference/remotesession/get_cookies.md"
+    >
+      Gets cookies from the session
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="observe"
+      icon="function"
+      href="/sdk-reference/remotesession/observe"
+    >
+      Observes the current session page
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="observe"
+      icon="function"
+      href="/sdk-reference/remotesession/observe.md"
+    >
+      Observes the current session page
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="offset"
+      icon="function"
+      href="/sdk-reference/remotesession/offset"
+    >
+      Get the trajectory offset of the session
 
-This is useful to start an agent that remembers information about steps
-that happened before it started
-  </Card>
-  <Card
-    title="replay"
-    icon="function"
-    href="/sdk-reference/remotesession/replay"
-  >
-    Get presigned URLs for the session replay
-  </Card>
-  <Card
-    title="reset"
-    icon="function"
-    href="/sdk-reference/remotesession/reset"
-  >
-    Resets the resource to its initial state
-  </Card>
-  <Card
-    title="scrape"
-    icon="function"
-    href="/sdk-reference/remotesession/scrape"
-  >
-    Scrape the current page data
-  </Card>
-  <Card
-    title="set_cookies"
-    icon="function"
-    href="/sdk-reference/remotesession/set_cookies"
-  >
-    Uploads cookies to the session
-  </Card>
-  <Card
-    title="start"
-    icon="function"
-    href="/sdk-reference/remotesession/start"
-  >
-    Start the session using the configured request
-  </Card>
-  <Card
-    title="status"
-    icon="function"
-    href="/sdk-reference/remotesession/status"
-  >
-    Get the current status of the session
-  </Card>
-  <Card
-    title="stop"
-    icon="function"
-    href="/sdk-reference/remotesession/stop"
-  >
-    Stop the session and clean up resources
-  </Card>
-  <Card
-    title="viewer"
-    icon="function"
-    href="/sdk-reference/remotesession/viewer"
-  >
-    Open the viewer for the session based on the viewer_type
-  </Card>
-  <Card
-    title="viewer_browser"
-    icon="function"
-    href="/sdk-reference/remotesession/viewer_browser"
-  >
-    Opens live session replay in browser (frame by frame) in a new browser tab
-  </Card>
-  <Card
-    title="viewer_cdp"
-    icon="function"
-    href="/sdk-reference/remotesession/viewer_cdp"
-  >
-    Open a browser tab with the debug URL for visualizing the session
-  </Card>
-  <Card
-    title="viewer_notebook"
-    icon="function"
-    href="/sdk-reference/remotesession/viewer_notebook"
-  >
-    Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook
-  </Card>
+      This is useful to start an agent that remembers information about steps
+      that happened before it started
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="offset"
+      icon="function"
+      href="/sdk-reference/remotesession/offset.md"
+    >
+      Get the trajectory offset of the session
+
+      This is useful to start an agent that remembers information about steps
+      that happened before it started
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="replay"
+      icon="function"
+      href="/sdk-reference/remotesession/replay"
+    >
+      Get presigned URLs for the session replay
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="replay"
+      icon="function"
+      href="/sdk-reference/remotesession/replay.md"
+    >
+      Get presigned URLs for the session replay
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="reset"
+      icon="function"
+      href="/sdk-reference/remotesession/reset"
+    >
+      Resets the resource to its initial state
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="reset"
+      icon="function"
+      href="/sdk-reference/remotesession/reset.md"
+    >
+      Resets the resource to its initial state
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="scrape"
+      icon="function"
+      href="/sdk-reference/remotesession/scrape"
+    >
+      Scrape the current page data
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="scrape"
+      icon="function"
+      href="/sdk-reference/remotesession/scrape.md"
+    >
+      Scrape the current page data
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="set_cookies"
+      icon="function"
+      href="/sdk-reference/remotesession/set_cookies"
+    >
+      Uploads cookies to the session
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="set_cookies"
+      icon="function"
+      href="/sdk-reference/remotesession/set_cookies.md"
+    >
+      Uploads cookies to the session
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="start"
+      icon="function"
+      href="/sdk-reference/remotesession/start"
+    >
+      Start the session using the configured request
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="start"
+      icon="function"
+      href="/sdk-reference/remotesession/start.md"
+    >
+      Start the session using the configured request
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="status"
+      icon="function"
+      href="/sdk-reference/remotesession/status"
+    >
+      Get the current status of the session
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="status"
+      icon="function"
+      href="/sdk-reference/remotesession/status.md"
+    >
+      Get the current status of the session
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="stop"
+      icon="function"
+      href="/sdk-reference/remotesession/stop"
+    >
+      Stop the session and clean up resources
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="stop"
+      icon="function"
+      href="/sdk-reference/remotesession/stop.md"
+    >
+      Stop the session and clean up resources
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="viewer"
+      icon="function"
+      href="/sdk-reference/remotesession/viewer"
+    >
+      Open the viewer for the session based on the viewer_type
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="viewer"
+      icon="function"
+      href="/sdk-reference/remotesession/viewer.md"
+    >
+      Open the viewer for the session based on the viewer_type
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="viewer_browser"
+      icon="function"
+      href="/sdk-reference/remotesession/viewer_browser"
+    >
+      Opens live session replay in browser (frame by frame) in a new browser tab
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="viewer_browser"
+      icon="function"
+      href="/sdk-reference/remotesession/viewer_browser.md"
+    >
+      Opens live session replay in browser (frame by frame) in a new browser tab
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="viewer_cdp"
+      icon="function"
+      href="/sdk-reference/remotesession/viewer_cdp"
+    >
+      Open a browser tab with the debug URL for visualizing the session
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="viewer_cdp"
+      icon="function"
+      href="/sdk-reference/remotesession/viewer_cdp.md"
+    >
+      Open a browser tab with the debug URL for visualizing the session
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="viewer_notebook"
+      icon="function"
+      href="/sdk-reference/remotesession/viewer_notebook"
+    >
+      Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="viewer_notebook"
+      icon="function"
+      href="/sdk-reference/remotesession/viewer_notebook.md"
+    >
+      Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook
+    </Card>
+  </Visibility>
 </CardGroup>
 
 ## Class Information

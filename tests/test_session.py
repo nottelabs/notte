@@ -1,3 +1,5 @@
+import asyncio
+
 import notte_core
 import pytest
 from notte_browser.captcha import CaptchaHandler
@@ -16,6 +18,7 @@ from notte_core.actions.actions import ScrapeAction
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.errors.actions import InvalidActionError
 from notte_llm.service import LLMService
+from pydantic import ValidationError
 
 from tests.mock.mock_browser import MockBrowserDriver
 from tests.mock.mock_service import MockLLMService
@@ -280,3 +283,42 @@ async def test_execute_with_custom_timeout() -> None:
         # Execute with custom timeout (10 seconds)
         result = await session.aexecute(type="click", id="B1", timeout=10000, raise_on_failure=False)
         assert result is not None
+
+
+def test_interaction_action_rejects_non_positive_timeout() -> None:
+    with pytest.raises(ValidationError):
+        _ = ClickAction(id="B1", timeout=0)
+
+
+@pytest.mark.asyncio
+async def test_click_disabled_ancestor_returns_failed_result() -> None:
+    async with NotteSession(headless=True) as session:
+        await session.window.page.set_content("""
+            <main inert>
+                <button id="target">Apply</button>
+            </main>
+        """)
+
+        result = await session.aexecute(type="click", selector="#target", raise_on_failure=False)
+
+        assert result.success is False
+        assert result.message is not None
+        assert "Element is disabled" in result.message
+
+
+@pytest.mark.asyncio
+async def test_interaction_execution_timeout_returns_failed_result() -> None:
+    async def slow_execute(*_args, **_kwargs) -> bool:
+        await asyncio.sleep(0.05)
+        return True
+
+    async with NotteSession(headless=True) as session:
+        session.controller.execute = slow_execute  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
+
+        result = await session.aexecute(
+            ClickAction(selector="#target", timeout=1),
+            raise_on_failure=False,
+        )
+
+        assert result.success is False
+        assert result.message == "Action timed out after 1ms"

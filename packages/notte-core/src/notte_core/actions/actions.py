@@ -198,8 +198,13 @@ class FormFillAction(BrowserAction):
     """
     Fill a form with multiple values. Critical: If you detect a form on a page, try to use this action at first, and otherwise use the regular fill action.
 
+    The `form_fill` action requires field keys that match the page's actual field mapping.
+    Do not guess keys from labels or HTML alone; use live observation or generated workflow
+    code to confirm the field mapping first.
+
     **Example:**
     ```python
+    # Field keys must come from the observed form mapping, not guesses.
     session.execute(type="form_fill", value={"email": "user@example.com", "first_name": "John", "last_name": "Doe"})
     ```
     """
@@ -982,7 +987,7 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
     press_enter: bool | None = Field(default=None)
     text_label: str | None = Field(default=None)
     param: ActionParameter | None = Field(default=None, exclude=True)
-    timeout: int = Field(default=config.timeout_action_ms, description="Action timeout in milliseconds")
+    timeout: int = Field(default=config.timeout_action_ms, gt=0, description="Action timeout in milliseconds")
 
     INTERACTION_ACTION_REGISTRY: ClassVar[dict[str, typeAlias["InteractionAction"]]] = {}
 

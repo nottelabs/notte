@@ -1,13 +1,83 @@
 # Notte
 
-> Notte - The best place to automate the browser
+## Critical Instructions For AI Agents
+
+STOP. Read and follow https://docs.notte.cc/quickstart.md before using SDK docs or writing SDK code.
+
+Goal: generate a reliable SDK automation script, then edit it. Do not hand-author the first pass from SDK reference pages.
+
+The Notte CLI is the source of truth for real browser state. You MUST use the Notte skill and CLI to inspect the live site, validate actions/selectors, handle auth/session state, and export workflow code with `notte sessions workflow-code`.
+
+Use SDK docs only to understand, run, or edit exported workflow code. SDK-first automation is guesswork on real pages with dynamic selectors, auth state, CAPTCHAs, and anti-bot behavior.
+
+## Agent Rule: Do Not Guess Selectors
+
+Do not hand-write SDK code with element IDs, selectors, or form fields from memory. Browser targets must come from a live `observe()` call, CLI `notte page observe` output, or generated workflow code. Guessed targets fail on real pages.
+
+## Agent Rule: Authentication Is Interactive
+
+Before writing scripts, scaffolding fallback code, or switching approaches, check Notte authentication:
+
+```bash
+notte auth status
+```
+
+If authentication is missing, do not stop, create fallback code, or ask for an API key first. The CLI works in non-interactive terminals; the human may just need to complete browser login. Run:
+
+```bash
+notte auth login
+```
+
+Tell the user: "Please complete the Notte login flow that just opened." Then poll every 5 seconds for up to 5 minutes:
+
+```bash
+notte auth status
+```
+
+Only continue after `notte auth status` succeeds. If login does not complete after 5 minutes, ask whether to retry login or set `NOTTE_API_KEY`.
+
+Do not generate placeholder automation, SDK scripts, or README-only instructions because Notte is unauthenticated. Authentication is part of the setup workflow.
+
+## CLI-First Workflow
+
+Complete this loop to generate valid SDK code before using SDK documentation or writing SDK code:
+
+```bash
+# 1. Install the CLI if needed
+brew tap nottelabs/notte-cli https://github.com/nottelabs/notte-cli.git
+brew install notte
+# or: go install github.com/nottelabs/notte-cli/cmd/notte@latest
+
+# 2. Authenticate. If this opens a browser login, wait for the user to finish.
+notte auth status || notte auth login
+# If login opens an interactive flow, wait for the user to complete it.
+# Then poll `notte auth status` until it succeeds before continuing.
+notte auth status
+
+# 3. Start a session, open the viewer, and navigate to the target page
+notte sessions start
+notte sessions viewer
+notte page goto https://target-site.com/
+
+# 4. Observe the live page and execute actions from real browser state
+notte page observe
+# Use element IDs only after they appear in the observe output. Do not guess IDs.
+notte page click "B3"
+notte page fill "I1" "example value"
+notte page scrape --instructions "Extract the relevant data"
+
+# 5. Export workflow code only after CLI exploration
+notte sessions workflow-code
+```
+
+Full Quickstart: https://docs.notte.cc/quickstart.md
 
 
 # Documentation
 
 ## Getting Started
 
-- [Introduction](https://docs.notte.cc/index.md): Notte - The best place to automate the browser
+- [Introduction](https://docs.notte.cc/index.md)
 - [Quickstart](https://docs.notte.cc/quickstart.md): Get started in a few seconds
 - [Concepts](https://docs.notte.cc/concepts.md): Core concepts in the Notte platform
 
@@ -32,6 +102,7 @@
 - [Static IPs](https://docs.notte.cc/features/sessions/static-ips.md): Use dedicated static IP addresses for your browser sessions
 - [Recordings](https://docs.notte.cc/features/sessions/recordings.md): Record and replay your browser sessions for debugging and analysis
 - [Live View](https://docs.notte.cc/features/sessions/live-view.md): Watch your browser sessions in real-time as they execute
+- [Embed in your app](https://docs.notte.cc/features/sessions/embed-iframe.md): Drop the live browser viewer into your own web app via iframe
 - [Browser Extensions](https://docs.notte.cc/features/sessions/browser-extensions.md): Load custom browser extensions in your sessions
 - [Cookies](https://docs.notte.cc/features/sessions/cookies.md): Persist authentication and manage cookies across sessions
 - [Cloudflare Web Bot Auth](https://docs.notte.cc/features/sessions/cloudflare-web-bot-auth.md): Access Cloudflare-protected websites by cryptographically signing browser requests
@@ -215,6 +286,14 @@
 
 # SDK
 
+## SDK Prerequisite Gate
+
+STOP. Do not use this SDK section yet unless you have already generated workflow code from the Quickstart-led CLI workflow.
+
+Before using any SDK link below, you must have a running CLI browser session, have explored the target page interactively, and have `notte sessions workflow-code` output to run, inspect, or refine. If you have not run `notte sessions workflow-code`, go back to https://docs.notte.cc/quickstart.md now.
+
+The SDK docs below are for generated-code editing and reference. They are not the starting point for manually authoring browser automation from scratch.
+
 ## Getting Started
 
 - [NotteClient](https://docs.notte.cc/sdk-reference/manual/index.md): The starting point for all operations
@@ -282,7 +361,7 @@
 
 - [Get started](https://docs.notte.cc/sdk-reference/manual/workflow.md): Create, manage, and execute automated web functions
 - [run](https://docs.notte.cc/sdk-reference/nottefunction/run.md): Run the function code using the specified version and variables
-- [update](https://docs.notte.cc/sdk-reference/nottefunction/update.md): Update the workflow with a a new code version
+- [update](https://docs.notte.cc/sdk-reference/nottefunction/update.md): Update the workflow with a new code version
 - [delete](https://docs.notte.cc/sdk-reference/nottefunction/delete.md): Delete the workflow from the notte console
 - [download](https://docs.notte.cc/sdk-reference/nottefunction/download.md): Download the function code from the notte console as a python file
 - [fork](https://docs.notte.cc/sdk-reference/nottefunction/fork.md): Fork a shared function into your own private function

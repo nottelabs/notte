@@ -490,6 +490,29 @@
 		return cursorStates.isInteractive || cursorStates.isHoverInteractive;
 	}
 
+	const NON_INTERACTIVE_CURSORS = new Set(['not-allowed', 'no-drop', 'wait', 'progress']);
+
+	function getDisabledReason(element, style) {
+		if (style?.cursor && NON_INTERACTIVE_CURSORS.has(style.cursor)) {
+			return 'DISABLED_CURSOR';
+		}
+		if (
+			element.hasAttribute('disabled') ||
+			element.getAttribute('disabled') === 'true' ||
+			element.getAttribute('disabled') === '' ||
+			element.getAttribute('aria-disabled') === 'true'
+		) {
+			return 'DISABLED_ATTRIBUTE';
+		}
+		if (element.disabled) {
+			return 'DISABLED_PROPERTY';
+		}
+		if (element.inert || element.hasAttribute('inert') || element.getAttribute('aria-inert') === 'true') {
+			return 'DISABLED_INERT';
+		}
+		return null;
+	}
+
 
 	/**
 	 * Checks if an element is interactive (general interactivity detection).
@@ -510,6 +533,11 @@
 		const tagName = element.tagName.toLowerCase();
 		const style = getCachedComputedStyle(element);
 
+		const disabledReason = getDisabledReason(element, style);
+		if (disabledReason !== null) {
+			return disabledReason;
+		}
+
 		// Check if element has pointer cursor using the dedicated function
 		let isInteractiveCursor = isPointerElementWithHover(element);
 
@@ -523,9 +551,7 @@
 			'not-allowed', // Action not allowed
 			'no-drop',     // Drop not allowed
 			'wait',        // Processing
-			'progress',    // In progress
-			'initial',     // Initial value
-			'inherit'      // Inherited value
+			'progress'     // In progress
 			//? Let's just include all potentially clickable elements that are not specifically blocked
 			// 'none',        // No cursor
 			// 'default',     // Default cursor
@@ -552,7 +578,7 @@
 		const explicitDisableTags = new Set([
 			'disabled',           // Standard disabled attribute
 			// 'aria-disabled',      // ARIA disabled state
-			'readonly',          // Read-only state
+			// 'readonly',          // Read-only state
 			// 'aria-readonly',     // ARIA read-only state
 			// 'aria-hidden',       // Hidden from accessibility
 			// 'hidden',            // Hidden attribute
@@ -581,11 +607,6 @@
 			// Check for disabled property on form elements
 			if (element.disabled) {
 				return 'DISABLED_PROPERTY';
-			}
-
-			// Check for readonly property on form elements
-			if (element.readOnly) {
-				return 'DISABLED_READONLY';
 			}
 
 			// Check for inert property
@@ -939,6 +960,10 @@
 	 */
 	function isElementDistinctInteraction(element) {
 		if (!element || element.nodeType !== Node.ELEMENT_NODE) {
+			return false;
+		}
+
+		if (getDisabledReason(element, getCachedComputedStyle(element)) !== null) {
 			return false;
 		}
 

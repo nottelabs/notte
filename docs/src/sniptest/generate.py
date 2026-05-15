@@ -81,6 +81,11 @@ def process_file(input_path: Path, dry_run: bool = False, verbose: bool = False)
                 if verbose:
                     return True, f"  [unchanged] {relative_input}"
                 return True, None
+            # Skip files that were manually edited (no auto-generated header)
+            if "Auto-generated mdx file" not in existing:
+                if verbose:
+                    return True, f"  [skipped-manual] {relative_output}"
+                return True, None
 
         if dry_run:
             return True, f"  [would create] {relative_output}"

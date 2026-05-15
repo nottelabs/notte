@@ -1,7 +1,7 @@
 # Code taken from:
 import datetime as dt
 from enum import StrEnum
-from typing import Any, ClassVar, Literal, Optional, Union  # type: ignore[attr-defined]
+from typing import Any, ClassVar, Literal, Optional, Union, cast  # type: ignore[attr-defined]
 
 from pydantic import BaseModel, ConfigDict, Field, create_model, field_serializer, field_validator, model_validator
 from typing_extensions import override
@@ -102,7 +102,11 @@ def create_model_from_schema(schema: dict[str, Any]) -> type[BaseModel]:
             else:
                 # Handle generic objects with additionalProperties
                 additional_props = field_schema.get("additionalProperties")
-                value_type = resolve_field_type(additional_props) if additional_props else Any
+                value_type = (
+                    resolve_field_type(cast(dict[str, Any], additional_props))
+                    if isinstance(additional_props, dict)
+                    else Any
+                )
                 return dict[str, value_type]
 
         return field_type  # type: ignore[return-value]

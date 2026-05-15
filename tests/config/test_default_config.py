@@ -1,4 +1,6 @@
-from notte_core.common.config import config
+import pytest
+from notte_core.common.config import NotteConfig, config
+from pydantic import ValidationError
 
 
 def test_default_config():
@@ -11,6 +13,8 @@ def test_default_config():
     assert config.raise_condition == "retry"
     assert config.max_error_length == 500
     assert config.max_consecutive_failures == 3
+    assert config.agent_logs_inactivity_timeout_seconds == 300.0
+    assert config.agent_status_poll_timeout_seconds == 300.0
     assert config.timeout_goto_ms == 10000
     assert config.timeout_default_ms == 8000
     assert config.timeout_action_ms == 5000
@@ -22,3 +26,15 @@ def test_default_config():
 
 def test_default_is_headless():
     assert config.headless, "headless should be true by default for tests"
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("agent_logs_inactivity_timeout_seconds", 0.0),
+        ("agent_status_poll_timeout_seconds", -1.0),
+    ],
+)
+def test_agent_timeout_config_values_must_be_positive(field: str, value: float):
+    with pytest.raises(ValidationError, match=field):
+        _ = NotteConfig.from_toml(**{field: value})

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Literal, Required, Self, Unpack
 
 import toml
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, Field, computed_field
 from typing_extensions import TypedDict, override
 
 from notte_core import LoggingSetup
@@ -329,6 +329,8 @@ class NotteConfigDict(TypedDict, total=False):
     # [agent]
     max_steps: int
     use_vision: bool
+    agent_logs_inactivity_timeout_seconds: float
+    agent_status_poll_timeout_seconds: float
 
     # [dom_parsing]
     highlight_elements: bool
@@ -340,6 +342,7 @@ class NotteConfigDict(TypedDict, total=False):
     timeout_goto_ms: int
     timeout_default_ms: int
     timeout_action_ms: int
+    timeout_evaluate_js_ms: int
     wait_retry_snapshot_ms: int
     wait_short_ms: int
     empty_page_max_retry: int
@@ -432,6 +435,8 @@ class NotteConfig(TomlConfig):
     # [agent]
     max_steps: int
     use_vision: bool
+    agent_logs_inactivity_timeout_seconds: float = Field(gt=0)
+    agent_status_poll_timeout_seconds: float = Field(gt=0)
 
     # [dom_parsing]
     highlight_elements: bool
@@ -443,6 +448,7 @@ class NotteConfig(TomlConfig):
     timeout_goto_ms: int
     timeout_default_ms: int
     timeout_action_ms: int
+    timeout_evaluate_js_ms: int
     wait_retry_snapshot_ms: int
     wait_short_ms: int
     empty_page_max_retry: int

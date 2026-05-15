@@ -109,11 +109,17 @@ profile-imports:
 docs-sdk: docs-llms
 	cd docs && uv run sphinx-build -b mdx sphinx _build
 	rm -rf docs/src/sdk-reference/baseaction
+	cd docs/src && uv run python scripts/apply_agent_md_notice.py
 
 
 .PHONY: docs-llms
 docs-llms:
 	cd docs/src && uv run python scripts/generate_llms.py
+
+
+.PHONY: docs-agent-notice
+docs-agent-notice:
+	cd docs/src && uv run python scripts/apply_agent_md_notice.py
 
 
 .PHONY: docs-check
@@ -126,7 +132,7 @@ docs-check:
 	fi
 	@$(MAKE) --no-print-directory docs-sdk
 	@if ! git diff HEAD --quiet -- docs || [ -n "$$(git ls-files --others --exclude-standard -- docs)" ]; then \
-		echo "\033[0;31mError: 'make docs-sdk' produced changes. Run it locally and commit the result.\033[0m"; \
+		echo "\033[0;31mError: docs generation produced changes. Run 'make docs-sdk docs-agent-notice' locally and commit the result.\033[0m"; \
 		git --no-pager diff HEAD --stat -- docs; \
 		git ls-files --others --exclude-standard -- docs; \
 		exit 1; \

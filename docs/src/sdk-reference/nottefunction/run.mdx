@@ -2,8 +2,9 @@
 title: "run"
 description: "Run the function code using the specified version and variables"
 ---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
-
+<AgentMdNotice />
 
 If no version is provided, the latest version is used.
 
@@ -49,4 +50,4 @@ function.run(variable1="value1", variable2="value2")
 
 ## Returns
 
-[`FunctionRunResponse`](/sdk-reference/misc/functionrunresponse)
+<Visibility for="humans">[`FunctionRunResponse`](/sdk-reference/misc/functionrunresponse)</Visibility><Visibility for="agents">[`FunctionRunResponse`](/sdk-reference/misc/functionrunresponse.md)</Visibility>

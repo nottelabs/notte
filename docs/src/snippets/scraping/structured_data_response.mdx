@@ -1,8 +1,7 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/scraping/structured_data_response.py */}
-
-```python structured_data_response.py
-
+<CodeGroup>
+```python Python
+from notte_sdk import NotteClient
+from pydantic import BaseModel
 
 class Product(BaseModel):
     name: str
@@ -16,3 +15,25 @@ product = client.scrape(url, response_format=Product)
 # Access the extracted data
 print(f"Name: {product.name}, Price: {product.price}")
 ```
+```javascript JavaScript
+import { z } from 'zod';
+import { NotteClient } from 'notte-sdk';
+
+const Product = z.object({
+  name: z.string(),
+  price: z.number(),
+});
+
+const client = new NotteClient({
+  apiKey: process.env.NOTTE_API_KEY,
+});
+
+const url = 'https://example.com/product';
+const product = await client.scrape(url, {
+  response_format: Product,
+});
+
+// Access the extracted data
+console.log(`Name: ${product.name}, Price: ${product.price}`);
+```
+</CodeGroup>

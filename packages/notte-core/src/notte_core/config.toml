@@ -9,6 +9,8 @@ use_vision = true
 highlight_elements = true
 # max_history_tokens = 32000
 max_steps = 20
+agent_logs_inactivity_timeout_seconds = 300.0
+agent_status_poll_timeout_seconds = 300.0
 
 # [error]
 max_error_length = 500
@@ -65,6 +67,7 @@ enable_pointer_elements = true
 timeout_goto_ms        = 10000
 timeout_default_ms     =  8000
 timeout_action_ms      =  5000
+timeout_evaluate_js_ms = 45000
 wait_retry_snapshot_ms =  1000
 wait_short_ms          =   500
 empty_page_max_retry   = 5

@@ -26,6 +26,7 @@ from notte_core.utils.url import is_valid_url
 from notte_sdk.types import (
     DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
     DEFAULT_HEADLESS_VIEWPORT_WIDTH,
+    AspectRatio,
     Cookie,
     SessionStartRequest,
 )
@@ -55,6 +56,7 @@ class BrowserWindowOptions(BaseModel):
     proxy: PlaywrightProxySettings | None
     viewport_width: int | None
     viewport_height: int | None
+    aspect_ratio: AspectRatio | None = None
     browser_type: BrowserType
     chrome_args: list[str] | None
     web_security: bool
@@ -77,6 +79,23 @@ class BrowserWindowOptions(BaseModel):
             raise ValueError("Both viewport_width and viewport_height must be set together or both must be None")
 
         if self.headless and self.viewport_width is None and self.viewport_height is None:
+            if self.cdp_url is not None:
+                logger.info(
+                    "🪟 Headless CDP session detected. Leaving viewport unset so the remote browser geometry is preserved."
+                )
+                return
+
+            if self.aspect_ratio is not None:
+                self.viewport_width, self.viewport_height = self._fit_aspect_ratio_in_default_viewport(
+                    self.aspect_ratio
+                )
+                message = (
+                    f"🪟 Headless mode detected. Setting viewport to {self.viewport_width}x{self.viewport_height} "
+                    + f"to respect aspect_ratio={self.aspect_ratio}."
+                )
+                logger.info(message)
+                return
+
             width_variation = random.randint(-50, 50)
             height_variation = random.randint(-50, 50)
             logger.warning(
@@ -84,6 +103,11 @@ class BrowserWindowOptions(BaseModel):
             )
             self.viewport_width = DEFAULT_HEADLESS_VIEWPORT_WIDTH + width_variation
             self.viewport_height = DEFAULT_HEADLESS_VIEWPORT_HEIGHT + height_variation
+
+    @staticmethod
+    def _fit_aspect_ratio_in_default_viewport(aspect_ratio: AspectRatio) -> tuple[int, int]:
+        width_ratio, height_ratio = (int(part) for part in aspect_ratio.split(":"))
+        return DEFAULT_HEADLESS_VIEWPORT_WIDTH, round(DEFAULT_HEADLESS_VIEWPORT_WIDTH * height_ratio / width_ratio)
 
     def get_chrome_args(self) -> list[str]:
         chrome_args = self.chrome_args or []
@@ -139,6 +163,7 @@ class BrowserWindowOptions(BaseModel):
             chrome_args=request.chrome_args,
             viewport_height=request.viewport_height,
             viewport_width=request.viewport_width,
+            aspect_ratio=request.aspect_ratio,
             cdp_url=request.cdp_url,
             web_security=config.web_security,
             debug_port=config.debug_port,

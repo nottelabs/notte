@@ -12,6 +12,10 @@
     "light": "/logo/logo-white.png"
   },
   "favicon": "/favicon.ico",
+  "banner": {
+    "content": "Get started: use the [Notte CLI skill](https://github.com/nottelabs/notte-skills/) to generate your first SDK script | [Setup guide](/quickstart)",
+    "dismissible": false
+  },
   "seo.indexing": "all",
   "navigation": {
     "languages": [
@@ -53,6 +57,7 @@
                       "features/sessions/static-ips",
                       "features/sessions/recordings",
                       "features/sessions/live-view",
+                      "features/sessions/embed-iframe",
                       "features/sessions/browser-extensions",
                       "features/sessions/cookies",
                       "features/sessions/cloudflare-web-bot-auth"
