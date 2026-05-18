@@ -238,7 +238,7 @@ def test_session_form_fill_with_vault_without_observe_uses_live_url():
     base_url = "https://apartment-board-demo-nine.vercel.app"
     login_url = f"{base_url}/auth/signin"
     username = "alder"
-    password = "rentals123"  # pragma: allowlist secret
+    password = "test-password"  # noqa: S105  # pragma: allowlist secret
 
     with client.Vault() as vault:
         _ = vault.add_credentials(url=base_url, username=username, password=password)
