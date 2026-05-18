@@ -2,11 +2,19 @@ import asyncio
 
 from notte_browser.session import NotteSession
 from notte_core.actions import FormFillAction
-from notte_core.credentials import EMAIL, PASSWORD
+from notte_core.credentials import EMAIL, PASSWORD, USERNAME
 from notte_core.credentials.types import ValueWithPlaceholder
 
 from tests.mock.mock_vault import MockVault
 from tests.mock.snapshot_factory import make_snapshot
+
+
+class FakeWindow:
+    def __init__(self, url: str) -> None:
+        self.url = url
+
+    async def snapshot(self):
+        return make_snapshot(self.url)
 
 
 def test_session_vault_replaces_form_fill_placeholders() -> None:
@@ -22,6 +30,38 @@ def test_session_vault_replaces_form_fill_placeholders() -> None:
     assert str(updated.value["email"]) == EMAIL
     assert isinstance(updated.value["current_password"], ValueWithPlaceholder)
     assert updated.value["current_password"].get_secret_value() == "s3cr3t"
+
+
+def test_session_vault_refreshes_snapshot_from_window() -> None:
+    vault = MockVault({"https://example.com": {"username": "fresh-user"}})
+    session = NotteSession(vault=vault)
+    session._window = FakeWindow("https://example.com")  # pyright: ignore[reportAttributeAccessIssue]
+
+    action = FormFillAction(value={"username": USERNAME})
+    updated = asyncio.run(session._action_with_vault(action))
+
+    assert session.snapshot.metadata.url == "https://example.com"
+    assert isinstance(updated.value["username"], ValueWithPlaceholder)
+    assert updated.value["username"].get_secret_value() == "fresh-user"
+
+
+def test_session_vault_uses_fresh_snapshot_instead_of_stale_snapshot() -> None:
+    vault = MockVault(
+        {
+            "https://old.example.com": {"username": "stale-user"},
+            "https://example.com": {"username": "fresh-user"},
+        }
+    )
+    session = NotteSession(vault=vault)
+    session.snapshot = make_snapshot("https://old.example.com")
+    session._window = FakeWindow("https://example.com")  # pyright: ignore[reportAttributeAccessIssue]
+
+    action = FormFillAction(value={"username": USERNAME})
+    updated = asyncio.run(session._action_with_vault(action))
+
+    assert session.snapshot.metadata.url == "https://example.com"
+    assert isinstance(updated.value["username"], ValueWithPlaceholder)
+    assert updated.value["username"].get_secret_value() == "fresh-user"
 
 
 def test_session_set_vault_enables_credential_replacement() -> None:

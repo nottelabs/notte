@@ -528,6 +528,8 @@ class NotteSession(AsyncResource, SyncResource):
         if self.vault is None or not isinstance(action, _SUPPORTED) or not self.vault.contains_credentials(action):
             return action
 
+        if self._window is not None:
+            self.snapshot = await self.window.snapshot()
         snapshot = self.snapshot
         try:
             if isinstance(action, FormFillAction):
