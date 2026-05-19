@@ -66,7 +66,7 @@ enable_pointer_elements = true
 # [playwright wait/timeout]
 timeout_goto_ms        = 10000
 timeout_default_ms     =  8000
-timeout_action_ms      =  5000
+timeout_action_ms      = 15000
 timeout_evaluate_js_ms = 45000
 wait_retry_snapshot_ms =  1000
 wait_short_ms          =   500
