@@ -18,7 +18,8 @@ import notte
 
 
 async def load_github_signin_fixture(session: notte.Session) -> None:
-    html = Path("tests/data/github_signin.html").read_text()
+    fixture_path = Path(__file__).resolve().parents[2] / "data" / "github_signin.html"
+    html = fixture_path.read_text(encoding="utf-8")
 
     async def fulfill_github_login(route):  # pyright: ignore[reportUnknownParameterType, reportMissingParameterType]
         await route.fulfill(status=200, content_type="text/html", body=html)
@@ -231,7 +232,8 @@ def test_invalid_credentials_in_local_agent():
 # ============================================
 
 
-def test_session_form_fill_with_vault_without_observe_uses_live_url():
+@pytest.mark.asyncio
+async def test_session_form_fill_with_vault_without_observe_uses_live_url():
     """Test form_fill credential replacement snapshots the live page before vault lookup."""
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
@@ -244,17 +246,34 @@ def test_session_form_fill_with_vault_without_observe_uses_live_url():
         _ = vault.add_credentials(url=base_url, username=username, password=password)
 
         with notte.Session(vault=vault, headless=True, idle_timeout_minutes=3, max_duration_minutes=15) as session:
-            goto_result = session.execute(type="goto", url=login_url)
+
+            async def fulfill_login(route):  # pyright: ignore[reportUnknownParameterType, reportMissingParameterType]
+                await route.fulfill(
+                    status=200,
+                    content_type="text/html",
+                    body="""
+                        <form>
+                            <label for="username">Username</label>
+                            <input id="username" autocomplete="username" type="text" />
+                            <label for="password">Password</label>
+                            <input id="password" autocomplete="current-password" type="password" />
+                        </form>
+                    """,
+                )
+
+            await session.window.page.route(login_url, fulfill_login)
+
+            goto_result = await session.aexecute(type="goto", url=login_url)
             assert goto_result.success
 
-            fill_result = session.execute(
+            fill_result = await session.aexecute(
                 type="form_fill",
                 value={"username": USERNAME_PLACEHOLDER, "password": PASSWORD_PLACEHOLDER},
             )
             assert fill_result.success
             assert session.snapshot.metadata.url == login_url
 
-            values_result = session.execute(
+            values_result = await session.aexecute(
                 type="evaluate_js",
                 code="""(() => {
                     const usernameInput = document.querySelector(
