@@ -266,11 +266,11 @@ async def test_execute_with_default_timeout() -> None:
     async with NotteSession(headless=True) as session:
         _ = await session.aexecute(type="goto", url="https://www.google.com")
         _ = await session.aobserve(perception_type="fast")
-        # Execute with default timeout (should use config.timeout_action_ms = 5000ms)
+        # Execute with default timeout (should use config.timeout_action_ms = 15000ms)
         # Try to click on first button (may fail if not found, but timeout param should work)
         result = await session.aexecute(type="click", id="B1", raise_on_failure=False)
         assert result is not None
-        assert config.timeout_action_ms == 5000  # Verify default
+        assert config.timeout_action_ms == 15000  # Verify default
 
 
 @pytest.mark.asyncio

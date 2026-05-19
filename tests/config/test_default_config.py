@@ -17,7 +17,7 @@ def test_default_config():
     assert config.agent_status_poll_timeout_seconds == 300.0
     assert config.timeout_goto_ms == 10000
     assert config.timeout_default_ms == 8000
-    assert config.timeout_action_ms == 5000
+    assert config.timeout_action_ms == 15000
     assert config.wait_retry_snapshot_ms == 1000
     assert config.wait_short_ms == 500
     assert config.empty_page_max_retry == 5
