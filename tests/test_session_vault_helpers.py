@@ -1,8 +1,8 @@
 import asyncio
 
 from notte_browser.session import NotteSession
-from notte_core.actions import FormFillAction
-from notte_core.credentials import EMAIL, PASSWORD, USERNAME
+from notte_core.actions import FillAction, FormFillAction, MultiFactorFillAction
+from notte_core.credentials import EMAIL, MFA, PASSWORD, USERNAME
 from notte_core.credentials.types import ValueWithPlaceholder
 
 from tests.mock.mock_vault import MockVault
@@ -15,6 +15,11 @@ class FakeWindow:
 
     async def snapshot(self):
         return make_snapshot(self.url)
+
+
+class NoopLocateSession(NotteSession):
+    async def locate(self, action):
+        return None
 
 
 def test_session_vault_replaces_form_fill_placeholders() -> None:
@@ -112,3 +117,21 @@ def test_session_vault_action_without_placeholders_passes_through() -> None:
     result = asyncio.run(session._action_with_vault(action))
     # Should pass through unchanged since no placeholders
     assert result is action
+
+
+def test_session_vault_preserves_selector_when_fill_mfa_becomes_multi_factor_fill() -> None:
+    mfa_secret = "AAAAAAAAAAAA"  # pragma: allowlist secret
+    vault = MockVault({"https://example.com": {"email": "test@test.com", "password": "pw", "mfa_secret": mfa_secret}})
+    session = NoopLocateSession(vault=vault)
+    session.snapshot = make_snapshot("https://example.com")
+
+    action = FillAction(selector='internal:role=textbox[name="Enter code"i]', value=MFA)
+    updated = asyncio.run(session._action_with_vault(action))
+
+    assert isinstance(updated, MultiFactorFillAction)
+    assert updated.id == ""
+    assert updated.selector is not None
+    assert updated.selector.playwright_selector == 'internal:role=textbox[name="Enter code"i]'
+    assert isinstance(updated.value, ValueWithPlaceholder)
+    assert len(updated.value.get_secret_value()) == 6
+    assert updated.value.get_secret_value().isdigit()
