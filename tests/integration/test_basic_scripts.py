@@ -58,8 +58,8 @@ async def test_observe_with_instructions() -> None:
         if len(actions) == 0:
             raise ValueError("No actions available")
         _ = await session.aexecute(actions[0])
-        obs = await session.aobserve()
         _ = await session.aexecute(type="switch_tab", tab_index=-1)
+        obs = await session.aobserve()
         assert obs.metadata.url.startswith("https://console.notte.cc"), (
             f"Expected URL to start with https://console.notte.cc, got {obs.metadata.url}"
         )
