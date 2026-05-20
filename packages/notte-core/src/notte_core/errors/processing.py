@@ -98,6 +98,31 @@ class InvalidPlaceholderError(NotteBaseError):
         )
 
 
+class CredentialFieldValidationError(NotteBaseError):
+    """Raised when a sentinel placeholder is used to fill an element that fails the credential
+    field's element-validation check (e.g. a password placeholder targeted at a non-password
+    element such as a <label>). Without this error the substitution would silently no-op and the
+    literal placeholder string would be typed into the field."""
+
+    def __init__(self, placeholder: str, cred_key: str, attrs: object) -> None:
+        dev_message = (
+            f"Sentinel placeholder {placeholder!r} for credential field {cred_key!r} was supplied, "
+            f"but the targeted element failed validate_element. Element attrs: {attrs!r}. "
+            f"Common cause: the action targeted a wrapper (e.g. <label>) instead of the actual "
+            f"<input>. Re-target the input element directly."
+        )
+        agent_message = (
+            f"Could not fill credential {cred_key!r}: targeted element is not a valid {cred_key!r} input. "
+            f"Re-locate the actual input field and retry."
+        )
+        user_message = "Credential placeholder used on an element that is not a valid target for that field."
+        super().__init__(
+            agent_message=agent_message,
+            user_message=user_message,
+            dev_message=dev_message,
+        )
+
+
 class ScrapeFailedError(NotteBaseError):
     def __init__(self, error_message: str) -> None:
         super().__init__(

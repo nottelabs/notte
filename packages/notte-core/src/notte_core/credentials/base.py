@@ -26,7 +26,7 @@ from notte_core.common.logging import logger
 from notte_core.common.types import TResponseFormat
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
 from notte_core.errors.actions import NoCredentialsFoundError
-from notte_core.errors.processing import InvalidPlaceholderError
+from notte_core.errors.processing import CredentialFieldValidationError, InvalidPlaceholderError
 from notte_core.profiling import profiler
 from notte_core.utils.url import get_root_domain
 
@@ -692,7 +692,12 @@ class BaseVault(ABC):
                     if cred_class is MFAField and isinstance(action, FillAction):
                         action = MultiFactorFillAction(id=action.id, value=action.value)
                 else:
-                    logger.trace(f"Could not validate element with attrs {attrs} for {cred_key}")
+                    # The caller passed a known sentinel placeholder, so they clearly intended a
+                    # credential substitution — but the targeted element doesn't satisfy the field's
+                    # validation (e.g. a password placeholder pointed at a <label> instead of the
+                    # <input type="password">). Raising here prevents the literal sentinel string
+                    # from being silently typed into the field.
+                    raise CredentialFieldValidationError(placeholder_value, cred_key, attrs)
             else:
                 # dont validate because element chosen by regex
                 assert isinstance(action.value, dict)
