@@ -22,7 +22,7 @@ def urls() -> list[str]:
         "https://www.instagram.com",
         "https://notte.cc",
         "https://www.bbc.com",
-        "https://www.allrecipes.com",
+        "https://www.bbc.com/food",
         "https://www.amazon.com",
         "https://www.apple.com",
         "https://arxiv.org",
