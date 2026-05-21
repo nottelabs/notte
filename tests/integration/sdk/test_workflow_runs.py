@@ -2,7 +2,7 @@ import json
 import os
 import tempfile
 from collections.abc import Generator
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from dotenv import load_dotenv
@@ -272,7 +272,7 @@ class TestFunctionRunExecution:
         assert response.function_run_id == create_response.function_run_id
         assert response.session_id is not None
         assert response.result is not None
-        assert response.status in ["closed", "active", "failed"]
+        assert response.status == "closed"
 
         # Verify both requests were made correctly
         assert mock_post.call_count == 2
@@ -304,6 +304,31 @@ class TestFunctionRunExecution:
 
 class TestRemoteFunctionRuns:
     """Test cases for RemoteWorkflow run functionality."""
+
+    @patch("notte_sdk.endpoints.workflows.SecureScriptRunner")
+    @patch("notte_sdk.endpoints.workflows.LogCapture")
+    def test_remote_workflow_run_local_failure_closes_run(self, mock_log_capture, mock_script_runner):
+        """Test local function failures close the run instead of marking it failed."""
+        workflows_client = MagicMock()
+        workflows_client.get.return_value.function_id = "test-function-id"
+        root_client = MagicMock()
+        root_client.workflows = workflows_client
+
+        workflow = RemoteWorkflow(workflow_id="test-function-id", _client=root_client)
+        log_capture = mock_log_capture.return_value
+        log_capture.__enter__.return_value = log_capture
+        log_capture.session_id = "test-session-id"
+        log_capture.get_logs.return_value = ["Log 1"]
+
+        mock_script_runner.return_value.run_script.side_effect = RuntimeError("boom")
+
+        with patch.object(workflow, "download", return_value="def run():\n    raise RuntimeError('boom')"):
+            result = workflow.run(local=True, function_run_id="test-run-id", raise_on_failure=False)
+
+        assert result.status == "closed"
+        assert result.result == "boom"
+        workflows_client.update_run.assert_called_once()
+        assert workflows_client.update_run.call_args.kwargs["status"] == "closed"
 
     @patch("notte_core.ast.SecureScriptRunner")
     @patch("notte_sdk.utils.LogCapture")

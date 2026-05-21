@@ -835,7 +835,7 @@ class RemoteWorkflow:
             except Exception as e:
                 logger.error(f"[Function] {self.function_id} run failed with error: {traceback.format_exc()}")
                 result = str(e)
-                status = "failed"
+                status = "closed"
                 exception = e
             # update the run with the result
             self._session_id = log_capture.session_id
