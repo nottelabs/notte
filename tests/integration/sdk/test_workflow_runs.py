@@ -330,14 +330,14 @@ class TestRemoteFunctionRuns:
         workflows_client.update_run.assert_called_once()
         assert workflows_client.update_run.call_args.kwargs["status"] == "closed"
 
-    @patch("notte_core.ast.SecureScriptRunner")
-    @patch("notte_sdk.utils.LogCapture")
+    @patch("notte_sdk.endpoints.workflows.SecureScriptRunner")
+    @patch("notte_sdk.endpoints.workflows.LogCapture")
     def test_remote_workflow_run_local(
         self, mock_log_capture, mock_script_runner, test_remote_workflow: RemoteWorkflow
     ):
         """Test running a RemoteWorkflow locally."""
         # Mock log capture
-        mock_log_instance = mock_log_capture.return_value.__enter__.return_value
+        mock_log_instance = mock_log_capture.return_value
         mock_log_instance.session_id = "test-session-id"
         mock_log_instance.get_logs.return_value = ["Log 1", "Log 2"]
 
@@ -346,7 +346,10 @@ class TestRemoteFunctionRuns:
         mock_runner_instance.run_script.return_value = {"test_var": "local_test", "result": "local_execution_result"}
 
         # Mock the download method to return script content with run function
-        with patch.object(test_remote_workflow, "download") as mock_download:
+        with (
+            patch.object(test_remote_workflow, "download") as mock_download,
+            patch.object(test_remote_workflow.client, "update_run") as mock_update_run,
+        ):
             mock_download.return_value = """import notte
 
 def run(test_var: str = "default"):
@@ -354,7 +357,7 @@ def run(test_var: str = "default"):
         return {"test_var": test_var, "result": "local_execution_result"}"""
 
             # Run locally
-            result = test_remote_workflow.run(local=True, test_var="local_test")
+            result = test_remote_workflow.run(local=True, function_run_id="test-run-id", test_var="local_test")
 
             assert result is not None
             assert isinstance(result, FunctionRunResponse)
@@ -362,8 +365,10 @@ def run(test_var: str = "default"):
             # Verify download was called
             mock_download.assert_called_once_with(workflow_path=None, version=None)
 
-            # The actual script execution happens, so just verify we got a response
-            # No need to verify mock calls since the real execution takes place
+            mock_runner_instance.run_script.assert_called_once()
+            mock_update_run.assert_called_once()
+            assert mock_update_run.call_args.kwargs["run_id"] == "test-run-id"
+            assert mock_update_run.call_args.kwargs["status"] == "closed"
 
     @patch("requests.post")
     def test_remote_workflow_run_cloud(self, mock_post, test_remote_workflow: RemoteWorkflow):
