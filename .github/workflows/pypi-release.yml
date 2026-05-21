@@ -54,15 +54,20 @@ jobs:
           # Strip leading 'v' for PyPI version
           pypi_version="${version#v}"
 
+          # Per-package budget: 10 attempts × 30s = 5 min each.
+          # Packages propagate together so in practice the first slow package
+          # dominates and the rest resolve instantly (typical total: ~5 min).
+          max_attempts=10
+
           for pkg in "${packages[@]}"; do
             echo "Waiting for $pkg==$pypi_version on PyPI..."
-            for i in $(seq 1 20); do
+            for i in $(seq 1 $max_attempts); do
               if pip index versions "$pkg" 2>/dev/null | grep -q "$pypi_version"; then
                 echo "  ✓ $pkg==$pypi_version available"
                 break
               fi
-              if [ $i -eq 20 ]; then
-                echo "  ✗ $pkg==$pypi_version not available after 10 minutes"
+              if [ $i -eq $max_attempts ]; then
+                echo "  ✗ $pkg==$pypi_version not available after 5 minutes"
                 exit 1
               fi
               sleep 30
