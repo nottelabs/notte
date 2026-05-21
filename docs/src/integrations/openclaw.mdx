@@ -1,0 +1,66 @@
+---
+title: OpenClaw
+description: 'Use Notte cloud browsers with OpenClaw'
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[OpenClaw](https://openclaw.ai) is an open-source personal AI assistant you run on your own devices. Its browser tool can drive any Chrome DevTools Protocol (CDP) endpoint — by pointing it at a Notte session URL, every browser task OpenClaw runs executes on a Notte cloud browser with built-in stealth, residential proxies, and anti-detection.
+
+## Prerequisites
+
+- A Notte API key ([get one here](https://console.notte.cc))
+- OpenClaw installed ([installation guide](https://docs.openclaw.ai))
+
+## Connect OpenClaw to a Notte browser
+
+OpenClaw's browser tool supports remote CDP **profiles**. Add a `notte` profile to `~/.openclaw/openclaw.json`:
+
+```json
+{
+  "browser": {
+    "enabled": true,
+    "defaultProfile": "notte",
+    "remoteCdpTimeoutMs": 3000,
+    "remoteCdpHandshakeTimeoutMs": 5000,
+    "profiles": {
+      "notte": {
+        "cdpUrl": "wss://us-prod.notte.cc/sessions/connect?token=<NOTTE_API_KEY>",
+        "color": "#7C3AED"
+      }
+    }
+  }
+}
+```
+
+Replace `<NOTTE_API_KEY>` with your key from the [Notte console](https://console.notte.cc). That's it — OpenClaw now runs its browser tool on a Notte cloud browser.
+
+<Note>
+  The `wss://us-prod.notte.cc/sessions/connect` endpoint creates a fresh browser session when OpenClaw connects and tears it down when the connection closes — there is no manual session lifecycle to manage.
+</Note>
+
+## Run a browser task
+
+Start the profile and drive it from the OpenClaw CLI:
+
+```bash
+# Start the Notte-backed browser profile
+openclaw browser --browser-profile notte start
+
+# Open a page
+openclaw browser --browser-profile notte open https://example.com
+
+# Capture a screenshot
+openclaw browser --browser-profile notte screenshot
+```
+
+Once the profile is running, OpenClaw's agent uses it automatically for any task that needs a browser — every page load, click, and screenshot executes on the Notte cloud browser.
+
+## Benefits of using Notte with OpenClaw
+
+* **No local browser management**: run OpenClaw's browser tool without installing or maintaining Chrome locally
+* **Stealth & anti-detection**: built-in fingerprint hardening and CAPTCHA solving
+* **Residential proxies**: route traffic through residential IPs across regions
+* **Live session view**: watch any running session from the [Notte console](https://console.notte.cc)
+* **Scalability**: each connection gets its own isolated cloud browser, so multiple OpenClaw instances run in parallel without contention
