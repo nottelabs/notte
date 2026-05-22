@@ -370,3 +370,79 @@ If you use notte in your research or project, please cite:
 ```
 
 Copyright © 2025 Notte Labs, Inc.
+
+## FAQ
+
+### What is Notte?
+
+Notte is a web agent framework built for speed, cost-efficiency, scale, and reliability. It provides full-stack tooling to build, deploy, and scale AI agents that interact with websites, combining scripting with AI for maximum efficiency.
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| Run Web Agents | Natural language tasks → website actions |
+| Structured Output | Get data in exact format with Pydantic models |
+| Site Interactions | Scraping + Playwright-compatible primitives |
+| Stealth Sessions | CAPTCHA solving, proxies, anti-detection |
+| Hybrid Workflows | Script + AI to reduce costs 50%+ |
+| Secrets Vaults | Credential management (email, password, MFA) |
+| Digital Personas | Automated identities with email, phone, 2FA |
+
+### How is Notte different from other web agent tools?
+
+Notte combines scripting with AI:
+- **vs Playwright/Selenium**: Notte adds AI + natural language + stealth features
+- **vs Browser Use**: Notte offers hybrid workflows + secrets management
+- **vs Puppeteer**: Notte provides production API + CAPTCHA handling
+
+### Getting Started
+
+```bash
+pip install notte
+patchright install --with-deps chromium
+```
+
+**Local mode** (Python SDK):
+```python
+import notte
+from dotenv import load_dotenv
+load_dotenv()
+
+agent = notte.Agent()  # Uses your LLM API keys
+result = agent.run("Search for Python tutorials on Google")
+```
+
+### Supported LLMs
+
+| Provider | Notes |
+|----------|-------|
+| OpenAI | GPT-4o, GPT-4o-mini |
+| Anthropic | Claude 3.5 Sonnet |
+| Google | Gemini Pro |
+| Azure | OpenAI models |
+| Local | Ollama, vLLM |
+
+### API Service Features
+
+- **Stealth Browser**: Built-in CAPTCHA solving, proxies
+- **Hybrid Workflows**: Script deterministic + AI for complex
+- **Secrets Vaults**: Enterprise credential storage
+- **Digital Personas**: Account creation automation
+
+### Requirements
+
+- Python 3.11+
+- Patchright (Playwright fork) with Chromium
+- LLM API keys (OpenAI/Anthropic/Google)
+
+### License
+
+SSPL-1.0 (Server Side Public License) - Free for development, commercial use requires license.
+
+### Help Resources
+
+- 📖 Documentation: https://docs.notte.cc
+- 🐛 Issues: https://github.com/nottelabs/notte/issues
+- 💬 X (Twitter): https://x.com/nottecore
+- 💼 LinkedIn: https://www.linkedin.com/company/nottelabsinc
