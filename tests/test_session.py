@@ -333,6 +333,20 @@ async def test_click_accepts_prefixed_selector(selector: str) -> None:
 
 
 @pytest.mark.asyncio
+async def test_click_empty_selector_returns_failed_result() -> None:
+    async with NotteSession(headless=True) as session:
+        result = await session.aexecute(
+            type="click",
+            selector="",
+            raise_on_failure=False,
+        )
+
+        assert result.success is False
+        assert result.message is not None
+        assert "No valid selector available" in result.message
+
+
+@pytest.mark.asyncio
 async def test_interaction_execution_timeout_returns_failed_result() -> None:
     async def slow_execute(*_args, **_kwargs) -> bool:
         await asyncio.sleep(0.05)

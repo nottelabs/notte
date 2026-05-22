@@ -77,9 +77,9 @@ class NodeSelectors(BaseModel):
         xpath_selector = ""
         playwright_selector: str | None = None
         if unique_selector.startswith("xpath="):
-            xpath_selector = unique_selector.replace("xpath=", "")
+            xpath_selector = unique_selector.removeprefix("xpath=")
         elif unique_selector.startswith("css="):
-            css_selector = unique_selector.replace("css=", "")
+            css_selector = unique_selector.removeprefix("css=")
         elif unique_selector.startswith("internal:"):
             playwright_selector = unique_selector
         elif unique_selector.startswith("~"):
