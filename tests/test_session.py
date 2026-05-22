@@ -308,6 +308,30 @@ async def test_click_disabled_ancestor_returns_failed_result() -> None:
         assert "Element is disabled" in result.message
 
 
+@pytest.mark.parametrize("selector", ['xpath=//button[@id="target"]', "css=#target"])
+@pytest.mark.asyncio
+async def test_click_accepts_prefixed_selector(selector: str) -> None:
+    async with NotteSession(headless=True) as session:
+        await session.window.page.set_content("""
+            <button id="target">Apply</button>
+        """)
+        await session.window.page.evaluate("""
+            window.clicked = false;
+            document.querySelector("#target").addEventListener("click", () => {
+                window.clicked = true;
+            });
+        """)
+
+        result = await session.aexecute(
+            type="click",
+            selector=selector,
+            raise_on_failure=False,
+        )
+
+        assert result.success is True
+        assert await session.window.page.evaluate("window.clicked") is True
+
+
 @pytest.mark.asyncio
 async def test_interaction_execution_timeout_returns_failed_result() -> None:
     async def slow_execute(*_args, **_kwargs) -> bool:
