@@ -8,6 +8,8 @@ import HeadlessDebug from "/snippets/sessions/captcha/headless_debug.mdx";
 import CombineStealth from "/snippets/sessions/captcha/combine_stealth.mdx";
 import EnsureRequirements from "/snippets/sessions/captcha/ensure_requirements.mdx";
 import TimeoutHandling from "/snippets/sessions/captcha/timeout_handling.mdx";
+import RecaptchaSolveAction from "/snippets/sessions/captcha/recaptcha_solve_action.mdx";
+import TextCaptchaSolveAction from "/snippets/sessions/captcha/text_captcha_solve_action.mdx";
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -104,56 +106,13 @@ Use stealth features for better success rates:
 
 For reCAPTCHA challenges, use the `captcha_solve` action with `captcha_type="recaptcha"`. This example comes from the [reCAPTCHA template](https://www.notte.cc/templates/captcha-bot-handling/basic-recaptcha).
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  DEMO_URL = "https://nopecha.com/captcha/recaptcha#easy"
-  client = NotteClient()
-
-  with client.Session(solve_captchas=True, proxies=True, open_viewer=True) as session:
-      session.execute(type="goto", url=DEMO_URL)
-
-      result = session.execute(
-          type="captcha_solve",
-          captcha_type="recaptcha",
-          raise_on_failure=False,
-      )
-
-      if not result.success:
-          raise RuntimeError(f"reCAPTCHA solve failed: {result.message}")
-
-      session.execute(type="wait", time_ms=2000)
-  ```
-</CodeGroup>
+<RecaptchaSolveAction />
 
 ### Text CAPTCHAs
 
 Text CAPTCHAs are the old-school challenges that show distorted letters, numbers, or a short phrase and ask the user to type the answer into a field. For these challenges, use `captcha_type="text"`. This example comes from the [text CAPTCHA template](https://www.notte.cc/templates/captcha-bot-handling/basic-text-captcha).
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  DEMO_URL = "https://captcha.com/demos/features/captcha-demo.aspx#"
-  VALIDATE_SELECTOR = 'internal:role=button[name="Validate"i]'
-  client = NotteClient()
-
-  with client.Session(solve_captchas=True, proxies=True, open_viewer=True) as session:
-      session.execute(type="goto", url=DEMO_URL)
-
-      result = session.execute(
-          type="captcha_solve",
-          captcha_type="text",
-          raise_on_failure=False,
-      )
-
-      if not result.success:
-          raise RuntimeError(f"Text CAPTCHA solve failed: {result.message}")
-
-      session.execute(type="click", selector=VALIDATE_SELECTOR)
-  ```
-</CodeGroup>
+<TextCaptchaSolveAction />
 
 ## Limitations
 
