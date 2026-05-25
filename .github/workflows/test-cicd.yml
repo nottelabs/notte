@@ -4,16 +4,15 @@ on:
   push:
     branches:
       - main
-  # NOTE: pull_request trigger is commented out because we use pull_request_target instead.
-  # pull_request_target runs in the base repo context with access to secrets, which is
-  # needed for external contributors. If you need to test workflow changes locally,
-  # you can temporarily uncomment the pull_request trigger below, but remember to
-  # comment it out again before merging to avoid duplicate workflows.
-  # pull_request:
-  #    branches:
-  #      - main
-  pull_request_target:
-     types: [opened, synchronize, reopened]
+  # SECURITY: Use `pull_request`, never `pull_request_target`. `pull_request_target`
+  # runs in the base-repo context with full secret access; combined with checking out
+  # the PR head, it lets any fork PR run arbitrary code with our secrets and exfiltrate
+  # them. With `pull_request`, fork PRs run in an isolated context with no secret access.
+  # External-contributor PRs that need secrets must be run by a maintainer via the
+  # `workflow_dispatch` trigger below, after reviewing the diff.
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       branch:
