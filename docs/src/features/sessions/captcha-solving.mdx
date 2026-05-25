@@ -12,7 +12,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Notte can automatically detect and solve captchas including reCAPTCHA v2, reCAPTCHA v3, and hCaptcha during your browser automation.
+Notte can automatically detect and solve captchas including reCAPTCHA v2, reCAPTCHA v3, hCaptcha, and simple text challenges during your browser automation.
 
 
 ## Quick Start
@@ -39,6 +39,8 @@ Notte automatically detects and solves:
 - ✅ **reCAPTCHA v2** - Checkbox and image challenges
 - ✅ **reCAPTCHA v3** - Invisible captchas
 - ✅ **hCaptcha** - Checkbox and image challenges
+- ✅ **Text CAPTCHAs** - Simple "read the characters and type them" challenges
+- ✅ **Image CAPTCHAs** - Visual verification challenges
 
 ## How It Works
 
@@ -49,36 +51,6 @@ When captcha solving is enabled:
 3. **Continuation** - Your automation continues seamlessly
 
 No additional code is needed - captchas are solved automatically when encountered.
-
-## Complete Example
-
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  with client.Session(
-      solve_captchas=True,
-      headless=False  # Watch it solve captchas
-  ) as session:
-      page = session.page
-
-      # Navigate to a site with captcha
-      page.goto("https://example.com/login")
-
-      # Fill login form
-      page.fill('input[name="email"]', "user@example.com")
-      page.fill('input[name="password"]', "password")
-
-      # Click submit - captcha will be solved automatically
-      page.click('button[type="submit"]')
-
-      # Wait for successful login
-      page.wait_for_url("**/dashboard")
-      print("Logged in successfully!")
-  ```
-</CodeGroup>
 
 ## Captcha + Proxies
 
@@ -126,17 +98,76 @@ Use stealth features for better success rates:
 
 <CombineStealth />
 
+## Examples
+
+### reCAPTCHA
+
+For reCAPTCHA challenges, use the `captcha_solve` action with `captcha_type="recaptcha"`. This example comes from the [reCAPTCHA template](https://www.notte.cc/templates/captcha-bot-handling/basic-recaptcha).
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  DEMO_URL = "https://nopecha.com/captcha/recaptcha#easy"
+  client = NotteClient()
+
+  with client.Session(solve_captchas=True, proxies=True, open_viewer=True) as session:
+      session.execute(type="goto", url=DEMO_URL)
+
+      result = session.execute(
+          type="captcha_solve",
+          captcha_type="recaptcha",
+          raise_on_failure=False,
+      )
+
+      if not result.success:
+          raise RuntimeError(f"reCAPTCHA solve failed: {result.message}")
+
+      session.execute(type="wait", time_ms=2000)
+  ```
+</CodeGroup>
+
+### Text CAPTCHAs
+
+Text CAPTCHAs are the old-school challenges that show distorted letters, numbers, or a short phrase and ask the user to type the answer into a field. For these challenges, use `captcha_type="text"`. This example comes from the [text CAPTCHA template](https://www.notte.cc/templates/captcha-bot-handling/basic-text-captcha).
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  DEMO_URL = "https://captcha.com/demos/features/captcha-demo.aspx#"
+  VALIDATE_SELECTOR = 'internal:role=button[name="Validate"i]'
+  client = NotteClient()
+
+  with client.Session(solve_captchas=True, proxies=True, open_viewer=True) as session:
+      session.execute(type="goto", url=DEMO_URL)
+
+      result = session.execute(
+          type="captcha_solve",
+          captcha_type="text",
+          raise_on_failure=False,
+      )
+
+      if not result.success:
+          raise RuntimeError(f"Text CAPTCHA solve failed: {result.message}")
+
+      session.execute(type="click", selector=VALIDATE_SELECTOR)
+  ```
+</CodeGroup>
+
 ## Limitations
 
 ### What CAPTCHA Solving Can Do:
 - ✅ Solve most reCAPTCHA v2 challenges
 - ✅ Solve reCAPTCHA v3 automatically
 - ✅ Solve most hCaptcha challenges
+- ✅ Solve simple text and image CAPTCHA challenges
 - ✅ Work with residential proxies
 - ✅ Work in headless and non-headless mode
 
 ### What It Cannot Do:
 - ❌ Solve 100% of captchas (some are unsolvable)
+- ❌ Reliably solve heavily distorted or ambiguous text challenges
 - ❌ Solve custom/proprietary captcha systems
 - ❌ Bypass all bot detection (combine with stealth)
 
