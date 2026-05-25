@@ -176,6 +176,8 @@ class CaptchaSolveActionDict(TypedDict, total=False):
             "datadome",
             "arkose labs",
             "geetest",
+            "geetest_v4_init",
+            "geetest_v4",
             "press&hold",
             "unknown",
         ]
