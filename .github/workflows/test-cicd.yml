@@ -8,15 +8,16 @@ on:
   # runs in the base-repo context with full secret access; combined with checking out
   # the PR head, it lets any fork PR run arbitrary code with our secrets and exfiltrate
   # them. With `pull_request`, fork PRs run in an isolated context with no secret access.
-  # External-contributor PRs that need secrets must be run by a maintainer via the
-  # `workflow_dispatch` trigger below, after reviewing the diff.
+  # Fork PRs run only the non-secret steps (install + pre-commit). To run the full
+  # secret-backed suite on an external PR, a maintainer uses the `workflow_dispatch`
+  # trigger below AFTER reviewing the diff (dispatch runs the PR's code WITH secrets).
   pull_request:
     branches:
       - main
   workflow_dispatch:
     inputs:
-      branch:
-        description: 'Branch to run CI on (e.g., <external-contributor>:main)'
+      pr_number:
+        description: 'PR number to run the FULL secret-backed CI on. For external (fork) PRs, only dispatch after reviewing the diff - this runs the contributor''s code with our secrets.'
         required: true
 
 concurrency:
@@ -34,6 +35,9 @@ env:
   EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
   DISABLE_TELEMETRY: "true"
   PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright-browsers
+  # True for push, manual dispatch, and same-repo PRs; false for fork PRs. Steps that
+  # need secrets are gated on this so fork PRs skip them cleanly instead of failing.
+  IS_TRUSTED: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
 permissions:
   pull-requests: write
@@ -43,14 +47,13 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     steps:
-      - name: Checkout code (manual trigger)
+      - name: Checkout PR code (manual trigger)
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v4
-        # NOTE: The ref parameter is commented out because workflow_dispatch
-        # currently always uses the default branch. If you need to checkout a
-        # specific branch from the input, uncomment the line below.
-        # with:
-        #   ref: ${{ github.event.inputs.branch }}
+        with:
+          # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
+          # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
 
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
@@ -59,6 +62,7 @@ jobs:
             ref: ${{ github.event.pull_request.head.sha }}
 
       - id: 'auth'
+        if: ${{ env.IS_TRUSTED == 'true' }}
         uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: ${{ secrets.VERTEX_AI }}
@@ -120,10 +124,20 @@ jobs:
       - name: Run pre-commit
         run: uv run --active pre-commit run --all-files
 
+      - name: Note - secret-backed tests skipped (fork PR)
+        if: ${{ env.IS_TRUSTED != 'true' }}
+        run: |
+          echo "This is a fork PR. Steps that require secrets (Vertex auth + the pytest suite)"
+          echo "were skipped - fork PRs intentionally have no access to repository secrets."
+          echo "Build, install, and pre-commit (lint + type checks) ran above and reflect your change."
+          echo "A maintainer can run the full secret-backed suite after reviewing the diff via"
+          echo "'Run workflow' (workflow_dispatch) with this PR number."
+
       - name: Verify environment variables
+        if: ${{ env.IS_TRUSTED == 'true' }}
         run: |
           if [ -z "$NOTTE_API_KEY" ]; then
-            echo "NOTTE_API_KEY is not set. Consider triggering the workflow manually if this is a PR from an external contributor."
+            echo "NOTTE_API_KEY is not set. For an external/fork PR, a maintainer should review the diff and run this workflow via 'Run workflow' (workflow_dispatch) with the PR number."
             exit 1
           fi
           if [ -z "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
@@ -145,12 +159,13 @@ jobs:
           echo "Environment variables are set"
 
       - name: Run unit tests
+        if: ${{ env.IS_TRUSTED == 'true' }}
         run: |
           set -o pipefail
           uv run pytest -n logical tests --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/integration/test_e2e.py --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages | tee pytest-coverage.txt
 
       - name: Pytest coverage comment
-        if: ${{ always() && github.ref != 'refs/heads/main' }}
+        if: ${{ always() && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}
         uses: MishaKav/pytest-coverage-comment@main
         with:
           pytest-coverage-path: ./pytest-coverage.txt
