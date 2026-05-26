@@ -149,6 +149,7 @@
                   "integrations/steel",
                   "integrations/massive",
                   "integrations/openai-cua",
+                  "integrations/fireworks",
                   "integrations/stagehand",
                   "integrations/openclaw",
                   "features/sessions/cloudflare-web-bot-auth"

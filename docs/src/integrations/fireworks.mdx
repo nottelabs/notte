@@ -1,0 +1,82 @@
+---
+title: 'Fireworks AI'
+description: 'Run Notte browser agents on Fireworks-served open-weight models'
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+## Overview
+
+Notte agents can drive the browser using any model served by [Fireworks AI](https://fireworks.ai), including Kimi K2.5, GLM-5, and MiniMax M2.5. Notte connects to Fireworks through LiteLLM, so the integration is a single `reasoning_model` string change with no separate provider plumbing.
+
+A recent joint benchmark, [Agents Don't Fail on Intelligence. They Fail on Execution](https://fireworks.ai/blog/agents-fail-on-execution), ran 720 browser-agent tasks across four LLMs. The three Fireworks-served models held an [Agent Execution Tax](https://notte.cc/blog/agent-execution-tax) of 0 to 1.6%, with consistent tail latency across three distinct MoE architectures.
+
+## Requirements
+
+* A Fireworks AI API key ([fireworks.ai](https://fireworks.ai))
+* A Notte API key ([console.notte.cc](https://console.notte.cc))
+* Python 3.11 or later
+
+## Setup
+
+<Steps>
+  <Step title="Install the Notte SDK">
+    ```bash
+    pip install --upgrade notte-sdk
+    ```
+  </Step>
+  <Step title="Configure your API keys as environment variables">
+    ```bash
+    export NOTTE_API_KEY="<your-notte-api-key>"
+    export FIREWORKS_API_KEY="<your-fireworks-api-key>"
+    ```
+  </Step>
+  <Step title="Run an agent against a Fireworks-served model">
+    ```python
+    from notte_sdk import NotteClient
+
+    notte = NotteClient()
+    with notte.Session() as session:
+        agent = notte.Agent(
+            session=session,
+            reasoning_model="fireworks_ai/accounts/fireworks/models/kimi-k2p5",
+        )
+        response = agent.run(
+            task="Go to news.ycombinator.com and return the top three stories."
+        )
+    ```
+  </Step>
+</Steps>
+
+## Validated Fireworks models
+
+The following models were validated in the joint benchmark (180 runs each, 60 WebVoyager tasks × 3 runs):
+
+| Model | Notes |
+|---|---|
+| Kimi K2.5 | 0% Agent Execution Tax across 852 calls; lowest token cost per task. Model ID: `fireworks_ai/accounts/fireworks/models/kimi-k2p5` |
+| GLM-5 | 0.6% Agent Execution Tax; strong on long-form sites (ArXiv, BBC, Wolfram Alpha). |
+| MiniMax M2.5 | 1.6% Agent Execution Tax; highest text-only task success rate in the benchmark. |
+
+Any Fireworks-served model that supports JSON-mode structured output will work with Notte. For canonical model IDs, see the [Fireworks model catalogue](https://fireworks.ai/models).
+
+## Reproducing the benchmark
+
+The benchmark is fully reproducible from the Notte repo:
+
+```bash
+uv run pytest packages/notte-eval/src/notte_eval/webvoyager/test_run.py \
+  --task_dir "webvoyager/webvoyager_simple.jsonl" \
+  --model "fireworks_ai/accounts/fireworks/models/kimi-k2p5" \
+  --n_runs 3 --use_vision false --headless true --max_steps 20 -v
+```
+
+Full configuration, methodology, and per-model numbers are in the [joint benchmark report](https://fireworks.ai/blog/agents-fail-on-execution).
+
+## Resources
+
+* [Joint benchmark: Agents Don't Fail on Intelligence. They Fail on Execution](https://fireworks.ai/blog/agents-fail-on-execution)
+* [Agent Execution Tax explainer](https://notte.cc/blog/agent-execution-tax)
+* [Fireworks AI](https://fireworks.ai) and the [Fireworks model catalogue](https://fireworks.ai/models)
+* [Notte on GitHub](https://github.com/nottelabs/notte)
