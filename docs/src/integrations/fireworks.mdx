@@ -10,7 +10,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 Notte agents can drive the browser using any model served by [Fireworks AI](https://fireworks.ai), including Kimi K2.5, GLM-5, and MiniMax M2.5. Notte connects to Fireworks through LiteLLM, so the integration is a single `reasoning_model` string change with no separate provider plumbing.
 
-A recent joint benchmark, [Agents Don't Fail on Intelligence. They Fail on Execution](https://fireworks.ai/blog/agents-fail-on-execution), ran 720 browser-agent tasks across four LLMs. The three Fireworks-served models held an [Agent Execution Tax](https://notte.cc/blog/agent-execution-tax) of 0 to 1.6%, with consistent tail latency across three distinct MoE architectures.
+A recent joint benchmark, [Agents Don't Fail on Intelligence. They Fail on Execution](https://fireworks.ai/blog/agent-execution-tax), ran 720 browser-agent tasks across four LLMs. The three Fireworks-served models held an [Agent Execution Tax](https://notte.cc/blog/agent-execution-tax) of 0 to 1.6%, with consistent tail latency across three distinct MoE architectures.
 
 ## Requirements
 
@@ -56,8 +56,8 @@ The following models were validated in the joint benchmark (180 runs each, 60 We
 | Model | Notes |
 |---|---|
 | Kimi K2.5 | 0% Agent Execution Tax across 852 calls; lowest token cost per task. Model ID: `fireworks_ai/accounts/fireworks/models/kimi-k2p5` |
-| GLM-5 | 0.6% Agent Execution Tax; strong on long-form sites (ArXiv, BBC, Wolfram Alpha). |
-| MiniMax M2.5 | 1.6% Agent Execution Tax; highest text-only task success rate in the benchmark. |
+| GLM-5 | 0.6% Agent Execution Tax; strong on long-form sites (ArXiv, BBC, Wolfram Alpha). Model ID: `fireworks_ai/accounts/fireworks/models/glm-5` |
+| MiniMax M2.5 | 1.6% Agent Execution Tax; highest text-only task success rate in the benchmark. Model ID: `fireworks_ai/accounts/fireworks/models/minimax-m2p5` |
 
 Any Fireworks-served model that supports JSON-mode structured output will work with Notte. For canonical model IDs, see the [Fireworks model catalogue](https://fireworks.ai/models).
 
@@ -72,11 +72,11 @@ uv run pytest packages/notte-eval/src/notte_eval/webvoyager/test_run.py \
   --n_runs 3 --use_vision false --headless true --max_steps 20 -v
 ```
 
-Full configuration, methodology, and per-model numbers are in the [joint benchmark report](https://fireworks.ai/blog/agents-fail-on-execution).
+Full configuration, methodology, and per-model numbers are in the [joint benchmark report](https://fireworks.ai/blog/agent-execution-tax).
 
 ## Resources
 
-* [Joint benchmark: Agents Don't Fail on Intelligence. They Fail on Execution](https://fireworks.ai/blog/agents-fail-on-execution)
+* [Joint benchmark: Agents Don't Fail on Intelligence. They Fail on Execution](https://fireworks.ai/blog/agent-execution-tax)
 * [Agent Execution Tax explainer](https://notte.cc/blog/agent-execution-tax)
 * [Fireworks AI](https://fireworks.ai) and the [Fireworks model catalogue](https://fireworks.ai/models)
 * [Notte on GitHub](https://github.com/nottelabs/notte)
