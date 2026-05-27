@@ -88,6 +88,7 @@ def test_no_snippets_outside_folder():
         "captcha-solving.mdx",  # CodeGroup wrappers for multi-language
         "stealth-mode.mdx",  # CodeGroup wrappers for multi-language
         "kernel.mdx",  # Integration-specific examples
+        "fireworks.mdx",  # Integration-specific examples
         "schedules.mdx",  # Comment-only cron examples
         "management.mdx",  # Comment-only metadata example
         "quickstart.mdx",  # CodeGroup with Python/JS tabs
