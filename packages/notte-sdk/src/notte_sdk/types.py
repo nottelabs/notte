@@ -498,23 +498,31 @@ class NotteProxy(SdkRequest):
     type: Literal["notte"] = "notte"
     id: str | None = None
     country: ProxyGeolocationCountry | None = None
+    city: str | None = None
     # TODO: enable domainPattern later on
     # domainPattern: str | None = None
 
     @model_validator(mode="before")
     @classmethod
     def handle_legacy_geolocation(cls, values: Any) -> dict[str, Any]:
-        """Handle backward compatibility with old geolocation.country syntax."""
+        """Handle backward compatibility with old geolocation syntax."""
         if isinstance(values, dict) and "geolocation" in values:
             geolocation: Any = values.pop("geolocation")  # type: ignore[reportUnknownMemberType]
-            # Only set country if it's not already provided
-            if "country" not in values and isinstance(geolocation, dict) and "country" in geolocation:
-                values["country"] = geolocation["country"]
+            if isinstance(geolocation, dict):
+                # Only set fields if they're not already provided.
+                if "country" not in values and "country" in geolocation:
+                    values["country"] = geolocation["country"]
+                if "city" not in values and "city" in geolocation:
+                    values["city"] = geolocation["city"]
         return values  # type: ignore[return-value]
 
     @staticmethod
     def from_country(country: str, id: str | None = None) -> "NotteProxy":
         return NotteProxy(id=id, country=ProxyGeolocationCountry(country))
+
+    @staticmethod
+    def from_city(city: str, id: str | None = None) -> "NotteProxy":
+        return NotteProxy(id=id, city=city)
 
 
 class ExternalProxy(SdkRequest):
@@ -559,6 +567,7 @@ class NotteProxyDict(TypedDict, total=False):
     type: Literal["notte"]
     id: str | None
     country: ProxyGeolocationCountry | None
+    city: str | None
 
 
 class TailnetProxyDict(TypedDict, total=False):
