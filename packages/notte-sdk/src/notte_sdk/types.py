@@ -516,13 +516,33 @@ class NotteProxy(SdkRequest):
                     values["city"] = geolocation["city"]
         return values  # type: ignore[return-value]
 
-    @staticmethod
-    def from_country(country: str, id: str | None = None) -> "NotteProxy":
-        return NotteProxy(id=id, country=ProxyGeolocationCountry(country))
+    @field_validator("city")
+    @classmethod
+    def validate_city(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        city = value.strip()
+        if not city:
+            raise ValueError("city must be a non-empty string")
+        return city
 
     @staticmethod
-    def from_city(city: str, id: str | None = None) -> "NotteProxy":
-        return NotteProxy(id=id, city=city)
+    def _resolve_proxy_id(proxy_id: str | None, kwargs: dict[str, Any]) -> str | None:
+        legacy_id = kwargs.pop("id", None)
+        if kwargs:
+            unexpected = next(iter(kwargs))
+            raise TypeError(f"Unexpected keyword argument: {unexpected}")
+        if proxy_id is not None and legacy_id is not None:
+            raise ValueError("Cannot provide both proxy_id and id")
+        return proxy_id if proxy_id is not None else legacy_id
+
+    @staticmethod
+    def from_country(country: str, proxy_id: str | None = None, **kwargs: Any) -> "NotteProxy":
+        return NotteProxy(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), country=ProxyGeolocationCountry(country))
+
+    @staticmethod
+    def from_city(city: str, proxy_id: str | None = None, **kwargs: Any) -> "NotteProxy":
+        return NotteProxy(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), city=city)
 
 
 class ExternalProxy(SdkRequest):

@@ -40,6 +40,34 @@ class TestDirectProxyValidation:
         assert proxy.country is None
         assert proxy.city == "Madrid"
 
+    def test_notte_proxy_from_city_rejects_empty_city(self):
+        """Test NotteProxy.from_city rejects empty city names."""
+        with pytest.raises(ValidationError, match="city must be a non-empty string"):
+            NotteProxy.from_city("")
+
+    def test_notte_proxy_rejects_whitespace_city(self):
+        """Test NotteProxy rejects whitespace-only city names."""
+        with pytest.raises(ValidationError, match="city must be a non-empty string"):
+            NotteProxy.model_validate({"type": "notte", "city": "   "})
+
+    def test_notte_proxy_from_city_with_proxy_id(self):
+        """Test NotteProxy.from_city helper with proxy_id."""
+        proxy = NotteProxy.from_city("Madrid", proxy_id="my-proxy-id")
+        assert proxy.id == "my-proxy-id"
+        assert proxy.city == "Madrid"
+
+    def test_notte_proxy_from_city_with_legacy_id(self):
+        """Test NotteProxy.from_city helper with legacy id keyword."""
+        proxy = NotteProxy.from_city("Madrid", id="my-proxy-id")
+        assert proxy.id == "my-proxy-id"
+        assert proxy.city == "Madrid"
+
+    def test_notte_proxy_from_country_with_legacy_id(self):
+        """Test NotteProxy.from_country helper with legacy id keyword."""
+        proxy = NotteProxy.from_country("us", id="my-proxy-id")
+        assert proxy.id == "my-proxy-id"
+        assert proxy.country == ProxyGeolocationCountry.UNITED_STATES
+
     def test_notte_proxy_without_country(self):
         """Test NotteProxy without country (None)."""
         proxy = NotteProxy.model_validate({"type": "notte"})
