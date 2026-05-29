@@ -441,13 +441,3 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [Bug Bounty](https://docs.notte.cc/legal/bug-bounty.md): Report security vulnerabilities responsibly
 
 ## Community
-
-
-
-# Updates
-
-## Updates
-
-- [Changelog](https://docs.notte.cc/changelog.md): Updates and improvements to Notte
-
-## Releases
