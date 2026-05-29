@@ -342,6 +342,7 @@
               {
                 "group": "Resources",
                 "pages": [
+                  "resources",
                   "pricing",
                   "rate-limits",
                   "guides/vibe-coding"

@@ -432,8 +432,7 @@ The SDK docs below are for generated-code editing and reference. They are not th
 
 ## Resources
 
-- [Pricing](https://docs.notte.cc/pricing.md): Simple usage-based pricing with included hours on every plan
-- [Rate Limits](https://docs.notte.cc/rate-limits.md): Feature limits and quotas by plan
+- [Resources](https://docs.notte.cc/resources.md): Quick links to pricing, rate limits, and AI coding setup
 - [Vibe Coding](https://docs.notte.cc/guides/vibe-coding.md): Connect documentation to your AI coding assistant with MCP
 
 ## Legal
