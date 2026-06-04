@@ -1,14 +1,19 @@
 """Tests for schema scraping pipe."""
 
+import os
 from typing import Any
 
 import pytest
+from dotenv import load_dotenv
 from notte_browser.scraping.pruning import MarkdownPruningPipe
 from notte_browser.scraping.schema import SchemaScrapingPipe
+from notte_core.common.config import LlmModel
 from notte_core.data.space import DictBaseModel, StructuredData
 from notte_llm.service import LLMService
 from pydantic import BaseModel, RootModel
 from typing_extensions import override
+
+_ = load_dotenv()
 
 
 class MockLLMServiceForSchema(LLMService):
@@ -149,6 +154,36 @@ async def test_schema_scraping_unmasks_root_model_list() -> None:
     assert result.success is True
     assert isinstance(result.data, RootItemList)
     assert [item.url for item in result.data.root] == ["https://example.com/a", "https://example.com/b"]
+
+
+@pytest.mark.skipif("OPENAI_API_KEY" not in os.environ, reason="requires OPENAI_API_KEY")
+@pytest.mark.asyncio
+async def test_schema_scraping_root_model_list_with_real_llm_round_trip() -> None:
+    schema_pipe = SchemaScrapingPipe(llmserve=LLMService(base_model=LlmModel.openai))
+
+    result = await schema_pipe.forward(
+        url="https://example.com/products",
+        document="""
+        # Product ranking
+
+        1. Atlas Notebook - https://example.com/atlas
+        2. Beacon Pen - https://example.com/beacon
+        """,
+        response_format=RootItemList,
+        instructions=(
+            "Extract the two product ranking entries. Return only the ranked items from the document with rank, "
+            "title, and url populated."
+        ),
+        verbose=False,
+        use_link_placeholders=False,
+    )
+
+    assert result.success is True, result.error
+    assert isinstance(result.data, RootItemList)
+    assert result.data.root == [
+        ScrapedItem(rank=1, title="Atlas Notebook", url="https://example.com/atlas"),
+        ScrapedItem(rank=2, title="Beacon Pen", url="https://example.com/beacon"),
+    ]
 
 
 @pytest.mark.asyncio
