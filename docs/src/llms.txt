@@ -220,6 +220,8 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 
 ## Profiles
 
+- [GET Profile Cookies Get](https://docs.notte.cc/api-reference/profiles/profile-cookies-get.md)
+- [POST Profile Cookies Set](https://docs.notte.cc/api-reference/profiles/profile-cookies-set.md)
 - [POST Profile Create](https://docs.notte.cc/api-reference/profiles/profile-create.md)
 - [DELETE Profile Delete](https://docs.notte.cc/api-reference/profiles/profile-delete.md)
 - [GET Profile Get](https://docs.notte.cc/api-reference/profiles/profile-get.md)
