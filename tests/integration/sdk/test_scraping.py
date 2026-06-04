@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from notte_browser.session import NotteSession
 from notte_sdk.client import NotteClient
 from notte_sdk.types import ScrapeRequest
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class PricingPlan(BaseModel):
@@ -17,6 +17,16 @@ class PricingPlan(BaseModel):
 
 class PricingPlans(BaseModel):
     plans: list[PricingPlan]
+
+
+class RankedProduct(BaseModel):
+    rank: int | None = None
+    title: str | None = None
+    url: str | None = None
+
+
+class RankedProducts(RootModel[list[RankedProduct]]):
+    root: list[RankedProduct]
 
 
 @pytest.fixture
@@ -71,6 +81,38 @@ async def test_scraping_response_format():
         plans = PricingPlans.model_validate(structured.data)
         assert len(plans.plans) >= 1
         assert plans == structured.get()
+
+
+@pytest.mark.asyncio
+async def test_scraping_root_model_list_response_format():
+    _ = load_dotenv()
+    async with NotteSession() as session:
+        await session.window.page.set_content("""
+        <main>
+          <h1>Product ranking</h1>
+          <ol>
+            <li><a href="https://example.com/atlas">Atlas Notebook</a></li>
+            <li><a href="https://example.com/beacon">Beacon Pen</a></li>
+          </ol>
+        </main>
+        """)
+
+        scraped: Any = await session.ascrape(
+            instructions=(
+                "Extract the ranked product entries from the page. Return one top-level list item per product with "
+                "rank, title, and url when present."
+            ),
+            response_format=RankedProducts,
+            raise_on_failure=True,
+            use_link_placeholders=False,
+        )
+
+        assert isinstance(scraped, list)
+        assert len(scraped) == 2
+        assert all(isinstance(item, RankedProduct) for item in scraped)
+        assert [item.rank for item in scraped] == [1, 2]
+        assert all(item.title for item in scraped)
+        assert all(item.url for item in scraped)
 
 
 @pytest.mark.asyncio
