@@ -7,9 +7,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-[Fireworks AI](https://fireworks.ai) serves open-weight LLMs (Kimi K2.5, GLM-5, MiniMax M2.5, and others) on production-grade inference infrastructure. By passing a Fireworks model string to a Notte agent, you can run browser automations on any Fireworks-hosted model without writing provider-specific code: Notte connects to Fireworks through LiteLLM, so the integration is a single `reasoning_model` string change.
+[Fireworks AI](https://fireworks.ai) hosts open-weight LLMs including Kimi K2.5, GLM-5, and MiniMax M2.5. To run a Notte agent on any of them, pass the model string to `reasoning_model`. Notte talks to Fireworks through LiteLLM, so there's no extra provider setup.
 
-For benchmark context on running browser agents across Fireworks-served models, see [Agents Don't Fail on Intelligence. They Fail on Execution](https://fireworks.ai/blog/agent-execution-tax).
+For numbers on how these models hold up across browser-agent workloads, see the joint benchmark, [Agents Don't Fail on Intelligence. They Fail on Execution](https://fireworks.ai/blog/agent-execution-tax).
 
 ## Prerequisites
 
@@ -19,38 +19,34 @@ For benchmark context on running browser agents across Fireworks-served models, 
 
 ## Setup
 
-### 1. Install the Notte SDK
+### 1. Install the SDK
 
 ```bash
 pip install --upgrade notte-sdk
 ```
 
-### 2. Configure your API keys
-
-Set the following environment variables:
+### 2. Set your API keys
 
 ```bash
 export NOTTE_API_KEY=<your-notte-api-key>
 export FIREWORKS_API_KEY=<your-fireworks-api-key>
 ```
 
-### 3. Run an agent against a Fireworks-served model
+### 3. Run an agent on a Fireworks model
 
-Pass a `reasoning_model` string in the `fireworks_ai/accounts/fireworks/models/<id>` shape:
+Pass the model string (formatted as `fireworks_ai/accounts/fireworks/models/<id>`) to `reasoning_model`:
 
 <FireworksBasic />
 
-That's it: the agent now drives the browser using Kimi K2.5 served by Fireworks.
-
 ## Supported models
 
-Any Fireworks-served model that supports JSON-mode structured output will work with Notte. The following were validated as part of the joint Notte × Fireworks benchmark:
+Any Fireworks model with JSON-mode structured output works with Notte. Three were covered in the joint benchmark with Fireworks:
 
 - Kimi K2.5: `fireworks_ai/accounts/fireworks/models/kimi-k2p5`
 - GLM-5: `fireworks_ai/accounts/fireworks/models/glm-5`
 - MiniMax M2.5: `fireworks_ai/accounts/fireworks/models/minimax-m2p5`
 
-See the [Fireworks model catalogue](https://fireworks.ai/models) for the full list.
+See the [Fireworks model catalogue](https://fireworks.ai/models) for everything else.
 
 ## Resources
 
