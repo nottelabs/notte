@@ -164,6 +164,7 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [Steel](https://docs.notte.cc/integrations/steel.md): Run Notte with Steel cloud browsers (CDP)
 - [Massive](https://docs.notte.cc/integrations/massive.md): Use Massive residential proxies with Notte sessions
 - [OpenAI CUA](https://docs.notte.cc/integrations/openai-cua.md): Integrate OpenAI CUA with Notte Browser Sessions
+- [Fireworks AI](https://docs.notte.cc/integrations/fireworks.md): Run Notte browser agents on Fireworks-served open-weight models
 - [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Use Notte cloud browsers with Stagehand browser automation
 - [OpenClaw](https://docs.notte.cc/integrations/openclaw.md): Use Notte cloud browsers with OpenClaw
 - [Cloudflare Web Bot Auth](https://docs.notte.cc/features/sessions/cloudflare-web-bot-auth.md): Access Cloudflare-protected websites by cryptographically signing browser requests
