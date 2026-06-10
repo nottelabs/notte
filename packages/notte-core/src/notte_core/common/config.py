@@ -71,6 +71,7 @@ class LlmProvider(StrEnum):
     zai = "zai"
     qwen = "qwen"
     minimax = "minimax"
+    fireworks_ai = "fireworks_ai"
 
     @property
     def context_length(self) -> int:
@@ -121,6 +122,8 @@ class LlmProvider(StrEnum):
                 return "QWEN_API_KEY"
             case LlmProvider.minimax:
                 return "MINIMAX_API_KEY"
+            case LlmProvider.fireworks_ai:
+                return "FIREWORKS_API_KEY"
             case _:  # pyright: ignore[reportUnnecessaryComparison]
                 raise ValueError(f"No API key name found for provider: {self}")  # pyright: ignore[reportUnreachable]
 
@@ -144,6 +147,9 @@ class LlmModel(StrEnum):
     kimi2_5 = "moonshot/kimi-k2.5"
     grok = "xai/grok-4-1-fast-non-reasoning"
     minimax = "minimax/minimax-m2.5"
+    fireworks_kimi_k2p5 = "fireworks_ai/accounts/fireworks/models/kimi-k2p5"
+    fireworks_glm_5 = "fireworks_ai/accounts/fireworks/models/glm-5"
+    fireworks_minimax_m2p5 = "fireworks_ai/accounts/fireworks/models/minimax-m2p5"
 
     @property
     def provider(self) -> LlmProvider:
@@ -218,6 +224,7 @@ class LlmModel(StrEnum):
         unsupported_providers = [
             str(LlmProvider.cerebras),
             str(LlmProvider.moonshot),
+            str(LlmProvider.fireworks_ai),
         ]
         unsupported_models = [
             "gemini-2.0-flash",
