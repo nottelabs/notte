@@ -240,6 +240,7 @@ class LlmModel(StrEnum):
         # Model-specific temperature overrides
         temperature_overrides: dict[str, float] = {
             "kimi-k2.5": 1.0,
+            "kimi-k2p5": 1.0,
         }
         for model_pattern, temp in temperature_overrides.items():
             if model_pattern in val_str:
