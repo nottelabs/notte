@@ -25,7 +25,46 @@ The Notte-MCP implementation directly mirrors the [Notte API offering](https://d
 - Data collection from websites without available APIs
 - Streamlined research workflows with AI-assisted browsing
 
-## Setup: How to Integrate Notte with MCP Server
+## Hosted MCP Server
+
+The fastest way to get started is the **hosted MCP server**, which runs directly on the Notte API — no local install or running process required. It is available at:
+
+```
+https://api.notte.cc/mcp/
+```
+
+This endpoint exposes (almost) every public Notte API route as an MCP tool, so AI clients like Claude Desktop, Cursor, and custom agents can drive sessions, agents, scraping, web search, vaults, profiles, and more out of the box. It speaks the [Streamable HTTP](https://modelcontextprotocol.io/specification/draft/basic/transports) transport and authenticates with your Notte API key via a standard `Authorization: Bearer` header.
+
+To connect Claude Desktop to the hosted server, add the following to your configuration:
+
+```json
+{
+    "mcpServers": {
+        "notte-mcp": {
+          "command": "npx",
+          "args": [
+            "mcp-remote",
+            "https://api.notte.cc/mcp/",
+            "--header",
+            "Authorization:${AUTH_HEADER}"
+          ],
+          "env": {
+            "AUTH_HEADER": "Bearer <your-notte-api-key>"
+          }
+        }
+    }
+}
+```
+
+<Note>
+The `Authorization:${AUTH_HEADER}` form (with the token supplied via the `env` block) avoids an `mcp-remote` quirk where header values containing spaces can be split incorrectly. Restart Claude Desktop after editing the config and the Notte tools will appear under the 🔨 icon.
+</Note>
+
+You can grab your API key from the [Notte Console](https://console.notte.cc).
+
+## Setup: Running the MCP Server Locally
+
+Prefer to self-host? The MCP server is also available as a standalone package you can run on your own machine.
 
 <Steps>
   <Step title="(Optional) Running the MCP Server Locally">

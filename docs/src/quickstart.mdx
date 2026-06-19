@@ -223,7 +223,7 @@ Build reliable Python SDK automation scripts by authoring in a real browser firs
           "",
           "**Browser profiles:** Profiles store browser state such as cookies, `localStorage`, and `sessionStorage`. Start a session with `--profile-id <profile-id>` to load that saved state; add `--profile-persist` when starting the session if changes should be saved back to the profile when the session closes.",
           "",
-          "Session debugging and export:",
+          "Session debugging:",
           "",
           "```bash",
           "# Get network logs",
@@ -231,11 +231,49 @@ Build reliable Python SDK automation scripts by authoring in a real browser firs
           "",
           "# Get replay URL/data",
           "notte sessions replay",
+          "```",
           "",
+          "Session export:",
+          "",
+          "```bash",
           "# Export session steps as Python workflow code.",
           "# Use --session-id to export a specific session, including one that has been stopped.",
-          "notte sessions workflow-code",
           "notte sessions workflow-code --session-id <session-id>",
+          "",
+          "# example flow",
+          "notte sessions start",
+          "notte page goto news.ycombinator.com",
+          "notte page scrape --instructions \"Extract the top 10 stories from Hacker News. For each story return: rank, title, URL, points, author, number of comments\" -o json",
+          "notte sessions workflow-code",
+          "",
+          "# returns",
+          "from __future__ import annotations",
+          "",
+          "from notte_sdk import NotteClient",
+          "from pydantic import BaseModel",
+          "",
+          "class Story(BaseModel):",
+          "    rank: int | None = None",
+          "    title: str | None = None",
+          "    url: str | None = None",
+          "    points: int | None = None",
+          "    author: str | None = None",
+          "    number_of_comments: int | None = None",
+          "",
+          "",
+          "class Model(BaseModel):",
+          "    stories: list[Story] | None = None",
+          "",
+          "client = NotteClient()",
+          "",
+          "def run() -> Model:",
+          "    with client.Session(use_file_storage=True) as session:",
+          "        _ = session.execute(type='goto', url='news.ycombinator.com')",
+          "",
+          "        # directly parses the output using response_format and returns the Model",
+          "        return session.scrape(instructions='Extract the top 10 stories from Hacker News. For each story return: rank, title, URL, points, author, number of comments', only_main_content=False, only_images=False, scrape_links=True, scrape_images=False, response_format=Model)",
+          "",
+          "run()",
           "```",
           "",
           "Cookie management:",
@@ -1040,7 +1078,7 @@ Build reliable Python SDK automation scripts by authoring in a real browser firs
 
     **Browser profiles:** Profiles store browser state such as cookies, `localStorage`, and `sessionStorage`. Start a session with `--profile-id <profile-id>` to load that saved state; add `--profile-persist` when starting the session if changes should be saved back to the profile when the session closes.
 
-    Session debugging and export:
+    Session debugging:
 
     ```bash
     # Get network logs
@@ -1048,11 +1086,49 @@ Build reliable Python SDK automation scripts by authoring in a real browser firs
 
     # Get replay URL/data
     notte sessions replay
+    ```
 
+    Session export:
+
+    ```bash
     # Export session steps as Python workflow code.
     # Use --session-id to export a specific session, including one that has been stopped.
-    notte sessions workflow-code
     notte sessions workflow-code --session-id <session-id>
+
+    # example flow
+    notte sessions start
+    notte page goto news.ycombinator.com
+    notte page scrape --instructions "Extract the top 10 stories from Hacker News. For each story return: rank, title, URL, points, author, number of comments" -o json
+    notte sessions workflow-code
+
+    # returns
+    from __future__ import annotations
+
+    from notte_sdk import NotteClient
+    from pydantic import BaseModel
+
+    class Story(BaseModel):
+        rank: int | None = None
+        title: str | None = None
+        url: str | None = None
+        points: int | None = None
+        author: str | None = None
+        number_of_comments: int | None = None
+
+
+    class Model(BaseModel):
+        stories: list[Story] | None = None
+
+    client = NotteClient()
+
+    def run() -> Model:
+        with client.Session(use_file_storage=True) as session:
+            _ = session.execute(type='goto', url='news.ycombinator.com')
+
+            # directly parses the output using response_format and returns the Model
+            return session.scrape(instructions='Extract the top 10 stories from Hacker News. For each story return: rank, title, URL, points, author, number of comments', only_main_content=False, only_images=False, scrape_links=True, scrape_images=False, response_format=Model)
+
+    run()
     ```
 
     Cookie management:
@@ -1838,7 +1914,7 @@ notte sessions list [--page N] [--page-size N] [--only-active]
 
 **Browser profiles:** Profiles store browser state such as cookies, `localStorage`, and `sessionStorage`. Start a session with `--profile-id <profile-id>` to load that saved state; add `--profile-persist` when starting the session if changes should be saved back to the profile when the session closes.
 
-Session debugging and export:
+Session debugging:
 
 ```bash
 # Get network logs
@@ -1846,11 +1922,49 @@ notte sessions network
 
 # Get replay URL/data
 notte sessions replay
+```
 
+Session export:
+
+```bash
 # Export session steps as Python workflow code.
 # Use --session-id to export a specific session, including one that has been stopped.
-notte sessions workflow-code
 notte sessions workflow-code --session-id <session-id>
+
+# example flow
+notte sessions start
+notte page goto news.ycombinator.com
+notte page scrape --instructions "Extract the top 10 stories from Hacker News. For each story return: rank, title, URL, points, author, number of comments" -o json
+notte sessions workflow-code
+
+# returns
+from __future__ import annotations
+
+from notte_sdk import NotteClient
+from pydantic import BaseModel
+
+class Story(BaseModel):
+    rank: int | None = None
+    title: str | None = None
+    url: str | None = None
+    points: int | None = None
+    author: str | None = None
+    number_of_comments: int | None = None
+
+
+class Model(BaseModel):
+    stories: list[Story] | None = None
+
+client = NotteClient()
+
+def run() -> Model:
+    with client.Session(use_file_storage=True) as session:
+        _ = session.execute(type='goto', url='news.ycombinator.com')
+
+        # directly parses the output using response_format and returns the Model
+        return session.scrape(instructions='Extract the top 10 stories from Hacker News. For each story return: rank, title, URL, points, author, number of comments', only_main_content=False, only_images=False, scrape_links=True, scrape_images=False, response_format=Model)
+
+run()
 ```
 
 Cookie management:
