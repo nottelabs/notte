@@ -2,9 +2,9 @@ from notte_core.common.config import LlmModel, LlmProvider
 
 
 FIREWORKS_MODELS: list[str] = [
-    LlmModel.fireworks_kimi_k2p5,
-    LlmModel.fireworks_glm_5,
-    LlmModel.fireworks_minimax_m2p5,
+    LlmModel.fireworks_kimi,
+    LlmModel.fireworks_glm,
+    LlmModel.fireworks_minimax,
 ]
 
 
@@ -34,5 +34,5 @@ def test_fireworks_models_use_non_strict_response_format():
 
 def test_fireworks_kimi_temperature_override_matches_moonshot():
     # Same underlying model, both paths should pick up the 1.0 override.
-    assert LlmModel.get_temperature(LlmModel.fireworks_kimi_k2p5, default=0.0) == 1.0
+    assert LlmModel.get_temperature(LlmModel.fireworks_kimi, default=0.0) == 1.0
     assert LlmModel.get_temperature(LlmModel.kimi2_5, default=0.0) == 1.0

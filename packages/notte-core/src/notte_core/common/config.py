@@ -147,9 +147,9 @@ class LlmModel(StrEnum):
     kimi2_5 = "moonshot/kimi-k2.5"
     grok = "xai/grok-4-1-fast-non-reasoning"
     minimax = "minimax/minimax-m2.5"
-    fireworks_kimi_k2p5 = "fireworks_ai/accounts/fireworks/models/kimi-k2p5"
-    fireworks_glm_5 = "fireworks_ai/accounts/fireworks/models/glm-5"
-    fireworks_minimax_m2p5 = "fireworks_ai/accounts/fireworks/models/minimax-m2p5"
+    fireworks_kimi = "fireworks_ai/accounts/fireworks/models/kimi-k2p5"
+    fireworks_glm = "fireworks_ai/accounts/fireworks/models/glm-5p2"
+    fireworks_minimax = "fireworks_ai/accounts/fireworks/models/minimax-m3"
 
     @property
     def provider(self) -> LlmProvider:
