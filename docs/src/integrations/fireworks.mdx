@@ -7,7 +7,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-[Fireworks AI](https://fireworks.ai) hosts open-weight LLMs including Kimi K2.5, GLM-5, and MiniMax M2.5. To run a Notte agent on any of them, pass the model string to `reasoning_model`. Notte talks to Fireworks through LiteLLM, so there's no extra provider setup.
+[Fireworks AI](https://fireworks.ai) hosts open-weight LLMs such as Kimi, GLM, and MiniMax. To run a Notte agent on any of them, pass the model string to `reasoning_model`. Notte talks to Fireworks through LiteLLM, so there's no extra provider setup.
 
 For numbers on how these models hold up across browser-agent workloads, see the joint benchmark, [Agents Don't Fail on Intelligence. They Fail on Execution](https://fireworks.ai/blog/agent-execution-tax).
 
@@ -38,13 +38,13 @@ Pass the model string (formatted as `fireworks_ai/accounts/fireworks/models/<id>
 
 ## Supported models
 
-Any Fireworks model with JSON-mode structured output works with Notte. Three were covered in the joint benchmark with Fireworks:
+Any Fireworks model with JSON-mode structured output works with Notte. For example:
 
 - Kimi K2.5: `fireworks_ai/accounts/fireworks/models/kimi-k2p5`
-- GLM-5: `fireworks_ai/accounts/fireworks/models/glm-5`
-- MiniMax M2.5: `fireworks_ai/accounts/fireworks/models/minimax-m2p5`
+- GLM 5.2: `fireworks_ai/accounts/fireworks/models/glm-5p2`
+- MiniMax M3: `fireworks_ai/accounts/fireworks/models/minimax-m3`
 
-See the [Fireworks model catalogue](https://fireworks.ai/models) for everything else.
+Model availability on Fireworks changes over time — see the [Fireworks model catalogue](https://fireworks.ai/models) for the current list. For how Fireworks-served models perform on browser-agent workloads, see the [joint benchmark](https://fireworks.ai/blog/agent-execution-tax).
 
 ## Resources
 
