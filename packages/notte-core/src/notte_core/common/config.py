@@ -92,7 +92,7 @@ class LlmProvider(StrEnum):
 
     @property
     def apikey_name(self) -> str:
-        if enable_openrouter():
+        if enable_openrouter() and self != LlmProvider.fireworks_ai:
             return "OPENROUTER_API_KEY"
         match self:
             case LlmProvider.gemini:
@@ -265,7 +265,8 @@ class LlmModel(StrEnum):
             return True
         try:
             provider = LlmModel.get_provider(model)
-            return provider.is_prefix_provider and provider.has_apikey_in_env()
+            _, _, suffix = model.partition("/")
+            return provider.is_prefix_provider and bool(suffix) and provider.has_apikey_in_env()
         except ValueError:
             return False
 

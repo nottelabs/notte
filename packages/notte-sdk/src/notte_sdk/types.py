@@ -1888,6 +1888,12 @@ class AgentCreateRequest(__AgentCreateRequest):
     @classmethod
     def validate_reasoning_model(cls, value: LlmModel) -> LlmModel:
         provider = LlmModel.get_provider(value)
+        if provider.is_prefix_provider:
+            if not LlmModel.is_valid(value):
+                raise ValueError(
+                    f"Model '{value}' requires the {provider.apikey_name} variable to be configured in the environment"
+                )
+            return value
         if not provider.has_apikey_in_env():
             raise ValueError(
                 f"Model '{value}' requires the {provider.apikey_name} variable to be configured in the environment"

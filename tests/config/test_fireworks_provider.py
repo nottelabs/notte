@@ -69,6 +69,20 @@ class TestFireworksResponseFormat:
         assert not LlmModel.use_strict_response_format("fireworks_ai/accounts/fireworks/models/any-model")
 
 
+class TestFireworksEdgeCases:
+    @patch.dict(os.environ, {"FIREWORKS_API_KEY": "test-key"})
+    def test_bare_provider_prefix_is_invalid(self) -> None:
+        assert not LlmModel.is_valid("fireworks_ai")
+
+    @patch.dict(os.environ, {"FIREWORKS_API_KEY": "test-key"})
+    def test_provider_with_trailing_slash_is_invalid(self) -> None:
+        assert not LlmModel.is_valid("fireworks_ai/")
+
+    @patch.dict(os.environ, {"FIREWORKS_API_KEY": "test-key", "ENABLE_OPENROUTER": "true"})
+    def test_apikey_not_masked_by_openrouter(self) -> None:
+        assert LlmProvider.fireworks_ai.apikey_name == "FIREWORKS_API_KEY"
+
+
 class TestFireworksHasApiKeyInEnv:
     @patch.dict(os.environ, {"FIREWORKS_API_KEY": "test-key"})
     def test_has_apikey_when_set(self) -> None:
