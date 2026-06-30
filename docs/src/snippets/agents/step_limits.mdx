@@ -1,14 +1,29 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/agents/step_limits.py */}
-
-```python step_limits.py
+<CodeGroup>
+```python Python
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
 with client.Session() as session:
-    agent = client.Agent(
-        session=session,
+    agent = client.Agent(session=session)
+    agent.run(
+        task="Find and summarize the top 5 AI news from today",
         max_steps=20,  # Limit to 20 actions
     )
 ```
+```javascript JavaScript
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient({
+  apiKey: process.env.NOTTE_API_KEY,
+});
+
+await client.Session().use(async (session) => {
+  const agent = client.Agent({ session });
+  await agent.run({
+    task: 'Find and summarize the top 5 AI news from today',
+    max_steps: 20, // Limit to 20 actions
+  });
+});
+```
+</CodeGroup>

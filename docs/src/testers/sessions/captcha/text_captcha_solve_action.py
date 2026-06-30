@@ -1,0 +1,21 @@
+# @sniptest filename=text_captcha_solve_action.py
+# @sniptest typecheck_only=true
+from notte_sdk import NotteClient
+
+DEMO_URL = "https://captcha.com/demos/features/captcha-demo.aspx#"
+VALIDATE_SELECTOR = 'internal:role=button[name="Validate"i]'
+client = NotteClient()
+
+with client.Session(solve_captchas=True, proxies=True, open_viewer=True) as session:
+    session.execute(type="goto", url=DEMO_URL)
+
+    result = session.execute(
+        type="captcha_solve",
+        captcha_type="text",
+        raise_on_failure=False,
+    )
+
+    if not result.success:
+        raise RuntimeError(f"Text CAPTCHA solve failed: {result.message}")
+
+    session.execute(type="click", selector=VALIDATE_SELECTOR)

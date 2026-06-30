@@ -42,9 +42,6 @@ class NotteModule(Protocol):
 class ScriptValidator(RestrictingNodeTransformer):
     """Validates that the AST only contains allowed operations"""
 
-    # Notte-specific operations that must be present in valid scripts
-    NOTTE_OPERATIONS: ClassVar[set[str]] = {"notte.Session", "client.Session", "cli.Session", "c.Session", "n.Session"}
-
     # Safe modules that can be imported in user scripts
     # These modules are considered safe because they don't provide:
     # - File system access (os, pathlib, shutil)
@@ -181,6 +178,12 @@ class ScriptValidator(RestrictingNodeTransformer):
             raise SyntaxError(f"Access to private attribute forbidden: '{node.attr}'")
         return super().visit_Attribute(node)
 
+    @override
+    def check_name(self, node: ast.AST, name: str | None, allow_magic_methods: bool = False) -> None:
+        if name == "__name__" and isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+            return
+        return super().check_name(node, name, allow_magic_methods)  # pyright: ignore[reportUnknownMemberType]
+
     @staticmethod
     def check_valid_import(name: str, import_type: Literal["import", "import from"] = "import") -> None:
         # Allow exact matches and explicitly whitelisted submodules
@@ -204,6 +207,12 @@ class ScriptValidator(RestrictingNodeTransformer):
         """Override to validate allowed from imports"""
         if node.module is None:
             raise SyntaxError("Relative imports are not allowed")
+
+        if node.module == "__future__":
+            imported_names = {alias.name for alias in node.names}
+            if imported_names == {"annotations"}:
+                return super().visit_ImportFrom(node)
+            raise SyntaxError("Only 'from __future__ import annotations' is allowed")
 
         ScriptValidator.check_valid_import(node.module, import_type="import from")
         return super().visit_ImportFrom(node)
@@ -302,18 +311,6 @@ class ScriptValidator(RestrictingNodeTransformer):
 
     @staticmethod
     def parse_script(code_string: str, restricted: bool = True) -> ParsedScriptInfo:
-        found_notte_operations: set[str] = set()
-
-        class StatefulScriptValidator(ScriptValidator):
-            @override
-            def visit_Call(self, node: ast.Call) -> ast.AST:
-                """Override to add custom call restrictions"""
-                call_name = self._get_call_name(node)
-                # Track notte operations
-                if call_name and call_name in self.NOTTE_OPERATIONS:
-                    found_notte_operations.add(call_name)
-                return super().visit_Call(node)
-
         # 1. Parse the AST first to check for run function
         tree = ast.parse(code_string)
 
@@ -331,14 +328,8 @@ class ScriptValidator(RestrictingNodeTransformer):
 
         # 4. Compile with RestrictedPython validation (strict mode only)
         code: types.CodeType = compile_restricted(  # pyright: ignore [reportUnknownVariableType]
-            code_string, filename="<user_script.py>", mode="exec", policy=StatefulScriptValidator
+            code_string, filename="<user_script.py>", mode="exec", policy=ScriptValidator
         )
-
-        # 5. Validate that at least one notte operation is present (strict mode only)
-        if restricted and not found_notte_operations:
-            raise ValueError(
-                f"Python script must contain at least one notte operation ({ScriptValidator.NOTTE_OPERATIONS})"
-            )
 
         return ParsedScriptInfo(code=code, variables=run_parameters)  # pyright: ignore [reportUnknownArgumentType]
 

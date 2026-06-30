@@ -2,9 +2,11 @@
 title: Browser Sessions
 description: 'Cloud-hosted browser instances for automation'
 ---
-
-import SessionsPython from '/snippets/sessions/index.mdx';
+import CDPSession from '/snippets/quickstart/cdp_session.mdx';
 import LinkedInStep from '/snippets/pages/linkedin_step.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
 
 Sessions are isolated browser instances running in the cloud that you can control programmatically. Think of them as headless Chrome browsers, but managed, scalable, and equipped with anti-detection, proxies, and captcha solving out of the box.
 
@@ -14,7 +16,7 @@ Every operation in Notte—whether you're running an AI agent, scraping data, or
 
 Create a session and start automating:
 
-<SessionsPython />
+<CDPSession />
 
 <Tip>
   We strongly recommend using the `with` statement (context manager) to ensure sessions are automatically stopped when done. This prevents orphaned sessions and unexpected costs. See [Session Lifecycle](/features/sessions/lifecycle) for manual management options.

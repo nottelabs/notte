@@ -1,7 +1,7 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/scraping/nested_structures.py */}
-
-```python nested_structures.py
+<CodeGroup>
+```python Python
+from notte_sdk import NotteClient
+from pydantic import BaseModel
 
 class Address(BaseModel):
     street: str
@@ -23,3 +23,32 @@ company = client.scrape(
 
 print(company.address.city)
 ```
+```javascript JavaScript
+import { z } from 'zod';
+import { NotteClient } from 'notte-sdk';
+
+const Address = z.object({
+  street: z.string(),
+  city: z.string(),
+  country: z.string(),
+});
+
+const Company = z.object({
+  name: z.string(),
+  description: z.string(),
+  address: Address,
+  employee_count: z.number().nullable(),
+});
+
+const client = new NotteClient({
+  apiKey: process.env.NOTTE_API_KEY,
+});
+
+const company = await client.scrape('https://example.com/about', {
+  response_format: Company,
+  instructions: 'Extract company information including address',
+});
+
+console.log(company.address.city);
+```
+</CodeGroup>

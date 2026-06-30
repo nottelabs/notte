@@ -26,6 +26,48 @@ class TestDirectProxyValidation:
         assert proxy.type == "notte"
         assert proxy.country == ProxyGeolocationCountry.UNITED_KINGDOM
 
+    def test_notte_proxy_with_city_string(self):
+        """Test NotteProxy with city as unrestricted string."""
+        proxy = NotteProxy.model_validate({"type": "notte", "city": "New York"})
+        assert proxy.type == "notte"
+        assert proxy.country is None
+        assert proxy.city == "New York"
+
+    def test_notte_proxy_from_city(self):
+        """Test NotteProxy.from_city helper."""
+        proxy = NotteProxy.from_city("Madrid")
+        assert proxy.type == "notte"
+        assert proxy.country is None
+        assert proxy.city == "Madrid"
+
+    def test_notte_proxy_from_city_rejects_empty_city(self):
+        """Test NotteProxy.from_city rejects empty city names."""
+        with pytest.raises(ValidationError, match="city must be a non-empty string"):
+            NotteProxy.from_city("")
+
+    def test_notte_proxy_rejects_whitespace_city(self):
+        """Test NotteProxy rejects whitespace-only city names."""
+        with pytest.raises(ValidationError, match="city must be a non-empty string"):
+            NotteProxy.model_validate({"type": "notte", "city": "   "})
+
+    def test_notte_proxy_from_city_with_proxy_id(self):
+        """Test NotteProxy.from_city helper with proxy_id."""
+        proxy = NotteProxy.from_city("Madrid", proxy_id="my-proxy-id")
+        assert proxy.id == "my-proxy-id"
+        assert proxy.city == "Madrid"
+
+    def test_notte_proxy_from_city_with_legacy_id(self):
+        """Test NotteProxy.from_city helper with legacy id keyword."""
+        proxy = NotteProxy.from_city("Madrid", id="my-proxy-id")
+        assert proxy.id == "my-proxy-id"
+        assert proxy.city == "Madrid"
+
+    def test_notte_proxy_from_country_with_legacy_id(self):
+        """Test NotteProxy.from_country helper with legacy id keyword."""
+        proxy = NotteProxy.from_country("us", id="my-proxy-id")
+        assert proxy.id == "my-proxy-id"
+        assert proxy.country == ProxyGeolocationCountry.UNITED_STATES
+
     def test_notte_proxy_without_country(self):
         """Test NotteProxy without country (None)."""
         proxy = NotteProxy.model_validate({"type": "notte"})
@@ -115,6 +157,15 @@ class TestSessionStartRequestWithDictConfigs:
         assert len(request.proxies) == 1
         assert request.proxies[0].type == "notte"
         assert request.proxies[0].country == ProxyGeolocationCountry.UNITED_STATES
+
+    def test_notte_proxy_dict_with_city(self):
+        """Test NotteProxy dict: {"type": "notte", "city": "Chicago"}."""
+        request = SessionStartRequest.model_validate({"proxies": [{"type": "notte", "city": "Chicago"}]})
+        assert isinstance(request.proxies, list)
+        assert len(request.proxies) == 1
+        assert request.proxies[0].type == "notte"
+        assert request.proxies[0].country is None
+        assert request.proxies[0].city == "Chicago"
 
     def test_notte_proxy_dict_with_typo_in_country(self):
         """Test NotteProxy dict with typo in 'country' field should fail validation."""
@@ -211,9 +262,10 @@ class TestBackwardCompatibility:
 
     def test_notte_proxy_with_geolocation_dict(self):
         """Test NotteProxy.model_validate with old geolocation syntax."""
-        proxy = NotteProxy.model_validate({"type": "notte", "geolocation": {"country": "us"}})
+        proxy = NotteProxy.model_validate({"type": "notte", "geolocation": {"country": "us", "city": "Seattle"}})
         assert proxy.type == "notte"
         assert proxy.country == ProxyGeolocationCountry.UNITED_STATES
+        assert proxy.city == "Seattle"
         # geolocation should not exist as a field
         assert not hasattr(proxy, "geolocation")
 
@@ -225,9 +277,12 @@ class TestBackwardCompatibility:
 
     def test_geolocation_with_country_already_set(self):
         """Test that country field takes precedence if both are provided."""
-        proxy = NotteProxy.model_validate({"type": "notte", "country": "us", "geolocation": {"country": "gb"}})
-        # country should take precedence over geolocation
+        proxy = NotteProxy.model_validate(
+            {"type": "notte", "country": "us", "city": "Austin", "geolocation": {"country": "gb", "city": "London"}}
+        )
+        # top-level fields should take precedence over geolocation
         assert proxy.country == ProxyGeolocationCountry.UNITED_STATES
+        assert proxy.city == "Austin"
 
     def test_geolocation_with_id(self):
         """Test old geolocation syntax with id field."""

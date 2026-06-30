@@ -7,7 +7,9 @@ from pydantic import BaseModel, Field, RootModel, model_serializer, model_valida
 from notte_core.errors.processing import InvalidInternalCheckError, ScrapeFailedError
 
 TBaseModel = TypeVar("TBaseModel", bound=BaseModel, covariant=True)
-DictBaseModel = RootModel[dict[str, Any] | list[dict[str, Any]]]
+# Legacy name: used as the raw structured-data wrapper before validating
+# against a user-provided schema, so it must preserve any JSON root shape.
+DictBaseModel = RootModel[Any]
 
 
 class NoStructuredData(BaseModel):
@@ -56,7 +58,7 @@ class StructuredData(BaseModel, Generic[TBaseModel]):
     @model_validator(mode="before")
     def wrap_dict_in_root_model(cls, values: dict[str, Any]) -> dict[str, Any]:
         if isinstance(values, dict) and "data" in values and isinstance(values["data"], (dict, list)):  # type: ignore[arg-type]
-            values["data"] = DictBaseModel(values["data"])  # type: ignore[arg-type]
+            values["data"] = DictBaseModel(values["data"])
         # if error and is not empty, set success to False
         error = values.get("error")
         if error is not None and len(error.strip()) > 0:

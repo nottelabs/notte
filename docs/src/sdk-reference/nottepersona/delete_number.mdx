@@ -2,8 +2,9 @@
 title: "delete_number"
 description: "Delete the phone number from the persona"
 ---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
-
+<AgentMdNotice />
 
 ```python
 persona = notte.Persona("<your-persona-id>")
@@ -13,4 +14,4 @@ persona.delete_number()
 
 ## Returns
 
-[`DeletePhoneNumberResponse`](/sdk-reference/misc/deletephonenumberresponse)
+<Visibility for="humans">[`DeletePhoneNumberResponse`](/sdk-reference/misc/deletephonenumberresponse)</Visibility><Visibility for="agents">[`DeletePhoneNumberResponse`](/sdk-reference/misc/deletephonenumberresponse.md)</Visibility>

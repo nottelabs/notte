@@ -1,6 +1,6 @@
 import functools
 import re
-from typing import Any, Callable, ClassVar, TypeVar
+from typing import Any, Callable, ClassVar, TypeVar, cast
 
 from notte_core.common.logging import logger
 from pydantic import BaseModel
@@ -140,18 +140,18 @@ class MarkdownPruningPipe:
             logger.debug(f"Failed to unmask the JSON string: {e}")
 
         # Step 2: look for string fields in the model that are exactly the same as the masked document
-        def recursive_unmask(data: dict[str, Any]) -> dict[str, Any]:
-            for key, value in data.items():
-                if isinstance(value, str):
-                    if value in document.links:
-                        data[key] = document.links[value]
-                    elif value in document.images:
-                        data[key] = document.images[value]
-                elif isinstance(value, dict):
-                    data[key] = recursive_unmask(value)  # pyright: ignore[reportUnknownArgumentType]
-                elif isinstance(value, list):
-                    data[key] = [recursive_unmask(item) for item in value]  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
-            return data
+        def recursive_unmask(value: Any) -> Any:
+            if isinstance(value, str):
+                if value in document.links:
+                    return document.links[value]
+                if value in document.images:
+                    return document.images[value]
+                return value
+            if isinstance(value, dict):
+                return {key: recursive_unmask(item) for key, item in cast(dict[str, Any], value).items()}
+            if isinstance(value, list):
+                return [recursive_unmask(item) for item in cast(list[Any], value)]
+            return value
 
         unmasked_data = recursive_unmask(data.model_dump())
         return data.__class__.model_validate(unmasked_data)

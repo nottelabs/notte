@@ -13,160 +13,402 @@ If you need to handle multiple sessions, you need to create a new client for eac
 ## Methods
 
 <CardGroup cols={2}>
-  <Card
-    title="__init__"
-    icon="function"
-    href="/sdk-reference/agentsclient/__init__"
-  >
-    Initialize an AgentsClient instance
-  </Card>
-  <Card
-    title="async_watch_logs"
-    icon="function"
-    href="/sdk-reference/agentsclient/async_watch_logs"
-  >
-    Watch the logs of the specified agent asynchronously
-  </Card>
-  <Card
-    title="async_watch_logs_and_wait"
-    icon="function"
-    href="/sdk-reference/agentsclient/async_watch_logs_and_wait"
-  >
-    Execute a task with the agent and wait for completion asynchronously
-  </Card>
-  <Card
-    title="check_and_warn_version_mismatch"
-    icon="function"
-    href="/sdk-reference/agentsclient/check_and_warn_version_mismatch"
-  >
-    Check if the current notte-sdk version matches the latest PyPI version
-  </Card>
-  <Card
-    title="create_function"
-    icon="function"
-    href="/sdk-reference/agentsclient/create_function"
-  >
-    Creates a function that reproduces the steps of the specified agent
-  </Card>
-  <Card
-    title="function_code"
-    icon="function"
-    href="/sdk-reference/agentsclient/function_code"
-  >
-    Retrieves a script that reproduces the steps of the specified agent
-  </Card>
-  <Card
-    title="headers"
-    icon="function"
-    href="/sdk-reference/agentsclient/headers"
-  >
-    Return HTTP headers for authenticated API requests
-  </Card>
-  <Card
-    title="health_check"
-    icon="function"
-    href="/sdk-reference/agentsclient/health_check"
-  >
-    Health check the Notte API
-  </Card>
-  <Card
-    title="is_custom_endpoint_available"
-    icon="function"
-    href="/sdk-reference/agentsclient/is_custom_endpoint_available"
-  >
-    Check if the custom endpoint is available
-  </Card>
-  <Card
-    title="list"
-    icon="function"
-    href="/sdk-reference/agentsclient/list"
-  >
-    Lists agents matching specified criteria
-  </Card>
-  <Card
-    title="request"
-    icon="function"
-    href="/sdk-reference/agentsclient/request"
-  >
-    Requests the specified API endpoint and returns the validated response
-  </Card>
-  <Card
-    title="request_download"
-    icon="function"
-    href="/sdk-reference/agentsclient/request_download"
-  >
-    No description available
-  </Card>
-  <Card
-    title="request_list"
-    icon="function"
-    href="/sdk-reference/agentsclient/request_list"
-  >
-    Retrieves and validates a list of responses from the API
-  </Card>
-  <Card
-    title="request_path"
-    icon="function"
-    href="/sdk-reference/agentsclient/request_path"
-  >
-    Constructs the full request URL for the given API endpoint
-  </Card>
-  <Card
-    title="run"
-    icon="function"
-    href="/sdk-reference/agentsclient/run"
-  >
-    Run an agent with the specified request parameters
-  </Card>
-  <Card
-    title="run_custom"
-    icon="function"
-    href="/sdk-reference/agentsclient/run_custom"
-  >
-    Run a custom agent with the specified request parameters and wait for completion
-  </Card>
-  <Card
-    title="start"
-    icon="function"
-    href="/sdk-reference/agentsclient/start"
-  >
-    Start an agent with the specified request parameters
-  </Card>
-  <Card
-    title="status"
-    icon="function"
-    href="/sdk-reference/agentsclient/status"
-  >
-    Retrieves the status of the specified agent
-  </Card>
-  <Card
-    title="stop"
-    icon="function"
-    href="/sdk-reference/agentsclient/stop"
-  >
-    Stops the specified agent and clears the last agent response
-  </Card>
-  <Card
-    title="wait"
-    icon="function"
-    href="/sdk-reference/agentsclient/wait"
-  >
-    Waits for the specified agent to complete
-  </Card>
-  <Card
-    title="watch_logs"
-    icon="function"
-    href="/sdk-reference/agentsclient/watch_logs"
-  >
-    Watch the logs of the specified agent
-  </Card>
-  <Card
-    title="watch_logs_and_wait"
-    icon="function"
-    href="/sdk-reference/agentsclient/watch_logs_and_wait"
-  >
-    Execute a task with the agent and wait for completion
-  </Card>
+  <Visibility for="humans">
+    <Card
+      title="__init__"
+      icon="function"
+      href="/sdk-reference/agentsclient/__init__"
+    >
+      Initialize an AgentsClient instance
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="__init__"
+      icon="function"
+      href="/sdk-reference/agentsclient/__init__.md"
+    >
+      Initialize an AgentsClient instance
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="async_watch_logs"
+      icon="function"
+      href="/sdk-reference/agentsclient/async_watch_logs"
+    >
+      Watch the logs of the specified agent asynchronously
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="async_watch_logs"
+      icon="function"
+      href="/sdk-reference/agentsclient/async_watch_logs.md"
+    >
+      Watch the logs of the specified agent asynchronously
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="async_watch_logs_and_wait"
+      icon="function"
+      href="/sdk-reference/agentsclient/async_watch_logs_and_wait"
+    >
+      Execute a task with the agent and wait for completion asynchronously
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="async_watch_logs_and_wait"
+      icon="function"
+      href="/sdk-reference/agentsclient/async_watch_logs_and_wait.md"
+    >
+      Execute a task with the agent and wait for completion asynchronously
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="check_and_warn_version_mismatch"
+      icon="function"
+      href="/sdk-reference/agentsclient/check_and_warn_version_mismatch"
+    >
+      Check if the current notte-sdk version matches the latest PyPI version
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="check_and_warn_version_mismatch"
+      icon="function"
+      href="/sdk-reference/agentsclient/check_and_warn_version_mismatch.md"
+    >
+      Check if the current notte-sdk version matches the latest PyPI version
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="create_function"
+      icon="function"
+      href="/sdk-reference/agentsclient/create_function"
+    >
+      Creates a function that reproduces the steps of the specified agent
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="create_function"
+      icon="function"
+      href="/sdk-reference/agentsclient/create_function.md"
+    >
+      Creates a function that reproduces the steps of the specified agent
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="function_code"
+      icon="function"
+      href="/sdk-reference/agentsclient/function_code"
+    >
+      Retrieves a script that reproduces the steps of the specified agent
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="function_code"
+      icon="function"
+      href="/sdk-reference/agentsclient/function_code.md"
+    >
+      Retrieves a script that reproduces the steps of the specified agent
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="headers"
+      icon="function"
+      href="/sdk-reference/agentsclient/headers"
+    >
+      Return HTTP headers for authenticated API requests
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="headers"
+      icon="function"
+      href="/sdk-reference/agentsclient/headers.md"
+    >
+      Return HTTP headers for authenticated API requests
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="health_check"
+      icon="function"
+      href="/sdk-reference/agentsclient/health_check"
+    >
+      Health check the Notte API
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="health_check"
+      icon="function"
+      href="/sdk-reference/agentsclient/health_check.md"
+    >
+      Health check the Notte API
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="is_custom_endpoint_available"
+      icon="function"
+      href="/sdk-reference/agentsclient/is_custom_endpoint_available"
+    >
+      Check if the custom endpoint is available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="is_custom_endpoint_available"
+      icon="function"
+      href="/sdk-reference/agentsclient/is_custom_endpoint_available.md"
+    >
+      Check if the custom endpoint is available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="list"
+      icon="function"
+      href="/sdk-reference/agentsclient/list"
+    >
+      Lists agents matching specified criteria
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="list"
+      icon="function"
+      href="/sdk-reference/agentsclient/list.md"
+    >
+      Lists agents matching specified criteria
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="request"
+      icon="function"
+      href="/sdk-reference/agentsclient/request"
+    >
+      Requests the specified API endpoint and returns the validated response
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="request"
+      icon="function"
+      href="/sdk-reference/agentsclient/request.md"
+    >
+      Requests the specified API endpoint and returns the validated response
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="request_download"
+      icon="function"
+      href="/sdk-reference/agentsclient/request_download"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="request_download"
+      icon="function"
+      href="/sdk-reference/agentsclient/request_download.md"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="request_list"
+      icon="function"
+      href="/sdk-reference/agentsclient/request_list"
+    >
+      Retrieves and validates a list of responses from the API
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="request_list"
+      icon="function"
+      href="/sdk-reference/agentsclient/request_list.md"
+    >
+      Retrieves and validates a list of responses from the API
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="request_path"
+      icon="function"
+      href="/sdk-reference/agentsclient/request_path"
+    >
+      Constructs the full request URL for the given API endpoint
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="request_path"
+      icon="function"
+      href="/sdk-reference/agentsclient/request_path.md"
+    >
+      Constructs the full request URL for the given API endpoint
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="run"
+      icon="function"
+      href="/sdk-reference/agentsclient/run"
+    >
+      Run an agent with the specified request parameters
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="run"
+      icon="function"
+      href="/sdk-reference/agentsclient/run.md"
+    >
+      Run an agent with the specified request parameters
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="run_custom"
+      icon="function"
+      href="/sdk-reference/agentsclient/run_custom"
+    >
+      Run a custom agent with the specified request parameters and wait for completion
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="run_custom"
+      icon="function"
+      href="/sdk-reference/agentsclient/run_custom.md"
+    >
+      Run a custom agent with the specified request parameters and wait for completion
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="start"
+      icon="function"
+      href="/sdk-reference/agentsclient/start"
+    >
+      Start an agent with the specified request parameters
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="start"
+      icon="function"
+      href="/sdk-reference/agentsclient/start.md"
+    >
+      Start an agent with the specified request parameters
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="status"
+      icon="function"
+      href="/sdk-reference/agentsclient/status"
+    >
+      Retrieves the status of the specified agent
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="status"
+      icon="function"
+      href="/sdk-reference/agentsclient/status.md"
+    >
+      Retrieves the status of the specified agent
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="stop"
+      icon="function"
+      href="/sdk-reference/agentsclient/stop"
+    >
+      Stops the specified agent and clears the last agent response
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="stop"
+      icon="function"
+      href="/sdk-reference/agentsclient/stop.md"
+    >
+      Stops the specified agent and clears the last agent response
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="wait"
+      icon="function"
+      href="/sdk-reference/agentsclient/wait"
+    >
+      Waits for the specified agent to complete
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="wait"
+      icon="function"
+      href="/sdk-reference/agentsclient/wait.md"
+    >
+      Waits for the specified agent to complete
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="watch_logs"
+      icon="function"
+      href="/sdk-reference/agentsclient/watch_logs"
+    >
+      Watch the logs of the specified agent
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="watch_logs"
+      icon="function"
+      href="/sdk-reference/agentsclient/watch_logs.md"
+    >
+      Watch the logs of the specified agent
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="watch_logs_and_wait"
+      icon="function"
+      href="/sdk-reference/agentsclient/watch_logs_and_wait"
+    >
+      Execute a task with the agent and wait for completion
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="watch_logs_and_wait"
+      icon="function"
+      href="/sdk-reference/agentsclient/watch_logs_and_wait.md"
+    >
+      Execute a task with the agent and wait for completion
+    </Card>
+  </Visibility>
 </CardGroup>
 
 ## Class Information

@@ -9,7 +9,8 @@ client = NotteClient()
 with client.Session() as session:
     session.execute(type="goto", url="https://example.com")
 
-    # By ID from observe()
+    # Pseudo observe output: [B1] button "Submit"
+    # Only use IDs that appear in your live observe() output.
     session.execute(type="click", id="B1")
 
     # By selector

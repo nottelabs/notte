@@ -2,8 +2,9 @@
 title: "emails"
 description: "Read recent emails sent to the persona"
 ---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
-
+<AgentMdNotice />
 
 ```python
 persona = notte.Persona("<your-persona-id>")
@@ -37,4 +38,4 @@ Use the `limit` and/or `timedelta` parameters to limit the number of emails retu
 
 ## Returns
 
-`Sequence`[[`EmailResponse`](/sdk-reference/misc/emailresponse)]
+`Sequence`[<Visibility for="humans">[`EmailResponse`](/sdk-reference/misc/emailresponse)</Visibility><Visibility for="agents">[`EmailResponse`](/sdk-reference/misc/emailresponse.md)</Visibility>]

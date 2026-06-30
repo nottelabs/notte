@@ -73,25 +73,25 @@ class NodeSelectors(BaseModel):
 
     @staticmethod
     def from_unique_selector(unique_selector: str) -> "NodeSelectors":
-        keys = dict(
-            css_selector="",
-            xpath_selector="",
-            playwright_selector="",
-        )
+        css_selector = ""
+        xpath_selector = ""
+        playwright_selector: str | None = None
         if unique_selector.startswith("xpath="):
-            keys["xpath_selector"] = unique_selector.replace("xpath=", "")
+            xpath_selector = unique_selector.removeprefix("xpath=")
         elif unique_selector.startswith("css="):
-            keys["css_selector"] = unique_selector.replace("css=", "")
+            css_selector = unique_selector.removeprefix("css=")
         elif unique_selector.startswith("internal:"):
-            keys["playwright_selector"] = unique_selector
+            playwright_selector = unique_selector
         elif unique_selector.startswith("~"):
             text = unique_selector.replace("~", "").strip()
-            keys["playwright_selector"] = f'internal:text="{text}"'
+            playwright_selector = f'internal:text="{text}"'
         else:
-            keys["playwright_selector"] = unique_selector
+            playwright_selector = unique_selector
 
         return NodeSelectors(
-            **keys,
+            css_selector=css_selector,
+            xpath_selector=xpath_selector,
+            playwright_selector=playwright_selector,
             notte_selector="",
             in_iframe=False,
             in_shadow_root=False,

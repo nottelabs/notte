@@ -431,19 +431,21 @@ def test_timeout_minutes_backward_compatibility() -> None:
 
 
 def test_max_duration_validation() -> None:
-    """Test max_duration_minutes validation (must be <= 60)."""
+    """Test max_duration_minutes validation (must be <= 24 * 60)."""
     from pydantic import ValidationError
 
     with pytest.raises(ValidationError) as exc_info:
-        test_max_duration = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES + 1
-        _ = SessionStartRequest(max_duration_minutes=test_max_duration)
+        _ = SessionStartRequest(max_duration_minutes=24 * 60 + 1)
 
     # Check that the error is about the max_duration_minutes field
     assert "max_duration_minutes" in str(exc_info.value)
 
-    # Should work with valid value
+    # Should work with values up to the 24h ceiling; per-tier enforcement
+    # happens server-side, the SDK only guards the absolute upper bound.
     request = SessionStartRequest(max_duration_minutes=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES)
     assert request.max_duration_minutes == DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
+    request = SessionStartRequest(max_duration_minutes=24 * 60)
+    assert request.max_duration_minutes == 24 * 60
 
 
 def test_idle_timeout_validation() -> None:

@@ -34,6 +34,8 @@ class RemoteAgentFallback:
     Usage:
         ```python
         with notte.AgentFallback(session, "add to cart") as agent:
+            # Pseudo observe output: [B1] button "Add to cart", then [L3] link "Checkout"
+            # Only use IDs that appear in your live observe() output.
             session.execute(actions.Click(id="B1"))
             session.execute(actions.Click(id="L3"))
         ```

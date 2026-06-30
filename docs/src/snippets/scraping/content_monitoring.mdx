@@ -1,7 +1,5 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/scraping/content_monitoring.py */}
-
-```python content_monitoring.py
+<CodeGroup>
+```python Python
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -12,3 +10,19 @@ content = client.scrape("https://example.com/pricing", instructions="Extract all
 # Compare with previous version
 # ...
 ```
+```javascript JavaScript
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient({
+  apiKey: process.env.NOTTE_API_KEY,
+});
+
+// Get current content
+const content = await client.scrape('https://example.com/pricing', {
+  instructions: 'Extract all pricing tiers and their features',
+});
+
+// Compare with previous version
+// ...
+```
+</CodeGroup>

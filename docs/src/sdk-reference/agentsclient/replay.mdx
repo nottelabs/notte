@@ -4,7 +4,7 @@ description: "Get presigned URLs for the specified agent's session replay"
 ---
 
 <Warning>
-  This method is deprecated. Use [`session.replay()`](/sdk-reference/remotesession/replay) instead.
+  This method is deprecated. Use <Visibility for="humans">[`session.replay()`](/sdk-reference/remotesession/replay)</Visibility><Visibility for="agents">[`session.replay()`](/sdk-reference/remotesession/replay.md)</Visibility> instead.
 </Warning>
 
 ```python
@@ -35,4 +35,4 @@ replay.download("replay.mp4")
 
 ## Returns
 
-[`ReplayResponse`](/sdk-reference/misc/replayresponse): Contains presigned URLs for MP4 download and HLS playlist.
+<Visibility for="humans">[`ReplayResponse`](/sdk-reference/misc/replayresponse)</Visibility><Visibility for="agents">[`ReplayResponse`](/sdk-reference/misc/replayresponse.md)</Visibility>: Contains presigned URLs for MP4 download and HLS playlist.

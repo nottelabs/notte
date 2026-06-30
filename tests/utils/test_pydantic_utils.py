@@ -120,3 +120,29 @@ def test_json_response_format_conversion(json_response_format: dict[str, Any]):
     Format = convert_response_format_to_pydantic_model(json_response_format)
     assert Format is not None
     assert Format.model_json_schema() == json_response_format
+
+
+def test_response_format_with_open_ended_dict_values():
+    class OpenEndedDictResponse(BaseModel):
+        visible_filter_counts: dict[str, Any] | None = None
+
+    schema = OpenEndedDictResponse.model_json_schema()
+    Format = convert_response_format_to_pydantic_model(schema)
+
+    assert Format is not None
+    instance = Format.model_validate(
+        {
+            "visible_filter_counts": {
+                "batch": 2024,
+                "location": {"san_francisco": 12},
+                "labels": ["B2B", "AI"],
+            }
+        }
+    )
+    assert instance.model_dump() == {
+        "visible_filter_counts": {
+            "batch": 2024,
+            "location": {"san_francisco": 12},
+            "labels": ["B2B", "AI"],
+        }
+    }

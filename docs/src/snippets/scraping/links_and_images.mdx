@@ -1,7 +1,5 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/scraping/links_and_images.py */}
-
-```python links_and_images.py
+<CodeGroup>
+```python Python
 # Include links (default)
 markdown = client.scrape(url, scrape_links=True)
 
@@ -14,3 +12,17 @@ markdown = client.scrape(url, scrape_images=True)
 # Exclude images (default)
 markdown = client.scrape(url, scrape_images=False)
 ```
+```javascript JavaScript
+// Include links (default)
+const markdownWithLinks = await client.scrape(url, { scrape_links: true });
+
+// Exclude links
+const markdownWithoutLinks = await client.scrape(url, { scrape_links: false });
+
+// Include images in markdown
+const markdownWithImages = await client.scrape(url, { scrape_images: true });
+
+// Exclude images (default)
+const markdownWithoutImages = await client.scrape(url, { scrape_images: false });
+```
+</CodeGroup>

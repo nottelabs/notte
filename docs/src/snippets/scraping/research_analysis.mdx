@@ -1,7 +1,5 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/scraping/research_analysis.py */}
-
-```python research_analysis.py
+<CodeGroup>
+```python Python
 from notte_sdk import NotteClient
 from pydantic import BaseModel
 
@@ -17,3 +15,24 @@ class ResearchPaper(BaseModel):
 client = NotteClient()
 result = client.scrape("https://papers.example.com/paper/123", response_format=ResearchPaper)
 ```
+```javascript JavaScript
+import { z } from 'zod';
+import { NotteClient } from 'notte-sdk';
+
+const ResearchPaper = z.object({
+  title: z.string(),
+  authors: z.array(z.string()),
+  abstract: z.string(),
+  publication_date: z.string().nullable(),
+  citations: z.number().nullable(),
+});
+
+const client = new NotteClient({
+  apiKey: process.env.NOTTE_API_KEY,
+});
+
+const result = await client.scrape('https://papers.example.com/paper/123', {
+  response_format: ResearchPaper,
+});
+```
+</CodeGroup>

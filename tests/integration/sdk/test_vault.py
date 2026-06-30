@@ -1,10 +1,13 @@
 import os
+from pathlib import Path
 from unittest import TestCase
 
 import pytest
 from dotenv import load_dotenv
 from notte_agent.falco.agent import FalcoAgent
 from notte_core.actions import FillAction, FormFillAction, WaitAction
+from notte_core.credentials import PASSWORD as PASSWORD_PLACEHOLDER
+from notte_core.credentials import USERNAME as USERNAME_PLACEHOLDER
 from notte_core.credentials.base import BaseVault, CredentialField, EmailField, PasswordField
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
 from notte_core.errors.actions import NoCredentialsFoundError
@@ -12,6 +15,20 @@ from notte_sdk import NotteClient
 from notte_sdk.errors import NotteAPIError
 
 import notte
+
+
+async def load_github_signin_fixture(session: notte.Session) -> None:
+    fixture_path = Path(__file__).resolve().parents[2] / "data" / "github_signin.html"
+    html = fixture_path.read_text(encoding="utf-8")
+
+    async def fulfill_github_login(route):  # pyright: ignore[reportUnknownParameterType, reportMissingParameterType]
+        await route.fulfill(status=200, content_type="text/html", body=html)
+
+    await session.window.page.route("https://github.com/login", fulfill_github_login)
+    _ = await session.window.page.goto(url="https://github.com/login")
+    res = await session.aexecute(WaitAction(time_ms=100))
+    assert res.success
+    _ = await session.aobserve()
 
 
 def test_vault_in_local_agent():
@@ -216,6 +233,68 @@ def test_invalid_credentials_in_local_agent():
 
 
 @pytest.mark.asyncio
+async def test_session_form_fill_with_vault_without_observe_uses_live_url():
+    """Test form_fill credential replacement snapshots the live page before vault lookup."""
+    _ = load_dotenv()
+    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    base_url = "https://apartment-board-demo-nine.vercel.app"
+    login_url = f"{base_url}/auth/signin"
+    username = "alder"
+    password = "test-password"  # noqa: S105  # pragma: allowlist secret
+
+    with client.Vault() as vault:
+        _ = vault.add_credentials(url=base_url, username=username, password=password)
+
+        with notte.Session(vault=vault, headless=True, idle_timeout_minutes=3, max_duration_minutes=15) as session:
+
+            async def fulfill_login(route):  # pyright: ignore[reportUnknownParameterType, reportMissingParameterType]
+                await route.fulfill(
+                    status=200,
+                    content_type="text/html",
+                    body="""
+                        <form>
+                            <label for="username">Username</label>
+                            <input id="username" autocomplete="username" type="text" />
+                            <label for="password">Password</label>
+                            <input id="password" autocomplete="current-password" type="password" />
+                        </form>
+                    """,
+                )
+
+            await session.window.page.route(login_url, fulfill_login)
+
+            goto_result = await session.aexecute(type="goto", url=login_url)
+            assert goto_result.success
+
+            fill_result = await session.aexecute(
+                type="form_fill",
+                value={"username": USERNAME_PLACEHOLDER, "password": PASSWORD_PLACEHOLDER},
+            )
+            assert fill_result.success
+            assert session.snapshot.metadata.url == login_url
+
+            values_result = await session.aexecute(
+                type="evaluate_js",
+                code="""(() => {
+                    const usernameInput = document.querySelector(
+                        'input#username, input[name="username"], input[autocomplete="username"], input[type="text"]'
+                    );
+                    const passwordInput = document.querySelector(
+                        'input#password, input[type="password"], input[autocomplete="current-password"]'
+                    );
+                    return {
+                        username: usernameInput?.value,
+                        password: passwordInput?.value,
+                    };
+                })()""",
+            )
+            assert values_result.success
+            assert values_result.data is not None
+            assert f'"username": "{username}"' in values_result.data.markdown
+            assert f'"password": "{password}"' in values_result.data.markdown
+
+
+@pytest.mark.asyncio
 async def test_session_set_vault_enables_credential_replacement():
     """Test that session.set_vault() enables credential replacement via _action_with_vault."""
     _ = load_dotenv()
@@ -230,12 +309,8 @@ async def test_session_set_vault_enables_credential_replacement():
         # Set vault on session directly (not via agent)
         session.set_vault(vault)
 
-        # Load a page and set up snapshot
-        file_path = "tests/data/github_signin.html"
-        _ = await session.window.page.goto(url=f"file://{os.path.abspath(file_path)}")
-        _ = await session.aexecute(WaitAction(time_ms=100))
-        _ = await session.aobserve()
-        session.snapshot.metadata.url = URL
+        # Load the fixture through a real URL so refreshed snapshots keep matching vault credentials.
+        await load_github_signin_fixture(session)
 
         # Test _action_with_vault replaces credentials
         action = FormFillAction(
@@ -264,11 +339,7 @@ async def test_session_vault_in_constructor():
 
         # Pass vault directly to session constructor
         with notte.Session(vault=vault) as session:
-            file_path = "tests/data/github_signin.html"
-            _ = await session.window.page.goto(url=f"file://{os.path.abspath(file_path)}")
-            _ = await session.aexecute(WaitAction(time_ms=100))
-            _ = await session.aobserve()
-            session.snapshot.metadata.url = URL
+            await load_github_signin_fixture(session)
 
             action = FormFillAction(value={"email": EmailField.placeholder_value})
             replaced = await session._action_with_vault(action)
@@ -288,11 +359,7 @@ async def test_session_fill_action_with_vault():
     with client.Vault() as vault, notte.Session(vault=vault) as session:
         _ = vault.add_credentials(url=URL, email=EMAIL, password="pw")
 
-        file_path = "tests/data/github_signin.html"
-        _ = await session.window.page.goto(url=f"file://{os.path.abspath(file_path)}")
-        _ = await session.aexecute(WaitAction(time_ms=100))
-        _ = await session.aobserve()
-        session.snapshot.metadata.url = URL
+        await load_github_signin_fixture(session)
 
         fill_action = FillAction(id="I1", value=EmailField.placeholder_value)
         replaced = await session._action_with_vault(fill_action)

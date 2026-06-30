@@ -12,7 +12,8 @@ with client.Session() as session:
     # Fill by selector
     session.execute(type="fill", selector="input[name='email']", value="user@example.com")
 
-    # Fill by ID from observe()
+    # Pseudo observe output: [I1] input "Email"
+    # Only use IDs that appear in your live observe() output.
     session.execute(type="fill", id="I1", value="user@example.com")
 
     # Fill by placeholder selector

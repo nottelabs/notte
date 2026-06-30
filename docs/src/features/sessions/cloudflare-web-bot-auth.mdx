@@ -2,11 +2,13 @@
 title: Cloudflare Web Bot Auth
 description: Access Cloudflare-protected websites by cryptographically signing browser requests
 ---
-
 import QuickStart from "/snippets/sessions/web-bot-auth/quick_start.mdx";
 import CompleteExample from "/snippets/sessions/web-bot-auth/complete_example.mdx";
 import AgentExample from "/snippets/sessions/web-bot-auth/agent_example.mdx";
 import Testing from "/snippets/sessions/web-bot-auth/testing.mdx";
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
 
 Many websites use Cloudflare's [Web Bot Auth](https://webbotauth.io) protocol to distinguish between legitimate automated services and unwanted bots. Notte is registered as a verified bot in Cloudflare's registry, which means sessions can cryptographically prove their identity and gain access to otherwise restricted content.
 

@@ -1,7 +1,5 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/scraping/handle_missing_data.py */}
-
-```python handle_missing_data.py
+<CodeGroup>
+```python Python
 from pydantic import BaseModel
 
 
@@ -11,3 +9,14 @@ class Product(BaseModel):
     discount_price: float | None = None  # Optional
     rating: float | None = None  # Optional
 ```
+```javascript JavaScript
+import { z } from 'zod';
+
+const Product = z.object({
+  name: z.string(),
+  price: z.number(),
+  discount_price: z.number().nullable().optional(), // Optional
+  rating: z.number().nullable().optional(), // Optional
+});
+```
+</CodeGroup>
