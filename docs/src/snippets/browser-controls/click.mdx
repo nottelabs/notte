@@ -12,7 +12,8 @@ with client.Session() as session:
     # Click by CSS selector
     session.execute(type="click", selector="button#submit")
 
-    # Click by ID from observe()
+    # Pseudo observe output: [B1] button "Submit"
+    # Only use IDs that appear in your live observe() output.
     session.execute(type="click", id="B1")
 
     # Click by text selector

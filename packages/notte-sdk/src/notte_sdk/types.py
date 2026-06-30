@@ -498,23 +498,51 @@ class NotteProxy(SdkRequest):
     type: Literal["notte"] = "notte"
     id: str | None = None
     country: ProxyGeolocationCountry | None = None
+    city: str | None = None
     # TODO: enable domainPattern later on
     # domainPattern: str | None = None
 
     @model_validator(mode="before")
     @classmethod
     def handle_legacy_geolocation(cls, values: Any) -> dict[str, Any]:
-        """Handle backward compatibility with old geolocation.country syntax."""
+        """Handle backward compatibility with old geolocation syntax."""
         if isinstance(values, dict) and "geolocation" in values:
             geolocation: Any = values.pop("geolocation")  # type: ignore[reportUnknownMemberType]
-            # Only set country if it's not already provided
-            if "country" not in values and isinstance(geolocation, dict) and "country" in geolocation:
-                values["country"] = geolocation["country"]
+            if isinstance(geolocation, dict):
+                # Only set fields if they're not already provided.
+                if "country" not in values and "country" in geolocation:
+                    values["country"] = geolocation["country"]
+                if "city" not in values and "city" in geolocation:
+                    values["city"] = geolocation["city"]
         return values  # type: ignore[return-value]
 
+    @field_validator("city")
+    @classmethod
+    def validate_city(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        city = value.strip()
+        if not city:
+            raise ValueError("city must be a non-empty string")
+        return city
+
     @staticmethod
-    def from_country(country: str, id: str | None = None) -> "NotteProxy":
-        return NotteProxy(id=id, country=ProxyGeolocationCountry(country))
+    def _resolve_proxy_id(proxy_id: str | None, kwargs: dict[str, Any]) -> str | None:
+        legacy_id = kwargs.pop("id", None)
+        if kwargs:
+            unexpected = next(iter(kwargs))
+            raise TypeError(f"Unexpected keyword argument: {unexpected}")
+        if proxy_id is not None and legacy_id is not None:
+            raise ValueError("Cannot provide both proxy_id and id")
+        return proxy_id if proxy_id is not None else legacy_id
+
+    @staticmethod
+    def from_country(country: str, proxy_id: str | None = None, **kwargs: Any) -> "NotteProxy":
+        return NotteProxy(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), country=ProxyGeolocationCountry(country))
+
+    @staticmethod
+    def from_city(city: str, proxy_id: str | None = None, **kwargs: Any) -> "NotteProxy":
+        return NotteProxy(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), city=city)
 
 
 class ExternalProxy(SdkRequest):
@@ -559,6 +587,7 @@ class NotteProxyDict(TypedDict, total=False):
     type: Literal["notte"]
     id: str | None
     country: ProxyGeolocationCountry | None
+    city: str | None
 
 
 class TailnetProxyDict(TypedDict, total=False):
@@ -753,7 +782,7 @@ class SessionStartRequest(SdkRequest):
         Field(
             description="Maximum session lifetime in minutes (absolute maximum, not affected by activity).",
             gt=0,
-            le=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
+            le=24 * 60,
         ),
     ] = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
 
@@ -835,6 +864,8 @@ class SessionStartRequest(SdkRequest):
             return data
         if data.get("viewport_width") is not None or data.get("viewport_height") is not None:
             raise ValueError("aspect_ratio cannot be set together with viewport_width or viewport_height")
+        data["viewport_width"] = None
+        data["viewport_height"] = None
         allowed = get_args(AspectRatio)
         if aspect not in allowed:
             raise ValueError(f"Unsupported aspect_ratio {aspect!r}; expected one of {list(allowed)}")

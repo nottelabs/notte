@@ -2,8 +2,9 @@
 title: "replay"
 description: "Get the replay for the agent's session"
 ---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
-
+<AgentMdNotice />
 
 .. deprecated::
     Use ``session.replay()`` instead. Agent replay is deprecated
@@ -27,4 +28,4 @@ description: "Get the replay for the agent's session"
 
 ## Returns
 
-[`ReplayResponse`](/sdk-reference/misc/replayresponse): Presigned URLs for HLS playlist and MP4 download.
+<Visibility for="humans">[`ReplayResponse`](/sdk-reference/misc/replayresponse)</Visibility><Visibility for="agents">[`ReplayResponse`](/sdk-reference/misc/replayresponse.md)</Visibility>: Presigned URLs for HLS playlist and MP4 download.

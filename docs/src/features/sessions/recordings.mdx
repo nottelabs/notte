@@ -2,7 +2,6 @@
 title: Recordings
 description: Record and replay your browser sessions for debugging and analysis
 ---
-
 import QuickStart from '/snippets/sessions/recordings/quick_start.mdx';
 import DownloadMp4 from '/snippets/sessions/recordings/download_mp4.mdx';
 import ReplayById from '/snippets/sessions/recordings/replay_by_id.mdx';
@@ -12,6 +11,9 @@ import CleanupOld from '/snippets/sessions/recordings/cleanup_old.mdx';
 import AgentReplayAlt from '/snippets/sessions/capabilities/agent_replay_alt.mdx';
 import NameRecordings from '/snippets/sessions/capabilities/name_recordings.mdx';
 import RecordOnFailures from '/snippets/sessions/capabilities/record_on_failures.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
 
 Notte automatically records every action in your browser sessions, allowing you to download video replays for debugging and analysis. Calling `session.replay()` returns a `ReplayResponse` containing a presigned URL for the MP4 file, which you can download with `replay.download()`.
 

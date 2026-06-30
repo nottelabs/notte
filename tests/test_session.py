@@ -1,3 +1,5 @@
+import asyncio
+
 import notte_core
 import pytest
 from notte_browser.captcha import CaptchaHandler
@@ -264,11 +266,11 @@ async def test_execute_with_default_timeout() -> None:
     async with NotteSession(headless=True) as session:
         _ = await session.aexecute(type="goto", url="https://www.google.com")
         _ = await session.aobserve(perception_type="fast")
-        # Execute with default timeout (should use config.timeout_action_ms = 5000ms)
+        # Execute with default timeout (should use config.timeout_action_ms = 15000ms)
         # Try to click on first button (may fail if not found, but timeout param should work)
         result = await session.aexecute(type="click", id="B1", raise_on_failure=False)
         assert result is not None
-        assert config.timeout_action_ms == 5000  # Verify default
+        assert config.timeout_action_ms == 15000  # Verify default
 
 
 @pytest.mark.asyncio
@@ -280,3 +282,83 @@ async def test_execute_with_custom_timeout() -> None:
         # Execute with custom timeout (10 seconds)
         result = await session.aexecute(type="click", id="B1", timeout=10000, raise_on_failure=False)
         assert result is not None
+
+
+def test_interaction_action_zero_timeout_uses_default_config_timeout() -> None:
+    from notte_core.common.config import config
+
+    action = ClickAction(id="B1", timeout=0)
+
+    assert action.timeout == config.timeout_action_ms
+
+
+@pytest.mark.asyncio
+async def test_click_disabled_ancestor_returns_failed_result() -> None:
+    async with NotteSession(headless=True) as session:
+        await session.window.page.set_content("""
+            <main inert>
+                <button id="target">Apply</button>
+            </main>
+        """)
+
+        result = await session.aexecute(type="click", selector="#target", raise_on_failure=False)
+
+        assert result.success is False
+        assert result.message is not None
+        assert "Element is disabled" in result.message
+
+
+@pytest.mark.parametrize("selector", ['xpath=//button[@id="target"]', "css=#target"])
+@pytest.mark.asyncio
+async def test_click_accepts_prefixed_selector(selector: str) -> None:
+    async with NotteSession(headless=True) as session:
+        await session.window.page.set_content("""
+            <button id="target">Apply</button>
+        """)
+        await session.window.page.evaluate("""
+            window.clicked = false;
+            document.querySelector("#target").addEventListener("click", () => {
+                window.clicked = true;
+            });
+        """)
+
+        result = await session.aexecute(
+            type="click",
+            selector=selector,
+            raise_on_failure=False,
+        )
+
+        assert result.success is True
+        assert await session.window.page.evaluate("window.clicked") is True
+
+
+@pytest.mark.asyncio
+async def test_click_empty_selector_returns_failed_result() -> None:
+    async with NotteSession(headless=True) as session:
+        result = await session.aexecute(
+            type="click",
+            selector="",
+            raise_on_failure=False,
+        )
+
+        assert result.success is False
+        assert result.message is not None
+        assert "No valid selector available" in result.message
+
+
+@pytest.mark.asyncio
+async def test_interaction_execution_timeout_returns_failed_result() -> None:
+    async def slow_execute(*_args, **_kwargs) -> bool:
+        await asyncio.sleep(0.05)
+        return True
+
+    async with NotteSession(headless=True) as session:
+        session.controller.execute = slow_execute  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
+
+        result = await session.aexecute(
+            ClickAction(selector="#target", timeout=1),
+            raise_on_failure=False,
+        )
+
+        assert result.success is False
+        assert result.message == "Action timed out after 1ms"

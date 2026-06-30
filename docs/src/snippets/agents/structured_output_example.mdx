@@ -1,7 +1,5 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/agents/structured_output_example.py */}
-
-```python structured_output_example.py
+<CodeGroup>
+```python Python
 from notte_sdk import NotteClient
 from pydantic import BaseModel
 
@@ -17,3 +15,25 @@ with client.Session() as session:
     agent = client.Agent(session=session)
     result = agent.run(task="Extract contact information", response_format=ContactInfo)
 ```
+```javascript JavaScript
+import { z } from 'zod';
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient({
+  apiKey: process.env.NOTTE_API_KEY,
+});
+
+const ContactInfo = z.object({
+  email: z.string(),
+  phone: z.string().nullable(),
+});
+
+await client.Session().use(async (session) => {
+  const agent = client.Agent({ session });
+  const result = await agent.run({
+    task: 'Extract contact information',
+    response_format: ContactInfo,
+  });
+});
+```
+</CodeGroup>

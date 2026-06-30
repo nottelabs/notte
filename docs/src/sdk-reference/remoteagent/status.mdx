@@ -2,8 +2,9 @@
 title: "status"
 description: "Get the current status of the agent"
 ---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
-
+<AgentMdNotice />
 
 This method retrieves the current state of the agent, including its progress,
 actions taken, and any errors or messages.
@@ -17,7 +18,7 @@ status = agent.status()
 
 ## Returns
 
-[`LegacyAgentStatusResponse`](/sdk-reference/misc/legacyagentstatusresponse): The current status of the agent execution.
+<Visibility for="humans">[`LegacyAgentStatusResponse`](/sdk-reference/misc/legacyagentstatusresponse)</Visibility><Visibility for="agents">[`LegacyAgentStatusResponse`](/sdk-reference/misc/legacyagentstatusresponse.md)</Visibility>: The current status of the agent execution.
 
 ## Raises
 

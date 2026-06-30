@@ -1,7 +1,5 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/agents/error_handling.py */}
-
-```python error_handling.py
+<CodeGroup>
+```python Python
 agent = client.Agent(session=session)
 result = agent.run(task="Complete task")
 
@@ -10,3 +8,14 @@ if result.success:
 else:
     print(f"Agent failed: {result.answer}")
 ```
+```javascript JavaScript
+const agent = client.Agent({ session });
+const result = await agent.run({ task: 'Complete task' });
+
+if (result.success) {
+  console.log(result.answer);
+} else {
+  console.log(`Agent failed: ${result.answer}`);
+}
+```
+</CodeGroup>

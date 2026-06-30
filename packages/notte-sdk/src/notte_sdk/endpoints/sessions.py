@@ -1274,7 +1274,8 @@ class RemoteSession(SyncResource):
             **data: Arbitrary keyword arguments validated against ScrapeRequestDict,
 
         Returns:
-            ScrapeResponse: An Observation object containing metadata, screenshot, action space, and data space.
+            Extracted data as structured data, markdown text, image data, or a StructuredData wrapper when
+            ``raise_on_failure=False``.
 
         """
         return self.client.page.scrape(self.session_id, raise_on_failure=raise_on_failure, **data)
@@ -1479,10 +1480,14 @@ class RemoteSession(SyncResource):
         action = obs.space.first()  # Get first available action
         result = session.execute(action)
 
-        # Execute a click action by element ID (use `obs.space.description` to checkout elements IDs)
+        # Execute a click action by element ID.
+        # Pseudo observe output: [B1] button "Submit"
+        # Only use IDs that appear in your live observe() output.
         result = session.execute(type="click", id="B1")
 
-        # Execute a form fill action
+        # Execute a fill action by element ID.
+        # Pseudo observe output: [I1] input "Email"
+        # Only use IDs that appear in your live observe() output.
         result = session.execute(type="fill", id="I1", value="user@example.com")
 
         # Execute browser navigation
@@ -1505,6 +1510,10 @@ class RemoteSession(SyncResource):
         - `fill`: Fill input fields with text
         - `upload_file`: upload files to file inputs
         - etc.
+
+        Do not write interaction code with guessed element IDs, selectors, or field names.
+        Element IDs must come from a live `observe()` call, and selectors/field names should
+        be validated against the actual page before they are used in automation.
 
         **Using Playwright Selectors:**
 

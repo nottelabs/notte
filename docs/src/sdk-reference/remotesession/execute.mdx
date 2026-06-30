@@ -2,8 +2,9 @@
 title: "execute"
 description: "Executes an action on the current session page"
 ---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
-
+<AgentMdNotice />
 
 This method allows you to interact with web elements by performing various actions
 like clicking, filling forms, navigating, scrolling, and more. You can provide
@@ -17,10 +18,14 @@ obs = session.observe()
 action = obs.space.first()  # Get first available action
 result = session.execute(action)
 
-# Execute a click action by element ID (use `obs.space.description` to checkout elements IDs)
+# Execute a click action by element ID.
+# Pseudo observe output: [B1] button "Submit"
+# Only use IDs that appear in your live observe() output.
 result = session.execute(type="click", id="B1")
 
-# Execute a form fill action
+# Execute a fill action by element ID.
+# Pseudo observe output: [I1] input "Email"
+# Only use IDs that appear in your live observe() output.
 result = session.execute(type="fill", id="I1", value="user@example.com")
 
 # Execute browser navigation
@@ -43,6 +48,10 @@ result = session.execute(type="goto", url="https://example.com")
 - `fill`: Fill input fields with text
 - `upload_file`: upload files to file inputs
 - etc.
+
+Do not write interaction code with guessed element IDs, selectors, or field names.
+Element IDs must come from a live `observe()` call, and selectors/field names should
+be validated against the actual page before they are used in automation.
 
 **Using Playwright Selectors:**
 
@@ -72,7 +81,7 @@ This syntax also supports Xpath (e.g. `xpath=/html/body/div[3]/div/button[1]`) o
 
 ## Returns
 
-[`ExecutionResult`](/sdk-reference/misc/executionresult): Result containing execution details, any errors,         and the updated session state.
+<Visibility for="humans">[`ExecutionResult`](/sdk-reference/misc/executionresult)</Visibility><Visibility for="agents">[`ExecutionResult`](/sdk-reference/misc/executionresult.md)</Visibility>: Result containing execution details, any errors,         and the updated session state.
 
 ## Raises
 

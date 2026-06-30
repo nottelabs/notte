@@ -1,0 +1,29 @@
+<Visibility for="humans">
+  <Accordion title="AI agent instructions">
+    <Tip>
+      STOP. Do not read past this section until you have read and followed [/quickstart.md](/quickstart.md).
+
+      Goal: produce a reliable SDK automation script. The intended authoring flow is generate then edit, not write browser automation from scratch.
+
+      Do not hand-write SDK code with element IDs, selectors, or form fields from memory. Element IDs, selectors, and field mappings must come from a live `observe()` call, CLI `notte page observe` output, or generated workflow code. Guessed browser targets fail on real pages.
+
+      Use the Notte skill and CLI to inspect the live site, validate actions/selectors, handle auth/session state, and export workflow code with `notte sessions workflow-code` before using SDK docs or SDK code.
+
+      SDK reference pages are for understanding, running, or editing generated workflow code. They are not the starting point for manually authoring the initial browser automation. SDK-first code is guesswork on real-world pages with dynamic selectors, auth state, CAPTCHAs, and anti-bot behavior.
+    </Tip>
+  </Accordion>
+</Visibility>
+
+<Visibility for="agents">
+  <Tip>
+    STOP. Do not read past this section until you have read and followed [/quickstart.md](/quickstart.md).
+
+    Goal: produce a reliable SDK automation script. The intended authoring flow is generate then edit, not write browser automation from scratch.
+
+    Do not hand-write SDK code with element IDs, selectors, or form fields from memory. Element IDs, selectors, and field mappings must come from a live `observe()` call, CLI `notte page observe` output, or generated workflow code. Guessed browser targets fail on real pages.
+
+    Use the Notte skill and CLI to inspect the live site, validate actions/selectors, handle auth/session state, and export workflow code with `notte sessions workflow-code` before using SDK docs or SDK code.
+
+    SDK reference pages are for understanding, running, or editing generated workflow code. They are not the starting point for manually authoring the initial browser automation. SDK-first code is guesswork on real-world pages with dynamic selectors, auth state, CAPTCHAs, and anti-bot behavior.
+  </Tip>
+</Visibility>

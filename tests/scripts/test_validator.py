@@ -504,18 +504,74 @@ def test_comments_only_script_forbidden():
         _ = validator.parse_script(script)
 
 
-def test_only_non_notte_operations_forbidden():
-    """Test that scripts with only non-notte operations are forbidden"""
+def test_only_non_notte_operations_allowed():
+    """Test that scripts without notte session operations are allowed."""
     script = """
-def run():
+def run() -> int:
     x = 1
     y = 2
-    result = x + y
-    logger.info("Hello world")
+    return x + y
 
 """
     validator = ScriptValidator()
-    with pytest.raises(ValueError, match="Python script must contain at least one notte operation"):
+    info = validator.parse_script(script)
+
+    assert info.variables == []
+
+
+def test_future_annotations_import_allowed():
+    """Test that scripts can use postponed annotation evaluation."""
+    script = """
+from __future__ import annotations
+
+def run(url: str) -> dict[str, str]:
+    return {"url": url}
+"""
+    validator = ScriptValidator()
+    info = validator.parse_script(script)
+
+    assert [param.name for param in info.variables] == ["url"]
+    assert info.variables[0].type == "str"
+
+
+def test_other_future_imports_forbidden():
+    """Test that only future annotations are allowed."""
+    script = """
+from __future__ import generator_stop
+
+def run():
+    return None
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match="Only 'from __future__ import annotations' is allowed"):
+        _ = validator.parse_script(script)
+
+
+def test_main_guard_name_allowed():
+    """Test that scripts can include a standard Python main guard."""
+    script = """
+def run() -> str:
+    return "ok"
+
+if __name__ == "__main__":
+    print(run())
+"""
+    validator = ScriptValidator()
+    info = validator.parse_script(script)
+
+    assert info.variables == []
+
+
+def test_assigning_dunder_name_forbidden():
+    """Test that the main guard exception does not allow rebinding dunder names."""
+    script = """
+def run() -> str:
+    return "ok"
+
+__name__ = "__main__"
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match='"__name__" is an invalid variable name'):
         _ = validator.parse_script(script)
 
 

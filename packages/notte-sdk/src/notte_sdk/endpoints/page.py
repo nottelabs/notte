@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
+from typing import TYPE_CHECKING, Any, Literal, Unpack, cast, overload
 
 from notte_core.actions import ActionUnion, CaptchaSolveAction, InteractionActionUnion
 from notte_core.common.config import PerceptionType
@@ -211,11 +211,13 @@ class PageClient(BaseClient):
                     )
                     extracted_data = request.response_format.model_validate(extracted_data_dict)
                 return extracted_data
-            if isinstance(structured.data, RootModel):
+            structured_data = cast(Any, structured.data)
+            if isinstance(structured_data, RootModel):
                 # unwrap RootModel
-                structured.data = structured.data.root  # type: ignore[attr-defined]
-            if request.response_format is not None and structured.data is not None:
-                structured.data = request.response_format.model_validate(structured.data)
+                structured_data = cast(Any, structured_data.root)
+                structured.data = structured_data
+            if request.response_format is not None and structured_data is not None:
+                structured.data = request.response_format.model_validate(structured_data)
             return structured
         return response.markdown
 

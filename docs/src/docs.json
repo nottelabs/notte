@@ -12,6 +12,10 @@
     "light": "/logo/logo-white.png"
   },
   "favicon": "/favicon.ico",
+  "banner": {
+    "content": "Get started: use the [Notte CLI skill](https://github.com/nottelabs/notte-skills/) to generate your first SDK script | [Setup guide](/quickstart)",
+    "dismissible": false
+  },
   "seo.indexing": "all",
   "navigation": {
     "languages": [
@@ -26,6 +30,7 @@
                 "pages": [
                   "index",
                   "quickstart",
+                  "templates",
                   "concepts"
                 ]
               },
@@ -53,6 +58,7 @@
                       "features/sessions/static-ips",
                       "features/sessions/recordings",
                       "features/sessions/live-view",
+                      "features/sessions/embed-iframe",
                       "features/sessions/browser-extensions",
                       "features/sessions/cookies",
                       "features/sessions/cloudflare-web-bot-auth"
@@ -144,6 +150,7 @@
                   "integrations/massive",
                   "integrations/openai-cua",
                   "integrations/stagehand",
+                  "integrations/openclaw",
                   "features/sessions/cloudflare-web-bot-auth"
                 ]
               }
@@ -335,6 +342,7 @@
               {
                 "group": "Resources",
                 "pages": [
+                  "resources",
                   "pricing",
                   "rate-limits",
                   "guides/vibe-coding"
@@ -361,24 +369,6 @@
                   "community/trustpilot",
                   "community/producthunt",
                   "community/youtube"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "Updates",
-            "groups": [
-              {
-                "group": "Updates",
-                "pages": [
-                  "changelog"
-                ]
-              },
-              {
-                "group": "Releases",
-                "pages": [
-                  "releases/github",
-                  "releases/pypi"
                 ]
               }
             ]

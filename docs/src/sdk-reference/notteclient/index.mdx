@@ -13,27 +13,60 @@ If you need to handle multiple sessions, you need to create a new client for eac
 ## Methods
 
 <CardGroup cols={2}>
-  <Card
-    title="__init__"
-    icon="function"
-    href="/sdk-reference/notteclient/__init__"
-  >
-    Initialize a NotteClient instance
-  </Card>
-  <Card
-    title="health_check"
-    icon="function"
-    href="/sdk-reference/notteclient/health_check"
-  >
-    Health check the Notte API
-  </Card>
-  <Card
-    title="scrape"
-    icon="function"
-    href="/sdk-reference/notteclient/scrape"
-  >
-    Scrape the current page data
-  </Card>
+  <Visibility for="humans">
+    <Card
+      title="__init__"
+      icon="function"
+      href="/sdk-reference/notteclient/__init__"
+    >
+      Initialize a NotteClient instance
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="__init__"
+      icon="function"
+      href="/sdk-reference/notteclient/__init__.md"
+    >
+      Initialize a NotteClient instance
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="health_check"
+      icon="function"
+      href="/sdk-reference/notteclient/health_check"
+    >
+      Health check the Notte API
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="health_check"
+      icon="function"
+      href="/sdk-reference/notteclient/health_check.md"
+    >
+      Health check the Notte API
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="scrape"
+      icon="function"
+      href="/sdk-reference/notteclient/scrape"
+    >
+      Scrape the current page data
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="scrape"
+      icon="function"
+      href="/sdk-reference/notteclient/scrape.md"
+    >
+      Scrape the current page data
+    </Card>
+  </Visibility>
 </CardGroup>
 
 ## Class Information

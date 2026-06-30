@@ -10,83 +10,204 @@ Base class for storage implementations that handle upload and download file stor
 ## Methods
 
 <CardGroup cols={2}>
-  <Card
-    title="__init__"
-    icon="function"
-    href="/sdk-reference/remotefilestorage/__init__"
-  >
-    Initialize self
-  </Card>
-  <Card
-    title="alist_downloaded_files"
-    icon="function"
-    href="/sdk-reference/remotefilestorage/alist_downloaded_files"
-  >
-    List files that have been downloaded into storage by the agents
-  </Card>
-  <Card
-    title="alist_uploaded_files"
-    icon="function"
-    href="/sdk-reference/remotefilestorage/alist_uploaded_files"
-  >
-    List files that have been uploaded to storage
-  </Card>
-  <Card
-    title="download"
-    icon="function"
-    href="/sdk-reference/remotefilestorage/download"
-  >
-    Stores a file that has been downloaded from a website in the current session
-  </Card>
-  <Card
-    title="get_file"
-    icon="function"
-    href="/sdk-reference/remotefilestorage/get_file"
-  >
-    Returns the local path for a file
-  </Card>
-  <Card
-    title="instructions"
-    icon="function"
-    href="/sdk-reference/remotefilestorage/instructions"
-  >
-    Return LLM instructions to append to the prompt
-  </Card>
-  <Card
-    title="list_downloaded_files"
-    icon="function"
-    href="/sdk-reference/remotefilestorage/list_downloaded_files"
-  >
-    List all files in the download_dir
-  </Card>
-  <Card
-    title="list_uploaded_files"
-    icon="function"
-    href="/sdk-reference/remotefilestorage/list_uploaded_files"
-  >
-    List all files from the upload_dir
-  </Card>
-  <Card
-    title="set_file"
-    icon="function"
-    href="/sdk-reference/remotefilestorage/set_file"
-  >
-    Stores a file from the local path
-  </Card>
-  <Card
-    title="set_session_id"
-    icon="function"
-    href="/sdk-reference/remotefilestorage/set_session_id"
-  >
-    No description available
-  </Card>
-  <Card
-    title="upload"
-    icon="function"
-    href="/sdk-reference/remotefilestorage/upload"
-  >
-    Upload a file from your local machine to storage
-  </Card>
+  <Visibility for="humans">
+    <Card
+      title="__init__"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/__init__"
+    >
+      Initialize self
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="__init__"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/__init__.md"
+    >
+      Initialize self
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="alist_downloaded_files"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/alist_downloaded_files"
+    >
+      List files that have been downloaded into storage by the agents
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="alist_downloaded_files"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/alist_downloaded_files.md"
+    >
+      List files that have been downloaded into storage by the agents
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="alist_uploaded_files"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/alist_uploaded_files"
+    >
+      List files that have been uploaded to storage
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="alist_uploaded_files"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/alist_uploaded_files.md"
+    >
+      List files that have been uploaded to storage
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="download"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/download"
+    >
+      Stores a file that has been downloaded from a website in the current session
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="download"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/download.md"
+    >
+      Stores a file that has been downloaded from a website in the current session
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="get_file"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/get_file"
+    >
+      Returns the local path for a file
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="get_file"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/get_file.md"
+    >
+      Returns the local path for a file
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="instructions"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/instructions"
+    >
+      Return LLM instructions to append to the prompt
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="instructions"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/instructions.md"
+    >
+      Return LLM instructions to append to the prompt
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="list_downloaded_files"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/list_downloaded_files"
+    >
+      List all files in the download_dir
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="list_downloaded_files"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/list_downloaded_files.md"
+    >
+      List all files in the download_dir
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="list_uploaded_files"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/list_uploaded_files"
+    >
+      List all files from the upload_dir
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="list_uploaded_files"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/list_uploaded_files.md"
+    >
+      List all files from the upload_dir
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="set_file"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/set_file"
+    >
+      Stores a file from the local path
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="set_file"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/set_file.md"
+    >
+      Stores a file from the local path
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="set_session_id"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/set_session_id"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="set_session_id"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/set_session_id.md"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="upload"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/upload"
+    >
+      Upload a file from your local machine to storage
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="upload"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/upload.md"
+    >
+      Upload a file from your local machine to storage
+    </Card>
+  </Visibility>
 </CardGroup>
 
 ## Class Information

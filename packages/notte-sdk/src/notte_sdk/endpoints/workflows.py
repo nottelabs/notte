@@ -113,7 +113,7 @@ class WorkflowsClient(BaseClient):
         """
         super().__init__(
             root_client=root_client,
-            base_endpoint_path="workflows",
+            base_endpoint_path="functions",
             server_url=server_url,
             api_key=api_key,
             verbose=verbose,
@@ -688,7 +688,7 @@ class RemoteWorkflow:
         restricted: bool = True,
     ) -> None:
         """
-        Update the workflow with a a new code version.
+        Update the workflow with a new code version.
 
         ```python
         function = notte.Function("<your-function-id>")
@@ -835,7 +835,7 @@ class RemoteWorkflow:
             except Exception as e:
                 logger.error(f"[Function] {self.function_id} run failed with error: {traceback.format_exc()}")
                 result = str(e)
-                status = "failed"
+                status = "closed"
                 exception = e
             # update the run with the result
             self._session_id = log_capture.session_id
