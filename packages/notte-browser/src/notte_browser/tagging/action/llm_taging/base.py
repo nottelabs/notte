@@ -110,12 +110,10 @@ class RetryPipeWrapper(BaseActionListingPipe):
         previous_action_list: list[InteractionAction],
     ) -> PossibleActionSpace:
         errors: list[str] = []
-        _last_error: Exception | None = None
         for _ in range(self.max_tries):
             try:
                 return await self.pipe.forward_incremental(snapshot, previous_action_list)
             except Exception as e:
-                _last_error = e
                 errors.append(str(e))
                 if self.verbose:
                     logger.debug(
