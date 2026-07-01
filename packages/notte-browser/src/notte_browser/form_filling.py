@@ -1,9 +1,8 @@
 import asyncio
 import random
 
-from notte_core.common.logging import logger
-
 from notte_browser.playwright_async_api import Locator, Page
+from notte_core.common.logging import logger
 
 
 def escape_css_selector(selector: str) -> str:
