@@ -333,6 +333,13 @@
                   "product/studio",
                   "product/anything-api"
                 ]
+              },
+              {
+                "group": "Quaso",
+                "icon": "croissant",
+                "pages": [
+                  "quaso/mobile"
+                ]
               }
             ]
           },
