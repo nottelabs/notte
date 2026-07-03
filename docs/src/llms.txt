@@ -208,6 +208,7 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 ## Health
 
 - [GET Health Check](https://docs.notte.cc/api-reference/health/health-check.md)
+- [GET Ready Check](https://docs.notte.cc/api-reference/health/ready-check.md)
 
 ## Personas
 
