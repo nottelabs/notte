@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/nottelabs-notte-badge.png)](https://mseep.ai/app/nottelabs-notte)
+
 # Rapidly build reliable web automation agents
 
 <div align="center">
