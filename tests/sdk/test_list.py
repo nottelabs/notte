@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from notte_sdk import NotteClient
 
 
-def test_simple_listing():
+def test_simple_listing(require_notte_api_key):
     _ = load_dotenv()
     notte = NotteClient()
 

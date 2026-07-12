@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import notte_core
+import pytest
 
 CONFIG_PATH = Path(__file__).parent / "test_notte_config.toml"
 notte_core.set_error_mode("developer")
@@ -49,3 +50,9 @@ def pytest_generate_tests(metafunc):
         # Apply parameterization only if any matching arguments exist
         if params:
             metafunc.parametrize(",".join(params.keys()), [next(iter(params.values()))])
+
+
+@pytest.fixture
+def require_notte_api_key():
+    if os.getenv("NOTTE_API_KEY") is None:
+        pytest.skip("NOTTE_API_KEY is required for live Notte API tests")

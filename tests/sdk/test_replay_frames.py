@@ -6,7 +6,7 @@ from PIL import Image
 import notte
 
 
-def test_sdk_screenshots():
+def test_sdk_screenshots(require_notte_api_key):
     """Make sure everything is in bytes (and not base64 encoded), all in JPEG"""
     client = NotteClient()
 

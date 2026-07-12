@@ -12,7 +12,7 @@ class Product(BaseModel):
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-def test_validator_message_received():
+def test_validator_message_received(require_notte_api_key):
     """Test that validation failures are logged and agent can recover with a valid response."""
     log_buffer = io.StringIO()
     _ = logger.add(log_buffer, format="{message}")
