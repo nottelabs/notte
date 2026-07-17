@@ -896,7 +896,7 @@ class EmailVerificationReadAction(ToolAction):
 
     @override
     def execution_message(self) -> str:
-        return f"Read email verification from {self.sender_domain}"
+        return f"Successfully read email verification from {self.sender_domain}"
 
     @override
     @staticmethod
