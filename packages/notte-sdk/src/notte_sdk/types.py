@@ -769,6 +769,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     web_bot_auth: bool
     extra_http_headers: dict[str, str] | None
     vault_id: str | None
+    mailbox_id: str | None
 
 
 class SessionStartRequest(SdkRequest):
@@ -844,6 +845,7 @@ class SessionStartRequest(SdkRequest):
     ] = None
 
     vault_id: Annotated[str | None, Field(description="The vault to use for the session")] = None
+    mailbox_id: Annotated[str | None, Field(description="Workspace mailbox connection to bind to the session")] = None
 
     @model_validator(mode="before")
     @classmethod
