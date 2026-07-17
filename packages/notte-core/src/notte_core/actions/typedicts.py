@@ -60,6 +60,7 @@ ActionType = Literal[
     "completion",
     "scrape",
     "email_read",
+    "email_verification_read",
     "sms_read",
     "evaluate_js",
     "click",
