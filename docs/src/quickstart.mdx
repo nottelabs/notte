@@ -245,8 +245,11 @@ Build reliable Python SDK automation scripts by authoring in a real browser firs
           "notte page goto news.ycombinator.com",
           "notte page scrape --instructions \"Extract the top 10 stories from Hacker News. For each story return: rank, title, URL, points, author, number of comments\" -o json",
           "notte sessions workflow-code",
+          "```",
           "",
-          "# returns",
+          "Returns:",
+          "",
+          "```python",
           "from __future__ import annotations",
           "",
           "from notte_sdk import NotteClient",
@@ -1100,8 +1103,11 @@ Build reliable Python SDK automation scripts by authoring in a real browser firs
     notte page goto news.ycombinator.com
     notte page scrape --instructions "Extract the top 10 stories from Hacker News. For each story return: rank, title, URL, points, author, number of comments" -o json
     notte sessions workflow-code
+    ```
 
-    # returns
+    Returns:
+
+    ```python
     from __future__ import annotations
 
     from notte_sdk import NotteClient
@@ -1936,8 +1942,11 @@ notte sessions start
 notte page goto news.ycombinator.com
 notte page scrape --instructions "Extract the top 10 stories from Hacker News. For each story return: rank, title, URL, points, author, number of comments" -o json
 notte sessions workflow-code
+```
 
-# returns
+Returns:
+
+```python
 from __future__ import annotations
 
 from notte_sdk import NotteClient

@@ -42,6 +42,10 @@ def rewrite_skill_relative_links(text: str) -> str:
 
 def setup_prompt(skill_docs: str) -> str:
     skill_docs = rewrite_skill_relative_links(normalize_markdown(skill_docs))
+    skill_docs = skill_docs.replace(
+        "notte sessions workflow-code\n\n# returns\nfrom __future__ import annotations",
+        "notte sessions workflow-code\n```\n\nReturns:\n\n```python\nfrom __future__ import annotations",
+    )
     sections = [
         "# Setup Notte",
         "",
