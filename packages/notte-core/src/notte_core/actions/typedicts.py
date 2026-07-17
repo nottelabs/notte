@@ -213,6 +213,12 @@ class EmailReadActionDict(TypedDict, total=False):
     only_unread: NotRequired[bool]
 
 
+class EmailVerificationReadActionDict(TypedDict, total=False):
+    type: Required[Literal["email_verification_read"]]
+    sender_domain: Required[str]
+    max_age_seconds: NotRequired[int]
+
+
 class SmsReadActionDict(TypedDict, total=False):
     type: Required[Literal["sms_read"]]
     limit: NotRequired[int]
@@ -312,6 +318,7 @@ ActionDict = (
     | CompletionActionDict
     | ScrapeActionDict
     | EmailReadActionDict
+    | EmailVerificationReadActionDict
     | SmsReadActionDict
     | EvaluateJsActionDict
     | ClickActionDict
