@@ -753,6 +753,7 @@ class SessionStartRequestDict(TypedDict, total=False):
         use_file_storage: Whether FileStorage should be attached to the session.
         screenshot_type: The type of screenshot to use for the session.
         profile: Browser profile configuration for state persistence.
+        auth_ids: Managed Auth connection IDs to authenticate before the session is returned.
     """
 
     headless: bool
@@ -775,6 +776,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     web_bot_auth: bool
     extra_http_headers: dict[str, str] | None
     vault_id: str | None
+    auth_ids: list[str]
 
 
 class SessionStartRequest(SdkRequest):
@@ -848,6 +850,16 @@ class SessionStartRequest(SdkRequest):
     ] = None
 
     vault_id: Annotated[str | None, Field(description="The vault to use for the session")] = None
+    auth_ids: Annotated[
+        list[str],
+        Field(
+            max_length=10,
+            description=(
+                "Managed Auth connection IDs to verify and, when necessary, authenticate "
+                "inside this session before it is returned."
+            ),
+        ),
+    ] = Field(default_factory=list)
 
     @model_validator(mode="before")
     @classmethod
@@ -856,6 +868,12 @@ class SessionStartRequest(SdkRequest):
             if "max_duration_minutes" not in values:
                 values["max_duration_minutes"] = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
         return values  # pyright: ignore[reportUnknownVariableType]
+
+    @model_validator(mode="after")
+    def validate_unique_auth_ids(self) -> "SessionStartRequest":
+        if len(self.auth_ids) != len(set(self.auth_ids)):
+            raise ValueError("auth_ids must not contain duplicates")
+        return self
 
     @model_validator(mode="before")
     @classmethod

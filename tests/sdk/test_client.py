@@ -418,6 +418,22 @@ def test_solve_captchas_defaults_to_enabled_but_can_be_disabled() -> None:
     assert SessionStartRequest(solve_captchas=False).solve_captchas is False
 
 
+def test_managed_auth_ids_are_serialized_and_must_be_unique() -> None:
+    from pydantic import ValidationError
+
+    auth_ids = [
+        "55555555-5555-5555-5555-555555555555",
+        "66666666-6666-6666-6666-666666666666",
+    ]
+    request = SessionStartRequest(auth_ids=auth_ids)
+
+    assert request.auth_ids == auth_ids
+    assert request.model_dump(mode="json")["auth_ids"] == auth_ids
+
+    with pytest.raises(ValidationError, match="auth_ids must not contain duplicates"):
+        SessionStartRequest(auth_ids=[auth_ids[0], auth_ids[0]])
+
+
 def test_new_timeout_parameters_explicit() -> None:
     """Test new explicit timeout parameters."""
     request = SessionStartRequest(max_duration_minutes=10, idle_timeout_minutes=5)
