@@ -11,6 +11,8 @@ from notte_sdk.types import (
     ExecutionResponse,
     ProfileCreateRequest,
     ProfileCreateRequestDict,
+    ProfileDuplicateRequest,
+    ProfileDuplicateRequestDict,
     ProfileListRequest,
     ProfileListRequestDict,
     ProfileResponse,
@@ -28,6 +30,7 @@ class ProfilesClient(BaseClient):
     CREATE_PROFILE = "create"
     GET_PROFILE = "{profile_id}"
     DELETE_PROFILE = "{profile_id}"
+    DUPLICATE_PROFILE = "{profile_id}/duplicate"
     LIST_PROFILES = ""
 
     def __init__(
@@ -78,6 +81,15 @@ class ProfilesClient(BaseClient):
             path=ProfilesClient.DELETE_PROFILE.format(profile_id=profile_id),
             response=ExecutionResponse,
             method="DELETE",
+        )
+
+    @staticmethod
+    def _duplicate_profile_endpoint(profile_id: str) -> NotteEndpoint[ProfileResponse]:
+        """Returns a NotteEndpoint configured for duplicating a profile."""
+        return NotteEndpoint(
+            path=ProfilesClient.DUPLICATE_PROFILE.format(profile_id=profile_id),
+            response=ProfileResponse,
+            method="POST",
         )
 
     @staticmethod
@@ -138,6 +150,21 @@ class ProfilesClient(BaseClient):
         """
         result = self.request(ProfilesClient._delete_profile_endpoint(profile_id))
         return result.success
+
+    @track_usage("cloud.profile.duplicate")
+    def duplicate(self, profile_id: str, **data: Unpack[ProfileDuplicateRequestDict]) -> ProfileResponse:
+        """Duplicate a profile and its last persisted browser state.
+
+        Args:
+            profile_id: Source profile ID
+            **data: Optional destination name. The source name is reused when omitted.
+
+        Returns:
+            ProfileResponse: The newly created profile
+        """
+        request = ProfileDuplicateRequest.model_validate(data)
+        endpoint = ProfilesClient._duplicate_profile_endpoint(profile_id).with_request(request)
+        return self.request(endpoint)
 
     @track_usage("cloud.profile.list")
     def list(self, **data: Unpack[ProfileListRequestDict]) -> Sequence[ProfileResponse]:
