@@ -1065,6 +1065,10 @@ class SessionResponse(SdkResponse):
     cdp_url: Annotated[str | None, Field(description="The URL to connect to the CDP server.")] = None
     viewer_url: Annotated[str | None, Field(description="The remote session viewer URL.")] = None
     web_bot_auth: Annotated[bool, Field(description="Whether to use web bot authentication.")] = False
+    auth_ids: Annotated[
+        list[str],
+        Field(description="Managed Auth connection IDs attached to this session."),
+    ] = Field(default_factory=list)
 
     @field_validator("closed_at", mode="before")
     @classmethod
