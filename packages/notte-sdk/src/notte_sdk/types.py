@@ -773,9 +773,7 @@ class SessionStartRequestDict(TypedDict, total=False):
 
 class SessionStartRequest(SdkRequest):
     headless: Annotated[bool, Field(description="Whether to run the session in headless mode.")] = config.headless
-    solve_captchas: Annotated[bool, Field(description="Whether to try to automatically solve captchas")] = (
-        config.solve_captchas
-    )
+    solve_captchas: Annotated[bool, Field(description="Whether to try to automatically solve captchas")] = True
 
     max_duration_minutes: Annotated[
         int,

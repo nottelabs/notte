@@ -135,6 +135,9 @@ class NotteSession(AsyncResource, SyncResource):
             raise ValueError(
                 "RemoteFileStorage is not supported for local sessions. Use a local storage implementation instead."
             )
+        # CAPTCHA solving is a cloud SDK capability. Keep local sessions
+        # runnable by default while preserving an explicit opt-in error.
+        _ = data.setdefault("solve_captchas", False)
         self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
         if self._request.solve_captchas and not CaptchaHandler.is_available:
             raise CaptchaSolverNotAvailableError()
