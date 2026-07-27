@@ -163,7 +163,7 @@ def _stop_session(mock_delete: MagicMock, client: NotteClient, session_id: str) 
 def test_start_session(mock_post: MagicMock, client: NotteClient, session_id: str, headers: dict[str, str]) -> None:
     session_data: SessionStartRequestDict = {
         "headless": True,
-        "solve_captchas": False,
+        "solve_captchas": True,
         "idle_timeout_minutes": DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES,
         "max_duration_minutes": DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
         "proxies": False,
@@ -410,6 +410,12 @@ def test_new_timeout_parameters_with_defaults() -> None:
     request = SessionStartRequest()
     assert request.max_duration_minutes == DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
     assert request.idle_timeout_minutes == DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES
+
+
+def test_solve_captchas_defaults_to_enabled_but_can_be_disabled() -> None:
+    request = SessionStartRequest()
+    assert request.solve_captchas is True
+    assert SessionStartRequest(solve_captchas=False).solve_captchas is False
 
 
 def test_new_timeout_parameters_explicit() -> None:
