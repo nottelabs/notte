@@ -70,7 +70,14 @@ Create a reusable function:
 
 ### Execute Generated Code
 
-Copy and run the generated Python:
+Review the generated Python before running it:
+
+<Warning>
+  Generated workflows contain LLM-produced code and should be treated as untrusted. Inspect the entire file, then run
+  it only in an isolated environment with the minimum required permissions.
+</Warning>
+
+{/* Unsafe generated-code execution was reported in #794 by @sebastiondev. */}
 
 <ExecuteGeneratedCode />
 

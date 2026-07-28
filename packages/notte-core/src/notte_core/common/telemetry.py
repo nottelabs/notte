@@ -1,4 +1,5 @@
 import importlib.metadata as metadata
+import inspect
 import logging
 import os
 import platform
@@ -228,23 +229,44 @@ def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> 
             logger.debug(f"Failed to send telemetry event {event_name}: {e}")
 
 
+def _capture_usage_event(method_name: str, error: Exception | None = None) -> None:
+    # Usage-decorated calls may contain credentials, payment details, cookies, or API tokens.
+    # Keep telemetry metadata-only. The unsafe error-path payload was reported in #826 by @sebastiondev.
+    properties: dict[str, Any] = {"status": "error" if error is not None else "success"}
+    if error is not None:
+        properties["error_type"] = type(error).__name__
+    capture_event(method_name, properties=properties)
+
+
 def track_usage(method_name: str) -> Callable[[F], F]:
-    """Decorator to track usage of a method."""
+    """Track a call without including argument values or exception messages."""
 
     def decorator(func: F) -> F:
-        exclude_kwargs = set(["email", "username", "password", "mfa_secret"])
+        if inspect.iscoroutinefunction(func):
+
+            @wraps(func)
+            async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+                try:
+                    result = await func(*args, **kwargs)
+                except Exception as e:
+                    _capture_usage_event(method_name, error=e)
+                    raise
+                else:
+                    _capture_usage_event(method_name)
+                    return result
+
+            return async_wrapper  # type: ignore
 
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            event_name = method_name
             try:
                 result = func(*args, **kwargs)
-                filtered_kwargs = {k: v for k, v in kwargs.items() if k not in exclude_kwargs}
-                capture_event(event_name, properties={"input": {"args": args, "kwargs": filtered_kwargs}})
-                return result
             except Exception as e:
-                capture_event(event_name, properties={"input": {"args": args, "kwargs": kwargs}, "error": str(e)})
-                raise e
+                _capture_usage_event(method_name, error=e)
+                raise
+            else:
+                _capture_usage_event(method_name)
+                return result
 
         return wrapper  # type: ignore
 
