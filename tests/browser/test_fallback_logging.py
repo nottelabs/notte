@@ -1,3 +1,4 @@
+import io
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -5,6 +6,7 @@ from notte_browser.dom.csspaths import build_csspath
 from notte_browser.form_filling import FormFiller
 from notte_browser.playwright_async_api import Error as PlaywrightError
 from notte_core.browser.observation import Screenshot
+from PIL import Image
 
 
 def test_build_csspath_logs_traceback_before_using_fallback() -> None:
@@ -54,6 +56,20 @@ def test_invalid_screenshot_logs_traceback_before_using_empty_screenshot() -> No
         screenshot = Screenshot(raw=b"not an image")
 
     assert screenshot.raw
+    logger.opt.assert_called_once_with(exception=True)
+    logger.opt.return_value.debug.assert_called_once_with("Failed to decode screenshot data; using an empty screenshot")
+
+
+def test_truncated_jpeg_logs_traceback_before_using_empty_screenshot() -> None:
+    buffer = io.BytesIO()
+    Image.new("RGB", (1024, 1024), "white").save(buffer, format="JPEG")
+    encoded = buffer.getvalue()
+    truncated = encoded[: len(encoded) // 2]
+
+    with patch("notte_core.browser.observation.logger") as logger:
+        screenshot = Screenshot(raw=truncated)
+
+    assert screenshot.raw != truncated
     logger.opt.assert_called_once_with(exception=True)
     logger.opt.return_value.debug.assert_called_once_with("Failed to decode screenshot data; using an empty screenshot")
 

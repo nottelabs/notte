@@ -10,6 +10,7 @@ from notte_core.errors.llm import (
     LLMnoOutputCompletionError,
     LLMParsingError,
 )
+from notte_core.errors.provider import ContextWindowExceededError
 from notte_llm.service import LLMService
 from notte_llm.tracer import LlmParsingErrorFileTracer
 from typing_extensions import override
@@ -20,8 +21,8 @@ _CONTEXT_SIZE_ERROR_MESSAGE = "Please reduce the length of the messages or compl
 _CONTEXT_SIZE_PATTERN = re.compile(r"Current length is (\d+) while limit is (\d+)")
 
 
-def _context_size_error(error: Exception) -> ContextSizeTooLargeError | None:
-    if isinstance(error, ContextSizeTooLargeError):
+def _context_size_error(error: Exception) -> ContextSizeTooLargeError | ContextWindowExceededError | None:
+    if isinstance(error, (ContextSizeTooLargeError, ContextWindowExceededError)):
         return error
 
     message = str(error)
@@ -94,6 +95,8 @@ class RetryPipeWrapper(BaseActionListingPipe):
                 context_size_error = _context_size_error(e)
                 if context_size_error is not None:
                     # Retrying cannot reduce the prompt, so fail immediately.
+                    if context_size_error is e:
+                        raise
                     raise context_size_error from e
                 if self.verbose:
                     logger.opt(exception=True).debug("Failed to parse action list; retrying")

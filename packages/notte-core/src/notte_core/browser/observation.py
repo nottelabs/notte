@@ -117,8 +117,9 @@ class Screenshot(BaseModel):
                         break
                     height = (v[pos + 5] << 8) | v[pos + 6]
                     width = (v[pos + 7] << 8) | v[pos + 8]
-                    # If dimensions are even, return as-is (fast path)
-                    if width % 2 == 0 and height % 2 == 0:
+                    # If dimensions are even and the image has its end marker,
+                    # return as-is without forcing a full synchronous decode.
+                    if width % 2 == 0 and height % 2 == 0 and v.endswith(b"\xff\xd9"):
                         return v
                     # Need to pad - fall through to PIL path
                     break
@@ -131,35 +132,39 @@ class Screenshot(BaseModel):
         # Slow path: use PIL for non-JPEG or images that need padding
         try:
             img = Image.open(io.BytesIO(v))
+            # Image.open is lazy. Force decoding here so a truncated image
+            # cannot escape validation and fail later in display or replay code.
+            _ = img.load()  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+            orig_img = img
+
+            # Pad to even width and height (required for video encoding)
+            width, height = img.size
+            new_width = width + (width % 2)
+            new_height = height + (height % 2)
+
+            if new_width != width or new_height != height:
+                new_img = Image.new(
+                    img.mode,
+                    (new_width, new_height),
+                    (255, 255, 255) if img.mode == "RGB" else (255, 255, 255, 255),
+                )
+                new_img.paste(img, (0, 0))
+                img = new_img
+
+            if img is orig_img and img.format == "JPEG":
+                return v
+
+            buffer = io.BytesIO()
+            # Convert to RGB if necessary (PNG with transparency needs this)
+            if img.mode in ("RGBA", "LA", "P"):
+                img = img.convert("RGB")
+
+            img.save(buffer, format="JPEG", quality=85)
+            _ = buffer.seek(0)
+            return buffer.getvalue()
         except OSError:
             logger.opt(exception=True).debug("Failed to decode screenshot data; using an empty screenshot")
             return Observation.empty().screenshot.raw
-
-        orig_img = img
-
-        # Pad to even width and height (required for video encoding)
-        width, height = img.size
-        new_width = width + (width % 2)
-        new_height = height + (height % 2)
-
-        if new_width != width or new_height != height:
-            new_img = Image.new(
-                img.mode, (new_width, new_height), (255, 255, 255) if img.mode == "RGB" else (255, 255, 255, 255)
-            )
-            new_img.paste(img, (0, 0))
-            img = new_img
-
-        if img is orig_img and img.format == "JPEG":
-            return v
-
-        buffer = io.BytesIO()
-        # Convert to RGB if necessary (PNG with transparency needs this)
-        if img.mode in ("RGBA", "LA", "P"):
-            img = img.convert("RGB")
-
-        img.save(buffer, format="JPEG", quality=85)
-        _ = buffer.seek(0)
-        return buffer.getvalue()
 
     @override
     def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:

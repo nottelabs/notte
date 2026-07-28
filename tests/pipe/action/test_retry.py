@@ -7,6 +7,7 @@ from notte_browser.tagging.type import PossibleAction, PossibleActionSpace
 from notte_core.actions import ClickAction
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.errors.llm import ContextSizeTooLargeError
+from notte_core.errors.provider import ContextWindowExceededError
 
 from tests.mock.mock_service import MockLLMService
 
@@ -138,6 +139,21 @@ async def test_incremental_typed_context_size_failure_skips_pointless_retries() 
 
 
 @pytest.mark.asyncio
+async def test_engine_context_window_failure_skips_pointless_retries() -> None:
+    error = ContextWindowExceededError(provider="test/model", current_size=200, max_size=100)
+    wrapper, pipe = make_wrapper(incremental_side_effect=error, max_tries=3)
+
+    with patch.object(RetryPipeWrapper, "tracer", MagicMock()):
+        result = await wrapper.forward_incremental(
+            snapshot=MagicMock(spec=BrowserSnapshot),
+            previous_action_list=previous_actions(),
+        )
+
+    assert [action.id for action in result.actions] == ["B1"]
+    assert pipe.forward_incremental.await_count == 1
+
+
+@pytest.mark.asyncio
 async def test_forward_raises_parsed_context_size_error_without_retrying() -> None:
     error = RuntimeError(
         "Please reduce the length of the messages or completions. Current length is 200 while limit is 100"
@@ -147,4 +163,16 @@ async def test_forward_raises_parsed_context_size_error_without_retrying() -> No
     with pytest.raises(ContextSizeTooLargeError, match="200.*100"):
         await wrapper.forward(snapshot=MagicMock(spec=BrowserSnapshot))
 
+    assert pipe.forward.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_forward_preserves_engine_context_window_error_without_retrying() -> None:
+    error = ContextWindowExceededError(provider="test/model", current_size=200, max_size=100)
+    wrapper, pipe = make_wrapper(forward_side_effect=error, max_tries=3)
+
+    with pytest.raises(ContextWindowExceededError) as exc_info:
+        await wrapper.forward(snapshot=MagicMock(spec=BrowserSnapshot))
+
+    assert exc_info.value is error
     assert pipe.forward.await_count == 1
