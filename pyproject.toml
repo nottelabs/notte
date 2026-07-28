@@ -19,8 +19,6 @@ dependencies = [
 
 [project.optional-dependencies]
 integrations = ["notte-integrations==1.4.4.dev"]
-eval = ["notte-eval==1.4.4.dev"]
-mcp = ["notte-mcp==1.4.4.dev"]
 
 [tool.uv.sources]
 notte-core = { workspace = true }
@@ -29,8 +27,6 @@ notte-browser = { workspace = true }
 notte-agent = { workspace = true }
 notte-llm = { workspace = true }
 notte-integrations = { workspace = true }
-notte-eval = { workspace = true }
-notte-mcp = { workspace = true }
 
 
 [tool.uv.workspace]

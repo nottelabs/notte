@@ -58,10 +58,6 @@ test-release:
 test-examples:
 	uv run pytest tests/examples/test_examples.py
 
-.PHONY: benchmark
-benchmark:
-	cat benchmarks/benchmark_config.toml | uv run python -m notte_eval.run
-
 .PHONY: pre-commit-run
 pre-commit-run:
 	uv run --active pre-commit run --all-files
@@ -91,14 +87,6 @@ release-clean:
 	@rm -rf .mypy_cache
 	@rm -rf .pytest_cache
 	@git checkout pyproject.toml uv.lock packages/*/pyproject.toml
-
-.PHONY: mcp
-mcp:
-	uv run python -m notte_mcp.server
-
-.PHONY: mcp-install-claude
-mcp-install-claude:
-	uv run fastmcp install packages/notte-mcp/src/notte_mcp/server.py -f .env
 
 .PHONY: profile-imports
 profile-imports:

@@ -62,47 +62,6 @@ The `Authorization:${AUTH_HEADER}` form (with the token supplied via the `env` b
 
 You can grab your API key from the [Notte Console](https://console.notte.cc).
 
-## Setup: Running the MCP Server Locally
-
-Prefer to self-host? The MCP server is also available as a standalone package you can run on your own machine.
-
-<Steps>
-  <Step title="(Optional) Running the MCP Server Locally">
-
-    Follow these steps in your terminal to install and run your Notte-MCP server:
-
-    ```bash
-    export NOTTE_API_KEY="your-api-key"
-    pip install notte-mcp     # install notte package
-    python -m notte_mcp.server # start the MCP server
-    ```
-  </Step>
-  <Step title="Set up your Claude Desktop configuration to use the server">
-    ```json
-{
-    "mcpServers": {
-        "notte-mcp": {
-          "command": "npx",
-          "args": [
-            "mcp-remote",
-            "http://localhost:8001/sse"
-          ],
-          "env": {
-            "NOTTE_API_KEY": "<your-notte-api-key>"
-          }
-        }
-    }
-}
-```
-  </Step>
-  <Step title="Restart Claude Desktop">
-    Restart your Claude Desktop app, and you should see the tools available by clicking the 🔨 icon.
-  </Step>
-  <Step title="Start Using the Tools">
-    Start using the tools! Below is a demo video of Claude performing a Google search for OpenAI using the Notte MCP server for a remote headless browser.
-  </Step>
-</Steps>
-
 ## Notte commands via MCP Server
 
 ### Agent Operations
@@ -129,13 +88,6 @@ Prefer to self-host? The MCP server is also available as a standalone package yo
 | `notte_start_session` | Start a new cloud browser session |
 | `notte_list_sessions` | List all active browser sessions |
 | `notte_stop_session` | Stop the current session |
-
-
-<Tip>
-
-The MCP server is open-source and available on [GitHub](https://github.com/nottelabs/notte/tree/main/packages/notte-mcp).
-
-</Tip>
 
 
 ## Further Reading
