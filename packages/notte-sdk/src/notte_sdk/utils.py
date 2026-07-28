@@ -2,6 +2,7 @@ import getpass
 import json
 import re
 import sys
+import warnings
 from collections.abc import Callable
 from io import StringIO
 from pathlib import Path
@@ -104,6 +105,11 @@ class LogCapture:
 
 
 def generate_cookies(session: RemoteSession, url: str, output_path: str) -> None:
+    warnings.warn(
+        "generate_cookies is deprecated and will be removed in the next few weeks. Use browser profiles to persist login state instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     if not output_path.endswith(".json"):
         raise ValueError(f"Output path must end with .json: {output_path}")
 

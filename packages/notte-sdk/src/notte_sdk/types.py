@@ -2,6 +2,7 @@ import datetime as dt
 import json
 import os
 import re
+import warnings
 from enum import StrEnum
 from pathlib import Path
 from types import NoneType
@@ -653,6 +654,11 @@ class Cookie(BaseModel):
 
     @staticmethod
     def dump_json(cookies: list["Cookie"], path: str | Path) -> int:
+        warnings.warn(
+            "Cookie.dump_json is deprecated and will be removed in the next few weeks. Use json.dump(session.get_cookies(), f) instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         path = Path(path)
         cookies_dump = [cookie.model_dump() for cookie in cookies]
         return path.write_text(json.dumps(cookies_dump))
@@ -970,18 +976,6 @@ class SessionStartRequest(SdkRequest):
         raise ValueError(f"Unsupported proxy type: {base_proxy.type}")  # pyright: ignore[reportUnreachable]
 
 
-class SessionStatusRequest(SdkRequest):
-    session_id: Annotated[
-        str | None,
-        Field(description="The ID of the session. A new session is created when not provided."),
-    ] = None
-
-    replay: Annotated[
-        bool,
-        Field(description="Whether to include the video replay in the response (`.webp` format)."),
-    ] = False
-
-
 class SessionListRequestDict(TypedDict, total=False):
     only_active: bool
     page_size: int
@@ -1094,10 +1088,6 @@ class FileLinkResponse(SdkResponse):
 
 class DownloadFileRequest(SdkRequest):
     filename: Annotated[str, Field(description="Name of file to download")]
-
-
-class DownloadsListRequest(SdkRequest):
-    session_id: Annotated[str, Field(description="Session ID")]
 
 
 # ############################################################
