@@ -31,7 +31,6 @@ notte-integrations = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*", "."]
-exclude = ["packages/notte-bua"]
 
 [build-system]
 requires = ["hatchling"]

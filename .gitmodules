@@ -1,3 +1,12 @@
-[submodule "packages/notte-bua"]
-	path = packages/notte-bua
-	url = https://github.com/nottelabs/bua.git
+[submodule "browserarena"]
+	path = browserarena
+	url = https://github.com/nottelabs/browserarena.git
+[submodule "notte-cli"]
+	path = notte-cli
+	url = https://github.com/nottelabs/notte-cli.git
+[submodule "notte-skills"]
+	path = notte-skills
+	url = https://github.com/nottelabs/notte-skills.git
+[submodule "templates"]
+	path = templates
+	url = https://github.com/nottelabs/templates.git
