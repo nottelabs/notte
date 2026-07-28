@@ -32,6 +32,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+bitwarden = [
+    "bitwarden-sdk>=2.0.0",
+]
 tempo = [
     "opentelemetry-exporter-otlp>=1.27.0",
 ]

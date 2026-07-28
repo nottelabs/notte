@@ -108,6 +108,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pre-commit-
 
+      - name: Install aac CLI (Agent Access Protocol)
+        run: |
+          curl -sL https://github.com/bitwarden/agent-access/releases/latest/download/aac-linux-x86_64.tar.gz | tar xz
+          sudo mv aac /usr/local/bin/
+          aac --version
+
       - name: Install dependencies
         run: uv sync --dev --all-extras
 
