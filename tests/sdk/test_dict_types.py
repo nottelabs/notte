@@ -422,8 +422,6 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
         # Classes that are missing Dict types but legitimately don't need them
         "AgentSessionRequest",  # Simple base class with single field
         "DownloadFileRequest",  # Simple class with single field
-        "DownloadsListRequest",  # Simple class with single field
-        "SessionStatusRequest",  # Simple class with basic fields
         "SetCookiesRequest",  # Uses existing Cookie structures
         "StartFunctionRunRequest",  # Complex composition, may not need Dict
         "TabSessionDebugRequest",  # Simple debug request with single field

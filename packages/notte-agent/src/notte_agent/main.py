@@ -15,19 +15,15 @@ from notte_agent.common.base import BaseAgent
 from notte_agent.common.notifier import NotifierAgent
 from notte_agent.common.types import AgentResponse
 from notte_agent.falco.agent import FalcoAgent
-from notte_agent.gufo.agent import GufoAgent
 
 
 class AgentType(StrEnum):
     FALCO = "falco"
-    GUFO = "gufo"
 
-    def get_agent_class(self) -> type[FalcoAgent | GufoAgent]:
+    def get_agent_class(self) -> type[FalcoAgent]:
         match self:
             case AgentType.FALCO:
                 return FalcoAgent
-            case AgentType.GUFO:
-                return GufoAgent
 
 
 class Agent(BaseAgent):

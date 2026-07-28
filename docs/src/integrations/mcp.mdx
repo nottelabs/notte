@@ -62,80 +62,18 @@ The `Authorization:${AUTH_HEADER}` form (with the token supplied via the `env` b
 
 You can grab your API key from the [Notte Console](https://console.notte.cc).
 
-## Setup: Running the MCP Server Locally
+## Available tools
 
-Prefer to self-host? The MCP server is also available as a standalone package you can run on your own machine.
+The hosted server generates its tools directly from the public Notte API, so almost every capability you can reach over REST is also available as an MCP tool. Tool names and parameters mirror the [API reference](/api-reference/authentication), and new API endpoints become tools automatically.
 
-<Steps>
-  <Step title="(Optional) Running the MCP Server Locally">
-
-    Follow these steps in your terminal to install and run your Notte-MCP server:
-
-    ```bash
-    export NOTTE_API_KEY="your-api-key"
-    pip install notte-mcp     # install notte package
-    python -m notte_mcp.server # start the MCP server
-    ```
-  </Step>
-  <Step title="Set up your Claude Desktop configuration to use the server">
-    ```json
-{
-    "mcpServers": {
-        "notte-mcp": {
-          "command": "npx",
-          "args": [
-            "mcp-remote",
-            "http://localhost:8001/sse"
-          ],
-          "env": {
-            "NOTTE_API_KEY": "<your-notte-api-key>"
-          }
-        }
-    }
-}
-```
-  </Step>
-  <Step title="Restart Claude Desktop">
-    Restart your Claude Desktop app, and you should see the tools available by clicking the 🔨 icon.
-  </Step>
-  <Step title="Start Using the Tools">
-    Start using the tools! Below is a demo video of Claude performing a Google search for OpenAI using the Notte MCP server for a remote headless browser.
-  </Step>
-</Steps>
-
-## Notte commands via MCP Server
-
-### Agent Operations
-
-| Tool | Description |
-|------|-------------|
-| `notte_operator` | Run a Notte agent to complete a task on any website |
-
-
-### Page Interaction & Scraping
-
-| Tool | Description |
-|------|-------------|
-| `notte_observe` | Observe elements and available actions on the current page |
-| `notte_screenshot` | Take a screenshot of the current page |
-| `notte_scrape` | Extract structured data from the current page |
-| `notte_step` | Execute an action on the current page |
-
-
-### Session Management
-
-| Tool | Description |
-|------|-------------|
-| `notte_start_session` | Start a new cloud browser session |
-| `notte_list_sessions` | List all active browser sessions |
-| `notte_stop_session` | Stop the current session |
-
-
-<Tip>
-
-The MCP server is open-source and available on [GitHub](https://github.com/nottelabs/notte/tree/main/packages/notte-mcp).
-
-</Tip>
+| Area | What your AI client can do |
+|------|----------------------------|
+| Sessions | Start, list, observe, and stop cloud browser sessions |
+| Page interaction | Observe pages, execute actions, and take screenshots |
+| Scraping | Extract structured data from any page |
+| Agents | Start, monitor, and stop web agents on any task |
+| Functions | Run reusable automations |
+| Vaults & profiles | Use stored credentials and persistent browser state |
 
 
 ## Further Reading
