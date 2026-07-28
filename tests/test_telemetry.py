@@ -32,10 +32,10 @@ def test_track_usage_does_not_capture_argument_values(monkeypatch: pytest.Monkey
 
     result = decorated(
         "positional-secret",
-        password="password-secret",  # pragma: allowlist secret
+        password="password-secret",  # noqa: S106  # pragma: allowlist secret
         card_number="card-number-secret",
         card_cvv="card-cvv-secret",
-        api_token="api-token-secret",
+        api_token="api-token-secret",  # noqa: S106  # pragma: allowlist secret
     )
 
     assert result == "ok"
@@ -45,7 +45,7 @@ def test_track_usage_does_not_capture_argument_values(monkeypatch: pytest.Monkey
 
 def test_track_usage_does_not_capture_exception_messages(monkeypatch: pytest.MonkeyPatch) -> None:
     events = capture_usage_events(monkeypatch)
-    secret = "exception-secret"  # pragma: allowlist secret
+    secret = "exception-secret"  # noqa: S105  # pragma: allowlist secret
 
     @telemetry.track_usage("test.error")
     def decorated() -> None:
@@ -61,7 +61,7 @@ def test_track_usage_does_not_capture_exception_messages(monkeypatch: pytest.Mon
 @pytest.mark.asyncio
 async def test_track_usage_captures_async_failures_after_await(monkeypatch: pytest.MonkeyPatch) -> None:
     events = capture_usage_events(monkeypatch)
-    secret = "async-secret"  # pragma: allowlist secret
+    secret = "async-secret"  # noqa: S105  # pragma: allowlist secret
 
     @telemetry.track_usage("test.async_error")
     async def decorated(*, token: str) -> None:

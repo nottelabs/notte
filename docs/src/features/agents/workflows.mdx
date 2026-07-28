@@ -81,6 +81,13 @@ Review the generated Python before running it:
 
 <ExecuteGeneratedCode />
 
+Before testing the saved file:
+
+1. Use a disposable container or virtual machine with no host or home-directory mounts.
+2. Provide only short-lived, minimum-scope credentials; generated code can read and transmit every value you expose.
+3. Restrict network access to the destinations the workflow requires, when possible.
+4. Destroy the environment and revoke its credentials after the test.
+
 ### Use Function API
 
 Run via the function endpoint:
