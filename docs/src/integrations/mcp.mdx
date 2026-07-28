@@ -62,32 +62,18 @@ The `Authorization:${AUTH_HEADER}` form (with the token supplied via the `env` b
 
 You can grab your API key from the [Notte Console](https://console.notte.cc).
 
-## Notte commands via MCP Server
+## Available tools
 
-### Agent Operations
+The hosted server generates its tools directly from the public Notte API, so every capability you can reach over REST is also available as an MCP tool. Tool names and parameters mirror the [API reference](/api-reference/authentication), and new API endpoints become tools automatically.
 
-| Tool | Description |
-|------|-------------|
-| `notte_operator` | Run a Notte agent to complete a task on any website |
-
-
-### Page Interaction & Scraping
-
-| Tool | Description |
-|------|-------------|
-| `notte_observe` | Observe elements and available actions on the current page |
-| `notte_screenshot` | Take a screenshot of the current page |
-| `notte_scrape` | Extract structured data from the current page |
-| `notte_step` | Execute an action on the current page |
-
-
-### Session Management
-
-| Tool | Description |
-|------|-------------|
-| `notte_start_session` | Start a new cloud browser session |
-| `notte_list_sessions` | List all active browser sessions |
-| `notte_stop_session` | Stop the current session |
+| Area | What your AI client can do |
+|------|----------------------------|
+| Sessions | Start, list, observe, and stop cloud browser sessions |
+| Page interaction | Observe pages, execute actions, and take screenshots |
+| Scraping | Extract structured data from any page |
+| Agents | Start, monitor, and stop web agents on any task |
+| Functions | Run reusable automations |
+| Vaults & profiles | Use stored credentials and persistent browser state |
 
 
 ## Further Reading
