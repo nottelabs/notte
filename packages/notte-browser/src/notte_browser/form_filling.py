@@ -3,6 +3,7 @@ import random
 
 from notte_core.common.logging import logger
 
+from notte_browser.playwright_async_api import Error as PlaywrightError
 from notte_browser.playwright_async_api import Locator, Page
 
 
@@ -565,7 +566,14 @@ class FormFiller:
             logger.debug(f"Successfully filled {field_type} field (exact match)")
             await asyncio.sleep(random.uniform(0.1, 0.5))
             return True
-        except Exception:
+        except PlaywrightError as e:
+            # An exact value miss is expected when the caller supplied visible
+            # option text, so log context without a noisy traceback.
+            logger.debug(
+                "Exact match failed for {} field; trying case-insensitive option matching: {}",
+                field_type,
+                e,
+            )
             try:
                 # If exact match fails, try case-insensitive match
                 options: list[dict[str, str]] = await field.evaluate("""select => {

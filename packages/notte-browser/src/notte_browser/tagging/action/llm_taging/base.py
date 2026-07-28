@@ -16,6 +16,23 @@ from typing_extensions import override
 
 from notte_browser.tagging.type import PossibleAction, PossibleActionSpace
 
+_CONTEXT_SIZE_ERROR_MESSAGE = "Please reduce the length of the messages or completions"
+_CONTEXT_SIZE_PATTERN = re.compile(r"Current length is (\d+) while limit is (\d+)")
+
+
+def _context_size_error(error: Exception) -> ContextSizeTooLargeError | None:
+    if isinstance(error, ContextSizeTooLargeError):
+        return error
+
+    message = str(error)
+    if _CONTEXT_SIZE_ERROR_MESSAGE not in message:
+        return None
+
+    match = _CONTEXT_SIZE_PATTERN.search(message)
+    size = int(match.group(1)) if match is not None else None
+    max_size = int(match.group(2)) if match is not None else None
+    return ContextSizeTooLargeError(size=size, max_size=max_size)
+
 
 class BaseActionListingPipe(ABC):
     def __init__(self, llmserve: LLMService) -> None:
@@ -74,24 +91,12 @@ class RetryPipeWrapper(BaseActionListingPipe):
                 return out
             except Exception as e:
                 last_error = e
-                if "Please reduce the length of the messages or completions" in str(e):
-                    # this is a known error that happens when the context is too long
-                    # we should not retry in this case (nothing is going to change)
-                    pattern = r"Current length is (\d+) while limit is (\d+)"
-                    size: int | None = None
-                    max_size: int | None = None
-                    match = re.search(pattern, str(e))
-                    if match:
-                        size = int(match.group(1))
-                        max_size = int(match.group(2))
-                    else:
-                        if self.verbose:
-                            logger.debug(
-                                f"Failed to parse context size from error message: {str(e)}. Please fix this ASAP."
-                            )
-                        raise ContextSizeTooLargeError(size=size, max_size=max_size) from e
+                context_size_error = _context_size_error(e)
+                if context_size_error is not None:
+                    # Retrying cannot reduce the prompt, so fail immediately.
+                    raise context_size_error from e
                 if self.verbose:
-                    logger.debug(f"failed to parse action list but retrying. Start of error msg: {str(e)[:200]}...")
+                    logger.opt(exception=True).debug("Failed to parse action list; retrying")
                 errors.append(str(e))
         self.tracer.trace(
             status="failure",
@@ -109,13 +114,44 @@ class RetryPipeWrapper(BaseActionListingPipe):
         snapshot: BrowserSnapshot,
         previous_action_list: list[InteractionAction],
     ) -> PossibleActionSpace:
-        for _ in range(self.max_tries):
+        errors: list[str] = []
+        for attempt in range(1, self.max_tries + 1):
             try:
-                return await self.pipe.forward_incremental(snapshot, previous_action_list)
-            except Exception:
-                pass
+                out = await self.pipe.forward_incremental(snapshot, previous_action_list)
+                self.tracer.trace(
+                    status="success",
+                    pipe_name=self.pipe.__class__.__name__,
+                    nb_retries=len(errors),
+                    error_msgs=errors,
+                )
+                return out
+            except Exception as e:
+                errors.append(str(e))
+                context_size_error = _context_size_error(e)
+                if self.verbose:
+                    next_step = "using the previous action list" if context_size_error is not None else "retrying"
+                    logger.opt(exception=True).debug(
+                        "Incremental action listing attempt {}/{} failed; {}",
+                        attempt,
+                        self.max_tries,
+                        next_step,
+                    )
+                if context_size_error is not None:
+                    # Incremental listing can safely use its previous result, but
+                    # retrying the same oversized prompt would be wasted work.
+                    break
+
+        self.tracer.trace(
+            status="failure",
+            pipe_name=self.pipe.__class__.__name__,
+            nb_retries=len(errors),
+            error_msgs=errors,
+        )
         if self.verbose:
-            logger.debug("Failed to get action list after max tries => returning previous action list")
+            logger.debug(
+                "Incremental action listing failed after {} attempt(s); returning the previous action list",
+                len(errors),
+            )
         return PossibleActionSpace(
             # TODO: get description from previous action list
             description="",
