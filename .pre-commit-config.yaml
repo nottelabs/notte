@@ -82,6 +82,12 @@ repos:
         language: system
         files: ^docs/src/(docs\.json|.*\.mdx|scripts/apply_agent_md_notice\.py|partials/agent-md-notice\.mdx)$
         pass_filenames: false
+      - id: docs-nav-conflicts
+        name: Check docs navigation for link/page conflicts
+        entry: bash -c "cd docs/src && uv run python scripts/check_docs_nav.py"
+        language: system
+        files: ^docs/src/(docs\.json|scripts/check_docs_nav\.py)$
+        pass_filenames: false
       - id: docs-quickstart-setup-prompt
         name: Inline Quickstart setup prompt
         entry: bash -c "cd docs/src && uv run python scripts/inline_quickstart_setup_prompt.py --check"
