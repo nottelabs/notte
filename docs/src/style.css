@@ -16,10 +16,10 @@
   z-index: 20 !important;
   min-height: 0 !important;
   padding: 0.625rem 1rem !important;
-  background: rgb(237, 252, 243) !important;
+  background: rgb(0, 112, 56) !important;
   border-top: 1px solid rgba(0, 184, 92, 0.18);
   border-bottom: 1px solid rgba(0, 184, 92, 0.2);
-  color: rgb(20, 83, 45) !important;
+  color: rgb(210, 246, 226) !important;
   box-shadow: none !important;
 }
 
@@ -38,23 +38,23 @@
 }
 
 #banner * {
-  color: rgb(20, 83, 45) !important;
+  color: rgb(210, 246, 226) !important;
 }
 
 #banner code {
   border: 1px solid rgba(0, 184, 92, 0.25);
-  background: rgb(220, 252, 231) !important;
-  color: rgb(20, 83, 45) !important;
+  background: rgba(0, 184, 92, 0.14) !important;
+  color: rgb(220, 255, 236) !important;
 }
 
 #banner a {
-  color: rgb(0, 112, 56) !important;
-  text-decoration-color: rgba(0, 112, 56, 0.45) !important;
+  color: rgb(152, 255, 197) !important;
+  text-decoration-color: rgba(152, 255, 197, 0.55) !important;
 }
 
 #banner a:hover {
-  color: rgb(20, 83, 45) !important;
-  text-decoration-color: rgb(20, 83, 45) !important;
+  color: rgb(220, 255, 236) !important;
+  text-decoration-color: rgb(220, 255, 236) !important;
 }
 
 :is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) #banner {
