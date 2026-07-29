@@ -19,14 +19,14 @@ https://api.notte.cc/mcp/
 The server uses Streamable HTTP and authenticates with `Authorization: Bearer <your-notte-api-key>`.
 
 <Tabs>
-  <Tab title="Claude Code">
+  <Tab title="Claude Code" icon="/images/anthropic-logo.svg">
     ```bash
     claude mcp add --transport http notte https://api.notte.cc/mcp/ --header "Authorization: Bearer $NOTTE_API_KEY"
     ```
 
     Verify the connection with `claude mcp list`.
   </Tab>
-  <Tab title="Codex">
+  <Tab title="Codex" icon="/images/openai-logo.svg">
     Add this to `~/.codex/config.toml` (or your project's `.codex/config.toml`):
 
     ```toml
@@ -35,7 +35,7 @@ The server uses Streamable HTTP and authenticates with `Authorization: Bearer <y
     bearer_token_env_var = "NOTTE_API_KEY"
     ```
   </Tab>
-  <Tab title="Cursor">
+  <Tab title="Cursor" icon="/images/cursor-logo.svg">
     Open your MCP settings and add:
 
     ```json
@@ -51,7 +51,7 @@ The server uses Streamable HTTP and authenticates with `Authorization: Bearer <y
     }
     ```
   </Tab>
-  <Tab title="Claude Desktop">
+  <Tab title="Claude Desktop" icon="/images/anthropic-logo.svg">
     Add this to your Claude Desktop configuration:
 
     ```json
@@ -74,7 +74,26 @@ The server uses Streamable HTTP and authenticates with `Authorization: Bearer <y
     ```
   </Tab>
   <Tab title="Others" icon="/images/mcp-logo.svg">
-    Add a Streamable HTTP server using the endpoint above and an `Authorization` header containing your Notte API key. This works with Windsurf, VS Code, and any other MCP-compatible client.
+    Add this to your MCP configuration:
+
+    ```json
+    {
+      "mcpServers": {
+        "notte": {
+          "url": "https://api.notte.cc/mcp/",
+          "headers": {
+            "Authorization": "Bearer <your-notte-api-key>"
+          }
+        }
+      }
+    }
+    ```
+
+    Or share this with your agent:
+
+    ```text
+    Set up the Notte MCP server for this project. Use https://api.notte.cc/mcp/ as a remote HTTP MCP server and authenticate with my NOTTE_API_KEY as a Bearer token. Confirm that the Notte tools are available.
+    ```
   </Tab>
 </Tabs>
 
@@ -89,12 +108,12 @@ https://docs.notte.cc/mcp
 ```
 
 <Tabs>
-  <Tab title="Claude Code">
+  <Tab title="Claude Code" icon="/images/anthropic-logo.svg">
     ```bash
     claude mcp add --transport http notte-docs https://docs.notte.cc/mcp
     ```
   </Tab>
-  <Tab title="Codex">
+  <Tab title="Codex" icon="/images/openai-logo.svg">
     Add this to `~/.codex/config.toml` (or your project's `.codex/config.toml`):
 
     ```toml
@@ -102,7 +121,7 @@ https://docs.notte.cc/mcp
     url = "https://docs.notte.cc/mcp"
     ```
   </Tab>
-  <Tab title="Cursor">
+  <Tab title="Cursor" icon="/images/cursor-logo.svg">
     ```json
     {
       "mcpServers": {
@@ -113,7 +132,7 @@ https://docs.notte.cc/mcp
     }
     ```
   </Tab>
-  <Tab title="Claude Desktop">
+  <Tab title="Claude Desktop" icon="/images/anthropic-logo.svg">
     Add this to your Claude Desktop configuration:
 
     ```json
@@ -131,6 +150,22 @@ https://docs.notte.cc/mcp
     ```
   </Tab>
   <Tab title="Others" icon="/images/mcp-logo.svg">
-    Add `https://docs.notte.cc/mcp` as a Streamable HTTP server. No authentication is required.
+    Add this to your MCP configuration:
+
+    ```json
+    {
+      "mcpServers": {
+        "notte-docs": {
+          "url": "https://docs.notte.cc/mcp"
+        }
+      }
+    }
+    ```
+
+    Or share this with your agent:
+
+    ```text
+    Add the Notte Docs MCP server to this project. Use https://docs.notte.cc/mcp as a remote HTTP MCP server with no authentication, then confirm it is available.
+    ```
   </Tab>
 </Tabs>
