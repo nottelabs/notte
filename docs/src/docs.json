@@ -17,6 +17,16 @@
     "dismissible": false
   },
   "seo.indexing": "all",
+  "redirects": [
+    {
+      "source": "/integrations/mcp",
+      "destination": "/mcp-server"
+    },
+    {
+      "source": "/guides/vibe-coding",
+      "destination": "/mcp-server"
+    }
+  ],
   "navigation": {
     "languages": [
       {
@@ -136,15 +146,8 @@
                 "group": "Integrations",
                 "icon": "plug",
                 "pages": [
+                  "mcp-server",
                   "integrations/claude-code-ai-agents",
-                  {
-                    "group": "MCP",
-                    "collapsed": true,
-                    "pages": [
-                      "integrations/mcp",
-                      "guides/vibe-coding"
-                    ]
-                  },
                   "integrations/kernel",
                   "integrations/steel",
                   "integrations/massive",
@@ -344,8 +347,7 @@
                 "pages": [
                   "resources",
                   "pricing",
-                  "rate-limits",
-                  "guides/vibe-coding"
+                  "rate-limits"
                 ]
               },
               {

@@ -156,10 +156,7 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 
 - [Claude Code & AI Agents](https://docs.notte.cc/integrations/claude-code-ai-agents.md): Use Notte with AI coding assistants like Claude Code, Cursor, and Windsurf
 
-### MCP
-
-- [MCP Server](https://docs.notte.cc/integrations/mcp.md): Extending AI Systems with Browser Control Capabilities
-- [Vibe Coding](https://docs.notte.cc/guides/vibe-coding.md): Connect documentation to your AI coding assistant with MCP
+- [MCP Server](https://docs.notte.cc/mcp-server.md): Give your AI assistant a hosted browser with Notte MCP
 - [Kernel.sh](https://docs.notte.cc/integrations/kernel.md): Integrate with Kernel browsers
 - [Steel](https://docs.notte.cc/integrations/steel.md): Run Notte with Steel cloud browsers (CDP)
 - [Massive](https://docs.notte.cc/integrations/massive.md): Use Massive residential proxies with Notte sessions
@@ -436,7 +433,7 @@ The SDK docs below are for generated-code editing and reference. They are not th
 ## Resources
 
 - [Resources](https://docs.notte.cc/resources.md): Quick links to pricing, rate limits, and AI coding setup
-- [Vibe Coding](https://docs.notte.cc/guides/vibe-coding.md): Connect documentation to your AI coding assistant with MCP
+- [MCP Server](https://docs.notte.cc/mcp-server.md): Give your AI assistant a hosted browser with Notte MCP
 
 ## Legal
 

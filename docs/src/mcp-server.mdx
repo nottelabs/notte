@@ -1,0 +1,202 @@
+---
+title: MCP Server
+description: Give your AI assistant a hosted browser with Notte MCP
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Give any MCP-compatible assistant a hosted browser. Notte MCP lets it start sessions, interact with pages, scrape data, run agents and Functions, and use vaults and browser profiles.
+
+## Connect the browser MCP
+
+Create a [Notte API key](https://console.notte.cc), then connect your client to the hosted endpoint:
+
+```text
+https://api.notte.cc/mcp/
+```
+
+The server uses Streamable HTTP and authenticates with `Authorization: Bearer <your-notte-api-key>`.
+
+<Tabs>
+  <Tab title="Cursor">
+    Open your MCP settings and add:
+
+    ```json
+    {
+      "mcpServers": {
+        "notte": {
+          "url": "https://api.notte.cc/mcp/",
+          "headers": {
+            "Authorization": "Bearer ${env:NOTTE_API_KEY}"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Windsurf">
+    Open your MCP configuration and add:
+
+    ```json
+    {
+      "mcpServers": {
+        "notte": {
+          "serverUrl": "https://api.notte.cc/mcp/",
+          "headers": {
+            "Authorization": "Bearer ${env:NOTTE_API_KEY}"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http notte https://api.notte.cc/mcp/ --header "Authorization: Bearer $NOTTE_API_KEY"
+    ```
+
+    Verify the connection with `claude mcp list`.
+  </Tab>
+  <Tab title="Claude Desktop">
+    Add this to your Claude Desktop configuration:
+
+    ```json
+    {
+      "mcpServers": {
+        "notte": {
+          "command": "npx",
+          "args": [
+            "mcp-remote",
+            "https://api.notte.cc/mcp/",
+            "--header",
+            "Authorization:${AUTH_HEADER}"
+          ],
+          "env": {
+            "AUTH_HEADER": "Bearer <your-notte-api-key>"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="VS Code">
+    Create `.vscode/mcp.json`:
+
+    ```json
+    {
+      "inputs": [
+        {
+          "type": "promptString",
+          "id": "notte-api-key",
+          "description": "Notte API key",
+          "password": true
+        }
+      ],
+      "servers": {
+        "notte": {
+          "type": "http",
+          "url": "https://api.notte.cc/mcp/",
+          "headers": {
+            "Authorization": "Bearer ${input:notte-api-key}"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Codex & ChatGPT desktop">
+    Add this to `~/.codex/config.toml` (or your project's `.codex/config.toml`):
+
+    ```toml
+    [mcp_servers.notte]
+    url = "https://api.notte.cc/mcp/"
+    bearer_token_env_var = "NOTTE_API_KEY"
+    ```
+  </Tab>
+  <Tab title="Other MCP clients">
+    Add a Streamable HTTP server using the endpoint above and an `Authorization` header containing your Notte API key. This works with any MCP client that supports remote HTTP servers.
+  </Tab>
+</Tabs>
+
+After connecting, ask your assistant to open a site, extract data, or complete a browser task. You can watch live sessions in the [Notte Console](https://console.notte.cc).
+
+## Give your coding agent the Notte docs
+
+The Notte Docs MCP gives your coding agent current documentation while it helps you build. It needs no API key:
+
+```text
+https://docs.notte.cc/mcp
+```
+
+<Tabs>
+  <Tab title="Cursor">
+    ```json
+    {
+      "mcpServers": {
+        "notte-docs": {
+          "url": "https://docs.notte.cc/mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Windsurf">
+    ```json
+    {
+      "mcpServers": {
+        "notte-docs": {
+          "serverUrl": "https://docs.notte.cc/mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http notte-docs https://docs.notte.cc/mcp
+    ```
+  </Tab>
+  <Tab title="Claude Desktop">
+    Add this to your Claude Desktop configuration:
+
+    ```json
+    {
+      "mcpServers": {
+        "notte-docs": {
+          "command": "npx",
+          "args": [
+            "mcp-remote",
+            "https://docs.notte.cc/mcp"
+          ]
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="VS Code">
+    Create `.vscode/mcp.json`:
+
+    ```json
+    {
+      "servers": {
+        "notte-docs": {
+          "type": "http",
+          "url": "https://docs.notte.cc/mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Codex & ChatGPT desktop">
+    Add this to `~/.codex/config.toml` (or your project's `.codex/config.toml`):
+
+    ```toml
+    [mcp_servers.notte_docs]
+    url = "https://docs.notte.cc/mcp"
+    ```
+  </Tab>
+  <Tab title="Other MCP clients">
+    Add `https://docs.notte.cc/mcp` as a Streamable HTTP server. No authentication is required.
+  </Tab>
+</Tabs>
