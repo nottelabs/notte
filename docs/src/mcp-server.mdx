@@ -19,6 +19,22 @@ https://api.notte.cc/mcp/
 The server uses Streamable HTTP and authenticates with `Authorization: Bearer <your-notte-api-key>`.
 
 <Tabs>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http notte https://api.notte.cc/mcp/ --header "Authorization: Bearer $NOTTE_API_KEY"
+    ```
+
+    Verify the connection with `claude mcp list`.
+  </Tab>
+  <Tab title="Codex">
+    Add this to `~/.codex/config.toml` (or your project's `.codex/config.toml`):
+
+    ```toml
+    [mcp_servers.notte]
+    url = "https://api.notte.cc/mcp/"
+    bearer_token_env_var = "NOTTE_API_KEY"
+    ```
+  </Tab>
   <Tab title="Cursor">
     Open your MCP settings and add:
 
@@ -34,29 +50,6 @@ The server uses Streamable HTTP and authenticates with `Authorization: Bearer <y
       }
     }
     ```
-  </Tab>
-  <Tab title="Windsurf">
-    Open your MCP configuration and add:
-
-    ```json
-    {
-      "mcpServers": {
-        "notte": {
-          "serverUrl": "https://api.notte.cc/mcp/",
-          "headers": {
-            "Authorization": "Bearer ${env:NOTTE_API_KEY}"
-          }
-        }
-      }
-    }
-    ```
-  </Tab>
-  <Tab title="Claude Code">
-    ```bash
-    claude mcp add --transport http notte https://api.notte.cc/mcp/ --header "Authorization: Bearer $NOTTE_API_KEY"
-    ```
-
-    Verify the connection with `claude mcp list`.
   </Tab>
   <Tab title="Claude Desktop">
     Add this to your Claude Desktop configuration:
@@ -80,42 +73,8 @@ The server uses Streamable HTTP and authenticates with `Authorization: Bearer <y
     }
     ```
   </Tab>
-  <Tab title="VS Code">
-    Create `.vscode/mcp.json`:
-
-    ```json
-    {
-      "inputs": [
-        {
-          "type": "promptString",
-          "id": "notte-api-key",
-          "description": "Notte API key",
-          "password": true
-        }
-      ],
-      "servers": {
-        "notte": {
-          "type": "http",
-          "url": "https://api.notte.cc/mcp/",
-          "headers": {
-            "Authorization": "Bearer ${input:notte-api-key}"
-          }
-        }
-      }
-    }
-    ```
-  </Tab>
-  <Tab title="Codex & ChatGPT desktop">
-    Add this to `~/.codex/config.toml` (or your project's `.codex/config.toml`):
-
-    ```toml
-    [mcp_servers.notte]
-    url = "https://api.notte.cc/mcp/"
-    bearer_token_env_var = "NOTTE_API_KEY"
-    ```
-  </Tab>
-  <Tab title="Other MCP clients">
-    Add a Streamable HTTP server using the endpoint above and an `Authorization` header containing your Notte API key. This works with any MCP client that supports remote HTTP servers.
+  <Tab title="Others" icon="/images/mcp-logo.svg">
+    Add a Streamable HTTP server using the endpoint above and an `Authorization` header containing your Notte API key. This works with Windsurf, VS Code, and any other MCP-compatible client.
   </Tab>
 </Tabs>
 
@@ -130,6 +89,19 @@ https://docs.notte.cc/mcp
 ```
 
 <Tabs>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http notte-docs https://docs.notte.cc/mcp
+    ```
+  </Tab>
+  <Tab title="Codex">
+    Add this to `~/.codex/config.toml` (or your project's `.codex/config.toml`):
+
+    ```toml
+    [mcp_servers.notte_docs]
+    url = "https://docs.notte.cc/mcp"
+    ```
+  </Tab>
   <Tab title="Cursor">
     ```json
     {
@@ -139,22 +111,6 @@ https://docs.notte.cc/mcp
         }
       }
     }
-    ```
-  </Tab>
-  <Tab title="Windsurf">
-    ```json
-    {
-      "mcpServers": {
-        "notte-docs": {
-          "serverUrl": "https://docs.notte.cc/mcp"
-        }
-      }
-    }
-    ```
-  </Tab>
-  <Tab title="Claude Code">
-    ```bash
-    claude mcp add --transport http notte-docs https://docs.notte.cc/mcp
     ```
   </Tab>
   <Tab title="Claude Desktop">
@@ -174,29 +130,7 @@ https://docs.notte.cc/mcp
     }
     ```
   </Tab>
-  <Tab title="VS Code">
-    Create `.vscode/mcp.json`:
-
-    ```json
-    {
-      "servers": {
-        "notte-docs": {
-          "type": "http",
-          "url": "https://docs.notte.cc/mcp"
-        }
-      }
-    }
-    ```
-  </Tab>
-  <Tab title="Codex & ChatGPT desktop">
-    Add this to `~/.codex/config.toml` (or your project's `.codex/config.toml`):
-
-    ```toml
-    [mcp_servers.notte_docs]
-    url = "https://docs.notte.cc/mcp"
-    ```
-  </Tab>
-  <Tab title="Other MCP clients">
+  <Tab title="Others" icon="/images/mcp-logo.svg">
     Add `https://docs.notte.cc/mcp` as a Streamable HTTP server. No authentication is required.
   </Tab>
 </Tabs>

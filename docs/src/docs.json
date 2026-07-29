@@ -1,6 +1,10 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "palm",
+  "appearance": {
+    "default": "light",
+    "strict": false
+  },
   "name": "Notte",
   "colors": {
     "primary": "#00b85c",
