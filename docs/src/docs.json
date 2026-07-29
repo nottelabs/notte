@@ -367,7 +367,6 @@
                   "community/x",
                   "community/linkedin",
                   "community/yc",
-                  "community/featurebase",
                   "community/trustpilot",
                   "community/producthunt",
                   "community/youtube"
@@ -382,11 +381,6 @@
               "anchor": "Slack Support",
               "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA",
               "icon": "heart"
-            },
-            {
-              "anchor": "Submit Feedback",
-              "href": "https://notte.featurebase.app/",
-              "icon": "message"
             }
           ]
         }
