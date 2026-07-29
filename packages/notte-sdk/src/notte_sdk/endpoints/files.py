@@ -273,9 +273,7 @@ class RemoteFileStorage(BaseStorage):
 
     def download_uploaded_file(self, file_name: str, local_dir: str, force: bool = False) -> bool:
         """
-        Downloads a user-uploaded file to the local filesystem.
-
-        This does not require the storage object to be attached to a session.
+        Downloads a user-uploaded file to the local filesystem without requiring a session attachment.
 
         ```python
         storage = notte.FileStorage()
