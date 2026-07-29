@@ -190,7 +190,8 @@ with client.Session(proxies=[proxy_settings]) as session:
 
 ## File download / upload
 
-File Storage allows you to upload files to a session and download files that agents retrieve during their work. Files are session-scoped and persist beyond the session lifecycle.
+File Storage allows you to upload files for your agents and download files that agents retrieve during their work.
+Uploaded files are user-scoped, while files downloaded by an agent are session-scoped.
 
 ```python
 from notte_sdk import NotteClient
@@ -200,6 +201,12 @@ storage = client.FileStorage()
 
 # Upload files before agent execution
 storage.upload("/path/to/document.pdf")
+
+# Download a user-uploaded file without starting a session
+storage.download_uploaded_file(
+    file_name="document.pdf",
+    local_dir="./inputs",
+)
 
 # Create session with storage attached
 with client.Session(storage=storage) as session:

@@ -1,0 +1,30 @@
+---
+title: "download_uploaded_file"
+description: "Downloads a user-uploaded file to the local filesystem"
+---
+
+
+
+This does not require the storage object to be attached to a session.
+
+```python
+storage = notte.FileStorage()
+storage.upload(file_path="<local_file_path>")
+storage.download_uploaded_file(file_name="<uploaded_file_name>", local_dir="<local_download_dir>")
+```
+
+
+## Parameters
+
+<ParamField path="file_name" type="str" required>
+</ParamField>
+
+<ParamField path="local_dir" type="str" required>
+</ParamField>
+
+<ParamField path="force" type="bool" default="False">
+</ParamField>
+
+## Returns
+
+`bool`
