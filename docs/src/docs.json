@@ -1,6 +1,10 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "palm",
+  "appearance": {
+    "default": "light",
+    "strict": false
+  },
   "name": "Notte",
   "colors": {
     "primary": "#00b85c",
@@ -13,10 +17,20 @@
   },
   "favicon": "/favicon.ico",
   "banner": {
-    "content": "Get started: use the [Notte CLI skill](https://github.com/nottelabs/notte-skills/) to generate your first SDK script | [Setup guide](/quickstart)",
+    "content": "Supercharge your AI agents with the Notte CLI and MCP. [Use this quickstart prompt for AI.](/quickstart)",
     "dismissible": false
   },
   "seo.indexing": "all",
+  "redirects": [
+    {
+      "source": "/integrations/mcp",
+      "destination": "/mcp-server"
+    },
+    {
+      "source": "/guides/vibe-coding",
+      "destination": "/mcp-server"
+    }
+  ],
   "navigation": {
     "languages": [
       {
@@ -31,7 +45,7 @@
                   "index",
                   "quickstart",
                   "templates",
-                  "concepts"
+                  "mcp-server"
                 ]
               },
               {
@@ -131,20 +145,20 @@
                   "guides/stealth",
                   "guides/account_creation"
                 ]
-              },
+              }
+            ]
+          },
+          {
+            "tab": "Integrations",
+            "href": "/integrations",
+            "groups": [
               {
                 "group": "Integrations",
                 "icon": "plug",
                 "pages": [
+                  "integrations/index",
+                  "mcp-server",
                   "integrations/claude-code-ai-agents",
-                  {
-                    "group": "MCP",
-                    "collapsed": true,
-                    "pages": [
-                      "integrations/mcp",
-                      "guides/vibe-coding"
-                    ]
-                  },
                   "integrations/kernel",
                   "integrations/steel",
                   "integrations/massive",
@@ -344,8 +358,7 @@
                 "pages": [
                   "resources",
                   "pricing",
-                  "rate-limits",
-                  "guides/vibe-coding"
+                  "rate-limits"
                 ]
               },
               {
@@ -365,7 +378,6 @@
                   "community/x",
                   "community/linkedin",
                   "community/yc",
-                  "community/featurebase",
                   "community/trustpilot",
                   "community/producthunt",
                   "community/youtube"
@@ -380,11 +392,6 @@
               "anchor": "Slack Support",
               "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA",
               "icon": "heart"
-            },
-            {
-              "anchor": "Submit Feedback",
-              "href": "https://notte.featurebase.app/",
-              "icon": "message"
             }
           ]
         }

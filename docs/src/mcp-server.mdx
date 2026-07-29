@@ -1,0 +1,163 @@
+---
+title: MCP Server
+description: Give your AI agents access to the Notte MCP server
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Give your AI agents access to the entire Notte ecosystem. Notte MCP lets it start cloud browser sessions, interact with the pages, fetch data, build scripts, and more.
+
+## Add the Notte MCP
+
+Create a [Notte API key](https://console.notte.cc/apikeys) and connect your client to the hosted MCP endpoint:
+
+```text
+https://api.notte.cc/mcp/
+```
+
+<Tabs>
+  <Tab title="Claude Code" icon="/images/claude-logo.svg">
+    Run this command and verify the connection with `claude mcp list`
+    ```bash
+    claude mcp add --transport http notte https://api.notte.cc/mcp/ --header "Authorization: Bearer $NOTTE_API_KEY"
+    ```
+  </Tab>
+  <Tab title="Codex" icon="/images/openai-logo.svg">
+    Add this to `~/.codex/config.toml` or your project's `.codex/config.toml`
+
+    ```toml
+    [mcp_servers.notte]
+    url = "https://api.notte.cc/mcp/"
+    bearer_token_env_var = "NOTTE_API_KEY"
+    ```
+  </Tab>
+  <Tab title="Cursor" icon="/images/cursor-logo.svg">
+    Open your MCP settings and add:
+
+    ```json
+    {
+      "mcpServers": {
+        "notte": {
+          "url": "https://api.notte.cc/mcp/",
+          "headers": {
+            "Authorization": "Bearer ${env:NOTTE_API_KEY}"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Claude Desktop" icon="/images/claude-logo.svg">
+    Add this to your Claude Desktop configuration:
+
+    ```json
+    {
+      "mcpServers": {
+        "notte": {
+          "command": "npx",
+          "args": [
+            "mcp-remote",
+            "https://api.notte.cc/mcp/",
+            "--header",
+            "Authorization:${AUTH_HEADER}"
+          ],
+          "env": {
+            "AUTH_HEADER": "Bearer <your-notte-api-key>"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Others" icon="/images/mcp-logo.svg">
+    Add this to your MCP configuration:
+
+    ```json
+    {
+      "mcpServers": {
+        "notte": {
+          "url": "https://api.notte.cc/mcp/",
+          "headers": {
+            "Authorization": "Bearer <your-notte-api-key>"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Post setup verify
+Run this prompt in your assistant to check that setup is all good:
+
+```text
+Use the Notte MCP server to verify that it is correctly configured. Start a new browser session, goto apple.com, open the live viewer, extract the navbar into structured JSON. Report to user and close all resources. Also report a concise table breakdown of main MCP endpoints with highlevel description to educate user/agent.
+```
+
+## Notte Documentation MCP
+
+You can also configure the Notte Docs MCP to give your coding agent current documentation while it helps you build. It needs no API key.
+
+```text
+https://docs.notte.cc/mcp
+```
+
+<Tabs>
+  <Tab title="Claude Code" icon="/images/claude-logo.svg">
+    Run this command and verify the connection with `claude mcp list`
+    ```bash
+    claude mcp add --transport http notte-docs https://docs.notte.cc/mcp
+    ```
+  </Tab>
+  <Tab title="Codex" icon="/images/openai-logo.svg">
+    Add this to `~/.codex/config.toml` or your project's `.codex/config.toml`
+
+    ```toml
+    [mcp_servers.notte_docs]
+    url = "https://docs.notte.cc/mcp"
+    ```
+  </Tab>
+  <Tab title="Cursor" icon="/images/cursor-logo.svg">
+    Open your MCP settings and add:
+    ```json
+    {
+      "mcpServers": {
+        "notte-docs": {
+          "url": "https://docs.notte.cc/mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Claude Desktop" icon="/images/claude-logo.svg">
+    Add this to your Claude Desktop configuration:
+
+    ```json
+    {
+      "mcpServers": {
+        "notte-docs": {
+          "command": "npx",
+          "args": [
+            "mcp-remote",
+            "https://docs.notte.cc/mcp"
+          ]
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Others" icon="/images/mcp-logo.svg">
+    Add this to your MCP configuration:
+
+    ```json
+    {
+      "mcpServers": {
+        "notte-docs": {
+          "url": "https://docs.notte.cc/mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>

@@ -37,6 +37,10 @@
   line-height: 1.45;
 }
 
+#banner * {
+  color: rgb(210, 246, 226) !important;
+}
+
 #banner code {
   border: 1px solid rgba(0, 184, 92, 0.25);
   background: rgba(0, 184, 92, 0.14) !important;
@@ -53,24 +57,45 @@
   text-decoration-color: rgb(220, 255, 236) !important;
 }
 
-html:not(.dark) #banner {
-  background: rgb(237, 252, 243) !important;
-  color: rgb(20, 83, 45) !important;
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) #banner {
+  background: rgba(0, 184, 92, 0.08) !important;
+  color: rgb(210, 246, 226) !important;
 }
 
-html:not(.dark) #banner p,
-html:not(.dark) #banner span {
-  color: rgb(20, 83, 45) !important;
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) #banner * {
+  color: rgb(210, 246, 226) !important;
 }
 
-html:not(.dark) #banner code {
-  background: rgb(220, 252, 231) !important;
-  color: rgb(20, 83, 45) !important;
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) #banner code {
+  background: rgba(0, 184, 92, 0.14) !important;
+  color: rgb(220, 255, 236) !important;
 }
 
-html:not(.dark) #banner a {
-  color: rgb(0, 112, 56) !important;
-  text-decoration-color: rgba(0, 112, 56, 0.45) !important;
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) #banner a {
+  color: rgb(152, 255, 197) !important;
+  text-decoration-color: rgba(152, 255, 197, 0.55) !important;
+}
+
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) #banner a:hover {
+  color: rgb(220, 255, 236) !important;
+  text-decoration-color: rgb(220, 255, 236) !important;
+}
+
+@layer theme {
+  html.light #banner,
+  html.light #banner * {
+    color: rgb(20, 83, 45) !important;
+  }
+
+  html.light #banner a {
+    color: rgb(0, 112, 56) !important;
+    text-decoration-color: rgba(0, 112, 56, 0.45) !important;
+  }
+
+  html.light #banner a:hover {
+    color: rgb(20, 83, 45) !important;
+    text-decoration-color: rgb(20, 83, 45) !important;
+  }
 }
 
 .notte-fast-setup {
