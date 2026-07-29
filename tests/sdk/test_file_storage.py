@@ -57,7 +57,7 @@ def test_download_uploaded_file_refuses_to_overwrite(files_client: FileStorageCl
     "file_name",
     [
         "../outside.txt",
-        "/tmp/outside.txt",
+        "/absolute/outside.txt",
         r"..\outside.txt",
         r"C:\tmp\outside.txt",
     ],
