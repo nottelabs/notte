@@ -53,6 +53,35 @@ def test_download_uploaded_file_refuses_to_overwrite(files_client: FileStorageCl
     request.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "../outside.txt",
+        "/tmp/outside.txt",
+        r"..\outside.txt",
+        r"C:\tmp\outside.txt",
+    ],
+)
+def test_download_uploaded_file_rejects_paths(
+    files_client: FileStorageClient,
+    tmp_path: Path,
+    file_name: str,
+) -> None:
+    with (
+        patch.object(files_client, "request") as request,
+        patch.object(files_client, "request_download") as request_download,
+        pytest.raises(ValueError, match="filename, not a path"),
+    ):
+        files_client.download_uploaded_file(
+            file_name=file_name,
+            local_dir=str(tmp_path),
+            force=True,
+        )
+
+    request.assert_not_called()
+    request_download.assert_not_called()
+
+
 def test_remote_storage_downloads_uploaded_file_without_session(tmp_path: Path) -> None:
     client = Mock(spec=FileStorageClient)
     client.download_uploaded_file.return_value = True

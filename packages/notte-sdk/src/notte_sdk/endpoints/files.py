@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import TYPE_CHECKING
 
 from notte_core.common.cache import CacheDirectory, ensure_cache_directory
@@ -139,6 +139,9 @@ class FileStorageClient(BaseClient):
         endpoint: NotteEndpoint[FileLinkResponse],
         force: bool = False,
     ) -> bool:
+        if Path(file_name).name != file_name or PureWindowsPath(file_name).name != file_name:
+            raise ValueError("file_name must be a filename, not a path")
+
         local_dir_path = Path(local_dir)
         if not local_dir_path.exists():
             local_dir_path.mkdir(parents=True, exist_ok=True)
@@ -279,6 +282,11 @@ class RemoteFileStorage(BaseStorage):
         storage.upload(file_path="<local_file_path>")
         storage.download_uploaded_file(file_name="<uploaded_file_name>", local_dir="<local_download_dir>")
         ```
+
+        Args:
+            file_name: The name of the uploaded file to download.
+            local_dir: The directory to download the file to.
+            force: Overwrite an existing destination file. Defaults to ``False``; set ``True`` to replace it.
         """
         return self.client.download_uploaded_file(file_name=file_name, local_dir=local_dir, force=force)
 

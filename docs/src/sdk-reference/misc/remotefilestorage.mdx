@@ -57,6 +57,12 @@ download_uploaded_file(file_name: str, local_dir: str, force: bool = False) -> b
 
 Downloads a user-uploaded file to the local filesystem
 
+**Parameters:**
+
+- `file_name`: The name of the uploaded file to download.
+- `local_dir`: The directory to download the file to.
+- `force`: Overwrite an existing destination file. Defaults to ``False``; set ``True`` to replace it.
+
 **Returns:**
 
 `bool`
