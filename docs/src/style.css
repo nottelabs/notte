@@ -58,8 +58,8 @@ html:not(.dark) #banner {
   color: rgb(20, 83, 45) !important;
 }
 
-html:not(.dark) #banner p,
-html:not(.dark) #banner span {
+html:not(.dark) #banner,
+html:not(.dark) #banner * {
   color: rgb(20, 83, 45) !important;
 }
 
