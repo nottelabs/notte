@@ -17,7 +17,7 @@
   },
   "favicon": "/favicon.ico",
   "banner": {
-    "content": "Get started: use the [Notte CLI skill](https://github.com/nottelabs/notte-skills/) to generate your first SDK script | [Setup guide](/quickstart)",
+    "content": "Supercharge your AI agents with the Notte CLI and MCP. [Use this quickstart prompt for AI.](/quickstart)",
     "dismissible": false
   },
   "seo.indexing": "all",
@@ -45,7 +45,7 @@
                   "index",
                   "quickstart",
                   "templates",
-                  "concepts"
+                  "mcp-server"
                 ]
               },
               {
