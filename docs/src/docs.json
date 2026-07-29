@@ -145,21 +145,6 @@
                   "guides/stealth",
                   "guides/account_creation"
                 ]
-              },
-              {
-                "group": "Integrations",
-                "icon": "plug",
-                "pages": [
-                  "mcp-server",
-                  "integrations/claude-code-ai-agents",
-                  "integrations/kernel",
-                  "integrations/steel",
-                  "integrations/massive",
-                  "integrations/openai-cua",
-                  "integrations/stagehand",
-                  "integrations/openclaw",
-                  "features/sessions/cloudflare-web-bot-auth"
-                ]
               }
             ]
           },
@@ -325,6 +310,26 @@
                       "sdk-reference/remotesession/offset"
                     ]
                   }
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Integrations",
+            "groups": [
+              {
+                "group": "Integrations",
+                "icon": "plug",
+                "pages": [
+                  "mcp-server",
+                  "integrations/claude-code-ai-agents",
+                  "integrations/kernel",
+                  "integrations/steel",
+                  "integrations/massive",
+                  "integrations/openai-cua",
+                  "integrations/stagehand",
+                  "integrations/openclaw",
+                  "features/sessions/cloudflare-web-bot-auth"
                 ]
               }
             ]
