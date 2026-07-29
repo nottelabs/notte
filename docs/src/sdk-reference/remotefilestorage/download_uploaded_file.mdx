@@ -1,0 +1,32 @@
+---
+title: "download_uploaded_file"
+description: "Downloads a user-uploaded file to the local filesystem without requiring a session attachment"
+---
+
+
+
+```python
+storage = notte.FileStorage()
+storage.upload(file_path="<local_file_path>")
+storage.download_uploaded_file(file_name="<uploaded_file_name>", local_dir="<local_download_dir>")
+```
+
+
+
+## Parameters
+
+<ParamField path="file_name" type="str" required>
+  The name of the uploaded file to download.
+</ParamField>
+
+<ParamField path="local_dir" type="str" required>
+  The directory to download the file to.
+</ParamField>
+
+<ParamField path="force" type="bool" default="False">
+  Overwrite an existing destination file. Defaults to ``False``; set ``True`` to replace it.
+</ParamField>
+
+## Returns
+
+`bool`

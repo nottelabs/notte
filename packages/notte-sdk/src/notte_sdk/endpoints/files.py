@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import TYPE_CHECKING
 
 from notte_core.common.cache import CacheDirectory, ensure_cache_directory
@@ -43,6 +43,7 @@ class FileStorageClient(BaseClient):
 
     STORAGE_UPLOAD = "uploads/{file_name}"
     STORAGE_UPLOAD_LIST = "uploads"
+    STORAGE_UPLOADED_FILE_DOWNLOAD = "uploads/{file_name}"
     STORAGE_DOWNLOAD = "{session_id}/downloads/{file_name}"
     STORAGE_UPLOAD_DOWNLOADED_FILE = "{session_id}/downloads/{file_name}"
     STORAGE_DOWNLOAD_LIST = "{session_id}/downloads"
@@ -81,6 +82,14 @@ class FileStorageClient(BaseClient):
         """
         path = FileStorageClient.STORAGE_UPLOAD_LIST
         return NotteEndpoint(path=path, response=ListFilesResponse, method="GET")
+
+    @staticmethod
+    def _storage_uploaded_file_download_endpoint(file_name: str) -> NotteEndpoint[FileLinkResponse]:
+        """
+        Returns a NotteEndpoint for getting a user-uploaded file link.
+        """
+        path = FileStorageClient.STORAGE_UPLOADED_FILE_DOWNLOAD.format(file_name=file_name)
+        return NotteEndpoint(path=path, response=FileLinkResponse, method="GET")
 
     @staticmethod
     def _storage_download_endpoint(
@@ -122,6 +131,29 @@ class FileStorageClient(BaseClient):
                 f"Cannot upload file {file_path} because it does not exist in the local file system."
             )
         return self.request(endpoint.with_file(file_path))
+
+    def _download_file(
+        self,
+        file_name: str,
+        local_dir: str,
+        endpoint: NotteEndpoint[FileLinkResponse],
+        force: bool = False,
+    ) -> bool:
+        if Path(file_name).name != file_name or PureWindowsPath(file_name).name != file_name:
+            raise ValueError("file_name must be a filename, not a path")
+
+        local_dir_path = Path(local_dir)
+        if not local_dir_path.exists():
+            local_dir_path.mkdir(parents=True, exist_ok=True)
+
+        file_path = local_dir_path / file_name
+
+        if file_path.exists() and not force:
+            raise ValueError(f"A file with name '{file_name}' is already at the path! Use force=True to overwrite.")
+
+        _ = DownloadFileRequest.model_validate({"filename": file_name})
+        resp: FileLinkResponse = self.request(endpoint)
+        return self.request_download(resp.url, str(file_path))
 
     @track_usage("cloud.files.upload")
     def upload(self, file_path: str, upload_file_name: str | None = None) -> FileUploadResponse:
@@ -166,19 +198,24 @@ class FileStorageClient(BaseClient):
             True if the file was downloaded successfully, False otherwise.
         """
 
-        local_dir_path = Path(local_dir)
-        if not local_dir_path.exists():
-            local_dir_path.mkdir(parents=True, exist_ok=True)
-
-        file_path = local_dir_path / file_name
-
-        if file_path.exists() and not force:
-            raise ValueError(f"A file with name '{file_name}' is already at the path! Use force=True to overwrite.")
-
         endpoint = self._storage_download_endpoint(session_id=session_id, file_name=file_name)
-        _ = DownloadFileRequest.model_validate({"filename": file_name})
-        resp: FileLinkResponse = self.request(endpoint)
-        return self.request_download(resp.url, str(file_path))
+        return self._download_file(file_name=file_name, local_dir=local_dir, endpoint=endpoint, force=force)
+
+    @track_usage("cloud.files.download_uploaded_file")
+    def download_uploaded_file(self, file_name: str, local_dir: str, force: bool = False) -> bool:
+        """
+        Downloads a user-uploaded file from storage.
+
+        Args:
+            file_name: The name of the uploaded file to download.
+            local_dir: The directory to download the file to.
+            force: Whether to overwrite the file if it already exists.
+
+        Returns:
+            True if the file was downloaded successfully, False otherwise.
+        """
+        endpoint = self._storage_uploaded_file_download_endpoint(file_name=file_name)
+        return self._download_file(file_name=file_name, local_dir=local_dir, endpoint=endpoint, force=force)
 
     def list_uploaded_files(self) -> list[FileInfo]:
         """
@@ -233,6 +270,23 @@ class RemoteFileStorage(BaseStorage):
 
         """
         return self.client.download(session_id=self.session_id, file_name=file_name, local_dir=local_dir, force=force)
+
+    def download_uploaded_file(self, file_name: str, local_dir: str, force: bool = False) -> bool:
+        """
+        Downloads a user-uploaded file to the local filesystem without requiring a session attachment.
+
+        ```python
+        storage = notte.FileStorage()
+        storage.upload(file_path="<local_file_path>")
+        storage.download_uploaded_file(file_name="<uploaded_file_name>", local_dir="<local_download_dir>")
+        ```
+
+        Args:
+            file_name: The name of the uploaded file to download.
+            local_dir: The directory to download the file to.
+            force: Overwrite an existing destination file. Defaults to ``False``; set ``True`` to replace it.
+        """
+        return self.client.download_uploaded_file(file_name=file_name, local_dir=local_dir, force=force)
 
     def upload(self, file_path: str, upload_file_name: str | None = None) -> bool:
         """
