@@ -79,7 +79,7 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 
 - [Introduction](https://docs.notte.cc/index.md)
 - [Quickstart](https://docs.notte.cc/quickstart.md): Get started in a few seconds
-- [Concepts](https://docs.notte.cc/concepts.md): Core concepts in the Notte platform
+- [MCP Server](https://docs.notte.cc/mcp-server.md): Give your AI agents access to the Notte MCP server
 
 ## Sessions
 
@@ -152,11 +152,14 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [Anti-Detection Playbook](https://docs.notte.cc/guides/stealth.md): How to avoid CAPTCHAs and bot detection in Notte Sessions
 - [Create accounts with Personas](https://docs.notte.cc/guides/account_creation.md): How to use notte personas for account creation
 
+
+# Integrations
+
 ## Integrations
 
+- [Integrations](https://docs.notte.cc/integrations/index.md): Connect Notte to the tools your team already uses.
+- [MCP Server](https://docs.notte.cc/mcp-server.md): Give your AI agents access to the Notte MCP server
 - [Claude Code & AI Agents](https://docs.notte.cc/integrations/claude-code-ai-agents.md): Use Notte with AI coding assistants like Claude Code, Cursor, and Windsurf
-
-- [MCP Server](https://docs.notte.cc/mcp-server.md): Give your AI assistant a hosted browser with Notte MCP
 - [Kernel.sh](https://docs.notte.cc/integrations/kernel.md): Integrate with Kernel browsers
 - [Steel](https://docs.notte.cc/integrations/steel.md): Run Notte with Steel cloud browsers (CDP)
 - [Massive](https://docs.notte.cc/integrations/massive.md): Use Massive residential proxies with Notte sessions
@@ -433,7 +436,6 @@ The SDK docs below are for generated-code editing and reference. They are not th
 ## Resources
 
 - [Resources](https://docs.notte.cc/resources.md): Quick links to pricing, rate limits, and AI coding setup
-- [MCP Server](https://docs.notte.cc/mcp-server.md): Give your AI assistant a hosted browser with Notte MCP
 
 ## Legal
 
