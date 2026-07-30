@@ -45,7 +45,8 @@
                   "index",
                   "quickstart",
                   "templates",
-                  "mcp-server"
+                  "mcp-server",
+                  "migrate-to-notte"
                 ]
               },
               {

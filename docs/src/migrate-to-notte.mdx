@@ -1,0 +1,61 @@
+---
+title: Migrate to Notte
+description: Safely migrate browser automation from another provider to Notte with an AI coding agent.
+---
+
+Use the Notte migration skills to move an existing browser-automation codebase
+to Notte with a visible plan, measured baseline, safe proof, tests, and a
+reversible rollout.
+
+## Install the skills
+
+```bash
+npx skills add nottelabs/notte-skills -y -g
+```
+
+The skills support migrations from Browserbase + Stagehand, Kernel, Anchor
+Browser, Browser Use Cloud, Steel, Hyperbrowser, and Skyvern.
+
+## Give this prompt to your AI coding agent
+
+Copy the prompt below into Codex, Claude Code, Cursor, or another supported
+coding agent from the root of the repository you want to migrate.
+
+```text
+Use $migrate-to-notte to assess and migrate this codebase to Notte.
+
+Start by publishing a clear, user-visible phase plan. Complete the Notte
+Quickstart before inspecting the repository. Detect the current browser
+provider, inventory every workflow and dependency, measure the current cost and
+latency where data is available, and run a safe read-only Notte proof.
+
+Build the replacement progressively in an isolated area, add tests, run static
+analysis and the full relevant test suite, and preserve public contracts. Keep
+every change reversible. Do not touch production resources, credentials,
+billing, or deploy to production without my explicit approval.
+```
+
+The skill routes the agent to the right provider-specific migration reference
+and keeps progress visible throughout the work.
+
+## Build a cost case first
+
+Use the read-only cost-comparison companion when you want a migration business
+case before implementation:
+
+```text
+Use $compare-to-notte-costs to scan this codebase and estimate the current
+browser-automation provider's cost against an equivalent Notte workload.
+
+Use current official pricing and my invoice or telemetry when available. Show
+monthly and annual low/base/high scenarios, required concurrency, assumptions,
+and excluded costs. Keep Browser Arena results separate as external benchmark
+context; do not treat them as a forecast of this application's performance.
+```
+
+## Skill source
+
+- [Migration skill](https://github.com/nottelabs/notte-skills/tree/main/plugins/notte-cli/skills/migrate-to-notte)
+- [Cost-comparison skill](https://github.com/nottelabs/notte-skills/tree/main/plugins/notte-cli/skills/compare-to-notte-costs)
+
+Need help with a migration? Join the [Notte community Slack](https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA).
