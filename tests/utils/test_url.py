@@ -1,4 +1,4 @@
-from notte_core.utils.url import get_root_domain
+from notte_core.utils.url import clean_url, get_root_domain
 
 
 def test_get_root_domain_with_https():
@@ -51,3 +51,20 @@ def test_wrong_urls():
 def test_get_root_domain_with_subdirectory():
     """Test get_root_domain with URL that includes subdirectories."""
     assert get_root_domain("https://app.neo.space/mail/") == "neo.space"
+
+
+def test_clean_url_basic():
+    assert clean_url("https://www.example.com") == "example.com"
+    assert clean_url("http://www.example.com/") == "example.com"
+    assert clean_url("https://example.com/path?query=1") == "example.com/path"
+    assert clean_url("www.example.com") == "example.com"
+    assert clean_url("example.com") == "example.com"
+
+
+def test_clean_url_only_strips_leading_www_and_scheme():
+    # Regression: str.replace() used to strip "www."/"http(s)://" anywhere,
+    # mangling a subdomain literally named "www" or a path containing them.
+    assert clean_url("https://api.www.example.com") == "api.www.example.com"
+    assert clean_url("https://download.www.company.com/x") == "download.www.company.com/x"
+    assert clean_url("https://www.example.com/newwww.html") == "example.com/newwww.html"
+    assert clean_url("http://www.example.com/awww.file") == "example.com/awww.file"

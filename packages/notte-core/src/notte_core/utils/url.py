@@ -12,8 +12,15 @@ def clean_url(url: str) -> str:
     base = url.split("?")[0]
     if base.endswith("/"):
         base = base[:-1]
-    base = base.replace("https://", "").replace("http://", "")
-    base = base.replace("www.", "")
+    # Strip only the LEADING scheme and www. prefix. str.replace() would also
+    # mangle a later occurrence, e.g. a subdomain literally named "www"
+    # (api.www.example.com) or a path segment that contains "www.".
+    for scheme in ("https://", "http://"):
+        if base.startswith(scheme):
+            base = base[len(scheme) :]
+            break
+    if base.startswith("www."):
+        base = base[len("www.") :]
     return base
 
 
