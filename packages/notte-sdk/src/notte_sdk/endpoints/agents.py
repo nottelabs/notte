@@ -349,6 +349,7 @@ class AgentsClient(BaseClient):
         endpoint = NotteEndpoint(path=AgentsClient.AGENT_LOGS_WS, response=BaseModel, method="GET")
         wss_url = self.request_path(endpoint).format(agent_id=agent_id, token=self.token, session_id=session_id)
         wss_url = wss_url.replace("https://", "wss://").replace("http://", "ws://")
+        wss_url = self._with_db_preview(wss_url)
 
         counter = [0]  # mutable container for step count
 
@@ -471,6 +472,7 @@ class AgentsClient(BaseClient):
         endpoint = NotteEndpoint(path=AgentsClient.AGENT_LOGS_WS, response=BaseModel, method="GET")
         wss_url = self.request_path(endpoint).format(agent_id=agent_id, token=self.token, session_id=session_id)
         wss_url = wss_url.replace("https://", "wss://").replace("http://", "ws://")
+        wss_url = self._with_db_preview(wss_url)
 
         counter = [0]  # mutable container for step count
 

@@ -5,7 +5,7 @@ from abc import ABC
 from collections.abc import Sequence
 from json import JSONDecodeError
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Self, TypeVar
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin
 
 import requests
 from notte_core import __version__ as notte_core_version
@@ -85,6 +85,10 @@ class BaseClient(ABC):
     HEALTH_CHECK_ENDPOINT: ClassVar[str] = "health"
     REQUEST_ORIGIN: ClassVar[str] = "sdk-python"
 
+    # Set per instance in __init__. Declared here with a default so clients
+    # built without running __init__ still resolve it.
+    db_preview: str | None = None
+
     def __init__(
         self,
         root_client: "NotteClient",
@@ -118,6 +122,7 @@ class BaseClient(ABC):
         self.server_url: str = server_url or os.getenv("NOTTE_API_URL") or self.DEFAULT_NOTTE_API_URL
         self.base_endpoint_path: str | None = base_endpoint_path
         self.verbose: bool = verbose
+        self.db_preview = (os.getenv("NOTTE_DB_PREVIEW") or "").strip() or None
 
         # Check for version mismatch and warn user if needed
         self.check_and_warn_version_mismatch()
@@ -311,12 +316,30 @@ class BaseClient(ABC):
         which is formatted as a Bearer token using the API key stored in self.token.
         Also includes headers to identify the request as coming from the SDK.
         """
+        # Internal: when NOTTE_DB_PREVIEW names a branch, forward it so the API
+        # serves the request from that branch's database. Only meaningful
+        # against our own non-production deployments, which is why it is not
+        # part of the documented interface.
+        preview = {"x-db-preview": self.db_preview} if self.db_preview else {}
         return {
             "Authorization": f"Bearer {self.token}",
             "x-notte-sdk-version": notte_core_version,
             "x-notte-request-origin": self.REQUEST_ORIGIN,
+            **preview,
             **(headers or {}),
         }
+
+    def _with_db_preview(self, url: str) -> str:
+        """Add the preview-branch selector to a websocket URL.
+
+        A WebSocket handshake carries no request headers when it is opened from
+        a browser, so the branch travels in the query string instead. Returns
+        the URL unchanged when no branch is configured.
+        """
+        if not self.db_preview:
+            return url
+        separator = "&" if "?" in url else "?"
+        return f"{url}{separator}db_preview={quote(self.db_preview, safe='')}"
 
     def request_path(self, endpoint: NotteEndpoint[TResponse]) -> str:
         """
