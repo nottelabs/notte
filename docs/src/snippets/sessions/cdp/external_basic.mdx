@@ -5,7 +5,7 @@
   client = NotteClient()
 
   # CDP URL from any external provider
-  cdp_url = "ws://external-provider.com:9222/devtools/browser/abc123"
+  cdp_url = "wss://external-provider.com:9222/devtools/browser/abc123"
 
   # Connect Notte to the external browser
   with client.Session(cdp_url=cdp_url) as session:
