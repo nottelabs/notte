@@ -851,7 +851,7 @@ class SessionStartRequest(SdkRequest):
 
     vault_id: Annotated[str | None, Field(description="The vault to use for the session")] = None
     auth_ids: Annotated[
-        list[str],
+        list[str] | None,
         Field(
             max_length=10,
             description=(
@@ -859,7 +859,7 @@ class SessionStartRequest(SdkRequest):
                 "inside this session before it is returned."
             ),
         ),
-    ] = Field(default_factory=list)
+    ] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -871,7 +871,7 @@ class SessionStartRequest(SdkRequest):
 
     @model_validator(mode="after")
     def validate_unique_auth_ids(self) -> "SessionStartRequest":
-        if len(self.auth_ids) != len(set(self.auth_ids)):
+        if self.auth_ids is not None and len(self.auth_ids) != len(set(self.auth_ids)):
             raise ValueError("auth_ids must not contain duplicates")
         return self
 

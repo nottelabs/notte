@@ -421,6 +421,8 @@ def test_solve_captchas_defaults_to_enabled_but_can_be_disabled() -> None:
 def test_managed_auth_ids_are_serialized_and_must_be_unique() -> None:
     from pydantic import ValidationError
 
+    assert "auth_ids" not in SessionStartRequest().model_dump(mode="json", exclude_none=True)
+
     auth_ids = [
         "55555555-5555-5555-5555-555555555555",
         "66666666-6666-6666-6666-666666666666",
