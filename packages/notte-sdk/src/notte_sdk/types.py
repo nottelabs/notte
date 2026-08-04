@@ -753,7 +753,7 @@ class SessionStartRequestDict(TypedDict, total=False):
         use_file_storage: Whether FileStorage should be attached to the session.
         screenshot_type: The type of screenshot to use for the session.
         profile: Browser profile configuration for state persistence.
-        auth_ids: Managed Auth connection IDs to authenticate before the session is returned.
+        auth_ids: Up to 10 unique Managed Auth connection IDs to authenticate before the session is returned.
     """
 
     headless: bool
@@ -1068,7 +1068,7 @@ class SessionResponse(SdkResponse):
     auth_ids: Annotated[
         list[str],
         Field(description="Managed Auth connection IDs attached to this session."),
-    ] = Field(default_factory=list)
+    ] = []
 
     @field_validator("closed_at", mode="before")
     @classmethod

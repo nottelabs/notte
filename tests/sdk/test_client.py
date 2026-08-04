@@ -430,6 +430,12 @@ def test_managed_auth_ids_are_serialized_and_must_be_unique() -> None:
     assert request.auth_ids == auth_ids
     assert request.model_dump(mode="json")["auth_ids"] == auth_ids
 
+    ten_auth_ids = [f"{index:08d}-0000-0000-0000-000000000000" for index in range(10)]
+    assert SessionStartRequest(auth_ids=ten_auth_ids).auth_ids == ten_auth_ids
+
+    with pytest.raises(ValidationError):
+        SessionStartRequest(auth_ids=[*ten_auth_ids, "00000010-0000-0000-0000-000000000000"])
+
     with pytest.raises(ValidationError, match="auth_ids must not contain duplicates"):
         SessionStartRequest(auth_ids=[auth_ids[0], auth_ids[0]])
 

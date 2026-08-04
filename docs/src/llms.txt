@@ -80,6 +80,7 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [Introduction](https://docs.notte.cc/index.md)
 - [Quickstart](https://docs.notte.cc/quickstart.md): Get started in a few seconds
 - [MCP Server](https://docs.notte.cc/mcp-server.md): Give your AI agents access to the Notte MCP server
+- [Migrate to Notte](https://docs.notte.cc/migrate-to-notte.md): Safely migrate browser automation from another provider to Notte with an AI coding agent.
 
 ## Sessions
 
@@ -225,6 +226,7 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [POST Profile Cookies Set](https://docs.notte.cc/api-reference/profiles/profile-cookies-set.md)
 - [POST Profile Create](https://docs.notte.cc/api-reference/profiles/profile-create.md)
 - [DELETE Profile Delete](https://docs.notte.cc/api-reference/profiles/profile-delete.md)
+- [POST Profile Duplicate](https://docs.notte.cc/api-reference/profiles/profile-duplicate.md)
 - [GET Profile Get](https://docs.notte.cc/api-reference/profiles/profile-get.md)
 - [GET Profile List](https://docs.notte.cc/api-reference/profiles/profile-list.md)
 
