@@ -777,7 +777,6 @@ class SessionStartRequestDict(TypedDict, total=False):
     vault_id: str | None
     auth_ids: list[str]
     wait_for_authentication: bool
-    system_hidden: bool
 
 
 class SessionStartRequest(SdkRequest):
@@ -859,10 +858,6 @@ class SessionStartRequest(SdkRequest):
         bool,
         Field(description="Whether to wait for Managed Auth authentication before returning the session"),
     ] = True
-    system_hidden: Annotated[
-        bool,
-        Field(description="Whether this session is an internal system run hidden from normal console lists"),
-    ] = False
 
     @model_validator(mode="before")
     @classmethod
@@ -1003,6 +998,12 @@ class SessionListRequest(SdkRequest):
     page_size: int = DEFAULT_LIMIT_LIST_ITEMS
     page: int = 1
     include_system: bool = True
+
+
+class ManagedAuthRunResponse(SdkResponse):
+    connection_id: str
+    status: str
+    message: str
 
 
 class SessionResponse(SdkResponse):

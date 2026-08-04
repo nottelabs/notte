@@ -418,13 +418,28 @@ def test_solve_captchas_defaults_to_enabled_but_can_be_disabled() -> None:
     assert SessionStartRequest(solve_captchas=False).solve_captchas is False
 
 
-def test_managed_auth_system_session_parameters() -> None:
+@patch("requests.post")
+def test_managed_auth_connection_check(mock_post: MagicMock, client: NotteClient, headers: dict[str, str]) -> None:
     auth_id = "55555555-5555-5555-5555-555555555555"
-    request = SessionStartRequest(auth_ids=[auth_id], system_hidden=True)
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = {
+        "connection_id": auth_id,
+        "status": "authenticated",
+        "message": "Authentication check completed",
+    }
 
-    assert request.auth_ids == [auth_id]
-    assert request.wait_for_authentication is True
-    assert request.system_hidden is True
+    result = client.managed_auth.check_connection(auth_id)
+
+    assert result.status == "authenticated"
+    mock_post.assert_called_once_with(
+        url=f"{client.managed_auth.server_url}/managed-auth/connections/{auth_id}/check",
+        headers=headers,
+        data="{}",
+        params=None,
+        timeout=client.managed_auth.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+        files=None,
+        json=None,
+    )
 
 
 def test_new_timeout_parameters_explicit() -> None:
