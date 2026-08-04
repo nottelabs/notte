@@ -442,6 +442,30 @@ def test_managed_auth_ids_are_serialized_and_must_be_unique() -> None:
         SessionStartRequest(auth_ids=[auth_ids[0], auth_ids[0]])
 
 
+@patch("requests.post")
+def test_managed_auth_connection_check(mock_post: MagicMock, client: NotteClient, headers: dict[str, str]) -> None:
+    auth_id = "55555555-5555-5555-5555-555555555555"
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = {
+        "connection_id": auth_id,
+        "status": "authenticated",
+        "message": "Authentication check completed",
+    }
+
+    result = client.managed_auth.check_connection(auth_id)
+
+    assert result.status == "authenticated"
+    mock_post.assert_called_once_with(
+        url=f"{client.managed_auth.server_url}/managed-auth/connections/{auth_id}/check",
+        headers=headers,
+        data="{}",
+        params=None,
+        timeout=client.managed_auth.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+        files=None,
+        json=None,
+    )
+
+
 def test_new_timeout_parameters_explicit() -> None:
     """Test new explicit timeout parameters."""
     request = SessionStartRequest(max_duration_minutes=10, idle_timeout_minutes=5)

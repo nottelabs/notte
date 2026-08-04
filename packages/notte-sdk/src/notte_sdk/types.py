@@ -1013,6 +1013,12 @@ class SessionListRequest(SdkRequest):
     include_system: bool = True
 
 
+class ManagedAuthRunResponse(SdkResponse):
+    connection_id: str
+    status: str
+    message: str
+
+
 class SessionResponse(SdkResponse):
     session_id: Annotated[
         str,

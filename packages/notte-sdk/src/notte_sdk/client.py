@@ -14,6 +14,7 @@ from notte_sdk.agent_fallback import RemoteAgentFallback
 from notte_sdk.endpoints.agents import AgentsClient, RemoteAgent
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
 from notte_sdk.endpoints.functions import NotteFunction
+from notte_sdk.endpoints.managed_auth import ManagedAuthClient
 from notte_sdk.endpoints.personas import NottePersona, PersonasClient
 from notte_sdk.endpoints.profiles import ProfilesClient
 from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient, SessionViewerType
@@ -62,6 +63,9 @@ class NotteClient:
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
         self.profiles: ProfilesClient = ProfilesClient(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
+        self.managed_auth: ManagedAuthClient = ManagedAuthClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
         self.files: FileStorageClient = FileStorageClient(
