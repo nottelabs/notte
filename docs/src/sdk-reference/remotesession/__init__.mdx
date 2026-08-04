@@ -101,6 +101,10 @@ RemoteSession instance configured with the specified parameters.
 <ParamField path="vault_id" type="str | None">
 </ParamField>
 
+<ParamField path="auth_ids" type="list">
+  Up to 10 unique Managed Auth connection IDs to authenticate before the session is returned.
+</ParamField>
+
 ## Returns
 
 `None`: A new RemoteSession instance configured with the specified parameters.
