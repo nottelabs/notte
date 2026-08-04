@@ -2,6 +2,7 @@ import datetime as dt
 import json
 import os
 import re
+import uuid
 import warnings
 from enum import StrEnum
 from pathlib import Path
@@ -851,7 +852,7 @@ class SessionStartRequest(SdkRequest):
 
     vault_id: Annotated[str | None, Field(description="The vault to use for the session")] = None
     auth_ids: Annotated[
-        list[str],
+        list[uuid.UUID],
         Field(description="Managed Auth connection IDs to authenticate inside this session", max_length=10),
     ] = Field(default_factory=list)
     wait_for_authentication: Annotated[
