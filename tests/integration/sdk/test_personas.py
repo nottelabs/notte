@@ -7,6 +7,26 @@ from notte_sdk.errors import NotteAPIError
 
 import notte
 
+# Persistent fixtures shared by CI, frontend tests, and developers. Never delete
+# these from automated cleanup. Cleanup must remain scoped to resources created
+# by the current test run rather than listing and sweeping the whole account.
+IMPORTANT_PERSONA_IDS = frozenset(
+    {
+        # Frontend tests
+        "f2e2834b-a054-4a96-a388-a447c37756ff",
+        "131a21e1-8c8e-4016-80b9-765c0ce4fb5c",
+        "ee3da1f5-e53c-4159-839d-e8db16bbe2e7",
+        "46d0649e-1d13-47be-a21f-703ce4cf02ea",
+        # Monorepo
+        "7abb4f37-25a1-4409-98d9-c4c916918254",
+        "0a0a0a0a-4444-5555-6666-777777777701",
+        "0a0a0a0a-4444-5555-6666-777777777702",
+        # Others
+        "23ae78af-93b4-4aeb-ba21-d18e1496bdd9",
+        "4e9faffa-ae3e-4a86-a87f-584bf77794e0",
+    }
+)
+
 
 @pytest.fixture
 def test_persona_id() -> str:
@@ -322,26 +342,3 @@ def test_persona_form_filling():
             assert persona.info.last_name in response.answer, (
                 f"Last name {persona.info.last_name} not in {response.answer}"
             )
-
-
-def test_does_nothing_expect_cleanup_personas():
-    _ = load_dotenv()
-    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    important_personas = [
-        # Front end tests
-        "f2e2834b-a054-4a96-a388-a447c37756ff",  # ok
-        "131a21e1-8c8e-4016-80b9-765c0ce4fb5c",  # ok
-        "ee3da1f5-e53c-4159-839d-e8db16bbe2e7",  # ok
-        "46d0649e-1d13-47be-a21f-703ce4cf02ea",  # ok
-        # Monorepo
-        "7abb4f37-25a1-4409-98d9-c4c916918254",  # ok
-        "0a0a0a0a-4444-5555-6666-777777777701",  # ok
-        "0a0a0a0a-4444-5555-6666-777777777702",  # ok
-        # others
-        "23ae78af-93b4-4aeb-ba21-d18e1496bdd9",  # ok
-        "4e9faffa-ae3e-4a86-a87f-584bf77794e0",  # ok
-    ]
-
-    for personas in client.personas.list(page_size=100):
-        if personas.persona_id not in important_personas:
-            _ = client.personas.delete(personas.persona_id)
