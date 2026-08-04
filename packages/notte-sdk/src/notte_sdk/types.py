@@ -776,7 +776,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     web_bot_auth: bool
     extra_http_headers: dict[str, str] | None
     vault_id: str | None
-    auth_ids: list[str]
+    auth_ids: list[str] | None
 
 
 class SessionStartRequest(SdkRequest):
