@@ -775,6 +775,9 @@ class SessionStartRequestDict(TypedDict, total=False):
     web_bot_auth: bool
     extra_http_headers: dict[str, str] | None
     vault_id: str | None
+    auth_ids: list[str]
+    wait_for_authentication: bool
+    system_hidden: bool
 
 
 class SessionStartRequest(SdkRequest):
@@ -848,6 +851,18 @@ class SessionStartRequest(SdkRequest):
     ] = None
 
     vault_id: Annotated[str | None, Field(description="The vault to use for the session")] = None
+    auth_ids: Annotated[
+        list[str],
+        Field(description="Managed Auth connection IDs to authenticate inside this session", max_length=10),
+    ] = Field(default_factory=list)
+    wait_for_authentication: Annotated[
+        bool,
+        Field(description="Whether to wait for Managed Auth authentication before returning the session"),
+    ] = True
+    system_hidden: Annotated[
+        bool,
+        Field(description="Whether this session is an internal system run hidden from normal console lists"),
+    ] = False
 
     @model_validator(mode="before")
     @classmethod
@@ -980,12 +995,14 @@ class SessionListRequestDict(TypedDict, total=False):
     only_active: bool
     page_size: int
     page: int
+    include_system: bool
 
 
 class SessionListRequest(SdkRequest):
     only_active: bool = True
     page_size: int = DEFAULT_LIMIT_LIST_ITEMS
     page: int = 1
+    include_system: bool = True
 
 
 class SessionResponse(SdkResponse):
@@ -1047,6 +1064,7 @@ class SessionResponse(SdkResponse):
     cdp_url: Annotated[str | None, Field(description="The URL to connect to the CDP server.")] = None
     viewer_url: Annotated[str | None, Field(description="The remote session viewer URL.")] = None
     web_bot_auth: Annotated[bool, Field(description="Whether to use web bot authentication.")] = False
+    system_hidden: Annotated[bool, Field(description="Whether this session is an internal system run.")] = False
 
     @field_validator("closed_at", mode="before")
     @classmethod

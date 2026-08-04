@@ -418,6 +418,15 @@ def test_solve_captchas_defaults_to_enabled_but_can_be_disabled() -> None:
     assert SessionStartRequest(solve_captchas=False).solve_captchas is False
 
 
+def test_managed_auth_system_session_parameters() -> None:
+    auth_id = "55555555-5555-5555-5555-555555555555"
+    request = SessionStartRequest(auth_ids=[auth_id], system_hidden=True)
+
+    assert request.auth_ids == [auth_id]
+    assert request.wait_for_authentication is True
+    assert request.system_hidden is True
+
+
 def test_new_timeout_parameters_explicit() -> None:
     """Test new explicit timeout parameters."""
     request = SessionStartRequest(max_duration_minutes=10, idle_timeout_minutes=5)
