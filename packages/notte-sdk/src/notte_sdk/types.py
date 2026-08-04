@@ -1370,6 +1370,19 @@ class ProfileCreateRequest(SdkRequest):
     name: Annotated[str | None, Field(description="Name of the profile")] = None
 
 
+class ProfileDuplicateRequestDict(TypedDict, total=False):
+    """Request dictionary for duplicating a profile."""
+
+    name: str
+
+
+class ProfileDuplicateRequest(SdkRequest):
+    name: Annotated[
+        str | None,
+        Field(description="Optional name for the duplicate; defaults to the source profile name"),
+    ] = None
+
+
 class ProfileResponse(SdkResponse):
     profile_id: Annotated[str, Field(description="Profile ID (format: notte-profile-{16 hex chars})")]
     name: Annotated[str | None, Field(description="Profile name")]
