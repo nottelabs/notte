@@ -777,6 +777,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     extra_http_headers: dict[str, str] | None
     vault_id: str | None
     auth_ids: list[str] | None
+    wait_for_authentication: bool
 
 
 class SessionStartRequest(SdkRequest):
@@ -860,6 +861,10 @@ class SessionStartRequest(SdkRequest):
             ),
         ),
     ] = None
+    wait_for_authentication: Annotated[
+        bool,
+        Field(description="Whether to wait for Managed Auth authentication before returning the session"),
+    ] = True
 
     @model_validator(mode="before")
     @classmethod
@@ -998,12 +1003,14 @@ class SessionListRequestDict(TypedDict, total=False):
     only_active: bool
     page_size: int
     page: int
+    include_system: bool
 
 
 class SessionListRequest(SdkRequest):
     only_active: bool = True
     page_size: int = DEFAULT_LIMIT_LIST_ITEMS
     page: int = 1
+    include_system: bool = True
 
 
 class SessionResponse(SdkResponse):
@@ -1069,6 +1076,7 @@ class SessionResponse(SdkResponse):
         list[str],
         Field(description="Managed Auth connection IDs attached to this session."),
     ] = []
+    system_hidden: Annotated[bool, Field(description="Whether this session is an internal system run.")] = False
 
     @field_validator("closed_at", mode="before")
     @classmethod
