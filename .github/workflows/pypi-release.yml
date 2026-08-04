@@ -45,7 +45,8 @@ jobs:
       - name: Build and Publish to PyPI
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
-        run: bash build.sh ${{ github.ref_name }} publish
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: bash build.sh "$RELEASE_TAG" publish
 
       - name: Wait for PyPI indexing
         run: |
@@ -53,6 +54,8 @@ jobs:
           sleep 180  # Wait 3 minutes for PyPI indexing
 
       - name: Install the package from PyPI
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
           uv venv pypi
           source pypi/bin/activate
@@ -63,8 +66,8 @@ jobs:
           wait_time=60
 
           while [ $attempt -le $max_attempts ]; do
-            echo "Attempt $attempt of $max_attempts: Installing notte==${{ github.ref_name }}..."
-            if uv pip install notte==${{ github.ref_name }}; then
+            echo "Attempt $attempt of $max_attempts: Installing notte==${RELEASE_TAG}..."
+            if uv pip install "notte==${RELEASE_TAG}"; then
               echo "Installation successful!"
               break
             fi
@@ -94,10 +97,12 @@ jobs:
 
     steps:
       - name: Trigger Mintlify deployment
+        env:
+          MINTLIFY_API_KEY: ${{ secrets.MINTLIFY_API_KEY }}
         run: |
           response=$(curl -s -w "\n%{http_code}" -X POST \
             "https://api.mintlify.com/v1/project/update/67325cb675ec6a1a358ff41d" \
-            -H "Authorization: Bearer ${{ secrets.MINTLIFY_API_KEY }}")
+            -H "Authorization: Bearer ${MINTLIFY_API_KEY}")
 
           http_code=$(echo "$response" | tail -n1)
           body=$(echo "$response" | sed '$d')
