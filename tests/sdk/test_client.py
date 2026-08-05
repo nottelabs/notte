@@ -14,12 +14,15 @@ from notte_sdk.errors import AuthenticationError
 from notte_sdk.types import (
     DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES,
     DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
+    AgentListRequest,
     ExecutionRequest,
     ExecutionRequestDict,
     ObserveResponse,
+    SessionListRequest,
     SessionResponse,
     SessionStartRequest,
     SessionStartRequestDict,
+    VaultListRequest,
 )
 
 
@@ -421,25 +424,56 @@ def test_solve_captchas_defaults_to_enabled_but_can_be_disabled() -> None:
 def test_managed_auth_ids_are_serialized_and_must_be_unique() -> None:
     from pydantic import ValidationError
 
-    assert "auth_ids" not in SessionStartRequest().model_dump(mode="json", exclude_none=True)
+    assert SessionStartRequest().auth_ids == []
 
     auth_ids = [
-        "55555555-5555-5555-5555-555555555555",
-        "66666666-6666-6666-6666-666666666666",
+        "managed-auth-connection-primary",
+        "managed-auth-connection-secondary",
     ]
     request = SessionStartRequest(auth_ids=auth_ids)
 
     assert request.auth_ids == auth_ids
     assert request.model_dump(mode="json")["auth_ids"] == auth_ids
 
-    ten_auth_ids = [f"{index:08d}-0000-0000-0000-000000000000" for index in range(10)]
+    ten_auth_ids = [f"managed-auth-connection-{index}" for index in range(10)]
     assert SessionStartRequest(auth_ids=ten_auth_ids).auth_ids == ten_auth_ids
 
     with pytest.raises(ValidationError):
-        SessionStartRequest(auth_ids=[*ten_auth_ids, "00000010-0000-0000-0000-000000000000"])
+        SessionStartRequest(auth_ids=[*ten_auth_ids, "managed-auth-connection-10"])
 
     with pytest.raises(ValidationError, match="auth_ids must not contain duplicates"):
         SessionStartRequest(auth_ids=[auth_ids[0], auth_ids[0]])
+
+
+@patch("requests.post")
+def test_managed_auth_connection_check(mock_post: MagicMock, client: NotteClient, headers: dict[str, str]) -> None:
+    auth_id = "55555555-5555-5555-5555-555555555555"
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = {
+        "connection_id": auth_id,
+        "status": "authenticated",
+        "message": "Authentication check completed",
+    }
+
+    result = client.managed_auth.check_connection(auth_id)
+
+    assert result.status == "authenticated"
+    mock_post.assert_called_once_with(
+        url=f"{client.managed_auth.server_url}/managed-auth/connections/{auth_id}/check",
+        headers=headers,
+        data="{}",
+        params=None,
+        timeout=client.managed_auth.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+        files=None,
+        json=None,
+    )
+
+
+def test_system_session_filter_is_session_specific_and_only_sent_explicitly() -> None:
+    assert "include_system" not in SessionListRequest().model_dump(exclude_none=True)
+    assert SessionListRequest(include_system=False).model_dump(exclude_none=True)["include_system"] is False
+    assert "include_system" not in AgentListRequest().model_dump()
+    assert "include_system" not in VaultListRequest().model_dump()
 
 
 def test_new_timeout_parameters_explicit() -> None:

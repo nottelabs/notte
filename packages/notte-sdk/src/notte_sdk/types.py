@@ -754,6 +754,9 @@ class SessionStartRequestDict(TypedDict, total=False):
         screenshot_type: The type of screenshot to use for the session.
         profile: Browser profile configuration for state persistence.
         auth_ids: Up to 10 unique Managed Auth connection IDs to authenticate before the session is returned.
+        wait_for_authentication: Defaults to True. Wait for Managed Auth before returning the session;
+            authentication failure or timeout fails session creation. When False, return after the browser is
+            ready while authentication continues in the background.
     """
 
     headless: bool
@@ -776,7 +779,8 @@ class SessionStartRequestDict(TypedDict, total=False):
     web_bot_auth: bool
     extra_http_headers: dict[str, str] | None
     vault_id: str | None
-    auth_ids: list[str] | None
+    auth_ids: list[str]
+    wait_for_authentication: bool
 
 
 class SessionStartRequest(SdkRequest):
@@ -851,7 +855,7 @@ class SessionStartRequest(SdkRequest):
 
     vault_id: Annotated[str | None, Field(description="The vault to use for the session")] = None
     auth_ids: Annotated[
-        list[str] | None,
+        list[str],
         Field(
             max_length=10,
             description=(
@@ -859,7 +863,17 @@ class SessionStartRequest(SdkRequest):
                 "inside this session before it is returned."
             ),
         ),
-    ] = None
+    ] = Field(default_factory=list)
+    wait_for_authentication: Annotated[
+        bool,
+        Field(
+            description=(
+                "Whether to wait for Managed Auth before returning the session. Defaults to true. "
+                "When true, authentication failure or timeout fails session creation; when false, "
+                "authentication continues in the background after the browser is ready."
+            )
+        ),
+    ] = True
 
     @model_validator(mode="before")
     @classmethod
@@ -871,7 +885,7 @@ class SessionStartRequest(SdkRequest):
 
     @model_validator(mode="after")
     def validate_unique_auth_ids(self) -> "SessionStartRequest":
-        if self.auth_ids is not None and len(self.auth_ids) != len(set(self.auth_ids)):
+        if len(self.auth_ids) != len(set(self.auth_ids)):
             raise ValueError("auth_ids must not contain duplicates")
         return self
 
@@ -994,16 +1008,39 @@ class SessionStartRequest(SdkRequest):
         raise ValueError(f"Unsupported proxy type: {base_proxy.type}")  # pyright: ignore[reportUnreachable]
 
 
-class SessionListRequestDict(TypedDict, total=False):
+class ListRequestDict(TypedDict, total=False):
     only_active: bool
     page_size: int
     page: int
 
 
-class SessionListRequest(SdkRequest):
+class ListRequest(SdkRequest):
     only_active: bool = True
     page_size: int = DEFAULT_LIMIT_LIST_ITEMS
     page: int = 1
+
+
+class SessionListRequestDict(ListRequestDict, total=False):
+    """Session list filters.
+
+    Args:
+        include_system: Include internal sessions whose response has ``system_hidden=True``.
+    """
+
+    include_system: bool | None
+
+
+class SessionListRequest(ListRequest):
+    include_system: Annotated[
+        bool | None,
+        Field(description="Include internal sessions whose response has system_hidden=True."),
+    ] = None
+
+
+class ManagedAuthRunResponse(SdkResponse):
+    connection_id: str
+    status: str
+    message: str
 
 
 class SessionResponse(SdkResponse):
@@ -1069,6 +1106,15 @@ class SessionResponse(SdkResponse):
         list[str],
         Field(description="Managed Auth connection IDs attached to this session."),
     ] = []
+    system_hidden: Annotated[
+        bool,
+        Field(
+            description=(
+                "Whether this session is an internal system run. Internal system runs are omitted "
+                "from session.list() unless include_system=True is requested."
+            )
+        ),
+    ] = False
 
     @field_validator("closed_at", mode="before")
     @classmethod
@@ -1183,13 +1229,13 @@ class ListCredentialsResponse(SdkResponse):
     credentials: Annotated[list[Credential], Field(description="URLs for which we hold credentials")]
 
 
-class VaultListRequestDict(SessionListRequestDict, total=False):
+class VaultListRequestDict(ListRequestDict, total=False):
     """Request dictionary for listing vaults."""
 
     pass
 
 
-class VaultListRequest(SessionListRequest):
+class VaultListRequest(ListRequest):
     pass
 
 
@@ -1517,13 +1563,13 @@ class DeletePhoneNumberResponse(SdkResponse):
     message: Annotated[str, Field(description="Message of the deletion")] = "Phone number deleted successfully"
 
 
-class PersonaListRequestDict(SessionListRequestDict, total=False):
+class PersonaListRequestDict(ListRequestDict, total=False):
     """Request dictionary for listing personas."""
 
     pass
 
 
-class PersonaListRequest(SessionListRequest):
+class PersonaListRequest(ListRequest):
     pass
 
 
@@ -1976,7 +2022,7 @@ class AgentStatusRequest(AgentSessionRequest):
     pass
 
 
-class AgentListRequestDict(SessionListRequestDict, total=False):
+class AgentListRequestDict(ListRequestDict, total=False):
     """Request dictionary for listing agents.
 
     Args:
@@ -1989,7 +2035,7 @@ class AgentListRequestDict(SessionListRequestDict, total=False):
     only_saved: bool
 
 
-class AgentListRequest(SessionListRequest):
+class AgentListRequest(ListRequest):
     only_saved: bool = False
 
 
@@ -2087,7 +2133,7 @@ class GetFunctionRequestDict(TypedDict, total=False):
     version: str | None
 
 
-class ListFunctionsRequestDict(SessionListRequestDict, total=False):
+class ListFunctionsRequestDict(ListRequestDict, total=False):
     """Request dictionary for listing workflows.
 
     Args:
@@ -2199,7 +2245,7 @@ class DeleteFunctionResponse(SdkResponse):
     message: Annotated[str, Field(description="The message of the deletion")]
 
 
-class ListFunctionsRequest(SessionListRequest):
+class ListFunctionsRequest(ListRequest):
     pass
 
 
@@ -2393,11 +2439,11 @@ class UpdateFunctionRunResponse(SdkResponse):
         return self.function_run_id
 
 
-class ListFunctionRunsRequestDict(SessionListRequestDict, total=False):
+class ListFunctionRunsRequestDict(ListRequestDict, total=False):
     pass
 
 
-class ListFunctionRunsRequest(SessionListRequest):
+class ListFunctionRunsRequest(ListRequest):
     pass
 
 

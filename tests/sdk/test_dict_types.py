@@ -460,7 +460,7 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
     # Valid inheritance patterns - build hierarchy aware validation
     def is_valid_inheritance(class_name: str, inheritance_chain: str) -> bool:
         valid_direct_bases = ["SdkRequest", "BaseModel"]
-        valid_request_bases = ["SessionListRequest", "PaginationParams", "ScrapeParams"]
+        valid_request_bases = ["ListRequest", "SessionListRequest", "PaginationParams", "ScrapeParams"]
         valid_composite_bases = [
             "SdkAgentCreateRequest",
             "AgentRunRequest",

@@ -105,6 +105,10 @@ RemoteSession instance configured with the specified parameters.
   Up to 10 unique Managed Auth connection IDs to authenticate before the session is returned.
 </ParamField>
 
+<ParamField path="wait_for_authentication" type="bool">
+  Defaults to True. Wait for Managed Auth before returning the session; authentication failure or timeout fails session creation. When False, return after the browser is ready while authentication continues in the background.
+</ParamField>
+
 ## Returns
 
 `None`: A new RemoteSession instance configured with the specified parameters.
