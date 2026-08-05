@@ -776,7 +776,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     web_bot_auth: bool
     extra_http_headers: dict[str, str] | None
     vault_id: str | None
-    auth_ids: list[str] | None
+    auth_ids: list[str]
     wait_for_authentication: bool
 
 
@@ -852,7 +852,7 @@ class SessionStartRequest(SdkRequest):
 
     vault_id: Annotated[str | None, Field(description="The vault to use for the session")] = None
     auth_ids: Annotated[
-        list[str] | None,
+        list[str],
         Field(
             max_length=10,
             description=(
@@ -860,7 +860,7 @@ class SessionStartRequest(SdkRequest):
                 "inside this session before it is returned."
             ),
         ),
-    ] = None
+    ] = Field(default_factory=list)
     wait_for_authentication: Annotated[
         bool,
         Field(description="Whether to wait for Managed Auth authentication before returning the session"),
@@ -876,7 +876,7 @@ class SessionStartRequest(SdkRequest):
 
     @model_validator(mode="after")
     def validate_unique_auth_ids(self) -> "SessionStartRequest":
-        if self.auth_ids is not None and len(self.auth_ids) != len(set(self.auth_ids)):
+        if len(self.auth_ids) != len(set(self.auth_ids)):
             raise ValueError("auth_ids must not contain duplicates")
         return self
 

@@ -421,22 +421,22 @@ def test_solve_captchas_defaults_to_enabled_but_can_be_disabled() -> None:
 def test_managed_auth_ids_are_serialized_and_must_be_unique() -> None:
     from pydantic import ValidationError
 
-    assert "auth_ids" not in SessionStartRequest().model_dump(mode="json", exclude_none=True)
+    assert SessionStartRequest().auth_ids == []
 
     auth_ids = [
-        "55555555-5555-5555-5555-555555555555",
-        "66666666-6666-6666-6666-666666666666",
+        "managed-auth-connection-primary",
+        "managed-auth-connection-secondary",
     ]
     request = SessionStartRequest(auth_ids=auth_ids)
 
     assert request.auth_ids == auth_ids
     assert request.model_dump(mode="json")["auth_ids"] == auth_ids
 
-    ten_auth_ids = [f"{index:08d}-0000-0000-0000-000000000000" for index in range(10)]
+    ten_auth_ids = [f"managed-auth-connection-{index}" for index in range(10)]
     assert SessionStartRequest(auth_ids=ten_auth_ids).auth_ids == ten_auth_ids
 
     with pytest.raises(ValidationError):
-        SessionStartRequest(auth_ids=[*ten_auth_ids, "00000010-0000-0000-0000-000000000000"])
+        SessionStartRequest(auth_ids=[*ten_auth_ids, "managed-auth-connection-10"])
 
     with pytest.raises(ValidationError, match="auth_ids must not contain duplicates"):
         SessionStartRequest(auth_ids=[auth_ids[0], auth_ids[0]])
