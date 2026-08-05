@@ -999,18 +999,24 @@ class SessionStartRequest(SdkRequest):
         raise ValueError(f"Unsupported proxy type: {base_proxy.type}")  # pyright: ignore[reportUnreachable]
 
 
-class SessionListRequestDict(TypedDict, total=False):
+class ListRequestDict(TypedDict, total=False):
     only_active: bool
     page_size: int
     page: int
-    include_system: bool
 
 
-class SessionListRequest(SdkRequest):
+class ListRequest(SdkRequest):
     only_active: bool = True
     page_size: int = DEFAULT_LIMIT_LIST_ITEMS
     page: int = 1
-    include_system: bool = True
+
+
+class SessionListRequestDict(ListRequestDict, total=False):
+    include_system: bool | None
+
+
+class SessionListRequest(ListRequest):
+    include_system: bool | None = None
 
 
 class ManagedAuthRunResponse(SdkResponse):
@@ -1197,13 +1203,13 @@ class ListCredentialsResponse(SdkResponse):
     credentials: Annotated[list[Credential], Field(description="URLs for which we hold credentials")]
 
 
-class VaultListRequestDict(SessionListRequestDict, total=False):
+class VaultListRequestDict(ListRequestDict, total=False):
     """Request dictionary for listing vaults."""
 
     pass
 
 
-class VaultListRequest(SessionListRequest):
+class VaultListRequest(ListRequest):
     pass
 
 
@@ -1531,13 +1537,13 @@ class DeletePhoneNumberResponse(SdkResponse):
     message: Annotated[str, Field(description="Message of the deletion")] = "Phone number deleted successfully"
 
 
-class PersonaListRequestDict(SessionListRequestDict, total=False):
+class PersonaListRequestDict(ListRequestDict, total=False):
     """Request dictionary for listing personas."""
 
     pass
 
 
-class PersonaListRequest(SessionListRequest):
+class PersonaListRequest(ListRequest):
     pass
 
 
@@ -1990,7 +1996,7 @@ class AgentStatusRequest(AgentSessionRequest):
     pass
 
 
-class AgentListRequestDict(SessionListRequestDict, total=False):
+class AgentListRequestDict(ListRequestDict, total=False):
     """Request dictionary for listing agents.
 
     Args:
@@ -2003,7 +2009,7 @@ class AgentListRequestDict(SessionListRequestDict, total=False):
     only_saved: bool
 
 
-class AgentListRequest(SessionListRequest):
+class AgentListRequest(ListRequest):
     only_saved: bool = False
 
 
@@ -2101,7 +2107,7 @@ class GetFunctionRequestDict(TypedDict, total=False):
     version: str | None
 
 
-class ListFunctionsRequestDict(SessionListRequestDict, total=False):
+class ListFunctionsRequestDict(ListRequestDict, total=False):
     """Request dictionary for listing workflows.
 
     Args:
@@ -2213,7 +2219,7 @@ class DeleteFunctionResponse(SdkResponse):
     message: Annotated[str, Field(description="The message of the deletion")]
 
 
-class ListFunctionsRequest(SessionListRequest):
+class ListFunctionsRequest(ListRequest):
     pass
 
 
@@ -2407,11 +2413,11 @@ class UpdateFunctionRunResponse(SdkResponse):
         return self.function_run_id
 
 
-class ListFunctionRunsRequestDict(SessionListRequestDict, total=False):
+class ListFunctionRunsRequestDict(ListRequestDict, total=False):
     pass
 
 
-class ListFunctionRunsRequest(SessionListRequest):
+class ListFunctionRunsRequest(ListRequest):
     pass
 
 
