@@ -754,6 +754,9 @@ class SessionStartRequestDict(TypedDict, total=False):
         screenshot_type: The type of screenshot to use for the session.
         profile: Browser profile configuration for state persistence.
         auth_ids: Up to 10 unique Managed Auth connection IDs to authenticate before the session is returned.
+        wait_for_authentication: Defaults to True. Wait for Managed Auth before returning the session;
+            authentication failure or timeout fails session creation. When False, return after the browser is
+            ready while authentication continues in the background.
     """
 
     headless: bool
@@ -863,7 +866,13 @@ class SessionStartRequest(SdkRequest):
     ] = Field(default_factory=list)
     wait_for_authentication: Annotated[
         bool,
-        Field(description="Whether to wait for Managed Auth authentication before returning the session"),
+        Field(
+            description=(
+                "Whether to wait for Managed Auth before returning the session. Defaults to true. "
+                "When true, authentication failure or timeout fails session creation; when false, "
+                "authentication continues in the background after the browser is ready."
+            )
+        ),
     ] = True
 
     @model_validator(mode="before")
@@ -1012,11 +1021,20 @@ class ListRequest(SdkRequest):
 
 
 class SessionListRequestDict(ListRequestDict, total=False):
+    """Session list filters.
+
+    Args:
+        include_system: Include internal sessions whose response has ``system_hidden=True``.
+    """
+
     include_system: bool | None
 
 
 class SessionListRequest(ListRequest):
-    include_system: bool | None = None
+    include_system: Annotated[
+        bool | None,
+        Field(description="Include internal sessions whose response has system_hidden=True."),
+    ] = None
 
 
 class ManagedAuthRunResponse(SdkResponse):
@@ -1088,7 +1106,15 @@ class SessionResponse(SdkResponse):
         list[str],
         Field(description="Managed Auth connection IDs attached to this session."),
     ] = []
-    system_hidden: Annotated[bool, Field(description="Whether this session is an internal system run.")] = False
+    system_hidden: Annotated[
+        bool,
+        Field(
+            description=(
+                "Whether this session is an internal system run. Internal system runs are omitted "
+                "from session.list() unless include_system=True is requested."
+            )
+        ),
+    ] = False
 
     @field_validator("closed_at", mode="before")
     @classmethod

@@ -106,6 +106,7 @@ RemoteSession instance configured with the specified parameters.
 </ParamField>
 
 <ParamField path="wait_for_authentication" type="bool">
+  Defaults to True. Wait for Managed Auth before returning the session; authentication failure or timeout fails session creation. When False, return after the browser is ready while authentication continues in the background.
 </ParamField>
 
 ## Returns

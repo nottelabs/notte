@@ -623,6 +623,9 @@ class RemoteSession(SyncResource):
             storage: File Storage to attach to the session
             open_viewer: Whether to open the live viewer when the session starts (default: False).
                 Browsers are always headless; this controls only the viewer popup.
+            wait_for_authentication: Defaults to True. Wait for Managed Auth before returning the
+                session; authentication failure or timeout fails session creation. When False,
+                return after the browser is ready while authentication continues in the background.
             **data: Keyword arguments for the session creation request.
 
         Returns:
