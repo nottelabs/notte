@@ -177,6 +177,7 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [Authentication](https://docs.notte.cc/api-reference/authentication.md): Authenticate with the Notte API
 - [API Error Codes](https://docs.notte.cc/api-reference/errors.md): API error responses and status codes
 - [Rate Limits](https://docs.notte.cc/api-reference/rate-limits.md): API rate limiting and response headers
+- [Session Replay](https://docs.notte.cc/api-reference/using-session-replay.md): Use mp4_url from GET /sessions/{session_id}/replay to download recordings
 
 ## Agents
 

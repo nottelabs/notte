@@ -1,0 +1,62 @@
+---
+title: Session Replay
+description: Use mp4_url from GET /sessions/{session_id}/replay to download recordings
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+`GET /sessions/{session_id}/replay` returns presigned URLs for the session recording after the session has ended.
+
+The field most clients need is **`mp4_url`**: a time-limited presigned URL for the MP4 file. Use it to download or share the recording from any HTTP client (webhooks, CI, non-Python SDKs). Check `expires_at` for when the URL stops working.
+
+```bash
+curl "https://api.notte.cc/sessions/{session_id}/replay" \
+  -H "Authorization: Bearer $NOTTE_API_KEY"
+```
+
+Example response:
+
+```json
+{
+  "mp4_url": "https://storage.example.com/replays/session_abc.mp4?X-Amz-Signature=...",
+  "playlist_content": "#EXTM3U\n...",
+  "expires_at": "2026-08-06T18:00:00+00:00",
+  "video_start_ms": 0,
+  "video_duration_ms": 45200
+}
+```
+
+## Response fields
+
+<ResponseField name="mp4_url" type="string | null">
+  Presigned URL for downloading the session recording as an MP4. Prefer this when you need the video file itself.
+</ResponseField>
+
+<ResponseField name="playlist_content" type="string | null">
+  HLS playlist content with presigned segment URLs, for streaming playback.
+</ResponseField>
+
+<ResponseField name="expires_at" type="string">
+  When the presigned URLs expire. Download promptly if you need a durable copy.
+</ResponseField>
+
+<ResponseField name="video_start_ms" type="integer | null">
+  Video start offset in milliseconds.
+</ResponseField>
+
+<ResponseField name="video_duration_ms" type="integer | null">
+  Video duration in milliseconds.
+</ResponseField>
+
+<Tip>
+  From the Python SDK, the same payload is returned by `session.replay()` as a
+  <Visibility for="humans">[`ReplayResponse`](/sdk-reference/misc/replayresponse)</Visibility><Visibility for="agents">[`ReplayResponse`](/sdk-reference/misc/replayresponse.md)</Visibility>.
+  Use `replay.mp4_url` or `replay.download("session.mp4")`.
+</Tip>
+
+Interactive OpenAPI playground for this endpoint is available under the API tab
+(Sessions → Session Replay), generated from
+[https://api.notte.cc/openapi.json](https://api.notte.cc/openapi.json).
+
+See also [Session recordings](/features/sessions/recordings).
