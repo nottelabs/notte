@@ -1,6 +1,8 @@
 import base64
+import json
 import traceback
 from pathlib import Path
+from typing import Any, cast
 
 from notte_core.actions import (
     BaseAction,
@@ -57,7 +59,7 @@ from notte_browser.errors import (
     capture_playwright_errors,
 )
 from notte_browser.form_filling import FormFiller
-from notte_browser.playwright_async_api import Locator
+from notte_browser.playwright_async_api import CDPSession, Locator
 from notte_browser.window import BrowserWindow
 
 # Installed once per download action. Wraps URL.createObjectURL so we retain a
@@ -65,6 +67,11 @@ from notte_browser.window import BrowserWindow
 # bytes even after the page's URL.revokeObjectURL runs (file-saver.js pattern).
 # Revocation only removes the URL->Blob mapping in the browser's registry;
 # our Map keeps the Blob object alive.
+#
+# Both snippets must run in the page's main world: the Blob is created by the
+# page's own script, and `page.evaluate` runs in an isolated world, where the
+# hook would patch a different `URL` and never observe the page's calls. Driving
+# them over CDP puts them in the main world and also sidesteps the page CSP.
 _BLOB_CAPTURE_HOOK = """
 (() => {
   if (window.__notte_blob_capture) return;
@@ -81,7 +88,7 @@ _BLOB_CAPTURE_HOOK = """
 
 # Returns base64 so we can ferry bytes safely across CDP.
 _BLOB_READ_SCRIPT = """
-async (url) => {
+(async (url) => {
   const blob = window.__notte_blob_capture && window.__notte_blob_capture.get(url);
   if (!blob) return null;
   const buf = await blob.arrayBuffer();
@@ -92,8 +99,27 @@ async (url) => {
     binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
   }
   return btoa(binary);
-}
+})(__NOTTE_BLOB_URL__)
 """
+
+
+async def _main_world_evaluate(cdp: CDPSession, expression: str, await_promise: bool = False) -> Any:
+    """Evaluate an expression in the page's main world and return its value."""
+    response: dict[str, Any] = await cdp.send(  # pyright: ignore [reportUnknownMemberType]
+        "Runtime.evaluate",
+        {"expression": expression, "awaitPromise": await_promise, "returnByValue": True},
+    )
+    result: Any = response.get("result")
+    if not isinstance(result, dict):
+        return None
+    return cast("dict[str, Any]", result).get("value")
+
+
+async def _read_captured_blob(cdp: CDPSession, blob_url: str) -> str | None:
+    """Read a captured Blob's bytes from the page's main world, base64 encoded."""
+    expression = _BLOB_READ_SCRIPT.replace("__NOTTE_BLOB_URL__", json.dumps(blob_url))
+    value = await _main_world_evaluate(cdp, expression, await_promise=True)
+    return value if isinstance(value, str) else None
 
 
 @final
@@ -425,25 +451,29 @@ class BrowserController:
                     # Install the blob-capture hook before the click so any
                     # URL.createObjectURL call inside the click handler has
                     # its Blob retained in our side map.
-                    _ = await window.page.evaluate(_BLOB_CAPTURE_HOOK)
+                    cdp = await window.page.context.new_cdp_session(window.page)
+                    try:
+                        _ = await _main_world_evaluate(cdp, _BLOB_CAPTURE_HOOK)
 
-                    async with window.page.expect_download() as dw:
-                        await locator.click()
-                    download = await dw.value
+                        async with window.page.expect_download() as dw:
+                            await locator.click()
+                        download = await dw.value
 
-                    dl_url = download.url
-                    if dl_url.startswith("blob:"):
-                        b64 = await window.page.evaluate(_BLOB_READ_SCRIPT, dl_url)
-                        if b64 is None:
-                            raise FailedToDownloadFileError()
-                        file_bytes = base64.b64decode(b64)
-                    else:
-                        # page.request shares cookies/auth with the page, so
-                        # same-origin protected downloads work.
-                        resp = await window.page.request.get(dl_url)
-                        if resp.status >= 400:
-                            raise FailedToDownloadFileError()
-                        file_bytes = await resp.body()
+                        dl_url = download.url
+                        if dl_url.startswith("blob:"):
+                            b64 = await _read_captured_blob(cdp, dl_url)
+                            if b64 is None:
+                                raise FailedToDownloadFileError()
+                            file_bytes = base64.b64decode(b64)
+                        else:
+                            # page.request shares cookies/auth with the page, so
+                            # same-origin protected downloads work.
+                            resp = await window.page.request.get(dl_url)
+                            if resp.status >= 400:
+                                raise FailedToDownloadFileError()
+                            file_bytes = await resp.body()
+                    finally:
+                        await cdp.detach()
 
                     if not file_bytes:
                         raise FailedToDownloadFileError()
