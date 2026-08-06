@@ -801,7 +801,7 @@ class SessionStartRequest(SdkRequest):
         Field(
             description="Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).",
             gt=0,
-            le=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
+            le=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES * 2,
             validation_alias=AliasChoices(
                 "idle_timeout_minutes", "timeout_minutes"
             ),  # Accept both names for backward compatibility
