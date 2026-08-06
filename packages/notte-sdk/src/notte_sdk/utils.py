@@ -10,8 +10,35 @@ from typing import Any, final
 
 from notte_core.actions import FormFillAction
 from notte_core.common.logging import logger
+from pydantic import BaseModel
 
 from notte_sdk.endpoints.sessions import RemoteSession
+
+
+def serialize_function_run_result(result: Any) -> str:
+    """Serialize a local function return value for `function_runs.result` (text).
+
+    Pydantic models (and containers that hold them) must be stored as JSON, not
+    Python ``str()`` / ``repr()``. Plain strings are kept as-is so error messages
+    and already-serialized payloads are unchanged.
+
+    Any serialization failure falls back to ``str(result)`` so local runs still
+    persist a closed status even when a model field is not JSON-encodable.
+    """
+    if isinstance(result, str):
+        return result
+
+    def _default(obj: Any) -> Any:
+        if isinstance(obj, BaseModel):
+            return obj.model_dump(mode="json")
+        raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
+    try:
+        if isinstance(result, BaseModel):
+            return result.model_dump_json()
+        return json.dumps(result, default=_default)
+    except (TypeError, ValueError):
+        return str(result)
 
 
 @final
