@@ -46,3 +46,16 @@ def test_serialize_non_json_object_falls_back_to_str() -> None:
             return "opaque-value"
 
     assert serialize_function_run_result(_Opaque()) == "opaque-value"
+
+
+def test_serialize_model_with_unsupported_field_falls_back_to_str() -> None:
+    class _Bad:
+        def __str__(self) -> str:
+            return "bad-field"
+
+    class _Model(BaseModel):
+        model_config = {"arbitrary_types_allowed": True}
+        value: object
+
+    result = _Model(value=_Bad())
+    assert serialize_function_run_result(result) == str(result)
