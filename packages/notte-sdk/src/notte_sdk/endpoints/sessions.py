@@ -2,6 +2,7 @@ import time
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
+from types import TracebackType
 from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 from webbrowser import open as open_browser
 
@@ -674,9 +675,9 @@ class RemoteSession(SyncResource):
 
     @override
     def __exit__(  # pyright: ignore [reportMissingSuperCall]
-        self, exc_type: type[BaseException], exc_val: BaseException, exc_tb: type[BaseException] | None
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> None:
-        if exc_val is not None:  # pyright: ignore [reportUnnecessaryComparison]
+        if exc_val is not None:
             logger.warning(f"Session exiting because of exception: {exc_val}")
 
         # Clean up sync playwright resources
@@ -704,12 +705,12 @@ class RemoteSession(SyncResource):
         return self
 
     async def __aexit__(
-        self, exc_type: type[BaseException], exc_val: BaseException, exc_tb: type[BaseException] | None
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> None:
         """
         Async context manager exit point with cleanup of async playwright resources.
         """
-        if exc_val is not None:  # pyright: ignore [reportUnnecessaryComparison]
+        if exc_val is not None:
             logger.warning(f"Session exiting because of exception: {exc_val}")
 
         # Clean up async playwright resources
