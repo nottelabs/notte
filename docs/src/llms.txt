@@ -211,6 +211,30 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [GET Health Check](https://docs.notte.cc/api-reference/health/health-check.md)
 - [GET Ready Check](https://docs.notte.cc/api-reference/health/ready-check.md)
 
+## Managed-Auth
+
+- [GET Managed Auth Admin Templates List](https://docs.notte.cc/api-reference/managed-auth/managed-auth-admin-templates-list.md)
+- [POST Managed Auth Connection Check](https://docs.notte.cc/api-reference/managed-auth/managed-auth-connection-check.md)
+- [POST Managed Auth Connection Create](https://docs.notte.cc/api-reference/managed-auth/managed-auth-connection-create.md)
+- [GET Managed Auth Connection Diagnostics Get](https://docs.notte.cc/api-reference/managed-auth/managed-auth-connection-diagnostics-get.md)
+- [DELETE Managed Auth Connection Disconnect](https://docs.notte.cc/api-reference/managed-auth/managed-auth-connection-disconnect.md)
+- [GET Managed Auth Connection Function Get](https://docs.notte.cc/api-reference/managed-auth/managed-auth-connection-function-get.md)
+- [PUT Managed Auth Connection Function Update](https://docs.notte.cc/api-reference/managed-auth/managed-auth-connection-function-update.md)
+- [GET Managed Auth Connection Get](https://docs.notte.cc/api-reference/managed-auth/managed-auth-connection-get.md)
+- [POST Managed Auth Connection Profile Reset](https://docs.notte.cc/api-reference/managed-auth/managed-auth-connection-profile-reset.md)
+- [POST Managed Auth Connection Promote](https://docs.notte.cc/api-reference/managed-auth/managed-auth-connection-promote.md)
+- [POST Managed Auth Connection Reauthenticate](https://docs.notte.cc/api-reference/managed-auth/managed-auth-connection-reauthenticate.md)
+- [PATCH Managed Auth Connection Update](https://docs.notte.cc/api-reference/managed-auth/managed-auth-connection-update.md)
+- [GET Managed Auth Connections List](https://docs.notte.cc/api-reference/managed-auth/managed-auth-connections-list.md)
+- [GET Managed Auth Function Templates Get](https://docs.notte.cc/api-reference/managed-auth/managed-auth-function-templates-get.md)
+- [POST Managed Auth Template Create](https://docs.notte.cc/api-reference/managed-auth/managed-auth-template-create.md)
+- [GET Managed Auth Template Export](https://docs.notte.cc/api-reference/managed-auth/managed-auth-template-export.md)
+- [DELETE Managed Auth Template Functions Unlink](https://docs.notte.cc/api-reference/managed-auth/managed-auth-template-functions-unlink.md)
+- [POST Managed Auth Template Import](https://docs.notte.cc/api-reference/managed-auth/managed-auth-template-import.md)
+- [POST Managed Auth Template Publish](https://docs.notte.cc/api-reference/managed-auth/managed-auth-template-publish.md)
+- [PATCH Managed Auth Template Update](https://docs.notte.cc/api-reference/managed-auth/managed-auth-template-update.md)
+- [GET Managed Auth Templates List](https://docs.notte.cc/api-reference/managed-auth/managed-auth-templates-list.md)
+
 ## Personas
 
 - [GET List Personas](https://docs.notte.cc/api-reference/personas/list-personas.md)
@@ -272,6 +296,7 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 ## Storage
 
 - [GET File Download](https://docs.notte.cc/api-reference/storage/file-download.md)
+- [GET File Download Uploaded File](https://docs.notte.cc/api-reference/storage/file-download-uploaded-file.md)
 - [GET File List Downloads](https://docs.notte.cc/api-reference/storage/file-list-downloads.md)
 - [GET File List Uploads](https://docs.notte.cc/api-reference/storage/file-list-uploads.md)
 - [POST File Upload](https://docs.notte.cc/api-reference/storage/file-upload.md)
