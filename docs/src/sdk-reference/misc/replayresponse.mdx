@@ -3,21 +3,16 @@ title: "ReplayResponse"
 description: "Response containing presigned URLs for session replay"
 ---
 
-Returned by `session.replay()`, `client.sessions.replay(session_id=...)`, and
-`GET /sessions/{session_id}/replay`.
 
-Use **`mp4_url`** when you need the recording file (download, upload to your own
-storage, or share a link). Prefer `playlist_content` for HLS streaming players.
-Call `download(path)` to fetch `mp4_url` into a local file.
 
 ## Fields
 
-<ParamField path="mp4_url" type="UnionType[str, None]">
-  Presigned URL for MP4 download. Time-limited; see `expires_at`.
-</ParamField>
-
 <ParamField path="playlist_content" type="UnionType[str, None]">
   HLS playlist content with presigned segment URLs
+</ParamField>
+
+<ParamField path="mp4_url" type="UnionType[str, None]">
+  Presigned URL for MP4 download
 </ParamField>
 
 <ParamField path="expires_at" type="UnionType[str, None]">
@@ -31,6 +26,7 @@ Call `download(path)` to fetch `mp4_url` into a local file.
 <ParamField path="video_duration_ms" type="UnionType[int, None]">
   Video duration in milliseconds
 </ParamField>
+
 
 ## Module
 
