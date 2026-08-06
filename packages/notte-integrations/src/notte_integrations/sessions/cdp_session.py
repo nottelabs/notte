@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from types import TracebackType
 
 from notte_browser.playwright import PlaywrightManager
 from notte_browser.playwright_async_api import Browser
@@ -49,7 +50,7 @@ class CDPSessionManager(PlaywrightManager, ABC):
         return self.notte_session.__enter__()
 
     def __exit__(
-        self, exc_type: type[BaseException], exc_value: BaseException, traceback: type[BaseException] | None
+        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None
     ) -> None:
         if self.notte_session is None or self.session is None:
             raise ValueError("Session not created")
