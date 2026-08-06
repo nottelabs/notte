@@ -46,7 +46,7 @@ from notte_sdk.types import (
     UpdateFunctionRequestDict,
     UpdateFunctionRunResponse,
 )
-from notte_sdk.utils import LogCapture
+from notte_sdk.utils import LogCapture, serialize_function_run_result
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
@@ -842,7 +842,7 @@ class RemoteWorkflow:
             _ = self.client.update_run(
                 function_id=self.function_id,
                 run_id=function_run_id,
-                result=str(result),
+                result=serialize_function_run_result(result),
                 variables=variables,
                 status=status,
                 session_id=log_capture.session_id,
