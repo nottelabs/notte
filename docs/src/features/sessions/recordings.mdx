@@ -15,7 +15,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Notte automatically records every action in your browser sessions, allowing you to download video replays for debugging and analysis. Calling `session.replay()` returns a `ReplayResponse` containing a presigned URL for the MP4 file, which you can download with `replay.download()`.
+Notte automatically records every action in your browser sessions, allowing you to download video replays for debugging and analysis. Calling `session.replay()` (or `GET /sessions/{session_id}/replay`) returns a `ReplayResponse` with **`mp4_url`** — a presigned URL for the MP4 file. Use that URL directly, or download with `replay.download()`.
 
 ## Quick Start
 
@@ -38,6 +38,37 @@ Session recordings capture:
 ### Download as MP4
 
 <DownloadMp4 />
+
+### Replay response (`mp4_url`)
+
+The replay endpoint returns JSON. The field you usually want is `mp4_url`:
+
+| Field | Description |
+|-------|-------------|
+| `mp4_url` | Presigned URL to download the MP4 recording |
+| `playlist_content` | HLS playlist with presigned segment URLs (for streaming) |
+| `expires_at` | When the presigned URLs expire |
+| `video_start_ms` | Video start offset in milliseconds |
+| `video_duration_ms` | Video duration in milliseconds |
+
+REST example:
+
+```bash
+curl "https://api.notte.cc/sessions/{session_id}/replay" \
+  -H "Authorization: Bearer $NOTTE_API_KEY"
+```
+
+```json
+{
+  "mp4_url": "https://storage.example.com/replays/session_abc.mp4?X-Amz-Signature=...",
+  "playlist_content": "#EXTM3U\n...",
+  "expires_at": "2026-08-06T18:00:00+00:00",
+  "video_start_ms": 0,
+  "video_duration_ms": 45200
+}
+```
+
+Full API reference: <Visibility for="humans">[Session Replay](/api-reference/using-session-replay)</Visibility><Visibility for="agents">[Session Replay](/api-reference/using-session-replay.md)</Visibility>.
 
 ### Replay by Session ID
 
@@ -97,13 +128,13 @@ Remove old recordings to save disk space:
 
 Recordings are:
 - Stored on Notte's servers after the session ends
-- Accessed via presigned URLs (returned by `session.replay()`)
+- Accessed via the `mp4_url` (and optional HLS playlist) returned by `session.replay()` / `GET /sessions/{session_id}/replay`
 - **Retained for 24 hours**
-- Downloadable as MP4 via `replay.download()`
+- Downloadable as MP4 via `replay.download()` or by fetching `mp4_url`
 
 <Warning>
   Recordings are deleted after 24 hours. Download them promptly if needed for later analysis.
-  Presigned URLs also expire — check `replay.expires_at` for the expiration time.
+  Presigned URLs also expire — check `expires_at` (or `replay.expires_at` in the SDK) for the expiration time.
 </Warning>
 
 ## Next Steps
