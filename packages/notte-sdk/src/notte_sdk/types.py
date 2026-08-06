@@ -1043,6 +1043,19 @@ class ManagedAuthRunResponse(SdkResponse):
     message: str
 
 
+def _drop_duration_format(schema: dict[str, Any]) -> None:
+    """Strip the `duration` format assertion from a `timedelta` field's JSON schema.
+
+    Pydantic annotates `timedelta` as `{"type": "string", "format": "duration"}`.
+    JSON Schema defines that format as the ABNF in RFC 3339 Appendix A, whose
+    `dur-second = 1*DIGIT "S"` rule allows integer components only. We serialize
+    with sub-second precision (`PT41.286072S`), which is valid ISO 8601 but not
+    valid per that grammar, so validators that assert formats reject an otherwise
+    correct payload. The wire value is unchanged; only the format claim is dropped.
+    """
+    _ = schema.pop("format", None)
+
+
 class SessionResponse(SdkResponse):
     session_id: Annotated[
         str,
@@ -1070,9 +1083,10 @@ class SessionResponse(SdkResponse):
     created_at: Annotated[dt.datetime, Field(description="Session creation time")]
     closed_at: Annotated[dt.datetime | None, Field(description="Session closing time")] = None
     last_accessed_at: Annotated[dt.datetime, Field(description="Last access time")]
-    duration: Annotated[dt.timedelta, Field(description="Session duration")] = Field(
-        default_factory=lambda: dt.timedelta(0)
-    )
+    duration: Annotated[
+        dt.timedelta,
+        Field(description="Session duration", json_schema_extra=_drop_duration_format),
+    ] = Field(default_factory=lambda: dt.timedelta(0))
     status: Annotated[
         Literal["active", "closed", "error", "timed_out"],
         Field(description="Session status"),
