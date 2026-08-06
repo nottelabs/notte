@@ -1,4 +1,5 @@
 import datetime as dt
+import re
 from typing import Any
 
 import pytest
@@ -12,6 +13,7 @@ from notte_sdk.types import (
     AgentStatusResponse,
     ObserveResponse,
     ReplayResponse,
+    SessionResponse,
     SessionStartRequest,
 )
 from pydantic import BaseModel, ValidationError
@@ -222,3 +224,45 @@ def test_unknown_proxy_type_should_raise_error():
 def test_cdp_url_with_headless_false_should_raise_error():
     with pytest.raises(ValidationError, match=r"headless must be True.*only works with a local browser"):
         _ = SessionStartRequest.model_validate({"cdp_url": "ws://localhost:9222", "headless": False})
+
+
+# ABNF `duration` rule from RFC 3339 Appendix A, which is what JSON Schema's
+# `duration` format is defined against. Integer components only.
+RFC_3339_DURATION = re.compile(r"^P(?!$)((\d+Y)?(\d+M)?(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+S)?)?|(\d+W)?)$")
+
+
+def _session_response(duration: dt.timedelta) -> SessionResponse:
+    now = dt.datetime.now(dt.timezone.utc)
+    return SessionResponse(
+        session_id="0d5b2f2f-0f6e-4c1e-9d4b-3a1f1f0b2c3d",
+        idle_timeout_minutes=3,
+        created_at=now,
+        last_accessed_at=now,
+        status="active",
+        duration=duration,
+    )
+
+
+@pytest.mark.parametrize("mode", ["validation", "serialization"])
+def test_session_duration_schema_declares_no_format(mode: Any):
+    """`duration` must not claim a `format` its serialized value cannot satisfy.
+
+    Pydantic annotates timedelta as `format: "duration"`, but we serialize with
+    sub-second precision, which RFC 3339 Appendix A does not allow. Clients that
+    assert formats (e.g. the MCP SDKs via ajv-formats) reject the whole payload.
+    """
+    schema = SessionResponse.model_json_schema(mode=mode)["properties"]["duration"]
+    assert schema["type"] == "string"
+    assert "format" not in schema
+
+
+def test_session_duration_keeps_sub_second_precision():
+    """The wire value is unchanged: a sub-second ISO 8601 duration that round-trips."""
+    response = _session_response(dt.timedelta(seconds=41.286072))
+    serialized = response.model_dump(mode="json")["duration"]
+
+    assert serialized == "PT41.286072S"
+    # The value is deliberately outside the RFC 3339 grammar; that is why the
+    # `format` assertion is dropped rather than the precision.
+    assert RFC_3339_DURATION.match(serialized) is None
+    assert SessionResponse.model_validate_json(response.model_dump_json()).duration == response.duration
