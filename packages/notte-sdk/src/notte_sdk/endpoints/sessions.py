@@ -1199,19 +1199,7 @@ class RemoteSession(SyncResource):
     # #######################################################################
 
     @overload
-    def scrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
-
-    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
-    @overload
-    def scrape(
-        self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> dict[str, Any]: ...
-
-    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
-    @overload
-    def scrape(
-        self, *, instructions: str, raise_on_failure: Literal[False], **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> StructuredData[BaseModel]: ...
+    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...
 
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
@@ -1235,8 +1223,21 @@ class RemoteSession(SyncResource):
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
     @overload
-    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # type: ignore[reportOverlappingOverload]
+    def scrape(
+        self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> dict[str, Any]: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    def scrape(
+        self, *, instructions: str, raise_on_failure: Literal[False], **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> StructuredData[BaseModel]: ...
+
+    # markdown catch-all LAST: open Unpack[TypedDict] otherwise swallows every kwargs call under ty
+    @overload
+    def scrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
 
     def scrape(
         self, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
