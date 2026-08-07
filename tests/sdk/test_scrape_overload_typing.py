@@ -61,10 +61,7 @@ def _extract_ty_reveals(output: str) -> list[str]:
 
 def _extract_pyright_reveals(output: str) -> list[str]:
     # Type of "response_format" is "Profile"
-    return [
-        _normalize_type(m)
-        for m in re.findall(r'Type of "[^"]+" is "([^"]+)"', output)
-    ]
+    return [_normalize_type(m) for m in re.findall(r'Type of "[^"]+" is "([^"]+)"', output)]
 
 
 def _run(cmd: list[str], *, cwd: Path, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:

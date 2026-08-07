@@ -1199,7 +1199,7 @@ class RemoteSession(SyncResource):
     # #######################################################################
 
     @overload
-    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...
+    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore[reportOverlappingOverload]
 
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload

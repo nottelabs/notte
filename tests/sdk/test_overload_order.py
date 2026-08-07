@@ -150,10 +150,7 @@ def _is_risky_for_ty(group: OverloadGroup) -> bool:
 
 def test_no_broad_unpack_overload_before_specific_return_overloads() -> None:
     risky = [
-        group
-        for path in _iter_python_files()
-        for group in _collect_overload_groups(path)
-        if _is_risky_for_ty(group)
+        group for path in _iter_python_files() for group in _collect_overload_groups(path) if _is_risky_for_ty(group)
     ]
     if not risky:
         return

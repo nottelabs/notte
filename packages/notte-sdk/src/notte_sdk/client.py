@@ -127,7 +127,7 @@ class NotteClient:
 
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
-    def scrape(  # pyright: ignore [reportOverlappingOverload]
+    def scrape(
         self,
         /,
         url: str,
@@ -140,7 +140,7 @@ class NotteClient:
 
     # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
     @overload
-    def scrape(  # pyright: ignore [reportOverlappingOverload]
+    def scrape(
         self,
         /,
         url: str,
@@ -153,7 +153,7 @@ class NotteClient:
 
     # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
     @overload
-    def scrape(  # pyright: ignore [reportOverlappingOverload]
+    def scrape(
         self,
         /,
         url: str,
@@ -165,7 +165,7 @@ class NotteClient:
 
     # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
     @overload
-    def scrape(  # pyright: ignore [reportOverlappingOverload]
+    def scrape(
         self,
         /,
         url: str,

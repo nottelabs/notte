@@ -7,12 +7,11 @@ from __future__ import annotations
 
 from typing import reveal_type
 
-from pydantic import BaseModel
-
 from notte_browser.session import NotteSession
 from notte_sdk import NotteClient
 from notte_sdk.endpoints.page import PageClient
 from notte_sdk.endpoints.sessions import RemoteSession
+from pydantic import BaseModel
 
 
 class Profile(BaseModel):

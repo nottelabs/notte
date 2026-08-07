@@ -109,7 +109,7 @@ extend-select = ["I"]
 "docs/src/testers/**/*.py" = ["F821", "F841"]
 
 [tool.basedpyright]
-exclude = [".venv", "uv-cache", "**/site-packages/**", "**/dist-packages/**", "tests", "old", "notebook", "dist", ".github"]
+exclude = [".venv", "uv-cache", "**/site-packages/**", "**/dist-packages/**", "tests", "typing_cases", "old", "notebook", "dist", ".github"]
 enableTypeIgnoreComments = true
 reportIgnoreCommentWithoutRule = false
 failOnWarnings = true
