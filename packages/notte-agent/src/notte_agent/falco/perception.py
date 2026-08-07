@@ -103,10 +103,13 @@ Data scraped from current page view:
         include_data: bool = True,
     ) -> str:
         id_str = f" with id={result.action.id}" if include_ids and isinstance(result.action, InteractionAction) else ""
+        url_str = f" (on {result.url})" if result.url else ""
         if not result.success:
             err_msg = trim_message(result.message)
-            return f"❌ action '{result.action.name()}'{id_str} failed with error: {err_msg}"
-        success_msg = f"✅ action '{result.action.name()}'{id_str} succeeded: '{result.action.execution_message()}'"
+            return f"❌ action '{result.action.name()}'{id_str} failed{url_str}: {err_msg}"
+        success_msg = (
+            f"✅ action '{result.action.name()}'{id_str} succeeded{url_str}: '{result.action.execution_message()}'"
+        )
         if include_data:
             return f"{success_msg}{self.perceive_data(result.data, only_structured=True)}"
         return success_msg

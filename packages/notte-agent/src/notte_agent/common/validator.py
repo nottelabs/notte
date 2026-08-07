@@ -17,6 +17,11 @@ If the task is unclear defined, you can let it pass.
 But if something is missing or the image does not show what was requested dont let it pass.
 Try to understand the page and help the model with suggestions like scroll, do x, ... to get the solution right.
 
+IMPORTANT: The agent navigates through multiple pages. Actions in the history were executed
+on previous pages (check the URL in each action). The current page observation shows the
+RESULT of navigation, not where actions were performed. Element IDs (L1, L2, etc.) reset
+on each page - do not assume IDs in action history match current page elements.
+
 Task to validate: {{task}}.
 
 Return a JSON object with 2 keys: `is_valid` and `reason`:

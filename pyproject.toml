@@ -81,6 +81,9 @@ timeout_method = "thread"
 asyncio_mode = "strict"
 log_cli = true
 log_cli_level = "INFO"
+markers = [
+    "integration: marks tests as integration tests (requires browser, LLM, network access)",
+]
 filterwarnings = [
     "ignore::DeprecationWarning:sklearn.utils.fixes:",
     "ignore::DeprecationWarning:pandas.core.common:",
