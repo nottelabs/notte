@@ -67,6 +67,7 @@ dev = [
     "sphinx>=8.2.3",
     "sphinx-mintlify>=0.1.0",
     "twine>=6.1.0",
+    "ty>=0.0.69",
     "typer>=0.19.2",
 ]
 lint = [
@@ -108,7 +109,7 @@ extend-select = ["I"]
 "docs/src/testers/**/*.py" = ["F821", "F841"]
 
 [tool.basedpyright]
-exclude = [".venv", "uv-cache", "**/site-packages/**", "**/dist-packages/**", "tests", "old", "notebook", "dist", ".github"]
+exclude = [".venv", "uv-cache", "**/site-packages/**", "**/dist-packages/**", "tests", "typing_cases", "old", "notebook", "dist", ".github"]
 enableTypeIgnoreComments = true
 reportIgnoreCommentWithoutRule = false
 failOnWarnings = true

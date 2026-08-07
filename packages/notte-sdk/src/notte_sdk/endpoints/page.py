@@ -106,33 +106,6 @@ class PageClient(BaseClient):
         return NotteEndpoint(path=path, response=ExecutionResultResponse, method="POST")
 
     @overload
-    def scrape(
-        self, session_id: str, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> str: ...
-
-    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
-    @overload
-    def scrape(
-        self,
-        session_id: str,
-        *,
-        instructions: str,
-        raise_on_failure: Literal[True] = ...,
-        **params: Unpack[ScrapeMarkdownParamsDict],
-    ) -> dict[str, Any]: ...
-
-    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
-    @overload
-    def scrape(
-        self,
-        session_id: str,
-        *,
-        instructions: str,
-        raise_on_failure: Literal[False],
-        **params: Unpack[ScrapeMarkdownParamsDict],
-    ) -> StructuredData[BaseModel]: ...
-
-    @overload
     def scrape(  # pyright: ignore[reportOverlappingOverload]
         self, session_id: str, /, *, only_images: Literal[True], raise_on_failure: bool = True
     ) -> list[ImageData]: ...
@@ -160,6 +133,34 @@ class PageClient(BaseClient):
         raise_on_failure: Literal[False],
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
+
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
+    @overload
+    def scrape(
+        self,
+        session_id: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> dict[str, Any]: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    def scrape(
+        self,
+        session_id: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[BaseModel]: ...
+
+    # markdown catch-all LAST: open Unpack[TypedDict] otherwise swallows every kwargs call under ty
+    @overload
+    def scrape(
+        self, session_id: str, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> str: ...
 
     @track_usage("cloud.session.scrape")
     def scrape(

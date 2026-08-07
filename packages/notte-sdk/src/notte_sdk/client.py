@@ -123,37 +123,11 @@ class NotteClient:
         return self.sessions.health_check()
 
     @overload
-    def scrape(
-        self, /, url: str, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> str: ...
-
-    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
-    @overload
-    def scrape(  # pyright: ignore [reportOverlappingOverload]
-        self,
-        /,
-        url: str,
-        *,
-        instructions: str,
-        raise_on_failure: Literal[True] = ...,
-        **params: Unpack[ScrapeMarkdownParamsDict],
-    ) -> dict[str, Any]: ...
-
-    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
-    @overload
-    def scrape(  # pyright: ignore [reportOverlappingOverload]
-        self,
-        /,
-        url: str,
-        *,
-        instructions: str,
-        raise_on_failure: Literal[False],
-        **params: Unpack[ScrapeMarkdownParamsDict],
-    ) -> StructuredData[BaseModel]: ...
+    def scrape(self, /, url: str, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
 
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
-    def scrape(  # pyright: ignore [reportOverlappingOverload]
+    def scrape(
         self,
         /,
         url: str,
@@ -166,7 +140,7 @@ class NotteClient:
 
     # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
     @overload
-    def scrape(  # pyright: ignore [reportOverlappingOverload]
+    def scrape(
         self,
         /,
         url: str,
@@ -177,8 +151,35 @@ class NotteClient:
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
     @overload
-    def scrape(self, /, url: str, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
+    def scrape(
+        self,
+        /,
+        url: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> dict[str, Any]: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    def scrape(
+        self,
+        /,
+        url: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[BaseModel]: ...
+
+    # markdown catch-all LAST: open Unpack[TypedDict] otherwise swallows every kwargs call under ty
+    @overload
+    def scrape(
+        self, /, url: str, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> str: ...
 
     def scrape(
         self, /, url: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]

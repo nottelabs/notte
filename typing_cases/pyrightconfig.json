@@ -1,0 +1,14 @@
+{
+  "include": ["."],
+  "extraPaths": [
+    "../packages/notte-sdk/src",
+    "../packages/notte-core/src",
+    "../packages/notte-browser/src",
+    "../packages/notte-agent/src",
+    "../packages/notte-llm/src"
+  ],
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "basic",
+  "reportUnusedVariable": "none",
+  "reportUnusedImport": "none"
+}
