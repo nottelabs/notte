@@ -55,7 +55,7 @@ def is_valid_url(url: str, check_reachability: bool = True) -> bool:
         if not check_reachability:
             return True
         # Send a HEAD request to the URL
-        response = requests.head(url, allow_redirects=True)
+        response = requests.head(url, allow_redirects=True, timeout=10)
         return response.status_code < 400  # Valid if status code is less than 400
     except requests.RequestException:
         return False
