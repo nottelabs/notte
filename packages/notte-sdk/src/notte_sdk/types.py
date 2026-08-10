@@ -781,7 +781,6 @@ class SessionStartRequestDict(TypedDict, total=False):
     vault_id: str | None
     auth_ids: list[str]
     wait_for_authentication: bool
-    mailbox_id: str | None
 
 
 class SessionStartRequest(SdkRequest):
@@ -875,7 +874,6 @@ class SessionStartRequest(SdkRequest):
             )
         ),
     ] = True
-    mailbox_id: Annotated[str | None, Field(description="Workspace mailbox connection to bind to the session")] = None
 
     @model_validator(mode="before")
     @classmethod

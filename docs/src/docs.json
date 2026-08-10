@@ -246,7 +246,8 @@
                       "sdk-reference/misc/scrapeaction",
                       "sdk-reference/misc/captchasolveaction",
                       "sdk-reference/misc/smsreadaction",
-                      "sdk-reference/misc/emailreadaction"
+                      "sdk-reference/misc/emailreadaction",
+                      "sdk-reference/misc/emailverificationreadaction"
                     ]
                   },
                   {

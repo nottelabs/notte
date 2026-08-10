@@ -361,6 +361,7 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [CaptchaSolveAction](https://docs.notte.cc/sdk-reference/misc/captchasolveaction.md): Solve a CAPTCHA challenge on the current page
 - [SmsReadAction](https://docs.notte.cc/sdk-reference/misc/smsreadaction.md): Read sms messages received recently
 - [EmailReadAction](https://docs.notte.cc/sdk-reference/misc/emailreadaction.md): Read recent emails from the mailbox
+- [EmailVerificationReadAction](https://docs.notte.cc/sdk-reference/misc/emailverificationreadaction.md): Read a recent verification code or link from a workspace mailbox
 
 ### Agent
 

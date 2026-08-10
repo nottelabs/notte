@@ -216,6 +216,7 @@ class EmailReadActionDict(TypedDict, total=False):
 
 class EmailVerificationReadActionDict(TypedDict, total=False):
     type: Required[Literal["email_verification_read"]]
+    mailbox_id: Required[str]
     sender_domain: Required[str]
     max_age_seconds: NotRequired[int]
 
