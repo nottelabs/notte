@@ -1,5 +1,7 @@
+import os
 from unittest.mock import Mock, patch
 
+import notte_core.common.config as notte_config
 import pytest
 from litellm import Message
 from notte_core.errors.base import ErrorConfig
@@ -41,6 +43,35 @@ async def test_completion_error(llm_engine: LLMEngine) -> None:
                 _ = await llm_engine.completion(messages=messages, model=model)
 
             assert "API Error" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+async def test_completion_with_orcarouter(llm_engine: LLMEngine) -> None:
+    """Completion routes through OrcaRouter when ENABLE_ORCAROUTER=true.
+
+    The model id is prefixed with ``openai/`` so litellm uses its
+    OpenAI-compatible path, and the OrcaRouter base URL + API key are forwarded.
+    """
+    messages = [
+        Message(role="user", content="Hello"),
+    ]
+    model = "gemini/gemini-2.5-flash"
+
+    mock_response = Mock()
+    mock_response.choices = [Mock(message=Mock(content="Hello there!"))]
+
+    with patch.dict(os.environ, {"ENABLE_ORCAROUTER": "true", "ORCAROUTER_API_KEY": "sk-orca-test"}):
+        notte_config._enable_orcarouter = None  # Reset cached value
+        with patch("litellm.acompletion", return_value=mock_response) as mock_acompletion:
+            response = await llm_engine.completion(messages=messages, model=model)
+        notte_config._enable_orcarouter = None  # Reset cached value
+
+        call_args = mock_acompletion.call_args
+        assert call_args.args[0] == "openai/google/gemini-2.5-flash"
+        assert call_args.kwargs["base_url"] == "https://api.orcarouter.ai/v1"
+        assert call_args.kwargs["api_key"] == "sk-orca-test"
+        assert response == mock_response
+        assert response.choices[0].message.content == "Hello there!"
 
 
 class TestStructuredContent:

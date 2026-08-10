@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -23,7 +24,13 @@ from litellm.exceptions import (
     ContextWindowExceededError as LiteLLMContextWindowExceededError,
 )
 from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTypeStubs]
-from notte_core.common.config import LlmModel, config, enable_openrouter
+from notte_core.common.config import (
+    ORCAROUTER_BASE_URL,
+    LlmModel,
+    config,
+    enable_openrouter,
+    enable_orcarouter,
+)
 from notte_core.common.logging import logger
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.llm import LLmModelOverloadedError, LLMParsingError
@@ -180,6 +187,11 @@ def is_anthropic_model(model: str) -> bool:
 def is_openrouter_model(model: str) -> bool:
     """Check if the model is routed through OpenRouter."""
     return model.lower().startswith("openrouter/")
+
+
+def is_orcarouter_model(model: str) -> bool:
+    """Check if the model is routed through OrcaRouter."""
+    return model.lower().startswith("orcarouter/") or enable_orcarouter()
 
 
 def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
@@ -369,12 +381,18 @@ class LLMEngine:
         litellm_response_format: dict[str, Any] | type[BaseModel] = dict(type="json_object")
         if use_strict_response_format:
             raw_schema = response_format.model_json_schema()
+            is_routed_via_openrouter = is_openrouter_model(effective_model) or enable_openrouter()
+            is_routed_via_orcarouter = is_orcarouter_model(effective_model) or enable_orcarouter()
+            # OrcaRouter exposes an OpenAI-compatible endpoint, so the OpenAI
+            # json_schema wrapper is used for every upstream it routes to
+            # (OpenAI, Anthropic, Google, DeepSeek, ...).
+            if is_routed_via_orcarouter:
+                litellm_response_format = fix_schema_for_openai(raw_schema)
             # For Anthropic models via OpenRouter, use non-strict json_object format
             # OpenRouter routes to various backends with incompatible schema support:
             # - Bedrock doesn't support oneOf at all
             # - Anthropic direct limits anyOf to 16 parameters
-            is_routed_via_openrouter = is_openrouter_model(effective_model) or enable_openrouter()
-            if is_routed_via_openrouter and is_anthropic_model(effective_model):
+            elif is_routed_via_openrouter and is_anthropic_model(effective_model):
                 litellm_response_format = dict(type="json_object")
                 use_strict_response_format = False
             # For OpenRouter-prefixed models, use OpenAI schema format
@@ -527,6 +545,11 @@ class LLMEngine:
 
     def _get_model(self, model: str | None) -> str:
         model = model or self.model
+        if enable_orcarouter():
+            # litellm has no native orcarouter/ route; use its OpenAI-compatible
+            # path. The openai/ prefix is stripped by litellm and the full
+            # (namespaced) model id is forwarded to ORCAROUTER_BASE_URL.
+            return f"openai/{LlmModel.get_orcarouter_model(model)}"
         if enable_openrouter():
             return LlmModel.get_openrouter_model(model)
         return model
@@ -558,6 +581,12 @@ class LLMEngine:
         model = self._get_model(model)
         # Apply model-specific temperature overrides
         temperature = LlmModel.get_temperature(model, temperature)
+        completion_kwargs: dict[str, Any] = {}
+        if enable_orcarouter():
+            completion_kwargs["base_url"] = ORCAROUTER_BASE_URL
+            orcarouter_api_key = os.environ.get("ORCAROUTER_API_KEY")
+            if orcarouter_api_key:
+                completion_kwargs["api_key"] = orcarouter_api_key
         try:
             response = await litellm.acompletion(  # pyright: ignore [reportUnknownMemberType]
                 model,
@@ -572,6 +601,7 @@ class LLMEngine:
                 # indefinitely. Without this, httpx has no read timeout and silent server
                 # stalls hang the whole agent run.
                 timeout=60,
+                **completion_kwargs,
             )
             # Cast to ModelResponse since we know it's not streaming in this case
             return cast(ModelResponse, response)

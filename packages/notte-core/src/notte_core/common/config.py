@@ -17,6 +17,9 @@ if not DEFAULT_CONFIG_PATH.exists():
 
 ScreenshotType = Literal["raw", "full", "last_action"]
 _enable_openrouter: bool | None = None
+_enable_orcarouter: bool | None = None
+
+ORCAROUTER_BASE_URL = "https://api.orcarouter.ai/v1"
 
 
 def enable_openrouter() -> bool:
@@ -25,6 +28,14 @@ def enable_openrouter() -> bool:
         return _enable_openrouter
     _enable_openrouter = os.environ.get("ENABLE_OPENROUTER", "false").lower() in ("true", "1", "yes")
     return _enable_openrouter
+
+
+def enable_orcarouter() -> bool:
+    global _enable_orcarouter
+    if _enable_orcarouter is not None:
+        return _enable_orcarouter
+    _enable_orcarouter = os.environ.get("ENABLE_ORCAROUTER", "false").lower() in ("true", "1", "yes")
+    return _enable_orcarouter
 
 
 class CookieDict(TypedDict, total=False):
@@ -59,6 +70,7 @@ class LlmProvider(StrEnum):
     gemini = "gemini"
     vertex_ai = "vertex_ai"
     openrouter = "openrouter"
+    orcarouter = "orcarouter"
     cerebras = "cerebras"
     groq = "groq"
     perplexity = "perplexity"
@@ -86,6 +98,8 @@ class LlmProvider(StrEnum):
 
     @property
     def apikey_name(self) -> str:
+        if enable_orcarouter():
+            return "ORCAROUTER_API_KEY"
         if enable_openrouter():
             return "OPENROUTER_API_KEY"
         match self:
@@ -103,6 +117,8 @@ class LlmProvider(StrEnum):
                 return "CEREBRAS_API_KEY"
             case LlmProvider.openrouter:
                 return "OPENROUTER_API_KEY"
+            case LlmProvider.orcarouter:
+                return "ORCAROUTER_API_KEY"
             case LlmProvider.deepseek:
                 return "DEEPSEEK_API_KEY"
             case LlmProvider.ollama:
@@ -144,6 +160,10 @@ class LlmModel(StrEnum):
     kimi2_5 = "moonshot/kimi-k2.5"
     grok = "xai/grok-4-1-fast-non-reasoning"
     minimax = "minimax/minimax-m2.5"
+    # Auto-routing OrcaRouter model. Prefer a fixed model (e.g. openai/gpt-4o)
+    # when using strict structured output, as orcarouter/auto does not
+    # guarantee json_schema compliance across all upstreams.
+    orcarouter = "orcarouter/auto"
 
     @property
     def provider(self) -> LlmProvider:
@@ -206,6 +226,55 @@ class LlmModel(StrEnum):
             _model = _model.replace("zai/", "z-ai/")
 
         return f"openrouter/{_model}"
+
+    @staticmethod
+    def get_orcarouter_model(model: str) -> str:
+        """Map a Notte model id to its OrcaRouter equivalent.
+
+        OrcaRouter exposes the upstream ``namespace/model`` ids directly
+        (``google/...``, ``anthropic/...``, ``orcarouter/...``), so Notte's
+        internal provider prefixes are rewritten when ENABLE_ORCAROUTER=true.
+        """
+        if model.startswith("orcarouter/"):
+            return model
+
+        _model = model.removeprefix("openrouter/")
+
+        # OrcaRouter does not serve every Notte provider family; map the
+        # missing ones to their closest available equivalent.
+        if "/gpt-oss-120b" in _model:
+            _model = "openai/gpt-5-mini"
+        if "/gemma-3-27b-it" in _model:
+            _model = "google/gemma-4-31b-it"
+        if "/deepseek-r1" in _model:
+            _model = "deepseek/deepseek-reasoner"
+        if "/claude-sonnet-4-5" in _model:
+            _model = "anthropic/claude-sonnet-4.5"
+        if "/llama-3.3-70b-instruct" in _model:
+            _model = "openai/gpt-4o"
+        if "/sonar-pro" in _model:
+            _model = "openai/gpt-4o"
+        if "/grok-4-1-fast-non-reasoning" in _model:
+            _model = "grok/grok-4.3"
+
+        if "vertex_ai/" in _model:
+            _model = _model.replace("vertex_ai", "google")
+        if "gemini/" in _model:
+            _model = _model.replace("gemini/", "google/")
+        if "zai/" in _model:
+            _model = _model.replace("zai/", "z-ai/")
+        if "moonshot/" in _model:
+            _model = _model.replace("moonshot/", "kimi/")
+        if "perplexity/" in _model:
+            _model = _model.replace("perplexity/", "openai/")
+        if "cerebras/" in _model:
+            _model = _model.replace("cerebras/", "openai/")
+        if "groq/" in _model:
+            _model = _model.replace("groq/", "openai/")
+        if "together_ai/" in _model:
+            _model = _model.replace("together_ai/", "openai/")
+
+        return _model
 
     @property
     def context_length(self) -> int:
