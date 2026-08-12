@@ -8,6 +8,7 @@ from collections.abc import Awaitable
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any, Callable, ClassVar, Literal, Self
+from urllib.parse import urlsplit
 
 import httpx
 from notte_core.browser.dom_tree import A11yNode, A11yTree, DomNode
@@ -35,6 +36,7 @@ from typing_extensions import override
 
 from notte_browser.dom.parsing import dom_tree_parsers
 from notte_browser.errors import (
+    AkamaiSoftDenyExhaustedError,
     BrowserExpiredError,
     EmptyPageContentError,
     InvalidLocatorRuntimeError,
@@ -46,6 +48,7 @@ from notte_browser.errors import (
     RemoteDebuggingNotAvailableError,
     UnexpectedBrowserError,
 )
+from notte_browser.navigation_recovery import AKAMAI_SOFT_DENY_RECOVERY_POLICY, is_akamai_soft_deny
 from notte_browser.playwright_async_api import CDPSession, Locator, Page, Response
 
 
@@ -589,24 +592,22 @@ class BrowserWindow(BaseModel):
         def is_default_page():
             return self.page.url == "about:blank" and not url == "about:blank"
 
-        def on_response(resp: Response) -> None:
-            """Store the response so its available for exception handling."""
-            self.goto_response = resp
-
         while True:
             self.goto_response = None
-            self.page.once("response", on_response)
             tries -= 1
 
             try:
+                response: Response | None
                 match operation:
                     case None:
                         assert url is not None, "URL is required for goto"
-                        _ = await self.page.goto(url, timeout=config.timeout_goto_ms)
+                        response = await self.page.goto(url, timeout=config.timeout_goto_ms)
                     case "back":
-                        _ = await self.page.go_back(timeout=config.timeout_goto_ms)
+                        response = await self.page.go_back(timeout=config.timeout_goto_ms)
                     case "forward":
-                        _ = await self.page.go_forward(timeout=config.timeout_goto_ms)
+                        response = await self.page.go_forward(timeout=config.timeout_goto_ms)
+                if response is not None:
+                    self.goto_response = response
                 if self.goto_response is not None:
                     logger.info(
                         f"Goto for {url=} succeeded with HTTP {self.goto_response.status}: {self.goto_response.status_text}"
@@ -631,6 +632,9 @@ class BrowserWindow(BaseModel):
             # to make extra element visible
             await self.short_wait()
 
+            if operation is None and url is not None:
+                self.goto_response = await self._recover_akamai_soft_deny(url, self.goto_response)
+
             if not is_default_page() or tries < 0:
                 break
 
@@ -638,8 +642,6 @@ class BrowserWindow(BaseModel):
             raise PageLoadingError(url=url or self.page.url)
 
     async def goto(self, url: str, tries: int = 3) -> None:
-        if url == self.page.url:
-            return
         prefixes = ("http://", "https://")
 
         if not any(url.startswith(prefix) for prefix in prefixes):
@@ -649,7 +651,73 @@ class BrowserWindow(BaseModel):
         if not is_valid_url(url, check_reachability=False):
             raise InvalidURLError(url=url)
 
+        if url == self.page.url and not await self._is_akamai_soft_deny(self.goto_response):
+            return
+
         await self.goto_and_wait(url=url, tries=tries, operation=None)
+
+    async def _is_akamai_soft_deny(self, response: Response | None) -> bool:
+        if not AKAMAI_SOFT_DENY_RECOVERY_POLICY.enabled or response is None:
+            return False
+
+        try:
+            body = await response.text()
+        except Exception:
+            # Detection is intentionally fail-open: an unreadable response must retain
+            # the existing navigation behavior instead of becoming a false soft deny.
+            logger.debug("Unable to read a 403 response body while checking for an Akamai soft deny")
+            return False
+
+        return is_akamai_soft_deny(status=response.status, headers=response.headers, body=body)
+
+    async def _recover_akamai_soft_deny(self, url: str, response: Response | None) -> Response | None:
+        if not await self._is_akamai_soft_deny(response):
+            return response
+
+        hostname = urlsplit(url).hostname or "unknown"
+        started_at = time.monotonic()
+        logger.warning(f"Akamai soft deny detected for host={hostname}; starting transparent recovery")
+
+        for reload_number in range(1, AKAMAI_SOFT_DENY_RECOVERY_POLICY.max_reloads + 1):
+            wait_message = (
+                f"Waiting for Akamai browser telemetry before reload host={hostname} reload={reload_number}/"
+                + f"{AKAMAI_SOFT_DENY_RECOVERY_POLICY.max_reloads}"
+            )
+            logger.info(wait_message)
+            await self.page.wait_for_timeout(AKAMAI_SOFT_DENY_RECOVERY_POLICY.settle_ms)
+
+            try:
+                response = await self.page.reload(timeout=config.timeout_goto_ms)
+            except PlaywrightTimeoutError as exc:
+                raise PageLoadingError(url=url) from exc
+
+            if response is None:
+                raise PageLoadingError(url=url)
+
+            self.goto_response = response
+            if not await self._is_akamai_soft_deny(response):
+                elapsed_ms = round((time.monotonic() - started_at) * 1000)
+                if response.status < HTTPStatus.BAD_REQUEST:
+                    recovered_message = (
+                        f"Akamai soft deny recovered host={hostname} reloads={reload_number} status={response.status} "
+                        + f"elapsed_ms={elapsed_ms}"
+                    )
+                    logger.info(recovered_message)
+                else:
+                    stopped_message = (
+                        f"Akamai soft deny recovery stopped on a different response host={hostname} "
+                        + f"reloads={reload_number} status={response.status} elapsed_ms={elapsed_ms}"
+                    )
+                    logger.warning(stopped_message)
+                return response
+
+        elapsed_ms = round((time.monotonic() - started_at) * 1000)
+        exhausted_message = (
+            f"Akamai soft deny recovery exhausted host={hostname} "
+            + f"reloads={AKAMAI_SOFT_DENY_RECOVERY_POLICY.max_reloads} elapsed_ms={elapsed_ms}"
+        )
+        logger.warning(exhausted_message)
+        raise AkamaiSoftDenyExhaustedError(url=url, reloads=AKAMAI_SOFT_DENY_RECOVERY_POLICY.max_reloads)
 
     async def set_cookies(self, cookies: list[CookieDict] | None = None, cookie_path: str | Path | None = None) -> None:
         if cookies is None and cookie_path is not None:

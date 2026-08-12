@@ -2,6 +2,7 @@ import traceback
 from collections.abc import Awaitable
 from functools import wraps
 from typing import Any, Callable, TypeVar
+from urllib.parse import urlsplit
 
 from notte_core.actions import ToolAction
 from notte_core.common.config import config
@@ -37,6 +38,24 @@ class PageLoadingError(BrowserError):
             agent_message=(
                 f"Failed to load page from {url}. Hint: check if the URL is valid and reachable and wait a couple"
                 " seconds before retrying. Otherwise, try another URL."
+            ),
+            should_retry_later=True,
+        )
+
+
+class AkamaiSoftDenyExhaustedError(BrowserError):
+    def __init__(self, url: str, reloads: int) -> None:
+        hostname = urlsplit(url).hostname or "the target website"
+        super().__init__(
+            dev_message=(
+                f"Akamai continued to deny navigation to {hostname} after {reloads} internal reloads. "
+                "The browser completed the available soft-deny recovery attempts."
+            ),
+            user_message=(
+                f"The website at {hostname} temporarily denied access after the browser retried its verification."
+            ),
+            agent_message=(
+                f"Akamai is still denying access to {hostname}. Wait before retrying or use another proxy configuration."
             ),
             should_retry_later=True,
         )
