@@ -884,6 +884,41 @@ class EmailReadAction(ToolAction):
         return ActionParameter(name="timedelta", type="datetime")
 
 
+class EmailVerificationReadAction(ToolAction):
+    """
+    Read a recent verification code or link from a workspace mailbox.
+
+    **Example:**
+    ```python
+    session.execute(type="email_verification_read", mailbox_id="mbx_123", sender_domain="example.com")
+    ```
+    """
+
+    type: Literal["email_verification_read"] = "email_verification_read"  # pyright: ignore [reportIncompatibleVariableOverride]
+    description: str = "Read a recent verification code or link from an approved sender domain."
+    mailbox_id: Annotated[
+        str, Field(description="Workspace mailbox connection to read the verification email from", min_length=1)
+    ]
+    sender_domain: Annotated[str, Field(description="Sender domain to search, such as example.com", min_length=1)]
+    max_age_seconds: Annotated[
+        int, Field(description="Maximum age of the verification email in seconds", ge=30, le=900)
+    ] = 300
+
+    @override
+    def execution_message(self) -> str:
+        return f"Successfully read email verification from {self.sender_domain}"
+
+    @override
+    @staticmethod
+    def example() -> "EmailVerificationReadAction":
+        return EmailVerificationReadAction(mailbox_id="mbx_123", sender_domain="example.com")
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="sender_domain", type="str")
+
+
 class SmsReadAction(ToolAction):
     """
     Read sms messages received recently.
