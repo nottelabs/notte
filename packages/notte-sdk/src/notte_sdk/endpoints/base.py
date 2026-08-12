@@ -122,7 +122,7 @@ class BaseClient(ABC):
         self.server_url: str = server_url or os.getenv("NOTTE_API_URL") or self.DEFAULT_NOTTE_API_URL
         self.base_endpoint_path: str | None = base_endpoint_path
         self.verbose: bool = verbose
-        self.db_preview = (os.getenv("NOTTE_DB_PREVIEW") or "").strip() or None
+        self.db_preview = (os.getenv("NOTTE_DB_PREVIEW_BRANCH") or "").strip() or None
 
         # Check for version mismatch and warn user if needed
         self.check_and_warn_version_mismatch()
@@ -316,8 +316,8 @@ class BaseClient(ABC):
         which is formatted as a Bearer token using the API key stored in self.token.
         Also includes headers to identify the request as coming from the SDK.
         """
-        # Internal: when NOTTE_DB_PREVIEW names a branch, forward it so the API
-        # serves the request from that branch's database. Only meaningful
+        # Internal: when NOTTE_DB_PREVIEW_BRANCH names a branch, forward it so the
+        # API serves the request from that branch's database. Only meaningful
         # against our own non-production deployments, which is why it is not
         # part of the documented interface.
         preview = {"x-db-preview": self.db_preview} if self.db_preview else {}
@@ -335,6 +335,10 @@ class BaseClient(ABC):
         A WebSocket handshake carries no request headers when it is opened from
         a browser, so the branch travels in the query string instead. Returns
         the URL unchanged when no branch is configured.
+
+        Only pass urls served by this API. A session can be backed by a
+        third-party browser provider, and handing that provider an internal
+        branch name is both meaningless to it and more than it needs to know.
         """
         if not self.db_preview:
             return url

@@ -538,7 +538,9 @@ class SessionsClient(BaseClient):
         Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook.
         """
         debug_info = self.debug_info(session_id=session_id)
-        return WebsocketService(wss_url=debug_info.ws.recording, process=display_image_in_notebook)
+        return WebsocketService(
+            wss_url=self._with_db_preview(debug_info.ws.recording), process=display_image_in_notebook
+        )
 
     @track_usage("cloud.session.viewer.cdp")
     def viewer_cdp(self, session_id: str) -> None:
@@ -1076,13 +1078,17 @@ class RemoteSession(SyncResource):
         if self.response is None:
             raise ValueError("You need to start the session first to get the cdp url")
         if self.request.cdp_url is not None:
-            # cdp url from another session provider
+            # cdp url from another session provider. It is handed to us by the
+            # caller and served by someone else, so it gets no preview selector.
             return self.request.cdp_url
+        # The remaining urls are websocket endpoints on our own API, which reads
+        # the preview branch from the query string. Without it the handshake is
+        # served from the default database and rejects a preview-branch session.
         if self.response.cdp_url is not None:
-            return self.response.cdp_url
+            return self.client._with_db_preview(self.response.cdp_url)  # pyright: ignore [reportPrivateUsage]
         # cdp url from the session provider
         debug = self.debug_info()
-        return debug.ws.cdp
+        return self.client._with_db_preview(debug.ws.cdp)  # pyright: ignore [reportPrivateUsage]
 
     @property
     def page(self) -> "PageSync":
