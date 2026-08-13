@@ -1038,11 +1038,11 @@ class NotteSession(AsyncResource, SyncResource):
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
-    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
     @overload
     async def ascrape(
         self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> BaseModel: ...
+    ) -> dict[str, Any]: ...
 
     # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
     @overload
@@ -1058,7 +1058,7 @@ class NotteSession(AsyncResource, SyncResource):
     @track_usage("local.session.scrape")
     async def ascrape(
         self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
-    ) -> StructuredData[BaseModel] | BaseModel | str | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
         # Extract and convert response_format for the action (store as JSON schema)
         response_format = params.get("response_format")
         instructions = params.get("instructions")

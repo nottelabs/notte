@@ -32,10 +32,11 @@ def scrape_logo_url(url: str) -> str | None:
             # Do not raise on failure, we want to handle the case where no logo is found
             raise_on_failure=False,
         )
-        if data.success:
+        logo = data.get() if data.success else None
+        if isinstance(logo, Logo):
             # Case 1: structured output worked
-            logger.info(f"Logo found for {url}: {data.get().get_url(url)}")
-            return data.get().get_url(url)
+            logger.info(f"Logo found for {url}: {logo.get_url(url)}")
+            return logo.get_url(url)
         images = session.scrape(only_images=True)
         for image in images:
             # Case 2: there is a logo image in data.images

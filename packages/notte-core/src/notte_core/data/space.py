@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, Any, Generic, Self, TypeVar
+from typing import Annotated, Any, Generic, Self, TypeVar, cast
 
 import requests
 from pydantic import BaseModel, Field, RootModel, model_serializer, model_validator
@@ -91,13 +91,22 @@ class StructuredData(BaseModel, Generic[TBaseModel]):
             result["data"] = self.data
         return result
 
-    def get(self) -> TBaseModel:
-        """Get the extracted data, raising ScrapeFailedError if extraction failed."""
+    def get(self) -> TBaseModel | dict[str, Any]:
+        """Get the extracted data, raising ScrapeFailedError if extraction failed.
+
+        Returns the validated model when the data was extracted against a user-provided
+        schema. When no schema was provided the payload is stored as a `DictBaseModel`
+        (i.e. `RootModel`) wrapper and this returns the unwrapped plain JSON object, which
+        is *not* a `BaseModel`. Callers must handle both shapes, e.g. by guarding with
+        `isinstance(data, BaseModel)` before calling `model_dump()`.
+        """
         if not self.success or self.data is None:
             raise ScrapeFailedError(self.error or "Unknown extraction error")
-        if isinstance(self.data, RootModel):
-            return self.data.root  # type: ignore[attr-defined]
-        return self.data
+        # local alias: keeps the narrowed type checkable instead of `RootModel[Unknown]`
+        data: TBaseModel | DictBaseModel = self.data
+        if isinstance(data, RootModel):
+            return cast(dict[str, Any], data.root)
+        return data
 
 
 class DataSpace(BaseModel):

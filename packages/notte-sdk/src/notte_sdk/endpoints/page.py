@@ -208,7 +208,7 @@ class PageClient(BaseClient):
                 # Validate against response_format if provided
                 if request.response_format is not None:
                     extracted_data_dict = (
-                        extracted_data.model_dump() if isinstance(extracted_data, BaseModel) else extracted_data  # pyright: ignore[reportUnnecessaryIsInstance]
+                        extracted_data.model_dump() if isinstance(extracted_data, BaseModel) else extracted_data
                     )
                     extracted_data = request.response_format.model_validate(extracted_data_dict)
                 return extracted_data
