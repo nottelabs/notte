@@ -1038,11 +1038,11 @@ class NotteSession(AsyncResource, SyncResource):
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
-    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
+    # instructions only, raise_on_failure=True (default) -> raw JSON payload, as for sync `scrape`
     @overload
     async def ascrape(
         self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> BaseModel: ...
+    ) -> dict[str, Any]: ...
 
     # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
     @overload
@@ -1058,7 +1058,7 @@ class NotteSession(AsyncResource, SyncResource):
     @track_usage("local.session.scrape")
     async def ascrape(
         self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
-    ) -> StructuredData[BaseModel] | BaseModel | str | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
         # Extract and convert response_format for the action (store as JSON schema)
         response_format = params.get("response_format")
         instructions = params.get("instructions")
@@ -1131,7 +1131,11 @@ class NotteSession(AsyncResource, SyncResource):
             if data.structured is None:
                 raise ScrapeFailedError("Failed to extract structured data")
             if raise_on_failure:  # the following line raises ScrapeFailedError if failed
-                return data.structured.get()
+                extracted_data = data.structured.get()
+                if response_format is None:
+                    # instructions only: no schema to validate against, return the raw JSON payload
+                    return extracted_data.model_dump()
+                return extracted_data
             if isinstance(data.structured.data, RootModel):
                 data.structured.data = data.structured.data.root  # type: ignore[attr-defined]
             return data.structured

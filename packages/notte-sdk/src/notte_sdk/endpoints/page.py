@@ -202,16 +202,14 @@ class PageClient(BaseClient):
                 if raise_on_failure:
                     raise ScrapeFailedError(error_message)
                 return StructuredData[BaseModel](success=False, error=error_message, data=None)
-            # Use structured.get() which raises ScrapeFailedError if failed, and unwraps RootModel
+            # Use structured.get() which raises ScrapeFailedError if failed
             if raise_on_failure:
                 extracted_data = structured.get()
                 # Validate against response_format if provided
                 if request.response_format is not None:
-                    extracted_data_dict = (
-                        extracted_data.model_dump() if isinstance(extracted_data, BaseModel) else extracted_data  # pyright: ignore[reportUnnecessaryIsInstance]
-                    )
-                    extracted_data = request.response_format.model_validate(extracted_data_dict)
-                return extracted_data
+                    return request.response_format.model_validate(extracted_data.model_dump())
+                # instructions only: no schema to validate against, return the raw JSON payload
+                return extracted_data.model_dump()
             structured_data = cast(Any, structured.data)
             if isinstance(structured_data, RootModel):
                 # unwrap RootModel

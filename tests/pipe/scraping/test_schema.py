@@ -254,8 +254,9 @@ async def test_unmask_placeholders_with_instructions_only() -> None:
     assert result.success is True
     assert result.data is not None
 
-    # Get the actual data
-    data = result.get()
+    # Get the actual data: no response_format was given, so the payload comes back
+    # wrapped in a DictBaseModel and model_dump() yields the raw JSON
+    data = result.get().model_dump()
     assert isinstance(data, dict)
     assert "hotels" in data
     assert len(data["hotels"]) == 2

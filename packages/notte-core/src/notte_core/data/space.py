@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, Any, Generic, Self, TypeVar
+from typing import Annotated, Any, Generic, Self, TypeVar, cast
 
 import requests
 from pydantic import BaseModel, Field, RootModel, model_serializer, model_validator
@@ -91,13 +91,47 @@ class StructuredData(BaseModel, Generic[TBaseModel]):
             result["data"] = self.data
         return result
 
+    def _schema(self) -> type[BaseModel] | None:
+        """The model `data` should be validated against, when it is known.
+
+        `StructuredData[Profile]` records `Profile` in pydantic's generic metadata, so a
+        raw JSON payload can be validated back into it. Returns None for the
+        unparametrized form and for `StructuredData[BaseModel]`, where no schema was
+        provided and there is therefore nothing to validate against.
+        """
+        args: tuple[Any, ...] = type(self).__pydantic_generic_metadata__["args"]
+        if len(args) != 1:
+            return None
+        schema = args[0]
+        if not isinstance(schema, type) or not issubclass(schema, BaseModel) or schema is BaseModel:
+            return None
+        return schema
+
     def get(self) -> TBaseModel:
-        """Get the extracted data, raising ScrapeFailedError if extraction failed."""
+        """Get the extracted data, raising ScrapeFailedError if extraction failed.
+
+        A payload that came in as raw JSON is stored wrapped in a `DictBaseModel`
+        (`RootModel[Any]`) by `wrap_dict_in_root_model`. It is validated back into the
+        schema this `StructuredData` was parametrized with, so the returned value is
+        always a model. When no schema is known the `RootModel` wrapper is itself the
+        model, and the raw payload stays reachable through `.root` / `model_dump()`.
+
+        Raises:
+            ScrapeFailedError: if the extraction failed or produced no data.
+            ValidationError: if the payload does not match the parametrized schema.
+        """
         if not self.success or self.data is None:
             raise ScrapeFailedError(self.error or "Unknown extraction error")
-        if isinstance(self.data, RootModel):
-            return self.data.root  # type: ignore[attr-defined]
-        return self.data
+        data: TBaseModel | DictBaseModel = self.data
+        if isinstance(data, RootModel):
+            # local alias: keeps the payload typed as `Any` instead of `RootModel[Unknown]`
+            wrapper = cast(DictBaseModel, data)
+            schema = self._schema()
+            if schema is None:
+                # no schema was provided: the RootModel wrapper is itself the model
+                return cast(TBaseModel, wrapper)
+            return cast(TBaseModel, schema.model_validate(wrapper.root))
+        return data
 
 
 class DataSpace(BaseModel):
