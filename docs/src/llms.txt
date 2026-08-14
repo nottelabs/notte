@@ -212,6 +212,15 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [GET Health Check](https://docs.notte.cc/api-reference/health/health-check.md)
 - [GET Ready Check](https://docs.notte.cc/api-reference/health/ready-check.md)
 
+## Mailboxes
+
+- [POST Mailbox Connect Token](https://docs.notte.cc/api-reference/mailboxes/mailbox-connect-token.md)
+- [DELETE Mailbox Delete](https://docs.notte.cc/api-reference/mailboxes/mailbox-delete.md)
+- [GET Mailbox Get](https://docs.notte.cc/api-reference/mailboxes/mailbox-get.md)
+- [GET Mailbox List](https://docs.notte.cc/api-reference/mailboxes/mailbox-list.md)
+- [POST Mailbox Sync](https://docs.notte.cc/api-reference/mailboxes/mailbox-sync.md)
+- [PATCH Mailbox Update](https://docs.notte.cc/api-reference/mailboxes/mailbox-update.md)
+
 ## Personas
 
 - [GET List Personas](https://docs.notte.cc/api-reference/personas/list-personas.md)
@@ -220,6 +229,7 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [GET Persona Emails List](https://docs.notte.cc/api-reference/personas/persona-emails-list.md)
 - [GET Persona Get](https://docs.notte.cc/api-reference/personas/persona-get.md)
 - [GET Persona Sms List](https://docs.notte.cc/api-reference/personas/persona-sms-list.md)
+- [PATCH Persona Update](https://docs.notte.cc/api-reference/personas/persona-update.md)
 
 ## Profiles
 
