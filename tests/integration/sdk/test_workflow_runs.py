@@ -11,9 +11,9 @@ from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.workflows import RemoteWorkflow
 from notte_sdk.types import (
     CreateFunctionRunResponse,
+    FunctionRunListItemResponse,
     FunctionRunResponse,
     GetFunctionResponse,
-    GetFunctionRunResponse,
     ListFunctionRunsResponse,
     UpdateFunctionRunResponse,
 )
@@ -154,11 +154,10 @@ class TestFunctionRunsClient:
 
         # Verify the structure of a workflow run response
         found_run = next(run for run in list_response.items if run.function_run_id == create_response.function_run_id)
-        assert isinstance(found_run, GetFunctionRunResponse)
+        assert isinstance(found_run, FunctionRunListItemResponse)
         assert found_run.function_id == test_workflow.function_id
         assert found_run.function_run_id == create_response.function_run_id
         assert found_run.created_at is not None
-        assert isinstance(found_run.logs, list)
 
     def test_update_workflow_run(self, client: NotteClient, test_workflow: GetFunctionResponse, session_id: str):
         """Test updating a workflow run."""
