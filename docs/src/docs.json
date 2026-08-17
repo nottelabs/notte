@@ -165,6 +165,7 @@
                   "integrations/openai-cua",
                   "integrations/stagehand",
                   "integrations/openclaw",
+                  "integrations/hermes",
                   "features/sessions/cloudflare-web-bot-auth"
                 ]
               }

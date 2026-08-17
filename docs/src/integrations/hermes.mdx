@@ -1,0 +1,89 @@
+---
+title: Hermes Agent
+description: 'Use Notte cloud browsers with Hermes Agent'
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[Hermes Agent](https://hermes-agent.nousresearch.com) is an open-source agent from Nous Research with browser tools for navigating sites, interacting with page elements, filling forms, and extracting information. Connect Hermes to a Notte browser over the Chrome DevTools Protocol (CDP) to run those tools on managed cloud browsers instead of a local browser.
+
+## Prerequisites
+
+- A Notte API key ([create one in the Notte console](https://console.notte.cc))
+- Hermes Agent installed ([installation guide](https://hermes-agent.nousresearch.com/docs/getting-started/quickstart))
+- Python 3.11+ with the Notte SDK installed
+
+```bash
+pip install notte
+```
+
+## Start a Notte browser and get its CDP URL
+
+Create a small launcher that starts a Notte session and prints its CDP endpoint:
+
+```python
+# notte_hermes.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+session = client.Session(
+    proxies=True,
+    solve_captchas=True,
+    open_viewer=True,
+)
+session.start()
+
+print(session.cdp_url())
+input("Press Enter when you are finished with Hermes... ")
+session.stop()
+```
+
+Run it in one terminal and keep it running for the lifetime of the Hermes task:
+
+```bash
+python notte_hermes.py
+```
+
+The script prints a `ws://` or `wss://` CDP URL. It also opens the Notte live viewer, so you can watch the browser session while Hermes works.
+
+<Note>
+  Treat the CDP URL like a credential. It gives its holder control of the browser session, so do not commit it or share it in chat, logs, or tickets.
+</Note>
+
+## Attach Hermes to the Notte browser
+
+In Hermes, use the `/browser connect` command and paste the CDP URL emitted by the launcher:
+
+```text
+/browser connect wss://...your-notte-session-cdp-url...
+```
+
+Hermes can now use its normal browser tools against the attached Notte session. Ask it to perform a browser task as usual:
+
+```text
+Find the latest three posts on the Notte blog and summarize them.
+```
+
+Hermes keeps the browser attached for the current task; the launcher owns the Notte session lifecycle and closes it after you press Enter.
+
+## Why use Notte with Hermes?
+
+- **Managed cloud browsers**: run browser tasks without installing or operating Chrome on the Hermes host.
+- **Stealth and reliability**: enable Notte proxies, anti-detection, and CAPTCHA solving when the target site needs them.
+- **Live viewer**: inspect and debug browser work in real time from the Notte console.
+- **Session isolation**: create one Notte session per Hermes task, user, or worker to avoid shared browser state.
+- **Existing Hermes workflow**: Hermes continues to use its built-in accessibility-tree browser tooling; only the browser endpoint changes.
+
+## Production pattern
+
+For long-running or concurrent Hermes deployments, create and stop a Notte session in the worker that handles each task. Pass that session's CDP URL to Hermes, keep the session open while the task runs, then stop it in a `finally` block. This gives each task isolated cookies and browser state while ensuring sessions are cleaned up if a task fails.
+
+If your workflow needs persistent authenticated state, use a Notte [vault](/concepts/vaults) or [browser profile](/features/sessions/browser-profiles) when creating the session. Do not bake website credentials into the Hermes configuration or task prompts.
+
+## Troubleshooting
+
+- **Hermes cannot connect**: confirm the CDP URL came from the active launcher process and has not expired or been stopped.
+- **Hermes opens a local browser instead**: reconnect with `/browser connect` before starting the task, then verify that Hermes reports the remote browser is attached.
+- **A site blocks the task**: create the Notte session with `proxies=True` and, where appropriate, `solve_captchas=True`.
+- **The browser closes too early**: keep the launcher process alive until the Hermes task has completed.
