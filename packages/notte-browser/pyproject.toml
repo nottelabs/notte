@@ -15,16 +15,15 @@ requires-python = ">=3.11"
 dependencies = [
     "notte_core==1.4.4.dev",
     "notte_llm==1.4.4.dev",
-    "maincontentextractor",
+    "html2text>=2025.4.15",
+    "lxml>=5.3.1",
     "markdownify>=0.14.1",
     "pillow>=11.2.1",
     "patchright~=1.55",
     "tqdm>=4.66.0",
+    "trafilatura>=2.0.0",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.uv.sources]
-maincontentextractor = { git = "https://github.com/HawkClaws/main_content_extractor", rev = "7c3ed7f6ed7f6c10223a3357d43ab741663bc812" }
