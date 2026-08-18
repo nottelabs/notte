@@ -1,6 +1,8 @@
 import base64
+import json
 import traceback
 from pathlib import Path
+from typing import Any, cast
 
 from notte_core.actions import (
     BaseAction,
@@ -57,7 +59,7 @@ from notte_browser.errors import (
     capture_playwright_errors,
 )
 from notte_browser.form_filling import FormFiller
-from notte_browser.playwright_async_api import Locator
+from notte_browser.playwright_async_api import CDPSession, Frame, Locator, evaluate_in_main_world
 from notte_browser.window import BrowserWindow
 
 # Installed once per download action. Wraps URL.createObjectURL so we retain a
@@ -65,23 +67,38 @@ from notte_browser.window import BrowserWindow
 # bytes even after the page's URL.revokeObjectURL runs (file-saver.js pattern).
 # Revocation only removes the URL->Blob mapping in the browser's registry;
 # our Map keeps the Blob object alive.
+#
+# Both snippets must run in the page's main world, where the Blob is created.
+# Chromium's top frame uses CDP; iframe and Firefox evaluation explicitly uses
+# the owning frame's page world rather than Patchright's default isolated world.
 _BLOB_CAPTURE_HOOK = """
 (() => {
   if (window.__notte_blob_capture) return;
-  const origCreate = URL.createObjectURL.bind(URL);
+  const origCreate = URL.createObjectURL;
   const blobs = new Map();
-  URL.createObjectURL = function (obj) {
-    const url = origCreate(obj);
+  const createObjectURL = function (obj) {
+    const url = origCreate.call(URL, obj);
     try { blobs.set(url, obj); } catch (e) {}
     return url;
   };
-  window.__notte_blob_capture = { get: (url) => blobs.get(url) || null };
+  URL.createObjectURL = createObjectURL;
+  window.__notte_blob_capture = {
+    get: (url) => blobs.get(url) || null,
+    clear: () => blobs.clear(),
+    dispose: () => {
+      blobs.clear();
+      if (URL.createObjectURL === createObjectURL) URL.createObjectURL = origCreate;
+      delete window.__notte_blob_capture;
+    },
+  };
 })();
 """
 
+_BLOB_CAPTURE_DISPOSE = "window.__notte_blob_capture?.dispose?.()"
+
 # Returns base64 so we can ferry bytes safely across CDP.
 _BLOB_READ_SCRIPT = """
-async (url) => {
+(async (url) => {
   const blob = window.__notte_blob_capture && window.__notte_blob_capture.get(url);
   if (!blob) return null;
   const buf = await blob.arrayBuffer();
@@ -92,8 +109,57 @@ async (url) => {
     binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
   }
   return btoa(binary);
-}
+})(__NOTTE_BLOB_URL__)
 """
+
+
+async def _main_world_evaluate(cdp: CDPSession, expression: str, await_promise: bool = False) -> Any:
+    """Evaluate an expression in the page's main world and return its value."""
+    raw_response = cast(
+        "object",
+        await cdp.send(  # pyright: ignore [reportUnknownMemberType]
+            "Runtime.evaluate",
+            {"expression": expression, "awaitPromise": await_promise, "returnByValue": True},
+        ),
+    )
+    response = cast("dict[str, Any]", raw_response) if isinstance(raw_response, dict) else {}
+    raw_exception_details: Any = response.get("exceptionDetails")
+    if isinstance(raw_exception_details, dict):
+        exception_details = cast("dict[str, Any]", raw_exception_details)
+        raw_exception: Any = exception_details.get("exception")
+        exception = cast("dict[str, Any]", raw_exception) if isinstance(raw_exception, dict) else None
+        description = exception.get("description") if exception is not None else None
+        message = description if isinstance(description, str) else exception_details.get("text", "unknown error")
+        raise RuntimeError(f"CDP Runtime.evaluate failed: {message}")
+    result: Any = response.get("result")
+    if not isinstance(result, dict):
+        return None
+    return cast("dict[str, Any]", result).get("value")
+
+
+async def _resolve_locator_frame(locator: Locator) -> Frame:
+    """Return the frame containing a locator without retaining its element handle."""
+    handle = await locator.element_handle()
+    try:
+        frame = await handle.owner_frame()
+    finally:
+        await handle.dispose()
+    if frame is None:
+        raise FailedToDownloadFileError()
+    return frame
+
+
+async def _evaluate_blob_expression(
+    frame: Frame,
+    expression: str,
+    *,
+    cdp: CDPSession | None = None,
+    await_promise: bool = False,
+) -> Any:
+    """Evaluate Blob capture code in the frame that owns the clicked locator."""
+    if cdp is not None:
+        return await _main_world_evaluate(cdp, expression, await_promise=await_promise)
+    return await evaluate_in_main_world(frame, expression)
 
 
 @final
@@ -425,25 +491,52 @@ class BrowserController:
                     # Install the blob-capture hook before the click so any
                     # URL.createObjectURL call inside the click handler has
                     # its Blob retained in our side map.
-                    _ = await window.page.evaluate(_BLOB_CAPTURE_HOOK)
+                    blob_frame = await _resolve_locator_frame(locator)
+                    is_main_frame = blob_frame == window.page.main_frame
+                    cdp = (
+                        await window.page.context.new_cdp_session(window.page)
+                        if window.is_chromium_based and is_main_frame
+                        else None
+                    )
+                    try:
+                        # CDP's default Runtime.evaluate context is the main
+                        # frame. For iframe locators (including cross-origin
+                        # frames), Frame.evaluate targets the owning frame's
+                        # main world directly. Firefox also uses this path.
+                        _ = await _evaluate_blob_expression(blob_frame, _BLOB_CAPTURE_HOOK, cdp=cdp)
 
-                    async with window.page.expect_download() as dw:
-                        await locator.click()
-                    download = await dw.value
+                        async with window.page.expect_download() as dw:
+                            await locator.click()
+                        download = await dw.value
 
-                    dl_url = download.url
-                    if dl_url.startswith("blob:"):
-                        b64 = await window.page.evaluate(_BLOB_READ_SCRIPT, dl_url)
-                        if b64 is None:
-                            raise FailedToDownloadFileError()
-                        file_bytes = base64.b64decode(b64)
-                    else:
-                        # page.request shares cookies/auth with the page, so
-                        # same-origin protected downloads work.
-                        resp = await window.page.request.get(dl_url)
-                        if resp.status >= 400:
-                            raise FailedToDownloadFileError()
-                        file_bytes = await resp.body()
+                        dl_url = download.url
+                        if dl_url.startswith("blob:"):
+                            expression = _BLOB_READ_SCRIPT.replace("__NOTTE_BLOB_URL__", json.dumps(dl_url))
+                            value = await _evaluate_blob_expression(
+                                blob_frame,
+                                expression,
+                                cdp=cdp,
+                                await_promise=True,
+                            )
+                            b64 = value if isinstance(value, str) else None
+                            if b64 is None:
+                                raise FailedToDownloadFileError()
+                            file_bytes = base64.b64decode(b64)
+                        else:
+                            # page.request shares cookies/auth with the page, so
+                            # same-origin protected downloads work.
+                            resp = await window.page.request.get(dl_url)
+                            if resp.status >= 400:
+                                raise FailedToDownloadFileError()
+                            file_bytes = await resp.body()
+                    finally:
+                        try:
+                            _ = await _evaluate_blob_expression(blob_frame, _BLOB_CAPTURE_DISPOSE, cdp=cdp)
+                        except Exception as e:
+                            logger.warning(f"Failed to dispose the Blob capture hook: {e}")
+                        finally:
+                            if cdp is not None:
+                                await cdp.detach()
 
                     if not file_bytes:
                         raise FailedToDownloadFileError()
