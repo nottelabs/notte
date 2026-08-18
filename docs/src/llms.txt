@@ -167,6 +167,7 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [OpenAI CUA](https://docs.notte.cc/integrations/openai-cua.md): Integrate OpenAI CUA with Notte Browser Sessions
 - [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Use Notte cloud browsers with Stagehand browser automation
 - [OpenClaw](https://docs.notte.cc/integrations/openclaw.md): Use Notte cloud browsers with OpenClaw
+- [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
 - [Cloudflare Web Bot Auth](https://docs.notte.cc/features/sessions/cloudflare-web-bot-auth.md): Access Cloudflare-protected websites by cryptographically signing browser requests
 
 
