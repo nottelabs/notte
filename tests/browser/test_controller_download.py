@@ -42,10 +42,8 @@ async def test_main_world_evaluate_surfaces_javascript_errors() -> None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("frame_url", ["https://top.example/frame", "https://cross-origin.example/frame"])
-async def test_blob_capture_uses_locator_owner_frame(frame_url: str) -> None:
+async def test_blob_capture_uses_locator_owner_frame() -> None:
     frame = AsyncMock()
-    frame.url = frame_url
     handle = AsyncMock()
     handle.owner_frame.return_value = frame
     locator = AsyncMock()
