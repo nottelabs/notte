@@ -11,9 +11,9 @@ from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.workflows import RemoteWorkflow
 from notte_sdk.types import (
     CreateFunctionRunResponse,
+    FunctionRunListItemResponse,
     FunctionRunResponse,
     GetFunctionResponse,
-    GetFunctionRunResponse,
     ListFunctionRunsResponse,
     UpdateFunctionRunResponse,
 )
@@ -154,11 +154,10 @@ class TestFunctionRunsClient:
 
         # Verify the structure of a workflow run response
         found_run = next(run for run in list_response.items if run.function_run_id == create_response.function_run_id)
-        assert isinstance(found_run, GetFunctionRunResponse)
+        assert isinstance(found_run, FunctionRunListItemResponse)
         assert found_run.function_id == test_workflow.function_id
         assert found_run.function_run_id == create_response.function_run_id
         assert found_run.created_at is not None
-        assert isinstance(found_run.logs, list)
 
     def test_update_workflow_run(self, client: NotteClient, test_workflow: GetFunctionResponse, session_id: str):
         """Test updating a workflow run."""
@@ -531,11 +530,12 @@ class TestFunctionRunsIntegration:
         run_ids = [run.workflow_run_id for run in list_response.items]
         assert run_id in run_ids
 
-        # 4. Find our specific run and verify its data
-        our_run = next(run for run in list_response.items if run.workflow_run_id == run_id)
-        assert our_run.function_id == test_workflow.function_id
-        assert our_run.session_id == session_id
-        assert our_run.logs == test_logs
+        # 4. Fetch our specific run to verify detail-only data
+        run_summary = next(run for run in list_response.items if run.workflow_run_id == run_id)
+        assert run_summary.function_id == test_workflow.function_id
+        assert run_summary.session_id == session_id
+        run_detail = client.functions.get_run(function_id=test_workflow.function_id, run_id=run_id)
+        assert run_detail.logs == test_logs
 
         # 5. Update the run to closed status
         final_update = client.functions.update_run(
@@ -584,12 +584,13 @@ class TestFunctionRunsIntegration:
         for created_run_id in created_runs:
             assert created_run_id in listed_run_ids, f"Run {created_run_id} not found in list response"
 
-        # Verify each run has the correct data
+        # Verify each run has the correct detail data
         for i, run_id in enumerate(created_runs):
-            run_data = next(run for run in list_response.items if run.workflow_run_id == run_id)
+            run_summary = next(run for run in list_response.items if run.workflow_run_id == run_id)
             # Session ID will be a UUID, so just check it exists
-            assert run_data.session_id is not None
-            assert run_data.logs == [f"Log entry {i}"]
+            assert run_summary.session_id is not None
+            run_detail = client.functions.get_run(function_id=workflow_id, run_id=run_id)
+            assert run_detail.logs == [f"Log entry {i}"]
 
     def test_remote_function_complete_flow(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test complete RemoteWorkflow execution flow."""

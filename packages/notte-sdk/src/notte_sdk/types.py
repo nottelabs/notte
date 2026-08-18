@@ -2383,6 +2383,38 @@ class GetFunctionRunResponse(SdkResponse):
         return self.function_run_id
 
 
+class FunctionRunListItemResponse(SdkResponse):
+    """Lightweight function run metadata returned by list endpoints."""
+
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ]
+    created_at: dt.datetime
+    updated_at: dt.datetime
+    status: FunctionRunStatus
+    session_id: Annotated[str | None, Field(description="The ID of the session")] = None
+    local: Annotated[bool, Field(description="Whether the function has been run locally or on the cloud")] = False
+
+    @computed_field
+    @property
+    def workflow_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_id
+
+    @computed_field
+    @property
+    def workflow_run_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_run_id
+
+
 class FunctionRunUpdateRequestDict(TypedDict, total=False):
     session_id: str | None
     logs: list[str]
@@ -2462,7 +2494,7 @@ class ListFunctionRunsRequest(ListRequest):
 
 
 class ListFunctionRunsResponse(SdkResponse):
-    items: Annotated[list[GetFunctionRunResponse], Field(description="The function runs")]
+    items: Annotated[list[FunctionRunListItemResponse], Field(description="The function runs")]
     page: Annotated[int, Field(description="Current page number")]
     page_size: Annotated[int, Field(description="Number of items per page")]
     has_next: Annotated[bool, Field(description="Whether there are more pages")]
