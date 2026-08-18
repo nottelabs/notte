@@ -2,8 +2,14 @@ from typing import cast
 from unittest.mock import AsyncMock
 
 import pytest
-from notte_browser.controller import _BLOB_CAPTURE_DISPOSE, _BLOB_CAPTURE_HOOK, _main_world_evaluate
-from notte_browser.playwright_async_api import CDPSession
+from notte_browser.controller import (
+    _BLOB_CAPTURE_DISPOSE,
+    _BLOB_CAPTURE_HOOK,
+    _evaluate_blob_expression,
+    _main_world_evaluate,
+    _resolve_locator_frame,
+)
+from notte_browser.playwright_async_api import CDPSession, Frame, Locator
 
 
 @pytest.mark.asyncio
@@ -31,8 +37,27 @@ async def test_main_world_evaluate_surfaces_javascript_errors() -> None:
         },
     }
 
-    with pytest.raises(RuntimeError, match="CDP Runtime.evaluate failed: Error: blob read failed"):
+    with pytest.raises(RuntimeError, match=r"^CDP Runtime\.evaluate failed: Error: blob read failed$"):
         _ = await _main_world_evaluate(cast("CDPSession", cdp), "expression")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("frame_url", ["https://top.example/frame", "https://cross-origin.example/frame"])
+async def test_blob_capture_uses_locator_owner_frame(frame_url: str) -> None:
+    frame = AsyncMock()
+    frame.url = frame_url
+    handle = AsyncMock()
+    handle.owner_frame.return_value = frame
+    locator = AsyncMock()
+    locator.element_handle.return_value = handle
+
+    resolved_frame = await _resolve_locator_frame(cast("Locator", locator))
+    value = await _evaluate_blob_expression(cast("Frame", resolved_frame), "expression")
+
+    assert resolved_frame is frame
+    assert value is frame.evaluate.return_value
+    frame.evaluate.assert_awaited_once_with("expression", isolated_context=False)
+    handle.dispose.assert_awaited_once_with()
 
 
 def test_blob_capture_hook_can_release_retained_blobs() -> None:
