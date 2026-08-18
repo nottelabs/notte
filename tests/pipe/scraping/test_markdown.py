@@ -88,6 +88,15 @@ def test_main_content_handles_malformed_html() -> None:
     assert "Still readable" in result
 
 
+def test_main_content_handles_comments_when_stripping_tags() -> None:
+    result = MainContentScrapingPipe.forward(
+        _snapshot("<main><!-- marker --><p>visible <em>emphasis</em></p></main>"),  # type: ignore[arg-type]
+        ScrapeParams(only_main_content=True, ignored_tags=["em"]),
+    )
+
+    assert "visible emphasis" in result
+
+
 def test_dense_dom_peak_memory_regression() -> None:
     script = """
 import json

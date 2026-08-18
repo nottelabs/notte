@@ -71,9 +71,13 @@ def _strip_configured_tags(elements: list[etree._Element], tags: list[str]) -> N
     normalized_tags = {tag.lower() for tag in tags}
     for root in elements:
         for element in list(root.iterdescendants()):
-            if element.tag.lower() not in normalized_tags:
+            tag = cast(object, element.tag)
+            if not isinstance(tag, str):
                 continue
-            if element.tag.lower() == "img":
+            normalized_tag = tag.lower()
+            if normalized_tag not in normalized_tags:
+                continue
+            if normalized_tag == "img":
                 _remove_subtree(element)
             else:
                 _unwrap_element(element)
