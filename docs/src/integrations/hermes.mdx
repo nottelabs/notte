@@ -2,6 +2,7 @@
 title: Hermes Agent
 description: 'Use Notte cloud browsers with Hermes Agent'
 ---
+import HermesLauncher from '/snippets/integrations/hermes_launcher.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -22,22 +23,7 @@ pip install notte
 
 Create a small launcher that starts a Notte session and prints its CDP endpoint:
 
-```python
-# notte_hermes.py
-from notte_sdk import NotteClient
-
-client = NotteClient()
-session = client.Session(
-    proxies=True,
-    solve_captchas=True,
-    open_viewer=True,
-)
-session.start()
-
-print(session.cdp_url())
-input("Press Enter when you are finished with Hermes... ")
-session.stop()
-```
+<HermesLauncher />
 
 Run it in one terminal and keep it running for the lifetime of the Hermes task:
 
