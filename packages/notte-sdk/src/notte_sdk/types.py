@@ -1091,6 +1091,10 @@ class SessionResponse(SdkResponse):
         Literal["active", "closed", "error", "timed_out"],
         Field(description="Session status"),
     ]
+    close_reason: Annotated[
+        Literal["manual", "idle_timeout", "max_duration", "error", "unknown"] | None,
+        Field(description="Reason the session closed, if it is no longer active"),
+    ] = None
     steps: Annotated[list[dict[str, Any]], Field(description="Steps of the session", repr=False)] = Field(
         default_factory=lambda: []
     )
