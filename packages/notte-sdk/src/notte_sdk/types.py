@@ -1160,6 +1160,13 @@ class SessionResponse(SdkResponse):
         return self.idle_timeout_minutes
 
 
+class SessionStopRequest(BaseModel):
+    close_reason: Annotated[
+        Literal["manual", "error"],
+        Field(description="Reason supplied by the client when stopping the session"),
+    ] = "manual"
+
+
 class ListFilesResponse(SdkResponse):
     files: Annotated[list[FileInfo], Field(description="List of files with metadata")]
 
