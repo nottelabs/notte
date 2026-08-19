@@ -244,7 +244,7 @@ The current status information of the session.
 ### stop
 
 ```python
-stop()
+stop(close_reason: typing.Literal['manual', 'error'] = manual)
 ```
 
 Stop the session and clean up resources

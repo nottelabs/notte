@@ -39,6 +39,10 @@ description: ""
   Session status
 </ParamField>
 
+<ParamField path="close_reason" type="Literal['manual', 'idle_timeout', 'max_duration', 'error', 'unknown'] | None">
+  Reason the session closed, if it is no longer active
+</ParamField>
+
 <ParamField path="steps" type="list[Dict[str, Any]]" required>
   Steps of the session
 </ParamField>
