@@ -1160,6 +1160,10 @@ class SessionResponse(SdkResponse):
         return self.idle_timeout_minutes
 
 
+class SessionStopRequestDict(TypedDict, total=False):
+    close_reason: Literal["manual", "error"]
+
+
 class SessionStopRequest(BaseModel):
     close_reason: Annotated[
         Literal["manual", "error"],
