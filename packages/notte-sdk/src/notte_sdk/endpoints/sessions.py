@@ -69,6 +69,7 @@ from notte_sdk.types import (
     SessionResponse,
     SessionStartRequest,
     SessionStartRequestDict,
+    SessionStopRequest,
     SetCookiesRequest,
     SetCookiesResponse,
     TabSessionDebugRequest,
@@ -183,7 +184,9 @@ class SessionsClient(BaseClient):
         return NotteEndpoint(path=SessionsClient.SESSION_START, response=SessionResponse, method="POST")
 
     @staticmethod
-    def _session_stop_endpoint(session_id: str | None = None) -> NotteEndpoint[SessionResponse]:
+    def _session_stop_endpoint(
+        session_id: str | None = None, params: SessionStopRequest | None = None
+    ) -> NotteEndpoint[SessionResponse]:
         """
         Constructs a DELETE endpoint for closing a session.
 
@@ -199,7 +202,7 @@ class SessionsClient(BaseClient):
         path = SessionsClient.SESSION_STOP
         if session_id is not None:
             path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=SessionResponse, method="DELETE")
+        return NotteEndpoint(path=path, response=SessionResponse, method="DELETE", params=params)
 
     @staticmethod
     def _session_status_endpoint(session_id: str | None = None) -> NotteEndpoint[SessionResponse]:
@@ -328,7 +331,7 @@ class SessionsClient(BaseClient):
         return response
 
     @track_usage("cloud.session.stop")
-    def stop(self, session_id: str) -> SessionResponse:
+    def stop(self, session_id: str, close_reason: Literal["manual", "error"] = "manual") -> SessionResponse:
         """
         Stops an active session.
 
@@ -345,7 +348,10 @@ class SessionsClient(BaseClient):
             SessionResponse: The validated response from the session stop request.
         """
         logger.info(f"[Session] {session_id} is stopping")
-        endpoint = SessionsClient._session_stop_endpoint(session_id=session_id)
+        endpoint = SessionsClient._session_stop_endpoint(
+            session_id=session_id,
+            params=SessionStopRequest(close_reason=close_reason),
+        )
         response = self.request(endpoint)
         if response.status != "closed":
             raise RuntimeError(f"[Session] {session_id} failed to stop")
@@ -692,7 +698,12 @@ class RemoteSession(SyncResource):
             self._playwright_context = None
         self._playwright_page = None
 
-        self.stop()
+        try:
+            self.stop(close_reason="error" if exc_val is not None else "manual")
+        except Exception as stop_error:
+            if exc_val is None:
+                raise
+            logger.error(f"Failed to stop session after context manager exception: {stop_error}")
 
         if isinstance(exc_val, KeyboardInterrupt):
             raise KeyboardInterrupt() from None
@@ -725,7 +736,12 @@ class RemoteSession(SyncResource):
             self._async_playwright_context = None
         self._async_playwright_page = None
 
-        self.stop()
+        try:
+            self.stop(close_reason="error" if exc_val is not None else "manual")
+        except Exception as stop_error:
+            if exc_val is None:
+                raise
+            logger.error(f"Failed to stop session after async context manager exception: {stop_error}")
 
         if isinstance(exc_val, KeyboardInterrupt):
             raise KeyboardInterrupt() from None
@@ -812,7 +828,7 @@ class RemoteSession(SyncResource):
                 logger.warning(f"🍪 Cookie file {self._cookie_file} not found, skipping cookie loading")
 
     @override
-    def stop(self) -> None:
+    def stop(self, close_reason: Literal["manual", "error"] = "manual") -> None:
         """
         Stop the session and clean up resources.
 
@@ -852,7 +868,7 @@ class RemoteSession(SyncResource):
             except Exception as e:
                 logger.error(f"🍪 Error saving cookies to {self._cookie_file}: {e}")
         try:
-            self.response = self.client.stop(session_id=self.session_id)
+            self.response = self.client.stop(session_id=self.session_id, close_reason=close_reason)
         except Exception as e:
             if "already stopped" in str(e).lower() or "already closed" in str(e).lower():
                 logger.warning(f"Session {self.session_id} was already stopped")

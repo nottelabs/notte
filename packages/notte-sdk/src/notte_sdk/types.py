@@ -1091,6 +1091,10 @@ class SessionResponse(SdkResponse):
         Literal["active", "closed", "error", "timed_out"],
         Field(description="Session status"),
     ]
+    close_reason: Annotated[
+        Literal["manual", "idle_timeout", "max_duration", "error", "unknown"] | None,
+        Field(description="Reason the session closed, if it is no longer active"),
+    ] = None
     steps: Annotated[list[dict[str, Any]], Field(description="Steps of the session", repr=False)] = Field(
         default_factory=lambda: []
     )
@@ -1154,6 +1158,17 @@ class SessionResponse(SdkResponse):
     def timeout_minutes(self) -> int:
         """Deprecated: Use idle_timeout_minutes instead. Kept for backward compatibility."""
         return self.idle_timeout_minutes
+
+
+class SessionStopRequestDict(TypedDict, total=False):
+    close_reason: Literal["manual", "error"]
+
+
+class SessionStopRequest(BaseModel):
+    close_reason: Annotated[
+        Literal["manual", "error"],
+        Field(description="Reason supplied by the client when stopping the session"),
+    ] = "manual"
 
 
 class ListFilesResponse(SdkResponse):

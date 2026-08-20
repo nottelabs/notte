@@ -201,7 +201,7 @@ def test_close_session(mock_delete: MagicMock, client: NotteClient, session_id: 
     mock_delete.assert_called_once_with(
         url=f"{client.sessions.server_url}/sessions/{session_id}/stop",
         headers=headers_copy,
-        params=None,
+        params={"close_reason": "manual"},
         timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS,
     )
 

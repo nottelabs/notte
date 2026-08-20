@@ -266,3 +266,12 @@ def test_session_duration_keeps_sub_second_precision():
     # `format` assertion is dropped rather than the precision.
     assert RFC_3339_DURATION.match(serialized) is None
     assert SessionResponse.model_validate_json(response.model_dump_json()).duration == response.duration
+
+
+def test_session_response_serializes_error_close_reason():
+    response = _session_response(dt.timedelta(seconds=1)).model_copy(
+        update={"status": "closed", "close_reason": "error"}
+    )
+
+    assert response.model_dump(mode="json")["close_reason"] == "error"
+    assert SessionResponse.model_validate_json(response.model_dump_json()).close_reason == "error"
