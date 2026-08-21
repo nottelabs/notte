@@ -13,7 +13,7 @@ UPLOAD_FIXTURE_URL = "https://test-resources-lovat.vercel.app/upload_fixture.htm
 
 def test_upload_non_existent_file_should_raise_error():
     notte = NotteClient()
-    storage = notte.FileStorage()
+    storage = notte.FileStorage("session-id")
 
     with pytest.raises(FileNotFoundError):
         _ = storage.upload(str(DATA_DIR / "non_existent_file.txt"))
@@ -57,7 +57,8 @@ def test_upload_against_local_fixture(case: FixtureUploadCase):
     storage = notte.FileStorage()
 
     with notte.Session(storage=storage) as session:
-        assert storage.upload(str(DATA_DIR / case.file_name))
+        uploaded = storage.upload(str(DATA_DIR / case.file_name))
+        assert uploaded.filename == case.file_name
 
         _ = session.execute(type="goto", url=UPLOAD_FIXTURE_URL)
         _ = session.execute(type="upload_file", selector="#file-input", file_path=case.file_name)

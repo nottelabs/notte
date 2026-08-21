@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from notte_browser.errors import NoStorageObjectProvidedError
 from notte_core.actions import DownloadFileAction
 from notte_sdk import NotteClient
+from notte_sdk.types import FileSource
 from pydantic import BaseModel, Field
 
 import notte
@@ -104,16 +105,15 @@ def test_download_against_local_fixture(case: FixtureDownloadCase):
         _ = session.execute(type="goto", url=case.url)
         _ = session.execute(type="download_file", selector=case.selector)
 
-        downloaded = storage.list_downloaded_files()
-        names = [f.name for f in downloaded]
-        matching = [n for n in names if n.endswith(case.expected_filename_suffix)]
+        downloaded = storage.list(FileSource.SESSION_DOWNLOAD, limit=1000).files
+        names = [f.filename for f in downloaded]
+        matching = [f for f in downloaded if f.filename.endswith(case.expected_filename_suffix)]
         assert len(matching) == 1, (
             f"expected exactly one file ending with {case.expected_filename_suffix!r}, got {names}"
         )
-        stored_name = matching[0]
+        stored = matching[0]
 
         with tempfile.TemporaryDirectory() as tmp_dir:
-            assert storage.download(file_name=stored_name, local_dir=tmp_dir)
-            local_path = Path(tmp_dir) / stored_name
+            local_path = Path(storage.download(file_id=stored.id, local_dir=tmp_dir))
             assert local_path.exists(), f"{local_path} missing after storage.download"
-            assert local_path.read_bytes() == case.expected_bytes, f"byte mismatch for {stored_name}"
+            assert local_path.read_bytes() == case.expected_bytes, f"byte mismatch for {stored.filename}"

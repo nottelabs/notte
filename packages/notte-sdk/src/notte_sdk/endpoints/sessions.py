@@ -661,9 +661,6 @@ class RemoteSession(SyncResource):
         request_data = {k: v for k, v in data.items() if k != "open_viewer"}
         request = SessionStartRequest.model_validate(request_data)
 
-        if storage is not None:
-            request.use_file_storage = True
-
         response: SessionResponse | None = None
         if session_id is not None:
             response = _client.status(session_id=session_id)
@@ -675,7 +672,9 @@ class RemoteSession(SyncResource):
 
         self.client: SessionsClient = _client
         self.response: SessionResponse | None = response
-        self.storage: RemoteFileStorage | None = storage
+        self.storage: RemoteFileStorage = storage or RemoteFileStorage(_client=_client.root_client.files)
+        if session_id is not None:
+            self.storage.set_session_id(session_id)
         self.default_perception_type: PerceptionType = perception_type
         self.default_raise_on_failure: bool = raise_on_failure
         self._cookie_file: Path | None = Path(cookie_file) if cookie_file is not None else None
@@ -688,11 +687,6 @@ class RemoteSession(SyncResource):
         self._async_playwright_browser: "BrowserAsync | None" = None
         self._async_playwright_page: "PageAsync | None" = None
 
-        if self.storage is not None and not self.request.use_file_storage:
-            logger.warning(
-                "Storage is provided but `use_file_storage=False` in session start request. Overriding `use_file_storage=True`."
-            )
-            self.request.use_file_storage = True
 
     @override
     def __exit__(  # pyright: ignore [reportMissingSuperCall]
@@ -825,8 +819,7 @@ class RemoteSession(SyncResource):
                 else:
                     logger.warning(f"Failed to start session: retrying ({retry_str})")
 
-        if self.storage is not None:
-            self.storage.set_session_id(self.session_id)
+        self.storage.set_session_id(self.session_id)
 
         logger.info(f"[Session] {self.session_id} started with request: {self.request.model_dump(exclude_none=True)}")
         if self._open_viewer:

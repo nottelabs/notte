@@ -44,6 +44,11 @@ class BaseStorage(ABC):
         """Whether this storage implementation requires a remote server."""
         return False
 
+    @property
+    def captures_browser_downloads(self) -> bool:
+        """Whether browser-native downloads are persisted out of band."""
+        return False
+
     @abstractmethod
     async def get_file(self, name: str) -> str | None:
         """Returns the local path for a file"""

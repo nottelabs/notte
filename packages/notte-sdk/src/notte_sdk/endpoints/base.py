@@ -436,7 +436,7 @@ class BaseClient(ABC):
                     params=params,
                     timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
-        if response.status_code != 200:
+        if not 200 <= response.status_code < 300:
             # Check for 422 status code with Pydantic validation errors first
             if response.status_code == 422:
                 should_upgrade, cached_version = self._should_suggest_upgrade()

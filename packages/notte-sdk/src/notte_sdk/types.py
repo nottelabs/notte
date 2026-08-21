@@ -759,7 +759,6 @@ class _SessionStartRequestDict(TypedDict, total=False):
         viewport_height: The height of the viewport
         aspect_ratio: Viewport shape preset ("5:4" or "16:9"). Cannot be combined with viewport_width/viewport_height.
         cdp_url: The CDP URL of another remote session provider.
-        use_file_storage: Whether FileStorage should be attached to the session.
         screenshot_type: The type of screenshot to use for the session.
         profile: Browser profile configuration for state persistence.
         auth_ids: Up to 10 unique Managed Auth connection IDs to authenticate before the session is returned.
@@ -781,7 +780,6 @@ class _SessionStartRequestDict(TypedDict, total=False):
     viewport_height: int | None
     aspect_ratio: AspectRatio | None
     cdp_url: str | None
-    use_file_storage: bool
     screenshot_type: ScreenshotType
     profile: SessionProfileDict | SessionProfile | None
     web_bot_auth: bool
@@ -851,10 +849,6 @@ class _SessionStartRequest(SdkRequest):
 
     cdp_url: Annotated[str | None, Field(description="The CDP URL of another remote session provider.")] = (
         config.cdp_url
-    )
-
-    use_file_storage: Annotated[bool, Field(description="Whether FileStorage should be attached to the session.")] = (
-        True
     )
 
     screenshot_type: Annotated[ScreenshotType, Field(description="The type of screenshot to use for the session.")] = (
@@ -1192,7 +1186,6 @@ class SessionResponse(SdkResponse):
     ] = False
     # remaining args
     browser_type: BrowserType = "chromium"
-    use_file_storage: Annotated[bool, Field(description="Whether FileStorage was attached to the session.")] = False
     network_request_bytes: Annotated[int, Field(description="Total byte usage for network requests.")] = 0
     network_response_bytes: Annotated[int, Field(description="Total byte usage for network responses.")] = 0
     user_agent: Annotated[str | None, Field(description="The user agent to use for the session")] = None
@@ -1260,8 +1253,28 @@ class SessionStopRequest(BaseModel):
     ] = "manual"
 
 
+class FileSource(StrEnum):
+    USER_UPLOAD = "user_upload"
+    SESSION_DOWNLOAD = "session_download"
+
+
+class SessionFile(BaseModel):
+    id: str
+    session_id: str
+    filename: str
+    mime_type: str
+    size: int
+    checksum: str
+    created_at: dt.datetime
+    expires_at: dt.datetime
+    source: FileSource
+
+
 class ListFilesResponse(SdkResponse):
-    files: Annotated[list[FileInfo], Field(description="List of files with metadata")]
+    files: Annotated[list[SessionFile], Field(description="List of non-expired session files")]
+    total: int
+    limit: int
+    offset: int
 
 
 class FileUploadResponse(SdkResponse):

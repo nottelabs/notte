@@ -2,13 +2,9 @@
 from notte_sdk import NotteClient
 
 client = NotteClient()
-storage = client.FileStorage()
-
-# Upload a file before the session
-storage.upload("document.pdf")
-
-# Create session with storage attached
-with client.Session(storage=storage) as session:
+with client.Session() as session:
+    # Every file belongs to this session.
+    session.storage.upload("document.pdf")
     agent = client.Agent(session=session)
 
     result = agent.run(
@@ -16,5 +12,5 @@ with client.Session(storage=storage) as session:
     )
 
 # Download files the agent retrieved
-for file in storage.list_downloaded_files():
-    storage.download(file_name=file.name, local_dir="./downloads")
+for file in session.storage.list("session_download").files:
+    session.storage.download(file.id, local_dir="./downloads")
