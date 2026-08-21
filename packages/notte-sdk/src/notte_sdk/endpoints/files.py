@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import TYPE_CHECKING, final
 
 import requests
@@ -88,8 +88,11 @@ class FileStorageClient(BaseClient):
     def download(self, session_id: str, file_id: str, local_dir: str = ".", *, force: bool = False) -> str:
         metadata = self.metadata(session_id, file_id)
         directory = Path(local_dir)
-        directory.mkdir(parents=True, exist_ok=True)
-        destination = directory / metadata.filename
+        _ = directory.mkdir(parents=True, exist_ok=True)
+        safe_name = Path(PureWindowsPath(metadata.filename).name).name
+        if safe_name in {"", ".", ".."}:
+            raise ValueError(f"Unsafe filename returned for file {file_id}: {metadata.filename!r}")
+        destination = directory / safe_name
         if destination.exists() and not force:
             raise FileExistsError(f"{destination} already exists; pass force=True to overwrite it")
         endpoint = NotteEndpoint(path=self._file_endpoint(session_id, file_id), response=SessionFile, method="GET")
@@ -106,8 +109,8 @@ class FileStorageClient(BaseClient):
             with temporary.open("wb") as output:
                 for chunk in response.iter_content(self.DEFAULT_FILE_CHUNK_SIZE):
                     if chunk:
-                        output.write(chunk)
-            temporary.replace(destination)
+                        _ = output.write(chunk)
+            _ = temporary.replace(destination)
         finally:
             response.close()
             temporary.unlink(missing_ok=True)
@@ -127,8 +130,8 @@ class RemoteFileStorage(BaseStorage):
     def __init__(self, session_id: str | None = None, *, _client: FileStorageClient | None = None):
         if _client is None:
             raise ValueError("FileStorageClient is required")
-        self.client = _client
-        self._session_id = session_id
+        self.client: FileStorageClient = _client
+        self._session_id: str | None = session_id
         super().__init__(upload_dir=str(NOTTE_CACHE_DIR / "uploads"), download_dir=str(NOTTE_CACHE_DIR / "downloads"))
 
     @property
@@ -138,6 +141,15 @@ class RemoteFileStorage(BaseStorage):
 
     def set_session_id(self, session_id: str) -> None:
         self._session_id = session_id
+
+    def for_session(self, session_id: str) -> RemoteFileStorage:
+        """Bind this storage once, cloning it when another session already owns it."""
+        if self._session_id is None:
+            self._session_id = session_id
+            return self
+        if self._session_id == session_id:
+            return self
+        return RemoteFileStorage(session_id, _client=self.client)
 
     @property
     def session_id(self) -> str:
@@ -167,7 +179,7 @@ class RemoteFileStorage(BaseStorage):
 
     @override
     async def set_file(self, path: str) -> bool:
-        self.upload(path)
+        _ = self.upload(path)
         return True
 
     @staticmethod

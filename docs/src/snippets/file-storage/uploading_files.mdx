@@ -5,15 +5,8 @@
 from notte_sdk import NotteClient
 
 client = NotteClient()
-storage = client.FileStorage()
-
-# Upload a file (uses the original filename)
-storage.upload("report.pdf")
-
-# Upload with a custom name
-storage.upload("report.pdf", upload_file_name="quarterly_report.pdf")
-
-# List uploaded files
-files = storage.list_uploaded_files()
-print(f"Uploaded: {files}")
+with client.Session() as session:
+    session.storage.upload("report.pdf")
+    session.storage.upload("report.pdf", upload_file_name="quarterly_report.pdf")
+    print(session.storage.list(source="user_upload").files)
 ```

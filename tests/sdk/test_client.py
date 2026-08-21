@@ -10,6 +10,7 @@ from notte_core.actions import BrowserAction, ClickAction
 from notte_core.browser.observation import ExecutionResult, Observation
 from notte_core.space import SpaceCategory
 from notte_sdk.client import NotteClient
+from notte_sdk.endpoints.base import NotteEndpoint
 from notte_sdk.errors import AuthenticationError
 from notte_sdk.types import (
     DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES,
@@ -68,6 +69,14 @@ def test_client_initialization_without_api_key() -> None:
     with patch.dict(os.environ, clear=True):
         with pytest.raises(AuthenticationError):
             _ = NotteClient()
+
+
+def test_base_client_accepts_empty_success_response(client: NotteClient) -> None:
+    response = MagicMock(status_code=204, content=b"")
+    with patch("requests.get", return_value=response):
+        result = client.sessions._request(NotteEndpoint(path="empty", response=SessionResponse, method="GET"))
+
+    assert result == {}
 
 
 @pytest.fixture

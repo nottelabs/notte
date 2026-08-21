@@ -9,7 +9,11 @@ from notte_sdk.types import FileSource, ListFilesResponse, SessionFile
 @pytest.fixture
 def files_client() -> FileStorageClient:
     with patch.object(FileStorageClient, "check_and_warn_version_mismatch"):
-        return FileStorageClient(Mock(), api_key="test-api-key", server_url="https://api.notte.test")
+        return FileStorageClient(
+            Mock(),
+            api_key="test-api-key",  # pragma: allowlist secret
+            server_url="https://api.notte.test",
+        )
 
 
 def file_metadata() -> SessionFile:
@@ -65,6 +69,21 @@ def test_download_is_id_based(files_client: FileStorageClient, tmp_path: Path) -
     response.close.assert_called_once()
 
 
+@pytest.mark.parametrize("filename", ["../../secret.txt", "..\\..\\secret.txt", "/tmp/secret.txt"])
+def test_download_sanitizes_server_filename(files_client: FileStorageClient, tmp_path: Path, filename: str) -> None:
+    response = Mock(ok=True)
+    response.iter_content.return_value = [b"hello"]
+    metadata = file_metadata().model_copy(update={"filename": filename})
+    with (
+        patch.object(files_client, "metadata", return_value=metadata),
+        patch("notte_sdk.endpoints.files.requests.get", return_value=response),
+    ):
+        destination = files_client.download("session-id", "file-id", str(tmp_path))
+
+    assert Path(destination) == tmp_path / "secret.txt"
+    assert Path(destination).read_bytes() == b"hello"
+
+
 def test_remote_storage_upload_is_session_scoped(files_client: FileStorageClient, tmp_path: Path) -> None:
     local = tmp_path / "input.txt"
     local.write_text("hello")
@@ -74,3 +93,16 @@ def test_remote_storage_upload_is_session_scoped(files_client: FileStorageClient
 
     assert result == metadata
     upload.assert_called_once_with("session-id", str(local), None)
+
+
+def test_remote_storage_is_cloned_when_reused_across_sessions(files_client: FileStorageClient) -> None:
+    storage = RemoteFileStorage(_client=files_client)
+
+    first = storage.for_session("session-a")
+    second = storage.for_session("session-b")
+
+    assert first is storage
+    assert first.session_id == "session-a"
+    assert second is not storage
+    assert second.session_id == "session-b"
+    assert second.client is storage.client
