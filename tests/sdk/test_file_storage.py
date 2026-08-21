@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
-from notte_sdk.types import FileSource, ListFilesResponse, SessionFile
+from notte_sdk.types import FileSource, SessionFile, SessionFilesPage
 
 
 @pytest.fixture
@@ -49,7 +49,7 @@ def test_list_uses_session_endpoint(files_client: FileStorageClient) -> None:
     with patch("notte_sdk.endpoints.files.requests.get", return_value=response) as get:
         result = files_client.list("session-id", source=FileSource.USER_UPLOAD)
 
-    assert isinstance(result, ListFilesResponse)
+    assert isinstance(result, SessionFilesPage)
     assert result.files[0].id == "file-id"
     assert get.call_args.args[0] == "https://api.notte.test/sessions/session-id/files"
     assert get.call_args.kwargs["params"]["source"] == "user_upload"

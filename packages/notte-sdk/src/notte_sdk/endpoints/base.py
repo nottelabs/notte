@@ -464,7 +464,7 @@ class BaseClient(ABC):
                 raise NotteAPIExecutionError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
 
             raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
-        if not response.content:
+        if response.status_code == 204 or getattr(response, "content", None) == b"":
             return {}
         response_dict: Any = response.json()
         if "detail" in response_dict:

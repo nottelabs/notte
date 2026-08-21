@@ -13,7 +13,7 @@ from typing_extensions import override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.errors import NotteAPIError
-from notte_sdk.types import FileSource, ListFilesResponse, SessionFile
+from notte_sdk.types import FileSource, SessionFile, SessionFilesPage
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
@@ -59,11 +59,11 @@ class FileStorageClient(BaseClient):
         source: FileSource | str | None = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> ListFilesResponse:
+    ) -> SessionFilesPage:
         params: dict[str, str | int] = {"limit": limit, "offset": offset}
         if source is not None:
             params["source"] = source.value if isinstance(source, FileSource) else source
-        endpoint = NotteEndpoint(path=self._file_endpoint(session_id), response=ListFilesResponse, method="GET")
+        endpoint = NotteEndpoint(path=self._file_endpoint(session_id), response=SessionFilesPage, method="GET")
         response = requests.get(
             self.request_path(endpoint),
             headers=self.headers(),
@@ -72,7 +72,7 @@ class FileStorageClient(BaseClient):
         )
         if not response.ok:
             raise NotteAPIError(path=f"sessions/{session_id}/files", response=response)
-        return ListFilesResponse.model_validate(response.json())
+        return SessionFilesPage.model_validate(response.json())
 
     def metadata(self, session_id: str, file_id: str) -> SessionFile:
         offset = 0
@@ -170,7 +170,7 @@ class RemoteFileStorage(BaseStorage):
     def upload(self, file_path: str, upload_file_name: str | None = None) -> SessionFile:
         return self.client.upload(self.session_id, file_path, upload_file_name)
 
-    def list(self, source: FileSource | str | None = None, *, limit: int = 100, offset: int = 0) -> ListFilesResponse:
+    def list(self, source: FileSource | str | None = None, *, limit: int = 100, offset: int = 0) -> SessionFilesPage:
         return self.client.list(self.session_id, source=source, limit=limit, offset=offset)
 
     def download(self, file_id: str, local_dir: str = ".", *, force: bool = False) -> str:

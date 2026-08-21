@@ -1271,6 +1271,12 @@ class SessionFile(BaseModel):
 
 
 class ListFilesResponse(SdkResponse):
+    """Legacy file-list response retained for import compatibility."""
+
+    files: Annotated[list[FileInfo], Field(description="List of files with metadata")]
+
+
+class SessionFilesPage(SdkResponse):
     files: Annotated[list[SessionFile], Field(description="List of non-expired session files")]
     total: int
     limit: int

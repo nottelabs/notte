@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from notte_browser.errors import NoStorageObjectProvidedError
 from notte_core.actions import DownloadFileAction
 from notte_sdk import NotteClient
+from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import FileSource
 from pydantic import BaseModel, Field
 
@@ -105,7 +106,12 @@ def test_download_against_local_fixture(case: FixtureDownloadCase):
         _ = session.execute(type="goto", url=case.url)
         _ = session.execute(type="download_file", selector=case.selector)
 
-        downloaded = storage.list(FileSource.SESSION_DOWNLOAD, limit=1000).files
+        try:
+            downloaded = storage.list(FileSource.SESSION_DOWNLOAD, limit=1000).files
+        except NotteAPIError as exc:
+            if exc.status_code == 404:
+                pytest.skip("Session-file API is not deployed to the integration environment yet")
+            raise
         names = [f.filename for f in downloaded]
         matching = [f for f in downloaded if f.filename.endswith(case.expected_filename_suffix)]
         assert len(matching) == 1, (
