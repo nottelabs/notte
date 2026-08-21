@@ -551,10 +551,10 @@ class BrowserController:
                     with open(file_path, "wb") as f:
                         _ = f.write(file_bytes)
 
-                    if self.storage.captures_browser_downloads:
-                        # Cloud browser workers capture this native download from
-                        # the Browser domain. Avoid creating a second catalog row.
-                        return True
+                if self.storage.captures_browser_downloads:
+                    # Cloud browser workers capture this native download from
+                    # the Browser domain. Avoid creating a second catalog row.
+                    return True
 
                 res = await self.storage.set_file(str(file_path))
 
