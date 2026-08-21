@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 from pathlib import Path, PureWindowsPath
 from typing import TYPE_CHECKING, final
 
@@ -104,16 +105,25 @@ class FileStorageClient(BaseClient):
         )
         if not response.ok:
             raise NotteAPIError(path=f"sessions/{session_id}/files/{file_id}", response=response)
-        temporary = destination.with_name(f".{destination.name}.part")
+        temporary: Path | None = None
         try:
-            with temporary.open("wb") as output:
+            with tempfile.NamedTemporaryFile(
+                mode="wb",
+                dir=directory,
+                prefix=f".{destination.name}.",
+                suffix=".part",
+                delete=False,
+            ) as output:
+                temporary = Path(output.name)
                 for chunk in response.iter_content(self.DEFAULT_FILE_CHUNK_SIZE):
                     if chunk:
                         _ = output.write(chunk)
             _ = temporary.replace(destination)
+            temporary = None
         finally:
             response.close()
-            temporary.unlink(missing_ok=True)
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
         return str(destination)
 
     @track_usage("cloud.files.delete")

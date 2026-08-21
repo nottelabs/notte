@@ -84,6 +84,24 @@ def test_download_sanitizes_server_filename(files_client: FileStorageClient, tmp
     assert Path(destination).read_bytes() == b"hello"
 
 
+def test_download_does_not_follow_predictable_temporary_symlink(
+    files_client: FileStorageClient, tmp_path: Path
+) -> None:
+    outside = tmp_path.parent / "outside.txt"
+    outside.write_text("safe")
+    (tmp_path / ".input.txt.part").symlink_to(outside)
+    response = Mock(ok=True)
+    response.iter_content.return_value = [b"download"]
+    with (
+        patch.object(files_client, "metadata", return_value=file_metadata()),
+        patch("notte_sdk.endpoints.files.requests.get", return_value=response),
+    ):
+        destination = files_client.download("session-id", "file-id", str(tmp_path))
+
+    assert Path(destination).read_bytes() == b"download"
+    assert outside.read_text() == "safe"
+
+
 def test_remote_storage_upload_is_session_scoped(files_client: FileStorageClient, tmp_path: Path) -> None:
     local = tmp_path / "input.txt"
     local.write_text("hello")
