@@ -879,7 +879,16 @@ class NotteSession(AsyncResource, SyncResource):
                 logger.warning(f"Failed to capture post-action screenshot: {e}")
 
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
-        if _raise_on_failure and exception is not None:
+        if _raise_on_failure and not success:
+            # Gate on "did the action fail", not "did something throw". Actions that signal
+            # failure by returning (a tool returning `success=False`, a controller action
+            # returning `False`) would otherwise be silently swallowed, the way evaluate_js was.
+            if exception is None:
+                exception = ActionExecutionError(
+                    action_id=resolved_action.type,
+                    url=self._window.page.url if self._window is not None else "",
+                    reason=message or "unknown",
+                )
             raise exception
         return execution_result
 

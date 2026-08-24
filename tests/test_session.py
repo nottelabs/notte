@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any
 
 import notte_core
 import pytest
@@ -463,3 +464,33 @@ async def test_evaluate_js_success_path_is_unchanged(code: str, expected_markdow
         assert result.exception is None
         assert result.data is not None
         assert result.data.markdown == expected_markdown
+
+
+# ============================================
+# actions that fail by returning (no exception)
+# ============================================
+
+
+async def _controller_execute_returning_false(*_args: Any, **_kwargs: Any) -> bool:
+    return False
+
+
+@pytest.mark.asyncio
+async def test_action_failing_by_returning_false_raises_by_default() -> None:
+    """The raise gate asks 'did the action fail', not 'did something throw'."""
+    async with NotteSession(headless=True) as session:
+        session.controller.execute = _controller_execute_returning_false  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
+
+        with pytest.raises(ActionExecutionError):
+            _ = await session.aexecute(type="wait", time_ms=1)
+
+
+@pytest.mark.asyncio
+async def test_action_failing_by_returning_false_is_quiet_when_not_raising() -> None:
+    async with NotteSession(headless=True) as session:
+        session.controller.execute = _controller_execute_returning_false  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
+
+        result = await session.aexecute(type="wait", time_ms=1, raise_on_failure=False)
+
+        assert result.success is False
+        assert result.exception is None

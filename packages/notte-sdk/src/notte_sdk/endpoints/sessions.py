@@ -1598,19 +1598,31 @@ class RemoteSession(SyncResource):
         result = self.client.page.execute(session_id=self.session_id, action=action_obj)
         # raise exception if needed
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
-        if _raise_on_failure and result.exception is not None:
+        # Gate on "did the action fail", not "did something throw", to mirror the local session.
+        # The server may also report a failure without an exception (e.g. an API version that
+        # predates the eval-js fix), in which case the message is all the caller has to go on.
+        if _raise_on_failure and (result.exception is not None or not result.success):
             logger.error(f"🚨 Execution failed with message: '{result.message}'")
-            exception_to_raise: Exception = result.exception
-            if isinstance(exception_to_raise, NotteBaseError):
-                result_message = str(result.message).strip()
-                raised_message = str(exception_to_raise).strip()
-                if result_message and _is_generic_error_message(raised_message):
-                    # Prefer the action-specific server message when the serialized exception
-                    # was reduced to a generic user-safe string.
-                    exception_to_raise = NotteBaseError(
-                        dev_message=result_message,
-                        user_message=result_message,
-                        agent_message=result_message,
-                    )
+            result_message = str(result.message).strip()
+            exception_to_raise: Exception
+            if result.exception is None:
+                fallback_message = result_message or f"Failed to execute action: {action_obj.type}"
+                exception_to_raise = NotteBaseError(
+                    dev_message=fallback_message,
+                    user_message=fallback_message,
+                    agent_message=fallback_message,
+                )
+            else:
+                exception_to_raise = result.exception
+                if isinstance(exception_to_raise, NotteBaseError):
+                    raised_message = str(exception_to_raise).strip()
+                    if result_message and _is_generic_error_message(raised_message):
+                        # Prefer the action-specific server message when the serialized exception
+                        # was reduced to a generic user-safe string.
+                        exception_to_raise = NotteBaseError(
+                            dev_message=result_message,
+                            user_message=result_message,
+                            agent_message=result_message,
+                        )
             raise exception_to_raise from result.exception
         return result

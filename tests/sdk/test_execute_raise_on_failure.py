@@ -82,3 +82,23 @@ def test_remote_evaluate_js_failure_does_not_raise_when_disabled() -> None:
     assert result.success is False
     assert result.data is None
     assert result.message == TIMEOUT_MESSAGE
+
+
+def test_remote_failure_without_exception_still_raises() -> None:
+    """The API may report a failure without attaching an exception: still raise the reason."""
+    session = remote_session(over_the_wire(server_side_result(exception=None)))
+
+    with pytest.raises(NotteBaseError) as exc_info:
+        _ = session.execute(ACTION)
+
+    assert TIMEOUT_MESSAGE in str(exc_info.value)
+
+
+def test_remote_failure_without_exception_is_quiet_when_disabled() -> None:
+    session = remote_session(over_the_wire(server_side_result(exception=None)), raise_on_failure=False)
+
+    result = session.execute(ACTION)
+
+    assert result.success is False
+    assert result.exception is None
+    assert result.message == TIMEOUT_MESSAGE
