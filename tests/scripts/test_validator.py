@@ -101,6 +101,13 @@ def test_script_runner(mock_notte: NotteModule, test_script: str):
     runner.run_script(test_script)
 
 
+class _StubNotteModule:
+    """Enough of the NotteModule protocol to execute a script that never calls it."""
+
+    def __getattr__(self, name: str):
+        raise RuntimeError(f"notte.{name} is not available in this test")
+
+
 def test_script_validator(test_script: str):
     validator = ScriptValidator()
     _ = validator.parse_script(test_script)
@@ -427,7 +434,19 @@ def run():
 
 """
     validator = ScriptValidator()
-    with pytest.raises(SyntaxError, match="Forbidden function call: 'open'"):
+    # `open` is no longer rejected at parse time. It resolves to `safe_tmp_open`,
+    # which confines every path to /tmp, so a script may keep scratch files
+    # without reaching the rest of the filesystem. See test_open_is_confined_to_tmp.
+    _ = validator.parse_script(script)
+
+    script = """
+def run():
+    with notte.Session() as session:
+        eval("1 + 1")
+        session.execute(type="goto", value="https://example.com")
+
+"""
+    with pytest.raises(SyntaxError, match="Forbidden function call: 'eval'"):
         _ = validator.parse_script(script)
 
 
@@ -458,7 +477,7 @@ def run():
 
 """
     validator = ScriptValidator()
-    with pytest.raises(SyntaxError, match="Access to private attribute forbidden: '__class__'"):
+    with pytest.raises(SyntaxError, match="Access to dangerous attribute forbidden: '__class__'"):
         _ = validator.parse_script(script)
 
 
@@ -961,3 +980,32 @@ def run(name, age = 25):
     assert age_param.name == "age"
     assert age_param.type is None
     assert age_param.default == "25"
+
+
+def test_open_is_confined_to_tmp():
+    """`open` is permitted, and cannot reach outside /tmp.
+
+    The validator no longer rejects `open` at parse time, so the containment is
+    entirely `safe_tmp_open`'s job: it resolves the path first, which is what
+    stops `../` and symlinks from walking out, and roots relative names at /tmp
+    rather than the working directory.
+    """
+    runner = SecureScriptRunner(_StubNotteModule())
+
+    with pytest.raises(RuntimeError, match="Only files inside /tmp are allowed"):
+        _ = runner.run_script('def run():\n    return open("/etc/passwd").read()\n')
+
+    with pytest.raises(RuntimeError, match="Only files inside /tmp are allowed"):
+        _ = runner.run_script('def run():\n    return open("/tmp/../etc/passwd").read()\n')
+
+    # A scratch file is the point of allowing it at all.
+    assert (
+        runner.run_script(
+            "def run():\n"
+            '    f = open("notte_confinement_probe.txt", "w")\n'
+            '    _ = f.write("scratch")\n'
+            "    f.close()\n"
+            '    return open("notte_confinement_probe.txt").read()\n'
+        )
+        == "scratch"
+    )
