@@ -64,7 +64,7 @@ from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.data.space import DataSpace, ImageData, StructuredData, TBaseModel
-from notte_core.errors.actions import InvalidActionError
+from notte_core.errors.actions import ActionExecutionError, InvalidActionError
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
 from notte_core.profiling import profiler
@@ -761,9 +761,15 @@ class NotteSession(AsyncResource, SyncResource):
                         except asyncio.TimeoutError:
                             success = False
                             message = f"JavaScript evaluation timed out after {config.timeout_evaluate_js_ms}ms"
+                            exception = ActionExecutionError(
+                                action_id=resolved_action.type, url=self.window.page.url, reason=message
+                            )
                         except PlaywrightError as js_err:
                             success = False
                             message = f"JavaScript evaluation failed: {js_err}"
+                            exception = ActionExecutionError(
+                                action_id=resolved_action.type, url=self.window.page.url, reason=message
+                            )
                         else:
                             # Convert result to string representation for markdown
                             if result is None:

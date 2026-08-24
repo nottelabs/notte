@@ -88,6 +88,17 @@ _GENERIC_UNEXPECTED_MESSAGES: frozenset[str] = frozenset(
     }
 )
 
+# `ActionExecutionError.user_message`. The API serialises exceptions with the user-facing
+# message, which drops the action-specific reason, so it has to be detected by prefix
+# (the base class appends "our team has been notified" / "try again later" suffixes).
+_ACTION_EXECUTION_USER_MESSAGE: str = "Sorry, this action cannot be executed at the moment."
+
+
+def _is_generic_error_message(message: str) -> bool:
+    """Whether a serialised exception message lost the action-specific reason."""
+    return message in _GENERIC_UNEXPECTED_MESSAGES or message.startswith(_ACTION_EXECUTION_USER_MESSAGE)
+
+
 # Retry configuration constants
 CLUSTER_OVERLOAD_RETRY_DELAY = 30  # seconds to wait before retrying on 529 errors
 CONSOLE_VIEWER_URL = (
@@ -1593,7 +1604,7 @@ class RemoteSession(SyncResource):
             if isinstance(exception_to_raise, NotteBaseError):
                 result_message = str(result.message).strip()
                 raised_message = str(exception_to_raise).strip()
-                if result_message and raised_message in _GENERIC_UNEXPECTED_MESSAGES:
+                if result_message and _is_generic_error_message(raised_message):
                     # Prefer the action-specific server message when the serialized exception
                     # was reduced to a generic user-safe string.
                     exception_to_raise = NotteBaseError(
