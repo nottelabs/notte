@@ -67,6 +67,9 @@ def _container_kind(annotation: str | None) -> str | None:
     a mapping, since guessing a sequence for something that might be a dict is
     the more expensive mistake.
 
+    Quoted annotations are unwrapped and re-read, since `ast.unparse` keeps the
+    quotes a forward reference was written with.
+
     Parsed rather than pattern-matched: `ast.unparse` produced these strings, so
     `ast.parse` reads them back exactly, including nesting the eye slides over.
     """
@@ -81,6 +84,17 @@ def _container_kind(annotation: str | None) -> str | None:
 
     def walk(current: ast.expr, depth: int = 0) -> None:
         if depth > 8:  # A pathological annotation is not worth recursing into.
+            return
+        if isinstance(current, ast.Constant) and isinstance(current.value, str):
+            # A quoted annotation. `def f(x: "list[str]")` is recorded by
+            # `ast.unparse` as the six characters `'list[str]'`, quotes and all,
+            # so without this the string reads as a bare constant of no
+            # particular type and the parameter silently keeps its raw value.
+            # Reached again for the inner half of `Optional["list[str]"]`.
+            try:
+                walk(ast.parse(current.value.strip(), mode="eval").body, depth + 1)
+            except SyntaxError:
+                pass
             return
         if isinstance(current, ast.BinOp) and isinstance(current.op, ast.BitOr):
             walk(current.left, depth + 1)
@@ -139,7 +153,13 @@ def _parse_collection_text(text: str, kind: str) -> Any | None:
     """
     try:
         value: Any = json.loads(text)
-    except ValueError:
+    except (ValueError, RecursionError):
+        # RecursionError alongside ValueError because `json.loads` recurses per
+        # nesting level: deeply nested input raises it rather than rejecting the
+        # text, and letting it escape would end the run over a variable this
+        # function is allowed to decline. Declining means passing the original
+        # string through, which is what happens if both parsers fail.
+        #
         # Nested rather than a loop with `continue`, so neither attempt needs a
         # bare `except` and the exceptions each parser really raises stay named.
         try:

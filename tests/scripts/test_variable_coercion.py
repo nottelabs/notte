@@ -107,3 +107,39 @@ def test_absent_and_empty_variables_are_safe() -> None:
     variables: dict[str, object] = {"x": "['a']"}
     # A variable with no matching parameter is not coerced or dropped.
     assert coerce_collection_variables([ParameterInfo(name="other", type="list[str]")], variables) == {"x": "['a']"}
+
+
+@pytest.mark.parametrize(
+    "annotation",
+    [
+        "'list[str]'",
+        '"list[str]"',
+        "Optional['list[str]']",
+        "'Optional[list[str]]'",
+    ],
+)
+def test_quoted_annotations_are_read_through(annotation: str) -> None:
+    # `def f(x: "list[str]")` is a forward reference, and `ast.unparse` records
+    # it with the quotes still on. Reading it as a plain constant would skip
+    # coercion and hand the script the raw string, which is the silent wrong
+    # answer this module exists to prevent.
+    assert coerce(annotation, '["a", "b"]') == ["a", "b"]
+
+
+def test_a_quoted_scalar_is_still_not_a_collection() -> None:
+    # Unwrapping the quotes must not turn every quoted annotation into one.
+    assert coerce("'int'", "5") == "5"
+    assert coerce("'NotAType'", "['a']") == "['a']"
+
+
+def test_a_quoted_annotation_that_is_not_a_type_is_ignored() -> None:
+    # The inner text does not have to parse. It must not raise if it does not.
+    assert coerce("'['", "['a']") == "['a']"
+
+
+def test_deeply_nested_json_does_not_end_the_run() -> None:
+    # `json.loads` recurses per nesting level and raises RecursionError rather
+    # than rejecting the text. Declining the value passes the original string
+    # through; letting the error escape would kill the run instead.
+    deep = "[" * 60_000 + "]" * 60_000
+    assert coerce("list[str]", deep) == deep
