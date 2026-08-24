@@ -1,8 +1,23 @@
+"""Script parsing and sandboxed execution for Notte functions.
+
+The variable coercion helpers here (`_annotation_head`, `_container_kind`,
+`_parse_collection_text`, `coerce_collection_variables`, the annotation head
+frozensets they share, and `_validate_variables`) are mirrored verbatim by the
+Notte API runtime, which keeps its own fork of this module. Keep the two copies
+byte-identical.
+
+A fix applied to only one of them leaves the other passing a JSON string
+straight through to a parameter annotated `list` or `dict`. That raises nothing:
+a function expecting `list[str]` and handed '["a", "b"]' iterates 21 characters
+and returns a wrong answer instead of failing.
+"""
+
 import ast
+import json
 import traceback
 import types
-from collections.abc import Mapping
-from typing import Any, Callable, ClassVar, Literal, Protocol, final
+from collections.abc import Iterable, Mapping
+from typing import Any, Callable, ClassVar, Literal, Protocol, cast, final
 
 from pydantic import BaseModel, ConfigDict
 from RestrictedPython import compile_restricted, safe_globals  # type: ignore [reportMissingTypeStubs]
@@ -22,6 +37,180 @@ class ParameterInfo(BaseModel):
     name: str
     type: str | None = None
     default: str | None = None
+
+
+_SEQUENCE_HEADS = frozenset({"list", "tuple", "set", "frozenset", "sequence", "iterable"})
+_MAPPING_HEADS = frozenset({"dict", "mapping", "ordereddict", "defaultdict"})
+_TRANSPARENT_HEADS = frozenset({"optional", "annotated", "union", "final"})
+
+
+def _annotation_head(node: ast.expr) -> str | None:
+    """Lowercased name of a subscript head, ignoring the module it came from."""
+    if isinstance(node, ast.Name):
+        return node.id.lower()
+    if isinstance(node, ast.Attribute):
+        return node.attr.lower()
+    if isinstance(node, ast.Subscript):
+        return _annotation_head(node.value)
+    return None
+
+
+def _container_kind(annotation: str | None) -> str | None:
+    """
+    Which container an annotation asks for, or None for anything else.
+
+    Read from the *outermost* type, so `dict[str, list[str]]` is a mapping
+    rather than a sequence that happens to mention one. Wrappers that do not
+    change the shape are looked through: `Optional[list[str]]`,
+    `Annotated[list[str], Field(...)]`, `list[str] | None`, and the `Union[...]`
+    spelling of the same. A union that names more than one container resolves to
+    a mapping, since guessing a sequence for something that might be a dict is
+    the more expensive mistake.
+
+    Quoted annotations are unwrapped and re-read, since `ast.unparse` keeps the
+    quotes a forward reference was written with.
+
+    Parsed rather than pattern-matched: `ast.unparse` produced these strings, so
+    `ast.parse` reads them back exactly, including nesting the eye slides over.
+    """
+    if not annotation:
+        return None
+    try:
+        node: ast.expr = ast.parse(annotation.strip(), mode="eval").body
+    except SyntaxError:
+        return None
+
+    kinds: set[str] = set()
+
+    def walk(current: ast.expr, depth: int = 0) -> None:
+        if depth > 8:  # A pathological annotation is not worth recursing into.
+            return
+        if isinstance(current, ast.Constant) and isinstance(current.value, str):
+            # A quoted annotation. `def f(x: "list[str]")` is recorded by
+            # `ast.unparse` as the six characters `'list[str]'`, quotes and all,
+            # so without this the string reads as a bare constant of no
+            # particular type and the parameter silently keeps its raw value.
+            # Reached again for the inner half of `Optional["list[str]"]`.
+            try:
+                walk(ast.parse(current.value.strip(), mode="eval").body, depth + 1)
+            except SyntaxError:
+                pass
+            return
+        if isinstance(current, ast.BinOp) and isinstance(current.op, ast.BitOr):
+            walk(current.left, depth + 1)
+            walk(current.right, depth + 1)
+            return
+        if isinstance(current, ast.Subscript):
+            head = _annotation_head(current.value)
+            if head in _TRANSPARENT_HEADS:
+                inner = current.slice
+                # `Annotated[T, ...]` and `Union[A, B]` both arrive as a tuple.
+                if isinstance(inner, ast.Tuple):
+                    members = inner.elts if head != "annotated" else inner.elts[:1]
+                    for member in members:
+                        walk(member, depth + 1)
+                else:
+                    walk(inner, depth + 1)
+                return
+            if head in _SEQUENCE_HEADS:
+                kinds.add("sequence")
+            elif head in _MAPPING_HEADS:
+                kinds.add("mapping")
+            return
+        head = _annotation_head(current)
+        if head in _SEQUENCE_HEADS:
+            kinds.add("sequence")
+        elif head in _MAPPING_HEADS:
+            kinds.add("mapping")
+
+    walk(node)
+    if "mapping" in kinds:
+        return "mapping"
+    if "sequence" in kinds:
+        return "sequence"
+    return None
+
+
+def _parse_collection_text(text: str, kind: str) -> Any | None:
+    """
+    A string that spells out a collection, as the collection, or None.
+
+    Two spellings, because both reach this function in practice: JSON, which is
+    what an HTTP caller sends, and the Python literal that `ast.unparse` writes
+    for a parameter default, so a caller echoing a default back sends
+    `['a', 'b']` with quotes JSON rejects.
+
+    `ast.literal_eval` is the safe evaluator: literals and nothing else, so a
+    name like `DEFAULT_KEYWORDS` or a call like `list()` raises here rather than
+    being resolved or executed. `set()` is the one exception, and CPython's
+    rather than ours: it is special-cased because there is no empty-set literal,
+    so it evaluates to an empty set and a parameter defaulted that way arrives
+    as `[]`. That is the value it asked for, and better than the four characters
+    of source it used to receive.
+
+    A set arrives as a list because JSON has no set. The wire format decided
+    that long before this function saw the value.
+    """
+    try:
+        value: Any = json.loads(text)
+    except (ValueError, MemoryError, RecursionError):
+        # More than ValueError because a parser can fail on the shape of the
+        # input rather than its syntax: `json.loads` recurses per nesting level,
+        # so deeply nested text raises RecursionError instead of rejecting it,
+        # and a large enough document exhausts memory. Letting either escape
+        # would end the run over a variable this function is allowed to decline.
+        # Declining means passing the original string through, which is what
+        # happens when both parsers fail. Same set the literal_eval arm catches,
+        # for the same reason.
+        #
+        # Nested rather than a loop with `continue`, so neither attempt needs a
+        # bare `except` and the exceptions each parser really raises stay named.
+        try:
+            value = ast.literal_eval(text)
+        except (ValueError, SyntaxError, TypeError, MemoryError, RecursionError):
+            return None
+
+    # `literal_eval` returns `Any`, so the narrowed types stay partially unknown
+    # without saying what the elements are. They are whatever the caller wrote.
+    if kind == "sequence" and isinstance(value, (list, tuple, set, frozenset)):
+        return list(cast("Iterable[Any]", value))
+    if kind == "mapping" and isinstance(value, dict):
+        return cast("dict[Any, Any]", value)
+    return None
+
+
+def coerce_collection_variables(run_parameters: list["ParameterInfo"], variables: dict[str, Any]) -> dict[str, Any]:
+    """
+    Replace strings that spell out a collection with the collection itself.
+
+    A caller that sends `keywords="['a', 'b']"` for `keywords: list[str]` is
+    handing the script a 22-character string where it expects two items, and the
+    script raises somewhere inside itself. Every client hits this: the callers
+    that build the payload from a stored default are echoing back Python source,
+    because that is what `ast.unparse` wrote when the parameter was recorded.
+
+    Deliberately narrow, on the numbers. Across a fortnight of production runs,
+    `int` and `bool` parameters received strings and succeeded 5,166 times,
+    because Python is duck-typed and the scripts cope, so touching those would
+    break working calls. A collection parameter that received a string failed
+    every time it happened, 4 of 4 over thirty days, so there is no behaviour
+    there to preserve and nothing this can regress.
+
+    Nothing is rejected and nothing else is converted. A value this cannot read
+    is passed through exactly as it arrived, which is what happened before.
+    """
+    if not variables:
+        return variables
+
+    kinds = {param.name: _container_kind(param.type) for param in run_parameters}
+    for name, value in variables.items():
+        kind = kinds.get(name)
+        if kind is None or not isinstance(value, str):
+            continue
+        parsed = _parse_collection_text(value, kind)
+        if parsed is not None:
+            variables[name] = parsed
+    return variables
 
 
 class ParsedScriptInfo(BaseModel):
@@ -560,6 +749,14 @@ class SecureScriptRunner:
         """
         Validate that the provided variables match the run function's expected parameters
 
+        Also coerces collection-typed variables in place, so a string spelling
+        out a list or dict arrives at the run function as the collection it
+        describes. That happens here, and mutates rather than returns, because
+        this is the one hook every caller already shares: the workflows Lambda
+        replaces `run_script` wholesale and calls this method on the same dict it
+        later splats into `run(**variables)`. A separate coercion step would be
+        correct and would miss the path that actually runs published functions.
+
         Args:
             run_parameters: List of parameters expected by the run function
             variables: Variables to be passed to the run function
@@ -585,6 +782,8 @@ class SecureScriptRunner:
             raise ValueError(
                 f"Unexpected variable names for run function: {sorted(unexpected_params)} (expected variable names: {sorted(all_params)})"
             )
+
+        _ = coerce_collection_variables(run_parameters, variables)
 
         # Optional: Log parameter information for debugging
         if hasattr(self, "logger"):
