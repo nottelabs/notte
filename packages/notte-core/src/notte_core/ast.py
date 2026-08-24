@@ -1,3 +1,17 @@
+"""Script parsing and sandboxed execution for Notte functions.
+
+The variable coercion helpers here (`_annotation_head`, `_container_kind`,
+`_parse_collection_text`, `coerce_collection_variables`, the annotation head
+frozensets they share, and `_validate_variables`) are mirrored verbatim by the
+Notte API runtime, which keeps its own fork of this module. Keep the two copies
+byte-identical.
+
+A fix applied to only one of them leaves the other passing a JSON string
+straight through to a parameter annotated `list` or `dict`. That raises nothing:
+a function expecting `list[str]` and handed '["a", "b"]' iterates 21 characters
+and returns a wrong answer instead of failing.
+"""
+
 import ast
 import json
 import traceback
