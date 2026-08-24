@@ -153,12 +153,15 @@ def _parse_collection_text(text: str, kind: str) -> Any | None:
     """
     try:
         value: Any = json.loads(text)
-    except (ValueError, RecursionError):
-        # RecursionError alongside ValueError because `json.loads` recurses per
-        # nesting level: deeply nested input raises it rather than rejecting the
-        # text, and letting it escape would end the run over a variable this
-        # function is allowed to decline. Declining means passing the original
-        # string through, which is what happens if both parsers fail.
+    except (ValueError, MemoryError, RecursionError):
+        # More than ValueError because a parser can fail on the shape of the
+        # input rather than its syntax: `json.loads` recurses per nesting level,
+        # so deeply nested text raises RecursionError instead of rejecting it,
+        # and a large enough document exhausts memory. Letting either escape
+        # would end the run over a variable this function is allowed to decline.
+        # Declining means passing the original string through, which is what
+        # happens when both parsers fail. Same set the literal_eval arm catches,
+        # for the same reason.
         #
         # Nested rather than a loop with `continue`, so neither attempt needs a
         # bare `except` and the exceptions each parser really raises stay named.

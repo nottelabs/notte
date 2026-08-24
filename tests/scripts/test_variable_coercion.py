@@ -143,3 +143,9 @@ def test_deeply_nested_json_does_not_end_the_run() -> None:
     # through; letting the error escape would kill the run instead.
     deep = "[" * 60_000 + "]" * 60_000
     assert coerce("list[str]", deep) == deep
+
+
+def test_a_huge_flat_json_document_does_not_end_the_run() -> None:
+    # The other half of the same rule: a parser may fail on the size or shape of
+    # the input rather than its syntax, and neither way is worth a dead run.
+    assert coerce("list[str]", "[" + "0," * 200_000 + "0]") is not None
