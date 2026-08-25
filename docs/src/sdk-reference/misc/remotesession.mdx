@@ -52,6 +52,20 @@ Debug information for the session.
 
 ---
 
+### evaluate_js
+
+```python
+evaluate_js(code: <class 'str'>, raise_on_failure: <class 'bool'> = True) -> str | notte_core.browser.observation.ExecutionResult
+```
+
+Evaluate JavaScript on the current page and return its result as a string
+
+**Returns:**
+
+`UnionType`[`str`, <Visibility for="humans">[`ExecutionResult`](/sdk-reference/misc/executionresult)</Visibility><Visibility for="agents">[`ExecutionResult`](/sdk-reference/misc/executionresult.md)</Visibility>]
+
+---
+
 ### execute
 
 ```python

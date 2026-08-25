@@ -1,0 +1,28 @@
+---
+title: "evaluate_js"
+description: "Evaluate JavaScript on the current page and return its result as a string"
+---
+
+
+
+The result is stringified the way `evaluate_js` records it: objects and
+arrays as JSON, a JS `null` as the string `"null"`. On failure the typed
+exception is raised with the actual JavaScript error; pass
+`raise_on_failure=False` to get the `ExecutionResult` envelope instead.
+
+```python
+payload = json.loads(session.evaluate_js("(async () => JSON.stringify(await res.json()))()"))
+```
+
+
+## Parameters
+
+<ParamField path="code" type="str" required>
+</ParamField>
+
+<ParamField path="raise_on_failure" type="bool" default="True">
+</ParamField>
+
+## Returns
+
+`UnionType`[`str`, <Visibility for="humans">[`ExecutionResult`](/sdk-reference/misc/executionresult)</Visibility><Visibility for="agents">[`ExecutionResult`](/sdk-reference/misc/executionresult.md)</Visibility>]
