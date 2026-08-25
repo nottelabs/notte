@@ -34,17 +34,15 @@ async def load_github_signin_fixture(session: notte.Session) -> None:
 def test_vault_in_local_agent():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    vault = client.Vault()
-    _ = vault.add_credentials(
-        url="https://github.com/",
-        email="xyz@notte.cc",
-        password="xyz",
-    )
-    with notte.Session() as session:
-        agent = notte.Agent(session=session, vault=vault, max_steps=5)
-        _ = agent.run(task="Go to the github.com and try to login with the credentials")
-
-    _ = client.vaults.delete(vault.vault_id)
+    with client.Vault() as vault:
+        _ = vault.add_credentials(
+            url="https://github.com/",
+            email="xyz@notte.cc",
+            password="xyz",
+        )
+        with notte.Session() as session:
+            agent = notte.Agent(session=session, vault=vault, max_steps=5)
+            _ = agent.run(task="Go to the github.com and try to login with the credentials")
 
 
 @pytest.mark.asyncio

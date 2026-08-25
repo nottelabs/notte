@@ -79,6 +79,8 @@ jobs:
       NOTTE_GITHUB_COM_EMAIL: ${{ secrets.NOTTE_GITHUB_COM_EMAIL }}
       NOTTE_GITHUB_COM_PASSWORD: ${{ secrets.NOTTE_GITHUB_COM_PASSWORD }}
       NOTTE_GITHUB_COM_MFA_SECRET: ${{ secrets.NOTTE_GITHUB_COM_MFA_SECRET }}
+      # Scope vault creates to this job only; cleanup deletes only this prefix.
+      NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -112,3 +114,9 @@ jobs:
 
       - name: Run execution tests
         run: cd docs/src && uv run pytest -v --tb=no
+
+      - name: Cleanup vaults created by this run
+        if: always()
+        run: |
+          source .venv/bin/activate
+          python scripts/cleanup_ci_vaults.py
