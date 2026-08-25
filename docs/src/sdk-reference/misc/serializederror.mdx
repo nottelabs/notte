@@ -1,0 +1,37 @@
+---
+title: "SerializedError"
+description: "Lossless wire representation of an execution result's exception"
+---
+
+
+
+The legacy `exception` field is serialized as `str(e)`, which collapses the error
+to whichever single message the server's `ErrorConfig` mode baked in and drops the
+concrete type and the retry/notify flags. This model carries all of it so clients
+can rehydrate the exception the server actually raised. The field is additive for
+wire compatibility: old servers never send it, old clients ignore it
+
+## Fields
+
+<ParamField path="error_type" type="str" required>
+</ParamField>
+
+<ParamField path="dev_message" type="str" required>
+</ParamField>
+
+<ParamField path="user_message" type="str" required>
+</ParamField>
+
+<ParamField path="agent_message" type="str" required>
+</ParamField>
+
+<ParamField path="should_retry_later" type="bool" default="False">
+</ParamField>
+
+<ParamField path="should_notify_team" type="bool" default="False">
+</ParamField>
+
+
+## Module
+
+`notte_core.browser.observation`
