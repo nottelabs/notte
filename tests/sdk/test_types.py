@@ -222,8 +222,25 @@ def test_unknown_proxy_type_should_raise_error():
 
 
 def test_cdp_url_with_headless_false_should_raise_error():
-    with pytest.raises(ValidationError, match=r"headless must be True.*only works with a local browser"):
+    with pytest.raises(
+        ValidationError,
+        match=r"`headless=True` sessions still include session replays and access to the live viewer",
+    ):
         _ = SessionStartRequest.model_validate({"cdp_url": "ws://localhost:9222", "headless": False})
+
+
+def test_remote_headless_true_is_accepted_for_legacy_sdks_but_not_serialized():
+    request = SessionStartRequest.model_validate({"headless": True})
+    assert "headless" not in request.model_dump()
+
+
+def test_advanced_stealth_is_public_but_headless_response_is_hidden_from_schema():
+    assert "advanced_stealth" in SessionStartRequest.model_json_schema()["properties"]
+    assert "advanced_stealth" not in SessionStartRequest().model_dump()
+    assert SessionStartRequest(advanced_stealth=True).model_dump()["advanced_stealth"] is True
+    assert "headless" not in SessionStartRequest.model_json_schema()["properties"]
+    assert "headless" not in SessionResponse.model_json_schema()["properties"]
+    assert _session_response(dt.timedelta()).model_dump()["headless"] is True
 
 
 # ABNF `duration` rule from RFC 3339 Appendix A, which is what JSON Schema's
@@ -240,6 +257,7 @@ def _session_response(duration: dt.timedelta) -> SessionResponse:
         last_accessed_at=now,
         status="active",
         duration=duration,
+        headless=True,
     )
 
 

@@ -10,7 +10,7 @@
       print("Creating session...")
 
       with client.Session(
-          headless=False,  # Opens live viewer
+          open_viewer=True,
           timeout_minutes=10,
           cookie_file="cookies.json"  # Auto-load/save cookies
       ) as session:

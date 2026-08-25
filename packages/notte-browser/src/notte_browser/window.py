@@ -28,7 +28,7 @@ from notte_sdk.types import (
     DEFAULT_HEADLESS_VIEWPORT_WIDTH,
     AspectRatio,
     Cookie,
-    SessionStartRequest,
+    LocalSessionStartRequest,
 )
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from typing_extensions import override
@@ -153,7 +153,7 @@ class BrowserWindowOptions(BaseModel):
         return chrome_args
 
     @staticmethod
-    def from_request(request: SessionStartRequest) -> "BrowserWindowOptions":
+    def from_request(request: LocalSessionStartRequest) -> "BrowserWindowOptions":
         return BrowserWindowOptions(
             headless=request.headless,
             solve_captchas=request.solve_captchas,

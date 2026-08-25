@@ -5,7 +5,7 @@ from typing import ClassVar
 from notte_core.common.logging import logger
 from notte_core.common.resource import AsyncResource
 from notte_core.profiling import profiler
-from notte_sdk.types import SessionStartRequest
+from notte_sdk.types import LocalSessionStartRequest
 from openai import BaseModel
 from pydantic import PrivateAttr
 from typing_extensions import override
@@ -161,7 +161,7 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
     async def new_window(self, options: BrowserWindowOptions | None = None) -> BrowserWindow:
         if not self.is_started():
             _ = await self.astart()
-        options = options or BrowserWindowOptions.from_request(SessionStartRequest())
+        options = options or BrowserWindowOptions.from_request(LocalSessionStartRequest())
         browser = await self.create_playwright_browser(options)
         resource = await self.get_browser_resource(options, browser)
 

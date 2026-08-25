@@ -5,7 +5,7 @@
   client = NotteClient()
 
   with client.Session(
-      headless=True,
+      advanced_stealth=False,
       solve_captchas=True,
       proxies=True,
       viewport_width=1920,

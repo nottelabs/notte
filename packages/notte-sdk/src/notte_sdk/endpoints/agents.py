@@ -901,7 +901,7 @@ class RemoteAgent:
         Args:
             vault: A notte vault instance, if the agent requires authentication
             session: The session to connect to. The session's `open_viewer` parameter controls
-                whether to display a live viewer (browsers are always headless).
+                whether to display a live viewer.
             notifier: A notifier (for example, email), which will get called upon task completion.
             session_id: (deprecated) use session instead
             **data: Additional keyword arguments for the agent creation request.

@@ -114,8 +114,7 @@ def test_open_viewer_false_no_viewer(client: NotteClient, session_id: str) -> No
             mock_viewer.assert_not_called()
 
 
-def test_session_always_headless_true_on_wire(client: NotteClient, session_id: str, headers: dict[str, str]) -> None:
-    """Test that session start requests always include headless=True."""
+def test_remote_session_omits_headless_on_wire(client: NotteClient, session_id: str, headers: dict[str, str]) -> None:
     with patch("requests.post") as mock_post:
         mock_response = session_response_dict(session_id)
         mock_post.return_value.status_code = 200
@@ -133,11 +132,8 @@ def test_session_always_headless_true_on_wire(client: NotteClient, session_id: s
         if calls:
             call_args = calls[0]
             request_data = json.loads(call_args.kwargs["data"])
-            # Verify headless is always True in the wire request
-            assert request_data["headless"] is True
-        else:
-            # Fallback: check the request attribute directly
-            assert session.request.headless is True
+            assert "headless" not in request_data
+            assert "advanced_stealth" not in request_data
 
 
 def _start_session(mock_post: MagicMock, client: NotteClient, session_id: str) -> SessionResponse:
@@ -165,7 +161,6 @@ def _stop_session(mock_delete: MagicMock, client: NotteClient, session_id: str) 
 @pytest.mark.order(1)
 def test_start_session(mock_post: MagicMock, client: NotteClient, session_id: str, headers: dict[str, str]) -> None:
     session_data: SessionStartRequestDict = {
-        "headless": True,
         "solve_captchas": True,
         "idle_timeout_minutes": DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES,
         "max_duration_minutes": DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,

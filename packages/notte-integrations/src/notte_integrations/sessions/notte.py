@@ -24,7 +24,7 @@ class NotteSessionsManager(CDPSessionManager):
         logger.info("Creating Notte session...")
 
         session = self.notte.Session(
-            headless=options.headless,
+            advanced_stealth=not options.headless,
             viewport_width=options.viewport_width,
             viewport_height=options.viewport_height,
             proxies=options.proxy is not None,
