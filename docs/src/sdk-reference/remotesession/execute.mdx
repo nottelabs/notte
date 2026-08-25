@@ -76,6 +76,14 @@ This syntax also supports Xpath (e.g. `xpath=/html/body/div[3]/div/button[1]`) o
   If true, will raise if we could not execute the action
 </ParamField>
 
+<ParamField path="retries" type="int" default="0">
+  Re-run a failed action up to this many extra times, sleeping         `retry_delay_ms` between attempts. The `raise_on_failure` contract         applies to the last attempt.
+</ParamField>
+
+<ParamField path="retry_delay_ms" type="int" default="2000">
+  Milliseconds to sleep between attempts.
+</ParamField>
+
 <ParamField path="kwargs" type="Any" required>
 </ParamField>
 

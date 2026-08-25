@@ -1378,116 +1378,268 @@ class RemoteSession(SyncResource):
 
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FormFillActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GotoActionDict]) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GotoNewTabActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CloseTabActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[FormFillActionDict],
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SwitchTabActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[GotoActionDict],
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GoBackActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[GotoNewTabActionDict],
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GoForwardActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[CloseTabActionDict],
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ReloadActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[WaitActionDict]) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[PressKeyActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrollUpActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[SwitchTabActionDict],
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrollDownActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[GoBackActionDict],
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CaptchaSolveActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[HelpActionDict]) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CompletionActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrapeActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[GoForwardActionDict],
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailReadActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[ReloadActionDict],
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailVerificationReadActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[WaitActionDict],
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SmsReadActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[PressKeyActionDict],
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EvaluateJsActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[ScrollUpActionDict],
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ClickActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FillActionDict]) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[MultiFactorFillActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FallbackFillActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[ScrollDownActionDict],
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CheckActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[CaptchaSolveActionDict],
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SelectDropdownOptionActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[HelpActionDict],
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[UploadFileActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[CompletionActionDict],
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[DownloadFileActionDict]
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[ScrapeActionDict],
     ) -> ExecutionResult: ...
     @overload
-    def execute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
+    def execute(
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[EmailReadActionDict],
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[EmailVerificationReadActionDict],
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[SmsReadActionDict],
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[EvaluateJsActionDict],
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[ClickActionDict],
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[FillActionDict],
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[MultiFactorFillActionDict],
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[FallbackFillActionDict],
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[CheckActionDict],
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[SelectDropdownOptionActionDict],
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[UploadFileActionDict],
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
+        **kwargs: Unpack[DownloadFileActionDict],
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, action: BaseAction, *, raise_on_failure: bool | None = None, retries: int = 0, retry_delay_ms: int = 2000
+    ) -> ExecutionResult: ...
 
     def execute(
         self,
         action: BaseAction | None = None,
         *,
         raise_on_failure: bool | None = None,
+        retries: int = 0,
+        retry_delay_ms: int = 2000,
         **kwargs: Any,
     ) -> ExecutionResult:
         """
@@ -1554,6 +1706,10 @@ class RemoteSession(SyncResource):
 
         Args:
             raise_on_failure: If true, will raise if we could not execute the action
+            retries: Re-run a failed action up to this many extra times, sleeping
+                `retry_delay_ms` between attempts. The `raise_on_failure` contract
+                applies to the last attempt.
+            retry_delay_ms: Milliseconds to sleep between attempts.
             **kwargs: Action fields as keyword arguments.
 
         Returns:
@@ -1578,6 +1734,11 @@ class RemoteSession(SyncResource):
             action_obj = ExecutionRequest.get_action(action=action, data=None)  # pyright: ignore [reportUnreachable]
 
         result = self.client.page.execute(session_id=self.session_id, action=action_obj)
+        for _ in range(max(retries, 0)):
+            if result.success:
+                break
+            time.sleep(retry_delay_ms / 1000)
+            result = self.client.page.execute(session_id=self.session_id, action=action_obj)
         # raise exception if needed
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
         # Gate on "did the action fail", not "did something throw", to mirror the local session.
