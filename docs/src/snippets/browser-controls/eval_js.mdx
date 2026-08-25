@@ -8,5 +8,5 @@ client = NotteClient()
 
 with client.Session() as session:
     session.execute(type="goto", url="https://notte.cc/")
-    session.execute(type="evaluate_js", code="document.title")
+    title = session.evaluate_js("document.title")
 ```

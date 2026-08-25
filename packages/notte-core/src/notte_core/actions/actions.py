@@ -974,10 +974,16 @@ class EvaluateJsAction(ToolAction):
 
     **Example:**
     ```python
-    session.execute(type="evaluate_js", code="document.title")
-    session.execute(type="evaluate_js", code="Array.from(document.querySelectorAll('a')).map(a => a.href)")
-    session.execute(type="evaluate_js", code="(() => { const els = document.querySelectorAll('a'); return els.length; })()")
+    title = session.evaluate_js("document.title")
+    links = session.evaluate_js("Array.from(document.querySelectorAll('a')).map(a => a.href)")
+    count = session.evaluate_js("(() => { const els = document.querySelectorAll('a'); return els.length; })()")
     ```
+
+    `session.evaluate_js(code)` returns the evaluated string directly (objects and
+    arrays as JSON, a JS `null` as the string `"null"`) and raises on failure with
+    the actual JavaScript error. The action form
+    `session.execute(type="evaluate_js", code=...)` returns the `ExecutionResult`
+    envelope instead.
     """
 
     type: Literal["evaluate_js"] = "evaluate_js"  # pyright: ignore [reportIncompatibleVariableOverride]

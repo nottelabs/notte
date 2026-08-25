@@ -18,6 +18,13 @@ def _check_remote_session(session: RemoteSession) -> None:
     reveal_type(envelope)  # ExecutionResult
 
 
+def _check_computed_bool(session: RemoteSession, flag: bool) -> None:
+    # a non-literal bool matches via argument expansion on both checkers;
+    # no plain-bool overload is needed
+    either = session.evaluate_js("1 + 1", raise_on_failure=flag)
+    reveal_type(either)  # str | ExecutionResult
+
+
 async def _check_local_session(session: NotteSession) -> None:
     text = await session.aevaluate_js("1 + 1")
     reveal_type(text)  # str
