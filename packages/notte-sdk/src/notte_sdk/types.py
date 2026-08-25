@@ -813,7 +813,7 @@ class SessionStartRequest(SdkRequest):
         Field(
             description="List of custom proxies to use for the session. If True, the default proxies will be used.",
         ),
-    ] = False
+    ] = True
     browser_type: Annotated[
         BrowserType, Field(description="The browser type to use. Can be chromium, chrome or firefox.")
     ] = DEFAULT_BROWSER_TYPE

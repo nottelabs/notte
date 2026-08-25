@@ -169,7 +169,7 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, session_id: st
         "solve_captchas": True,
         "idle_timeout_minutes": DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES,
         "max_duration_minutes": DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
-        "proxies": False,
+        "proxies": True,
         "browser_type": "chromium",
         "viewport_width": 1920,
         "viewport_height": 1080,
@@ -419,6 +419,12 @@ def test_solve_captchas_defaults_to_enabled_but_can_be_disabled() -> None:
     request = SessionStartRequest()
     assert request.solve_captchas is True
     assert SessionStartRequest(solve_captchas=False).solve_captchas is False
+
+
+def test_proxies_default_to_enabled_but_can_be_disabled() -> None:
+    request = SessionStartRequest()
+    assert request.proxies is True
+    assert SessionStartRequest(proxies=False).proxies is False
 
 
 def test_managed_auth_ids_are_serialized_and_must_be_unique() -> None:

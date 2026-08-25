@@ -46,8 +46,8 @@ Customize your session with these options:
   Automatically detect and solve captchas (reCAPTCHA, hCaptcha, etc.)
 </ParamField>
 
-<ParamField path="proxies" type="boolean | list[ProxySettings]" default={false}>
-  Enable residential proxies. Set to `true` for default proxies or provide custom proxy configuration.
+<ParamField path="proxies" type="boolean | list[ProxySettings]" default={true}>
+  Residential proxies are enabled by default. Set to `false` to disable them or provide custom proxy configuration.
   See [Proxy Configuration](#proxies) for details.
 </ParamField>
 
