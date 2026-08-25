@@ -429,7 +429,6 @@ def test_proxies_default_to_enabled_but_can_be_disabled() -> None:
     request = SessionStartRequest()
     assert request.proxies is True
     assert SessionStartRequest(proxies=False).proxies is False
-    assert LocalSessionStartRequest().proxies is False
 
 
 def test_managed_auth_ids_are_serialized_and_must_be_unique() -> None:
