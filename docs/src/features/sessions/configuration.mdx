@@ -38,11 +38,11 @@ Customize your session with these options:
 
 ### Common Parameters
 
-<ParamField path="headless" type="boolean" default={true}>
+<ParamField path="headless" type="boolean" default={false}>
   Whether to run the browser in headless mode. Set to `false` to open a live viewer in your browser.
 </ParamField>
 
-<ParamField path="solve_captchas" type="boolean" default={false}>
+<ParamField path="solve_captchas" type="boolean" default={true}>
   Automatically detect and solve captchas (reCAPTCHA, hCaptcha, etc.)
 </ParamField>
 
@@ -63,7 +63,7 @@ Customize your session with these options:
   Browser viewport height in pixels.
 </ParamField>
 
-<ParamField path="browser_type" type="string" default={"chrome"}>
+<ParamField path="browser_type" type="string" default={"chromium"}>
   Browser engine to use: `"chromium"`, or `"chrome"`.
 </ParamField>
 
@@ -81,7 +81,7 @@ Customize your session with these options:
   Connect to an external browser session via Chrome DevTools Protocol URL (e.g., from Kernel.sh or other providers).
 </ParamField>
 
-<ParamField path="use_file_storage" type="boolean" default={false}>
+<ParamField path="use_file_storage" type="boolean" default={true}>
   Enable file storage for uploading/downloading files during the session.
 </ParamField>
 

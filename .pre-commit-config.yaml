@@ -88,6 +88,12 @@ repos:
         language: system
         files: ^docs/src/(docs\.json|scripts/check_docs_nav\.py)$
         pass_filenames: false
+      - id: docs-config-defaults
+        name: Check documented session-config defaults against the SDK
+        entry: bash -c "uv run python docs/src/scripts/check_config_docs_defaults.py"
+        language: system
+        files: ^(docs/src/features/sessions/configuration\.mdx|docs/src/scripts/check_config_docs_defaults\.py|packages/notte-sdk/src/notte_sdk/types\.py|packages/notte-core/src/notte_core/config\.toml)$
+        pass_filenames: false
       - id: docs-quickstart-setup-prompt
         name: Inline Quickstart setup prompt
         entry: bash -c "cd docs/src && uv run python scripts/inline_quickstart_setup_prompt.py --check"
