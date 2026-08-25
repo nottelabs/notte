@@ -32,6 +32,8 @@ async def test_aevaluate_js_returns_the_envelope_when_not_raising() -> None:
         assert result.message.startswith("JavaScript evaluation failed:")
 
 
-def test_evaluate_js_sync_returns_the_string() -> None:
-    with NotteSession(headless=True) as session:
-        assert session.evaluate_js("1 + 1") == "2"
+# NOTE: no sync-variant test here on purpose. A sync NotteSession (asyncio.run
+# under nest_asyncio) breaks the next async browser launch in the same pytest
+# process, so mixing the two in one file flakes under random test ordering.
+# The sync wrapper is a one-line delegation to aevaluate_js and its overload
+# typing is pinned by typing_cases/evaluate_js_overloads.py.

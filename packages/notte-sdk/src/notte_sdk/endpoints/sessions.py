@@ -44,6 +44,7 @@ from notte_core.common.logging import logger
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
+from notte_core.errors.actions import EvaluateJsNoDataError
 from notte_core.errors.base import NotteBaseError
 from notte_core.utils.files import create_or_append_cookies_to_file
 from pydantic import BaseModel
@@ -1623,9 +1624,5 @@ class RemoteSession(SyncResource):
             return result
         if result.data is None:
             # an API build that predates the eval-js fix reports success without data
-            raise NotteBaseError(
-                dev_message="evaluate_js returned no data",
-                user_message="evaluate_js returned no data",
-                agent_message="evaluate_js returned no data",
-            )
+            raise EvaluateJsNoDataError()
         return result.data.markdown

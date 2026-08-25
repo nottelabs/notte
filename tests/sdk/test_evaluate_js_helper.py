@@ -6,8 +6,8 @@ import pytest
 from notte_core.actions import EvaluateJsAction
 from notte_core.browser.observation import ExecutionResult
 from notte_core.data.space import DataSpace
-from notte_core.errors.actions import ActionExecutionError
-from notte_core.errors.base import ErrorConfig, NotteBaseError
+from notte_core.errors.actions import ActionExecutionError, EvaluateJsNoDataError
+from notte_core.errors.base import ErrorConfig
 
 from tests.sdk.test_execute_raise_on_failure import over_the_wire, remote_session
 
@@ -55,5 +55,5 @@ def test_evaluate_js_success_without_data_raises_instead_of_returning_none() -> 
     """An API build that predates the eval-js fix can report success with no data."""
     session = remote_session(over_the_wire(eval_result(success=True)))
 
-    with pytest.raises(NotteBaseError, match="returned no data"):
+    with pytest.raises(EvaluateJsNoDataError, match="returned no data"):
         _ = session.evaluate_js(CODE)

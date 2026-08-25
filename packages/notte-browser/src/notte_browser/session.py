@@ -64,7 +64,7 @@ from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.data.space import DataSpace, ImageData, StructuredData, TBaseModel
-from notte_core.errors.actions import ActionExecutionError, InvalidActionError
+from notte_core.errors.actions import ActionExecutionError, EvaluateJsNoDataError, InvalidActionError
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
 from notte_core.profiling import profiler
@@ -1067,7 +1067,10 @@ class NotteSession(AsyncResource, SyncResource):
         result = await self.aexecute(type="evaluate_js", code=code, raise_on_failure=raise_on_failure)
         if not raise_on_failure:
             return result
-        assert result.data is not None  # evaluate_js always sets data on success
+        if result.data is None:
+            # cannot happen with this package's execute path, which always sets
+            # data on a successful eval; a typed error beats a stripped assert
+            raise EvaluateJsNoDataError()
         return result.data.markdown
 
     @overload
