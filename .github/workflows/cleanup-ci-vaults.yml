@@ -1,10 +1,26 @@
 name: cleanup-ci-vaults
 
-# Manual / scheduled orphan drain only. Do NOT run delete-all from every PR —
-# dozens of parallel CI jobs share this API key and would race each other.
+# Manual only. Prefer deleting a single run prefix; optional orphan-defaults for backlog.
 on:
   workflow_dispatch:
     inputs:
+      mode:
+        description: "prefix = one workflow run; orphan-defaults = drain leaked name=default vaults"
+        required: true
+        default: "prefix"
+        type: choice
+        options:
+          - "prefix"
+          - "orphan-defaults"
+      prefix:
+        description: "Required for mode=prefix (e.g. ci-32862931541-execution)"
+        required: false
+        type: string
+      min_age_hours:
+        description: "For orphan-defaults: only delete default vaults older than this many hours"
+        required: false
+        default: "2"
+        type: string
       dry_run:
         description: "List vaults without deleting"
         required: false
@@ -13,14 +29,6 @@ on:
         options:
           - "false"
           - "true"
-      min_age_hours:
-        description: "Only delete ephemeral-named vaults at least this many hours old"
-        required: false
-        default: "2"
-        type: string
-  schedule:
-    # Daily drain of leaked default/pytest vaults older than 2h.
-    - cron: "0 5 * * *"
 
 jobs:
   cleanup:
@@ -44,11 +52,19 @@ jobs:
       - name: Install notte-sdk
         run: uv pip install --system notte-sdk
 
-      - name: Cleanup orphaned CI vaults
+      - name: Cleanup vaults
         run: |
-          MIN_AGE="${{ github.event.inputs.min_age_hours || '2' }}"
-          ARGS=(--min-age-hours "$MIN_AGE")
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+          ARGS=()
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
             ARGS+=(--dry-run)
+          fi
+          if [ "${{ inputs.mode }}" = "orphan-defaults" ]; then
+            ARGS+=(--orphan-defaults --min-age-hours "${{ inputs.min_age_hours }}")
+          else
+            if [ -z "${{ inputs.prefix }}" ]; then
+              echo "prefix is required when mode=prefix"
+              exit 1
+            fi
+            ARGS+=(--prefix "${{ inputs.prefix }}")
           fi
           python scripts/cleanup_ci_vaults.py "${ARGS[@]}"

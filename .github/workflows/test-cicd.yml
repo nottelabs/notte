@@ -38,6 +38,8 @@ env:
   # True for push, manual dispatch, and same-repo PRs; false for fork PRs. Steps that
   # need secrets are gated on this so fork PRs skip them cleanly instead of failing.
   IS_TRUSTED: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+  # Scope vault creates to this workflow job; cleanup deletes only this prefix.
+  NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}
 
 permissions:
   pull-requests: write
@@ -163,6 +165,10 @@ jobs:
         run: |
           set -o pipefail
           uv run pytest -n logical tests --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages | tee pytest-coverage.txt
+
+      - name: Cleanup vaults created by this run
+        if: ${{ always() && env.IS_TRUSTED == 'true' }}
+        run: uv run python scripts/cleanup_ci_vaults.py
 
       - name: Pytest coverage comment
         if: ${{ always() && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}

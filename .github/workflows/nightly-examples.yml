@@ -28,6 +28,7 @@ env:
   CREDIT_CARD_NUMBER: 4242424242424242
   CREDIT_CARD_CVV: 777
   CREDIT_CARD_EXPIRATION: "05/28"
+  NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}
 
 jobs:
   example-tests:
@@ -82,6 +83,10 @@ jobs:
         uses: coactions/setup-xvfb@v1
         with:
             run: bash tests/run_examples.sh
+
+      - name: Cleanup vaults created by this run
+        if: always()
+        run: uv run python scripts/cleanup_ci_vaults.py
 
       - name: Send Slack Notification
         uses: slackapi/slack-github-action@v1.24.0

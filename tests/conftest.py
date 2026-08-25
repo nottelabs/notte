@@ -1,5 +1,8 @@
+import importlib.util
 import os
+import sys
 from pathlib import Path
+from typing import Any
 
 import notte_core
 
@@ -12,6 +15,24 @@ os.environ["NOTTE_CONFIG_PATH"] = str(CONFIG_PATH)
 # if we run in Github Actions, we need to disable GPU
 if os.getenv("GITHUB_ACTIONS") is not None:
     os.environ["DISABLE_GPU"] = "true"
+
+
+def _load_ci_vault_scope() -> Any | None:
+    if not os.environ.get("NOTTE_CI_VAULT_PREFIX"):
+        return None
+    path = Path(__file__).resolve().parents[1] / "scripts" / "ci_vault_scope.py"
+    spec = importlib.util.spec_from_file_location("ci_vault_scope", path)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["ci_vault_scope"] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_CI_VAULT_SCOPE = _load_ci_vault_scope()
+if _CI_VAULT_SCOPE is not None:
+    _CI_VAULT_SCOPE.install()
 
 
 # Flaky test configuration:
