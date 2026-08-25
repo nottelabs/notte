@@ -368,17 +368,30 @@ class SerializedError(BaseModel):
         return error
 
     def _resolve_error_class(self) -> type[NotteBaseError]:
-        # Imported lazily so every notte-core error subclass is registered in
+        # Imported lazily so every first-party error subclass is registered in
         # `__subclasses__` before the walk, without import cycles at module load.
-        import notte_core.errors.actions  # noqa: F401  # pyright: ignore[reportUnusedImport]
-        import notte_core.errors.llm  # noqa: F401
-        import notte_core.errors.processing  # noqa: F401
-        import notte_core.errors.provider  # noqa: F401
-        import notte_core.errors.validation  # noqa: F401
+        # Modules outside notte-core are optional: an SDK-only install (or one
+        # without playwright) does not ship them.
+        import importlib
 
-        # Errors defined outside notte-core (or not imported in this process)
-        # rehydrate as the base class: the type is best-effort, the messages and
-        # flags are not.
+        for module in (
+            "notte_core.errors.actions",
+            "notte_core.errors.llm",
+            "notte_core.errors.processing",
+            "notte_core.errors.provider",
+            "notte_core.errors.validation",
+            "notte_browser.errors",
+            "notte_agent.errors",
+            "notte_sdk.errors",
+        ):
+            try:
+                _ = importlib.import_module(module)
+            except ImportError:
+                continue
+
+        # Error types not found in the tree (third-party, or from a module that
+        # is not installed) rehydrate as the base class: the type is
+        # best-effort, the messages and flags are not.
         candidates: list[type[NotteBaseError]] = [NotteBaseError]
         while candidates:
             cls = candidates.pop()

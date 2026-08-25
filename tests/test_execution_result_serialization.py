@@ -75,6 +75,32 @@ def test_unknown_error_type_falls_back_to_base_class() -> None:
     assert restored.exception.should_retry_later is True
 
 
+def test_first_party_error_outside_core_rehydrates_concrete_type() -> None:
+    """Errors defined in notte-browser/notte-agent resolve without the caller importing them."""
+    for error_type in ("InvalidLocatorRuntimeError", "MaxStepsReachedError", "PageLoadingError"):
+        detail = SerializedError(
+            error_type=error_type,
+            dev_message="dev",
+            user_message="user",
+            agent_message="agent",
+        )
+
+        error = detail.to_exception()
+
+        assert type(error).__name__ == error_type
+
+    from notte_browser.errors import BrowserError
+
+    # hierarchy matters: `except BrowserError` on the client must catch a
+    # rehydrated PageLoadingError
+    assert isinstance(
+        SerializedError(
+            error_type="PageLoadingError", dev_message="dev", user_message="user", agent_message="agent"
+        ).to_exception(),
+        BrowserError,
+    )
+
+
 def test_plain_exception_round_trips_messages() -> None:
     restored = ExecutionResult.model_validate_json(_failed_result(TimeoutError("boom")).model_dump_json())
 
