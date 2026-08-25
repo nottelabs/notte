@@ -1,0 +1,55 @@
+name: cleanup-ci-vaults
+
+on:
+  workflow_dispatch:
+    inputs:
+      include_persona:
+        description: "Also delete persona-owned vaults"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      dry_run:
+        description: "List vaults without deleting"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  cleanup:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 30
+    env:
+      NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+      # Match docs execution tests (default API host used by notte-sdk).
+      DISABLE_TELEMETRY: "true"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Install notte-sdk
+        run: uv pip install --system notte-sdk
+
+      - name: Cleanup leaked vaults
+        run: |
+          ARGS=()
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            ARGS+=(--dry-run)
+          fi
+          if [ "${{ inputs.include_persona }}" = "true" ]; then
+            ARGS+=(--include-persona)
+          fi
+          python scripts/cleanup_ci_vaults.py "${ARGS[@]}"

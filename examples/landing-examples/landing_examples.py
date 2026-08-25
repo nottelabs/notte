@@ -26,31 +26,35 @@ landing_examples = [
 def main():
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
-    for task, url, vault in landing_examples[3:]:
+    for task, url, use_vault in landing_examples[3:]:
         with client.Session() as session:
-            if vault:
-                vault = client.Vault()
-                email = os.getenv("NOTTE_VAULT_TEST_EMAIL")
-                assert email is not None
-                pwd = os.getenv("NOTTE_VAULT_TEST_PASSWORD")
-                assert pwd is not None
-                _ = vault.add_credentials(
-                    url="https://google.com",
-                    email=email,
-                    password=pwd,
-                )
+            if use_vault:
+                with client.Vault() as vault:
+                    email = os.getenv("NOTTE_VAULT_TEST_EMAIL")
+                    assert email is not None
+                    pwd = os.getenv("NOTTE_VAULT_TEST_PASSWORD")
+                    assert pwd is not None
+                    _ = vault.add_credentials(
+                        url="https://google.com",
+                        email=email,
+                        password=pwd,
+                    )
+                    agent = client.Agent(
+                        session=session,
+                        reasoning_model="vertex_ai/gemini-2.0-flash",
+                        max_steps=15,
+                        vault=vault,
+                    )
+                    run_kwargs = {"task": task, **({"url": url} if url is not None else {})}
+                    response = agent.run(**run_kwargs)
             else:
-                vault = None
-
-            agent_kwargs = {
-                "session": session,
-                "reasoning_model": "vertex_ai/gemini-2.0-flash",
-                "max_steps": 15,
-                **({"vault": vault} if vault is not None else {}),
-            }
-            agent = client.Agent(**agent_kwargs)
-            run_kwargs = {"task": task, **({"url": url} if url is not None else {})}
-            response = agent.run(**run_kwargs)
+                agent = client.Agent(
+                    session=session,
+                    reasoning_model="vertex_ai/gemini-2.0-flash",
+                    max_steps=15,
+                )
+                run_kwargs = {"task": task, **({"url": url} if url is not None else {})}
+                response = agent.run(**run_kwargs)
 
             if not response.success:
                 exit(-1)

@@ -78,10 +78,17 @@ jobs:
           fi
           echo "Environment variables are set"
 
+      - name: Cleanup leaked vaults (before)
+        run: uv run python scripts/cleanup_ci_vaults.py
+
       - name: Run example tests
         uses: coactions/setup-xvfb@v1
         with:
             run: bash tests/run_examples.sh
+
+      - name: Cleanup leaked vaults (after)
+        if: always()
+        run: uv run python scripts/cleanup_ci_vaults.py
 
       - name: Send Slack Notification
         uses: slackapi/slack-github-action@v1.24.0
