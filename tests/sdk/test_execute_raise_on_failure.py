@@ -65,7 +65,9 @@ def test_remote_evaluate_js_failure_raises_with_the_actual_reason(server_error_m
         exception = ActionExecutionError(action_id=ACTION.type, url="https://example.com", reason=TIMEOUT_MESSAGE)
     session = remote_session(over_the_wire(server_side_result(exception=exception)))
 
-    with pytest.raises(NotteBaseError) as exc_info:
+    # the structured wire payload rehydrates the concrete type, so remote callers
+    # can catch the same exception class as local ones
+    with pytest.raises(ActionExecutionError) as exc_info:
         _ = session.execute(ACTION)
 
     assert TIMEOUT_MESSAGE in str(exc_info.value)

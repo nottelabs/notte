@@ -81,24 +81,6 @@ from notte_sdk.websockets.jupyter import display_image_in_notebook
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
 
-_GENERIC_UNEXPECTED_MESSAGES: frozenset[str] = frozenset(
-    {
-        "An unexpected error occurred. Our team has been notified.",
-        "An unexpected error occurred.",
-    }
-)
-
-# `ActionExecutionError.user_message`. The API serialises exceptions with the user-facing
-# message, which drops the action-specific reason, so it has to be detected by prefix
-# (the base class appends "our team has been notified" / "try again later" suffixes).
-_ACTION_EXECUTION_USER_MESSAGE: str = "Sorry, this action cannot be executed at the moment."
-
-
-def _is_generic_error_message(message: str) -> bool:
-    """Whether a serialised exception message lost the action-specific reason."""
-    return message in _GENERIC_UNEXPECTED_MESSAGES or message.startswith(_ACTION_EXECUTION_USER_MESSAGE)
-
-
 # Retry configuration constants
 CLUSTER_OVERLOAD_RETRY_DELAY = 30  # seconds to wait before retrying on 529 errors
 CONSOLE_VIEWER_URL = (
@@ -1599,30 +1581,18 @@ class RemoteSession(SyncResource):
         # raise exception if needed
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
         # Gate on "did the action fail", not "did something throw", to mirror the local session.
-        # The server may also report a failure without an exception (e.g. an API version that
-        # predates the eval-js fix), in which case the message is all the caller has to go on.
-        if _raise_on_failure and (result.exception is not None or not result.success):
+        if _raise_on_failure and not result.success:
             logger.error(f"🚨 Execution failed with message: '{result.message}'")
-            result_message = str(result.message).strip()
-            exception_to_raise: Exception
-            if result.exception is None:
-                fallback_message = result_message or f"Failed to execute action: {action_obj.type}"
-                exception_to_raise = NotteBaseError(
-                    dev_message=fallback_message,
-                    user_message=fallback_message,
-                    agent_message=fallback_message,
-                )
-            else:
-                exception_to_raise = result.exception
-                if isinstance(exception_to_raise, NotteBaseError):
-                    raised_message = str(exception_to_raise).strip()
-                    if result_message and _is_generic_error_message(raised_message):
-                        # Prefer the action-specific server message when the serialized exception
-                        # was reduced to a generic user-safe string.
-                        exception_to_raise = NotteBaseError(
-                            dev_message=result_message,
-                            user_message=result_message,
-                            agent_message=result_message,
-                        )
-            raise exception_to_raise from result.exception
+            if result.exception is not None:
+                # `ExecutionResult` validation rehydrated the concrete error type, messages
+                # and flags from the structured `exception_detail` wire payload.
+                raise result.exception
+            # An API build that predates `exception_detail` may report a failure without
+            # an exception; the message is all the caller has to go on.
+            fallback_message = str(result.message).strip() or f"Failed to execute action: {action_obj.type}"
+            raise NotteBaseError(
+                dev_message=fallback_message,
+                user_message=fallback_message,
+                agent_message=fallback_message,
+            )
         return result
