@@ -13,10 +13,13 @@ and returns a wrong answer instead of failing.
 """
 
 import ast
+import contextlib
 import json
+import os
+import subprocess
 import traceback
 import types
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Iterator, Mapping
 from typing import Any, Callable, ClassVar, Literal, Protocol, cast, final
 
 from pydantic import BaseModel, ConfigDict
@@ -29,6 +32,79 @@ class MissingRunFunctionError(Exception):
     """Raised when a script does not contain a required 'run' function"""
 
     pass
+
+
+class SubprocessNotAllowed(PermissionError):
+    """Raised when a running script tries to spawn a process."""
+
+
+# The names that create a process, grouped by the module they live on. The
+# import allow list refuses ``subprocess`` and ``os`` to script authors, but
+# ``asyncio`` is allowed - functions use ``asyncio.to_thread`` for concurrency -
+# and ``asyncio.create_subprocess_shell`` reaches a real shell. It, the event
+# loop's ``subprocess_shell`` / ``subprocess_exec``, and the low-level
+# ``loop._make_subprocess_transport`` all funnel through ``subprocess.Popen`` on
+# Linux, so blocking Popen closes every asyncio route at once. The ``os``
+# primitives are covered too, for a caller that reaches them some other way.
+_SUBPROCESS_GUARDED: tuple[tuple[Any, tuple[str, ...]], ...] = (
+    (subprocess, ("Popen", "run", "call", "check_call", "check_output")),
+    (
+        os,
+        (
+            "fork",
+            "forkpty",
+            "posix_spawn",
+            "posix_spawnp",
+            "system",
+            "popen",
+            "execv",
+            "execve",
+            "execvp",
+            "execvpe",
+            "execl",
+            "execle",
+            "execlp",
+            "execlpe",
+            "spawnv",
+            "spawnve",
+            "spawnvp",
+            "spawnvpe",
+        ),
+    ),
+)
+
+
+@contextlib.contextmanager
+def deny_subprocess_creation() -> Iterator[None]:
+    """Refuse process creation for the duration of the block, then restore it.
+
+    Scoped rather than installed once at import on purpose. The runner spawns its
+    own worker children through a forkserver, and a process-global patch left in
+    place would deny that too; wrapping only the user-code ``exec`` leaves the
+    runner's own machinery alone. Restoring also keeps a host process - the SDK
+    runs a local function inside the caller's own interpreter - usable for its
+    own subprocesses afterwards.
+
+    Save-and-restore, so it is not reentrant safe across threads sharing one
+    process. The runner executes one function per child, so that does not arise
+    here; the durable answer for a hostile guest is an OS boundary (seccomp),
+    which this does not replace.
+    """
+
+    def _deny(*_args: Any, **_kwargs: Any) -> Any:
+        raise SubprocessNotAllowed("subprocess creation is not permitted while a function runs")
+
+    saved: list[tuple[Any, str, Any]] = []
+    try:
+        for module, names in _SUBPROCESS_GUARDED:
+            for name in names:
+                if hasattr(module, name):
+                    saved.append((module, name, getattr(module, name)))
+                    setattr(module, name, _deny)
+        yield
+    finally:
+        for module, name, original in saved:
+            setattr(module, name, original)
 
 
 class ParameterInfo(BaseModel):
@@ -818,16 +894,17 @@ class SecureScriptRunner:
             result: Mapping[str, object] = {}
 
             try:
-                exec(parsed_info.code, execution_globals, result)
+                with deny_subprocess_creation():
+                    exec(parsed_info.code, execution_globals, result)
 
-                # Call the run function if it exists
-                run_ft = result.get("run")
-                if run_ft is None or not callable(run_ft):
-                    raise MissingRunFunctionError("Script must contain a 'run' function")
-                if callable(run_ft):
-                    return run_ft(**variables) if variables else run_ft()
+                    # Call the run function if it exists
+                    run_ft = result.get("run")
+                    if run_ft is None or not callable(run_ft):
+                        raise MissingRunFunctionError("Script must contain a 'run' function")
+                    if callable(run_ft):
+                        return run_ft(**variables) if variables else run_ft()
 
-                return result
+                    return result
 
             except Exception:
                 raise RuntimeError(f"Python script execution failed in restricted mode: {traceback.format_exc()}")
@@ -840,17 +917,18 @@ class SecureScriptRunner:
             }
 
             try:
-                # Execute the script in regular Python
-                exec(parsed_info.code, execution_globals)
+                with deny_subprocess_creation():
+                    # Execute the script in regular Python
+                    exec(parsed_info.code, execution_globals)
 
-                # Call the run function
-                run_ft = execution_globals.get("run")
-                if run_ft is None or not callable(run_ft):
-                    raise MissingRunFunctionError("Python script must contain a 'run' function")
-                if callable(run_ft):
-                    return run_ft(**variables) if variables else run_ft()  # pyright: ignore [reportUnknownVariableType]
+                    # Call the run function
+                    run_ft = execution_globals.get("run")
+                    if run_ft is None or not callable(run_ft):
+                        raise MissingRunFunctionError("Python script must contain a 'run' function")
+                    if callable(run_ft):
+                        return run_ft(**variables) if variables else run_ft()  # pyright: ignore [reportUnknownVariableType]
 
-                return execution_globals
+                    return execution_globals
 
             except Exception:
                 raise RuntimeError(f"Script execution failed in unrestricted mode: {traceback.format_exc()}")
