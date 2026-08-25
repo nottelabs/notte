@@ -5,24 +5,24 @@ client = NotteClient()
 
 # Creating a new vault
 vault = client.Vault()
-try:
-    # Add your credentials securely
-    vault.add_credentials(
-        url="https://github.com/",
-        email="<your-email>",
-        password="<your-password>",
-        mfa_secret="<your-mfa-secret>",
-    )
 
-    # remove a credential from the vault
-    vault.delete_credentials(url="https://github.com/")
+# Add your credentials securely
+vault.add_credentials(
+    url="https://github.com/",
+    email="<your-email>",
+    password="<your-password>",
+    mfa_secret="<your-mfa-secret>",
+)
 
-    # list all credentials in the vault
-    credentials = vault.list_credentials()
-    print(credentials)
-finally:
-    # delete the vault when you don't need it anymore
-    vault.delete()
+# remove a credential from the vault
+vault.delete_credentials(url="https://github.com/")
+
+# list all credentials in the vault
+credentials = vault.list_credentials()
+print(credentials)
+
+# delete the vault when you don't need it anymore
+vault.delete()
 
 # you can also list your active vaults as follows:
 active_vaults = client.vaults.list()
