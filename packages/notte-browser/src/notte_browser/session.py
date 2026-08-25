@@ -466,6 +466,7 @@ class NotteSession(AsyncResource, SyncResource):
         only_unread: bool | None = None,
         time_window: dt.timedelta | None = None,
         limit: int | None = None,
+        raise_on_failure: bool = False,
     ) -> ExecutionResult:
         if not self._has_any_persona_tool():
             raise ValueError(
@@ -478,7 +479,9 @@ class NotteSession(AsyncResource, SyncResource):
             payload["timedelta"] = time_window
         if limit is not None:
             payload["limit"] = limit
-        return await self.aexecute(**payload)
+        # reads are queries: a tool reporting "nothing yet" is data, not an error,
+        # so polling `while not session.read_emails().success` keeps working
+        return await self.aexecute(raise_on_failure=raise_on_failure, **payload)
 
     def read_emails(
         self,
@@ -486,8 +489,13 @@ class NotteSession(AsyncResource, SyncResource):
         only_unread: bool | None = None,
         time_window: dt.timedelta | None = None,
         limit: int | None = None,
+        raise_on_failure: bool = False,
     ) -> ExecutionResult:
-        return asyncio.run(self.aread_emails(only_unread=only_unread, time_window=time_window, limit=limit))
+        return asyncio.run(
+            self.aread_emails(
+                only_unread=only_unread, time_window=time_window, limit=limit, raise_on_failure=raise_on_failure
+            )
+        )
 
     async def aread_sms(
         self,
@@ -495,6 +503,7 @@ class NotteSession(AsyncResource, SyncResource):
         only_unread: bool | None = None,
         time_window: dt.timedelta | None = None,
         limit: int | None = None,
+        raise_on_failure: bool = False,
     ) -> ExecutionResult:
         if not self._has_any_persona_tool():
             raise ValueError(
@@ -507,7 +516,7 @@ class NotteSession(AsyncResource, SyncResource):
             payload["timedelta"] = time_window
         if limit is not None:
             payload["limit"] = limit
-        return await self.aexecute(**payload)
+        return await self.aexecute(raise_on_failure=raise_on_failure, **payload)
 
     def read_sms(
         self,
@@ -515,8 +524,13 @@ class NotteSession(AsyncResource, SyncResource):
         only_unread: bool | None = None,
         time_window: dt.timedelta | None = None,
         limit: int | None = None,
+        raise_on_failure: bool = False,
     ) -> ExecutionResult:
-        return asyncio.run(self.aread_sms(only_unread=only_unread, time_window=time_window, limit=limit))
+        return asyncio.run(
+            self.aread_sms(
+                only_unread=only_unread, time_window=time_window, limit=limit, raise_on_failure=raise_on_failure
+            )
+        )
 
     async def locate(self, action: BaseAction) -> Locator | None:
         action_with_selector = await NodeResolutionPipe.forward(action, self._snapshot)
@@ -898,8 +912,11 @@ class NotteSession(AsyncResource, SyncResource):
         with open(actions_file, "r") as f:
             action_list = ActionList.model_validate_json(f.read())
         for i, action in enumerate(action_list.actions):
-            logger.info(f"💡 Step {i + 1}/{len(action_list.actions)}: executing action '{action.type}' {action.id}")
-            res = self.execute(action)
+            # browser-level actions (wait, goto, ...) have no `id` attribute
+            action_id = getattr(action, "id", "")
+            logger.info(f"💡 Step {i + 1}/{len(action_list.actions)}: executing action '{action.type}' {action_id}")
+            # replay stops gracefully on the first failed step instead of raising
+            res = self.execute(action, raise_on_failure=False)
             logger.info(f"{'✅' if res.success else '❌'} - {res.message}")
             if not res.success:
                 logger.error("🚨 Stopping execution of saved actions since last action failed...")

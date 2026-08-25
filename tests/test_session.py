@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 from typing import Any
 
 import notte_core
@@ -7,6 +8,7 @@ from notte_browser.captcha import CaptchaHandler
 from notte_browser.errors import CaptchaSolverNotAvailableError, NoSnapshotObservedError, ScrollActionFailedError
 from notte_browser.session import NotteSession
 from notte_core.actions import (
+    ActionList,
     ClickAction,
     GotoAction,
     GotoNewTabAction,
@@ -500,3 +502,23 @@ async def test_action_failing_by_returning_false_is_quiet_when_not_raising() -> 
         # path would have thrown, so the result and the trajectory agree
         assert isinstance(result.exception, ActionExecutionError)
         assert result.message in str(result.exception)
+
+
+@pytest.mark.asyncio
+async def test_help_action_raises_by_default() -> None:
+    """The controller reports HelpAction as `success=False`; under the widened
+    gate that raises like any other failure (deliberate: see PR #905 review)."""
+    async with NotteSession(headless=True) as session:
+        with pytest.raises(ActionExecutionError, match="help"):
+            _ = await session.aexecute(type="help", reason="the page layout is unclear")
+
+
+def test_execute_saved_actions_stops_gracefully_on_failed_step(tmp_path: Path) -> None:
+    """Replay logs the failed step and returns instead of raising."""
+    actions_file = tmp_path / "actions.json"
+    actions_file.write_text(ActionList(actions=[WaitAction(time_ms=1)]).model_dump_json())
+
+    with NotteSession(headless=True) as session:
+        session.controller.execute = _controller_execute_returning_false  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
+
+        session.execute_saved_actions(str(actions_file))  # must not raise

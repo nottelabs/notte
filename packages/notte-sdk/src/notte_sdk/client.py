@@ -227,7 +227,9 @@ class NotteClient:
             For image scraping: returns list[ImageData].
         """
         with self.Session(open_viewer=False, perception_type="fast") as session:
-            result = session.execute(GotoAction(url=url))
+            # best-effort navigation: scrape whatever loaded unless the goto
+            # actually threw server side
+            result = session.execute(GotoAction(url=url), raise_on_failure=False)
             if not result.success and result.exception is not None:
                 raise result.exception
             return session.scrape(raise_on_failure=raise_on_failure, **data)

@@ -147,14 +147,15 @@ def generate_cookies(session: RemoteSession, url: str, output_path: str) -> None
 
     form_fill_action = FormFillAction(value=dict(email=email, current_password=password))  # type: ignore
 
-    res = session.execute(form_fill_action)
+    # this helper has its own failure contract (ValueError / logged return)
+    res = session.execute(form_fill_action, raise_on_failure=False)
     if not res.success:
         logger.error(f"Failed to fill email & password: {res.message}")
         raise ValueError("Failed to fill email & password")
     logger.info("✅ Successfully filled email & password")
 
     actions = session.observe(instructions="Click on the 'Sign in' button", perception_type="deep")
-    res = session.execute(actions[0])
+    res = session.execute(actions[0], raise_on_failure=False)
     if not res.success:
         logger.error(f"Failed to click on the 'Sign in' button: {res.message}")
         return
