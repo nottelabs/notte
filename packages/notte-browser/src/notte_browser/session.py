@@ -58,7 +58,16 @@ from notte_core.actions.typedicts import (
 )
 from notte_core.browser.observation import ExecutionResult, Observation, Screenshot, TimedSpan
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import BrowserBackend, CookieDict, PerceptionType, RaiseCondition, ScreenshotType, config
+from notte_core.common.config import (
+    EXECUTE_RETRY_DEFAULT,
+    EXECUTE_RETRY_DELAY_MS,
+    BrowserBackend,
+    CookieDict,
+    PerceptionType,
+    RaiseCondition,
+    ScreenshotType,
+    config,
+)
 from notte_core.common.logging import logger, timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
@@ -571,15 +580,20 @@ class NotteSession(AsyncResource, SyncResource):
 
     @overload
     async def aexecute(
-        self, action: BaseAction, *, raise_on_failure: bool | None = None, retries: int = 0, retry_delay_ms: int = 2000
+        self,
+        action: BaseAction,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
     ) -> ExecutionResult: ...
     @overload
     async def aexecute(
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[FormFillActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -587,8 +601,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[GotoActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -596,8 +610,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[GotoNewTabActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -605,8 +619,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[CloseTabActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -614,8 +628,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[SwitchTabActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -623,8 +637,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[GoBackActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -632,8 +646,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[GoForwardActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -641,8 +655,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[ReloadActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -650,8 +664,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[WaitActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -659,8 +673,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[PressKeyActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -668,8 +682,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[ScrollUpActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -677,8 +691,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[ScrollDownActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -686,8 +700,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[CaptchaSolveActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -695,8 +709,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[HelpActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -704,8 +718,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[CompletionActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -713,8 +727,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[ScrapeActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -722,8 +736,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[EmailReadActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -731,8 +745,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[EmailVerificationReadActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -740,8 +754,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[SmsReadActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -749,8 +763,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[EvaluateJsActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -758,8 +772,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[ClickActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -767,8 +781,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[FillActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -776,8 +790,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[MultiFactorFillActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -785,8 +799,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[FallbackFillActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -794,8 +808,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[CheckActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -803,8 +817,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[SelectDropdownOptionActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -812,8 +826,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[UploadFileActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -821,8 +835,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[DownloadFileActionDict],
     ) -> ExecutionResult: ...
 
@@ -833,8 +847,8 @@ class NotteSession(AsyncResource, SyncResource):
         action: BaseAction | None = None,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Any,
     ) -> ExecutionResult:
         """
@@ -1087,15 +1101,20 @@ class NotteSession(AsyncResource, SyncResource):
 
     @overload
     def execute(
-        self, action: BaseAction, *, raise_on_failure: bool | None = None, retries: int = 0, retry_delay_ms: int = 2000
+        self,
+        action: BaseAction,
+        *,
+        raise_on_failure: bool | None = None,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
     ) -> ExecutionResult: ...
     @overload
     def execute(
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[FormFillActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1103,8 +1122,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[GotoActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1112,8 +1131,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[GotoNewTabActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1121,8 +1140,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[CloseTabActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1130,8 +1149,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[SwitchTabActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1139,8 +1158,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[GoBackActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1148,8 +1167,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[GoForwardActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1157,8 +1176,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[ReloadActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1166,8 +1185,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[WaitActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1175,8 +1194,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[PressKeyActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1184,8 +1203,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[ScrollUpActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1193,8 +1212,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[ScrollDownActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1202,8 +1221,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[CaptchaSolveActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1211,8 +1230,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[HelpActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1220,8 +1239,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[CompletionActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1229,8 +1248,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[ScrapeActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1238,8 +1257,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[EmailReadActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1247,8 +1266,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[EmailVerificationReadActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1256,8 +1275,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[SmsReadActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1265,8 +1284,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[EvaluateJsActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1274,8 +1293,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[ClickActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1283,8 +1302,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[FillActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1292,8 +1311,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[MultiFactorFillActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1301,8 +1320,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[FallbackFillActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1310,8 +1329,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[CheckActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1319,8 +1338,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[SelectDropdownOptionActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1328,8 +1347,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[UploadFileActionDict],
     ) -> ExecutionResult: ...
     @overload
@@ -1337,8 +1356,8 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Unpack[DownloadFileActionDict],
     ) -> ExecutionResult: ...
 
@@ -1347,8 +1366,8 @@ class NotteSession(AsyncResource, SyncResource):
         action: BaseAction | None = None,
         *,
         raise_on_failure: bool | None = None,
-        retries: int = 0,
-        retry_delay_ms: int = 2000,
+        retries: int = EXECUTE_RETRY_DEFAULT,
+        retry_delay_ms: int = EXECUTE_RETRY_DELAY_MS,
         **kwargs: Any,
     ) -> ExecutionResult:
         """

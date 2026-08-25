@@ -12,6 +12,11 @@ from notte_core.errors.base import ErrorMode
 
 DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config.toml"
 
+# Defaults for the `retries` / `retry_delay_ms` call options on `session.execute`,
+# shared by the local session (notte-browser) and the remote one (notte-sdk).
+EXECUTE_RETRY_DEFAULT = 0
+EXECUTE_RETRY_DELAY_MS = 2000
+
 if not DEFAULT_CONFIG_PATH.exists():
     raise FileNotFoundError(f"Config file not found: {DEFAULT_CONFIG_PATH}")
 
