@@ -134,17 +134,27 @@ def cleanup_this_run(*, dry_run: bool = False, prefix: str | None = None) -> int
 
     deleted = 0
     failed = 0
+    already_gone = 0
     for vault_id in targets:
         try:
             _ = client.vaults.delete(vault_id)
             deleted += 1
             print(f"  deleted {vault_id}")
         except Exception as exc:  # noqa: BLE001 - best-effort run teardown
+            if _is_already_deleted_error(exc):
+                already_gone += 1
+                print(f"  already gone {vault_id}")
+                continue
             failed += 1
             print(f"  failed {vault_id}: {exc}", file=sys.stderr)
 
-    print(f"[ci-vault-scope] done deleted={deleted} failed={failed}")
+    print(f"[ci-vault-scope] done deleted={deleted} already_gone={already_gone} failed={failed}")
     return 0 if failed == 0 else 1
+
+
+def _is_already_deleted_error(exc: BaseException) -> bool:
+    text = str(exc).lower()
+    return "not active" in text or "not found" in text or ("already" in text and "deleted" in text)
 
 
 def cleanup_orphan_defaults(*, dry_run: bool, min_age_hours: float) -> int:
@@ -183,13 +193,18 @@ def cleanup_orphan_defaults(*, dry_run: bool, min_age_hours: float) -> int:
 
     deleted = 0
     failed = 0
+    already_gone = 0
     for vault in targets:
         try:
             _ = client.vaults.delete(vault.vault_id)
             deleted += 1
             print(f"  deleted {vault.vault_id}")
         except Exception as exc:  # noqa: BLE001
+            if _is_already_deleted_error(exc):
+                already_gone += 1
+                print(f"  already gone {vault.vault_id}")
+                continue
             failed += 1
             print(f"  failed {vault.vault_id}: {exc}", file=sys.stderr)
-    print(f"[ci-vault-scope] orphan drain done deleted={deleted} failed={failed}")
+    print(f"[ci-vault-scope] orphan drain done deleted={deleted} already_gone={already_gone} failed={failed}")
     return 0 if failed == 0 else 1
