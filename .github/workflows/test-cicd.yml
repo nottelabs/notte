@@ -158,19 +158,11 @@ jobs:
           fi
           echo "Environment variables are set"
 
-      - name: Cleanup leaked vaults (before)
-        if: ${{ env.IS_TRUSTED == 'true' }}
-        run: uv run python scripts/cleanup_ci_vaults.py
-
       - name: Run unit tests
         if: ${{ env.IS_TRUSTED == 'true' }}
         run: |
           set -o pipefail
           uv run pytest -n logical tests --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages | tee pytest-coverage.txt
-
-      - name: Cleanup leaked vaults (after)
-        if: ${{ always() && env.IS_TRUSTED == 'true' }}
-        run: uv run python scripts/cleanup_ci_vaults.py
 
       - name: Pytest coverage comment
         if: ${{ always() && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}

@@ -110,18 +110,5 @@ jobs:
           fi
           echo "Environment variables are set"
 
-      - name: Cleanup leaked vaults (before)
-        run: |
-          # Docs execution creates ephemeral vaults; cancelled/failed runs leak them until
-          # the account hits the active-vault limit (HTTP 429 on vaults/create).
-          source .venv/bin/activate
-          python scripts/cleanup_ci_vaults.py
-
       - name: Run execution tests
         run: cd docs/src && uv run pytest -v --tb=no
-
-      - name: Cleanup leaked vaults (after)
-        if: always()
-        run: |
-          source .venv/bin/activate
-          python scripts/cleanup_ci_vaults.py
