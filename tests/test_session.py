@@ -481,7 +481,9 @@ async def test_action_failing_by_returning_false_raises_by_default() -> None:
     async with NotteSession(headless=True) as session:
         session.controller.execute = _controller_execute_returning_false  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
 
-        with pytest.raises(ActionExecutionError):
+        # the raised error must describe a failure, not echo the success-phrased
+        # execution message of the action that did not actually run
+        with pytest.raises(ActionExecutionError, match="Action 'wait' failed during browser execution"):
             _ = await session.aexecute(type="wait", time_ms=1)
 
 
@@ -493,4 +495,8 @@ async def test_action_failing_by_returning_false_is_quiet_when_not_raising() -> 
         result = await session.aexecute(type="wait", time_ms=1, raise_on_failure=False)
 
         assert result.success is False
-        assert result.exception is None
+        assert result.message == "Action 'wait' failed during browser execution"
+        # return-style failures carry the same synthesized exception the raising
+        # path would have thrown, so the result and the trajectory agree
+        assert isinstance(result.exception, ActionExecutionError)
+        assert result.message in str(result.exception)

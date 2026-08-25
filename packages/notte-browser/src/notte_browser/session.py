@@ -761,15 +761,9 @@ class NotteSession(AsyncResource, SyncResource):
                         except asyncio.TimeoutError:
                             success = False
                             message = f"JavaScript evaluation timed out after {config.timeout_evaluate_js_ms}ms"
-                            exception = ActionExecutionError(
-                                action_id=resolved_action.type, url=self.window.page.url, reason=message
-                            )
                         except PlaywrightError as js_err:
                             success = False
                             message = f"JavaScript evaluation failed: {js_err}"
-                            exception = ActionExecutionError(
-                                action_id=resolved_action.type, url=self.window.page.url, reason=message
-                            )
                         else:
                             # Convert result to string representation for markdown
                             if result is None:
@@ -803,6 +797,9 @@ class NotteSession(AsyncResource, SyncResource):
                             )
                         else:
                             success = await self.controller.execute(self.window, resolved_action, self._snapshot)
+                        if not success:
+                            # `message` still holds the success-phrased execution_message.
+                            message = f"Action '{resolved_action.type}' failed during browser execution"
 
             except (NoSnapshotObservedError, NoStorageObjectProvidedError, NoToolProvidedError) as e:
                 # this should be handled by the caller
@@ -860,6 +857,17 @@ class NotteSession(AsyncResource, SyncResource):
             else:
                 resolved_action = step_action
 
+        if not success and exception is None:
+            # Actions that signal failure by returning (a tool returning `success=False`,
+            # a controller action returning `False`) carry no exception. Synthesize one
+            # before the result is built so the returned result, the trajectory and the
+            # raise below all agree on what failed.
+            exception = ActionExecutionError(
+                action_id=resolved_action.type,
+                url=self._window.page.url if self._window is not None else "",
+                reason=message or "unknown",
+            )
+
         execution_result = ExecutionResult(
             action=resolved_action,
             success=success,
@@ -879,16 +887,10 @@ class NotteSession(AsyncResource, SyncResource):
                 logger.warning(f"Failed to capture post-action screenshot: {e}")
 
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
-        if _raise_on_failure and not success:
-            # Gate on "did the action fail", not "did something throw". Actions that signal
-            # failure by returning (a tool returning `success=False`, a controller action
-            # returning `False`) would otherwise be silently swallowed, the way evaluate_js was.
-            if exception is None:
-                exception = ActionExecutionError(
-                    action_id=resolved_action.type,
-                    url=self._window.page.url if self._window is not None else "",
-                    reason=message or "unknown",
-                )
+        # Gate on "did the action fail", not "did something throw": after the synthesis
+        # above, every failure carries an exception, including the return-style ones
+        # that were previously silently swallowed, the way evaluate_js was.
+        if _raise_on_failure and exception is not None:
             raise exception
         return execution_result
 
