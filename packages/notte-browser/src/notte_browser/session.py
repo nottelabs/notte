@@ -64,7 +64,7 @@ from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.data.space import DataSpace, ImageData, StructuredData, TBaseModel
-from notte_core.errors.actions import InvalidActionError
+from notte_core.errors.actions import ActionExecutionError, InvalidActionError
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
 from notte_core.profiling import profiler
@@ -466,6 +466,7 @@ class NotteSession(AsyncResource, SyncResource):
         only_unread: bool | None = None,
         time_window: dt.timedelta | None = None,
         limit: int | None = None,
+        raise_on_failure: bool = False,
     ) -> ExecutionResult:
         if not self._has_any_persona_tool():
             raise ValueError(
@@ -478,7 +479,9 @@ class NotteSession(AsyncResource, SyncResource):
             payload["timedelta"] = time_window
         if limit is not None:
             payload["limit"] = limit
-        return await self.aexecute(**payload)
+        # reads are queries: a tool reporting "nothing yet" is data, not an error,
+        # so polling `while not session.read_emails().success` keeps working
+        return await self.aexecute(raise_on_failure=raise_on_failure, **payload)
 
     def read_emails(
         self,
@@ -486,8 +489,13 @@ class NotteSession(AsyncResource, SyncResource):
         only_unread: bool | None = None,
         time_window: dt.timedelta | None = None,
         limit: int | None = None,
+        raise_on_failure: bool = False,
     ) -> ExecutionResult:
-        return asyncio.run(self.aread_emails(only_unread=only_unread, time_window=time_window, limit=limit))
+        return asyncio.run(
+            self.aread_emails(
+                only_unread=only_unread, time_window=time_window, limit=limit, raise_on_failure=raise_on_failure
+            )
+        )
 
     async def aread_sms(
         self,
@@ -495,6 +503,7 @@ class NotteSession(AsyncResource, SyncResource):
         only_unread: bool | None = None,
         time_window: dt.timedelta | None = None,
         limit: int | None = None,
+        raise_on_failure: bool = False,
     ) -> ExecutionResult:
         if not self._has_any_persona_tool():
             raise ValueError(
@@ -507,7 +516,7 @@ class NotteSession(AsyncResource, SyncResource):
             payload["timedelta"] = time_window
         if limit is not None:
             payload["limit"] = limit
-        return await self.aexecute(**payload)
+        return await self.aexecute(raise_on_failure=raise_on_failure, **payload)
 
     def read_sms(
         self,
@@ -515,8 +524,13 @@ class NotteSession(AsyncResource, SyncResource):
         only_unread: bool | None = None,
         time_window: dt.timedelta | None = None,
         limit: int | None = None,
+        raise_on_failure: bool = False,
     ) -> ExecutionResult:
-        return asyncio.run(self.aread_sms(only_unread=only_unread, time_window=time_window, limit=limit))
+        return asyncio.run(
+            self.aread_sms(
+                only_unread=only_unread, time_window=time_window, limit=limit, raise_on_failure=raise_on_failure
+            )
+        )
 
     async def locate(self, action: BaseAction) -> Locator | None:
         action_with_selector = await NodeResolutionPipe.forward(action, self._snapshot)
@@ -797,6 +811,9 @@ class NotteSession(AsyncResource, SyncResource):
                             )
                         else:
                             success = await self.controller.execute(self.window, resolved_action, self._snapshot)
+                        if not success:
+                            # `message` still holds the success-phrased execution_message.
+                            message = f"Action '{resolved_action.type}' failed during browser execution"
 
             except (NoSnapshotObservedError, NoStorageObjectProvidedError, NoToolProvidedError) as e:
                 # this should be handled by the caller
@@ -854,6 +871,17 @@ class NotteSession(AsyncResource, SyncResource):
             else:
                 resolved_action = step_action
 
+        if not success and exception is None:
+            # Actions that signal failure by returning (a tool returning `success=False`,
+            # a controller action returning `False`) carry no exception. Synthesize one
+            # before the result is built so the returned result, the trajectory and the
+            # raise below all agree on what failed.
+            exception = ActionExecutionError(
+                action_id=resolved_action.type,
+                url=self._window.page.url if self._window is not None else "",
+                reason=message or "unknown",
+            )
+
         execution_result = ExecutionResult(
             action=resolved_action,
             success=success,
@@ -873,6 +901,9 @@ class NotteSession(AsyncResource, SyncResource):
                 logger.warning(f"Failed to capture post-action screenshot: {e}")
 
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
+        # Gate on "did the action fail", not "did something throw": after the synthesis
+        # above, every failure carries an exception, including the return-style ones
+        # that were previously silently swallowed, the way evaluate_js was.
         if _raise_on_failure and exception is not None:
             raise exception
         return execution_result
@@ -881,8 +912,11 @@ class NotteSession(AsyncResource, SyncResource):
         with open(actions_file, "r") as f:
             action_list = ActionList.model_validate_json(f.read())
         for i, action in enumerate(action_list.actions):
-            logger.info(f"💡 Step {i + 1}/{len(action_list.actions)}: executing action '{action.type}' {action.id}")
-            res = self.execute(action)
+            # browser-level actions (wait, goto, ...) have no `id` attribute
+            action_id = getattr(action, "id", "")
+            logger.info(f"💡 Step {i + 1}/{len(action_list.actions)}: executing action '{action.type}' {action_id}")
+            # replay stops gracefully on the first failed step instead of raising
+            res = self.execute(action, raise_on_failure=False)
             logger.info(f"{'✅' if res.success else '❌'} - {res.message}")
             if not res.success:
                 logger.error("🚨 Stopping execution of saved actions since last action failed...")

@@ -1,4 +1,6 @@
 import asyncio
+from pathlib import Path
+from typing import Any
 
 import notte_core
 import pytest
@@ -6,6 +8,7 @@ from notte_browser.captcha import CaptchaHandler
 from notte_browser.errors import CaptchaSolverNotAvailableError, NoSnapshotObservedError, ScrollActionFailedError
 from notte_browser.session import NotteSession
 from notte_core.actions import (
+    ActionList,
     ClickAction,
     GotoAction,
     GotoNewTabAction,
@@ -16,7 +19,7 @@ from notte_core.actions import (
 )
 from notte_core.actions.actions import ScrapeAction
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.errors.actions import InvalidActionError
+from notte_core.errors.actions import ActionExecutionError, InvalidActionError
 from notte_llm.service import LLMService
 
 from tests.mock.mock_browser import MockBrowserDriver
@@ -362,3 +365,160 @@ async def test_interaction_execution_timeout_returns_failed_result() -> None:
 
         assert result.success is False
         assert result.message == "Action timed out after 1ms"
+
+
+# ============================================
+# evaluate_js failure tests
+# ============================================
+
+# a promise that never settles: forces `asyncio.wait_for` to time out
+HANGING_JS: str = "new Promise(() => {})"
+# a synchronous JS exception: surfaces as a playwright error
+THROWING_JS: str = '(() => { throw new Error("boom"); })()'
+EVALUATE_JS_TIMEOUT_MS: int = 500
+
+
+@pytest.fixture
+def short_evaluate_js_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Shorten the evaluate_js timeout (45s by default) so timeout tests stay fast."""
+    from notte_browser import session as session_module
+    from notte_core.common.config import config
+
+    monkeypatch.setattr(
+        session_module,
+        "config",
+        config.model_copy(update={"timeout_evaluate_js_ms": EVALUATE_JS_TIMEOUT_MS}),
+    )
+
+
+@pytest.mark.asyncio
+async def test_evaluate_js_timeout_raises_by_default(short_evaluate_js_timeout: None) -> None:
+    """A JS evaluation timeout must raise under the default raise_on_failure."""
+    async with NotteSession(headless=True) as session:
+        await session.window.page.set_content("<p>hello</p>")
+
+        with pytest.raises(
+            ActionExecutionError, match=f"JavaScript evaluation timed out after {EVALUATE_JS_TIMEOUT_MS}ms"
+        ):
+            _ = await session.aexecute(type="evaluate_js", code=HANGING_JS)
+
+
+@pytest.mark.asyncio
+async def test_evaluate_js_timeout_returns_failed_result_without_raise(short_evaluate_js_timeout: None) -> None:
+    """With raise_on_failure=False the caller still gets a result that says it failed."""
+    async with NotteSession(headless=True) as session:
+        await session.window.page.set_content("<p>hello</p>")
+
+        result = await session.aexecute(type="evaluate_js", code=HANGING_JS, raise_on_failure=False)
+
+        assert result is not None
+        assert result.success is False
+        assert result.data is None
+        assert result.message == f"JavaScript evaluation timed out after {EVALUATE_JS_TIMEOUT_MS}ms"
+        assert isinstance(result.exception, ActionExecutionError)
+        assert result.message in str(result.exception)
+
+
+@pytest.mark.asyncio
+async def test_evaluate_js_playwright_error_raises_by_default() -> None:
+    """A playwright error during JS evaluation must raise under the default raise_on_failure."""
+    async with NotteSession(headless=True) as session:
+        await session.window.page.set_content("<p>hello</p>")
+
+        with pytest.raises(ActionExecutionError, match="JavaScript evaluation failed"):
+            _ = await session.aexecute(type="evaluate_js", code=THROWING_JS)
+
+
+@pytest.mark.asyncio
+async def test_evaluate_js_playwright_error_returns_failed_result_without_raise() -> None:
+    async with NotteSession(headless=True) as session:
+        await session.window.page.set_content("<p>hello</p>")
+
+        result = await session.aexecute(type="evaluate_js", code=THROWING_JS, raise_on_failure=False)
+
+        assert result is not None
+        assert result.success is False
+        assert result.data is None
+        assert result.message.startswith("JavaScript evaluation failed:")
+        assert isinstance(result.exception, ActionExecutionError)
+        assert "boom" in str(result.exception)
+
+
+@pytest.mark.parametrize(
+    ("code", "expected_markdown"),
+    [
+        ("document.title", "Sample title"),
+        ("1 + 1", "2"),
+        # a JS `null` is a *successful* evaluation, and must stay one
+        ("null", "null"),
+        ("(() => { return null; })()", "null"),
+        ("[1, 2]", "[\n  1,\n  2\n]"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_evaluate_js_success_path_is_unchanged(code: str, expected_markdown: str) -> None:
+    async with NotteSession(headless=True) as session:
+        await session.window.page.set_content("<title>Sample title</title><p>hello</p>")
+
+        result = await session.aexecute(type="evaluate_js", code=code)
+
+        assert result.success is True
+        assert result.exception is None
+        assert result.data is not None
+        assert result.data.markdown == expected_markdown
+
+
+# ============================================
+# actions that fail by returning (no exception)
+# ============================================
+
+
+async def _controller_execute_returning_false(*_args: Any, **_kwargs: Any) -> bool:
+    return False
+
+
+@pytest.mark.asyncio
+async def test_action_failing_by_returning_false_raises_by_default() -> None:
+    """The raise gate asks 'did the action fail', not 'did something throw'."""
+    async with NotteSession(headless=True) as session:
+        session.controller.execute = _controller_execute_returning_false  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
+
+        # the raised error must describe a failure, not echo the success-phrased
+        # execution message of the action that did not actually run
+        with pytest.raises(ActionExecutionError, match="Action 'wait' failed during browser execution"):
+            _ = await session.aexecute(type="wait", time_ms=1)
+
+
+@pytest.mark.asyncio
+async def test_action_failing_by_returning_false_is_quiet_when_not_raising() -> None:
+    async with NotteSession(headless=True) as session:
+        session.controller.execute = _controller_execute_returning_false  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
+
+        result = await session.aexecute(type="wait", time_ms=1, raise_on_failure=False)
+
+        assert result.success is False
+        assert result.message == "Action 'wait' failed during browser execution"
+        # return-style failures carry the same synthesized exception the raising
+        # path would have thrown, so the result and the trajectory agree
+        assert isinstance(result.exception, ActionExecutionError)
+        assert result.message in str(result.exception)
+
+
+@pytest.mark.asyncio
+async def test_help_action_raises_by_default() -> None:
+    """The controller reports HelpAction as `success=False`; under the widened
+    gate that raises like any other failure (deliberate: see PR #905 review)."""
+    async with NotteSession(headless=True) as session:
+        with pytest.raises(ActionExecutionError, match="help"):
+            _ = await session.aexecute(type="help", reason="the page layout is unclear")
+
+
+def test_execute_saved_actions_stops_gracefully_on_failed_step(tmp_path: Path) -> None:
+    """Replay logs the failed step and returns instead of raising."""
+    actions_file = tmp_path / "actions.json"
+    actions_file.write_text(ActionList(actions=[WaitAction(time_ms=1)]).model_dump_json())
+
+    with NotteSession(headless=True) as session:
+        session.controller.execute = _controller_execute_returning_false  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
+
+        session.execute_saved_actions(str(actions_file))  # must not raise
