@@ -316,6 +316,78 @@ class Observation(FilledTimedSpan):
         return _empty_observation_instance
 
 
+class SerializedError(BaseModel):
+    """Lossless wire representation of an `ExecutionResult.exception`.
+
+    The legacy `exception` field is serialized as `str(e)`, which collapses the error
+    to whichever single message the server's `ErrorConfig` mode baked in and drops the
+    concrete type and the retry/notify flags. This model carries all of it so clients
+    can rehydrate the exception the server actually raised. The field is additive for
+    wire compatibility: old servers never send it, old clients ignore it.
+    """
+
+    error_type: str
+    dev_message: str
+    user_message: str
+    agent_message: str
+    should_retry_later: bool = False
+    should_notify_team: bool = False
+
+    @staticmethod
+    def from_exception(e: Exception) -> "SerializedError":
+        if isinstance(e, NotteBaseError):
+            return SerializedError(
+                error_type=type(e).__name__,
+                dev_message=e.dev_message,
+                user_message=e.user_message,
+                agent_message=e.agent_message,
+                should_retry_later=e.should_retry_later,
+                should_notify_team=e.should_notify_team,
+            )
+        message = str(e)
+        return SerializedError(
+            error_type=type(e).__name__,
+            dev_message=message,
+            user_message=message,
+            agent_message=message,
+        )
+
+    def to_exception(self) -> NotteBaseError:
+        error_cls = self._resolve_error_class()
+        error = error_cls.__new__(error_cls)
+        # Subclass __init__ signatures differ (e.g. ActionExecutionError takes
+        # action_id/url/reason), so rebuild through the uniform base initializer.
+        NotteBaseError.__init__(
+            error,
+            dev_message=self.dev_message,
+            user_message=self.user_message,
+            agent_message=self.agent_message,
+            should_retry_later=self.should_retry_later,
+            should_notify_team=self.should_notify_team,
+        )
+        return error
+
+    def _resolve_error_class(self) -> type[NotteBaseError]:
+        # Imported lazily so every notte-core error subclass is registered in
+        # `__subclasses__` before the walk, without import cycles at module load.
+        import notte_core.errors.actions  # noqa: F401  # pyright: ignore[reportUnusedImport]
+        import notte_core.errors.llm  # noqa: F401
+        import notte_core.errors.processing  # noqa: F401
+        import notte_core.errors.provider  # noqa: F401
+        import notte_core.errors.validation  # noqa: F401
+
+        # Errors defined outside notte-core (or not imported in this process)
+        # rehydrate as the base class: the type is best-effort, the messages and
+        # flags are not.
+        candidates: list[type[NotteBaseError]] = [NotteBaseError]
+        while candidates:
+            cls = candidates.pop()
+            if cls.__name__ == self.error_type:
+                return cls
+            candidates.extend(cls.__subclasses__())
+        return NotteBaseError
+
+
 class ExecutionResult(FilledTimedSpan):
     # action: BaseAction
     action: ActionUnion
@@ -323,6 +395,7 @@ class ExecutionResult(FilledTimedSpan):
     message: str
     data: DataSpace | None = None
     exception: NotteBaseError | Exception | None = Field(default=None)
+    exception_detail: SerializedError | None = None
 
     @field_validator("exception", mode="before")
     @classmethod
@@ -330,6 +403,22 @@ class ExecutionResult(FilledTimedSpan):
         if isinstance(v, str):
             return NotteBaseError(dev_message=v, user_message=v, agent_message=v)
         return v
+
+    @model_validator(mode="after")
+    def sync_exception_detail(self) -> "ExecutionResult":
+        if self.success:
+            return self
+        if self.exception is None:
+            if self.exception_detail is not None:
+                # Wire payload from a server that only sets the structured field.
+                self.exception = self.exception_detail.to_exception()
+        elif self.exception_detail is None:
+            self.exception_detail = SerializedError.from_exception(self.exception)
+        elif type(self.exception) is NotteBaseError:
+            # The legacy string field was rehydrated as a bare NotteBaseError by
+            # `validate_exception`; the detail knows the real type, messages and flags.
+            self.exception = self.exception_detail.to_exception()
+        return self
 
     model_config: ConfigDict = ConfigDict(  # pyright: ignore [reportIncompatibleVariableOverride]
         arbitrary_types_allowed=True,
