@@ -317,7 +317,7 @@ class Observation(FilledTimedSpan):
 
 
 class SerializedError(BaseModel):
-    """Lossless wire representation of an `ExecutionResult.exception`.
+    """Lossless wire representation of an execution result's exception.
 
     The legacy `exception` field is serialized as `str(e)`, which collapses the error
     to whichever single message the server's `ErrorConfig` mode baked in and drops the
