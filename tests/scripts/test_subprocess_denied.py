@@ -1,13 +1,19 @@
-"""A running function must not be able to spawn a process.
+"""A running function must not spawn a process, and the guard must not corrupt
+the host process that ran it.
 
 The runner allows ``asyncio`` (functions use it for concurrency), and asyncio is
 the one route to a subprocess the import allow list leaves reachable.
-``deny_subprocess_creation`` closes it around the user-code ``exec`` and, being
-scoped, restores process creation afterwards so the runner's own forkserver and
-an SDK host process keep working.
+``deny_subprocess_creation`` closes it around the user-code ``exec``. It is
+reentrant: overlapping local runs share one patch and restore only when the last
+finishes, so neither corrupts the other's view of ``subprocess``. It is a
+defense-in-depth layer - a function that defers a spawn to a thread outliving the
+run still reaches the real ``subprocess`` - which is why the runner that executes
+untrusted code denies subprocess permanently in a single-use child instead.
 """
 
 import subprocess
+import threading
+import time
 
 import pytest
 from notte_core.ast import SecureScriptRunner, SubprocessNotAllowed, deny_subprocess_creation
@@ -67,11 +73,43 @@ def test_unrestricted_concurrency_still_works() -> None:
     assert _run(_as_run(_TO_THREAD), restricted=False) == 4
 
 
-def test_the_guard_restores_afterwards() -> None:
-    # A scoped guard must leave the host process able to spawn again - the SDK
-    # runs a local function inside the caller's own interpreter.
+def test_guard_restores_the_host_afterwards() -> None:
     original = subprocess.Popen
     with deny_subprocess_creation():
         with pytest.raises(SubprocessNotAllowed):
             subprocess.Popen(["true"])
+    assert subprocess.Popen is original
+
+
+def test_nested_guards_hold_until_the_outermost_exits() -> None:
+    original = subprocess.Popen
+    with deny_subprocess_creation():
+        with deny_subprocess_creation():
+            assert subprocess.Popen is not original
+        # Inner exit must NOT restore while the outer guard is still active.
+        assert subprocess.Popen is not original
+    assert subprocess.Popen is original
+
+
+def test_overlapping_guards_across_threads_do_not_corrupt_the_host() -> None:
+    original = subprocess.Popen
+    errors: list[str] = []
+
+    def worker(hold: float) -> None:
+        try:
+            with deny_subprocess_creation():
+                time.sleep(hold)
+                # While any guard is active, the host must still be denied - a
+                # sibling's exit must not restore the real Popen underneath us.
+                assert subprocess.Popen is not original
+        except AssertionError as exc:  # noqa: PERF203
+            errors.append(str(exc))
+
+    threads = [threading.Thread(target=worker, args=(hold,)) for hold in (0.3, 0.1)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert not errors
     assert subprocess.Popen is original

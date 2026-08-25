@@ -17,6 +17,7 @@ import contextlib
 import json
 import os
 import subprocess
+import threading
 import traceback
 import types
 from collections.abc import Iterable, Iterator, Mapping
@@ -74,37 +75,60 @@ _SUBPROCESS_GUARDED: tuple[tuple[Any, tuple[str, ...]], ...] = (
 )
 
 
+_subprocess_guard_lock = threading.Lock()
+_subprocess_guard_depth = 0
+_subprocess_guard_saved: list[tuple[Any, str, Any]] = []
+
+
+def _deny_subprocess(*_args: Any, **_kwargs: Any) -> Any:
+    raise SubprocessNotAllowed("subprocess creation is not permitted while a function runs")
+
+
 @contextlib.contextmanager
 def deny_subprocess_creation() -> Iterator[None]:
     """Refuse process creation for the duration of the block, then restore it.
 
-    Scoped rather than installed once at import on purpose. The runner spawns its
-    own worker children through a forkserver, and a process-global patch left in
-    place would deny that too; wrapping only the user-code ``exec`` leaves the
-    runner's own machinery alone. Restoring also keeps a host process - the SDK
-    runs a local function inside the caller's own interpreter - usable for its
-    own subprocesses afterwards.
+    Scoped rather than installed once at import: a runtime that spawns its own
+    worker children through a forkserver would have that denied by a permanent
+    patch, and the SDK runs a local function inside the caller's own interpreter,
+    which must stay able to spawn afterwards.
 
-    Save-and-restore, so it is not reentrant safe across threads sharing one
-    process. The runner executes one function per child, so that does not arise
-    here; the durable answer for a hostile guest is an OS boundary (seccomp),
-    which this does not replace.
+    Reentrant across threads by design. The patch is installed when the first
+    guarded run in the process begins and removed only when the last one ends, so
+    two overlapping local runs cannot open a window where one has restored the
+    real ``subprocess`` while the other guest is still executing, nor leave the
+    host permanently denied. A depth count under a lock is what buys that.
+
+    What it does NOT do: contain a function that starts a background thread and
+    returns. Once no guarded run is in flight the patch is gone, so a thread that
+    spawns then reaches the real ``subprocess``. Restricted mode (the default)
+    refuses the ``async def`` that reaches asyncio's subprocess API at all, and a
+    genuinely hostile guest needs an OS boundary - seccomp denying
+    ``fork`` / ``execve``. This is a defense-in-depth layer beneath those, not a
+    substitute for them. The runner that executes untrusted code closes the
+    thread gap a different way: it runs each function in a single-use child and
+    denies subprocess there permanently.
     """
 
-    def _deny(*_args: Any, **_kwargs: Any) -> Any:
-        raise SubprocessNotAllowed("subprocess creation is not permitted while a function runs")
-
-    saved: list[tuple[Any, str, Any]] = []
+    global _subprocess_guard_depth
+    with _subprocess_guard_lock:
+        if _subprocess_guard_depth == 0:
+            _subprocess_guard_saved.clear()
+            for module, names in _SUBPROCESS_GUARDED:
+                for name in names:
+                    if hasattr(module, name):
+                        _subprocess_guard_saved.append((module, name, getattr(module, name)))
+                        setattr(module, name, _deny_subprocess)
+        _subprocess_guard_depth += 1
     try:
-        for module, names in _SUBPROCESS_GUARDED:
-            for name in names:
-                if hasattr(module, name):
-                    saved.append((module, name, getattr(module, name)))
-                    setattr(module, name, _deny)
         yield
     finally:
-        for module, name, original in saved:
-            setattr(module, name, original)
+        with _subprocess_guard_lock:
+            _subprocess_guard_depth -= 1
+            if _subprocess_guard_depth == 0:
+                for module, name, original in _subprocess_guard_saved:
+                    setattr(module, name, original)
+                _subprocess_guard_saved.clear()
 
 
 class ParameterInfo(BaseModel):
