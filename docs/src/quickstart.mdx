@@ -195,7 +195,6 @@ Build reliable Python SDK automation scripts by authoring in a real browser firs
           "```bash",
           "# Start a new session",
           "notte sessions start [flags]",
-          "  --headless                 Run in headless mode (default: true)",
           "  --idle-timeout-minutes     Idle timeout in minutes",
           "  --max-duration-minutes     Maximum session lifetime in minutes",
           "  --proxy                    Use default proxies",
@@ -574,13 +573,13 @@ Build reliable Python SDK automation scripts by authoring in a real browser firs
           "",
           "```bash",
           "# Scrape with session",
-          "notte sessions start --headless",
+          "notte sessions start",
           "notte page goto \"https://news.ycombinator.com\"",
           "notte page scrape --instructions \"Extract top 10 story titles\"",
           "notte sessions stop",
           "",
           "# Multi-page scraping",
-          "notte sessions start --headless",
+          "notte sessions start",
           "notte page goto \"https://example.com/products\"",
           "notte page observe",
           "notte page scrape --instructions \"Extract product names and prices\"",
@@ -701,16 +700,15 @@ Build reliable Python SDK automation scripts by authoring in a real browser firs
           "notte page click \"#target-element\"",
           "```",
           "",
-          "### Viewing Headless Sessions",
+          "### Viewing Sessions",
           "",
-          "Running with `--headless` (the default) doesn't mean you can't see the browser:",
+          "Remote sessions can always be viewed while they run:",
           "",
           "- **ViewerUrl**: When you start a session, the output includes a `ViewerUrl` - open it in your browser to watch the session live",
           "- **Viewer command**: `notte sessions viewer` opens the viewer directly",
-          "- **Non-headless mode**: Use `--headless=false` only if you need a local browser window (not available on remote/CI environments)",
           "",
           "```bash",
-          "# Start headless session and get viewer URL",
+          "# Start a session and get its viewer URL",
           "notte sessions start -o json | jq -r '.viewer_url'",
           "",
           "# Or open viewer for current session",
@@ -1053,7 +1051,6 @@ Build reliable Python SDK automation scripts by authoring in a real browser firs
     ```bash
     # Start a new session
     notte sessions start [flags]
-      --headless                 Run in headless mode (default: true)
       --idle-timeout-minutes     Idle timeout in minutes
       --max-duration-minutes     Maximum session lifetime in minutes
       --proxy                    Use default proxies
@@ -1432,13 +1429,13 @@ Build reliable Python SDK automation scripts by authoring in a real browser firs
 
     ```bash
     # Scrape with session
-    notte sessions start --headless
+    notte sessions start
     notte page goto "https://news.ycombinator.com"
     notte page scrape --instructions "Extract top 10 story titles"
     notte sessions stop
 
     # Multi-page scraping
-    notte sessions start --headless
+    notte sessions start
     notte page goto "https://example.com/products"
     notte page observe
     notte page scrape --instructions "Extract product names and prices"
@@ -1559,16 +1556,15 @@ Build reliable Python SDK automation scripts by authoring in a real browser firs
     notte page click "#target-element"
     ```
 
-    ### Viewing Headless Sessions
+    ### Viewing Sessions
 
-    Running with `--headless` (the default) doesn't mean you can't see the browser:
+    Remote sessions can always be viewed while they run:
 
     - **ViewerUrl**: When you start a session, the output includes a `ViewerUrl` - open it in your browser to watch the session live
     - **Viewer command**: `notte sessions viewer` opens the viewer directly
-    - **Non-headless mode**: Use `--headless=false` only if you need a local browser window (not available on remote/CI environments)
 
     ```bash
-    # Start headless session and get viewer URL
+    # Start a session and get its viewer URL
     notte sessions start -o json | jq -r '.viewer_url'
 
     # Or open viewer for current session
@@ -1892,7 +1888,6 @@ Control browser session lifecycle:
 ```bash
 # Start a new session
 notte sessions start [flags]
-  --headless                 Run in headless mode (default: true)
   --idle-timeout-minutes     Idle timeout in minutes
   --max-duration-minutes     Maximum session lifetime in minutes
   --proxy                    Use default proxies
@@ -2271,13 +2266,13 @@ Session ID is resolved in this order:
 
 ```bash
 # Scrape with session
-notte sessions start --headless
+notte sessions start
 notte page goto "https://news.ycombinator.com"
 notte page scrape --instructions "Extract top 10 story titles"
 notte sessions stop
 
 # Multi-page scraping
-notte sessions start --headless
+notte sessions start
 notte page goto "https://example.com/products"
 notte page observe
 notte page scrape --instructions "Extract product names and prices"
@@ -2398,16 +2393,15 @@ notte page wait 500
 notte page click "#target-element"
 ```
 
-### Viewing Headless Sessions
+### Viewing Sessions
 
-Running with `--headless` (the default) doesn't mean you can't see the browser:
+Remote sessions can always be viewed while they run:
 
 - **ViewerUrl**: When you start a session, the output includes a `ViewerUrl` - open it in your browser to watch the session live
 - **Viewer command**: `notte sessions viewer` opens the viewer directly
-- **Non-headless mode**: Use `--headless=false` only if you need a local browser window (not available on remote/CI environments)
 
 ```bash
-# Start headless session and get viewer URL
+# Start a session and get its viewer URL
 notte sessions start -o json | jq -r '.viewer_url'
 
 # Or open viewer for current session

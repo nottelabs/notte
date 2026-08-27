@@ -8,7 +8,7 @@ from notte_core.common.config import BrowserType
 from notte_core.common.logging import logger
 from notte_sdk.client import NotteClient
 from notte_sdk.endpoints.sessions import RemoteSession
-from notte_sdk.types import SessionStartRequest
+from notte_sdk.types import LocalSessionStartRequest
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
@@ -45,7 +45,7 @@ class CDPSessionManager(PlaywrightManager, ABC):
         if self.client is None:
             logger.info("Creating new Notte client")
             self.client = NotteClient()
-        self.session = self.create_session_cdp(BrowserWindowOptions.from_request(SessionStartRequest()))
+        self.session = self.create_session_cdp(BrowserWindowOptions.from_request(LocalSessionStartRequest()))
         self.notte_session = self.client.Session(cdp_url=self.session.cdp_url)
         return self.notte_session.__enter__()
 

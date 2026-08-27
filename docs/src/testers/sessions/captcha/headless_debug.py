@@ -5,7 +5,7 @@ client = NotteClient()
 
 with client.Session(
     solve_captchas=True,
-    headless=False,  # Opens live viewer
+    open_viewer=True,
 ) as session:
     # You can watch captchas being solved
     pass
