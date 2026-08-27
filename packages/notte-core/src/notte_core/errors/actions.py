@@ -21,6 +21,17 @@ class ActionExecutionError(ActionError):
         )
 
 
+class EvaluateJsNoDataError(ActionError):
+    def __init__(self) -> None:
+        message = "evaluate_js reported success but returned no data"
+        super().__init__(
+            dev_message=message,
+            user_message=f"{message}.",
+            agent_message=message,
+            should_notify_team=True,
+        )
+
+
 class NotEnoughActionsListedError(ActionError):
     def __init__(self, n_trials: int, n_actions: int, threshold: float) -> None:
         super().__init__(

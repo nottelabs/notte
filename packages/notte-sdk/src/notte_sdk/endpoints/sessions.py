@@ -44,6 +44,7 @@ from notte_core.common.logging import logger
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
+from notte_core.errors.actions import EvaluateJsNoDataError
 from notte_core.errors.base import NotteBaseError
 from notte_core.utils.files import create_or_append_cookies_to_file
 from pydantic import BaseModel
@@ -1596,3 +1597,32 @@ class RemoteSession(SyncResource):
                 agent_message=fallback_message,
             )
         return result
+
+    # raise_on_failure=True (default) -> the evaluated string; failures raise
+    @overload
+    def evaluate_js(self, code: str, *, raise_on_failure: Literal[True] = ...) -> str: ...
+
+    # raise_on_failure=False -> the ExecutionResult envelope, like execute()
+    @overload
+    def evaluate_js(self, code: str, *, raise_on_failure: Literal[False]) -> ExecutionResult: ...
+
+    def evaluate_js(self, code: str, *, raise_on_failure: bool = True) -> str | ExecutionResult:
+        """
+        Evaluate JavaScript on the current page and return its result as a string.
+
+        The result is stringified the way `evaluate_js` records it: objects and
+        arrays as JSON, a JS `null` as the string `"null"`. On failure the typed
+        exception is raised with the actual JavaScript error; pass
+        `raise_on_failure=False` to get the `ExecutionResult` envelope instead.
+
+        ```python
+        payload = json.loads(session.evaluate_js("(async () => JSON.stringify(await res.json()))()"))
+        ```
+        """
+        result = self.execute(type="evaluate_js", code=code, raise_on_failure=raise_on_failure)
+        if not raise_on_failure:
+            return result
+        if result.data is None:
+            # an API build that predates the eval-js fix reports success without data
+            raise EvaluateJsNoDataError()
+        return result.data.markdown

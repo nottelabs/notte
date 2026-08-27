@@ -172,12 +172,21 @@ def handle_file(filepath: str):
 
 
 @handle_file("vaults/index.py")
-def handle_vault(
+def handle_vault_index(
     eval_example: EvalExample,
     code: str,
 ) -> None:
-    code = code.replace("<your-mfa-secret>", "JBSWY3DPEHPK3PXP")
-    run_example(eval_example, code=code)
+    if FAST_MODE or TYPE_CHECK_MODE:
+        # Syntax/type check - don't create client
+        code = code.replace("<your-mfa-secret>", "JBSWY3DPEHPK3PXP").replace("my_vault_id", "placeholder-vault-id")
+        run_example(eval_example, code=code)
+    else:
+        # Full mode: create real vault and always delete it via context manager
+        _ = load_dotenv()
+        client = NotteClient()
+        with client.Vault() as vault:
+            code = code.replace("<your-mfa-secret>", "JBSWY3DPEHPK3PXP").replace("my_vault_id", vault.vault_id)
+            run_example(eval_example, code=code)
 
 
 @handle_file("agents/index.py")
@@ -236,22 +245,18 @@ def handle_workflow_fork(
     run_example(eval_example, code=code)
 
 
-@handle_file("vaults/index.py")
-def handle_vault_index(
+@handle_file("getting-started/concept_vault.py")
+def handle_concept_vault(
     eval_example: EvalExample,
     code: str,
 ) -> None:
-    if FAST_MODE or TYPE_CHECK_MODE:
-        # Syntax/type check - don't create client
-        code = code.replace("<your-mfa-secret>", "JBSWY3DPEHPK3PXP").replace("my_vault_id", "placeholder-vault-id")
-        run_example(eval_example, code=code)
-    else:
-        # Full mode: create real vault
-        _ = load_dotenv()
-        client = NotteClient()
-        with client.Vault() as vault:
-            code = code.replace("<your-mfa-secret>", "JBSWY3DPEHPK3PXP").replace("my_vault_id", vault.vault_id)
-            run_example(eval_example, code=code)
+    """Cap agent steps in execution mode; vault cleanup uses `with client.Vault()`."""
+    if not (FAST_MODE or TYPE_CHECK_MODE):
+        code = code.replace(
+            "agent = client.Agent(session=session, vault=vault)",
+            "agent = client.Agent(session=session, vault=vault, max_steps=1)",
+        )
+    run_example(eval_example, code=code)
 
 
 @handle_file("sessions/file_storage_basic.py")

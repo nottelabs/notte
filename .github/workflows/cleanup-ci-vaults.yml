@@ -1,0 +1,70 @@
+name: cleanup-ci-vaults
+
+# Manual only. Prefer deleting a single run prefix; optional orphan-defaults for backlog.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "prefix = one workflow run; orphan-defaults = drain leaked name=default vaults"
+        required: true
+        default: "prefix"
+        type: choice
+        options:
+          - "prefix"
+          - "orphan-defaults"
+      prefix:
+        description: "Required for mode=prefix (e.g. ci-32862931541-execution)"
+        required: false
+        type: string
+      min_age_hours:
+        description: "For orphan-defaults: only delete default vaults older than this many hours"
+        required: false
+        default: "2"
+        type: string
+      dry_run:
+        description: "List vaults without deleting"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  cleanup:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 30
+    env:
+      NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+      DISABLE_TELEMETRY: "true"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Install notte-sdk
+        run: uv pip install --system notte-sdk
+
+      - name: Cleanup vaults
+        run: |
+          ARGS=()
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            ARGS+=(--dry-run)
+          fi
+          if [ "${{ inputs.mode }}" = "orphan-defaults" ]; then
+            ARGS+=(--orphan-defaults --min-age-hours "${{ inputs.min_age_hours }}")
+          else
+            if [ -z "${{ inputs.prefix }}" ]; then
+              echo "prefix is required when mode=prefix"
+              exit 1
+            fi
+            ARGS+=(--prefix "${{ inputs.prefix }}")
+          fi
+          python scripts/cleanup_ci_vaults.py "${ARGS[@]}"
