@@ -88,7 +88,7 @@ Check if captcha solving failed:
 
 <MonitorFailures />
 
-### 3. Use Headless=False for Debugging
+### 3. Use the Live Viewer for Debugging
 
 Watch captcha solving in action:
 
@@ -122,7 +122,7 @@ Text CAPTCHAs are the old-school challenges that show distorted letters, numbers
 - ✅ Solve most hCaptcha challenges
 - ✅ Solve simple text and image CAPTCHA challenges
 - ✅ Work with residential proxies
-- ✅ Work in headless and non-headless mode
+- ✅ Work in remote browser sessions
 
 ### What It Cannot Do:
 - ❌ Solve 100% of captchas (some are unsolvable)
@@ -167,7 +167,7 @@ Test captcha solving on demo sites:
 
   with client.Session(
       solve_captchas=True,
-      headless=False
+      open_viewer=True
   ) as session:
       page = session.page
 

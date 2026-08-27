@@ -86,7 +86,7 @@ class NotteClient:
 
     @property
     def Session(self) -> type[RemoteSession]:
-        return cast(type[RemoteSession], partial(RemoteSession, _client=self.sessions, headless=True))
+        return cast(type[RemoteSession], partial(RemoteSession, _client=self.sessions))
 
     @property
     def Agent(self) -> type[RemoteAgent]:

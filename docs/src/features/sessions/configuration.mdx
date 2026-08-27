@@ -4,7 +4,7 @@ description: Learn how to create and configure Notte browser sessions
 ---
 import QuickStart from '/snippets/sessions/configuration/quick_start.mdx';
 import FullConfig from '/snippets/sessions/configuration/full_config.mdx';
-import HeadlessMode from '/snippets/sessions/configuration/headless_mode.mdx';
+import AdvancedStealth from '/snippets/sessions/configuration/headless_mode.mdx';
 import CaptchaSolving from '/snippets/sessions/configuration/captcha_solving.mdx';
 import Timeout from '/snippets/sessions/configuration/timeout.mdx';
 import Viewport from '/snippets/sessions/configuration/viewport.mdx';
@@ -38,8 +38,8 @@ Customize your session with these options:
 
 ### Common Parameters
 
-<ParamField path="headless" type="boolean" default={false}>
-  Whether to run the browser in headless mode. Set to `false` to open a live viewer in your browser.
+<ParamField path="advanced_stealth" type="boolean" default={false}>
+  Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Access is currently available to approved workspaces; contact [hello@notte.cc](mailto:hello@notte.cc) to enable it.
 </ParamField>
 
 <ParamField path="solve_captchas" type="boolean" default={true}>
@@ -107,14 +107,14 @@ When you start a session, you get access to these properties and methods:
 
 <SessionResponse />
 
-## Headless Mode
+## Advanced Stealth
 
-Control whether to run the browser visibly or in the background:
+Use Notte's approval-gated browser environment for difficult sites:
 
-<HeadlessMode />
+<AdvancedStealth />
 
 <Tip>
-  When `headless=False`, a live viewer automatically opens in your browser so you can watch the automation in real-time.
+  Use `open_viewer=True` independently when you want the live viewer to open as the session starts.
 </Tip>
 
 ## Proxies

@@ -76,13 +76,13 @@ from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_llm.service import LLMService
 from notte_sdk.endpoints.personas import BasePersona
 from notte_sdk.types import (
+    LocalSessionStartRequest,
+    LocalSessionStartRequestDict,
     PaginationParams,
     PaginationParamsDict,
     ScrapeMarkdownParamsDict,
     ScrapeParams,
     ScrapeParamsDict,
-    SessionStartRequest,
-    SessionStartRequestDict,
 )
 from pydantic import RootModel, ValidationError
 from typing_extensions import override
@@ -130,7 +130,7 @@ class NotteSession(AsyncResource, SyncResource):
         persona: BasePersona | None = None,
         window: BrowserWindow | None = None,
         keep_alive: bool = False,
-        **data: Unpack[SessionStartRequestDict],
+        **data: Unpack[LocalSessionStartRequestDict],
     ) -> None:
         if storage is not None and storage.is_remote:
             raise ValueError(
@@ -139,7 +139,7 @@ class NotteSession(AsyncResource, SyncResource):
         # CAPTCHA solving is a cloud SDK capability. Keep local sessions
         # runnable by default while preserving an explicit opt-in error.
         _ = data.setdefault("solve_captchas", False)
-        self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
+        self._request: LocalSessionStartRequest = LocalSessionStartRequest.model_validate(data)
         if self._request.solve_captchas and not CaptchaHandler.is_available:
             raise CaptchaSolverNotAvailableError()
         self.screenshot_type: ScreenshotType = self._request.screenshot_type
@@ -189,7 +189,7 @@ class NotteSession(AsyncResource, SyncResource):
         await self.window.set_cookies(cookies=cookies, cookie_path=cookie_file)
 
     @staticmethod
-    def script(storage: BaseStorage | None = None, **data: Unpack[SessionStartRequestDict]) -> NotteSession:
+    def script(storage: BaseStorage | None = None, **data: Unpack[LocalSessionStartRequestDict]) -> NotteSession:
         return NotteSession(storage=storage, raise_on_failure=True, perception_type="fast", **data)
 
     @track_usage("local.session.cookies.get")

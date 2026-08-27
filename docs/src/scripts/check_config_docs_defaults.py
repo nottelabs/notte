@@ -43,7 +43,7 @@ def code_defaults() -> dict[str, Any]:
         return fields[name].default
 
     return {
-        "headless": field_default("headless"),
+        "advanced_stealth": field_default("advanced_stealth"),
         "solve_captchas": field_default("solve_captchas"),
         "proxies": field_default("proxies"),
         # the docs param is the SDK's idle timeout

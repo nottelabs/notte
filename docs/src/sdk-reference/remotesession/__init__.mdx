@@ -29,11 +29,7 @@ RemoteSession instance configured with the specified parameters.
 </ParamField>
 
 <ParamField path="open_viewer" type="bool" default="False">
-  Whether to open the live viewer when the session starts (default: False).         Browsers are always headless; this controls only the viewer popup.
-</ParamField>
-
-<ParamField path="headless" type="bool">
-  Whether to run the session in headless mode.
+  Whether to open the live viewer when the session starts (default: False).         This controls only the viewer popup and is independent of the browser environment.
 </ParamField>
 
 <ParamField path="solve_captchas" type="bool">
@@ -107,6 +103,9 @@ RemoteSession instance configured with the specified parameters.
 
 <ParamField path="wait_for_authentication" type="bool">
   Defaults to True. Wait for Managed Auth before returning the session; authentication failure or timeout fails session creation. When False, return after the browser is ready while authentication continues in the background.
+</ParamField>
+
+<ParamField path="advanced_stealth" type="bool">
 </ParamField>
 
 ## Returns

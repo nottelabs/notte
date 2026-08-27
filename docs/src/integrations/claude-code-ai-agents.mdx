@@ -45,7 +45,7 @@ Core workflow:
 
 ## Tips
 
-- **Viewing headless sessions**: When you start a session, the output includes a `ViewerUrl` - open it to watch your headless browser live
+- **Viewing sessions**: When you start a session, the output includes a `ViewerUrl` - open it to watch your browser live
 - **Element selectors**: Use only element IDs returned by `observe` (like `@B1`). If those don't work, use Playwright selectors validated against the live page: `#id`, `.class`, `button:has-text('Submit')`
 - **Multiple matches**: Use `>> nth=0` suffix to select the first match: `button:has-text('OK') >> nth=0`
 - **Closing modals**: `notte page press "Escape"` reliably dismisses most dialogs

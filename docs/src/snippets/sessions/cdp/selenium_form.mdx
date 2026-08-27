@@ -5,7 +5,7 @@
   client = NotteClient()
 
   def automate_form():
-      with client.Session(headless=False) as session:
+      with client.Session(open_viewer=True) as session:
           page = session.page
 
           # Navigate to form

@@ -36,7 +36,17 @@ from notte_core.storage import FileInfo as FileInfo  # noqa: E402
 from notte_core.trajectory import ElementLiteral
 from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
 from notte_core.utils.url import get_root_domain
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    computed_field,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
 from pyotp import TOTP
 from typing_extensions import NotRequired, TypedDict, deprecated, override
 
@@ -734,11 +744,10 @@ class SessionProfile(SdkRequest):
     persist: Annotated[bool, Field(description="Whether to save browser state to profile on session close")] = False
 
 
-class SessionStartRequestDict(TypedDict, total=False):
+class _SessionStartRequestDict(TypedDict, total=False):
     """Request dictionary for starting a session.
 
     Args:
-        headless: Whether to run the session in headless mode.
         solve_captchas: Whether to try to automatically solve captchas
         max_duration_minutes: Maximum session lifetime in minutes (absolute maximum).
         idle_timeout_minutes: Idle timeout in minutes. Session closes after this period of inactivity.
@@ -759,7 +768,6 @@ class SessionStartRequestDict(TypedDict, total=False):
             ready while authentication continues in the background.
     """
 
-    headless: bool
     solve_captchas: bool
     max_duration_minutes: int
     idle_timeout_minutes: int
@@ -783,8 +791,19 @@ class SessionStartRequestDict(TypedDict, total=False):
     wait_for_authentication: bool
 
 
-class SessionStartRequest(SdkRequest):
-    headless: Annotated[bool, Field(description="Whether to run the session in headless mode.")] = config.headless
+class SessionStartRequestDict(_SessionStartRequestDict, total=False):
+    """Public request dictionary for starting a remote session."""
+
+    advanced_stealth: bool
+
+
+class LocalSessionStartRequestDict(_SessionStartRequestDict, total=False):
+    """Request dictionary for starting a browser session on the local machine."""
+
+    headless: bool
+
+
+class _SessionStartRequest(SdkRequest):
     solve_captchas: Annotated[bool, Field(description="Whether to try to automatically solve captchas")] = True
 
     max_duration_minutes: Annotated[
@@ -884,7 +903,7 @@ class SessionStartRequest(SdkRequest):
         return values  # pyright: ignore[reportUnknownVariableType]
 
     @model_validator(mode="after")
-    def validate_unique_auth_ids(self) -> "SessionStartRequest":
+    def validate_unique_auth_ids(self) -> "_SessionStartRequest":
         if len(self.auth_ids) != len(set(self.auth_ids)):
             raise ValueError("auth_ids must not contain duplicates")
         return self
@@ -908,13 +927,13 @@ class SessionStartRequest(SdkRequest):
         return data
 
     @model_validator(mode="after")
-    def check_viewport(self) -> "SessionStartRequest":
+    def check_viewport(self) -> "_SessionStartRequest":
         if (self.viewport_width is None) != (self.viewport_height is None):
             raise ValueError("Both viewport_width and viewport_height must be set together or both must be None")
         return self
 
     @model_validator(mode="after")
-    def check_solve_captchas(self) -> "SessionStartRequest":
+    def check_solve_captchas(self) -> "_SessionStartRequest":
         if self.browser_type in ("chrome-nightly", "chrome-turbo") and self.solve_captchas and not self.proxies:
             raise ValueError(
                 f"`proxies` parameter cannot be falsy when setting `solve_captchas=True` with `browser_type` '{self.browser_type}'."
@@ -923,7 +942,7 @@ class SessionStartRequest(SdkRequest):
         return self
 
     @model_validator(mode="after")
-    def validate_cdp_url_constraints(self) -> "SessionStartRequest":
+    def validate_cdp_url_constraints(self) -> "_SessionStartRequest":
         """
         Validate that when cdp_url is provided, certain fields are set to their default values.
 
@@ -931,11 +950,6 @@ class SessionStartRequest(SdkRequest):
             ValueError: If cdp_url is provided but other fields are not set to defaults.
         """
         if self.cdp_url is not None:
-            if not self.headless:
-                raise ValueError(
-                    "When cdp_url is provided, headless must be True. "
-                    + "Headed mode (headless=False) only works with a local browser."
-                )
             if self.user_agent is not None:
                 raise ValueError(
                     "When cdp_url is provided, user_agent must be None. Set the user agent with your external session CDP provider."
@@ -955,7 +969,7 @@ class SessionStartRequest(SdkRequest):
         return self
 
     @model_validator(mode="after")
-    def validate_timeout_relationship(self) -> "SessionStartRequest":
+    def validate_timeout_relationship(self) -> "_SessionStartRequest":
         """
         Validate that idle_timeout_minutes does not exceed max_duration_minutes.
 
@@ -1008,6 +1022,65 @@ class SessionStartRequest(SdkRequest):
         raise ValueError(f"Unsupported proxy type: {base_proxy.type}")  # pyright: ignore[reportUnreachable]
 
 
+class SessionStartRequest(_SessionStartRequest):
+    """Public request for starting a remote Notte browser session."""
+
+    advanced_stealth: Annotated[
+        bool,
+        Field(
+            description=(
+                "Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. "
+                "Available to approved workspaces."
+            )
+        ),
+    ] = False
+
+    @model_serializer(mode="wrap")
+    def omit_disabled_advanced_stealth(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        data = cast(dict[str, Any], handler(self))
+        if not self.advanced_stealth:
+            data.pop("advanced_stealth", None)
+        return data
+
+    @model_validator(mode="before")
+    @classmethod
+    def handle_legacy_headless(cls, values: Any) -> Any:
+        """Keep old SDKs working without exposing remote browser launch mode."""
+        if not isinstance(values, dict):
+            return values
+        data = dict(cast(dict[str, Any], values))
+        if "headless" not in data:
+            return data
+        headless = data.pop("headless")
+        if headless is not True:
+            raise ValueError(
+                "Remote `headless=False` is no longer supported. "
+                + "`headless=True` sessions still include session replays and access to the live viewer."
+            )
+        return data
+
+    @model_validator(mode="after")
+    def validate_advanced_stealth_cdp_url(self) -> "SessionStartRequest":
+        if self.advanced_stealth and self.cdp_url is not None:
+            raise ValueError("advanced_stealth cannot be used with an external cdp_url")
+        return self
+
+
+class LocalSessionStartRequest(_SessionStartRequest):
+    """Request for starting a browser session on the local machine."""
+
+    headless: Annotated[bool, Field(description="Whether to run the local browser in headless mode.")] = config.headless
+
+    @model_validator(mode="after")
+    def validate_local_cdp_headless(self) -> "LocalSessionStartRequest":
+        if self.cdp_url is not None and not self.headless:
+            raise ValueError(
+                "When cdp_url is provided, headless must be True. "
+                + "Headed mode (headless=False) only works with a locally launched browser."
+            )
+        return self
+
+
 class ListRequestDict(TypedDict, total=False):
     only_active: bool
     page_size: int
@@ -1057,6 +1130,9 @@ def _drop_duration_format(schema: dict[str, Any]) -> None:
 
 
 class SessionResponse(SdkResponse):
+    # Preserve unknown response fields so legacy wire metadata such as
+    # ``headless`` remains available without becoming part of current schemas.
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")
     session_id: Annotated[
         str,
         Field(
@@ -1115,7 +1191,13 @@ class SessionResponse(SdkResponse):
     user_agent: Annotated[str | None, Field(description="The user agent to use for the session")] = None
     viewport_width: Annotated[int | None, Field(description="The width of the viewport")] = None
     viewport_height: Annotated[int | None, Field(description="The height of the viewport")] = None
-    headless: Annotated[bool, Field(description="Whether to run the session in headless mode.")] = True
+
+    @property
+    def headless(self) -> bool:
+        """Legacy launch metadata retained for old session-status consumers."""
+        extra = self.__pydantic_extra__
+        return True if extra is None else bool(extra.get("headless", True))
+
     solve_captchas: Annotated[bool | NoneType, Field(description="Whether to solve captchas.")] = None
     cdp_url: Annotated[str | None, Field(description="The URL to connect to the CDP server.")] = None
     viewer_url: Annotated[str | None, Field(description="The remote session viewer URL.")] = None

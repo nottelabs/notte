@@ -4,15 +4,9 @@
 
   client = NotteClient()
 
-  # Headless mode (no viewer)
-  with client.Session(headless=True) as session:
+  # Advanced Stealth requires approval for your workspace.
+  with client.Session(advanced_stealth=True, open_viewer=True) as session:
       page = session.page
       page.goto("https://example.com")
-
-  # Non-headless (opens live viewer automatically)
-  with client.Session(headless=False) as session:
-      page = session.page
-      page.goto("https://example.com")
-      # Viewer opens automatically in your browser
   ```
 </CodeGroup>
