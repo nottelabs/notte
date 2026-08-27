@@ -832,7 +832,7 @@ class _SessionStartRequest(SdkRequest):
         Field(
             description="List of custom proxies to use for the session. If True, the default proxies will be used.",
         ),
-    ] = True
+    ] = False
     browser_type: Annotated[
         BrowserType, Field(description="The browser type to use. Can be chromium, chrome or firefox.")
     ] = DEFAULT_BROWSER_TYPE
@@ -1024,6 +1024,13 @@ class _SessionStartRequest(SdkRequest):
 
 class SessionStartRequest(_SessionStartRequest):
     """Public request for starting a remote Notte browser session."""
+
+    proxies: Annotated[
+        list[ProxySettings] | bool,
+        Field(
+            description="List of custom proxies to use for the session. If True, the default proxies will be used.",
+        ),
+    ] = True
 
     advanced_stealth: Annotated[
         bool,
