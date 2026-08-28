@@ -32,7 +32,7 @@
     },
     {
       "source": "/guides/reliability",
-      "destination": "/features/agents/configuration"
+      "destination": "/concepts/sessions"
     }
   ],
   "navigation": {
@@ -98,7 +98,6 @@
             "pages": [
               "concepts/vaults",
               "features/sessions/browser-profiles",
-              "concepts/managed-auth",
               "concepts/personas"
             ]
           },
