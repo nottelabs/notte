@@ -89,6 +89,7 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [Session Configurations](https://docs.notte.cc/features/sessions/configuration.md): Learn how to create and configure Notte browser sessions
 - [Browser Controls](https://docs.notte.cc/features/sessions/browser-controls.md): Complete reference of all browser actions available in sessions
 - [Playwright vs Notte Controls](https://docs.notte.cc/features/sessions/playwright-vs-notte.md): Understanding the difference between direct Playwright control and Notte's AI-enabled SDK
+- [File Storage](https://docs.notte.cc/concepts/file-storage.md): Upload and download files for your automations
 
 ### Session Capabilities
 
@@ -99,7 +100,6 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [Multi-Region Support](https://docs.notte.cc/features/sessions/multi-region.md): Run browser sessions across multiple geographic regions
 - [CAPTCHA Solving](https://docs.notte.cc/features/sessions/captcha-solving.md): Automatically detect and solve captchas during browser automation
 - [Ad Blocking](https://docs.notte.cc/features/sessions/ad-blocking.md): Built-in ad and tracker blocking for browser sessions
-- [Browser Profiles](https://docs.notte.cc/features/sessions/browser-profiles.md): Persist browser state across sessions
 - [Static IPs](https://docs.notte.cc/features/sessions/static-ips.md): Use dedicated static IP addresses for your browser sessions
 - [Recordings](https://docs.notte.cc/features/sessions/recordings.md): Record and replay your browser sessions for debugging and analysis
 - [Live View](https://docs.notte.cc/features/sessions/live-view.md): Watch your browser sessions in real-time as they execute
@@ -115,6 +115,21 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [Connect with Selenium](https://docs.notte.cc/features/sessions/selenium.md): Use Selenium with Notte sessions via Chrome DevTools Protocol
 - [External Providers](https://docs.notte.cc/features/sessions/external-providers.md): Connect Notte to external browser infrastructure via Chrome DevTools Protocol
 
+## Authentication
+
+- [Secret Vaults](https://docs.notte.cc/concepts/vaults.md): Enterprise-grade credential management for your Sessions & Agents
+- [Browser Profiles](https://docs.notte.cc/features/sessions/browser-profiles.md): Persist browser state across sessions
+- [Managed Auth](https://docs.notte.cc/concepts/managed-auth.md): Keep sessions logged in with catalog connections backed by vaults and profiles
+- [Persona Identities](https://docs.notte.cc/concepts/personas.md): Self-service identities for web automation (account creation, 2FA,etc.)
+
+## Functions
+
+- [Functions](https://docs.notte.cc/concepts/functions.md): Deploy browser automations as serverless API endpoints
+- [Creating Functions](https://docs.notte.cc/features/functions/creating.md): Write and deploy browser automation Functions
+- [Function Invocations](https://docs.notte.cc/features/functions/invocations.md): Call Functions via API, SDK, cURL, or webhooks
+- [Function Schedules](https://docs.notte.cc/features/functions/schedules.md): Schedule Functions to run automatically with cron expressions
+- [Function Management](https://docs.notte.cc/features/functions/management.md): Update, version, monitor, and manage your deployed Functions
+
 ## Agents
 
 - [Browser Agents](https://docs.notte.cc/concepts/agents.md): AI-powered agents that autonomously complete browser tasks
@@ -128,27 +143,13 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [Agent to Function Conversion](https://docs.notte.cc/features/agents/workflows.md): Convert agent executions into reusable function code
 - [Agent Fallback](https://docs.notte.cc/features/agents/fallback.md): Automatically recover from script failures with AI agents
 
-## Functions
+## Web API
 
-- [Functions](https://docs.notte.cc/concepts/functions.md): Deploy browser automations as serverless API endpoints
-- [Creating Functions](https://docs.notte.cc/features/functions/creating.md): Write and deploy browser automation Functions
-- [Function Invocations](https://docs.notte.cc/features/functions/invocations.md): Call Functions via API, SDK, cURL, or webhooks
-- [Function Schedules](https://docs.notte.cc/features/functions/schedules.md): Schedule Functions to run automatically with cron expressions
-- [Function Management](https://docs.notte.cc/features/functions/management.md): Update, version, monitor, and manage your deployed Functions
-
-## Agent Tools
-
-- [File Storage](https://docs.notte.cc/concepts/file-storage.md): Upload and download files for your automations
-- [Secret Vaults](https://docs.notte.cc/concepts/vaults.md): Enterprise-grade credential management for your Sessions & Agents
-- [Persona Identities](https://docs.notte.cc/concepts/personas.md): Self-service identities for web automation (account creation, 2FA,etc.)
-
-## Scraping
-
-- [Scraping](https://docs.notte.cc/concepts/scraping.md): Extract content and structured data from web pages
+- [Fetch](https://docs.notte.cc/concepts/scraping.md): Extract content and structured data from web pages
+- [Search](https://docs.notte.cc/concepts/search.md): Search the web and get URLs, snippets, or a sourced answer
 
 ## Guides
 
-- [Towards Reliable Agents](https://docs.notte.cc/guides/reliability.md): How to build reliable web agents
 - [Advanced Scraping](https://docs.notte.cc/guides/scraping.md): How to build reliable web scrapers with Notte
 - [Anti-Detection Playbook](https://docs.notte.cc/guides/stealth.md): How to avoid CAPTCHAs and bot detection in Notte Sessions
 - [Create accounts with Personas](https://docs.notte.cc/guides/account_creation.md): How to use notte personas for account creation

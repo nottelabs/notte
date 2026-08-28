@@ -1,30 +1,20 @@
-#navbar {
-  display: flex;
-  flex-direction: column;
-}
-
-#navbar > .mx-auto {
-  order: 1;
-  width: 100%;
-}
-
 #banner {
-  order: 2;
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-  z-index: 20 !important;
-  min-height: 0 !important;
-  padding: 0.625rem 1rem !important;
-  background: rgba(0, 184, 92, 0.08) !important;
-  border-top: 1px solid rgba(0, 184, 92, 0.18);
-  border-bottom: 1px solid rgba(0, 184, 92, 0.2);
-  color: rgb(210, 246, 226) !important;
+  height: 2.5rem !important;
+  min-height: 2.5rem !important;
+  max-height: 2.5rem !important;
+  padding: 0 1rem !important;
+  overflow: hidden !important;
+  background-color: #e8f6ee !important;
+  background-image: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  color: rgb(20, 83, 45) !important;
   box-shadow: none !important;
+  isolation: isolate;
 }
 
-#banner + script + div[aria-hidden="true"] {
-  display: none !important;
+header#navbar {
+  background-color: #e8f6ee !important;
 }
 
 #banner > div {
@@ -38,28 +28,33 @@
 }
 
 #banner * {
-  color: rgb(210, 246, 226) !important;
+  color: rgb(20, 83, 45) !important;
 }
 
 #banner code {
-  border: 1px solid rgba(0, 184, 92, 0.25);
-  background: rgba(0, 184, 92, 0.14) !important;
-  color: rgb(220, 255, 236) !important;
+  border: 1px solid #b7dccb;
+  background: #d8efe4 !important;
+  color: rgb(20, 83, 45) !important;
 }
 
 #banner a {
-  color: rgb(152, 255, 197) !important;
-  text-decoration-color: rgba(152, 255, 197, 0.55) !important;
+  color: rgb(0, 112, 56) !important;
+  text-decoration-color: rgba(0, 112, 56, 0.45) !important;
 }
 
 #banner a:hover {
-  color: rgb(220, 255, 236) !important;
-  text-decoration-color: rgb(220, 255, 236) !important;
+  color: rgb(20, 83, 45) !important;
+  text-decoration-color: rgb(20, 83, 45) !important;
 }
 
 :is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) #banner {
-  background: rgba(0, 184, 92, 0.08) !important;
+  background-color: #163528 !important;
+  border-bottom: none !important;
   color: rgb(210, 246, 226) !important;
+}
+
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) header#navbar {
+  background-color: #163528 !important;
 }
 
 :is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) #banner * {
@@ -67,7 +62,8 @@
 }
 
 :is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) #banner code {
-  background: rgba(0, 184, 92, 0.14) !important;
+  border-color: #2a5a42;
+  background: #1a3d2e !important;
   color: rgb(220, 255, 236) !important;
 }
 
@@ -312,4 +308,322 @@ html:not(.dark) .notte-fast-setup__feature-sub {
   0% { transform: scale(0.985); }
   65% { transform: scale(1.008); }
   100% { transform: scale(1); }
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/GeistMonoVF.woff") format("woff");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+a:has(> .nav-logo) {
+  display: inline-flex;
+  align-items: center;
+}
+
+a:has(> .nav-logo) .nav-logo {
+  width: 22px;
+  height: 22px;
+  max-width: 22px;
+  padding: 0;
+}
+
+a:has(> .nav-logo)::after {
+  content: "Documentation";
+  margin-left: 0.375rem;
+  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: hsl(240 10% 3.9%);
+}
+
+html.dark a:has(> .nav-logo)::after,
+html[data-theme="dark"] a:has(> .nav-logo)::after {
+  color: hsl(0 0% 98%);
+}
+
+.notte-sidebar-toggle {
+  display: none;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: hsl(240 10% 3.9%);
+  cursor: pointer;
+}
+
+html.dark .notte-sidebar-toggle,
+html[data-theme="dark"] .notte-sidebar-toggle {
+  color: hsl(0 0% 98%);
+}
+
+.notte-toggle-logo,
+.notte-toggle-icon {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+
+.notte-toggle-icon {
+  display: flex;
+}
+
+.notte-toggle-logo img {
+  width: 22px;
+  height: 22px;
+}
+
+.notte-toggle-logo-light {
+  display: block;
+}
+
+.notte-toggle-logo-dark {
+  display: none;
+}
+
+html.dark .notte-toggle-logo-light,
+html[data-theme="dark"] .notte-toggle-logo-light {
+  display: none;
+}
+
+html.dark .notte-toggle-logo-dark,
+html[data-theme="dark"] .notte-toggle-logo-dark {
+  display: block;
+}
+
+.notte-sidebar-toggle svg {
+  display: block;
+}
+
+.notte-sidebar-toggle:hover {
+  background: rgba(10, 10, 10, 0.05);
+}
+
+.notte-sidebar-toggle:focus-visible {
+  outline: 2px solid rgba(0, 190, 95, 0.5);
+  outline-offset: 2px;
+}
+
+html.dark .notte-sidebar-toggle:hover,
+html[data-theme="dark"] .notte-sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+#notte-sidebar-tooltip {
+  position: fixed;
+  z-index: 2147483647;
+  display: none;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid hsl(240 5.9% 90%);
+  border-radius: 0.375rem;
+  background: hsl(0 0% 100%);
+  color: hsl(240 10% 3.9%);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.25;
+  white-space: nowrap;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  pointer-events: none;
+}
+
+#notte-sidebar-tooltip.is-visible {
+  display: flex;
+}
+
+#notte-sidebar-tooltip .notte-toggle-tooltip-shortcut {
+  color: hsl(240 3.8% 46.1%);
+  font-weight: 500;
+}
+
+html.dark #notte-sidebar-tooltip,
+html[data-theme="dark"] #notte-sidebar-tooltip {
+  border-color: hsl(240 3.7% 15.9%);
+  background: hsl(240 10% 3.9%);
+  color: hsl(0 0% 98%);
+}
+
+html.dark #notte-sidebar-tooltip .notte-toggle-tooltip-shortcut,
+html[data-theme="dark"] #notte-sidebar-tooltip .notte-toggle-tooltip-shortcut {
+  color: hsl(240 5% 64.9%);
+}
+
+@media (min-width: 1024px) {
+  html:not([data-page-mode="custom"]):not([data-page-mode="center"]) .notte-sidebar-toggle {
+    display: inline-flex;
+  }
+
+  #navbar-transition-maple,
+  #navbar-transition-maple[data-is-opaque="false"],
+  #navbar-transition-maple[data-is-opaque="true"] {
+    top: var(--banner-height, 2.5rem) !important;
+    margin-top: 0 !important;
+    z-index: 40;
+    isolation: isolate;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  html.dark #navbar-transition-maple,
+  html.dark #navbar-transition-maple[data-is-opaque="false"],
+  html.dark #navbar-transition-maple[data-is-opaque="true"],
+  html[data-theme="dark"] #navbar-transition-maple,
+  html[data-theme="dark"] #navbar-transition-maple[data-is-opaque="false"],
+  html[data-theme="dark"] #navbar-transition-maple[data-is-opaque="true"] {
+    background: #0a0a0b !important;
+    background-color: #0a0a0b !important;
+    background-image: none !important;
+  }
+
+  #navbar-transition-maple::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-color: #ffffff;
+  }
+
+  html.dark #navbar-transition-maple::before,
+  html[data-theme="dark"] #navbar-transition-maple::before {
+    background-color: #0a0a0b;
+  }
+
+  #navbar-transition-maple > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  #navbar-transition-maple .notte-sidebar-toggle {
+    margin-right: 0.75rem;
+    align-self: center;
+  }
+
+  html.notte-sidebar-hidden .notte-sidebar-toggle {
+    display: none !important;
+  }
+
+  html.notte-sidebar-hidden #sidebar {
+    display: flex !important;
+    width: 3rem !important;
+    min-width: 3rem !important;
+    max-width: 3rem !important;
+    overflow: hidden;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  html.notte-sidebar-hidden #sidebar > *:not(#notte-sidebar-rail-toggle),
+  html.notte-sidebar-hidden #sidebar-content {
+    display: none !important;
+  }
+
+  html.notte-sidebar-hidden #content-container {
+    margin-left: 3rem !important;
+  }
+
+  html.notte-sidebar-hidden #navbar-transition-maple {
+    left: 3rem !important;
+  }
+
+  .notte-sidebar-rail-toggle {
+    display: none;
+  }
+
+  html.notte-sidebar-hidden .notte-sidebar-rail-toggle {
+    display: inline-flex;
+    position: absolute;
+    top: 0.5rem;
+    right: auto;
+    bottom: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0.375rem;
+    background: transparent;
+    color: hsl(240 10% 3.9%);
+    cursor: pointer;
+    z-index: 2;
+  }
+
+  html.dark.notte-sidebar-hidden .notte-sidebar-rail-toggle,
+  html[data-theme="dark"].notte-sidebar-hidden .notte-sidebar-rail-toggle {
+    color: hsl(0 0% 98%);
+  }
+
+  html.notte-sidebar-hidden .notte-sidebar-rail-toggle:hover {
+    background: rgba(10, 10, 10, 0.05);
+  }
+
+  html.dark.notte-sidebar-hidden .notte-sidebar-rail-toggle:hover,
+  html[data-theme="dark"].notte-sidebar-hidden .notte-sidebar-rail-toggle:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  html.notte-sidebar-hidden .notte-sidebar-rail-toggle .notte-toggle-logo {
+    display: flex;
+  }
+
+  html.notte-sidebar-hidden .notte-sidebar-rail-toggle .notte-toggle-icon {
+    display: none;
+  }
+
+  html.notte-sidebar-hidden .notte-sidebar-rail-toggle:hover .notte-toggle-logo,
+  html.notte-sidebar-hidden .notte-sidebar-rail-toggle:focus-visible .notte-toggle-logo {
+    display: none;
+  }
+
+  html.notte-sidebar-hidden .notte-sidebar-rail-toggle:hover .notte-toggle-icon,
+  html.notte-sidebar-hidden .notte-sidebar-rail-toggle:focus-visible .notte-toggle-icon {
+    display: flex;
+  }
+}
+
+#navbar a:has(> .nav-logo),
+#navbar .nav-logo,
+#navbar-transition-maple a:has(> .nav-logo),
+#navbar-transition-maple .nav-logo {
+  display: none !important;
+}
+
+/* Maple also paints navbar.links in the top header. Keep Support / Book Demo / Sign In in the sidebar footer only. */
+#navbar nav[aria-label="Main"],
+#navbar-transition nav[aria-label="Main"],
+#navbar-transition-maple nav[aria-label="Main"],
+#navbar li.navbar-link,
+#navbar-transition li.navbar-link,
+#navbar-transition-maple li.navbar-link,
+#navbar-transition-maple .notte-navbar-links,
+#notte-navbar-links,
+#navbar-transition-maple a[href*="join.slack.com"],
+#navbar-transition-maple a[href*="cal.com/team/notte/demo"],
+#navbar-transition-maple a[href*="console.notte.cc"],
+#navbar a[href*="join.slack.com"],
+#navbar a[href*="cal.com/team/notte/demo"],
+#navbar a[href*="console.notte.cc"] {
+  display: none !important;
 }

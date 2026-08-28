@@ -1,0 +1,39 @@
+---
+title: 'Managed Auth'
+description: 'Keep sessions logged in with catalog connections backed by vaults and profiles'
+---
+import SessionWithAuth from '/snippets/auth/session_with_auth.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Managed Auth is the Auth catalog in the [Notte Console](https://console.notte.cc). Each connection is a saved login for a site: Notte stores credentials in a [vault](/concepts/vaults), keeps cookies in a [browser profile](/features/sessions/browser-profiles), and re-authenticates when a session starts.
+
+Create and inspect connections under **Auth** in the console. The other Auth tabs are the same building blocks: Profiles, Vaults, and Personas.
+
+## Attach a connection to a session
+
+Pass the connection ID when you start a session. Notte checks whether the profile is still logged in, and logs in again if it is not.
+
+<SessionWithAuth />
+
+`auth_ids` accepts up to 10 unique connection IDs. Authentication runs in that order.
+
+<ParamField path="auth_ids" type="list[str]">
+  Managed Auth connection IDs to authenticate before the session is returned.
+</ParamField>
+
+<ParamField path="wait_for_authentication" type="boolean" default={true}>
+  Wait for Managed Auth to finish before returning the session. If authentication fails or times out, session creation fails. Set to `false` to return as soon as the browser is ready while authentication continues in the background.
+</ParamField>
+
+## How it fits together
+
+| Console tab | What it stores |
+| --- | --- |
+| Connections | Site logins that a session can attach with `auth_ids` |
+| [Profiles](/features/sessions/browser-profiles) | Cookies and browser state for a connection |
+| [Vaults](/concepts/vaults) | Encrypted passwords and other credentials |
+| [Personas](/concepts/personas) | Email, phone, and identity for sign-up and 2FA |
+
+You usually create the connection in the console, then pass its ID into `Session`. You do not need to wire the vault and profile yourself unless you are managing those resources separately.
