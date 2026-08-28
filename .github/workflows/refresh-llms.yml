@@ -1,0 +1,133 @@
+name: refresh-llms
+
+# Every day, regenerate docs/src/llms.txt from the live OpenAPI spec and open
+# (and auto-merge) a pull request when it has drifted. main is protected, so the
+# refresh lands through a PR and the required checks, not through a direct push.
+#
+# The generator degrades quietly: if the OpenAPI fetch fails it writes a stub
+# line in place of the endpoint list and still exits 0. Committing that would
+# silently strip a quarter of the file, so the run is failed instead.
+
+on:
+  schedule:
+    - cron: '30 5 * * *' # daily at 05:30 UTC
+  workflow_dispatch: # allow manual triggering
+
+concurrency:
+  group: refresh-llms
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 20
+    env:
+      # A single token is used for the checkout, the push, and the pull request,
+      # so that the PR is opened by a real account and therefore runs CI.
+      GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
+      BRANCH: chore/refresh-llms
+      TARGET: docs/src/llms.txt
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SUBMODULE_BUMP_PAT }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Regenerate llms.txt
+        id: generate
+        run: |
+          set -euo pipefail
+
+          before_lines=$(wc -l < "$TARGET")
+
+          # The generator reports a failed spec fetch on stderr and still exits 0,
+          # so stderr is captured to a file and inspected after the run.
+          status=0
+          make docs-llms >/tmp/generate-llms.out 2>/tmp/generate-llms.err || status=$?
+          cat /tmp/generate-llms.out
+          cat /tmp/generate-llms.err >&2
+
+          if [ "$status" -ne 0 ]; then
+            echo "::error::make docs-llms failed with exit code $status."
+            exit "$status"
+          fi
+
+          if grep -q "failed to fetch openapi" /tmp/generate-llms.err; then
+            echo "::error::The OpenAPI spec could not be fetched, so the generated file is missing its API section. Refusing to commit a degraded llms.txt."
+            exit 1
+          fi
+
+          # A truncated spec can still return 200, which the check above misses.
+          # Any large drop in size means the API section came back incomplete.
+          after_lines=$(wc -l < "$TARGET")
+          floor=$(( before_lines * 9 / 10 ))
+          if [ "$after_lines" -lt "$floor" ]; then
+            echo "::error::Generated llms.txt shrank from $before_lines to $after_lines lines, which suggests an incomplete spec. Refusing to commit."
+            exit 1
+          fi
+
+          if git diff --quiet -- "$TARGET"; then
+            echo "llms.txt is already up to date."
+            echo "changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "changes=true" >> "$GITHUB_OUTPUT"
+          echo "stat=$(git diff --numstat -- "$TARGET" | awk '{print "+"$1" -"$2}')" >> "$GITHUB_OUTPUT"
+          git diff --stat -- "$TARGET"
+
+      - name: Open or update the refresh pull request
+        if: steps.generate.outputs.changes == 'true'
+        env:
+          STAT: ${{ steps.generate.outputs.stat }}
+        run: |
+          set -euo pipefail
+
+          DATE=$(date -u +%Y-%m-%d)
+          TITLE="docs: refresh generated llms.txt"
+          BODY=$(printf '%s\n\n%s\n\n%s\n\n%s\n' \
+            "Automated daily regeneration of \`$TARGET\` via \`make docs-llms\`, which builds the API section from the live OpenAPI spec." \
+            "Updated $DATE (UTC): $STAT" \
+            "No hand edits. The run fails instead of committing if the spec cannot be fetched or comes back incomplete." \
+            "Opened by .github/workflows/refresh-llms.yml. Merges automatically once the required checks pass.")
+
+          # Always rebuild the branch from the current main so it stays mergeable.
+          git checkout -B "$BRANCH"
+          git add -- "$TARGET"
+          git commit -m "$TITLE"
+          git push --force origin "$BRANCH"
+
+          PR_NUMBER=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
+          if [ -n "$PR_NUMBER" ]; then
+            echo "Updating existing PR #$PR_NUMBER"
+            gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY"
+          else
+            PR_NUMBER=$(gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY" \
+              | sed -n 's|.*pull/\([0-9]*\).*|\1|p' | head -1)
+            echo "Created PR #$PR_NUMBER"
+          fi
+
+          gh pr merge "$PR_NUMBER" --auto --squash --delete-branch \
+            || echo "::warning::Could not enable auto-merge on PR #$PR_NUMBER. It stays open for manual merge."
+
+          echo "PR: https://github.com/${{ github.repository }}/pull/$PR_NUMBER"
