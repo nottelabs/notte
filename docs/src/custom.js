@@ -1,4 +1,62 @@
 (function () {
+  if (window.__notte404Redirect) {
+    return;
+  }
+  window.__notte404Redirect = true;
+
+  function isHome() {
+    return location.pathname === "/" || location.pathname === "";
+  }
+
+  function isNotFoundPage() {
+    if (isHome()) {
+      return false;
+    }
+    var title = document.title || "";
+    if (title === "Page Not Found" || title.indexOf("Page Not Found") === 0) {
+      return true;
+    }
+    var heading = document.querySelector("h1");
+    var headingText = heading ? heading.textContent.trim() : "";
+    if (headingText !== "404" && headingText !== "Page Not Found") {
+      return false;
+    }
+    var body = (document.body && document.body.innerText) || "";
+    return body.indexOf("We couldn't find the page") !== -1 || headingText === "Page Not Found";
+  }
+
+  function maybeRedirect() {
+    if (!isNotFoundPage()) {
+      return;
+    }
+    if (document.documentElement) {
+      document.documentElement.style.visibility = "hidden";
+    }
+    location.replace("/");
+  }
+
+  maybeRedirect();
+
+  function watch() {
+    maybeRedirect();
+    if (!document.body) {
+      requestAnimationFrame(watch);
+      return;
+    }
+    new MutationObserver(maybeRedirect).observe(document.documentElement, {
+      childList: true,
+      subtree: true
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", watch);
+  } else {
+    watch();
+  }
+})();
+
+(function () {
   if (window.__notteSidebarToggle === 11) {
     return;
   }

@@ -9,7 +9,7 @@
   "colors": {
     "primary": "#00b85c",
     "light": "#00e673",
-    "dark": "#00e673"
+    "dark": "#e8f6ee"
   },
   "logo": {
     "dark": "/logo/notte-mark-white.svg",
@@ -37,8 +37,17 @@
     {
       "source": "/guides/reliability",
       "destination": "/concepts/sessions"
+    },
+    {
+      "source": "/products",
+      "destination": "/"
     }
   ],
+  "errors": {
+    "404": {
+      "redirect": true
+    }
+  },
   "navigation": {
     "tabs": [
       {

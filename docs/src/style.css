@@ -1,9 +1,17 @@
+:root {
+  --banner-bg-light: #e8f6ee;
+  --banner-bg-dark: #163528;
+}
+
 #banner {
+  --banner-bg-light: #e8f6ee;
+  --banner-bg-dark: #163528;
   height: 2.5rem !important;
   min-height: 2.5rem !important;
   max-height: 2.5rem !important;
   padding: 0 1rem !important;
   overflow: hidden !important;
+  background: #e8f6ee !important;
   background-color: #e8f6ee !important;
   background-image: none !important;
   border-top: none !important;
