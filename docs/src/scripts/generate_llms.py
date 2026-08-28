@@ -237,17 +237,28 @@ def main() -> int:
         out += [f"> {intro}", ""]
     out += AGENT_READING_GUIDANCE
 
-    languages = config.get("navigation", {}).get("languages", [])
-    if not languages:
-        print("error: no languages found in docs.json navigation", file=sys.stderr)
+    navigation = config.get("navigation", {})
+    languages = navigation.get("languages", [])
+    if languages:
+        tabs = languages[0].get("tabs", [])
+    else:
+        tabs = navigation.get("tabs", [])
+    if not tabs:
+        print("error: no tabs found in docs.json navigation", file=sys.stderr)
         return 1
-    tabs = languages[0].get("tabs", [])
     for tab in tabs:
         out += ["", f"# {tab['tab']}", ""]
-        if tab.get("tab") == "SDK":
+        if tab.get("tab") in ("SDK", "APIs and SDKs"):
             out += SDK_READING_GATE
         for group in tab.get("groups", []):
             out += [f"## {group['group']}", ""]
+            if "openapi" in group:
+                try:
+                    spec = fetch_openapi(group["openapi"])
+                    out += render_openapi(spec)
+                except Exception as e:
+                    print(f"  warning: failed to fetch openapi {group['openapi']}: {e}", file=sys.stderr)
+                    out += [f"- OpenAPI spec: {group['openapi']}", ""]
             out += render_pages(group.get("pages", []), depth=3)
             out += [""]
         if "openapi" in tab:

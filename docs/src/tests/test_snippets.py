@@ -171,6 +171,17 @@ def handle_file(filepath: str):
     return decorator
 
 
+@handle_file("search/quick_start.py")
+def handle_search_quick_start(
+    eval_example: EvalExample,
+    code: str,
+) -> None:
+    if FAST_MODE or TYPE_CHECK_MODE:
+        run_example(eval_example, code=code)
+    else:
+        logger.info("Skipping search/quick_start execution (live Search API)")
+
+
 @handle_file("vaults/index.py")
 def handle_vault_index(
     eval_example: EvalExample,
