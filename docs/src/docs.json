@@ -18,7 +18,11 @@
   "favicon": "/favicon.ico",
   "banner": {
     "content": "Supercharge your AI agents with the Notte CLI and MCP. [Use this quickstart prompt for AI.](/quickstart)",
-    "dismissible": false
+    "dismissible": false,
+    "color": {
+      "light": "#e8f6ee",
+      "dark": "#163528"
+    }
   },
   "seo.indexing": "all",
   "redirects": [
@@ -139,10 +143,21 @@
             "icon": "plug",
             "pages": [
               "integrations/index",
-              "mcp-server",
+              "mcp-server"
+            ]
+          },
+          {
+            "group": "Coding Agents",
+            "icon": "code",
+            "pages": [
               "integrations/claude-code-ai-agents",
-              "integrations/claude-managed-agents",
-              "integrations/openai-cua",
+              "integrations/claude-managed-agents"
+            ]
+          },
+          {
+            "group": "Agent Frameworks",
+            "icon": "robot",
+            "pages": [
               "integrations/browser-use",
               "integrations/langchain",
               "integrations/crewai",
@@ -150,12 +165,31 @@
               "integrations/google-adk",
               "integrations/vercel-ai-sdk",
               "integrations/mastra",
-              "integrations/stagehand",
+              "integrations/openai-cua",
               "integrations/openclaw",
               "integrations/hermes",
-              "integrations/n8n",
+              "integrations/stagehand"
+            ]
+          },
+          {
+            "group": "Workflow Automation",
+            "icon": "diagram-project",
+            "pages": [
+              "integrations/n8n"
+            ]
+          },
+          {
+            "group": "Browser Drivers",
+            "icon": "gamepad",
+            "pages": [
               "features/sessions/playwright",
-              "features/sessions/puppeteer",
+              "features/sessions/puppeteer"
+            ]
+          },
+          {
+            "group": "Browser Infrastructure",
+            "icon": "server",
+            "pages": [
               "integrations/kernel",
               "integrations/steel",
               "integrations/massive",
