@@ -1,34 +1,38 @@
 ---
-title: LangChain
-description: Give LangChain and LangGraph agents a browser with the Notte MCP server
+title: crewAI
+description: Give crewAI agents a browser with the Notte MCP server
 ---
-import Langchain from '/snippets/integrations/mcp/langchain.mdx';
+import Crewai from '/snippets/integrations/mcp/crewai.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-[LangChain](https://python.langchain.com/) loads MCP servers through `langchain-mcp-adapters`, which converts every tool on the server into a LangChain tool. Point it at the [Notte MCP server](/mcp-server) and any LangChain or LangGraph agent can drive a browser.
+[crewAI](https://docs.crewai.com/) gives every agent in a crew a set of tools. `MCPServerAdapter` turns an MCP server into those tools, so pointing it at the [Notte MCP server](/mcp-server) hands your crew a real browser.
 
 ## Prerequisites
 
 - A Notte API key ([get one here](https://console.notte.cc))
-- Credentials for the model your agent uses
+- Credentials for the model your crew uses
 
 ## 1. Install the SDKs
 
 ```bash
-pip install langchain-mcp-adapters langgraph
+pip install "crewai-tools[mcp]"
 ```
 
 ## 2. Attach the Notte MCP server
 
-<Langchain />
+<Crewai />
 
 Set the following environment variable in your `.env` file:
 
 ```bash
 NOTTE_API_KEY=your-notte-api-key
 ```
+
+<Note>
+  `MCPServerAdapter` is a context manager. Build your crew inside the `with` block so the tools stay connected for the whole run.
+</Note>
 
 ## Next steps
 
@@ -45,7 +49,7 @@ NOTTE_API_KEY=your-notte-api-key
     Pull structured data out of a page
   </Card>
 
-  <Card title="Vaults" icon="key" href="/concepts/vaults">
-    Let agents log in without seeing credentials
+  <Card title="Personas" icon="user" href="/concepts/personas">
+    Give each agent its own identity and inbox
   </Card>
 </CardGroup>

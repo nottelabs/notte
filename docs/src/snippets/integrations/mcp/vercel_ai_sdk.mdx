@@ -1,0 +1,29 @@
+<CodeGroup>
+  ```typescript notte-ai-sdk.ts
+  import { anthropic } from "@ai-sdk/anthropic";
+  import { createMCPClient } from "@ai-sdk/mcp";
+  import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+  import { generateText, stepCountIs } from "ai";
+
+  const mcp = await createMCPClient({
+    transport: new StreamableHTTPClientTransport(new URL("https://api.notte.cc/mcp/"), {
+      requestInit: {
+        headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },
+      },
+    }),
+  });
+
+  const tools = await mcp.tools();
+
+  const result = await generateText({
+    model: anthropic("claude-sonnet-4-5-20250929"),
+    tools,
+    stopWhen: stepCountIs(6),
+    prompt: "What is the main heading on https://example.com?",
+  });
+
+  console.log(result.text);
+
+  await mcp.close();
+  ```
+</CodeGroup>

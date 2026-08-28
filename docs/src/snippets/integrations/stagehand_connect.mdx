@@ -1,0 +1,21 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/integrations/stagehand_connect.py */}
+
+```python notte_stagehand.py
+async def main():
+    client = NotteClient()
+
+    with client.Session() as session:
+        # Stagehand attaches to the Notte browser over CDP
+        stagehand = Stagehand(
+            browser=await local_browser.connect(cdp_url=session.cdp_url()),
+            model="anthropic/claude-sonnet-4-5-20250929",
+            api_key=os.environ.get("ANTHROPIC_API_KEY"),
+        )
+        await stagehand.initialize()
+        print(await stagehand.extract("the title of the top story"))
+        await stagehand.close()
+
+
+asyncio.run(main())
+```

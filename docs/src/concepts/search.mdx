@@ -1,0 +1,49 @@
+---
+title: Search
+description: Search the web and get URLs, snippets, or a sourced answer
+---
+import SearchQuickStart from '/snippets/search/quick_start.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Search looks up the public web and returns ranked results, a sourced answer, or structured output. Use it when you need links and context before you [Fetch](/concepts/scraping) a page.
+
+The REST endpoint is `POST /search`. Full schema: [Search Web](/api-reference/search/search-web).
+
+## Quick start
+
+```bash
+curl -X POST https://api.notte.cc/search \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"q": "notte browser automation", "depth": "standard", "outputType": "searchResults"}'
+```
+
+<SearchQuickStart />
+
+## Parameters
+
+<ParamField path="q" type="string" required>
+  The search query.
+</ParamField>
+
+<ParamField path="depth" type="string" default="standard">
+  How thorough the search is: `standard`, `fast`, or `deep`.
+</ParamField>
+
+<ParamField path="outputType" type="string" default="searchResults">
+  What to return:
+
+  - `searchResults`: ranked URLs with name and content snippets
+  - `sourcedAnswer`: a written answer plus source URLs
+  - `structured`: structured output when you also pass a schema
+</ParamField>
+
+Extra fields are forwarded (for example `maxResults` or `includeDomains`).
+
+## Response shapes
+
+`searchResults` includes a `results` array. Each item has `url`, `name`, and `content`.
+
+`sourcedAnswer` includes `answer` (string) and `sources` (list of supporting URLs).

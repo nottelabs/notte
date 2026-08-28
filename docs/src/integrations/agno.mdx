@@ -1,13 +1,13 @@
 ---
-title: LangChain
-description: Give LangChain and LangGraph agents a browser with the Notte MCP server
+title: Agno
+description: Give Agno agents a browser with the Notte MCP server
 ---
-import Langchain from '/snippets/integrations/mcp/langchain.mdx';
+import Agno from '/snippets/integrations/mcp/agno.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-[LangChain](https://python.langchain.com/) loads MCP servers through `langchain-mcp-adapters`, which converts every tool on the server into a LangChain tool. Point it at the [Notte MCP server](/mcp-server) and any LangChain or LangGraph agent can drive a browser.
+[Agno](https://docs.agno.com/) ships an `MCPTools` toolkit that connects an agent to any MCP server. Point it at the [Notte MCP server](/mcp-server) to give your agent sessions, browser agents, scraping and functions.
 
 ## Prerequisites
 
@@ -17,18 +17,22 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ## 1. Install the SDKs
 
 ```bash
-pip install langchain-mcp-adapters langgraph
+pip install agno mcp
 ```
 
 ## 2. Attach the Notte MCP server
 
-<Langchain />
+<Agno />
 
 Set the following environment variable in your `.env` file:
 
 ```bash
 NOTTE_API_KEY=your-notte-api-key
 ```
+
+<Note>
+  Pass the bearer token through `header_provider`, not `headers` - `MCPTools` forwards `header_provider` to the HTTP transport and rejects a bare `headers` argument.
+</Note>
 
 ## Next steps
 
@@ -45,7 +49,7 @@ NOTTE_API_KEY=your-notte-api-key
     Pull structured data out of a page
   </Card>
 
-  <Card title="Vaults" icon="key" href="/concepts/vaults">
-    Let agents log in without seeing credentials
+  <Card title="Functions" icon="/logo/square-function.svg" href="/concepts/functions">
+    Turn a working run into a callable function
   </Card>
 </CardGroup>

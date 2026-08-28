@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "palm",
+  "theme": "maple",
   "appearance": {
     "default": "light",
     "strict": false
@@ -9,16 +9,20 @@
   "colors": {
     "primary": "#00b85c",
     "light": "#00e673",
-    "dark": "#00e673"
+    "dark": "#e8f6ee"
   },
   "logo": {
-    "dark": "/logo/logo-dark.png",
-    "light": "/logo/logo-white.png"
+    "dark": "/logo/notte-mark-white.svg",
+    "light": "/logo/notte-mark.svg"
   },
   "favicon": "/favicon.ico",
   "banner": {
     "content": "Supercharge your AI agents with the Notte CLI and MCP. [Use this quickstart prompt for AI.](/quickstart)",
-    "dismissible": false
+    "dismissible": false,
+    "color": {
+      "light": "#e8f6ee",
+      "dark": "#163528"
+    }
   },
   "seo.indexing": "all",
   "redirects": [
@@ -29,166 +33,199 @@
     {
       "source": "/guides/vibe-coding",
       "destination": "/mcp-server"
+    },
+    {
+      "source": "/guides/reliability",
+      "destination": "/concepts/sessions"
+    },
+    {
+      "source": "/products",
+      "destination": "/"
     }
   ],
+  "errors": {
+    "404": {
+      "redirect": true
+    }
+  },
   "navigation": {
-    "languages": [
+    "tabs": [
       {
-        "language": "en",
-        "tabs": [
+        "tab": "Documentation",
+        "groups": [
           {
-            "tab": "Documentation",
-            "groups": [
-              {
-                "group": "Getting Started",
-                "pages": [
-                  "index",
-                  "quickstart",
-                  "templates",
-                  "mcp-server",
-                  "migrate-to-notte"
-                ]
-              },
-              {
-                "group": "Sessions",
-                "icon": "tv",
-                "pages": [
-                  "concepts/sessions",
-                  "features/sessions/lifecycle",
-                  "features/sessions/configuration",
-                  "features/sessions/browser-controls",
-                  "features/sessions/playwright-vs-notte",
-                  {
-                    "group": "Session Capabilities",
-                    "collapsed": true,
-                    "pages": [
-                      "features/sessions/browser-types",
-                      "features/sessions/browser-pools",
-                      "features/sessions/stealth-mode",
-                      "features/sessions/proxies",
-                      "features/sessions/multi-region",
-                      "features/sessions/captcha-solving",
-                      "features/sessions/ad-blocking",
-                      "features/sessions/browser-profiles",
-                      "features/sessions/static-ips",
-                      "features/sessions/recordings",
-                      "features/sessions/live-view",
-                      "features/sessions/embed-iframe",
-                      "features/sessions/browser-extensions",
-                      "features/sessions/cookies",
-                      "features/sessions/cloudflare-web-bot-auth"
-                    ]
-                  },
-                  {
-                    "group": "Connect over CDP",
-                    "collapsed": true,
-                    "pages": [
-                      "features/sessions/playwright",
-                      "features/sessions/puppeteer",
-                      "features/sessions/selenium",
-                      "features/sessions/external-providers"
-                    ]
-                  }
-                ]
-              },
-              {
-                "group": "Agents",
-                "icon": "sparkles",
-                "pages": [
-                  "concepts/agents",
-                  "features/agents/configuration",
-                  "features/agents/lifecycle",
-                  {
-                    "group": "Advanced",
-                    "collapsed": true,
-                    "pages": [
-                      "features/agents/structured-output",
-                      "features/agents/replay",
-                      "features/agents/workflows",
-                      "features/agents/fallback"
-                    ]
-                  }
-                ]
-              },
-              {
-                "group": "Functions",
-                "icon": "flower",
-                "pages": [
-                  "concepts/functions",
-                  "features/functions/creating",
-                  "features/functions/invocations",
-                  "features/functions/schedules",
-                  "features/functions/management"
-                ]
-              },
-              {
-                "group": "Agent Tools",
-                "icon": "link",
-                "pages": [
-                  "concepts/file-storage",
-                  "concepts/vaults",
-                  "concepts/personas"
-                ]
-              },
-              {
-                "group": "Scraping",
-                "icon": "database",
-                "pages": [
-                  "concepts/scraping"
-                ]
-              },
-              {
-                "group": "Guides",
-                "icon": "book-open",
-                "pages": [
-                  "guides/reliability",
-                  "guides/scraping",
-                  "guides/stealth",
-                  "guides/account_creation"
-                ]
-              }
+            "group": "Getting Started",
+            "pages": [
+              "index",
+              "quickstart",
+              "templates",
+              "mcp-server",
+              "migrate-to-notte"
             ]
           },
           {
-            "tab": "Integrations",
-            "groups": [
+            "group": "Sessions",
+            "icon": "tv",
+            "pages": [
+              "concepts/sessions",
+              "features/sessions/lifecycle",
+              "features/sessions/configuration",
+              "features/sessions/browser-controls",
+              "features/sessions/playwright-vs-notte",
+              "concepts/file-storage",
               {
-                "group": "Integrations",
-                "icon": "plug",
+                "group": "Session Capabilities",
+                "collapsed": true,
                 "pages": [
-                  "integrations/index",
-                  "mcp-server",
-                  "integrations/claude-code-ai-agents",
-                  "integrations/kernel",
-                  "integrations/steel",
-                  "integrations/massive",
-                  "integrations/openai-cua",
-                  "integrations/stagehand",
-                  "integrations/openclaw",
-                  "integrations/hermes",
+                  "features/sessions/browser-types",
+                  "features/sessions/browser-pools",
+                  "features/sessions/stealth-mode",
+                  "features/sessions/proxies",
+                  "features/sessions/multi-region",
+                  "features/sessions/captcha-solving",
+                  "features/sessions/ad-blocking",
+                  "features/sessions/static-ips",
+                  "features/sessions/recordings",
+                  "features/sessions/live-view",
+                  "features/sessions/embed-iframe",
+                  "features/sessions/browser-extensions",
+                  "features/sessions/cookies",
                   "features/sessions/cloudflare-web-bot-auth"
                 ]
+              },
+              {
+                "group": "Connect over CDP",
+                "collapsed": true,
+                "pages": [
+                  "features/sessions/playwright",
+                  "features/sessions/puppeteer",
+                  "features/sessions/selenium",
+                  "features/sessions/external-providers"
+                ]
               }
             ]
           },
           {
-            "tab": "API",
-            "groups": [
-              {
-                "group": "Getting Started",
-                "pages": [
-                  "api-reference/authentication",
-                  "api-reference/errors",
-                  "api-reference/rate-limits",
-                  "api-reference/using-session-replay"
-                ]
-              }
-            ],
+            "group": "Authentication",
+            "icon": "key",
+            "pages": [
+              "concepts/vaults",
+              "features/sessions/browser-profiles",
+              "concepts/personas"
+            ]
+          },
+          {
+            "group": "Functions",
+            "icon": "/logo/square-function.svg",
+            "pages": [
+              "concepts/functions",
+              "features/functions/creating",
+              "features/functions/invocations",
+              "features/functions/schedules",
+              "features/functions/management"
+            ]
+          },
+          {
+            "group": "Web API",
+            "icon": "download",
+            "pages": [
+              "concepts/scraping",
+              "concepts/search"
+            ]
+          },
+          {
+            "group": "Guides",
+            "icon": "book-open",
+            "pages": [
+              "guides/scraping",
+              "guides/stealth",
+              "guides/account_creation"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Integrations",
+        "groups": [
+          {
+            "group": "Integrations",
+            "icon": "plug",
+            "pages": [
+              "integrations/index",
+              "mcp-server"
+            ]
+          },
+          {
+            "group": "Coding Agents",
+            "icon": "code",
+            "pages": [
+              "integrations/claude-code-ai-agents",
+              "integrations/claude-managed-agents"
+            ]
+          },
+          {
+            "group": "Agent Frameworks",
+            "icon": "robot",
+            "pages": [
+              "integrations/browser-use",
+              "integrations/langchain",
+              "integrations/crewai",
+              "integrations/agno",
+              "integrations/google-adk",
+              "integrations/vercel-ai-sdk",
+              "integrations/mastra",
+              "integrations/openai-cua",
+              "integrations/openclaw",
+              "integrations/hermes",
+              "integrations/stagehand"
+            ]
+          },
+          {
+            "group": "Workflow Automation",
+            "icon": "diagram-project",
+            "pages": [
+              "integrations/n8n"
+            ]
+          },
+          {
+            "group": "Browser Drivers",
+            "icon": "gamepad",
+            "pages": [
+              "features/sessions/playwright",
+              "features/sessions/puppeteer"
+            ]
+          },
+          {
+            "group": "Browser Infrastructure",
+            "icon": "server",
+            "pages": [
+              "integrations/kernel",
+              "integrations/steel",
+              "integrations/massive",
+              "features/sessions/cloudflare-web-bot-auth"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "APIs and SDKs",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "api-reference/authentication",
+              "api-reference/errors",
+              "api-reference/rate-limits",
+              "api-reference/using-session-replay"
+            ]
+          },
+          {
+            "group": "APIs",
             "openapi": "https://api.notte.cc/openapi.json"
           },
           {
-            "tab": "SDK",
-            "groups": [
+            "group": "SDK",
+            "pages": [
               {
                 "group": "Getting Started",
                 "pages": [
@@ -338,66 +375,43 @@
                 ]
               }
             ]
-          },
+          }
+        ]
+      },
+      {
+        "tab": "Resources",
+        "groups": [
           {
-            "tab": "Products",
-            "groups": [
-              {
-                "group": "Products",
-                "pages": [
-                  "product/agent-mode",
-                  "product/demonstrate-mode",
-                  "product/studio",
-                  "product/anything-api"
-                ]
-              }
+            "group": "Resources",
+            "pages": [
+              "resources",
+              "pricing",
+              "rate-limits"
             ]
           },
           {
-            "tab": "Resources",
-            "groups": [
-              {
-                "group": "Resources",
-                "pages": [
-                  "resources",
-                  "pricing",
-                  "rate-limits"
-                ]
-              },
-              {
-                "group": "Legal",
-                "pages": [
-                  "trust-center",
-                  "legal/terms",
-                  "legal/privacy",
-                  "legal/bug-bounty"
-                ]
-              },
-              {
-                "group": "Community",
-                "pages": [
-                  "community/github",
-                  "community/slack",
-                  "community/x",
-                  "community/linkedin",
-                  "community/yc",
-                  "community/trustpilot",
-                  "community/producthunt",
-                  "community/youtube"
-                ]
-              }
+            "group": "Legal",
+            "pages": [
+              "trust-center",
+              "legal/terms",
+              "legal/privacy",
+              "legal/bug-bounty"
+            ]
+          },
+          {
+            "group": "Community",
+            "pages": [
+              "community/github",
+              "community/slack",
+              "community/x",
+              "community/linkedin",
+              "community/yc",
+              "community/trustpilot",
+              "community/producthunt",
+              "community/youtube"
             ]
           }
-        ],
-        "global": {
-          "anchors": [
-            {
-              "anchor": "Slack Support",
-              "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA",
-              "icon": "heart"
-            }
-          ]
-        }
+        ]
       }
     ]
   },
@@ -407,6 +421,11 @@
   },
   "navbar": {
     "links": [
+      {
+        "label": "Support",
+        "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA",
+        "icon": "arrow-up-right-from-square"
+      },
       {
         "label": "Book Demo",
         "href": "https://cal.com/team/notte/demo",

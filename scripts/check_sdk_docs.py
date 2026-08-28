@@ -57,10 +57,7 @@ def get_documented_methods_from_docs_json(docs_json_path: Path) -> set[str]:
             tabs = navigation.get("tabs", [])
 
         for tab in tabs:
-            if tab.get("tab") == "SDK":
-                groups: list[dict[str, Any] | list[dict[str, Any]]] = tab.get("groups", [])
-                documented_methods.update(extract_methods_from_groups(groups))
-                break
+            documented_methods.update(extract_methods_from_groups(tab.get("groups", [])))
 
     except Exception as e:
         print(f"Error reading docs.json: {e}")

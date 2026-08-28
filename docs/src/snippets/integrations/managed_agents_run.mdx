@@ -1,0 +1,22 @@
+<CodeGroup>
+  ```typescript run.ts
+  // packages.go drops the binary in $(go env GOROOT)/bin, which is not on PATH.
+  // Every shell command that calls notte must prepend this.
+  const PATH_FIX = 'export PATH="$PATH:$(go env GOROOT)/bin:$(go env GOPATH)/bin"';
+
+  const agent = await client.beta.agents.create({
+    name: "browser-operator",
+    environment_id: env.id,
+    vault_id: vault.id,
+    system_prompt:
+      `You drive real browsers with the notte CLI. ` +
+      `Prefix every shell command with: ${PATH_FIX}`,
+  });
+
+  const run = await client.beta.agents.runs.create(agent.id, {
+    input: "Open https://example.com and report its main heading.",
+  });
+
+  console.log(run.id);
+  ```
+</CodeGroup>

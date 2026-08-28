@@ -171,6 +171,17 @@ def handle_file(filepath: str):
     return decorator
 
 
+@handle_file("search/quick_start.py")
+def handle_search_quick_start(
+    eval_example: EvalExample,
+    code: str,
+) -> None:
+    if FAST_MODE or TYPE_CHECK_MODE:
+        run_example(eval_example, code=code)
+    else:
+        logger.info("Skipping search/quick_start execution (live Search API)")
+
+
 @handle_file("vaults/index.py")
 def handle_vault_index(
     eval_example: EvalExample,
@@ -275,30 +286,6 @@ def handle_storage_upload_file(
 ) -> None:
     code = code.replace("/path/to/document.pdf", "tests/data/test.pdf")
     run_example(eval_example, code=code)
-
-
-@handle_file("integrations/stagehand_basic.py")
-def handle_stagehand_basic(
-    eval_example: EvalExample,
-    code: str,
-) -> None:
-    """Skip execution for stagehand examples (requires stagehand package)."""
-    if FAST_MODE or TYPE_CHECK_MODE:
-        run_example(eval_example, code=code)
-    else:
-        logger.info("Skipping stagehand_basic test (requires stagehand package)")
-
-
-@handle_file("integrations/stagehand_complete.py")
-def handle_stagehand_complete(
-    eval_example: EvalExample,
-    code: str,
-) -> None:
-    """Skip execution for stagehand examples (requires stagehand package)."""
-    if FAST_MODE or TYPE_CHECK_MODE:
-        run_example(eval_example, code=code)
-    else:
-        logger.info("Skipping stagehand_complete test (requires stagehand package)")
 
 
 @handle_file("sessions/external_cdp.py")

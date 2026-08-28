@@ -212,6 +212,7 @@ docs/src/openapi.json
 
 # Observability / Profiling outputs
 *.svg
+!docs/src/**/*.svg
 flamegraph*.html
 **/otel_profile_results.csv
 **/trace.json
