@@ -317,7 +317,6 @@ def invalid_function():
     def test_invalid_workflow_forbidden_imports(self, client: NotteClient):
         """Test that workflows with forbidden imports are rejected."""
         invalid_content = """import os
-import notte
 
 def run():
     os.system("echo hello")  # This should be forbidden
@@ -339,7 +338,6 @@ def run():
         """Test that workflows with allowed imports are accepted."""
         valid_content = """import json
 import datetime
-import notte
 
 def run():
     data = {"timestamp": datetime.datetime.now().isoformat()}
