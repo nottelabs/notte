@@ -30,10 +30,14 @@ def client():
 @pytest.fixture
 def sample_workflow_content():
     """Sample valid script content for testing."""
-    return '''def run(test_var: str = "default"):
+    return '''from notte_sdk import NotteClient
+
+
+def run(test_var: str = "default"):
     """Sample script that navigates to a URL and scrapes content."""
     url = f"https://httpbin.org/get?test={test_var}"
-    with notte.Session(open_viewer=False, perception_type="fast") as session:
+    client = NotteClient()
+    with client.Session(open_viewer=False, perception_type="fast") as session:
         session.execute({"type": "goto", "url": url})
         session.observe()
         result = session.scrape()

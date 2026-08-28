@@ -339,11 +339,14 @@ def run():
         valid_content = """import json
 import datetime
 
+from notte_sdk import NotteClient
+
 def run():
     data = {"timestamp": datetime.datetime.now().isoformat()}
     json_data = json.dumps(data)
 
-    with notte.Session(open_viewer=False) as session:
+    client = NotteClient()
+    with client.Session(open_viewer=False) as session:
         session.execute({"type": "goto", "url": "https://httpbin.org/get"})
         result = session.scrape()
         return {"json_data": json_data, "scrape_result": result}
