@@ -1,0 +1,65 @@
+---
+title: Claude Managed Agents
+description: Give Anthropic's hosted agents a Notte browser, with your key held in a vault
+---
+import ManagedAgentsSetup from '/snippets/integrations/managed_agents_setup.mdx';
+import ManagedAgentsRun from '/snippets/integrations/managed_agents_run.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[Claude Managed Agents](https://docs.claude.com/en/api/agent-sdk/overview) run in Anthropic-hosted sandboxes. Those sandboxes have a shell but no browser, so give them the [notte CLI](https://github.com/nottelabs/notte-cli) and they can drive real browsers - many at once, one per subagent - while your API key stays in a vault the model never reads.
+
+## Prerequisites
+
+- An `ANTHROPIC_API_KEY` with Managed Agents access
+- A Notte API key ([get one here](https://console.notte.cc))
+- Node 22 or later
+
+## 1. Install the SDK
+
+```bash
+npm install @anthropic-ai/sdk
+```
+
+## 2. Create the environment and vault
+
+The environment is the sandbox image. The vault holds your Notte key and substitutes it into outbound requests, so the key never appears in the model's context.
+
+<ManagedAgentsSetup />
+
+## 3. Run an agent
+
+<ManagedAgentsRun />
+
+## Two networking planes
+
+These are easy to confuse and they do different jobs.
+
+**Environment networking** is a firewall on the container. It decides which hosts the sandbox can reach at all, at build time and at run time. The Go module proxy belongs here: `allow_package_managers` covers npm and PyPI but not `proxy.golang.org`, so without those hosts the image builds with Go present and no `notte` binary.
+
+**Credential networking** decides where a secret may be substituted. Scope it to the hosts that actually consume the key, so a prompt injection cannot exfiltrate it to an attacker's domain.
+
+<Warning>
+  `packages.go` installs the binary into `$(go env GOROOT)/bin`, which is not on `PATH` - `PATH` carries `/usr/local/go/bin` while `GOROOT` is a versioned directory. Every shell command that calls `notte` has to prepend the fix shown above, or the agent will report that the command was not found.
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Claude Code" icon="code" href="/integrations/claude-code-ai-agents">
+    Use Notte from Claude Code instead
+  </Card>
+
+  <Card title="MCP Server" icon="plug" href="/mcp-server">
+    Connect over MCP rather than the CLI
+  </Card>
+
+  <Card title="Browser Agents" icon="robot" href="/concepts/agents">
+    Hand a whole task to a Notte agent
+  </Card>
+
+  <Card title="Vaults" icon="key" href="/concepts/vaults">
+    Notte's own credential store
+  </Card>
+</CardGroup>

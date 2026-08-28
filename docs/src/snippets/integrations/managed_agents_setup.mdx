@@ -1,0 +1,45 @@
+```typescript setup.ts
+import Anthropic from "@anthropic-ai/sdk";
+
+const client = new Anthropic();
+
+// 1. An environment with the notte CLI baked into the image.
+//    allow_package_managers covers npm and PyPI but NOT the Go module proxy,
+//    so the Go toolchain hosts have to be allowed explicitly or the install
+//    silently produces no binary.
+const env = await client.beta.environments.create({
+  name: "notte-browser-env",
+  config: {
+    type: "cloud",
+    packages: { go: ["github.com/nottelabs/notte-cli/cmd/notte@latest"] },
+    networking: {
+      type: "limited",
+      allow_package_managers: true,
+      allowed_hosts: [
+        "api.notte.cc",
+        "*.notte.cc",
+        "proxy.golang.org",
+        "sum.golang.org",
+        "storage.googleapis.com",
+      ],
+    },
+  },
+});
+
+// 2. A vault holding NOTTE_API_KEY. The sandbox env var carries an opaque
+//    placeholder; the real value is substituted into outbound requests only
+//    when they are addressed to allowed_hosts, so the model never sees it.
+const vault = await client.beta.vaults.create({ display_name: "Notte vault" });
+
+const credential = await client.beta.vaults.credentials.create(vault.id, {
+  display_name: "Notte API key",
+  auth: {
+    type: "environment_variable",
+    secret_name: "NOTTE_API_KEY",
+    secret_value: process.env.NOTTE_API_KEY!,
+    networking: { type: "limited", allowed_hosts: ["api.notte.cc", "*.notte.cc"] },
+  },
+});
+
+console.log(env.id, vault.id, credential.id);
+```

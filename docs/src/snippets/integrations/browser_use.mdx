@@ -1,0 +1,31 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/integrations/browser_use.py */}
+
+```python notte_browser_use.py
+import asyncio
+
+from browser_use import Agent, Browser, BrowserProfile, ChatAnthropic
+from notte_sdk import NotteClient
+
+
+async def main():
+    client = NotteClient()
+
+    with client.Session() as session:
+        # Point Browser Use at the Notte cloud browser over CDP
+        browser = Browser(browser_profile=BrowserProfile(cdp_url=session.cdp_url()))
+
+        agent = Agent(
+            task="Go to https://example.com and tell me the exact H1 heading text.",
+            llm=ChatAnthropic(model="claude-sonnet-4-5-20250929"),
+            browser=browser,
+        )
+
+        result = await agent.run(max_steps=5)
+        print(result.final_result())
+
+        await browser.stop()
+
+
+asyncio.run(main())
+```

@@ -1,0 +1,65 @@
+---
+title: n8n
+description: Use Notte browser agents inside n8n workflows
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[n8n](https://n8n.io/) is a workflow automation tool. The `n8n-nodes-notte` community node adds Notte as a step in any workflow, so a browser agent can run between your triggers, branches and downstream integrations without writing code.
+
+## Install the node
+
+In your n8n instance, go to **Settings → Community Nodes → Install** and enter:
+
+```
+n8n-nodes-notte
+```
+
+Self-hosted instances can install it directly instead:
+
+```bash
+npm install n8n-nodes-notte
+```
+
+## Add your credentials
+
+Create a **Notte API** credential with an API key from [console.notte.cc](https://console.notte.cc/apikeys). The credential also takes a base URL, which you only need to change if you are pointed at a non-default Notte deployment.
+
+## Nodes
+
+### Notte Agent Browser
+
+The main node runs in one of three modes:
+
+| Mode | What it does |
+|------|--------------|
+| **Agent** | Runs an AI agent that performs a browser task autonomously from a natural language prompt |
+| **Scrape** | Extracts structured data from a URL |
+| **Function** | Runs a deployed [Notte function](/concepts/functions) by id |
+
+Agent mode is the one to reach for when the task needs judgement - logging in, navigating a flow, reacting to what is on the page. Scrape mode is faster and cheaper when you only need data off a known URL. Function mode is for work you have already made repeatable: author the function once, then call it from as many workflows as you like.
+
+### Notte Trigger
+
+The trigger node starts a workflow when a [persona](/concepts/personas) receives a new email or SMS. This is what closes the loop on signup and verification flows: an agent creates an account, the confirmation email lands in the persona's inbox, and the trigger fires the next branch of your workflow.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Browser Agents" icon="robot" href="/concepts/agents">
+    What an agent can do with a task prompt
+  </Card>
+
+  <Card title="Functions" icon="/logo/square-function.svg" href="/concepts/functions">
+    Turn a working run into a callable function
+  </Card>
+
+  <Card title="Personas" icon="user" href="/concepts/personas">
+    Identities with their own inbox and phone number
+  </Card>
+
+  <Card title="Scraping" icon="download" href="/concepts/scraping">
+    Pull structured data out of a page
+  </Card>
+</CardGroup>

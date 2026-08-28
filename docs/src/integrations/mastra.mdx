@@ -1,0 +1,56 @@
+---
+title: Mastra
+description: Give Mastra agents a browser with the Notte MCP server
+---
+import Mastra from '/snippets/integrations/mcp/mastra.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[Mastra](https://mastra.ai/) connects agents to MCP servers through `MCPClient`. Point it at the [Notte MCP server](/mcp-server) and every agent in your Mastra app can drive a browser.
+
+## Prerequisites
+
+- A Notte API key ([get one here](https://console.notte.cc))
+- A provider key for the model you call
+
+## 1. Install the SDKs
+
+```bash
+npm install @mastra/core @mastra/mcp @ai-sdk/anthropic
+```
+
+## 2. Attach the Notte MCP server
+
+<Mastra />
+
+Set the following environment variables in your `.env` file:
+
+```bash
+NOTTE_API_KEY=your-notte-api-key
+ANTHROPIC_API_KEY=your-anthropic-api-key
+```
+
+<Note>
+  `listTools()` returns every Notte tool namespaced as `notte_*`, ready to pass to an agent's `tools`. Use `listToolsets()` instead when you want to attach the server per request rather than at construction.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="MCP Server" icon="plug" href="/mcp-server">
+    Every tool the Notte MCP server exposes
+  </Card>
+
+  <Card title="Vercel AI SDK" icon="triangle" href="/integrations/vercel-ai-sdk">
+    The same MCP wiring without the Mastra runtime
+  </Card>
+
+  <Card title="Browser Agents" icon="robot" href="/concepts/agents">
+    Hand a whole task to a Notte agent
+  </Card>
+
+  <Card title="Functions" icon="/logo/square-function.svg" href="/concepts/functions">
+    Turn a working run into a callable function
+  </Card>
+</CardGroup>

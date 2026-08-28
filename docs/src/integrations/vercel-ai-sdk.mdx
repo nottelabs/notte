@@ -1,0 +1,56 @@
+---
+title: Vercel AI SDK
+description: Give AI SDK agents a browser with the Notte MCP server
+---
+import VercelAiSdk from '/snippets/integrations/mcp/vercel_ai_sdk.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+The [Vercel AI SDK](https://ai-sdk.dev/) can load tools from an MCP server and pass them straight into `generateText` or `streamText`. Point its MCP client at the [Notte MCP server](/mcp-server) and your TypeScript agent gets a browser.
+
+## Prerequisites
+
+- A Notte API key ([get one here](https://console.notte.cc))
+- A provider key for the model you call
+
+## 1. Install the SDKs
+
+```bash
+npm install ai @ai-sdk/mcp @ai-sdk/anthropic @modelcontextprotocol/sdk
+```
+
+## 2. Attach the Notte MCP server
+
+<VercelAiSdk />
+
+Set the following environment variables in your `.env` file:
+
+```bash
+NOTTE_API_KEY=your-notte-api-key
+ANTHROPIC_API_KEY=your-anthropic-api-key
+```
+
+<Note>
+  The MCP client lives in `@ai-sdk/mcp`. Older guides import `experimental_createMCPClient` from `ai` itself, which no longer exports it.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="MCP Server" icon="plug" href="/mcp-server">
+    Every tool the Notte MCP server exposes
+  </Card>
+
+  <Card title="Connect with Puppeteer" icon="p" href="/features/sessions/puppeteer">
+    Drive a Notte session from Node.js over CDP
+  </Card>
+
+  <Card title="Browser Agents" icon="robot" href="/concepts/agents">
+    Hand a whole task to a Notte agent
+  </Card>
+
+  <Card title="Scraping" icon="download" href="/concepts/scraping">
+    Pull structured data out of a page
+  </Card>
+</CardGroup>

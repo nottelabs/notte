@@ -148,6 +148,66 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [Integrations](https://docs.notte.cc/integrations/index.md): Connect Notte to the tools your team already uses.
 - [MCP Server](https://docs.notte.cc/mcp-server.md): Give your AI agents access to the Notte MCP server
 - [Claude Code & AI Agents](https://docs.notte.cc/integrations/claude-code-ai-agents.md): Use Notte with AI coding assistants like Claude Code, Cursor, and Windsurf
+- [Claude Managed Agents](https://docs.notte.cc/integrations/claude-managed-agents.md): Give Anthropic's hosted agents a Notte browser, with your key held in a vault
+- [OpenAI CUA](https://docs.notte.cc/integrations/openai-cua.md): Integrate OpenAI CUA with Notte Browser Sessions
+- [Browser Use](https://docs.notte.cc/integrations/browser-use.md): Run Browser Use agents on Notte cloud browsers over CDP
+- [LangChain](https://docs.notte.cc/integrations/langchain.md): Give LangChain and LangGraph agents a browser with the Notte MCP server
+- [crewAI](https://docs.notte.cc/integrations/crewai.md): Give crewAI agents a browser with the Notte MCP server
+- [Agno](https://docs.notte.cc/integrations/agno.md): Give Agno agents a browser with the Notte MCP server
+- [Google ADK](https://docs.notte.cc/integrations/google-adk.md): Give Google ADK agents a browser with the Notte MCP server
+- [Vercel AI SDK](https://docs.notte.cc/integrations/vercel-ai-sdk.md): Give AI SDK agents a browser with the Notte MCP server
+- [Mastra](https://docs.notte.cc/integrations/mastra.md): Give Mastra agents a browser with the Notte MCP server
+- [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Connecting Stagehand to Notte cloud browsers
+- [OpenClaw](https://docs.notte.cc/integrations/openclaw.md): Use Notte cloud browsers with OpenClaw
+- [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
+- [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte browser agents inside n8n workflows
+- [Connect with Playwright](https://docs.notte.cc/features/sessions/playwright.md): Use Playwright with Notte sessions via Chrome DevTools Protocol
+- [Connect with Puppeteer](https://docs.notte.cc/features/sessions/puppeteer.md): Use Puppeteer with Notte sessions via Chrome DevTools Protocol
+- [Kernel.sh](https://docs.notte.cc/integrations/kernel.md): Integrate with Kernel browsers
+- [Steel](https://docs.notte.cc/integrations/steel.md): Run Notte with Steel cloud browsers (CDP)
+- [Massive](https://docs.notte.cc/integrations/massive.md): Use Massive residential proxies with Notte sessions
+- [Cloudflare Web Bot Auth](https://docs.notte.cc/features/sessions/cloudflare-web-bot-auth.md): Access Cloudflare-protected websites by cryptographically signing browser requests
+
+### Connect over CDP
+
+- [Connect with Playwright](https://docs.notte.cc/features/sessions/playwright.md): Use Playwright directly with Notte sessions via Chrome DevTools Protocol
+- [Connect with Puppeteer](https://docs.notte.cc/features/sessions/puppeteer.md): Use Puppeteer with Notte sessions via Chrome DevTools Protocol
+- [Connect with Selenium](https://docs.notte.cc/features/sessions/selenium.md): Use Selenium with Notte sessions via Chrome DevTools Protocol
+- [External Providers](https://docs.notte.cc/features/sessions/external-providers.md): Connect Notte to external browser infrastructure via Chrome DevTools Protocol
+
+## Authentication
+
+- [Secret Vaults](https://docs.notte.cc/concepts/vaults.md): Enterprise-grade credential management for your Sessions & Agents
+- [Browser Profiles](https://docs.notte.cc/features/sessions/browser-profiles.md): Persist browser state across sessions
+- [Persona Identities](https://docs.notte.cc/concepts/personas.md): Self-service identities for web automation (account creation, 2FA,etc.)
+
+## Functions
+
+- [Functions](https://docs.notte.cc/concepts/functions.md): Deploy browser automations as serverless API endpoints
+- [Creating Functions](https://docs.notte.cc/features/functions/creating.md): Write and deploy browser automation Functions
+- [Function Invocations](https://docs.notte.cc/features/functions/invocations.md): Call Functions via API, SDK, cURL, or webhooks
+- [Function Schedules](https://docs.notte.cc/features/functions/schedules.md): Schedule Functions to run automatically with cron expressions
+- [Function Management](https://docs.notte.cc/features/functions/management.md): Update, version, monitor, and manage your deployed Functions
+
+## Web API
+
+- [Fetch](https://docs.notte.cc/concepts/scraping.md): Extract content and structured data from web pages
+- [Search](https://docs.notte.cc/concepts/search.md): Search the web and get URLs, snippets, or a sourced answer
+
+## Guides
+
+- [Advanced Scraping](https://docs.notte.cc/guides/scraping.md): How to build reliable web scrapers with Notte
+- [Anti-Detection Playbook](https://docs.notte.cc/guides/stealth.md): How to avoid CAPTCHAs and bot detection in Notte Sessions
+- [Create accounts with Personas](https://docs.notte.cc/guides/account_creation.md): How to use notte personas for account creation
+
+
+# Integrations
+
+## Integrations
+
+- [Integrations](https://docs.notte.cc/integrations/index.md): Connect Notte to the tools your team already uses.
+- [MCP Server](https://docs.notte.cc/mcp-server.md): Give your AI agents access to the Notte MCP server
+- [Claude Code & AI Agents](https://docs.notte.cc/integrations/claude-code-ai-agents.md): Use Notte with AI coding assistants like Claude Code, Cursor, and Windsurf
 - [Kernel.sh](https://docs.notte.cc/integrations/kernel.md): Integrate with Kernel browsers
 - [Steel](https://docs.notte.cc/integrations/steel.md): Run Notte with Steel cloud browsers (CDP)
 - [Massive](https://docs.notte.cc/integrations/massive.md): Use Massive residential proxies with Notte sessions
