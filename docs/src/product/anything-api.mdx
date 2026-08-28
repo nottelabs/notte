@@ -3,12 +3,13 @@ title: Anything API
 description: Build and run web automations from a single API call
 ---
 import RunFunction from '/snippets/anything-api/run_function.mdx';
-import ConsumeSSE from '/snippets/anything-api/consume_sse.mdx';
+import ConsumeStream from '/snippets/anything-api/consume_stream.mdx';
+import StartDetached from '/snippets/anything-api/start_detached.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-The Anything API lets you describe a task in plain English, and Notte will build, deploy, and run a web automation function for you -- all through a single HTTP request. The response is an SSE stream so you can follow the agent's progress in real time.
+The Anything API lets you describe a task in plain English, and Notte will build, deploy, and run a web automation function for you -- all through a single HTTP request. The response streams the agent's progress as an [AI SDK UI message stream](https://ai-sdk.dev/docs/ai-sdk-ui/stream-protocol), or you can detach and let the run continue in the background.
 
 <CardGroup cols={2}>
   <Card title="Try it now" icon="arrow-up-right-from-square" href="https://anything.notte.cc">
@@ -28,12 +29,32 @@ curl -N -X POST https://anything.notte.cc/api/anything/start \
   -d '{"query": "fetch the top 3 hacker news posts"}'
 ```
 
-The API streams back SSE events as the agent works. When it's done, the final `done` event contains the `function_id` of the created function, which you can re-run later via the [Notte CLI](https://github.com/nottelabs/notte-cli) or [SDK](/quickstart).
+The API streams the agent's work back as an AI SDK UI message stream. The `x-thread-id` response header identifies the thread handling your run, so you can send follow-up turns into the same thread later.
 
 ## Request
 
 <ParamField path="query" type="string" required>
   A natural-language description of the task you want automated.
+</ParamField>
+
+<ParamField path="thread_id" type="string (UUID)">
+  Send a follow-up turn into an existing thread. The sandbox state and conversation carry over. Omit to start a new thread.
+</ParamField>
+
+<ParamField path="detach" type="boolean" default="false">
+  Start the run and return immediately instead of streaming. See [Detached mode](#detached-mode).
+</ParamField>
+
+<ParamField path="model" type="string">
+  Optional model override for the agent.
+</ParamField>
+
+<ParamField path="reasoningEffort" type="string">
+  Optional reasoning effort override for the agent.
+</ParamField>
+
+<ParamField path="version" type="string" default="v2">
+  API contract version. `"v2"` is the only supported value and the default, so you can omit this field. Explicit `"v1"` returns `400` -- see [Migrating from v1](#migrating-from-v1).
 </ParamField>
 
 ```json POST /api/anything/start
@@ -51,66 +72,61 @@ The API streams back SSE events as the agent works. When it's done, the final `d
 
 ## Response
 
-The response is a `text/event-stream`. Each line follows the [SSE spec](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events):
+### Streamed (default)
 
-```
-data: {"type":"<event_type>", ...}
-```
+By default, the response is an [AI SDK UI message stream](https://ai-sdk.dev/docs/ai-sdk-ui/stream-protocol) -- the same format the Vercel AI SDK's `useChat` hook consumes, so you can point a chat UI straight at the endpoint or read the stream yourself.
 
-### Event types
+**Response headers**
 
-| Type | Description | Key fields |
-|------|-------------|------------|
-| `status` | Agent lifecycle updates | `status` |
-| `thinking_delta` | Agent reasoning (streamed) | `delta` |
-| `text_delta` | Agent response text (streamed) | `delta` |
-| `tool_start` | Agent started using a tool | `name` |
-| `tool_result` | Tool execution result | `content` |
-| `message_complete` | An assistant message was persisted | `role` |
-| `notte_session_data` | Browser session info | `viewer_url` |
-| `function_uploaded` | A Notte Function was created | `function_id`, `function_name`, `created_at` |
-| `done` | Agent finished | `total_cost_usd`, `function_id`, `metadata` |
-| `error` | Something went wrong | `error`, `detail` |
-| `timeout` | Agent timed out | `reason`, `detail` |
-| `cancelled` | Agent was cancelled | `reason` |
+| Header | Description |
+|--------|-------------|
+| `x-thread-id` | ID of the thread handling this run. Use it as `thread_id` in follow-up requests. |
+| `x-vercel-ai-ui-message-stream` | `v1` -- the AI SDK's stream-format version. Unrelated to the retired v1 backend. |
 
-### Terminal events
+### Detached mode
 
-The stream ends after one of these events: `done`, `error`, `timeout`, or `cancelled`.
-
-### Example: done event
-
-```json
-{
-  "type": "done",
-  "metadata": {
-    "thread_id": "820a7cff-613b-4529-9ba4-52c7a6777713"
-  },
-  "total_cost_usd": 0.43,
-  "function_id": "d3c31289-f28b-49bd-a340-95e071cfef7e"
-}
-```
-
-## Re-running the created function
-
-Once the agent finishes, it typically creates a reusable **Notte Function**. Use the `function_id` from the `done` event to run it again:
+Pass `detach: true` to start the run and return immediately with `202 Accepted`:
 
 <CodeGroup>
-```bash CLI
-notte functions run \
-  --function-id d3c31289-f28b-49bd-a340-95e071cfef7e \
-  --vars '{"count": "3"}' \
-  -o json
+```bash cURL
+curl -X POST https://anything.notte.cc/api/anything/start \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -d '{"query": "fetch the top 3 hacker news posts", "detach": true}'
 ```
 
-<RunFunction />
+<StartDetached />
 </CodeGroup>
 
-## Consuming the SSE stream
+The response body contains:
+
+| Field | Description |
+|-------|-------------|
+| `thread_id` | ID of the thread handling the run (also sent as the `x-thread-id` header). |
+| `url` | Link to the thread page in the app, where you can follow the run. |
+| `status` | `"started"` |
+
+## Follow-up turns
+
+Pass the `thread_id` from a previous response to continue the conversation in the same thread. The sandbox state and conversation history carry over, so the agent can build on its earlier work:
+
+```bash
+curl -N -X POST https://anything.notte.cc/api/anything/start \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -d '{
+    "query": "now also include each post'\''s comment count",
+    "thread_id": "820a7cff-613b-4529-9ba4-52c7a6777713"
+  }'
+```
+
+Follow-up turns work in both streamed and detached mode.
+
+## Consuming the stream
 
 ### Python
 
-<ConsumeSSE />
+<ConsumeStream />
 
 ### TypeScript
 
@@ -131,9 +147,12 @@ if (!response.body) {
   throw new Error("ReadableStream not available");
 }
 
+// The thread ID lets you send follow-up turns later
+const threadId = response.headers.get("x-thread-id");
+console.log("Thread ID:", threadId);
+
 const reader = response.body.getReader();
 const decoder = new TextDecoder();
-const terminal = new Set(["done", "error", "timeout", "cancelled"]);
 let buffer = "";
 
 while (true) {
@@ -145,34 +164,48 @@ while (true) {
   buffer = lines.pop()!;
 
   for (const line of lines) {
-    if (line.startsWith("data: ")) {
-      const event = JSON.parse(line.slice(6));
-      console.log(event.type, event);
-
-      if (event.type === "done") {
-        console.log("Function ID:", event.function_id);
-        console.log("Cost:", event.total_cost_usd);
-      }
-
-      if (terminal.has(event.type)) {
-        reader.cancel();
-        break;
-      }
-    }
+    if (!line.startsWith("data: ")) continue;
+    const payload = line.slice("data: ".length);
+    if (payload === "[DONE]") break;
+    const chunk = JSON.parse(payload);
+    console.log(chunk.type, chunk);
   }
 }
 ```
+
+If you are building a chat interface, you can skip the manual parsing: the stream is directly compatible with the [AI SDK's `useChat` hook](https://ai-sdk.dev/docs/ai-sdk-ui/chatbot).
+
+## Re-running a created function
+
+When a run creates a reusable **Notte Function**, you can run it again via the [Notte CLI](https://github.com/nottelabs/notte-cli) or [SDK](/quickstart):
+
+<CodeGroup>
+```bash CLI
+notte functions run \
+  --function-id d3c31289-f28b-49bd-a340-95e071cfef7e \
+  --vars '{"count": "3"}' \
+  -o json
+```
+
+<RunFunction />
+</CodeGroup>
+
+## Migrating from v1
+
+<Warning>
+The v1 backend is retired. Requests with `version: "v1"` return `400 {"error": "unsupported_version"}` with a retirement message.
+</Warning>
+
+If you were calling the v1 API:
+
+- **Omit `version`** (or send `"v2"`). It now defaults to `"v2"`.
+- **Responses are an AI SDK UI message stream** instead of the v1 SSE event feed. The v1 event types (`status`, `thinking_delta`, `done`, ...) no longer exist.
+- **Follow-ups use `thread_id`.** The v1 concepts `resume_strategy`, snapshot semantics, and `claude_code_session_id` are gone: pass the `thread_id` from the `x-thread-id` response header to continue a thread.
+- The `x-vercel-ai-ui-message-stream: v1` response header refers to the AI SDK's own stream-format version, not the retired v1 backend.
 
 ## Error handling
 
 | Status | Meaning |
 |--------|---------|
+| `400` | Missing `query` field, invalid JSON, or `version: "v1"` (`unsupported_version`) |
 | `401` | Missing or invalid API key |
-| `400` | Missing `query` field or invalid JSON |
-| `502` | Agent failed to start or SSE stream unavailable |
-
-If the stream connects successfully but the agent encounters an error, you will receive an `error` event in the SSE stream instead of an HTTP error status.
-
-## Pricing
-
-Each request is billed based on the LLM usage incurred by the agent. The `total_cost_usd` field in the `done` event reports the exact cost for that run.
