@@ -23,7 +23,7 @@ permissions:
 jobs:
   refresh:
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    timeout-minutes: 20
+    timeout-minutes: 45
     env:
       # A single token is used for the checkout, the push, and the pull request,
       # so that the PR is opened by a real account and therefore runs CI.
@@ -127,7 +127,28 @@ jobs:
             echo "Created PR #$PR_NUMBER"
           fi
 
-          gh pr merge "$PR_NUMBER" --auto --squash --delete-branch \
-            || echo "::warning::Could not enable auto-merge on PR #$PR_NUMBER. It stays open for manual merge."
-
           echo "PR: https://github.com/${{ github.repository }}/pull/$PR_NUMBER"
+
+          # main requires one approving review. A bypass allowance lets this
+          # token merge without that review, but GitHub does not extend the
+          # bypass to the auto-merge queue acting on its behalf, so --auto would
+          # park the pull request at REVIEW_REQUIRED forever. Wait for the checks
+          # here and merge explicitly, which does honour the bypass.
+          #
+          # Merging the pull request this job just created, by number, is also
+          # what keeps the merge safe: nothing is looked up by branch name, so a
+          # fork branch cannot impersonate this automation.
+          for _ in $(seq 1 10); do
+            if gh pr checks "$PR_NUMBER" >/dev/null 2>&1; then
+              break
+            fi
+            echo "Waiting for checks to be reported on PR #$PR_NUMBER."
+            sleep 30
+          done
+
+          if gh pr checks "$PR_NUMBER" --watch --fail-fast --interval 30; then
+            gh pr merge "$PR_NUMBER" --squash --delete-branch
+            echo "Merged PR #$PR_NUMBER."
+          else
+            echo "::warning::Checks did not pass on PR #$PR_NUMBER, so it was left open. The next scheduled run rebuilds the branch from main and retries."
+          fi
