@@ -424,16 +424,6 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [offset](https://docs.notte.cc/sdk-reference/remotesession/offset.md): Get the trajectory offset of the session
 
 
-# Products
-
-## Products
-
-- [Agent Mode](https://docs.notte.cc/product/agent-mode.md): Bootstrap automations from natural language prompts
-- [Demonstrate Mode](https://docs.notte.cc/product/demonstrate-mode.md): Record browser actions and generate automation code instantly
-- [Automation Studio](https://docs.notte.cc/product/studio.md): A dedicated IDE for browser agents and automations
-- [Anything API](https://docs.notte.cc/product/anything-api.md): Build and run web automations from a single API call
-
-
 # Resources
 
 ## Resources
