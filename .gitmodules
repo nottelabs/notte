@@ -10,3 +10,6 @@
 [submodule "templates"]
 	path = templates
 	url = https://github.com/nottelabs/templates.git
+[submodule "claude-managed-agents"]
+	path = claude-managed-agents
+	url = https://github.com/nottelabs/claude-managed-agents.git
