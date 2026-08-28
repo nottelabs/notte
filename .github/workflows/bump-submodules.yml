@@ -1,0 +1,117 @@
+name: bump-submodules
+
+# Every day, fast-forward each submodule in this repository to the latest commit
+# on its default branch, then open (and auto-merge) a pull request with the bumps.
+# main is protected, so the bumps land through a PR and the required checks, not
+# through a direct push.
+
+on:
+  schedule:
+    - cron: '0 5 * * *' # daily at 05:00 UTC
+  workflow_dispatch: # allow manual triggering
+
+concurrency:
+  group: bump-submodules
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  bump:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 15
+    env:
+      # A single token is used for the checkout, the push, and the pull request,
+      # so that the PR is opened by a real account and therefore runs CI.
+      GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
+      BRANCH: chore/bump-submodules
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.SUBMODULE_BUMP_PAT }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fast-forward submodules
+        id: bump
+        run: |
+          set -euo pipefail
+
+          # Every submodule declared in .gitmodules, in path order.
+          PATHS=$(git config -f .gitmodules --get-regexp '^submodule\..*\.path$' \
+            | awk '{print $2}' | sort)
+
+          echo "Tracking submodules:"
+          echo "$PATHS" | sed 's/^/  - /'
+
+          for sub in $PATHS; do
+            git submodule update --init "$sub"
+            git -C "$sub" fetch --quiet origin
+            # Prefer the repository's main branch, fall back to its default branch.
+            if git -C "$sub" rev-parse --verify --quiet origin/main >/dev/null; then
+              target=origin/main
+            else
+              target=$(git -C "$sub" symbolic-ref --quiet --short refs/remotes/origin/HEAD || echo origin/main)
+            fi
+            git -C "$sub" checkout --quiet --detach "$target"
+            echo "  $sub -> $(git -C "$sub" rev-parse --short HEAD) ($target)"
+          done
+
+          git add -- $PATHS
+
+          if git diff --cached --quiet -- $PATHS; then
+            echo "All submodules are already up to date."
+            echo "changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "changes=true" >> "$GITHUB_OUTPUT"
+
+          # Compact "Subproject commit X -> Y" summary for the pull request body.
+          {
+            echo 'summary<<SUMMARY_EOF'
+            git -c core.pager=cat diff --cached --submodule=short -- $PATHS
+            echo SUMMARY_EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the bump pull request
+        if: steps.bump.outputs.changes == 'true'
+        env:
+          SUMMARY: ${{ steps.bump.outputs.summary }}
+        run: |
+          set -euo pipefail
+
+          DATE=$(date -u +%Y-%m-%d)
+          TITLE="chore: bump submodules to latest upstream"
+          BODY=$(printf '%s\n\n%s\n\n```\n%s\n```\n\n%s\n' \
+            "Automated daily bump of every submodule in this repository to the latest commit on its default branch." \
+            "Updated $DATE (UTC):" \
+            "$SUMMARY" \
+            "Opened by .github/workflows/bump-submodules.yml. Merges automatically once the required checks pass.")
+
+          # Always rebuild the branch from the current main so it stays mergeable.
+          git checkout -B "$BRANCH"
+          git commit -m "$TITLE"
+          git push --force origin "$BRANCH"
+
+          PR_NUMBER=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
+          if [ -n "$PR_NUMBER" ]; then
+            echo "Updating existing PR #$PR_NUMBER"
+            gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY"
+          else
+            PR_NUMBER=$(gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY" \
+              | sed -n 's|.*pull/\([0-9]*\).*|\1|p' | head -1)
+            echo "Created PR #$PR_NUMBER"
+          fi
+
+          gh pr merge "$PR_NUMBER" --auto --squash --delete-branch \
+            || echo "::warning::Could not enable auto-merge on PR #$PR_NUMBER. It stays open for manual merge."
+
+          echo "PR: https://github.com/${{ github.repository }}/pull/$PR_NUMBER"
