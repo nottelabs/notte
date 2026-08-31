@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -82,34 +81,20 @@ async def test_goto_timeout_without_response_is_not_reported_as_success() -> Non
 
 
 @pytest.mark.asyncio
-async def test_goto_timeout_with_response_keeps_best_effort_load_wait() -> None:
+async def test_committed_navigation_keeps_best_effort_load_wait() -> None:
     page = MagicMock()
     page.url = "https://example.com"
     page.is_closed.return_value = False
     response = make_response(page)
-    callbacks: dict[str, Callable[[MagicMock], None]] = {}
-
-    def register_response_callback(_event: str, callback: Callable[[MagicMock], None]) -> None:
-        callbacks[_event] = callback
-
-    def capture_response(_url: str, **_kwargs: object) -> None:
-        callbacks["request"](response.request)
-        callbacks["response"](response)
-        raise PlaywrightTimeoutError("load event timed out")
-
-    page.on.side_effect = register_response_callback
-    page.goto = AsyncMock(side_effect=capture_response)
+    page.goto = AsyncMock(return_value=response)
     window = make_window(page)
 
-    with (
-        patch.object(BrowserWindow, "long_wait", new_callable=AsyncMock) as long_wait,
-        patch.object(BrowserWindow, "short_wait", new_callable=AsyncMock) as short_wait,
-    ):
+    with patch.object(BrowserWindow, "long_wait", new_callable=AsyncMock) as long_wait:
         await window.goto_and_wait("https://example.com")
 
+    page.goto.assert_awaited_once_with("https://example.com", timeout=10000, wait_until="commit")
     long_wait.assert_awaited_once()
-    short_wait.assert_awaited_once()
-    assert page.remove_listener.call_count == 2
+    assert window.goto_response is response
 
 
 @pytest.mark.asyncio
@@ -117,24 +102,16 @@ async def test_late_response_from_previous_navigation_does_not_affect_next_timeo
     page = MagicMock()
     page.url = "https://example.com"
     page.is_closed.return_value = False
-    callbacks: dict[str, Callable[[MagicMock], None]] = {}
-    page.on.side_effect = lambda event, callback: callbacks.__setitem__(event, callback)
     call_count = 0
 
     late_response = make_response(page)
     late_response.request.url = "https://first.example.com"
-    second_request = MagicMock()
-    second_request.url = "https://second.example.com"
-    second_request.is_navigation_request.return_value = True
-    second_request.frame = page.main_frame
-    second_request.redirected_from = None
 
     def timeout_with_late_response(_url: str, **_kwargs: object) -> None:
         nonlocal call_count
         call_count += 1
         if call_count == 2:
-            callbacks["request"](second_request)
-            callbacks["response"](late_response)
+            window._record_navigation_response(late_response)
         raise PlaywrightTimeoutError("navigation timed out")
 
     page.goto = AsyncMock(side_effect=timeout_with_late_response)
@@ -148,8 +125,6 @@ async def test_late_response_from_previous_navigation_does_not_affect_next_timeo
 
     with pytest.raises(PageLoadingError):
         await window.goto_and_wait("https://second.example.com")
-
-    assert page.remove_listener.call_count == 4
 
 
 @pytest.mark.asyncio
@@ -168,29 +143,12 @@ async def test_replacement_page_receives_persistent_and_attempt_response_callbac
     active_page.is_closed.return_value = True
 
     response = make_response(replacement_page)
-    callbacks: dict[str, list[Callable[[MagicMock], None]]] = {"request": [], "response": []}
+    replacement_page.goto = AsyncMock(return_value=response)
 
-    def register_response_callback(event: str, callback: Callable[[MagicMock], None]) -> None:
-        callbacks[event].append(callback)
-
-    def capture_response(_url: str, **_kwargs: object) -> None:
-        for callback in callbacks["request"]:
-            callback(response.request)
-        for callback in callbacks["response"]:
-            callback(response)
-        raise PlaywrightTimeoutError("load event timed out")
-
-    replacement_page.on.side_effect = register_response_callback
-    replacement_page.goto = AsyncMock(side_effect=capture_response)
-
-    with (
-        patch.object(BrowserWindow, "long_wait", new_callable=AsyncMock) as long_wait,
-        patch.object(BrowserWindow, "short_wait", new_callable=AsyncMock),
-    ):
+    with patch.object(BrowserWindow, "long_wait", new_callable=AsyncMock) as long_wait:
         await window.goto_and_wait("https://replacement.example.com")
 
     assert resource.page is replacement_page
-    assert len(callbacks["request"]) == 1
-    assert len(callbacks["response"]) == 2
+    replacement_page.on.assert_any_call("response", window._record_navigation_response)
     assert window.goto_response is response
     long_wait.assert_awaited_once()

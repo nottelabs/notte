@@ -7,7 +7,7 @@ import traceback
 from collections.abc import Awaitable
 from http import HTTPStatus
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Literal, Self
+from typing import Any, Callable, ClassVar, Literal, Self
 
 import httpx
 from notte_core.browser.dom_tree import A11yNode, A11yTree, DomNode
@@ -47,9 +47,6 @@ from notte_browser.errors import (
     UnexpectedBrowserError,
 )
 from notte_browser.playwright_async_api import CDPSession, Locator, Page, Response
-
-if TYPE_CHECKING:
-    from notte_browser.playwright_async_api import Request
 
 
 class BrowserWindowOptions(BaseModel):
@@ -215,10 +212,8 @@ class BrowserWindow(BaseModel):
 
         self.apply_page_callbacks()
 
-    def _is_main_frame_navigation_request(self, request: "Request") -> bool:
-        return request.is_navigation_request() and request.frame == self.page.main_frame
-
     def _is_final_main_document_response(self, response: Response) -> bool:
+        request = response.request
         is_redirect = response.status in {
             HTTPStatus.MOVED_PERMANENTLY,
             HTTPStatus.FOUND,
@@ -226,14 +221,7 @@ class BrowserWindow(BaseModel):
             HTTPStatus.TEMPORARY_REDIRECT,
             HTTPStatus.PERMANENT_REDIRECT,
         }
-        return self._is_main_frame_navigation_request(response.request) and not is_redirect
-
-    @staticmethod
-    def _response_belongs_to_request(response: Response, expected_request: "Request") -> bool:
-        request = response.request
-        while request.redirected_from is not None:
-            request = request.redirected_from
-        return request == expected_request
+        return request.is_navigation_request() and request.frame == self.page.main_frame and not is_redirect
 
     def _record_navigation_response(self, response: Response) -> None:
         if self._is_final_main_document_response(response):
@@ -614,82 +602,53 @@ class BrowserWindow(BaseModel):
             return self.page.url == "about:blank" and not url == "about:blank"
 
         while True:
-            attempt_request: "Request | None" = None
-            attempt_response: Response | None = None
-
-            def on_request(request: "Request") -> None:
-                nonlocal attempt_request
-                if attempt_request is not None or not self._is_main_frame_navigation_request(request):
-                    return
-                if operation is None:
-                    assert url is not None
-                    requested_url = httpx.URL(url).copy_with(fragment=None)
-                    actual_url = httpx.URL(request.url).copy_with(fragment=None)
-                    if actual_url != requested_url:
-                        return
-                attempt_request = request
-
-            def on_response(response: Response) -> None:
-                nonlocal attempt_response
-                if (
-                    attempt_request is not None
-                    and self._is_final_main_document_response(response)
-                    and self._response_belongs_to_request(response, attempt_request)
-                ):
-                    attempt_response = response
-
             self.goto_response = None
-            self.page.on("request", on_request)
-            self.page.on("response", on_response)
+            response: Response | None = None
             tries -= 1
 
             try:
+                # Waiting for commit makes Playwright return the response for this
+                # exact navigation while still failing if the main document never
+                # receives response headers. Later load states remain best-effort.
                 match operation:
                     case None:
                         assert url is not None, "URL is required for goto"
-                        response = await self.page.goto(url, timeout=config.timeout_goto_ms)
+                        response = await self.page.goto(
+                            url,
+                            timeout=config.timeout_goto_ms,
+                            wait_until="commit",
+                        )
                     case "back":
-                        response = await self.page.go_back(timeout=config.timeout_goto_ms)
+                        response = await self.page.go_back(
+                            timeout=config.timeout_goto_ms,
+                            wait_until="commit",
+                        )
                     case "forward":
-                        response = await self.page.go_forward(timeout=config.timeout_goto_ms)
-                if response is not None and self._is_final_main_document_response(response):
-                    attempt_response = response
+                        response = await self.page.go_forward(
+                            timeout=config.timeout_goto_ms,
+                            wait_until="commit",
+                        )
+                if response is not None:
                     self.goto_response = response
-                if attempt_response is not None:
-                    logger.info(
-                        f"Goto for {url=} succeeded with HTTP {attempt_response.status}: {attempt_response.status_text}"
-                    )
-            except PlaywrightTimeoutError as e:
-                # Chromium updates page.url as soon as navigation starts, before the
-                # main resource receives a response. Treating that URL change as a
-                # successful navigation leaves the page in a pending-navigation state;
-                # Page.captureScreenshot can then block indefinitely waiting for a
-                # rendered frame. A response proves that navigation reached the server,
-                # so preserve the existing best-effort load-state handling only then.
-                if attempt_response is None:
-                    logger.warning(f"Goto for {url=} timed out before receiving an HTTP response")
-                    raise PageLoadingError(url=url or self.page.url) from e
-                await self.long_wait()
-            except Exception as e:
-                if attempt_response is not None:
-                    if attempt_response.status == HTTPStatus.PROXY_AUTHENTICATION_REQUIRED:
+                    if response.status == HTTPStatus.PROXY_AUTHENTICATION_REQUIRED:
                         raise InvalidProxyError(url=url or self.page.url)
-
-                    # retry if it seems like it loaded correctly?
-                    if attempt_response.status == HTTPStatus.OK and tries > 0:
+                    logger.info(f"Goto for {url=} committed with HTTP {response.status}: {response.status_text}")
+                await self.long_wait()
+            except PlaywrightTimeoutError as e:
+                logger.warning(f"Goto for {url=} timed out before the main document committed")
+                raise PageLoadingError(url=url or self.page.url) from e
+            except InvalidProxyError:
+                raise
+            except Exception as e:
+                if response is not None:
+                    # Preserve the existing retry behavior for failures that occur
+                    # after a successful main-document response.
+                    if response.status == HTTPStatus.OK and tries > 0:
                         continue
-
                     logger.error(
-                        f"Goto for {url=} failed with HTTP {attempt_response.status}: {attempt_response.status_text}, {traceback.format_exc()}"
+                        f"Goto for {url=} failed with HTTP {response.status}: {response.status_text}, {traceback.format_exc()}"
                     )
                 raise PageLoadingError(url=url or self.page.url) from e
-            finally:
-                self.page.remove_listener("request", on_request)
-                self.page.remove_listener("response", on_response)
-
-            # extra wait to make sure that css animations can start
-            # to make extra element visible
-            await self.short_wait()
 
             if not is_default_page() or tries < 0:
                 break

@@ -4,7 +4,6 @@ from notte_core.common.config import BrowserBackend, config
 
 if TYPE_CHECKING:
     from patchright.async_api import Frame as PatchrightFrame
-    from patchright.async_api import Request as Request
 from notte_core.common.logging import logger
 
 match config.browser_backend:
