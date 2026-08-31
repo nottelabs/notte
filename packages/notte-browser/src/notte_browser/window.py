@@ -611,7 +611,16 @@ class BrowserWindow(BaseModel):
                     logger.info(
                         f"Goto for {url=} succeeded with HTTP {self.goto_response.status}: {self.goto_response.status_text}"
                     )
-            except PlaywrightTimeoutError:
+            except PlaywrightTimeoutError as e:
+                # Chromium updates page.url as soon as navigation starts, before the
+                # main resource receives a response. Treating that URL change as a
+                # successful navigation leaves the page in a pending-navigation state;
+                # Page.captureScreenshot can then block indefinitely waiting for a
+                # rendered frame. A response proves that navigation reached the server,
+                # so preserve the existing best-effort load-state handling only then.
+                if self.goto_response is None:
+                    logger.warning(f"Goto for {url=} timed out before receiving an HTTP response")
+                    raise PageLoadingError(url=url or self.page.url) from e
                 await self.long_wait()
             except Exception as e:
                 if self.goto_response is not None:

@@ -114,6 +114,10 @@ enable_nest_asyncio()
 
 # TODO: ACT callback
 class NotteSession(AsyncResource, SyncResource):
+    # Screenshots appended to the trajectory are best-effort and must not keep a
+    # completed action request open when Chromium's compositor stops responding.
+    POST_ACTION_SCREENSHOT_TIMEOUT_SECONDS: ClassVar[float] = 5.0
+
     observe_max_retry_after_snapshot_update: ClassVar[int] = 2
     nb_seconds_between_snapshots_check: ClassVar[int] = 10
 
@@ -337,6 +341,20 @@ class NotteSession(AsyncResource, SyncResource):
         screenshot = Screenshot(raw=screenshot_bytes, bboxes=[], last_action_id=None)
         await self.trajectory.append(screenshot)
         return screenshot
+
+    async def _capture_post_action_screenshot(self) -> None:
+        try:
+            _ = await asyncio.wait_for(
+                self.ascreenshot(),
+                timeout=self.POST_ACTION_SCREENSHOT_TIMEOUT_SECONDS,
+            )
+        except TimeoutError:
+            logger.warning(
+                "Post-action screenshot timed out after "
+                + f"{self.POST_ACTION_SCREENSHOT_TIMEOUT_SECONDS:.1f}s; returning the action result without it"
+            )
+        except Exception as e:
+            logger.warning(f"Failed to capture post-action screenshot: {e}")
 
     def screenshot(
         self,
@@ -895,10 +913,7 @@ class NotteSession(AsyncResource, SyncResource):
 
         # add screenshot to trajectory (after the execution)
         if self._window is not None:
-            try:
-                _ = await self.ascreenshot()
-            except Exception as e:
-                logger.warning(f"Failed to capture post-action screenshot: {e}")
+            await self._capture_post_action_screenshot()
 
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
         # Gate on "did the action fail", not "did something throw": after the synthesis
