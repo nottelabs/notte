@@ -212,7 +212,7 @@ class BrowserWindow(BaseModel):
 
         self.apply_page_callbacks()
 
-    def _record_navigation_response(self, response: Response) -> None:
+    def _is_final_main_document_response(self, response: Response) -> bool:
         request = response.request
         is_redirect = response.status in {
             HTTPStatus.MOVED_PERMANENTLY,
@@ -221,7 +221,10 @@ class BrowserWindow(BaseModel):
             HTTPStatus.TEMPORARY_REDIRECT,
             HTTPStatus.PERMANENT_REDIRECT,
         }
-        if request.is_navigation_request() and request.frame == self.page.main_frame and not is_redirect:
+        return request.is_navigation_request() and request.frame == self.page.main_frame and not is_redirect
+
+    def _record_navigation_response(self, response: Response) -> None:
+        if self._is_final_main_document_response(response):
             self.goto_response = response
 
     def apply_page_callbacks(self):
@@ -599,21 +602,32 @@ class BrowserWindow(BaseModel):
             return self.page.url == "about:blank" and not url == "about:blank"
 
         while True:
+            attempt_response: Response | None = None
+
+            def on_response(response: Response) -> None:
+                nonlocal attempt_response
+                if self._is_final_main_document_response(response):
+                    attempt_response = response
+
             self.goto_response = None
+            self.page.on("response", on_response)
             tries -= 1
 
             try:
                 match operation:
                     case None:
                         assert url is not None, "URL is required for goto"
-                        _ = await self.page.goto(url, timeout=config.timeout_goto_ms)
+                        response = await self.page.goto(url, timeout=config.timeout_goto_ms)
                     case "back":
-                        _ = await self.page.go_back(timeout=config.timeout_goto_ms)
+                        response = await self.page.go_back(timeout=config.timeout_goto_ms)
                     case "forward":
-                        _ = await self.page.go_forward(timeout=config.timeout_goto_ms)
-                if self.goto_response is not None:
+                        response = await self.page.go_forward(timeout=config.timeout_goto_ms)
+                if response is not None and self._is_final_main_document_response(response):
+                    attempt_response = response
+                    self.goto_response = response
+                if attempt_response is not None:
                     logger.info(
-                        f"Goto for {url=} succeeded with HTTP {self.goto_response.status}: {self.goto_response.status_text}"
+                        f"Goto for {url=} succeeded with HTTP {attempt_response.status}: {attempt_response.status_text}"
                     )
             except PlaywrightTimeoutError as e:
                 # Chromium updates page.url as soon as navigation starts, before the
@@ -622,23 +636,25 @@ class BrowserWindow(BaseModel):
                 # Page.captureScreenshot can then block indefinitely waiting for a
                 # rendered frame. A response proves that navigation reached the server,
                 # so preserve the existing best-effort load-state handling only then.
-                if self.goto_response is None:
+                if attempt_response is None:
                     logger.warning(f"Goto for {url=} timed out before receiving an HTTP response")
                     raise PageLoadingError(url=url or self.page.url) from e
                 await self.long_wait()
             except Exception as e:
-                if self.goto_response is not None:
-                    if self.goto_response.status == HTTPStatus.PROXY_AUTHENTICATION_REQUIRED:
+                if attempt_response is not None:
+                    if attempt_response.status == HTTPStatus.PROXY_AUTHENTICATION_REQUIRED:
                         raise InvalidProxyError(url=url or self.page.url)
 
                     # retry if it seems like it loaded correctly?
-                    if self.goto_response.status == HTTPStatus.OK and tries > 0:
+                    if attempt_response.status == HTTPStatus.OK and tries > 0:
                         continue
 
                     logger.error(
-                        f"Goto for {url=} failed with HTTP {self.goto_response.status}: {self.goto_response.status_text}, {traceback.format_exc()}"
+                        f"Goto for {url=} failed with HTTP {attempt_response.status}: {attempt_response.status_text}, {traceback.format_exc()}"
                     )
                 raise PageLoadingError(url=url or self.page.url) from e
+            finally:
+                self.page.remove_listener("response", on_response)
 
             # extra wait to make sure that css animations can start
             # to make extra element visible
