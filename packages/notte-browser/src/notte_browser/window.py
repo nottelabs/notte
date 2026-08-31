@@ -239,7 +239,7 @@ class BrowserWindow(BaseModel):
             and len(self.resource.page.context.pages) > 0
         ):
             # reset to the last created page
-            self.resource.page = self.resource.page.context.pages[-1]
+            self.page = self.resource.page.context.pages[-1]
         return self.resource.page
 
     @property
