@@ -7,7 +7,7 @@ import traceback
 from collections.abc import Awaitable
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any, Callable, ClassVar, Literal, Self
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Literal, Self
 
 import httpx
 from notte_core.browser.dom_tree import A11yNode, A11yTree, DomNode
@@ -47,6 +47,9 @@ from notte_browser.errors import (
     UnexpectedBrowserError,
 )
 from notte_browser.playwright_async_api import CDPSession, Locator, Page, Response
+
+if TYPE_CHECKING:
+    from notte_browser.playwright_async_api import Request
 
 
 class BrowserWindowOptions(BaseModel):
@@ -212,8 +215,10 @@ class BrowserWindow(BaseModel):
 
         self.apply_page_callbacks()
 
+    def _is_main_frame_navigation_request(self, request: "Request") -> bool:
+        return request.is_navigation_request() and request.frame == self.page.main_frame
+
     def _is_final_main_document_response(self, response: Response) -> bool:
-        request = response.request
         is_redirect = response.status in {
             HTTPStatus.MOVED_PERMANENTLY,
             HTTPStatus.FOUND,
@@ -221,7 +226,14 @@ class BrowserWindow(BaseModel):
             HTTPStatus.TEMPORARY_REDIRECT,
             HTTPStatus.PERMANENT_REDIRECT,
         }
-        return request.is_navigation_request() and request.frame == self.page.main_frame and not is_redirect
+        return self._is_main_frame_navigation_request(response.request) and not is_redirect
+
+    @staticmethod
+    def _response_belongs_to_request(response: Response, expected_request: "Request") -> bool:
+        request = response.request
+        while request.redirected_from is not None:
+            request = request.redirected_from
+        return request == expected_request
 
     def _record_navigation_response(self, response: Response) -> None:
         if self._is_final_main_document_response(response):
@@ -602,14 +614,32 @@ class BrowserWindow(BaseModel):
             return self.page.url == "about:blank" and not url == "about:blank"
 
         while True:
+            attempt_request: "Request | None" = None
             attempt_response: Response | None = None
+
+            def on_request(request: "Request") -> None:
+                nonlocal attempt_request
+                if attempt_request is not None or not self._is_main_frame_navigation_request(request):
+                    return
+                if operation is None:
+                    assert url is not None
+                    requested_url = httpx.URL(url).copy_with(fragment=None)
+                    actual_url = httpx.URL(request.url).copy_with(fragment=None)
+                    if actual_url != requested_url:
+                        return
+                attempt_request = request
 
             def on_response(response: Response) -> None:
                 nonlocal attempt_response
-                if self._is_final_main_document_response(response):
+                if (
+                    attempt_request is not None
+                    and self._is_final_main_document_response(response)
+                    and self._response_belongs_to_request(response, attempt_request)
+                ):
                     attempt_response = response
 
             self.goto_response = None
+            self.page.on("request", on_request)
             self.page.on("response", on_response)
             tries -= 1
 
@@ -654,6 +684,7 @@ class BrowserWindow(BaseModel):
                     )
                 raise PageLoadingError(url=url or self.page.url) from e
             finally:
+                self.page.remove_listener("request", on_request)
                 self.page.remove_listener("response", on_response)
 
             # extra wait to make sure that css animations can start
