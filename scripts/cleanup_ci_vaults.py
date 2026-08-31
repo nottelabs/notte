@@ -50,15 +50,29 @@ def main() -> int:
         default=2.0,
         help="Age cutoff for --orphan-defaults (default: 2)",
     )
+    # A flag rather than an environment variable on purpose: a variable set once
+    # in a workflow is inherited by every later job that never meant to ask for
+    # it, which is the shape of mistake this guard exists to catch.
+    _ = parser.add_argument(
+        "--allow-production",
+        action="store_true",
+        help="Permit deleting from the production API (refused by default)",
+    )
     args = parser.parse_args()
 
     scope = _load_scope()
     if args.orphan_defaults:
         cleanup_orphans = getattr(scope, "cleanup_orphan_defaults")
-        return int(cleanup_orphans(dry_run=args.dry_run, min_age_hours=args.min_age_hours))
+        return int(
+            cleanup_orphans(
+                dry_run=args.dry_run,
+                min_age_hours=args.min_age_hours,
+                allow_production=args.allow_production,
+            )
+        )
 
     cleanup = getattr(scope, "cleanup_this_run")
-    return int(cleanup(dry_run=args.dry_run, prefix=args.prefix))
+    return int(cleanup(dry_run=args.dry_run, prefix=args.prefix, allow_production=args.allow_production))
 
 
 if __name__ == "__main__":

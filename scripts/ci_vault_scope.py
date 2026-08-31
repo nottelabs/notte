@@ -6,6 +6,10 @@ When ``NOTTE_CI_VAULT_PREFIX`` is set (e.g. ``ci-<run_id>-<job>``):
    unique name under that prefix and their IDs are recorded.
 2. ``cleanup_this_run()`` deletes only vaults created under that prefix / recorded
    for this run — never other parallel jobs' vaults.
+
+Both entry points refuse to run against the production API unless explicitly
+allowed, because the SDK's base URL falls back to production when
+``NOTTE_API_URL`` is unset.
 """
 
 from __future__ import annotations
@@ -15,6 +19,7 @@ import re
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 from uuid import uuid4
 
 _VAULT_NAME_RE = re.compile(r"^[a-zA-Z0-9\s\-_]+$")
@@ -104,7 +109,38 @@ def list_active_vaults(client: Any, *, page_size: int = 100) -> list[Any]:
     return vaults
 
 
-def cleanup_this_run(*, dry_run: bool = False, prefix: str | None = None) -> int:
+PRODUCTION_HOSTS = frozenset({"api.notte.cc", "www.api.notte.cc"})
+
+
+def resolved_server_url(client: Any) -> str:
+    """The base URL the SDK will actually talk to, after its own fallbacks."""
+    return str(getattr(getattr(client, "vaults", None), "server_url", "") or "")
+
+
+def assert_not_production(client: Any, *, allow_production: bool) -> None:
+    """Refuse to delete anything from production unless explicitly allowed.
+
+    The SDK resolves its base URL as ``NOTTE_API_URL`` or, when that is unset,
+    its production default. A CI job that exports only ``NOTTE_API_KEY`` is
+    therefore pointed at production while looking like it is pointed nowhere in
+    particular, and nothing in the response says which environment answered. For
+    a helper whose whole job is deleting, that default is the wrong way round.
+
+    Checked against the resolved URL rather than the environment variable, so an
+    unset variable and a variable set to production are caught the same way.
+    """
+    if allow_production:
+        return
+    url = resolved_server_url(client)
+    host = urlparse(url).hostname or ""
+    if host.lower() in PRODUCTION_HOSTS:
+        raise SystemExit(
+            f"Refusing to delete vaults from production ({url}).\n"
+            + "Set NOTTE_API_URL to a non-production environment, or pass --allow-production to override deliberately."
+        )
+
+
+def cleanup_this_run(*, dry_run: bool = False, prefix: str | None = None, allow_production: bool = False) -> int:
     """Delete only vaults created by this workflow run (prefix + recorded IDs)."""
     resolved = sanitize_prefix(prefix) if prefix else run_prefix()
     if resolved is None:
@@ -114,6 +150,7 @@ def cleanup_this_run(*, dry_run: bool = False, prefix: str | None = None) -> int
     from notte_sdk import NotteClient
 
     client = NotteClient()
+    assert_not_production(client, allow_production=allow_production)
     recorded = set(recorded_vault_ids(resolved))
     listed = list_active_vaults(client)
     by_prefix = {
@@ -157,7 +194,7 @@ def _is_already_deleted_error(exc: BaseException) -> bool:
     return "not active" in text or "not found" in text or ("already" in text and "deleted" in text)
 
 
-def cleanup_orphan_defaults(*, dry_run: bool, min_age_hours: float) -> int:
+def cleanup_orphan_defaults(*, dry_run: bool, min_age_hours: float, allow_production: bool = False) -> int:
     """One-shot drain of leaked name=default vaults older than min_age_hours."""
     import datetime as dt
 
@@ -168,6 +205,7 @@ def cleanup_orphan_defaults(*, dry_run: bool, min_age_hours: float) -> int:
         return 2
 
     client = NotteClient()
+    assert_not_production(client, allow_production=allow_production)
     now = dt.datetime.now(tz=dt.timezone.utc)
     min_age = dt.timedelta(hours=min_age_hours)
     targets: list[Any] = []

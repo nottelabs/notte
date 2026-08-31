@@ -12,6 +12,13 @@ on:
     paths:
       - 'docs/**'
 
+# Set explicitly, workflow-wide. The SDK falls back to its production base URL
+# when this is unset, so a job that only exports NOTTE_API_KEY runs against
+# production without saying so - including the cleanup step below, which
+# deletes. Matches test-cicd.yml.
+env:
+  NOTTE_API_URL: "https://us-staging.notte.cc"
+
 jobs:
   syntax-check:
     runs-on: blacksmith-4vcpu-ubuntu-2404
