@@ -18,6 +18,41 @@ def make_window(page: MagicMock) -> BrowserWindow:
     )
 
 
+@pytest.mark.parametrize(
+    ("is_navigation", "is_main_frame", "status"),
+    [
+        (False, True, 200),
+        (True, False, 200),
+        (True, True, 302),
+        (True, True, 307),
+    ],
+)
+def test_only_final_main_document_response_is_recorded(is_navigation: bool, is_main_frame: bool, status: int) -> None:
+    page = MagicMock()
+    response = MagicMock()
+    response.status = status
+    response.request.is_navigation_request.return_value = is_navigation
+    response.request.frame = page.main_frame if is_main_frame else MagicMock()
+    window = make_window(page)
+
+    window._record_navigation_response(response)
+
+    assert window.goto_response is None
+
+
+def test_final_main_document_response_is_recorded() -> None:
+    page = MagicMock()
+    response = MagicMock()
+    response.status = 200
+    response.request.is_navigation_request.return_value = True
+    response.request.frame = page.main_frame
+    window = make_window(page)
+
+    window._record_navigation_response(response)
+
+    assert window.goto_response is response
+
+
 @pytest.mark.asyncio
 async def test_goto_timeout_without_response_is_not_reported_as_success() -> None:
     page = MagicMock()
@@ -48,7 +83,9 @@ async def test_goto_timeout_with_response_keeps_best_effort_load_wait() -> None:
     page.is_closed.return_value = False
 
     def capture_response(_url: str, **_kwargs: object) -> None:
-        window.goto_response = response
+        response.request.is_navigation_request.return_value = True
+        response.request.frame = page.main_frame
+        window._record_navigation_response(response)
         raise PlaywrightTimeoutError("load event timed out")
 
     page.goto = AsyncMock(side_effect=capture_response)

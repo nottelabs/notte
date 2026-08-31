@@ -205,15 +205,24 @@ class BrowserWindow(BaseModel):
     def model_post_init(self, __context: Any) -> None:
         self.resource.page.set_default_timeout(config.timeout_default_ms)
 
-        # Response callbacks to set self.goto_response for all navigation requests
-        # used for determining if the page is a raw file and making the download file action available
-        def on_response(response: Response):
-            if response.request.is_navigation_request():
-                self.goto_response = response
-
-        self.page_callbacks["response"] = on_response  # pyright: ignore [reportArgumentType]
+        # Keep the final main-document response for navigation error handling and
+        # raw-file detection. Iframe, subresource, and intermediate redirect
+        # responses do not prove that the requested document reached the browser.
+        self.page_callbacks["response"] = self._record_navigation_response  # pyright: ignore [reportArgumentType]
 
         self.apply_page_callbacks()
+
+    def _record_navigation_response(self, response: Response) -> None:
+        request = response.request
+        is_redirect = response.status in {
+            HTTPStatus.MOVED_PERMANENTLY,
+            HTTPStatus.FOUND,
+            HTTPStatus.SEE_OTHER,
+            HTTPStatus.TEMPORARY_REDIRECT,
+            HTTPStatus.PERMANENT_REDIRECT,
+        }
+        if request.is_navigation_request() and request.frame == self.page.main_frame and not is_redirect:
+            self.goto_response = response
 
     def apply_page_callbacks(self):
         for key, callback in self.page_callbacks.items():
@@ -589,13 +598,8 @@ class BrowserWindow(BaseModel):
         def is_default_page():
             return self.page.url == "about:blank" and not url == "about:blank"
 
-        def on_response(resp: Response) -> None:
-            """Store the response so its available for exception handling."""
-            self.goto_response = resp
-
         while True:
             self.goto_response = None
-            self.page.once("response", on_response)
             tries -= 1
 
             try:
