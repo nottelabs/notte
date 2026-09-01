@@ -222,10 +222,12 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [GET Function Download Url](https://docs.notte.cc/api-reference/functions/function-download-url.md)
 - [POST Function Fork](https://docs.notte.cc/api-reference/functions/function-fork.md)
 - [PATCH Function Metadata Update](https://docs.notte.cc/api-reference/functions/function-metadata-update.md)
+- [POST Function Rollback](https://docs.notte.cc/api-reference/functions/function-rollback.md)
 - [GET Function Run Get Metadata](https://docs.notte.cc/api-reference/functions/function-run-get-metadata.md)
 - [POST Function Run Start](https://docs.notte.cc/api-reference/functions/function-run-start.md)
 - [DELETE Function Run Stop](https://docs.notte.cc/api-reference/functions/function-run-stop.md)
 - [PATCH Function Run Update Metadata](https://docs.notte.cc/api-reference/functions/function-run-update-metadata.md)
+- [GET Function Runtime Health](https://docs.notte.cc/api-reference/functions/function-runtime-health.md)
 - [DELETE Function Schedule Delete](https://docs.notte.cc/api-reference/functions/function-schedule-delete.md)
 - [POST Function Schedule Set](https://docs.notte.cc/api-reference/functions/function-schedule-set.md)
 - [POST Function Update](https://docs.notte.cc/api-reference/functions/function-update.md)
@@ -245,6 +247,16 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [GET Mailbox List](https://docs.notte.cc/api-reference/mailboxes/mailbox-list.md)
 - [POST Mailbox Sync](https://docs.notte.cc/api-reference/mailboxes/mailbox-sync.md)
 - [PATCH Mailbox Update](https://docs.notte.cc/api-reference/mailboxes/mailbox-update.md)
+
+## Managed-Auth
+
+- [POST  Connect Link Context](https://docs.notte.cc/api-reference/managed-auth/connect-link-context.md)
+- [POST  Connect Link Mailbox Connect](https://docs.notte.cc/api-reference/managed-auth/connect-link-mailbox-connect.md)
+- [POST  Connect Link Mailbox Sync](https://docs.notte.cc/api-reference/managed-auth/connect-link-mailbox-sync.md)
+- [POST  Connect Link Mailboxes](https://docs.notte.cc/api-reference/managed-auth/connect-link-mailboxes.md)
+- [GET  Connect Link Status](https://docs.notte.cc/api-reference/managed-auth/connect-link-status.md)
+- [POST  Connect Link Submit](https://docs.notte.cc/api-reference/managed-auth/connect-link-submit.md)
+- [POST Managed Auth Connect Link Create](https://docs.notte.cc/api-reference/managed-auth/managed-auth-connect-link-create.md)
 
 ## Personas
 
