@@ -3,6 +3,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from notte_core.common.config import LlmModel
 
 
 def find_python_files(directory: Path) -> list[Path]:
@@ -82,7 +83,10 @@ def test_root_level_scripts(python_file: Path) -> None:
     Args:
         python_file: Path to the Python file to test
     """
-    OVERRIDE_ARGS: dict[str, list[str]] = {"cli_agent.py": ["--task", "go to duckduckgo"]}
+    OVERRIDE_ARGS: dict[str, list[str]] = {
+        "cli_agent.py": ["--task", "go to duckduckgo"],
+        "quickstart.py": ["go to duckduckgo", "3", str(LlmModel.default())],
+    }
     print(f"Running {python_file.name}...")
     exit_code, logs = run_python_file(python_file, OVERRIDE_ARGS.get(python_file.name, []))
 
