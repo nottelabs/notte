@@ -3055,6 +3055,7 @@ version = "1.4.4.dev0"
 source = { editable = "packages/notte-sdk" }
 dependencies = [
     { name = "halo" },
+    { name = "keyring" },
     { name = "notte-core" },
     { name = "websockets" },
 ]
@@ -3067,6 +3068,7 @@ playwright = [
 [package.metadata]
 requires-dist = [
     { name = "halo", specifier = ">=0.0.28" },
+    { name = "keyring", specifier = ">=25.6.0" },
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "playwright", marker = "extra == 'playwright'", specifier = "~=1.55" },
     { name = "websockets", specifier = ">=13.1" },

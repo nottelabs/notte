@@ -65,7 +65,7 @@ def test_client_initialization_with_params() -> None:
 
 
 def test_client_initialization_without_api_key() -> None:
-    with patch.dict(os.environ, clear=True):
+    with patch.dict(os.environ, clear=True), patch("notte_sdk.endpoints.base.resolve_api_key", return_value=None):
         with pytest.raises(AuthenticationError):
             _ = NotteClient()
 
