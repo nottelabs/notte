@@ -129,11 +129,11 @@ jobs:
 
           echo "PR: https://github.com/${{ github.repository }}/pull/$PR_NUMBER"
 
-          # main requires one approving review. A bypass allowance lets this
-          # token merge without that review, but GitHub does not extend the
-          # bypass to the auto-merge queue acting on its behalf, so --auto would
-          # park the pull request at REVIEW_REQUIRED forever. Wait for the checks
-          # here and merge explicitly, which does honour the bypass.
+          # main requires one approving review, so the pull request sits at
+          # mergeStateStatus BLOCKED and --auto would park there forever. This
+          # token's account is exempt server side, but `gh pr merge` refuses a
+          # BLOCKED pull request client side, before it ever calls the API.
+          # --admin skips only that local guard; the merge itself is ordinary.
           #
           # Merging the pull request this job just created, by number, is also
           # what keeps the merge safe: nothing is looked up by branch name, so a
@@ -147,8 +147,9 @@ jobs:
           done
 
           if gh pr checks "$PR_NUMBER" --watch --fail-fast --interval 30; then
-            gh pr merge "$PR_NUMBER" --squash --delete-branch
+            gh pr merge "$PR_NUMBER" --squash --delete-branch --admin
             echo "Merged PR #$PR_NUMBER."
           else
-            echo "::warning::Checks did not pass on PR #$PR_NUMBER, so it was left open. The next scheduled run rebuilds the branch from main and retries."
+            echo "::error::Checks did not pass on PR #$PR_NUMBER, so it was left open. The next scheduled run rebuilds the branch from main and retries."
+            exit 1
           fi
