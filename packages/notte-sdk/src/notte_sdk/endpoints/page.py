@@ -26,6 +26,8 @@ from notte_sdk.types import (
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
 
+CAPTCHA_SOLVE_REQUEST_TIMEOUT_SECONDS = 150
+
 
 @final
 class PageClient(BaseClient):
@@ -290,7 +292,7 @@ class PageClient(BaseClient):
         """
         endpoint = PageClient._page_execute_endpoint(session_id=session_id)
         is_captcha = isinstance(action, CaptchaSolveAction)
-        request_timeout = 100 if is_captcha else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
+        request_timeout = CAPTCHA_SOLVE_REQUEST_TIMEOUT_SECONDS if is_captcha else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
 
         for _ in range(3):
             try:
