@@ -106,6 +106,7 @@ def _install_server_owned_dialog_policy(browser: Any) -> None:
     for context in browser.contexts:
         context.on("dialog", _observe_server_owned_dialog)
 
+
 try:
     from playwright.sync_api import Browser as BrowserSync
     from playwright.sync_api import Page as PageSync
