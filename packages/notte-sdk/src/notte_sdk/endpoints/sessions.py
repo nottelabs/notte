@@ -90,6 +90,22 @@ CONSOLE_VIEWER_URL = (
 _playwright_available = False
 _async_playwright_available = False
 
+
+def _observe_server_owned_dialog(_dialog: Any) -> None:
+    """Keep the external CDP client from competing with Notte for native dialogs.
+
+    Playwright automatically handles a JavaScript dialog when no listener is
+    registered. Native dialogs are target-global, so that default races the
+    Notte browser controller attached to the same target. The backend owns
+    dialog handling; this listener makes the SDK Playwright connection an
+    observer without issuing a second ``Page.handleJavaScriptDialog`` command.
+    """
+
+
+def _install_server_owned_dialog_policy(browser: Any) -> None:
+    for context in browser.contexts:
+        context.on("dialog", _observe_server_owned_dialog)
+
 try:
     from playwright.sync_api import Browser as BrowserSync
     from playwright.sync_api import Page as PageSync
@@ -1150,6 +1166,7 @@ class RemoteSession(SyncResource):
             if self._playwright_browser is None:
                 cdp_url = self.cdp_url()
                 self._playwright_browser = self._playwright_context.chromium.connect_over_cdp(cdp_url)
+                _install_server_owned_dialog_policy(self._playwright_browser)
 
             # Get the first page from the first context
             self._playwright_page = self._playwright_browser.contexts[0].pages[0]
@@ -1205,6 +1222,7 @@ class RemoteSession(SyncResource):
             if self._async_playwright_browser is None:
                 cdp_url = self.cdp_url()
                 self._async_playwright_browser = await self._async_playwright_context.chromium.connect_over_cdp(cdp_url)
+                _install_server_owned_dialog_policy(self._async_playwright_browser)
 
             # Get the first page from the first context
             self._async_playwright_page = self._async_playwright_browser.contexts[0].pages[0]
