@@ -18,7 +18,6 @@ from notte_sdk.types import (
     AgentListRequest,
     ExecutionRequest,
     ExecutionRequestDict,
-    LocalSessionStartRequest,
     ObserveResponse,
     SessionListRequest,
     SessionResponse,
