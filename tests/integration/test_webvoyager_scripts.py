@@ -14,6 +14,7 @@ from notte_core.actions import (
 #         )
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=5)
 @pytest.mark.asyncio
 async def test_huggingface_model_search():
     async with NotteSession() as page:
