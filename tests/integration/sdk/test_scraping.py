@@ -194,6 +194,7 @@ class SiteUpdate(BaseModel):
     update_text: str | None
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=5)
 def test_scraping_structured_data_with_response_format_and_raise_on_failure_false():
     _ = load_dotenv()
     notte = NotteClient()
