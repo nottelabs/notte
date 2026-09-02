@@ -89,6 +89,7 @@ jobs:
         run: uv run python scripts/cleanup_ci_vaults.py
 
       - name: Send Slack Notification
+        if: always()
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
