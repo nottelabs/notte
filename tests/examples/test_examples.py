@@ -1,5 +1,8 @@
 import logging
+import os
+import signal
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -19,7 +22,7 @@ def find_python_files(directory: Path) -> list[Path]:
     return [file for file in directory.glob("*.py") if file.name != "__init__.py" and not file.name.startswith("test_")]
 
 
-def run_python_file(file_path: Path, args: list[str]) -> tuple[int, list[str]]:
+def run_python_file(file_path: Path, args: list[str], timeout_seconds: float = 280) -> tuple[int, list[str]]:
     """
     Run a Python file and return its output (both stdout and stderr).
 
@@ -30,25 +33,55 @@ def run_python_file(file_path: Path, args: list[str]) -> tuple[int, list[str]]:
     Returns:
         The error code
     """
-    logged: list[str] = []
-    try:
-        # Merge stderr into stdout and capture the combined output
-        # result = subprocess.run( + args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=True)
+    with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as output:
         process = subprocess.Popen(
-            ["python", str(file_path)] + args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+            ["python", str(file_path)] + args,
+            stdout=output,
+            stderr=subprocess.STDOUT,
+            text=True,
+            start_new_session=True,
+            # Examples should exercise open_viewer=True, but CI must not launch
+            # a local browser whose lifecycle can keep the example alive.
+            env={**os.environ, "BROWSER": "/bin/true"},
         )
 
-        # Read and log stdout in real-time
-        for line in process.stdout:
+        try:
+            exit_code = process.wait(timeout=timeout_seconds)
+        except subprocess.TimeoutExpired:
+            exit_code = -1
+            logging.error("Timed out running %s after %s seconds", file_path, timeout_seconds)
+        finally:
+            # Viewer/browser processes may outlive the example. Stop the whole
+            # process group so they cannot leak into later parametrized tests.
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+
+        output.seek(0)
+        logged: list[str] = []
+        for line in output:
             line = line.strip()
             if line:
                 logged.append(line)
                 logging.info(line)
 
-        return process.wait(), logged
-    except subprocess.CalledProcessError as e:
-        print(f"Error running {file_path}: {e}")
-        return -1, logged
+        return exit_code, logged
+
+
+def test_run_python_file_does_not_wait_for_descendant_stdout(tmp_path: Path) -> None:
+    script = tmp_path / "spawns_descendant.py"
+    script.write_text(
+        "import os, subprocess, sys\n"
+        "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)'])\n"
+        "print('parent finished')\n"
+        "print(os.environ['BROWSER'])\n"
+    )
+
+    exit_code, logs = run_python_file(script, [], timeout_seconds=5)
+
+    assert exit_code == 0
+    assert logs == ["parent finished", "/bin/true"]
 
 
 def get_python_files() -> list[Path]:
