@@ -197,6 +197,8 @@ def test_persona_get_operations():
         assert retrieved_persona.first_name is not None
         assert retrieved_persona.last_name is not None
         assert retrieved_persona.email is not None
+        email_domain = retrieved_persona.email.rsplit("@", 1)[1]
+        assert retrieved_persona.internal_email == f"{persona_id}@{email_domain}"
     finally:
         # Clean up
         if persona_id is not None:
