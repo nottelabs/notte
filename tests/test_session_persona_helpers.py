@@ -32,6 +32,7 @@ class StubPersona(BasePersona):
             first_name="Test",
             last_name="Persona",
             email="persona@example.com",
+            internal_email=f"{persona_id}@mail-sand.com",
             vault_id="vault_123" if vault else None,
             phone_number=None,
         )
@@ -47,6 +48,13 @@ class StubPersona(BasePersona):
 
     def _get_vault(self):  # type: ignore[override]
         return self._vault
+
+
+def test_persona_exposes_public_and_internal_email_addresses() -> None:
+    persona = StubPersona(emails=[], sms=[])
+
+    assert persona.email == "persona@example.com"
+    assert persona.internal_email == "persona_test@mail-sand.com"
 
 
 def test_session_read_emails_and_sms() -> None:

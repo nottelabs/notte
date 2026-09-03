@@ -272,6 +272,16 @@ class BasePersona(ABC):
     def info(self) -> PersonaResponse:
         return self._get_info()
 
+    @property
+    def email(self) -> str:
+        """Public, human-readable email address of the persona."""
+        return self.info.email
+
+    @property
+    def internal_email(self) -> str:
+        """Internal UUID-backed mailbox address of the persona."""
+        return self.info.internal_email
+
     @cached_property
     def vault(self) -> BaseVault:
         vault = self._get_vault()

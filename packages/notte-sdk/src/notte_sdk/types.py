@@ -1603,7 +1603,8 @@ class PersonaResponse(SdkResponse):
     status: Annotated[str, Field(description="Status of the persona (active, closed)")]
     first_name: Annotated[str, Field(description="First name of the persona")]
     last_name: Annotated[str, Field(description="Last name of the persona")]
-    email: Annotated[str, Field(description="Email of the persona")]
+    email: Annotated[str, Field(description="Public, human-readable email address of the persona")]
+    internal_email: Annotated[str, Field(description="Internal UUID-backed mailbox address of the persona")]
     vault_id: Annotated[str | None, Field(description="ID of the vault")]
     phone_number: Annotated[str | None, Field(description="Phone number of the persona (optional)")]
 
