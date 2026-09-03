@@ -451,8 +451,8 @@ The SDK docs below are for generated-code editing and reference. They are not th
 #### File Storage
 
 - [FileStorage](https://docs.notte.cc/sdk-reference/manual/file_storage.md): Upload and download files for your automations
-- [download](https://docs.notte.cc/sdk-reference/remotefilestorage/download.md): Stores a file that has been downloaded from a website in the current session
-- [upload](https://docs.notte.cc/sdk-reference/remotefilestorage/upload.md): Upload a file from your local machine to storage
+- [download](https://docs.notte.cc/sdk-reference/remotefilestorage/download.md): No description available
+- [upload](https://docs.notte.cc/sdk-reference/remotefilestorage/upload.md): No description available
 - [list_downloaded_files](https://docs.notte.cc/sdk-reference/remotefilestorage/list_downloaded_files.md): List all files in the download_dir
 - [list_uploaded_files](https://docs.notte.cc/sdk-reference/remotefilestorage/list_uploaded_files.md): List all files from the upload_dir
 

@@ -13,7 +13,7 @@ description: "Base class for storage implementations that handle upload and down
 alist_downloaded_files() -> list[FileInfo]
 ```
 
-List files that have been downloaded into storage by the agents
+List all files in the download_dir
 
 **Returns:**
 
@@ -27,7 +27,7 @@ List files that have been downloaded into storage by the agents
 alist_uploaded_files() -> list[FileInfo]
 ```
 
-List files that have been uploaded to storage
+List all files from the upload_dir
 
 **Returns:**
 
@@ -35,37 +35,37 @@ List files that have been uploaded to storage
 
 ---
 
-### download
+### delete
 
 ```python
-download(file_name: str, local_dir: str, force: bool = False) -> bool
+delete(file_id: str) -> None
 ```
-
-Stores a file that has been downloaded from a website in the current session
-
-**Returns:**
-
-`bool`
 
 ---
 
-### download_uploaded_file
+### download
 
 ```python
-download_uploaded_file(file_name: str, local_dir: str, force: bool = False) -> bool
+download(file_id: str, local_dir: str = ., force: bool = False) -> str
 ```
-
-Downloads a user-uploaded file to the local filesystem without requiring a session attachment
-
-**Parameters:**
-
-- `file_name`: The name of the uploaded file to download.
-- `local_dir`: The directory to download the file to.
-- `force`: Overwrite an existing destination file. Defaults to ``False``; set ``True`` to replace it.
 
 **Returns:**
 
-`bool`
+`str`
+
+---
+
+### for_session
+
+```python
+for_session(session_id: str) -> RemoteFileStorage
+```
+
+Bind this storage once, cloning it when another session already owns it
+
+**Returns:**
+
+<Visibility for="humans">[`RemoteFileStorage`](/sdk-reference/misc/remotefilestorage)</Visibility><Visibility for="agents">[`RemoteFileStorage`](/sdk-reference/misc/remotefilestorage.md)</Visibility>
 
 ---
 
@@ -94,6 +94,18 @@ Return LLM instructions to append to the prompt
 **Returns:**
 
 `str`
+
+---
+
+### list
+
+```python
+list(source: FileSource | str | None = None, limit: int = 100, offset: int = 0) -> SessionFilesPage
+```
+
+**Returns:**
+
+<Visibility for="humans">[`SessionFilesPage`](/sdk-reference/misc/sessionfilespage)</Visibility><Visibility for="agents">[`SessionFilesPage`](/sdk-reference/misc/sessionfilespage.md)</Visibility>
 
 ---
 
@@ -142,7 +154,7 @@ Stores a file from the local path
 ### set_session_id
 
 ```python
-set_session_id(id: str) -> None
+set_session_id(session_id: str) -> None
 ```
 
 ---
@@ -150,14 +162,12 @@ set_session_id(id: str) -> None
 ### upload
 
 ```python
-upload(file_path: str, upload_file_name: str | None = None) -> bool
+upload(file_path: str, upload_file_name: str | None = None) -> SessionFile
 ```
-
-Upload a file from your local machine to storage
 
 **Returns:**
 
-`bool`
+<Visibility for="humans">[`SessionFile`](/sdk-reference/misc/sessionfile)</Visibility><Visibility for="agents">[`SessionFile`](/sdk-reference/misc/sessionfile.md)</Visibility>
 
 ---
 

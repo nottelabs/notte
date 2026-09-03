@@ -3,10 +3,6 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-# Correct
-storage = client.FileStorage()
-storage.upload("file.pdf")
-
-with client.Session(storage=storage) as session:
-    # Storage is available
-    pass
+with client.Session() as session:
+    # Storage is always available and scoped to the session.
+    session.storage.upload("file.pdf")

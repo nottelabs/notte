@@ -53,7 +53,6 @@ def code_defaults() -> dict[str, Any]:
         "viewport_width": DEFAULT_HEADLESS_VIEWPORT_WIDTH,
         "viewport_height": DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
         "browser_type": field_default("browser_type"),
-        "use_file_storage": field_default("use_file_storage"),
         "perception_type": config.perception_type,
         "raise_on_failure": config.raise_on_session_execution_failure,
     }
