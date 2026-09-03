@@ -149,6 +149,11 @@ async def _resolve_locator_frame(locator: Locator) -> Frame:
     return frame
 
 
+def _should_persist_download(*, manually_fetched: bool, captures_browser_downloads: bool) -> bool:
+    """Return whether the controller owns persistence for a downloaded file."""
+    return manually_fetched or not captures_browser_downloads
+
+
 async def _evaluate_blob_expression(
     frame: Frame,
     expression: str,
@@ -476,7 +481,8 @@ class BrowserController:
                 if self.storage is None or self.storage.download_dir is None:
                     raise NoStorageObjectProvidedError(action.name())
 
-                if window.is_file():
+                manually_fetched = window.is_file()
+                if manually_fetched:
                     file_content, filename = await window.download_file()
                     logger.info(f"Saving raw file with this filename: {filename}")
                     file_path = Path(self.storage.download_dir) / filename
@@ -551,7 +557,15 @@ class BrowserController:
                     with open(file_path, "wb") as f:
                         _ = f.write(file_bytes)
 
-                if not self.storage.captures_browser_downloads:
+                # Raw URLs are fetched and written by the controller itself; no
+                # browser download event is emitted for an out-of-band collector
+                # to capture. Native click downloads do emit such an event, so a
+                # collector-backed storage must remain the sole ingester there to
+                # avoid creating duplicate catalog entries.
+                if _should_persist_download(
+                    manually_fetched=manually_fetched,
+                    captures_browser_downloads=self.storage.captures_browser_downloads,
+                ):
                     res = await self.storage.set_file(str(file_path))
                     if not res:
                         raise FailedToDownloadFileError()
