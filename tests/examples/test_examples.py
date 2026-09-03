@@ -3,6 +3,7 @@ import os
 import signal
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,29 @@ def find_python_files(directory: Path) -> list[Path]:
         A list of Path objects for Python files
     """
     return [file for file in directory.glob("*.py") if file.name != "__init__.py" and not file.name.startswith("test_")]
+
+
+def _terminate_process_group(process: subprocess.Popen[str], grace_seconds: float = 5) -> None:
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return
+
+    deadline = time.monotonic() + grace_seconds
+    while time.monotonic() < deadline:
+        try:
+            os.killpg(process.pid, 0)
+        except ProcessLookupError:
+            break
+        time.sleep(0.05)
+    else:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+
+    if process.poll() is None:
+        process.wait(timeout=1)
 
 
 def run_python_file(file_path: Path, args: list[str], timeout_seconds: float = 280) -> tuple[int, list[str]]:
@@ -53,10 +77,7 @@ def run_python_file(file_path: Path, args: list[str], timeout_seconds: float = 2
         finally:
             # Viewer/browser processes may outlive the example. Stop the whole
             # process group so they cannot leak into later parametrized tests.
-            try:
-                os.killpg(process.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
+            _terminate_process_group(process)
 
         output.seek(0)
         logged: list[str] = []
@@ -82,6 +103,25 @@ def test_run_python_file_does_not_wait_for_descendant_stdout(tmp_path: Path) -> 
 
     assert exit_code == 0
     assert logs == ["parent finished", "/bin/true"]
+
+
+def test_run_python_file_kills_and_reaps_process_after_timeout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    script = tmp_path / "ignores_sigterm.py"
+    script.write_text(
+        "import signal, time\n"
+        "signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+        "print('ready', flush=True)\n"
+        "time.sleep(30)\n"
+    )
+    original_terminate = _terminate_process_group
+    monkeypatch.setattr(
+        f"{__name__}._terminate_process_group", lambda process: original_terminate(process, grace_seconds=0.1)
+    )
+
+    exit_code, logs = run_python_file(script, [], timeout_seconds=0.1)
+
+    assert exit_code == -1
+    assert logs == ["ready"]
 
 
 def get_python_files() -> list[Path]:
