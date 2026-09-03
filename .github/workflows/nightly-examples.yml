@@ -80,13 +80,11 @@ jobs:
           echo "Environment variables are set"
 
       - name: Run example tests
-        uses: coactions/setup-xvfb@v1
-        with:
-            run: bash tests/run_examples.sh
+        run: xvfb-run --auto-servernum bash tests/run_examples.sh
 
       - name: Cleanup vaults created by this run
         if: always()
-        run: uv run python scripts/cleanup_ci_vaults.py
+        run: uv run python scripts/cleanup_ci_vaults.py --allow-production
 
       - name: Send Slack Notification
         if: always()
