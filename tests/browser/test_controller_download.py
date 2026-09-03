@@ -8,6 +8,7 @@ from notte_browser.controller import (
     _evaluate_blob_expression,
     _main_world_evaluate,
     _resolve_locator_frame,
+    _should_persist_download,
 )
 from notte_browser.playwright_async_api import CDPSession, Frame, Locator
 
@@ -62,3 +63,19 @@ def test_blob_capture_hook_can_release_retained_blobs() -> None:
     assert "clear: () => blobs.clear()" in _BLOB_CAPTURE_HOOK
     assert "URL.createObjectURL = origCreate" in _BLOB_CAPTURE_HOOK
     assert _BLOB_CAPTURE_DISPOSE == "window.__notte_blob_capture?.dispose?.()"
+
+
+@pytest.mark.parametrize("captures_browser_downloads", [False, True])
+def test_controller_persists_manually_fetched_raw_files(captures_browser_downloads: bool) -> None:
+    assert _should_persist_download(
+        manually_fetched=True,
+        captures_browser_downloads=captures_browser_downloads,
+    )
+
+
+def test_collector_owns_native_browser_download_persistence() -> None:
+    assert not _should_persist_download(manually_fetched=False, captures_browser_downloads=True)
+
+
+def test_controller_persists_native_download_without_collector() -> None:
+    assert _should_persist_download(manually_fetched=False, captures_browser_downloads=False)
