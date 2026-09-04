@@ -46,6 +46,11 @@ def test_script_defaults_to_a_credentialed_get_with_no_body() -> None:
 def test_script_appends_params_to_the_query_string() -> None:
     assert 'fetch("/api?page=2&q=a+b", init)' in build_fetch_script("/api", params={"page": 2, "q": "a b"})
     assert 'fetch("/api?x=1&page=2", init)' in build_fetch_script("/api?x=1", params={"page": 2})
+    # before the fragment, which the browser strips before sending
+    assert 'fetch("/items?page=2#results", init)' in build_fetch_script("/items#results", params={"page": 2})
+    assert 'fetch("https://a.test/p?x=1&page=2#f", init)' in build_fetch_script(
+        "https://a.test/p?x=1#f", params={"page": 2}
+    )
 
 
 def test_script_serialises_a_json_body_and_sets_the_content_type() -> None:
@@ -76,6 +81,13 @@ def test_script_form_encodes_a_mapping_and_passes_a_string_through() -> None:
 def test_script_rejects_json_and_data_together() -> None:
     with pytest.raises(ValueError, match="either json or data"):
         _ = build_fetch_script("/x", json_body={}, data="y")
+
+
+def test_script_rejects_a_body_on_get_and_head() -> None:
+    with pytest.raises(ValueError, match="GET requests cannot have a body"):
+        _ = build_fetch_script("/x", json_body={"a": 1})
+    with pytest.raises(ValueError, match="HEAD requests cannot have a body"):
+        _ = build_fetch_script("/x", method="head", data="y")
 
 
 def test_script_aborts_after_the_timeout() -> None:

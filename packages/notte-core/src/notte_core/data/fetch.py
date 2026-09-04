@@ -12,7 +12,7 @@ import json
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, cast
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit, urlunsplit
 
 from notte_core.errors.actions import FetchResponseDecodeError, FetchStatusError
 
@@ -47,8 +47,13 @@ def build_fetch_script(
 
     request_url = url
     if params:
-        separator = "&" if "?" in url else "?"
-        request_url = f"{url}{separator}{urlencode(params, doseq=True)}"
+        # insert before any fragment: the browser strips `#...` before sending,
+        # so parameters appended after it would be silently dropped
+        parts = urlsplit(url)
+        query = urlencode(params, doseq=True)
+        if parts.query:
+            query = f"{parts.query}&{query}"
+        request_url = urlunsplit((parts.scheme, parts.netloc, parts.path, query, parts.fragment))
 
     request_headers: dict[str, str] = dict(headers or {})
     body: str | None = None
@@ -70,6 +75,9 @@ def build_fetch_script(
         "redirect": "follow",
     }
     if body is not None:
+        if init["method"] in {"GET", "HEAD"}:
+            # browser fetch() rejects these outright, so fail before the round-trip
+            raise ValueError(f"{init['method']} requests cannot have a body")
         init["body"] = body
 
     abort = ""
