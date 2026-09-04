@@ -19,7 +19,7 @@ def test_validator_message_received():
 
     client = NotteClient()
 
-    with client.Session() as session:
+    with client.Session(proxies=False) as session:
         agent = client.Agent(session=session, max_steps=3)
         # Ask for invalid price first (-1), expect agent to recover with valid price (2)
         valid = agent.run(

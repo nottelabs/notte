@@ -9,7 +9,7 @@ _ = load_dotenv()
 def test_start_close_session():
     client = NotteClient()
 
-    response = client.sessions.start()
+    response = client.sessions.start(proxies=False)
     assert response.status == "active"
     response = client.sessions.stop(session_id=response.session_id)
     assert response.status == "closed"
@@ -36,7 +36,7 @@ def test_start_close_session_with_proxy():
 
 def test_start_close_session_with_viewport():
     client = NotteClient()
-    with client.Session(viewport_height=100, viewport_width=100) as session:
+    with client.Session(proxies=False, viewport_height=100, viewport_width=100) as session:
         assert session.session_id is not None
         status = session.status()
         assert status.status == "active"
@@ -58,7 +58,7 @@ def test_replay_session(session_id: str):
 @pytest.mark.parametrize("browser_type", ["chrome", "chromium"])
 def test_start_close_session_with_browser_type(browser_type: BrowserType):
     client = NotteClient()
-    with client.Session(open_viewer=False, browser_type=browser_type) as session:
+    with client.Session(proxies=False, open_viewer=False, browser_type=browser_type) as session:
         assert session.session_id is not None
         status = session.status()
         assert status.status == "active"

@@ -116,7 +116,7 @@ def test_download_against_local_fixture(case: FixtureDownloadCase):
     notte = NotteClient()
     storage = notte.FileStorage()
 
-    with notte.Session(storage=storage) as session:
+    with notte.Session(proxies=False, storage=storage) as session:
         _ = session.execute(type="goto", url=case.url)
         _ = session.execute(type="download_file", selector=case.selector)
 
