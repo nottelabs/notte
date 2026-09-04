@@ -151,7 +151,7 @@ async def test_readme_async_scraping_example():
 def test_readme_sync_scraping_example():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    with client.Session() as session:
+    with client.Session(proxies=False) as session:
         result = session.execute({"type": "goto", "url": "https://www.notte.cc"})
         assert result.success
         data = session.scrape()
@@ -173,7 +173,7 @@ async def test_scraping_images_only():
 async def test_scraping_structured_data():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    with client.Session() as session:
+    with client.Session(proxies=False) as session:
         _ = session.execute(type="goto", url="https://gymbeam.pl")
         data = session.scrape(instructions="Extract the company name")
         assert isinstance(data, dict)
@@ -198,7 +198,7 @@ class SiteUpdate(BaseModel):
 def test_scraping_structured_data_with_response_format_and_raise_on_failure_false():
     _ = load_dotenv()
     notte = NotteClient()
-    with notte.Session(browser_type="chrome", viewport_height=1080, viewport_width=1920) as page:
+    with notte.Session(proxies=False, browser_type="chrome", viewport_height=1080, viewport_width=1920) as page:
         n_articles = 10
         _ = page.execute(type="goto", url="http://stonewoodcapital.com/news/")
         result = page.scrape(

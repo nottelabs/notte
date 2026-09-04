@@ -125,6 +125,7 @@ def test_session_with_profile_read_only(client: NotteClient) -> None:
     try:
         # Create session with profile in read-only mode
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": False},
             open_viewer=False,
         ) as session:
@@ -147,6 +148,7 @@ def test_session_with_profile_persist(client: NotteClient) -> None:
     try:
         # First session: persist changes
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
@@ -172,6 +174,7 @@ def test_profile_state_persists_across_sessions(client: NotteClient) -> None:
     try:
         # First session: visit a page and persist
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
@@ -182,6 +185,7 @@ def test_profile_state_persists_across_sessions(client: NotteClient) -> None:
 
         # Second session: use same profile in read-only mode
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": False},
             open_viewer=False,
         ) as session:
@@ -199,6 +203,7 @@ def test_profile_cookies_persist(client: NotteClient) -> None:
     try:
         # First session: set cookies and persist
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
@@ -209,6 +214,7 @@ def test_profile_cookies_persist(client: NotteClient) -> None:
 
         # Second session: cookies should be loaded
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": False},
             open_viewer=False,
         ) as session:
@@ -227,6 +233,7 @@ def test_profile_localstorage_persist(client: NotteClient) -> None:
     try:
         # First session: set localStorage and persist
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
@@ -239,6 +246,7 @@ def test_profile_localstorage_persist(client: NotteClient) -> None:
 
         # Second session: localStorage should be restored
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": False},
             open_viewer=False,
         ) as session:
@@ -255,6 +263,7 @@ def test_profile_sessionstorage_persist(client: NotteClient) -> None:
     try:
         # First session: set sessionStorage and persist
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
@@ -266,6 +275,7 @@ def test_profile_sessionstorage_persist(client: NotteClient) -> None:
 
         # Second session: sessionStorage should be restored
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": False},
             open_viewer=False,
         ) as session:

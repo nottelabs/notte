@@ -115,7 +115,7 @@ def test_download_file_action_is_strictly_readonly():
             # ----------------------------------------------------------------
 
             # Mock the session start and execute methods to avoid network calls
-            with client.Session(storage=storage, open_viewer=False) as session:
+            with client.Session(proxies=False, storage=storage, open_viewer=False) as session:
                 _ = session.execute(type="goto", url="https://arxiv.org/abs/1706.03762")
                 _ = session.execute(type="click", selector='internal:role=link[name="View PDF"i]')
                 time.sleep(5)  # reduced sleep for test speed

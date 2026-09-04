@@ -13,7 +13,7 @@ from notte_sdk.client import NotteClient
 
 def test_failed_action_rehydrates_concrete_exception_over_the_wire():
     client = NotteClient()
-    with client.Session(open_viewer=False) as page:
+    with client.Session(proxies=False, open_viewer=False) as page:
         _ = page.execute(type="goto", value="https://www.example.com")
         _ = page.observe(perception_type="fast")
 

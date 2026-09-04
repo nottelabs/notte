@@ -10,7 +10,7 @@ _ = load_dotenv()
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_new_steps():
     client = NotteClient()
-    with client.Session(open_viewer=False) as session:
+    with client.Session(proxies=False, open_viewer=False) as session:
         _ = session.execute(type="goto", url="https://phantombuster.com/login")
         _ = session.observe()
 
@@ -89,7 +89,7 @@ def test_old_session_format():
 
 def test_agents_in_single_session():
     client = NotteClient()
-    with client.Session(browser_type="chrome", open_viewer=False) as session:
+    with client.Session(proxies=False, browser_type="chrome", open_viewer=False) as session:
         agent1 = client.Agent(session=session, max_steps=1)
         _ = agent1.run(task="go to linkedin", url="https://www.linkedin.com")
 
