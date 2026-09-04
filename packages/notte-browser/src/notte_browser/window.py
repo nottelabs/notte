@@ -205,15 +205,27 @@ class BrowserWindow(BaseModel):
     def model_post_init(self, __context: Any) -> None:
         self.resource.page.set_default_timeout(config.timeout_default_ms)
 
-        # Response callbacks to set self.goto_response for all navigation requests
-        # used for determining if the page is a raw file and making the download file action available
-        def on_response(response: Response):
-            if response.request.is_navigation_request():
-                self.goto_response = response
-
-        self.page_callbacks["response"] = on_response  # pyright: ignore [reportArgumentType]
+        # Keep the final main-document response for navigation error handling and
+        # raw-file detection. Iframe, subresource, and intermediate redirect
+        # responses do not prove that the requested document reached the browser.
+        self.page_callbacks["response"] = self._record_navigation_response  # pyright: ignore [reportArgumentType]
 
         self.apply_page_callbacks()
+
+    def _is_final_main_document_response(self, response: Response) -> bool:
+        request = response.request
+        is_redirect = response.status in {
+            HTTPStatus.MOVED_PERMANENTLY,
+            HTTPStatus.FOUND,
+            HTTPStatus.SEE_OTHER,
+            HTTPStatus.TEMPORARY_REDIRECT,
+            HTTPStatus.PERMANENT_REDIRECT,
+        }
+        return request.is_navigation_request() and request.frame == self.page.main_frame and not is_redirect
+
+    def _record_navigation_response(self, response: Response) -> None:
+        if self._is_final_main_document_response(response):
+            self.goto_response = response
 
     def apply_page_callbacks(self):
         for key, callback in self.page_callbacks.items():
@@ -227,7 +239,7 @@ class BrowserWindow(BaseModel):
             and len(self.resource.page.context.pages) > 0
         ):
             # reset to the last created page
-            self.resource.page = self.resource.page.context.pages[-1]
+            self.page = self.resource.page.context.pages[-1]
         return self.resource.page
 
     @property
@@ -589,47 +601,54 @@ class BrowserWindow(BaseModel):
         def is_default_page():
             return self.page.url == "about:blank" and not url == "about:blank"
 
-        def on_response(resp: Response) -> None:
-            """Store the response so its available for exception handling."""
-            self.goto_response = resp
-
         while True:
             self.goto_response = None
-            self.page.once("response", on_response)
+            response: Response | None = None
             tries -= 1
 
             try:
+                # Waiting for commit makes Playwright return the response for this
+                # exact navigation while still failing if the main document never
+                # receives response headers. Later load states remain best-effort.
                 match operation:
                     case None:
                         assert url is not None, "URL is required for goto"
-                        _ = await self.page.goto(url, timeout=config.timeout_goto_ms)
+                        response = await self.page.goto(
+                            url,
+                            timeout=config.timeout_goto_ms,
+                            wait_until="commit",
+                        )
                     case "back":
-                        _ = await self.page.go_back(timeout=config.timeout_goto_ms)
+                        response = await self.page.go_back(
+                            timeout=config.timeout_goto_ms,
+                            wait_until="commit",
+                        )
                     case "forward":
-                        _ = await self.page.go_forward(timeout=config.timeout_goto_ms)
-                if self.goto_response is not None:
-                    logger.info(
-                        f"Goto for {url=} succeeded with HTTP {self.goto_response.status}: {self.goto_response.status_text}"
-                    )
-            except PlaywrightTimeoutError:
-                await self.long_wait()
-            except Exception as e:
-                if self.goto_response is not None:
-                    if self.goto_response.status == HTTPStatus.PROXY_AUTHENTICATION_REQUIRED:
+                        response = await self.page.go_forward(
+                            timeout=config.timeout_goto_ms,
+                            wait_until="commit",
+                        )
+                if response is not None:
+                    self.goto_response = response
+                    if response.status == HTTPStatus.PROXY_AUTHENTICATION_REQUIRED:
                         raise InvalidProxyError(url=url or self.page.url)
-
-                    # retry if it seems like it loaded correctly?
-                    if self.goto_response.status == HTTPStatus.OK and tries > 0:
+                    logger.info(f"Goto for {url=} committed with HTTP {response.status}: {response.status_text}")
+                await self.long_wait()
+            except PlaywrightTimeoutError as e:
+                logger.warning(f"Goto for {url=} timed out before the main document committed")
+                raise PageLoadingError(url=url or self.page.url) from e
+            except InvalidProxyError:
+                raise
+            except Exception as e:
+                if response is not None:
+                    # Preserve the existing retry behavior for failures that occur
+                    # after a successful main-document response.
+                    if response.status == HTTPStatus.OK and tries > 0:
                         continue
-
                     logger.error(
-                        f"Goto for {url=} failed with HTTP {self.goto_response.status}: {self.goto_response.status_text}, {traceback.format_exc()}"
+                        f"Goto for {url=} failed with HTTP {response.status}: {response.status_text}, {traceback.format_exc()}"
                     )
                 raise PageLoadingError(url=url or self.page.url) from e
-
-            # extra wait to make sure that css animations can start
-            # to make extra element visible
-            await self.short_wait()
 
             if not is_default_page() or tries < 0:
                 break
