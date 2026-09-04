@@ -62,7 +62,9 @@ def test_script_serialises_a_json_body_and_sets_the_content_type() -> None:
 
 
 def test_script_keeps_a_caller_content_type() -> None:
-    script = build_fetch_script("/x", json_body={}, headers={"content-type": "application/graphql-response+json"})
+    script = build_fetch_script(
+        "/x", method="POST", json_body={}, headers={"content-type": "application/graphql-response+json"}
+    )
 
     assert script.count("ontent-") == 1
     assert "application/graphql-response+json" in script
