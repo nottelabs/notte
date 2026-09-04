@@ -1,5 +1,5 @@
 import time
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from pathlib import Path
 from types import TracebackType
@@ -43,6 +43,7 @@ from notte_core.common.config import CookieDict, PerceptionType, config
 from notte_core.common.logging import logger
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
+from notte_core.data.fetch import FetchData, FetchResponse, build_fetch_script
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from notte_core.errors.actions import EvaluateJsNoDataError
 from notte_core.errors.base import NotteBaseError
@@ -1636,3 +1637,39 @@ class RemoteSession(SyncResource):
             # an API build that predates the eval-js fix reports success without data
             raise EvaluateJsNoDataError()
         return result.data.markdown
+
+    def fetch(
+        self,
+        url: str,
+        *,
+        method: str = "GET",
+        headers: Mapping[str, str] | None = None,
+        params: Mapping[str, Any] | None = None,
+        json: Any = None,
+        data: FetchData | None = None,
+        timeout: float | None = None,
+    ) -> FetchResponse:
+        """
+        Issue an HTTP request from the page the session is on and return the response.
+
+        The request runs inside the browser through `fetch()`, so it carries the
+        page's cookies, the session's proxy and the browser's own network
+        fingerprint. A relative `url` resolves against the current page, which
+        also makes it same-origin; a cross-origin URL is subject to CORS exactly
+        as in a browser tab, so `goto` the target origin first. Redirects are
+        followed and the final URL is on `response.url`. A non-2xx status is
+        returned, not raised; call `response.raise_for_status()` for the
+        `requests` behaviour. A network failure surfaces as the JavaScript error.
+
+        `json` is serialised as the body with an `application/json` content type,
+        `data` as a form body when it is a mapping or verbatim when it is a string.
+
+        ```python
+        session.execute(type="goto", url="https://en.wikipedia.org/wiki/Main_Page")
+        summary = session.fetch("/api/rest_v1/page/summary/Main_Page").json()
+        ```
+        """
+        script = build_fetch_script(
+            url, method=method, headers=headers, params=params, json_body=json, data=data, timeout=timeout
+        )
+        return FetchResponse.from_evaluated(self.evaluate_js(script))

@@ -1,0 +1,51 @@
+---
+title: "FetchResponse"
+description: "The response of a fetch call, with the shape of a requests response"
+---
+
+
+
+A non-2xx status is a response, not an error; call `raise_for_status()`
+for the `requests` behaviour. `url` is the final URL after redirects
+
+## Methods
+
+### from_evaluated
+
+```python
+from_evaluated(raw: str) -> FetchResponse
+```
+
+Read the envelope `build_fetch_script` returns from the evaluated string
+
+**Returns:**
+
+<Visibility for="humans">[`FetchResponse`](/sdk-reference/misc/fetchresponse)</Visibility><Visibility for="agents">[`FetchResponse`](/sdk-reference/misc/fetchresponse.md)</Visibility>
+
+---
+
+### json
+
+```python
+json() -> Any
+```
+
+**Returns:**
+
+`Any`
+
+---
+
+### raise_for_status
+
+```python
+raise_for_status() -> None
+```
+
+---
+
+
+
+## Module
+
+`notte_core.data.fetch`

@@ -89,6 +89,20 @@ Result containing execution details, any errors, and the updated session state.
 
 ---
 
+### fetch
+
+```python
+fetch(url: <class 'str'>, method: <class 'str'> = GET, headers: collections.abc.Mapping[str, str] | None = None, params: collections.abc.Mapping[str, typing.Any] | None = None, json: typing.Any = None, data: str | collections.abc.Mapping[str, typing.Any] | None = None, timeout: float | None = None) -> <class 'notte_core.data.fetch.FetchResponse'>
+```
+
+Issue an HTTP request from the page the session is on and return the response
+
+**Returns:**
+
+<Visibility for="humans">[`FetchResponse`](/sdk-reference/misc/fetchresponse)</Visibility><Visibility for="agents">[`FetchResponse`](/sdk-reference/misc/fetchresponse.md)</Visibility>
+
+---
+
 ### get_cookies
 
 ```python
