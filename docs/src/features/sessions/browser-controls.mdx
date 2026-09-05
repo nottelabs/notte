@@ -208,7 +208,7 @@ Evaluate JavaScript code on the current page and return the result. `session.eva
 
 ### Fetch
 
-Issue an HTTP request from the page the session is on. `session.fetch(url)` runs the browser's own `fetch()` inside the current page, so the request carries the page's cookies, the session's proxy and the browser's network fingerprint. A relative URL resolves against the current page, which also keeps it same-origin; a cross-origin URL is subject to CORS as in any browser tab, so `goto` the target origin first. The response is shaped like `requests`: `status_code`, `ok`, `headers`, `text`, `url`, `json()` and `raise_for_status()`.
+Issue an HTTP request from the page the session is on. `session.fetch(url)` runs the browser's own `fetch()` inside the current page, so the request carries the page's cookies, the session's proxy and the browser's network fingerprint. A relative URL resolves against the current page, which also keeps it same-origin; a cross-origin URL is subject to CORS as in any browser tab, so `goto` the target origin first. The result is a standard `requests.Response`: `status_code`, `ok`, `headers`, `text`, `url`, `json()` and `raise_for_status()` work as usual.
 
 <Fetch />
 

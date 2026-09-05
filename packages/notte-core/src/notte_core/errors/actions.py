@@ -32,18 +32,6 @@ class EvaluateJsNoDataError(ActionError):
         )
 
 
-class FetchStatusError(ActionError):
-    def __init__(self, status_code: int, url: str) -> None:
-        self.status_code: int = status_code
-        self.url: str = url
-        message = f"fetch of {url} returned HTTP {status_code}"
-        super().__init__(
-            dev_message=message,
-            user_message=f"{message}.",
-            agent_message=message,
-        )
-
-
 class FetchResponseDecodeError(ActionError):
     def __init__(self, reason: str) -> None:
         message = f"fetch script returned an unreadable response envelope: {reason}"

@@ -6,6 +6,7 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 from webbrowser import open as open_browser
 
+import requests
 from notte_core.actions import BaseAction, InteractionActionUnion
 from notte_core.actions.typedicts import (
     CaptchaSolveActionDict,
@@ -43,7 +44,7 @@ from notte_core.common.config import CookieDict, PerceptionType, config
 from notte_core.common.logging import logger
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
-from notte_core.data.fetch import FetchData, FetchResponse, build_fetch_script
+from notte_core.data.fetch import FetchData, build_fetch_script, response_from_evaluated
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from notte_core.errors.actions import EvaluateJsNoDataError
 from notte_core.errors.base import NotteBaseError
@@ -1648,7 +1649,7 @@ class RemoteSession(SyncResource):
         json: Any = None,
         data: FetchData | None = None,
         timeout: float | None = None,
-    ) -> FetchResponse:
+    ) -> requests.Response:
         """
         Issue an HTTP request from the page the session is on and return the response.
 
@@ -1657,9 +1658,10 @@ class RemoteSession(SyncResource):
         fingerprint. A relative `url` resolves against the current page, which
         also makes it same-origin; a cross-origin URL is subject to CORS exactly
         as in a browser tab, so `goto` the target origin first. Redirects are
-        followed and the final URL is on `response.url`. A non-2xx status is
-        returned, not raised; call `response.raise_for_status()` for the
-        `requests` behaviour. A network failure surfaces as the JavaScript error.
+        followed and the final URL is on `response.url`. The result is a standard
+        `requests.Response`: a non-2xx status is returned, not raised, and
+        `response.raise_for_status()` raises `requests.HTTPError`. A network
+        failure surfaces as the JavaScript error.
 
         `json` is serialised as the body with an `application/json` content type,
         `data` as a form body when it is a mapping or verbatim when it is a string.
@@ -1672,4 +1674,4 @@ class RemoteSession(SyncResource):
         script = build_fetch_script(
             url, method=method, headers=headers, params=params, json_body=json, data=data, timeout=timeout
         )
-        return FetchResponse.from_evaluated(self.evaluate_js(script))
+        return response_from_evaluated(self.evaluate_js(script))

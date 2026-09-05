@@ -2,19 +2,24 @@
 
 `session.fetch()` runs the browser's own `fetch()` inside the current page, so
 the request carries the page's cookies, the session's proxy and the browser's
-network fingerprint. This module builds the script and reads the result back;
-it is shared by the remote SDK session and the local browser session.
+network fingerprint. This module builds the script and reads the result back
+into a standard `requests.Response`; it is shared by the remote SDK session and
+the local browser session.
 """
 
 from __future__ import annotations
 
+import io
 import json
 from collections.abc import Mapping
-from dataclasses import dataclass
+from http import HTTPStatus
 from typing import Any, cast
 from urllib.parse import urlencode, urlsplit, urlunsplit
 
-from notte_core.errors.actions import FetchResponseDecodeError, FetchStatusError
+import requests
+from requests.structures import CaseInsensitiveDict
+
+from notte_core.errors.actions import FetchResponseDecodeError
 
 FetchData = str | Mapping[str, Any]
 
@@ -100,47 +105,38 @@ def build_fetch_script(
     )
 
 
-@dataclass(frozen=True)
-class FetchResponse:
-    """The response of a fetch call, with the shape of a requests response.
+def response_from_evaluated(raw: str) -> requests.Response:
+    """Turn the envelope `build_fetch_script` returns into a `requests.Response`.
 
-    A non-2xx status is a response, not an error; call `raise_for_status()`
-    for the `requests` behaviour. `url` is the final URL after redirects.
+    A non-2xx status is a response, not an error; `raise_for_status()` raises
+    `requests.HTTPError` as usual. `url` is the final URL after redirects, and
+    the body is exposed through `text`, `content` and `json()`.
     """
+    try:
+        payload: Any = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise FetchResponseDecodeError(reason=str(exc)) from exc
+    if not isinstance(payload, dict):
+        raise FetchResponseDecodeError(reason="envelope is not an object")
+    envelope = cast(dict[str, Any], payload)
+    try:
+        status_code = int(envelope["status"])
+        raw_headers: Any = envelope.get("headers") or {}
+        headers = {str(key): str(value) for key, value in dict(raw_headers).items()}
+        text = str(envelope.get("text", ""))
+        url = str(envelope.get("url", ""))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise FetchResponseDecodeError(reason=str(exc)) from exc
 
-    status_code: int
-    headers: dict[str, str]
-    text: str
-    url: str
-
-    @property
-    def ok(self) -> bool:
-        return self.status_code < 400
-
-    def json(self) -> Any:
-        return json.loads(self.text)
-
-    def raise_for_status(self) -> None:
-        if self.status_code >= 400:
-            raise FetchStatusError(status_code=self.status_code, url=self.url)
-
-    @classmethod
-    def from_evaluated(cls, raw: str) -> FetchResponse:
-        """Read the envelope `build_fetch_script` returns from the evaluated string."""
-        try:
-            payload: Any = json.loads(raw)
-        except json.JSONDecodeError as exc:
-            raise FetchResponseDecodeError(reason=str(exc)) from exc
-        if not isinstance(payload, dict):
-            raise FetchResponseDecodeError(reason="envelope is not an object")
-        envelope = cast(dict[str, Any], payload)
-        try:
-            raw_headers: Any = envelope.get("headers") or {}
-            return cls(
-                status_code=int(envelope["status"]),
-                headers={str(key): str(value) for key, value in dict(raw_headers).items()},
-                text=str(envelope.get("text", "")),
-                url=str(envelope.get("url", "")),
-            )
-        except (KeyError, TypeError, ValueError) as exc:
-            raise FetchResponseDecodeError(reason=str(exc)) from exc
+    response = requests.Response()
+    response.status_code = status_code
+    response.headers = CaseInsensitiveDict(headers)
+    # the browser already decoded the body; hand it back as utf-8 so `.text` round-trips
+    response.encoding = "utf-8"
+    response.raw = io.BytesIO(text.encode("utf-8"))
+    response.url = url
+    try:
+        response.reason = HTTPStatus(status_code).phrase
+    except ValueError:
+        response.reason = ""
+    return response

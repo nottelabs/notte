@@ -1,14 +1,15 @@
-"""Remote `fetch()`: the request runs in the page via `evaluate_js` and comes back requests-shaped."""
+"""Remote `fetch()`: the request runs in the page via `evaluate_js` and comes back as a `requests.Response`."""
 
 import datetime as dt
 import json
 
 import pytest
+import requests
 from notte_core.actions import EvaluateJsAction
 from notte_core.browser.observation import ExecutionResult
-from notte_core.data.fetch import FetchResponse, build_fetch_script
+from notte_core.data.fetch import build_fetch_script
 from notte_core.data.space import DataSpace
-from notte_core.errors.actions import FetchResponseDecodeError, FetchStatusError
+from notte_core.errors.actions import FetchResponseDecodeError
 
 from tests.sdk.test_execute_raise_on_failure import over_the_wire, remote_session
 
@@ -104,16 +105,20 @@ def test_script_aborts_after_the_timeout() -> None:
 # --- the response ----------------------------------------------------------------
 
 
-def test_fetch_returns_a_requests_shaped_response() -> None:
+def test_fetch_returns_a_requests_response() -> None:
     session = remote_session(over_the_wire(eval_result(envelope())))
 
     response = session.fetch("/api")
 
-    assert isinstance(response, FetchResponse)
+    assert isinstance(response, requests.Response)
     assert response.status_code == 200
     assert response.ok
+    assert response.reason == "OK"
     assert response.json() == {"ok": True}
-    assert response.headers["content-type"] == "application/json"
+    assert response.text == '{"ok": true}'
+    assert response.content == b'{"ok": true}'
+    # browsers lowercase header names; requests keeps the lookup case-insensitive
+    assert response.headers["Content-Type"] == "application/json"
     assert response.url == "https://example.com/api"
     response.raise_for_status()
 
@@ -126,9 +131,9 @@ def test_fetch_returns_http_errors_and_raises_only_when_asked() -> None:
     assert response.status_code == 403
     assert not response.ok
     assert response.text == "denied"
-    with pytest.raises(FetchStatusError, match="HTTP 403") as raised:
+    with pytest.raises(requests.HTTPError, match="403 Client Error: Forbidden") as raised:
         response.raise_for_status()
-    assert raised.value.status_code == 403
+    assert raised.value.response is response
 
 
 def test_fetch_rejects_an_unreadable_envelope() -> None:
