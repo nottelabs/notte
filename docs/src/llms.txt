@@ -301,7 +301,10 @@ The SDK docs below are for generated-code editing and reference. They are not th
 
 ## Sessions
 
+- [DELETE Delete Session File](https://docs.notte.cc/api-reference/sessions/delete-session-file.md)
+- [GET Download Session File](https://docs.notte.cc/api-reference/sessions/download-session-file.md)
 - [GET Get Session Script](https://docs.notte.cc/api-reference/sessions/get-session-script.md)
+- [GET List Session Files](https://docs.notte.cc/api-reference/sessions/list-session-files.md)
 - [GET List Sessions](https://docs.notte.cc/api-reference/sessions/list-sessions.md)
 - [POST Page Execute](https://docs.notte.cc/api-reference/sessions/page-execute.md)
 - [POST Page Observe](https://docs.notte.cc/api-reference/sessions/page-observe.md)
@@ -316,15 +319,7 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [POST Session Start](https://docs.notte.cc/api-reference/sessions/session-start.md)
 - [GET Session Status](https://docs.notte.cc/api-reference/sessions/session-status.md)
 - [DELETE Session Stop](https://docs.notte.cc/api-reference/sessions/session-stop.md)
-
-## Storage
-
-- [GET File Download](https://docs.notte.cc/api-reference/storage/file-download.md)
-- [GET File Download Uploaded File](https://docs.notte.cc/api-reference/storage/file-download-uploaded-file.md)
-- [GET File List Downloads](https://docs.notte.cc/api-reference/storage/file-list-downloads.md)
-- [GET File List Uploads](https://docs.notte.cc/api-reference/storage/file-list-uploads.md)
-- [POST File Upload](https://docs.notte.cc/api-reference/storage/file-upload.md)
-- [POST File Upload Downloaded File](https://docs.notte.cc/api-reference/storage/file-upload-downloaded-file.md)
+- [POST Upload Session File](https://docs.notte.cc/api-reference/sessions/upload-session-file.md)
 
 ## Usage
 
