@@ -63,12 +63,12 @@ jobs:
           # The generator reports a failed spec fetch on stderr and still exits 0,
           # so stderr is captured to a file and inspected after the run.
           status=0
-          make docs-llms >/tmp/generate-llms.out 2>/tmp/generate-llms.err || status=$?
+          make docs-llms-refresh >/tmp/generate-llms.out 2>/tmp/generate-llms.err || status=$?
           cat /tmp/generate-llms.out
           cat /tmp/generate-llms.err >&2
 
           if [ "$status" -ne 0 ]; then
-            echo "::error::make docs-llms failed with exit code $status."
+            echo "::error::make docs-llms-refresh failed with exit code $status."
             exit "$status"
           fi
 
@@ -106,7 +106,7 @@ jobs:
           DATE=$(date -u +%Y-%m-%d)
           TITLE="docs: refresh generated llms.txt"
           BODY=$(printf '%s\n\n%s\n\n%s\n\n%s\n' \
-            "Automated daily regeneration of \`$TARGET\` via \`make docs-llms\`, which builds the API section from the live OpenAPI spec." \
+            "Automated daily regeneration of \`$TARGET\` via \`make docs-llms-refresh\`, which builds the API section from the live OpenAPI spec." \
             "Updated $DATE (UTC): $STAT" \
             "No hand edits. The run fails instead of committing if the spec cannot be fetched or comes back incomplete." \
             "Opened by .github/workflows/refresh-llms.yml. Merges automatically once the required checks pass.")

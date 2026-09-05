@@ -5,12 +5,19 @@ Tabs become H1, top-level groups become H2, nested groups become H3.
 Each page is emitted as a bullet with title + description pulled from
 the page's YAML frontmatter.
 
+The API section is rendered from the OpenAPI spec and kept between marker
+comments. By default it is reused verbatim from the existing llms.txt so the
+generator is deterministic and offline, which is what the pre-commit hook
+needs; pass --refresh-openapi to fetch the live spec and rebuild it, which is
+what the daily refresh workflow does.
+
 Run from anywhere:
-    python3 src/scripts/generate_llms.py
+    python3 src/scripts/generate_llms.py [--refresh-openapi]
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -168,6 +175,41 @@ def render_openapi(spec: dict) -> list[str]:
     return lines
 
 
+OPENAPI_END_MARKER = "<!-- openapi:end -->"
+
+
+def openapi_begin_marker(url: str) -> str:
+    return f"<!-- openapi:begin {url} -->"
+
+
+def cached_openapi_section(existing: str, url: str) -> list[str] | None:
+    """Return the marker-delimited API block for `url` from a previous llms.txt, or None."""
+    begin = openapi_begin_marker(url)
+    start = existing.find(begin)
+    if start == -1:
+        return None
+    end = existing.find(OPENAPI_END_MARKER, start)
+    if end == -1:
+        return None
+    block = existing[start : end + len(OPENAPI_END_MARKER)]
+    return block.split("\n")
+
+
+def openapi_section(url: str, *, refresh: bool, existing: str) -> list[str]:
+    """The API block for `url`: reused from `existing` unless refreshing or absent."""
+    if not refresh:
+        cached = cached_openapi_section(existing, url)
+        if cached is not None:
+            return cached + [""]
+        print(f"  warning: no cached openapi section for {url}, fetching live", file=sys.stderr)
+    try:
+        spec = fetch_openapi(url)
+    except Exception as e:
+        print(f"  warning: failed to fetch openapi {url}: {e}", file=sys.stderr)
+        return [f"- OpenAPI spec: {url}", ""]
+    return [openapi_begin_marker(url), ""] + render_openapi(spec) + [OPENAPI_END_MARKER, ""]
+
+
 def read_frontmatter(page_path: str) -> dict:
     """Return parsed frontmatter dict for a nav page path."""
     for ext in (".mdx", ".md"):
@@ -226,7 +268,16 @@ def render_pages(pages: list, depth: int) -> list[str]:
     return lines
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(
+        "--refresh-openapi",
+        action="store_true",
+        help="fetch the live OpenAPI spec and rebuild the API section instead of reusing the committed one",
+    )
+    args = parser.parse_args(argv)
+    existing = OUTPUT.read_text(encoding="utf-8") if OUTPUT.exists() else ""
+
     config = json.loads(DOCS_JSON.read_text())
     site_name = config.get("name", "Docs")
 
@@ -253,21 +304,11 @@ def main() -> int:
         for group in tab.get("groups", []):
             out += [f"## {group['group']}", ""]
             if "openapi" in group:
-                try:
-                    spec = fetch_openapi(group["openapi"])
-                    out += render_openapi(spec)
-                except Exception as e:
-                    print(f"  warning: failed to fetch openapi {group['openapi']}: {e}", file=sys.stderr)
-                    out += [f"- OpenAPI spec: {group['openapi']}", ""]
+                out += openapi_section(group["openapi"], refresh=args.refresh_openapi, existing=existing)
             out += render_pages(group.get("pages", []), depth=3)
             out += [""]
         if "openapi" in tab:
-            try:
-                spec = fetch_openapi(tab["openapi"])
-                out += render_openapi(spec)
-            except Exception as e:
-                print(f"  warning: failed to fetch openapi {tab['openapi']}: {e}", file=sys.stderr)
-                out += [f"- OpenAPI spec: {tab['openapi']}", ""]
+            out += openapi_section(tab["openapi"], refresh=args.refresh_openapi, existing=existing)
 
     OUTPUT.write_text("\n".join(out).rstrip() + "\n")
     print(f"wrote {OUTPUT.relative_to(SRC_DIR.parent)} ({OUTPUT.stat().st_size} bytes)")

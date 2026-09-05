@@ -104,6 +104,12 @@ docs-sdk: docs-llms
 docs-llms:
 	cd docs/src && uv run python scripts/generate_llms.py
 
+# Rebuild the API section of llms.txt from the live OpenAPI spec. Only the
+# refresh-llms workflow should need this; docs-llms reuses the committed section.
+.PHONY: docs-llms-refresh
+docs-llms-refresh:
+	cd docs/src && uv run python scripts/generate_llms.py --refresh-openapi
+
 
 .PHONY: docs-agent-notice
 docs-agent-notice:
