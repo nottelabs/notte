@@ -1,0 +1,53 @@
+---
+title: "fetch"
+description: "Issue an HTTP request from the page the session is on and return the response"
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+The request runs inside the browser through `fetch()`, so it carries the
+page's cookies, the session's proxy and the browser's own network
+fingerprint. A relative `url` resolves against the current page, which
+also makes it same-origin; a cross-origin URL is subject to CORS exactly
+as in a browser tab, so `goto` the target origin first. Redirects are
+followed and the final URL is on `response.url`. The result is a standard
+`requests.Response`: a non-2xx status is returned, not raised, and
+`response.raise_for_status()` raises `requests.HTTPError`. A network
+failure surfaces as the JavaScript error.
+
+`json` is serialised as the body with an `application/json` content type,
+`data` as a form body when it is a mapping or verbatim when it is a string.
+
+```python
+session.execute(type="goto", url="https://en.wikipedia.org/wiki/Main_Page")
+summary = session.fetch("/api/rest_v1/page/summary/Main_Page").json()
+```
+
+
+## Parameters
+
+<ParamField path="url" type="str" required>
+</ParamField>
+
+<ParamField path="method" type="str" default="GET">
+</ParamField>
+
+<ParamField path="headers" type="UnionType[Mapping[str, str], None]" default="None">
+</ParamField>
+
+<ParamField path="params" type="UnionType[Mapping[str, Any], None]" default="None">
+</ParamField>
+
+<ParamField path="json" type="Any" default="None">
+</ParamField>
+
+<ParamField path="data" type="UnionType[str, Mapping[str, Any], None]" default="None">
+</ParamField>
+
+<ParamField path="timeout" type="UnionType[float, None]" default="None">
+</ParamField>
+
+## Returns
+
+<Visibility for="humans">[`Response`](/sdk-reference/misc/response)</Visibility><Visibility for="agents">[`Response`](/sdk-reference/misc/response.md)</Visibility>

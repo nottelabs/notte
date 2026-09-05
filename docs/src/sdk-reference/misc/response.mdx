@@ -1,0 +1,65 @@
+---
+title: "Response"
+description: "The :class:`Response <Response>` object, which contains a"
+---
+
+
+server's response to an HTTP request
+
+## Methods
+
+### close
+
+```python
+close()
+```
+
+Releases the connection back to the pool
+
+---
+
+### iter_content
+
+```python
+iter_content(chunk_size = 1, decode_unicode = False)
+```
+
+Iterates over the response data
+
+---
+
+### iter_lines
+
+```python
+iter_lines(chunk_size = 512, decode_unicode = False, delimiter = None)
+```
+
+Iterates over the response data, one line at a time
+
+---
+
+### json
+
+```python
+json(kwargs)
+```
+
+Decodes the JSON response body (if any) as a Python object
+
+---
+
+### raise_for_status
+
+```python
+raise_for_status()
+```
+
+Raises :class:`HTTPError`, if one occurred
+
+---
+
+
+
+## Module
+
+`requests.models`

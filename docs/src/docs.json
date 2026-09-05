@@ -249,6 +249,7 @@
                       "sdk-reference/remotesession/observe",
                       "sdk-reference/remotesession/execute",
                       "sdk-reference/remotesession/scrape",
+"sdk-reference/remotesession/fetch",
                       "sdk-reference/remotesession/replay",
                       "sdk-reference/remotesession/cdp_url",
                       "sdk-reference/remotesession/set_cookies",

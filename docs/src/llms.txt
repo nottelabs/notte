@@ -203,6 +203,8 @@ The SDK docs below are for generated-code editing and reference. They are not th
 
 ## APIs
 
+<!-- openapi:begin https://api.notte.cc/openapi.json -->
+
 ## Agents
 
 - [POST Agent Start](https://docs.notte.cc/api-reference/agents/agent-start.md)
@@ -340,6 +342,8 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [DELETE Vault Delete](https://docs.notte.cc/api-reference/vaults/vault-delete.md)
 - [PATCH Vault Update](https://docs.notte.cc/api-reference/vaults/vault-update.md)
 
+<!-- openapi:end -->
+
 
 ## SDK
 
@@ -363,6 +367,7 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [observe](https://docs.notte.cc/sdk-reference/remotesession/observe.md): Observes the current session page
 - [execute](https://docs.notte.cc/sdk-reference/remotesession/execute.md): Executes an action on the current session page
 - [scrape](https://docs.notte.cc/sdk-reference/remotesession/scrape.md): Scrape the current page data
+- [fetch](https://docs.notte.cc/sdk-reference/remotesession/fetch.md): Issue an HTTP request from the page the session is on and return the response
 - [replay](https://docs.notte.cc/sdk-reference/remotesession/replay.md): Get presigned URLs for the session replay
 - [cdp_url](https://docs.notte.cc/sdk-reference/remotesession/cdp_url.md): Get the Chrome DevTools Protocol WebSocket URL for the session
 - [set_cookies](https://docs.notte.cc/sdk-reference/remotesession/set_cookies.md): Uploads cookies to the session

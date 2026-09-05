@@ -32,6 +32,17 @@ class EvaluateJsNoDataError(ActionError):
         )
 
 
+class FetchResponseDecodeError(ActionError):
+    def __init__(self, reason: str) -> None:
+        message = f"fetch script returned an unreadable response envelope: {reason}"
+        super().__init__(
+            dev_message=message,
+            user_message=f"{message}.",
+            agent_message=message,
+            should_notify_team=True,
+        )
+
+
 class NotEnoughActionsListedError(ActionError):
     def __init__(self, n_trials: int, n_actions: int, threshold: float) -> None:
         super().__init__(
