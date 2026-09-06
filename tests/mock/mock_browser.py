@@ -166,9 +166,10 @@ class MockBrowserDriver(AsyncResource):
         """Mock browser screenshot"""
         return Observation.empty().screenshot.raw
 
-    async def goto(self, url: str) -> BrowserSnapshot:
+    async def goto(self, url: str, wait_until: str | None = None) -> BrowserSnapshot:
         """Mock navigation action"""
         self.url = url
+        self.wait_until = wait_until
         snapshot = BrowserSnapshot(
             metadata=SnapshotMetadata(
                 title="mock",

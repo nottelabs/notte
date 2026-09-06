@@ -27,6 +27,12 @@ def test_goto_action_accepts_the_playwright_events_only() -> None:
         _ = GotoAction(url="https://example.com", wait_until="eventually")  # type: ignore[arg-type]
 
 
+def test_wait_until_stays_out_of_the_agent_schema() -> None:
+    # the agent prompt renders each action's schema minus non_agent_fields; keep the knob out of it
+    assert "wait_until" in GotoAction.non_agent_fields()
+    assert "wait_until" not in GotoAction(url="https://example.com", wait_until="commit").model_dump_agent()
+
+
 @pytest.mark.asyncio
 async def test_goto_with_commit_is_enough_for_a_same_origin_fetch() -> None:
     async with NotteSession(headless=True) as session:

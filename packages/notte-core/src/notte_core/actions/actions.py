@@ -309,6 +309,12 @@ class GotoAction(BrowserAction):
 
     __pydantic_fields_set__ = {"url"}  # type: ignore[reportUnknownMemberType]
 
+    @classmethod
+    @override
+    def non_agent_fields(cls) -> set[str]:
+        # a latency knob for scripts, not a decision the agent should be making
+        return super().non_agent_fields() | {"wait_until"}
+
     @override
     def execution_message(self) -> str:
         return f"Navigated to '{self.url}' in current tab"
