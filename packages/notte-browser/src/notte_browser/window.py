@@ -48,6 +48,8 @@ from notte_browser.errors import (
 )
 from notte_browser.playwright_async_api import CDPSession, Locator, Page, Response
 
+WaitUntil = Literal["commit", "domcontentloaded", "load", "networkidle"]
+
 
 class BrowserWindowOptions(BaseModel):
     headless: bool
@@ -584,7 +586,11 @@ class BrowserWindow(BaseModel):
             return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector)
 
     async def goto_and_wait(
-        self, url: str | None = None, tries: int = 3, operation: Literal["back", "forward"] | None = None
+        self,
+        url: str | None = None,
+        tries: int = 3,
+        operation: Literal["back", "forward"] | None = None,
+        wait_until: WaitUntil | None = None,
     ) -> None:
         def is_default_page():
             return self.page.url == "about:blank" and not url == "about:blank"
@@ -602,7 +608,7 @@ class BrowserWindow(BaseModel):
                 match operation:
                     case None:
                         assert url is not None, "URL is required for goto"
-                        _ = await self.page.goto(url, timeout=config.timeout_goto_ms)
+                        _ = await self.page.goto(url, timeout=config.timeout_goto_ms, wait_until=wait_until)
                     case "back":
                         _ = await self.page.go_back(timeout=config.timeout_goto_ms)
                     case "forward":
@@ -628,8 +634,9 @@ class BrowserWindow(BaseModel):
                 raise PageLoadingError(url=url or self.page.url) from e
 
             # extra wait to make sure that css animations can start
-            # to make extra element visible
-            await self.short_wait()
+            # to make extra element visible; pointless before the DOM exists
+            if wait_until not in ("commit", "domcontentloaded"):
+                await self.short_wait()
 
             if not is_default_page() or tries < 0:
                 break
@@ -637,7 +644,7 @@ class BrowserWindow(BaseModel):
         if is_default_page():
             raise PageLoadingError(url=url or self.page.url)
 
-    async def goto(self, url: str, tries: int = 3) -> None:
+    async def goto(self, url: str, tries: int = 3, wait_until: WaitUntil | None = None) -> None:
         if url == self.page.url:
             return
         prefixes = ("http://", "https://")
@@ -649,7 +656,7 @@ class BrowserWindow(BaseModel):
         if not is_valid_url(url, check_reachability=False):
             raise InvalidURLError(url=url)
 
-        await self.goto_and_wait(url=url, tries=tries, operation=None)
+        await self.goto_and_wait(url=url, tries=tries, operation=None, wait_until=wait_until)
 
     async def set_cookies(self, cookies: list[CookieDict] | None = None, cookie_path: str | Path | None = None) -> None:
         if cookies is None and cookie_path is not None:

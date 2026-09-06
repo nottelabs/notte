@@ -285,15 +285,24 @@ class GotoAction(BrowserAction):
     """
     Goto to a URL (in current tab).
 
+    `wait_until` picks the navigation event to wait for, as in Playwright: `load`
+    (the default) waits for the page and its subresources, `domcontentloaded` for
+    the HTML to be parsed, `commit` for the first response bytes, `networkidle`
+    for the network to go quiet. `commit` and `domcontentloaded` also skip the
+    settle wait that follows a load, which makes them the cheap choice when the
+    page is only needed as an origin for `session.fetch()`.
+
     **Example:**
     ```python
     session.execute(type="goto", url="https://www.google.com")
+    session.execute(type="goto", url="https://www.google.com", wait_until="commit")
     ```
     """
 
     type: Literal["goto"] = "goto"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Goto to a URL (in current tab)"
     url: str
+    wait_until: Literal["commit", "domcontentloaded", "load", "networkidle"] | None = None
 
     # Allow 'id' to be a field name
     model_config = {"extra": "forbid", "protected_namespaces": ()}  # type: ignore[reportUnknownMemberType]

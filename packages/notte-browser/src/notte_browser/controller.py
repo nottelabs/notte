@@ -216,8 +216,8 @@ class BrowserController:
 
             case CaptchaSolveAction(captcha_type=_):
                 _ = await CaptchaHandler.handle_captchas(window, action)
-            case GotoAction(url=url):
-                await window.goto(url)
+            case GotoAction(url=url, wait_until=wait_until):
+                await window.goto(url, wait_until=wait_until)
             case GotoNewTabAction(url=url):
                 new_page = await window.page.context.new_page()
                 window.page = new_page

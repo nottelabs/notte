@@ -116,6 +116,7 @@ class FormFillActionDict(TypedDict, total=False):
 class GotoActionDict(TypedDict):
     type: Literal["goto"]
     url: str
+    wait_until: NotRequired[Literal["commit", "domcontentloaded", "load", "networkidle"]]
 
 
 class GotoNewTabActionDict(TypedDict):

@@ -50,6 +50,7 @@ Navigate to a URL.
 
 **Parameters:**
 - `url` (str): The URL to navigate to
+- `wait_until` (str, optional): Navigation event to wait for: `load` (default), `domcontentloaded`, `commit` or `networkidle`. `commit` and `domcontentloaded` skip the post-load settle wait, which makes them the cheap choice when the page is only needed as an origin for `session.fetch()`
 
 **Use for:** Opening pages, navigating between pages
 
