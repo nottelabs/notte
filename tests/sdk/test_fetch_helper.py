@@ -1,5 +1,6 @@
 """Remote `fetch()`: the request runs in the page via `evaluate_js` and comes back as a `requests.Response`."""
 
+import base64
 import datetime as dt
 import json
 
@@ -14,8 +15,22 @@ from notte_core.errors.actions import FetchResponseDecodeError
 from tests.sdk.test_execute_raise_on_failure import over_the_wire, remote_session
 
 
-def envelope(status: int = 200, text: str = '{"ok": true}', url: str = "https://example.com/api") -> str:
-    return json.dumps({"status": status, "url": url, "headers": {"content-type": "application/json"}, "text": text})
+def envelope(
+    status: int = 200,
+    text: str = '{"ok": true}',
+    url: str = "https://example.com/api",
+    content_type: str = "application/json",
+    body: bytes | None = None,
+) -> str:
+    payload = body if body is not None else text.encode("utf-8")
+    return json.dumps(
+        {
+            "status": status,
+            "url": url,
+            "headers": {"content-type": content_type},
+            "body_b64": base64.b64encode(payload).decode("ascii"),
+        }
+    )
 
 
 def eval_result(markdown: str) -> ExecutionResult:
@@ -134,6 +149,31 @@ def test_fetch_returns_http_errors_and_raises_only_when_asked() -> None:
     with pytest.raises(requests.HTTPError, match="403 Client Error: Forbidden") as raised:
         response.raise_for_status()
     assert raised.value.response is response
+
+
+def test_fetch_preserves_binary_bodies_byte_for_byte() -> None:
+    payload = b"caf\xe9\x00\xff"
+    session = remote_session(
+        over_the_wire(eval_result(envelope(content_type="application/octet-stream", body=payload)))
+    )
+
+    response = session.fetch("/blob")
+
+    assert response.content == payload
+    # undeclared charset and not valid utf-8: left to requests' detection, never forced
+    assert response.encoding is None
+
+
+def test_fetch_decodes_text_with_the_declared_charset() -> None:
+    payload = "caf\u00e9".encode("latin-1")
+    session = remote_session(
+        over_the_wire(eval_result(envelope(content_type="text/html; charset=ISO-8859-1", body=payload)))
+    )
+
+    response = session.fetch("/page")
+
+    assert response.encoding == "ISO-8859-1"
+    assert response.text == "caf\u00e9"
 
 
 def test_fetch_rejects_an_unreadable_envelope() -> None:

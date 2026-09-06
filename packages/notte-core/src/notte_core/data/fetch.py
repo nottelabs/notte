@@ -9,6 +9,7 @@ the local browser session.
 
 from __future__ import annotations
 
+import base64
 import io
 import json
 from collections.abc import Mapping
@@ -97,20 +98,45 @@ def build_fetch_script(
         f"const init = {json.dumps(init)};"
         f"{abort}"
         f"const response = await fetch({json.dumps(request_url)}, init);"
-        "const text = await response.text();"
+        # ship the raw bytes as base64: `response.text()` would decode with
+        # replacement and lose any non-UTF-8 or binary body for good
+        "const bytes = new Uint8Array(await response.arrayBuffer());"
+        "let binary = '';"
+        "for (let i = 0; i < bytes.length; i += 0x8000) {"
+        "  binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));"
+        "}"
         "const headers = {};"
         "response.headers.forEach((value, key) => { headers[key] = value; });"
-        "return JSON.stringify({status: response.status, url: response.url, headers: headers, text: text});"
+        "return JSON.stringify({status: response.status, url: response.url, headers: headers, body_b64: btoa(binary)});"
         "})()"
     )
+
+
+def _encoding_for(headers: Mapping[str, str], content: bytes) -> str | None:
+    """The charset the response declares, else utf-8 when the bytes are valid utf-8.
+
+    Returning None leaves `requests` to detect the encoding from the bytes, which
+    is the right call for the odd legacy page that declares nothing.
+    """
+    content_type = next((value for key, value in headers.items() if key.lower() == _CONTENT_TYPE), "")
+    for param in content_type.split(";")[1:]:
+        name, _, value = param.strip().partition("=")
+        if name.strip().lower() == "charset" and value:
+            return value.strip().strip("\"'")
+    try:
+        _ = content.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+    return "utf-8"
 
 
 def response_from_evaluated(raw: str) -> requests.Response:
     """Turn the envelope `build_fetch_script` returns into a `requests.Response`.
 
     A non-2xx status is a response, not an error; `raise_for_status()` raises
-    `requests.HTTPError` as usual. `url` is the final URL after redirects, and
-    the body is exposed through `text`, `content` and `json()`.
+    `requests.HTTPError` as usual. `url` is the final URL after redirects.
+    `content` holds the exact bytes the server sent, so binary bodies survive;
+    `text` decodes them with the declared charset, or utf-8 when none is given.
     """
     try:
         payload: Any = json.loads(raw)
@@ -123,7 +149,7 @@ def response_from_evaluated(raw: str) -> requests.Response:
         status_code = int(envelope["status"])
         raw_headers: Any = envelope.get("headers") or {}
         headers = {str(key): str(value) for key, value in dict(raw_headers).items()}
-        text = str(envelope.get("text", ""))
+        content = base64.b64decode(str(envelope.get("body_b64", "")), validate=True)
         url = str(envelope.get("url", ""))
     except (KeyError, TypeError, ValueError) as exc:
         raise FetchResponseDecodeError(reason=str(exc)) from exc
@@ -131,9 +157,8 @@ def response_from_evaluated(raw: str) -> requests.Response:
     response = requests.Response()
     response.status_code = status_code
     response.headers = CaseInsensitiveDict(headers)
-    # the browser already decoded the body; hand it back as utf-8 so `.text` round-trips
-    response.encoding = "utf-8"
-    response.raw = io.BytesIO(text.encode("utf-8"))
+    response.encoding = _encoding_for(headers, content)
+    response.raw = io.BytesIO(content)
     response.url = url
     try:
         response.reason = HTTPStatus(status_code).phrase

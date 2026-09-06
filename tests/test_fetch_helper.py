@@ -30,6 +30,22 @@ async def test_afetch_json_reads_the_body() -> None:
 
 
 @pytest.mark.asyncio
+async def test_afetch_returns_binary_bodies_intact() -> None:
+    async with NotteSession(headless=True) as session:
+        _ = await session.aexecute(type="goto", url="https://www.example.com/")
+
+        # a 1x1 PNG served from a data URL: bytes that are not valid utf-8
+        response = await session.afetch(
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        )
+
+        assert response.status_code == 200
+        assert response.headers["Content-Type"] == "image/png"
+        assert response.content.startswith(b"\x89PNG\r\n\x1a\n")
+        assert len(response.content) == 70
+
+
+@pytest.mark.asyncio
 async def test_afetch_network_failure_raises_the_js_error() -> None:
     async with NotteSession(headless=True) as session:
         _ = await session.aexecute(type="goto", url="https://www.example.com/")
