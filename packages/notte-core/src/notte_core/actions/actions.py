@@ -6,9 +6,9 @@ import re
 import warnings
 from abc import ABCMeta, abstractmethod
 from functools import reduce
-from typing import Annotated, Any, ClassVar, Literal, cast, get_args
+from typing import Annotated, Any, ClassVar, Literal, get_args
 
-from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, field_validator, model_serializer, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import override
 
 from notte_core.browser.dom_tree import NodeSelectors
@@ -314,20 +314,6 @@ class GotoAction(BrowserAction):
     def non_agent_fields(cls) -> set[str]:
         # a latency knob for scripts, not a decision the agent should be making
         return super().non_agent_fields() | {"wait_until"}
-
-    @model_serializer(mode="wrap")
-    def _omit_unset_wait_until(self, handler: SerializerFunctionWrapHandler) -> Any:
-        # Actions are echoed back in API responses and every action model forbids
-        # unknown fields, so a `"wait_until": null` from a newer API would make an
-        # older SDK reject the whole response. Leave the key out unless it is set;
-        # the wire shape of a plain goto then stays exactly what it was.
-        data = handler(self)
-        if not isinstance(data, dict):
-            return data
-        typed = cast(dict[str, Any], data)
-        if typed.get("wait_until") is None:
-            _ = typed.pop("wait_until", None)
-        return typed
 
     @override
     def execution_message(self) -> str:

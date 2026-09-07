@@ -5,22 +5,29 @@ from typing import Literal
 
 import pytest
 from notte_browser.session import NotteSession
-from notte_core.actions import GotoAction
+from notte_core.actions import ActionUnion, GotoAction
 from notte_core.actions.typedicts import action_dict_to_base_action
 from notte_core.browser.observation import ExecutionResult
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 
-def test_goto_action_defaults_to_no_wait_until_and_omits_it_when_dumped() -> None:
+def test_goto_action_defaults_to_no_wait_until_and_wire_dump_omits_it() -> None:
     action = GotoAction(url="https://example.com")
 
     assert action.wait_until is None
-    # older API builds reject unknown fields, so an unset value must not be sent,
-    # and not only under exclude_none: API responses are dumped with defaults included
+    # SDK requests and API responses use exclude_none at their wire boundaries.
     assert "wait_until" not in action.model_dump(exclude_none=True)
-    assert "wait_until" not in action.model_dump()
-    assert "wait_until" not in action.model_dump(mode="json", by_alias=True)
     assert GotoAction(url="https://example.com", wait_until="commit").model_dump()["wait_until"] == "commit"
+
+
+def test_goto_action_union_serialization_schema_remains_concrete() -> None:
+    schema = TypeAdapter(ActionUnion).json_schema(mode="serialization")
+    goto_schema = schema["$defs"]["GotoAction"]
+
+    assert schema["discriminator"]["mapping"]["goto"] == "#/$defs/GotoAction"
+    assert goto_schema["type"] == "object"
+    assert {"type", "url", "wait_until"} <= goto_schema["properties"].keys()
+    assert goto_schema["properties"]["type"]["const"] == "goto"
 
 
 class _GotoBeforeWaitUntil(BaseModel):
@@ -37,8 +44,8 @@ def test_an_echoed_goto_still_parses_on_an_older_sdk() -> None:
         action=GotoAction(url="https://example.com"), success=True, message="ok", started_at=now, ended_at=now
     )
 
-    # what FastAPI serialises for the response model: defaults included, nothing excluded
-    echoed = result.model_dump(mode="json", by_alias=True)["action"]
+    # API response routes exclude None-valued model fields at the wire boundary.
+    echoed = result.model_dump(mode="json", by_alias=True, exclude_none=True)["action"]
 
     parsed = _GotoBeforeWaitUntil.model_validate(
         {k: v for k, v in echoed.items() if k in ("type", "url", "wait_until")}

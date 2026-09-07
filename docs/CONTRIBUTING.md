@@ -9,6 +9,10 @@ You can contribute to Notte by submitting a PR or by reporting an issue.
 3. Make your changes
 4. Submit a PR
 
+Changes to Pydantic models used by the API must follow the
+[backward-compatibility guide](backward-compatibility.md), including checks for
+both validation and serialization schemas.
+
 ## Reporting an Issue
 
 1. Check if the issue already exists
