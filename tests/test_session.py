@@ -468,6 +468,21 @@ async def test_evaluate_js_success_path_is_unchanged(code: str, expected_markdow
         assert result.data.markdown == expected_markdown
 
 
+@pytest.mark.asyncio
+async def test_evaluate_js_does_not_retain_automatic_screenshots() -> None:
+    async with NotteSession(headless=True) as session:
+        await session.window.page.set_content("<p>hello</p>")
+
+        for _ in range(3):
+            result = await session.aexecute(type="evaluate_js", code="document.body.textContent")
+            assert result.success is True
+
+        assert list(session.trajectory.screenshots()) == []
+
+        explicit_screenshot = await session.ascreenshot()
+        assert list(session.trajectory.screenshots()) == [explicit_screenshot]
+
+
 # ============================================
 # actions that fail by returning (no exception)
 # ============================================

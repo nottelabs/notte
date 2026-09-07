@@ -893,8 +893,12 @@ class NotteSession(AsyncResource, SyncResource):
         )
         await self.trajectory.append(execution_result)
 
-        # add screenshot to trajectory (after the execution)
-        if self._window is not None:
+        # Add a screenshot after visual browser actions. EvaluateJsAction is a
+        # data-returning primitive (commonly used for repeated fetches), and
+        # retaining a full JPEG for every call makes session memory grow linearly
+        # even when the page never changes. Callers that need a frame after
+        # evaluate_js can still request one explicitly with ascreenshot().
+        if self._window is not None and not isinstance(resolved_action, EvaluateJsAction):
             try:
                 _ = await self.ascreenshot()
             except Exception as e:
