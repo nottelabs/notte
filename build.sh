@@ -52,6 +52,5 @@ if [ "$publish" == "publish" ]; then
     echo "Publishing packages"
     uv publish \
         --check-url https://pypi.org/simple \
-        --token "$UV_PUBLISH_TOKEN" \
         dist/*
 fi

@@ -53,7 +53,6 @@ jobs:
         run: >-
           uv publish
           --check-url https://pypi.org/simple
-          --token "$UV_PUBLISH_TOKEN"
           dist/*
 
       - name: Wait for PyPI indexing
