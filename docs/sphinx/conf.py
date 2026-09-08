@@ -44,3 +44,28 @@ builders = {"mintlify": "sphinx_mintlify.MintlifyBuilder"}
 autodoc_member_order = "bysource"
 autodoc_typehints = "description"
 autodoc_class_signature = "mixed"
+
+
+def setup(app):
+    # sphinx-mintlify keys generated type pages by bare class name. Following
+    # Playwright's Page graph would overwrite requests.Response with its own
+    # unrelated Response type, so link Page to its upstream reference instead.
+    from sphinx_mintlify.builder import MintlifyBuilder
+    from sphinx_mintlify.generator import ClassMarkdownGenerator
+
+    class SDKReferenceGenerator(ClassMarkdownGenerator):
+        def _format_type_with_links(self, annotation, module=None):
+            resolved = self._resolve_type(annotation, module) if isinstance(annotation, str) else annotation
+            if (
+                isinstance(resolved, type)
+                and resolved.__module__.startswith("playwright.")
+                and resolved.__name__ == "Page"
+            ):
+                return "[`Page`](https://playwright.dev/python/docs/api/class-page)"
+            return super()._format_type_with_links(annotation, module)
+
+    def use_sdk_generator(app):
+        if isinstance(app.builder, MintlifyBuilder):
+            app.builder.generator = SDKReferenceGenerator(app)
+
+    app.connect("builder-inited", use_sdk_generator)

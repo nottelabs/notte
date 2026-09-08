@@ -1,184 +1,65 @@
 ---
 title: "Response"
-description: "No description available"
+description: "The :class:`Response <Response>` object, which contains a"
 ---
 
 
+server's response to an HTTP request
 
 ## Methods
 
-### all_headers
+### close
 
 ```python
-all_headers() -> typing.Dict[str, str]
+close()
 ```
 
-Response
-
-**Returns:**
-
-`Dict`[`str`, `str`]
+Releases the connection back to the pool
 
 ---
 
-### body
+### iter_content
 
 ```python
-body() -> <class 'bytes'>
+iter_content(chunk_size = 1, decode_unicode = False)
 ```
 
-Response
-
-**Returns:**
-
-`bytes`
+Iterates over the response data
 
 ---
 
-### finished
+### iter_lines
 
 ```python
-finished()
+iter_lines(chunk_size = 512, decode_unicode = False, delimiter = None)
 ```
 
-Response
-
----
-
-### header_value
-
-```python
-header_value(name: <class 'str'>) -> typing.Optional[str]
-```
-
-Response
-
-**Returns:**
-
-`str` | `None`
-
----
-
-### header_values
-
-```python
-header_values(name: <class 'str'>) -> typing.List[str]
-```
-
-Response
-
-**Returns:**
-
-`list`[`str`]
-
----
-
-### headers_array
-
-```python
-headers_array() -> typing.List[playwright._impl._api_structures.NameValue]
-```
-
-Response
-
-**Returns:**
-
-`list`[<Visibility for="humans">[`NameValue`](/sdk-reference/misc/namevalue)</Visibility><Visibility for="agents">[`NameValue`](/sdk-reference/misc/namevalue.md)</Visibility>]
+Iterates over the response data, one line at a time
 
 ---
 
 ### json
 
 ```python
-json() -> typing.Any
+json(kwargs)
 ```
 
-Response
-
-**Returns:**
-
-`Any`
+Decodes the JSON response body (if any) as a Python object
 
 ---
 
-### on
+### raise_for_status
 
 ```python
-on(event: typing.Any, f: typing.Any)
+raise_for_status()
 ```
 
-Registers the function ``f`` to the event name ``event``
+Raises :class:`HTTPError`, if one occurred
 
 ---
 
-### once
-
-```python
-once(event: typing.Any, f: typing.Any)
-```
-
-The same as ``self
-
----
-
-### remove_listener
-
-```python
-remove_listener(event: typing.Any, f: typing.Any)
-```
-
-Removes the function ``f`` from ``event``
-
----
-
-### security_details
-
-```python
-security_details() -> typing.Optional[playwright._impl._api_structures.SecurityDetails]
-```
-
-Response
-
-**Returns:**
-
-<Visibility for="humans">[`SecurityDetails`](/sdk-reference/misc/securitydetails)</Visibility><Visibility for="agents">[`SecurityDetails`](/sdk-reference/misc/securitydetails.md)</Visibility> | `None`
-
----
-
-### server_addr
-
-```python
-server_addr() -> typing.Optional[playwright._impl._api_structures.RemoteAddr]
-```
-
-Response
-
-**Returns:**
-
-<Visibility for="humans">[`RemoteAddr`](/sdk-reference/misc/remoteaddr)</Visibility><Visibility for="agents">[`RemoteAddr`](/sdk-reference/misc/remoteaddr.md)</Visibility> | `None`
-
----
-
-### text
-
-```python
-text() -> <class 'str'>
-```
-
-Response
-
-**Returns:**
-
-`str`
-
----
-
-
-## Inheritance
-
-Inherits from: AsyncBase
 
 
 ## Module
 
-`playwright.async_api._generated`
+`requests.models`
