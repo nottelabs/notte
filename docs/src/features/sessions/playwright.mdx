@@ -89,6 +89,31 @@ CDP connections can be interrupted. Wrap operations in try-except blocks:
 
 <PlaywrightCdpErrorHandling />
 
+When using the SDK-managed `session.page`, call `session.reconnect()` after
+its browser connection drops. For `await session.apage`, use
+`await session.areconnect()` instead:
+
+```python
+# After detecting a disconnected SDK-managed Playwright connection:
+page = session.reconnect(timeout_ms=10_000)
+# Rebuild locators from this page for subsequent work.
+```
+
+Each call makes at most one CDP connection attempt to the existing session. It
+does not repeat the failed operation, resume the workflow, or start a replacement
+session. The timeout bounds the CDP handshake. If the connection is still healthy,
+the existing page is returned. Initialize `session.page` (or `await session.apage`)
+before using these methods; independently connected Playwright clients manage
+their own connections.
+
+Call reconnect before leaving the session context manager: exiting that context
+still stops the remote session. Old `Page`, `Locator`, and `CDPSession` objects
+remain invalid after a disconnect. The replacement page is the first page of the
+default browser context, as with initial `session.page` access; with multiple tabs,
+select the intended tab explicitly. Reinstall any custom event handlers or routes
+on the replacement objects. A reconnect can fail if the remote session has expired
+or its browser is no longer available.
+
 ## When to Use Playwright with Notte
 
 Use Playwright directly when you need:

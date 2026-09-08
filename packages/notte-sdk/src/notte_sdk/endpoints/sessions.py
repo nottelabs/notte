@@ -1,3 +1,5 @@
+import asyncio
+import math
 import time
 from collections.abc import Mapping, Sequence
 from enum import StrEnum
@@ -686,6 +688,7 @@ class RemoteSession(SyncResource):
         self._async_playwright_context: "PlaywrightAsync | None" = None
         self._async_playwright_browser: "BrowserAsync | None" = None
         self._async_playwright_page: "PageAsync | None" = None
+        self._playwright_reconnect_lock: asyncio.Lock = asyncio.Lock()
 
     @override
     def __exit__(  # pyright: ignore [reportMissingSuperCall]
@@ -1109,6 +1112,65 @@ class RemoteSession(SyncResource):
         # cdp url from the session provider
         debug = self.debug_info()
         return self.client._with_db_preview(debug.ws.cdp)  # pyright: ignore [reportPrivateUsage]
+
+    def reconnect(self, *, timeout_ms: float = 10_000) -> "PageSync":
+        """Reconnect a disconnected sync Playwright client to this session.
+
+        Makes one connection attempt; it never retries an interrupted action,
+        starts a new session, or stops the remote browser. Call this before
+        leaving the session context manager, whose exit still stops the session.
+        Rebuild any retained Page, Locator, or CDPSession objects afterward.
+
+        Returns the first page of the default browser context, like ``page``;
+        this is not a guarantee of selecting a previously used tab. A healthy
+        connection is returned unchanged. Initialize ``page`` before calling.
+        ``timeout_ms`` must be finite and positive and bounds the CDP handshake.
+        """
+        if not math.isfinite(timeout_ms) or timeout_ms <= 0:
+            raise ValueError("timeout_ms must be finite and positive")
+        if self._playwright_context is None or self._playwright_browser is None:
+            raise RuntimeError("Initialize session.page before calling reconnect(); use areconnect() for async clients")
+        if self._playwright_browser.is_connected():
+            return self.page
+
+        # Keep the disconnected binding until a complete replacement is ready.
+        # Reuse the driver: starting another sync driver can nest event loops.
+        browser = self._playwright_context.chromium.connect_over_cdp(self.cdp_url(), timeout=timeout_ms)
+        try:
+            page = browser.contexts[0].pages[0]
+            _install_server_owned_dialog_policy(browser)
+        except BaseException:
+            browser.close()
+            raise
+        self._playwright_browser = browser
+        self._playwright_page = page
+        return page
+
+    async def areconnect(self, *, timeout_ms: float = 10_000) -> "PageAsync":
+        """Async version of ``reconnect``; no interrupted actions are retried.
+
+        Initialize ``await session.apage`` first. Concurrent reconnect requests
+        share the replacement binding. The timeout bounds each CDP handshake,
+        not time waiting for another reconnect to finish.
+        """
+        if not math.isfinite(timeout_ms) or timeout_ms <= 0:
+            raise ValueError("timeout_ms must be finite and positive")
+        async with self._playwright_reconnect_lock:
+            if self._async_playwright_context is None or self._async_playwright_browser is None:
+                raise RuntimeError("Initialize await session.apage before calling areconnect()")
+            if self._async_playwright_browser.is_connected():
+                return await self.apage
+
+            browser = await self._async_playwright_context.chromium.connect_over_cdp(self.cdp_url(), timeout=timeout_ms)
+            try:
+                page = browser.contexts[0].pages[0]
+                _install_server_owned_dialog_policy(browser)
+            except BaseException:
+                await browser.close()
+                raise
+            self._async_playwright_browser = browser
+            self._async_playwright_page = page
+            return page
 
     @property
     def page(self) -> "PageSync":
