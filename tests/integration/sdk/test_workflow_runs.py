@@ -308,7 +308,7 @@ class TestRemoteFunctionRuns:
     @patch("notte_sdk.endpoints.workflows.SecureScriptRunner")
     @patch("notte_sdk.endpoints.workflows.LogCapture")
     def test_remote_workflow_run_local_failure_closes_run(self, mock_log_capture, mock_script_runner):
-        """Test local function failures close the run instead of marking it failed."""
+        """Return a failed response while persisting the closed billing state."""
         workflows_client = MagicMock()
         workflows_client.get.return_value.function_id = "test-function-id"
         root_client = MagicMock()
@@ -325,7 +325,7 @@ class TestRemoteFunctionRuns:
         with patch.object(workflow, "download", return_value="def run():\n    raise RuntimeError('boom')"):
             result = workflow.run(local=True, function_run_id="test-run-id", raise_on_failure=False)
 
-        assert result.status == "closed"
+        assert result.status == "failed"
         assert result.result == "boom"
         workflows_client.update_run.assert_called_once()
         assert workflows_client.update_run.call_args.kwargs["status"] == "closed"
