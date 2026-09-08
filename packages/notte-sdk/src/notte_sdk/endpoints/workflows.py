@@ -811,7 +811,7 @@ class RemoteWorkflow:
 
         > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
         """
-        runtime = TypeAdapter(FunctionRuntime).validate_python(runtime)
+        runtime = TypeAdapter[FunctionRuntime](FunctionRuntime).validate_python(runtime)
         if input_variables is not None:
             if duplicates := input_variables.keys() & variables.keys():
                 raise ValueError(f"Duplicate input variables: {sorted(duplicates)}")
