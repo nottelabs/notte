@@ -872,7 +872,9 @@ class RemoteWorkflow:
                 function_run_id=function_run_id,
                 session_id=log_capture.session_id,
                 result=result,
-                status=status,
+                # Persistence uses closed for both outcomes; the execution
+                # response must retain the verdict for cloud callers.
+                status="failed" if exception is not None else status,
             )
         # run on cloud
         res = self.client.run(

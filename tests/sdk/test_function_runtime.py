@@ -87,3 +87,22 @@ def test_duplicate_inputs_rejected_before_creating_run():
     with pytest.raises(ValueError, match="Duplicate input"):
         RemoteWorkflow.run(function, input_variables={"wait_seconds": 1}, wait_seconds=2)
     function.client.create_run.assert_not_called()
+
+
+@pytest.mark.parametrize("raise_on_failure", [True, False])
+def test_local_failure_persists_closed_but_reports_failure(monkeypatch, raise_on_failure):
+    failure = RuntimeError("intentional test failure")
+    runner = SimpleNamespace(run_script=Mock(side_effect=failure))
+    monkeypatch.setattr(workflows, "SecureScriptRunner", lambda **kwargs: runner)
+    client = SimpleNamespace(update_run=Mock())
+    function = SimpleNamespace(
+        client=client, function_id="function", root_client=object(), download=lambda **kwargs: "code"
+    )
+    if raise_on_failure:
+        with pytest.raises(RuntimeError, match="intentional test failure"):
+            RemoteWorkflow.run(function, function_run_id="run", local=True, raise_on_failure=True)
+    else:
+        result = RemoteWorkflow.run(function, function_run_id="run", local=True, raise_on_failure=False)
+        assert result.status == "failed" and result.result == "intentional test failure"
+    assert client.update_run.call_args.kwargs["status"] == "closed"
+    assert client.update_run.call_args.kwargs["result"] == "intentional test failure"
