@@ -1,6 +1,9 @@
 # Configuration file for the Sphinx documentation builder.
 import os
 import sys
+from pathlib import Path
+
+from sphinx.application import Sphinx
 
 sys.path.insert(0, os.path.abspath(".."))  # Add parent directory to Python path
 sys.path.insert(0, os.path.abspath("../.."))  # Add parent directory to Python path
@@ -44,3 +47,20 @@ builders = {"mintlify": "sphinx_mintlify.MintlifyBuilder"}
 autodoc_member_order = "bysource"
 autodoc_typehints = "description"
 autodoc_class_signature = "mixed"
+
+
+# sphinx-mintlify renders defaults of string type aliases without their quotes.
+# Keep the public function signature valid Python after each regeneration.
+def preserve_function_runtime_default(app: Sphinx, exception: Exception | None) -> None:
+    if exception is not None:
+        return
+    reference = Path(app.confdir).parent / "src/sdk-reference/misc/nottefunction.mdx"
+    if reference.exists():
+        content = reference.read_text()
+        _ = reference.write_text(
+            content.replace("runtime: FunctionRuntime = standard", 'runtime: FunctionRuntime = "standard"')
+        )
+
+
+def setup(app: Sphinx) -> None:
+    _ = app.connect("build-finished", preserve_function_runtime_default)

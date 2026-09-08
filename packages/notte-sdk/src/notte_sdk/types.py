@@ -2283,6 +2283,9 @@ class ListFunctionsRequestDict(ListRequestDict, total=False):
     pass
 
 
+FunctionRuntime = Literal["standard", "extended"]
+
+
 class RunFunctionRequestDict(TypedDict, total=False):
     """Request dictionary for running a function.
 
@@ -2294,6 +2297,7 @@ class RunFunctionRequestDict(TypedDict, total=False):
     function_id: str
     variables: dict[str, Any]
     stream: bool
+    runtime: FunctionRuntime
 
 
 class RunFunctionRequest(SdkRequest):
@@ -2302,6 +2306,9 @@ class RunFunctionRequest(SdkRequest):
         Field(description="The ID of the function to run", validation_alias=AliasChoices("workflow_id", "function_id")),
     ]
     variables: Annotated[dict[str, Any], Field(description="The variables to run the workflow with")]
+    runtime: Annotated[
+        FunctionRuntime, Field(description="standard uses Lambda; extended allows longer cloud execution")
+    ] = "standard"
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = True
 
 
@@ -2426,6 +2433,9 @@ class StartFunctionRunRequest(SdkRequest):
         ),
     ] = None
     variables: Annotated[dict[str, Any] | None, Field(description="The variables to run the function with")] = None
+    runtime: Annotated[
+        FunctionRuntime, Field(description="standard uses Lambda; extended allows longer cloud execution")
+    ] = "standard"
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = False
 
     @computed_field

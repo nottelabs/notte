@@ -13,6 +13,7 @@ from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.errors.base import NotteBaseError
 from notte_core.utils.encryption import Encryption
+from pydantic import TypeAdapter
 from typing_extensions import deprecated
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
@@ -25,6 +26,7 @@ from notte_sdk.types import (
     DeleteFunctionResponse,
     ForkFunctionRequest,
     FunctionRunResponse,
+    FunctionRuntime,
     FunctionRunUpdateRequest,
     FunctionRunUpdateRequestDict,
     GetFunctionRequest,
@@ -479,6 +481,7 @@ class WorkflowsClient(BaseClient):
             function_run_id=function_run_id,
             variables=_request.variables,
             stream=_request.stream,
+            runtime=_request.runtime,
         )
         endpoint = self._start_workflow_run_endpoint(
             function_id=request.function_id, run_id=function_run_id
@@ -488,7 +491,9 @@ class WorkflowsClient(BaseClient):
         headers["Content-Type"] = "application/json"
         headers = self.headers(headers=headers)
         url = self.request_path(endpoint)
-        req_data = request.model_dump_json(exclude_none=True)
+        req_data = request.model_dump_json(
+            exclude_none=True, exclude={"runtime"} if request.runtime == "standard" else None
+        )
         timeout = timeout or self.WORKFLOW_RUN_TIMEOUT
 
         if not request.stream:
@@ -787,12 +792,17 @@ class RemoteWorkflow:
         function_run_id: str | None = None,
         workflow_run_id: str | None = None,
         log_callback: Callable[[str], None] | None = None,
+        runtime: FunctionRuntime = "standard",
+        input_variables: dict[str, Any] | None = None,
         **variables: Any,
     ) -> FunctionRunResponse:
         """
         Run the function code using the specified version and variables.
 
         If no version is provided, the latest version is used.
+        Pass runtime="extended" for longer cloud execution; "standard" is the default.
+        Use `input_variables={"runtime": value}` for script inputs whose names match
+        SDK options; these are merged with keyword inputs, rejecting duplicates.
 
         ```python
         function = notte.Function("<your-function-id>")
@@ -801,6 +811,13 @@ class RemoteWorkflow:
 
         > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
         """
+        runtime = TypeAdapter[FunctionRuntime](FunctionRuntime).validate_python(runtime)
+        if input_variables is not None:
+            if duplicates := input_variables.keys() & variables.keys():
+                raise ValueError(f"Duplicate input variables: {sorted(duplicates)}")
+            variables = {**input_variables, **variables}
+        if local and runtime != "standard":
+            raise ValueError("extended runtime is only available for cloud runs")
         if workflow_run_id is not None:
             warnings.warn(
                 "'workflow_run_id' is deprecated, use 'function_run_id' instead",
@@ -855,13 +872,16 @@ class RemoteWorkflow:
                 function_run_id=function_run_id,
                 session_id=log_capture.session_id,
                 result=result,
-                status=status,
+                # Persistence uses closed for both outcomes; the execution
+                # response must retain the verdict for cloud callers.
+                status="failed" if exception is not None else status,
             )
         # run on cloud
         res = self.client.run(
             function_id=self.response.function_id,
             function_run_id=function_run_id,
             stream=stream,
+            runtime=runtime,
             timeout=timeout,
             variables=variables,
         )

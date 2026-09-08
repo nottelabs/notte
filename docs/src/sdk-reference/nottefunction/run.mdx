@@ -7,6 +7,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 <AgentMdNotice />
 
 If no version is provided, the latest version is used.
+Pass runtime="extended" for longer cloud execution; "standard" is the default.
+Use `input_variables={"runtime": value}` for script inputs whose names match
+SDK options; these are merged with keyword inputs, rejecting duplicates.
 
 ```python
 function = notte.Function("<your-function-id>")
@@ -43,6 +46,12 @@ function.run(variable1="value1", variable2="value2")
 </ParamField>
 
 <ParamField path="log_callback" type="UnionType[Callable[[str], None], None]" default="None">
+</ParamField>
+
+<ParamField path="runtime" type="Literal['standard', 'extended']" default="standard">
+</ParamField>
+
+<ParamField path="input_variables" type="UnionType[Dict[str, Any], None]" default="None">
 </ParamField>
 
 <ParamField path="variables" type="Any" required>
