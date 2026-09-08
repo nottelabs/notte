@@ -3,6 +3,8 @@ import os
 import sys
 from pathlib import Path
 
+from sphinx.application import Sphinx
+
 sys.path.insert(0, os.path.abspath(".."))  # Add parent directory to Python path
 sys.path.insert(0, os.path.abspath("../.."))  # Add parent directory to Python path
 
@@ -49,16 +51,16 @@ autodoc_class_signature = "mixed"
 
 # sphinx-mintlify renders defaults of string type aliases without their quotes.
 # Keep the public function signature valid Python after each regeneration.
-def preserve_function_runtime_default(app, exception):
+def preserve_function_runtime_default(app: Sphinx, exception: Exception | None) -> None:
     if exception is not None:
         return
     reference = Path(app.confdir).parent / "src/sdk-reference/misc/nottefunction.mdx"
     if reference.exists():
         content = reference.read_text()
-        reference.write_text(
+        _ = reference.write_text(
             content.replace("runtime: FunctionRuntime = standard", 'runtime: FunctionRuntime = "standard"')
         )
 
 
-def setup(app):
-    app.connect("build-finished", preserve_function_runtime_default)
+def setup(app: Sphinx) -> None:
+    _ = app.connect("build-finished", preserve_function_runtime_default)
