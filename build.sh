@@ -50,5 +50,8 @@ done
 publish=$2
 if [ "$publish" == "publish" ]; then
     echo "Publishing packages"
-    uv run twine upload --skip-existing --repository pypi dist/* -u __token__ -p $UV_PUBLISH_TOKEN
+    uv publish \
+        --check-url https://pypi.org/simple \
+        --token "$UV_PUBLISH_TOKEN" \
+        dist/*
 fi
