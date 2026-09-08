@@ -36,17 +36,24 @@ jobs:
             python-version-file: ".python-version"
             cache: ${{ env.CACHE_TYPE }}
 
+      - name: Build Python distributions
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: bash build.sh "$RELEASE_TAG"
+
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
           name: python-package-distributions
           path: dist/
 
-      - name: Build and Publish to PyPI
+      - name: Publish to PyPI
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: bash build.sh "$RELEASE_TAG" publish
+        run: >-
+          uv publish
+          --check-url https://pypi.org/simple
+          dist/*
 
       - name: Wait for PyPI indexing
         run: |
