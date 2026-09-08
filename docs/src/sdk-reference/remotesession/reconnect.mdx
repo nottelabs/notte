@@ -1,0 +1,26 @@
+---
+title: "reconnect"
+description: "Reconnect a disconnected sync Playwright client to this session"
+---
+
+
+
+Makes one connection attempt; it never retries an interrupted action,
+starts a new session, or stops the remote browser. Call this before
+leaving the session context manager, whose exit still stops the session.
+Rebuild any retained Page, Locator, or CDPSession objects afterward.
+
+Returns the first page of the default browser context, like ``page``;
+this is not a guarantee of selecting a previously used tab. A healthy
+connection is returned unchanged. Initialize ``page`` before calling.
+``timeout_ms`` must be finite and positive and bounds the CDP handshake
+
+
+## Parameters
+
+<ParamField path="timeout_ms" type="float" default="10000">
+</ParamField>
+
+## Returns
+
+[`Page`](https://playwright.dev/python/docs/api/class-page)

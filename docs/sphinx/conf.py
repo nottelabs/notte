@@ -1,6 +1,11 @@
 # Configuration file for the Sphinx documentation builder.
 import os
 import sys
+from types import ModuleType
+from typing import Any
+
+from sphinx.application import Sphinx
+from typing_extensions import override
 
 sys.path.insert(0, os.path.abspath(".."))  # Add parent directory to Python path
 sys.path.insert(0, os.path.abspath("../.."))  # Add parent directory to Python path
@@ -44,3 +49,33 @@ builders = {"mintlify": "sphinx_mintlify.MintlifyBuilder"}
 autodoc_member_order = "bysource"
 autodoc_typehints = "description"
 autodoc_class_signature = "mixed"
+
+
+def setup(app: Sphinx) -> None:
+    # sphinx-mintlify keys generated type pages by bare class name. Following
+    # Playwright's Page graph would overwrite requests.Response with its own
+    # unrelated Response type, so link Page to its upstream reference instead.
+    from sphinx_mintlify.builder import MintlifyBuilder  # pyright: ignore[reportMissingTypeStubs]
+    from sphinx_mintlify.generator import ClassMarkdownGenerator  # pyright: ignore[reportMissingTypeStubs]
+
+    class SDKReferenceGenerator(ClassMarkdownGenerator):
+        @override
+        def _format_type_with_links(self, type_annotation: Any, module: ModuleType | None = None) -> str:
+            resolved = (
+                vars(module).get(type_annotation)
+                if isinstance(type_annotation, str) and module is not None
+                else type_annotation
+            )
+            if (
+                isinstance(resolved, type)
+                and resolved.__module__.startswith("playwright.")
+                and resolved.__name__ == "Page"
+            ):
+                return "[`Page`](https://playwright.dev/python/docs/api/class-page)"
+            return super()._format_type_with_links(type_annotation, module)  # pyright: ignore[reportUnknownMemberType]
+
+    def use_sdk_generator(app: Sphinx) -> None:
+        if isinstance(app.builder, MintlifyBuilder):
+            app.builder.generator = SDKReferenceGenerator(app)
+
+    _ = app.connect("builder-inited", use_sdk_generator)
