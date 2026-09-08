@@ -13,6 +13,7 @@ from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.errors.base import NotteBaseError
 from notte_core.utils.encryption import Encryption
+from pydantic import TypeAdapter
 from typing_extensions import deprecated
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
@@ -792,6 +793,7 @@ class RemoteWorkflow:
         workflow_run_id: str | None = None,
         log_callback: Callable[[str], None] | None = None,
         runtime: FunctionRuntime = "standard",
+        input_variables: dict[str, Any] | None = None,
         **variables: Any,
     ) -> FunctionRunResponse:
         """
@@ -799,6 +801,8 @@ class RemoteWorkflow:
 
         If no version is provided, the latest version is used.
         Pass runtime="extended" for longer cloud execution; "standard" is the default.
+        Use `input_variables={"runtime": value}` for script inputs whose names match
+        SDK options; these are merged with keyword inputs, rejecting duplicates.
 
         ```python
         function = notte.Function("<your-function-id>")
@@ -807,8 +811,11 @@ class RemoteWorkflow:
 
         > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
         """
-        if runtime not in ("standard", "extended"):
-            raise ValueError("runtime must be 'standard' or 'extended'")
+        runtime = TypeAdapter(FunctionRuntime).validate_python(runtime)
+        if input_variables is not None:
+            if duplicates := input_variables.keys() & variables.keys():
+                raise ValueError(f"Duplicate input variables: {sorted(duplicates)}")
+            variables = {**input_variables, **variables}
         if local and runtime != "standard":
             raise ValueError("extended runtime is only available for cloud runs")
         if workflow_run_id is not None:

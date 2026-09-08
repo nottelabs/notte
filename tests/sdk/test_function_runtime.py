@@ -57,7 +57,7 @@ def test_invalid_or_local_extended_rejected_before_creating_run():
     function = SimpleNamespace(client=SimpleNamespace(create_run=Mock()))
     with pytest.raises(ValueError, match="cloud"):
         RemoteWorkflow.run(function, local=True, runtime="extended")
-    with pytest.raises(ValueError, match="runtime must"):
+    with pytest.raises(ValueError, match="standard.*extended"):
         RemoteWorkflow.run(function, runtime="invalid")
     function.client.create_run.assert_not_called()
 
@@ -65,3 +65,25 @@ def test_invalid_or_local_extended_rejected_before_creating_run():
 def test_models_default_to_standard():
     assert RunFunctionRequest(function_id="function", variables={}).runtime == "standard"
     assert StartFunctionRunRequest(function_id="function").runtime == "standard"
+
+
+def test_script_inputs_can_use_reserved_sdk_option_names():
+    response = SimpleNamespace(status="closed", session_id=None)
+    client = SimpleNamespace(run=Mock(return_value=response))
+    function = SimpleNamespace(client=client, response=SimpleNamespace(function_id="function"))
+    RemoteWorkflow.run(
+        function,
+        function_run_id="run",
+        runtime="extended",
+        input_variables={"runtime": "python", "version": 3},
+        wait_seconds=960,
+    )
+    assert client.run.call_args.kwargs["variables"] == {"runtime": "python", "version": 3, "wait_seconds": 960}
+    assert client.run.call_args.kwargs["runtime"] == "extended"
+
+
+def test_duplicate_inputs_rejected_before_creating_run():
+    function = SimpleNamespace(client=SimpleNamespace(create_run=Mock()))
+    with pytest.raises(ValueError, match="Duplicate input"):
+        RemoteWorkflow.run(function, input_variables={"wait_seconds": 1}, wait_seconds=2)
+    function.client.create_run.assert_not_called()
