@@ -25,6 +25,7 @@ from notte_sdk.types import (
     DeleteFunctionResponse,
     ForkFunctionRequest,
     FunctionRunResponse,
+    FunctionRuntime,
     FunctionRunUpdateRequest,
     FunctionRunUpdateRequestDict,
     GetFunctionRequest,
@@ -479,6 +480,7 @@ class WorkflowsClient(BaseClient):
             function_run_id=function_run_id,
             variables=_request.variables,
             stream=_request.stream,
+            runtime=_request.runtime,
         )
         endpoint = self._start_workflow_run_endpoint(
             function_id=request.function_id, run_id=function_run_id
@@ -488,7 +490,9 @@ class WorkflowsClient(BaseClient):
         headers["Content-Type"] = "application/json"
         headers = self.headers(headers=headers)
         url = self.request_path(endpoint)
-        req_data = request.model_dump_json(exclude_none=True)
+        req_data = request.model_dump_json(
+            exclude_none=True, exclude={"runtime"} if request.runtime == "standard" else None
+        )
         timeout = timeout or self.WORKFLOW_RUN_TIMEOUT
 
         if not request.stream:
@@ -787,12 +791,14 @@ class RemoteWorkflow:
         function_run_id: str | None = None,
         workflow_run_id: str | None = None,
         log_callback: Callable[[str], None] | None = None,
+        runtime: FunctionRuntime = "standard",
         **variables: Any,
     ) -> FunctionRunResponse:
         """
         Run the function code using the specified version and variables.
 
         If no version is provided, the latest version is used.
+        Pass runtime="extended" for longer cloud execution; "standard" is the default.
 
         ```python
         function = notte.Function("<your-function-id>")
@@ -801,6 +807,10 @@ class RemoteWorkflow:
 
         > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
         """
+        if runtime not in ("standard", "extended"):
+            raise ValueError("runtime must be 'standard' or 'extended'")
+        if local and runtime != "standard":
+            raise ValueError("extended runtime is only available for cloud runs")
         if workflow_run_id is not None:
             warnings.warn(
                 "'workflow_run_id' is deprecated, use 'function_run_id' instead",
@@ -862,6 +872,7 @@ class RemoteWorkflow:
             function_id=self.response.function_id,
             function_run_id=function_run_id,
             stream=stream,
+            runtime=runtime,
             timeout=timeout,
             variables=variables,
         )
