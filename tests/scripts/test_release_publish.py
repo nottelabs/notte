@@ -2,20 +2,19 @@ from pathlib import Path
 
 import yaml
 
-
 ROOT = Path(__file__).parents[2]
 
 
 def test_release_workflow_builds_before_uploading_and_publishing() -> None:
-    workflow = yaml.safe_load(
-        (ROOT / ".github/workflows/pypi-release.yml").read_text()
-    )
+    workflow = yaml.safe_load((ROOT / ".github/workflows/pypi-release.yml").read_text())
     steps = workflow["jobs"]["build"]["steps"]
     names = [step.get("name") for step in steps]
 
-    assert names.index("Build Python distributions") < names.index(
-        "Store the distribution packages"
-    ) < names.index("Publish to PyPI")
+    assert (
+        names.index("Build Python distributions")
+        < names.index("Store the distribution packages")
+        < names.index("Publish to PyPI")
+    )
 
     publish = next(step for step in steps if step.get("name") == "Publish to PyPI")
     command = publish["run"]
