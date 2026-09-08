@@ -1,0 +1,188 @@
+---
+title: "FrameLocator"
+description: "No description available"
+---
+
+
+
+## Methods
+
+### frame_locator
+
+```python
+frame_locator(selector: <class 'str'>) -> FrameLocator
+```
+
+FrameLocator
+
+**Returns:**
+
+<Visibility for="humans">[`FrameLocator`](/sdk-reference/misc/framelocator)</Visibility><Visibility for="agents">[`FrameLocator`](/sdk-reference/misc/framelocator.md)</Visibility>
+
+---
+
+### get_by_alt_text
+
+```python
+get_by_alt_text(text: typing.Union[str, typing.Pattern[str]], exact: typing.Optional[bool] = None) -> Locator
+```
+
+FrameLocator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### get_by_label
+
+```python
+get_by_label(text: typing.Union[str, typing.Pattern[str]], exact: typing.Optional[bool] = None) -> Locator
+```
+
+FrameLocator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### get_by_placeholder
+
+```python
+get_by_placeholder(text: typing.Union[str, typing.Pattern[str]], exact: typing.Optional[bool] = None) -> Locator
+```
+
+FrameLocator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### get_by_role
+
+```python
+get_by_role(role: typing.Literal['alert', 'alertdialog', 'application', 'article', 'banner', 'blockquote', 'button', 'caption', 'cell', 'checkbox', 'code', 'columnheader', 'combobox', 'complementary', 'contentinfo', 'definition', 'deletion', 'dialog', 'directory', 'document', 'emphasis', 'feed', 'figure', 'form', 'generic', 'grid', 'gridcell', 'group', 'heading', 'img', 'insertion', 'link', 'list', 'listbox', 'listitem', 'log', 'main', 'marquee', 'math', 'menu', 'menubar', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'meter', 'navigation', 'none', 'note', 'option', 'paragraph', 'presentation', 'progressbar', 'radio', 'radiogroup', 'region', 'row', 'rowgroup', 'rowheader', 'scrollbar', 'search', 'searchbox', 'separator', 'slider', 'spinbutton', 'status', 'strong', 'subscript', 'superscript', 'switch', 'tab', 'table', 'tablist', 'tabpanel', 'term', 'textbox', 'time', 'timer', 'toolbar', 'tooltip', 'tree', 'treegrid', 'treeitem'], checked: typing.Optional[bool] = None, disabled: typing.Optional[bool] = None, expanded: typing.Optional[bool] = None, include_hidden: typing.Optional[bool] = None, level: typing.Optional[int] = None, name: typing.Union[typing.Pattern[str], str, NoneType] = None, pressed: typing.Optional[bool] = None, selected: typing.Optional[bool] = None, exact: typing.Optional[bool] = None) -> Locator
+```
+
+FrameLocator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### get_by_test_id
+
+```python
+get_by_test_id(test_id: typing.Union[str, typing.Pattern[str]]) -> Locator
+```
+
+FrameLocator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### get_by_text
+
+```python
+get_by_text(text: typing.Union[str, typing.Pattern[str]], exact: typing.Optional[bool] = None) -> Locator
+```
+
+FrameLocator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### get_by_title
+
+```python
+get_by_title(text: typing.Union[str, typing.Pattern[str]], exact: typing.Optional[bool] = None) -> Locator
+```
+
+FrameLocator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### locator
+
+```python
+locator(selector_or_locator: typing.Union[ForwardRef('Locator'), str], has_text: typing.Union[typing.Pattern[str], str, NoneType] = None, has_not_text: typing.Union[typing.Pattern[str], str, NoneType] = None, has: typing.Optional[ForwardRef('Locator')] = None, has_not: typing.Optional[ForwardRef('Locator')] = None) -> Locator
+```
+
+FrameLocator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### nth
+
+```python
+nth(index: <class 'int'>) -> FrameLocator
+```
+
+FrameLocator
+
+**Returns:**
+
+<Visibility for="humans">[`FrameLocator`](/sdk-reference/misc/framelocator)</Visibility><Visibility for="agents">[`FrameLocator`](/sdk-reference/misc/framelocator.md)</Visibility>
+
+---
+
+### on
+
+```python
+on(event: typing.Any, f: typing.Any)
+```
+
+Registers the function ``f`` to the event name ``event``
+
+---
+
+### once
+
+```python
+once(event: typing.Any, f: typing.Any)
+```
+
+The same as ``self
+
+---
+
+### remove_listener
+
+```python
+remove_listener(event: typing.Any, f: typing.Any)
+```
+
+Removes the function ``f`` from ``event``
+
+---
+
+
+## Inheritance
+
+Inherits from: AsyncBase
+
+
+## Module
+
+`playwright.async_api._generated`

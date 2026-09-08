@@ -1,0 +1,20 @@
+---
+title: "areconnect"
+description: "Async version of ``reconnect``; no interrupted actions are retried"
+---
+
+
+
+Initialize ``await session.apage`` first. Concurrent reconnect requests
+share the replacement binding. The timeout bounds each CDP handshake,
+not time waiting for another reconnect to finish
+
+
+## Parameters
+
+<ParamField path="timeout_ms" type="float" default="10000">
+</ParamField>
+
+## Returns
+
+<Visibility for="humans">[`Page`](/sdk-reference/misc/page)</Visibility><Visibility for="agents">[`Page`](/sdk-reference/misc/page.md)</Visibility>

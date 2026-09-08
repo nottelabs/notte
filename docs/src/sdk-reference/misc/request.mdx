@@ -1,5 +1,5 @@
 ---
-title: "Response"
+title: "Request"
 description: "No description available"
 ---
 
@@ -13,35 +13,11 @@ description: "No description available"
 all_headers() -> typing.Dict[str, str]
 ```
 
-Response
+Request
 
 **Returns:**
 
 `Dict`[`str`, `str`]
-
----
-
-### body
-
-```python
-body() -> <class 'bytes'>
-```
-
-Response
-
-**Returns:**
-
-`bytes`
-
----
-
-### finished
-
-```python
-finished()
-```
-
-Response
 
 ---
 
@@ -51,25 +27,11 @@ Response
 header_value(name: <class 'str'>) -> typing.Optional[str]
 ```
 
-Response
+Request
 
 **Returns:**
 
 `str` | `None`
-
----
-
-### header_values
-
-```python
-header_values(name: <class 'str'>) -> typing.List[str]
-```
-
-Response
-
-**Returns:**
-
-`list`[`str`]
 
 ---
 
@@ -79,7 +41,7 @@ Response
 headers_array() -> typing.List[playwright._impl._api_structures.NameValue]
 ```
 
-Response
+Request
 
 **Returns:**
 
@@ -87,17 +49,17 @@ Response
 
 ---
 
-### json
+### is_navigation_request
 
 ```python
-json() -> typing.Any
+is_navigation_request() -> <class 'bool'>
 ```
 
-Response
+Request
 
 **Returns:**
 
-`Any`
+`bool`
 
 ---
 
@@ -131,45 +93,31 @@ Removes the function ``f`` from ``event``
 
 ---
 
-### security_details
+### response
 
 ```python
-security_details() -> typing.Optional[playwright._impl._api_structures.SecurityDetails]
+response() -> typing.Optional[ForwardRef('Response')]
 ```
 
-Response
+Request
 
 **Returns:**
 
-<Visibility for="humans">[`SecurityDetails`](/sdk-reference/misc/securitydetails)</Visibility><Visibility for="agents">[`SecurityDetails`](/sdk-reference/misc/securitydetails.md)</Visibility> | `None`
+<Visibility for="humans">[`Response`](/sdk-reference/misc/response)</Visibility><Visibility for="agents">[`Response`](/sdk-reference/misc/response.md)</Visibility> | `None`
 
 ---
 
-### server_addr
+### sizes
 
 ```python
-server_addr() -> typing.Optional[playwright._impl._api_structures.RemoteAddr]
+sizes() -> <class 'playwright._impl._api_structures.RequestSizes'>
 ```
 
-Response
+Request
 
 **Returns:**
 
-<Visibility for="humans">[`RemoteAddr`](/sdk-reference/misc/remoteaddr)</Visibility><Visibility for="agents">[`RemoteAddr`](/sdk-reference/misc/remoteaddr.md)</Visibility> | `None`
-
----
-
-### text
-
-```python
-text() -> <class 'str'>
-```
-
-Response
-
-**Returns:**
-
-`str`
+<Visibility for="humans">[`RequestSizes`](/sdk-reference/misc/requestsizes)</Visibility><Visibility for="agents">[`RequestSizes`](/sdk-reference/misc/requestsizes.md)</Visibility>
 
 ---
 

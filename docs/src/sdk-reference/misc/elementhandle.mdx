@@ -1,0 +1,596 @@
+---
+title: "ElementHandle"
+description: "No description available"
+---
+
+
+
+## Methods
+
+### as_element
+
+```python
+as_element() -> typing.Optional[ForwardRef('ElementHandle')]
+```
+
+ElementHandle
+
+**Returns:**
+
+<Visibility for="humans">[`ElementHandle`](/sdk-reference/misc/elementhandle)</Visibility><Visibility for="agents">[`ElementHandle`](/sdk-reference/misc/elementhandle.md)</Visibility> | `None`
+
+---
+
+### bounding_box
+
+```python
+bounding_box() -> typing.Optional[playwright._impl._api_structures.FloatRect]
+```
+
+ElementHandle
+
+**Returns:**
+
+<Visibility for="humans">[`FloatRect`](/sdk-reference/misc/floatrect)</Visibility><Visibility for="agents">[`FloatRect`](/sdk-reference/misc/floatrect.md)</Visibility> | `None`
+
+---
+
+### check
+
+```python
+check(position: typing.Optional[playwright._impl._api_structures.Position] = None, timeout: typing.Optional[float] = None, force: typing.Optional[bool] = None, no_wait_after: typing.Optional[bool] = None, trial: typing.Optional[bool] = None)
+```
+
+ElementHandle
+
+---
+
+### click
+
+```python
+click(modifiers: typing.Optional[typing.Sequence[typing.Literal['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']]] = None, position: typing.Optional[playwright._impl._api_structures.Position] = None, delay: typing.Optional[float] = None, button: typing.Optional[typing.Literal['left', 'middle', 'right']] = None, click_count: typing.Optional[int] = None, timeout: typing.Optional[float] = None, force: typing.Optional[bool] = None, no_wait_after: typing.Optional[bool] = None, trial: typing.Optional[bool] = None)
+```
+
+ElementHandle
+
+---
+
+### content_frame
+
+```python
+content_frame() -> typing.Optional[ForwardRef('Frame')]
+```
+
+ElementHandle
+
+**Returns:**
+
+<Visibility for="humans">[`Frame`](/sdk-reference/misc/frame)</Visibility><Visibility for="agents">[`Frame`](/sdk-reference/misc/frame.md)</Visibility> | `None`
+
+---
+
+### dblclick
+
+```python
+dblclick(modifiers: typing.Optional[typing.Sequence[typing.Literal['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']]] = None, position: typing.Optional[playwright._impl._api_structures.Position] = None, delay: typing.Optional[float] = None, button: typing.Optional[typing.Literal['left', 'middle', 'right']] = None, timeout: typing.Optional[float] = None, force: typing.Optional[bool] = None, no_wait_after: typing.Optional[bool] = None, trial: typing.Optional[bool] = None)
+```
+
+ElementHandle
+
+---
+
+### dispatch_event
+
+```python
+dispatch_event(type: <class 'str'>, event_init: typing.Optional[typing.Dict] = None)
+```
+
+ElementHandle
+
+---
+
+### dispose
+
+```python
+dispose()
+```
+
+JSHandle
+
+---
+
+### eval_on_selector
+
+```python
+eval_on_selector(selector: <class 'str'>, expression: <class 'str'>, arg: typing.Optional[typing.Any] = None) -> typing.Any
+```
+
+ElementHandle
+
+**Returns:**
+
+`Any`
+
+---
+
+### eval_on_selector_all
+
+```python
+eval_on_selector_all(selector: <class 'str'>, expression: <class 'str'>, arg: typing.Optional[typing.Any] = None) -> typing.Any
+```
+
+ElementHandle
+
+**Returns:**
+
+`Any`
+
+---
+
+### evaluate
+
+```python
+evaluate(expression: <class 'str'>, arg: typing.Optional[typing.Any] = None) -> typing.Any
+```
+
+JSHandle
+
+**Returns:**
+
+`Any`
+
+---
+
+### evaluate_handle
+
+```python
+evaluate_handle(expression: <class 'str'>, arg: typing.Optional[typing.Any] = None) -> JSHandle
+```
+
+JSHandle
+
+**Returns:**
+
+<Visibility for="humans">[`JSHandle`](/sdk-reference/misc/jshandle)</Visibility><Visibility for="agents">[`JSHandle`](/sdk-reference/misc/jshandle.md)</Visibility>
+
+---
+
+### fill
+
+```python
+fill(value: <class 'str'>, timeout: typing.Optional[float] = None, no_wait_after: typing.Optional[bool] = None, force: typing.Optional[bool] = None)
+```
+
+ElementHandle
+
+---
+
+### focus
+
+```python
+focus()
+```
+
+ElementHandle
+
+---
+
+### get_attribute
+
+```python
+get_attribute(name: <class 'str'>) -> typing.Optional[str]
+```
+
+ElementHandle
+
+**Returns:**
+
+`str` | `None`
+
+---
+
+### get_properties
+
+```python
+get_properties() -> typing.Dict[str, ForwardRef('JSHandle')]
+```
+
+JSHandle
+
+**Returns:**
+
+`Dict`[`str`, <Visibility for="humans">[`JSHandle`](/sdk-reference/misc/jshandle)</Visibility><Visibility for="agents">[`JSHandle`](/sdk-reference/misc/jshandle.md)</Visibility>]
+
+---
+
+### get_property
+
+```python
+get_property(property_name: <class 'str'>) -> JSHandle
+```
+
+JSHandle
+
+**Returns:**
+
+<Visibility for="humans">[`JSHandle`](/sdk-reference/misc/jshandle)</Visibility><Visibility for="agents">[`JSHandle`](/sdk-reference/misc/jshandle.md)</Visibility>
+
+---
+
+### hover
+
+```python
+hover(modifiers: typing.Optional[typing.Sequence[typing.Literal['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']]] = None, position: typing.Optional[playwright._impl._api_structures.Position] = None, timeout: typing.Optional[float] = None, no_wait_after: typing.Optional[bool] = None, force: typing.Optional[bool] = None, trial: typing.Optional[bool] = None)
+```
+
+ElementHandle
+
+---
+
+### inner_html
+
+```python
+inner_html() -> <class 'str'>
+```
+
+ElementHandle
+
+**Returns:**
+
+`str`
+
+---
+
+### inner_text
+
+```python
+inner_text() -> <class 'str'>
+```
+
+ElementHandle
+
+**Returns:**
+
+`str`
+
+---
+
+### input_value
+
+```python
+input_value(timeout: typing.Optional[float] = None) -> <class 'str'>
+```
+
+ElementHandle
+
+**Returns:**
+
+`str`
+
+---
+
+### is_checked
+
+```python
+is_checked() -> <class 'bool'>
+```
+
+ElementHandle
+
+**Returns:**
+
+`bool`
+
+---
+
+### is_disabled
+
+```python
+is_disabled() -> <class 'bool'>
+```
+
+ElementHandle
+
+**Returns:**
+
+`bool`
+
+---
+
+### is_editable
+
+```python
+is_editable() -> <class 'bool'>
+```
+
+ElementHandle
+
+**Returns:**
+
+`bool`
+
+---
+
+### is_enabled
+
+```python
+is_enabled() -> <class 'bool'>
+```
+
+ElementHandle
+
+**Returns:**
+
+`bool`
+
+---
+
+### is_hidden
+
+```python
+is_hidden() -> <class 'bool'>
+```
+
+ElementHandle
+
+**Returns:**
+
+`bool`
+
+---
+
+### is_visible
+
+```python
+is_visible() -> <class 'bool'>
+```
+
+ElementHandle
+
+**Returns:**
+
+`bool`
+
+---
+
+### json_value
+
+```python
+json_value() -> typing.Any
+```
+
+JSHandle
+
+**Returns:**
+
+`Any`
+
+---
+
+### on
+
+```python
+on(event: typing.Any, f: typing.Any)
+```
+
+Registers the function ``f`` to the event name ``event``
+
+---
+
+### once
+
+```python
+once(event: typing.Any, f: typing.Any)
+```
+
+The same as ``self
+
+---
+
+### owner_frame
+
+```python
+owner_frame() -> typing.Optional[ForwardRef('Frame')]
+```
+
+ElementHandle
+
+**Returns:**
+
+<Visibility for="humans">[`Frame`](/sdk-reference/misc/frame)</Visibility><Visibility for="agents">[`Frame`](/sdk-reference/misc/frame.md)</Visibility> | `None`
+
+---
+
+### press
+
+```python
+press(key: <class 'str'>, delay: typing.Optional[float] = None, timeout: typing.Optional[float] = None, no_wait_after: typing.Optional[bool] = None)
+```
+
+ElementHandle
+
+---
+
+### query_selector
+
+```python
+query_selector(selector: <class 'str'>) -> typing.Optional[ForwardRef('ElementHandle')]
+```
+
+ElementHandle
+
+**Returns:**
+
+<Visibility for="humans">[`ElementHandle`](/sdk-reference/misc/elementhandle)</Visibility><Visibility for="agents">[`ElementHandle`](/sdk-reference/misc/elementhandle.md)</Visibility> | `None`
+
+---
+
+### query_selector_all
+
+```python
+query_selector_all(selector: <class 'str'>) -> typing.List[ForwardRef('ElementHandle')]
+```
+
+ElementHandle
+
+**Returns:**
+
+`list`[<Visibility for="humans">[`ElementHandle`](/sdk-reference/misc/elementhandle)</Visibility><Visibility for="agents">[`ElementHandle`](/sdk-reference/misc/elementhandle.md)</Visibility>]
+
+---
+
+### remove_listener
+
+```python
+remove_listener(event: typing.Any, f: typing.Any)
+```
+
+Removes the function ``f`` from ``event``
+
+---
+
+### screenshot
+
+```python
+screenshot(timeout: typing.Optional[float] = None, type: typing.Optional[typing.Literal['jpeg', 'png']] = None, path: typing.Union[pathlib.Path, str, NoneType] = None, quality: typing.Optional[int] = None, omit_background: typing.Optional[bool] = None, animations: typing.Optional[typing.Literal['allow', 'disabled']] = None, caret: typing.Optional[typing.Literal['hide', 'initial']] = None, scale: typing.Optional[typing.Literal['css', 'device']] = None, mask: typing.Optional[typing.Sequence[ForwardRef('Locator')]] = None, mask_color: typing.Optional[str] = None, style: typing.Optional[str] = None) -> <class 'bytes'>
+```
+
+ElementHandle
+
+**Returns:**
+
+`bytes`
+
+---
+
+### scroll_into_view_if_needed
+
+```python
+scroll_into_view_if_needed(timeout: typing.Optional[float] = None)
+```
+
+ElementHandle
+
+---
+
+### select_option
+
+```python
+select_option(value: typing.Union[str, typing.Sequence[str], NoneType] = None, index: typing.Union[int, typing.Sequence[int], NoneType] = None, label: typing.Union[str, typing.Sequence[str], NoneType] = None, element: typing.Union[ForwardRef('ElementHandle'), typing.Sequence[ForwardRef('ElementHandle')], NoneType] = None, timeout: typing.Optional[float] = None, force: typing.Optional[bool] = None, no_wait_after: typing.Optional[bool] = None) -> typing.List[str]
+```
+
+ElementHandle
+
+**Returns:**
+
+`list`[`str`]
+
+---
+
+### select_text
+
+```python
+select_text(force: typing.Optional[bool] = None, timeout: typing.Optional[float] = None)
+```
+
+ElementHandle
+
+---
+
+### set_checked
+
+```python
+set_checked(checked: <class 'bool'>, position: typing.Optional[playwright._impl._api_structures.Position] = None, timeout: typing.Optional[float] = None, force: typing.Optional[bool] = None, no_wait_after: typing.Optional[bool] = None, trial: typing.Optional[bool] = None)
+```
+
+ElementHandle
+
+---
+
+### set_input_files
+
+```python
+set_input_files(files: typing.Union[str, pathlib.Path, playwright._impl._api_structures.FilePayload, typing.Sequence[typing.Union[str, pathlib.Path]], typing.Sequence[playwright._impl._api_structures.FilePayload]], timeout: typing.Optional[float] = None, no_wait_after: typing.Optional[bool] = None)
+```
+
+ElementHandle
+
+---
+
+### tap
+
+```python
+tap(modifiers: typing.Optional[typing.Sequence[typing.Literal['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']]] = None, position: typing.Optional[playwright._impl._api_structures.Position] = None, timeout: typing.Optional[float] = None, force: typing.Optional[bool] = None, no_wait_after: typing.Optional[bool] = None, trial: typing.Optional[bool] = None)
+```
+
+ElementHandle
+
+---
+
+### text_content
+
+```python
+text_content() -> typing.Optional[str]
+```
+
+ElementHandle
+
+**Returns:**
+
+`str` | `None`
+
+---
+
+### type
+
+```python
+type(text: <class 'str'>, delay: typing.Optional[float] = None, timeout: typing.Optional[float] = None, no_wait_after: typing.Optional[bool] = None)
+```
+
+ElementHandle
+
+---
+
+### uncheck
+
+```python
+uncheck(position: typing.Optional[playwright._impl._api_structures.Position] = None, timeout: typing.Optional[float] = None, force: typing.Optional[bool] = None, no_wait_after: typing.Optional[bool] = None, trial: typing.Optional[bool] = None)
+```
+
+ElementHandle
+
+---
+
+### wait_for_element_state
+
+```python
+wait_for_element_state(state: typing.Literal['disabled', 'editable', 'enabled', 'hidden', 'stable', 'visible'], timeout: typing.Optional[float] = None)
+```
+
+ElementHandle
+
+---
+
+### wait_for_selector
+
+```python
+wait_for_selector(selector: <class 'str'>, state: typing.Optional[typing.Literal['attached', 'detached', 'hidden', 'visible']] = None, timeout: typing.Optional[float] = None, strict: typing.Optional[bool] = None) -> typing.Optional[ForwardRef('ElementHandle')]
+```
+
+ElementHandle
+
+**Returns:**
+
+<Visibility for="humans">[`ElementHandle`](/sdk-reference/misc/elementhandle)</Visibility><Visibility for="agents">[`ElementHandle`](/sdk-reference/misc/elementhandle.md)</Visibility> | `None`
+
+---
+
+
+## Inheritance
+
+Inherits from: JSHandle
+
+
+## Module
+
+`playwright.async_api._generated`

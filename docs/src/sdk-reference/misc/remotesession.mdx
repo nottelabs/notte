@@ -16,6 +16,20 @@ Attributes:
 
 ## Methods
 
+### areconnect
+
+```python
+areconnect(timeout_ms: <class 'float'> = 10000) -> PageAsync
+```
+
+Async version of ``reconnect``; no interrupted actions are retried
+
+**Returns:**
+
+<Visibility for="humans">[`Page`](/sdk-reference/misc/page)</Visibility><Visibility for="agents">[`Page`](/sdk-reference/misc/page.md)</Visibility>
+
+---
+
 ### cdp_url
 
 ```python
@@ -157,6 +171,20 @@ The session trajectory offset
 **Raises:**
 
 - `ValueError`: If the session hasn't been started yet (no session_id available).
+
+---
+
+### reconnect
+
+```python
+reconnect(timeout_ms: <class 'float'> = 10000) -> PageSync
+```
+
+Reconnect a disconnected sync Playwright client to this session
+
+**Returns:**
+
+<Visibility for="humans">[`Page`](/sdk-reference/misc/page)</Visibility><Visibility for="agents">[`Page`](/sdk-reference/misc/page.md)</Visibility>
 
 ---
 

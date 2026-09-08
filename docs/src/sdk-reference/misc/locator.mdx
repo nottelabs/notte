@@ -1,0 +1,790 @@
+---
+title: "Locator"
+description: "No description available"
+---
+
+
+
+## Methods
+
+### all
+
+```python
+all() -> typing.List[ForwardRef('Locator')]
+```
+
+Locator
+
+**Returns:**
+
+`list`[<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>]
+
+---
+
+### all_inner_texts
+
+```python
+all_inner_texts() -> typing.List[str]
+```
+
+Locator
+
+**Returns:**
+
+`list`[`str`]
+
+---
+
+### all_text_contents
+
+```python
+all_text_contents() -> typing.List[str]
+```
+
+Locator
+
+**Returns:**
+
+`list`[`str`]
+
+---
+
+### and_
+
+```python
+and_(locator: Locator) -> Locator
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### aria_snapshot
+
+```python
+aria_snapshot(timeout: typing.Optional[float] = None) -> <class 'str'>
+```
+
+Locator
+
+**Returns:**
+
+`str`
+
+---
+
+### blur
+
+```python
+blur(timeout: typing.Optional[float] = None)
+```
+
+Locator
+
+---
+
+### bounding_box
+
+```python
+bounding_box(timeout: typing.Optional[float] = None) -> typing.Optional[playwright._impl._api_structures.FloatRect]
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`FloatRect`](/sdk-reference/misc/floatrect)</Visibility><Visibility for="agents">[`FloatRect`](/sdk-reference/misc/floatrect.md)</Visibility> | `None`
+
+---
+
+### check
+
+```python
+check(position: typing.Optional[playwright._impl._api_structures.Position] = None, timeout: typing.Optional[float] = None, force: typing.Optional[bool] = None, no_wait_after: typing.Optional[bool] = None, trial: typing.Optional[bool] = None)
+```
+
+Locator
+
+---
+
+### clear
+
+```python
+clear(timeout: typing.Optional[float] = None, no_wait_after: typing.Optional[bool] = None, force: typing.Optional[bool] = None)
+```
+
+Locator
+
+---
+
+### click
+
+```python
+click(modifiers: typing.Optional[typing.Sequence[typing.Literal['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']]] = None, position: typing.Optional[playwright._impl._api_structures.Position] = None, delay: typing.Optional[float] = None, button: typing.Optional[typing.Literal['left', 'middle', 'right']] = None, click_count: typing.Optional[int] = None, timeout: typing.Optional[float] = None, force: typing.Optional[bool] = None, no_wait_after: typing.Optional[bool] = None, trial: typing.Optional[bool] = None)
+```
+
+Locator
+
+---
+
+### count
+
+```python
+count() -> <class 'int'>
+```
+
+Locator
+
+**Returns:**
+
+`int`
+
+---
+
+### dblclick
+
+```python
+dblclick(modifiers: typing.Optional[typing.Sequence[typing.Literal['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']]] = None, position: typing.Optional[playwright._impl._api_structures.Position] = None, delay: typing.Optional[float] = None, button: typing.Optional[typing.Literal['left', 'middle', 'right']] = None, timeout: typing.Optional[float] = None, force: typing.Optional[bool] = None, no_wait_after: typing.Optional[bool] = None, trial: typing.Optional[bool] = None)
+```
+
+Locator
+
+---
+
+### describe
+
+```python
+describe(description: <class 'str'>) -> Locator
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### dispatch_event
+
+```python
+dispatch_event(type: <class 'str'>, event_init: typing.Optional[typing.Dict] = None, timeout: typing.Optional[float] = None)
+```
+
+Locator
+
+---
+
+### drag_to
+
+```python
+drag_to(target: Locator, force: typing.Optional[bool] = None, no_wait_after: typing.Optional[bool] = None, timeout: typing.Optional[float] = None, trial: typing.Optional[bool] = None, source_position: typing.Optional[playwright._impl._api_structures.Position] = None, target_position: typing.Optional[playwright._impl._api_structures.Position] = None)
+```
+
+Locator
+
+---
+
+### element_handle
+
+```python
+element_handle(timeout: typing.Optional[float] = None) -> ElementHandle
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`ElementHandle`](/sdk-reference/misc/elementhandle)</Visibility><Visibility for="agents">[`ElementHandle`](/sdk-reference/misc/elementhandle.md)</Visibility>
+
+---
+
+### element_handles
+
+```python
+element_handles() -> typing.List[ForwardRef('ElementHandle')]
+```
+
+Locator
+
+**Returns:**
+
+`list`[<Visibility for="humans">[`ElementHandle`](/sdk-reference/misc/elementhandle)</Visibility><Visibility for="agents">[`ElementHandle`](/sdk-reference/misc/elementhandle.md)</Visibility>]
+
+---
+
+### evaluate
+
+```python
+evaluate(expression: <class 'str'>, arg: typing.Optional[typing.Any] = None, timeout: typing.Optional[float] = None) -> typing.Any
+```
+
+Locator
+
+**Returns:**
+
+`Any`
+
+---
+
+### evaluate_all
+
+```python
+evaluate_all(expression: <class 'str'>, arg: typing.Optional[typing.Any] = None) -> typing.Any
+```
+
+Locator
+
+**Returns:**
+
+`Any`
+
+---
+
+### evaluate_handle
+
+```python
+evaluate_handle(expression: <class 'str'>, arg: typing.Optional[typing.Any] = None, timeout: typing.Optional[float] = None) -> JSHandle
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`JSHandle`](/sdk-reference/misc/jshandle)</Visibility><Visibility for="agents">[`JSHandle`](/sdk-reference/misc/jshandle.md)</Visibility>
+
+---
+
+### fill
+
+```python
+fill(value: <class 'str'>, timeout: typing.Optional[float] = None, no_wait_after: typing.Optional[bool] = None, force: typing.Optional[bool] = None)
+```
+
+Locator
+
+---
+
+### filter
+
+```python
+filter(has_text: typing.Union[typing.Pattern[str], str, NoneType] = None, has_not_text: typing.Union[typing.Pattern[str], str, NoneType] = None, has: typing.Optional[ForwardRef('Locator')] = None, has_not: typing.Optional[ForwardRef('Locator')] = None, visible: typing.Optional[bool] = None) -> Locator
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### focus
+
+```python
+focus(timeout: typing.Optional[float] = None)
+```
+
+Locator
+
+---
+
+### frame_locator
+
+```python
+frame_locator(selector: <class 'str'>) -> FrameLocator
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`FrameLocator`](/sdk-reference/misc/framelocator)</Visibility><Visibility for="agents">[`FrameLocator`](/sdk-reference/misc/framelocator.md)</Visibility>
+
+---
+
+### get_attribute
+
+```python
+get_attribute(name: <class 'str'>, timeout: typing.Optional[float] = None) -> typing.Optional[str]
+```
+
+Locator
+
+**Returns:**
+
+`str` | `None`
+
+---
+
+### get_by_alt_text
+
+```python
+get_by_alt_text(text: typing.Union[str, typing.Pattern[str]], exact: typing.Optional[bool] = None) -> Locator
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### get_by_label
+
+```python
+get_by_label(text: typing.Union[str, typing.Pattern[str]], exact: typing.Optional[bool] = None) -> Locator
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### get_by_placeholder
+
+```python
+get_by_placeholder(text: typing.Union[str, typing.Pattern[str]], exact: typing.Optional[bool] = None) -> Locator
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### get_by_role
+
+```python
+get_by_role(role: typing.Literal['alert', 'alertdialog', 'application', 'article', 'banner', 'blockquote', 'button', 'caption', 'cell', 'checkbox', 'code', 'columnheader', 'combobox', 'complementary', 'contentinfo', 'definition', 'deletion', 'dialog', 'directory', 'document', 'emphasis', 'feed', 'figure', 'form', 'generic', 'grid', 'gridcell', 'group', 'heading', 'img', 'insertion', 'link', 'list', 'listbox', 'listitem', 'log', 'main', 'marquee', 'math', 'menu', 'menubar', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'meter', 'navigation', 'none', 'note', 'option', 'paragraph', 'presentation', 'progressbar', 'radio', 'radiogroup', 'region', 'row', 'rowgroup', 'rowheader', 'scrollbar', 'search', 'searchbox', 'separator', 'slider', 'spinbutton', 'status', 'strong', 'subscript', 'superscript', 'switch', 'tab', 'table', 'tablist', 'tabpanel', 'term', 'textbox', 'time', 'timer', 'toolbar', 'tooltip', 'tree', 'treegrid', 'treeitem'], checked: typing.Optional[bool] = None, disabled: typing.Optional[bool] = None, expanded: typing.Optional[bool] = None, include_hidden: typing.Optional[bool] = None, level: typing.Optional[int] = None, name: typing.Union[typing.Pattern[str], str, NoneType] = None, pressed: typing.Optional[bool] = None, selected: typing.Optional[bool] = None, exact: typing.Optional[bool] = None) -> Locator
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### get_by_test_id
+
+```python
+get_by_test_id(test_id: typing.Union[str, typing.Pattern[str]]) -> Locator
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### get_by_text
+
+```python
+get_by_text(text: typing.Union[str, typing.Pattern[str]], exact: typing.Optional[bool] = None) -> Locator
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### get_by_title
+
+```python
+get_by_title(text: typing.Union[str, typing.Pattern[str]], exact: typing.Optional[bool] = None) -> Locator
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### highlight
+
+```python
+highlight()
+```
+
+Locator
+
+---
+
+### hover
+
+```python
+hover(modifiers: typing.Optional[typing.Sequence[typing.Literal['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']]] = None, position: typing.Optional[playwright._impl._api_structures.Position] = None, timeout: typing.Optional[float] = None, no_wait_after: typing.Optional[bool] = None, force: typing.Optional[bool] = None, trial: typing.Optional[bool] = None)
+```
+
+Locator
+
+---
+
+### inner_html
+
+```python
+inner_html(timeout: typing.Optional[float] = None) -> <class 'str'>
+```
+
+Locator
+
+**Returns:**
+
+`str`
+
+---
+
+### inner_text
+
+```python
+inner_text(timeout: typing.Optional[float] = None) -> <class 'str'>
+```
+
+Locator
+
+**Returns:**
+
+`str`
+
+---
+
+### input_value
+
+```python
+input_value(timeout: typing.Optional[float] = None) -> <class 'str'>
+```
+
+Locator
+
+**Returns:**
+
+`str`
+
+---
+
+### is_checked
+
+```python
+is_checked(timeout: typing.Optional[float] = None) -> <class 'bool'>
+```
+
+Locator
+
+**Returns:**
+
+`bool`
+
+---
+
+### is_disabled
+
+```python
+is_disabled(timeout: typing.Optional[float] = None) -> <class 'bool'>
+```
+
+Locator
+
+**Returns:**
+
+`bool`
+
+---
+
+### is_editable
+
+```python
+is_editable(timeout: typing.Optional[float] = None) -> <class 'bool'>
+```
+
+Locator
+
+**Returns:**
+
+`bool`
+
+---
+
+### is_enabled
+
+```python
+is_enabled(timeout: typing.Optional[float] = None) -> <class 'bool'>
+```
+
+Locator
+
+**Returns:**
+
+`bool`
+
+---
+
+### is_hidden
+
+```python
+is_hidden(timeout: typing.Optional[float] = None) -> <class 'bool'>
+```
+
+Locator
+
+**Returns:**
+
+`bool`
+
+---
+
+### is_visible
+
+```python
+is_visible(timeout: typing.Optional[float] = None) -> <class 'bool'>
+```
+
+Locator
+
+**Returns:**
+
+`bool`
+
+---
+
+### locator
+
+```python
+locator(selector_or_locator: typing.Union[str, ForwardRef('Locator')], has_text: typing.Union[typing.Pattern[str], str, NoneType] = None, has_not_text: typing.Union[typing.Pattern[str], str, NoneType] = None, has: typing.Optional[ForwardRef('Locator')] = None, has_not: typing.Optional[ForwardRef('Locator')] = None) -> Locator
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### nth
+
+```python
+nth(index: <class 'int'>) -> Locator
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### on
+
+```python
+on(event: typing.Any, f: typing.Any)
+```
+
+Registers the function ``f`` to the event name ``event``
+
+---
+
+### once
+
+```python
+once(event: typing.Any, f: typing.Any)
+```
+
+The same as ``self
+
+---
+
+### or_
+
+```python
+or_(locator: Locator) -> Locator
+```
+
+Locator
+
+**Returns:**
+
+<Visibility for="humans">[`Locator`](/sdk-reference/misc/locator)</Visibility><Visibility for="agents">[`Locator`](/sdk-reference/misc/locator.md)</Visibility>
+
+---
+
+### press
+
+```python
+press(key: <class 'str'>, delay: typing.Optional[float] = None, timeout: typing.Optional[float] = None, no_wait_after: typing.Optional[bool] = None)
+```
+
+Locator
+
+---
+
+### press_sequentially
+
+```python
+press_sequentially(text: <class 'str'>, delay: typing.Optional[float] = None, timeout: typing.Optional[float] = None, no_wait_after: typing.Optional[bool] = None)
+```
+
+Locator
+
+---
+
+### remove_listener
+
+```python
+remove_listener(event: typing.Any, f: typing.Any)
+```
+
+Removes the function ``f`` from ``event``
+
+---
+
+### screenshot
+
+```python
+screenshot(timeout: typing.Optional[float] = None, type: typing.Optional[typing.Literal['jpeg', 'png']] = None, path: typing.Union[pathlib.Path, str, NoneType] = None, quality: typing.Optional[int] = None, omit_background: typing.Optional[bool] = None, animations: typing.Optional[typing.Literal['allow', 'disabled']] = None, caret: typing.Optional[typing.Literal['hide', 'initial']] = None, scale: typing.Optional[typing.Literal['css', 'device']] = None, mask: typing.Optional[typing.Sequence[ForwardRef('Locator')]] = None, mask_color: typing.Optional[str] = None, style: typing.Optional[str] = None) -> <class 'bytes'>
+```
+
+Locator
+
+**Returns:**
+
+`bytes`
+
+---
+
+### scroll_into_view_if_needed
+
+```python
+scroll_into_view_if_needed(timeout: typing.Optional[float] = None)
+```
+
+Locator
+
+---
+
+### select_option
+
+```python
+select_option(value: typing.Union[str, typing.Sequence[str], NoneType] = None, index: typing.Union[int, typing.Sequence[int], NoneType] = None, label: typing.Union[str, typing.Sequence[str], NoneType] = None, element: typing.Union[ForwardRef('ElementHandle'), typing.Sequence[ForwardRef('ElementHandle')], NoneType] = None, timeout: typing.Optional[float] = None, no_wait_after: typing.Optional[bool] = None, force: typing.Optional[bool] = None) -> typing.List[str]
+```
+
+Locator
+
+**Returns:**
+
+`list`[`str`]
+
+---
+
+### select_text
+
+```python
+select_text(force: typing.Optional[bool] = None, timeout: typing.Optional[float] = None)
+```
+
+Locator
+
+---
+
+### set_checked
+
+```python
+set_checked(checked: <class 'bool'>, position: typing.Optional[playwright._impl._api_structures.Position] = None, timeout: typing.Optional[float] = None, force: typing.Optional[bool] = None, no_wait_after: typing.Optional[bool] = None, trial: typing.Optional[bool] = None)
+```
+
+Locator
+
+---
+
+### set_input_files
+
+```python
+set_input_files(files: typing.Union[str, pathlib.Path, playwright._impl._api_structures.FilePayload, typing.Sequence[typing.Union[str, pathlib.Path]], typing.Sequence[playwright._impl._api_structures.FilePayload]], timeout: typing.Optional[float] = None, no_wait_after: typing.Optional[bool] = None)
+```
+
+Locator
+
+---
+
+### tap
+
+```python
+tap(modifiers: typing.Optional[typing.Sequence[typing.Literal['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']]] = None, position: typing.Optional[playwright._impl._api_structures.Position] = None, timeout: typing.Optional[float] = None, force: typing.Optional[bool] = None, no_wait_after: typing.Optional[bool] = None, trial: typing.Optional[bool] = None)
+```
+
+Locator
+
+---
+
+### text_content
+
+```python
+text_content(timeout: typing.Optional[float] = None) -> typing.Optional[str]
+```
+
+Locator
+
+**Returns:**
+
+`str` | `None`
+
+---
+
+### type
+
+```python
+type(text: <class 'str'>, delay: typing.Optional[float] = None, timeout: typing.Optional[float] = None, no_wait_after: typing.Optional[bool] = None)
+```
+
+Locator
+
+---
+
+### uncheck
+
+```python
+uncheck(position: typing.Optional[playwright._impl._api_structures.Position] = None, timeout: typing.Optional[float] = None, force: typing.Optional[bool] = None, no_wait_after: typing.Optional[bool] = None, trial: typing.Optional[bool] = None)
+```
+
+Locator
+
+---
+
+### wait_for
+
+```python
+wait_for(timeout: typing.Optional[float] = None, state: typing.Optional[typing.Literal['attached', 'detached', 'hidden', 'visible']] = None)
+```
+
+Locator
+
+---
+
+
+## Inheritance
+
+Inherits from: AsyncBase
+
+
+## Module
+
+`playwright.async_api._generated`
