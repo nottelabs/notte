@@ -49,7 +49,7 @@ function.run(variable1="value1", variable2="value2")
 <ParamField path="log_callback" type="UnionType[Callable[[str], None], None]" default="None">
 </ParamField>
 
-<ParamField path="runtime" type="Literal['standard', 'extended']" default="standard">
+<ParamField path="runtime" type="Literal['standard', 'extended'] | None" default="None">
 </ParamField>
 
 <ParamField path="input_variables" type="UnionType[Dict[str, Any], None]" default="None">
