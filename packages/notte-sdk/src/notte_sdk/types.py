@@ -2297,7 +2297,7 @@ class RunFunctionRequestDict(TypedDict, total=False):
     function_id: str
     variables: dict[str, Any]
     stream: bool
-    runtime: FunctionRuntime
+    runtime: FunctionRuntime | None
 
 
 class RunFunctionRequest(SdkRequest):
@@ -2307,8 +2307,8 @@ class RunFunctionRequest(SdkRequest):
     ]
     variables: Annotated[dict[str, Any], Field(description="The variables to run the workflow with")]
     runtime: Annotated[
-        FunctionRuntime, Field(description="standard uses Lambda; extended allows longer cloud execution")
-    ] = "standard"
+        FunctionRuntime | None, Field(description="Override the saved function runtime; omit to inherit its default")
+    ] = None
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = True
 
 
@@ -2336,6 +2336,7 @@ class ForkFunctionRequest(SdkRequest):
 
 
 class GetFunctionResponse(SdkResponse):
+    default_runtime: FunctionRuntime = "standard"
     function_id: Annotated[
         str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
     ]
@@ -2434,8 +2435,8 @@ class StartFunctionRunRequest(SdkRequest):
     ] = None
     variables: Annotated[dict[str, Any] | None, Field(description="The variables to run the function with")] = None
     runtime: Annotated[
-        FunctionRuntime, Field(description="standard uses Lambda; extended allows longer cloud execution")
-    ] = "standard"
+        FunctionRuntime | None, Field(description="Override the saved function runtime; omit to inherit its default")
+    ] = None
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = False
 
     @computed_field

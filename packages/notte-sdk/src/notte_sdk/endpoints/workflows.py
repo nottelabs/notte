@@ -491,9 +491,7 @@ class WorkflowsClient(BaseClient):
         headers["Content-Type"] = "application/json"
         headers = self.headers(headers=headers)
         url = self.request_path(endpoint)
-        req_data = request.model_dump_json(
-            exclude_none=True, exclude={"runtime"} if request.runtime == "standard" else None
-        )
+        req_data = request.model_dump_json(exclude_none=True)
         timeout = timeout or self.WORKFLOW_RUN_TIMEOUT
 
         if not request.stream:
@@ -792,7 +790,7 @@ class RemoteWorkflow:
         function_run_id: str | None = None,
         workflow_run_id: str | None = None,
         log_callback: Callable[[str], None] | None = None,
-        runtime: FunctionRuntime = "standard",
+        runtime: FunctionRuntime | None = None,
         input_variables: dict[str, Any] | None = None,
         **variables: Any,
     ) -> FunctionRunResponse:
@@ -800,7 +798,8 @@ class RemoteWorkflow:
         Run the function code using the specified version and variables.
 
         If no version is provided, the latest version is used.
-        Pass runtime="extended" for longer cloud execution; "standard" is the default.
+        Omit runtime to use the saved function default. Pass runtime="extended"
+        for longer cloud execution, or runtime="standard" to override that default.
         Use `input_variables={"runtime": value}` for script inputs whose names match
         SDK options; these are merged with keyword inputs, rejecting duplicates.
 
@@ -811,12 +810,12 @@ class RemoteWorkflow:
 
         > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
         """
-        runtime = TypeAdapter[FunctionRuntime](FunctionRuntime).validate_python(runtime)
+        runtime = TypeAdapter[FunctionRuntime | None](FunctionRuntime | None).validate_python(runtime)
         if input_variables is not None:
             if duplicates := input_variables.keys() & variables.keys():
                 raise ValueError(f"Duplicate input variables: {sorted(duplicates)}")
             variables = {**input_variables, **variables}
-        if local and runtime != "standard":
+        if local and runtime == "extended":
             raise ValueError("extended runtime is only available for cloud runs")
         if workflow_run_id is not None:
             warnings.warn(

@@ -2,7 +2,7 @@
 
 import json
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 from notte_sdk.endpoints import workflows
@@ -10,7 +10,7 @@ from notte_sdk.endpoints.workflows import RemoteWorkflow, WorkflowsClient
 from notte_sdk.types import RunFunctionRequest, StartFunctionRunRequest
 
 
-@pytest.mark.parametrize("runtime", ["standard", "extended"])
+@pytest.mark.parametrize("runtime", [None, "standard", "extended"])
 def test_high_level_run_forwards_runtime(runtime):
     response = SimpleNamespace(status="closed", session_id=None)
     client = SimpleNamespace(run=Mock(return_value=response))
@@ -21,8 +21,9 @@ def test_high_level_run_forwards_runtime(runtime):
     assert client.run.call_args.kwargs["variables"] == {"wait_seconds": 960}
 
 
-@pytest.mark.parametrize("runtime", ["standard", "extended"])
-def test_transport_preserves_selection(monkeypatch, runtime):
+@pytest.mark.parametrize("runtime", [None, "standard", "extended"])
+@pytest.mark.parametrize("stream", [False, True])
+def test_transport_preserves_selection(monkeypatch, runtime, stream):
     endpoint = SimpleNamespace(with_request=lambda request: request)
     client = SimpleNamespace(
         token="test",
@@ -31,7 +32,7 @@ def test_transport_preserves_selection(monkeypatch, runtime):
         _start_workflow_run_endpoint=lambda **kwargs: endpoint,
         WORKFLOW_RUN_TIMEOUT=900,
     )
-    post = Mock(
+    post = MagicMock(
         return_value=SimpleNamespace(
             json=lambda: {
                 "function_id": "function",
@@ -42,15 +43,22 @@ def test_transport_preserves_selection(monkeypatch, runtime):
             }
         )
     )
+    post.return_value = MagicMock(json=post.return_value.json)
+    post.return_value.__enter__.return_value = post.return_value
+    post.return_value.iter_lines.return_value = [
+        ("data: " + json.dumps({"type": "result", "message": json.dumps(post.return_value.json())})).encode()
+    ]
     monkeypatch.setattr(workflows.requests, "post", post)
     WorkflowsClient.run(
-        client, "run", function_id="function", variables={"wait_seconds": 960}, stream=False, runtime=runtime
+        client, "run", function_id="function", variables={"wait_seconds": 960}, stream=stream, runtime=runtime
     )
     body = json.loads(post.call_args.kwargs["data"])
-    assert body.get("runtime", "standard") == runtime
+    assert body.get("runtime") == runtime
     assert body["variables"] == {"wait_seconds": 960}
-    if runtime == "standard":
-        assert "runtime" not in body  # Compatible with older APIs and Lambda images.
+    if runtime is None:
+        assert "runtime" not in body
+    else:
+        assert body["runtime"] == runtime
 
 
 def test_invalid_or_local_extended_rejected_before_creating_run():
@@ -62,9 +70,9 @@ def test_invalid_or_local_extended_rejected_before_creating_run():
     function.client.create_run.assert_not_called()
 
 
-def test_models_default_to_standard():
-    assert RunFunctionRequest(function_id="function", variables={}).runtime == "standard"
-    assert StartFunctionRunRequest(function_id="function").runtime == "standard"
+def test_models_leave_runtime_unset():
+    assert RunFunctionRequest(function_id="function", variables={}).runtime is None
+    assert StartFunctionRunRequest(function_id="function").runtime is None
 
 
 def test_script_inputs_can_use_reserved_sdk_option_names():
