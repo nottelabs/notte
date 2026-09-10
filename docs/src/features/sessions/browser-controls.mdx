@@ -259,7 +259,13 @@ Upload a file to a file input.
 **Parameters:**
 - `selector` (str): CSS selector for the file input
 - `id` (str): Element ID
-- `file_path` (str): Path to the file to upload
+- `file_path` (str): In cloud sessions, a stored filename or a public HTTP(S) file URL, including signed URLs.
+
+URL files download on the API server without navigating away from the form. They do
+not use browser cookies, browser proxy settings, or custom authentication headers,
+and are not added to the persistent session file catalog. The cloud backend must
+support URL uploads; no SDK update is required. Standalone local sessions keep
+their existing storage/path behavior.
 
 **Use for:** Uploading documents, images, any file input
 

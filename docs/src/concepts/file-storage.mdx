@@ -58,6 +58,32 @@ Upload files from your local machine to make them available in sessions:
   team at [support@notte.cc](mailto:support@notte.cc).
 </Note>
 
+### Attaching a URL directly to a form
+
+In a cloud session, pass a public HTTP(S) file URL, including a signed URL, to
+`session.execute(type="upload_file", file_path=...)` along with the upload element's
+selector or observed ID. Notte downloads and attaches the file without navigating
+away from the form or requiring a separate `session.storage.upload()` call.
+
+```python
+session.execute(
+    type="upload_file",
+    selector='input[type="file"]',
+    file_path="https://example.com/document.pdf",
+)
+```
+
+The download runs on the API server and does not use browser cookies, browser proxy
+settings, or custom authentication headers. URLs must resolve to public addresses;
+redirects are checked too. Downloads have a 120-second overall limit, up to five
+redirects, and the server's configured session file size limit. Temporary files are
+removed when the session is cleaned up and are not added to its persistent file
+catalog.
+
+This requires cloud backend support, with no SDK update. Standalone local sessions
+retain their existing storage/path behavior. `storage.upload()` still accepts local
+files; URL support belongs to the browser's `upload_file` action.
+
 ## Downloading Files
 
 Download files that agents retrieved from websites:
