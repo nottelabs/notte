@@ -1,0 +1,12 @@
+# @sniptest filename=url_upload.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    session.execute(type="goto", url="https://test-resources-lovat.vercel.app/upload_fixture.html")
+    session.execute(
+        type="upload_file",
+        selector='input[type="file"]',
+        file_path="https://test-resources-lovat.vercel.app/text1.txt",
+    )

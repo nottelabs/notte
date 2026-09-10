@@ -4,6 +4,7 @@ description: Upload and download files for your automations
 ---
 import Quickstart from '/snippets/file-storage/quickstart.mdx';
 import UploadingFiles from '/snippets/file-storage/uploading_files.mdx';
+import UrlUpload from '/snippets/file-storage/url_upload.mdx';
 import DownloadingFiles from '/snippets/file-storage/downloading_files.mdx';
 import ForceOverwrite from '/snippets/file-storage/force_overwrite.mdx';
 import UsingWithAgents from '/snippets/file-storage/using_with_agents.mdx';
@@ -57,6 +58,27 @@ Upload files from your local machine to make them available in sessions:
   Each uploaded file must be under **100 MB**. For larger files, contact the
   team at [support@notte.cc](mailto:support@notte.cc).
 </Note>
+
+### Attaching a URL directly to a form
+
+In a cloud session, pass a public HTTP(S) file URL, including a signed URL, to
+`session.execute(type="upload_file", file_path=...)` along with the upload element's
+selector or observed ID. Notte downloads and attaches the file without navigating
+away from the form or requiring a separate `session.storage.upload()` call.
+
+<UrlUpload />
+
+The download runs on the API server and does not use browser cookies, browser proxy
+settings, or custom authentication headers. URLs must resolve to public addresses;
+redirects are checked too. Downloads have a 120-second overall limit, up to five
+redirects, and the server's configured per-file and aggregate temporary-upload size
+limits. Temporary files are
+removed when the session is cleaned up and are not added to its persistent file
+catalog.
+
+This requires cloud backend support, with no SDK update. Standalone local sessions
+retain their existing storage/path behavior. `storage.upload()` still accepts local
+files; URL support belongs to the browser's `upload_file` action.
 
 ## Downloading Files
 
