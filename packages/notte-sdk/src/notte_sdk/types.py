@@ -761,10 +761,9 @@ class _SessionStartRequestDict(TypedDict, total=False):
         cdp_url: The CDP URL of another remote session provider.
         screenshot_type: The type of screenshot to use for the session.
         profile: Browser profile configuration for state persistence.
-        auth_ids: Up to 10 unique Managed Auth connection IDs to authenticate before the session is returned.
-        wait_for_authentication: Defaults to True. Wait for Managed Auth before returning the session;
-            authentication failure or timeout fails session creation. When False, return after the browser is
-            ready while authentication continues in the background.
+        auth_ids: Up to 10 unique Managed Auth connection IDs. The API verifies them inline and can return an authenticating session while login continues.
+        wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.
+        auth_retry: Number of additional retries for transient managed-auth login failures, from 0 to 2. Each retry verifies the session again before submitting credentials. A blocked connection permits one explicit login attempt.
     """
 
     solve_captchas: bool
@@ -1018,8 +1017,9 @@ class _SessionStartRequest(SdkRequest):
 
 
 class SessionStartRequest(_SessionStartRequest):
-    auth_retry: int = Field(default=0, ge=0, le=2)
     """Public request for starting a remote Notte browser session."""
+
+    auth_retry: int = Field(default=0, ge=0, le=2)
 
     proxies: Annotated[
         list[ProxySettings] | bool,
@@ -1043,6 +1043,8 @@ class SessionStartRequest(_SessionStartRequest):
         data = cast(dict[str, Any], handler(self))
         if not self.advanced_stealth:
             data.pop("advanced_stealth", None)
+        if not self.auth_ids:
+            data.pop("auth_retry", None)
         return data
 
     @model_validator(mode="before")

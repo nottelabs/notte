@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from notte_sdk.endpoints.sessions import RemoteSession
+from notte_sdk.types import SessionStartRequest
 
 
 def bare_session():
@@ -71,3 +72,9 @@ async def test_cancelled_async_wait_closes_the_started_session():
     with pytest.raises(asyncio.CancelledError):
         await session.__aenter__()
     session.stop.assert_called_once_with(close_reason="error")
+
+
+@pytest.mark.parametrize("mode", ["python", "json"])
+def test_login_retry_is_only_serialized_for_managed_auth(mode):
+    assert "auth_retry" not in SessionStartRequest().model_dump(mode=mode)
+    assert SessionStartRequest(auth_ids=["connection"], auth_retry=2).model_dump(mode=mode)["auth_retry"] == 2

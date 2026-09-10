@@ -656,9 +656,7 @@ class RemoteSession(SyncResource):
             open_viewer: Whether to open the live viewer when the session starts (default: False).
                 This controls only the viewer popup and is independent of the browser environment.
             advanced_stealth: Enable Notte's highest-fidelity browser environment. Available to approved workspaces.
-            wait_for_authentication: Defaults to True. Wait for Managed Auth before returning the
-                session; authentication failure or timeout fails session creation. When False,
-                return after the browser is ready while authentication continues in the background.
+            wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.
             **data: Keyword arguments for the session creation request.
 
         Returns:
