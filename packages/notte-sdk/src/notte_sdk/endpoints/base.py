@@ -326,6 +326,11 @@ class BaseClient(ABC):
             "x-notte-sdk-version": notte_core_version,
             "x-notte-request-origin": self.REQUEST_ORIGIN,
             **preview,
+            **(
+                {"x-notte-auth-capability": os.environ["NOTTE_AUTH_CAPABILITY"]}
+                if os.getenv("NOTTE_AUTH_CAPABILITY")
+                else {}
+            ),
             **(headers or {}),
         }
 
@@ -340,10 +345,14 @@ class BaseClient(ABC):
         third-party browser provider, and handing that provider an internal
         branch name is both meaningless to it and more than it needs to know.
         """
-        if not self.db_preview:
-            return url
-        separator = "&" if "?" in url else "?"
-        return f"{url}{separator}db_preview={quote(self.db_preview, safe='')}"
+        if self.db_preview:
+            separator = "&" if "?" in url else "?"
+            url = f"{url}{separator}db_preview={quote(self.db_preview, safe='')}"
+        capability = os.getenv("NOTTE_AUTH_CAPABILITY")
+        if capability:
+            separator = "&" if "?" in url else "?"
+            url = f"{url}{separator}auth_capability={quote(capability, safe='')}"
+        return url
 
     def request_path(self, endpoint: NotteEndpoint[TResponse]) -> str:
         """
