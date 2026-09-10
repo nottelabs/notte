@@ -790,6 +790,7 @@ class _SessionStartRequestDict(TypedDict, total=False):
 
 
 class SessionStartRequestDict(_SessionStartRequestDict, total=False):
+    auth_retry: int
     """Public request dictionary for starting a remote session."""
 
     advanced_stealth: bool
@@ -1017,6 +1018,7 @@ class _SessionStartRequest(SdkRequest):
 
 
 class SessionStartRequest(_SessionStartRequest):
+    auth_retry: int = Field(default=0, ge=0, le=2)
     """Public request for starting a remote Notte browser session."""
 
     proxies: Annotated[
@@ -1111,7 +1113,31 @@ class SessionListRequest(ListRequest):
     ] = None
 
 
+class ManagedAuthOperation(SdkResponse):
+    id: str
+    connection_id: str
+    session_id: str | None = None
+    source: str
+    status: Literal["pending", "running", "succeeded", "failed", "cancelled"]
+    phase: str
+    attempt: int = 0
+    auth_retry: int = 0
+    authenticated: bool | None = None
+    failure_code: str | None = None
+    error: str | None = None
+    deadline: dt.datetime
+
+
+class SessionAuthResponse(SdkResponse):
+    session_id: str
+    status: Literal["authenticating", "active", "failed", "closed"]
+    operations: list[ManagedAuthOperation] = Field(default_factory=list)
+    error: str | None = None
+
+
 class ManagedAuthRunResponse(SdkResponse):
+    operation_id: str | None = None
+    authenticated: bool | None = None
     connection_id: str
     status: str
     message: str
@@ -1165,7 +1191,7 @@ class SessionResponse(SdkResponse):
         Field(description="Session duration", json_schema_extra=_drop_duration_format),
     ] = Field(default_factory=lambda: dt.timedelta(0))
     status: Annotated[
-        Literal["active", "closed", "error", "timed_out"],
+        Literal["active", "authenticating", "closed", "error", "timed_out"],
         Field(description="Session status"),
     ]
     close_reason: Annotated[
