@@ -4,6 +4,7 @@ description: Upload and download files for your automations
 ---
 import Quickstart from '/snippets/file-storage/quickstart.mdx';
 import UploadingFiles from '/snippets/file-storage/uploading_files.mdx';
+import UrlUpload from '/snippets/file-storage/url_upload.mdx';
 import DownloadingFiles from '/snippets/file-storage/downloading_files.mdx';
 import ForceOverwrite from '/snippets/file-storage/force_overwrite.mdx';
 import UsingWithAgents from '/snippets/file-storage/using_with_agents.mdx';
@@ -65,18 +66,13 @@ In a cloud session, pass a public HTTP(S) file URL, including a signed URL, to
 selector or observed ID. Notte downloads and attaches the file without navigating
 away from the form or requiring a separate `session.storage.upload()` call.
 
-```python
-session.execute(
-    type="upload_file",
-    selector='input[type="file"]',
-    file_path="https://example.com/document.pdf",
-)
-```
+<UrlUpload />
 
 The download runs on the API server and does not use browser cookies, browser proxy
 settings, or custom authentication headers. URLs must resolve to public addresses;
 redirects are checked too. Downloads have a 120-second overall limit, up to five
-redirects, and the server's configured session file size limit. Temporary files are
+redirects, and the server's configured per-file and aggregate temporary-upload size
+limits. Temporary files are
 removed when the session is cleaned up and are not added to its persistent file
 catalog.
 
