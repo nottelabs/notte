@@ -1,11 +1,18 @@
 name: Release Node SDK
 
 # Mirrors pypi-release.yml: pushing the same vX.Y.Z tag that publishes the
-# Python packages to PyPI publishes node-sdk to npm at the same version.
+# Python packages to PyPI publishes node-sdk to npm at the same version. Manual
+# dispatch can recover a Node-only release without rerunning the Python release.
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Stable version to publish (X.Y.Z or vX.Y.Z)
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -20,7 +27,7 @@ defaults:
 
 jobs:
   publish:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     name: Build and publish notte-sdk to npm
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -36,6 +43,9 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
+          # Recovery releases always publish the current default branch rather
+          # than whichever ref the dispatcher happens to select in the UI.
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.repository.default_branch || github.ref }}
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -44,14 +54,14 @@ jobs:
 
       - run: npm ci
 
-      - name: Set release version from tag
+      - name: Set release version
         id: version
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
         run: |
           RELEASE_VERSION="${RELEASE_TAG#v}"
           if ! echo "$RELEASE_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::Expected a stable vX.Y.Z release tag, got '$RELEASE_TAG'"
+            echo "::error::Expected a stable X.Y.Z or vX.Y.Z release version, got '$RELEASE_TAG'"
             exit 1
           fi
           echo "Releasing notte-sdk@$RELEASE_VERSION"
