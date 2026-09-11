@@ -252,7 +252,9 @@ export function createReference(root = sdkRoot) {
   const debugPaths = [...diagnosticMethods]
     .map(path => `${prefix}/${path}`).filter(path => navigableMethods.has(path));
   const categories = { 'Getting Started': [], 'Core Features': [], Tooling: [], Debug: debugPaths.length ? [{ group: 'Debug Methods', collapsed: true, pages: debugPaths }] : [] };
-  if (navigableMethods.has(`${prefix}/client/scrape`)) categories['Core Features'].push(`${prefix}/client/scrape`);
+  for (const method of ['scrape', 'search']) {
+    if (navigableMethods.has(`${prefix}/client/${method}`)) categories['Core Features'].push(`${prefix}/client/${method}`);
+  }
   if (classes.some(({ symbol }) => symbol.name === 'NotteClient')) {
     categories['Getting Started'].push(`${prefix}/manual/client`);
     for (const guide of gettingStartedGuides) {
@@ -260,7 +262,7 @@ export function createReference(root = sdkRoot) {
       categories['Getting Started'].push(`${prefix}/${guide.slug}`);
     }
   }
-  const labels = { NotteClient: 'Client', NotteFunction: 'Function', NotteVault: 'Vault', NottePersona: 'Persona', SessionFiles: 'File Storage', RemoteFileStorage: 'Remote File Storage', NotteAnything: 'Anything', NotteSearch: 'Search', NotteSecrets: 'Secrets', NotteUsage: 'Usage' }; // pragma: allowlist secret (public navigation labels)
+  const labels = { NotteClient: 'Client', NotteFunction: 'Function', NotteVault: 'Vault', NottePersona: 'Persona', SessionFiles: 'File Storage', RemoteFileStorage: 'Remote File Storage', NotteAnything: 'Anything', NotteSecrets: 'Secrets', NotteUsage: 'Usage' }; // pragma: allowlist secret (public navigation labels)
   const classOrder = ['NotteClient', 'Session', 'Agent', 'NotteFunction', 'NotteVault', 'NottePersona', 'SessionFiles'];
   for (const group of groups.sort((a, b) => (classOrder.indexOf(a.group) + 1 || 100) - (classOrder.indexOf(b.group) + 1 || 100))) {
     // Client factories remain linked from NotteClient's overview, not a nested sidebar.

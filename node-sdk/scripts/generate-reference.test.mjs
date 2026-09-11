@@ -116,6 +116,12 @@ test('feature landing pages use factories and method navigation follows user tas
   }
   const core = actual.navigation.pages.find(group => group.group === 'Core Features');
   assert.equal(core.pages[0], 'typescript-sdk-reference/client/scrape');
+  assert.ok(core.pages.includes('typescript-sdk-reference/client/search'));
+  const search = actual.pages.get('typescript-sdk-reference/client/search.mdx');
+  assert.match(search, /const client = new NotteClient\(\)/);
+  assert.match(search, /await client.search\(/);
+  assert.ok(!actual.pages.has('typescript-sdk-reference/manual/nottesearch.mdx'));
+  assert.ok(!actual.pages.has('typescript-sdk-reference/nottesearch/search.mdx'));
   const session = core.pages.find(group => group.group === 'Session');
   assert.deepEqual(session.pages.slice(0, 6), ['manual/session', 'session/start', 'session/stop', 'session/observe', 'session/execute', 'session/scrape'].map(path => `typescript-sdk-reference/${path}`));
   for (const method of ['getid', 'getresponse', 'issessionactive', 'symbol-asynciterator']) assert.ok(!session.pages.includes(`typescript-sdk-reference/session/${method}`));
@@ -167,7 +173,7 @@ test('Node SDK mirrors Python categories and appears below Python in the sidebar
   assert.match(actual.pages.get('typescript-sdk-reference/errors.mdx'), /NotteAPIError/);
   assert.match(actual.pages.get('typescript-sdk-reference/authentication.mdx'), /NOTTE_API_KEY/);
   assert.match(actual.pages.get('typescript-sdk-reference/rate-limits.mdx'), /error.statusCode === 429/);
-  assert.deepEqual(categoryNames('Core Features'), ['Session', 'Actions', 'Agent', 'Function', 'Anything', 'Search']);
+  assert.deepEqual(categoryNames('Core Features'), ['Session', 'Actions', 'Agent', 'Function', 'Anything']);
   assert.deepEqual(categoryNames('Tooling'), ['Vault', 'Persona', 'File Storage', 'Secrets', 'Usage', 'Remote File Storage']);
   const actions = actual.navigation.pages.find(group => group.group === 'Core Features').pages.find(group => group.group === 'Actions');
   assert.ok(actions.pages.includes('typescript-sdk-reference/types/gotoaction'));

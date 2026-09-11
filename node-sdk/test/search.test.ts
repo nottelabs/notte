@@ -1,50 +1,49 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { NotteClient } from '@/client';
+import { NotteClient } from '@/client';
 
 const mocks = vi.hoisted(() => ({
   searchWeb: vi.fn(),
 }));
 
-vi.mock('@/lib/client/sdk.gen', () => mocks);
+vi.mock('@/lib/client/sdk.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/lib/client/sdk.gen')>(),
+  ...mocks,
+}));
 
-import { NotteSearch } from '@/search';
-
-describe('NotteSearch', () => {
-  const generated = { id: 'test-client' };
-  const client = { getClient: () => generated } as unknown as NotteClient;
-  let search: NotteSearch;
+describe('NotteClient.search', () => {
+  let client: NotteClient;
 
   beforeEach(() => {
     mocks.searchWeb.mockReset();
-    search = new NotteSearch(client);
+    client = new NotteClient({ apiKey: 'test-key' }); // pragma: allowlist secret (test fixture)
   });
 
   it('posts the query as `q` and returns the data', async () => {
     const data = { results: [{ url: 'https://notte.cc', name: 'Notte', content: 'Browser automation' }] };
     mocks.searchWeb.mockResolvedValue({ data });
 
-    const result = await search.search('notte browser automation');
+    const result = await client.search('notte browser automation');
 
     expect(mocks.searchWeb).toHaveBeenCalledTimes(1);
     expect(mocks.searchWeb).toHaveBeenCalledWith({
-      client: generated,
+      client: client.getClient(),
       body: { q: 'notte browser automation' },
       throwOnError: true,
     });
     expect(result).toBe(data);
   });
 
-  it('forwards options and keeps the positional query authoritative', async () => {
+  it('forwards search options', async () => {
     mocks.searchWeb.mockResolvedValue({ data: { answer: 'yes', sources: [] } });
 
-    const result = await search.search('what is notte?', {
+    const result = await client.search('what is notte?', {
       outputType: 'sourcedAnswer',
       depth: 'deep',
       maxResults: 3,
     });
 
     expect(mocks.searchWeb).toHaveBeenCalledWith({
-      client: generated,
+      client: client.getClient(),
       body: { q: 'what is notte?', outputType: 'sourcedAnswer', depth: 'deep', maxResults: 3 },
       throwOnError: true,
     });
@@ -55,6 +54,6 @@ describe('NotteSearch', () => {
     const failure = new Error('boom');
     mocks.searchWeb.mockRejectedValue(failure);
 
-    await expect(search.search('anything')).rejects.toBe(failure);
+    await expect(client.search('anything')).rejects.toBe(failure);
   });
 });

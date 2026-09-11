@@ -27,6 +27,14 @@
   "seo.indexing": "all",
   "redirects": [
     {
+      "source": "/typescript-sdk-reference/manual/nottesearch",
+      "destination": "/typescript-sdk-reference/client/search"
+    },
+    {
+      "source": "/typescript-sdk-reference/nottesearch/search",
+      "destination": "/typescript-sdk-reference/client/search"
+    },
+    {
       "source": "/integrations/mcp",
       "destination": "/mcp-server"
     },
@@ -391,6 +399,7 @@
                 "group": "Core Features",
                 "pages": [
                   "typescript-sdk-reference/client/scrape",
+                  "typescript-sdk-reference/client/search",
                   {
                     "group": "Session",
                     "collapsed": true,
@@ -484,14 +493,6 @@
                     "pages": [
                       "typescript-sdk-reference/manual/notteanything",
                       "typescript-sdk-reference/notteanything/start"
-                    ]
-                  },
-                  {
-                    "group": "Search",
-                    "collapsed": true,
-                    "pages": [
-                      "typescript-sdk-reference/manual/nottesearch",
-                      "typescript-sdk-reference/nottesearch/search"
                     ]
                   }
                 ]

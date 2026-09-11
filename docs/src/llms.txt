@@ -480,6 +480,7 @@ The SDK docs below are for generated-code editing and reference. They are not th
 ### Core Features
 
 - [scrape](https://docs.notte.cc/typescript-sdk-reference/client/scrape.md)
+- [search](https://docs.notte.cc/typescript-sdk-reference/client/search.md)
 
 #### Session
 
@@ -560,11 +561,6 @@ The SDK docs below are for generated-code editing and reference. They are not th
 
 - [NotteAnything](https://docs.notte.cc/typescript-sdk-reference/manual/notteanything.md)
 - [start](https://docs.notte.cc/typescript-sdk-reference/notteanything/start.md)
-
-#### Search
-
-- [NotteSearch](https://docs.notte.cc/typescript-sdk-reference/manual/nottesearch.md)
-- [search](https://docs.notte.cc/typescript-sdk-reference/nottesearch/search.md)
 
 ### Tooling
 

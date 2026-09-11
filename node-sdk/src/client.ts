@@ -25,6 +25,7 @@ import {
   listSessions,
   listVaults,
   scrapeWebpage,
+  searchWeb,
 } from '@/lib/client/sdk.gen';
 import {
   buildScrapeBody,
@@ -36,7 +37,7 @@ import {
 } from '@/scrape';
 import { SDK_VERSION } from '@/version';
 import { RemoteFileStorage, SessionFiles } from '@/files';
-import { NotteSearch, type SearchOptions, type SearchResponse, type SearchResultsResponse, type SearchSourcedAnswerResponse, type SearchStructuredResponse } from '@/search';
+import type { SearchOptions, SearchResponse, SearchResultsResponse, SearchSourcedAnswerResponse, SearchStructuredResponse } from '@/search';
 import { NotteAnything } from '@/anything';
 import { NotteSecrets } from '@/secrets';
 import { NotteUsage } from '@/usage';
@@ -429,9 +430,14 @@ export class NotteClient {
   }
 
   /**
-   * Web search (`POST /search`).
+   * Search the public web (`POST /search`). Returns ranked results by default,
+   * an answer with sources with `outputType: 'sourcedAnswer'`, or structured
+   * output with `outputType: 'structured'`.
    *
    * ```ts
+   * import { NotteClient } from 'notte-sdk';
+   *
+   * const client = new NotteClient();
    * const { results } = await client.search('notte browser agents');
    * const { answer } = await client.search('what is notte?', { outputType: 'sourcedAnswer' });
    * ```
@@ -441,7 +447,12 @@ export class NotteClient {
   async search(query: string, options: SearchOptions & { outputType: 'structured' }): Promise<SearchStructuredResponse>;
   async search(query: string, options: SearchOptions): Promise<SearchResponse>;
   async search(query: string, options: SearchOptions = {}): Promise<SearchResponse> {
-    return new NotteSearch(this).search(query, options);
+    const response = await searchWeb({
+      client: this.getClient(),
+      body: { ...options, q: query },
+      throwOnError: true,
+    });
+    return response.data as SearchResponse;
   }
 
   /** Anything API (`POST /anything/start`). */
