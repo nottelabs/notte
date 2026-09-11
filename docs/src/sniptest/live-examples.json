@@ -1,4 +1,16 @@
 {
+  "functions/management/filter_active_runs.ts": {
+    "expected": { "results": [] },
+    "logContains": "Active runs: 0"
+  },
+  "file-storage/uploading_files.ts": {
+    "expected": { "status": "active" },
+    "closedSession": true
+  },
+  "file-storage/attach_before_starting.ts": {
+    "expected": { "status": "active" },
+    "closedSession": true
+  },
   "sessions/cdp/playwright_events.ts": {
     "expected": { "status": "active" },
     "closedSession": true,

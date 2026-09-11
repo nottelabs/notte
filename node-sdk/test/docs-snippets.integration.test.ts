@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { readdir, readFile, mkdtemp, rm } from 'node:fs/promises';
+import { readdir, readFile, mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -64,6 +64,38 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
   }, 60_000);
 
   it.each(snippets)('%s and its Python counterpart execute unchanged', { timeout: 180_000 }, async name => {
+    if (name.startsWith('file-storage/')) {
+      const directory = await mkdtemp(join(tmpdir(), 'notte-docs-files-'));
+      const contract = contracts[name];
+      try {
+        const ids: string[] = [];
+        for (const language of ['typescript', 'python']) {
+          const cwd = join(directory, language);
+          await mkdir(cwd);
+          // Owned fixture files; never depend on or overwrite a developer's files.
+          for (const filename of ['report.pdf', 'file.pdf']) {
+            await writeFile(join(cwd, filename), '%PDF-1.4\nNotte paired upload fixture\n%%EOF\n');
+          }
+          const source = `${testers}${name.replace(/\.ts$/, language === 'python' ? '.py' : '.ts')}`;
+          const runner = fileURLToPath(new URL(`../../docs/src/sniptest/run_${language}.` + (language === 'python' ? 'py' : 'mjs'), import.meta.url));
+          const { stdout, stderr } = await execute(
+            language === 'python' ? process.env.NOTTE_DOCS_PYTHON || 'python' : process.execPath,
+            language === 'python' ? [runner, source] : ['--experimental-strip-types', runner, source],
+            { cwd, env: process.env, timeout: 120_000, maxBuffer: 2 * 1024 * 1024 },
+          );
+          const values = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!);
+          const id = verifyExampleOutput(JSON.stringify(collectExampleResult(values, contract)), contract, `${stdout}\n${stderr}`);
+          expect(id).toBeTruthy();
+          ids.push(id!);
+          const stopped = await sessionStatus({ client: client.getClient(), path: { session_id: id! }, throwOnError: true });
+          expect(stopped.data.status).toBe('closed');
+        }
+        expect(ids[0]).not.toBe(ids[1]);
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+      return;
+    }
     if (name === 'quickstart/cdp_session.ts') {
       const directory = await mkdtemp(join(tmpdir(), 'notte-docs-screenshots-'));
       const original = process.env.NOTTE_SCREENSHOT_PATH;

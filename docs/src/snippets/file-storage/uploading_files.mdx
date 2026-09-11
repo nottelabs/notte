@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/file-storage/uploading_files.py */}
 
+<CodeGroup>
+
 ```python uploading_files.py
 from notte_sdk import NotteClient
 
@@ -10,3 +12,20 @@ with client.Session() as session:
     session.storage.upload("report.pdf", upload_file_name="quarterly_report.pdf")
     print(session.storage.list(source="user_upload").files)
 ```
+
+```typescript uploading_files.ts
+import { NotteClient } from 'notte-sdk';
+import { readFile } from 'node:fs/promises';
+
+const client = new NotteClient();
+const status = await client.Session().use(async session => {
+  const storage = client.Files(session.getId()!);
+  const report = new Blob([new Uint8Array(await readFile('report.pdf'))]);
+  await storage.upload(report, 'report.pdf');
+  await storage.upload(report, 'quarterly_report.pdf');
+  console.log((await storage.list({ source: 'user_upload' })).files);
+  return await session.status();
+});
+```
+
+</CodeGroup>
