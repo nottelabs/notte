@@ -224,7 +224,7 @@
             "openapi": "https://api.notte.cc/openapi.json"
           },
           {
-            "group": "SDK",
+            "group": "Python SDK",
             "pages": [
               {
                 "group": "Getting Started",
@@ -330,9 +330,6 @@
                       "sdk-reference/nottevault/get_credentials",
                       "sdk-reference/nottevault/delete_credentials",
                       "sdk-reference/nottevault/list_credentials",
-                      "sdk-reference/nottevault/set_credit_card",
-                      "sdk-reference/nottevault/get_credit_card",
-                      "sdk-reference/nottevault/delete_credit_card",
                       "sdk-reference/nottevault/generate_password"
                     ]
                   },
@@ -372,6 +369,150 @@
                       "sdk-reference/notteclient/health_check",
                       "sdk-reference/remotesession/debug_info",
                       "sdk-reference/remotesession/offset"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Node SDK",
+            "pages": [
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "typescript-sdk-reference/manual/client",
+                  "typescript-sdk-reference/authentication",
+                  "typescript-sdk-reference/errors",
+                  "typescript-sdk-reference/rate-limits"
+                ]
+              },
+              {
+                "group": "Core Features",
+                "pages": [
+                  "typescript-sdk-reference/client/scrape",
+                  {
+                    "group": "Session",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/session",
+                      "typescript-sdk-reference/session/start",
+                      "typescript-sdk-reference/session/stop",
+                      "typescript-sdk-reference/session/observe",
+                      "typescript-sdk-reference/session/execute",
+                      "typescript-sdk-reference/session/scrape",
+                      "typescript-sdk-reference/session/replay",
+                      "typescript-sdk-reference/session/setcookies",
+                      "typescript-sdk-reference/session/getcookies",
+                      "typescript-sdk-reference/session/viewer",
+                      "typescript-sdk-reference/session/status"
+                    ]
+                  },
+                  {
+                    "group": "Actions",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/types/gotoaction",
+                      "typescript-sdk-reference/types/gotonewtabaction",
+                      "typescript-sdk-reference/types/switchtabaction",
+                      "typescript-sdk-reference/types/gobackaction",
+                      "typescript-sdk-reference/types/goforwardaction",
+                      "typescript-sdk-reference/types/reloadaction",
+                      "typescript-sdk-reference/types/waitaction",
+                      "typescript-sdk-reference/types/presskeyaction",
+                      "typescript-sdk-reference/types/scrollupaction",
+                      "typescript-sdk-reference/types/scrolldownaction",
+                      "typescript-sdk-reference/types/clickactionoutput",
+                      "typescript-sdk-reference/types/fillactionoutput",
+                      "typescript-sdk-reference/types/checkactionoutput",
+                      "typescript-sdk-reference/types/formfillaction",
+                      "typescript-sdk-reference/types/evaluatejsaction",
+                      "typescript-sdk-reference/types/selectdropdownoptionactionoutput",
+                      "typescript-sdk-reference/types/uploadfileactionoutput",
+                      "typescript-sdk-reference/types/downloadfileactionoutput",
+                      "typescript-sdk-reference/types/scrapeaction",
+                      "typescript-sdk-reference/types/captchasolveaction",
+                      "typescript-sdk-reference/types/smsreadaction",
+                      "typescript-sdk-reference/types/emailreadaction",
+                      "typescript-sdk-reference/types/emailverificationreadaction"
+                    ]
+                  },
+                  {
+                    "group": "Agent",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/agent",
+                      "typescript-sdk-reference/agent/run",
+                      "typescript-sdk-reference/agent/start",
+                      "typescript-sdk-reference/agent/stop",
+                      "typescript-sdk-reference/agent/status"
+                    ]
+                  },
+                  {
+                    "group": "Function",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/function",
+                      "typescript-sdk-reference/function/createrun",
+                      "typescript-sdk-reference/function/run",
+                      "typescript-sdk-reference/function/getrun",
+                      "typescript-sdk-reference/function/download",
+                      "typescript-sdk-reference/function/geturl",
+                      "typescript-sdk-reference/function/runs"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Tooling",
+                "pages": [
+                  {
+                    "group": "Vault",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/vault",
+                      "typescript-sdk-reference/vault/addcredentials",
+                      "typescript-sdk-reference/vault/getcredentials",
+                      "typescript-sdk-reference/vault/deletecredentials",
+                      "typescript-sdk-reference/vault/listcredentials",
+                      "typescript-sdk-reference/vault/generatepassword"
+                    ]
+                  },
+                  {
+                    "group": "Persona",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/persona",
+                      "typescript-sdk-reference/persona/delete",
+                      "typescript-sdk-reference/persona/addcredentials",
+                      "typescript-sdk-reference/persona/emails",
+                      "typescript-sdk-reference/persona/sms"
+                    ]
+                  },
+                  {
+                    "group": "File Storage",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/files",
+                      "typescript-sdk-reference/files/download",
+                      "typescript-sdk-reference/files/upload",
+                      "typescript-sdk-reference/files/list"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Debug",
+                "pages": [
+                  {
+                    "group": "Debug Methods",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/client/getconfig",
+                      "typescript-sdk-reference/client/getclient",
+                      "typescript-sdk-reference/session/getresponse",
+                      "typescript-sdk-reference/session/issessionactive",
+                      "typescript-sdk-reference/agent/isrunning"
                     ]
                   }
                 ]

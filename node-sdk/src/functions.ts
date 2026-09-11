@@ -111,7 +111,10 @@ export class NotteFunction {
 		}
 	}
 
-	/** Compatibility alias for getRun(). */
+	/**
+	 * Compatibility alias for getRun().
+	 * @deprecated Use getRun() instead. Retained for backwards compatibility.
+	 */
 	async retrieve(functionRunId: string): Promise<GetFunctionRunResponse> {
 		return this.getRun(functionRunId);
 	}

@@ -1,5 +1,14 @@
 # Integration follow-up
 
+- Security follow-up (PR #970 CodeRabbit): `NotteVault.generatePassword()` uses
+  `Math.random()` when enforcing character requirements. Replace every selection
+  with unbiased cryptographically secure sampling in a separate SDK fix. Test
+  length/character requirements and ensure generation works with `Math.random`
+  stubbed to throw. The docs PR removes the security assurance, not the runtime bug.
+- Upstream OpenAPI descriptions should use language-neutral JSON Schema guidance
+  and describe `ListPersonasData` filters as personas, not sessions. The Node
+  reference currently corrects these descriptions at generation time.
+
 The pipeline migration enables discovery/execution of all integration files. It
 does not claim that every legacy test passes or has a self-contained fixture.
 SDK and test corrections are separate in [PR #966](https://github.com/nottelabs/notte/pull/966),

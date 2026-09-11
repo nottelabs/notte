@@ -97,6 +97,11 @@ export interface SessionOptions extends Omit<ApiSessionStartRequest, 'use_file_s
   open_viewer?: boolean;
 }
 
+/**
+ * Browser session created with `client.Session(options)`.
+ * Call `start()` before using it and `stop()` when finished, or use `use()`
+ * to start and stop automatically around an asynchronous callback.
+ */
 export class Session {
   private client: NotteClient;
   private options: ApiSessionStartRequest;
@@ -227,6 +232,7 @@ export class Session {
 
   /**
    * Open the live viewer for this session in the local default browser.
+   * @throws If the session has not started or no viewer URL is available.
    */
   viewer(): void {
     if (!this.sessionId) {

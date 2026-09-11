@@ -365,7 +365,6 @@
     "sessions/external_cdp.py",
     "sessions/extract_cookies_manual.py",
     "sessions/extract_cookies_notte.py",
-    "sessions/index.py",
     "sessions/lifecycle/handle_interrupts.py",
     "sessions/live-view/agent.py",
     "sessions/live-view/configuration.py",
