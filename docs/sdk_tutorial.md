@@ -9,7 +9,7 @@ import os
 notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
 # start / stop your session using the context manager
-with notte.Session(timeout_minutes=5) as session:
+with notte.Session(max_duration_minutes=5) as session:
     # get the session status
     status = session.status()
 # list your active sessions
@@ -49,17 +49,18 @@ from notte_sdk.client import NotteClient
 import os
 
 notte = NotteClient()
-# start an agent
-agent = notte.Agent(max_steps=10)
-response = agent.run(
-    task="Summarize the job offers on the Notte careers page.",
-    url="https://notte.cc",
-)
-# get session replay
-replay = agent.replay()
+# start a session and attach an agent
+with notte.Session() as session:
+    agent = notte.Agent(session=session, max_steps=10)
+    response = agent.run(
+        task="Summarize the job offers on the Notte careers page.",
+        url="https://notte.cc",
+    )
+# Retrieve the replay after closing the session
+replay = session.replay()
 ```
 
-Note that starting an agent also starts a session which is automatically stopped when the agent completes its tasks (or is stopped).
+The session context manager stops the session when the block exits. You can run multiple agents in the same session before closing it.
 
 You can use a non blocking approach to control the execution flow using the `agent.start(...)`, `agent.status(...)` and `agent.stop(...)` methods.
 

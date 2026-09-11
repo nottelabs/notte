@@ -498,6 +498,8 @@ class SessionsClient(BaseClient):
         wait: bool = True,
         timeout: float = 240.0,
         poll_interval: float = 5.0,
+        *,
+        _session_closed: bool = False,
     ) -> ReplayResponse:
         """
         Get presigned URLs for session replay.
@@ -532,7 +534,9 @@ class SessionsClient(BaseClient):
                 if e.status_code != 404:
                     raise
                 error_msg = e.error.get("message", "") or e.error.get("detail", "")
-                if "still active" in error_msg:
+                # The replay service can lag behind a successful stop response
+                # while background cleanup persists the session and video.
+                if "still active" in error_msg and not _session_closed:
                     raise ValueError(
                         f"Session {session_id} is still active — close the session first to generate the replay."
                     ) from e
@@ -950,6 +954,7 @@ class RemoteSession(SyncResource):
             wait=wait,
             timeout=timeout,
             poll_interval=poll_interval,
+            _session_closed=self.response is not None and self.response.status == "closed",
         )
 
     def viewer_browser(self) -> None:

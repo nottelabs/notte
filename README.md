@@ -49,12 +49,14 @@ Use the following script to spinup an agent using opensource features (you'll ne
 
 ```python
 import notte
+import os
 from dotenv import load_dotenv
 load_dotenv()
 
 with notte.Session(headless=False) as session:
-    agent = notte.Agent(session=session, reasoning_model='gemini/gemini-2.5-flash', max_steps=30)
-    response = agent.run(task="doom scroll cat memes on google images")
+    model = os.getenv("NOTTE_EXAMPLE_MODEL", "gemini/gemini-2.5-flash")
+    agent = notte.Agent(session=session, reasoning_model=model, max_steps=10)
+    response = agent.run(task="Find three cat memes on Google Images and describe them")
 ```
 
 ### Using Python SDK (Recommended)
@@ -178,11 +180,20 @@ with client.Session(
         url="https://www.google.com/recaptcha/api2/demo"
     )
 
-# Custom proxy configuration
+```
+
+For a custom proxy, set `PROXY_SERVER`, `PROXY_USERNAME`, and `PROXY_PASSWORD` to your provider's connection details.
+
+```python requires-env="PROXY_SERVER,PROXY_USERNAME,PROXY_PASSWORD"
+import os
+from notte_sdk import NotteClient
+from notte_sdk.types import ExternalProxy
+
+client = NotteClient()
 proxy_settings = ExternalProxy(
-    server="http://your-proxy-server:port",
-    username="your-username",
-    password="your-password",
+    server=os.environ["PROXY_SERVER"],
+    username=os.environ["PROXY_USERNAME"],
+    password=os.environ["PROXY_PASSWORD"],
 )
 
 with client.Session(proxies=[proxy_settings]) as session:
@@ -193,35 +204,36 @@ with client.Session(proxies=[proxy_settings]) as session:
 ## File download / upload
 
 File Storage allows you to upload files for your agents and download files that agents retrieve during their work.
-Uploaded files are user-scoped, while files downloaded by an agent are session-scoped.
+Both uploaded files and browser downloads belong to a session. Start a session before uploading files, and use file IDs to download them.
+Set `UPLOAD_FILE_PATH` to a local document and `UPLOAD_URL` to the website where your agent should upload it.
 
-```python
+```python requires-env="UPLOAD_FILE_PATH,UPLOAD_URL"
+import os
 from notte_sdk import NotteClient
+from notte_sdk.types import FileSource
 
 client = NotteClient()
-storage = client.FileStorage()
 
-# Upload files before agent execution
-storage.upload("/path/to/document.pdf")
+with client.Session() as session:
+    storage = session.storage
+    uploaded_file = storage.upload(os.environ["UPLOAD_FILE_PATH"])
+    storage.download(file_id=uploaded_file.id, local_dir="./inputs")
 
-# Download a user-uploaded file without starting a session
-storage.download_uploaded_file(
-    file_name="document.pdf",
-    local_dir="./inputs",
-)
-
-# Create session with storage attached
-with client.Session(storage=storage) as session:
     agent = client.Agent(session=session, max_steps=5)
     response = agent.run(
-        task="Upload the PDF document to the website and download the cat picture",
-        url="https://example.com/upload"
+        task=f"Upload {uploaded_file.filename} to the website and download the cat picture",
+        url=os.environ["UPLOAD_URL"],
     )
 
-# Download files that the agent downloaded
-downloaded_files = storage.list(type="downloads")
-for file_name in downloaded_files:
-    storage.download(file_name=file_name, local_dir="./results")
+    # Download files that the agent downloaded (100 files per page)
+    offset = 0
+    while True:
+        downloaded_files = storage.list(source=FileSource.SESSION_DOWNLOAD, offset=offset)
+        for file in downloaded_files.files:
+            storage.download(file_id=file.id, local_dir="./results")
+        offset += len(downloaded_files.files)
+        if offset >= downloaded_files.total or not downloaded_files.files:
+            break
 ```
 
 ## Cookies / Auth Sessions
@@ -266,13 +278,16 @@ with client.Session() as session:
 
 You can plug in any browser session provider you want and use our agent on top. Use external headless browser providers via CDP to benefit from Notte's agentic capabilities with any CDP-compatible browser.
 
-```python
+Set `EXTERNAL_CDP_URL` to the WebSocket URL of a running browser from your provider.
+
+```python requires-env="EXTERNAL_CDP_URL"
+import os
 from notte_sdk import NotteClient
 
 client = NotteClient()
-cdp_url = "wss://your-external-cdp-url"
+cdp_url = os.environ["EXTERNAL_CDP_URL"]
 
-with client.Session(cdp_url=cdp_url) as session:
+with client.Session(cdp_url=cdp_url, proxies=False, viewport_width=None, viewport_height=None) as session:
     agent = client.Agent(session=session)
     response = agent.run(task="extract pricing plans from https://www.notte.cc/")
 ```
@@ -288,11 +303,12 @@ client = NotteClient()
 
 with client.Session(open_viewer=True) as session:
     # Start with a deterministic navigation
-    session.execute(type="goto", url="https://duckduckgo.com/")
-    session.execute(type="fill", selector="internal:role=combobox[name=\"Search with DuckDuckGo\"i]", value="nottelabs")
-    agent = client.Agent(session=session, max_steps=3)
+    session.execute(type="goto", url="https://github.com/nottelabs")
+    agent = client.Agent(session=session, max_steps=10)
     # Use an agent to reason about the next step
-    agent.run(task="Open nottelabs github repository")
+    response = agent.run(task="Open the notte repository owned by nottelabs. Finish on its repository home page.")
+    assert response.success, response.answer
+    assert session.observe().metadata.url.split("?")[0].rstrip("/") == "https://github.com/nottelabs/notte"
     # Use a scraping endpoint to extract data
     data = session.scrape(instructions="Extract number of stars")
 ```
