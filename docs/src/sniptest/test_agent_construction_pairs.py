@@ -19,6 +19,11 @@ class AgentConstructionPairsTest(unittest.TestCase):
                 with self.subTest(name=name, language=suffix):
                     config, rendered = parse_file(root / f"{name}{suffix}")
                     self.assertIsNotNone(config.show)
+                    if suffix == ".ts" and name in ("param_session", "param_notifier", "creating_agent"):
+                        self.assertIn("await client.Session", rendered)
+                        self.assertIn("const agent = client.Agent", rendered)
+                        self.assertNotIn("const agent = await", rendered)
+
                     for text in expected:
                         self.assertIn(text, rendered)
                     for hidden in ("assert", "export {", "sessionStatus", "status =", "idle_timeout_minutes"):

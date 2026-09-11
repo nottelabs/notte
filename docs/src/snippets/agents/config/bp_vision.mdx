@@ -5,7 +5,7 @@
 
 ```python bp_vision.py
 # Text-only site
-agent = client.Agent(session=session, use_vision=False)
+text_agent = client.Agent(session=session, use_vision=False)
 
 # Image-heavy site
 agent = client.Agent(session=session, use_vision=True)
@@ -13,10 +13,10 @@ agent = client.Agent(session=session, use_vision=True)
 
 ```typescript bp_vision.ts
 // Text-only site
-let agent = client.Agent({ session, use_vision: false });
+const textAgent = client.Agent({ session, use_vision: false });
 
 // Image-heavy site
-agent = client.Agent({ session, use_vision: true });
+const agent = client.Agent({ session, use_vision: true });
 ```
 
 </CodeGroup>

@@ -20,20 +20,17 @@ with client.Session() as session:
 ```
 
 ```typescript creating_agent.ts
-import { NotteClient } from 'notte-sdk';
-
-const client = new NotteClient();
-
-const agent = await client.Session().use(async session =>
-  client.Agent({
+await client.Session().use(async session => {
+  const agent = client.Agent({
     session,
     reasoning_model: 'gemini/gemini-2.0-flash',
     use_vision: true,
     max_steps: 15,
     // vault, // Optional
     // persona, // Optional
-  }),
-);
+  });
+  // Use the agent here, while its session is active.
+});
 ```
 
 </CodeGroup>
