@@ -9,3 +9,6 @@ with client.Session() as session:
 
     # Image-heavy site
     agent = client.Agent(session=session, use_vision=True)
+    status = session.status()
+    assert agent.request.use_vision is True
+    assert agent.request.session_id == status.session_id

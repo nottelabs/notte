@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/agents/config/creating_agent.py */}
 
+<CodeGroup>
+
 ```python creating_agent.py
 from notte_sdk import NotteClient
 
@@ -16,3 +18,22 @@ with client.Session() as session:
         # persona=persona,  # Optional
     )
 ```
+
+```typescript creating_agent.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const agent = await client.Session().use(async session =>
+  client.Agent({
+    session,
+    reasoning_model: 'gemini/gemini-2.0-flash',
+    use_vision: true,
+    max_steps: 15,
+    // vault, // Optional
+    // persona, // Optional
+  }),
+);
+```
+
+</CodeGroup>

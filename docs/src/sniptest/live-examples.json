@@ -1,4 +1,16 @@
 {
+  "agents/config/creating_agent.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "agents/config/param_reasoning_model.ts": {
+    "expected": { "status": "active" },
+    "closedSession": true
+  },
+  "agents/config/bp_vision.ts": {
+    "expected": { "status": "active" },
+    "closedSession": true
+  },
   "sessions/cdp/playwright_events.ts": {
     "expected": { "status": "active" },
     "closedSession": true,
