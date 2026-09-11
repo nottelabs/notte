@@ -1,0 +1,11 @@
+src/
+lib/
+tsconfig.json
+tsup.config.ts
+openapi-ts.config.ts
+*.log
+.git/
+node_modules/
+coverage/
+.nyc_output/
+.DS_Store

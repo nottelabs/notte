@@ -1,0 +1,78 @@
+{
+  "name": "notte-sdk",
+  "version": "0.0.0-dev",
+  "description": "TypeScript SDK for Notte - Cloud-hosted browser sessions with LLM-powered web agents",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./next": {
+      "types": "./dist/proxy/next.d.ts",
+      "import": "./dist/proxy/next.mjs",
+      "require": "./dist/proxy/next.js"
+    },
+    "./proxy": {
+      "types": "./dist/proxy/core.d.ts",
+      "import": "./dist/proxy/core.mjs",
+      "require": "./dist/proxy/core.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "generate": "openapi-ts && node scripts/normalize-generated.js && node scripts/generate-proxy-patterns.js",
+    "generate:staging": "NOTTE_API_URL=https://us-staging.notte.cc npm run generate",
+    "check:staging": "node scripts/check-generated-drift.js",
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "prepublishOnly": "npm run build",
+    "test": "vitest",
+    "test:unit": "vitest --exclude='**/*integration.test.ts'",
+    "test:integration": "VITEST_INTEGRATION=1 vitest --run",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "notte",
+    "api",
+    "sdk",
+    "typescript"
+  ],
+  "author": "Notte",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nottelabs/notte.git",
+    "directory": "node-sdk"
+  },
+  "bugs": "https://github.com/nottelabs/notte/issues",
+  "homepage": "https://github.com/nottelabs/notte/tree/main/node-sdk",
+  "dependencies": {
+    "ws": "^8.18.0",
+    "zod": "^4.1.9"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.99.0",
+    "@types/node": "^20.14.0",
+    "@types/ws": "^8.5.10",
+    "dotenv": "^16.4.5",
+    "tsup": "^8.5.1",
+    "typescript": "^5.5.4",
+    "vitest": "^4.0.10"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "overrides": {
+    "brace-expansion": "^5.0.8",
+    "glob": "^11.1.0",
+    "js-yaml": "^4.3.0",
+    "postcss": "^8.5.25",
+    "tar": "^7.5.8"
+  }
+}

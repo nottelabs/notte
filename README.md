@@ -36,6 +36,8 @@ Notte provides all the essential tools for building and deploying AI agents that
 
 # Quickstart
 
+For JavaScript and TypeScript, see the [Node SDK](node-sdk/README.md) (`npm install notte-sdk`).
+
 ```
 pip install notte
 patchright install --with-deps chromium
