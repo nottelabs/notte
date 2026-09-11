@@ -15,6 +15,9 @@ It reads signatures, overloads, parameter defaults, accessors, JSDoc, exported
 option types, and the transitive source-defined types those APIs reference.
 Generated OpenAPI request/response models are included; low-level HTTP transport
 implementation types are excluded.
+Supporting type pages and Encryption remain generated but are hidden from the
+sidebar. The SDK's `ActionSpace.actions` union supplies Core Features / Actions;
+other type pages are reachable through related-type links on API pages.
 It does not import or execute the SDK, call OpenAPI, or require credentials.
 
 Edit SDK declarations/JSDoc to change API documentation. Generated pages live in

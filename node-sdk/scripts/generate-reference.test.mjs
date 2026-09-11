@@ -79,7 +79,7 @@ test('real SDK output covers factories, aliases and inherited session options wi
   for (const content of actual.pages.values()) assert.doesNotMatch(content, /import\("\/|\/Users\/|\/private\/tmp\//);
 });
 
-test('navigation and generated reference links resolve and every page is navigable', () => {
+test('navigation and generated reference links resolve; only supporting types and encryption are hidden', () => {
   const listed = new Set();
   const walk = node => {
     if (typeof node === 'string') listed.add(`${node}.mdx`);
@@ -87,7 +87,10 @@ test('navigation and generated reference links resolve and every page is navigab
     else node.pages?.forEach(walk);
   };
   walk(actual.navigation);
-  assert.deepEqual([...listed].sort(), [...actual.pages.keys()].sort());
+  for (const name of listed) assert.ok(actual.pages.has(name), `Missing navigation page: ${name}`);
+  for (const name of actual.pages.keys()) {
+    if (!listed.has(name)) assert.match(name, /\/types\/|\/encryption\/|\/manual\/encryption\.mdx$/);
+  }
   for (const [name, content] of actual.pages) {
     for (const [, link] of content.matchAll(/\]\(\/(typescript-sdk-reference\/[^)#]+)(?:#[^)]*)?\)/g)) {
       assert.ok(actual.pages.has(`${link}.mdx`), `${name} links to missing ${link}`);
@@ -101,8 +104,13 @@ test('Node SDK mirrors Python categories and appears below Python in the sidebar
   const categoryNames = category => actual.navigation.pages.find(group => group.group === category).pages
     .filter(page => typeof page === 'object').map(page => page.group);
   assert.ok(categoryNames('Getting Started').includes('Client'));
-  assert.deepEqual(categoryNames('Core Features'), ['Agent', 'Function', 'Session']);
-  for (const name of ['Vault', 'Persona', 'File Storage', 'Encryption', 'Types']) assert.ok(categoryNames('Tooling').includes(name));
+  assert.deepEqual(categoryNames('Core Features'), ['Session', 'Actions', 'Agent', 'Function']);
+  assert.deepEqual(categoryNames('Tooling'), ['Vault', 'Persona', 'File Storage']);
+  const actions = actual.navigation.pages.find(group => group.group === 'Core Features').pages.find(group => group.group === 'Actions');
+  assert.ok(actions.pages.includes('typescript-sdk-reference/types/gotoaction'));
+  assert.ok(actions.pages.includes('typescript-sdk-reference/types/clickactionoutput'));
+  assert.ok(!actions.pages.includes('typescript-sdk-reference/types/actionspace'));
+  assert.ok(!JSON.stringify(actual.navigation).includes('encryption'));
   const docs = JSON.parse(readFileSync(new URL('../../docs/src/docs.json', import.meta.url), 'utf8'));
   const navigation = JSON.stringify(docs.navigation);
   const python = navigation.indexOf('"group":"Python SDK"');

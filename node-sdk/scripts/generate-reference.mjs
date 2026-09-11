@@ -151,7 +151,6 @@ export function createReference(root = sdkRoot) {
     pages.set(`${prefix}/manual/${classSlug}.mdx`, page(name, node, contents.filter(Boolean).join('\n\n')));
     groups.push({ group: name, collapsed: true, pages: nav });
   }
-  const typePaths = [];
   for (const [name, node] of [...types].sort(([a], [b]) => a.localeCompare(b, 'en'))) {
     const path = `${prefix}/types/${name.toLowerCase()}`;
     if (pages.has(`${path}.mdx`)) throw new Error(`Duplicate reference path: ${path}`);
@@ -165,20 +164,29 @@ export function createReference(root = sdkRoot) {
       return `<ParamField body=${attr(p.name)} type={${attr(value)}}${p.flags & ts.SymbolFlags.Optional ? '' : ' required'}>\n${doc(p) || ' '}${tags(declaration) ? `\n\n${tags(declaration)}` : ''}\n</ParamField>`;
     });
     pages.set(`${path}.mdx`, page(name, node, [doc(symbol), fence(node.getText()), tags(node), fields.length ? `## Fields\n\n${fields.join('\n\n')}` : '', related([node])].filter(Boolean).join('\n\n')));
-    typePaths.push(path);
   }
-  pages.set(`${prefix}/manual/index.mdx`, page('Node SDK reference', null, `This reference is generated from the public high-level classes, their signatures, JSDoc, and related types in \`node-sdk/src\`. It documents the checked-in SDK source; match it to the version you use.\n\nInstall the SDK:\n\n\`\`\`sh\nnpm install notte-sdk\n\`\`\`\n\n${classes.map(({ symbol }) => `- [${symbol.name}](/${prefix}/manual/${slug(symbol.name)})`).join('\n')}\n\nThe generated low-level HTTP functions, legacy client helpers, and proxy subpath entrypoints are not part of this high-level reference. See the [API reference](/api-reference/authentication) for HTTP endpoints and the [Python SDK reference](/sdk-reference/manual/index) for Python.\n\nTo update these pages, edit the TypeScript source or its JSDoc and run \`npm run docs:generate --prefix node-sdk\`. CI checks for stale generated pages.`));
+  pages.set(`${prefix}/manual/index.mdx`, page('Node SDK reference', null, `This reference is generated from the public high-level classes, their signatures, JSDoc, and related types in \`node-sdk/src\`. It documents the checked-in SDK source; match it to the version you use.\n\nInstall the SDK:\n\n\`\`\`sh\nnpm install notte-sdk\n\`\`\`\n\n${classes.filter(({ symbol }) => symbol.name !== 'Encryption').map(({ symbol }) => `- [${symbol.name}](/${prefix}/manual/${slug(symbol.name)})`).join('\n')}\n\nThe generated low-level HTTP functions, legacy client helpers, and proxy subpath entrypoints are not part of this high-level reference. See the [API reference](/api-reference/authentication) for HTTP endpoints and the [Python SDK reference](/sdk-reference/manual/index) for Python.\n\nTo update these pages, edit the TypeScript source or its JSDoc and run \`npm run docs:generate --prefix node-sdk\`. CI checks for stale generated pages.`));
   const debugPaths = ['client/getconfig', 'client/getclient', 'session/getresponse']
     .map(path => `${prefix}/${path}`).filter(path => pages.has(`${path}.mdx`));
   const categories = { 'Getting Started': [], 'Core Features': [], Tooling: [], Debug: debugPaths };
   categories['Getting Started'].push(`${prefix}/manual/index`);
   const labels = { NotteClient: 'Client', NotteFunction: 'Function', NotteVault: 'Vault', NottePersona: 'Persona', SessionFiles: 'File Storage' };
-  for (const group of groups) {
+  const classOrder = ['NotteClient', 'Session', 'Agent', 'NotteFunction', 'NotteVault', 'NottePersona', 'SessionFiles'];
+  for (const group of groups.sort((a, b) => (classOrder.indexOf(a.group) + 1 || 100) - (classOrder.indexOf(b.group) + 1 || 100))) {
+    if (group.group === 'Encryption') continue;
     const category = group.group === 'NotteClient' ? 'Getting Started'
       : ['NotteVault', 'NottePersona', 'SessionFiles', 'Encryption'].includes(group.group) ? 'Tooling' : 'Core Features';
     categories[category].push({ ...group, group: labels[group.group] ?? group.group, pages: group.pages.filter(path => !debugPaths.includes(path)) });
   }
-  categories.Tooling.push({ group: 'Types', collapsed: true, pages: typePaths });
+  // Use the SDK's action union, not every model with "Action" in its name.
+  const actionSpace = types.get('ActionSpace');
+  const actions = actionSpace && checker.getTypeAtLocation(actionSpace).getProperty('actions');
+  const actionType = actions && checker.getIndexTypeOfType(checker.getTypeOfSymbolAtLocation(actions, actionSpace), ts.IndexKind.Number);
+  if (actionType) {
+    const paths = (actionType.isUnion() ? actionType.types : [actionType]).map(type => type.aliasSymbol?.name ?? type.getSymbol()?.name)
+      .filter(name => types.has(name)).map(name => `${prefix}/types/${name.toLowerCase()}`);
+    categories['Core Features'].splice(1, 0, { group: 'Actions', collapsed: true, pages: paths });
+  }
   return { pages, navigation: { group: 'Node SDK', pages: Object.entries(categories).filter(([, pages]) => pages.length).map(([group, pages]) => ({ group, pages })) } };
 }
 
