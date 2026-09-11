@@ -223,10 +223,10 @@ describe('redirect credential hardening', () => {
     interceptor = getResponseInterceptor();
   });
 
-  it('strips x-notte-api-key as well as Authorization on cross-origin redirects', async () => {
+  it('strips credentials on cross-origin redirects outside function execution', async () => {
     const mockGlobalFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('{}', { status: 200 }));
     const redirectResponse = new Response('', { status: 307, headers: { location: 'https://lambda.aws.com/function' } });
-    const request = new Request('https://api.notte.cc/functions/x/runs/y', {
+    const request = new Request('https://api.notte.cc/sessions/start', {
       method: 'POST',
       headers: { Authorization: 'Bearer sk-secret', 'x-notte-api-key': 'sk-secret' }, // pragma: allowlist secret
     });
@@ -236,6 +236,32 @@ describe('redirect credential hardening', () => {
     const headers = new Headers(mockGlobalFetch.mock.calls[0][1]?.headers as Record<string, string>);
     expect(headers.has('Authorization')).toBe(false);
     expect(headers.has('x-notte-api-key')).toBe(false);
+    mockGlobalFetch.mockRestore();
+  });
+
+  it('preserves the runtime key only for a configured API execution handoff', async () => {
+    const mockGlobalFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('{}'));
+    const response = new Response('', { status: 307, headers: { location: 'https://runtime.example/execute' } });
+    const request = new Request('https://api.notte.cc/functions/x/runs/y', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer test-key', 'x-notte-api-key': 'test-key' }, // pragma: allowlist secret
+    });
+    await interceptor(response, request, { serializedBody: '{}' });
+    const init = mockGlobalFetch.mock.calls[0][1]!;
+    expect(new Headers(init.headers).get('x-notte-api-key')).toBe('test-key'); // pragma: allowlist secret
+    expect(new Headers(init.headers).has('Authorization')).toBe(false);
+    expect(init.redirect).toBe('manual');
+    mockGlobalFetch.mockRestore();
+  });
+
+  it('does not let another origin delegate runtime credentials', async () => {
+    const mockGlobalFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('{}'));
+    const response = new Response('', { status: 307, headers: { location: 'https://runtime.example/execute' } });
+    const request = new Request('https://unrelated.example/functions/x/runs/y', {
+      method: 'POST', headers: { 'x-notte-api-key': 'test-key' }, // pragma: allowlist secret
+    });
+    await interceptor(response, request, { serializedBody: '{}' });
+    expect(new Headers(mockGlobalFetch.mock.calls[0][1]?.headers).has('x-notte-api-key')).toBe(false);
     mockGlobalFetch.mockRestore();
   });
 

@@ -8,6 +8,16 @@ Run unit tests (no API key required):
 npm run test:unit -- --run
 ```
 
+### Coverage
+Run `npm run test:coverage` to measure all handwritten SDK source, including
+files not imported by a test. Generated API bindings and test/build files are
+excluded. CI runs this on Node 22 and 24 and uploads HTML and JSON summary reports.
+Minimum coverage is 80% statements, lines, and functions, and 75% branches.
+
+`client-http.test.ts` uses two local HTTP origins to verify function runtime
+handoffs, credential stripping on subsequent/unrelated redirects, delayed
+response-body timeouts, and caller cancellation.
+
 ### Integration Tests
 The function streaming transport suite uses a local HTTP server and needs no credentials:
 

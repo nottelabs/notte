@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/client/client';
+import { getParseAs } from '@/lib/client/client/utils.gen';
 import { Session, type SessionOptions } from '@/session';
 import type {
   AgentResponse,
@@ -169,30 +170,50 @@ export class NotteClient {
     // Also normalizes Content-Type from text/plain to application/json
     // (AWS Lambda function URLs return JSON with the wrong Content-Type).
     this.client.interceptors.response.use(async (response: Response, request: Request, opts: any) => {
-      if ((response.status === 307 || response.status === 308) && response.headers.get('location')) {
-        const location = new URL(response.headers.get('location')!, request.url);
-        // Never replay a credentialed request over plaintext (loopback excepted for local development).
+      const initialUrl = new URL(request.url);
+      let currentUrl = initialUrl;
+      const headers = new Headers(request.headers);
+      // Only the configured API's execution endpoint can delegate runtime
+      // authentication. Its first HTTPS redirect is the runtime handoff, not
+      // a blanket trust in an AWS domain or in arbitrary API redirects.
+      const apiUrl = new URL(this.config.baseUrl, initialUrl);
+      const executionPrefix = `${apiUrl.pathname.replace(/\/$/, '')}/functions/`;
+      const executionPath = initialUrl.pathname.slice(executionPrefix.length);
+      const runtimeHandoff = request.method === 'POST' &&
+        initialUrl.origin === apiUrl.origin && initialUrl.pathname.startsWith(executionPrefix) &&
+        /^[^/]+\/runs\/[^/]+$/.test(executionPath) && !executionPath.endsWith('/create');
+      for (let hop = 0; (response.status === 307 || response.status === 308) && response.headers.get('location'); hop++) {
+        if (hop >= 10) throw new InvalidRequestError('Too many API redirects');
+        const location = new URL(response.headers.get('location')!, currentUrl);
         const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
         if (location.protocol !== 'https:' && !(location.protocol === 'http:' && loopback)) {
           throw new InvalidRequestError(`Refusing to follow a redirect to an insecure URL: ${location.origin}`);
         }
-        const headers = new Headers(request.headers);
-        // Strip every credential header on cross-origin redirects to avoid leaking them
-        if (location.origin !== new URL(request.url).origin) {
-          headers.delete('Authorization');
-          headers.delete('x-notte-api-key');
+        if (location.username || location.password) {
+          throw new InvalidRequestError('Refusing to follow a redirect containing URL credentials');
         }
+        if (location.origin !== currentUrl.origin) {
+          headers.delete('Authorization');
+          const localHandoff = location.protocol === 'http:' && initialUrl.protocol === 'http:' &&
+            ['localhost', '127.0.0.1', '[::1]'].includes(initialUrl.hostname) && loopback;
+          if (!(hop === 0 && runtimeHandoff && (location.protocol === 'https:' || localHandoff))) {
+            headers.delete('x-notte-api-key');
+          }
+        }
+        // A runtime cannot delegate the key again, even to another path on
+        // its own origin. Handle every hop ourselves so fetch cannot leak it.
+        if (hop > 0) headers.delete('x-notte-api-key');
+        await response.body?.cancel();
         const headerRecord: Record<string, string> = {};
-        headers.forEach((v: string, k: string) => {
-          headerRecord[k] = v;
-        });
-        const redirected = await fetch(location.toString(), {
+        headers.forEach((v, k) => { headerRecord[k] = v; });
+        response = await (opts.fetch ?? fetch)(location.toString(), {
           method: request.method,
           headers: headerRecord,
           body: opts.serializedBody ?? undefined,
           signal: request.signal,
+          redirect: 'manual',
         });
-        return redirected;
+        currentUrl = location;
       }
 
       // Normalize text/plain → application/json (Lambda function URLs)
@@ -207,13 +228,27 @@ export class NotteClient {
       return response;
     });
 
-    // Release the deadline timer once a response arrived (after the redirect
-    // replay above, which still needs the signal), or once the request failed.
-    // Streaming bodies are read after this point; the signal stays usable for
-    // callers that hold it, only the SDK timer is released.
-    this.client.interceptors.response.use((response: Response, request: Request) => {
-      releaseDeadline(request);
-      return response;
+    // Non-streaming calls are not finished until their body has arrived.
+    // Buffer under the deadline, then let the generated client parse normally.
+    // Explicit streams have a caller-owned lifetime (Function.run supplies its
+    // own signal/deadline); do not buffer them or delay delivery of live logs.
+    this.client.interceptors.response.use(async (response: Response, request: Request, opts: any) => {
+      try {
+        const parseAs = opts.parseAs === 'auto'
+          ? getParseAs(response.headers.get('content-type'))
+          : opts.parseAs;
+        if (parseAs !== 'stream' && response.body) {
+          const body = await response.arrayBuffer();
+          const buffered = new Response(body, {
+            status: response.status, statusText: response.statusText, headers: response.headers,
+          });
+          Object.defineProperty(buffered, 'url', { value: response.url });
+          return buffered;
+        }
+        return response;
+      } finally {
+        releaseDeadline(request);
+      }
     });
 
     // Turn raw failures into the typed error hierarchy.
@@ -235,6 +270,17 @@ export class NotteClient {
     if (error instanceof NotteAPIError) {
       return error;
     }
+    // Fetch body reads may throw AbortError even when the signal's reason is
+    // TimeoutError. Preserve caller cancellation and report SDK deadlines as
+    // timeouts rather than HTTP errors with a misleading status of 200.
+    if (request?.signal.aborted) {
+      error = request.signal.reason ?? error;
+    }
+    if (isTimeoutAbort(error)) {
+      const target = request ? ` to \`${requestPath(request)}\`` : '';
+      return new NotteTimeoutError(`Request${target} ${(error as Error).message}`, { cause: error });
+    }
+    if (request?.signal.aborted) return error;
     if (response) {
       const path = requestPath(request, response);
       const body = normalizeErrorBody(error);
@@ -256,12 +302,6 @@ export class NotteClient {
         return new NotteAPIExecutionError(path, response.status, body, response);
       }
       return new NotteAPIError(path, response.status, body, response);
-    }
-    if (isTimeoutAbort(error)) {
-      // Only the deadline path aborts with a TimeoutError carrying the effective
-      // deadline; a caller cancelling its own AbortSignal keeps its AbortError.
-      const target = request ? ` to \`${requestPath(request)}\`` : '';
-      return new NotteTimeoutError(`Request${target} ${(error as Error).message}`, { cause: error });
     }
     return error;
   }

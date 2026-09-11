@@ -37,7 +37,14 @@ jobs:
           cache-dependency-path: node-sdk/package-lock.json
       - run: npm ci
       - run: npm run typecheck
-      - run: npm run test:unit -- --run
+      - run: npm run test:coverage
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: node-sdk-coverage-${{ matrix.node }}
+          path: node-sdk/coverage/
+          if-no-files-found: ignore
       - run: npm run build
       - run: npm pack --dry-run
       - name: Smoke-test built package exports

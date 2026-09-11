@@ -29,11 +29,14 @@ export default defineConfig({
       ? ['**/node_modules/**']
       : ['**/node_modules/**', 'test/**/*.integration.test.ts', 'test/integration.test.ts'],
     coverage: {
-      reporter: ['text', 'json', 'html'],
+      provider: 'v8',
+      reporter: ['text', 'json-summary', 'html'],
+      include: ['src/**/*.ts'],
+      thresholds: { statements: 80, branches: 75, functions: 80, lines: 80 },
       exclude: [
         'node_modules/',
         'test/',
-        'lib/',
+        'src/lib/**',
         'dist/',
         '*.config.*'
       ]

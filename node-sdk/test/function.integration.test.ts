@@ -73,7 +73,11 @@ describe('Function live integration', () => {
 
 	it('updates the code with a modified script and bumps the version', async () => {
 		const before = await fn.get();
-		const updated = await fn.update({ path: updatedPath });
+		// Server-generated versions have second precision; create and update can
+		// happen within the same second on CI. Exercise a distinct explicit version.
+		const version = `node-sdk-update-${Date.now()}`;
+		const updated = await fn.update({ path: updatedPath, version });
+		expect(updated.latest_version).toBe(version);
 		expect(updated.function_id).toBe(fn.functionId);
 		expect(updated.latest_version).toBeTruthy();
 		expect(updated.latest_version).not.toBe(before.latest_version);

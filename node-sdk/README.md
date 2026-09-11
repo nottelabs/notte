@@ -880,8 +880,9 @@ try {
 ### Timeouts and retries
 
 The client applies a per-request timeout (`timeoutMs`, default 60 000 ms; `0`
-disables it) and rejects with `NotteTimeoutError` when it elapses. `retry()`
-wraps an async function so it is re-attempted on failure, like the Python
+disables it) through response-body consumption and rejects with `NotteTimeoutError`
+when it elapses. Explicit streams use the caller's signal for body cancellation;
+function runs supply their own execution deadline. `retry()` wraps an async function so it is re-attempted on failure, like the Python
 `@retry` decorator:
 
 ```typescript

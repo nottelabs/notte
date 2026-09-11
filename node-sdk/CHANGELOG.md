@@ -5,9 +5,16 @@
 - `session.fetch()` refuses plaintext `http:` targets and redirects by default
   because the request carries the page's cookies; pass `allowInsecure: true`
   to override. Relative URLs resolve against the page.
-- Manual 307/308 redirect replay strips `x-notte-api-key` as well as
-  `Authorization` on cross-origin targets and refuses insecure destinations
-  (loopback excepted).
+- Manual 307/308 redirects preserve `x-notte-api-key` only for the configured
+  API's first function-execution runtime handoff. Cross-origin bearer tokens
+  and keys on unrelated or subsequent runtime redirects are stripped; insecure
+  destinations are refused (loopback excepted).
+- Request deadlines cover response-body reads as well as waiting for headers.
+  Explicit streams retain their caller-owned deadline and cancellation signal.
+- Replay polling tolerates a temporary “still active” response after a
+  successful `stop()`, while retaining the replay deadline.
+- CI measures handwritten SDK coverage and enforces minimum thresholds;
+  `npm run test:coverage` generates local HTML and JSON summary reports.
 - A caller's own `AbortSignal` is no longer reported as `NotteTimeoutError`;
   only the SDK deadline is. Composite signals use `AbortSignal.any` when available.
 - Captcha actions that time out on every retry rethrow the last `NotteAPIError`

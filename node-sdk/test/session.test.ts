@@ -281,6 +281,26 @@ describe('Session Unit Tests', () => {
       expect(sleep).toHaveBeenCalledWith(10);
     });
 
+    it('waits through stale active state after a successful stop', async () => {
+      vi.mocked(sessionStop).mockResolvedValue({ data: sessionResponse({ status: 'closed' }) } as never);
+      vi.mocked(sessionReplay)
+        .mockRejectedValueOnce(new NotteAPIError('/replay', 404, { message: 'Session is still active' }))
+        .mockResolvedValueOnce({ data: replays[0] } as never);
+      const session = new Session(mockClient);
+      await session.use(async () => undefined);
+      expect(await session.replay({ pollIntervalMs: 1 })).toEqual(replays[0]);
+      expect(sessionReplay).toHaveBeenCalledTimes(2);
+    });
+
+    it('bounds stale active state polling after stop by the replay deadline', async () => {
+      vi.mocked(sessionStop).mockResolvedValue({ data: sessionResponse({ status: 'closed' }) } as never);
+      vi.mocked(sessionReplay).mockRejectedValue(new NotteAPIError('/replay', 404, { message: 'Session is still active' }));
+      const session = new Session(mockClient);
+      await session.start();
+      await session.stop();
+      await expect(session.replay({ timeoutMs: 5, pollIntervalMs: 1 })).rejects.toBeInstanceOf(NotteTimeoutError);
+    });
+
     it('throws when the API says the session is still active', async () => {
       vi.mocked(sessionReplay).mockRejectedValue(new NotteAPIError('/replay', 404, { message: 'Session is still active' }));
       const session = new Session(mockClient);
