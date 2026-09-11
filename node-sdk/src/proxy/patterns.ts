@@ -60,9 +60,6 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^prompts\/improve$/, // /prompts/improve
   /^prompts\/nudge$/, // /prompts/nudge
 
-  // Proxies endpoints
-  /^proxies\/gateway\/credentials$/, // /proxies/gateway/credentials
-
   // Ready endpoints
   /^ready$/, // /ready
 
