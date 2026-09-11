@@ -13,7 +13,8 @@ with client.Session() as session:
             # ... operations
         except Exception as e:
             print(f"CDP connection failed: {e}")
-        # Capture successful connection outside the displayed error-handling example.
-        if not browser.is_connected():
-            raise RuntimeError("CDP browser is not connected")
-        status = session.status()
+        else:
+            # Capture successful connection outside the displayed error-handling example.
+            if not browser.is_connected():
+                raise RuntimeError("CDP browser is not connected")
+            status = session.status()
