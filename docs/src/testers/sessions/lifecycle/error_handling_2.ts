@@ -1,7 +1,6 @@
 // @sniptest filename=error_handling_2.ts
-// @sniptest show=8-32
+// @sniptest show=7-25
 import { NotteClient } from 'notte-sdk';
-import { chromium } from 'playwright-core';
 
 const client = new NotteClient();
 let sessionId: string | null = null;
@@ -14,15 +13,9 @@ try {
   try {
     sessionId = session.getId();
     const status = await session.status();
-    if (!status.cdp_url) throw new Error('Session did not return a CDP URL');
-    const browser = await chromium.connectOverCDP(status.cdp_url);
-    try {
-      const page = browser.contexts()[0].pages()[0];
-      await page.goto('https://example.com');
-      throw expectedError;
-    } finally {
-      await browser.close();
-    }
+    const page = await session.page();
+    await page.goto('https://example.com');
+    throw expectedError;
   } finally {
     await session.stop();
   }

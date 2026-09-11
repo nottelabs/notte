@@ -21,17 +21,12 @@ await client
   .use(async (session) => {
     console.log(`Session ${session.getId()} is active`);
 
-    // Connect Playwright to access the page.
+    // Access the session’s Playwright page.
     status = await session.status();
-    const browser = await chromium.connectOverCDP(status.cdp_url!);
-    try {
-      const page = browser.contexts()[0].pages()[0];
-      await page.goto('https://example.com');
-      title = await page.title();
-      console.log(`Page title: ${title}`);
-    } finally {
-      await browser.close();
-    }
+    const page = await session.page();
+    await page.goto('https://example.com');
+    title = await page.title();
+    console.log(`Page title: ${title}`);
   });
 // Automatically stopped here.
 ```
@@ -59,14 +54,9 @@ try {
   console.log(`Session ${session.getId()} is active`);
   status = await session.status();
   if (status.status !== 'active') throw new Error('Session is not active');
-  const browser = await chromium.connectOverCDP(status.cdp_url!);
-  try {
-    const page = browser.contexts()[0].pages()[0];
-    await page.goto('https://example.com');
-    title = await page.title();
-  } finally {
-    await browser.close();
-  }
+  const page = await session.page();
+  await page.goto('https://example.com');
+  title = await page.title();
 } finally {
   // Always stop the session
   await session.stop();
