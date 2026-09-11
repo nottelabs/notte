@@ -62,9 +62,41 @@ jobs:
       - name: Install dependencies
         run: uv sync --dev --all-extras
 
-      - name: Install patchright
+      - name: Use HTTPS Ubuntu mirrors on Blacksmith
         run: |
-          echo "Cache miss - installing patchright"
+          # Canonical's archive/security endpoints intermittently fail from
+          # Blacksmith over both HTTP and HTTPS. Prefer kernel.org's Ubuntu
+          # mirror, with the official archive as fallback, for every suite.
+          # Preserve suites (including noble-security) and Ubuntu signing keys.
+          sudo python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          apt = Path('/etc/apt')
+          mirror_list = apt / 'blacksmith-ubuntu-mirrors.txt'
+          mirror_list.write_text(
+              'https://mirrors.edge.kernel.org/ubuntu\tpriority:1\n'
+              'https://archive.ubuntu.com/ubuntu\tpriority:2\n')
+          sources = [apt / 'sources.list']
+          sources += list((apt / 'sources.list.d').glob('*.list'))
+          sources += list((apt / 'sources.list.d').glob('*.sources'))
+          for source in sources:
+              if source.is_file():
+                  source.write_text(re.sub(
+                      r'https?://(?:(?:[a-z0-9-]+\.)*archive\.ubuntu\.com|security\.ubuntu\.com)/ubuntu/?(?=\s|$)',
+                      f'mirror+file:{mirror_list}', source.read_text()))
+          PY
+          # Bound each network wait and reject stale indexes after an error.
+          sudo tee /etc/apt/apt.conf.d/99-ci-network > /dev/null <<'EOF'
+          Acquire::http::Timeout "20";
+          Acquire::https::Timeout "20";
+          Acquire::Retries "2";
+          APT::Update::Error-Mode "any";
+          EOF
+
+      - name: Install patchright
+        timeout-minutes: 5
+        run: |
           uv run patchright install --with-deps chromium --no-shell
 
       - name: Verify environment variables
