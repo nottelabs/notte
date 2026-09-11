@@ -13,6 +13,25 @@ from parser import parse_file
 
 
 class RepositoryExamplesTest(unittest.TestCase):
+    def test_create_session_tabs_show_the_same_task_and_output(self):
+        testers = Path(__file__).resolve().parents[1] / "testers/sessions/lifecycle"
+        for name in ("create_session", "create_session_2"):
+            _, python = parse_file(testers / f"{name}.py")
+            _, typescript = parse_file(testers / f"{name}.ts")
+            with self.subTest(name=name):
+                for code in (python, typescript):
+                    self.assertIn("Session ", code)
+                    self.assertIn(" is active", code)
+                    self.assertIn("https://example.com", code)
+                self.assertEqual("Page title:" in python, "Page title:" in typescript)
+                self.assertNotIn("console.log(viewport)", typescript)
+                self.assertNotIn("page.evaluate", typescript)
+                if name == "create_session":
+                    self.assertNotIn("Session is not active", typescript)
+                    for code in (python, typescript):
+                        self.assertIn("1920", code)
+                        self.assertIn("1080", code)
+
     def test_non_timeout_examples_do_not_configure_idle_timeouts(self):
         testers = Path(__file__).resolve().parents[1] / "testers"
         for name in (

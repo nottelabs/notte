@@ -47,13 +47,10 @@
   "sessions/lifecycle/create_session.ts": {
     "expected": {
       "status": "active",
-      "title": "Example Domain",
-      "viewport": {
-        "width": 1920,
-        "height": 1080
-      }
+      "title": "Example Domain"
     },
-    "closedSession": true
+    "closedSession": true,
+    "logContains": "Page title: Example Domain"
   },
   "sessions/lifecycle/create_session_2.ts": {
     "expected": {

@@ -1,5 +1,5 @@
 // @sniptest filename=create_session_2.ts
-// @sniptest show=8-26
+// @sniptest show=8-25
 import { NotteClient, type SessionResponse } from 'notte-sdk';
 import { chromium } from 'playwright-core';
 
@@ -13,8 +13,7 @@ try {
   console.log(`Session ${session.getId()} is active`);
   status = await session.status();
   if (status.status !== 'active') throw new Error('Session is not active');
-  if (!status.cdp_url) throw new Error('Session did not return a CDP URL');
-  const browser = await chromium.connectOverCDP(status.cdp_url);
+  const browser = await chromium.connectOverCDP(status.cdp_url!);
   try {
     const page = browser.contexts()[0].pages()[0];
     await page.goto('https://example.com');
