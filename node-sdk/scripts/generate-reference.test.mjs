@@ -89,7 +89,7 @@ test('navigation and generated reference links resolve; supporting APIs can rema
   walk(actual.navigation);
   for (const name of listed) assert.ok(actual.pages.has(name), `Missing navigation page: ${name}`);
   for (const name of actual.pages.keys()) {
-    if (!listed.has(name) && !actual.pages.get(name).includes('**deprecated:**')) assert.match(name, /\/types\/|\/encryption\/|\/manual\/(?:encryption|index)\.mdx$|\/client\/(?:session|files|agent|vault|persona|nottefunction)\.mdx$|\/symbol-asynciterator\.mdx$|\/function\/getfunctionid\.mdx$|\/session\/(?:getid|use|setcookiesfromfile)\.mdx$|\/vault\/(?:start|stop|delete|addcredentialsfromenv|setcreditcard|getcreditcard|deletecreditcard)\.mdx$|\/persona\/(?:start|stop|create|get|use)\.mdx$|\/files\/delete\.mdx$/);
+    if (!listed.has(name) && !actual.pages.get(name).includes('**deprecated:**') && !/\/(?:manual\/)?(?:[a-z]+error|pagefetchresponse)(?:\/|\.mdx$)/.test(name)) assert.match(name, /\/types\/|\/encryption\/|\/manual\/(?:encryption|index)\.mdx$|\/client\/(?:session|files|agent|vault|persona|nottefunction|function|filestorage|withdbpreview|healthcheck|search)\.mdx$|\/symbol-asynciterator\.mdx$|\/function\/getfunctionid\.mdx$|\/session\/(?:getid|use|setcookiesfromfile)\.mdx$|\/vault\/(?:start|stop|delete|addcredentialsfromenv|setcreditcard|getcreditcard|deletecreditcard)\.mdx$|\/persona\/(?:start|stop|create|get|use)\.mdx$|\/files\/delete\.mdx$/);
   }
   for (const [name, content] of actual.pages) {
     for (const [, link] of content.matchAll(/\]\(\/(typescript-sdk-reference\/[^)#]+)(?:#[^)]*)?\)/g)) {
@@ -164,11 +164,11 @@ test('Node SDK mirrors Python categories and appears below Python in the sidebar
   for (const [path, title] of [['manual/client', 'NotteClient'], ['authentication', 'Authentication'], ['errors', 'Error Handling'], ['rate-limits', 'Rate Limits']]) {
     assert.ok(actual.pages.get(`typescript-sdk-reference/${path}.mdx`).startsWith(`---\ntitle: "${title}"\n`));
   }
-  assert.match(actual.pages.get('typescript-sdk-reference/errors.mdx'), /does not provide Python/);
+  assert.match(actual.pages.get('typescript-sdk-reference/errors.mdx'), /NotteAPIError/);
   assert.match(actual.pages.get('typescript-sdk-reference/authentication.mdx'), /NOTTE_API_KEY/);
-  assert.match(actual.pages.get('typescript-sdk-reference/rate-limits.mdx'), /do not consistently preserve HTTP status/);
-  assert.deepEqual(categoryNames('Core Features'), ['Session', 'Actions', 'Agent', 'Function']);
-  assert.deepEqual(categoryNames('Tooling'), ['Vault', 'Persona', 'File Storage']);
+  assert.match(actual.pages.get('typescript-sdk-reference/rate-limits.mdx'), /error.statusCode === 429/);
+  assert.deepEqual(categoryNames('Core Features'), ['Session', 'Actions', 'Agent', 'Function', 'Anything', 'Search']);
+  assert.deepEqual(categoryNames('Tooling'), ['Vault', 'Persona', 'File Storage', 'Secrets', 'Usage', 'Remote File Storage']);
   const actions = actual.navigation.pages.find(group => group.group === 'Core Features').pages.find(group => group.group === 'Actions');
   assert.ok(actions.pages.includes('typescript-sdk-reference/types/gotoaction'));
   assert.ok(actions.pages.includes('typescript-sdk-reference/types/clickactionoutput'));
@@ -198,12 +198,12 @@ test('Tooling and Actions mirror Python tasks without Node lifecycle clutter', (
   const python = findGroup(docs.navigation, 'Python SDK');
   const paths = (nav, name) => findGroup(nav, name).pages;
   const task = path => path.split('/').at(-1).replace(/_/g, '').replace(/(?:input|output)$/, '');
-  assert.deepEqual(paths(actual.navigation, 'Vault').slice(1).map(task), paths(python, 'Vault').slice(1).map(task));
+  assert.deepEqual(paths(actual.navigation, 'Vault').slice(1).map(task), [...paths(python, 'Vault').slice(1).map(task), 'hascredential']);
   for (const nav of [python, actual.navigation]) assert.doesNotMatch(JSON.stringify(nav), /(?:set|get|delete)_?credit_?card/);
   assert.deepEqual(paths(actual.navigation, 'Actions').map(task), paths(python, 'Actions').map(task));
   assert.deepEqual(paths(actual.navigation, 'Persona').slice(1).map(task), ['delete', 'addcredentials', 'emails', 'sms']);
-  assert.deepEqual(paths(actual.navigation, 'File Storage').slice(1).map(task), ['download', 'upload', 'list']);
-  for (const [section, methods] of Object.entries({ vault: ['start', 'stop', 'delete', 'addcredentialsfromenv', 'setcreditcard', 'getcreditcard', 'deletecreditcard'], persona: ['start', 'stop', 'create', 'get', 'use'], session: ['use', 'setcookiesfromfile'], files: ['delete'] })) {
+  assert.deepEqual(paths(actual.navigation, 'File Storage').slice(1).map(task), ['download', 'upload', 'list', 'metadata', 'stream']);
+  for (const [section, methods] of Object.entries({ vault: ['start', 'stop', 'delete', 'addcredentialsfromenv'], persona: ['start', 'stop', 'create', 'get', 'use'], session: ['use', 'setcookiesfromfile'], files: ['delete'] })) {
     for (const method of methods) {
       const path = `typescript-sdk-reference/${section}/${method}`;
       assert.ok(actual.pages.has(`${path}.mdx`), 'Hidden helpers must retain their URLs');
@@ -228,11 +228,16 @@ test('review regressions preserve complete summaries and accurate Node descripti
     assert.doesNotMatch(page(`types/${name}`), /active sessions|return sessions|system sessions/);
     assert.match(page(`types/${name}`), /active personas/);
   }
-  for (const name of ['checkactionoutput', 'clickactionoutput', 'credentialsdictinput', 'creditcarddictinput', 'selectdropdownoptionactionoutput', 'downloadfileactionoutput', 'smsresponse', 'fallbackfillactionoutput', 'fillactionoutput', 'uploadfileactionoutput', 'multifactorfillactionoutput', 'structureddatabasemodel']) {
+  for (const name of ['checkactionoutput', 'clickactionoutput', 'credentialsdictinput', 'selectdropdownoptionactionoutput', 'downloadfileactionoutput', 'smsresponse', 'fallbackfillactionoutput', 'fillactionoutput', 'uploadfileactionoutput', 'multifactorfillactionoutput', 'structureddatabasemodel']) {
     assert.doesNotMatch(page(`types/${name}`).split('```typescript')[0], /\n(?:CheckAction|ClickAction|CredentialsDict|CreditCardDict|SelectDropdownOptionAction|DownloadFileAction|SmsResponse|FallbackFillAction|FillAction|UploadFileAction|MultiFactorFillAction|StructuredData\[BaseModel\])\n/);
   }
   assert.doesNotMatch(page('types/cookie').split('## Fields')[1], /Httponly|Expirationdate|Hostonly|Samesite|Storeid|Partitionkey/);
-  assert.match(page('vault/generatepassword'), /do not use this[\s\S]*security-sensitive/);
+  assert.match(page('vault/generatepassword'), /secure random password/);
+  assert.doesNotMatch(page('vault/generatepassword'), /Math.random|do not use this/);
+  for (const method of ['setcreditcard', 'getcreditcard', 'deletecreditcard']) {
+    assert.ok(!actual.pages.has(`typescript-sdk-reference/vault/${method}.mdx`));
+  }
+  assert.ok(!actual.pages.has('typescript-sdk-reference/types/creditcarddictinput.mdx'));
 });
 
 test('navigation replacement preserves unrelated Python navigation and formatting', () => {

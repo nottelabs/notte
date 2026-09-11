@@ -31,11 +31,11 @@ A missing key throws during client construction, except when using a relative pr
 
 ## Configuration errors
 
-[NotteClient](/typescript-sdk-reference/manual/client) throws an \`Error\` for a missing API key or an unsupported API URL. HTTPS is required for remote servers; HTTP is allowed on loopback for local development.
+[NotteClient](/typescript-sdk-reference/manual/client) throws \`AuthenticationError\` for a missing API key and \`InvalidRequestError\` for an unsupported API URL. HTTPS is required for remote servers; HTTP is allowed on loopback for local development.
 
 ## API and execution errors
 
-High-level methods generally wrap failed API responses in ordinary JavaScript \`Error\` objects. The Node SDK does not provide Python’s \`NotteAPIError\` exception hierarchy or a consistent \`status_code\` property.
+HTTP failures throw [NotteAPIError](/typescript-sdk-reference/manual/notteapierror), with \`statusCode\`, \`path\`, the parsed error body, and the response when available. Request deadlines throw [NotteTimeoutError](/typescript-sdk-reference/manual/nottetimeouterror). Failed actions throw \`ActionExecutionError\`; failed cloud function runs throw \`FailedToRunCloudFunctionError\` unless \`raiseOnFailure: false\` is set.
 
 Treat caught values as \`unknown\`: check \`error instanceof Error\` before reading \`error.message\`. Do not depend on parsing error messages to identify HTTP status codes.
 
@@ -54,7 +54,7 @@ Do not retry every exception: configuration errors require a fix, and repeating 
 
 ## Handling rate limits
 
-High-level Node SDK methods do not consistently preserve HTTP status codes or response headers on thrown errors. Do not copy Python examples that inspect \`error.status_code\`, or assume every failed request was rate-limited.
+Check \`error instanceof NotteAPIError\` and \`error.statusCode === 429\` to identify rate limiting. Response headers are available through \`error.response?.headers\`; Node uses \`statusCode\`, not Python’s \`status_code\`.
 
 When your HTTP integration exposes a verified \`429\` response, honor \`Retry-After\` if provided; otherwise use bounded exponential backoff with jitter. Set a retry limit and retry only operations that are safe to repeat. Automatic rate-limit retries are not provided by the high-level client.
 
