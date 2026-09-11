@@ -3,6 +3,7 @@
  * `notte_core.utils.files.create_or_append_cookies_to_file` in Python.
  */
 import { readFile, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import type { Cookie } from '@/lib/client/types.gen';
 import { InvalidRequestError } from '@/errors';
 
@@ -21,16 +22,44 @@ export async function readCookiesFile(cookieFile: string): Promise<Cookie[]> {
  */
 export async function createOrAppendCookiesToFile(cookieFile: string, cookies: Cookie[]): Promise<void> {
   console.info(`🍪 Automatically saving cookies to ${cookieFile}`);
-  let existing: Cookie[] = [];
+  // Sessions sharing one cookie file (stopped concurrently) must not read the
+  // same contents and overwrite each other, so the read-modify-write runs
+  // under a per-path lock. The lock is per process; a file shared between
+  // processes still needs an external lock.
+  await withFileLock(cookieFile, async () => {
+    let existing: Cookie[] = [];
+    try {
+      existing = await readCookiesFile(cookieFile);
+    } catch (error) {
+      if (!isNotFound(error)) {
+        throw error;
+      }
+    }
+    existing.push(...cookies);
+    await writeFile(cookieFile, JSON.stringify(existing), 'utf-8');
+  });
+}
+
+const fileLocks = new Map<string, Promise<void>>();
+
+/** Run `fn` after every earlier operation queued for the same resolved path. */
+async function withFileLock<T>(path: string, fn: () => Promise<T>): Promise<T> {
+  const key = resolve(path);
+  const previous = fileLocks.get(key) ?? Promise.resolve();
+  let release!: () => void;
+  const current = new Promise<void>(done => {
+    release = done;
+  });
+  fileLocks.set(key, previous.then(() => current));
+  await previous;
   try {
-    existing = await readCookiesFile(cookieFile);
-  } catch (error) {
-    if (!isNotFound(error)) {
-      throw error;
+    return await fn();
+  } finally {
+    release();
+    if (fileLocks.get(key) === previous.then(() => current)) {
+      fileLocks.delete(key);
     }
   }
-  existing.push(...cookies);
-  await writeFile(cookieFile, JSON.stringify(existing), 'utf-8');
 }
 
 function isNotFound(error: unknown): boolean {

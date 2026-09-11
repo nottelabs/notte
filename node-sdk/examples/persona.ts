@@ -15,6 +15,9 @@ function requirePersonaId(): string {
 }
 
 async function personaExample() {
+  // Validate the environment before creating remote resources so a missing
+  // variable cannot skip the cleanup at the end of the example.
+  const existingPersonaId = requirePersonaId();
   const client = new NotteClient();
 
   // Example 1: Try to create a new persona with a vault
@@ -105,7 +108,7 @@ async function personaExample() {
 
   // Example 6: Access an existing persona by id
   console.log('\n=== Using existing persona ===');
-  const existingPersona = client.Persona({ persona_id: requirePersonaId() });
+  const existingPersona = client.Persona({ persona_id: existingPersonaId });
 
   const existingEmails = await existingPersona.emails();
   console.log(`Existing persona has ${existingEmails.length} emails`);

@@ -29,7 +29,7 @@ const pricingPlansJson = {
       type: 'array',
       items: {
         type: 'object',
-        required: ['name'],
+        required: ['name', 'features'],
         properties: {
           name: { type: 'string', description: 'Name of the plan' },
           price_per_month: { type: 'string', description: 'Price of the plan (with currency)' },

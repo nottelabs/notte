@@ -671,6 +671,7 @@ export class Session {
     const isCaptcha = isCaptchaSolveAction(action);
 
     let result: ApiExecutionResponse | undefined;
+    let lastError: unknown;
     for (let attempt = 0; attempt < CAPTCHA_SOLVE_TRIES; attempt += 1) {
       try {
         const response = await pageExecute({
@@ -684,6 +685,7 @@ export class Session {
         break;
       } catch (error) {
         if (isCaptcha && error instanceof NotteAPIError && error.statusCode === 408) {
+          lastError = error;
           console.warn('Solve captcha action timed out. This can happen for long and complex captchas. Retrying...');
           continue;
         }
@@ -691,7 +693,8 @@ export class Session {
       }
     }
     if (!result) {
-      throw new Error(`Failed to execute action '${action.type}'. This should not happen. Please report this issue.`);
+      // Every attempt timed out: surface the last typed 408 rather than a generic message.
+      throw lastError ?? new Error(`Failed to execute action '${action.type}'. This should not happen. Please report this issue.`);
     }
 
     // Gate on "did the action fail", not "did something throw", to mirror the local session.

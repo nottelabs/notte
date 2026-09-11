@@ -59,13 +59,13 @@ command (for its API timeouts), for example `npm run test:integration -- session
 
 Run integration tests (requires API key):
 ```bash
-NOTTE_API_KEY=your_api_key npm test session.integration.test.ts
+NOTTE_API_KEY=your_api_key npm run test:integration -- session
 ```
 
 Or set the environment variable:
 ```bash
 export NOTTE_API_KEY=your_api_key
-npm test session.integration.test.ts
+npm run test:integration -- session
 ```
 
 ## Test Structure

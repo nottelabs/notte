@@ -386,3 +386,18 @@ describe('generatePassword uniformity', () => {
     expect(seen.size).toBe(62);
   });
 });
+
+describe('getRootDomain uses the public suffix list', () => {
+  it.each([
+    ['https://shop.example.co.uk/basket', 'example.co.uk'],
+    ['https://portal.example.com.au', 'example.com.au'],
+    ['https://www.parliament.gov.uk/', 'parliament.gov.uk'],
+    ['https://school.pvt.k12.ma.us/', 'school.pvt.k12.ma.us'],
+    ['https://alice.github.io/', 'github.io'], // ICANN section only, like tldextract's default in Python
+    ['https://Mixed.Case.Example.COM', 'example.com'],
+    ['https://intranet-host/', 'intranet-host'],
+    ['https://localhost:8000/', 'localhost'],
+  ])('%s -> %s', (url, domain) => {
+    expect(getRootDomain(url)).toBe(domain);
+  });
+});

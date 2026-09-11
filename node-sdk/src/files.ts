@@ -1,5 +1,5 @@
 import { createWriteStream } from 'node:fs';
-import { mkdir, readFile, rename, rm, stat } from 'node:fs/promises';
+import { link, mkdir, readFile, rename, rm, stat } from 'node:fs/promises';
 import { basename, extname, join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { Readable } from 'node:stream';
@@ -295,9 +295,12 @@ export class RemoteFileStorage {
     }
     await mkdir(localDir, { recursive: true });
     const destination = join(localDir, safeName);
-    const exists = await stat(destination).then(() => true, () => false);
-    if (exists && !options.force) {
-      throw new FileExistsError(`${destination} already exists; pass force: true to overwrite it`);
+    if (!options.force) {
+      // Fail fast before the transfer; the atomic `link` below is the real guard.
+      const exists = await stat(destination).then(() => true, () => false);
+      if (exists) {
+        throw new FileExistsError(`${destination} already exists; pass force: true to overwrite it`);
+      }
     }
 
     const body = await files.stream(fileId);
@@ -308,7 +311,21 @@ export class RemoteFileStorage {
         Readable.fromWeb(body as unknown as NodeReadableStream<Uint8Array>),
         createWriteStream(temporary, { flags: 'wx' }),
       );
-      await rename(temporary, destination);
+      if (options.force) {
+        await rename(temporary, destination);
+      } else {
+        // `link` fails with EEXIST instead of replacing a file created after the
+        // check above, so the no-overwrite contract holds under concurrency.
+        try {
+          await link(temporary, destination);
+        } catch (error) {
+          if ((error as { code?: string }).code === 'EEXIST') {
+            throw new FileExistsError(`${destination} already exists; pass force: true to overwrite it`);
+          }
+          throw error;
+        }
+        await rm(temporary, { force: true });
+      }
     } catch (error) {
       await rm(temporary, { force: true });
       throw error;

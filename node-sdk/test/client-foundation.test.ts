@@ -276,3 +276,31 @@ describe('NotteClient transport', () => {
     });
   });
 });
+
+describe('caller cancellation vs deadline', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('does not report a caller abort as a NotteTimeoutError', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        (request: Request) =>
+          new Promise<Response>((_, reject) => {
+            // like undici: an already-aborted signal rejects immediately
+            if (request.signal.aborted) reject(request.signal.reason);
+            request.signal.addEventListener('abort', () => reject(request.signal.reason));
+          }),
+      ),
+    );
+    const client = new NotteClient({ apiKey: API_KEY, baseUrl: DEFAULT_NOTTE_API_URL, timeoutMs: 60_000 });
+    const controller = new AbortController();
+    const pending = client.getClient().get({ url: '/health', signal: controller.signal }).catch((e: unknown) => e);
+    controller.abort(new DOMException('cancelled by caller', 'AbortError'));
+
+    const error = await pending;
+    expect(error).not.toBeInstanceOf(NotteTimeoutError);
+    expect((error as Error).name).toBe('AbortError');
+  });
+});

@@ -187,7 +187,9 @@ describe('execute raise on failure', () => {
       const session = await remoteSession(executionResult({ action: CAPTCHA }));
       vi.mocked(pageExecute).mockRejectedValue(timeout());
 
-      await expect(session.execute(CAPTCHA)).rejects.toThrow("Failed to execute action 'captcha_solve'. This should not happen.");
+      const error = await session.execute(CAPTCHA).catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(NotteAPIError);
+      expect((error as NotteAPIError).statusCode).toBe(408);
       expect(pageExecute).toHaveBeenCalledTimes(3);
     });
 

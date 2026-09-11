@@ -25,6 +25,11 @@ export interface PageFetchOptions {
   data?: FetchData;
   /** Abort the request after this many milliseconds. Must be positive. */
   timeoutMs?: number;
+  /**
+   * Allow `http:` URLs (and redirects to them). Off by default because the
+   * request carries the page's cookies, which would travel in cleartext.
+   */
+  allowInsecure?: boolean;
 }
 
 const CONTENT_TYPE = 'content-type';
@@ -73,7 +78,7 @@ function withParams(url: string, params: Record<string, unknown>): string {
  * ```
  */
 export function buildFetchScript(url: string, options: PageFetchOptions = {}): string {
-  const { method = 'GET', headers, params, json, data, timeoutMs } = options;
+  const { method = 'GET', headers, params, json, data, timeoutMs, allowInsecure = false } = options;
   if (json !== undefined && data !== undefined) {
     throw new InvalidRequestError('pass either json or data, not both');
   }
@@ -129,7 +134,17 @@ export function buildFetchScript(url: string, options: PageFetchOptions = {}): s
     '(async () => {' +
     `const init = ${JSON.stringify(init)};` +
     `${abort}` +
-    `const response = await fetch(${JSON.stringify(requestUrl)}, init);` +
+    // resolve against the page so relative URLs inherit its scheme, then refuse
+    // plaintext: `credentials: 'include'` would send non-Secure cookies in clear
+    `const target = new URL(${JSON.stringify(requestUrl)}, location.href);` +
+    `const allowInsecure = ${allowInsecure ? 'true' : 'false'};` +
+    "if (target.protocol !== 'https:' && !allowInsecure) {" +
+    "  throw new Error('Refusing to fetch ' + target.origin + ' over plaintext; pass allowInsecure: true to override');" +
+    '}' +
+    'const response = await fetch(target.toString(), init);' +
+    "if (!allowInsecure && new URL(response.url).protocol !== 'https:') {" +
+    "  throw new Error('Refusing to read a response served over plaintext from ' + new URL(response.url).origin + '; pass allowInsecure: true to override');" +
+    '}' +
     // ship the raw bytes as base64: `response.text()` would decode with
     // replacement and lose any non-UTF-8 or binary body for good
     'const bytes = new Uint8Array(await response.arrayBuffer());' +

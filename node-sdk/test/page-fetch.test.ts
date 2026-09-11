@@ -52,22 +52,23 @@ describe('buildFetchScript', () => {
     expect(script).toContain('"method":"GET"');
     expect(script).toContain('"credentials":"include"');
     expect(script).toContain('"redirect":"follow"');
-    expect(script).toContain('fetch("/api", init)');
+    expect(script).toContain('new URL("/api", location.href)');
+    expect(script).toContain('fetch(target.toString(), init)');
     expect(script).not.toContain('"body"');
     expect(script).not.toContain('AbortController');
     expect(script).toContain('body_b64: btoa(binary)');
   });
 
   it('appends params to the query string', () => {
-    expect(buildFetchScript('/api', { params: { page: 2, q: 'a b' } })).toContain('fetch("/api?page=2&q=a+b", init)');
-    expect(buildFetchScript('/api?x=1', { params: { page: 2 } })).toContain('fetch("/api?x=1&page=2", init)');
+    expect(buildFetchScript('/api', { params: { page: 2, q: 'a b' } })).toContain('new URL("/api?page=2&q=a+b", location.href)');
+    expect(buildFetchScript('/api?x=1', { params: { page: 2 } })).toContain('new URL("/api?x=1&page=2", location.href)');
     // before the fragment, which the browser strips before sending
-    expect(buildFetchScript('/items#results', { params: { page: 2 } })).toContain('fetch("/items?page=2#results", init)');
-    expect(buildFetchScript('https://a.test/p?x=1#f', { params: { page: 2 } })).toContain('fetch("https://a.test/p?x=1&page=2#f", init)');
+    expect(buildFetchScript('/items#results', { params: { page: 2 } })).toContain('new URL("/items?page=2#results", location.href)');
+    expect(buildFetchScript('https://a.test/p?x=1#f', { params: { page: 2 } })).toContain('new URL("https://a.test/p?x=1&page=2#f", location.href)');
     // array values repeat the key, like `doseq=True`
-    expect(buildFetchScript('/api', { params: { tag: ['a', 'b'] } })).toContain('fetch("/api?tag=a&tag=b", init)');
+    expect(buildFetchScript('/api', { params: { tag: ['a', 'b'] } })).toContain('new URL("/api?tag=a&tag=b", location.href)');
     // empty params leave the url alone
-    expect(buildFetchScript('/api', { params: {} })).toContain('fetch("/api", init)');
+    expect(buildFetchScript('/api', { params: {} })).toContain('new URL("/api", location.href)');
   });
 
   it('serialises a JSON body and sets the content type', () => {
@@ -232,5 +233,20 @@ describe('responseFromEvaluated', () => {
     expect(response.url).toBe('');
     expect(response.bytes().length).toBe(0);
     expect(response.encoding).toBe('utf-8');
+  });
+});
+
+describe('buildFetchScript plaintext guard (CWE-319)', () => {
+  it('resolves the url against the page and refuses http targets by default', () => {
+    const script = buildFetchScript('/api/items');
+    expect(script).toContain('new URL("/api/items", location.href)');
+    expect(script).toContain("target.protocol !== 'https:' && !allowInsecure");
+    expect(script).toContain('const allowInsecure = false;');
+    expect(script).toContain("new URL(response.url).protocol !== 'https:'");
+  });
+
+  it('allowInsecure lets http requests and redirects through', () => {
+    const script = buildFetchScript('http://intranet.local/status', { allowInsecure: true });
+    expect(script).toContain('const allowInsecure = true;');
   });
 });

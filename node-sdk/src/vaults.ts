@@ -14,6 +14,7 @@ import {
   vaultCredentialsList,
   vaultDelete,
 } from '@/lib/client/sdk.gen';
+import { getDomain } from 'tldts';
 import { InvalidRequestError } from '@/errors';
 
 // Constructor overloads for NotteVault - mirrors Python overloads
@@ -31,15 +32,6 @@ export type VaultConstructor = VaultConstructorWithId | VaultConstructorCreate;
 export const CREDENTIAL_FIELDS = ['email', 'username', 'mfa_secret', 'password'] as const;
 export type CredentialField = (typeof CREDENTIAL_FIELDS)[number];
 
-/**
- * Second-level labels that form a public suffix together with a two-letter
- * country code (`example.co.uk`, `shop.com.au`). Python resolves this with the
- * full public suffix list through `tldextract`; this SDK ships a compact rule
- * instead so no dependency is needed.
- */
-const COUNTRY_SECOND_LEVEL_LABELS = new Set([
-  'ac', 'co', 'com', 'edu', 'gov', 'ltd', 'me', 'mil', 'ne', 'net', 'nom', 'or', 'org', 'plc', 'sch',
-]);
 
 function extractHostname(url: string): string {
   const trimmed = url.trim();
@@ -82,17 +74,15 @@ export function getRootDomain(url: string): string {
   if (hostname.startsWith('[') || /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)) {
     return hostname;
   }
-  const labels = hostname.split('.').filter(label => label.length > 0);
-  if (labels.length === 0) {
-    return '';
+  // Public Suffix List (ICANN section, like tldextract's default in Python), so
+  // multi-label suffixes such as `co.uk` or `pvt.k12.ma.us` are handled and the
+  // credential key matches the one the Python SDK derives.
+  const domain = getDomain(hostname, { allowPrivateDomains: false, detectIp: false });
+  if (domain) {
+    return domain.toLowerCase();
   }
-  if (labels.length <= 2) {
-    return labels.join('.');
-  }
-  const tld = labels[labels.length - 1]!;
-  const secondLevel = labels[labels.length - 2]!;
-  const suffixLength = tld.length === 2 && COUNTRY_SECOND_LEVEL_LABELS.has(secondLevel) ? 2 : 1;
-  return labels.slice(-(suffixLength + 1)).join('.');
+  // Unknown suffix (intranet names, `localhost`): keep the hostname whole.
+  return hostname.toLowerCase();
 }
 
 /**

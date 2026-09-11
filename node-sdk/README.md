@@ -261,7 +261,8 @@ await notte.Session().use(async (session) => {
   const result = await session.execute(actions.click({ id: 'B999' }), { raiseOnFailure: false });
   console.log(result.success, result.message);
 
-  // Run JavaScript in the page and fetch through the page (cookies, proxy, fingerprint)
+  // Run JavaScript in the page and fetch through the page (cookies, proxy, fingerprint).
+  // Relative URLs resolve against the page; plaintext http targets are refused unless allowInsecure is set.
   const title = await session.evaluateJs('document.title');
   const summary = await session.fetch('/api/rest_v1/page/summary/Main_Page').then(r => r.json());
 
@@ -373,7 +374,9 @@ await notte.Session().use(async (session) => {
 - `stop()` - Stop the agent
 - `agentId` - The agent ID (read-only property, available after `start()` / `run()`)
 - `sessionId` - The session ID the agent runs in (read-only property)
-- `isRunning()` - Check if agent is running
+- `hasStarted()` - Whether `start()`/`run()` was called on this instance (local check)
+- `isActive()` - Whether the agent is still active on the server (fetches the status)
+- `isRunning()` - Deprecated alias of `hasStarted()`; it does not contact the API
 
 #### Structured answers with Zod
 
@@ -733,10 +736,15 @@ import { NotteClient, FileExistsError } from 'notte-sdk';
 
 const notte = new NotteClient();
 const storage = notte.FileStorage();
+let sessionId = '';
+let fileId = '';
 
 await notte.Session({ storage }).use(async (session) => {
+  sessionId = session.getId()!;
+
   // Upload from a path, a Blob or a Uint8Array
   const uploaded = await storage.upload('./invoice.pdf');
+  fileId = uploaded.id;
 
   // ... let the session / an agent download something ...
 

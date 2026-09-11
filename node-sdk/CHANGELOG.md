@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- `session.fetch()` refuses plaintext `http:` targets and redirects by default
+  because the request carries the page's cookies; pass `allowInsecure: true`
+  to override. Relative URLs resolve against the page.
+- Manual 307/308 redirect replay strips `x-notte-api-key` as well as
+  `Authorization` on cross-origin targets and refuses insecure destinations
+  (loopback excepted).
+- A caller's own `AbortSignal` is no longer reported as `NotteTimeoutError`;
+  only the SDK deadline is. Composite signals use `AbortSignal.any` when available.
+- Captcha actions that time out on every retry rethrow the last `NotteAPIError`
+  (408) instead of a generic message.
+- Cookie files are updated under a per-path lock so sessions stopped
+  concurrently do not overwrite each other's cookies.
+- `RemoteFileStorage.download()` without `force` links the temporary file into
+  place, so a file created after the existence check is never replaced.
+- Vault credential URLs are keyed by the Public Suffix List (`tldts`, ICANN
+  section, matching `tldextract` in the Python SDK) instead of a suffix heuristic.
+- `agent.isRunning()` keeps its synchronous contract but is deprecated: use
+  `hasStarted()` for the local check or the new `isActive()` for the live status.
+- `npm test` no longer picks up `*.integration.test.ts`; use `npm run test:integration`.
+
 - **Breaking:** remove credit card storage from vaults (`setCreditCard`,
   `getCreditCard`, `deleteCreditCard`) and every mention of it from the
   documentation and examples.

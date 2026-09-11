@@ -163,17 +163,23 @@ export class NotteClient {
     // (AWS Lambda function URLs return JSON with the wrong Content-Type).
     this.client.interceptors.response.use(async (response: Response, request: Request, opts: any) => {
       if ((response.status === 307 || response.status === 308) && response.headers.get('location')) {
-        const location = response.headers.get('location')!;
+        const location = new URL(response.headers.get('location')!, request.url);
+        // Never replay a credentialed request over plaintext (loopback excepted for local development).
+        const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+        if (location.protocol !== 'https:' && !(location.protocol === 'http:' && loopback)) {
+          throw new InvalidRequestError(`Refusing to follow a redirect to an insecure URL: ${location.origin}`);
+        }
         const headers = new Headers(request.headers);
-        // Strip auth on cross-origin redirects to avoid leaking credentials
-        if (new URL(location).origin !== new URL(request.url).origin) {
+        // Strip every credential header on cross-origin redirects to avoid leaking them
+        if (location.origin !== new URL(request.url).origin) {
           headers.delete('Authorization');
+          headers.delete('x-notte-api-key');
         }
         const headerRecord: Record<string, string> = {};
         headers.forEach((v: string, k: string) => {
           headerRecord[k] = v;
         });
-        const redirected = await fetch(location, {
+        const redirected = await fetch(location.toString(), {
           method: request.method,
           headers: headerRecord,
           body: opts.serializedBody ?? undefined,
@@ -234,12 +240,11 @@ export class NotteClient {
       }
       return new NotteAPIError(path, response.status, body, response);
     }
-    if (isAbortError(error)) {
+    if (isTimeoutAbort(error)) {
+      // Only the deadline path aborts with a TimeoutError carrying the effective
+      // deadline; a caller cancelling its own AbortSignal keeps its AbortError.
       const target = request ? ` to \`${requestPath(request)}\`` : '';
-      // `withTimeout` aborts with the effective deadline (default or per-call
-      // override) in the reason; fall back to the default for foreign aborts.
-      const reason = error instanceof Error && error.name === 'TimeoutError' ? error.message : `timed out after ${this.config.timeoutMs}ms`;
-      return new NotteTimeoutError(`Request${target} ${reason}`, { cause: error });
+      return new NotteTimeoutError(`Request${target} ${(error as Error).message}`, { cause: error });
     }
     return error;
   }
@@ -464,29 +469,41 @@ function requestPath(request: Request | undefined, response?: Response): string 
   }
 }
 
-function isAbortError(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'name' in error &&
-    ((error as { name?: string }).name === 'AbortError' || (error as { name?: string }).name === 'TimeoutError')
-  );
+function isTimeoutAbort(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && (error as { name?: string }).name === 'TimeoutError';
 }
 
-/** Combine the caller's signal with a deadline without requiring `AbortSignal.any`. */
+function timeoutReason(timeoutMs: number): DOMException {
+  return new DOMException(`timed out after ${timeoutMs}ms`, 'TimeoutError');
+}
+
+/**
+ * Combine the caller's signal with a deadline. `AbortSignal.any` (Node 20.3+)
+ * lets the runtime drop the composite signal once the request settles, so a
+ * long-lived caller signal never accumulates listeners.
+ */
 function withTimeout(signal: AbortSignal | null | undefined, timeoutMs: number): AbortSignal {
+  const signalAny = (AbortSignal as unknown as { any?: (signals: AbortSignal[]) => AbortSignal }).any;
+  if (typeof signalAny === 'function') {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(timeoutReason(timeoutMs)), timeoutMs);
+    timer.unref?.();
+    const composite = signalAny.call(AbortSignal, signal ? [signal, controller.signal] : [controller.signal]);
+    composite.addEventListener('abort', () => clearTimeout(timer), { once: true });
+    return composite;
+  }
+  // Fallback for runtimes without AbortSignal.any.
   const controller = new AbortController();
-  const timer = setTimeout(() => {
-    controller.abort(new DOMException(`timed out after ${timeoutMs}ms`, 'TimeoutError'));
-  }, timeoutMs);
+  const timer = setTimeout(() => controller.abort(timeoutReason(timeoutMs)), timeoutMs);
   timer.unref?.();
-  const clear = () => clearTimeout(timer);
-  controller.signal.addEventListener('abort', clear, { once: true });
+  controller.signal.addEventListener('abort', () => clearTimeout(timer), { once: true });
   if (signal) {
     if (signal.aborted) {
       controller.abort(signal.reason);
     } else {
-      signal.addEventListener('abort', () => controller.abort(signal.reason), { once: true });
+      const forward = () => controller.abort(signal.reason);
+      signal.addEventListener('abort', forward, { once: true });
+      controller.signal.addEventListener('abort', () => signal.removeEventListener('abort', forward), { once: true });
     }
   }
   return controller.signal;

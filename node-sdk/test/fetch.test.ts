@@ -213,3 +213,65 @@ describe('redirect & Content-Type response interceptor', () => {
     });
   });
 });
+
+describe('redirect credential hardening', () => {
+  let interceptor: ReturnType<typeof getResponseInterceptor>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    new NotteClient({ apiKey: 'test-key' }); // pragma: allowlist secret
+    interceptor = getResponseInterceptor();
+  });
+
+  it('strips x-notte-api-key as well as Authorization on cross-origin redirects', async () => {
+    const mockGlobalFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('{}', { status: 200 }));
+    const redirectResponse = new Response('', { status: 307, headers: { location: 'https://lambda.aws.com/function' } });
+    const request = new Request('https://api.notte.cc/functions/x/runs/y', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer sk-secret', 'x-notte-api-key': 'sk-secret' }, // pragma: allowlist secret
+    });
+
+    await interceptor(redirectResponse, request, { serializedBody: '{}' });
+
+    const headers = new Headers(mockGlobalFetch.mock.calls[0][1]?.headers as Record<string, string>);
+    expect(headers.has('Authorization')).toBe(false);
+    expect(headers.has('x-notte-api-key')).toBe(false);
+    mockGlobalFetch.mockRestore();
+  });
+
+  it('keeps x-notte-api-key on same-origin redirects', async () => {
+    const mockGlobalFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('{}', { status: 200 }));
+    const redirectResponse = new Response('', { status: 308, headers: { location: 'https://api.notte.cc/v2/functions' } });
+    const request = new Request('https://api.notte.cc/functions', {
+      method: 'POST',
+      headers: { 'x-notte-api-key': 'sk-secret' }, // pragma: allowlist secret
+    });
+
+    await interceptor(redirectResponse, request, { serializedBody: '{}' });
+
+    const headers = new Headers(mockGlobalFetch.mock.calls[0][1]?.headers as Record<string, string>);
+    expect(headers.get('x-notte-api-key')).toBe('sk-secret'); // pragma: allowlist secret
+    mockGlobalFetch.mockRestore();
+  });
+
+  it('refuses to follow redirects to plaintext http destinations', async () => {
+    const mockGlobalFetch = vi.spyOn(globalThis, 'fetch');
+    const redirectResponse = new Response('', { status: 307, headers: { location: 'http://insecure.example/function' } });
+    const request = new Request('https://api.notte.cc/endpoint', { method: 'POST', headers: { Authorization: 'Bearer sk-secret' } }); // pragma: allowlist secret
+
+    await expect(interceptor(redirectResponse, request, { serializedBody: '{}' })).rejects.toThrow('insecure URL');
+    expect(mockGlobalFetch).not.toHaveBeenCalled();
+    mockGlobalFetch.mockRestore();
+  });
+
+  it('allows http redirects to loopback for local development', async () => {
+    const mockGlobalFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('{}', { status: 200 }));
+    const redirectResponse = new Response('', { status: 307, headers: { location: 'http://localhost:8000/function' } });
+    const request = new Request('https://api.notte.cc/endpoint', { method: 'POST' });
+
+    await interceptor(redirectResponse, request, { serializedBody: '{}' });
+
+    expect(mockGlobalFetch).toHaveBeenCalledTimes(1);
+    mockGlobalFetch.mockRestore();
+  });
+});

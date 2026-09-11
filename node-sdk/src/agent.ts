@@ -602,13 +602,22 @@ export class Agent {
 
   /**
    * Whether the agent is still active on the server. Fetches the current status,
-   * like calling `agent.status()` in Python; an agent that was never started is not running.
+   * like calling `agent.status()` in Python; an agent that was never started is not active.
    */
-  async isRunning(): Promise<boolean> {
+  async isActive(): Promise<boolean> {
     if (!this.response) {
       return false;
     }
     const status = await this.status();
     return status.status === 'active';
+  }
+
+  /**
+   * @deprecated Only reports whether this instance was started; it does not
+   * contact the API. Use `hasStarted()` for that check or `isActive()` for the
+   * live server status.
+   */
+  isRunning(): boolean {
+    return this.hasStarted();
   }
 }

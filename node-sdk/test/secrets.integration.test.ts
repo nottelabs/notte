@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { NotteClient } from '@/client';
+import { NotteAPIError } from '@/errors';
 import { NotteSecrets, type SecretMetadata } from '@/secrets';
 import { config } from 'dotenv';
 
@@ -29,8 +30,9 @@ describe('Secrets Integration Tests', () => {
     try {
       await secrets.delete(stored.id);
     } catch (error) {
-      // Already deleted by the last test; anything else is worth surfacing.
-      console.warn(`Failed to clean up secret ${stored.id}: ${String(error)}`);
+      // The last test deletes the secret itself; only that outcome is expected.
+      if (error instanceof NotteAPIError && error.statusCode === 404) return;
+      throw error;
     }
   });
 

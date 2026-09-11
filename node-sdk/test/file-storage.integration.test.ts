@@ -61,7 +61,7 @@ describe('File storage integration', () => {
   describe('with a session using file storage', () => {
     let session: Session;
     let storage: RemoteFileStorage;
-    let tmpPath: string;
+    let tmpPath = '';
     let fileApiAvailable = true;
 
     beforeAll(async () => {
@@ -94,7 +94,11 @@ describe('File storage integration', () => {
     });
 
     afterEach(async () => {
-      await rm(tmpPath, { recursive: true, force: true });
+      // A dynamic skip in beforeEach leaves tmpPath unset; Vitest still runs afterEach.
+      if (tmpPath) {
+        await rm(tmpPath, { recursive: true, force: true });
+        tmpPath = '';
+      }
     });
 
     it('uploads, lists, reads metadata, downloads and deletes a file', async () => {
