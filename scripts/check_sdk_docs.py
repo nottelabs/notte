@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
 Pre-commit hook to check that SDK methods used in Python examples
-are documented in the SDK Reference section of docs.json.
+are documented in the SDK Reference navigation or reference pages.
 
 This script:
 1. Scans Python files for method calls like `.method_name(`
 2. Extracts the method names
-3. Checks if each method has corresponding documentation in docs.json
+3. Checks if each method has corresponding navigation or a reference page
 4. Reports any missing documentation
 """
 
@@ -37,7 +37,7 @@ def extract_method_calls_from_file(file_path: Path) -> set[str]:
 
 
 def get_documented_methods_from_docs_json(docs_json_path: Path) -> set[str]:
-    """Extract documented method names from the SDK Reference section of docs.json."""
+    """Find documented methods, including reference pages hidden from the sidebar."""
     documented_methods: set[str] = set()
 
     try:
@@ -58,6 +58,13 @@ def get_documented_methods_from_docs_json(docs_json_path: Path) -> set[str]:
 
         for tab in tabs:
             documented_methods.update(extract_methods_from_groups(tab.get("groups", [])))
+
+        # The sidebar intentionally hides deprecated and convenience APIs. Their
+        # generated reference pages still document supported example calls.
+        reference_dir = docs_json_path.parent / "sdk-reference"
+        for page in reference_dir.glob("*/*.mdx"):
+            if page.parent.name not in {"manual", "misc"} and page.stem != "index":
+                documented_methods.add(page.stem)
 
     except Exception as e:
         print(f"Error reading docs.json: {e}")
