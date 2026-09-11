@@ -14,7 +14,7 @@ cd node-sdk
 npm ci
 npm run typecheck
 npm run test:unit -- --run
-npx vitest run test/function-stream.integration.test.ts
+npx vitest run test/function-stream.local.test.ts
 npm run build
 node scripts/check-package.js
 npm pack --dry-run
