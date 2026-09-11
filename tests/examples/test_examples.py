@@ -2,6 +2,7 @@ import logging
 import os
 import signal
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -59,7 +60,7 @@ def run_python_file(file_path: Path, args: list[str], timeout_seconds: float = 2
     """
     with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as output:
         process = subprocess.Popen(
-            ["python", str(file_path)] + args,
+            [sys.executable, str(file_path)] + args,
             stdout=output,
             stderr=subprocess.STDOUT,
             text=True,

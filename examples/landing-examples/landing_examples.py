@@ -19,7 +19,11 @@ landing_examples = [
     ["Visit github.com/trending and return the top 3 repositories shown.", None, False],
     ["Check if there are any new blog posts on notte.cc/blog", None, False],
     ["Go to bbc.com and click on the first headline in the 'Sport' section. Return its title.", None, False],
-    ["Go to weather.com and tell me the current temperature in New York City.", None, False],
+    [
+        "Read the current temperature in New York City. Include the observation station and last update time.",
+        "https://forecast.weather.gov/MapClick.php?lat=40.7146&lon=-74.0071",
+        False,
+    ],
 ]
 
 
