@@ -3973,54 +3973,6 @@ export type ProfileResponse = {
 };
 
 /**
- * ProxyCredentialRequest
- */
-export type ProxyCredentialRequest = {
-    /**
-     * Country
-     *
-     * ISO 3166-1 alpha-2 country code, e.g. `us`.
-     */
-    country?: string | null;
-    /**
-     * City
-     *
-     * Evomi city id or display name, e.g. `new.york`. Wins over country.
-     */
-    city?: string | null;
-};
-
-/**
- * ProxyCredentialResponse
- */
-export type ProxyCredentialResponse = {
-    /**
-     * Username
-     */
-    username: string;
-    /**
-     * Password
-     */
-    password: string;
-    /**
-     * Expires At
-     */
-    expires_at: string;
-    /**
-     * Proxy Url Tls
-     *
-     * `https://user:pass@host:443`, for clients that do TLS to the proxy. // pragma: allowlist secret
-     */
-    proxy_url_tls: string;
-    /**
-     * Proxy Url Plain
-     *
-     * `http://user:pass@host:3128`, for clients that cannot. // pragma: allowlist secret
-     */
-    proxy_url_plain: string;
-};
-
-/**
  * ProxyGeolocationCountry
  */
 export type ProxyGeolocationCountry = 'ad' | 'ae' | 'af' | 'ag' | 'ai' | 'al' | 'am' | 'ao' | 'ar' | 'at' | 'au' | 'aw' | 'az' | 'ba' | 'bb' | 'bd' | 'be' | 'bf' | 'bg' | 'bh' | 'bi' | 'bj' | 'bm' | 'bn' | 'bo' | 'bq' | 'br' | 'bs' | 'bt' | 'bw' | 'by' | 'bz' | 'ca' | 'cd' | 'cg' | 'ch' | 'ci' | 'cl' | 'cm' | 'cn' | 'co' | 'cr' | 'cu' | 'cv' | 'cw' | 'cy' | 'cz' | 'de' | 'dj' | 'dk' | 'dm' | 'do' | 'dz' | 'ec' | 'ee' | 'eg' | 'es' | 'et' | 'fi' | 'fj' | 'fr' | 'ga' | 'gb' | 'gd' | 'ge' | 'gf' | 'gg' | 'gh' | 'gi' | 'gm' | 'gn' | 'gp' | 'gq' | 'gr' | 'gt' | 'gu' | 'gw' | 'gy' | 'hk' | 'hn' | 'hr' | 'ht' | 'hu' | 'id' | 'ie' | 'il' | 'im' | 'in' | 'iq' | 'ir' | 'is' | 'it' | 'je' | 'jm' | 'jo' | 'jp' | 'ke' | 'kg' | 'kh' | 'kn' | 'kr' | 'kw' | 'ky' | 'kz' | 'la' | 'lb' | 'lc' | 'lk' | 'lr' | 'ls' | 'lt' | 'lu' | 'lv' | 'ly' | 'ma' | 'md' | 'me' | 'mf' | 'mg' | 'mk' | 'ml' | 'mm' | 'mn' | 'mo' | 'mq' | 'mr' | 'mt' | 'mu' | 'mv' | 'mw' | 'mx' | 'my' | 'mz' | 'na' | 'nc' | 'ne' | 'ng' | 'ni' | 'nl' | 'no' | 'np' | 'nz' | 'om' | 'pa' | 'pe' | 'pf' | 'pg' | 'ph' | 'pk' | 'pl' | 'pr' | 'ps' | 'pt' | 'py' | 'qa' | 're' | 'ro' | 'rs' | 'ru' | 'rw' | 'sa' | 'sc' | 'sd' | 'se' | 'sg' | 'si' | 'sk' | 'sl' | 'sm' | 'sn' | 'so' | 'sr' | 'ss' | 'st' | 'sv' | 'sx' | 'sy' | 'sz' | 'tc' | 'tg' | 'th' | 'tj' | 'tm' | 'tn' | 'tr' | 'tt' | 'tw' | 'tz' | 'ua' | 'ug' | 'us' | 'uy' | 'uz' | 'vc' | 've' | 'vg' | 'vi' | 'vn' | 'ye' | 'za' | 'zm' | 'zw';
@@ -10746,41 +10698,6 @@ export type DeleteSecretResponses = {
 };
 
 export type DeleteSecretResponse = DeleteSecretResponses[keyof DeleteSecretResponses];
-
-export type MintProxyCredentialsData = {
-    body: ProxyCredentialRequest;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: never;
-    url: '/proxies/gateway/credentials';
-};
-
-export type MintProxyCredentialsErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type MintProxyCredentialsError = MintProxyCredentialsErrors[keyof MintProxyCredentialsErrors];
-
-export type MintProxyCredentialsResponses = {
-    /**
-     * Successful Response
-     */
-    200: ProxyCredentialResponse;
-};
-
-export type MintProxyCredentialsResponse = MintProxyCredentialsResponses[keyof MintProxyCredentialsResponses];
 
 export type HealthCheckData = {
     body?: never;
