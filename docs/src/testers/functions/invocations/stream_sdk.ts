@@ -1,4 +1,5 @@
 // @sniptest filename=stream_sdk.ts
+// @sniptest show=8-9
 import { NotteClient } from 'notte-sdk';
 
 const client = new NotteClient();
@@ -8,4 +9,5 @@ const fn = client.NotteFunction({
 
 // Stream logs while waiting for the final result.
 const result = await fn.run({ url: 'https://example.com' }, { stream: true });
-console.log(JSON.stringify({ status: result.status, result: result.result }));
+
+export { result };

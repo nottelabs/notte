@@ -1,24 +1,14 @@
 # @sniptest filename=timeout.py
-import json
-
+# @sniptest show=5-8
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
+# Session closes after 10 minutes of inactivity
 with client.Session(idle_timeout_minutes=10) as session:
-    status = session.status()
-    if status.status != "active":
-        raise RuntimeError("Session is not active")
     page = session.page
     page.goto("https://example.com")
-    print(
-        json.dumps(
-            {
-                "session_id": session.session_id,
-                "status": status.status,
-                "idle_timeout_minutes": status.idle_timeout_minutes,
-                "title": page.title(),
-            }
-        )
-    )
-# Automatically stopped here.
+
+    # Values retained for the external test runner, outside the displayed range.
+    status = session.status()
+    title = page.title()

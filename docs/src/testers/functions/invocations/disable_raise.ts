@@ -1,4 +1,5 @@
 // @sniptest filename=disable_raise.ts
+// @sniptest show=8-17
 import { NotteClient } from 'notte-sdk';
 
 const client = new NotteClient();
@@ -11,4 +12,10 @@ const result = await fn.run(
   { url: 'https://example.com', fail: true },
   { raiseOnFailure: false },
 );
-console.log(JSON.stringify({ status: result.status }));
+if (result.status === 'failed') {
+  console.log(`Function failed: ${result.result}`);
+} else {
+  console.log(`Success: ${result.result}`);
+}
+
+export { result };

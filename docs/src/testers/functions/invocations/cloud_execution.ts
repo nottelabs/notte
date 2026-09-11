@@ -1,4 +1,5 @@
 // @sniptest filename=cloud_execution.ts
+// @sniptest show=8-9
 import { NotteClient } from 'notte-sdk';
 
 const client = new NotteClient();
@@ -8,4 +9,5 @@ const fn = client.NotteFunction({
 
 // Run on Notte infrastructure (the default).
 const result = await fn.run({ url: 'https://example.com' });
-console.log(JSON.stringify({ status: result.status, result: result.result }));
+
+export { result };

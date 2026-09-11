@@ -4,7 +4,6 @@
 <CodeGroup>
 
 ```python sequential.py
-urls = ["https://example.com", "https://example.org"]
 results = []
 for url in urls:
     result = function.run(url=url)
@@ -14,7 +13,6 @@ print(results)
 ```
 
 ```typescript sequential.ts
-const urls = ['https://example.com', 'https://example.org'];
 const results: unknown[] = [];
 for (const url of urls) {
   const result = await fn.run({ url });

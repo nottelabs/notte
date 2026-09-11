@@ -1,12 +1,12 @@
 # @sniptest filename=error_handling_2.py
-import json
-
+# @sniptest show=7-21
 from notte_sdk import NotteClient
 
 client = NotteClient()
-session = client.Session(idle_timeout_minutes=2)
 session_id = None
+error_message = None
 
+session = client.Session(idle_timeout_minutes=2)
 try:
     session.start()
     try:
@@ -18,5 +18,6 @@ try:
 except ValueError as error:
     if str(error) != "Example automation failure":
         raise
-    print(json.dumps({"session_id": session_id, "error": str(error)}))
+    error_message = str(error)
+    print(f"Automation failed: {error_message}")
 # Cleanup happens even when automation raises.

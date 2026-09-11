@@ -1,7 +1,39 @@
 import { describe, expect, it } from 'vitest';
-import { verifyExampleOutput } from './helpers/docs-examples';
+import {
+  collectExampleResult,
+  verifyExampleOutput,
+} from './helpers/docs-examples';
 
 describe('paired example output contracts', () => {
+  it('collects SDK return values without requiring prints in the example', () => {
+    const contract = {
+      expected: { status: 'closed', result: { url: 'https://example.com' } },
+    };
+    const result = { status: 'closed', result: { url: 'https://example.com' } };
+    expect(collectExampleResult({ result }, contract)).toEqual(
+      contract.expected,
+    );
+    expect(() => collectExampleResult({}, contract)).toThrow(
+      'Missing example response',
+    );
+  });
+
+  it('does not accept two missing run IDs as a successful metadata check', () => {
+    const contract = { expected: { status: 'closed', same_run: true } };
+    expect(() =>
+      collectExampleResult({ run_status: { status: 'closed' } }, contract),
+    ).toThrow();
+    expect(
+      collectExampleResult(
+        {
+          run_id: 'owned-run',
+          run_status: { status: 'closed', function_run_id: 'other-run' },
+        },
+        contract,
+      ).same_run,
+    ).toBe(false);
+  });
+
   const sessionId = '12345678-1234-1234-1234-123456789012';
   const contract = {
     expected: { title: 'Example Domain' },

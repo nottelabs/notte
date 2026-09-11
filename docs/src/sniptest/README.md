@@ -59,11 +59,14 @@ legacy execution backlog and executes both files unchanged;
 when adding examples needing other resources, extend the owned fixtures first.
 Do not add examples that depend on somebody's existing resource IDs.
 
-`live-examples.json` declares exact expected JSON output for 18 pairs; the six
+`live-examples.json` declares exact expected results for 18 pairs; the six
 original cases retain dedicated checks in the runner. Each new executable pair
 must have a nonempty behavior contract. CI rejects missing counterparts, pending
-Python counterparts, stale contracts, and contract typos. The scripts themselves
-print the result, with no test-time source rewriting. The runner compares both
+Python counterparts, stale contracts, and contract typos. The runner collects
+Python globals using `runpy` and TypeScript module exports, with no test-time source
+rewriting. Serialization belongs to the runner, not the examples. `show=...`
+ranges keep environment setup, runtime captures, and exports outside the generated
+documentation in both languages. The runner compares both
 languages against the same expected values and verifies session closure through
 the API, including after the intentionally raised automation error. Stream tests
 must produce a known function log as well as the final result. Wrong results,

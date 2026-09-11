@@ -1,5 +1,5 @@
 # @sniptest filename=handling_results.py
-import json
+# @sniptest show=8-21
 import os
 
 from notte_sdk import NotteClient
@@ -7,6 +7,17 @@ from notte_sdk import NotteClient
 client = NotteClient()
 function = client.Function(os.environ["NOTTE_FUNCTION_ID"])
 
-# Check the final status and structured return value.
 result = function.run(url="https://example.com")
-print(json.dumps({"status": result.status, "result": result.result}))
+
+# Check status
+if result.status == "closed":
+    print("Success!")
+    print(result.result)  # Function return value
+elif result.status == "failed":
+    print("Function failed")
+    print(result.result)  # Error message
+
+# Access metadata
+print(f"Function ID: {result.function_id}")
+print(f"Run ID: {result.function_run_id}")
+print(f"Session ID: {result.session_id}")

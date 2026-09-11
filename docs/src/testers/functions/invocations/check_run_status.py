@@ -1,6 +1,5 @@
 # @sniptest filename=check_run_status.py
-# @sniptest show=12-15
-import json
+# @sniptest show=11-14
 import os
 
 from notte_sdk import NotteClient
@@ -15,5 +14,3 @@ run_status = function.get_run(run_id)
 
 print(f"Status: {run_status.status}")  # "active", "closed", "failed"
 print(f"Result: {run_status.result}")
-
-print(json.dumps({"status": run_status.status, "same_run": run_status.function_run_id == result.function_run_id}))

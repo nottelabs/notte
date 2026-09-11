@@ -1,12 +1,14 @@
 // @sniptest filename=error_handling.ts
+// @sniptest show=8-29
 import { NotteClient } from 'notte-sdk';
 import { chromium } from 'playwright-core';
 
 const client = new NotteClient();
+let sessionId: string | null = null;
+let errorMessage: string | undefined;
+
 const session = client.Session({ idle_timeout_minutes: 2 });
 const expectedError = new Error('Example automation failure');
-let sessionId: string | null = null;
-
 try {
   await session.use(async () => {
     sessionId = session.getId();
@@ -23,8 +25,9 @@ try {
   });
 } catch (error) {
   if (error !== expectedError) throw error;
-  console.log(
-    JSON.stringify({ session_id: sessionId, error: expectedError.message }),
-  );
+  errorMessage = expectedError.message;
+  console.log(`Automation failed: ${errorMessage}`);
 }
 // Cleanup happens even when automation throws.
+
+export { sessionId as session_id, errorMessage as error_message };

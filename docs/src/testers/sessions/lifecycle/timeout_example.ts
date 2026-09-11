@@ -1,17 +1,16 @@
 // @sniptest filename=timeout_example.ts
-import { NotteClient } from 'notte-sdk';
+// @sniptest show=6-12
+import { NotteClient, type SessionResponse } from 'notte-sdk';
 
 const client = new NotteClient();
+let status: SessionResponse | undefined;
 
-await client.Session({ idle_timeout_minutes: 15 }).use(async (session) => {
-  const status = await session.status();
+const session = client.Session({ idle_timeout_minutes: 15 });
+await session.use(async () => {
+  status = await session.status();
   if (status.status !== 'active') throw new Error('Session is not active');
-  console.log(
-    JSON.stringify({
-      session_id: session.getId(),
-      status: status.status,
-      idle_timeout_minutes: status.idle_timeout_minutes,
-    }),
-  );
+  console.log(`Status: ${status.status}`);
 });
 // Automatically stopped here.
+
+export { status };

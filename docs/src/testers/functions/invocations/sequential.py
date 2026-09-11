@@ -1,6 +1,5 @@
 # @sniptest filename=sequential.py
-# @sniptest show=9-15
-import json
+# @sniptest show=9-14
 import os
 
 from notte_sdk import NotteClient
@@ -15,5 +14,3 @@ for url in urls:
     results.append(result.result)
 
 print(results)
-
-print(json.dumps({"results": results}))

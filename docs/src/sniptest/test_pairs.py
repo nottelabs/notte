@@ -1,5 +1,6 @@
 """Offline regression tests for paired example generation and parity enforcement."""
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,6 +13,27 @@ from parser import parse_file
 
 
 class RepositoryExamplesTest(unittest.TestCase):
+    def test_all_new_pairs_keep_test_plumbing_out_of_displayed_code(self):
+        directory = Path(__file__).resolve().parent
+        contracts = json.loads((directory / "live-examples.json").read_text())
+        for name in contracts:
+            for suffix in (".py", ".ts"):
+                path = (directory.parent / "testers" / name).with_suffix(suffix)
+                with self.subTest(path=path):
+                    config, rendered = parse_file(path)
+                    self.assertIsNotNone(config.show)
+                    for unwanted in (
+                        "import json",
+                        "import os",
+                        "NOTTE_FUNCTION_ID",
+                        "same_run",
+                        "export {",
+                        "Values retained",
+                    ):
+                        self.assertNotIn(unwanted, rendered)
+                    self.assertNotIn("json.dumps", path.read_text())
+                    self.assertNotIn("JSON.stringify", path.read_text())
+
     def test_focused_function_examples_hide_execution_setup_in_both_tabs(self):
         testers = Path(__file__).resolve().parents[1] / "testers/functions/invocations"
         for name in ("check_run_status", "sequential"):

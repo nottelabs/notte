@@ -15,9 +15,4 @@ const runStatus = await fn.getRun(runId);
 console.log(`Status: ${runStatus.status}`); // "active", "closed", "failed"
 console.log(`Result: ${runStatus.result}`);
 
-console.log(
-  JSON.stringify({
-    status: runStatus.status,
-    same_run: runStatus.function_run_id === result.function_run_id,
-  }),
-);
+export { runStatus as run_status, runId as run_id };

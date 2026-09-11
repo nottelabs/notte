@@ -4,14 +4,7 @@
 <CodeGroup>
 
 ```python Python - Automatic Cleanup
-import json
-
-from notte_sdk import NotteClient
-
-client = NotteClient()
 session = client.Session(idle_timeout_minutes=2)
-session_id = None
-
 try:
     with session:
         session_id = session.session_id
@@ -20,19 +13,14 @@ try:
 except ValueError as error:
     if str(error) != "Example automation failure":
         raise
-    print(json.dumps({"session_id": session_id, "error": str(error)}))
+    error_message = str(error)
+    print(f"Automation failed: {error_message}")
 # Cleanup happens even when automation raises.
 ```
 
 ```typescript TypeScript - Automatic Cleanup
-import { NotteClient } from 'notte-sdk';
-import { chromium } from 'playwright-core';
-
-const client = new NotteClient();
 const session = client.Session({ idle_timeout_minutes: 2 });
 const expectedError = new Error('Example automation failure');
-let sessionId: string | null = null;
-
 try {
   await session.use(async () => {
     sessionId = session.getId();
@@ -49,22 +37,14 @@ try {
   });
 } catch (error) {
   if (error !== expectedError) throw error;
-  console.log(
-    JSON.stringify({ session_id: sessionId, error: expectedError.message }),
-  );
+  errorMessage = expectedError.message;
+  console.log(`Automation failed: ${errorMessage}`);
 }
 // Cleanup happens even when automation throws.
 ```
 
 ```python Python - Manual Error Handling
-import json
-
-from notte_sdk import NotteClient
-
-client = NotteClient()
 session = client.Session(idle_timeout_minutes=2)
-session_id = None
-
 try:
     session.start()
     try:
@@ -76,19 +56,14 @@ try:
 except ValueError as error:
     if str(error) != "Example automation failure":
         raise
-    print(json.dumps({"session_id": session_id, "error": str(error)}))
+    error_message = str(error)
+    print(f"Automation failed: {error_message}")
 # Cleanup happens even when automation raises.
 ```
 
 ```typescript TypeScript - Manual Error Handling
-import { NotteClient } from 'notte-sdk';
-import { chromium } from 'playwright-core';
-
-const client = new NotteClient();
 const session = client.Session({ idle_timeout_minutes: 2 });
 const expectedError = new Error('Example automation failure');
-let sessionId: string | null = null;
-
 try {
   await session.start();
   try {
@@ -108,9 +83,8 @@ try {
   }
 } catch (error) {
   if (error !== expectedError) throw error;
-  console.log(
-    JSON.stringify({ session_id: sessionId, error: expectedError.message }),
-  );
+  errorMessage = expectedError.message;
+  console.log(`Automation failed: ${errorMessage}`);
 }
 // Cleanup happens even when automation throws.
 ```

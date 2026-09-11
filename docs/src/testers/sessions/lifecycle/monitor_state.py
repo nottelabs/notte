@@ -1,6 +1,5 @@
 # @sniptest filename=monitor_state.py
-import json
-
+# @sniptest show=5-11
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -8,14 +7,10 @@ client = NotteClient()
 with client.Session(idle_timeout_minutes=2) as session:
     status = session.status()
     if status.status != "active":
-        raise RuntimeError("Session is not active")
-    print(
-        json.dumps(
-            {
-                "session_id": session.session_id,
-                "status": status.status,
-                "idle_timeout_minutes": status.idle_timeout_minutes,
-            }
-        )
-    )
-# Automatically stopped here.
+        raise Exception("Session is no longer active")
+
+    # Continue with operations
+    pass
+
+    # Values retained for the external test runner, outside the displayed range.
+    status = session.status()

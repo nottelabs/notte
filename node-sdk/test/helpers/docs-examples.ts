@@ -6,6 +6,46 @@ export interface ExampleContract {
   logContains?: string;
 }
 
+/** Read runtime values exported by TS or collected with runpy for Python. */
+export function collectExampleResult(
+  values: Record<string, unknown>,
+  contract: ExampleContract,
+): Record<string, unknown> {
+  const record = (value: unknown): Record<string, unknown> => {
+    assert.ok(
+      value !== null && typeof value === 'object' && !Array.isArray(value),
+      'Missing example response',
+    );
+    return value as Record<string, unknown>;
+  };
+  if (contract.closedSession) {
+    if ('error' in contract.expected)
+      return { session_id: values.session_id, error: values.error_message };
+    const status = record(values.status);
+    return {
+      session_id: status.session_id,
+      status: status.status,
+      idle_timeout_minutes: status.idle_timeout_minutes,
+      ...('title' in contract.expected ? { title: values.title } : {}),
+      ...('viewport' in contract.expected ? { viewport: values.viewport } : {}),
+    };
+  }
+  if ('same_run' in contract.expected) {
+    const run = record(values.run_status);
+    assert.equal(typeof values.run_id, 'string', 'Missing executed run ID');
+    return {
+      status: run.status,
+      same_run: run.function_run_id === values.run_id,
+    };
+  }
+  if ('results' in contract.expected) return { results: values.results };
+  const result = record(values.result);
+  return {
+    status: result.status,
+    ...('result' in contract.expected ? { result: result.result } : {}),
+  };
+}
+
 /** Compare actual example output, not a rewritten or mocked version of the script. */
 export function verifyExampleOutput(
   output: string,

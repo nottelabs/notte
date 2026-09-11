@@ -4,43 +4,17 @@
 <CodeGroup>
 
 ```python timeout_example.py
-import json
-
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
 with client.Session(idle_timeout_minutes=15) as session:
-    status = session.status()
-    if status.status != "active":
-        raise RuntimeError("Session is not active")
-    print(
-        json.dumps(
-            {
-                "session_id": session.session_id,
-                "status": status.status,
-                "idle_timeout_minutes": status.idle_timeout_minutes,
-            }
-        )
-    )
-# Automatically stopped here.
+    # Complex automation
+    pass
 ```
 
 ```typescript timeout_example.ts
-import { NotteClient } from 'notte-sdk';
-
-const client = new NotteClient();
-
-await client.Session({ idle_timeout_minutes: 15 }).use(async (session) => {
-  const status = await session.status();
+const session = client.Session({ idle_timeout_minutes: 15 });
+await session.use(async () => {
+  status = await session.status();
   if (status.status !== 'active') throw new Error('Session is not active');
-  console.log(
-    JSON.stringify({
-      session_id: session.getId(),
-      status: status.status,
-      idle_timeout_minutes: status.idle_timeout_minutes,
-    }),
-  );
+  console.log(`Status: ${status.status}`);
 });
 // Automatically stopped here.
 ```

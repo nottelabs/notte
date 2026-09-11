@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { NotteClient, functionCreate, functionDelete, listFunctionRunsByFunctionId, functionRunStop, sessionStatus } from '@/index';
-import { verifyExampleOutput, type ExampleContract } from './helpers/docs-examples';
+import { collectExampleResult, verifyExampleOutput, type ExampleContract } from './helpers/docs-examples';
 
 const execute = promisify(execFile);
 const testers = fileURLToPath(new URL('../../docs/src/testers/', import.meta.url));
@@ -88,22 +88,28 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
       return;
     }
     const logged: unknown[][] = [];
+    const contract = contracts[name];
+    let exported: Record<string, unknown>;
     const log = vi.spyOn(console, 'log').mockImplementation((...args) => { logged.push(args); });
     try {
-      await import(/* @vite-ignore */ `${testers}${name}`);
+      exported = await import(/* @vite-ignore */ `${testers}${name}`);
     } finally {
       log.mockRestore();
     }
-    const { stdout, stderr } = await execute(process.env.NOTTE_DOCS_PYTHON || 'python', [`${testers}${name.replace(/\.ts$/, '.py')}`], {
+    const pythonPath = `${testers}${name.replace(/\.ts$/, '.py')}`;
+    const pythonArgs = contract
+      ? [fileURLToPath(new URL('../../docs/src/sniptest/run_python.py', import.meta.url)), pythonPath]
+      : [pythonPath];
+    const { stdout, stderr } = await execute(process.env.NOTTE_DOCS_PYTHON || 'python', pythonArgs, {
       env: process.env,
       timeout: 120_000,
       maxBuffer: 2 * 1024 * 1024,
     });
-    const contract = contracts[name];
     if (contract) {
+      const pythonValues = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!);
       const ids = [
-        verifyExampleOutput(logged.map(args => args.join(' ')).join('\n'), contract),
-        verifyExampleOutput(stdout, contract, `${stdout}\n${stderr}`),
+        verifyExampleOutput(JSON.stringify(collectExampleResult(exported!, contract)), contract, logged.map(args => args.join(' ')).join('\n')),
+        verifyExampleOutput(JSON.stringify(collectExampleResult(pythonValues, contract)), contract, `${stdout}\n${stderr}`),
       ];
       if (contract.closedSession) {
         expect(ids[0]).not.toBe(ids[1]);
