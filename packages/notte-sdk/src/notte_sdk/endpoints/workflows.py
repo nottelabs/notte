@@ -799,8 +799,9 @@ class RemoteWorkflow:
 
         If no version is provided, the latest version is used.
         This call waits for completion; streaming controls live log delivery.
-        For a Function, call `create_run()` first to obtain a run ID before execution,
-        then pass it as `function_run_id`. Omitting the ID creates a new run.
+        For a Function, optionally call `create_run()` only if you need the run ID
+        before execution, then pass it as `function_run_id`. When `function_run_id`
+        is omitted, `run()` automatically creates a new run.
         Omit runtime to use the saved function default. Pass runtime="extended"
         for longer cloud execution, or runtime="standard" to override that default.
         Use `input_variables={"runtime": value}` for script inputs whose names match
