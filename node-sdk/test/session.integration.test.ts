@@ -41,10 +41,12 @@ describe('Session Integration Tests', () => {
 		it('should start and stop a session', async () => {
 			const session = client.Session({ proxies: false });
 			await session.start();
-			expect(session.getResponse()?.status).toBe('active');
-			expect(session.getId()).toBeDefined();
-
-			await session.stop();
+			try {
+				expect(session.getResponse()?.status).toBe('active');
+				expect(session.getId()).toBeDefined();
+			} finally {
+				await session.stop();
+			}
 			expect(session.getResponse()?.status).toBe('closed');
 		});
 
@@ -95,21 +97,19 @@ describe('Session Integration Tests', () => {
 	});
 
 	describe('Session Replay', () => {
-		it('should replay a session', async () => {
-			const sessionId = process.env.NOTTE_SESSION_ID;
-			if (!sessionId) throw new Error('NOTTE_SESSION_ID is required for replay tests');
-
-			try {
-				const session = client.Session({ proxies: false });
-				session['sessionId'] = sessionId;
-				const response = await session.replay();
-				expect(response).toBeDefined();
-				expect(response.replay).toBeDefined();
-				expect(response.replay.length).toBeGreaterThan(0);
-			} catch (error) {
-				// If the session doesn't exist, that's okay for this test
-				expect(error).toBeDefined();
-			}
+		it('should replay a session', { timeout: 120000 }, async () => {
+			const session = client.Session({ proxies: false, idle_timeout_minutes: 1 });
+			await session.use(async (session) => {
+				await session.execute({ type: 'goto', url: 'https://example.com' });
+			});
+			// Recordings are finalized only after the browser session is closed.
+			await expect.poll(async () => {
+				const replay = await session.replay();
+				return Boolean(replay.mp4_url || replay.playlist_content);
+			}, {
+				timeout: 60000,
+				interval: 1000,
+			}).toBe(true);
 		});
 	});
 
@@ -277,10 +277,11 @@ describe('Session Integration Tests', () => {
 		it('should handle already active session error', async () => {
 			const session = client.Session({ proxies: false });
 			await session.start();
-
-			await expect(session.start()).rejects.toThrow('Session is already active');
-
-			await session.stop();
+			try {
+				await expect(session.start()).rejects.toThrow('Session is already active');
+			} finally {
+				await session.stop();
+			}
 		});
 	});
 

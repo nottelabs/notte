@@ -1,9 +1,10 @@
 import { beforeEach, describe, it, expect, expectTypeOf, vi } from 'vitest';
 import { Session } from '@/session';
 import { NotteClient } from '@/client';
-import { sessionStart, sessionStop } from '@/lib/client/sdk.gen';
+import { sessionStart, sessionStop, sessionReplay } from '@/lib/client/sdk.gen';
 import type {
   SessionOptions,
+  ReplayResponse,
 } from '@/index';
 import { openBrowser } from '@/utils';
 
@@ -61,6 +62,39 @@ describe('Session Unit Tests', () => {
       const options: SessionOptions = { headless };
       expectTypeOf<SessionOptions['headless']>().toEqualTypeOf<boolean | undefined>();
       expect(options.headless).toBe(true);
+    });
+  });
+
+  describe('replay', () => {
+    it.each([
+      { mp4_url: 'https://example.com/replay.mp4', expires_at: '2099-01-01T00:00:00Z' },
+      { playlist_content: '#EXTM3U\n#EXT-X-ENDLIST', expires_at: '2099-01-01T00:00:00Z' },
+    ] satisfies ReplayResponse[])('retrieves the last closed session without marking it active (%j)', async replay => {
+      vi.mocked(sessionStart).mockResolvedValue({ data: { session_id: 'session-replay', status: 'active' } } as any);
+      vi.mocked(sessionStop).mockResolvedValue({ data: { session_id: 'session-replay', status: 'closed' } } as any);
+      vi.mocked(sessionReplay).mockResolvedValue({ data: replay } as any);
+      const session = new Session(mockClient);
+      await session.start();
+      await session.stop();
+
+      expectTypeOf<ReturnType<Session['replay']>>().toEqualTypeOf<Promise<ReplayResponse>>();
+      expect(await session.replay()).toEqual(replay);
+      expect(sessionReplay).toHaveBeenCalledWith({ client: mockClient.getClient(), path: { session_id: 'session-replay' } });
+      expect(session.getId()).toBeNull();
+      expect(session.isSessionActive()).toBe(false);
+    });
+
+    it('rejects replay when no session has been created', async () => {
+      await expect(new Session(mockClient).replay()).rejects.toThrow('Session not started');
+      expect(sessionReplay).not.toHaveBeenCalled();
+    });
+
+    it('rejects an empty replay response', async () => {
+      vi.mocked(sessionStart).mockResolvedValue({ data: { session_id: 'session-replay', status: 'active' } } as any);
+      vi.mocked(sessionReplay).mockResolvedValue({} as any);
+      const session = new Session(mockClient);
+      await session.start();
+      await expect(session.replay()).rejects.toThrow('empty response');
     });
   });
 

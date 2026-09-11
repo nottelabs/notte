@@ -1,14 +1,27 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { NotteClient } from '@/client';
-import type { FunctionRunStartResult } from '@/functions';
+import { functionCreate, functionDelete } from '@/lib/client/sdk.gen';
 import { config } from 'dotenv';
 config();
 
-describe.skipIf(!process.env.NOTTE_FUNCTION_ID)('Function Integration Tests', () => {
+describe('Function Integration Tests', () => {
 	let client: NotteClient;
+	let functionId: string;
+	beforeAll(async () => {
+		const fixtureClient = new NotteClient();
+		const created = await functionCreate({
+			client: fixtureClient.getClient(),
+			body: { file: new File(['def run(url: str) -> dict:\n    return {"url": url}\n'], 'integration.py', { type: 'text/x-python' }) },
+			throwOnError: true,
+		});
+		functionId = created.data.function_id;
+	});
+	afterAll(async () => {
+		if (functionId) await functionDelete({ client: new NotteClient().getClient(), path: { function_id: functionId }, throwOnError: true });
+	});
 
 	beforeEach(async () => {
 		// Initialize client with API key from environment
@@ -25,7 +38,6 @@ describe.skipIf(!process.env.NOTTE_FUNCTION_ID)('Function Integration Tests', ()
 
 	describe('Function Creation', () => {
 		it('should create function instance with function_id', () => {
-			const functionId = process.env.NOTTE_FUNCTION_ID!;
 			const fn = client.NotteFunction({
 				function_id: functionId
 			});
@@ -36,7 +48,6 @@ describe.skipIf(!process.env.NOTTE_FUNCTION_ID)('Function Integration Tests', ()
 		});
 
 		it('should create function instance with function_id and decryption_key', () => {
-			const functionId = process.env.NOTTE_FUNCTION_ID!;
 			const decryptionKey = process.env.NOTTE_FUNCTION_DECRYPTION_KEY || 'test-decryption-key'; // pragma: allowlist secret
 			const fn = client.NotteFunction({
 				function_id: functionId,
@@ -52,7 +63,6 @@ describe.skipIf(!process.env.NOTTE_FUNCTION_ID)('Function Integration Tests', ()
 
 	describe('Function Run', () => {
 		it('should run a function', { timeout: 300000 }, async () => {
-			const functionId = process.env.NOTTE_FUNCTION_ID!;
 			const fn = client.NotteFunction({
 				function_id: functionId
 			});
@@ -69,7 +79,6 @@ describe.skipIf(!process.env.NOTTE_FUNCTION_ID)('Function Integration Tests', ()
 
 	describe('Function Metadata', () => {
 		it('should get metadata for a function run', { timeout: 300000 }, async () => {
-			const functionId = process.env.NOTTE_FUNCTION_ID!;
 			const fn = client.NotteFunction({
 				function_id: functionId
 			});
@@ -94,10 +103,8 @@ describe.skipIf(!process.env.NOTTE_FUNCTION_ID)('Function Integration Tests', ()
 
 	describe('Function Download', () => {
 		it('should get a download url', { timeout: 60000 }, async () => {
-			const functionId = process.env.NOTTE_FUNCTION_ID!;
 			const fn = client.NotteFunction({
 				function_id: functionId,
-				decryption_key: process.env.NOTTE_FUNCTION_DECRYPTION_KEY
 			});
 
 			const url = await fn.getUrl();
@@ -106,10 +113,8 @@ describe.skipIf(!process.env.NOTTE_FUNCTION_ID)('Function Integration Tests', ()
 		});
 
 		it('should download the function code', { timeout: 60000 }, async () => {
-			const functionId = process.env.NOTTE_FUNCTION_ID!;
 			const fn = client.NotteFunction({
 				function_id: functionId,
-				decryption_key: process.env.NOTTE_FUNCTION_DECRYPTION_KEY
 			});
 
 			const code = await fn.download();
@@ -118,10 +123,8 @@ describe.skipIf(!process.env.NOTTE_FUNCTION_ID)('Function Integration Tests', ()
 		});
 
 		it('should download the function code to a file', { timeout: 60000 }, async () => {
-			const functionId = process.env.NOTTE_FUNCTION_ID!;
 			const fn = client.NotteFunction({
 				function_id: functionId,
-				decryption_key: process.env.NOTTE_FUNCTION_DECRYPTION_KEY
 			});
 			const target = join(tmpdir(), `notte-function-${Date.now()}.py`);
 
@@ -136,7 +139,7 @@ describe.skipIf(!process.env.NOTTE_FUNCTION_ID)('Function Integration Tests', ()
 
 		it('should reject a path that is not a python file', async () => {
 			const fn = client.NotteFunction({
-				function_id: process.env.NOTTE_FUNCTION_ID!
+				function_id: functionId
 			});
 
 			await expect(fn.download({ path: 'invalid_file.txt' })).rejects.toThrow(
@@ -147,7 +150,6 @@ describe.skipIf(!process.env.NOTTE_FUNCTION_ID)('Function Integration Tests', ()
 
 	describe('Function Properties', () => {
 		it('should expose functionId property', () => {
-			const functionId = process.env.NOTTE_FUNCTION_ID!;
 			const fn = client.NotteFunction({
 				function_id: functionId
 			});
@@ -157,7 +159,6 @@ describe.skipIf(!process.env.NOTTE_FUNCTION_ID)('Function Integration Tests', ()
 		});
 
 		it('should expose decryptionKey property when provided', () => {
-			const functionId = process.env.NOTTE_FUNCTION_ID!;
 			const decryptionKey = process.env.NOTTE_FUNCTION_DECRYPTION_KEY || 'test-decryption-key'; // pragma: allowlist secret
 			const fn = client.NotteFunction({
 				function_id: functionId,
