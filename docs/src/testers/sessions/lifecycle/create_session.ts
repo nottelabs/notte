@@ -1,7 +1,6 @@
 // @sniptest filename=create_session.ts
-// @sniptest show=8-26
+// @sniptest show=7-20
 import { NotteClient, type SessionResponse } from 'notte-sdk';
-import { chromium } from 'playwright-core';
 
 const client = new NotteClient();
 let status: SessionResponse | undefined;
@@ -13,17 +12,12 @@ await client
   .use(async (session) => {
     console.log(`Session ${session.getId()} is active`);
 
-    // Connect Playwright to access the page.
+    // Access the session’s Playwright page.
     status = await session.status();
-    const browser = await chromium.connectOverCDP(status.cdp_url!);
-    try {
-      const page = browser.contexts()[0].pages()[0];
-      await page.goto('https://example.com');
-      title = await page.title();
-      console.log(`Page title: ${title}`);
-    } finally {
-      await browser.close();
-    }
+    const page = await session.page();
+    await page.goto('https://example.com');
+    title = await page.title();
+    console.log(`Page title: ${title}`);
   });
 // Automatically stopped here.
 

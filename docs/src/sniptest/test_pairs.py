@@ -13,6 +13,14 @@ from parser import parse_file
 
 
 class RepositoryExamplesTest(unittest.TestCase):
+    def test_python_page_examples_use_the_node_page_helper(self):
+        root = Path(__file__).resolve().parents[1] / "testers"
+        for path in root.rglob("*.ts"):
+            python = path.with_suffix(".py")
+            if python.exists() and "session.page" in python.read_text():
+                with self.subTest(path=path):
+                    self.assertNotIn("connectOverCDP", path.read_text())
+
     def test_playwright_cleanup_and_monitoring_pairs_preserve_teaching_code(self):
         testers = Path(__file__).resolve().parents[1] / "testers"
         for name in ("sessions/cdp/playwright_context_managers", "sessions/playwright-vs-notte/playwright_example"):
