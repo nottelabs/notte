@@ -223,6 +223,7 @@ describe('NotteClient transport', () => {
 
       expect(error).toBeInstanceOf(NotteTimeoutError);
       expect((error as Error).message).toContain('/health');
+      expect((error as Error).message).toContain('timed out after 20ms');
     });
 
     it('honours the per-call timeout header and strips it from the outgoing request', async () => {
@@ -240,6 +241,7 @@ describe('NotteClient transport', () => {
         .catch((e: unknown) => e);
 
       expect(error).toBeInstanceOf(NotteTimeoutError);
+      expect((error as Error).message).toContain('timed out after 20ms');
       expect(requests[0].headers.get(TIMEOUT_HEADER)).toBeNull();
     });
 

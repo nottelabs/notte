@@ -236,7 +236,10 @@ export class NotteClient {
     }
     if (isAbortError(error)) {
       const target = request ? ` to \`${requestPath(request)}\`` : '';
-      return new NotteTimeoutError(`Request${target} timed out after ${this.config.timeoutMs}ms`, { cause: error });
+      // `withTimeout` aborts with the effective deadline (default or per-call
+      // override) in the reason; fall back to the default for foreign aborts.
+      const reason = error instanceof Error && error.name === 'TimeoutError' ? error.message : `timed out after ${this.config.timeoutMs}ms`;
+      return new NotteTimeoutError(`Request${target} ${reason}`, { cause: error });
     }
     return error;
   }
@@ -474,7 +477,7 @@ function isAbortError(error: unknown): boolean {
 function withTimeout(signal: AbortSignal | null | undefined, timeoutMs: number): AbortSignal {
   const controller = new AbortController();
   const timer = setTimeout(() => {
-    controller.abort(new DOMException(`Request timed out after ${timeoutMs}ms`, 'TimeoutError'));
+    controller.abort(new DOMException(`timed out after ${timeoutMs}ms`, 'TimeoutError'));
   }, timeoutMs);
   timer.unref?.();
   const clear = () => clearTimeout(timer);

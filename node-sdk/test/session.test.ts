@@ -412,6 +412,29 @@ describe('Session Unit Tests', () => {
       expect(session.isSessionActive()).toBe(false);
     });
 
+    it('stops the remote session with close_reason error when cookie loading fails after start', async () => {
+      const file = join(tempDir, 'broken.json');
+      await writeFile(file, '{not json');
+      const session = new Session(mockClient, { cookie_file: file });
+
+      await expect(session.start()).rejects.toThrow();
+
+      expect(sessionStop).toHaveBeenCalledWith(expect.objectContaining({ query: { close_reason: 'error' } }));
+      expect(session.isSessionActive()).toBe(false);
+    });
+
+    it('stops the remote session when the cookie upload fails after start', async () => {
+      const file = join(tempDir, 'cookies.json');
+      await writeFile(file, JSON.stringify([cookie]));
+      vi.mocked(sessionCookiesSet).mockRejectedValueOnce(new NotteAPIError('/sessions/x/cookies', 500, { message: 'boom' }));
+      const session = new Session(mockClient, { cookie_file: file });
+
+      await expect(session.start()).rejects.toBeInstanceOf(NotteAPIError);
+
+      expect(sessionStop).toHaveBeenCalledWith(expect.objectContaining({ query: { close_reason: 'error' } }));
+      expect(session.isSessionActive()).toBe(false);
+    });
+
     it('creates the cookie_file on stop when it did not exist', async () => {
       const file = join(tempDir, 'new.json');
       const session = new Session(mockClient, { cookie_file: file });
@@ -434,13 +457,15 @@ describe('Session Unit Tests', () => {
   describe('storage', () => {
     it('sends use_file_storage and binds the storage to the session id', async () => {
       const storage = { setSessionId: vi.fn(), forSession: vi.fn() } as unknown as RemoteFileStorage;
+      vi.mocked(storage.forSession).mockReturnValue(storage);
       const session = new Session(mockClient, { storage, proxies: false });
       expect(session.storage).toBe(storage);
 
       await session.start();
 
       expect(sessionStart).toHaveBeenCalledWith(expect.objectContaining({ body: { proxies: false, use_file_storage: true } }));
-      expect(vi.mocked(storage.setSessionId)).toHaveBeenCalledWith('session-123');
+      expect(vi.mocked(storage.forSession)).toHaveBeenCalledWith('session-123');
+      expect(session.storage).toBe(storage);
     });
   });
 
@@ -641,3 +666,20 @@ describe('Session Unit Tests', () => {
 
 // Note: For comprehensive integration tests that test actual API interactions,
 // see session.integration.test.ts which requires NOTTE_API_KEY environment variable.
+
+describe('Session storage binding', () => {
+  it('clones a storage already bound to another session instead of rebinding it', async () => {
+    const storage = { forSession: vi.fn(), setSessionId: vi.fn() };
+    const clone = { forSession: vi.fn(), setSessionId: vi.fn() };
+    storage.forSession.mockReturnValue(clone);
+    vi.mocked(sessionStart).mockResolvedValue({ data: sessionResponse({ session_id: 'session-b' }) } as never);
+
+    const session = new Session(mockNotteClient(), { storage: storage as never });
+    await session.start();
+
+    expect(storage.forSession).toHaveBeenCalledWith('session-b');
+    expect(storage.setSessionId).not.toHaveBeenCalled();
+    expect(session.storage).toBe(clone);
+    expect(sessionStart).toHaveBeenCalledWith(expect.objectContaining({ body: expect.objectContaining({ use_file_storage: true }) }));
+  });
+});

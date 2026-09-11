@@ -229,18 +229,31 @@ export class Session {
     this.sessionId = sessionData.session_id;
     this.isActive = true;
     this.response = sessionData;
-    this.fileStorage?.setSessionId(sessionData.session_id);
+    // `forSession` clones a storage already bound to another session, so one
+    // RemoteFileStorage reused across sessions never points at the wrong one.
+    this.fileStorage = this.fileStorage?.forSession(sessionData.session_id);
 
-    if (this.openViewer) {
-      this.openViewerInBrowser();
-    }
-    if (this.cookieFile !== undefined) {
-      if (existsSync(this.cookieFile)) {
-        console.info(`🍪 Automatically loading cookies from ${this.cookieFile}`);
-        await this.setCookiesFromFile(this.cookieFile);
-      } else {
-        console.warn(`🍪 Cookie file ${this.cookieFile} not found, skipping cookie loading`);
+    // The remote browser exists from here on: if any post-start step fails,
+    // stop it before rethrowing so a bad cookie file cannot leak a session.
+    try {
+      if (this.openViewer) {
+        this.openViewerInBrowser();
       }
+      if (this.cookieFile !== undefined) {
+        if (existsSync(this.cookieFile)) {
+          console.info(`🍪 Automatically loading cookies from ${this.cookieFile}`);
+          await this.setCookiesFromFile(this.cookieFile);
+        } else {
+          console.warn(`🍪 Cookie file ${this.cookieFile} not found, skipping cookie loading`);
+        }
+      }
+    } catch (error) {
+      try {
+        await this.stop('error');
+      } catch (stopError) {
+        console.error(`[Session] Failed to stop ${sessionData.session_id} after a start failure: ${String(stopError)}`);
+      }
+      throw error;
     }
   }
 

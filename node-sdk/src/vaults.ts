@@ -126,7 +126,11 @@ export function isValidMfaSecret(secret: string): boolean {
   if (padded.length % 8 !== 0) {
     padded += '='.repeat(8 - (padded.length % 8));
   }
-  const stripped = padded.replace(/=+$/, '');
+  let end = padded.length;
+  while (end > 0 && padded[end - 1] === '=') {
+    end -= 1;
+  }
+  const stripped = padded.slice(0, end);
   const padding = padded.length - stripped.length;
   return /^[A-Z2-7]*$/.test(stripped) && [0, 1, 3, 4, 6].includes(padding);
 }
@@ -443,14 +447,19 @@ export class NotteVault {
 
     // Generate the initial random password from the platform CSPRNG.
     const allowedChars = includeSpecialChars ? `${alphanumeric}-_` : alphanumeric;
-    const array = new Uint8Array(length);
-    globalThis.crypto.getRandomValues(array);
-    const passwordArray = Array.from(array, byte => allowedChars[byte % allowedChars.length]!);
-
+    // Rejection sampling keeps the CSPRNG output uniform: a plain modulo would
+    // favour the first `2^32 mod size` characters.
     const randomIndex = (size: number): number => {
-      const [value] = globalThis.crypto.getRandomValues(new Uint32Array(1));
-      return value! % size;
+      const limit = Math.floor(0x1_0000_0000 / size) * size;
+      const buffer = new Uint32Array(1);
+      for (;;) {
+        const [value] = globalThis.crypto.getRandomValues(buffer);
+        if (value! < limit) {
+          return value! % size;
+        }
+      }
     };
+    const passwordArray = Array.from({ length }, () => allowedChars[randomIndex(allowedChars.length)]!);
     const pick = (chars: string): string => chars[randomIndex(chars.length)]!;
 
     // Guarantee every required character class is present. Fixing one class

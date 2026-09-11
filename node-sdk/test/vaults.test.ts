@@ -359,3 +359,30 @@ describe('NotteVault generatePassword', () => {
     expect(vault.generatePassword()).not.toBe(vault.generatePassword());
   });
 });
+
+describe('MFA secret padding', () => {
+  it('handles secrets ending in many padding characters without a regex', () => {
+    expect(isValidMfaSecret('JBSWY3DPEHPK3PXP')).toBe(true);
+    expect(isValidMfaSecret('JBSWY3DP' + '='.repeat(10_000))).toBe(false);
+    expect(isValidMfaSecret('MFRGG===')).toBe(true);
+    // pyotp right-pads to a multiple of eight, so a short padding run is completed rather than rejected
+    expect(isValidMfaSecret('MFRGG=')).toBe(true);
+    // six characters pad to two '=' which base32 never produces
+    expect(isValidMfaSecret('MFRGGA')).toBe(false);
+  });
+});
+
+describe('generatePassword uniformity', () => {
+  it('only ever uses allowed characters and reaches every character class', () => {
+    const vault = new NotteVault(client);
+    const seen = new Set<string>();
+    for (let i = 0; i < 200; i += 1) {
+      for (const char of vault.generatePassword(32, false)) {
+        seen.add(char);
+        expect(/[A-Za-z0-9]/.test(char)).toBe(true);
+      }
+    }
+    // 62 symbols over 6400 draws: a biased or broken sampler would leave gaps.
+    expect(seen.size).toBe(62);
+  });
+});
