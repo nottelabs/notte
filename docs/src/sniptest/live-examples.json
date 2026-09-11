@@ -1,4 +1,12 @@
 {
+  "sessions/cdp/playwright_context_managers.ts": {
+    "expected": { "status": "active" },
+    "closedSession": true
+  },
+  "sessions/playwright-vs-notte/playwright_example.ts": {
+    "expected": { "status": "active" },
+    "closedSession": true,
+    "logContains": "← https://example.com/ (200)"
   "agents/config/creating_agent.ts": {
     "expected": { "status": "closed" },
     "closedSession": true

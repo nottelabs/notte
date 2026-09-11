@@ -342,7 +342,6 @@
     "sessions/cdp/external_cleanup.py",
     "sessions/cdp/external_error_handling.py",
     "sessions/cdp/external_monitor_costs.py",
-    "sessions/cdp/playwright_context_managers.py",
     "sessions/cdp/puppeteer_session_timeout.py",
     "sessions/cdp/selenium_basic_automation.py",
     "sessions/cdp/selenium_builtin_page.py",
