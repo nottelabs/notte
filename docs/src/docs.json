@@ -528,12 +528,14 @@
                     "group": "File Storage",
                     "collapsed": true,
                     "pages": [
-                      "typescript-sdk-reference/manual/files",
-                      "typescript-sdk-reference/files/download",
-                      "typescript-sdk-reference/files/upload",
-                      "typescript-sdk-reference/files/list",
-                      "typescript-sdk-reference/files/metadata",
-                      "typescript-sdk-reference/files/stream"
+                      "typescript-sdk-reference/manual/remotefilestorage",
+                      "typescript-sdk-reference/remotefilestorage/download",
+                      "typescript-sdk-reference/remotefilestorage/downloadblob",
+                      "typescript-sdk-reference/remotefilestorage/upload",
+                      "typescript-sdk-reference/remotefilestorage/list",
+                      "typescript-sdk-reference/remotefilestorage/metadata",
+                      "typescript-sdk-reference/remotefilestorage/stream",
+                      "typescript-sdk-reference/remotefilestorage/delete"
                     ]
                   },
                   {
@@ -554,21 +556,6 @@
                       "typescript-sdk-reference/manual/notteusage",
                       "typescript-sdk-reference/notteusage/get",
                       "typescript-sdk-reference/notteusage/logs"
-                    ]
-                  },
-                  {
-                    "group": "Remote File Storage",
-                    "collapsed": true,
-                    "pages": [
-                      "typescript-sdk-reference/manual/remotefilestorage",
-                      "typescript-sdk-reference/remotefilestorage/setsessionid",
-                      "typescript-sdk-reference/remotefilestorage/forsession",
-                      "typescript-sdk-reference/remotefilestorage/upload",
-                      "typescript-sdk-reference/remotefilestorage/list",
-                      "typescript-sdk-reference/remotefilestorage/metadata",
-                      "typescript-sdk-reference/remotefilestorage/download",
-                      "typescript-sdk-reference/remotefilestorage/downloadblob",
-                      "typescript-sdk-reference/remotefilestorage/delete"
                     ]
                   }
                 ]

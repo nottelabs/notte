@@ -89,7 +89,7 @@ test('navigation and generated reference links resolve; supporting APIs can rema
   walk(actual.navigation);
   for (const name of listed) assert.ok(actual.pages.has(name), `Missing navigation page: ${name}`);
   for (const name of actual.pages.keys()) {
-    if (!listed.has(name) && !actual.pages.get(name).includes('**deprecated:**') && !/\/(?:manual\/)?(?:[a-z]+error|pagefetchresponse)(?:\/|\.mdx$)/.test(name)) assert.match(name, /\/types\/|\/encryption\/|\/manual\/(?:encryption|index)\.mdx$|\/client\/(?:session|files|agent|vault|persona|nottefunction|function|filestorage|withdbpreview|healthcheck|search)\.mdx$|\/symbol-asynciterator\.mdx$|\/function\/getfunctionid\.mdx$|\/session\/(?:getid|use|setcookiesfromfile)\.mdx$|\/vault\/(?:start|stop|delete|addcredentialsfromenv|setcreditcard|getcreditcard|deletecreditcard)\.mdx$|\/persona\/(?:start|stop|create|get|use)\.mdx$|\/files\/delete\.mdx$/);
+    if (!listed.has(name) && !actual.pages.get(name).includes('**deprecated:**') && !/\/(?:manual\/)?(?:[a-z]+error|pagefetchresponse|files)(?:\/|\.mdx$)/.test(name)) assert.match(name, /\/types\/|\/encryption\/|\/manual\/(?:encryption|index)\.mdx$|\/client\/(?:session|files|agent|vault|persona|nottefunction|function|filestorage|withdbpreview|healthcheck|search)\.mdx$|\/symbol-asynciterator\.mdx$|\/function\/getfunctionid\.mdx$|\/session\/(?:getid|use|setcookiesfromfile)\.mdx$|\/vault\/(?:start|stop|delete|addcredentialsfromenv|setcreditcard|getcreditcard|deletecreditcard)\.mdx$|\/persona\/(?:start|stop|create|get|use)\.mdx$|\/remotefilestorage\/(?:setsessionid|forsession)\.mdx$/);
   }
   for (const [name, content] of actual.pages) {
     for (const [, link] of content.matchAll(/\]\(\/(typescript-sdk-reference\/[^)#]+)(?:#[^)]*)?\)/g)) {
@@ -174,7 +174,7 @@ test('Node SDK mirrors Python categories and appears below Python in the sidebar
   assert.match(actual.pages.get('typescript-sdk-reference/authentication.mdx'), /NOTTE_API_KEY/);
   assert.match(actual.pages.get('typescript-sdk-reference/rate-limits.mdx'), /error.statusCode === 429/);
   assert.deepEqual(categoryNames('Core Features'), ['Session', 'Actions', 'Agent', 'Function', 'Anything']);
-  assert.deepEqual(categoryNames('Tooling'), ['Vault', 'Persona', 'File Storage', 'Secrets', 'Usage', 'Remote File Storage']);
+  assert.deepEqual(categoryNames('Tooling'), ['Vault', 'Persona', 'File Storage', 'Secrets', 'Usage']);
   const actions = actual.navigation.pages.find(group => group.group === 'Core Features').pages.find(group => group.group === 'Actions');
   assert.ok(actions.pages.includes('typescript-sdk-reference/types/gotoaction'));
   assert.ok(actions.pages.includes('typescript-sdk-reference/types/clickactionoutput'));
@@ -208,8 +208,12 @@ test('Tooling and Actions mirror Python tasks without Node lifecycle clutter', (
   for (const nav of [python, actual.navigation]) assert.doesNotMatch(JSON.stringify(nav), /(?:set|get|delete)_?credit_?card/);
   assert.deepEqual(paths(actual.navigation, 'Actions').map(task), paths(python, 'Actions').map(task));
   assert.deepEqual(paths(actual.navigation, 'Persona').slice(1).map(task), ['delete', 'addcredentials', 'emails', 'sms']);
-  assert.deepEqual(paths(actual.navigation, 'File Storage').slice(1).map(task), ['download', 'upload', 'list', 'metadata', 'stream']);
-  for (const [section, methods] of Object.entries({ vault: ['start', 'stop', 'delete', 'addcredentialsfromenv'], persona: ['start', 'stop', 'create', 'get', 'use'], session: ['use', 'setcookiesfromfile'], files: ['delete'] })) {
+  assert.deepEqual(paths(actual.navigation, 'File Storage').slice(1).map(task), ['download', 'downloadblob', 'upload', 'list', 'metadata', 'stream', 'delete']);
+  assert.equal(paths(actual.navigation, 'File Storage')[0], 'typescript-sdk-reference/manual/remotefilestorage');
+  assert.ok(paths(actual.navigation, 'File Storage').slice(1).every(path => path.startsWith('typescript-sdk-reference/remotefilestorage/')));
+  assert.match(actual.pages.get('typescript-sdk-reference/manual/remotefilestorage.mdx'), /const storage = client.FileStorage\(sessionId\)/);
+  assert.doesNotMatch(JSON.stringify(actual.navigation), /Remote File Storage/);
+  for (const [section, methods] of Object.entries({ vault: ['start', 'stop', 'delete', 'addcredentialsfromenv'], persona: ['start', 'stop', 'create', 'get', 'use'], session: ['use', 'setcookiesfromfile'], files: ['delete'], remotefilestorage: ['setsessionid', 'forsession'] })) {
     for (const method of methods) {
       const path = `typescript-sdk-reference/${section}/${method}`;
       assert.ok(actual.pages.has(`${path}.mdx`), 'Hidden helpers must retain their URLs');

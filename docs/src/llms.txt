@@ -585,12 +585,14 @@ The SDK docs below are for generated-code editing and reference. They are not th
 
 #### File Storage
 
-- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/files.md)
-- [download](https://docs.notte.cc/typescript-sdk-reference/files/download.md)
-- [upload](https://docs.notte.cc/typescript-sdk-reference/files/upload.md)
-- [list](https://docs.notte.cc/typescript-sdk-reference/files/list.md)
-- [metadata](https://docs.notte.cc/typescript-sdk-reference/files/metadata.md)
-- [stream](https://docs.notte.cc/typescript-sdk-reference/files/stream.md)
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/remotefilestorage.md)
+- [download](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/download.md)
+- [downloadBlob](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/downloadblob.md)
+- [upload](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/upload.md)
+- [list](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/list.md)
+- [metadata](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/metadata.md)
+- [stream](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/stream.md)
+- [delete](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/delete.md)
 
 #### Secrets
 
@@ -605,18 +607,6 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [NotteUsage](https://docs.notte.cc/typescript-sdk-reference/manual/notteusage.md)
 - [get](https://docs.notte.cc/typescript-sdk-reference/notteusage/get.md)
 - [logs](https://docs.notte.cc/typescript-sdk-reference/notteusage/logs.md)
-
-#### Remote File Storage
-
-- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/remotefilestorage.md)
-- [setSessionId](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/setsessionid.md)
-- [forSession](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/forsession.md)
-- [upload](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/upload.md)
-- [list](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/list.md)
-- [metadata](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/metadata.md)
-- [download](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/download.md)
-- [downloadBlob](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/downloadblob.md)
-- [delete](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/delete.md)
 
 ### Debug
 

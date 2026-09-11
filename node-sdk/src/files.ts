@@ -182,10 +182,16 @@ export class SessionFiles {
  * so the session binds it on start, or bind it yourself with a session ID.
  *
  * ```ts
- * const storage = new RemoteFileStorage(client, sessionId);
+ * const storage = client.FileStorage(sessionId);
  * const uploaded = await storage.upload('./resume.pdf');
  * const localPath = await storage.download(uploaded.id, './downloads');
+ * const blob = await storage.downloadBlob(uploaded.id);
  * ```
+ *
+ * `download()` saves to disk; `downloadBlob()` returns bytes in memory, and
+ * `stream()` returns a readable stream. For lower-level session file access,
+ * see [NotteClient.Files](/typescript-sdk-reference/client/files).
+ *
  */
 export class RemoteFileStorage {
   private _sessionId: string | null;
@@ -336,6 +342,11 @@ export class RemoteFileStorage {
   /** Download a file's bytes as a `Blob` without touching the local filesystem. */
   async downloadBlob(fileId: string): Promise<Blob> {
     return this.files().download(fileId);
+  }
+
+  /** Stream a file's bytes without buffering the whole file in memory. */
+  async stream(fileId: string): Promise<ReadableStream<Uint8Array>> {
+    return this.files().stream(fileId);
   }
 
   /** Delete a session file. */

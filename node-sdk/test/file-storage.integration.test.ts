@@ -73,7 +73,7 @@ describe('File storage integration', () => {
       if (!sessionId) {
         throw new Error('session did not start');
       }
-      storage = new RemoteFileStorage(client).forSession(sessionId);
+      storage = client.FileStorage(sessionId);
       try {
         await storage.list();
       } catch (error) {
@@ -139,6 +139,9 @@ describe('File storage integration', () => {
         // In-memory download.
         const blob = await storage.downloadBlob(uploaded.id);
         await expect(blob.text()).resolves.toBe('original file!\nnode sdk');
+
+        const stream = await storage.stream(uploaded.id);
+        await expect(new Response(stream).text()).resolves.toBe('original file!\nnode sdk');
       } finally {
         await storage.delete(uploaded.id);
       }

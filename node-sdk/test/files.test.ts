@@ -298,6 +298,20 @@ describe('RemoteFileStorage', () => {
     expect(mocks.deleteSessionFile.mock.calls[0]![0].path).toEqual({ session_id: 'session-id', file_id: 'file-id' });
   });
 
+  it('streams file bytes through the bound session', async () => {
+    const body = new Blob(['streamed content']).stream();
+    mocks.downloadSessionFile.mockResolvedValue({ data: body });
+    const storage = new RemoteFileStorage(client, 'session-id');
+
+    const stream = await storage.stream('file-id');
+    expect(stream).toBe(body);
+    await expect(new Response(stream).text()).resolves.toBe('streamed content');
+    expect(mocks.downloadSessionFile).toHaveBeenCalledWith(expect.objectContaining({
+      path: { session_id: 'session-id', file_id: 'file-id' },
+      parseAs: 'stream',
+    }));
+  });
+
   describe('download to disk', () => {
     function mockDownload(metadata: SessionFile, content: string) {
       mocks.listSessionFiles.mockResolvedValue(page([metadata]));
