@@ -1,24 +1,52 @@
 {/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/sessions/configuration/full_config.py */}
+{/* @sniptest testers/sessions/configuration/full_config.py, testers/sessions/configuration/full_config.ts */}
 
 <CodeGroup>
 
 ```python Python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
 with client.Session(
     advanced_stealth=False,
     solve_captchas=True,
     proxies=True,
     viewport_width=1920,
     viewport_height=1080,
-    timeout_minutes=10,
+    idle_timeout_minutes=10,
     browser_type="chromium",
 ) as session:
     page = session.page
     page.goto("https://example.com")
+```
+
+```typescript TypeScript
+const session = client.Session({
+  idle_timeout_minutes: 10,
+  advanced_stealth: false,
+  solve_captchas: true,
+  proxies: true,
+  viewport_width: 1920,
+  viewport_height: 1080,
+  browser_type: 'chromium',
+});
+await session.use(async () => {
+  status = await session.status();
+  if (status.status !== 'active') throw new Error('Session is not active');
+  if (!status.cdp_url) throw new Error('Session did not return a CDP URL');
+  const browser = await chromium.connectOverCDP(status.cdp_url);
+  try {
+    const page = browser.contexts()[0].pages()[0];
+    await page.goto('https://example.com');
+    title = await page.title();
+    console.log(`Page title: ${title}`);
+    viewport = await page.evaluate(() => ({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    }));
+    console.log(viewport);
+  } finally {
+    await browser.close();
+  }
+});
+// Automatically stopped here.
 ```
 
 </CodeGroup>

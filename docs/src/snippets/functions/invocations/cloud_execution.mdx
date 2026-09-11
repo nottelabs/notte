@@ -1,15 +1,19 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/invocations/cloud_execution.py */}
 
+<CodeGroup>
+
 ```python cloud_execution.py
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-function = client.Function(function_id="workflow_abc123")
 # Runs on Notte infrastructure
 result = function.run(
     url="https://example.com",
     local=False,  # Default
 )
 ```
+
+```typescript cloud_execution.ts
+// Run on Notte infrastructure (the default).
+const result = await fn.run({ url: 'https://example.com' });
+```
+
+</CodeGroup>

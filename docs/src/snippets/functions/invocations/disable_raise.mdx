@@ -1,19 +1,28 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/invocations/disable_raise.py */}
 
+<CodeGroup>
+
 ```python disable_raise.py
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-function = client.Function(function_id="workflow_abc123")
-
-# Don't raise exception on failure
-result = function.run(url="https://example.com", raise_on_failure=False)
-
-# Check status manually
+# Inspect a failed run without raising an exception.
+result = function.run(url="https://example.com", fail=True, raise_on_failure=False)
 if result.status == "failed":
     print(f"Function failed: {result.result}")
 else:
     print(f"Success: {result.result}")
 ```
+
+```typescript disable_raise.ts
+// Inspect a failed run without throwing an exception.
+const result = await fn.run(
+  { url: 'https://example.com', fail: true },
+  { raiseOnFailure: false },
+);
+if (result.status === 'failed') {
+  console.log(`Function failed: ${result.result}`);
+} else {
+  console.log(`Success: ${result.result}`);
+}
+```
+
+</CodeGroup>

@@ -1,21 +1,30 @@
 {/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/sessions/lifecycle/stop_session.py */}
+{/* @sniptest testers/sessions/lifecycle/stop_session.py, testers/sessions/lifecycle/stop_session.ts */}
 
 <CodeGroup>
 
 ```python Python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-# Manual stop
 session = client.Session()
 session.start()
-
-# ... do work ...
-
-session.stop()
+try:
+    status = session.status()
+    if status.status != "active":
+        raise RuntimeError("Session is not active")
+finally:
+    session.stop()
 print("Session stopped successfully")
+```
+
+```typescript TypeScript
+const session = client.Session();
+await session.start();
+try {
+  status = await session.status();
+  if (status.status !== 'active') throw new Error('Session is not active');
+} finally {
+  await session.stop();
+}
+console.log('Session stopped successfully');
 ```
 
 </CodeGroup>

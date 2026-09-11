@@ -1,17 +1,40 @@
 {/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/sessions/configuration/viewport.py */}
+{/* @sniptest testers/sessions/configuration/viewport.py, testers/sessions/configuration/viewport.ts */}
 
 <CodeGroup>
 
 ```python Python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
 # 4K resolution
 with client.Session(viewport_width=3840, viewport_height=2160) as session:
     page = session.page
     page.goto("https://example.com")
+```
+
+```typescript TypeScript
+const session = client.Session({
+  viewport_width: 3840,
+  viewport_height: 2160,
+});
+await session.use(async () => {
+  status = await session.status();
+  if (status.status !== 'active') throw new Error('Session is not active');
+  if (!status.cdp_url) throw new Error('Session did not return a CDP URL');
+  const browser = await chromium.connectOverCDP(status.cdp_url);
+  try {
+    const page = browser.contexts()[0].pages()[0];
+    await page.goto('https://example.com');
+    title = await page.title();
+    console.log(`Page title: ${title}`);
+    viewport = await page.evaluate(() => ({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    }));
+    console.log(viewport);
+  } finally {
+    await browser.close();
+  }
+});
+// Automatically stopped here.
 ```
 
 </CodeGroup>

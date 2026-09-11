@@ -1,41 +1,76 @@
 {/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/sessions/lifecycle/create_session.py, testers/sessions/lifecycle/create_session_2.py */}
+{/* @sniptest testers/sessions/lifecycle/create_session.py, testers/sessions/lifecycle/create_session.ts, testers/sessions/lifecycle/create_session_2.py, testers/sessions/lifecycle/create_session_2.ts */}
 
 <CodeGroup>
 
 ```python Python - Context Manager
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
 # Recommended: Use context manager for automatic cleanup
-with client.Session(timeout_minutes=10, viewport_width=1920, viewport_height=1080) as session:
+with client.Session(viewport_width=1920, viewport_height=1080) as session:
     print(f"Session {session.session_id} is active")
 
     # Access Playwright page
     page = session.page
     page.goto("https://example.com")
     print(f"Page title: {page.title()}")
+```
 
-# Session automatically stopped here
+```typescript TypeScript - Context Manager
+// Recommended: Use .use() for automatic cleanup.
+await client
+  .Session({ viewport_width: 1920, viewport_height: 1080 })
+  .use(async (session) => {
+    console.log(`Session ${session.getId()} is active`);
+
+    // Connect Playwright to access the page.
+    status = await session.status();
+    const browser = await chromium.connectOverCDP(status.cdp_url!);
+    try {
+      const page = browser.contexts()[0].pages()[0];
+      await page.goto('https://example.com');
+      title = await page.title();
+      console.log(`Page title: ${title}`);
+    } finally {
+      await browser.close();
+    }
+  });
+// Automatically stopped here.
 ```
 
 ```python Python - Manual Management
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-# Manual management (not recommended)
-session = client.Session(timeout_minutes=10)
+session = client.Session()
 session.start()
-
 try:
     print(f"Session {session.session_id} is active")
+    status = session.status()
+    if status.status != "active":
+        raise RuntimeError("Session is not active")
     page = session.page
     page.goto("https://example.com")
+    title = page.title()
 finally:
     # Always stop the session
     session.stop()
+```
+
+```typescript TypeScript - Manual Management
+const session = client.Session();
+await session.start();
+try {
+  console.log(`Session ${session.getId()} is active`);
+  status = await session.status();
+  if (status.status !== 'active') throw new Error('Session is not active');
+  const browser = await chromium.connectOverCDP(status.cdp_url!);
+  try {
+    const page = browser.contexts()[0].pages()[0];
+    await page.goto('https://example.com');
+    title = await page.title();
+  } finally {
+    await browser.close();
+  }
+} finally {
+  // Always stop the session
+  await session.stop();
+}
 ```
 
 </CodeGroup>

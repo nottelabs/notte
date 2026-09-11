@@ -1,5 +1,6 @@
 """Offline regression tests for paired example generation and parity enforcement."""
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,6 +13,83 @@ from parser import parse_file
 
 
 class RepositoryExamplesTest(unittest.TestCase):
+    def test_create_session_tabs_show_the_same_task_and_output(self):
+        testers = Path(__file__).resolve().parents[1] / "testers/sessions/lifecycle"
+        for name in ("create_session", "create_session_2"):
+            _, python = parse_file(testers / f"{name}.py")
+            _, typescript = parse_file(testers / f"{name}.ts")
+            with self.subTest(name=name):
+                for code in (python, typescript):
+                    self.assertIn("Session ", code)
+                    self.assertIn(" is active", code)
+                    self.assertIn("https://example.com", code)
+                self.assertEqual("Page title:" in python, "Page title:" in typescript)
+                self.assertNotIn("console.log(viewport)", typescript)
+                self.assertNotIn("page.evaluate", typescript)
+                if name == "create_session":
+                    self.assertNotIn("Session is not active", typescript)
+                    for code in (python, typescript):
+                        self.assertIn("1920", code)
+                        self.assertIn("1080", code)
+
+    def test_non_timeout_examples_do_not_configure_idle_timeouts(self):
+        testers = Path(__file__).resolve().parents[1] / "testers"
+        for name in (
+            "sessions/configuration/proxies_simple",
+            "sessions/configuration/quick_start",
+            "sessions/configuration/viewport",
+            "sessions/lifecycle/create_session",
+            "sessions/lifecycle/create_session_2",
+            "sessions/lifecycle/monitor_state",
+            "sessions/lifecycle/stop_session",
+            "sessions/lifecycle/error_handling",
+            "sessions/lifecycle/error_handling_2",
+        ):
+            for suffix in (".py", ".ts"):
+                with self.subTest(name=name, language=suffix):
+                    self.assertNotIn("idle_timeout_minutes", (testers / f"{name}{suffix}").read_text())
+
+    def test_all_new_pairs_keep_test_plumbing_out_of_displayed_code(self):
+        directory = Path(__file__).resolve().parent
+        contracts = json.loads((directory / "live-examples.json").read_text())
+        for name in contracts:
+            for suffix in (".py", ".ts"):
+                path = (directory.parent / "testers" / name).with_suffix(suffix)
+                with self.subTest(path=path):
+                    config, rendered = parse_file(path)
+                    self.assertIsNotNone(config.show)
+                    for unwanted in (
+                        "import json",
+                        "import os",
+                        "NOTTE_FUNCTION_ID",
+                        "same_run",
+                        "export {",
+                        "Values retained",
+                    ):
+                        self.assertNotIn(unwanted, rendered)
+                    self.assertNotIn("json.dumps", path.read_text())
+                    self.assertNotIn("JSON.stringify", path.read_text())
+
+    def test_focused_function_examples_hide_execution_setup_in_both_tabs(self):
+        testers = Path(__file__).resolve().parents[1] / "testers/functions/invocations"
+        for name in ("check_run_status", "sequential"):
+            for suffix in (".py", ".ts"):
+                with self.subTest(name=name, language=suffix):
+                    path = testers / f"{name}{suffix}"
+                    config, rendered = parse_file(path)
+                    self.assertIsNotNone(config.show)
+                    self.assertNotIn("import ", rendered)
+                    self.assertNotIn("NOTTE_FUNCTION_ID", rendered)
+                    self.assertNotIn("same_run", rendered)
+                    self.assertNotIn("json.dumps", rendered)
+                    self.assertNotIn("JSON.stringify", rendered)
+                    if name == "check_run_status":
+                        self.assertIn("Status:", rendered)
+                        self.assertIn("Result:", rendered)
+                        self.assertIn("get_run(run_id)" if suffix == ".py" else "getRun(runId)", rendered)
+                    else:
+                        self.assertIn("print(results)" if suffix == ".py" else "console.log(results)", rendered)
+
     def test_paired_python_examples_compile(self):
         testers = Path(__file__).resolve().parents[1] / "testers"
         pairs = list(testers.rglob("*.ts"))

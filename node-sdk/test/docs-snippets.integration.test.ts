@@ -6,9 +6,11 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { NotteClient, functionCreate, functionDelete, listFunctionRunsByFunctionId, functionRunStop, sessionStatus } from '@/index';
+import { collectExampleResult, verifyExampleOutput, type ExampleContract } from './helpers/docs-examples';
 
 const execute = promisify(execFile);
 const testers = fileURLToPath(new URL('../../docs/src/testers/', import.meta.url));
+const contracts = JSON.parse(await readFile(new URL('../../docs/src/sniptest/live-examples.json', import.meta.url), 'utf8')) as Record<string, ExampleContract>;
 const catalog = JSON.parse(await readFile(`${testers}snippets.json`, 'utf8')) as Record<string, {
   blocks: Array<{ source: string; execution_pending?: string }>;
 }>;
@@ -31,7 +33,7 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
     const created = await functionCreate({
       client: client.getClient(),
       body: { file: new File([
-        'def run(url: str, search_query: str = "") -> dict:\n    return {"url": url, "search_query": search_query}\n',
+        'def run(url: str, search_query: str = "", fail: bool = False) -> dict:\n    print("Running docs echo")\n    if fail:\n        raise ValueError("Example function failure")\n    return {"url": url, "search_query": search_query}\n',
       ], 'docs_echo.py', { type: 'text/x-python' }) },
       throwOnError: true,
     });
@@ -86,17 +88,38 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
       return;
     }
     const logged: unknown[][] = [];
+    const contract = contracts[name];
+    let exported: Record<string, unknown>;
     const log = vi.spyOn(console, 'log').mockImplementation((...args) => { logged.push(args); });
     try {
-      await import(/* @vite-ignore */ `${testers}${name}`);
+      exported = await import(/* @vite-ignore */ `${testers}${name}`);
     } finally {
       log.mockRestore();
     }
-    const { stdout } = await execute(process.env.NOTTE_DOCS_PYTHON || 'python', [`${testers}${name.replace(/\.ts$/, '.py')}`], {
+    const pythonPath = `${testers}${name.replace(/\.ts$/, '.py')}`;
+    const pythonArgs = contract
+      ? [fileURLToPath(new URL('../../docs/src/sniptest/run_python.py', import.meta.url)), pythonPath]
+      : [pythonPath];
+    const { stdout, stderr } = await execute(process.env.NOTTE_DOCS_PYTHON || 'python', pythonArgs, {
       env: process.env,
       timeout: 120_000,
       maxBuffer: 2 * 1024 * 1024,
     });
+    if (contract) {
+      const pythonValues = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!);
+      const ids = [
+        verifyExampleOutput(JSON.stringify(collectExampleResult(exported!, contract)), contract, logged.map(args => args.join(' ')).join('\n')),
+        verifyExampleOutput(JSON.stringify(collectExampleResult(pythonValues, contract)), contract, `${stdout}\n${stderr}`),
+      ];
+      if (contract.closedSession) {
+        expect(ids[0]).not.toBe(ids[1]);
+        for (const id of ids) {
+          const session = await sessionStatus({ client: client.getClient(), path: { session_id: id! }, throwOnError: true });
+          expect(session.data.status).toBe('closed');
+        }
+      }
+      return;
+    }
     if (name.startsWith('functions/')) {
       const query = name.endsWith('invoke_sdk.ts') ? 'laptop' : '';
       expect(logged).toContainEqual([{ url: 'https://example.com', search_query: query }]);

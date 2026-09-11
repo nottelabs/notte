@@ -1,51 +1,92 @@
 {/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/sessions/lifecycle/error_handling.py, testers/sessions/lifecycle/error_handling_2.py */}
+{/* @sniptest testers/sessions/lifecycle/error_handling.py, testers/sessions/lifecycle/error_handling.ts, testers/sessions/lifecycle/error_handling_2.py, testers/sessions/lifecycle/error_handling_2.ts */}
 
 <CodeGroup>
 
 ```python Python - Automatic Cleanup
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
+session = client.Session()
 try:
-    with client.Session() as session:
-        page = session.page
-        page.goto("https://example.com")
+    with session:
+        session_id = session.session_id
+        session.page.goto("https://example.com")
+        raise ValueError("Example automation failure")
+except ValueError as error:
+    if str(error) != "Example automation failure":
+        raise
+    error_message = str(error)
+    print(f"Automation failed: {error_message}")
+# Cleanup happens even when automation raises.
+```
 
-        # Simulate an error
-        raise ValueError("Something went wrong!")
-
-except ValueError as e:
-    print(f"Automation failed: {e}")
-    # Session is still automatically stopped
-
-print("Session was cleaned up despite the error")
+```typescript TypeScript - Automatic Cleanup
+const session = client.Session();
+const expectedError = new Error('Example automation failure');
+try {
+  await session.use(async () => {
+    sessionId = session.getId();
+    const status = await session.status();
+    if (!status.cdp_url) throw new Error('Session did not return a CDP URL');
+    const browser = await chromium.connectOverCDP(status.cdp_url);
+    try {
+      const page = browser.contexts()[0].pages()[0];
+      await page.goto('https://example.com');
+      throw expectedError;
+    } finally {
+      await browser.close();
+    }
+  });
+} catch (error) {
+  if (error !== expectedError) throw error;
+  errorMessage = expectedError.message;
+  console.log(`Automation failed: ${errorMessage}`);
+}
+// Cleanup happens even when automation throws.
 ```
 
 ```python Python - Manual Error Handling
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-session = None
-
+session = client.Session()
 try:
-    session = client.Session()
     session.start()
-
-    page = session.page
-    page.goto("https://example.com")
-
-    # Your automation code here
-
-except Exception as error:
-    print(f"Automation failed: {error}")
-finally:
-    # This always runs, whether success or failure
-    if session is not None:
+    try:
+        session_id = session.session_id
+        session.page.goto("https://example.com")
+        raise ValueError("Example automation failure")
+    finally:
         session.stop()
-        print("Session stopped")
+except ValueError as error:
+    if str(error) != "Example automation failure":
+        raise
+    error_message = str(error)
+    print(f"Automation failed: {error_message}")
+# Cleanup happens even when automation raises.
+```
+
+```typescript TypeScript - Manual Error Handling
+const session = client.Session();
+const expectedError = new Error('Example automation failure');
+try {
+  await session.start();
+  try {
+    sessionId = session.getId();
+    const status = await session.status();
+    if (!status.cdp_url) throw new Error('Session did not return a CDP URL');
+    const browser = await chromium.connectOverCDP(status.cdp_url);
+    try {
+      const page = browser.contexts()[0].pages()[0];
+      await page.goto('https://example.com');
+      throw expectedError;
+    } finally {
+      await browser.close();
+    }
+  } finally {
+    await session.stop();
+  }
+} catch (error) {
+  if (error !== expectedError) throw error;
+  errorMessage = expectedError.message;
+  console.log(`Automation failed: ${errorMessage}`);
+}
+// Cleanup happens even when automation throws.
 ```
 
 </CodeGroup>

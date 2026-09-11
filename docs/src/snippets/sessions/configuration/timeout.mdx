@@ -1,17 +1,32 @@
 {/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/sessions/configuration/timeout.py */}
+{/* @sniptest testers/sessions/configuration/timeout.py, testers/sessions/configuration/timeout.ts */}
 
 <CodeGroup>
 
 ```python Python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
 # Session closes after 10 minutes of inactivity
-with client.Session(timeout_minutes=10) as session:
+with client.Session(idle_timeout_minutes=10) as session:
     page = session.page
     page.goto("https://example.com")
+```
+
+```typescript TypeScript
+const session = client.Session({ idle_timeout_minutes: 10 });
+await session.use(async () => {
+  status = await session.status();
+  if (status.status !== 'active') throw new Error('Session is not active');
+  if (!status.cdp_url) throw new Error('Session did not return a CDP URL');
+  const browser = await chromium.connectOverCDP(status.cdp_url);
+  try {
+    const page = browser.contexts()[0].pages()[0];
+    await page.goto('https://example.com');
+    title = await page.title();
+    console.log(`Page title: ${title}`);
+  } finally {
+    await browser.close();
+  }
+});
+// Automatically stopped here.
 ```
 
 </CodeGroup>

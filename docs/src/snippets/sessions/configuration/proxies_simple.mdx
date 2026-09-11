@@ -1,12 +1,31 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/sessions/configuration/proxies_simple.py */}
 
+<CodeGroup>
+
 ```python proxies_simple.py
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
 with client.Session(proxies=True) as session:
     page = session.page
     page.goto("https://example.com")
 ```
+
+```typescript proxies_simple.ts
+const session = client.Session({ proxies: true });
+await session.use(async () => {
+  status = await session.status();
+  if (status.status !== 'active') throw new Error('Session is not active');
+  if (!status.cdp_url) throw new Error('Session did not return a CDP URL');
+  const browser = await chromium.connectOverCDP(status.cdp_url);
+  try {
+    const page = browser.contexts()[0].pages()[0];
+    await page.goto('https://example.com');
+    title = await page.title();
+    console.log(`Page title: ${title}`);
+  } finally {
+    await browser.close();
+  }
+});
+// Automatically stopped here.
+```
+
+</CodeGroup>

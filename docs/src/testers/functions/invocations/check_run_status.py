@@ -1,12 +1,15 @@
 # @sniptest filename=check_run_status.py
-# @sniptest show=8-13
+# @sniptest show=11-14
+import os
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
-function = client.Function("function_abc123")
-run_id = "run_xyz789"
+function = client.Function(os.environ["NOTTE_FUNCTION_ID"])
 
-# Check run status
+result = function.run(url="https://example.com")
+run_id = result.function_run_id
+
 run_status = function.get_run(run_id)
 
 print(f"Status: {run_status.status}")  # "active", "closed", "failed"

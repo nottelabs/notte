@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/invocations/sequential.py */}
 
+<CodeGroup>
+
 ```python sequential.py
 results = []
 for url in urls:
@@ -9,3 +11,15 @@ for url in urls:
 
 print(results)
 ```
+
+```typescript sequential.ts
+const results: unknown[] = [];
+for (const url of urls) {
+  const result = await fn.run({ url });
+  results.push(result.result);
+}
+
+console.log(results);
+```
+
+</CodeGroup>
