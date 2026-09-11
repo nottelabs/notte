@@ -12,7 +12,7 @@ npm run test:unit -- --run
 The function streaming transport suite uses a local HTTP server and needs no credentials:
 
 ```bash
-npx vitest run test/function-stream.local.test.ts
+npx vitest run test/function-stream.local.test.ts  # also part of npm run test:unit
 ```
 
 It covers live log delivery before completion, redirects, split UTF-8/SSE frames,

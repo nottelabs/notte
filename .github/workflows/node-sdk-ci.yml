@@ -38,8 +38,6 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run test:unit -- --run
-      - name: Test streaming over local HTTP
-        run: npx vitest run test/function-stream.local.test.ts
       - run: npm run build
       - run: npm pack --dry-run
       - name: Smoke-test built package exports
