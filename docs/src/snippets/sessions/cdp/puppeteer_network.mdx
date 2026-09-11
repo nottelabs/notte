@@ -1,35 +1,40 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/cdp/puppeteer_network.ts */}
+
 <CodeGroup>
-  ```javascript Node.js
-  const puppeteer = require('puppeteer-core');
 
-  async function main() {
-    const cdpUrl = process.argv[2]; // From Python or API
+```typescript Node.js
+const puppeteer = require('puppeteer-core');
 
-    const browser = await puppeteer.connect({
-      browserWSEndpoint: cdpUrl
-    });
+async function main() {
+  const cdpUrl = process.argv[2]; // From Python or API
 
-    const pages = await browser.pages();
-    const page = pages[0];
+  const browser = await puppeteer.connect({
+    browserWSEndpoint: cdpUrl
+  });
 
-    // Enable request interception
-    await page.setRequestInterception(true);
+  const pages = await browser.pages();
+  const page = pages[0];
 
-    // Block images and stylesheets
-    page.on('request', (request) => {
-      if (['image', 'stylesheet', 'font'].includes(request.resourceType())) {
-        request.abort();
-      } else {
-        request.continue();
-      }
-    });
+  // Enable request interception
+  await page.setRequestInterception(true);
 
-    await page.goto('https://example.com');
-    console.log('Page loaded without images');
+  // Block images and stylesheets
+  page.on('request', (request) => {
+    if (['image', 'stylesheet', 'font'].includes(request.resourceType())) {
+      request.abort();
+    } else {
+      request.continue();
+    }
+  });
 
-    await browser.disconnect();
-  }
+  await page.goto('https://example.com');
+  console.log('Page loaded without images');
 
-  main().catch(console.error);
-  ```
+  await browser.disconnect();
+}
+
+main().catch(console.error);
+```
+
 </CodeGroup>

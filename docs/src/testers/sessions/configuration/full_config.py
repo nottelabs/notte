@@ -1,0 +1,15 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session(
+    advanced_stealth=False,
+    solve_captchas=True,
+    proxies=True,
+    viewport_width=1920,
+    viewport_height=1080,
+    timeout_minutes=10,
+    browser_type="chromium",
+) as session:
+    page = session.page
+    page.goto("https://example.com")

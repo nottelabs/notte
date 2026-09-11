@@ -1,40 +1,41 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/lifecycle/create_session.py, testers/sessions/lifecycle/create_session_2.py */}
+
 <CodeGroup>
-  ```python Python - Context Manager
-  from notte_sdk import NotteClient
 
-  client = NotteClient()
+```python Python - Context Manager
+from notte_sdk import NotteClient
 
-  # Recommended: Use context manager for automatic cleanup
-  with client.Session(
-      timeout_minutes=10,
-      viewport_width=1920,
-      viewport_height=1080
-  ) as session:
-      print(f"Session {session.session_id} is active")
+client = NotteClient()
 
-      # Access Playwright page
-      page = session.page
-      page.goto("https://example.com")
-      print(f"Page title: {page.title()}")
+# Recommended: Use context manager for automatic cleanup
+with client.Session(timeout_minutes=10, viewport_width=1920, viewport_height=1080) as session:
+    print(f"Session {session.session_id} is active")
 
-  # Session automatically stopped here
-  ```
+    # Access Playwright page
+    page = session.page
+    page.goto("https://example.com")
+    print(f"Page title: {page.title()}")
 
-  ```python Python - Manual Management
-  from notte_sdk import NotteClient
+# Session automatically stopped here
+```
 
-  client = NotteClient()
+```python Python - Manual Management
+from notte_sdk import NotteClient
 
-  # Manual management (not recommended)
-  session = client.Session(timeout_minutes=10)
-  session.start()
+client = NotteClient()
 
-  try:
-      print(f"Session {session.session_id} is active")
-      page = session.page
-      page.goto("https://example.com")
-  finally:
-      # Always stop the session
-      session.stop()
-  ```
+# Manual management (not recommended)
+session = client.Session(timeout_minutes=10)
+session.start()
+
+try:
+    print(f"Session {session.session_id} is active")
+    page = session.page
+    page.goto("https://example.com")
+finally:
+    # Always stop the session
+    session.stop()
+```
+
 </CodeGroup>

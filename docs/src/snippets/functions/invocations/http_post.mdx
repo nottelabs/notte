@@ -1,16 +1,21 @@
-<CodeGroup>
-  ```http HTTP
-  POST https://api.notte.cc/functions/{function_id}/runs/start
-  Authorization: Bearer YOUR_API_KEY
-  Content-Type: application/json
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/invocations/http_post.http */}
 
-  {
-    "function_id": "function_abc123",
-    "variables": {
-      "url": "https://example.com",
-      "query": "laptop"
-    },
-    "stream": true
-  }
-  ```
+<CodeGroup>
+
+```http HTTP
+POST https://api.notte.cc/functions/{function_id}/runs/start
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "function_id": "function_abc123",
+  "variables": {
+    "url": "https://example.com",
+    "query": "laptop"
+  },
+  "stream": true
+}
+```
+
 </CodeGroup>

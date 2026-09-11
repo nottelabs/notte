@@ -1,17 +1,22 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/configuration/external_cdp.py */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  from kernel import Kernel
 
-  client = NotteClient()
-  kernel = Kernel()
+```python Python
+from kernel import Kernel
+from notte_sdk import NotteClient
 
-  # Create browser on Kernel
-  kernel_browser = kernel.browsers.create()
+client = NotteClient()
+kernel = Kernel()
 
-  # Connect Notte to Kernel's browser
-  with client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
-      page = session.page
-      page.goto("https://example.com")
-  ```
+# Create browser on Kernel
+kernel_browser = kernel.browsers.create()
+
+# Connect Notte to Kernel's browser
+with client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
+    page = session.page
+    page.goto("https://example.com")
+```
+
 </CodeGroup>

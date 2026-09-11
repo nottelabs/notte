@@ -1,30 +1,35 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/cdp/external_kernel.py */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  from kernel import Kernel
 
-  # Initialize clients
-  client = NotteClient()
-  kernel = Kernel()
+```python Python
+from kernel import Kernel
+from notte_sdk import NotteClient
 
-  # Create browser on Kernel
-  kernel_browser = kernel.browsers.create()
+# Initialize clients
+client = NotteClient()
+kernel = Kernel()
 
-  try:
-      # Connect Notte to Kernel's browser
-      with client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
-          # Use Notte's features
-          page = session.page
-          page.goto("https://example.com")
+# Create browser on Kernel
+kernel_browser = kernel.browsers.create()
 
-          # Run an Agent
-          agent = client.Agent(session=session, max_steps=10)
-          result = agent.run(task="Find the contact email")
+try:
+    # Connect Notte to Kernel's browser
+    with client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
+        # Use Notte's features
+        page = session.page
+        page.goto("https://example.com")
 
-          print(f"Result: {result.answer}")
+        # Run an Agent
+        agent = client.Agent(session=session, max_steps=10)
+        result = agent.run(task="Find the contact email")
 
-  finally:
-      # Clean up Kernel browser
-      kernel.browsers.delete_by_id(kernel_browser.session_id)
-  ```
+        print(f"Result: {result.answer}")
+
+finally:
+    # Clean up Kernel browser
+    kernel.browsers.delete_by_id(kernel_browser.session_id)
+```
+
 </CodeGroup>

@@ -1,37 +1,42 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/cdp/puppeteer_screenshots.ts */}
+
 <CodeGroup>
-  ```javascript Node.js
-  const puppeteer = require('puppeteer-core');
 
-  async function main() {
-    const cdpUrl = process.argv[2];
+```typescript Node.js
+const puppeteer = require('puppeteer-core');
 
-    const browser = await puppeteer.connect({
-      browserWSEndpoint: cdpUrl
-    });
+async function main() {
+  const cdpUrl = process.argv[2];
 
-    const pages = await browser.pages();
-    const page = pages[0];
+  const browser = await puppeteer.connect({
+    browserWSEndpoint: cdpUrl
+  });
 
-    await page.goto('https://example.com');
+  const pages = await browser.pages();
+  const page = pages[0];
 
-    // Take screenshot
-    await page.screenshot({
-      path: 'screenshot.png',
-      fullPage: true
-    });
+  await page.goto('https://example.com');
 
-    // Generate PDF
-    await page.pdf({
-      path: 'page.pdf',
-      format: 'A4',
-      printBackground: true
-    });
+  // Take screenshot
+  await page.screenshot({
+    path: 'screenshot.png',
+    fullPage: true
+  });
 
-    console.log('Screenshot and PDF saved');
+  // Generate PDF
+  await page.pdf({
+    path: 'page.pdf',
+    format: 'A4',
+    printBackground: true
+  });
 
-    await browser.disconnect();
-  }
+  console.log('Screenshot and PDF saved');
 
-  main().catch(console.error);
-  ```
+  await browser.disconnect();
+}
+
+main().catch(console.error);
+```
+
 </CodeGroup>

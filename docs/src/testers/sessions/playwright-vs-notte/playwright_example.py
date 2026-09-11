@@ -1,0 +1,15 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    page = session.page
+
+    # Block images for faster loading
+    page.route("**/*.{png,jpg,jpeg}", lambda route: route.abort())
+
+    # Listen to network requests
+    page.on("request", lambda req: print(f"→ {req.url}"))
+    page.on("response", lambda res: print(f"← {res.url} ({res.status})"))
+
+    page.goto("https://example.com")

@@ -26,18 +26,28 @@ compatible `retrieve()` alias with streaming enabled and disabled:
 NOTTE_API_KEY=your_api_key npx vitest run test/function-create-run.integration.test.ts
 ```
 
-Live function fixture tests require `NOTTE_API_KEY` and `NOTTE_FUNCTION_ID`
-(a function accepting a `url` argument):
+Run the full integration suite against staging:
 
 ```bash
-npx vitest run test/function.integration.test.ts
+NOTTE_API_URL=https://us-staging.notte.cc NOTTE_API_KEY=your_api_key npm run test:integration
 ```
 
-The fixture suite is skipped when `NOTTE_FUNCTION_ID` is absent. Existing-persona
-tests additionally require `NOTTE_PERSONA_ID`; replay tests require `NOTTE_SESSION_ID`.
-Use dedicated test resources. CI only runs the isolated create-run live suite,
-not these fixture-dependent suites. Set `NOTTE_API_URL=https://us-staging.notte.cc`
-explicitly to avoid the client's production default.
+CI runs all SDK integration suites on same-repository PRs touching `node-sdk/`,
+and on main. Fork PRs run credential-free tests only. Live suites run serially
+to respect staging quotas. This migration intentionally preserves existing tests
+and their failures. Some legacy tests still require `NOTTE_FUNCTION_ID`,
+`NOTTE_PERSONA_ID`, or `NOTTE_SESSION_ID`; missing fixtures and stale SDK assumptions
+are tracked in [the integration backlog](INTEGRATION_BACKLOG.md), not hidden by
+new passing assertions. The account needs session, function, vault, persona, and
+agent permissions with sufficient quotas.
+
+The separate paired-documentation workflow enables `docs-snippets.integration.test.ts`
+with `NOTTE_DOCS_LIVE=1`; it requires the Python documentation test environment.
+That opt-in suite is not executed by the SDK-only job.
+
+Set `NOTTE_API_URL=https://us-staging.notte.cc` explicitly for local runs to avoid
+the client's production default. Individual live files should use the integration
+command (for its API timeouts), for example `npm run test:integration -- session`.
 
 Run integration tests (requires API key):
 ```bash

@@ -1,7 +1,12 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/quickstart/scraping_hackernews.py, testers/quickstart/scraping_hackernews.ts */}
+
 <CodeGroup>
+
 ```python Python
-from pydantic import BaseModel
 from notte_sdk import NotteClient
+from pydantic import BaseModel
+
 
 class HackerNewsPost(BaseModel):
     title: str
@@ -9,21 +14,24 @@ class HackerNewsPost(BaseModel):
     points: int
     author: str
 
+
 class HackerNewsFeed(BaseModel):
     posts: list[HackerNewsPost]
+
 
 client = NotteClient()
 
 result = client.scrape(
     url="https://news.ycombinator.com",
     response_format=HackerNewsFeed,
-    instructions="Extract the top 5 posts from the front page"
+    instructions="Extract the top 5 posts from the front page",
 )
 
 for i, post in enumerate(result.data.posts, 1):
     print(f"{i}. {post.points} - {post.title}")
 ```
-```javascript JavaScript
+
+```typescript TypeScript
 import { z } from 'zod';
 import { NotteClient } from 'notte-sdk';
 
@@ -51,4 +59,5 @@ result.posts.forEach((post, index) => {
   console.log(`${index + 1}. ${post.points} - ${post.title}`);
 });
 ```
+
 </CodeGroup>

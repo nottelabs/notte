@@ -2,8 +2,8 @@
 """
 Batch Snippet Processor - Converts Python/TypeScript example pairs to MDX snippets.
 
-Crawls /testers/**/*.py and generates corresponding /snippets/**/*.mdx files
-using the parser module. Same-name .ts files become a second CodeGroup tab.
+Crawls /testers/**/*.py and the multi-tab source catalog to generate every
+/snippets/**/*.mdx file. Same-name .ts files become a second CodeGroup tab.
 
 Usage:
     python process.py                    # Process all files
@@ -20,7 +20,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from parser import parse_file
+from catalog import catalog_sources, load_catalog, source_path
+from parser import generate_mdx, parse_file, parse_magic_comments
 
 # Resolve paths relative to this script
 SCRIPT_DIR = Path(__file__).parent
@@ -42,10 +43,17 @@ def get_output_path(input_path: Path) -> Path:
 
 
 def get_all_tester_files() -> list[Path]:
-    """Find all Python files in the testers directory."""
+    """Find regular Python examples and catalog-backed snippet targets."""
     if not TESTERS_DIR.exists():
         return []
-    return sorted(TESTERS_DIR.rglob("*.py"))
+    managed = catalog_sources(TESTERS_DIR)
+    regular = [path for path in TESTERS_DIR.rglob("*.py") if path.resolve() not in managed]
+    for target in load_catalog(TESTERS_DIR):
+        path = TESTERS_DIR / target
+        if path.suffix != ".mdx" or not path.resolve().is_relative_to(TESTERS_DIR.resolve()):
+            raise ValueError(f"Invalid snippet target: {target}")
+        regular.append(path)
+    return sorted(regular)
 
 
 def get_all_generated_snippets() -> set[Path]:
@@ -58,6 +66,23 @@ def get_all_generated_snippets() -> set[Path]:
 
 def render_file(input_path: Path) -> str:
     """Render a Python example and its optional same-name TypeScript counterpart."""
+    if input_path.suffix == ".mdx":
+        spec = load_catalog(TESTERS_DIR)[str(input_path.relative_to(TESTERS_DIR))]
+        blocks = []
+        sources = []
+        for block in spec["blocks"]:
+            path = source_path(TESTERS_DIR, block["source"])
+            config, code = parse_magic_comments(path.read_text())
+            config.language = block["language"]
+            config.filename = block["title"] or None
+            blocks.append(generate_mdx(config, code))
+            sources.append(str(path.relative_to(ROOT_DIR.resolve())))
+        if not blocks:
+            raise ValueError(f"No source blocks for {input_path}")
+        body = "\n".join(blocks)
+        if spec["group"]:
+            body = f"<CodeGroup>\n\n{body}\n</CodeGroup>\n"
+        return make_header(", ".join(sources)) + body
     _, python_mdx = parse_file(input_path)
     header = make_header(str(input_path.relative_to(ROOT_DIR)))
     typescript_path = input_path.with_suffix(".ts")
@@ -90,13 +115,6 @@ def process_file(
                 if verbose:
                     return True, f"  [unchanged] {relative_input}"
                 return True, None
-            # Skip files that were manually edited (no auto-generated header)
-            if "Auto-generated mdx file" not in existing:
-                if input_path.with_suffix(".ts").exists():
-                    return False, f"  [error] Paired snippet must be generated: {relative_output}"
-                if verbose:
-                    return True, f"  [skipped-manual] {relative_output}"
-                return True, None
 
         if check:
             return False, f"  [stale] {relative_output}: run make sniptest"
@@ -122,6 +140,7 @@ def clean_orphaned_snippets(dry_run: bool = False, verbose: bool = False) -> lis
         list of messages about removed files
     """
     messages = []
+    expected = get_all_generated_snippets()
 
     # Find all MDX files in snippets directories that match tester structure
     for snippet_path in SNIPPETS_DIR.rglob("*.mdx"):
@@ -134,10 +153,7 @@ def clean_orphaned_snippets(dry_run: bool = False, verbose: bool = False) -> lis
             continue
 
         # Check if corresponding tester exists
-        relative = snippet_path.relative_to(SNIPPETS_DIR)
-        tester_path = TESTERS_DIR / relative.with_suffix(".py")
-
-        if not tester_path.exists():
+        if snippet_path not in expected:
             relative_snippet = snippet_path.relative_to(ROOT_DIR)
             if dry_run:
                 messages.append(f"  [would remove] {relative_snippet}")
@@ -172,6 +188,12 @@ def main():
         sys.exit(1)
 
     tester_files = get_all_tester_files()
+    if args.check:
+        unowned = set(SNIPPETS_DIR.rglob("*.mdx")) - get_all_generated_snippets()
+        if unowned:
+            for path in sorted(unowned):
+                print(f"Snippet has no tester source: {path.relative_to(ROOT_DIR)}")
+            sys.exit(1)
 
     if not tester_files:
         print(f"No Python files found in {TESTERS_DIR}")

@@ -1,46 +1,51 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/lifecycle/error_handling.py, testers/sessions/lifecycle/error_handling_2.py */}
+
 <CodeGroup>
-  ```python Python - Automatic Cleanup
-  from notte_sdk import NotteClient
 
-  client = NotteClient()
+```python Python - Automatic Cleanup
+from notte_sdk import NotteClient
 
-  try:
-      with client.Session() as session:
-          page = session.page
-          page.goto("https://example.com")
+client = NotteClient()
 
-          # Simulate an error
-          raise ValueError("Something went wrong!")
+try:
+    with client.Session() as session:
+        page = session.page
+        page.goto("https://example.com")
 
-  except ValueError as e:
-      print(f"Automation failed: {e}")
-      # Session is still automatically stopped
+        # Simulate an error
+        raise ValueError("Something went wrong!")
 
-  print("Session was cleaned up despite the error")
-  ```
+except ValueError as e:
+    print(f"Automation failed: {e}")
+    # Session is still automatically stopped
 
-  ```python Python - Manual Error Handling
-  from notte_sdk import NotteClient
+print("Session was cleaned up despite the error")
+```
 
-  client = NotteClient()
+```python Python - Manual Error Handling
+from notte_sdk import NotteClient
 
-  session = None
+client = NotteClient()
 
-  try:
-      session = client.Session()
-      session.start()
+session = None
 
-      page = session.page
-      page.goto("https://example.com")
+try:
+    session = client.Session()
+    session.start()
 
-      # Your automation code here
+    page = session.page
+    page.goto("https://example.com")
 
-  except Exception as error:
-      print(f"Automation failed: {error}")
-  finally:
-      # This always runs, whether success or failure
-      if session is not None:
-          session.stop()
-          print("Session stopped")
-  ```
+    # Your automation code here
+
+except Exception as error:
+    print(f"Automation failed: {error}")
+finally:
+    # This always runs, whether success or failure
+    if session is not None:
+        session.stop()
+        print("Session stopped")
+```
+
 </CodeGroup>

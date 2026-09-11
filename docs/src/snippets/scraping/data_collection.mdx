@@ -1,4 +1,8 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/scraping/data_collection.py, testers/scraping/data_collection.ts */}
+
 <CodeGroup>
+
 ```python Python
 from notte_sdk import NotteClient
 from pydantic import BaseModel
@@ -23,7 +27,8 @@ for url in urls:
     data = client.scrape(url, response_format=ProductInfo)
     products.append(data)
 ```
-```javascript JavaScript
+
+```typescript TypeScript
 import { z } from 'zod';
 import { NotteClient } from 'notte-sdk';
 
@@ -51,4 +56,5 @@ for (const url of urls) {
   products.push(data);
 }
 ```
+
 </CodeGroup>

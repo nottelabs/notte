@@ -1,0 +1,12 @@
+POST https://api.notte.cc/functions/{function_id}/runs/start
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "function_id": "function_abc123",
+  "variables": {
+    "url": "https://example.com",
+    "query": "laptop"
+  },
+  "stream": true
+}

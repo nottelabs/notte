@@ -1,21 +1,26 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/lifecycle/connect_existing.py */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
 
-  client = NotteClient()
+```python Python
+from notte_sdk import NotteClient
 
-  # Connect to existing session
-  session_id = "550e8400-e29b-41d4-a716-446655440000"
+client = NotteClient()
 
-  with client.Session(session_id) as session:
-      print(f"Connected to session: {session.session_id}")
+# Connect to existing session
+session_id = "550e8400-e29b-41d4-a716-446655440000"
 
-      # Get current status
-      status = session.status()
-      print(f"Session status: {status.status}")
+with client.Session(session_id) as session:
+    print(f"Connected to session: {session.session_id}")
 
-      # Continue using the session
-      page = session.page
-      page.goto("https://example.com")
-  ```
+    # Get current status
+    status = session.status()
+    print(f"Session status: {status.status}")
+
+    # Continue using the session
+    page = session.page
+    page.goto("https://example.com")
+```
+
 </CodeGroup>

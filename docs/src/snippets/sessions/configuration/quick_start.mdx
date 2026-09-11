@@ -1,12 +1,17 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/configuration/quick_start.py */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
 
-  client = NotteClient()
+```python Python
+from notte_sdk import NotteClient
 
-  with client.Session() as session:
-      print(f"Session ID: {session.session_id}")
-      page = session.page  # Playwright-compatible page
-      page.goto("https://example.com")
-  ```
+client = NotteClient()
+
+with client.Session() as session:
+    print(f"Session ID: {session.session_id}")
+    page = session.page  # Playwright-compatible page
+    page.goto("https://example.com")
+```
+
 </CodeGroup>

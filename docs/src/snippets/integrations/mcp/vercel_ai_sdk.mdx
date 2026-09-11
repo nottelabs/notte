@@ -1,29 +1,34 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/integrations/mcp/vercel_ai_sdk.ts */}
+
 <CodeGroup>
-  ```typescript notte-ai-sdk.ts
-  import { anthropic } from "@ai-sdk/anthropic";
-  import { createMCPClient } from "@ai-sdk/mcp";
-  import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-  import { generateText, stepCountIs } from "ai";
 
-  const mcp = await createMCPClient({
-    transport: new StreamableHTTPClientTransport(new URL("https://api.notte.cc/mcp/"), {
-      requestInit: {
-        headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },
-      },
-    }),
-  });
+```typescript notte-ai-sdk.ts
+import { anthropic } from "@ai-sdk/anthropic";
+import { createMCPClient } from "@ai-sdk/mcp";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { generateText, stepCountIs } from "ai";
 
-  const tools = await mcp.tools();
+const mcp = await createMCPClient({
+  transport: new StreamableHTTPClientTransport(new URL("https://api.notte.cc/mcp/"), {
+    requestInit: {
+      headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },
+    },
+  }),
+});
 
-  const result = await generateText({
-    model: anthropic("claude-sonnet-4-5-20250929"),
-    tools,
-    stopWhen: stepCountIs(6),
-    prompt: "What is the main heading on https://example.com?",
-  });
+const tools = await mcp.tools();
 
-  console.log(result.text);
+const result = await generateText({
+  model: anthropic("claude-sonnet-4-5-20250929"),
+  tools,
+  stopWhen: stepCountIs(6),
+  prompt: "What is the main heading on https://example.com?",
+});
 
-  await mcp.close();
-  ```
+console.log(result.text);
+
+await mcp.close();
+```
+
 </CodeGroup>

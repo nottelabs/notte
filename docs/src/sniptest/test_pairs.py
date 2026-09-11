@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import generate
+from catalog import catalog_sources
 from parity import check_parity
 from parser import parse_file
 
@@ -16,6 +17,8 @@ class RepositoryExamplesTest(unittest.TestCase):
         pairs = list(testers.rglob("*.ts"))
         self.assertTrue(pairs, "At least one executable pair is required")
         for typescript in pairs:
+            if typescript.resolve() in catalog_sources(testers):
+                continue
             python = typescript.with_suffix(".py")
             with self.subTest(path=python):
                 compile(python.read_text(), str(python), "exec")

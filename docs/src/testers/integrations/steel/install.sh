@@ -1,0 +1,2 @@
+uv pip install notte-sdk
+uv pip install steel

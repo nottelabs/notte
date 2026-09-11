@@ -1,16 +1,18 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/invocations/generate_curl.py */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
 
-  client = NotteClient()
-  function = client.Function(function_id="func_abc123")
+```python Python
+from notte_sdk import NotteClient
 
-  # Generate cURL command
-  curl_command = function.get_curl(
-      url="https://example.com",
-      search_query="laptop"
-  )
+client = NotteClient()
+function = client.Function(function_id="func_abc123")
 
-  print(curl_command)
-  ```
+# Generate cURL command
+curl_command = function.get_curl(url="https://example.com", search_query="laptop")
+
+print(curl_command)
+```
+
 </CodeGroup>

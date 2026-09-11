@@ -9,7 +9,8 @@
     "types": ["node"],
     "typeRoots": ["../../../node-sdk/node_modules/@types"],
     "paths": {
-      "notte-sdk": ["../../../node-sdk/dist/index.d.ts"]
+      "notte-sdk": ["../../../node-sdk/dist/index.d.ts"],
+      "playwright-core": ["../../../node-sdk/node_modules/playwright-core"]
     }
   },
   "include": ["../testers/**/*.ts"]

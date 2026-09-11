@@ -1,7 +1,13 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/workflows/index.py, testers/workflows/index_2.py */}
+
 <CodeGroup>
+
 ```python my_scraping_function.py
 from notte_sdk import NotteClient
+
 client = NotteClient()
+
 
 def run(url: str):
     with client.Session() as session:
@@ -16,9 +22,7 @@ client = NotteClient()
 
 # Create a new function from our local Python file
 function = client.Function(
-    workflow_path="my_scraping_function.py",
-    name="My Scraping Function",
-    description="A function for scraping the web"
+    workflow_path="my_scraping_function.py", name="My Scraping Function", description="A function for scraping the web"
 )
 print(f"Function created with ID: {function.function_id}. You can reference it using `client.Function(<function_id>)`")
 
@@ -32,4 +36,5 @@ function.update(workflow_path="my_scraping_function.py")
 # List all functions
 functions = client.functions.list()
 ```
+
 </CodeGroup>

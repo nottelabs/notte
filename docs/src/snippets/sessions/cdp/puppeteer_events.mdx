@@ -1,42 +1,47 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/cdp/puppeteer_events.ts */}
+
 <CodeGroup>
-  ```javascript Node.js
-  const puppeteer = require('puppeteer-core');
 
-  async function main() {
-    const cdpUrl = process.argv[2];
+```typescript Node.js
+const puppeteer = require('puppeteer-core');
 
-    const browser = await puppeteer.connect({
-      browserWSEndpoint: cdpUrl
-    });
+async function main() {
+  const cdpUrl = process.argv[2];
 
-    const pages = await browser.pages();
-    const page = pages[0];
+  const browser = await puppeteer.connect({
+    browserWSEndpoint: cdpUrl
+  });
 
-    // Listen to console messages
-    page.on('console', (msg) => {
-      console.log('Browser console:', msg.text());
-    });
+  const pages = await browser.pages();
+  const page = pages[0];
 
-    // Listen to page errors
-    page.on('pageerror', (error) => {
-      console.error('Page error:', error.message);
-    });
+  // Listen to console messages
+  page.on('console', (msg) => {
+    console.log('Browser console:', msg.text());
+  });
 
-    // Listen to requests
-    page.on('request', (request) => {
-      console.log('Request:', request.url());
-    });
+  // Listen to page errors
+  page.on('pageerror', (error) => {
+    console.error('Page error:', error.message);
+  });
 
-    // Listen to responses
-    page.on('response', (response) => {
-      console.log('Response:', response.url(), response.status());
-    });
+  // Listen to requests
+  page.on('request', (request) => {
+    console.log('Request:', request.url());
+  });
 
-    await page.goto('https://example.com');
+  // Listen to responses
+  page.on('response', (response) => {
+    console.log('Response:', response.url(), response.status());
+  });
 
-    await browser.disconnect();
-  }
+  await page.goto('https://example.com');
 
-  main().catch(console.error);
-  ```
+  await browser.disconnect();
+}
+
+main().catch(console.error);
+```
+
 </CodeGroup>

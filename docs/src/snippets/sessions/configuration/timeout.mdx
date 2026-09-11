@@ -1,12 +1,17 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/configuration/timeout.py */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
 
-  client = NotteClient()
+```python Python
+from notte_sdk import NotteClient
 
-  # Session closes after 10 minutes of inactivity
-  with client.Session(timeout_minutes=10) as session:
-      page = session.page
-      page.goto("https://example.com")
-  ```
+client = NotteClient()
+
+# Session closes after 10 minutes of inactivity
+with client.Session(timeout_minutes=10) as session:
+    page = session.page
+    page.goto("https://example.com")
+```
+
 </CodeGroup>
