@@ -31,14 +31,6 @@ See more operations on sessions:
 <Card title="Scrape" icon="download" href="/typescript-sdk-reference/session/scrape">
 Scrape the current page.
 
-```ts
-const markdown = await session.scrape({ only_main_content: true });
-const images = await session.scrape({ only_images: true });
-const product = await session.scrape({ response_format: Product, instructions: 'Extract the product' });
-const result = await session.scrape({ response_format: Product, raiseOnFailure: false });
-if (result.success) console.log(result.data);
-```
-
 With `response_format` or `instructions`, the extracted data is returned
 directly and a failed extraction throws `ScrapeFailedError`. Pass
 `raiseOnFailure: false` to receive the `StructuredData` wrapper instead.
@@ -48,27 +40,12 @@ directly and a failed extraction throws `ScrapeFailedError`. Pass
 Observe the current page: the list of actions that can be taken, a
 screenshot and page metadata.
 
-```ts
-const obs = await session.observe();
-console.log(obs.space.description);
-const deep = await session.observe({ perception_type: 'deep', max_nb_actions: 50 });
-```
-
 The `perception_type` defaults to the session option (`fast`). A bare
 string argument is accepted as the perception type.
 </Card>
 
 <Card title="Execute" icon="shoe-prints" href="/typescript-sdk-reference/session/execute">
 Execute an action on the current page.
-
-```ts
-import { actions } from 'notte-sdk';
-
-await session.execute({ type: 'goto', url: 'https://www.notte.cc' });
-await session.execute(actions.fill({ selector: "input[name='email']", value: 'user@example.com' }));
-const result = await session.execute({ type: 'click', id: 'B1' }, { raiseOnFailure: false });
-if (!result.success) console.log(result.message);
-```
 
 When the action fails and `raiseOnFailure` is true (the default, see the
 session option), the structured `exception_detail` returned by the API is

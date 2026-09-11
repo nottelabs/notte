@@ -232,7 +232,7 @@ test('review regressions preserve complete summaries and accurate Node descripti
   assert.match(page('manual/function'), /API returns an encrypted one/);
   assert.match(page('persona/get'), /## Returns\s+```typescript\nPromise<PersonaResponseWithInternalEmail>/);
   assert.match(page('persona/use'), /existing ID are retained/);
-  assert.match(page('session/viewer'), /\*\*throws:\*\*[\s\S]*no viewer URL/);
+  assert.match(page('session/viewer'), /## Raises[\s\S]*no viewer URL/);
   for (const name of ['apiagentstartrequest', 'scraperequest']) {
     assert.doesNotMatch(page(`types/${name}`), /Pydantic/);
     assert.match(page(`types/${name}`), /JSON Schema object/);
@@ -251,6 +251,22 @@ test('review regressions preserve complete summaries and accurate Node descripti
     assert.ok(!actual.pages.has(`typescript-sdk-reference/vault/${method}.mdx`));
   }
   assert.ok(!actual.pages.has('typescript-sdk-reference/types/creditcarddictinput.mdx'));
+});
+
+test('JSDoc renders Python-style parameter, return, raises and example sections', () => {
+  for (const path of ['function/run', 'function/download', 'function/createrun', 'function/runs', 'remotefilestorage/upload', 'remotefilestorage/download', 'session/execute', 'session/fetch']) {
+    const content = actual.pages.get(`typescript-sdk-reference/${path}.mdx`);
+    for (const heading of ['Parameters', 'Returns', 'Raises', 'Example']) {
+      assert.equal(content.split(`## ${heading}\n`).length - 1, 1, `${path}: one ${heading} section`);
+    }
+    assert.doesNotMatch(content, /\*\*returns:\*\*|\*\*throws:\*\*/);
+    assert.doesNotMatch(content, /<ParamField[^>]*>\n- /);
+    assert.match(content, /## Example\n\n```typescript/);
+  }
+  const download = actual.pages.get('typescript-sdk-reference/function/download.mdx');
+  assert.match(download, /source text, including when a local destination is supplied/);
+  assert.match(actual.pages.get('typescript-sdk-reference/remotefilestorage/download.mdx'), /FileExistsError/);
+  assert.match(actual.pages.get('typescript-sdk-reference/function/run.mdx'), /Disabling streaming still waits for completion/);
 });
 
 test('navigation replacement preserves unrelated Python navigation and formatting', () => {

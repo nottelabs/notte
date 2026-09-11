@@ -99,6 +99,11 @@ export class SessionFiles {
   /**
    * Upload bytes as a session file. `filename` is what the browser sees when
    * the file is later attached to a page.
+   *
+   * @param file - Bytes to upload as a Blob, File, or buffer.
+   * @param filename - Stored filename, defaulting to `file`.
+   * @returns Metadata for the uploaded file, including its ID, name, and size.
+   * @throws NotteAPIError if the storage API request fails.
    */
   async upload(file: Blob | Uint8Array, filename = 'file'): Promise<SessionFile> {
     const response = await uploadSessionFile({
@@ -110,7 +115,12 @@ export class SessionFiles {
     return response.data;
   }
 
-  /** List the session's non-expired files, newest first. */
+  /** List the session's non-expired files, newest first.
+   *
+   * @param options - Optional source filter and pagination. Defaults to all sources, limit 100, and offset 0.
+   * @returns One page of non-expired files and the total count; pagination is not automatic.
+   * @throws NotteAPIError if the storage API request fails.
+   */
   async list(options: FileListOptions = {}): Promise<SessionFilesPage> {
     const response = await listSessionFiles({
       client: this.client,
@@ -124,6 +134,11 @@ export class SessionFiles {
   /**
    * Find a file's metadata by ID by scanning the session listing. Rejects with
    * `FileNotFoundError` when the ID is unknown or expired.
+   *
+   * @param fileId - ID of a file belonging to this session.
+   * @returns The matching file's metadata.
+   * @throws NotteAPIError if the storage API request fails.
+   * @throws FileNotFoundError if the file ID is unknown or expired.
    */
   async metadata(fileId: string): Promise<SessionFile> {
     let offset = 0;
@@ -140,7 +155,12 @@ export class SessionFiles {
     }
   }
 
-  /** Download a file's bytes as a `Blob`. */
+  /** Download a file's bytes as a `Blob`.
+   *
+   * @param fileId - ID of a file belonging to this session.
+   * @returns The downloaded bytes as a Blob; no local file is written.
+   * @throws NotteAPIError if the storage API request fails.
+   */
   async download(fileId: string): Promise<Blob> {
     const response = await downloadSessionFile({
       client: this.client,
@@ -166,7 +186,12 @@ export class SessionFiles {
     return body;
   }
 
-  /** Delete a session file. */
+  /** Delete a session file.
+   *
+   * @param fileId - ID of the session file to delete.
+   * @returns Resolves when deletion succeeds.
+   * @throws NotteAPIError if the storage API request fails.
+   */
   async delete(fileId: string): Promise<void> {
     await deleteSessionFile({
       client: this.client,
@@ -248,10 +273,15 @@ export class RemoteFileStorage {
    * Upload a file to the session. A string is read as a local path and its
    * basename becomes the uploaded filename unless `uploadFileName` is set.
    *
-   * ```ts
+   * @param file - Local file path, Blob, File, or buffer to upload.
+   * @param uploadFileName - Optional stored filename. Local paths default to their basename; File objects keep their name.
+   * @returns Metadata for the uploaded file, including its ID, name, and size.
+   * @throws NotteAPIError if the storage API request fails.
+   * @throws InvalidRequestError if storage has not been bound to a session.
+   * @throws InvalidRequestError if a supplied local path is not a file.
+   * @example
    * await storage.upload('./data/resume.pdf');
    * await storage.upload(Buffer.from('hello'), 'hello.txt');
-   * ```
    */
   async upload(file: UploadableFile, uploadFileName?: string): Promise<SessionFile> {
     const files = this.files();
@@ -270,15 +300,25 @@ export class RemoteFileStorage {
   /**
    * List the session's files.
    *
-   * ```ts
+   * @param options - Optional source filter and pagination. Defaults to all sources, limit 100, and offset 0.
+   * @returns One page of non-expired files and the total count; pagination is not automatic.
+   * @throws NotteAPIError if the storage API request fails.
+   * @throws InvalidRequestError if storage has not been bound to a session.
+   * @example
    * const downloads = await storage.list({ source: 'session_download', limit: 1000 });
-   * ```
    */
   async list(options: FileListOptions = {}): Promise<SessionFilesPage> {
     return this.files().list(options);
   }
 
-  /** Metadata of a file by ID. Rejects with `FileNotFoundError` when unknown. */
+  /** Metadata of a file by ID. Rejects with `FileNotFoundError` when unknown.
+   *
+   * @param fileId - ID of a file belonging to this session.
+   * @returns The matching file's metadata.
+   * @throws NotteAPIError if the storage API request fails.
+   * @throws FileNotFoundError if the file ID is unknown or expired.
+   * @throws InvalidRequestError if storage has not been bound to a session.
+   */
   async metadata(fileId: string): Promise<SessionFile> {
     return this.files().metadata(fileId);
   }
@@ -288,9 +328,15 @@ export class RemoteFileStorage {
    * file is written atomically (temporary file + rename). Rejects with
    * `FileExistsError` when the destination exists unless `force` is set.
    *
-   * ```ts
+   * @param fileId - ID of the file to download.
+   * @param localDir - Destination directory, created if needed. Defaults to the current directory.
+   * @param options - Set `force` to overwrite an existing destination; defaults to false.
+   * @returns The local file path after the download has been written successfully.
+   * @throws NotteAPIError if the storage API request fails.
+   * @throws InvalidRequestError if storage has not been bound to a session.
+   * @throws FileExistsError if the destination exists and `force` is false. Filesystem errors also propagate.
+   * @example
    * const path = await storage.download(fileId, './downloads', { force: true });
-   * ```
    */
   async download(fileId: string, localDir = '.', options: FileDownloadOptions = {}): Promise<string> {
     const files = this.files();
@@ -349,7 +395,13 @@ export class RemoteFileStorage {
     return this.files().stream(fileId);
   }
 
-  /** Delete a session file. */
+  /** Delete a session file.
+   *
+   * @param fileId - ID of the session file to delete.
+   * @returns Resolves when deletion succeeds.
+   * @throws NotteAPIError if the storage API request fails.
+   * @throws InvalidRequestError if storage has not been bound to a session.
+   */
   async delete(fileId: string): Promise<void> {
     await this.files().delete(fileId);
   }

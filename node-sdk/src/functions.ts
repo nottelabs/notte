@@ -140,7 +140,7 @@ export interface FunctionUrlOptions extends FunctionGetOptions {
 }
 
 export interface FunctionDownloadOptions extends FunctionUrlOptions {
-	/** Where to write the code. Must end with `.py`. Returned only when omitted. */
+	/** Optional local destination ending in `.py`. Source text is returned whether or not a path is supplied. */
 	path?: string;
 }
 
@@ -265,9 +265,11 @@ export class NotteFunction {
 	 * Get the function metadata together with its download URL, the
 	 * counterpart of `client.functions.get()` in Python.
 	 *
-	 * ```ts
+	 * @param options - Optional version selector; omitted means the latest version.
+	 * @returns Function metadata, version history, and the download link returned by the API.
+	 * @throws NotteAPIError if the function cannot be retrieved.
+	 * @example
 	 * const { latest_version, versions } = await fn.get();
-	 * ```
 	 */
 	async get(options: FunctionGetOptions = {}): Promise<FunctionWithLinkResponse> {
 		const functionId = await this.ensureInitialized();
@@ -283,10 +285,13 @@ export class NotteFunction {
 	/**
 	 * Upload a new version of the code, mirroring `function.update(path=...)`.
 	 *
-	 * ```ts
+	 * @param options - Local Python file path, optional version, and code-access settings.
+	 * @returns Updated function metadata, including its latest version.
+	 * @throws InvalidRequestError if the path is missing or does not end in `.py`.
+	 * @throws NotteAPIError if the upload is rejected.
+	 * @example
 	 * const updated = await fn.update({ path: './scraper.py' });
 	 * console.log(updated.latest_version);
-	 * ```
 	 */
 	async update(options: FunctionUpdateOptions): Promise<FunctionResponse> {
 		if (options.path === undefined) {
@@ -311,9 +316,11 @@ export class NotteFunction {
 	/**
 	 * Update the function metadata (name, description, default runtime, ...).
 	 *
-	 * ```ts
+	 * @param options - Metadata fields to update, such as name, description, or default runtime.
+	 * @returns Updated function metadata.
+	 * @throws NotteAPIError if the metadata update is rejected.
+	 * @example
 	 * await fn.updateMetadata({ name: 'Price monitor', default_runtime: 'extended' });
-	 * ```
 	 */
 	async updateMetadata(options: FunctionMetadataUpdateOptions): Promise<FunctionResponse> {
 		const functionId = await this.ensureInitialized();
@@ -329,9 +336,10 @@ export class NotteFunction {
 	/**
 	 * Delete the function from the Notte console.
 	 *
-	 * ```ts
+	 * @returns The API's function-deletion confirmation.
+	 * @throws NotteAPIError if the function cannot be deleted.
+	 * @example
 	 * await fn.delete();
-	 * ```
 	 */
 	async delete(): Promise<DeleteFunctionResponse> {
 		const functionId = await this.ensureInitialized();
@@ -347,9 +355,11 @@ export class NotteFunction {
 	/**
 	 * Schedule the function to run on a cron expression.
 	 *
-	 * ```ts
+	 * @param options - Cron expression and optional variables passed to each scheduled execution.
+	 * @returns The saved schedule configuration.
+	 * @throws NotteAPIError if the schedule cannot be saved.
+	 * @example
 	 * await fn.setSchedule({ cron: '0 9 * * *', variables: { url: 'https://example.com' } });
-	 * ```
 	 */
 	async setSchedule(options: FunctionScheduleOptions): Promise<ScheduleResponse> {
 		const functionId = await this.ensureInitialized();
@@ -365,9 +375,10 @@ export class NotteFunction {
 	/**
 	 * Remove the function schedule.
 	 *
-	 * ```ts
+	 * @returns The API's schedule-deletion confirmation.
+	 * @throws NotteAPIError if schedule deletion fails.
+	 * @example
 	 * await fn.deleteSchedule();
-	 * ```
 	 */
 	async deleteSchedule(): Promise<ScheduleDeleteResponse> {
 		const functionId = await this.ensureInitialized();
@@ -382,10 +393,12 @@ export class NotteFunction {
 	/**
 	 * Roll the function back to a previous version.
 	 *
-	 * ```ts
+	 * @param options - Target version and optional code-access restriction, which defaults to true.
+	 * @returns Updated function metadata after rollback.
+	 * @throws NotteAPIError if the requested version cannot be restored.
+	 * @example
 	 * const { versions } = await fn.get();
 	 * await fn.rollback({ version: versions[0] });
-	 * ```
 	 */
 	async rollback(options: FunctionRollbackOptions): Promise<FunctionResponse> {
 		const functionId = await this.ensureInitialized();
@@ -402,10 +415,12 @@ export class NotteFunction {
 	/**
 	 * Get metadata for a specific function run.
 	 *
-	 * ```ts
+	 * @param functionRunId - ID of a run belonging to this function.
+	 * @returns The run's current status, logs, and result metadata. This does not wait for completion.
+	 * @throws NotteAPIError if the run cannot be retrieved.
+	 * @example
 	 * const run = await fn.getRun(result.function_run_id);
 	 * console.log(run.status, run.logs);
-	 * ```
 	 */
 	async getRun(functionRunId: string): Promise<GetFunctionRunResponse> {
 		const functionId = await this.ensureInitialized();
@@ -431,10 +446,12 @@ export class NotteFunction {
 	 * before execution, then pass it to `run(variables, { functionRunId })`.
 	 * `run()` otherwise creates a new run on its own.
 	 *
-	 * ```ts
+	 * @param options - Run-record settings; `local` defaults to false. Node execution remains cloud-only.
+	 * @returns A created run record and its ID. No function code has executed yet.
+	 * @throws NotteAPIError if run creation is rejected.
+	 * @example
 	 * const created = await fn.createRun();
 	 * const result = await fn.run({ url: 'https://example.com' }, { functionRunId: created.function_run_id });
-	 * ```
 	 */
 	async createRun(options: FunctionRunCreateOptions = {}): Promise<FunctionRunCreateResult> {
 		const functionId = await this.ensureInitialized();
@@ -448,25 +465,15 @@ export class NotteFunction {
 	/**
 	 * List the runs of this function.
 	 *
-	 * `only_active` is sent as `false` unless the caller says otherwise, and that
-	 * is deliberate rather than redundant. `GET /functions/{function_id}/runs`
-	 * now defaults it to `false` server-side as well, but it used to default to
-	 * `true`: the request model was a bare subclass of the session one, where
-	 * "only active" reads sensibly as "list my running sessions" and, for "list
-	 * this function's runs", was a trap. Hitting the endpoint with no query
-	 * parameters returned only the runs executing right now - an empty list for
-	 * any function that had finished. That cost us a bug in the anything-api
-	 * console, where a function with 15 recorded runs displayed "Nothing has run
-	 * this endpoint yet".
+	 * Includes completed runs by default. Set `only_active: true` to retrieve
+	 * only in-flight runs. Use the response pagination metadata to request
+	 * additional pages.
 	 *
-	 * Sending it explicitly pins this method to the documented behaviour against
-	 * whichever API version it is talking to, including deployments that predate
-	 * the server-side change. Callers who want only in-flight runs pass
-	 * `only_active: true`.
-	 *
-	 * ```ts
+	 * @param options - Pagination and filtering options. `only_active` defaults to false, including completed runs.
+	 * @returns One page of run records and pagination metadata; additional pages require another call.
+	 * @throws NotteAPIError if the run history cannot be retrieved.
+	 * @example
 	 * const { items } = await fn.runs({ page_size: 20 });
-	 * ```
 	 */
 	async runs(options: FunctionRunListOptions = {}): Promise<PaginatedResponseFunctionRunListItemResponse> {
 		const functionId = await this.ensureInitialized();
@@ -490,12 +497,17 @@ export class NotteFunction {
 	 * `FailedToRunCloudFunctionError` unless `raiseOnFailure` is false, and the
 	 * wait is aborted with `NotteTimeoutError` after `timeoutMs`.
 	 *
-	 * ```ts
+	 * @param variables - JSON-serializable keyword arguments passed to the Python function's `run` entry point.
+	 * @param options - Log streaming, failure handling, runtime, run ID, and timeout settings.
+	 * @returns The completed execution response. The function's return value is in `result`. Disabling streaming still waits for completion.
+	 * @throws FailedToRunCloudFunctionError if execution fails and `raiseOnFailure` is true.
+	 * @throws NotteTimeoutError if the execution request exceeds `timeoutMs`.
+	 * @throws InvalidRequestError if the run options are invalid.
+	 * @example
 	 * const result = await fn.run({ url: 'https://example.com' });
 	 * console.log(result.result);
 	 *
 	 * await fn.run({ url: 'https://example.com' }, { runtime: 'extended', onLog: line => logger.info(line) });
-	 * ```
 	 */
 	async run(variables: Record<string, unknown> = {}, options: FunctionRunOptions = {}): Promise<FunctionRunResult> {
 		const stream = options.stream ?? true;
@@ -565,9 +577,12 @@ export class NotteFunction {
 	 * Get the download URL of the function code, decrypting it when the API
 	 * returns an encrypted one (Notte managed functions).
 	 *
-	 * ```ts
+	 * @param options - Optional version and decryption-key override.
+	 * @returns An HTTP(S) URL for downloading the function source.
+	 * @throws InvalidRequestError if an encrypted URL has no usable decryption key.
+	 * @throws NotteError if decryption does not produce an HTTP(S) URL.
+	 * @example
 	 * const url = await fn.getUrl({ version: 'v1' });
-	 * ```
 	 */
 	async getUrl(options: FunctionUrlOptions = {}): Promise<string> {
 		const { url } = await this.get(options);
@@ -604,9 +619,12 @@ export class NotteFunction {
 	 * Download the function code as a python file. Returns the code, and writes
 	 * it to `path` when one is provided.
 	 *
-	 * ```ts
+	 * @param options - Optional version, decryption key, and local `.py` destination path.
+	 * @returns The Python source text, including when a local destination is supplied.
+	 * @throws InvalidRequestError if the destination does not end in `.py` or the decryption key is invalid.
+	 * @throws NotteError if the source download fails. Local filesystem failures also propagate.
+	 * @example
 	 * const code = await fn.download({ path: './scraper.py' });
-	 * ```
 	 */
 	async download(options: FunctionDownloadOptions = {}): Promise<string> {
 		const { path } = options;

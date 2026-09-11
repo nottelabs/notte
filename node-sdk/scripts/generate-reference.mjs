@@ -137,8 +137,8 @@ export function createReference(root = sdkRoot) {
   for (const node of types.values()) collectTypes(node);
 
   const pages = new Map();
-  const tags = node => ts.getJSDocTags(node).filter(t => ['deprecated', 'returns', 'throws', 'example'].includes(t.tagName.text))
-    .map(t => `**${t.tagName.text}:**\n\n${t.tagName.text === 'example' ? fence(ts.getTextOfJSDocComment(t.comment) ?? '') : prose(ts.getTextOfJSDocComment(t.comment) ?? '')}`).join('\n\n');
+  const tags = (node, excluded = []) => ts.getJSDocTags(node).filter(t => ['deprecated', 'returns', 'throws', 'example'].includes(t.tagName.text) && !excluded.includes(t.tagName.text))
+    .map(t => `${t.tagName.text === 'example' ? '## Example' : `**${t.tagName.text}:**`}\n\n${t.tagName.text === 'example' ? fence(ts.getTextOfJSDocComment(t.comment) ?? '') : prose(ts.getTextOfJSDocComment(t.comment) ?? '')}`).join('\n\n');
   const signatures = (name, nodes) => nodes.map(node => {
     const signature = checker.getSignatureFromDeclaration(node);
     const modifiers = node.modifiers?.some(m => m.kind === ts.SyntaxKind.StaticKeyword) ? 'static ' : '';
@@ -157,7 +157,7 @@ export function createReference(root = sdkRoot) {
     const symbol = checker.getSymbolAtLocation(p.name);
     const type = p.type?.getText() ?? typeText(checker.getTypeAtLocation(p));
     const required = !p.questionToken && !p.initializer && !p.dotDotDotToken;
-    const details = [doc(symbol), p.initializer ? `Default:\n\n${fence(p.initializer.getText())}` : ''].filter(Boolean).join('\n\n');
+    const details = [doc(symbol).replace(/^-\s+/, ''), p.initializer ? `Default:\n\n${fence(p.initializer.getText())}` : ''].filter(Boolean).join('\n\n');
     return `<ParamField body=${attr(p.name.getText())} type={${attr(type)}}${required ? ' required' : ''}>\n${details || ' '}\n</ParamField>`;
   }).join('\n\n');
   const related = nodes => {
@@ -198,9 +198,13 @@ export function createReference(root = sdkRoot) {
       for (const [i, overload] of overloads.entries()) {
         if (overload.parameters.length) contents.push(`## Parameters${overloads.length > 1 ? ` (overload ${i + 1})` : ''}\n\n${params(overload)}`);
         const signature = checker.getSignatureFromDeclaration(overload);
-        contents.push(`## Returns${overloads.length > 1 ? ` (overload ${i + 1})` : ''}\n\n${fence(overload.type?.getText() ?? typeText(signature.getReturnType()))}`);
+        const returns = ts.getJSDocTags(overload).find(tag => tag.tagName.text === 'returns');
+        const description = prose(ts.getTextOfJSDocComment(returns?.comment) ?? '');
+        contents.push(`## Returns${overloads.length > 1 ? ` (overload ${i + 1})` : ''}\n\n${fence(overload.type?.getText() ?? typeText(signature.getReturnType()))}${description ? `\n\n${description}` : ''}`);
       }
-      contents.push(tags(method), related(overloads));
+      const throws = ts.getJSDocTags(method).filter(tag => tag.tagName.text === 'throws');
+      if (throws.length) contents.push(`## Raises\n\n${throws.map(tag => `- ${prose(ts.getTextOfJSDocComment(tag.comment) ?? '')}`).join('\n')}`);
+      contents.push(tags(method, ['returns', 'throws']), related(overloads));
       pages.set(`${path}.mdx`, page(methodName, method, contents.filter(Boolean).join('\n\n')));
       const deprecated = overloads.every(node => ts.getJSDocTags(node).some(tag => tag.tagName.text === 'deprecated'));
       if (!deprecated && !ts.isComputedPropertyName(method.name) && !hiddenMethods.has(`${classSlug}/${memberSlug(methodName)}`)) {

@@ -11,7 +11,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 ```typescript
 export interface FunctionDownloadOptions extends FunctionUrlOptions {
-	/** Where to write the code. Must end with `.py`. Returned only when omitted. */
+	/** Optional local destination ending in `.py`. Source text is returned whether or not a path is supplied. */
 	path?: string;
 }
 ```
@@ -19,7 +19,7 @@ export interface FunctionDownloadOptions extends FunctionUrlOptions {
 ## Fields
 
 <ParamField body="path" type={"string | undefined"}>
-Where to write the code. Must end with `.py`. Returned only when omitted.
+Optional local destination ending in `.py`. Source text is returned whether or not a path is supplied.
 </ParamField>
 
 <ParamField body="decryption_key" type={"string | undefined"}>

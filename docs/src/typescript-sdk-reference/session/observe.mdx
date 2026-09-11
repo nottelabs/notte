@@ -12,12 +12,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 Observe the current page: the list of actions that can be taken, a
 screenshot and page metadata.
 
-```ts
-const obs = await session.observe();
-console.log(obs.space.description);
-const deep = await session.observe({ perception_type: 'deep', max_nb_actions: 50 });
-```
-
 The `perception_type` defaults to the session option (`fast`). A bare
 string argument is accepted as the perception type.
 
@@ -28,6 +22,8 @@ Session.observe(options?: ObserveRequest | PerceptionType): Promise<Observation>
 ## Parameters
 
 <ParamField body="options" type={"ObserveRequest | PerceptionType"}>
+Observation settings, including an optional URL, or a perception-mode string.
+
 Default:
 
 ```typescript
@@ -39,6 +35,20 @@ Default:
 
 ```typescript
 Promise<Observation>
+```
+
+Structured page analysis, available actions, and page metadata.
+
+## Raises
+
+- NotteAPIError if observation fails.
+
+## Example
+
+```typescript
+const obs = await session.observe();
+console.log(obs.space.description);
+const deep = await session.observe({ perception_type: 'deep', max_nb_actions: 50 });
 ```
 
 ## Related types
