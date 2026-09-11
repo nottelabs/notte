@@ -97,16 +97,19 @@ describe('Session Integration Tests', () => {
 	});
 
 	describe('Session Replay', () => {
-		it('should replay a session', async () => {
+		it('should replay a session', { timeout: 120000 }, async () => {
 			const session = client.Session({ proxies: false, idle_timeout_minutes: 1 });
 			await session.use(async (session) => {
 				await session.execute({ type: 'goto', url: 'https://example.com' });
 			});
 			// Recordings are finalized only after the browser session is closed.
-			await expect.poll(async () => (await session.replay()).replay.length, {
+			await expect.poll(async () => {
+				const replay = await session.replay();
+				return Boolean(replay.mp4_url || replay.playlist_content);
+			}, {
 				timeout: 60000,
 				interval: 1000,
-			}).toBeGreaterThan(0);
+			}).toBe(true);
 		});
 	});
 

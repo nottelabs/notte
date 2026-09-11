@@ -1,6 +1,7 @@
 import { NotteClient } from '@/client';
 import type {
   SessionResponse,
+  ReplayResponse,
   ApiSessionStartRequest,
   Cookie,
   ExecutionResponse,
@@ -364,7 +365,7 @@ export class Session {
   /**
    * Get session replay data
    */
-  async replay(): Promise<any> {
+  async replay(): Promise<ReplayResponse> {
     // Replays are generated after stop(), which clears the active session ID.
     const sessionId = this.sessionId ?? this.response?.session_id;
     if (!sessionId) {
@@ -382,6 +383,9 @@ export class Session {
       throw new Error(`Failed to get session replay: ${formatError(response.error)}`);
     }
 
+    if (!response.data) {
+      throw new Error('Failed to get session replay: empty response');
+    }
     return response.data;
   }
 
