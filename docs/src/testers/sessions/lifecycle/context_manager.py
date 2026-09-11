@@ -3,7 +3,6 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-with client.Session() as session:
-    # ... use session
-    pass
+with client.Session(idle_timeout_minutes=2) as session:
+    print(session.session_id)
 # Automatically stopped here

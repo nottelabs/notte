@@ -1,0 +1,77 @@
+name: paired-sdk-examples
+
+on:
+  pull_request:
+    paths: ['docs/**', 'node-sdk/**', 'packages/**', 'uv.lock', '.github/workflows/paired-sdk-examples.yml']
+  push:
+    branches: [main]
+    paths: ['docs/**', 'node-sdk/**', 'packages/**', 'uv.lock', '.github/workflows/paired-sdk-examples.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: node-sdk/package-lock.json
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.11'
+      - run: npm ci --prefix node-sdk
+      - run: npm run build --prefix node-sdk
+      - run: npm run typecheck --prefix node-sdk
+      - run: node-sdk/node_modules/.bin/tsc -p docs/src/sniptest/tsconfig.json
+      - run: python -m unittest discover -s docs/src/sniptest -p 'test_*.py'
+      - run: python docs/src/sniptest/generate.py --check
+      - name: Enforce example parity and shrinking backlog
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != '0000000000000000000000000000000000000000' ]; then
+            python docs/src/sniptest/parity.py --base-ref "$BASE_SHA"
+          else
+            python docs/src/sniptest/parity.py
+          fi
+
+  live:
+    needs: checks
+    # Test same-repository PRs before merging; forks must not receive staging credentials.
+    if: >-
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NOTTE_API_URL: https://us-staging.notte.cc
+      NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+      NOTTE_DOCS_LIVE: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      # Do not restore dependency caches into the credentialed job.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+        with:
+          enable-cache: false
+      - run: uv sync --locked --package notte-sdk --no-dev
+      - run: npm ci --prefix node-sdk
+      - run: npm run build --prefix node-sdk
+      - name: Execute both languages against the local SDK packages
+        working-directory: node-sdk
+        run: |
+          export NOTTE_DOCS_PYTHON="$GITHUB_WORKSPACE/.venv/bin/python"
+          npx vitest run test/docs-snippets.integration.test.ts

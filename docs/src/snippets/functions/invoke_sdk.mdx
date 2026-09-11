@@ -1,9 +1,31 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/invoke_sdk.py */}
 
+<CodeGroup>
+
 ```python invoke_sdk.py
+import os
+
+from notte_sdk import NotteClient
+
+client = NotteClient()
+function = client.Function(function_id=os.environ["NOTTE_FUNCTION_ID"])
+
 # Via SDK
 result = function.run(url="https://example.com", search_query="laptop")
 
 print(result.result)
 ```
+
+```typescript invoke_sdk.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+const fn = client.NotteFunction({ function_id: process.env.NOTTE_FUNCTION_ID! });
+
+const result = await fn.run({ url: 'https://example.com', search_query: 'laptop' });
+
+console.log(result.result);
+```
+
+</CodeGroup>

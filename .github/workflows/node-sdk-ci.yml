@@ -1,4 +1,4 @@
-name: Node SDK
+name: node sdk cicd
 
 on:
   pull_request:
@@ -20,7 +20,7 @@ defaults:
     working-directory: node-sdk
 
 jobs:
-  check:
+  tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -28,6 +28,8 @@ jobs:
         node: [22, 24]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ matrix.node }}
@@ -43,14 +45,18 @@ jobs:
       - name: Smoke-test built package exports
         run: node scripts/check-package.js
 
-  live:
-    # Never give API credentials to pull request code, including fork PRs.
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: check
+  integration-tests:
+    # Same-repository PRs run against staging; fork PRs never receive API credentials.
+    if: >-
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
+    needs: tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22

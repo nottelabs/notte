@@ -4,6 +4,7 @@ import { fileURLToPath, URL } from 'node:url';
 export default defineConfig({
   resolve: {
     alias: {
+      'notte-sdk': fileURLToPath(new URL('./dist/index.mjs', import.meta.url)),
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '@/lib': fileURLToPath(new URL('./src/lib', import.meta.url))
     }

@@ -2,6 +2,7 @@
 title: Authentication
 description: Authenticate with the Notte API
 ---
+import Client from '/snippets/client/index.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -16,17 +17,15 @@ All API requests require a Bearer token in the `Authorization` header.
 
 ## Using the API key
 
-Set your API key locally before calling the REST API or using the Python SDK:
+Set your API key locally before calling the REST API or using either SDK:
 
 ```bash
 export NOTTE_API_KEY=your_api_key_here
 ```
 
-```python
-from notte_sdk import NotteClient
+Both SDKs read `NOTTE_API_KEY` automatically:
 
-client = NotteClient()  # reads NOTTE_API_KEY automatically
-```
+<Client />
 
 If you want the full machine-readable API contract, the OpenAPI spec is available at:
 

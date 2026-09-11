@@ -33,8 +33,15 @@ npx vitest run test/function-create-run.integration.test.ts
 
 This test creates its own function and deletes it afterward. Other live suites
 may require pre-existing fixtures; see [test documentation](test/README.md).
-CI runs credential-free checks on pull requests, including forks. Live tests and
-API drift checks run on main pushes or a manual workflow run on main.
+The `node sdk cicd` workflow runs on every PR touching `node-sdk/`:
+
+- `tests` runs unit tests, local HTTP integration tests, type checks, and package
+  checks on Node.js 22 and 24, including for fork PRs.
+- `integration-tests` runs the isolated live function lifecycle tests against
+  staging on same-repository PRs. Fork PRs skip this credentialed job.
+
+Both jobs also run on main pushes and manual workflow runs on main. API drift
+checks remain limited to main pushes and manual workflow runs on main.
 
 ### Releases
 

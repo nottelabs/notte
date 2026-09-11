@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Batch Snippet Processor - Converts all Python files in /testers to MDX snippets.
+Batch Snippet Processor - Converts Python/TypeScript example pairs to MDX snippets.
 
 Crawls /testers/**/*.py and generates corresponding /snippets/**/*.mdx files
-using the parser module.
+using the parser module. Same-name .ts files become a second CodeGroup tab.
 
 Usage:
     python process.py                    # Process all files
@@ -56,7 +56,20 @@ def get_all_generated_snippets() -> set[Path]:
     return generated
 
 
-def process_file(input_path: Path, dry_run: bool = False, verbose: bool = False) -> tuple[bool, str]:
+def render_file(input_path: Path) -> str:
+    """Render a Python example and its optional same-name TypeScript counterpart."""
+    _, python_mdx = parse_file(input_path)
+    header = make_header(str(input_path.relative_to(ROOT_DIR)))
+    typescript_path = input_path.with_suffix(".ts")
+    if not typescript_path.exists():
+        return header + python_mdx
+    _, typescript_mdx = parse_file(typescript_path)
+    return header + f"<CodeGroup>\n\n{python_mdx}\n{typescript_mdx}\n</CodeGroup>\n"
+
+
+def process_file(
+    input_path: Path, dry_run: bool = False, verbose: bool = False, check: bool = False
+) -> tuple[bool, str | None]:
     """
     Process a single tester file and generate its snippet.
 
@@ -68,11 +81,7 @@ def process_file(input_path: Path, dry_run: bool = False, verbose: bool = False)
     relative_output = output_path.relative_to(ROOT_DIR)
 
     try:
-        config, mdx_content = parse_file(input_path)
-
-        # Add header comment with source file reference
-        source_ref = str(input_path.relative_to(ROOT_DIR))
-        full_content = make_header(source_ref) + mdx_content
+        full_content = render_file(input_path)
 
         # Check if file needs updating
         if output_path.exists():
@@ -83,9 +92,14 @@ def process_file(input_path: Path, dry_run: bool = False, verbose: bool = False)
                 return True, None
             # Skip files that were manually edited (no auto-generated header)
             if "Auto-generated mdx file" not in existing:
+                if input_path.with_suffix(".ts").exists():
+                    return False, f"  [error] Paired snippet must be generated: {relative_output}"
                 if verbose:
                     return True, f"  [skipped-manual] {relative_output}"
                 return True, None
+
+        if check:
+            return False, f"  [stale] {relative_output}: run make sniptest"
 
         if dry_run:
             return True, f"  [would create] {relative_output}"
@@ -145,8 +159,11 @@ def main():
         "--clean", "-c", action="store_true", help="Remove orphaned snippets (generated files without testers)"
     )
     argparser.add_argument("--verbose", "-v", action="store_true", help="Show unchanged files")
+    argparser.add_argument("--check", action="store_true", help="Fail on generated drift without writing")
 
     args = argparser.parse_args()
+    if args.check and args.clean:
+        argparser.error("--check cannot be combined with --clean")
 
     # Validate directories
     if not TESTERS_DIR.exists():
@@ -171,7 +188,7 @@ def main():
     messages = []
 
     for tester_file in tester_files:
-        success, message = process_file(tester_file, dry_run=args.dry_run, verbose=args.verbose)
+        success, message = process_file(tester_file, dry_run=args.dry_run, verbose=args.verbose, check=args.check)
         if success:
             success_count += 1
         else:
