@@ -1,4 +1,5 @@
 # @sniptest filename=sequential.py
+# @sniptest show=9-15
 import json
 import os
 
@@ -12,4 +13,7 @@ results = []
 for url in urls:
     result = function.run(url=url)
     results.append(result.result)
+
+print(results)
+
 print(json.dumps({"results": results}))

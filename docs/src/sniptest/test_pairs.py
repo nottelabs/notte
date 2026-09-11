@@ -12,6 +12,26 @@ from parser import parse_file
 
 
 class RepositoryExamplesTest(unittest.TestCase):
+    def test_focused_function_examples_hide_execution_setup_in_both_tabs(self):
+        testers = Path(__file__).resolve().parents[1] / "testers/functions/invocations"
+        for name in ("check_run_status", "sequential"):
+            for suffix in (".py", ".ts"):
+                with self.subTest(name=name, language=suffix):
+                    path = testers / f"{name}{suffix}"
+                    config, rendered = parse_file(path)
+                    self.assertIsNotNone(config.show)
+                    self.assertNotIn("import ", rendered)
+                    self.assertNotIn("NOTTE_FUNCTION_ID", rendered)
+                    self.assertNotIn("same_run", rendered)
+                    self.assertNotIn("json.dumps", rendered)
+                    self.assertNotIn("JSON.stringify", rendered)
+                    if name == "check_run_status":
+                        self.assertIn("Status:", rendered)
+                        self.assertIn("Result:", rendered)
+                        self.assertIn("get_run(run_id)" if suffix == ".py" else "getRun(runId)", rendered)
+                    else:
+                        self.assertIn("print(results)" if suffix == ".py" else "console.log(results)", rendered)
+
     def test_paired_python_examples_compile(self):
         testers = Path(__file__).resolve().parents[1] / "testers"
         pairs = list(testers.rglob("*.ts"))

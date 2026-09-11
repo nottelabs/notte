@@ -1,4 +1,5 @@
 // @sniptest filename=check_run_status.ts
+// @sniptest show=11-14
 import { NotteClient } from 'notte-sdk';
 
 const client = new NotteClient();
@@ -7,8 +8,13 @@ const fn = client.NotteFunction({
 });
 
 const result = await fn.run({ url: 'https://example.com' });
-// Retrieve a run owned by this example, rather than a placeholder ID.
-const runStatus = await fn.getRun(result.function_run_id);
+const runId = result.function_run_id;
+
+const runStatus = await fn.getRun(runId);
+
+console.log(`Status: ${runStatus.status}`); // "active", "closed", "failed"
+console.log(`Result: ${runStatus.result}`);
+
 console.log(
   JSON.stringify({
     status: runStatus.status,

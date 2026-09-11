@@ -4,37 +4,24 @@
 <CodeGroup>
 
 ```python sequential.py
-import json
-import os
-
-from notte_sdk import NotteClient
-
-client = NotteClient()
-function = client.Function(os.environ["NOTTE_FUNCTION_ID"])
-
 urls = ["https://example.com", "https://example.org"]
 results = []
 for url in urls:
     result = function.run(url=url)
     results.append(result.result)
-print(json.dumps({"results": results}))
+
+print(results)
 ```
 
 ```typescript sequential.ts
-import { NotteClient } from 'notte-sdk';
-
-const client = new NotteClient();
-const fn = client.NotteFunction({
-  function_id: process.env.NOTTE_FUNCTION_ID!,
-});
-
 const urls = ['https://example.com', 'https://example.org'];
 const results: unknown[] = [];
 for (const url of urls) {
   const result = await fn.run({ url });
   results.push(result.result);
 }
-console.log(JSON.stringify({ results }));
+
+console.log(results);
 ```
 
 </CodeGroup>

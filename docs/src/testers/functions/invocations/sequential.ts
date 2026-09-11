@@ -1,4 +1,5 @@
 // @sniptest filename=sequential.ts
+// @sniptest show=8-15
 import { NotteClient } from 'notte-sdk';
 
 const client = new NotteClient();
@@ -12,4 +13,7 @@ for (const url of urls) {
   const result = await fn.run({ url });
   results.push(result.result);
 }
+
+console.log(results);
+
 console.log(JSON.stringify({ results }));
