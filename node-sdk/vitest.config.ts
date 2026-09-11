@@ -4,7 +4,8 @@ import { fileURLToPath, URL } from 'node:url';
 export default defineConfig({
   resolve: {
     alias: {
-      'notte-sdk': fileURLToPath(new URL('./dist/index.mjs', import.meta.url)),
+      // Unit tests run before the package build; live examples exercise that build.
+      'notte-sdk': fileURLToPath(new URL(process.env.VITEST_INTEGRATION ? './dist/index.mjs' : './src/index.ts', import.meta.url)),
       'playwright-core': fileURLToPath(new URL('./node_modules/playwright-core/index.mjs', import.meta.url)),
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '@/lib': fileURLToPath(new URL('./src/lib', import.meta.url))

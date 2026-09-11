@@ -57,7 +57,9 @@ for (const example of ['uploading_files', 'attach_before_starting']) {
         RemoteFileStorage: { prototype: { upload: unknown } };
       }>('notte-sdk');
       const original = RemoteFileStorage.prototype.upload;
-      await expect(import(`../../docs/src/testers/file-storage/${example}.ts`)).rejects.toThrow();
+      const message = failure === 'delete' ? 'Failed to delete uploaded example files'
+        : failure === 'second-upload' ? 'upload failed' : `${failure} failed`;
+      await expect(import(`../../docs/src/testers/file-storage/${example}.ts`)).rejects.toThrow(message);
       const count = example === 'attach_before_starting' || failure === 'second-upload' ? 1 : 2;
       expect(fixture.deleted).toEqual(Array.from({ length: count }, (_, i) => String(i + 1)));
       expect(fixture.stopped).toBe(true);
