@@ -66,7 +66,10 @@ describe('Vault Integration Tests', () => {
 			// Verify credentials were added
 			const credentials = await newVault.listCredentials();
 			expect(credentials.length).toBeGreaterThan(0);
-			const githubCreds = credentials.find(c => new URL(c.url).hostname === 'github.com');
+			// The API normalizes credential URLs to a hostname.
+			const githubCreds = credentials.find(c =>
+				new URL(c.url.includes('://') ? c.url : `https://${c.url}`).hostname === 'github.com'
+			);
 			expect(githubCreds).toBeDefined();
 		});
 

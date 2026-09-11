@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { NotteClient, NottePersona } from '@/index';
 import { Session } from '@/session';
 import { Agent } from '@/agent';
@@ -12,6 +12,18 @@ const API_KEY = process.env.NOTTE_API_KEY;
 
 describe('Persona Integration Tests', () => {
   let client: NotteClient;
+  let fixturePersona: NottePersona | undefined;
+
+  async function existingPersona() {
+    fixturePersona = client.Persona({ create_phone_number: false });
+    await fixturePersona.get();
+    return client.Persona({ persona_id: fixturePersona.personaId });
+  }
+
+  afterEach(async () => {
+    if (fixturePersona) await fixturePersona.delete();
+    fixturePersona = undefined;
+  });
 
   beforeEach(() => {
     if (!API_KEY) {
@@ -96,9 +108,8 @@ describe('Persona Integration Tests', () => {
       }
     });
     it('should get existing persona by ID', async () => {
-      const testPersonaId = process.env.NOTTE_PERSONA_ID;
-      if (!testPersonaId) throw new Error('NOTTE_PERSONA_ID is required for existing-persona tests');
-      const persona = client.Persona({ persona_id: testPersonaId });
+      const persona = await existingPersona();
+      const testPersonaId = fixturePersona!.personaId;
 
       // Initialize the persona
       await persona.get();
@@ -424,39 +435,27 @@ describe('Persona Integration Tests', () => {
 
   describe('Email and SMS Operations', () => {
     it('should read emails with filters', async () => {
-      const testPersonaId = process.env.NOTTE_PERSONA_ID;
-      if (!testPersonaId) throw new Error('NOTTE_PERSONA_ID is required for existing-persona tests');
-      const persona = client.Persona({ persona_id: testPersonaId });
+      const persona = await existingPersona();
 
       // Test reading emails with different filters
       const allEmails = await persona.emails();
-      expect(allEmails.length).toBeGreaterThanOrEqual(1);
+      expect(allEmails).toEqual([]);
 
       // Test with limit
       const limitedEmails = await persona.emails({ limit: 5 });
-      expect(limitedEmails.length).toBeGreaterThanOrEqual(1);
+      expect(limitedEmails).toEqual([]);
 
       // Test with unread only
       const unreadEmails = await persona.emails({ only_unread: true });
       expect(unreadEmails.length).toBeGreaterThanOrEqual(0);
     });
 
-    it('should read SMS with filters', async () => {
-      const testPersonaId = process.env.NOTTE_PERSONA_ID;
-      if (!testPersonaId) throw new Error('NOTTE_PERSONA_ID is required for existing-persona tests');
-      const persona = client.Persona({ persona_id: testPersonaId });
-
-      // Test reading SMS with different filters
-      const allSms = await persona.sms();
-      expect(allSms.length).toBeGreaterThan(0);
-
-      // Test with limit
-      const limitedSms = await persona.sms({ limit: 5 });
-      expect(limitedSms.length).toBeGreaterThan(0);
-
-      // Test with unread only
-      const unreadSms = await persona.sms({ only_unread: true });
-      expect(unreadSms.length).toBeGreaterThanOrEqual(0);
+    it('should reject SMS filters for a persona without a phone', async () => {
+      const persona = await existingPersona();
+      // Do not allocate a billable phone or depend on a shared inbox in CI.
+      for (const filter of [undefined, { limit: 5 }, { only_unread: true }]) {
+        await expect(persona.sms(filter)).rejects.toThrow(/phone/i);
+      }
     });
 
     it('should handle empty email and SMS for new persona', async () => {

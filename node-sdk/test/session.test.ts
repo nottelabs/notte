@@ -1,7 +1,7 @@
 import { beforeEach, describe, it, expect, expectTypeOf, vi } from 'vitest';
 import { Session } from '@/session';
 import { NotteClient } from '@/client';
-import { sessionStart, sessionStop } from '@/lib/client/sdk.gen';
+import { sessionStart, sessionStop, sessionReplay } from '@/lib/client/sdk.gen';
 import type {
   SessionOptions,
 } from '@/index';
@@ -61,6 +61,27 @@ describe('Session Unit Tests', () => {
       const options: SessionOptions = { headless };
       expectTypeOf<SessionOptions['headless']>().toEqualTypeOf<boolean | undefined>();
       expect(options.headless).toBe(true);
+    });
+  });
+
+  describe('replay', () => {
+    it('retrieves the last closed session without marking it active', async () => {
+      vi.mocked(sessionStart).mockResolvedValue({ data: { session_id: 'session-replay', status: 'active' } } as any);
+      vi.mocked(sessionStop).mockResolvedValue({ data: { session_id: 'session-replay', status: 'closed' } } as any);
+      vi.mocked(sessionReplay).mockResolvedValue({ data: { replay: 'recording' } } as any);
+      const session = new Session(mockClient);
+      await session.start();
+      await session.stop();
+
+      expect(await session.replay()).toEqual({ replay: 'recording' });
+      expect(sessionReplay).toHaveBeenCalledWith({ client: mockClient.getClient(), path: { session_id: 'session-replay' } });
+      expect(session.getId()).toBeNull();
+      expect(session.isSessionActive()).toBe(false);
+    });
+
+    it('rejects replay when no session has been created', async () => {
+      await expect(new Session(mockClient).replay()).rejects.toThrow('Session not started');
+      expect(sessionReplay).not.toHaveBeenCalled();
     });
   });
 

@@ -365,14 +365,16 @@ export class Session {
    * Get session replay data
    */
   async replay(): Promise<any> {
-    if (!this.sessionId) {
+    // Replays are generated after stop(), which clears the active session ID.
+    const sessionId = this.sessionId ?? this.response?.session_id;
+    if (!sessionId) {
       throw new Error('Session not started');
     }
 
     const response = await sessionReplay({
       client: this.client.getClient(),
       path: {
-        session_id: this.sessionId
+        session_id: sessionId
       }
     });
 
