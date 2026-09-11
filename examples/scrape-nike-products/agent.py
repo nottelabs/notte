@@ -1,3 +1,4 @@
+import argparse
 import datetime as dt
 from pathlib import Path
 from typing import Annotated
@@ -103,13 +104,17 @@ def scrape_products(session: RemoteSession, cat: ProductCategory) -> ShoppingLis
 # ############################################
 
 
-def scrape_nike_products():
+def scrape_nike_products(max_categories: int | None = None):
+    if max_categories is not None and max_categories < 1:
+        raise ValueError("max_categories must be positive")
     timestamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d_%H%M%S")
     run_dir = RESULT_DIR / timestamp
     run_dir.mkdir(exist_ok=True, parents=True)
 
     with notte.Session(open_viewer=True) as session:
         categories = scrape_categories(session)
+        if max_categories is not None:
+            categories.categories = categories.categories[:max_categories]
         _ = (run_dir / "categories.json").write_text(categories.model_dump_json())
         outputs: list[list[ShoppingItem]] = []
         for category in tqdm(categories.categories):
@@ -132,4 +137,7 @@ Scraping data saved in {run_dir}
 
 
 if __name__ == "__main__":
-    scrape_nike_products()
+    parser = argparse.ArgumentParser(description="Scrape Nike product categories and their products")
+    parser.add_argument("--max-categories", type=int, help="Limit the number of categories to scrape")
+    args = parser.parse_args()
+    scrape_nike_products(max_categories=args.max_categories)

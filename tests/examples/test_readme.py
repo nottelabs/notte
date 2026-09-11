@@ -1,3 +1,4 @@
+import os
 import shutil
 import subprocess
 import sys
@@ -11,6 +12,10 @@ from pytest_examples import CodeExample, EvalExample, find_examples
 
 def run_example_safely(example: CodeExample, eval_example: EvalExample) -> None:
     """Run a code example and handle exceptions to avoid Python 3.11 traceback formatting issues."""
+    required_env = example.prefix_settings().get("requires-env", "").upper().split(",")
+    missing = [name.strip() for name in required_env if name.strip() and not os.getenv(name.strip())]
+    if missing:
+        pytest.skip(f"Example requires environment variables: {', '.join(missing)}")
     try:
         _ = eval_example.run(example)
     except Exception as e:
@@ -66,6 +71,7 @@ def test_pip_install_notte_browser():
 
 
 @pytest.mark.parametrize("example", find_examples("README.md"), ids=str)
+@pytest.mark.flaky(reruns=2, reruns_delay=5, only_rerun=["ServiceUnavailableError"])
 def test_readme_python_code(example: CodeExample, eval_example: EvalExample):
     _ = load_dotenv()
     run_example_safely(example, eval_example)

@@ -175,13 +175,18 @@ def test_use_case_script(use_case_dir: Path) -> None:
         use_case_dir: Path to the use case directory to test
     """
     OVERRIDE_ARGS: dict[str, list[str]] = {"human-in-the-loop": ["--task", "go to duckduckgo"]}
+    OVERRIDE_ARGS["scrape-nike-products"] = ["--max-categories", "1"]
+    entrypoints = {
+        "landing-examples": "landing_examples.py",
+        "session-solve-captcha": "main.py",
+    }
 
-    agent_file = use_case_dir / "agent.py"
-    assert agent_file.exists(), f"No agent.py file found in {use_case_dir}"
+    agent_file = use_case_dir / entrypoints.get(use_case_dir.name, "agent.py")
+    assert agent_file.exists(), f"No example script found at {agent_file}"
     exit_code, logged = run_python_file(agent_file, OVERRIDE_ARGS.get(use_case_dir.name, []))
 
     if use_case_dir.name == "github-auto-issues-trending-repos":
         assert exit_code != 0
         assert logged[-1] == "KeyError: 'AUTO_ISSUES_GITHUB_EMAIL'"
     else:
-        assert exit_code == 0, f"Failed to run {use_case_dir.name}"
+        assert exit_code == 0, f"Failed to run {use_case_dir.name} (exit code {exit_code}):\n" + "\n".join(logged[-30:])

@@ -922,6 +922,13 @@ class _SessionStartRequest(SdkRequest):
 
     @model_validator(mode="after")
     def check_viewport(self) -> "_SessionStartRequest":
+        if self.cdp_url is not None:
+            # Configured viewport defaults belong to browsers we create, not an
+            # external browser. Keep explicit values for CDP validation below.
+            if "viewport_width" not in self.model_fields_set:
+                self.viewport_width = None
+            if "viewport_height" not in self.model_fields_set:
+                self.viewport_height = None
         if (self.viewport_width is None) != (self.viewport_height is None):
             raise ValueError("Both viewport_width and viewport_height must be set together or both must be None")
         return self
@@ -938,10 +945,10 @@ class _SessionStartRequest(SdkRequest):
     @model_validator(mode="after")
     def validate_cdp_url_constraints(self) -> "_SessionStartRequest":
         """
-        Validate that when cdp_url is provided, certain fields are set to their default values.
+        Validate that browser settings are left to the external CDP provider.
 
         Raises:
-            ValueError: If cdp_url is provided but other fields are not set to defaults.
+            ValueError: If cdp_url is provided with browser settings that must be configured by the provider.
         """
         if self.cdp_url is not None:
             if self.user_agent is not None:
@@ -952,11 +959,11 @@ class _SessionStartRequest(SdkRequest):
                 raise ValueError(
                     "When cdp_url is provided, chrome_args must be None. Set the chrome arguments with your external session CDP provider."
                 )
-            if self.viewport_width is not None and self.viewport_width != DEFAULT_VIEWPORT_WIDTH:
+            if self.viewport_width is not None:
                 raise ValueError(
                     "When cdp_url is provided, viewport_width must be None. Set the viewport width with your external session CDP provider."
                 )
-            if self.viewport_height is not None and self.viewport_height != DEFAULT_VIEWPORT_HEIGHT:
+            if self.viewport_height is not None:
                 raise ValueError(
                     "When cdp_url is provided, viewport_height must be None. Set the viewport height with your external session CDP provider."
                 )

@@ -146,6 +146,21 @@ def test_remote_session_omits_headless_on_wire(client: NotteClient, session_id: 
             assert "advanced_stealth" not in request_data
 
 
+def test_remote_cdp_session_omits_viewport_on_wire(client: NotteClient, session_id: str) -> None:
+    with patch("requests.post") as mock_post:
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = session_response_dict(session_id)
+
+        session = client.Session(cdp_url="ws://localhost:9222")
+        session.start()
+
+    mock_post.assert_called_once()
+    request_data = json.loads(mock_post.call_args.kwargs["data"])
+    assert request_data["cdp_url"] == "ws://localhost:9222"
+    assert "viewport_width" not in request_data
+    assert "viewport_height" not in request_data
+
+
 def _start_session(mock_post: MagicMock, client: NotteClient, session_id: str) -> SessionResponse:
     """
     Mocks the HTTP response for starting a session and triggers session initiation.
