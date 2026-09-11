@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NotteClient } from '@/index';
+import { InvalidRequestError, NotteAPIError } from '@/errors';
 import { config } from 'dotenv';
 import { cleanupVaults } from './helpers/cleanup-vaults';
 
@@ -21,6 +22,7 @@ describe('Vault Integration Tests', () => {
   });
 
   afterEach(async () => {
+    vi.unstubAllEnvs();
     await cleanupVaults(client, createdVaults);
     createdVaults = [];
   });
@@ -33,7 +35,7 @@ describe('Vault Integration Tests', () => {
     await cleanupVaults(client, [vaultId]);
 
     const deletedVault = client.Vault({ vault_id: vaultId });
-    await expect(deletedVault.listCredentials()).rejects.toThrow();
+    await expect(deletedVault.listCredentials()).rejects.toBeInstanceOf(NotteAPIError);
   });
 
   describe('Basic Vault Operations', () => {
@@ -52,9 +54,8 @@ describe('Vault Integration Tests', () => {
 
       // Verify credentials were added
       const credentials = await vault.getCredentials('https://github.com/');
-      expect(credentials).toBeDefined();
-      expect(credentials?.email).toBe('xyz@notte.cc');
-      expect(credentials?.password).toBe('xyz');
+      expect(credentials.email).toBe('xyz@notte.cc');
+      expect(credentials.password).toBe('xyz');
     });
 
     it('should list all credentials in vault', async () => {
@@ -74,11 +75,26 @@ describe('Vault Integration Tests', () => {
       const vaultId = vault.vaultId;
       createdVaults.push(vaultId);
 
-      // List all credentials
+      // List all credentials: URLs are stored as root domains and passwords are never returned.
       const credentials = await vault.listCredentials();
       expect(credentials).toHaveLength(2);
       expect(credentials.some(c => c.url === 'github.com')).toBe(true);
       expect(credentials.some(c => c.url === 'google.com')).toBe(true);
+      expect(credentials.every(c => !('password' in c))).toBe(true);
+    });
+
+    it('should report whether a credential exists', async () => {
+      const vault = client.Vault();
+
+      await vault.addCredentials('https://github.com/', {
+        email: 'test@example.com',
+        password: 'password' // pragma: allowlist secret
+      });
+      createdVaults.push(vault.vaultId);
+
+      await expect(vault.hasCredential('https://github.com/login')).resolves.toBe(true);
+      await expect(vault.hasCredential('github.com')).resolves.toBe(true);
+      await expect(vault.hasCredential('https://google.com/')).resolves.toBe(false);
     });
 
     it('should delete credentials', async () => {
@@ -94,15 +110,14 @@ describe('Vault Integration Tests', () => {
       createdVaults.push(vaultId);
 
       // Verify credentials exist
-      let credentials = await vault.getCredentials('https://github.com/');
-      expect(credentials).toBeDefined();
+      await expect(vault.getCredentials('https://github.com/')).resolves.toMatchObject({ email: 'test@example.com' });
 
       // Delete credentials
       await vault.deleteCredentials('https://github.com/');
 
-      // Verify credentials are deleted
-      credentials = await vault.getCredentials('https://github.com/');
-      expect(credentials).toBeNull();
+      // Verify credentials are deleted: like Python, a missing credential is an API error.
+      await expect(vault.getCredentials('https://github.com/')).rejects.toBeInstanceOf(NotteAPIError);
+      await expect(vault.hasCredential('https://github.com/')).resolves.toBe(false);
     }, 15000); // 15 second timeout
   });
 
@@ -196,66 +211,6 @@ describe('Vault Integration Tests', () => {
     }, 30000); // 30 second timeout
   });
 
-  describe('Credit Card Operations', () => {
-    it('should set and get credit card', async () => {
-      const vault = client.Vault();
-
-      const creditCard = {
-        card_holder_name: 'John Doe',
-        card_number: '4111111111111111',
-        card_cvv: '123',
-        card_full_expiration: '12/2025'
-      };
-
-      // Set credit card
-      await vault.setCreditCard(creditCard);
-
-      const vaultId = vault.vaultId;
-      createdVaults.push(vaultId);
-
-      // Get credit card
-      const retrievedCard = await vault.getCreditCard();
-      expect(retrievedCard).toEqual(creditCard);
-    });
-
-    it('should delete credit card', { timeout: 30000 }, async () => {
-      const vault = client.Vault();
-
-      const creditCard = {
-        card_holder_name: 'John Doe',
-        card_number: '4111111111111111',
-        card_cvv: '123',
-        card_full_expiration: '12/2025'
-      };
-
-      // Set credit card
-      await vault.setCreditCard(creditCard);
-
-      const vaultId = vault.vaultId;
-      createdVaults.push(vaultId);
-
-      // Verify credit card exists
-      let retrievedCard = await vault.getCreditCard();
-      expect(retrievedCard).toEqual(creditCard);
-
-      // Delete credit card
-      await vault.deleteCreditCard();
-
-      // Verify credit card is deleted (should throw error or return null)
-      // Wait a bit for deletion to propagate
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      try {
-        await vault.getCreditCard();
-        // If no error is thrown, the test should fail
-        expect.fail('Expected getCreditCard to throw error after deletion');
-      } catch (error) {
-        // Expected behavior - credit card should not exist
-        expect(error).toBeDefined();
-      }
-    });
-  });
-
   describe('Password Generation', () => {
     it('should generate password with default settings', () => {
       const vault = client.Vault();
@@ -292,6 +247,7 @@ describe('Vault Integration Tests', () => {
 
     it('should throw error for password too short', () => {
       const vault = client.Vault();
+      expect(() => vault.generatePassword(2)).toThrow(InvalidRequestError);
       expect(() => vault.generatePassword(2)).toThrow('Password length must be at least 4 characters');
     });
 
@@ -310,90 +266,85 @@ describe('Vault Integration Tests', () => {
   });
 
   describe('Vault Context Manager', () => {
-    it('should delete vault after context exit', { timeout: 60000 }, async () => {
-      let vaultId: string;
-
-      // Create vault in context
+    // Mirrors test_vault_should_be_deleted_after_exit_context: stop() deletes the vault.
+    it('should delete vault after stop()', { timeout: 60000 }, async () => {
       const vault = client.Vault();
       await vault.addCredentials('https://test.com/', {
         email: 'test@example.com',
         password: 'testpassword' // pragma: allowlist secret
       });
 
-      vaultId = vault.vaultId;
+      const vaultId = vault.vaultId;
 
       // Stop vault (which should delete it)
       await vault.stop();
 
-      // Verify vault is deleted by trying to access it
-      try {
-        const deletedVault = client.Vault({ vault_id: vaultId });
-        await deletedVault.listCredentials();
-        expect.fail('Expected vault to be deleted');
-      } catch (error) {
-        // Expected behavior - vault should not exist
-        expect(error).toBeDefined();
-      }
+      // The vault is gone from the listing and can no longer be opened.
+      const vaults = await client.vaults.list();
+      expect(vaults.some(v => v.vault_id === vaultId)).toBe(false);
+      const deletedVault = client.Vault({ vault_id: vaultId });
+      await expect(deletedVault.listCredentials()).rejects.toBeInstanceOf(NotteAPIError);
     });
   });
 
   describe('Environment Variable Credentials', () => {
+    // Mirrors test_add_credentials_from_env.
     it('should add credentials from environment variables', { timeout: 60000 }, async () => {
-      // Set up environment variables
-      const originalEnv = process.env;
-      process.env.PEEPLE_COM_EMAIL = 'xyz@notte.cc';
-      process.env.PEEPLE_COM_PASSWORD = 'xyz'; // pragma: allowlist secret
-      process.env.TEST_COM_USERNAME = 'my_xyz_username';
-      process.env.TEST_COM_PASSWORD = 'my_xyz_password'; // pragma: allowlist secret
+      vi.stubEnv('PEEPLE_COM_EMAIL', 'xyz@notte.cc');
+      vi.stubEnv('PEEPLE_COM_PASSWORD', 'xyz'); // pragma: allowlist secret
+      vi.stubEnv('TEST_COM_USERNAME', 'my_xyz_username');
+      vi.stubEnv('TEST_COM_PASSWORD', 'my_xyz_password'); // pragma: allowlist secret
 
-      try {
-        const vault = client.Vault();
+      const vault = client.Vault();
 
-        // Add credentials from environment
-        await vault.addCredentialsFromEnv('https://peeple.com/ok');
-        await vault.addCredentialsFromEnv('https://test.com');
+      // Add credentials from environment: sub-domains resolve to the root domain's variables.
+      await vault.addCredentialsFromEnv('https://test.peeple.com/ok');
+      await vault.addCredentialsFromEnv('https://test.com');
 
-        const vaultId = vault.vaultId;
-        createdVaults.push(vaultId);
+      const vaultId = vault.vaultId;
+      createdVaults.push(vaultId);
 
-        // Test getting credentials with different URL formats
-        let credentials = await vault.getCredentials('https://peeple.com/test');
-        expect(credentials).toBeDefined();
-        expect(credentials?.email).toBe('xyz@notte.cc');
-        expect(credentials?.password).toBe('xyz');
+      // Unknown website: an API error, like Python.
+      await expect(vault.getCredentials('https://accounts.google.com')).rejects.toBeInstanceOf(NotteAPIError);
 
-        credentials = await vault.getCredentials('peeple.com');
-        expect(credentials).toBeDefined();
-        expect(credentials?.email).toBe('xyz@notte.cc');
-        expect(credentials?.password).toBe('xyz');
+      // Getting credentials with different URL formats
+      await expect(vault.getCredentials('https://test.peeple.com/test')).resolves.toEqual({
+        email: 'xyz@notte.cc',
+        password: 'xyz'
+      });
+      await expect(vault.getCredentials('peeple.com')).resolves.toEqual({
+        email: 'xyz@notte.cc',
+        password: 'xyz'
+      });
+      await expect(vault.getCredentials('https://test.com/')).resolves.toEqual({
+        username: 'my_xyz_username',
+        password: 'my_xyz_password' // pragma: allowlist secret
+      });
+    });
 
-        credentials = await vault.getCredentials('https://test.com/');
-        expect(credentials).toBeDefined();
-        expect(credentials?.email).toBe('my_xyz_username');
-        expect(credentials?.password).toBe('my_xyz_password');
+    it('should add an MFA secret from the environment', { timeout: 60000 }, async () => {
+      vi.stubEnv('EXAMPLE_COM_EMAIL', 'xyz@notte.cc');
+      vi.stubEnv('EXAMPLE_COM_PASSWORD', 'xyz'); // pragma: allowlist secret
+      vi.stubEnv('EXAMPLE_COM_MFA_SECRET', 'JBSWY3DPEHPK3PXP'); // pragma: allowlist secret
 
-        // Test non-existent credentials
-        credentials = await vault.getCredentials('https://accounts.google.com');
-        expect(credentials).toBeNull();
-      } finally {
-        // Restore original environment
-        process.env = originalEnv;
-      }
+      const vault = client.Vault();
+      await vault.addCredentialsFromEnv('https://example.com/');
+      createdVaults.push(vault.vaultId);
+
+      await expect(vault.getCredentials('https://example.com/')).resolves.toMatchObject({
+        email: 'xyz@notte.cc',
+        mfa_secret: 'JBSWY3DPEHPK3PXP' // pragma: allowlist secret
+      });
     });
 
     it('should throw error for missing environment variables', async () => {
       const vault = client.Vault();
 
-      // This should fail because environment variables are not set
-      await expect(vault.addCredentialsFromEnv('https://example.com/')).rejects.toThrow();
-
-      // Initialize vault first to get vault ID for cleanup
-      await vault.addCredentials('https://example.com/', {
-        email: 'test@example.com',
-        password: 'test' // pragma: allowlist secret
-      });
-      const vaultId = vault.vaultId;
-      createdVaults.push(vaultId);
+      // This fails before any API call because the environment variables are not set.
+      const failure = vault.addCredentialsFromEnv('https://example.com/');
+      await expect(failure).rejects.toBeInstanceOf(InvalidRequestError);
+      await expect(failure).rejects.toThrow(/EXAMPLE_COM_EMAIL/);
+      expect(() => vault.vaultId).toThrow(InvalidRequestError);
     });
   });
 
@@ -413,48 +364,46 @@ describe('Vault Integration Tests', () => {
 
       // Verify credentials were added
       const credentials = await vault.getCredentials('https://github.com/');
-      expect(credentials).toBeDefined();
-      expect(credentials?.mfa_secret).toBe('JBSWY3DPEHPK3PXP'); // pragma: allowlist secret
+      expect(credentials.mfa_secret).toBe('JBSWY3DPEHPK3PXP'); // pragma: allowlist secret
     });
 
+    // Mirrors test_add_correct_otp: any base32 string is a valid secret.
+    it('should accept a short base32 secret', async () => {
+      const vault = client.Vault();
+
+      await vault.addCredentials('https://github.com/', {
+        email: 'xyz@notte.cc',
+        password: 'xyz', // pragma: allowlist secret
+        mfa_secret: 'mysecret' // pragma: allowlist secret
+      });
+      createdVaults.push(vault.vaultId);
+
+      await expect(vault.getCredentials('https://github.com/')).resolves.toMatchObject({ mfa_secret: 'mysecret' }); // pragma: allowlist secret
+    });
+
+    // Mirrors test_add_wrong_otp: a one-time code is rejected client-side.
     it('should throw error for invalid MFA secret (all numbers)', async () => {
       const vault = client.Vault();
 
-      // This should fail because MFA secret is all numbers
       await expect(vault.addCredentials('https://github.com/', {
         email: 'xyz@notte.cc',
         password: 'xyz', // pragma: allowlist secret
         mfa_secret: '999777' // pragma: allowlist secret
-      })).rejects.toThrow();
+      })).rejects.toBeInstanceOf(InvalidRequestError);
 
-      // Vault may not be initialized if addCredentials throws before initialization
-      // Try to get vault ID for cleanup, but don't fail if it's not initialized
-      try {
-        const vaultId = vault.vaultId;
-        createdVaults.push(vaultId);
-      } catch {
-        // Vault not initialized, which is expected when addCredentials fails early
-      }
+      // Validation fails before the vault is created remotely.
+      expect(() => vault.vaultId).toThrow(InvalidRequestError);
     });
 
-    it('should throw error for MFA secret too short', async () => {
+    it('should reject credentials with both username and email', async () => {
       const vault = client.Vault();
 
-      // This should fail because MFA secret is too short
       await expect(vault.addCredentials('https://github.com/', {
         email: 'xyz@notte.cc',
-        password: 'xyz', // pragma: allowlist secret
-        mfa_secret: 'short' // pragma: allowlist secret
-      })).rejects.toThrow();
-
-      // Vault may not be initialized if addCredentials throws before initialization
-      // Try to get vault ID for cleanup, but don't fail if it's not initialized
-      try {
-        const vaultId = vault.vaultId;
-        createdVaults.push(vaultId);
-      } catch {
-        // Vault not initialized, which is expected when addCredentials fails early
-      }
+        username: 'xyz',
+        password: 'xyz' // pragma: allowlist secret
+      })).rejects.toThrow('Can only set either username or email');
+      expect(() => vault.vaultId).toThrow(InvalidRequestError);
     });
   });
 
@@ -502,16 +451,22 @@ describe('Vault Integration Tests', () => {
       }
     });
 
-    it('should return null for non-existent credentials', async () => {
+    it('should reject non-existent credentials with a NotteAPIError', async () => {
       const vault = client.Vault();
 
-      // Try to get credentials that don't exist
-      const credentials = await vault.getCredentials('https://nonexistent.com/');
-      expect(credentials).toBeNull();
+      const failure = vault.getCredentials('https://nonexistent.com/');
+      await expect(failure).rejects.toBeInstanceOf(NotteAPIError);
+      await expect(failure).rejects.toMatchObject({ statusCode: expect.any(Number) });
 
       // Get vault ID after initialization for cleanup
       const vaultId = vault.vaultId;
       createdVaults.push(vaultId);
+    });
+
+    it('should reject an invalid URL before calling the API', async () => {
+      const vault = client.Vault();
+      await expect(vault.getCredentials('https://')).rejects.toBeInstanceOf(InvalidRequestError);
+      expect(() => vault.vaultId).toThrow(InvalidRequestError);
     });
   });
 });

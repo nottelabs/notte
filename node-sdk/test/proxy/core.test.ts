@@ -149,6 +149,7 @@ describe('handleProxyRequest', () => {
 
       const calledHeaders = vi.mocked(globalThis.fetch).mock.calls[0]?.[1]?.headers as Headers;
       expect(calledHeaders.get('Authorization')).toBe('Bearer user-specific-key');
+      expect(calledHeaders.get('x-notte-api-key')).toBe('user-specific-key');
     });
 
     it('should use default apiKey when authenticate returns void', async () => {

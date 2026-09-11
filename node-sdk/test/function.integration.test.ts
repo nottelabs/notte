@@ -1,172 +1,155 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { readFileSync, rmSync } from 'node:fs';
+/**
+ * Live lifecycle of a function owned by this file, mirroring
+ * `tests/integration/sdk/test_workflows.py` and `test_workflow_runs.py`:
+ * create from a temp `.py` -> get -> list -> update -> download -> runs -> delete.
+ * No `NOTTE_FUNCTION_ID`; the browser-free echo script needs no session.
+ */
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { NotteClient } from '@/client';
-import { functionCreate, functionDelete } from '@/lib/client/sdk.gen';
 import { config } from 'dotenv';
+import { NotteClient } from '@/client';
+import { NotteFunction } from '@/functions';
+import { InvalidRequestError, NotteAPIError } from '@/errors';
+import { functionRunStop } from '@/lib/client/sdk.gen';
+
 config();
 
-describe('Function Integration Tests', () => {
+const SCRIPT = 'def run(value: str) -> dict:\n    return {"echo": value}\n';
+const UPDATED_SCRIPT = 'def run(value: str) -> dict:\n    return {"echo": value, "updated": True}\n';
+
+describe('Function live integration', () => {
 	let client: NotteClient;
-	let functionId: string;
+	let fn: NotteFunction;
+	let dir: string;
+	let scriptPath: string;
+	let updatedPath: string;
+
 	beforeAll(async () => {
-		const fixtureClient = new NotteClient();
-		const created = await functionCreate({
-			client: fixtureClient.getClient(),
-			body: { file: new File(['def run(url: str) -> dict:\n    return {"url": url}\n'], 'integration.py', { type: 'text/x-python' }) },
-			throwOnError: true,
-		});
-		functionId = created.data.function_id;
-	});
+		client = new NotteClient();
+		dir = mkdtempSync(join(tmpdir(), 'notte-function-'));
+		scriptPath = join(dir, 'echo_function.py');
+		updatedPath = join(dir, 'echo_function_updated.py');
+		writeFileSync(scriptPath, SCRIPT);
+		writeFileSync(updatedPath, UPDATED_SCRIPT);
+		fn = client.NotteFunction({ path: scriptPath, name: `node-sdk-${Date.now()}`, description: 'Node SDK live fixture' });
+		expect(() => fn.functionId).toThrow(InvalidRequestError);
+		const created = await fn.get();
+		expect(created.function_id).toBe(fn.functionId);
+	}, 60000);
+
 	afterAll(async () => {
-		if (functionId) await functionDelete({ client: new NotteClient().getClient(), path: { function_id: functionId }, throwOnError: true });
-	});
-
-	beforeEach(async () => {
-		// Initialize client with API key from environment
-		const apiKey = process.env.NOTTE_API_KEY;
-		if (!apiKey) {
-			throw new Error('NOTTE_API_KEY environment variable is required for integration tests');
-		}
-
-		client = new NotteClient({
-			apiKey,
-			baseUrl: process.env.NOTTE_API_URL || 'https://api.notte.cc'
-		});
-	});
-
-	describe('Function Creation', () => {
-		it('should create function instance with function_id', () => {
-			const fn = client.NotteFunction({
-				function_id: functionId
-			});
-
-			expect(fn).toBeDefined();
-			expect(fn.getFunctionId()).toBe(functionId);
-			expect(fn.functionId).toBe(functionId);
-		});
-
-		it('should create function instance with function_id and decryption_key', () => {
-			const decryptionKey = process.env.NOTTE_FUNCTION_DECRYPTION_KEY || 'test-decryption-key'; // pragma: allowlist secret
-			const fn = client.NotteFunction({
-				function_id: functionId,
-				decryption_key: decryptionKey
-			});
-
-			expect(fn).toBeDefined();
-			expect(fn.getFunctionId()).toBe(functionId);
-			expect(fn.functionId).toBe(functionId);
-			expect(fn.decryptionKey).toBe(decryptionKey);
-		});
-	});
-
-	describe('Function Run', () => {
-		it('should run a function', { timeout: 300000 }, async () => {
-			const fn = client.NotteFunction({
-				function_id: functionId
-			});
-
-			const result = await fn.run({ url: 'https://example.com' });
-
-			expect(result).toBeDefined();
-			expect(result.function_run_id).toBeDefined();
-			expect(typeof result.function_run_id).toBe('string');
-			expect(result.status).toBe('closed');
-			expect(result).toHaveProperty('result');
-		});
-	});
-
-	describe('Function Metadata', () => {
-		it('should get metadata for a function run', { timeout: 300000 }, async () => {
-			const fn = client.NotteFunction({
-				function_id: functionId
-			});
-
-			// First, start a function run
-			const runResult = await fn.run({ url: 'https://example.com' }, { stream: false });
-
-			expect(runResult).toBeDefined();
-			const runId = runResult.function_run_id;
-			expect(runId).toBeDefined();
-
-			// Wait a bit for the run to be processed
-			await new Promise(resolve => setTimeout(resolve, 2000));
-
-			// Get metadata for the function run
-			const metadata = await fn.retrieve(runId!);
-
-			expect(metadata).toBeDefined();
-			expect(metadata.function_run_id).toBe(runId);
-		});
-	});
-
-	describe('Function Download', () => {
-		it('should get a download url', { timeout: 60000 }, async () => {
-			const fn = client.NotteFunction({
-				function_id: functionId,
-			});
-
-			const url = await fn.getUrl();
-
-			expect(url).toMatch(/^https?:\/\//);
-		});
-
-		it('should download the function code', { timeout: 60000 }, async () => {
-			const fn = client.NotteFunction({
-				function_id: functionId,
-			});
-
-			const code = await fn.download();
-
-			expect(code).toContain('def run(');
-		});
-
-		it('should download the function code to a file', { timeout: 60000 }, async () => {
-			const fn = client.NotteFunction({
-				function_id: functionId,
-			});
-			const target = join(tmpdir(), `notte-function-${Date.now()}.py`);
-
-			try {
-				const code = await fn.download({ path: target });
-
-				expect(readFileSync(target, 'utf8')).toBe(code);
-			} finally {
-				rmSync(target, { force: true });
+		try {
+			if (fn) {
+				const deleted = await fn.delete();
+				expect(deleted.status).toBe('success');
 			}
-		});
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
+	}, 60000);
 
-		it('should reject a path that is not a python file', async () => {
-			const fn = client.NotteFunction({
-				function_id: functionId
-			});
-
-			await expect(fn.download({ path: 'invalid_file.txt' })).rejects.toThrow(
-				'Code file path must end with .py'
-			);
-		});
+	it('creates the function lazily from the python file', async () => {
+		const response = await fn.get();
+		expect(response.function_id).toBe(fn.getFunctionId());
+		expect(response.latest_version).toBeTruthy();
+		expect(response.status).toBeTruthy();
+		expect(response.url).toMatch(/^https?:\/\//);
+		expect(response.name).toMatch(/^node-sdk-/);
 	});
 
-	describe('Function Properties', () => {
-		it('should expose functionId property', () => {
-			const fn = client.NotteFunction({
-				function_id: functionId
-			});
-
-			expect(fn.functionId).toBe(functionId);
-			expect(fn.getFunctionId()).toBe(functionId);
-		});
-
-		it('should expose decryptionKey property when provided', () => {
-			const decryptionKey = process.env.NOTTE_FUNCTION_DECRYPTION_KEY || 'test-decryption-key'; // pragma: allowlist secret
-			const fn = client.NotteFunction({
-				function_id: functionId,
-				decryption_key: decryptionKey
-			});
-
-			expect(fn.decryptionKey).toBe(decryptionKey);
-		});
+	it('appears in the functions list', async () => {
+		const items = await client.functions.list({ page_size: 50 });
+		expect(items.map(item => item.function_id)).toContain(fn.functionId);
 	});
 
+	it('references the same function by ID', async () => {
+		const byId = client.NotteFunction({ function_id: fn.functionId });
+		expect(byId.functionId).toBe(fn.functionId);
+		const response = await byId.get();
+		expect(response.function_id).toBe(fn.functionId);
+	});
+
+	it('updates the code with a modified script and bumps the version', async () => {
+		const before = await fn.get();
+		const updated = await fn.update({ path: updatedPath });
+		expect(updated.function_id).toBe(fn.functionId);
+		expect(updated.latest_version).toBeTruthy();
+		expect(updated.latest_version).not.toBe(before.latest_version);
+		expect(updated.versions).toContain(before.latest_version);
+		await expect(fn.download()).resolves.toContain('"updated": True');
+	});
+
+	it('updates the metadata', async () => {
+		const updated = await fn.updateMetadata({ description: 'Node SDK live fixture (updated)' });
+		expect(updated.description).toBe('Node SDK live fixture (updated)');
+	});
+
+	it('exposes a download url and the code', async () => {
+		const url = await fn.getUrl();
+		expect(url).toMatch(/^https?:\/\//);
+		const code = await fn.download();
+		expect(code).toContain('def run(value: str)');
+	});
+
+	it('downloads the code to a python file', async () => {
+		const target = join(dir, 'downloaded.py');
+		const code = await fn.download({ path: target });
+		expect(readFileSync(target, 'utf8')).toBe(code);
+	});
+
+	it('rejects a download path that is not a python file', async () => {
+		await expect(fn.download({ path: join(dir, 'invalid_file.txt') })).rejects.toThrow(InvalidRequestError);
+	});
+
+	it('creates, executes, retrieves and lists runs', { timeout: 180000 }, async () => {
+		const created = await fn.createRun();
+		expect(created.function_id).toBe(fn.functionId);
+		expect(created.status).toBe('created');
+		try {
+			const before = await fn.getRun(created.function_run_id);
+			expect(before.status).toBe('active');
+			expect(before.result).toBeNull();
+
+			const value = `node-sdk-${Date.now()}`;
+			const result = await fn.run({ value }, { functionRunId: created.function_run_id });
+			expect(result.function_run_id).toBe(created.function_run_id);
+			expect(result.status).toBe('closed');
+			expect(result.result).toEqual({ echo: value, updated: true });
+
+			const persisted = await fn.getRun(created.function_run_id);
+			expect(persisted.status).toBe('closed');
+			expect(persisted.variables).toEqual({ value });
+
+			const page = await fn.runs({ page_size: 10 });
+			expect(page.page).toBe(1);
+			expect(page.page_size).toBe(10);
+			expect(page.items.map(item => item.function_run_id)).toContain(created.function_run_id);
+			const listed = page.items.find(item => item.function_run_id === created.function_run_id)!;
+			expect(listed.function_id).toBe(fn.functionId);
+			expect(listed).not.toHaveProperty('logs');
+			expect(listed).not.toHaveProperty('result');
+		} finally {
+			if ((await fn.getRun(created.function_run_id)).status === 'active') {
+				await functionRunStop({ client: client.getClient(), path: { function_id: fn.functionId, run_id: created.function_run_id }, throwOnError: true });
+			}
+		}
+	});
+
+	it('runs without a pre-created record, with and without streaming', { timeout: 180000 }, async () => {
+		const logs: string[] = [];
+		const streamed = await fn.run({ value: 'streamed' }, { onLog: line => logs.push(line) });
+		expect(streamed.status).toBe('closed');
+		expect(streamed.result).toEqual({ echo: 'streamed', updated: true });
+
+		const plain = await fn.run({ value: 'plain' }, { stream: false });
+		expect(plain.status).toBe('closed');
+		expect(plain.result).toEqual({ echo: 'plain', updated: true });
+		expect(plain.function_run_id).not.toBe(streamed.function_run_id);
+	});
+
+	it('rejects a run for an unknown run ID with NotteAPIError', { timeout: 60000 }, async () => {
+		await expect(fn.run({ value: 'x' }, { functionRunId: 'invalid-run-id', stream: false })).rejects.toBeInstanceOf(NotteAPIError);
+	});
 });

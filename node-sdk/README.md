@@ -59,8 +59,11 @@ Publishing a stable GitHub release tagged `node-sdk-vX.Y.Z` then runs validation
 and publishes with provenance. Python release tags do not trigger npm publishing.
 No registry credentials or publishing configuration are changed by adding this package.
 
-Importing the SDK does not contact the npm registry. To explicitly check for an
-update, call `await checkForLatestVersion()` from `notte-sdk`.
+Importing the SDK does not contact the npm registry. Constructing a `NotteClient`
+performs a one-time, non-blocking check per process and warns when a newer
+release exists, like the Python SDK. Set `NOTTE_SDK_DISABLE_VERSION_CHECK=1` to
+disable it. To explicitly check for an update, call `await checkForLatestVersion()`
+from `notte-sdk`.
 API URLs must use HTTPS, except HTTP loopback addresses for local development.
 
 ## Features
@@ -83,6 +86,7 @@ clients poll agent status for completion because they cannot use backend WebSock
 - 📡 **Real-time Updates** - WebSocket support for live agent monitoring
 - 📝 **Type Safety** - Full TypeScript support with generated types
 - ⚡ **Serverless Functions** - Run pre-built automation workflows with simple API calls
+- 🔍 **Web Search, Secrets and Usage** - Search the web, manage workspace secrets and read billing usage
 - 🔄 **Auto-sync** - Generated from OpenAPI spec, always up-to-date
 
 ## Installation
@@ -104,7 +108,7 @@ const notte = new NotteClient({
 });
 
 // Use session with automatic cleanup (mirrors Python's context manager)
-await notte.Session({ timeoutMinutes: 30 }).use(async (session) => {
+await notte.Session({ idle_timeout_minutes: 5 }).use(async (session) => {
   const status = await session.status();
   console.log('Session status:', status);
 });
@@ -121,13 +125,13 @@ const notte = new NotteClient();
 await notte.Session().use(async (session) => {
   const agent = notte.Agent({ session, max_steps: 10 });
 
-  const response = await agent.run(
-    "Find the best Italian restaurant in San Francisco and book a table for 2 at 7pm today",
-    (update) => {
+  const response = await agent.run({
+    task: "Find the best Italian restaurant in San Francisco and book a table for 2 at 7pm today",
+    updateHandler: (update) => {
       // Receive real-time updates via WebSocket
-      console.log(`Step ${update.data.currentStep}: ${update.data.message}`);
+      console.log(`[${update.type}]`, update.data);
     }
-  );
+  });
 
   console.log(`Agent completed: ${response.success ? 'Success' : 'Failed'}`);
   console.log(`Answer: ${response.answer}`);
@@ -143,10 +147,15 @@ The main client for interacting with the Notte API.
 ```typescript
 import { NotteClient } from 'notte-sdk';
 
-const notte = new NotteClient();
+const notte = new NotteClient({
+  apiKey: process.env.NOTTE_API_KEY, // defaults to NOTTE_API_KEY
+  baseUrl: 'https://api.notte.cc',   // defaults to NOTTE_API_URL or https://api.notte.cc
+  timeoutMs: 60_000,                 // per-request timeout, default 60 s
+  verbose: false,                    // log every request
+});
 
 // Create sessions
-const session = notte.Session({ timeoutMinutes: 30 });
+const session = notte.Session({ idle_timeout_minutes: 5, max_duration_minutes: 30 });
 
 // Create agents
 const agent = notte.Agent({ session, max_steps: 15 });
@@ -156,7 +165,31 @@ const vault = notte.Vault({ name: 'My Vault' });
 
 // Create personas
 const persona = notte.Persona({ create_vault: true });
+
+// Check that the API is reachable (rejects with NotteAPIError otherwise)
+await notte.healthCheck();
 ```
+
+#### Listing resources
+
+Every resource has a `list()` namespace, mirroring `client.sessions.list()` and
+friends in Python. Options are the generated query parameters of the matching
+endpoint (`SessionListOptions`, `AgentListOptions`, `VaultListOptions`,
+`FunctionListOptions`, `PersonaListOptions`).
+
+```typescript
+const sessions = await notte.sessions.list({ only_active: true });
+const agents = await notte.agents.list({ page_size: 10 });
+const vaults = await notte.vaults.list();
+const functions = await notte.functions.list();
+const personas = await notte.personas.list({ only_active: true });
+```
+
+#### Database preview branches
+
+Set `NOTTE_DB_PREVIEW_BRANCH` (or pass `dbPreview` to the client) to route every
+request and websocket handshake to a database preview branch. This is an internal
+option used when testing API changes.
 
 ### Session
 
@@ -168,7 +201,7 @@ import { NotteClient } from 'notte-sdk';
 const notte = new NotteClient();
 
 // Context manager pattern (automatic start/stop)
-await notte.Session({ timeoutMinutes: 30 }).use(async (session) => {
+await notte.Session({ idle_timeout_minutes: 5 }).use(async (session) => {
   // Session is automatically started
   console.log('Session ID:', session.getId());
 
@@ -189,7 +222,7 @@ try {
 }
 
 // Async iterator pattern
-for await (const session of notte.Session({ timeoutMinutes: 15 })) {
+for await (const session of notte.Session({ max_duration_minutes: 15 })) {
   // Use session here
   const status = await session.status();
   console.log('Session active:', status);
@@ -197,15 +230,101 @@ for await (const session of notte.Session({ timeoutMinutes: 15 })) {
 }
 ```
 
+#### Browser control
+
+Drive the page with typed actions, exactly like `session.execute(...)` in Python.
+Element ids (`B1`, `I2`, ...) must come from a live `observe()` call.
+
+```typescript
+import { NotteClient, actions, ActionExecutionError } from 'notte-sdk';
+
+const notte = new NotteClient();
+
+await notte.Session().use(async (session) => {
+  await session.execute(actions.goto({ url: 'https://www.notte.cc' }));
+
+  const observation = await session.observe({ perception_type: 'deep' });
+  console.log(observation.space);
+
+  // Plain objects work too; the `type` field is a discriminated union
+  await session.execute({ type: 'click', id: 'B1' });
+  await session.execute(actions.fill({ selector: 'internal:text="Email"', value: 'me@example.com' }));
+
+  // A failed action throws ActionExecutionError with the server-side error type
+  try {
+    await session.execute(actions.click({ id: 'B999' }));
+  } catch (error) {
+    if (error instanceof ActionExecutionError) console.log(error.errorType, error.userMessage);
+  }
+
+  // Or inspect the result yourself
+  const result = await session.execute(actions.click({ id: 'B999' }), { raiseOnFailure: false });
+  console.log(result.success, result.message);
+
+  // Run JavaScript in the page and fetch through the page (cookies, proxy, fingerprint)
+  const title = await session.evaluateJs('document.title');
+  const summary = await session.fetch('/api/rest_v1/page/summary/Main_Page').then(r => r.json());
+
+  // Scrape the current page
+  const markdown = await session.scrape({ only_main_content: true });
+
+  // Cookies
+  const cookies = await session.getCookies();
+  await session.setCookies(cookies);
+});
+```
+
+#### Playwright access
+
+`playwright-core` is an optional peer dependency (`npm install playwright-core`),
+the counterpart of `pip install notte-sdk[playwright]`:
+
+```typescript
+await notte.Session().use(async (session) => {
+  const page = await session.page(); // connected over CDP, cached
+  await page.goto('https://www.notte.cc');
+  await page.screenshot({ path: 'screenshot.png' });
+
+  // Or connect your own tooling
+  const cdpUrl = await session.cdpUrl();
+});
+```
+
+#### Replays and cookie files
+
+```typescript
+// Persist login state between runs: loaded on start, appended on stop
+const session = notte.Session({ cookie_file: './cookies.json' });
+
+await session.use(async () => { /* ... */ });
+
+// Replays are generated after stop(); replay() polls until ready (240 s by default)
+const replay = await session.replay();
+await session.downloadReplay('./session.mp4');
+```
+
 #### Session Methods
 
-- `start()` - Start the session
-- `stop()` - Stop the session
+- `start()` - Start the session (retries 5xx errors 3 times, waits 30 s on cluster overload)
+- `stop(closeReason?)` - Stop the session
 - `status()` - Get session status
-- `viewer()` - Open the live session viewer in the local default browser
 - `use(callback)` - Context manager pattern
 - `getId()` - Get session ID
 - `isSessionActive()` - Check if session is running
+- `execute(action, options?)` - Execute a typed action; throws `ActionExecutionError` on failure unless `raiseOnFailure: false`
+- `observe(options?)` - Observe the page (`perception_type`, `min_nb_actions`, `max_nb_actions`)
+- `scrape(options?)` - Scrape the page as markdown, images, or structured data (see [Scraping](#scraping))
+- `evaluateJs(code, options?)` - Evaluate JavaScript and return the stringified result
+- `fetch(url, options?)` - Issue an HTTP request from inside the page
+- `setCookies(cookies)` / `setCookiesFromFile(path)` / `getCookies()` - Manage cookies
+- `cdpUrl()` - Chrome DevTools Protocol websocket URL
+- `page()` - Playwright `Page` connected over CDP (requires `playwright-core`)
+- `debugInfo()` / `debugTabInfo(tabIdx?)` - Debug URLs and tab metadata
+- `replay(options?)` / `downloadReplay(path?)` - Session recording
+- `getScript(options?)` - Python code reproducing the session
+- `viewer()` - Open the live session viewer in the local default browser
+- `storage` - The `RemoteFileStorage` attached with the `storage` option
+- `client.sessions.list(options?)` - List sessions
 
 ### Agent
 
@@ -222,25 +341,25 @@ await notte.Session().use(async (session) => {
     max_steps: 10
   });
 
-  // Non-blocking: start agent and get ID
-  const agentId = await agent.start("Navigate to Google and search for 'TypeScript'");
-  console.log('Agent started:', agentId);
+  // Non-blocking: start agent and get its ID
+  await agent.start({ task: "Navigate to Google and search for 'TypeScript'" });
+  console.log('Agent started:', agent.agentId);
 
   // Check agent status
   const status = await agent.status();
   console.log('Agent status:', status);
 
   // Blocking: run agent and wait for completion with live updates
-  const response = await agent.run(
-    "Find the latest TypeScript documentation",
-    (update) => {
+  const response = await agent.run({
+    task: "Find the latest TypeScript documentation",
+    updateHandler: (update) => {
       if (update.type === 'step') {
         console.log(`Step update:`, update.data);
       } else if (update.type === 'completion') {
         console.log(`Completed:`, update.data);
       }
     }
-  );
+  });
 
   console.log('Final result:', response);
 });
@@ -248,11 +367,12 @@ await notte.Session().use(async (session) => {
 
 #### Agent Methods
 
-- `start(task)` - Start agent with task (non-blocking)
-- `run(task, onUpdate?)` - Start agent and wait for completion (blocking)
+- `start(request)` - Start agent with `{ task, url?, ... }` (non-blocking)
+- `run(request)` - Start agent and wait for completion (blocking); pass `updateHandler` for live updates
 - `status()` - Get agent status
 - `stop()` - Stop the agent
-- `getId()` - Get agent ID
+- `agentId` - The agent ID (read-only property, available after `start()` / `run()`)
+- `sessionId` - The session ID the agent runs in (read-only property)
 - `isRunning()` - Check if agent is running
 
 #### Structured answers with Zod
@@ -300,15 +420,6 @@ await vault.addCredentials('https://github.com/', {
 const strongPassword = vault.generatePassword(20, true); // 20 chars with special chars
 const simplePassword = vault.generatePassword(12, false); // 12 chars, no special chars
 
-// Add credit card information
-await vault.setCreditCard({
-  card_holder_name: 'John Doe',
-  card_number: '4111111111111111',
-  card_cvv: '123',
-  expiry_month: '12',
-  expiry_year: '2025'
-});
-
 // Use with agents for automatic credential management
 await notte.Session().use(async (session) => {
   const agent = notte.Agent({
@@ -328,22 +439,21 @@ const credentials = await existingVault.listCredentials();
 
 // Cleanup
 await vault.deleteCredentials('https://github.com/');
-await vault.deleteCreditCard();
 await vault.stop(); // Deletes entire vault
 ```
 
 #### Vault Methods
 
-- `addCredentials(url, credentials)` - Store credentials for a URL
-- `getCredentials(url)` - Retrieve credentials for a URL
+- `addCredentials(url, credentials)` - Store credentials for a URL (validated client-side like Python: root domain, exactly one of `email`/`username`, base32 `mfa_secret`)
+- `addCredentialsFromEnv(url)` - Read `{DOMAIN}_EMAIL` / `{DOMAIN}_USERNAME` / `{DOMAIN}_PASSWORD` / `{DOMAIN}_MFA_SECRET` from the environment
+- `getCredentials(url)` - Retrieve credentials for a URL; throws `NotteAPIError` when none exist
+- `hasCredential(url)` - Whether credentials exist for a URL
 - `deleteCredentials(url)` - Delete credentials for a URL
 - `listCredentials()` - List all stored credentials
-- `setCreditCard(card)` - Store credit card information
-- `getCreditCard()` - Retrieve credit card information
-- `deleteCreditCard()` - Delete credit card information
 - `generatePassword(length?, includeSpecialChars?)` - Generate secure passwords
 - `delete()` - Delete the entire vault
 - `stop()` - Stop and delete the vault
+- `client.vaults.list(options?)` - List vaults
 
 #### Security Features
 
@@ -361,15 +471,12 @@ import { NotteClient } from 'notte-sdk';
 
 const notte = new NotteClient();
 
-// Create a new persona with vault and phone number
-const persona = notte.Persona({
-  create_vault: true,
-  create_phone_number: true
-});
+// Create a new persona with a vault
+const persona = notte.Persona({ create_vault: true });
 
-// Get persona information
-console.log(`Email: ${persona.info.email}`);
-console.log(`Phone: ${persona.info.phone_number}`);
+// Get persona information (the first call initializes the persona)
+const info = await persona.get();
+console.log(`Email: ${info.email}`);
 
 // Read emails sent to the persona
 const emails = await persona.emails({
@@ -392,9 +499,9 @@ await notte.Session().use(async (session) => {
     vault_id: persona.vault.vaultId // Agent will use persona's vault
   });
 
-  const result = await agent.run(
-    `Create an account on GitHub using the persona credentials`
-  );
+  const result = await agent.run({
+    task: `Create an account on GitHub using the persona credentials`
+  });
   console.log(`Account created: ${result.success}`);
 });
 
@@ -414,10 +521,9 @@ await persona.stop(); // Deletes persona and all associated data
 
 #### Persona Methods
 
+- `get()` - Fetch (and initialize) the persona information
 - `emails(options?)` - Read emails sent to the persona
 - `sms(options?)` - Read SMS messages sent to the persona
-- `createNumber(options?)` - Create a phone number for the persona
-- `deleteNumber()` - Delete the persona's phone number
 - `addCredentials(url)` - Add auto-generated credentials to the persona's vault
 - `delete()` - Delete the persona
 - `stop()` - Stop and delete the persona
@@ -437,7 +543,7 @@ const sms = await persona.sms(options);
 
 #### Persona Features
 
-- **Complete Digital Identity** - Unique email address and phone number
+- **Complete Digital Identity** - Unique email address
 - **2FA Support** - Receive and read SMS verification codes automatically
 - **Automated Account Creation** - Seamless integration with agents for signup flows
 - **Vault Integration** - Optional secure credential storage
@@ -574,9 +680,40 @@ const fn = notte.NotteFunction({
 const code = await fn.download();
 ```
 
+#### Creating and managing functions
+
+Upload a Python script to create a function, like `NotteFunction(path=...)` in Python.
+Creation is lazy: the upload happens on the first call that needs the function id.
+
+```typescript
+const fn = notte.NotteFunction({ path: './my_function.py', name: 'price-monitor', description: 'Checks prices' });
+
+const details = await fn.get();                 // metadata, versions and download link
+await fn.update({ path: './my_function_v2.py' }); // upload a new version
+await fn.updateMetadata({ name: 'price-monitor-v2' });
+await fn.rollback({ version: details.latest_version });
+
+await fn.setSchedule({ cron: '0 9 * * *', variables: { url: 'https://example.com' } });
+await fn.deleteSchedule();
+
+const runs = await fn.runs();                   // all runs, including completed ones
+const functions = await notte.functions.list();
+
+await fn.delete();
+```
+
+`run()` waits at most 300 s by default; pass `timeoutMs` to change it. A failed
+run throws `FailedToRunCloudFunctionError` unless `raiseOnFailure: false`.
+
 #### Function Methods
 
-- `run(variables?, options?)` - Stream logs and wait for completion; use `stream: false` for the backend's JSON response without live logs
+- `run(variables?, options?)` - Stream logs and wait for completion; use `stream: false` for the backend's JSON response without live logs. Options: `runtime`, `functionRunId`, `onLog`, `raiseOnFailure`, `timeoutMs`
+- `get(options?)` - Function metadata, versions and download link
+- `update(options)` / `updateMetadata(body)` - Upload a new version / change name, description
+- `delete()` - Delete the function
+- `setSchedule(body)` / `deleteSchedule()` - Manage the cron schedule
+- `rollback(options)` - Roll back to a previous version
+- `runs(options?)` - List runs (all runs by default, `only_active: true` for active ones)
 - `createRun()` - Create a cloud run record without executing it
 - `getRun(functionRunId)` - Get current metadata/result for a specific run
 - `retrieve(functionRunId)` - Compatibility alias for `getRun()`
@@ -586,14 +723,105 @@ const code = await fn.download();
 - `functionId` - The function ID (read-only property)
 - `decryptionKey` - The decryption key, if provided (read-only property)
 
+### File Storage
+
+Upload files for a session to use and download files the session produced,
+the counterpart of `client.FileStorage()` in Python.
+
+```typescript
+import { NotteClient, FileExistsError } from 'notte-sdk';
+
+const notte = new NotteClient();
+const storage = notte.FileStorage();
+
+await notte.Session({ storage }).use(async (session) => {
+  // Upload from a path, a Blob or a Uint8Array
+  const uploaded = await storage.upload('./invoice.pdf');
+
+  // ... let the session / an agent download something ...
+
+  const downloads = await storage.list({ source: 'session_download' });
+  for (const file of downloads.files) {
+    const path = await storage.download(file.id, './downloads');
+    console.log('saved', path);
+  }
+
+  const info = await storage.metadata(uploaded.id);
+  await storage.delete(uploaded.id);
+});
+
+// Files of a closed session
+const files = notte.FileStorage(sessionId);
+await files.download(fileId, './downloads', { force: true }); // overwrite instead of FileExistsError
+```
+
+`notte.Files(sessionId)` exposes the same operations returning `Blob`s instead of writing to disk.
+
+### Web Search
+
+Search the public web with `POST /search`. The default `outputType` returns
+ranked results; `sourcedAnswer` returns a written answer with its sources.
+
+```typescript
+const { results } = await notte.search('notte browser automation', { depth: 'fast' });
+results.forEach(item => console.log(item.name, item.url));
+
+const { answer, sources } = await notte.search('what is notte?', { outputType: 'sourcedAnswer' });
+console.log(answer, sources.map(s => s.url));
+```
+
+Extra fields such as `maxResults` or `includeDomains` are forwarded to the search
+provider. `SearchOptions` and the `SearchResultsResponse` /
+`SearchSourcedAnswerResponse` shapes are exported.
+
+### Anything API
+
+`notte.anything.start({ task })` (`POST /anything/start`) turns a plain-English
+description of a web task into a deployed, reusable function. Building is slow and
+billable; prefer `notte.functions.list()` when a ready-made function already fits.
+The API response is not typed by the OpenAPI spec and is exposed as an opaque
+`AnythingStartResponse` record (it references the built function, e.g. `function_id`).
+
+```typescript
+const started = await notte.anything.start({ task: 'fetch the top 3 hacker news posts' });
+console.log(started);
+```
+
+### Secrets
+
+Workspace secrets (`/secrets`) are scoped by namespace: `llm_provider` keys are
+used by agents and scraping, `function_env` values are injected into function runs.
+Listing never returns values, only metadata with a `key_hint`.
+
+```typescript
+const meta = await notte.secrets.store({ namespace: 'function_env', name: 'API_TOKEN', value: 'xyz' });
+const { value } = await notte.secrets.get('API_TOKEN', 'function_env');
+const secrets = await notte.secrets.list({ namespace: 'function_env' });
+await notte.secrets.delete(meta.id);
+```
+
+### Usage
+
+Read billing usage for the current (or a given) monthly period, and page through
+per-request usage logs.
+
+```typescript
+const usage = await notte.usage.get();
+console.log(`${usage.session_count} sessions, $${usage.total_cost} this period`);
+
+const page = await notte.usage.logs({ endpoint: 'sessions.start', page: 1, page_size: 50 });
+page.items.forEach(log => console.log(log.created_at, log.endpoint, log.duration_ms));
+```
+
 ## Advanced Usage
 
 ### Session Configuration
 
 ```typescript
 const session = notte.Session({
-  timeoutMinutes: 45,        // Session timeout (default: 30)
-  // Add other session options as supported by the API
+  idle_timeout_minutes: 5,    // Close the session after this much inactivity
+  max_duration_minutes: 45,   // Hard limit on the session lifetime
+  // Add other session options as supported by the API (SessionOptions)
 });
 ```
 
@@ -608,36 +836,78 @@ const agent = notte.Agent({
 
 ### Error Handling
 
+Every error thrown by the SDK extends `NotteError`, mirroring `notte_sdk.errors`
+in Python. Generated API calls reject with a `NotteAPIError` carrying the request
+`path`, the HTTP `statusCode` and the parsed response body in `error`; the API can
+flag failures as `NotteAPIExecutionError`. Client-side problems use dedicated
+classes: `AuthenticationError` (missing key), `InvalidRequestError`,
+`NotteTimeoutError` (request or wait deadline exceeded),
+`FailedToRunCloudFunctionError`, `ScrapeFailedError` and `ActionExecutionError`.
+
 ```typescript
+import { NotteAPIError, NotteError, NotteTimeoutError } from 'notte-sdk';
+
 try {
   await notte.Session().use(async (session) => {
     const agent = notte.Agent({ session });
-    const response = await agent.run("Complete a complex task");
+    const response = await agent.run({ task: "Complete a complex task" });
 
     if (!response.success) {
-      console.error('Agent failed:', response.error);
+      console.error('Agent failed:', response.answer);
     }
   });
 } catch (error) {
-  console.error('Session error:', error);
+  if (error instanceof NotteAPIError) {
+    console.error(`API ${error.statusCode} on ${error.path}:`, error.apiMessage ?? error.error);
+  } else if (error instanceof NotteTimeoutError) {
+    console.error('Timed out:', error.message);
+  } else if (error instanceof NotteError) {
+    console.error('SDK error:', error.message);
+  } else {
+    throw error;
+  }
 }
+```
+
+### Timeouts and retries
+
+The client applies a per-request timeout (`timeoutMs`, default 60 000 ms; `0`
+disables it) and rejects with `NotteTimeoutError` when it elapses. `retry()`
+wraps an async function so it is re-attempted on failure, like the Python
+`@retry` decorator:
+
+```typescript
+import { NotteClient, retry } from 'notte-sdk';
+
+const notte = new NotteClient({ timeoutMs: 30_000 });
+
+const start = retry(() => notte.Session().start(), {
+  maxTries: 3,
+  delayMs: 1_000,
+  shouldRetry: error => error instanceof NotteTimeoutError,
+});
+await start();
 ```
 
 ### WebSocket Updates
 
-The `agent.run()` method provides real-time updates via WebSocket:
+The `agent.run()` method provides real-time updates via WebSocket through the
+`updateHandler` option:
 
 ```typescript
-const response = await agent.run("Your task", (update) => {
-  switch (update.type) {
-    case 'step':
-      console.log(`Step ${update.data.currentStep}:`, update.data);
-      break;
-    case 'completion':
-      console.log('Task completed:', update.data);
-      break;
-    default:
-      console.log('Update:', update);
+const response = await agent.run({
+  task: "Your task",
+  updateHandler: (update) => {
+    switch (update.type) {
+      case 'step':
+        console.log('Step:', update.data);
+        break;
+      case 'completion':
+        console.log('Task completed:', update.data);
+        break;
+      default:
+        console.log('Update:', update);
+    }
   }
 });
 ```
@@ -675,7 +945,7 @@ from notte_sdk import NotteClient
 notte = NotteClient()
 
 # Session context manager
-with notte.Session(timeout_minutes=2) as session:
+with notte.Session(idle_timeout_minutes=2) as session:
     status = session.status()
     print(status)
 
@@ -693,7 +963,7 @@ import { NotteClient } from 'notte-sdk';
 const notte = new NotteClient();
 
 // Session context manager equivalent
-await notte.Session({ timeoutMinutes: 2 }).use(async (session) => {
+await notte.Session({ idle_timeout_minutes: 2 }).use(async (session) => {
   const status = await session.status();
   console.log(status);
 });
@@ -701,7 +971,7 @@ await notte.Session({ timeoutMinutes: 2 }).use(async (session) => {
 // Agent usage
 await notte.Session().use(async (session) => {
   const agent = notte.Agent({ session, max_steps: 10 });
-  const response = await agent.run("Find the best italian restaurant in SF");
+  const response = await agent.run({ task: "Find the best italian restaurant in SF" });
   console.log(`Agent completed: ${response.success}, answer: ${response.answer}`);
 });
 ```
@@ -739,7 +1009,7 @@ npm test
 npm run test -- --coverage
 
 # Run specific test file
-npm run test src/test/client.test.ts
+npm run test test/client.test.ts
 ```
 
 ### Regenerating from API
@@ -758,15 +1028,15 @@ This will fetch the latest API specification and update the generated client cod
 The SDK is built with full TypeScript support:
 
 ```typescript
-import { NotteClient, SessionStatus, AgentResponse } from 'notte-sdk';
+import { NotteClient, type SessionResponse, type LegacyAgentStatusResponse } from 'notte-sdk';
 
 const notte = new NotteClient();
 
 // All types are properly inferred
 await notte.Session().use(async (session) => {
-  const status: SessionStatus = await session.status();
+  const status: SessionResponse = await session.status();
   const agent = notte.Agent({ session });
-  const response: AgentResponse = await agent.run("task");
+  const response: LegacyAgentStatusResponse = await agent.run({ task: "task" });
 });
 ```
 
@@ -774,24 +1044,35 @@ await notte.Session().use(async (session) => {
 
 ### Types
 
-The SDK exports all generated types from the OpenAPI specification:
+The SDK exports all generated types from the OpenAPI specification alongside the
+hand-written option types:
 
 ```typescript
 import type {
   NotteClientConfig,
   SessionOptions,
-  SessionStatus,
+  SessionResponse,
+  SessionListOptions,
   AgentConstructor,
   AgentRunRequest,
   AgentUpdateHandler,
+  AgentListOptions,
   VaultConstructor,
-  CredentialsDict,
-  CreditCardDict,
+  VaultListOptions,
+  CredentialsDictInput,
   Credential,
   PersonaConstructor,
   MessageReadOptions,
   PersonaListOptions,
-  CreatePhoneNumberOptions
+  FunctionConstructor,
+  FunctionListOptions,
+  RetryOptions,
+  NotteAPIErrorBody,
+  SearchOptions,
+  SearchResultsResponse,
+  AnythingStartResponse,
+  SecretMetadata,
+  UsageResponse,
 } from 'notte-sdk';
 ```
 

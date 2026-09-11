@@ -34,7 +34,11 @@ import {
   type ZodLikeSchema,
 } from '@/scrape';
 import { SDK_VERSION } from '@/version';
-import { SessionFiles } from '@/files';
+import { RemoteFileStorage, SessionFiles } from '@/files';
+import { NotteSearch, type SearchOptions, type SearchResponse, type SearchResultsResponse, type SearchSourcedAnswerResponse, type SearchStructuredResponse } from '@/search';
+import { NotteAnything } from '@/anything';
+import { NotteSecrets } from '@/secrets';
+import { NotteUsage } from '@/usage';
 import {
   AuthenticationError,
   InvalidRequestError,
@@ -272,6 +276,21 @@ export class NotteClient {
   }
 
   /**
+   * File storage to attach to a session, the counterpart of `client.FileStorage()`.
+   *
+   * ```ts
+   * const storage = client.FileStorage();
+   * await client.Session({ storage }).use(async session => {
+   *   await storage.upload('./invoice.pdf');
+   *   const files = await storage.list({ source: 'session_download' });
+   * });
+   * ```
+   */
+  FileStorage(sessionId?: string): RemoteFileStorage {
+    return new RemoteFileStorage(this, sessionId);
+  }
+
+  /**
    * Create a new agent
    */
   Agent(options: AgentConstructor): Agent {
@@ -342,6 +361,37 @@ export class NotteClient {
         return response.data?.items ?? [];
       },
     };
+  }
+
+  /**
+   * Web search (`POST /search`).
+   *
+   * ```ts
+   * const { results } = await client.search('notte browser agents');
+   * const { answer } = await client.search('what is notte?', { outputType: 'sourcedAnswer' });
+   * ```
+   */
+  async search(query: string, options?: SearchOptions & { outputType?: 'searchResults' }): Promise<SearchResultsResponse>;
+  async search(query: string, options: SearchOptions & { outputType: 'sourcedAnswer' }): Promise<SearchSourcedAnswerResponse>;
+  async search(query: string, options: SearchOptions & { outputType: 'structured' }): Promise<SearchStructuredResponse>;
+  async search(query: string, options: SearchOptions): Promise<SearchResponse>;
+  async search(query: string, options: SearchOptions = {}): Promise<SearchResponse> {
+    return new NotteSearch(this).search(query, options);
+  }
+
+  /** Anything API (`POST /anything/start`). */
+  get anything(): NotteAnything {
+    return new NotteAnything(this);
+  }
+
+  /** Workspace secrets (`/secrets`). */
+  get secrets(): NotteSecrets {
+    return new NotteSecrets(this);
+  }
+
+  /** Usage and billing (`/usage`, `/usage/logs`). */
+  get usage(): NotteUsage {
+    return new NotteUsage(this);
   }
 
   /**

@@ -407,7 +407,8 @@ export class Agent {
       throwOnError: true,
       signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())),
     });
-    const wsUrl = new URL(debug.data.ws.logs);
+    // Websocket handshakes read the db preview branch from the query string.
+    const wsUrl = new URL(this.client.withDbPreview(debug.data.ws.logs));
     const token = wsUrl.searchParams.get('token');
     if (!token || token === config.apiKey || wsUrl.protocol !== 'wss:') return null;
     wsUrl.pathname = `/agents/${encodeURIComponent(agentId)}/debug/logs`;
@@ -592,9 +593,22 @@ export class Agent {
   }
 
   /**
-   * Check if agent is running - convenience method
+   * Whether `start()`/`run()` was called on this instance (or it was built from an agent id).
+   * This is a local check and does not contact the API.
    */
-  isRunning(): boolean {
+  hasStarted(): boolean {
     return this.response !== null;
+  }
+
+  /**
+   * Whether the agent is still active on the server. Fetches the current status,
+   * like calling `agent.status()` in Python; an agent that was never started is not running.
+   */
+  async isRunning(): Promise<boolean> {
+    if (!this.response) {
+      return false;
+    }
+    const status = await this.status();
+    return status.status === 'active';
   }
 }

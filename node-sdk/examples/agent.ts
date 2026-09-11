@@ -1,6 +1,6 @@
 // Example usage of the TypeScript SDK with custom logging
 
-import { NotteClient } from '@notte/sdk';
+import { NotteClient } from 'notte-sdk';
 
 async function exampleUsage() {
   const client = new NotteClient();
@@ -18,12 +18,16 @@ async function exampleUsage() {
     console.log(`Answer: ${result.answer}`);
   });
 
-  // Example 2: Using custom update handler
+  // Example 2: Using a custom update handler
   await client.Session().use(async (session) => {
     const agent = client.Agent({ session, max_steps: 3 });
 
     const result = await agent.run({
-      task: "Check the weather today", url: "https://www.google.com/search?q=weather"
+      task: "Check the weather today",
+      url: "https://www.google.com/search?q=weather",
+      updateHandler: (update) => {
+        console.log(`[${update.timestamp}] ${update.type}`, update.data);
+      }
     });
 
     console.log(`Final result: ${result.answer}`);

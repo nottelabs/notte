@@ -36,4 +36,20 @@ describe('cleanupVaults', () => {
 
     expect(vaultDeleteMock).not.toHaveBeenCalled();
   });
+
+  it('keeps deleting the remaining vaults when one delete rejects', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vaultDeleteMock.mockImplementation(async ({ path }: { path: { vault_id: string } }) => {
+      if (path.vault_id === 'gone') {
+        throw new Error('404');
+      }
+      return { data: { status: 'success' } };
+    });
+
+    await expect(cleanupVaults(client, ['gone', 'owned-vault-2'])).resolves.toBeUndefined();
+
+    expect(vaultDeleteMock).toHaveBeenCalledTimes(2);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('Failed to delete owned vault gone'));
+    warn.mockRestore();
+  });
 });

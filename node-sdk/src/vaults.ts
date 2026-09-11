@@ -1,42 +1,181 @@
-import { NotteClient } from '@/client';
+import type { NotteClient } from '@/client';
 import type {
+  Credential,
+  CredentialsDictInput,
+  CredentialsDictOutput,
   Vault,
   VaultCreateRequest,
-  GetCredentialsResponse,
-  DeleteCredentialsResponse,
-  GetCreditCardResponse,
-  DeleteVaultResponse,
-  ListCredentialsResponse,
-  CredentialsDictInput,
-  CreditCardDictInput,
-  Credential
 } from '@/lib/client/types.gen';
 import {
   vaultCreate,
   vaultCredentialsAdd,
-  vaultCredentialsGet,
   vaultCredentialsDelete,
-  vaultDelete,
+  vaultCredentialsGet,
   vaultCredentialsList,
-  vaultCreditCardSet,
-  vaultCreditCardGet,
-  vaultCreditCardDelete
+  vaultDelete,
 } from '@/lib/client/sdk.gen';
-import { formatError } from '@/utils';
+import { InvalidRequestError } from '@/errors';
 
 // Constructor overloads for NotteVault - mirrors Python overloads
 export interface VaultConstructorWithId {
   vault_id: string;
 }
 
-export interface VaultConstructorCreate extends Omit<VaultCreateRequest, never> {
+export interface VaultConstructorCreate extends VaultCreateRequest {
   vault_id?: never;
 }
 
 export type VaultConstructor = VaultConstructorWithId | VaultConstructorCreate;
 
+/** Credential fields read by `addCredentialsFromEnv`, in the order Python's `CredentialField.registry` declares them. */
+export const CREDENTIAL_FIELDS = ['email', 'username', 'mfa_secret', 'password'] as const;
+export type CredentialField = (typeof CREDENTIAL_FIELDS)[number];
+
 /**
- * Vault that fetches credentials stored using the SDK - mirrors Python NotteVault class
+ * Second-level labels that form a public suffix together with a two-letter
+ * country code (`example.co.uk`, `shop.com.au`). Python resolves this with the
+ * full public suffix list through `tldextract`; this SDK ships a compact rule
+ * instead so no dependency is needed.
+ */
+const COUNTRY_SECOND_LEVEL_LABELS = new Set([
+  'ac', 'co', 'com', 'edu', 'gov', 'ltd', 'me', 'mil', 'ne', 'net', 'nom', 'or', 'org', 'plc', 'sch',
+]);
+
+function extractHostname(url: string): string {
+  const trimmed = url.trim();
+  if (trimmed.length === 0) {
+    return '';
+  }
+  // Bare domains (`peeple.com`, `github.com:443`) get a scheme so `URL` can parse them.
+  const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed);
+  const candidates = hasScheme ? [trimmed] : [`https://${trimmed}`];
+  for (const candidate of candidates) {
+    try {
+      const { hostname } = new URL(candidate);
+      // Python's tldextract yields an empty domain for names starting with a dot.
+      if (hostname.length > 0 && !hostname.startsWith('.')) {
+        return hostname.toLowerCase();
+      }
+    } catch {
+      // Not parseable: no domain.
+    }
+  }
+  return '';
+}
+
+/**
+ * Get the root domain of a URL, the counterpart of `notte_core.utils.url.get_root_domain`.
+ * Returns an empty string when no domain can be extracted.
+ *
+ * ```ts
+ * getRootDomain('https://www.example.com/path'); // 'example.com'
+ * getRootDomain('https://test.peeple.com/ok'); // 'peeple.com'
+ * getRootDomain('https://shop.example.co.uk'); // 'example.co.uk'
+ * ```
+ */
+export function getRootDomain(url: string): string {
+  const hostname = extractHostname(url);
+  if (hostname.length === 0) {
+    return '';
+  }
+  // IPv6 literals and IPv4 addresses have no public suffix: keep them whole.
+  if (hostname.startsWith('[') || /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)) {
+    return hostname;
+  }
+  const labels = hostname.split('.').filter(label => label.length > 0);
+  if (labels.length === 0) {
+    return '';
+  }
+  if (labels.length <= 2) {
+    return labels.join('.');
+  }
+  const tld = labels[labels.length - 1]!;
+  const secondLevel = labels[labels.length - 2]!;
+  const suffixLength = tld.length === 2 && COUNTRY_SECOND_LEVEL_LABELS.has(secondLevel) ? 2 : 1;
+  return labels.slice(-(suffixLength + 1)).join('.');
+}
+
+/**
+ * Normalise a credential URL to its root domain, the counterpart of
+ * `notte_sdk.types.validate_url`. Throws `InvalidRequestError` when the URL
+ * has no domain name.
+ *
+ * ```ts
+ * validateUrl('https://github.com/login'); // 'github.com'
+ * validateUrl('https://'); // throws InvalidRequestError
+ * ```
+ */
+export function validateUrl(url: string): string {
+  const domain = getRootDomain(url);
+  if (domain.length === 0) {
+    throw new InvalidRequestError(`Invalid URL: ${url}. Please provide a valid URL with a domain name.`);
+  }
+  return domain;
+}
+
+/**
+ * Check that a string is a base32 TOTP secret, with the padding rules Python's
+ * `pyotp.TOTP(secret).now()` applies (`base64.b32decode` after right-padding
+ * the secret to a multiple of eight characters).
+ */
+export function isValidMfaSecret(secret: string): boolean {
+  if (secret.length === 0) {
+    return false;
+  }
+  let padded = secret.toUpperCase();
+  if (padded.length % 8 !== 0) {
+    padded += '='.repeat(8 - (padded.length % 8));
+  }
+  const stripped = padded.replace(/=+$/, '');
+  const padding = padded.length - stripped.length;
+  return /^[A-Z2-7]*$/.test(stripped) && [0, 1, 3, 4, 6].includes(padding);
+}
+
+/**
+ * Validate an MFA secret like `AddCredentialsRequest.check_email_and_username`
+ * in Python. Rejects one-time codes (`999777`) and anything that is not base32.
+ */
+export function validateMfaSecret(secret: string): void {
+  if (!isValidMfaSecret(secret)) {
+    throw new InvalidRequestError('Invalid MFA secret code: did you try to store an OTP instead of a secret?');
+  }
+}
+
+/**
+ * Apply the client-side rules of Python's `AddCredentialsRequest`: exactly one
+ * of `username` / `email`, and a base32 `mfa_secret` when one is provided.
+ * Returns the credentials unchanged.
+ */
+export function validateCredentials(credentials: CredentialsDictInput): CredentialsDictInput {
+  const hasUsername = credentials.username !== undefined && credentials.username !== null;
+  const hasEmail = credentials.email !== undefined && credentials.email !== null;
+  if (hasUsername && hasEmail) {
+    throw new InvalidRequestError('Can only set either username or email');
+  }
+  if (!hasUsername && !hasEmail) {
+    throw new InvalidRequestError('Need to have either username or email set');
+  }
+  if (credentials.mfa_secret !== undefined && credentials.mfa_secret !== null) {
+    validateMfaSecret(credentials.mfa_secret);
+  }
+  return credentials;
+}
+
+/**
+ * Vault that fetches credentials stored using the SDK, the counterpart of
+ * `notte_sdk.endpoints.vaults.NotteVault`.
+ *
+ * The remote vault is created lazily on the first API operation so local-only
+ * helpers such as `generatePassword()` stay side-effect free. Every API
+ * failure rejects with a `NotteAPIError`; caller mistakes (invalid URL,
+ * one-time code stored as an MFA secret, ...) reject with `InvalidRequestError`.
+ * // pragma: allowlist secret
+ * ```ts
+ * const vault = client.Vault({ name: 'My vault' });
+ * await vault.addCredentials('https://github.com/', { email: 'me@example.org', password: 'secret' }); // pragma: allowlist secret
+ * const credentials = await vault.getCredentials('https://github.com/login');
+ * await vault.stop(); // deletes the vault and every credential it holds
+ * ```
  */
 export class NotteVault {
   private client: NotteClient;
@@ -47,18 +186,24 @@ export class NotteVault {
   constructor(client: NotteClient, options: VaultConstructor = {}) {
     this.client = client;
 
-    if (options && 'vault_id' in options && options.vault_id) {
+    if (options && 'vault_id' in options && options.vault_id !== undefined) {
       // Constructor for existing vault
+      if (options.vault_id.length === 0) {
+        throw new InvalidRequestError('Vault ID cannot be empty');
+      }
       this.initPromise = this.initExistingVault(options.vault_id);
+      // The rejection is surfaced by the first awaited operation; avoid an
+      // unhandled rejection when verification fails before anything is awaited.
+      this.initPromise.catch(() => undefined);
     } else {
       // Defer remote creation until an operation actually needs a vault. This
       // keeps local-only helpers such as generatePassword() side-effect free.
-      this.createData = (options || {}) as VaultConstructorCreate;
+      const { vault_id: _ignored, ...createData } = (options ?? {}) as VaultConstructorCreate;
+      this.createData = createData;
     }
   }
 
   private async initExistingVault(vaultId: string): Promise<string> {
-    // Verify vault exists by trying to list its credentials
     await this.verifyVaultExists(vaultId);
     this._vaultId = vaultId;
     return this._vaultId;
@@ -67,35 +212,22 @@ export class NotteVault {
   private async initNewVault(createData: VaultCreateRequest): Promise<string> {
     const response = await vaultCreate({
       client: this.client.getClient(),
-      body: createData
+      body: createData,
+      throwOnError: true,
     });
-
-    if (response?.error) {
-      throw new Error(`Failed to create vault: ${formatError(response.error)}`);
-    }
-
-    const vault = response.data as Vault;
+    const vault: Vault = response.data;
     console.warn(`[Vault] ${vault.vault_id} created since no vault id was provided. Please store this to retrieve it later.`);
     this._vaultId = vault.vault_id;
     return this._vaultId;
   }
 
   private async verifyVaultExists(vaultId: string): Promise<void> {
-    if (vaultId.length === 0) {
-      throw new Error('Vault ID cannot be empty');
-    }
-
-    // Verify vault exists by trying to list its credentials
-    const response = await vaultCredentialsList({
+    // Verify the vault exists by listing its credentials; a missing vault rejects with a NotteAPIError.
+    await vaultCredentialsList({
       client: this.client.getClient(),
-      path: {
-        vault_id: vaultId
-      }
+      path: { vault_id: vaultId },
+      throwOnError: true,
     });
-
-    if (response?.error) {
-      throw new Error(`Failed to verify vault exists: ${formatError(response.error)}`);
-    }
   }
 
   private async ensureInitialized(): Promise<string> {
@@ -111,259 +243,195 @@ export class NotteVault {
       this.initPromise = this.initNewVault(createData);
       return await this.initPromise;
     }
-    throw new Error('Vault not initialized');
+    throw new InvalidRequestError('Vault not initialized');
   }
 
+  /** ID of the remote vault. Throws until the first API operation has created or verified it. */
   get vaultId(): string {
     if (!this._vaultId) {
-      throw new Error('Vault not initialized. Use await on vault operations first.');
+      throw new InvalidRequestError('Vault not initialized. Await a vault operation first.');
     }
     return this._vaultId;
   }
 
   /**
-   * Start the vault - no-op for compatibility with Python interface
+   * Start the vault. No-op kept for parity with Python's `SyncResource` interface.
    */
   start(): void {
     // No-op - vault is ready to use immediately
   }
 
   /**
-   * Stop the vault - deletes it and all credentials
+   * Stop the vault: deletes it together with every credential it holds.
+   *
+   * ```ts
+   * await vault.stop();
+   * ```
    */
   async stop(): Promise<void> {
     const vaultId = await this.ensureInitialized();
-    console.log(`[Vault] ${vaultId} deleted. All credentials have been deleted.`);
+    console.info(`[Vault] ${vaultId} deleted. All credentials have been deleted.`);
     await this.delete();
   }
 
   /**
-   * Add or update credentials for a URL
+   * Add or update the credentials stored for a website. The URL is reduced to
+   * its root domain (`https://github.com/login` → `github.com`) before it is
+   * sent, like Python's `AddCredentialsRequest`.
+   *
+   * ```ts
+   * await vault.addCredentials('https://github.com/', {
+   *   email: 'me@example.org',
+   *   password: 'secret', // pragma: allowlist secret
+   *   mfa_secret: 'JBSWY3DPEHPK3PXP', // pragma: allowlist secret
+   * });
+   * ```
    */
   async addCredentials(url: string, credentials: CredentialsDictInput): Promise<void> {
-    // Validate MFA secret if provided
-    if (credentials.mfa_secret) {
-      this.validateMfaSecret(credentials.mfa_secret);
-    }
-
+    const domain = validateUrl(url);
+    validateCredentials(credentials);
     const vaultId = await this.ensureInitialized();
-    const response = await vaultCredentialsAdd({
+    await vaultCredentialsAdd({
       client: this.client.getClient(),
-      path: {
-        vault_id: vaultId
-      },
-      body: { url, credentials }
+      path: { vault_id: vaultId },
+      body: { url: domain, credentials },
+      throwOnError: true,
     });
-
-    if (response?.error) {
-      throw new Error(`Failed to add credentials: ${formatError(response.error)}`);
-    }
   }
 
   /**
-   * Get credentials for a URL
+   * Get the credentials stored for a website. Rejects with a `NotteAPIError`
+   * when the vault holds no credentials for that domain, like Python's
+   * `get_credentials`.
+   *
+   * ```ts
+   * const { email, password } = await vault.getCredentials('https://github.com/login');
+   * ```
    */
-  async getCredentials(url: string): Promise<CredentialsDictInput | null> {
-    try {
-      const vaultId = await this.ensureInitialized();
-      const response = await vaultCredentialsGet({
-        client: this.client.getClient(),
-        path: {
-          vault_id: vaultId
-        },
-        query: { url }
-      });
-
-      if (response?.error) {
-        return null;
-      }
-
-      const credentialsResponse = response.data as GetCredentialsResponse;
-      return credentialsResponse.credentials;
-    } catch (error) {
-      return null;
-    }
+  async getCredentials(url: string): Promise<CredentialsDictOutput> {
+    const domain = validateUrl(url);
+    const vaultId = await this.ensureInitialized();
+    const response = await vaultCredentialsGet({
+      client: this.client.getClient(),
+      path: { vault_id: vaultId },
+      query: { url: domain },
+      throwOnError: true,
+    });
+    return response.data.credentials;
   }
 
   /**
-   * Delete credentials for a URL
+   * Check whether the vault holds credentials for a website, the counterpart
+   * of `BaseVault.has_credential`. Never rejects for a missing credential.
+   *
+   * ```ts
+   * if (!(await vault.hasCredential('https://github.com/'))) {
+   *   await vault.addCredentialsFromEnv('https://github.com/');
+   * }
+   * ```
+   */
+  async hasCredential(url: string): Promise<boolean> {
+    const domain = getRootDomain(url);
+    const credentials = await this.listCredentials();
+    return credentials.some(credential => credential.url === url || credential.url === domain);
+  }
+
+  /**
+   * Delete the credentials stored for a website.
+   *
+   * ```ts
+   * await vault.deleteCredentials('https://github.com/');
+   * ```
    */
   async deleteCredentials(url: string): Promise<void> {
+    const domain = validateUrl(url);
     const vaultId = await this.ensureInitialized();
-    const response = await vaultCredentialsDelete({
+    await vaultCredentialsDelete({
       client: this.client.getClient(),
-      path: {
-        vault_id: vaultId
-      },
-      query: { url }
+      path: { vault_id: vaultId },
+      query: { url: domain },
+      throwOnError: true,
     });
-
-    if (response?.error) {
-      throw new Error(`Failed to delete credentials: ${formatError(response.error)}`);
-    }
   }
 
   /**
-   * Set credit card information
-   */
-  async setCreditCard(creditCard: CreditCardDictInput): Promise<void> {
-    const vaultId = await this.ensureInitialized();
-    const response = await vaultCreditCardSet({
-      client: this.client.getClient(),
-      path: {
-        vault_id: vaultId
-      },
-      body: { credit_card: creditCard }
-    });
-
-    if (response?.error) {
-      throw new Error(`Failed to set credit card: ${formatError(response.error)}`);
-    }
-  }
-
-  /**
-   * Get credit card information
-   */
-  async getCreditCard(): Promise<CreditCardDictInput> {
-    const vaultId = await this.ensureInitialized();
-    const response = await vaultCreditCardGet({
-      client: this.client.getClient(),
-      path: {
-        vault_id: vaultId
-      }
-    });
-
-    if (response?.error) {
-      throw new Error(`Failed to get credit card: ${formatError(response.error)}`);
-    }
-
-    const creditCardResponse = response.data as GetCreditCardResponse;
-    return creditCardResponse.credit_card;
-  }
-
-  /**
-   * List all credentials in the vault
+   * List the websites the vault holds credentials for. Passwords are never returned.
+   *
+   * ```ts
+   * const credentials = await vault.listCredentials();
+   * console.log(credentials.map(c => c.url));
+   * ```
    */
   async listCredentials(): Promise<Credential[]> {
     const vaultId = await this.ensureInitialized();
     const response = await vaultCredentialsList({
       client: this.client.getClient(),
-      path: {
-        vault_id: vaultId
-      }
+      path: { vault_id: vaultId },
+      throwOnError: true,
     });
-
-    if (response?.error) {
-      throw new Error(`Failed to list credentials: ${formatError(response.error)}`);
-    }
-
-    const credentialsResponse = response.data as ListCredentialsResponse;
-    return credentialsResponse.credentials;
+    return response.data.credentials;
   }
 
   /**
-   * Delete credit card information
-   */
-  async deleteCreditCard(): Promise<void> {
-    const vaultId = await this.ensureInitialized();
-    const response = await vaultCreditCardDelete({
-      client: this.client.getClient(),
-      path: {
-        vault_id: vaultId
-      }
-    });
-
-    if (response?.error) {
-      throw new Error(`Failed to delete credit card: ${formatError(response.error)}`);
-    }
-  }
-
-  /**
-   * Delete the entire vault
+   * Delete the vault and every credential it holds.
    */
   async delete(): Promise<void> {
     const vaultId = await this.ensureInitialized();
-    const response = await vaultDelete({
+    await vaultDelete({
       client: this.client.getClient(),
-      path: {
-        vault_id: vaultId
-      }
+      path: { vault_id: vaultId },
+      throwOnError: true,
     });
-
-    if (response?.error) {
-      throw new Error(`Failed to delete vault: ${formatError(response.error)}`);
-    }
   }
 
   /**
-   * Add credentials from environment variables
-   * Mirrors Python's add_credentials_from_env method
+   * Add credentials read from environment variables, the counterpart of
+   * `BaseVault.add_credentials_from_env`. For `https://github.com/` the
+   * variables are `GITHUB_COM_EMAIL`, `GITHUB_COM_USERNAME`,
+   * `GITHUB_COM_MFA_SECRET` and `GITHUB_COM_PASSWORD`.
+   *
+   * ```ts
+   * process.env.GITHUB_COM_EMAIL = 'me@example.org';
+   * process.env.GITHUB_COM_PASSWORD = 'secret'; // pragma: allowlist secret
+   * await vault.addCredentialsFromEnv('https://github.com/');
+   * ```
    */
   async addCredentialsFromEnv(url: string): Promise<void> {
-    // Extract domain from URL for environment variable naming
-    const domain = this.extractDomainFromUrl(url);
-    const envPrefix = domain.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase();
-
-    // Look for common credential environment variables
-    const email = process.env[`${envPrefix}_EMAIL`] || process.env[`${envPrefix}_USERNAME`];
-    const password = process.env[`${envPrefix}_PASSWORD`];
-
-    if (!email || !password) {
-      throw new Error(`Environment variables ${envPrefix}_EMAIL/USERNAME and ${envPrefix}_PASSWORD are required`);
+    const rootDomain = validateUrl(url);
+    const prefix = rootDomain.replace(/\./g, '_').toUpperCase();
+    const credentials: Partial<CredentialsDictInput> = {};
+    const variableNames: string[] = [];
+    for (const field of CREDENTIAL_FIELDS) {
+      const variable = `${prefix}_${field.toUpperCase()}`;
+      variableNames.push(variable);
+      const value = process.env[variable];
+      if (value !== undefined) {
+        credentials[field] = value;
+      }
     }
-
-    const credentials: CredentialsDictInput = { email, password };
-
-    // Add MFA secret if available
-    const mfaSecret = process.env[`${envPrefix}_MFA_SECRET`];
-    if (mfaSecret) {
-      this.validateMfaSecret(mfaSecret);
-      credentials.mfa_secret = mfaSecret;
+    if (Object.keys(credentials).length === 0) {
+      throw new InvalidRequestError(
+        `No credentials found in the environment for ${url}. Please set the following variables: ${variableNames.join(', ')}`,
+      );
     }
-
-    await this.addCredentials(url, credentials);
+    await this.addCredentials(url, credentials as CredentialsDictInput);
   }
 
   /**
-   * Extract domain from URL for environment variable naming
-   */
-  private extractDomainFromUrl(url: string): string {
-    try {
-      const urlObj = new URL(url);
-      return urlObj.hostname.replace(/^www\./, '');
-    } catch {
-      // If URL parsing fails, try to extract domain manually
-      const match = url.match(/(?:https?:\/\/)?(?:www\.)?([^\/]+)/);
-      return match ? match[1] : url;
-    }
-  }
-
-  /**
-   * Validate MFA secret format
-   * Mirrors Python's MFA secret validation
-   */
-  private validateMfaSecret(mfaSecret: string): void {
-    // MFA secret should be a valid base32 string (typically 16-32 characters)
-    // and should not be all numbers (which would be invalid)
-    if (/^\d+$/.test(mfaSecret)) {
-      throw new Error('MFA secret cannot be all numbers. Please provide a valid base32 secret.');
-    }
-
-    if (mfaSecret.length < 16) {
-      throw new Error('MFA secret must be at least 16 characters long');
-    }
-  }
-
-  /**
-   * Generate a password with character requirements.
-   * Requirement enforcement currently uses Math.random(); do not use this
-   * method for security-sensitive passwords until that implementation is fixed.
+   * Generate a secure random password, the counterpart of Python's
+   * `generate_password`. The result always contains a lowercase letter, an
+   * uppercase letter and a digit, plus a special character unless
+   * `includeSpecialChars` is false.
+   *
+   * ```ts
+   * const password = vault.generatePassword(24);
+   * ```
    */
   generatePassword(length: number = 20, includeSpecialChars: boolean = true): string {
     // Validate minimum length
     const minRequiredLength = includeSpecialChars ? 4 : 3;
     if (length < minRequiredLength) {
-      throw new Error(`Password length must be at least ${minRequiredLength} characters`);
+      throw new InvalidRequestError(`Password length must be at least ${minRequiredLength} characters`);
     }
 
     // Character sets
@@ -371,69 +439,37 @@ export class NotteVault {
     const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const digits = '0123456789';
     const specialChars = '!@#$%^&*()_+-=[]|;:,.<>?';
+    const alphanumeric = uppercase + lowercase + digits;
 
-    // Generate initial random password using crypto
-    const crypto = globalThis.crypto || require('crypto');
+    // Generate the initial random password from the platform CSPRNG.
+    const allowedChars = includeSpecialChars ? `${alphanumeric}-_` : alphanumeric;
     const array = new Uint8Array(length);
-    crypto.getRandomValues(array);
+    globalThis.crypto.getRandomValues(array);
+    const passwordArray = Array.from(array, byte => allowedChars[byte % allowedChars.length]!);
 
-    // Use appropriate character set based on includeSpecialChars
-    const allowedChars = includeSpecialChars
-      ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_' // pragma: allowlist secret
-      : 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let password = Array.from(array, byte => allowedChars[byte % allowedChars.length]).join('').slice(0, length);
-    const passwordArray = password.split('');
+    const randomIndex = (size: number): number => {
+      const [value] = globalThis.crypto.getRandomValues(new Uint32Array(1));
+      return value! % size;
+    };
+    const pick = (chars: string): string => chars[randomIndex(chars.length)]!;
 
-    // Ensure we have required character types by replacing some characters
-    // This maintains randomness while guaranteeing complexity requirements
-
-    // If special chars are not allowed, remove any that might have been included first
-    if (!includeSpecialChars) {
-      for (let i = 0; i < passwordArray.length; i++) {
-        if (specialChars.includes(passwordArray[i])) {
-          // Replace with a random alphanumeric character
-          const alphanumeric = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-          passwordArray[i] = alphanumeric[Math.floor(Math.random() * alphanumeric.length)];
-        }
-      }
-    }
-
-    // Guarantee all required character types are present
-    // We'll verify and fix in a loop until all requirements are met
-    // This ensures that even if one fix overwrites another requirement, we'll fix it in the next iteration
-    let maxIterations = 10; // Prevent infinite loops
+    // Guarantee every required character class is present. Fixing one class
+    // may overwrite another, so loop until all requirements hold.
+    let maxIterations = 10;
     while (maxIterations-- > 0) {
       let allRequirementsMet = true;
-
-      // Check and fix lowercase - replace any character that's not already lowercase
-      if (!passwordArray.some(c => lowercase.includes(c))) {
-        const index = Math.floor(Math.random() * passwordArray.length);
-        passwordArray[index] = lowercase[Math.floor(Math.random() * lowercase.length)];
-        allRequirementsMet = false;
+      const requirements: Array<[boolean, string]> = [
+        [true, lowercase],
+        [true, uppercase],
+        [true, digits],
+        [includeSpecialChars, specialChars],
+      ];
+      for (const [required, chars] of requirements) {
+        if (required && !passwordArray.some(c => chars.includes(c))) {
+          passwordArray[randomIndex(passwordArray.length)] = pick(chars);
+          allRequirementsMet = false;
+        }
       }
-
-      // Check and fix uppercase - replace any character that's not already uppercase
-      if (!passwordArray.some(c => uppercase.includes(c))) {
-        const index = Math.floor(Math.random() * passwordArray.length);
-        passwordArray[index] = uppercase[Math.floor(Math.random() * uppercase.length)];
-        allRequirementsMet = false;
-      }
-
-      // Check and fix digits - replace any character that's not already a digit
-      if (!passwordArray.some(c => digits.includes(c))) {
-        const index = Math.floor(Math.random() * passwordArray.length);
-        passwordArray[index] = digits[Math.floor(Math.random() * digits.length)];
-        allRequirementsMet = false;
-      }
-
-      // Check and fix special chars if required - replace any character that's not already a special char
-      if (includeSpecialChars && !passwordArray.some(c => specialChars.includes(c))) {
-        const index = Math.floor(Math.random() * passwordArray.length);
-        passwordArray[index] = specialChars[Math.floor(Math.random() * specialChars.length)];
-        allRequirementsMet = false;
-      }
-
-      // If all requirements are met, we're done
       if (allRequirementsMet) {
         break;
       }
