@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NotteClient } from '@/client';
-import { client } from '@/lib/client/client.gen';
+import { createClient } from '@/lib/client/client';
+const client = createClient();
 
 /**
  * Tests for the redirect and Content-Type interceptors registered
@@ -11,15 +12,16 @@ import { client } from '@/lib/client/client.gen';
  * to verify its behavior.
  */
 
-vi.mock('@/lib/client/client.gen', () => ({
-  client: {
+vi.mock('@/lib/client/client', () => {
+  const client = {
     setConfig: vi.fn(),
     interceptors: {
       request: { use: vi.fn() },
       response: { use: vi.fn() },
     },
-  },
-}));
+  };
+  return { createClient: () => client, createConfig: (config: unknown) => config };
+});
 
 function getResponseInterceptor() {
   // NotteClient registers the response interceptor via client.interceptors.response.use(fn)

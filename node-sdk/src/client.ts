@@ -1,4 +1,4 @@
-import { client } from '@/lib/client/client.gen';
+import { createClient } from '@/lib/client/client';
 import { Session, type SessionOptions } from '@/session';
 import type { GlobalScrapeRequest } from '@/lib/client/types.gen';
 import { Agent, type AgentConstructor } from '@/agent';
@@ -20,6 +20,7 @@ export interface NotteClientConfig {
 
 export class NotteClient {
   private config: NotteClientConfig;
+  private readonly client = createClient();
 
   constructor(config: NotteClientConfig = {}) {
     // Get API key from config or environment variable
@@ -41,13 +42,13 @@ export class NotteClient {
     // Use redirect:'manual' so we handle 3xx ourselves.
     // Node's undici drops POST bodies on cross-origin 307 redirects
     // (e.g. when the API gateway redirects to AWS Lambda function URLs).
-    client.setConfig({
+    this.client.setConfig({
       baseUrl: this.config.baseUrl,
       redirect: 'manual',
     });
 
-    client.interceptors.request.use((request: any) => {
-      request.headers.set('Authorization', `Bearer ${this.config.apiKey}`);
+    this.client.interceptors.request.use((request: any) => {
+      if (this.config.apiKey) request.headers.set('Authorization', `Bearer ${this.config.apiKey}`);
       request.headers.set('x-notte-request-origin', 'sdk-node');
       request.headers.set('x-notte-sdk-version', SDK_VERSION);
       return request;
@@ -56,7 +57,7 @@ export class NotteClient {
     // Follow 307/308 redirects manually, replaying the original body.
     // Also normalizes Content-Type from text/plain to application/json
     // (AWS Lambda function URLs return JSON with the wrong Content-Type).
-    client.interceptors.response.use(async (response: any, request: any, opts: any) => {
+    this.client.interceptors.response.use(async (response: any, request: any, opts: any) => {
       if ((response.status === 307 || response.status === 308) && response.headers.get('location')) {
         const location = response.headers.get('location')!;
         const headers = new Headers(request.headers);
@@ -151,7 +152,7 @@ export class NotteClient {
    * Get the configured client instance
    */
   getClient() {
-    return client;
+    return this.client;
   }
 
   /**

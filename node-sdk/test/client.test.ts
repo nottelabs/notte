@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NotteClient } from '@/client';
-import { client } from '@/lib/client/client.gen';
+import { createClient } from '@/lib/client/client';
+const client = createClient();
 
 // Mock the generated client
-vi.mock('@/lib/client/client.gen', () => ({
-  client: {
+vi.mock('@/lib/client/client', () => {
+  const client = {
     setConfig: vi.fn(),
     interceptors: {
       request: {
@@ -14,8 +15,9 @@ vi.mock('@/lib/client/client.gen', () => ({
         use: vi.fn()
       }
     }
-  }
-}));
+  };
+  return { createClient: () => client, createConfig: (config: unknown) => config };
+});
 
 describe('NotteClient', () => {
   let notteClient: NotteClient;

@@ -362,18 +362,23 @@ export class Agent {
 
     try {
       const result = await this.watchLogs(log, updateHandler);
-      if (result) {
+      if (result && result.status !== 'active') {
         return result;
       }
-
-      // Fallback - wait and check status (mirrors Python fallback logic)
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      return await this.status();
-
     } catch (error) {
-      console.error(`[Agent] ${this.agentId} failed to complete in time. Try running agent.status() after a few seconds.`);
-      return await this.status();
+      console.warn(`[Agent] ${this.agentId} log stream unavailable; polling for completion.`);
     }
+    // Losing the log transport does not mean execution has completed.
+    const deadline = Date.now() + 300000;
+    while (Date.now() < deadline) {
+      const result = await this.status();
+      if (result.status !== 'active') {
+        updateHandler?.({ type: 'completion', data: result, timestamp: new Date().toISOString() });
+        return result;
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    throw new Error(`Agent ${this.agentId} did not complete before the polling timeout; retrieve status() later.`);
   }
 
   /**
@@ -389,6 +394,8 @@ export class Agent {
     }
 
     const config = this.client.getConfig();
+    // Relative HTTP proxies do not expose the backend WebSocket transport.
+    if (config.baseUrl?.startsWith('/')) return null;
     const token = config.apiKey;
     const agentId = this.response.agent_id;
     const sessionId = this.response.session_id;
@@ -401,6 +408,17 @@ export class Agent {
 
     return new Promise((resolve, reject) => {
       this.websocket = new WebSocket(wsUrl);
+      const socket = this.websocket;
+      const timeout = setTimeout(() => finish(null), 300000);
+      let settled = false;
+      const finish = (result: LegacyAgentStatusResponse | null) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        if (this.websocket === socket) this.websocket = null;
+        if (socket.readyState !== WebSocket.CLOSED) socket.terminate();
+        resolve(result);
+      };
       let counter = 0;
 
       this.websocket.on('open', () => {
@@ -409,7 +427,7 @@ export class Agent {
 
       this.websocket.on('error', (error) => {
         console.error(`Connection error: ${agentId} ${error.message}`);
-        resolve(null);
+        finish(null);
       });
 
       this.websocket.on('message', (data) => {
@@ -443,8 +461,7 @@ export class Agent {
               console.error(finalStatus.answer);
             }
 
-            this.disconnectWebSocket();
-            resolve(finalStatus);
+            finish(finalStatus);
             return;
           }
 
@@ -471,17 +488,8 @@ export class Agent {
       });
 
       this.websocket.on('close', () => {
-        this.websocket = null;
-        resolve(null);
+        finish(null);
       });
-
-      // Set a timeout to prevent hanging forever
-      setTimeout(() => {
-        if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
-          this.disconnectWebSocket();
-          resolve(null);
-        }
-      }, 300000); // 5 minutes timeout
     });
   }
 

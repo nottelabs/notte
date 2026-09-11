@@ -20,22 +20,28 @@ type NextRouteHandler = (
  * @example
  * ```typescript
  * // app/api/notte/[...path]/route.ts
- * import { createNotteProxy } from '@notte/sdk/next';
+ * import { createNotteProxy, NotteProxyAuthError } from 'notte-sdk/next';
+ * import { getUser } from '@/lib/auth'; // Your server-side authentication implementation
  *
  * export const { GET, POST, PUT, DELETE, PATCH } = createNotteProxy({
- *   apiKey: process.env.NOTTE_API_KEY!,
+ *   authenticate: async (request) => {
+ *     const user = await getUser(request);
+ *     if (!user?.notteApiKey) throw new NotteProxyAuthError();
+ *     return user.notteApiKey;
+ *   },
  * });
  * ```
  *
  * @example With authentication
  * ```typescript
- * import { createNotteProxy, NotteProxyAuthError } from '@notte/sdk/next';
+ * import { createNotteProxy, NotteProxyAuthError } from 'notte-sdk/next';
  *
  * export const { GET, POST, PUT, DELETE, PATCH } = createNotteProxy({
  *   apiKey: process.env.NOTTE_API_KEY!,
  *   authenticate: async (request) => {
  *     const session = await getSession(request);
  *     if (!session) throw new NotteProxyAuthError('Not logged in');
+ *     await authorizeNotteRequest(session, request); // Enforce resource ownership
  *   },
  * });
  * ```
@@ -43,10 +49,9 @@ type NextRouteHandler = (
  * @example With per-user API keys
  * ```typescript
  * export const { GET, POST, PUT, DELETE, PATCH } = createNotteProxy({
- *   apiKey: 'fallback-key', // pragma: allowlist secret
  *   authenticate: async (request) => {
  *     const user = await getUser(request);
- *     if (!user) throw new NotteProxyAuthError();
+ *     if (!user?.notteApiKey) throw new NotteProxyAuthError();
  *     return user.notteApiKey; // returned string overrides apiKey
  *   },
  * });

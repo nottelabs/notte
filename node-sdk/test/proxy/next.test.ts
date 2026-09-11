@@ -21,7 +21,7 @@ describe('createNotteProxy', () => {
     const savedKey = process.env.NOTTE_API_KEY;
     delete process.env.NOTTE_API_KEY;
     try {
-      const handlers = createNotteProxy({});
+      const handlers = createNotteProxy({ authenticate: async () => {},});
       const request = new Request('http://localhost:3000/api/notte/sessions', {
         method: 'GET',
       });
@@ -35,7 +35,7 @@ describe('createNotteProxy', () => {
   });
 
   it('should return all 5 HTTP method handlers', () => {
-    const handlers = createNotteProxy({ apiKey: 'test-key' }); // pragma: allowlist secret
+    const handlers = createNotteProxy({ authenticate: async () => {}, apiKey: 'test-key' }); // pragma: allowlist secret
 
     expect(handlers.GET).toBeTypeOf('function');
     expect(handlers.POST).toBeTypeOf('function');
@@ -45,7 +45,7 @@ describe('createNotteProxy', () => {
   });
 
   it('should handle GET requests correctly', async () => {
-    const handlers = createNotteProxy({
+    const handlers = createNotteProxy({ authenticate: async () => {},
       apiKey: 'test-key', // pragma: allowlist secret
       apiUrl: 'https://mock-api.notte.cc',
     });
@@ -60,7 +60,7 @@ describe('createNotteProxy', () => {
   });
 
   it('should handle POST requests with body', async () => {
-    const handlers = createNotteProxy({
+    const handlers = createNotteProxy({ authenticate: async () => {},
       apiKey: 'test-key', // pragma: allowlist secret
       apiUrl: 'https://mock-api.notte.cc',
     });
@@ -77,7 +77,7 @@ describe('createNotteProxy', () => {
   });
 
   it('should return 500 for unexpected errors in hooks', async () => {
-    const handlers = createNotteProxy({
+    const handlers = createNotteProxy({ authenticate: async () => {},
       apiKey: 'test-key', // pragma: allowlist secret
       apiUrl: 'https://mock-api.notte.cc',
       onBeforeRequest: () => {
@@ -99,7 +99,7 @@ describe('createNotteProxy', () => {
   it('should return 502 when upstream fetch fails', async () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new Error('Connection refused'));
 
-    const handlers = createNotteProxy({
+    const handlers = createNotteProxy({ authenticate: async () => {},
       apiKey: 'test-key', // pragma: allowlist secret
       apiUrl: 'https://mock-api.notte.cc',
     });
@@ -156,7 +156,7 @@ describe('createNotteProxy', () => {
   });
 
   it('should extract path segments from params promise', async () => {
-    const handlers = createNotteProxy({
+    const handlers = createNotteProxy({ authenticate: async () => {},
       apiKey: 'test-key', // pragma: allowlist secret
       apiUrl: 'https://mock-api.notte.cc',
     });

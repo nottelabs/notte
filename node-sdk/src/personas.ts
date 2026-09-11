@@ -57,9 +57,11 @@ export class NottePersona {
   private response: PersonaResponseWithInternalEmail | null = null;
   private initPromise: Promise<PersonaResponseWithInternalEmail> | null = null;
   private _vault: NotteVault | undefined;
+  private readonly ownsPersona: boolean;
 
   constructor(client: NotteClient, options: PersonaConstructor = {}) {
     this.client = client;
+    this.ownsPersona = !('persona_id' in options && options.persona_id);
 
     if (options && 'persona_id' in options && options.persona_id) {
       // Constructor for existing persona
@@ -177,9 +179,7 @@ export class NottePersona {
    * Start the persona - ensures initialization
    */
   async start(): Promise<void> {
-    if (this.response === null) {
-      await this.create();
-    }
+    await this.ensureInitialized();
   }
 
   /**
@@ -208,16 +208,7 @@ export class NottePersona {
     if (this.response !== null) {
       throw new Error(`Persona ${this.personaId} already initialized`);
     }
-    const response = await personaCreate({
-      client: this.client.getClient(),
-      body: this._initRequest
-    });
-
-    if (response?.error) {
-      throw new Error(`Failed to create persona: ${formatError(response.error)}`);
-    }
-
-    this.response = response.data as PersonaResponseWithInternalEmail;
+    await this.ensureInitialized();
   }
 
   /**
@@ -307,12 +298,12 @@ export class NottePersona {
    * Context manager for automatic cleanup
    */
   async use<T>(callback: (persona: NottePersona) => Promise<T>): Promise<T> {
+    await this.ensureInitialized();
     try {
       return await callback(this);
     } finally {
       // Only delete if this persona was created (not loaded from existing ID)
-      // Check if we have an init request and it doesn't contain a persona_id
-      if (this._initRequest && !('persona_id' in this._initRequest)) {
+      if (this.ownsPersona) {
         try {
           await this.delete();
         } catch (error) {

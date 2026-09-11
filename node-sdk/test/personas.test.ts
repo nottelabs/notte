@@ -47,4 +47,29 @@ describe('NottePersona email addresses', () => {
     );
     expect(persona.info.internal_email).toBe(persona.internalEmail);
   });
+
+  it.each([false, true])('never deletes a borrowed persona, callback throws=%s', async throws => {
+    const persona = new NottePersona(client, { persona_id: 'existing' });
+    const result = persona.use(async p => {
+      expect(p.info.persona_id).toBeDefined();
+      if (throws) throw new Error('callback failed');
+      return 'ok';
+    });
+    if (throws) await expect(result).rejects.toThrow('callback failed');
+    else await expect(result).resolves.toBe('ok');
+    expect(mocks.personaDelete).not.toHaveBeenCalled();
+  });
+
+  it('shares creation across constructor, start, create and get', async () => {
+    let finish!: (value: unknown) => void;
+    mocks.personaCreate.mockReturnValue(new Promise(resolve => { finish = resolve; }));
+    const persona = new NottePersona(client);
+    const pending = Promise.all([persona.start(), persona.start(), persona.create(), persona.get()]);
+    expect(mocks.personaCreate).toHaveBeenCalledTimes(1);
+    finish({ data: { persona_id: 'owned' } });
+    await pending;
+    mocks.personaDelete.mockResolvedValue({ data: {} });
+    await persona.use(async p => expect(p.personaId).toBe('owned'));
+    expect(mocks.personaDelete).toHaveBeenCalledTimes(1);
+  });
 });

@@ -44,6 +44,9 @@ export async function handleProxyRequest(
     }
 
     // Step 2: Authentication
+    if (typeof config.authenticate !== 'function') {
+      throw new NotteProxyAuthError('Proxy caller authentication is required');
+    }
     let apiKey = config.apiKey || process.env.NOTTE_API_KEY;
 
     if (config.authenticate) {

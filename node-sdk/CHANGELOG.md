@@ -13,3 +13,9 @@
 - Streaming calls return a typed `FunctionRunResult`. Calls reject failed executions
   by default. Use `raiseOnFailure: false` to receive the failed response, and
   `onLog` to customize or silence log output.
+## Review hardening
+
+- Isolate configuration and credentials per client instance.
+- Require caller authentication for server-side proxies (missing callbacks return 401).
+- Poll agents to completion after log transport failures, with an explicit timeout.
+- Reuse persona initialization and only automatically delete personas owned by the wrapper.

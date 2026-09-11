@@ -66,7 +66,7 @@ describe('Vault Integration Tests', () => {
 			// Verify credentials were added
 			const credentials = await newVault.listCredentials();
 			expect(credentials.length).toBeGreaterThan(0);
-			const githubCreds = credentials.find(c => c.url.includes('github.com'));
+			const githubCreds = credentials.find(c => new URL(c.url).hostname === 'github.com');
 			expect(githubCreds).toBeDefined();
 		});
 

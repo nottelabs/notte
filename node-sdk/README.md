@@ -54,6 +54,16 @@ No registry credentials or publishing configuration are changed by adding this p
 
 ## Features
 
+### Server-side proxy security
+
+`createNotteProxy` from `notte-sdk/next` requires an `authenticate` callback at
+runtime. Without one, requests return 401 even when a server API key is configured.
+The callback must verify caller identity and authorize access to requested
+resources. Returning a user-specific Notte API key isolates accounts; returning
+void uses the shared server key and requires application-level ownership checks.
+An endpoint allowlist is not a substitute for authorization. Relative HTTP proxy
+clients poll agent status for completion because they cannot use backend WebSockets.
+
 - 🌐 **Cloud Browser Sessions** - Access remote browsers with full control
 - 🤖 **LLM-Powered Agents** - Intelligent web automation with natural language
 - 🔒 **Secret Vaults** - Enterprise-grade credential management with end-to-end encryption

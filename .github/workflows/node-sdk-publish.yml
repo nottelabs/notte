@@ -31,8 +31,6 @@ jobs:
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
-          cache: npm
-          cache-dependency-path: node-sdk/package-lock.json
       - run: npm ci
       - name: Set release version
         env:

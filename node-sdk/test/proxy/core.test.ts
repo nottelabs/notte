@@ -25,6 +25,7 @@ function makeRequest(
 
 function baseConfig(overrides: Partial<NotteProxyConfig> = {}): NotteProxyConfig {
   return {
+    authenticate: async () => {},
     apiKey: 'test-api-key', // pragma: allowlist secret
     apiUrl: 'https://mock-api.notte.cc',
     ...overrides,
@@ -41,6 +42,12 @@ describe('handleProxyRequest', () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+  });
+
+  it('rejects requests without caller authentication even with a server key', async () => {
+    const response = await handleProxyRequest(makeRequest('sessions'), ['sessions'], baseConfig({ authenticate: undefined }));
+    expect(response.status).toBe(401);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   describe('path validation', () => {
@@ -543,7 +550,7 @@ describe('handleProxyRequest', () => {
       );
 
       const request = makeRequest('sessions');
-      await handleProxyRequest(request, ['sessions'], { apiKey: 'test-key' }); // pragma: allowlist secret
+      await handleProxyRequest(request, ['sessions'], baseConfig({ apiUrl: undefined }));
 
       const calledUrl = vi.mocked(globalThis.fetch).mock.calls[0]?.[0] as string;
       expect(calledUrl).toBe('https://api.notte.cc/sessions');

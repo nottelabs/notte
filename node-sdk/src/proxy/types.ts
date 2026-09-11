@@ -39,7 +39,9 @@ export interface NotteProxyConfig {
   apiUrl?: string;
 
   /**
-   * Optional async function to authenticate/authorize incoming requests.
+   * Authenticate and authorize incoming requests. Missing callbacks fail closed (401).
+   * Check resource ownership as well as caller identity. With a shared key, every
+   * authorized caller otherwise has access to the same account resources.
    *
    * - Throw a `NotteProxyAuthError` to reject the request (returns 401).
    * - Return `void` to allow the request through using the default `apiKey`.
