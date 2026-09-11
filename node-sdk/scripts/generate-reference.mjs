@@ -239,7 +239,7 @@ export function createReference(root = sdkRoot) {
         '## Parameters\n\nUse the defaults or pass these options to `client.Session(options)`:\n\n' + fieldsFor(options).join('\n\n'),
         `<Accordion title="Direct constructor reference">\n\n${constructor}\n\n</Accordion>`);
     }
-    pages.set(`${prefix}/manual/${classSlug}.mdx`, page(factory ? 'Get started' : name, node, contents.filter(Boolean).join('\n\n')));
+    pages.set(`${prefix}/manual/${classSlug}.mdx`, page(factory || ['NotteUsage', 'NotteSecrets', 'NotteAnything'].includes(name) ? 'Get started' : name, node, contents.filter(Boolean).join('\n\n')));
     groups.push({ group: name, collapsed: true, pages: nav });
   }
   for (const [name, node] of [...types].sort(([a], [b]) => a.localeCompare(b, 'en'))) {

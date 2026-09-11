@@ -559,7 +559,7 @@ The SDK docs below are for generated-code editing and reference. They are not th
 
 #### Anything
 
-- [NotteAnything](https://docs.notte.cc/typescript-sdk-reference/manual/notteanything.md)
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/notteanything.md)
 - [start](https://docs.notte.cc/typescript-sdk-reference/notteanything/start.md)
 
 ### Tooling
@@ -596,7 +596,7 @@ The SDK docs below are for generated-code editing and reference. They are not th
 
 #### Secrets
 
-- [NotteSecrets](https://docs.notte.cc/typescript-sdk-reference/manual/nottesecrets.md)
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/nottesecrets.md)
 - [list](https://docs.notte.cc/typescript-sdk-reference/nottesecrets/list.md)
 - [store](https://docs.notte.cc/typescript-sdk-reference/nottesecrets/store.md)
 - [get](https://docs.notte.cc/typescript-sdk-reference/nottesecrets/get.md)
@@ -604,7 +604,7 @@ The SDK docs below are for generated-code editing and reference. They are not th
 
 #### Usage
 
-- [NotteUsage](https://docs.notte.cc/typescript-sdk-reference/manual/notteusage.md)
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/notteusage.md)
 - [get](https://docs.notte.cc/typescript-sdk-reference/notteusage/get.md)
 - [logs](https://docs.notte.cc/typescript-sdk-reference/notteusage/logs.md)
 

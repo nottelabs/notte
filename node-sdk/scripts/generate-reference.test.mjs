@@ -108,6 +108,9 @@ test('deprecated methods remain documented but are excluded from navigation and 
 });
 
 test('feature landing pages use factories and method navigation follows user tasks', () => {
+  for (const name of ['notteusage', 'nottesecrets', 'notteanything']) {
+    assert.match(actual.pages.get(`typescript-sdk-reference/manual/${name}.mdx`), /^---\ntitle: "Get started"/);
+  }
   for (const [name, factory] of Object.entries({ session: 'Session', agent: 'Agent', function: 'NotteFunction', vault: 'Vault', persona: 'Persona', files: 'Files' })) {
     const content = actual.pages.get(`typescript-sdk-reference/manual/${name}.mdx`);
     assert.match(content, /^---\ntitle: "Get started"/);
