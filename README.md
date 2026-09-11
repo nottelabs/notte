@@ -49,12 +49,14 @@ Use the following script to spinup an agent using opensource features (you'll ne
 
 ```python
 import notte
+import os
 from dotenv import load_dotenv
 load_dotenv()
 
 with notte.Session(headless=False) as session:
-    agent = notte.Agent(session=session, reasoning_model='gemini/gemini-2.5-flash', max_steps=30)
-    response = agent.run(task="doom scroll cat memes on google images")
+    model = os.getenv("NOTTE_EXAMPLE_MODEL", "gemini/gemini-2.5-flash")
+    agent = notte.Agent(session=session, reasoning_model=model, max_steps=10)
+    response = agent.run(task="Find three cat memes on Google Images and describe them")
 ```
 
 ### Using Python SDK (Recommended)
@@ -285,7 +287,7 @@ from notte_sdk import NotteClient
 client = NotteClient()
 cdp_url = os.environ["EXTERNAL_CDP_URL"]
 
-with client.Session(cdp_url=cdp_url, viewport_width=None, viewport_height=None) as session:
+with client.Session(cdp_url=cdp_url, proxies=False, viewport_width=None, viewport_height=None) as session:
     agent = client.Agent(session=session)
     response = agent.run(task="extract pricing plans from https://www.notte.cc/")
 ```

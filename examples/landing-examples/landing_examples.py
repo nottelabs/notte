@@ -1,3 +1,4 @@
+import argparse
 import os
 
 from dotenv import load_dotenv
@@ -23,10 +24,11 @@ landing_examples = [
 
 
 # run landing page examples
-def main():
+def main(example_index: int | None = None):
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
-    for task, url, use_vault in landing_examples[3:]:
+    selected = landing_examples[3:] if example_index is None else [landing_examples[example_index]]
+    for task, url, use_vault in selected:
         with client.Session() as session:
             if use_vault:
                 with client.Vault() as vault:
@@ -59,4 +61,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Run the landing-page agent examples")
+    parser.add_argument("--example-index", type=int, choices=range(len(landing_examples)))
+    args = parser.parse_args()
+    main(example_index=args.example_index)

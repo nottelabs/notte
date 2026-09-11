@@ -923,6 +923,8 @@ class _SessionStartRequest(SdkRequest):
     @model_validator(mode="after")
     def check_viewport(self) -> "_SessionStartRequest":
         if self.cdp_url is not None:
+            if "proxies" not in self.model_fields_set:
+                self.proxies = False
             # Configured viewport defaults belong to browsers we create, not an
             # external browser. Keep explicit values for CDP validation below.
             if "viewport_width" not in self.model_fields_set:
@@ -951,6 +953,8 @@ class _SessionStartRequest(SdkRequest):
             ValueError: If cdp_url is provided with browser settings that must be configured by the provider.
         """
         if self.cdp_url is not None:
+            if self.proxies:
+                raise ValueError("Proxies must be configured by the external CDP provider, not by Notte")
             if self.user_agent is not None:
                 raise ValueError(
                     "When cdp_url is provided, user_agent must be None. Set the user agent with your external session CDP provider."

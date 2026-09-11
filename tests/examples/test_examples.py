@@ -166,7 +166,9 @@ def test_root_level_scripts(python_file: Path) -> None:
     assert exit_code == 0, f"Failed to run {python_file.name} {logs[-1] if len(logs) > 0 else ''}"
 
 
-@pytest.mark.parametrize("use_case_dir", get_use_cases_dirs(), ids=lambda p: p.name)
+@pytest.mark.parametrize(
+    "use_case_dir", get_use_cases_dirs(ignore_list=("__pycache__", "landing-examples")), ids=lambda p: p.name
+)
 @pytest.mark.flaky(reruns=2, reruns_delay=5, only_rerun=["Failed to solve captcha! Please try again"])
 def test_use_case_script(use_case_dir: Path) -> None:
     """
@@ -191,3 +193,13 @@ def test_use_case_script(use_case_dir: Path) -> None:
         assert logged[-1] == "KeyError: 'AUTO_ISSUES_GITHUB_EMAIL'"
     else:
         assert exit_code == 0, f"Failed to run {use_case_dir.name} (exit code {exit_code}):\n" + "\n".join(logged[-30:])
+
+
+@pytest.mark.parametrize(
+    "index", [3, 4, 5], ids=["landing-examples-blog", "landing-examples-bbc", "landing-examples-weather"]
+)
+@pytest.mark.flaky(reruns=2, reruns_delay=5, only_rerun=["Task failed due to session expiration"])
+def test_landing_example(index: int) -> None:
+    script = Path(__file__).resolve().parents[2] / "examples" / "landing-examples" / "landing_examples.py"
+    exit_code, logged = run_python_file(script, ["--example-index", str(index)])
+    assert exit_code == 0, f"Landing example {index} failed (exit code {exit_code}):\n" + "\n".join(logged[-30:])

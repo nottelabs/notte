@@ -16,6 +16,8 @@ env:
   DISABLE_TELEMETRY: "true"
   NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  # Use the Vertex credentials configured below for the local-agent example.
+  NOTTE_EXAMPLE_MODEL: "vertex_ai/gemini-2.5-flash"
   GITHUB_COM_EMAIL: ${{ secrets.BOT_GITHUB_COM_EMAIL }}
   GITHUB_COM_PASSWORD: ${{ secrets.BOT_GITHUB_COM_PASSWORD }}
   GITHUB_COM_MFA_SECRET: ${{ secrets.BOT_GITHUB_COM_MFA_SECRET }}
@@ -126,14 +128,32 @@ jobs:
         if: always()
         run: uv run python scripts/cleanup_ci_vaults.py --allow-production
 
+      - name: Build Slack notification
+        if: always()
+        env:
+          RUN_TIMESTAMP: ${{ steps.timestamp.outputs.timestamp }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          summary_path = Path("pytest_summary.log")
+          summary = summary_path.read_text() if summary_path.exists() else "Example tests did not run. See the workflow logs."
+          summary = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", summary)
+          payload = {
+              "username": f"GitHub Nightly Pipeline ({os.environ['RUN_TIMESTAMP']})",
+              "text": f"Pipeline results: {os.environ['RUN_URL']}\n```\n{summary[:12000]}\n```",
+          }
+          Path("slack-payload.json").write_text(json.dumps(payload))
+          PY
+
       - name: Send Slack Notification
         if: always()
         uses: slackapi/slack-github-action@v1.24.0
         with:
-          payload: |
-            {
-              "username": "GitHub Nightly Pipeline (${{ steps.timestamp.outputs.timestamp }})",
-              "text": "Pipeline results: (cf url (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})) \n ```\n${{ env.TEST_OUTPUT }}```"
-            }
+          payload-file-path: slack-payload.json
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_WEBHOOK_URL }}

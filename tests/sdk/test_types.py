@@ -235,6 +235,12 @@ def test_cdp_url_does_not_send_configured_viewport_defaults():
 
     assert "viewport_width" not in payload
     assert "viewport_height" not in payload
+    assert payload["proxies"] is False
+
+
+def test_cdp_url_rejects_notte_proxies():
+    with pytest.raises(ValidationError, match="Proxies must be configured by the external CDP provider"):
+        _ = SessionStartRequest(cdp_url="ws://localhost:9222", proxies=True)
 
 
 @pytest.mark.parametrize("width,height", [(1920, 1080), (1280, 720)])
