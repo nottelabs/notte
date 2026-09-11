@@ -9,7 +9,8 @@ import type {
 import {
   agentStart,
   agentStatus,
-  agentStop
+  agentStop,
+  sessionDebugInfo
 } from '@/lib/client/sdk.gen';
 import { formatError } from '@/utils';
 import { NotteVault } from './vaults';
@@ -396,15 +397,20 @@ export class Agent {
     const config = this.client.getConfig();
     // Relative HTTP proxies do not expose the backend WebSocket transport.
     if (config.baseUrl?.startsWith('/')) return null;
-    const token = config.apiKey;
     const agentId = this.response.agent_id;
     const sessionId = this.response.session_id;
 
-    // Follow Python pattern: /agents/{agent_id}/debug/logs?token={token}&session_id={session_id}
-    const wsUrl = config.baseUrl
-      ?.replace('https://', 'wss://')
-      .replace('http://', 'ws://') +
-      `/agents/${agentId}/debug/logs?token=${token}&session_id=${sessionId}`;
+    // Use the server-issued, session-scoped expiring viewer token, not the API key.
+    const debug = await sessionDebugInfo({
+      client: this.client.getClient(),
+      path: { session_id: sessionId },
+      throwOnError: true,
+    });
+    const wsUrl = new URL(debug.data.ws.logs);
+    const token = wsUrl.searchParams.get('token');
+    if (!token || token === config.apiKey || wsUrl.protocol !== 'wss:') return null;
+    wsUrl.pathname = `/agents/${encodeURIComponent(agentId)}/debug/logs`;
+    wsUrl.searchParams.set('session_id', sessionId);
 
     return new Promise((resolve, reject) => {
       this.websocket = new WebSocket(wsUrl);

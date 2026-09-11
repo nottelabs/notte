@@ -33,9 +33,10 @@ export type { NotteProxyConfig } from '@/proxy/types';
 export { NotteProxyAuthError } from '@/proxy/types';
 
 // Create a configured client instance (legacy support)
-import { client } from '@/lib/client/client.gen';
+import { createClient as createGeneratedClient } from '@/lib/client/client';
 
 export const createClient = (config?: { baseUrl?: string; token?: string }) => {
+  const client = createGeneratedClient({ baseUrl: config?.baseUrl || 'https://api.notte.cc' });
   if (config?.baseUrl) {
     client.setConfig({ baseUrl: config.baseUrl });
   }

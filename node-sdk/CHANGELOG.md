@@ -19,3 +19,6 @@
 - Require caller authentication for server-side proxies (missing callbacks return 401).
 - Poll agents to completion after log transport failures, with an explicit timeout.
 - Reuse persona initialization and only automatically delete personas owned by the wrapper.
+- Isolate legacy client factories and preserve resolved configuration defaults.
+- Send session files as multipart data through the generated HTTP client.
+- Use session-scoped expiring viewer tokens for agent logs instead of account keys.

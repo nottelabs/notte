@@ -105,6 +105,7 @@ export async function handleProxyRequest(
     const requestOptions: RequestInit = {
       method: request.method,
       headers: forwardHeaders,
+      signal: request.signal,
     };
 
     if (METHODS_WITH_BODY.includes(request.method) && request.body) {

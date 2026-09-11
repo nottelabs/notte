@@ -39,6 +39,8 @@ export class SessionFiles {
       method: 'POST',
       url: this.path(),
       body,
+      bodySerializer: undefined,
+      headers: { 'Content-Type': null },
     });
     if (result.error || !result.data) throw new Error('Failed to upload session file');
     return result.data as unknown as SessionFile;

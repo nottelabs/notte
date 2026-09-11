@@ -25,18 +25,18 @@ export class NotteClient {
   constructor(config: NotteClientConfig = {}) {
     // Get API key from config or environment variable
     const apiKey = config.apiKey || process.env.NOTTE_API_KEY;
+    const baseUrl = config.baseUrl || process.env.NOTTE_API_URL || 'https://api.notte.cc';
 
     // Only skip the apiKey check for relative proxy paths (e.g. '/api/notte').
     // Any HTTPS URL—including staging—still requires a key.
-    const isProxyMode = config.baseUrl && !config.baseUrl.startsWith('https://');
+    const isProxyMode = /^\/(?!\/)/.test(baseUrl);
     if (!apiKey && !isProxyMode) {
       throw new Error('API key is required. Provide it via config.apiKey or set the NOTTE_API_KEY environment variable.');
     }
 
     this.config = {
-      baseUrl: config.baseUrl || process.env.NOTTE_API_URL || 'https://api.notte.cc',
+      baseUrl,
       apiKey,
-      ...config
     };
 
     // Use redirect:'manual' so we handle 3xx ourselves.

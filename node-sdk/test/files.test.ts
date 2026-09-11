@@ -2,6 +2,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionFiles } from '@/files';
 import type { Client } from '@/lib/client/client/types.gen';
+import { createClient } from '@/lib/client/client';
+
+it('sends multipart bytes through the actual generated client', async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>(async input => {
+    const request = input instanceof Request ? input : new Request(input);
+    expect(request.headers.get('content-type')).toMatch(/^multipart\/form-data; boundary=/);
+    const body = await request.formData();
+    const file = body.get('file') as File;
+    expect(file.name).toBe('test.txt');
+    expect(await file.text()).toBe('file bytes');
+    return Response.json({ id: 'file' });
+  });
+  const client = createClient({ baseUrl: 'https://example.com', fetch });
+  await expect(new SessionFiles(client, 'session').upload(new Blob(['file bytes']), 'test.txt')).resolves.toEqual({ id: 'file' });
+});
 
 describe('SessionFiles', () => {
   const request = vi.fn();
