@@ -9,7 +9,7 @@ help:
 	@echo "  make install     - Install dependencies and generate SDK"
 	@echo "  make sdk         - Generate SDK from OpenAPI spec (alias: make generate)"
 	@echo "  make check       - Check if SDK is up to date with staging"
-	@echo "  make release     - Release package to npm"
+	@echo "  make release <version> - Dry-run a release build (publishing happens in CI on a vX.Y.Z tag)"
 	@echo "  make tests       - Run all tests"
 	@echo "  make example <filename> - Run example file (e.g., make example persona)"
 	@echo ""
@@ -35,11 +35,21 @@ check:
 	@echo "Checking if SDK is up to date with staging..."
 	npm run check:staging
 
-# Release package to npm
+# Dry-run a release build at a given version, then restore the dev version.
+# Publishing happens in CI (.github/workflows/node-sdk-publish.yml) when a
+# vX.Y.Z tag is pushed, together with the Python packages.
 release:
-	@echo "Building and releasing to npm..."
+	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+		echo "Error: No version specified. Usage: make release <version>"; \
+		echo "Example: make release 1.9.0"; \
+		exit 1; \
+	fi
+	@echo "Building notte-sdk version: $(filter-out $@,$(MAKECMDGOALS))"
+	npm version "$(filter-out $@,$(MAKECMDGOALS))" --no-git-tag-version
 	npm run build
-	npm publish
+	node scripts/check-package.js
+	npm pack --dry-run
+	@git checkout package.json package-lock.json
 
 # Run all tests
 tests:
