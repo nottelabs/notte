@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Cookie } from '@/lib/client/types.gen';
 import { InvalidRequestError } from '@/errors';
-import { createOrAppendCookiesToFile, readCookiesFile } from '@/cookies';
+import { createOrAppendCookiesToFile, pendingCookieFileLocks, readCookiesFile } from '@/cookies';
 
 const cookie = (name: string): Cookie => ({ name, value: 'v', domain: 'example.com', path: '/', httpOnly: false });
 
@@ -45,6 +45,12 @@ describe('cookie files', () => {
 
     const saved = JSON.parse(await readFile(file, 'utf-8')) as Cookie[];
     expect(saved.map(c => c.name).sort()).toEqual([...names].sort());
+  });
+
+  it('evicts the per-path lock once the last queued update completes', async () => {
+    const file = join(dir, 'evict.json');
+    await Promise.all([createOrAppendCookiesToFile(file, [cookie('a')]), createOrAppendCookiesToFile(file, [cookie('b')])]);
+    expect(pendingCookieFileLocks()).toBe(0);
   });
 
   it('locks per resolved path, so different files proceed independently', async () => {

@@ -150,12 +150,19 @@ export class NotteClient {
       const override = headers.get(TIMEOUT_HEADER);
       headers.delete(TIMEOUT_HEADER);
       const timeoutMs = override !== null ? Number(override) : this.config.timeoutMs;
-      const signal = timeoutMs > 0 ? withTimeout(request.signal, timeoutMs) : request.signal;
 
       if (this.config.verbose) {
         console.info(`Making \`${request.method}\` request to \`${request.url}\``);
       }
-      return new Request(request, { headers, signal });
+      if (!(timeoutMs > 0)) {
+        return new Request(request, { headers });
+      }
+      const deadline = withTimeout(request.signal, timeoutMs);
+      const timed = new Request(request, { headers, signal: deadline.signal });
+      // Released by the response/error interceptors below so a completed
+      // request does not keep its timer alive until the deadline.
+      pendingDeadlines.set(timed, deadline.release);
+      return timed;
     });
 
     // Follow 307/308 redirects manually, replaying the original body.
@@ -200,8 +207,18 @@ export class NotteClient {
       return response;
     });
 
+    // Release the deadline timer once a response arrived (after the redirect
+    // replay above, which still needs the signal), or once the request failed.
+    // Streaming bodies are read after this point; the signal stays usable for
+    // callers that hold it, only the SDK timer is released.
+    this.client.interceptors.response.use((response: Response, request: Request) => {
+      releaseDeadline(request);
+      return response;
+    });
+
     // Turn raw failures into the typed error hierarchy.
     this.client.interceptors.error.use((error: unknown, response: Response | undefined, request: Request | undefined) => {
+      releaseDeadline(request);
       return this.toTypedError(error, response, request);
     });
 
@@ -477,34 +494,59 @@ function timeoutReason(timeoutMs: number): DOMException {
   return new DOMException(`timed out after ${timeoutMs}ms`, 'TimeoutError');
 }
 
+const pendingDeadlines = new WeakMap<Request, () => void>();
+
+function releaseDeadline(request: Request | undefined): void {
+  if (!request) return;
+  const release = pendingDeadlines.get(request);
+  if (release) {
+    pendingDeadlines.delete(request);
+    release();
+  }
+}
+
+interface Deadline {
+  signal: AbortSignal;
+  /** Clear the timer and detach from the caller's signal. Idempotent. */
+  release: () => void;
+}
+
 /**
  * Combine the caller's signal with a deadline. `AbortSignal.any` (Node 20.3+)
  * lets the runtime drop the composite signal once the request settles, so a
  * long-lived caller signal never accumulates listeners.
  */
-function withTimeout(signal: AbortSignal | null | undefined, timeoutMs: number): AbortSignal {
-  const signalAny = (AbortSignal as unknown as { any?: (signals: AbortSignal[]) => AbortSignal }).any;
-  if (typeof signalAny === 'function') {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(timeoutReason(timeoutMs)), timeoutMs);
-    timer.unref?.();
-    const composite = signalAny.call(AbortSignal, signal ? [signal, controller.signal] : [controller.signal]);
-    composite.addEventListener('abort', () => clearTimeout(timer), { once: true });
-    return composite;
-  }
-  // Fallback for runtimes without AbortSignal.any.
+function withTimeout(signal: AbortSignal | null | undefined, timeoutMs: number): Deadline {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(timeoutReason(timeoutMs)), timeoutMs);
   timer.unref?.();
-  controller.signal.addEventListener('abort', () => clearTimeout(timer), { once: true });
-  if (signal) {
-    if (signal.aborted) {
-      controller.abort(signal.reason);
-    } else {
-      const forward = () => controller.abort(signal.reason);
-      signal.addEventListener('abort', forward, { once: true });
-      controller.signal.addEventListener('abort', () => signal.removeEventListener('abort', forward), { once: true });
+  let detach: () => void = () => undefined;
+  let composite: AbortSignal;
+
+  const signalAny = (AbortSignal as unknown as { any?: (signals: AbortSignal[]) => AbortSignal }).any;
+  if (typeof signalAny === 'function') {
+    composite = signalAny.call(AbortSignal, signal ? [signal, controller.signal] : [controller.signal]);
+  } else {
+    // Fallback for runtimes without AbortSignal.any.
+    composite = controller.signal;
+    if (signal) {
+      if (signal.aborted) {
+        controller.abort(signal.reason);
+      } else {
+        const forward = () => controller.abort(signal.reason);
+        signal.addEventListener('abort', forward, { once: true });
+        detach = () => signal.removeEventListener('abort', forward);
+      }
     }
   }
-  return controller.signal;
+
+  let released = false;
+  const release = () => {
+    if (released) return;
+    released = true;
+    clearTimeout(timer);
+    detach();
+  };
+  composite.addEventListener('abort', release, { once: true });
+  return { signal: composite, release };
 }

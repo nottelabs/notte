@@ -26,10 +26,18 @@ export interface PageFetchOptions {
   /** Abort the request after this many milliseconds. Must be positive. */
   timeoutMs?: number;
   /**
-   * Allow `http:` URLs (and redirects to them). Off by default because the
-   * request carries the page's cookies, which would travel in cleartext.
+   * Allow `http:` URLs and follow redirects. Off by default because the request
+   * carries the page's cookies: an `https:` request redirected to `http:` would
+   * send them in cleartext before the response can be inspected, so by default
+   * redirects are not followed and a redirected response throws.
    */
   allowInsecure?: boolean;
+  /**
+   * Browser `fetch` redirect mode. Defaults to `manual` (a redirect throws)
+   * unless `allowInsecure` is set, in which case redirects are followed like
+   * the Python SDK does.
+   */
+  redirect?: 'follow' | 'manual' | 'error';
 }
 
 const CONTENT_TYPE = 'content-type';
@@ -79,6 +87,7 @@ function withParams(url: string, params: Record<string, unknown>): string {
  */
 export function buildFetchScript(url: string, options: PageFetchOptions = {}): string {
   const { method = 'GET', headers, params, json, data, timeoutMs, allowInsecure = false } = options;
+  const redirect = options.redirect ?? (allowInsecure ? 'follow' : 'manual');
   if (json !== undefined && data !== undefined) {
     throw new InvalidRequestError('pass either json or data, not both');
   }
@@ -113,7 +122,7 @@ export function buildFetchScript(url: string, options: PageFetchOptions = {}): s
     method: method.toUpperCase(),
     headers: requestHeaders,
     credentials: 'include',
-    redirect: 'follow',
+    redirect,
   };
   if (body !== undefined) {
     if (init.method === 'GET' || init.method === 'HEAD') {
@@ -142,6 +151,11 @@ export function buildFetchScript(url: string, options: PageFetchOptions = {}): s
     "  throw new Error('Refusing to fetch ' + target.origin + ' over plaintext; pass allowInsecure: true to override');" +
     '}' +
     'const response = await fetch(target.toString(), init);' +
+    // with redirect: 'manual' the browser stops at the first redirect and hands
+    // back an opaque response, so no cookie has left over a downgraded connection
+    "if (response.type === 'opaqueredirect') {" +
+    "  throw new Error('The request to ' + target.origin + ' was redirected; redirects are not followed because the page cookies could be sent in cleartext. Fetch the final URL directly or pass allowInsecure: true');" +
+    '}' +
     "if (!allowInsecure && new URL(response.url).protocol !== 'https:') {" +
     "  throw new Error('Refusing to read a response served over plaintext from ' + new URL(response.url).origin + '; pass allowInsecure: true to override');" +
     '}' +

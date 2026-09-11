@@ -51,7 +51,7 @@ describe('buildFetchScript', () => {
     expect(script.startsWith('(async () => {')).toBe(true);
     expect(script).toContain('"method":"GET"');
     expect(script).toContain('"credentials":"include"');
-    expect(script).toContain('"redirect":"follow"');
+    expect(script).toContain('"redirect":"manual"');
     expect(script).toContain('new URL("/api", location.href)');
     expect(script).toContain('fetch(target.toString(), init)');
     expect(script).not.toContain('"body"');
@@ -248,5 +248,18 @@ describe('buildFetchScript plaintext guard (CWE-319)', () => {
   it('allowInsecure lets http requests and redirects through', () => {
     const script = buildFetchScript('http://intranet.local/status', { allowInsecure: true });
     expect(script).toContain('const allowInsecure = true;');
+    expect(script).toContain('"redirect":"follow"');
+  });
+
+  it('does not follow redirects by default, so no cookie can leave over a downgraded connection', () => {
+    const script = buildFetchScript('/api/items');
+    expect(script).toContain('"redirect":"manual"');
+    expect(script).toContain("response.type === 'opaqueredirect'");
+    expect(script).toContain('redirects are not followed');
+  });
+
+  it('honours an explicit redirect mode', () => {
+    expect(buildFetchScript('/api', { redirect: 'error' })).toContain('"redirect":"error"');
+    expect(buildFetchScript('/api', { redirect: 'follow' })).toContain('"redirect":"follow"');
   });
 });

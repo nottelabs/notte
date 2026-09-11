@@ -304,3 +304,32 @@ describe('caller cancellation vs deadline', () => {
     expect((error as Error).name).toBe('AbortError');
   });
 });
+
+describe('deadline timer lifecycle', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it('releases the deadline timer as soon as the request completes', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ status: 'ok' })));
+    const client = new NotteClient({ apiKey: API_KEY, baseUrl: DEFAULT_NOTTE_API_URL, timeoutMs: 60_000 });
+    const before = vi.getTimerCount();
+
+    await client.healthCheck();
+
+    expect(vi.getTimerCount()).toBe(before);
+  });
+
+  it('releases the deadline timer when the request fails', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ message: 'nope' }, { status: 500 })));
+    const client = new NotteClient({ apiKey: API_KEY, baseUrl: DEFAULT_NOTTE_API_URL, timeoutMs: 60_000 });
+    const before = vi.getTimerCount();
+
+    await client.healthCheck().catch(() => undefined);
+
+    expect(vi.getTimerCount()).toBe(before);
+  });
+});

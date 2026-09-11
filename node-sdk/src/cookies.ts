@@ -50,16 +50,24 @@ async function withFileLock<T>(path: string, fn: () => Promise<T>): Promise<T> {
   const current = new Promise<void>(done => {
     release = done;
   });
-  fileLocks.set(key, previous.then(() => current));
+  const tail = previous.then(() => current);
+  fileLocks.set(key, tail);
   await previous;
   try {
     return await fn();
   } finally {
     release();
-    if (fileLocks.get(key) === previous.then(() => current)) {
+    // Evict the entry when nobody queued behind us, so paths used once do not
+    // accumulate in long-running processes.
+    if (fileLocks.get(key) === tail) {
       fileLocks.delete(key);
     }
   }
+}
+
+/** Test hook: number of cookie files with an in-flight or queued update. */
+export function pendingCookieFileLocks(): number {
+  return fileLocks.size;
 }
 
 function isNotFound(error: unknown): boolean {
