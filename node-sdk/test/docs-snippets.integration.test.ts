@@ -5,7 +5,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { NotteClient, functionCreate, functionDelete, listFunctionRunsByFunctionId, functionRunStop, sessionStatus } from '@/index';
+import { NotteClient, functionCreate, functionDelete, listFunctionRunsByFunctionId, functionRunStop } from '@/index';
+import { expectSessionClosed } from './helpers/session-closure';
 import { collectExampleResult, verifyExampleOutput, type ExampleContract } from './helpers/docs-examples';
 
 const execute = promisify(execFile);
@@ -87,8 +88,7 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
           const id = verifyExampleOutput(JSON.stringify(collectExampleResult(values, contract)), contract, `${stdout}\n${stderr}`);
           expect(id).toBeTruthy();
           ids.push(id!);
-          const stopped = await sessionStatus({ client: client.getClient(), path: { session_id: id! }, throwOnError: true });
-          expect(stopped.data.status).toBe('closed');
+          await expectSessionClosed(client, id!, `${name} (${language})`);
         }
         expect(ids[0]).not.toBe(ids[1]);
       } finally {
@@ -151,9 +151,8 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
       ];
       if (contract.closedSession) {
         expect(ids[0]).not.toBe(ids[1]);
-        for (const id of ids) {
-          const session = await sessionStatus({ client: client.getClient(), path: { session_id: id! }, throwOnError: true });
-          expect(session.data.status).toBe('closed');
+        for (const [index, id] of ids.entries()) {
+          await expectSessionClosed(client, id!, `${name} (${index === 0 ? 'typescript' : 'python'})`);
         }
       }
       return;
@@ -169,10 +168,9 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
     }
     if (name === 'sessions/lifecycle/context_manager.ts') {
       const ids = [logged[0][0], stdout.trim()];
-      for (const id of ids) {
+      for (const [index, id] of ids.entries()) {
         expect(typeof id).toBe('string');
-        const session = await sessionStatus({ client: client.getClient(), path: { session_id: id as string }, throwOnError: true });
-        expect(session.data.status).toBe('closed');
+        await expectSessionClosed(client, id as string, `${name} (${index === 0 ? 'typescript' : 'python'})`);
       }
     }
   });
