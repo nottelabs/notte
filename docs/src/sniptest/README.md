@@ -50,8 +50,11 @@ only its own function in teardown. Session examples use context-managed cleanup
 and a short idle timeout as a fallback. Tests have bounded timeouts. Hard process
 termination can prevent teardown; the function may require manual removal.
 
-Pull requests run credential-free checks. Live execution runs on main pushes or
-a manual dispatch on main, never with secrets exposed to pull-request code.
+All matching pull requests run credential-free checks. Same-repository PRs also
+run live execution against staging before merging. Fork PRs skip the credentialed
+job. Live execution also runs on main pushes and manual dispatch on main.
+Keep the `pull_request` trigger; do not use `pull_request_target` to execute fork code
+with repository secrets.
 The existing Python docs suite still checks paired examples' syntax and types;
 their live execution belongs to the isolated paired suite.
 

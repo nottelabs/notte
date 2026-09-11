@@ -45,8 +45,10 @@ jobs:
 
   live:
     needs: checks
-    # Never expose credentials to pull-request code or an unreviewed dispatch branch.
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    # Test same-repository PRs before merging; forks must not receive staging credentials.
+    if: >-
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
