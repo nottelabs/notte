@@ -167,6 +167,7 @@ def test_root_level_scripts(python_file: Path) -> None:
 
 
 @pytest.mark.parametrize("use_case_dir", get_use_cases_dirs(), ids=lambda p: p.name)
+@pytest.mark.flaky(reruns=2, reruns_delay=5, only_rerun=["Failed to solve captcha! Please try again"])
 def test_use_case_script(use_case_dir: Path) -> None:
     """
     Test that a Python file runs without errors.

@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '0 6 * * *'  # Run at 6 AM every day
   workflow_dispatch:  # Allow manual triggering
+    inputs:
+      test_filter:
+        description: "Optional pytest -k expression for focused example runs"
+        required: false
+        default: ""
+        type: string
 
 env:
   CACHE_TYPE: "pip"
@@ -112,7 +118,9 @@ jobs:
           echo "Environment variables are set"
 
       - name: Run example tests
-        run: xvfb-run --auto-servernum bash tests/run_examples.sh
+        env:
+          EXAMPLE_TEST_FILTER: ${{ inputs.test_filter || '' }}
+        run: xvfb-run --auto-servernum bash tests/run_examples.sh -k "$EXAMPLE_TEST_FILTER"
 
       - name: Cleanup vaults created by this run
         if: always()

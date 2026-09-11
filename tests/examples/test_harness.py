@@ -46,8 +46,16 @@ def test_configured_example_still_reports_execution_errors(monkeypatch: pytest.M
 
 def test_nike_category_limit(tmp_path: Path):
     script = Path(__file__).resolve().parents[2] / "examples" / "scrape-nike-products" / "agent.py"
-    with patch("notte_sdk.NotteClient"):
+    with patch("notte_sdk.NotteClient") as client_type:
         namespace = runpy.run_path(str(script))
+    context = client_type.return_value.Session.return_value
+    session = context.__enter__.return_value
+
+    def replay_after_close():
+        context.__exit__.assert_called_once()
+        return Mock(spec=["download"])
+
+    session.replay.side_effect = replay_after_close
     scrape = namespace["scrape_nike_products"]
     categories = namespace["ProductCategories"].example()
     products = Mock(return_value=namespace["ShoppingList"](items=[]))

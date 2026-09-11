@@ -133,7 +133,7 @@ Scraping results:
 
 Scraping data saved in {run_dir}
 """)
-        session.replay().save(str(run_dir / "replay.webp"))
+    session.replay().download(run_dir / "replay.mp4")
 
 
 if __name__ == "__main__":

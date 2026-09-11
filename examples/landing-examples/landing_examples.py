@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from notte_sdk import NotteClient
 
 # Load environment variables
-_ = load_dotenv(".env.example")
+_ = load_dotenv()
 
 landing_examples = [
     # task str, URL str | None, use vault bool
@@ -41,7 +41,6 @@ def main():
                     )
                     agent = client.Agent(
                         session=session,
-                        reasoning_model="vertex_ai/gemini-2.0-flash",
                         max_steps=15,
                         vault=vault,
                     )
@@ -50,7 +49,6 @@ def main():
             else:
                 agent = client.Agent(
                     session=session,
-                    reasoning_model="vertex_ai/gemini-2.0-flash",
                     max_steps=15,
                 )
                 run_kwargs = {"task": task, **({"url": url} if url is not None else {})}

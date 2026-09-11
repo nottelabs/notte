@@ -56,8 +56,8 @@ with notte.Session() as session:
         task="Summarize the job offers on the Notte careers page.",
         url="https://notte.cc",
     )
-    # get session replay
-    replay = session.replay()
+# Retrieve the replay after closing the session
+replay = session.replay()
 ```
 
 The session context manager stops the session when the block exits. You can run multiple agents in the same session before closing it.

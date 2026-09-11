@@ -14,7 +14,7 @@ echo "Summary will be saved to: $SUMMARY_FILE"
 echo "-----------------------------------"
 
 # Run the test command and save full output
-uv run pytest tests/examples --durations 10 | tee "$FULL_LOG"
+uv run pytest tests/examples --durations 10 "$@" | tee "$FULL_LOG"
 status=$?
 
 # Now extract the summary portion

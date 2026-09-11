@@ -301,11 +301,12 @@ client = NotteClient()
 
 with client.Session(open_viewer=True) as session:
     # Start with a deterministic navigation
-    session.execute(type="goto", url="https://duckduckgo.com/")
-    session.execute(type="fill", selector="internal:role=combobox[name=\"Search with DuckDuckGo\"i]", value="nottelabs")
-    agent = client.Agent(session=session, max_steps=3)
+    session.execute(type="goto", url="https://github.com/nottelabs")
+    agent = client.Agent(session=session, max_steps=10)
     # Use an agent to reason about the next step
-    agent.run(task="Open nottelabs github repository")
+    response = agent.run(task="Open the notte repository owned by nottelabs. Finish on its repository home page.")
+    assert response.success, response.answer
+    assert session.observe().metadata.url.split("?")[0].rstrip("/") == "https://github.com/nottelabs/notte"
     # Use a scraping endpoint to extract data
     data = session.scrape(instructions="Extract number of stars")
 ```

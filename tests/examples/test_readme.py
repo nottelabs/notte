@@ -71,7 +71,9 @@ def test_pip_install_notte_browser():
 
 
 @pytest.mark.parametrize("example", find_examples("README.md"), ids=str)
-@pytest.mark.flaky(reruns=2, reruns_delay=5, only_rerun=["ServiceUnavailableError"])
+@pytest.mark.flaky(
+    reruns=2, reruns_delay=5, only_rerun=["ServiceUnavailableError", r"LLMProviderError: LLM request .* timed out"]
+)
 def test_readme_python_code(example: CodeExample, eval_example: EvalExample):
     _ = load_dotenv()
     run_example_safely(example, eval_example)
