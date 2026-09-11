@@ -14,10 +14,13 @@ import { SessionFiles } from '@/files';
 
 
 export interface NotteClientConfig {
+  /** API base URL. Defaults to NOTTE_API_URL, then https://api.notte.cc. */
   baseUrl?: string;
+  /** API key. Defaults to NOTTE_API_KEY; required except when using a relative proxy URL. */
   apiKey?: string;
 }
 
+/** Entry point for sessions, agents, functions, vaults, personas, and session files. */
 export class NotteClient {
   private config: NotteClientConfig;
   private readonly client = createClient();

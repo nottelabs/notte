@@ -1,0 +1,33 @@
+name: typescript-sdk-reference
+
+on:
+  pull_request:
+    paths: ['node-sdk/**', 'docs/src/typescript-sdk-reference/**', 'docs/src/docs.json', '.github/workflows/typescript-sdk-reference.yml']
+  push:
+    branches: [main]
+    paths: ['node-sdk/**', 'docs/src/typescript-sdk-reference/**', 'docs/src/docs.json', '.github/workflows/typescript-sdk-reference.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generated-reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        node: [22, 24]
+    defaults:
+      run:
+        working-directory: node-sdk
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm ci
+      - run: npm run docs:test
+      - run: npm run docs:check
