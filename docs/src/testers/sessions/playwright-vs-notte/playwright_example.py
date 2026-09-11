@@ -1,3 +1,4 @@
+# @sniptest show=1-15
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -13,3 +14,4 @@ with client.Session() as session:
     page.on("response", lambda res: print(f"← {res.url} ({res.status})"))
 
     page.goto("https://example.com")
+    status = session.status()

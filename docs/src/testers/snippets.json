@@ -1183,7 +1183,13 @@
         "source": "sessions/playwright-vs-notte/playwright_example.py",
         "language": "python",
         "title": "Python",
-        "execution_pending": "Legacy example from sessions/playwright-vs-notte/playwright_example.mdx; needs owned fixtures and behavior assertions before live execution."
+        "live_tested": true
+      },
+      {
+        "source": "sessions/playwright-vs-notte/playwright_example.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "live_tested": true
       }
     ]
   },

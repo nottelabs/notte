@@ -1,27 +1,4 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/sessions/playwright-vs-notte/playwright_example.py, testers/sessions/playwright-vs-notte/playwright_example.ts */}
-
-<CodeGroup>
-
-```python Python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
-    page = session.page
-
-    # Block images for faster loading
-    page.route("**/*.{png,jpg,jpeg}", lambda route: route.abort())
-
-    # Listen to network requests
-    page.on("request", lambda req: print(f"→ {req.url}"))
-    page.on("response", lambda res: print(f"← {res.url} ({res.status})"))
-
-    page.goto("https://example.com")
-```
-
-```typescript TypeScript
+// @sniptest show=1-24
 import { NotteClient } from 'notte-sdk';
 import { chromium } from 'playwright-core';
 
@@ -46,6 +23,5 @@ const status = await client.Session().use(async session => {
   }
   return status;
 });
-```
 
-</CodeGroup>
+export { status };
