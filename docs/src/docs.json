@@ -224,244 +224,6 @@
             "openapi": "https://api.notte.cc/openapi.json"
           },
           {
-            "group": "TypeScript SDK",
-            "pages": [
-              "typescript-sdk-reference/manual/index",
-              {
-                "group": "Agent",
-                "collapsed": true,
-                "pages": [
-                  "typescript-sdk-reference/manual/agent",
-                  "typescript-sdk-reference/agent/start",
-                  "typescript-sdk-reference/agent/run",
-                  "typescript-sdk-reference/agent/status",
-                  "typescript-sdk-reference/agent/stop",
-                  "typescript-sdk-reference/agent/isrunning"
-                ]
-              },
-              {
-                "group": "Encryption",
-                "collapsed": true,
-                "pages": [
-                  "typescript-sdk-reference/manual/encryption",
-                  "typescript-sdk-reference/encryption/decrypt"
-                ]
-              },
-              {
-                "group": "NotteClient",
-                "collapsed": true,
-                "pages": [
-                  "typescript-sdk-reference/manual/client",
-                  "typescript-sdk-reference/client/session",
-                  "typescript-sdk-reference/client/files",
-                  "typescript-sdk-reference/client/agent",
-                  "typescript-sdk-reference/client/vault",
-                  "typescript-sdk-reference/client/persona",
-                  "typescript-sdk-reference/client/nottefunction",
-                  "typescript-sdk-reference/client/getclient",
-                  "typescript-sdk-reference/client/scrape",
-                  "typescript-sdk-reference/client/getconfig"
-                ]
-              },
-              {
-                "group": "NotteFunction",
-                "collapsed": true,
-                "pages": [
-                  "typescript-sdk-reference/manual/function",
-                  "typescript-sdk-reference/function/getrun",
-                  "typescript-sdk-reference/function/retrieve",
-                  "typescript-sdk-reference/function/createrun",
-                  "typescript-sdk-reference/function/runs",
-                  "typescript-sdk-reference/function/run",
-                  "typescript-sdk-reference/function/geturl",
-                  "typescript-sdk-reference/function/download",
-                  "typescript-sdk-reference/function/getfunctionid"
-                ]
-              },
-              {
-                "group": "NottePersona",
-                "collapsed": true,
-                "pages": [
-                  "typescript-sdk-reference/manual/persona",
-                  "typescript-sdk-reference/persona/start",
-                  "typescript-sdk-reference/persona/stop",
-                  "typescript-sdk-reference/persona/create",
-                  "typescript-sdk-reference/persona/delete",
-                  "typescript-sdk-reference/persona/addcredentials",
-                  "typescript-sdk-reference/persona/emails",
-                  "typescript-sdk-reference/persona/sms",
-                  "typescript-sdk-reference/persona/get",
-                  "typescript-sdk-reference/persona/use"
-                ]
-              },
-              {
-                "group": "NotteVault",
-                "collapsed": true,
-                "pages": [
-                  "typescript-sdk-reference/manual/vault",
-                  "typescript-sdk-reference/vault/start",
-                  "typescript-sdk-reference/vault/stop",
-                  "typescript-sdk-reference/vault/addcredentials",
-                  "typescript-sdk-reference/vault/getcredentials",
-                  "typescript-sdk-reference/vault/deletecredentials",
-                  "typescript-sdk-reference/vault/setcreditcard",
-                  "typescript-sdk-reference/vault/getcreditcard",
-                  "typescript-sdk-reference/vault/listcredentials",
-                  "typescript-sdk-reference/vault/deletecreditcard",
-                  "typescript-sdk-reference/vault/delete",
-                  "typescript-sdk-reference/vault/addcredentialsfromenv",
-                  "typescript-sdk-reference/vault/generatepassword"
-                ]
-              },
-              {
-                "group": "Session",
-                "collapsed": true,
-                "pages": [
-                  "typescript-sdk-reference/manual/session",
-                  "typescript-sdk-reference/session/start",
-                  "typescript-sdk-reference/session/stop",
-                  "typescript-sdk-reference/session/status",
-                  "typescript-sdk-reference/session/getid",
-                  "typescript-sdk-reference/session/issessionactive",
-                  "typescript-sdk-reference/session/getresponse",
-                  "typescript-sdk-reference/session/viewer",
-                  "typescript-sdk-reference/session/setcookies",
-                  "typescript-sdk-reference/session/setcookiesfromfile",
-                  "typescript-sdk-reference/session/getcookies",
-                  "typescript-sdk-reference/session/execute",
-                  "typescript-sdk-reference/session/observe",
-                  "typescript-sdk-reference/session/replay",
-                  "typescript-sdk-reference/session/scrape",
-                  "typescript-sdk-reference/session/use",
-                  "typescript-sdk-reference/session/symbol-asynciterator"
-                ]
-              },
-              {
-                "group": "SessionFiles",
-                "collapsed": true,
-                "pages": [
-                  "typescript-sdk-reference/manual/files",
-                  "typescript-sdk-reference/files/upload",
-                  "typescript-sdk-reference/files/list",
-                  "typescript-sdk-reference/files/download",
-                  "typescript-sdk-reference/files/delete"
-                ]
-              },
-              {
-                "group": "Types",
-                "collapsed": true,
-                "pages": [
-                  "typescript-sdk-reference/types/actionspace",
-                  "typescript-sdk-reference/types/agentconstructor",
-                  "typescript-sdk-reference/types/agentconstructorwithagentid",
-                  "typescript-sdk-reference/types/agentconstructorwithsession",
-                  "typescript-sdk-reference/types/agentresponse",
-                  "typescript-sdk-reference/types/agentrunrequest",
-                  "typescript-sdk-reference/types/agentstatus",
-                  "typescript-sdk-reference/types/agentupdatehandler",
-                  "typescript-sdk-reference/types/apiagentstartrequest",
-                  "typescript-sdk-reference/types/apiexecutionresponse",
-                  "typescript-sdk-reference/types/apisessionstartrequest",
-                  "typescript-sdk-reference/types/basemodel",
-                  "typescript-sdk-reference/types/boundingbox",
-                  "typescript-sdk-reference/types/captchasolveaction",
-                  "typescript-sdk-reference/types/checkactionoutput",
-                  "typescript-sdk-reference/types/clickactionoutput",
-                  "typescript-sdk-reference/types/closetabaction",
-                  "typescript-sdk-reference/types/completionaction",
-                  "typescript-sdk-reference/types/cookie",
-                  "typescript-sdk-reference/types/credential",
-                  "typescript-sdk-reference/types/credentialsdictinput",
-                  "typescript-sdk-reference/types/creditcarddictinput",
-                  "typescript-sdk-reference/types/dataspace",
-                  "typescript-sdk-reference/types/deletepersonaresponse",
-                  "typescript-sdk-reference/types/downloadfileactionoutput",
-                  "typescript-sdk-reference/types/emailreadaction",
-                  "typescript-sdk-reference/types/emailresponse",
-                  "typescript-sdk-reference/types/emailverificationreadaction",
-                  "typescript-sdk-reference/types/evaluatejsaction",
-                  "typescript-sdk-reference/types/executionresponse",
-                  "typescript-sdk-reference/types/externalproxy",
-                  "typescript-sdk-reference/types/fallbackfillactionoutput",
-                  "typescript-sdk-reference/types/filesource",
-                  "typescript-sdk-reference/types/fillactionoutput",
-                  "typescript-sdk-reference/types/formfillaction",
-                  "typescript-sdk-reference/types/functionconstructor",
-                  "typescript-sdk-reference/types/functiondownloadoptions",
-                  "typescript-sdk-reference/types/functionruncreateresult",
-                  "typescript-sdk-reference/types/functionrunlistitemresponse",
-                  "typescript-sdk-reference/types/functionrunlistoptions",
-                  "typescript-sdk-reference/types/functionrunoptions",
-                  "typescript-sdk-reference/types/functionrunresult",
-                  "typescript-sdk-reference/types/functionrunstartresult",
-                  "typescript-sdk-reference/types/functionsource",
-                  "typescript-sdk-reference/types/functionurloptions",
-                  "typescript-sdk-reference/types/getfunctionrunresponse",
-                  "typescript-sdk-reference/types/globalscraperequest",
-                  "typescript-sdk-reference/types/gobackaction",
-                  "typescript-sdk-reference/types/goforwardaction",
-                  "typescript-sdk-reference/types/gotoaction",
-                  "typescript-sdk-reference/types/gotonewtabaction",
-                  "typescript-sdk-reference/types/helpaction",
-                  "typescript-sdk-reference/types/imagecategory",
-                  "typescript-sdk-reference/types/imagedata",
-                  "typescript-sdk-reference/types/legacyagentstatusresponse",
-                  "typescript-sdk-reference/types/listfunctionrunsbyfunctioniddata",
-                  "typescript-sdk-reference/types/listpersonasdata",
-                  "typescript-sdk-reference/types/llmmodel",
-                  "typescript-sdk-reference/types/messagereadoptions",
-                  "typescript-sdk-reference/types/multifactorfillactionoutput",
-                  "typescript-sdk-reference/types/nodeselectors",
-                  "typescript-sdk-reference/types/notteclientconfig",
-                  "typescript-sdk-reference/types/notteproxy",
-                  "typescript-sdk-reference/types/observation",
-                  "typescript-sdk-reference/types/paginatedresponsefunctionrunlistitemresponse",
-                  "typescript-sdk-reference/types/personaconstructor",
-                  "typescript-sdk-reference/types/personaconstructorcreate",
-                  "typescript-sdk-reference/types/personaconstructorwithid",
-                  "typescript-sdk-reference/types/personacreaterequest",
-                  "typescript-sdk-reference/types/personaemailslistdata",
-                  "typescript-sdk-reference/types/personalistoptions",
-                  "typescript-sdk-reference/types/personaresponse",
-                  "typescript-sdk-reference/types/personaresponsewithinternalemail",
-                  "typescript-sdk-reference/types/presskeyaction",
-                  "typescript-sdk-reference/types/proxygeolocationcountry",
-                  "typescript-sdk-reference/types/reloadaction",
-                  "typescript-sdk-reference/types/replayresponse",
-                  "typescript-sdk-reference/types/rootmodelany",
-                  "typescript-sdk-reference/types/runfunctionrequest",
-                  "typescript-sdk-reference/types/scrapeaction",
-                  "typescript-sdk-reference/types/scraperequest",
-                  "typescript-sdk-reference/types/screenshot",
-                  "typescript-sdk-reference/types/scrolldownaction",
-                  "typescript-sdk-reference/types/scrollupaction",
-                  "typescript-sdk-reference/types/selectdropdownoptionactionoutput",
-                  "typescript-sdk-reference/types/serializederror",
-                  "typescript-sdk-reference/types/sessionfile",
-                  "typescript-sdk-reference/types/sessionfilespage",
-                  "typescript-sdk-reference/types/sessionoptions",
-                  "typescript-sdk-reference/types/sessionprofile",
-                  "typescript-sdk-reference/types/sessionresponse",
-                  "typescript-sdk-reference/types/smsreadaction",
-                  "typescript-sdk-reference/types/smsresponse",
-                  "typescript-sdk-reference/types/snapshotmetadata",
-                  "typescript-sdk-reference/types/spacecategory",
-                  "typescript-sdk-reference/types/structureddatabasemodel",
-                  "typescript-sdk-reference/types/switchtabaction",
-                  "typescript-sdk-reference/types/tabsdata",
-                  "typescript-sdk-reference/types/tailnetproxy",
-                  "typescript-sdk-reference/types/uploadfileactionoutput",
-                  "typescript-sdk-reference/types/vaultconstructor",
-                  "typescript-sdk-reference/types/vaultconstructorcreate",
-                  "typescript-sdk-reference/types/vaultconstructorwithid",
-                  "typescript-sdk-reference/types/vaultcreaterequest",
-                  "typescript-sdk-reference/types/viewportdata",
-                  "typescript-sdk-reference/types/waitaction"
-                ]
-              }
-            ]
-          },
-          {
             "group": "Python SDK",
             "pages": [
               {
@@ -612,6 +374,264 @@
                       "sdk-reference/remotesession/offset"
                     ]
                   }
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Node SDK",
+            "pages": [
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "typescript-sdk-reference/manual/index",
+                  {
+                    "group": "Client",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/client",
+                      "typescript-sdk-reference/client/session",
+                      "typescript-sdk-reference/client/files",
+                      "typescript-sdk-reference/client/agent",
+                      "typescript-sdk-reference/client/vault",
+                      "typescript-sdk-reference/client/persona",
+                      "typescript-sdk-reference/client/nottefunction",
+                      "typescript-sdk-reference/client/scrape"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Core Features",
+                "pages": [
+                  {
+                    "group": "Agent",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/agent",
+                      "typescript-sdk-reference/agent/start",
+                      "typescript-sdk-reference/agent/run",
+                      "typescript-sdk-reference/agent/status",
+                      "typescript-sdk-reference/agent/stop",
+                      "typescript-sdk-reference/agent/isrunning"
+                    ]
+                  },
+                  {
+                    "group": "Function",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/function",
+                      "typescript-sdk-reference/function/getrun",
+                      "typescript-sdk-reference/function/retrieve",
+                      "typescript-sdk-reference/function/createrun",
+                      "typescript-sdk-reference/function/runs",
+                      "typescript-sdk-reference/function/run",
+                      "typescript-sdk-reference/function/geturl",
+                      "typescript-sdk-reference/function/download",
+                      "typescript-sdk-reference/function/getfunctionid"
+                    ]
+                  },
+                  {
+                    "group": "Session",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/session",
+                      "typescript-sdk-reference/session/start",
+                      "typescript-sdk-reference/session/stop",
+                      "typescript-sdk-reference/session/status",
+                      "typescript-sdk-reference/session/getid",
+                      "typescript-sdk-reference/session/issessionactive",
+                      "typescript-sdk-reference/session/viewer",
+                      "typescript-sdk-reference/session/setcookies",
+                      "typescript-sdk-reference/session/setcookiesfromfile",
+                      "typescript-sdk-reference/session/getcookies",
+                      "typescript-sdk-reference/session/execute",
+                      "typescript-sdk-reference/session/observe",
+                      "typescript-sdk-reference/session/replay",
+                      "typescript-sdk-reference/session/scrape",
+                      "typescript-sdk-reference/session/use",
+                      "typescript-sdk-reference/session/symbol-asynciterator"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Tooling",
+                "pages": [
+                  {
+                    "group": "Encryption",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/encryption",
+                      "typescript-sdk-reference/encryption/decrypt"
+                    ]
+                  },
+                  {
+                    "group": "Persona",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/persona",
+                      "typescript-sdk-reference/persona/start",
+                      "typescript-sdk-reference/persona/stop",
+                      "typescript-sdk-reference/persona/create",
+                      "typescript-sdk-reference/persona/delete",
+                      "typescript-sdk-reference/persona/addcredentials",
+                      "typescript-sdk-reference/persona/emails",
+                      "typescript-sdk-reference/persona/sms",
+                      "typescript-sdk-reference/persona/get",
+                      "typescript-sdk-reference/persona/use"
+                    ]
+                  },
+                  {
+                    "group": "Vault",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/vault",
+                      "typescript-sdk-reference/vault/start",
+                      "typescript-sdk-reference/vault/stop",
+                      "typescript-sdk-reference/vault/addcredentials",
+                      "typescript-sdk-reference/vault/getcredentials",
+                      "typescript-sdk-reference/vault/deletecredentials",
+                      "typescript-sdk-reference/vault/setcreditcard",
+                      "typescript-sdk-reference/vault/getcreditcard",
+                      "typescript-sdk-reference/vault/listcredentials",
+                      "typescript-sdk-reference/vault/deletecreditcard",
+                      "typescript-sdk-reference/vault/delete",
+                      "typescript-sdk-reference/vault/addcredentialsfromenv",
+                      "typescript-sdk-reference/vault/generatepassword"
+                    ]
+                  },
+                  {
+                    "group": "File Storage",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/files",
+                      "typescript-sdk-reference/files/upload",
+                      "typescript-sdk-reference/files/list",
+                      "typescript-sdk-reference/files/download",
+                      "typescript-sdk-reference/files/delete"
+                    ]
+                  },
+                  {
+                    "group": "Types",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/types/actionspace",
+                      "typescript-sdk-reference/types/agentconstructor",
+                      "typescript-sdk-reference/types/agentconstructorwithagentid",
+                      "typescript-sdk-reference/types/agentconstructorwithsession",
+                      "typescript-sdk-reference/types/agentresponse",
+                      "typescript-sdk-reference/types/agentrunrequest",
+                      "typescript-sdk-reference/types/agentstatus",
+                      "typescript-sdk-reference/types/agentupdatehandler",
+                      "typescript-sdk-reference/types/apiagentstartrequest",
+                      "typescript-sdk-reference/types/apiexecutionresponse",
+                      "typescript-sdk-reference/types/apisessionstartrequest",
+                      "typescript-sdk-reference/types/basemodel",
+                      "typescript-sdk-reference/types/boundingbox",
+                      "typescript-sdk-reference/types/captchasolveaction",
+                      "typescript-sdk-reference/types/checkactionoutput",
+                      "typescript-sdk-reference/types/clickactionoutput",
+                      "typescript-sdk-reference/types/closetabaction",
+                      "typescript-sdk-reference/types/completionaction",
+                      "typescript-sdk-reference/types/cookie",
+                      "typescript-sdk-reference/types/credential",
+                      "typescript-sdk-reference/types/credentialsdictinput",
+                      "typescript-sdk-reference/types/creditcarddictinput",
+                      "typescript-sdk-reference/types/dataspace",
+                      "typescript-sdk-reference/types/deletepersonaresponse",
+                      "typescript-sdk-reference/types/downloadfileactionoutput",
+                      "typescript-sdk-reference/types/emailreadaction",
+                      "typescript-sdk-reference/types/emailresponse",
+                      "typescript-sdk-reference/types/emailverificationreadaction",
+                      "typescript-sdk-reference/types/evaluatejsaction",
+                      "typescript-sdk-reference/types/executionresponse",
+                      "typescript-sdk-reference/types/externalproxy",
+                      "typescript-sdk-reference/types/fallbackfillactionoutput",
+                      "typescript-sdk-reference/types/filesource",
+                      "typescript-sdk-reference/types/fillactionoutput",
+                      "typescript-sdk-reference/types/formfillaction",
+                      "typescript-sdk-reference/types/functionconstructor",
+                      "typescript-sdk-reference/types/functiondownloadoptions",
+                      "typescript-sdk-reference/types/functionruncreateresult",
+                      "typescript-sdk-reference/types/functionrunlistitemresponse",
+                      "typescript-sdk-reference/types/functionrunlistoptions",
+                      "typescript-sdk-reference/types/functionrunoptions",
+                      "typescript-sdk-reference/types/functionrunresult",
+                      "typescript-sdk-reference/types/functionrunstartresult",
+                      "typescript-sdk-reference/types/functionsource",
+                      "typescript-sdk-reference/types/functionurloptions",
+                      "typescript-sdk-reference/types/getfunctionrunresponse",
+                      "typescript-sdk-reference/types/globalscraperequest",
+                      "typescript-sdk-reference/types/gobackaction",
+                      "typescript-sdk-reference/types/goforwardaction",
+                      "typescript-sdk-reference/types/gotoaction",
+                      "typescript-sdk-reference/types/gotonewtabaction",
+                      "typescript-sdk-reference/types/helpaction",
+                      "typescript-sdk-reference/types/imagecategory",
+                      "typescript-sdk-reference/types/imagedata",
+                      "typescript-sdk-reference/types/legacyagentstatusresponse",
+                      "typescript-sdk-reference/types/listfunctionrunsbyfunctioniddata",
+                      "typescript-sdk-reference/types/listpersonasdata",
+                      "typescript-sdk-reference/types/llmmodel",
+                      "typescript-sdk-reference/types/messagereadoptions",
+                      "typescript-sdk-reference/types/multifactorfillactionoutput",
+                      "typescript-sdk-reference/types/nodeselectors",
+                      "typescript-sdk-reference/types/notteclientconfig",
+                      "typescript-sdk-reference/types/notteproxy",
+                      "typescript-sdk-reference/types/observation",
+                      "typescript-sdk-reference/types/paginatedresponsefunctionrunlistitemresponse",
+                      "typescript-sdk-reference/types/personaconstructor",
+                      "typescript-sdk-reference/types/personaconstructorcreate",
+                      "typescript-sdk-reference/types/personaconstructorwithid",
+                      "typescript-sdk-reference/types/personacreaterequest",
+                      "typescript-sdk-reference/types/personaemailslistdata",
+                      "typescript-sdk-reference/types/personalistoptions",
+                      "typescript-sdk-reference/types/personaresponse",
+                      "typescript-sdk-reference/types/personaresponsewithinternalemail",
+                      "typescript-sdk-reference/types/presskeyaction",
+                      "typescript-sdk-reference/types/proxygeolocationcountry",
+                      "typescript-sdk-reference/types/reloadaction",
+                      "typescript-sdk-reference/types/replayresponse",
+                      "typescript-sdk-reference/types/rootmodelany",
+                      "typescript-sdk-reference/types/runfunctionrequest",
+                      "typescript-sdk-reference/types/scrapeaction",
+                      "typescript-sdk-reference/types/scraperequest",
+                      "typescript-sdk-reference/types/screenshot",
+                      "typescript-sdk-reference/types/scrolldownaction",
+                      "typescript-sdk-reference/types/scrollupaction",
+                      "typescript-sdk-reference/types/selectdropdownoptionactionoutput",
+                      "typescript-sdk-reference/types/serializederror",
+                      "typescript-sdk-reference/types/sessionfile",
+                      "typescript-sdk-reference/types/sessionfilespage",
+                      "typescript-sdk-reference/types/sessionoptions",
+                      "typescript-sdk-reference/types/sessionprofile",
+                      "typescript-sdk-reference/types/sessionresponse",
+                      "typescript-sdk-reference/types/smsreadaction",
+                      "typescript-sdk-reference/types/smsresponse",
+                      "typescript-sdk-reference/types/snapshotmetadata",
+                      "typescript-sdk-reference/types/spacecategory",
+                      "typescript-sdk-reference/types/structureddatabasemodel",
+                      "typescript-sdk-reference/types/switchtabaction",
+                      "typescript-sdk-reference/types/tabsdata",
+                      "typescript-sdk-reference/types/tailnetproxy",
+                      "typescript-sdk-reference/types/uploadfileactionoutput",
+                      "typescript-sdk-reference/types/vaultconstructor",
+                      "typescript-sdk-reference/types/vaultconstructorcreate",
+                      "typescript-sdk-reference/types/vaultconstructorwithid",
+                      "typescript-sdk-reference/types/vaultcreaterequest",
+                      "typescript-sdk-reference/types/viewportdata",
+                      "typescript-sdk-reference/types/waitaction"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Debug",
+                "pages": [
+                  "typescript-sdk-reference/client/getconfig",
+                  "typescript-sdk-reference/client/getclient",
+                  "typescript-sdk-reference/session/getresponse"
                 ]
               }
             ]

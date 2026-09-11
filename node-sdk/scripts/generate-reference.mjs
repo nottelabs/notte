@@ -167,15 +167,26 @@ export function createReference(root = sdkRoot) {
     pages.set(`${path}.mdx`, page(name, node, [doc(symbol), fence(node.getText()), tags(node), fields.length ? `## Fields\n\n${fields.join('\n\n')}` : '', related([node])].filter(Boolean).join('\n\n')));
     typePaths.push(path);
   }
-  pages.set(`${prefix}/manual/index.mdx`, page('TypeScript SDK reference', null, `This reference is generated from the public high-level classes, their signatures, JSDoc, and related types in \`node-sdk/src\`. It documents the checked-in SDK source; match it to the version you use.\n\nInstall the SDK:\n\n\`\`\`sh\nnpm install notte-sdk\n\`\`\`\n\n${classes.map(({ symbol }) => `- [${symbol.name}](/${prefix}/manual/${slug(symbol.name)})`).join('\n')}\n\nThe generated low-level HTTP functions, legacy client helpers, and proxy subpath entrypoints are not part of this high-level reference. See the [API reference](/api-reference/authentication) for HTTP endpoints and the [Python SDK reference](/sdk-reference/manual/index) for Python.\n\nTo update these pages, edit the TypeScript source or its JSDoc and run \`npm run docs:generate --prefix node-sdk\`. CI checks for stale generated pages.`));
-  return { pages, navigation: { group: 'TypeScript SDK', pages: [`${prefix}/manual/index`, ...groups, { group: 'Types', collapsed: true, pages: typePaths }] } };
+  pages.set(`${prefix}/manual/index.mdx`, page('Node SDK reference', null, `This reference is generated from the public high-level classes, their signatures, JSDoc, and related types in \`node-sdk/src\`. It documents the checked-in SDK source; match it to the version you use.\n\nInstall the SDK:\n\n\`\`\`sh\nnpm install notte-sdk\n\`\`\`\n\n${classes.map(({ symbol }) => `- [${symbol.name}](/${prefix}/manual/${slug(symbol.name)})`).join('\n')}\n\nThe generated low-level HTTP functions, legacy client helpers, and proxy subpath entrypoints are not part of this high-level reference. See the [API reference](/api-reference/authentication) for HTTP endpoints and the [Python SDK reference](/sdk-reference/manual/index) for Python.\n\nTo update these pages, edit the TypeScript source or its JSDoc and run \`npm run docs:generate --prefix node-sdk\`. CI checks for stale generated pages.`));
+  const debugPaths = ['client/getconfig', 'client/getclient', 'session/getresponse']
+    .map(path => `${prefix}/${path}`).filter(path => pages.has(`${path}.mdx`));
+  const categories = { 'Getting Started': [], 'Core Features': [], Tooling: [], Debug: debugPaths };
+  categories['Getting Started'].push(`${prefix}/manual/index`);
+  const labels = { NotteClient: 'Client', NotteFunction: 'Function', NotteVault: 'Vault', NottePersona: 'Persona', SessionFiles: 'File Storage' };
+  for (const group of groups) {
+    const category = group.group === 'NotteClient' ? 'Getting Started'
+      : ['NotteVault', 'NottePersona', 'SessionFiles', 'Encryption'].includes(group.group) ? 'Tooling' : 'Core Features';
+    categories[category].push({ ...group, group: labels[group.group] ?? group.group, pages: group.pages.filter(path => !debugPaths.includes(path)) });
+  }
+  categories.Tooling.push({ group: 'Types', collapsed: true, pages: typePaths });
+  return { pages, navigation: { group: 'Node SDK', pages: Object.entries(categories).filter(([, pages]) => pages.length).map(([group, pages]) => ({ group, pages })) } };
 }
 
 // Replace only this navigation group, preserving all unrelated docs.json formatting.
 export function replaceNavigation(text, group) {
-  const needle = '"group": "TypeScript SDK"';
+  const needle = '"group": "Node SDK"';
   const index = text.indexOf(needle);
-  if (index < 0 || text.indexOf(needle, index + 1) >= 0) throw new Error('Expected one TypeScript SDK navigation group');
+  if (index < 0 || text.indexOf(needle, index + 1) >= 0) throw new Error('Expected one Node SDK navigation group');
   const start = text.lastIndexOf('{', index);
   let depth = 0, quoted = false, escaped = false;
   for (let end = start; end < text.length; end++) {
@@ -193,7 +204,7 @@ export function replaceNavigation(text, group) {
       return result;
     }
   }
-  throw new Error('Unclosed TypeScript SDK navigation group');
+  throw new Error('Unclosed Node SDK navigation group');
 }
 
 export function syncReference({ pages, navigation }, docsRoot, check = false) {

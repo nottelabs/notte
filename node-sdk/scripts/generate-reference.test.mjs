@@ -95,10 +95,26 @@ test('navigation and generated reference links resolve and every page is navigab
   }
 });
 
+test('Node SDK mirrors Python categories and appears below Python in the sidebar', () => {
+  assert.equal(actual.navigation.group, 'Node SDK');
+  assert.deepEqual(actual.navigation.pages.map(group => group.group), ['Getting Started', 'Core Features', 'Tooling', 'Debug']);
+  const categoryNames = category => actual.navigation.pages.find(group => group.group === category).pages
+    .filter(page => typeof page === 'object').map(page => page.group);
+  assert.ok(categoryNames('Getting Started').includes('Client'));
+  assert.deepEqual(categoryNames('Core Features'), ['Agent', 'Function', 'Session']);
+  for (const name of ['Vault', 'Persona', 'File Storage', 'Encryption', 'Types']) assert.ok(categoryNames('Tooling').includes(name));
+  const docs = JSON.parse(readFileSync(new URL('../../docs/src/docs.json', import.meta.url), 'utf8'));
+  const navigation = JSON.stringify(docs.navigation);
+  const python = navigation.indexOf('"group":"Python SDK"');
+  const node = navigation.indexOf('"group":"Node SDK"');
+  assert.ok(python >= 0 && node > python, 'Python SDK must appear before Node SDK');
+  assert.ok(!navigation.includes('"group":"TypeScript SDK"'));
+});
+
 test('navigation replacement preserves unrelated Python navigation and formatting', () => {
-  const input = '{\n  "navigation": [{"group": "SDK", "pages": ["sdk-reference/manual/session"]},\n  {"group": "TypeScript SDK", "pages": []}]\n}\n';
+  const input = '{\n  "navigation": [{"group": "SDK", "pages": ["sdk-reference/manual/session"]},\n  {"group": "Node SDK", "pages": []}]\n}\n';
   const replaced = replaceNavigation(input, generated.navigation);
-  assert.ok(replaced.startsWith(input.split('{"group": "TypeScript SDK"')[0]));
+  assert.ok(replaced.startsWith(input.split('{"group": "Node SDK"')[0]));
   assert.deepEqual(JSON.parse(replaced).navigation[0], JSON.parse(input).navigation[0]);
   assert.equal(replaceNavigation(replaced, generated.navigation), replaced);
   assert.throws(() => replaceNavigation('{}', generated.navigation), /Expected one/);
@@ -107,7 +123,7 @@ test('navigation replacement preserves unrelated Python navigation and formattin
 test('check is non-mutating and detects missing, edited and orphaned generated pages', () => {
   const output = resolve(fixture, 'docs');
   mkdirSync(output);
-  writeFileSync(resolve(output, 'docs.json'), '{"group": "TypeScript SDK", "pages": []}');
+  writeFileSync(resolve(output, 'docs.json'), '{"group": "Node SDK", "pages": []}');
   assert.ok(syncReference(generated, output, true).length);
   syncReference(generated, output);
   assert.deepEqual(syncReference(generated, output, true), []);
