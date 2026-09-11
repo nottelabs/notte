@@ -9,8 +9,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/lib/client/types.gen.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/lib/client/types.gen.ts#L1510)
 
-EmailReadAction
-
 ```typescript
 export type EmailReadAction = {
     /**
@@ -49,31 +47,25 @@ export type EmailReadAction = {
 ## Fields
 
 <ParamField body="type" type={"\"email_read\" | undefined"}>
-Type
+
 </ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
-Category
+
 </ParamField>
 
 <ParamField body="description" type={"string | undefined"}>
-Description
+
 </ParamField>
 
 <ParamField body="limit" type={"number | undefined"}>
-Limit
-
 Max number of emails to return
 </ParamField>
 
 <ParamField body="timedelta" type={"string | null | undefined"}>
-Timedelta
-
 Return only emails that are not older than `timedelta`
 </ParamField>
 
 <ParamField body="only_unread" type={"boolean | undefined"}>
-Only Unread
-
 Return only previously unread emails
 </ParamField>

@@ -9,8 +9,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/lib/client/types.gen.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/lib/client/types.gen.ts#L2650)
 
-GlobalScrapeRequest
-
 ```typescript
 export type GlobalScrapeRequest = {
     /**
@@ -166,7 +164,7 @@ export type GlobalScrapeRequest = {
     /**
      * Response Format
      *
-     * The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)
+     * The response format to use for the scrape. Use a JSON Schema object; high-level Node agent and scrape methods also accept a Zod schema
      */
     response_format?: unknown | null;
     /**
@@ -191,74 +189,50 @@ export type GlobalScrapeRequest = {
 ## Fields
 
 <ParamField body="solve_captchas" type={"boolean | undefined"}>
-Solve Captchas
-
 Whether to try to automatically solve captchas
 </ParamField>
 
 <ParamField body="max_duration_minutes" type={"number | undefined"}>
-Max Duration Minutes
-
 Maximum session lifetime in minutes (absolute maximum, not affected by activity).
 </ParamField>
 
 <ParamField body="idle_timeout_minutes" type={"number | undefined"}>
-Idle Timeout Minutes
-
 Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).
 </ParamField>
 
 <ParamField body="proxies" type={"boolean | (NotteProxy | ExternalProxy | TailnetProxy)[] | undefined"}>
-Proxies
-
 List of custom proxies to use for the session. If True, the default proxies will be used.
 </ParamField>
 
 <ParamField body="browser_type" type={"\"chromium\" | \"chrome\" | \"chrome-nightly\" | \"chrome-turbo\" | undefined"}>
-Browser Type
-
 The browser type to use. Supported values are chromium and chrome. chrome-nightly and chrome-turbo are legacy aliases for chrome.
 </ParamField>
 
 <ParamField body="user_agent" type={"string | null | undefined"}>
-User Agent
-
 The user agent to use for the session
 </ParamField>
 
 <ParamField body="chrome_args" type={"string[] | null | undefined"}>
-Chrome Args
-
 Overwrite the chrome instance arguments
 </ParamField>
 
 <ParamField body="viewport_width" type={"number | null | undefined"}>
-Viewport Width
-
 The width of the viewport
 </ParamField>
 
 <ParamField body="viewport_height" type={"number | null | undefined"}>
-Viewport Height
-
 The height of the viewport
 </ParamField>
 
 <ParamField body="aspect_ratio" type={"\"5:4\" | \"16:9\" | null | undefined"}>
-Aspect Ratio
-
 Viewport shape preset. When set, the backend fits the largest rectangle of this aspect ratio inside the sampled available screen area. Cannot be combined with explicit viewport_width/viewport_height.
 </ParamField>
 
 <ParamField body="cdp_url" type={"string | null | undefined"}>
-Cdp Url
-
 The CDP URL of another remote session provider.
 </ParamField>
 
 <ParamField body="screenshot_type" type={"\"raw\" | \"full\" | \"last_action\" | undefined"}>
-Screenshot Type
-
 The type of screenshot to use for the session.
 </ParamField>
 
@@ -267,97 +241,67 @@ Browser profile configuration for state persistence
 </ParamField>
 
 <ParamField body="web_bot_auth" type={"boolean | undefined"}>
-Web Bot Auth
-
 Whether to use web bot authentication.
 </ParamField>
 
 <ParamField body="extra_http_headers" type={"{ [key: string]: string; } | null | undefined"}>
-Extra Http Headers
-
 Extra HTTP headers to be sent with every request.
 </ParamField>
 
 <ParamField body="vault_id" type={"string | null | undefined"}>
-Vault Id
-
 The vault to use for the session
 </ParamField>
 
 <ParamField body="auth_ids" type={"string[] | undefined"}>
-Auth Ids
-
 Managed Auth connection IDs to verify and, when necessary, authenticate inside this session before it is returned.
 </ParamField>
 
 <ParamField body="wait_for_authentication" type={"boolean | undefined"}>
-Wait For Authentication
-
 Whether to wait for Managed Auth before returning the session. Defaults to true. When true, authentication failure or timeout fails session creation; when false, authentication continues in the background after the browser is ready.
 </ParamField>
 
 <ParamField body="advanced_stealth" type={"boolean | undefined"}>
-Advanced Stealth
-
 Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
 </ParamField>
 
 <ParamField body="selector" type={"string | null | undefined"}>
-Selector
-
 Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
 </ParamField>
 
 <ParamField body="scrape_links" type={"boolean | undefined"}>
-Scrape Links
-
 Whether to scrape links from the page. Links are scraped by default.
 </ParamField>
 
 <ParamField body="scrape_images" type={"boolean | undefined"}>
-Scrape Images
-
 Whether to scrape images from the page. Images are scraped by default.
 </ParamField>
 
 <ParamField body="ignored_tags" type={"string[] | null | undefined"}>
-Ignored Tags
-
 HTML tags to ignore from the page
 </ParamField>
 
 <ParamField body="only_main_content" type={"boolean | undefined"}>
-Only Main Content
-
 Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
 </ParamField>
 
 <ParamField body="only_images" type={"boolean | undefined"}>
-Only Images
-
 Whether to only scrape images from the page. If True, the page content is excluded.
 </ParamField>
 
 <ParamField body="response_format" type={"unknown"}>
-Response Format
-
-The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)
+The response format to use for the scrape. Use a JSON Schema object; high-level Node agent and scrape methods also accept a Zod schema
 </ParamField>
 
 <ParamField body="instructions" type={"string | null | undefined"}>
-Instructions
-
 Additional instructions to use for the scrape. E.g. 'Extract only the title, date and content of the articles.'
 </ParamField>
 
 <ParamField body="use_link_placeholders" type={"boolean | undefined"}>
-Use Link Placeholders
-
 Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.
 </ParamField>
 
 <ParamField body="url" type={"string"} required>
-Url
+
 </ParamField>
 
 ## Related types

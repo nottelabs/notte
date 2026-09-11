@@ -27,15 +27,11 @@ export type FunctionRunOptions = Pick<RunFunctionRequest, 'runtime' | 'stream'> 
 ## Fields
 
 <ParamField body="stream" type={"boolean | undefined"}>
-Stream
-
 Whether to stream logs, or only return final response
 Stream logs and wait for completion. Defaults to true.
 </ParamField>
 
 <ParamField body="runtime" type={"\"standard\" | \"extended\" | null | undefined"}>
-Runtime
-
 Override the saved function runtime; omit to inherit its default
 </ParamField>
 

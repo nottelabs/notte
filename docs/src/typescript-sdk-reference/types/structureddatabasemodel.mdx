@@ -9,8 +9,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/lib/client/types.gen.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/lib/client/types.gen.ts#L5026)
 
-StructuredData[BaseModel]
-
 ```typescript
 export type StructuredDataBaseModel = {
     /**
@@ -37,20 +35,14 @@ export type StructuredDataBaseModel = {
 ## Fields
 
 <ParamField body="success" type={"boolean | undefined"}>
-Success
-
 Whether the data was extracted successfully
 </ParamField>
 
 <ParamField body="error" type={"string | null | undefined"}>
-Error
-
 Error message if the data was not extracted successfully
 </ParamField>
 
 <ParamField body="data" type={"unknown"}>
-Data
-
 Structured data extracted from the page in JSON format
 </ParamField>
 

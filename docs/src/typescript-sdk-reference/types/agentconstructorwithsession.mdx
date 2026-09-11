@@ -47,32 +47,22 @@ export interface AgentConstructorWithSession extends Omit<ApiAgentStartRequest, 
 </ParamField>
 
 <ParamField body="session_offset" type={"number | null | undefined"}>
-Session Offset
-
 [Experimental] The step from which the agent should gather information from in the session. If none, fresh memory
 </ParamField>
 
 <ParamField body="reasoning_model" type={"string | undefined"}>
-Reasoning Model
-
 The reasoning model to use
 </ParamField>
 
 <ParamField body="use_vision" type={"boolean | undefined"}>
-Use Vision
-
 Whether to use vision for the agent. Not all reasoning models support vision.
 </ParamField>
 
 <ParamField body="max_steps" type={"number | undefined"}>
-Max Steps
-
 The maximum number of steps the agent should take
 </ParamField>
 
 <ParamField body="notifier_config" type={"{ [key: string]: unknown; } | null | undefined"}>
-Notifier Config
-
 Config used for the notifier
 </ParamField>
 

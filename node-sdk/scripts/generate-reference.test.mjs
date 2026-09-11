@@ -171,6 +171,28 @@ test('Node SDK mirrors Python categories and appears below Python in the sidebar
   assert.ok(!navigation.includes('"group":"TypeScript SDK"'));
 });
 
+test('review regressions preserve complete summaries and accurate Node descriptions', () => {
+  const page = path => actual.pages.get(`typescript-sdk-reference/${path}.mdx`);
+  assert.match(page('manual/function'), /Returns the code, and writes it to `path` when one is provided\./);
+  assert.match(page('manual/function'), /API returns an encrypted one/);
+  assert.match(page('persona/get'), /## Returns\s+```typescript\nPromise<PersonaResponseWithInternalEmail>/);
+  assert.match(page('persona/use'), /existing ID are retained/);
+  assert.match(page('session/viewer'), /\*\*throws:\*\*[\s\S]*no viewer URL/);
+  for (const name of ['apiagentstartrequest', 'scraperequest']) {
+    assert.doesNotMatch(page(`types/${name}`), /Pydantic/);
+    assert.match(page(`types/${name}`), /JSON Schema object/);
+  }
+  for (const name of ['listpersonasdata', 'personalistoptions']) {
+    assert.doesNotMatch(page(`types/${name}`), /active sessions|return sessions|system sessions/);
+    assert.match(page(`types/${name}`), /active personas/);
+  }
+  for (const name of ['checkactionoutput', 'clickactionoutput', 'credentialsdictinput', 'creditcarddictinput', 'selectdropdownoptionactionoutput', 'downloadfileactionoutput', 'smsresponse', 'fallbackfillactionoutput', 'fillactionoutput', 'uploadfileactionoutput', 'multifactorfillactionoutput', 'structureddatabasemodel']) {
+    assert.doesNotMatch(page(`types/${name}`).split('```typescript')[0], /\n(?:CheckAction|ClickAction|CredentialsDict|CreditCardDict|SelectDropdownOptionAction|DownloadFileAction|SmsResponse|FallbackFillAction|FillAction|UploadFileAction|MultiFactorFillAction|StructuredData\[BaseModel\])\n/);
+  }
+  assert.doesNotMatch(page('types/cookie').split('## Fields')[1], /Httponly|Expirationdate|Hostonly|Samesite|Storeid|Partitionkey/);
+  assert.match(page('vault/generatepassword'), /do not use this[\s\S]*security-sensitive/);
+});
+
 test('navigation replacement preserves unrelated Python navigation and formatting', () => {
   const input = '{\n  "navigation": [{"group": "SDK", "pages": ["sdk-reference/manual/session"]},\n  {"group": "Node SDK", "pages": []}]\n}\n';
   const replaced = replaceNavigation(input, generated.navigation);

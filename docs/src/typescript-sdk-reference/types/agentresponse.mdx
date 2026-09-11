@@ -9,8 +9,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/lib/client/types.gen.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/lib/client/types.gen.ts#L134)
 
-AgentResponse
-
 ```typescript
 export type AgentResponse = {
     /**
@@ -53,20 +51,14 @@ export type AgentResponse = {
 ## Fields
 
 <ParamField body="agent_id" type={"string"} required>
-Agent Id
-
 The ID of the agent
 </ParamField>
 
 <ParamField body="created_at" type={"string"} required>
-Created At
-
 The creation time of the agent
 </ParamField>
 
 <ParamField body="session_id" type={"string"} required>
-Session Id
-
 The ID of the session
 </ParamField>
 
@@ -75,14 +67,10 @@ The status of the agent (active or closed)
 </ParamField>
 
 <ParamField body="closed_at" type={"string | null | undefined"}>
-Closed At
-
 The closing time of the agent
 </ParamField>
 
 <ParamField body="saved" type={"boolean | undefined"}>
-Saved
-
 Whether the agent is saved as a workflow
 </ParamField>
 

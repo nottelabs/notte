@@ -9,8 +9,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/lib/client/types.gen.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/lib/client/types.gen.ts#L32)
 
-ActionSpace
-
 ```typescript
 export type ActionSpace = {
     /**
@@ -47,14 +45,10 @@ export type ActionSpace = {
 ## Fields
 
 <ParamField body="description" type={"string"} required>
-Description
-
 Human-readable description of the current web page
 </ParamField>
 
 <ParamField body="interaction_actions" type={"(ClickActionOutput | FillActionOutput | MultiFactorFillActionOutput | FallbackFillActionOutput | CheckActionOutput | SelectDropdownOptionActionOutput | UploadFileActionOutput | DownloadFileActionOutput)[]"} required>
-Interaction Actions
-
 List of available interaction actions in the current state
 </ParamField>
 
@@ -63,15 +57,15 @@ Category of the action space (e.g., 'homepage', 'search-results', 'item')
 </ParamField>
 
 <ParamField body="actions" type={"(ClickActionOutput | FillActionOutput | MultiFactorFillActionOutput | FallbackFillActionOutput | CheckActionOutput | SelectDropdownOptionActionOutput | UploadFileActionOutput | DownloadFileActionOutput | FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitAction | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction)[]"} required>
-Actions
+
 </ParamField>
 
 <ParamField body="browser_actions" type={"(FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitAction | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction)[]"} required>
-Browser Actions
+
 </ParamField>
 
 <ParamField body="markdown" type={"string"} required>
-Markdown
+
 </ParamField>
 
 ## Related types

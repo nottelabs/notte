@@ -9,8 +9,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/lib/client/types.gen.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/lib/client/types.gen.ts#L4080)
 
-RunFunctionRequest
-
 ```typescript
 export type RunFunctionRequest = {
     /**
@@ -45,25 +43,17 @@ export type RunFunctionRequest = {
 ## Fields
 
 <ParamField body="workflow_id" type={"string"} required>
-Workflow Id
-
 The ID of the function to run
 </ParamField>
 
 <ParamField body="variables" type={"{ [key: string]: unknown; }"} required>
-Variables
-
 The variables to run the workflow with
 </ParamField>
 
 <ParamField body="runtime" type={"\"standard\" | \"extended\" | null | undefined"}>
-Runtime
-
 Override the saved function runtime; omit to inherit its default
 </ParamField>
 
 <ParamField body="stream" type={"boolean | undefined"}>
-Stream
-
 Whether to stream logs, or only return final response
 </ParamField>

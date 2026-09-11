@@ -295,7 +295,8 @@ export class NottePersona {
   }
 
   /**
-   * Context manager for automatic cleanup
+   * Run a callback and automatically delete a persona created by this instance.
+   * Personas loaded by an existing ID are retained after the callback finishes.
    */
   async use<T>(callback: (persona: NottePersona) => Promise<T>): Promise<T> {
     await this.ensureInitialized();

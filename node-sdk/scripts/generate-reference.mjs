@@ -50,7 +50,28 @@ export function createReference(root = sdkRoot) {
   const isInternal = node => ts.getJSDocTags(node).some(tag => tag.tagName.text === 'internal');
   const visible = node => !isInternal(node) && !node.name?.getText().startsWith('#') &&
     !node.modifiers?.some(m => m.kind === ts.SyntaxKind.PrivateKeyword || m.kind === ts.SyntaxKind.ProtectedKeyword);
-  const doc = symbol => prose(ts.displayPartsToString(symbol?.getDocumentationComment(checker)));
+  // Shared OpenAPI descriptions need Node-specific presentation, not SDK runtime edits.
+  const schemaDoc = (text, node) => {
+    text = text.replace(/You can use a Pydantic model or a JSON Schema dict \(cf\. https:\/\/docs\.pydantic\.dev\/latest\/concepts\/json_schema\/#generating-json-schema\.\)/g,
+      'Use a JSON Schema object; high-level Node agent and scrape methods also accept a Zod schema');
+    for (let parent = node; parent; parent = parent.parent) {
+      if (parent.name?.getText() === 'ListPersonasData') {
+        text = text.replace(/active sessions/g, 'active personas').replace(/return sessions/g, 'return personas').replace(/system sessions/g, 'system personas');
+        break;
+      }
+    }
+    return text;
+  };
+  const doc = symbol => {
+    const node = symbol?.declarations?.[0];
+    let text = schemaDoc(ts.displayPartsToString(symbol?.getDocumentationComment(checker)), node);
+    if (node?.getSourceFile().fileName.endsWith('/lib/client/types.gen.ts')) {
+      const paragraphs = text.split(/\n\s*\n/);
+      const normalize = value => value.replace(/(?:Input|Output)$/, '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+      if (normalize(paragraphs[0]) === normalize(symbol.name)) text = paragraphs.slice(1).join('\n\n');
+    }
+    return prose(text);
+  };
   const typeText = type => portableType(checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation));
   const sourceLink = node => {
     const file = `node-sdk/${relative(root, node.getSourceFile().fileName).replaceAll('\\', '/')}`;
@@ -157,7 +178,7 @@ export function createReference(root = sdkRoot) {
       for (const [i, overload] of overloads.entries()) {
         if (overload.parameters.length) contents.push(`## Parameters${overloads.length > 1 ? ` (overload ${i + 1})` : ''}\n\n${params(overload)}`);
         const signature = checker.getSignatureFromDeclaration(overload);
-        contents.push(`## Returns${overloads.length > 1 ? ` (overload ${i + 1})` : ''}\n\n${fence(typeText(signature.getReturnType()))}`);
+        contents.push(`## Returns${overloads.length > 1 ? ` (overload ${i + 1})` : ''}\n\n${fence(overload.type?.getText() ?? typeText(signature.getReturnType()))}`);
       }
       contents.push(tags(method), related(overloads));
       pages.set(`${path}.mdx`, page(methodName, method, contents.filter(Boolean).join('\n\n')));
@@ -165,7 +186,7 @@ export function createReference(root = sdkRoot) {
       if (!deprecated && !ts.isComputedPropertyName(method.name) && !hiddenMethods.has(`${classSlug}/${memberSlug(methodName)}`)) {
         navigableMethods.add(path);
         nav.push(path);
-        if (!diagnosticMethods.has(`${classSlug}/${memberSlug(methodName)}`)) methodLinks.push(`- [${methodName}](/${path})${doc(checker.getSymbolAtLocation(method.name)) ? `: ${doc(checker.getSymbolAtLocation(method.name)).split('\n')[0]}` : ''}`);
+        if (!diagnosticMethods.has(`${classSlug}/${memberSlug(methodName)}`)) methodLinks.push(`- [${methodName}](/${path})${doc(checker.getSymbolAtLocation(method.name)) ? `: ${doc(checker.getSymbolAtLocation(method.name)).split(/\n\s*\n/)[0].replace(/\s*\n\s*/g, ' ')}` : ''}`);
       }
     }
     const props = members.filter(m => ts.isPropertyDeclaration(m) || ts.isGetAccessorDeclaration(m)).map(m => {
@@ -206,7 +227,7 @@ export function createReference(root = sdkRoot) {
     if (pages.has(`${path}.mdx`)) throw new Error(`Duplicate reference path: ${path}`);
     const symbol = checker.getSymbolAtLocation(node.name);
     const fields = fieldsFor(node);
-    pages.set(`${path}.mdx`, page(name, node, [doc(symbol), fence(node.getText()), tags(node), fields.length ? `## Fields\n\n${fields.join('\n\n')}` : '', related([node])].filter(Boolean).join('\n\n')));
+    pages.set(`${path}.mdx`, page(name, node, [doc(symbol), fence(schemaDoc(node.getText(), node)), tags(node), fields.length ? `## Fields\n\n${fields.join('\n\n')}` : '', related([node])].filter(Boolean).join('\n\n')));
   }
   pages.set(`${prefix}/manual/index.mdx`, page('Node SDK reference', null, `This reference is generated from the public high-level classes, their signatures, JSDoc, and related types in \`node-sdk/src\`. It documents the checked-in SDK source; match it to the version you use.\n\nInstall the SDK:\n\n\`\`\`sh\nnpm install notte-sdk\n\`\`\`\n\n${classes.filter(({ symbol }) => symbol.name !== 'Encryption').map(({ symbol }) => `- [${symbol.name}](/${prefix}/manual/${slug(symbol.name)})`).join('\n')}\n\nThe generated low-level HTTP functions, legacy client helpers, and proxy subpath entrypoints are not part of this high-level reference. See the [API reference](/api-reference/authentication) for HTTP endpoints and the [Python SDK reference](/sdk-reference/manual/index) for Python.\n\nTo update these pages, edit the TypeScript source or its JSDoc and run \`npm run docs:generate --prefix node-sdk\`. CI checks for stale generated pages.`));
   const debugPaths = [...diagnosticMethods]

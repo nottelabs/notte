@@ -232,6 +232,7 @@ export class Session {
 
   /**
    * Open the live viewer for this session in the local default browser.
+   * @throws If the session has not started or no viewer URL is available.
    */
   viewer(): void {
     if (!this.sessionId) {

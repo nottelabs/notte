@@ -9,8 +9,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/lib/client/types.gen.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/lib/client/types.gen.ts#L1594)
 
-EmailVerificationReadAction
-
 ```typescript
 export type EmailVerificationReadAction = {
     /**
@@ -49,31 +47,25 @@ export type EmailVerificationReadAction = {
 ## Fields
 
 <ParamField body="type" type={"\"email_verification_read\" | undefined"}>
-Type
+
 </ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
-Category
+
 </ParamField>
 
 <ParamField body="description" type={"string | undefined"}>
-Description
+
 </ParamField>
 
 <ParamField body="mailbox_id" type={"string"} required>
-Mailbox Id
-
 Workspace mailbox connection to read the verification email from
 </ParamField>
 
 <ParamField body="sender_domain" type={"string"} required>
-Sender Domain
-
 Sender domain to search, such as example.com
 </ParamField>
 
 <ParamField body="max_age_seconds" type={"number | undefined"}>
-Max Age Seconds
-
 Maximum age of the verification email in seconds
 </ParamField>

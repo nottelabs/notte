@@ -19,38 +19,26 @@ export type FunctionRunListOptions = NonNullable<ListFunctionRunsByFunctionIdDat
 ## Fields
 
 <ParamField body="page" type={"number | undefined"}>
-Page
-
 Page number
 </ParamField>
 
 <ParamField body="page_size" type={"number | undefined"}>
-Page Size
-
 Number of items per page
 </ParamField>
 
 <ParamField body="only_active" type={"boolean | undefined"}>
-Only Active
-
 Whether to only return active function runs
 </ParamField>
 
 <ParamField body="only_current_token" type={"boolean | undefined"}>
-Only Current Token
-
 Whether to only return function runs for the current token (apikey)
 </ParamField>
 
 <ParamField body="include_system" type={"boolean | undefined"}>
-Include System
-
 Whether to include internal system function runs
 </ParamField>
 
 <ParamField body="source" type={"FunctionSource | null | undefined"}>
-Source
-
 Only return runs of functions created from this source
 </ParamField>
 

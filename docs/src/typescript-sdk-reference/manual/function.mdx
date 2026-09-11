@@ -29,11 +29,11 @@ client.NotteFunction(options: FunctionConstructor): NotteFunction;
 
 ## Usage
 
-- [createRun](/typescript-sdk-reference/function/createrun): Create a cloud run record without starting execution.
-- [run](/typescript-sdk-reference/function/run): Stream logs and wait for the final result by default.
+- [createRun](/typescript-sdk-reference/function/createrun): Create a cloud run record without starting execution. Optional: use this only when you need the ID before execution, then pass it to run(variables, &#123; functionRunId &#125;). run() otherwise creates a new run.
+- [run](/typescript-sdk-reference/function/run): Stream logs and wait for the final result by default. Pass &#123; stream: false &#125; to receive the backend's JSON response without live logs. Disabling streaming does not make standard-runtime execution non-blocking. Pass functionRunId to execute a record returned by createRun().
 - [getRun](/typescript-sdk-reference/function/getrun): Get metadata for a specific function run
-- [download](/typescript-sdk-reference/function/download): Download the function code as a python file. Returns the code, and writes
-- [getUrl](/typescript-sdk-reference/function/geturl): Get the download URL of the function code, decrypting it when the API
+- [download](/typescript-sdk-reference/function/download): Download the function code as a python file. Returns the code, and writes it to `path` when one is provided.
+- [getUrl](/typescript-sdk-reference/function/geturl): Get the download URL of the function code, decrypting it when the API returns an encrypted one (Notte managed functions).
 - [runs](/typescript-sdk-reference/function/runs): List the runs of this function.
 
 <Accordion title="Direct constructor reference">

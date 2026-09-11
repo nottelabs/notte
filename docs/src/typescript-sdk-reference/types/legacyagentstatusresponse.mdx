@@ -9,8 +9,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/lib/client/types.gen.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/lib/client/types.gen.ts#L3013)
 
-LegacyAgentStatusResponse
-
 ```typescript
 export type LegacyAgentStatusResponse = {
     /**
@@ -83,20 +81,14 @@ export type LegacyAgentStatusResponse = {
 ## Fields
 
 <ParamField body="agent_id" type={"string"} required>
-Agent Id
-
 The ID of the agent
 </ParamField>
 
 <ParamField body="created_at" type={"string"} required>
-Created At
-
 The creation time of the agent
 </ParamField>
 
 <ParamField body="session_id" type={"string"} required>
-Session Id
-
 The ID of the session
 </ParamField>
 
@@ -105,43 +97,31 @@ The status of the agent (active or closed)
 </ParamField>
 
 <ParamField body="closed_at" type={"string | null | undefined"}>
-Closed At
-
 The closing time of the agent
 </ParamField>
 
 <ParamField body="saved" type={"boolean | undefined"}>
-Saved
-
 Whether the agent is saved as a workflow
 </ParamField>
 
 <ParamField body="task" type={"string"} required>
-Task
-
 The task that the agent is currently running
 </ParamField>
 
 <ParamField body="url" type={"string | null | undefined"}>
-Url
-
 The URL that the agent started on
 </ParamField>
 
 <ParamField body="success" type={"boolean | null | undefined"}>
-Success
-
 Whether the agent task was successful. None if the agent is still running
 </ParamField>
 
 <ParamField body="answer" type={"string | null | undefined"}>
-Answer
-
 The answer to the agent task. None if the agent is still running
 </ParamField>
 
 <ParamField body="steps" type={"{ [key: string]: unknown; }[] | undefined"}>
-Steps
+
 </ParamField>
 
 ## Related types

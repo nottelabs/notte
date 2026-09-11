@@ -9,8 +9,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/lib/client/types.gen.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/lib/client/types.gen.ts#L423)
 
-ApiSessionStartRequest
-
 ```typescript
 export type ApiSessionStartRequest = {
     /**
@@ -139,74 +137,50 @@ export type ApiSessionStartRequest = {
 ## Fields
 
 <ParamField body="solve_captchas" type={"boolean | undefined"}>
-Solve Captchas
-
 Whether to try to automatically solve captchas
 </ParamField>
 
 <ParamField body="max_duration_minutes" type={"number | undefined"}>
-Max Duration Minutes
-
 Maximum session lifetime in minutes (absolute maximum, not affected by activity).
 </ParamField>
 
 <ParamField body="idle_timeout_minutes" type={"number | undefined"}>
-Idle Timeout Minutes
-
 Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).
 </ParamField>
 
 <ParamField body="proxies" type={"boolean | (NotteProxy | ExternalProxy | TailnetProxy)[] | undefined"}>
-Proxies
-
 List of custom proxies to use for the session. If True, the default proxies will be used.
 </ParamField>
 
 <ParamField body="browser_type" type={"\"chromium\" | \"chrome\" | \"chrome-nightly\" | \"chrome-turbo\" | undefined"}>
-Browser Type
-
 The browser type to use. Supported values are chromium and chrome. chrome-nightly and chrome-turbo are legacy aliases for chrome.
 </ParamField>
 
 <ParamField body="user_agent" type={"string | null | undefined"}>
-User Agent
-
 The user agent to use for the session
 </ParamField>
 
 <ParamField body="chrome_args" type={"string[] | null | undefined"}>
-Chrome Args
-
 Overwrite the chrome instance arguments
 </ParamField>
 
 <ParamField body="viewport_width" type={"number | null | undefined"}>
-Viewport Width
-
 The width of the viewport
 </ParamField>
 
 <ParamField body="viewport_height" type={"number | null | undefined"}>
-Viewport Height
-
 The height of the viewport
 </ParamField>
 
 <ParamField body="aspect_ratio" type={"\"5:4\" | \"16:9\" | null | undefined"}>
-Aspect Ratio
-
 Viewport shape preset. When set, the backend fits the largest rectangle of this aspect ratio inside the sampled available screen area. Cannot be combined with explicit viewport_width/viewport_height.
 </ParamField>
 
 <ParamField body="cdp_url" type={"string | null | undefined"}>
-Cdp Url
-
 The CDP URL of another remote session provider.
 </ParamField>
 
 <ParamField body="screenshot_type" type={"\"raw\" | \"full\" | \"last_action\" | undefined"}>
-Screenshot Type
-
 The type of screenshot to use for the session.
 </ParamField>
 
@@ -215,44 +189,30 @@ Browser profile configuration for state persistence
 </ParamField>
 
 <ParamField body="web_bot_auth" type={"boolean | undefined"}>
-Web Bot Auth
-
 Whether to use web bot authentication.
 </ParamField>
 
 <ParamField body="extra_http_headers" type={"{ [key: string]: string; } | null | undefined"}>
-Extra Http Headers
-
 Extra HTTP headers to be sent with every request.
 </ParamField>
 
 <ParamField body="vault_id" type={"string | null | undefined"}>
-Vault Id
-
 The vault to use for the session
 </ParamField>
 
 <ParamField body="auth_ids" type={"string[] | undefined"}>
-Auth Ids
-
 Managed Auth connection IDs to verify and, when necessary, authenticate inside this session. Authentication finishes before the session is returned unless wait_for_authentication is false.
 </ParamField>
 
 <ParamField body="wait_for_authentication" type={"boolean | undefined"}>
-Wait For Authentication
-
 Whether to wait for Managed Auth profile restoration and authentication before returning the session. When false, authentication continues in the background after the browser is ready.
 </ParamField>
 
 <ParamField body="advanced_stealth" type={"boolean | undefined"}>
-Advanced Stealth
-
 Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
 </ParamField>
 
 <ParamField body="demonstrate" type={"boolean | undefined"}>
-Demonstrate
-
 Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.
 </ParamField>
 

@@ -9,8 +9,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/lib/client/types.gen.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/lib/client/types.gen.ts#L1546)
 
-EmailResponse
-
 ```typescript
 export type EmailResponse = {
     /**
@@ -61,43 +59,29 @@ export type EmailResponse = {
 ## Fields
 
 <ParamField body="subject" type={"string"} required>
-Subject
-
 Subject of the email
 </ParamField>
 
 <ParamField body="email_id" type={"string"} required>
-Email Id
-
 Email UUID
 </ParamField>
 
 <ParamField body="created_at" type={"string"} required>
-Created At
-
 Creation date
 </ParamField>
 
 <ParamField body="sender_email" type={"string | null"} required>
-Sender Email
-
 Email address of the sender
 </ParamField>
 
 <ParamField body="sender_name" type={"string | null"} required>
-Sender Name
-
 Name (if available) of the sender
 </ParamField>
 
 <ParamField body="text_content" type={"string | null | undefined"}>
-Text Content
-
 Raw textual body, can be uncorrelated with html content
 </ParamField>
 
 <ParamField body="html_content" type={"string | null | undefined"}>
-Html Content
-
 HTML body, can be uncorrelated with raw content
 </ParamField>

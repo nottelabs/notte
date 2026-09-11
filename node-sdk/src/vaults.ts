@@ -355,8 +355,9 @@ export class NotteVault {
   }
 
   /**
-   * Generate a secure random password
-   * Mirrors Python's generate_password method
+   * Generate a password with character requirements.
+   * Requirement enforcement currently uses Math.random(); do not use this
+   * method for security-sensitive passwords until that implementation is fixed.
    */
   generatePassword(length: number = 20, includeSpecialChars: boolean = true): string {
     // Validate minimum length

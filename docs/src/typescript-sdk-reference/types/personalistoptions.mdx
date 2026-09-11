@@ -16,33 +16,23 @@ export type PersonaListOptions = NonNullable<ListPersonasData['query']>;
 ## Fields
 
 <ParamField body="page" type={"number | undefined"}>
-Page
-
 Page number
 </ParamField>
 
 <ParamField body="page_size" type={"number | undefined"}>
-Page Size
-
 Number of items per page
 </ParamField>
 
 <ParamField body="only_active" type={"boolean | undefined"}>
-Only Active
-
-Whether to only return active sessions
+Whether to only return active personas
 </ParamField>
 
 <ParamField body="only_current_token" type={"boolean | undefined"}>
-Only Current Token
-
-Whether to only return sessions for the current token (apikey)
+Whether to only return personas for the current token (apikey)
 </ParamField>
 
 <ParamField body="include_system" type={"boolean | undefined"}>
-Include System
-
-Whether to include internal system sessions
+Whether to include internal system personas
 </ParamField>
 
 ## Related types

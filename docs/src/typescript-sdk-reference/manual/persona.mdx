@@ -47,7 +47,7 @@ client.Persona(options?: PersonaConstructor): NottePersona;
 - [stop](/typescript-sdk-reference/persona/stop): Stop the persona - deletes it
 - [create](/typescript-sdk-reference/persona/create): Create the persona
 - [get](/typescript-sdk-reference/persona/get): Get persona information (alias for ensureInitialized)
-- [use](/typescript-sdk-reference/persona/use): Context manager for automatic cleanup
+- [use](/typescript-sdk-reference/persona/use): Run a callback and automatically delete a persona created by this instance. Personas loaded by an existing ID are retained after the callback finishes.
 
 <Accordion title="Direct constructor reference">
 

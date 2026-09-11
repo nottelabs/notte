@@ -9,8 +9,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/lib/client/types.gen.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/lib/client/types.gen.ts#L335)
 
-ApiExecutionResponse
-
 ```typescript
 export type ApiExecutionResponse = {
     /**
@@ -101,23 +99,23 @@ export type ApiExecutionResponse = {
 ## Fields
 
 <ParamField body="started_at" type={"string"} required>
-Started At
+
 </ParamField>
 
 <ParamField body="ended_at" type={"string"} required>
-Ended At
+
 </ParamField>
 
 <ParamField body="action" type={"({ type: \"form_fill\"; } & FormFillAction) | ({ type: \"goto\"; } & GotoAction) | ({ type: \"goto_new_tab\"; } & GotoNewTabAction) | ({ type: \"close_tab\"; } & CloseTabAction) | ({ type: \"switch_tab\"; } & SwitchTabAction) | ({ type: \"go_back\"; } & GoBackAction) | ({ type: \"go_forward\"; } & GoForwardAction) | ({ type: \"reload\"; } & ReloadAction) | ({ type: \"wait\"; } & WaitAction) | ({ type: \"press_key\"; } & PressKeyAction) | ({ type: \"scroll_up\"; } & ScrollUpAction) | ({ type: \"scroll_down\"; } & ScrollDownAction) | ({ type: \"captcha_solve\"; } & CaptchaSolveAction) | ({ type: \"help\"; } & HelpAction) | ({ type: \"completion\"; } & CompletionAction) | ({ type: \"scrape\"; } & ScrapeAction) | ({ type: \"email_read\"; } & EmailReadAction) | ({ type: \"email_verification_read\"; } & EmailVerificationReadAction) | ({ type: \"sms_read\"; } & SmsReadAction) | ({ type: \"evaluate_js\"; } & EvaluateJsAction) | ({ type: \"click\"; } & ClickActionOutput) | ({ type: \"fill\"; } & FillActionOutput) | ({ type: \"multi_factor_fill\"; } & MultiFactorFillActionOutput) | ({ type: \"fallback_fill\"; } & FallbackFillActionOutput) | ({ type: \"check\"; } & CheckActionOutput) | ({ type: \"select_dropdown_option\"; } & SelectDropdownOptionActionOutput) | ({ type: \"upload_file\"; } & UploadFileActionOutput) | ({ type: \"download_file\"; } & DownloadFileActionOutput)"} required>
-Action
+
 </ParamField>
 
 <ParamField body="success" type={"boolean"} required>
-Success
+
 </ParamField>
 
 <ParamField body="message" type={"string"} required>
-Message
+
 </ParamField>
 
 <ParamField body="data" type={"DataSpace | null | undefined"}>
@@ -125,7 +123,7 @@ Message
 </ParamField>
 
 <ParamField body="exception" type={"string | null | undefined"}>
-Exception
+
 </ParamField>
 
 <ParamField body="exception_detail" type={"SerializedError | null | undefined"}>
