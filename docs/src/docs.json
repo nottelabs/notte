@@ -307,6 +307,7 @@
                     "collapsed": true,
                     "pages": [
                       "sdk-reference/manual/workflow",
+                      "sdk-reference/nottefunction/create_run",
                       "sdk-reference/nottefunction/run",
                       "sdk-reference/nottefunction/update",
                       "sdk-reference/nottefunction/delete",

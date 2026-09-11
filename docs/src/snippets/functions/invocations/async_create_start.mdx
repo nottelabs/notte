@@ -5,12 +5,13 @@
 from notte_sdk import NotteClient
 
 client = NotteClient()
-# Create a run (returns immediately)
-run_response = client.functions.create_run("function_abc123", local=False)
+function = client.Function("function_abc123")
+# Create a run record without starting execution.
+created = function.create_run()
 
-run_id = run_response.workflow_run_id
+run_id = created.function_run_id
 print(f"Run created: {run_id}")
 
-# Start the run
-client.functions.run(run_id, function_id="function_abc123", variables={"url": "https://example.com"})
+# Execute that run and wait for its result.
+result = function.run(function_run_id=run_id, url="https://example.com")
 ```
