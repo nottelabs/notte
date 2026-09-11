@@ -420,6 +420,7 @@ The SDK docs below are for generated-code editing and reference. They are not th
 #### Function
 
 - [Get started](https://docs.notte.cc/sdk-reference/manual/workflow.md): Create, manage, and execute automated web functions
+- [create_run](https://docs.notte.cc/sdk-reference/nottefunction/create_run.md): Create a run record without starting execution
 - [run](https://docs.notte.cc/sdk-reference/nottefunction/run.md): Run the function code using the specified version and variables
 - [update](https://docs.notte.cc/sdk-reference/nottefunction/update.md): Update the workflow with a new code version
 - [delete](https://docs.notte.cc/sdk-reference/nottefunction/delete.md): Delete the workflow from the notte console

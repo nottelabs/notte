@@ -17,6 +17,7 @@ import StreamSdk from "/snippets/functions/invocations/stream_sdk.mdx";
 import StreamHttp from "/snippets/functions/invocations/stream_http.mdx";
 import StreamResponse from "/snippets/functions/invocations/stream_response.mdx";
 import AsyncCreateStart from "/snippets/functions/invocations/async_create_start.mdx";
+import AsyncRun from "/snippets/functions/invocations/async_run.mdx";
 import CheckRunStatus from "/snippets/functions/invocations/check_run_status.mdx";
 import StopRunning from "/snippets/functions/invocations/stop_running.mdx";
 import WebhookHandler from "/snippets/functions/invocations/webhook_handler.mdx";
@@ -110,11 +111,30 @@ Response streams:
 
 ### Create and Start Separately
 
-For long-running functions:
+Use `function.create_run()` when you need a run ID before execution begins.
+It creates the run record only. Pass that ID to `function.run(function_run_id=...)`
+to execute it; omitting the ID creates a different run. If creating a local run,
+pass `local=True` to both calls.
 
 <AsyncCreateStart />
 
+### Run Without Blocking the Event Loop
+
+`function.run()` is synchronous and waits for completion. `stream=True` (the default)
+prints live logs; `stream=False` receives the final JSON response without live logs.
+Disabling streaming does not make standard-runtime execution non-blocking.
+
+Use `asyncio.to_thread()` to keep your application's event loop available:
+
+<AsyncRun />
+
+Keep the application running until the task finishes. This runs the synchronous
+SDK call in a local thread; it does not create a detached server-side job.
+
 ### Check Run Status
+
+`function.get_run(run_id)` fetches the current status and result without waiting
+for execution to finish. From async code, use `await asyncio.to_thread(function.get_run, run_id)`.
 
 <CheckRunStatus />
 
