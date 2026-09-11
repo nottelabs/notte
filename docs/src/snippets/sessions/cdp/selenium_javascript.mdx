@@ -52,7 +52,7 @@ const status = await client.Session().use(async session => {
       const items = document.querySelectorAll('.item');
       return Array.from(items).map(item => item.textContent);
     });
-    console.log(`Items: ${data}`);
+    console.log('Items:', data);
 
     // Pass arguments to JavaScript
     result = await page.evaluate(x => x * 2, 5);
