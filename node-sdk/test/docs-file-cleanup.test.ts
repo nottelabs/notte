@@ -53,7 +53,9 @@ for (const example of ['uploading_files', 'attach_before_starting']) {
       vi.resetModules();
       Object.assign(fixture, { uploads: 0, deleted: [], stopped: false, failure });
       vi.spyOn(console, 'log').mockImplementation(() => {});
-      const { RemoteFileStorage } = await import('notte-sdk');
+      const { RemoteFileStorage } = await vi.importMock<{
+        RemoteFileStorage: { prototype: { upload: unknown } };
+      }>('notte-sdk');
       const original = RemoteFileStorage.prototype.upload;
       await expect(import(`../../docs/src/testers/file-storage/${example}.ts`)).rejects.toThrow();
       const count = example === 'attach_before_starting' || failure === 'second-upload' ? 1 : 2;
