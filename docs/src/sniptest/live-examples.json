@@ -1,4 +1,16 @@
 {
+  "functions/management/view_run_history.ts": {
+    "expected": { "results": ["closed"] },
+    "logContains": "Status: closed"
+  },
+  "file-storage/descriptive_filenames.ts": {
+    "expected": { "status": "active" },
+    "closedSession": true
+  },
+  "file-storage/force_overwrite.ts": {
+    "expected": { "status": "active" },
+    "closedSession": true
+  },
   "agents/config/param_max_steps.ts": {
     "expected": { "status": "active" },
     "closedSession": true

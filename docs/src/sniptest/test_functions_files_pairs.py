@@ -16,6 +16,9 @@ class FunctionsFilesPairsTest(unittest.TestCase):
             "file-storage/uploading_files",
             "file-storage/attach_before_starting",
             "functions/management/filter_active_runs",
+            "file-storage/descriptive_filenames",
+            "file-storage/force_overwrite",
+            "functions/management/view_run_history",
         ):
             for suffix in (".py", ".ts"):
                 with self.subTest(name=name, language=suffix):
@@ -23,7 +26,13 @@ class FunctionsFilesPairsTest(unittest.TestCase):
                     self.assertIsNotNone(config.show)
                     for hidden in ("assert", "export {", "NOTTE_FUNCTION_ID", "FixtureClient", "verified"):
                         self.assertNotIn(hidden, rendered)
-                    if "filter_active" in name:
+                    if "view_run_history" in name:
+                        for text in ("only_active", "Run ID:", "Created:", "Updated:"):
+                            self.assertIn(text, rendered)
+                    elif "force_overwrite" in name:
+                        self.assertIn(".download(", rendered)
+                        self.assertIn("force", rendered)
+                    elif "filter_active" in name:
                         self.assertIn("only_active", rendered)
                         self.assertIn("Active runs:", rendered)
                     else:
@@ -33,9 +42,46 @@ class FunctionsFilesPairsTest(unittest.TestCase):
 
 
 class UploadCleanupTest(unittest.TestCase):
+    def test_overwrite_failure_deletes_fixture_and_closes_session(self):
+        deleted = []
+        stopped = []
+
+        class Storage:
+            def upload(self, *args):
+                return types.SimpleNamespace(id="owned-file")
+
+            def download(self, *args, **kwargs):
+                raise RuntimeError("download failed")
+
+            def delete(self, file_id):
+                deleted.append(file_id)
+
+        class Session:
+            storage = Storage()
+            session_id = "owned-session"
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                stopped.append(True)
+
+        sdk = types.ModuleType("notte_sdk")
+        sdk.NotteClient = lambda: types.SimpleNamespace(Session=Session, FileStorage=lambda _: Session.storage)
+        source = Path(__file__).resolve().parents[1] / "testers/file-storage/force_overwrite.py"
+        with (
+            patch.dict("sys.modules", {"notte_sdk": sdk}),
+            patch.object(Path, "mkdir"),
+            patch.object(Path, "write_bytes"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "download failed"):
+                runpy.run_path(str(source))
+        self.assertEqual(deleted, ["owned-file"])
+        self.assertEqual(stopped, [True])
+
     def test_partial_failures_delete_all_successful_uploads(self):
         root = Path(__file__).resolve().parents[1] / "testers/file-storage"
-        for example in ("uploading_files", "attach_before_starting"):
+        for example in ("uploading_files", "attach_before_starting", "descriptive_filenames"):
             failures = ["status", "list", "delete"]
             if example == "uploading_files":
                 failures.append("second-upload")

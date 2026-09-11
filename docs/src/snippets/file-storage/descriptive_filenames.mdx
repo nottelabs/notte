@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/file-storage/descriptive_filenames.py */}
 
+<CodeGroup>
+
 ```python descriptive_filenames.py
 from datetime import datetime
 
@@ -11,3 +13,17 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 with client.Session() as session:
     session.storage.upload("report.pdf", upload_file_name=f"report_{timestamp}.pdf")
 ```
+
+```typescript descriptive_filenames.ts
+const client = new NotteClient();
+const now = new Date();
+const date = [now.getFullYear(), now.getMonth() + 1, now.getDate()].map(n => String(n).padStart(2, '0')).join('');
+const time = [now.getHours(), now.getMinutes(), now.getSeconds()].map(n => String(n).padStart(2, '0')).join('');
+const timestamp = `${date}_${time}`;
+const storage = client.FileStorage();
+await client.Session({ storage }).use(async session => {
+  await storage.upload('report.pdf', `report_${timestamp}.pdf`);
+});
+```
+
+</CodeGroup>
