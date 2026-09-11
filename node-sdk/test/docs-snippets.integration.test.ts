@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { NotteClient, functionCreate, functionDelete, listFunctionRunsByFunctionId, functionRunStop } from '@/index';
+import { withPythonPageRetry } from './helpers/python-page-retry';
 import { expectSessionClosed } from './helpers/session-closure';
 import { collectExampleResult, verifyExampleOutput, type ExampleContract } from './helpers/docs-examples';
 
@@ -64,7 +65,7 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
     }
   }, 60_000);
 
-  it.each(snippets)('%s and its Python counterpart execute unchanged', { timeout: 180_000 }, async name => {
+  async function runExample(name: string) {
     if (name.startsWith('file-storage/')) {
       const directory = await mkdtemp(join(tmpdir(), 'notte-docs-files-'));
       const contract = contracts[name];
@@ -132,11 +133,13 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
     const pythonArgs = contract
       ? [fileURLToPath(new URL('../../docs/src/sniptest/run_python.py', import.meta.url)), pythonPath]
       : [pythonPath];
-    const { stdout, stderr } = await execute(process.env.NOTTE_DOCS_PYTHON || 'python', pythonArgs, {
-      env: process.env,
-      timeout: 120_000,
-      maxBuffer: 2 * 1024 * 1024,
-    });
+    const { stdout, stderr } = await withPythonPageRetry(name, () => execute(
+      process.env.NOTTE_DOCS_PYTHON || 'python', pythonArgs, {
+        env: process.env,
+        timeout: 120_000,
+        maxBuffer: 2 * 1024 * 1024,
+      },
+    ));
     if (contract) {
       // This getting-started example intentionally just prints the SDK response.
       // Capture that existing output instead of adding test exports to the example.
@@ -173,5 +176,12 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
         await expectSessionClosed(client, id as string, `${name} (${index === 0 ? 'typescript' : 'python'})`);
       }
     }
-  });
+  }
+
+  for (const name of snippets) {
+    it(`${name} and its Python counterpart execute unchanged`, {
+      // The timeout example may run Python twice, each with a 120s deadline.
+      timeout: name === 'sessions/configuration/timeout.ts' ? 300_000 : 180_000,
+    }, () => runExample(name));
+  }
 });
