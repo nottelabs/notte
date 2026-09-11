@@ -3996,6 +3996,40 @@ export type ReloadAction = {
 };
 
 /**
+ * ReplayMissingResponse
+ */
+export type ReplayMissingResponse = {
+    /**
+     * Detail
+     */
+    detail: string;
+    /**
+     * Session Id
+     */
+    session_id: string | null;
+    /**
+     * Status
+     */
+    status: number;
+    /**
+     * Error
+     */
+    error: string;
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Replay Status
+     */
+    replay_status: 'waiting_for_session' | 'processing' | 'unavailable' | 'failed' | 'unknown';
+    /**
+     * Retryable
+     */
+    retryable: boolean;
+};
+
+/**
  * ReplayResponse
  */
 export type ReplayResponse = {
@@ -7573,6 +7607,14 @@ export type SessionReplayData = {
 };
 
 export type SessionReplayErrors = {
+    /**
+     * Replay missing; see replay_status and retryable.
+     */
+    404: ReplayMissingResponse;
+    /**
+     * Capture completed without any frames.
+     */
+    410: ReplayMissingResponse;
     /**
      * Validation Error
      */
