@@ -43,3 +43,9 @@ MDX. CI checks the output and compiles every generated page as MDX on Node 22/24
 These are API signatures, not independently maintained executable examples.
 Runnable Python/TypeScript examples remain in `docs/src/testers/` and are tested
 by the paired-example pipeline.
+The Session getting-started page embeds the TypeScript block from the generated
+`docs/src/snippets/sessions/index.mdx`, keeping the tested example as its only
+code source. After editing that tester, run `python docs/src/sniptest/generate.py`
+before `npm run docs:generate --prefix node-sdk`. The guide expands the same
+compiler-derived fields as the `SessionOptions` reference and links to the
+generated scrape, observe, and execute method pages.

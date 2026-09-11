@@ -89,7 +89,7 @@ test('navigation and generated reference links resolve; supporting APIs can rema
   walk(actual.navigation);
   for (const name of listed) assert.ok(actual.pages.has(name), `Missing navigation page: ${name}`);
   for (const name of actual.pages.keys()) {
-    if (!listed.has(name)) assert.match(name, /\/types\/|\/encryption\/|\/manual\/encryption\.mdx$|\/symbol-asynciterator\.mdx$/);
+    if (!listed.has(name)) assert.match(name, /\/types\/|\/encryption\/|\/manual\/encryption\.mdx$|\/symbol-asynciterator\.mdx$|\/function\/getfunctionid\.mdx$|\/session\/getid\.mdx$/);
   }
   for (const [name, content] of actual.pages) {
     for (const [, link] of content.matchAll(/\]\(\/(typescript-sdk-reference\/[^)#]+)(?:#[^)]*)?\)/g)) {
@@ -113,11 +113,32 @@ test('feature landing pages use factories and method navigation follows user tas
   assert.ok(!JSON.stringify(actual.navigation).includes('symbol-asynciterator'));
   const debug = actual.navigation.pages.find(group => group.group === 'Debug');
   assert.equal(debug.pages[0].group, 'Debug Methods');
-  assert.ok(debug.pages[0].pages.includes('typescript-sdk-reference/session/getid'));
+  assert.ok(debug.pages[0].pages.includes('typescript-sdk-reference/session/getresponse'));
+  assert.ok(!JSON.stringify(actual.navigation).includes('/getfunctionid'));
+  assert.ok(!JSON.stringify(actual.navigation).includes('/getid'));
+  assert.ok(JSON.stringify(actual.navigation).includes('/getrun'));
+  assert.ok(!actual.pages.get('typescript-sdk-reference/manual/function.mdx').includes('[getFunctionId]'));
   for (const path of ['session/start', 'agent/run', 'function/createrun', 'vault/addcredentials', 'persona/emails', 'files/upload']) {
     const title = actual.pages.get(`typescript-sdk-reference/${path}.mdx`).match(/^title: "(.*)"/m)[1];
     assert.ok(!title.includes('.'), `Method title must be unqualified: ${title}`);
   }
+});
+
+test('Session guide reuses its tested snippet, usage cards, and all generated option fields', () => {
+  const page = actual.pages.get('typescript-sdk-reference/manual/session.mdx');
+  const snippet = readFileSync(new URL('../../docs/src/snippets/sessions/index.mdx', import.meta.url), 'utf8');
+  const code = snippet.match(/^```typescript[^\n]*\n([\s\S]*?)^```/m)[1].trimEnd();
+  assert.ok(page.includes('```typescript\n' + code + '\n```'));
+  const source = readFileSync(new URL('../../docs/src/testers/sessions/index.ts', import.meta.url), 'utf8');
+  assert.equal(code, source.replace(/^(?:\/\/ @sniptest[^\n]*\n)+/, '').trimEnd());
+  assert.ok(page.indexOf('await client.Session') < page.indexOf('## Usage'));
+  for (const method of ['scrape', 'observe', 'execute']) assert.ok(page.includes(`href="/typescript-sdk-reference/session/${method}"`));
+  assert.match(page, /<CardGroup cols=\{3\}>/);
+  const fields = text => [...text.matchAll(/<ParamField[\s\S]*?<\/ParamField>/g)].map(match => match[0]);
+  assert.deepEqual(fields(page.split('<Accordion')[0]), fields(actual.pages.get('typescript-sdk-reference/types/sessionoptions.mdx')));
+  assert.match(page, /body="open_viewer"/);
+  assert.match(page, /body="idle_timeout_minutes"/);
+  assert.doesNotMatch(page.split('<Accordion')[0], /body="options"|export \{|JSON.stringify/);
 });
 
 test('Node SDK mirrors Python categories and appears below Python in the sidebar', () => {

@@ -479,8 +479,7 @@
                       "typescript-sdk-reference/function/retrieve",
                       "typescript-sdk-reference/function/download",
                       "typescript-sdk-reference/function/geturl",
-                      "typescript-sdk-reference/function/runs",
-                      "typescript-sdk-reference/function/getfunctionid"
+                      "typescript-sdk-reference/function/runs"
                     ]
                   }
                 ]
@@ -546,7 +545,6 @@
                       "typescript-sdk-reference/client/getconfig",
                       "typescript-sdk-reference/client/getclient",
                       "typescript-sdk-reference/session/getresponse",
-                      "typescript-sdk-reference/session/getid",
                       "typescript-sdk-reference/session/issessionactive",
                       "typescript-sdk-reference/agent/isrunning"
                     ]

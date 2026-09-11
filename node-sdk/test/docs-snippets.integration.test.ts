@@ -106,6 +106,12 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
       maxBuffer: 2 * 1024 * 1024,
     });
     if (contract) {
+      // This getting-started example intentionally just prints the SDK response.
+      // Capture that existing output instead of adding test exports to the example.
+      if (name === 'sessions/index.ts') {
+        expect(logged).toHaveLength(1);
+        exported = { status: logged[0][0] };
+      }
       const pythonValues = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!);
       const ids = [
         verifyExampleOutput(JSON.stringify(collectExampleResult(exported!, contract)), contract, logged.map(args => args.join(' ')).join('\n')),

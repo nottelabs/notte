@@ -18,7 +18,8 @@ const methodOrder = {
   NottePersona: ['delete', 'addCredentials', 'emails', 'sms'],
   SessionFiles: ['download', 'upload', 'list', 'delete'],
 };
-const diagnosticMethods = new Set(['client/getconfig', 'client/getclient', 'session/getresponse', 'session/getid', 'session/issessionactive', 'agent/isrunning']);
+const hiddenMethods = new Set(['function/getfunctionid', 'session/getid']);
+const diagnosticMethods = new Set(['client/getconfig', 'client/getclient', 'session/getresponse', 'session/issessionactive', 'agent/isrunning']);
 const portableType = text => text.replace(/import\("[^"]+"\)\./g, '');
 const fence = text => `\`\`\`typescript\n${text}\n\`\`\``;
 // JSDoc is prose, not JSX. Preserve code spans but escape MDX expressions/tags.
@@ -102,6 +103,15 @@ export function createReference(root = sdkRoot) {
     const modifiers = node.modifiers?.some(m => m.kind === ts.SyntaxKind.StaticKeyword) ? 'static ' : '';
     return `${modifiers}${name}${portableType(checker.signatureToString(signature, node, ts.TypeFormatFlags.NoTruncation))};`;
   }).join('\n');
+  const fieldsFor = node => {
+    const type = checker.getTypeAtLocation(node);
+    const properties = !type.isUnion() && !(type.flags & ts.TypeFlags.StringLike) ? checker.getPropertiesOfType(type) : [];
+    return properties.filter(p => p.declarations?.some(d => local(d) && visible(d))).map(p => {
+      const declaration = p.valueDeclaration ?? p.declarations[0];
+      const value = typeText(checker.getTypeOfSymbolAtLocation(p, node));
+      return `<ParamField body=${attr(p.name)} type={${attr(value)}}${p.flags & ts.SymbolFlags.Optional ? '' : ' required'}>\n${doc(p) || ' '}${tags(declaration) ? `\n\n${tags(declaration)}` : ''}\n</ParamField>`;
+    });
+  };
   const params = node => (node.parameters ?? []).map(p => {
     const symbol = checker.getSymbolAtLocation(p.name);
     const type = p.type?.getText() ?? typeText(checker.getTypeAtLocation(p));
@@ -150,7 +160,7 @@ export function createReference(root = sdkRoot) {
       }
       contents.push(tags(method), related(overloads));
       pages.set(`${path}.mdx`, page(methodName, method, contents.filter(Boolean).join('\n\n')));
-      if (!ts.isComputedPropertyName(method.name)) {
+      if (!ts.isComputedPropertyName(method.name) && !hiddenMethods.has(`${classSlug}/${memberSlug(methodName)}`)) {
         nav.push(path);
         if (!diagnosticMethods.has(`${classSlug}/${memberSlug(methodName)}`)) methodLinks.push(`- [${methodName}](/${path})${doc(checker.getSymbolAtLocation(method.name)) ? `: ${doc(checker.getSymbolAtLocation(method.name)).split('\n')[0]}` : ''}`);
       }
@@ -165,6 +175,26 @@ export function createReference(root = sdkRoot) {
     const creation = factory ? `## Create ${name}\n\nUse [NotteClient.${factory.name.getText()}](/${prefix}/client/${memberSlug(factory.name.getText())}) to create this object from your configured client.\n\n${fence(signatures(`client.${factory.name.getText()}`, [factory]))}\n\n${params(factory)}\n\n${related([factory])}` : '';
     const constructor = ctorOverloads.length ? `${fence(signatures(`new ${name}`, ctorOverloads))}\n\n${ctorOverloads.map((ctor, i) => `${ctorOverloads.length > 1 ? `### Overload ${i + 1}\n\n` : ''}${params(ctor)}`).join('\n\n')}\n\n${related(ctorOverloads)}` : '';
     const contents = [doc(symbol), creation || fence(`import { ${name} } from 'notte-sdk';`), creation ? '' : constructor, methodLinks.length ? `## Usage\n\n${methodLinks.join('\n')}` : '', creation && constructor ? `<Accordion title="Direct constructor reference">\n\n${constructor}\n\n</Accordion>` : '', props.length ? `<Accordion title="Properties">\n\n${props.join('\n\n')}\n\n</Accordion>` : ''];
+    if (name === 'Session' && factory) {
+      // Reuse the snippet pipeline's display ranges rather than maintaining code here.
+      const snippet = readFileSync(resolve(root, '../docs/src/snippets/sessions/index.mdx'), 'utf8');
+      const examples = [...snippet.matchAll(/^```typescript[^\n]*\n([\s\S]*?)^```/gm)];
+      if (examples.length !== 1) throw new Error('Expected one generated TypeScript session example; run the snippet generator first');
+      const options = types.get('SessionOptions');
+      if (!options) throw new Error('SessionOptions is required for the Session getting-started page');
+      const cards = [['scrape', 'Scrape', 'download'], ['observe', 'Observe', 'telescope'], ['execute', 'Execute', 'shoe-prints']]
+        .map(([method, title, icon]) => {
+          const declaration = methods.get(method)?.[0];
+          if (!declaration) throw new Error(`Session.${method} is required for its usage card`);
+          return `<Card title=${attr(title)} icon=${attr(icon)} href="/${prefix}/session/${method}">\n${doc(checker.getSymbolAtLocation(declaration.name))}\n</Card>`;
+        });
+      contents.splice(0, contents.length,
+        'Sessions provide a managed browser lifecycle for automation. The `use()` callback starts the session and stops it when the callback finishes, including when it throws.',
+        fence(examples[0][1].trimEnd()),
+        `## Usage\n\nSee more operations on sessions:\n\n<CardGroup cols={3}>\n${cards.join('\n\n')}\n</CardGroup>`,
+        '## Parameters\n\nUse the defaults or pass these options to `client.Session(options)`:\n\n' + fieldsFor(options).join('\n\n'),
+        `<Accordion title="Direct constructor reference">\n\n${constructor}\n\n</Accordion>`);
+    }
     pages.set(`${prefix}/manual/${classSlug}.mdx`, page(factory ? 'Get started' : name, node, contents.filter(Boolean).join('\n\n')));
     groups.push({ group: name, collapsed: true, pages: nav });
   }
@@ -172,14 +202,7 @@ export function createReference(root = sdkRoot) {
     const path = `${prefix}/types/${name.toLowerCase()}`;
     if (pages.has(`${path}.mdx`)) throw new Error(`Duplicate reference path: ${path}`);
     const symbol = checker.getSymbolAtLocation(node.name);
-    const type = checker.getTypeAtLocation(node);
-    // Resolve inherited/mapped object options as well as showing their source declaration.
-    const properties = !type.isUnion() && !(type.flags & ts.TypeFlags.StringLike) ? checker.getPropertiesOfType(type) : [];
-    const fields = properties.filter(p => p.declarations?.some(d => local(d) && visible(d))).map(p => {
-      const declaration = p.valueDeclaration ?? p.declarations[0];
-      const value = typeText(checker.getTypeOfSymbolAtLocation(p, node));
-      return `<ParamField body=${attr(p.name)} type={${attr(value)}}${p.flags & ts.SymbolFlags.Optional ? '' : ' required'}>\n${doc(p) || ' '}${tags(declaration) ? `\n\n${tags(declaration)}` : ''}\n</ParamField>`;
-    });
+    const fields = fieldsFor(node);
     pages.set(`${path}.mdx`, page(name, node, [doc(symbol), fence(node.getText()), tags(node), fields.length ? `## Fields\n\n${fields.join('\n\n')}` : '', related([node])].filter(Boolean).join('\n\n')));
   }
   pages.set(`${prefix}/manual/index.mdx`, page('Node SDK reference', null, `This reference is generated from the public high-level classes, their signatures, JSDoc, and related types in \`node-sdk/src\`. It documents the checked-in SDK source; match it to the version you use.\n\nInstall the SDK:\n\n\`\`\`sh\nnpm install notte-sdk\n\`\`\`\n\n${classes.filter(({ symbol }) => symbol.name !== 'Encryption').map(({ symbol }) => `- [${symbol.name}](/${prefix}/manual/${slug(symbol.name)})`).join('\n')}\n\nThe generated low-level HTTP functions, legacy client helpers, and proxy subpath entrypoints are not part of this high-level reference. See the [API reference](/api-reference/authentication) for HTTP endpoints and the [Python SDK reference](/sdk-reference/manual/index) for Python.\n\nTo update these pages, edit the TypeScript source or its JSDoc and run \`npm run docs:generate --prefix node-sdk\`. CI checks for stale generated pages.`));
