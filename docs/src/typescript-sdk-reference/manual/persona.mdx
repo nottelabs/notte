@@ -1,5 +1,5 @@
 ---
-title: "NottePersona"
+title: "Get started"
 ---
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
@@ -21,11 +21,35 @@ Notte Personas come with complete digital identities:
 - Automated Communication: Built-in email and SMS reading capabilities
 - 2FA Support: Seamless handling of two-factor authentication flows
 
+## Create NottePersona
+
+Use [NotteClient.Persona](/typescript-sdk-reference/client/persona) to create this object from your configured client.
+
 ```typescript
-import { NottePersona } from 'notte-sdk';
+client.Persona(options?: PersonaConstructor): NottePersona;
 ```
 
-## Constructor
+<ParamField body="options" type={"PersonaConstructor"}>
+
+</ParamField>
+
+## Related types
+
+- [PersonaConstructor](/typescript-sdk-reference/types/personaconstructor)
+
+## Usage
+
+- [delete](/typescript-sdk-reference/persona/delete): Delete the persona from the notte console
+- [addCredentials](/typescript-sdk-reference/persona/addcredentials): Add credentials to the persona (generates a password and stores it in the vault)
+- [emails](/typescript-sdk-reference/persona/emails): Read recent emails sent to the persona
+- [sms](/typescript-sdk-reference/persona/sms): Read recent SMS messages sent to the persona
+- [start](/typescript-sdk-reference/persona/start): Start the persona - ensures initialization
+- [stop](/typescript-sdk-reference/persona/stop): Stop the persona - deletes it
+- [create](/typescript-sdk-reference/persona/create): Create the persona
+- [get](/typescript-sdk-reference/persona/get): Get persona information (alias for ensureInitialized)
+- [use](/typescript-sdk-reference/persona/use): Context manager for automatic cleanup
+
+<Accordion title="Direct constructor reference">
 
 ```typescript
 new NottePersona(client: NotteClient, options?: PersonaConstructor): NottePersona;
@@ -47,7 +71,9 @@ Default:
 
 - [PersonaConstructor](/typescript-sdk-reference/types/personaconstructor)
 
-## Properties
+</Accordion>
+
+<Accordion title="Properties">
 
 ### info
 
@@ -97,14 +123,4 @@ internalEmail: string
 
 Internal UUID-backed mailbox address of the persona
 
-## Methods
-
-- [start](/typescript-sdk-reference/persona/start): Start the persona - ensures initialization
-- [stop](/typescript-sdk-reference/persona/stop): Stop the persona - deletes it
-- [create](/typescript-sdk-reference/persona/create): Create the persona
-- [delete](/typescript-sdk-reference/persona/delete): Delete the persona from the notte console
-- [addCredentials](/typescript-sdk-reference/persona/addcredentials): Add credentials to the persona (generates a password and stores it in the vault)
-- [emails](/typescript-sdk-reference/persona/emails): Read recent emails sent to the persona
-- [sms](/typescript-sdk-reference/persona/sms): Read recent SMS messages sent to the persona
-- [get](/typescript-sdk-reference/persona/get): Get persona information (alias for ensureInitialized)
-- [use](/typescript-sdk-reference/persona/use): Context manager for automatic cleanup
+</Accordion>

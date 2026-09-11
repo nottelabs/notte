@@ -1,5 +1,5 @@
 ---
-title: "NotteFunction"
+title: "Get started"
 ---
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
@@ -11,11 +11,34 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 Function class for managing function runs
 
+## Create NotteFunction
+
+Use [NotteClient.NotteFunction](/typescript-sdk-reference/client/nottefunction) to create this object from your configured client.
+
 ```typescript
-import { NotteFunction } from 'notte-sdk';
+client.NotteFunction(options: FunctionConstructor): NotteFunction;
 ```
 
-## Constructor
+<ParamField body="options" type={"FunctionConstructor"} required>
+
+</ParamField>
+
+## Related types
+
+- [FunctionConstructor](/typescript-sdk-reference/types/functionconstructor)
+
+## Usage
+
+- [createRun](/typescript-sdk-reference/function/createrun): Create a cloud run record without starting execution.
+- [run](/typescript-sdk-reference/function/run): Stream logs and wait for the final result by default.
+- [getRun](/typescript-sdk-reference/function/getrun): Get metadata for a specific function run
+- [retrieve](/typescript-sdk-reference/function/retrieve): Compatibility alias for getRun().
+- [download](/typescript-sdk-reference/function/download): Download the function code as a python file. Returns the code, and writes
+- [getUrl](/typescript-sdk-reference/function/geturl): Get the download URL of the function code, decrypting it when the API
+- [runs](/typescript-sdk-reference/function/runs): List the runs of this function.
+- [getFunctionId](/typescript-sdk-reference/function/getfunctionid): Get the function ID
+
+<Accordion title="Direct constructor reference">
 
 ```typescript
 new NotteFunction(client: NotteClient, options: FunctionConstructor): NotteFunction;
@@ -33,7 +56,9 @@ new NotteFunction(client: NotteClient, options: FunctionConstructor): NotteFunct
 
 - [FunctionConstructor](/typescript-sdk-reference/types/functionconstructor)
 
-## Properties
+</Accordion>
+
+<Accordion title="Properties">
 
 ### functionId
 
@@ -51,13 +76,4 @@ decryptionKey?: string | undefined
 
 
 
-## Methods
-
-- [getRun](/typescript-sdk-reference/function/getrun): Get metadata for a specific function run
-- [retrieve](/typescript-sdk-reference/function/retrieve): Compatibility alias for getRun().
-- [createRun](/typescript-sdk-reference/function/createrun): Create a cloud run record without starting execution.
-- [runs](/typescript-sdk-reference/function/runs): List the runs of this function.
-- [run](/typescript-sdk-reference/function/run): Stream logs and wait for the final result by default.
-- [getUrl](/typescript-sdk-reference/function/geturl): Get the download URL of the function code, decrypting it when the API
-- [download](/typescript-sdk-reference/function/download): Download the function code as a python file. Returns the code, and writes
-- [getFunctionId](/typescript-sdk-reference/function/getfunctionid): Get the function ID
+</Accordion>

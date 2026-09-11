@@ -79,7 +79,7 @@ test('real SDK output covers factories, aliases and inherited session options wi
   for (const content of actual.pages.values()) assert.doesNotMatch(content, /import\("\/|\/Users\/|\/private\/tmp\//);
 });
 
-test('navigation and generated reference links resolve; only supporting types and encryption are hidden', () => {
+test('navigation and generated reference links resolve; supporting APIs can remain hidden', () => {
   const listed = new Set();
   const walk = node => {
     if (typeof node === 'string') listed.add(`${node}.mdx`);
@@ -89,12 +89,34 @@ test('navigation and generated reference links resolve; only supporting types an
   walk(actual.navigation);
   for (const name of listed) assert.ok(actual.pages.has(name), `Missing navigation page: ${name}`);
   for (const name of actual.pages.keys()) {
-    if (!listed.has(name)) assert.match(name, /\/types\/|\/encryption\/|\/manual\/encryption\.mdx$/);
+    if (!listed.has(name)) assert.match(name, /\/types\/|\/encryption\/|\/manual\/encryption\.mdx$|\/symbol-asynciterator\.mdx$/);
   }
   for (const [name, content] of actual.pages) {
     for (const [, link] of content.matchAll(/\]\(\/(typescript-sdk-reference\/[^)#]+)(?:#[^)]*)?\)/g)) {
       assert.ok(actual.pages.has(`${link}.mdx`), `${name} links to missing ${link}`);
     }
+  }
+});
+
+test('feature landing pages use factories and method navigation follows user tasks', () => {
+  for (const [name, factory] of Object.entries({ session: 'Session', agent: 'Agent', function: 'NotteFunction', vault: 'Vault', persona: 'Persona', files: 'Files' })) {
+    const content = actual.pages.get(`typescript-sdk-reference/manual/${name}.mdx`);
+    assert.match(content, /^---\ntitle: "Get started"/);
+    assert.ok(content.includes(`client.${factory}(`));
+    assert.ok(content.indexOf(`client.${factory}(`) < content.indexOf('Direct constructor reference'));
+  }
+  const core = actual.navigation.pages.find(group => group.group === 'Core Features');
+  assert.equal(core.pages[0], 'typescript-sdk-reference/client/scrape');
+  const session = core.pages.find(group => group.group === 'Session');
+  assert.deepEqual(session.pages.slice(0, 6), ['manual/session', 'session/start', 'session/stop', 'session/observe', 'session/execute', 'session/scrape'].map(path => `typescript-sdk-reference/${path}`));
+  for (const method of ['getid', 'getresponse', 'issessionactive', 'symbol-asynciterator']) assert.ok(!session.pages.includes(`typescript-sdk-reference/session/${method}`));
+  assert.ok(!JSON.stringify(actual.navigation).includes('symbol-asynciterator'));
+  const debug = actual.navigation.pages.find(group => group.group === 'Debug');
+  assert.equal(debug.pages[0].group, 'Debug Methods');
+  assert.ok(debug.pages[0].pages.includes('typescript-sdk-reference/session/getid'));
+  for (const path of ['session/start', 'agent/run', 'function/createrun', 'vault/addcredentials', 'persona/emails', 'files/upload']) {
+    const title = actual.pages.get(`typescript-sdk-reference/${path}.mdx`).match(/^title: "(.*)"/m)[1];
+    assert.ok(!title.includes('.'), `Method title must be unqualified: ${title}`);
   }
 });
 

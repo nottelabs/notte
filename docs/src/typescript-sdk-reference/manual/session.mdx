@@ -1,5 +1,5 @@
 ---
-title: "Session"
+title: "Get started"
 ---
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
@@ -13,11 +13,42 @@ Browser session created with `client.Session(options)`.
 Call `start()` before using it and `stop()` when finished, or use `use()`
 to start and stop automatically around an asynchronous callback.
 
+## Create Session
+
+Use [NotteClient.Session](/typescript-sdk-reference/client/session) to create this object from your configured client.
+
 ```typescript
-import { Session } from 'notte-sdk';
+client.Session(options?: SessionOptions): Session;
 ```
 
-## Constructor
+<ParamField body="options" type={"SessionOptions"}>
+Default:
+
+```typescript
+{}
+```
+</ParamField>
+
+## Related types
+
+- [SessionOptions](/typescript-sdk-reference/types/sessionoptions)
+
+## Usage
+
+- [start](/typescript-sdk-reference/session/start): Start the session - creates a new session on the server
+- [stop](/typescript-sdk-reference/session/stop): Stop the session - terminates the session on the server
+- [observe](/typescript-sdk-reference/session/observe): Observe the current page state
+- [execute](/typescript-sdk-reference/session/execute): Execute an action on the page
+- [scrape](/typescript-sdk-reference/session/scrape): Scrape the current page
+- [replay](/typescript-sdk-reference/session/replay): Get session replay data
+- [setCookies](/typescript-sdk-reference/session/setcookies): Set cookies for the session
+- [getCookies](/typescript-sdk-reference/session/getcookies): Get cookies from the session
+- [viewer](/typescript-sdk-reference/session/viewer): Open the live viewer for this session in the local default browser.
+- [status](/typescript-sdk-reference/session/status): Get session status
+- [use](/typescript-sdk-reference/session/use): Context manager pattern - automatically start and stop session
+- [setCookiesFromFile](/typescript-sdk-reference/session/setcookiesfromfile): Set cookies from a file
+
+<Accordion title="Direct constructor reference">
 
 ```typescript
 new Session(client: NotteClient, options?: SessionOptions): Session;
@@ -39,21 +70,4 @@ Default:
 
 - [SessionOptions](/typescript-sdk-reference/types/sessionoptions)
 
-## Methods
-
-- [start](/typescript-sdk-reference/session/start): Start the session - creates a new session on the server
-- [stop](/typescript-sdk-reference/session/stop): Stop the session - terminates the session on the server
-- [status](/typescript-sdk-reference/session/status): Get session status
-- [getId](/typescript-sdk-reference/session/getid): Get session ID
-- [isSessionActive](/typescript-sdk-reference/session/issessionactive): Check if session is active
-- [getResponse](/typescript-sdk-reference/session/getresponse): Get the last response from session operations
-- [viewer](/typescript-sdk-reference/session/viewer): Open the live viewer for this session in the local default browser.
-- [setCookies](/typescript-sdk-reference/session/setcookies): Set cookies for the session
-- [setCookiesFromFile](/typescript-sdk-reference/session/setcookiesfromfile): Set cookies from a file
-- [getCookies](/typescript-sdk-reference/session/getcookies): Get cookies from the session
-- [execute](/typescript-sdk-reference/session/execute): Execute an action on the page
-- [observe](/typescript-sdk-reference/session/observe): Observe the current page state
-- [replay](/typescript-sdk-reference/session/replay): Get session replay data
-- [scrape](/typescript-sdk-reference/session/scrape): Scrape the current page
-- [use](/typescript-sdk-reference/session/use): Context manager pattern - automatically start and stop session
-- [[Symbol.asyncIterator]](/typescript-sdk-reference/session/symbol-asynciterator): Async iterator pattern for session lifecycle management
+</Accordion>

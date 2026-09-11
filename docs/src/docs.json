@@ -395,8 +395,7 @@
                       "typescript-sdk-reference/client/agent",
                       "typescript-sdk-reference/client/vault",
                       "typescript-sdk-reference/client/persona",
-                      "typescript-sdk-reference/client/nottefunction",
-                      "typescript-sdk-reference/client/scrape"
+                      "typescript-sdk-reference/client/nottefunction"
                     ]
                   }
                 ]
@@ -404,6 +403,7 @@
               {
                 "group": "Core Features",
                 "pages": [
+                  "typescript-sdk-reference/client/scrape",
                   {
                     "group": "Session",
                     "collapsed": true,
@@ -411,19 +411,16 @@
                       "typescript-sdk-reference/manual/session",
                       "typescript-sdk-reference/session/start",
                       "typescript-sdk-reference/session/stop",
-                      "typescript-sdk-reference/session/status",
-                      "typescript-sdk-reference/session/getid",
-                      "typescript-sdk-reference/session/issessionactive",
-                      "typescript-sdk-reference/session/viewer",
-                      "typescript-sdk-reference/session/setcookies",
-                      "typescript-sdk-reference/session/setcookiesfromfile",
-                      "typescript-sdk-reference/session/getcookies",
-                      "typescript-sdk-reference/session/execute",
                       "typescript-sdk-reference/session/observe",
-                      "typescript-sdk-reference/session/replay",
+                      "typescript-sdk-reference/session/execute",
                       "typescript-sdk-reference/session/scrape",
+                      "typescript-sdk-reference/session/replay",
+                      "typescript-sdk-reference/session/setcookies",
+                      "typescript-sdk-reference/session/getcookies",
+                      "typescript-sdk-reference/session/viewer",
+                      "typescript-sdk-reference/session/status",
                       "typescript-sdk-reference/session/use",
-                      "typescript-sdk-reference/session/symbol-asynciterator"
+                      "typescript-sdk-reference/session/setcookiesfromfile"
                     ]
                   },
                   {
@@ -465,11 +462,10 @@
                     "collapsed": true,
                     "pages": [
                       "typescript-sdk-reference/manual/agent",
-                      "typescript-sdk-reference/agent/start",
                       "typescript-sdk-reference/agent/run",
-                      "typescript-sdk-reference/agent/status",
+                      "typescript-sdk-reference/agent/start",
                       "typescript-sdk-reference/agent/stop",
-                      "typescript-sdk-reference/agent/isrunning"
+                      "typescript-sdk-reference/agent/status"
                     ]
                   },
                   {
@@ -477,13 +473,13 @@
                     "collapsed": true,
                     "pages": [
                       "typescript-sdk-reference/manual/function",
+                      "typescript-sdk-reference/function/createrun",
+                      "typescript-sdk-reference/function/run",
                       "typescript-sdk-reference/function/getrun",
                       "typescript-sdk-reference/function/retrieve",
-                      "typescript-sdk-reference/function/createrun",
-                      "typescript-sdk-reference/function/runs",
-                      "typescript-sdk-reference/function/run",
-                      "typescript-sdk-reference/function/geturl",
                       "typescript-sdk-reference/function/download",
+                      "typescript-sdk-reference/function/geturl",
+                      "typescript-sdk-reference/function/runs",
                       "typescript-sdk-reference/function/getfunctionid"
                     ]
                   }
@@ -497,18 +493,18 @@
                     "collapsed": true,
                     "pages": [
                       "typescript-sdk-reference/manual/vault",
-                      "typescript-sdk-reference/vault/start",
-                      "typescript-sdk-reference/vault/stop",
                       "typescript-sdk-reference/vault/addcredentials",
                       "typescript-sdk-reference/vault/getcredentials",
                       "typescript-sdk-reference/vault/deletecredentials",
+                      "typescript-sdk-reference/vault/listcredentials",
                       "typescript-sdk-reference/vault/setcreditcard",
                       "typescript-sdk-reference/vault/getcreditcard",
-                      "typescript-sdk-reference/vault/listcredentials",
                       "typescript-sdk-reference/vault/deletecreditcard",
+                      "typescript-sdk-reference/vault/generatepassword",
+                      "typescript-sdk-reference/vault/start",
+                      "typescript-sdk-reference/vault/stop",
                       "typescript-sdk-reference/vault/delete",
-                      "typescript-sdk-reference/vault/addcredentialsfromenv",
-                      "typescript-sdk-reference/vault/generatepassword"
+                      "typescript-sdk-reference/vault/addcredentialsfromenv"
                     ]
                   },
                   {
@@ -516,13 +512,13 @@
                     "collapsed": true,
                     "pages": [
                       "typescript-sdk-reference/manual/persona",
-                      "typescript-sdk-reference/persona/start",
-                      "typescript-sdk-reference/persona/stop",
-                      "typescript-sdk-reference/persona/create",
                       "typescript-sdk-reference/persona/delete",
                       "typescript-sdk-reference/persona/addcredentials",
                       "typescript-sdk-reference/persona/emails",
                       "typescript-sdk-reference/persona/sms",
+                      "typescript-sdk-reference/persona/start",
+                      "typescript-sdk-reference/persona/stop",
+                      "typescript-sdk-reference/persona/create",
                       "typescript-sdk-reference/persona/get",
                       "typescript-sdk-reference/persona/use"
                     ]
@@ -532,9 +528,9 @@
                     "collapsed": true,
                     "pages": [
                       "typescript-sdk-reference/manual/files",
+                      "typescript-sdk-reference/files/download",
                       "typescript-sdk-reference/files/upload",
                       "typescript-sdk-reference/files/list",
-                      "typescript-sdk-reference/files/download",
                       "typescript-sdk-reference/files/delete"
                     ]
                   }
@@ -543,9 +539,18 @@
               {
                 "group": "Debug",
                 "pages": [
-                  "typescript-sdk-reference/client/getconfig",
-                  "typescript-sdk-reference/client/getclient",
-                  "typescript-sdk-reference/session/getresponse"
+                  {
+                    "group": "Debug Methods",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/client/getconfig",
+                      "typescript-sdk-reference/client/getclient",
+                      "typescript-sdk-reference/session/getresponse",
+                      "typescript-sdk-reference/session/getid",
+                      "typescript-sdk-reference/session/issessionactive",
+                      "typescript-sdk-reference/agent/isrunning"
+                    ]
+                  }
                 ]
               }
             ]

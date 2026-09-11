@@ -15,8 +15,6 @@ Entry point for sessions, agents, functions, vaults, personas, and session files
 import { NotteClient } from 'notte-sdk';
 ```
 
-## Constructor
-
 ```typescript
 new NotteClient(config?: NotteClientConfig): NotteClient;
 ```
@@ -33,7 +31,17 @@ Default:
 
 - [NotteClientConfig](/typescript-sdk-reference/types/notteclientconfig)
 
-## Properties
+## Usage
+
+- [Session](/typescript-sdk-reference/client/session): Create a new session
+- [Files](/typescript-sdk-reference/client/files): Access files owned by a specific session, including closed sessions.
+- [Agent](/typescript-sdk-reference/client/agent): Create a new agent
+- [Vault](/typescript-sdk-reference/client/vault): Create or access a vault
+- [Persona](/typescript-sdk-reference/client/persona): Create or access a persona
+- [NotteFunction](/typescript-sdk-reference/client/nottefunction): Create or access a function
+- [scrape](/typescript-sdk-reference/client/scrape): Scrape a webpage directly (without session)
+
+<Accordion title="Properties">
 
 ### personas
 
@@ -43,14 +51,4 @@ personas: { list: (options?: { page?: number | undefined; page_size?: number | u
 
 Personas client for listing and managing personas
 
-## Methods
-
-- [Session](/typescript-sdk-reference/client/session): Create a new session
-- [Files](/typescript-sdk-reference/client/files): Access files owned by a specific session, including closed sessions.
-- [Agent](/typescript-sdk-reference/client/agent): Create a new agent
-- [Vault](/typescript-sdk-reference/client/vault): Create or access a vault
-- [Persona](/typescript-sdk-reference/client/persona): Create or access a persona
-- [NotteFunction](/typescript-sdk-reference/client/nottefunction): Create or access a function
-- [getClient](/typescript-sdk-reference/client/getclient): Get the configured client instance
-- [scrape](/typescript-sdk-reference/client/scrape): Scrape a webpage directly (without session)
-- [getConfig](/typescript-sdk-reference/client/getconfig): Get the client configuration
+</Accordion>
