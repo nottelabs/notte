@@ -1,4 +1,4 @@
-export { checkForLatestVersion } from '@/version-check';
+export { checkForLatestVersion, startVersionCheck } from '@/version-check';
 
 // Re-export all generated types and services
 export * from '@/lib/client/types.gen';
@@ -8,7 +8,7 @@ export * from '@/lib/client/sdk.gen';
 export { client } from '@/lib/client/client.gen';
 
 // Export main SDK classes
-export { NotteClient } from '@/client';
+export { NotteClient, DEFAULT_NOTTE_API_URL, DEFAULT_REQUEST_TIMEOUT_MS, TIMEOUT_HEADER } from '@/client';
 export { Session } from '@/session';
 export { Agent } from '@/agent';
 export { NotteVault } from '@/vaults';
@@ -18,23 +18,62 @@ export { Encryption } from '@/encryption';
 export { SessionFiles } from '@/files';
 export type { FileSource, SessionFile, SessionFilesPage } from '@/files';
 
+// Errors and helpers
+export {
+  NotteError,
+  NotteAPIError,
+  NotteAPIExecutionError,
+  AuthenticationError,
+  InvalidRequestError,
+  NotteTimeoutError,
+  FailedToRunCloudFunctionError,
+  ScrapeFailedError,
+  ActionExecutionError,
+  EvaluateJsNoDataError,
+  FetchResponseDecodeError,
+  retry,
+} from '@/errors';
+export type { NotteAPIErrorBody, RetryOptions } from '@/errors';
+
+// Scrape helpers shared by `client.scrape()` and `session.scrape()`
+export { processScrapeResponse } from '@/scrape';
+export type { ScrapeOptions, ScrapeResult, SessionScrapeOptions, StructuredData, ZodLikeSchema } from '@/scrape';
+
 // Export types
-export type { NotteClientConfig } from '@/client';
+export type {
+  NotteClientConfig,
+  GlobalScrapeOptions,
+  SessionListOptions,
+  AgentListOptions,
+  VaultListOptions,
+  FunctionListOptions,
+} from '@/client';
 export type { SessionOptions } from '@/session';
 export type { AgentConstructor, AgentRunRequest, AgentUpdateHandler } from '@/agent';
+export { prepareAgentRequest, parseAgentStatusMessage } from '@/agent';
 export type { VaultConstructor } from '@/vaults';
-export type { PersonaConstructor, MessageReadOptions, PersonaListOptions } from '@/personas';
-export type { FunctionConstructor, FunctionRunOptions, FunctionRunStartResult, FunctionRunResult, FunctionRunCreateResult, FunctionUrlOptions, FunctionDownloadOptions } from '@/functions';
+export type { PersonaConstructor, MessageReadOptions, PersonaListOptions, PersonaResponseWithInternalEmail } from '@/personas';
+export type {
+  FunctionConstructor,
+  FunctionRunOptions,
+  FunctionRunStartResult,
+  FunctionRunResult,
+  FunctionRunCreateResult,
+  FunctionRunListOptions,
+  FunctionUrlOptions,
+  FunctionDownloadOptions,
+} from '@/functions';
 
-// Export proxy types and errors (the proxy module itself is available via '@notte/sdk/next' and '@notte/sdk/proxy')
+// Export proxy types and errors (the proxy module itself is available via 'notte-sdk/next' and 'notte-sdk/proxy')
 export type { NotteProxyConfig } from '@/proxy/types';
 export { NotteProxyAuthError } from '@/proxy/types';
 
 // Create a configured client instance (legacy support)
 import { createClient as createGeneratedClient } from '@/lib/client/client';
+import { DEFAULT_NOTTE_API_URL as DEFAULT_API_URL } from '@/client';
 
 export const createClient = (config?: { baseUrl?: string; token?: string }) => {
-  const client = createGeneratedClient({ baseUrl: config?.baseUrl || 'https://api.notte.cc' });
+  const client = createGeneratedClient({ baseUrl: config?.baseUrl || DEFAULT_API_URL });
   if (config?.baseUrl) {
     client.setConfig({ baseUrl: config.baseUrl });
   }

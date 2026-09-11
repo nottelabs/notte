@@ -13,7 +13,7 @@ it('does not overwrite resolved defaults with explicit undefined options', () =>
   vi.stubEnv('NOTTE_API_URL', 'https://environment.example');
   try {
     const client = new NotteClient({ apiKey: undefined, baseUrl: undefined });
-    expect(client.getConfig()).toEqual({ apiKey: 'environment-test-key', baseUrl: 'https://environment.example' }); // pragma: allowlist secret
+    expect(client.getConfig()).toMatchObject({ apiKey: 'environment-test-key', baseUrl: 'https://environment.example' }); // pragma: allowlist secret
   } finally { vi.unstubAllEnvs(); }
 });
 

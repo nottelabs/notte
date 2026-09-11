@@ -13,6 +13,9 @@ vi.mock('@/lib/client/client', () => {
       },
       response: {
         use: vi.fn()
+      },
+      error: {
+        use: vi.fn()
       }
     }
   };
@@ -114,7 +117,7 @@ describe('NotteClient', () => {
       try {
         delete process.env.NOTTE_API_KEY;
 
-        expect(() => new NotteClient({})).toThrow('API key is required');
+        expect(() => new NotteClient({})).toThrow('NOTTE_API_KEY needs to be provided');
       } finally {
         if (original === undefined) {
           delete process.env.NOTTE_API_KEY;
@@ -204,7 +207,8 @@ describe('NotteClient', () => {
       notteClient = new NotteClient(config);
       const returnedConfig = notteClient.getConfig();
 
-      expect(returnedConfig).toEqual(config);
+      expect(returnedConfig).toMatchObject(config);
+      expect(returnedConfig.timeoutMs).toBe(60_000);
     });
   });
 });

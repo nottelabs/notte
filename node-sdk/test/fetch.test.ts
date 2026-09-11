@@ -18,6 +18,7 @@ vi.mock('@/lib/client/client', () => {
     interceptors: {
       request: { use: vi.fn() },
       response: { use: vi.fn() },
+      error: { use: vi.fn() },
     },
   };
   return { createClient: () => client, createConfig: (config: unknown) => config };

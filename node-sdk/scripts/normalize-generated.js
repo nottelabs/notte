@@ -35,6 +35,13 @@ function normalizeFile(filePath) {
 	content = content.replace(/^(\s*\* `https?:\/\/user:pass@host:\d+`[^\n]*?)\s*(?:\/\/ pragma: allowlist secret)?$/gm,
 		(_, example) => `${example} ${DETECT_SECRETS_ALLOWLIST}`); // pragma: allowlist secret
 
+	// The spec is fetched from staging (see openapi-ts.config.ts) so the generated
+	// singleton inherits the staging base URL. Consumers importing `client`
+	// directly must talk to production, like the Python SDK's default server URL.
+	if (path.basename(filePath) === 'client.gen.ts') {
+		content = content.replace(/baseUrl: '[^']*'/g, "baseUrl: 'https://api.notte.cc'");
+	}
+
 	// Ensure file ends with exactly one newline
 	content = content.replace(/\n+$/, '') + '\n';
 

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { NotteClient } from '@/client';
+import type { StructuredData } from '@/scrape';
 import { z } from 'zod';
 
 // Load environment variables
@@ -193,11 +194,12 @@ describe('Scraping Integration Tests', () => {
 		});
 
 		it('should scrape with response format', { timeout: 30000 }, async () => {
-			const structured = await client.scrape('https://www.notte.cc', {
+			const structured = (await client.scrape('https://www.notte.cc', {
 				proxies: false,
 				response_format: pricingPlansJson,
-				instructions: 'Extract pricing plans from the page'
-			});
+				instructions: 'Extract pricing plans from the page',
+				raiseOnFailure: false
+			})) as StructuredData<{ plans?: unknown[] }>;
 			expect(structured).toBeDefined();
 			if (structured.success && structured.data?.plans) {
 				expect(structured.data.plans.length).toBeGreaterThan(0);
@@ -207,11 +209,12 @@ describe('Scraping Integration Tests', () => {
 		});
 
 		it('should scrape with JSON schema response format', { timeout: 30000 }, async () => {
-			const structured = await client.scrape('https://www.notte.cc', {
+			const structured = (await client.scrape('https://www.notte.cc', {
 				proxies: false,
 				response_format: pricingPlansJson,
-				instructions: 'Extract pricing plans from the page'
-			});
+				instructions: 'Extract pricing plans from the page',
+				raiseOnFailure: false
+			})) as StructuredData<{ plans?: unknown[] }>;
 			expect(structured).toBeDefined();
 			if (structured.success && structured.data?.plans) {
 				expect(structured.data.plans.length).toBeGreaterThan(0);

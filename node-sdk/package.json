@@ -55,9 +55,20 @@
   },
   "bugs": "https://github.com/nottelabs/notte/issues",
   "homepage": "https://github.com/nottelabs/notte/tree/main/node-sdk",
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "ws": "^8.18.0",
     "zod": "^4.1.9"
+  },
+  "peerDependencies": {
+    "playwright-core": ">=1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright-core": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.99.0",
