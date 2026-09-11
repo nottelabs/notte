@@ -1,7 +1,17 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/agents/config/param_session.py */}
 
+<CodeGroup>
+
 ```python param_session.py
 with client.Session(open_viewer=True) as session:
     agent = client.Agent(session=session)
 ```
+
+```typescript param_session.ts
+const agent = await client.Session({ open_viewer: true }).use(async session =>
+  client.Agent({ session }),
+);
+```
+
+</CodeGroup>
