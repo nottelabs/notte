@@ -52,6 +52,10 @@ Publishing a stable GitHub release tagged `node-sdk-vX.Y.Z` then runs validation
 and publishes with provenance. Python release tags do not trigger npm publishing.
 No registry credentials or publishing configuration are changed by adding this package.
 
+Importing the SDK does not contact the npm registry. To explicitly check for an
+update, call `await checkForLatestVersion()` from `notte-sdk`.
+API URLs must use HTTPS, except HTTP loopback addresses for local development.
+
 ## Features
 
 ### Server-side proxy security

@@ -1,6 +1,4 @@
-import { startVersionCheck } from '@/version-check';
-
-startVersionCheck();
+export { checkForLatestVersion } from '@/version-check';
 
 // Re-export all generated types and services
 export * from '@/lib/client/types.gen';

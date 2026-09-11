@@ -4,6 +4,10 @@ import { createClient } from '@/index';
 
 afterEach(() => vi.unstubAllGlobals());
 
+it.each(['http://remote.example', 'ftp://remote.example'])('rejects insecure remote API URL %s', baseUrl => {
+  expect(() => new NotteClient({ baseUrl, apiKey: 'test-key' })).toThrow('HTTPS'); // pragma: allowlist secret
+});
+
 it('does not overwrite resolved defaults with explicit undefined options', () => {
   vi.stubEnv('NOTTE_API_KEY', 'environment-test-key'); // pragma: allowlist secret
   vi.stubEnv('NOTTE_API_URL', 'https://environment.example');

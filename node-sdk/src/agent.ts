@@ -361,8 +361,9 @@ export class Agent {
       throw new Error('Agent not started');
     }
 
+    const deadline = Date.now() + 300000;
     try {
-      const result = await this.watchLogs(log, updateHandler);
+      const result = await this.watchLogs(log, updateHandler, deadline);
       if (result && result.status !== 'active') {
         return result;
       }
@@ -370,9 +371,8 @@ export class Agent {
       console.warn(`[Agent] ${this.agentId} log stream unavailable; polling for completion.`);
     }
     // Losing the log transport does not mean execution has completed.
-    const deadline = Date.now() + 300000;
     while (Date.now() < deadline) {
-      const result = await this.status();
+      const result = await this.status(AbortSignal.timeout(Math.max(1, deadline - Date.now())));
       if (result.status !== 'active') {
         updateHandler?.({ type: 'completion', data: result, timestamp: new Date().toISOString() });
         return result;
@@ -385,7 +385,7 @@ export class Agent {
   /**
    * Watch logs via WebSocket - mirrors Python watch_logs method
    */
-  private async watchLogs(log: boolean = true, updateHandler: AgentUpdateHandler | null = null): Promise<LegacyAgentStatusResponse | null> {
+  private async watchLogs(log: boolean = true, updateHandler: AgentUpdateHandler | null = null, deadline = Date.now() + 300000): Promise<LegacyAgentStatusResponse | null> {
     if (this.existingAgent) {
       throw new Error('You cannot call watchLogs() on an agent instantiated from agent id');
     }
@@ -405,6 +405,7 @@ export class Agent {
       client: this.client.getClient(),
       path: { session_id: sessionId },
       throwOnError: true,
+      signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())),
     });
     const wsUrl = new URL(debug.data.ws.logs);
     const token = wsUrl.searchParams.get('token');
@@ -415,7 +416,7 @@ export class Agent {
     return new Promise((resolve, reject) => {
       this.websocket = new WebSocket(wsUrl);
       const socket = this.websocket;
-      const timeout = setTimeout(() => finish(null), 300000);
+      const timeout = setTimeout(() => finish(null), Math.max(0, deadline - Date.now()));
       let settled = false;
       const finish = (result: LegacyAgentStatusResponse | null) => {
         if (settled) return;
@@ -502,13 +503,14 @@ export class Agent {
   /**
    * Get agent status - mirrors Python status method
    */
-  async status(): Promise<LegacyAgentStatusResponse> {
+  async status(signal?: AbortSignal): Promise<LegacyAgentStatusResponse> {
     if (!this.response) {
       throw new Error('Agent not started or not accessible');
     }
 
     const response = await agentStatus({
       client: this.client.getClient(),
+      signal,
       path: {
         agent_id: this.response.agent_id
       }

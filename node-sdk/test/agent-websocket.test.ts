@@ -49,11 +49,11 @@ it.each(['wss://api.example/?token=account-test-key', 'ws://api.example/?token=s
   expect(state.urls).toEqual([]);
 });
 
-it('times out a socket that never opens and polls to completion', async () => {
+it('shares the deadline with polling when a socket never opens', async () => {
   state.close = false;
-  const result = run();
+  const result = expect(run()).rejects.toThrow('polling timeout');
   await vi.advanceTimersByTimeAsync(300000);
-  await expect(result).resolves.toMatchObject({ status: 'closed' });
+  await result;
   expect(state.terminate).toHaveBeenCalledOnce();
   expect(vi.getTimerCount()).toBe(0);
 });

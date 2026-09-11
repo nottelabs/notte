@@ -30,6 +30,13 @@ export class NotteClient {
     // Only skip the apiKey check for relative proxy paths (e.g. '/api/notte').
     // Any HTTPS URL—including staging—still requires a key.
     const isProxyMode = /^\/(?!\/)/.test(baseUrl);
+    if (!isProxyMode) {
+      const url = new URL(baseUrl);
+      const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+      if (url.protocol !== 'https:' && !(url.protocol === 'http:' && loopback)) {
+        throw new Error('API base URL must use HTTPS (HTTP is only allowed on loopback for local development)');
+      }
+    }
     if (!apiKey && !isProxyMode) {
       throw new Error('API key is required. Provide it via config.apiKey or set the NOTTE_API_KEY environment variable.');
     }
