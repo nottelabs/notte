@@ -48,16 +48,21 @@ checks remain limited to main pushes and manual workflow runs on main.
 The npm package remains `notte-sdk`. Its MIT license is in [LICENSE](LICENSE);
 the repository root license does not replace this package's license.
 
-Publishing is disabled by default. Before enabling it, maintainers must:
+The Node SDK is released together with the Python SDK, from the same tag and at
+the same version. Cutting a release means creating a GitHub release tagged
+`vX.Y.Z` on [nottelabs/notte](https://github.com/nottelabs/notte/releases):
 
-1. Disable the previous publishing workflow.
-2. Configure npm trusted publishing for `nottelabs/notte`, workflow
-   `node-sdk-publish.yml`, environment `npm`, and configure environment protection.
-3. Set the repository variable `NODE_SDK_PUBLISH_ENABLED=true`.
+- `pypi-release.yml` publishes the Python packages to PyPI as `X.Y.Z`.
+- `node-sdk-publish.yml` sets this package's version to `X.Y.Z`, runs the
+  typecheck, unit tests, streaming test and export smoke test, publishes to npm
+  with provenance, then installs the published version back from npm to verify it.
 
-Publishing a stable GitHub release tagged `node-sdk-vX.Y.Z` then runs validation
-and publishes with provenance. Python release tags do not trigger npm publishing.
-No registry credentials or publishing configuration are changed by adding this package.
+`package.json` stays at `0.0.0-dev` on `main`; the version is only set in CI
+from the tag, like the `.dev` placeholder in the Python `pyproject.toml` files.
+Publishing uses npm trusted publishing (GitHub OIDC) bound to this repository,
+workflow `node-sdk-publish.yml` and environment `npm`, so no npm token is stored
+in the repository. To dry-run a release build locally, run `make release X.Y.Z`
+in this directory; it never publishes.
 
 Importing the SDK does not contact the npm registry. Constructing a `NotteClient`
 performs a one-time, non-blocking check per process and warns when a newer

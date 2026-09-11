@@ -1,50 +1,134 @@
-name: Publish Node SDK
+name: Release Node SDK
 
+# Mirrors pypi-release.yml: pushing the same vX.Y.Z tag that publishes the
+# Python packages to PyPI publishes node-sdk to npm at the same version.
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*"
 
 permissions:
   contents: read
 
 concurrency:
-  group: node-sdk-publish
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: node-sdk
 
 jobs:
   publish:
-    # Enable only after npm trusted publishing is configured and the previous
-    # publisher is disabled. Python release tags must never publish this package.
-    if: vars.NODE_SDK_PUBLISH_ENABLED == 'true' && startsWith(github.event.release.tag_name, 'node-sdk-v')
+    if: startsWith(github.ref, 'refs/tags/v')
+    name: Build and publish notte-sdk to npm
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
+    # npm trusted publishing is bound to this repository, this workflow file
+    # and this environment. No registry token is stored in the repository.
     environment: npm
     permissions:
       contents: read
       id-token: write
-    defaults:
-      run:
-        working-directory: node-sdk
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
+
       - run: npm ci
-      - name: Set release version
+
+      - name: Set release version from tag
+        id: version
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          RELEASE_VERSION="${RELEASE_TAG#node-sdk-v}"
+          RELEASE_VERSION="${RELEASE_TAG#v}"
           if ! echo "$RELEASE_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo 'Expected a stable node-sdk-vX.Y.Z release tag'
+            echo "::error::Expected a stable vX.Y.Z release tag, got '$RELEASE_TAG'"
             exit 1
           fi
+          echo "Releasing notte-sdk@$RELEASE_VERSION"
           npm version "$RELEASE_VERSION" --no-git-tag-version
+          echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+
       - run: npm run typecheck
       - run: npm run test:unit -- --run
-      - run: npx vitest run test/function-stream.integration.test.ts
+      - name: Test streaming over local HTTP
+        run: npx vitest run test/function-stream.integration.test.ts
       - run: npm run build
-      - run: node scripts/check-package.js
-      - run: npm publish --access public --provenance
+      - name: Smoke-test built package exports
+        run: node scripts/check-package.js
+
+      - name: Publish to npm
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          published_version=$(npm view "notte-sdk@${RELEASE_VERSION}" version 2>/dev/null || true)
+          if [ "$published_version" = "$RELEASE_VERSION" ]; then
+            echo "notte-sdk@$RELEASE_VERSION is already published; continuing to verification"
+          else
+            npm publish --access public --provenance
+          fi
+
+  verify:
+    name: Verify notte-sdk from npm
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions: {}
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+
+      - name: Install the package from npm
+        env:
+          RELEASE_VERSION: ${{ needs.publish.outputs.version }}
+        working-directory: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          workdir=$(mktemp -d)
+          cd "$workdir"
+          npm init -y >/dev/null
+
+          # Retry installation with exponential backoff while npm replicates
+          # the new version. --prefer-online skips any stale local cache.
+          max_attempts=5
+          attempt=1
+          wait_time=30
+
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt of $max_attempts: Installing notte-sdk@${RELEASE_VERSION}..."
+            if npm install --ignore-scripts --prefer-online --no-audit --no-fund "notte-sdk@${RELEASE_VERSION}"; then
+              echo "Installation successful!"
+              break
+            fi
+
+            if [ $attempt -lt $max_attempts ]; then
+              echo "Installation failed, waiting ${wait_time}s before retry..."
+              sleep $wait_time
+              wait_time=$((wait_time * 2))
+            else
+              echo "All installation attempts failed"
+              exit 1
+            fi
+            attempt=$((attempt + 1))
+          done
+
+          installed=$(node -p "require('./node_modules/notte-sdk/package.json').version")
+          if [ "$installed" != "$RELEASE_VERSION" ]; then
+            echo "::error::Installed notte-sdk@$installed, expected $RELEASE_VERSION"
+            exit 1
+          fi
+
+          node --input-type=commonjs -e "const sdk = require('notte-sdk'); if (typeof sdk.NotteClient !== 'function') process.exit(1);"
+          node --input-type=module -e "import { NotteClient } from 'notte-sdk'; if (typeof NotteClient !== 'function') process.exit(1);"
+          echo "notte-sdk@$installed installs and loads from npm"

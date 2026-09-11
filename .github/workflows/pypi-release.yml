@@ -67,14 +67,16 @@ jobs:
           uv venv pypi
           source pypi/bin/activate
 
-          # Retry installation with exponential backoff
+          # Retry installation with exponential backoff. --refresh bypasses
+          # uv's cached copy of the PyPI index (served with max-age=600),
+          # which the publish step's --check-url primed before the upload.
           max_attempts=3
           attempt=1
           wait_time=60
 
           while [ $attempt -le $max_attempts ]; do
             echo "Attempt $attempt of $max_attempts: Installing notte==${RELEASE_TAG}..."
-            if uv pip install "notte==${RELEASE_TAG}"; then
+            if uv pip install --refresh "notte==${RELEASE_TAG}"; then
               echo "Installation successful!"
               break
             fi
