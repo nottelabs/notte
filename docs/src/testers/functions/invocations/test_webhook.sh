@@ -1,0 +1,10 @@
+curl -X POST https://api.notte.cc/functions/function_abc123/runs/start \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "function_id": "function_abc123",
+    "variables": {
+      "event_type": "order.created",
+      "data": {"order_id": "123", "amount": 99.99}
+    }
+  }'

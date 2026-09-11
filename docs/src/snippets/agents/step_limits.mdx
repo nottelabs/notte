@@ -1,4 +1,8 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/step_limits.py, testers/agents/step_limits.ts */}
+
 <CodeGroup>
+
 ```python Python
 from notte_sdk import NotteClient
 
@@ -11,7 +15,8 @@ with client.Session() as session:
         max_steps=20,  # Limit to 20 actions
     )
 ```
-```javascript JavaScript
+
+```typescript TypeScript
 import { NotteClient } from 'notte-sdk';
 
 const client = new NotteClient({
@@ -26,4 +31,5 @@ await client.Session().use(async (session) => {
   });
 });
 ```
+
 </CodeGroup>

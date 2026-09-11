@@ -31,7 +31,7 @@ jobs:
       - run: npm ci --prefix node-sdk
       - run: npm run build --prefix node-sdk
       - run: npm run typecheck --prefix node-sdk
-      - run: node-sdk/node_modules/.bin/tsc -p docs/src/sniptest/tsconfig.json
+      - run: node docs/src/sniptest/check_typescript.mjs
       - run: python -m unittest discover -s docs/src/sniptest -p 'test_*.py'
       - run: python docs/src/sniptest/generate.py --check
       - name: Enforce example parity and shrinking backlog
@@ -68,6 +68,7 @@ jobs:
         with:
           enable-cache: false
       - run: uv sync --locked --package notte-sdk --no-dev
+      - run: uv pip install playwright==1.62.0
       - run: npm ci --prefix node-sdk
       - run: npm run build --prefix node-sdk
       - name: Execute both languages against the local SDK packages

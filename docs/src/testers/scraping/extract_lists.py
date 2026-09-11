@@ -1,5 +1,4 @@
 # @sniptest filename=extract_lists.py
-# @sniptest show=4-23
 
 from notte_sdk import NotteClient
 from pydantic import BaseModel

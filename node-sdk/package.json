@@ -61,6 +61,7 @@
     "@types/node": "^20.14.0",
     "@types/ws": "^8.5.10",
     "dotenv": "^16.4.5",
+    "playwright-core": "1.63.0",
     "tsup": "^8.5.1",
     "typescript": "^5.5.4",
     "vitest": "^4.0.10"

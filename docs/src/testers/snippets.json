@@ -1,0 +1,1147 @@
+{
+  "agents/error_handling.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "agents/error_handling.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "agents/error_handling.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from agents/error_handling.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "agents/natural_language_task.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "agents/natural_language_task.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "agents/natural_language_task.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from agents/natural_language_task.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "agents/starting_url.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "agents/starting_url.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "agents/starting_url.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from agents/starting_url.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "agents/step_limits.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "agents/step_limits.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "agents/step_limits.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from agents/step_limits.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "agents/structured_output_example.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "agents/structured_output_example.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "agents/structured_output_example.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from agents/structured_output_example.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "functions/invocations/curl_basic.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "functions/invocations/curl_basic.sh",
+        "language": "bash",
+        "title": "cURL"
+      }
+    ]
+  },
+  "functions/invocations/curl_output.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "functions/invocations/curl_output.sh",
+        "language": "bash",
+        "title": "Output"
+      }
+    ]
+  },
+  "functions/invocations/generate_curl.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "functions/invocations/generate_curl.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from functions/invocations/generate_curl.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "functions/invocations/http_error_handling.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "functions/invocations/http_error_handling.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from functions/invocations/http_error_handling.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "functions/invocations/http_post.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "functions/invocations/http_post.http",
+        "language": "http",
+        "title": "HTTP"
+      }
+    ]
+  },
+  "functions/invocations/http_response.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "functions/invocations/http_response.json",
+        "language": "json",
+        "title": "JSON"
+      }
+    ]
+  },
+  "functions/invocations/js_axios.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "functions/invocations/js_axios.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from functions/invocations/js_axios.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "functions/invocations/js_fetch.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "functions/invocations/js_fetch.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from functions/invocations/js_fetch.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "functions/invocations/rate_limit_handling.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "functions/invocations/rate_limit_handling.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from functions/invocations/rate_limit_handling.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "functions/invocations/stream_http.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "functions/invocations/stream_http.sh",
+        "language": "bash",
+        "title": "cURL"
+      }
+    ]
+  },
+  "functions/invocations/stream_response.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "functions/invocations/stream_response.txt",
+        "language": "text",
+        "title": "Output"
+      }
+    ]
+  },
+  "functions/invocations/test_webhook.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "functions/invocations/test_webhook.sh",
+        "language": "bash",
+        "title": "cURL"
+      }
+    ]
+  },
+  "integrations/managed_agents_run.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "integrations/managed_agents_run.ts",
+        "language": "typescript",
+        "title": "run.ts",
+        "execution_pending": "Legacy example from integrations/managed_agents_run.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "integrations/managed_agents_setup.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "integrations/managed_agents_setup.ts",
+        "language": "typescript",
+        "title": "setup.ts",
+        "execution_pending": "Legacy example from integrations/managed_agents_setup.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "integrations/mcp/mastra.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "integrations/mcp/mastra.ts",
+        "language": "typescript",
+        "title": "notte-mastra.ts",
+        "execution_pending": "Legacy example from integrations/mcp/mastra.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "integrations/mcp/vercel_ai_sdk.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "integrations/mcp/vercel_ai_sdk.ts",
+        "language": "typescript",
+        "title": "notte-ai-sdk.ts",
+        "execution_pending": "Legacy example from integrations/mcp/vercel_ai_sdk.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "integrations/steel/install.mdx": {
+    "group": false,
+    "blocks": [
+      {
+        "source": "integrations/steel/install.sh",
+        "language": "bash",
+        "title": ""
+      }
+    ]
+  },
+  "pages/linkedin_step.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "pages/linkedin_step.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "pages/linkedin_step.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from pages/linkedin_step.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "quickstart/cdp_session.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "quickstart/cdp_session.py",
+        "language": "python",
+        "title": "Python",
+        "live_tested": true
+      },
+      {
+        "source": "quickstart/cdp_session.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "live_tested": true
+      }
+    ]
+  },
+  "quickstart/install_sdk.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "quickstart/install_sdk.sh",
+        "language": "bash",
+        "title": "Python (requires >= 3.11)"
+      },
+      {
+        "source": "quickstart/install_sdk_2.sh",
+        "language": "bash",
+        "title": "TypeScript (Node.js 18+)"
+      }
+    ]
+  },
+  "quickstart/scraping_hackernews.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "quickstart/scraping_hackernews.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from quickstart/scraping_hackernews.mdx; needs owned fixtures and behavior assertions before live execution."
+      },
+      {
+        "source": "quickstart/scraping_hackernews.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from quickstart/scraping_hackernews.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "quickstart/set_api_key.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "quickstart/set_api_key.sh",
+        "language": "bash",
+        "title": "Python / Node.js"
+      },
+      {
+        "source": "quickstart/set_api_key.py",
+        "language": "python",
+        "title": "Python",
+        "live_tested": true
+      },
+      {
+        "source": "quickstart/set_api_key.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "live_tested": true
+      }
+    ]
+  },
+  "quickstart/web_agent.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "quickstart/web_agent.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from quickstart/web_agent.mdx; needs owned fixtures and behavior assertions before live execution."
+      },
+      {
+        "source": "quickstart/web_agent.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from quickstart/web_agent.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/content_filtering.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/content_filtering.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/content_filtering.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/content_filtering.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/content_monitoring.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/content_monitoring.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/content_monitoring.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/content_monitoring.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/data_collection.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/data_collection.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/data_collection.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/data_collection.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/extract_lists.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/extract_lists.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/extract_lists.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/extract_lists.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/handle_missing_data.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/handle_missing_data.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/handle_missing_data.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/handle_missing_data.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/image_extraction.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/image_extraction.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/image_extraction.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/image_extraction.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/instructions_only.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/instructions_only.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/instructions_only.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/instructions_only.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/link_placeholders.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/link_placeholders.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/link_placeholders.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/link_placeholders.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/links_and_images.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/links_and_images.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/links_and_images.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/links_and_images.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/nested_structures.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/nested_structures.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/nested_structures.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/nested_structures.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/precise_schemas.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/precise_schemas.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/precise_schemas.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/precise_schemas.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/pydantic_model.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/pydantic_model.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/pydantic_model.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/pydantic_model.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/quick_scrape.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/quick_scrape.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/quick_scrape.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/quick_scrape.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/research_analysis.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/research_analysis.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/research_analysis.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/research_analysis.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/scope_scrapes.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/scope_scrapes.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/scope_scrapes.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/scope_scrapes.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/scoped_scraping.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/scoped_scraping.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/scoped_scraping.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/scoped_scraping.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/session_based.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/session_based.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/session_based.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/session_based.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/specific_instructions.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/specific_instructions.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/specific_instructions.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/specific_instructions.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "scraping/structured_data_response.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "scraping/structured_data_response.py",
+        "language": "python",
+        "title": "Python",
+        "existing_python_test": true
+      },
+      {
+        "source": "scraping/structured_data_response.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "execution_pending": "Legacy example from scraping/structured_data_response.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/external_basic.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/external_basic.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/cdp/external_basic.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/external_browserbase.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/external_browserbase.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/cdp/external_browserbase.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/external_kernel.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/external_kernel.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/cdp/external_kernel.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/external_multi_provider.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/external_multi_provider.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/cdp/external_multi_provider.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/external_troubleshooting.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/external_troubleshooting.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/cdp/external_troubleshooting.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/playwright_async.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/playwright_async.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/cdp/playwright_async.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/playwright_both_apis.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/playwright_both_apis.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/cdp/playwright_both_apis.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/playwright_connect.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/playwright_connect.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/cdp/playwright_connect.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/playwright_events.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/playwright_events.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/cdp/playwright_events.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/playwright_multiple_pages.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/playwright_multiple_pages.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/cdp/playwright_multiple_pages.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/playwright_network.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/playwright_network.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/cdp/playwright_network.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/puppeteer_complete.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/puppeteer_complete.ts",
+        "language": "typescript",
+        "title": "Node.js",
+        "execution_pending": "Legacy example from sessions/cdp/puppeteer_complete.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/puppeteer_events.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/puppeteer_events.ts",
+        "language": "typescript",
+        "title": "Node.js",
+        "execution_pending": "Legacy example from sessions/cdp/puppeteer_events.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/puppeteer_manipulation.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/puppeteer_manipulation.ts",
+        "language": "typescript",
+        "title": "Node.js",
+        "execution_pending": "Legacy example from sessions/cdp/puppeteer_manipulation.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/puppeteer_multiple_pages.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/puppeteer_multiple_pages.ts",
+        "language": "typescript",
+        "title": "Node.js",
+        "execution_pending": "Legacy example from sessions/cdp/puppeteer_multiple_pages.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/puppeteer_network.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/puppeteer_network.ts",
+        "language": "typescript",
+        "title": "Node.js",
+        "execution_pending": "Legacy example from sessions/cdp/puppeteer_network.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/puppeteer_python_start.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/puppeteer_python_start.py",
+        "language": "python",
+        "title": "Python - Start Session",
+        "execution_pending": "Legacy example from sessions/cdp/puppeteer_python_start.mdx; needs owned fixtures and behavior assertions before live execution."
+      },
+      {
+        "source": "sessions/cdp/puppeteer_python_start.ts",
+        "language": "typescript",
+        "title": "Node.js - Connect Puppeteer",
+        "execution_pending": "Legacy example from sessions/cdp/puppeteer_python_start.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/puppeteer_rest_api.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/puppeteer_rest_api.ts",
+        "language": "typescript",
+        "title": "Node.js",
+        "execution_pending": "Legacy example from sessions/cdp/puppeteer_rest_api.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/puppeteer_screenshots.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/puppeteer_screenshots.ts",
+        "language": "typescript",
+        "title": "Node.js",
+        "execution_pending": "Legacy example from sessions/cdp/puppeteer_screenshots.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/selenium_connect.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/selenium_connect.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/cdp/selenium_connect.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/cdp/selenium_form.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/cdp/selenium_form.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/cdp/selenium_form.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/configuration/captcha_solving.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/configuration/captcha_solving.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/configuration/captcha_solving.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/configuration/external_cdp.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/configuration/external_cdp.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/configuration/external_cdp.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/configuration/full_config.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/configuration/full_config.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/configuration/full_config.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/configuration/headless_mode.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/configuration/headless_mode.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/configuration/headless_mode.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/configuration/quick_start.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/configuration/quick_start.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/configuration/quick_start.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/configuration/timeout.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/configuration/timeout.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/configuration/timeout.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/configuration/viewport.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/configuration/viewport.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/configuration/viewport.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/lifecycle/complete_example.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/lifecycle/complete_example.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/lifecycle/complete_example.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/lifecycle/connect_existing.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/lifecycle/connect_existing.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/lifecycle/connect_existing.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/lifecycle/create_session.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/lifecycle/create_session.py",
+        "language": "python",
+        "title": "Python - Context Manager",
+        "execution_pending": "Legacy example from sessions/lifecycle/create_session.mdx; needs owned fixtures and behavior assertions before live execution."
+      },
+      {
+        "source": "sessions/lifecycle/create_session_2.py",
+        "language": "python",
+        "title": "Python - Manual Management",
+        "execution_pending": "Legacy example from sessions/lifecycle/create_session.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/lifecycle/error_handling.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/lifecycle/error_handling.py",
+        "language": "python",
+        "title": "Python - Automatic Cleanup",
+        "execution_pending": "Legacy example from sessions/lifecycle/error_handling.mdx; needs owned fixtures and behavior assertions before live execution."
+      },
+      {
+        "source": "sessions/lifecycle/error_handling_2.py",
+        "language": "python",
+        "title": "Python - Manual Error Handling",
+        "execution_pending": "Legacy example from sessions/lifecycle/error_handling.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/lifecycle/get_session_details.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/lifecycle/get_session_details.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/lifecycle/get_session_details.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/lifecycle/list_sessions.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/lifecycle/list_sessions.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/lifecycle/list_sessions.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/lifecycle/stop_session.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/lifecycle/stop_session.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/lifecycle/stop_session.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/playwright-vs-notte/mix_both.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/playwright-vs-notte/mix_both.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/playwright-vs-notte/mix_both.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/playwright-vs-notte/notte_sdk_example.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/playwright-vs-notte/notte_sdk_example.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/playwright-vs-notte/notte_sdk_example.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "sessions/playwright-vs-notte/playwright_example.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/playwright-vs-notte/playwright_example.py",
+        "language": "python",
+        "title": "Python",
+        "execution_pending": "Legacy example from sessions/playwright-vs-notte/playwright_example.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  },
+  "workflows/index.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "workflows/index.py",
+        "language": "python",
+        "title": "my_scraping_function.py",
+        "execution_pending": "Legacy example from workflows/index.mdx; needs owned fixtures and behavior assertions before live execution."
+      },
+      {
+        "source": "workflows/index_2.py",
+        "language": "python",
+        "title": "play_with_function.py",
+        "execution_pending": "Legacy example from workflows/index.mdx; needs owned fixtures and behavior assertions before live execution."
+      }
+    ]
+  }
+}

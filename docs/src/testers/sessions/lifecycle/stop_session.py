@@ -1,0 +1,12 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Manual stop
+session = client.Session()
+session.start()
+
+# ... do work ...
+
+session.stop()
+print("Session stopped successfully")

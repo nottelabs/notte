@@ -1,7 +1,12 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/scraping/pydantic_model.py, testers/scraping/pydantic_model.ts */}
+
 <CodeGroup>
+
 ```python Python
 from notte_sdk import NotteClient
 from pydantic import BaseModel
+
 
 class Product(BaseModel):
     name: str
@@ -16,7 +21,8 @@ product = client.scrape(
 
 print(f"Name: {product.name}, Price: {product.price}")
 ```
-```javascript JavaScript
+
+```typescript TypeScript
 import { z } from 'zod';
 import { NotteClient } from 'notte-sdk';
 
@@ -37,4 +43,5 @@ const product = await client.scrape('https://example.com/product', {
 
 console.log(`Name: ${product.name}, Price: ${product.price}`);
 ```
+
 </CodeGroup>

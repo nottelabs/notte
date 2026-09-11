@@ -1,20 +1,24 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/playwright-vs-notte/playwright_example.py */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  from playwright.sync_api import sync_playwright
 
-  client = NotteClient()
+```python Python
+from notte_sdk import NotteClient
 
-  with client.Session() as session:
-      page = session.page
+client = NotteClient()
 
-      # Block images for faster loading
-      page.route("**/*.{png,jpg,jpeg}", lambda route: route.abort())
+with client.Session() as session:
+    page = session.page
 
-      # Listen to network requests
-      page.on("request", lambda req: print(f"→ {req.url}"))
-      page.on("response", lambda res: print(f"← {res.url} ({res.status})"))
+    # Block images for faster loading
+    page.route("**/*.{png,jpg,jpeg}", lambda route: route.abort())
 
-      page.goto("https://example.com")
-  ```
+    # Listen to network requests
+    page.on("request", lambda req: print(f"→ {req.url}"))
+    page.on("response", lambda res: print(f"← {res.url} ({res.status})"))
+
+    page.goto("https://example.com")
+```
+
 </CodeGroup>

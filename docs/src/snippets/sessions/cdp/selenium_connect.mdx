@@ -1,33 +1,35 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/cdp/selenium_connect.py */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  from selenium import webdriver
-  from selenium.webdriver.chrome.options import Options
 
-  client = NotteClient()
+```python Python
+from notte_sdk import NotteClient
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
-  # Start Notte session
-  with client.Session() as session:
-      # Get CDP URL
-      cdp_url = session.cdp_url()
+client = NotteClient()
 
-      # Configure Selenium options
-      chrome_options = Options()
-      chrome_options.add_experimental_option("debuggerAddress", cdp_url.replace("ws://", "").replace("wss://", ""))
+# Start Notte session
+with client.Session() as session:
+    # Get CDP URL
+    cdp_url = session.cdp_url()
 
-      # Connect Selenium to Notte session
-      driver = webdriver.Remote(
-          command_executor=cdp_url,
-          options=chrome_options
-      )
+    # Configure Selenium options
+    chrome_options = Options()
+    chrome_options.add_experimental_option("debuggerAddress", cdp_url.replace("ws://", "").replace("wss://", ""))
 
-      # Use Selenium WebDriver API
-      driver.get("https://example.com")
-      print(f"Title: {driver.title}")
+    # Connect Selenium to Notte session
+    driver = webdriver.Remote(command_executor=cdp_url, options=chrome_options)
 
-      # Take screenshot
-      driver.save_screenshot("screenshot.png")
+    # Use Selenium WebDriver API
+    driver.get("https://example.com")
+    print(f"Title: {driver.title}")
 
-      driver.quit()
-  ```
+    # Take screenshot
+    driver.save_screenshot("screenshot.png")
+
+    driver.quit()
+```
+
 </CodeGroup>

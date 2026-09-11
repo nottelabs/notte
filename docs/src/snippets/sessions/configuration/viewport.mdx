@@ -1,15 +1,17 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/configuration/viewport.py */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
 
-  client = NotteClient()
+```python Python
+from notte_sdk import NotteClient
 
-  # 4K resolution
-  with client.Session(
-      viewport_width=3840,
-      viewport_height=2160
-  ) as session:
-      page = session.page
-      page.goto("https://example.com")
-  ```
+client = NotteClient()
+
+# 4K resolution
+with client.Session(viewport_width=3840, viewport_height=2160) as session:
+    page = session.page
+    page.goto("https://example.com")
+```
+
 </CodeGroup>

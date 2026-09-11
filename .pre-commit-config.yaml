@@ -111,7 +111,7 @@ repos:
         name: Generate snippets from testers
         entry: bash -c "make sniptest"
         language: system
-        files: ^docs/src/testers/.*\.(py|ts)$
+        files: ^docs/src/(testers/|sniptest/)
         pass_filenames: false
       - id: sniptest-verify
         name: Verify snippet show= ranges are complete

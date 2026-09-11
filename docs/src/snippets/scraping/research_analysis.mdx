@@ -1,4 +1,8 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/scraping/research_analysis.py, testers/scraping/research_analysis.ts */}
+
 <CodeGroup>
+
 ```python Python
 from notte_sdk import NotteClient
 from pydantic import BaseModel
@@ -15,7 +19,8 @@ class ResearchPaper(BaseModel):
 client = NotteClient()
 result = client.scrape("https://papers.example.com/paper/123", response_format=ResearchPaper)
 ```
-```javascript JavaScript
+
+```typescript TypeScript
 import { z } from 'zod';
 import { NotteClient } from 'notte-sdk';
 
@@ -35,4 +40,5 @@ const result = await client.scrape('https://papers.example.com/paper/123', {
   response_format: ResearchPaper,
 });
 ```
+
 </CodeGroup>

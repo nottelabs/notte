@@ -1,46 +1,54 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/lifecycle/complete_example.py */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  import time
 
-  client = NotteClient()
+```python Python
+import time
 
-  def run_automation():
-      # 1. Create session with configuration
-      print("Creating session...")
+from notte_sdk import NotteClient
 
-      with client.Session(
-          open_viewer=True,
-          timeout_minutes=10,
-          cookie_file="cookies.json"  # Auto-load/save cookies
-      ) as session:
-          print(f"Session created: {session.session_id}")
-          print("Live viewer opened in browser")
+client = NotteClient()
 
-          # 2. Access Playwright page
-          page = session.page
 
-          # 3. Use the session
-          print("Navigating to example.com...")
-          page.goto("https://example.com")
+def run_automation():
+    # 1. Create session with configuration
+    print("Creating session...")
 
-          title = page.title()
-          print(f"Page title: {title}")
+    with client.Session(
+        open_viewer=True,
+        timeout_minutes=10,
+        cookie_file="cookies.json",  # Auto-load/save cookies
+    ) as session:
+        print(f"Session created: {session.session_id}")
+        print("Live viewer opened in browser")
 
-          # Take a screenshot
-          page.screenshot(path="screenshot.png")
-          print("Screenshot saved")
+        # 2. Access Playwright page
+        page = session.page
 
-          # Wait before closing
-          time.sleep(3)
+        # 3. Use the session
+        print("Navigating to example.com...")
+        page.goto("https://example.com")
 
-          # Cookies automatically saved to cookies.json
-          print("Session will be stopped and cookies saved...")
+        title = page.title()
+        print(f"Page title: {title}")
 
-      # Session automatically stopped here
-      print("Session stopped successfully")
+        # Take a screenshot
+        page.screenshot(path="screenshot.png")
+        print("Screenshot saved")
 
-  if __name__ == "__main__":
-      run_automation()
-  ```
+        # Wait before closing
+        time.sleep(3)
+
+        # Cookies automatically saved to cookies.json
+        print("Session will be stopped and cookies saved...")
+
+    # Session automatically stopped here
+    print("Session stopped successfully")
+
+
+if __name__ == "__main__":
+    run_automation()
+```
+
 </CodeGroup>

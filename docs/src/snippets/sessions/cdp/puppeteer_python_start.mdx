@@ -1,50 +1,51 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/cdp/puppeteer_python_start.py, testers/sessions/cdp/puppeteer_python_start.ts */}
+
 <CodeGroup>
-  ```python Python - Start Session
-  from notte_sdk import NotteClient
-  import subprocess
-  import json
 
-  client = NotteClient()
+```python Python - Start Session
+import subprocess
 
-  with client.Session(timeout_minutes=10) as session:
-      cdp_url = session.cdp_url()
+from notte_sdk import NotteClient
 
-      # Pass CDP URL to Node.js script
-      result = subprocess.run(
-          ["node", "puppeteer_script.js", cdp_url],
-          capture_output=True,
-          text=True
-      )
+client = NotteClient()
 
-      print(result.stdout)
-  ```
+with client.Session(timeout_minutes=10) as session:
+    cdp_url = session.cdp_url()
 
-  ```javascript Node.js - Connect Puppeteer
-  // puppeteer_script.js
-  const puppeteer = require('puppeteer-core');
+    # Pass CDP URL to Node.js script
+    result = subprocess.run(["node", "puppeteer_script.js", cdp_url], capture_output=True, text=True)
 
-  async function main() {
-    // Get CDP URL from command line argument
-    const cdpUrl = process.argv[2];
+    print(result.stdout)
+```
 
-    // Connect to Notte session
-    const browser = await puppeteer.connect({
-      browserWSEndpoint: cdpUrl
-    });
+```typescript Node.js - Connect Puppeteer
+// puppeteer_script.js
+const puppeteer = require('puppeteer-core');
 
-    // Get the page (Notte sessions have one default page)
-    const pages = await browser.pages();
-    const page = pages[0];
+async function main() {
+  // Get CDP URL from command line argument
+  const cdpUrl = process.argv[2];
 
-    // Use Puppeteer API
-    await page.goto('https://example.com');
-    console.log('Title:', await page.title());
+  // Connect to Notte session
+  const browser = await puppeteer.connect({
+    browserWSEndpoint: cdpUrl
+  });
 
-    await page.screenshot({ path: 'screenshot.png' });
+  // Get the page (Notte sessions have one default page)
+  const pages = await browser.pages();
+  const page = pages[0];
 
-    await browser.disconnect();
-  }
+  // Use Puppeteer API
+  await page.goto('https://example.com');
+  console.log('Title:', await page.title());
 
-  main().catch(console.error);
-  ```
+  await page.screenshot({ path: 'screenshot.png' });
+
+  await browser.disconnect();
+}
+
+main().catch(console.error);
+```
+
 </CodeGroup>
