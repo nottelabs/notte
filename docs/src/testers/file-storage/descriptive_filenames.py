@@ -1,5 +1,5 @@
 # @sniptest filename=descriptive_filenames.py
-# @sniptest show=18-25
+# @sniptest show=19-26
 from pathlib import Path
 
 from notte_sdk.endpoints.files import RemoteFileStorage
@@ -16,6 +16,7 @@ def tracked_upload(self, *args, **kwargs):
 
 
 RemoteFileStorage.upload = tracked_upload
+primary_error = None
 try:
     from datetime import datetime
 
@@ -32,6 +33,9 @@ try:
     for file in files:
         downloaded = session.storage.download(file.id, local_dir="./verified")
         assert Path(downloaded).read_bytes() == Path("report.pdf").read_bytes()
+except BaseException as error:
+    primary_error = error
+    raise
 finally:
     RemoteFileStorage.upload = original_upload
     cleanup_errors = []
@@ -41,4 +45,6 @@ finally:
         except Exception as error:
             cleanup_errors.append(error)
     if cleanup_errors:
+        if primary_error is not None:
+            raise BaseExceptionGroup("Example and cleanup failed", [primary_error, *cleanup_errors]) from None
         raise ExceptionGroup("Failed to delete uploaded example files", cleanup_errors)

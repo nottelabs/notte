@@ -11,7 +11,7 @@ with fixture.Session() as session:
         session_id = session.session_id
         file_id = uploaded.id
         destination = Path("downloads/file.pdf")
-        destination.parent.mkdir()
+        destination.parent.mkdir(exist_ok=True)
         destination.write_bytes(b"old contents")
 
         from notte_sdk import NotteClient

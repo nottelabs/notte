@@ -11,7 +11,7 @@ const status = await client.Session({ storage: fixtureStorage }).use(async sessi
   try {
     const sessionId = fixtureStorage.sessionId;
     const fileId = uploaded.id;
-    await mkdir('downloads');
+    await mkdir('downloads', { recursive: true });
     await writeFile('downloads/file.pdf', 'old contents');
 
     const storage = client.FileStorage(sessionId);

@@ -135,8 +135,16 @@ class UploadCleanupTest(unittest.TestCase):
         files.RemoteFileStorage = Storage
         original = Storage.upload
         with patch.dict("sys.modules", {"notte_sdk": sdk, "notte_sdk.endpoints.files": files}):
-            with self.assertRaises(Exception), patch("builtins.print"):
+            with self.assertRaises(Exception) as raised, patch("builtins.print"):
                 runpy.run_path(str(source))
+        if source.stem == "descriptive_filenames":
+            if failure == "delete":
+                self.assertIsInstance(raised.exception, ExceptionGroup)
+                self.assertEqual(
+                    [str(error) for error in raised.exception.exceptions], ["status failed", "delete failed"]
+                )
+            else:
+                self.assertEqual(str(raised.exception), f"{failure} failed")
         self.assertEqual(deleted, [file.id for file in uploaded])
         self.assertTrue(uploaded)
         self.assertEqual(stopped, [True])
