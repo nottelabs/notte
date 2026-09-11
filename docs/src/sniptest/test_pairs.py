@@ -13,6 +13,33 @@ from parser import parse_file
 
 
 class RepositoryExamplesTest(unittest.TestCase):
+    def test_cdp_pairs_keep_capture_and_serialization_out_of_python_docs(self):
+        testers = Path(__file__).resolve().parents[1] / "testers/sessions/cdp"
+        cases = {
+            "playwright_events": "Listen to responses",
+            "playwright_timeout": "Long Playwright automation",
+            "playwright_cdp_error_handling": "CDP connection failed:",
+            "selenium_javascript": "Result:",
+            "selenium_playwright_alternative": "Title:",
+        }
+        for name, teaching_text in cases.items():
+            for suffix in (".py", ".ts"):
+                with self.subTest(name=name, language=suffix):
+                    config, rendered = parse_file(testers / f"{name}{suffix}")
+                    self.assertIsNotNone(config.show)
+                    self.assertIn(teaching_text, rendered)
+                    self.assertIn("from notte_sdk" if suffix == ".py" else "from 'notte-sdk'", rendered)
+                    self.assertNotIn("export {", rendered)
+                    self.assertNotIn("JSON.stringify", rendered)
+                    self.assertNotIn("json.dumps", rendered)
+                    if suffix == ".py":
+                        self.assertNotIn("status = session.status()", rendered)
+                    if name != "playwright_timeout":
+                        self.assertNotIn("idle_timeout_minutes", rendered)
+                    else:
+                        self.assertIn("idle_timeout_minutes", rendered)
+                        self.assertIn("max_duration_minutes", rendered)
+
     def test_create_session_tabs_show_the_same_task_and_output(self):
         testers = Path(__file__).resolve().parents[1] / "testers/sessions/lifecycle"
         for name in ("create_session", "create_session_2"):

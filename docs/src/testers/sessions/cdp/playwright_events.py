@@ -1,3 +1,4 @@
+# @sniptest show=1-25
 from notte_sdk import NotteClient
 from playwright.sync_api import sync_playwright
 
@@ -23,3 +24,4 @@ with client.Session() as session:
         page.on("response", lambda res: print(f"Response: {res.url} - {res.status}"))
 
         page.goto("https://example.com")
+        status = session.status()

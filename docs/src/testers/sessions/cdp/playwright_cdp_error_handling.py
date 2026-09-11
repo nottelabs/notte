@@ -1,4 +1,5 @@
 # @sniptest filename=playwright_cdp_error_handling.py
+# @sniptest show=1-13
 from notte_sdk import NotteClient
 from playwright.sync_api import sync_playwright  # type: ignore[import-not-found]
 
@@ -12,3 +13,7 @@ with client.Session() as session:
             # ... operations
         except Exception as e:
             print(f"CDP connection failed: {e}")
+        # Capture successful connection outside the displayed error-handling example.
+        if not browser.is_connected():
+            raise RuntimeError("CDP browser is not connected")
+        status = session.status()

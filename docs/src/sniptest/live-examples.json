@@ -1,4 +1,27 @@
 {
+  "sessions/cdp/playwright_events.ts": {
+    "expected": { "status": "active" },
+    "closedSession": true,
+    "logContains": "Response: https://example.com/ - 200"
+  },
+  "sessions/cdp/playwright_timeout.ts": {
+    "expected": { "status": "active", "idle_timeout_minutes": 20, "max_duration_minutes": 20 },
+    "closedSession": true
+  },
+  "sessions/cdp/playwright_cdp_error_handling.ts": {
+    "expected": { "status": "active" },
+    "closedSession": true
+  },
+  "sessions/cdp/selenium_javascript.ts": {
+    "expected": { "status": "active" },
+    "closedSession": true,
+    "logContains": "Result: 10"
+  },
+  "sessions/cdp/selenium_playwright_alternative.ts": {
+    "expected": { "status": "active" },
+    "closedSession": true,
+    "logContains": "Title: Example Domain"
+  },
   "sessions/configuration/quick_start.ts": {
     "expected": {
       "status": "active",

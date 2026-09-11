@@ -786,7 +786,13 @@
         "source": "sessions/cdp/playwright_events.py",
         "language": "python",
         "title": "Python",
-        "execution_pending": "Legacy example from sessions/cdp/playwright_events.mdx; needs owned fixtures and behavior assertions before live execution."
+        "live_tested": true
+      },
+      {
+        "source": "sessions/cdp/playwright_events.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "live_tested": true
       }
     ]
   },

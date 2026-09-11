@@ -1,7 +1,9 @@
 # Paired example follow-up
 
-This batch adds 18 executable same-name pairs, bringing paired live coverage from
-6 to 24 cases (48 script executions). It does not finish the whole migration.
+The first batch added 18 executable same-name pairs. The CDP follow-up adds five
+more: event listeners, connection error handling, timeout bounds, JavaScript
+evaluation, and the Playwright alternative. Paired live coverage is now 29 cases
+(58 script executions). This does not finish the whole migration.
 Run `python docs/src/sniptest/parity.py` for current counts. Untranslated examples
 remain in `parity.json`; legacy fixture/type gaps remain in `testers/snippets.json`.
 Do not remove an exemption until the corresponding scripts and assertions exist.
@@ -34,3 +36,9 @@ The paired browser examples here connect Playwright using the returned CDP URL.
 They preserve the same navigation task in both languages and assert its result.
 Legacy `timeout_minutes` examples in this batch now use the actual
 `idle_timeout_minutes` option in both SDKs.
+
+The CDP timeout example previously set only `idle_timeout_minutes=20`. Python
+validation and the staging API both reject that configuration because the default
+maximum duration is 15 minutes. This example now explicitly sets
+`max_duration_minutes=20` in both languages, and the live contract checks both
+bounds. No SDK behavior was changed.
