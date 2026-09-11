@@ -89,7 +89,7 @@ test('navigation and generated reference links resolve; supporting APIs can rema
   walk(actual.navigation);
   for (const name of listed) assert.ok(actual.pages.has(name), `Missing navigation page: ${name}`);
   for (const name of actual.pages.keys()) {
-    if (!listed.has(name) && !actual.pages.get(name).includes('**deprecated:**')) assert.match(name, /\/types\/|\/encryption\/|\/manual\/encryption\.mdx$|\/symbol-asynciterator\.mdx$|\/function\/getfunctionid\.mdx$|\/session\/getid\.mdx$/);
+    if (!listed.has(name) && !actual.pages.get(name).includes('**deprecated:**')) assert.match(name, /\/types\/|\/encryption\/|\/manual\/(?:encryption|index)\.mdx$|\/client\/(?:session|files|agent|vault|persona|nottefunction)\.mdx$|\/symbol-asynciterator\.mdx$|\/function\/getfunctionid\.mdx$|\/session\/getid\.mdx$/);
   }
   for (const [name, content] of actual.pages) {
     for (const [, link] of content.matchAll(/\]\(\/(typescript-sdk-reference\/[^)#]+)(?:#[^)]*)?\)/g)) {
@@ -155,7 +155,18 @@ test('Node SDK mirrors Python categories and appears below Python in the sidebar
   assert.deepEqual(actual.navigation.pages.map(group => group.group), ['Getting Started', 'Core Features', 'Tooling', 'Debug']);
   const categoryNames = category => actual.navigation.pages.find(group => group.group === category).pages
     .filter(page => typeof page === 'object').map(page => page.group);
-  assert.ok(categoryNames('Getting Started').includes('Client'));
+  assert.deepEqual(actual.navigation.pages.find(group => group.group === 'Getting Started').pages, [
+    'typescript-sdk-reference/manual/client',
+    'typescript-sdk-reference/authentication',
+    'typescript-sdk-reference/errors',
+    'typescript-sdk-reference/rate-limits',
+  ]);
+  for (const [path, title] of [['manual/client', 'NotteClient'], ['authentication', 'Authentication'], ['errors', 'Error Handling'], ['rate-limits', 'Rate Limits']]) {
+    assert.ok(actual.pages.get(`typescript-sdk-reference/${path}.mdx`).startsWith(`---\ntitle: "${title}"\n`));
+  }
+  assert.match(actual.pages.get('typescript-sdk-reference/errors.mdx'), /does not provide Python/);
+  assert.match(actual.pages.get('typescript-sdk-reference/authentication.mdx'), /NOTTE_API_KEY/);
+  assert.match(actual.pages.get('typescript-sdk-reference/rate-limits.mdx'), /do not consistently preserve HTTP status/);
   assert.deepEqual(categoryNames('Core Features'), ['Session', 'Actions', 'Agent', 'Function']);
   assert.deepEqual(categoryNames('Tooling'), ['Vault', 'Persona', 'File Storage']);
   const actions = actual.navigation.pages.find(group => group.group === 'Core Features').pages.find(group => group.group === 'Actions');

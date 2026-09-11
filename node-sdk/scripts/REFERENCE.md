@@ -18,6 +18,11 @@ implementation types are excluded.
 Supporting type pages and Encryption remain generated but are hidden from the
 sidebar. The SDK's `ActionSpace.actions` union supplies Core Features / Actions;
 other type pages are reachable through related-type links on API pages.
+Getting Started mirrors Python's flat navigation: NotteClient, Authentication,
+Error Handling, and Rate Limits. Narrative guidance lives in
+`scripts/reference-guides.mjs`; keep its claims aligned with Node SDK behavior.
+Client factory pages remain accessible from the generated NotteClient overview.
+The generator overview URL remains available but is not a sidebar entry.
 Feature landing pages derive their creation API from `NotteClient` factory
 return types and put direct constructors in a collapsed reference section.
 Method titles are unqualified; navigation follows task order rather than source

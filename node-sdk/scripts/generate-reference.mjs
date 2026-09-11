@@ -2,6 +2,7 @@ import ts from 'typescript';
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync, unlinkSync } from 'node:fs';
 import { dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gettingStartedGuides } from './reference-guides.mjs';
 
 const sdkRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const prefix = 'typescript-sdk-reference';
@@ -234,11 +235,18 @@ export function createReference(root = sdkRoot) {
     .map(path => `${prefix}/${path}`).filter(path => navigableMethods.has(path));
   const categories = { 'Getting Started': [], 'Core Features': [], Tooling: [], Debug: debugPaths.length ? [{ group: 'Debug Methods', collapsed: true, pages: debugPaths }] : [] };
   if (navigableMethods.has(`${prefix}/client/scrape`)) categories['Core Features'].push(`${prefix}/client/scrape`);
-  categories['Getting Started'].push(`${prefix}/manual/index`);
+  if (classes.some(({ symbol }) => symbol.name === 'NotteClient')) {
+    categories['Getting Started'].push(`${prefix}/manual/client`);
+    for (const guide of gettingStartedGuides) {
+      pages.set(`${prefix}/${guide.slug}.mdx`, page(guide.title, null, guide.content));
+      categories['Getting Started'].push(`${prefix}/${guide.slug}`);
+    }
+  }
   const labels = { NotteClient: 'Client', NotteFunction: 'Function', NotteVault: 'Vault', NottePersona: 'Persona', SessionFiles: 'File Storage' };
   const classOrder = ['NotteClient', 'Session', 'Agent', 'NotteFunction', 'NotteVault', 'NottePersona', 'SessionFiles'];
   for (const group of groups.sort((a, b) => (classOrder.indexOf(a.group) + 1 || 100) - (classOrder.indexOf(b.group) + 1 || 100))) {
-    if (group.group === 'Encryption') continue;
+    // Client factories remain linked from NotteClient's overview, not a nested sidebar.
+    if (group.group === 'Encryption' || group.group === 'NotteClient') continue;
     const category = group.group === 'NotteClient' ? 'Getting Started'
       : ['NotteVault', 'NottePersona', 'SessionFiles', 'Encryption'].includes(group.group) ? 'Tooling' : 'Core Features';
     categories[category].push({ ...group, group: labels[group.group] ?? group.group, pages: group.pages.filter(path => !debugPaths.includes(path) && path !== `${prefix}/client/scrape`) });

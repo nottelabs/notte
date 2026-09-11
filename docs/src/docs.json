@@ -384,20 +384,10 @@
               {
                 "group": "Getting Started",
                 "pages": [
-                  "typescript-sdk-reference/manual/index",
-                  {
-                    "group": "Client",
-                    "collapsed": true,
-                    "pages": [
-                      "typescript-sdk-reference/manual/client",
-                      "typescript-sdk-reference/client/session",
-                      "typescript-sdk-reference/client/files",
-                      "typescript-sdk-reference/client/agent",
-                      "typescript-sdk-reference/client/vault",
-                      "typescript-sdk-reference/client/persona",
-                      "typescript-sdk-reference/client/nottefunction"
-                    ]
-                  }
+                  "typescript-sdk-reference/manual/client",
+                  "typescript-sdk-reference/authentication",
+                  "typescript-sdk-reference/errors",
+                  "typescript-sdk-reference/rate-limits"
                 ]
               },
               {
