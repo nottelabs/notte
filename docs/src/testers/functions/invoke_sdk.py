@@ -1,9 +1,10 @@
 # @sniptest filename=invoke_sdk.py
-# @sniptest show=6-9
+import os
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
-function = client.Function(function_id="func_abc123")
+function = client.Function(function_id=os.environ["NOTTE_FUNCTION_ID"])
 
 # Via SDK
 result = function.run(url="https://example.com", search_query="laptop")

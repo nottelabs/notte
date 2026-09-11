@@ -534,6 +534,9 @@ def test_python_testers(tester_file: Path, eval_example: EvalExample):
     """
     _ = load_dotenv()
 
+    if tester_file.with_suffix(".ts").exists() and not (FAST_MODE or TYPE_CHECK_MODE):
+        pytest.skip("Paired examples execute with isolated fixtures in the paired-sdk-examples workflow")
+
     tester_name = f"{tester_file.parent.name}/{tester_file.name}"
     code = tester_file.read_text("utf-8")
     custom_fn = handlers.get(tester_name)

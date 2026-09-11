@@ -60,7 +60,7 @@ def parse_magic_comments(content: str) -> tuple[SnippetConfig, str]:
     code_start_idx = 0
 
     # Pattern to match: # @sniptest key=value
-    magic_pattern = re.compile(r"^#\s*@sniptest\s+(\w+)=(.+)$")
+    magic_pattern = re.compile(r"^(?:#|//)\s*@sniptest\s+(\w+)=(.+)$")
 
     for i, line in enumerate(lines):
         stripped = line.strip()
@@ -258,6 +258,8 @@ def parse_file(input_path: Path) -> tuple[SnippetConfig, str]:
     """Parse a Python file and return config and MDX content."""
     content = input_path.read_text()
     config, code = parse_magic_comments(content)
+    if input_path.suffix == ".ts":
+        config.language = "typescript"
     mdx_content = generate_mdx(config, code)
     return config, mdx_content
 

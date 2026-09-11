@@ -37,7 +37,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Functions can be invoked in multiple ways - through the Python SDK, HTTP API, cURL commands, or as webhook endpoints.
+Functions can be invoked through the Python or TypeScript SDK, HTTP API, cURL commands, or as webhook endpoints.
 
 ## Via Python SDK
 
@@ -111,10 +111,16 @@ Response streams:
 
 ### Create and Start Separately
 
-Use `function.create_run()` when you need a run ID before execution begins.
+Use Python's `function.create_run()` or TypeScript's `fn.createRun()` only when you need a run ID before execution begins.
 It creates the run record only. Pass that ID to `function.run(function_run_id=...)`
-to execute it; omitting the ID creates a different run. If creating a local run,
-pass `local=True` to both calls.
+or `fn.run(variables, { functionRunId })` to execute it. Omitting the ID automatically creates a new run.
+For Python local execution, pass `local=True` to both calls.
+
+Set `NOTTE_FUNCTION_ID` to your deployed function's ID before running these examples:
+
+```bash
+export NOTTE_FUNCTION_ID=your_function_id
+```
 
 <AsyncCreateStart />
 
@@ -135,6 +141,7 @@ SDK call in a local thread; it does not create a detached server-side job.
 
 `function.get_run(run_id)` fetches the current status and result without waiting
 for execution to finish. From async code, use `await asyncio.to_thread(function.get_run, run_id)`.
+In TypeScript, use `await fn.getRun(runId)`; `fn.retrieve(runId)` remains a compatible alias.
 
 <CheckRunStatus />
 

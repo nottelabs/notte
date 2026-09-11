@@ -111,11 +111,17 @@ repos:
         name: Generate snippets from testers
         entry: bash -c "make sniptest"
         language: system
-        files: ^docs/src/testers/.*\.py$
+        files: ^docs/src/testers/.*\.(py|ts)$
         pass_filenames: false
       - id: sniptest-verify
         name: Verify snippet show= ranges are complete
         entry: bash -c "cd docs/src && uv run python sniptest/verify_snippets.py"
         language: system
         files: ^docs/src/testers/.*\.py$
+        pass_filenames: false
+      - id: sniptest-parity
+        name: Verify paired SDK examples
+        entry: python3 docs/src/sniptest/parity.py
+        language: system
+        files: ^docs/src/(testers/|sniptest/)
         pass_filenames: false

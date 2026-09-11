@@ -35,7 +35,7 @@ Create a new session using the context manager pattern (recommended):
 <CreateSession />
 
 <Tip>
-  Always use the context manager (`with` statement) to ensure sessions are properly stopped, even if errors occur.
+  Use Python's `with` statement or TypeScript's `session.use()` to stop sessions even if errors occur.
 </Tip>
 
 ## Getting Session Details
@@ -112,7 +112,7 @@ Follow these patterns to build reliable, cost-effective automation:
 
 ### 1. Always Use Context Managers
 
-The `with` statement guarantees cleanup:
+Python's `with` statement and TypeScript's `use()` callback guarantee cleanup:
 
 <ContextManager />
 
