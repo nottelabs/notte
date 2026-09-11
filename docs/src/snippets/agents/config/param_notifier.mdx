@@ -13,13 +13,14 @@ with client.Session() as session:
 ```
 
 ```typescript param_notifier.ts
-const agent = await client.Session().use(async session =>
+await client.Session().use(async session => {
   // Agent with notification via email
-  client.Agent({
+  const agent = client.Agent({
     session,
     // Notifications can be configured in the Notte console
-  }),
-);
+  });
+  // Use the agent here, while its session is active.
+});
 ```
 
 </CodeGroup>

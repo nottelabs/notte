@@ -26,6 +26,11 @@ class RepositoryExamplesTest(unittest.TestCase):
                 with self.subTest(name=name, language=suffix):
                     config, rendered = parse_file(testers / f"{name}{suffix}")
                     self.assertIsNotNone(config.show)
+                    if suffix == ".ts" and name in ("param_session", "param_notifier", "creating_agent"):
+                        self.assertIn("await client.Session", rendered)
+                        self.assertIn("const agent = client.Agent", rendered)
+                        self.assertNotIn("const agent = await", rendered)
+
                     self.assertIn(teaching_text, rendered)
                     self.assertIn("session", rendered)
                     for hidden in (
