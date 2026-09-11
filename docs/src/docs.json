@@ -330,9 +330,6 @@
                       "sdk-reference/nottevault/get_credentials",
                       "sdk-reference/nottevault/delete_credentials",
                       "sdk-reference/nottevault/list_credentials",
-                      "sdk-reference/nottevault/set_credit_card",
-                      "sdk-reference/nottevault/get_credit_card",
-                      "sdk-reference/nottevault/delete_credit_card",
                       "sdk-reference/nottevault/generate_password"
                     ]
                   },
@@ -408,27 +405,15 @@
                       "typescript-sdk-reference/session/setcookies",
                       "typescript-sdk-reference/session/getcookies",
                       "typescript-sdk-reference/session/viewer",
-                      "typescript-sdk-reference/session/status",
-                      "typescript-sdk-reference/session/use",
-                      "typescript-sdk-reference/session/setcookiesfromfile"
+                      "typescript-sdk-reference/session/status"
                     ]
                   },
                   {
                     "group": "Actions",
                     "collapsed": true,
                     "pages": [
-                      "typescript-sdk-reference/types/clickactionoutput",
-                      "typescript-sdk-reference/types/fillactionoutput",
-                      "typescript-sdk-reference/types/multifactorfillactionoutput",
-                      "typescript-sdk-reference/types/fallbackfillactionoutput",
-                      "typescript-sdk-reference/types/checkactionoutput",
-                      "typescript-sdk-reference/types/selectdropdownoptionactionoutput",
-                      "typescript-sdk-reference/types/uploadfileactionoutput",
-                      "typescript-sdk-reference/types/downloadfileactionoutput",
-                      "typescript-sdk-reference/types/formfillaction",
                       "typescript-sdk-reference/types/gotoaction",
                       "typescript-sdk-reference/types/gotonewtabaction",
-                      "typescript-sdk-reference/types/closetabaction",
                       "typescript-sdk-reference/types/switchtabaction",
                       "typescript-sdk-reference/types/gobackaction",
                       "typescript-sdk-reference/types/goforwardaction",
@@ -437,14 +422,19 @@
                       "typescript-sdk-reference/types/presskeyaction",
                       "typescript-sdk-reference/types/scrollupaction",
                       "typescript-sdk-reference/types/scrolldownaction",
-                      "typescript-sdk-reference/types/captchasolveaction",
-                      "typescript-sdk-reference/types/helpaction",
-                      "typescript-sdk-reference/types/completionaction",
+                      "typescript-sdk-reference/types/clickactionoutput",
+                      "typescript-sdk-reference/types/fillactionoutput",
+                      "typescript-sdk-reference/types/checkactionoutput",
+                      "typescript-sdk-reference/types/formfillaction",
+                      "typescript-sdk-reference/types/evaluatejsaction",
+                      "typescript-sdk-reference/types/selectdropdownoptionactionoutput",
+                      "typescript-sdk-reference/types/uploadfileactionoutput",
+                      "typescript-sdk-reference/types/downloadfileactionoutput",
                       "typescript-sdk-reference/types/scrapeaction",
-                      "typescript-sdk-reference/types/emailreadaction",
-                      "typescript-sdk-reference/types/emailverificationreadaction",
+                      "typescript-sdk-reference/types/captchasolveaction",
                       "typescript-sdk-reference/types/smsreadaction",
-                      "typescript-sdk-reference/types/evaluatejsaction"
+                      "typescript-sdk-reference/types/emailreadaction",
+                      "typescript-sdk-reference/types/emailverificationreadaction"
                     ]
                   },
                   {
@@ -485,14 +475,7 @@
                       "typescript-sdk-reference/vault/getcredentials",
                       "typescript-sdk-reference/vault/deletecredentials",
                       "typescript-sdk-reference/vault/listcredentials",
-                      "typescript-sdk-reference/vault/setcreditcard",
-                      "typescript-sdk-reference/vault/getcreditcard",
-                      "typescript-sdk-reference/vault/deletecreditcard",
-                      "typescript-sdk-reference/vault/generatepassword",
-                      "typescript-sdk-reference/vault/start",
-                      "typescript-sdk-reference/vault/stop",
-                      "typescript-sdk-reference/vault/delete",
-                      "typescript-sdk-reference/vault/addcredentialsfromenv"
+                      "typescript-sdk-reference/vault/generatepassword"
                     ]
                   },
                   {
@@ -503,12 +486,7 @@
                       "typescript-sdk-reference/persona/delete",
                       "typescript-sdk-reference/persona/addcredentials",
                       "typescript-sdk-reference/persona/emails",
-                      "typescript-sdk-reference/persona/sms",
-                      "typescript-sdk-reference/persona/start",
-                      "typescript-sdk-reference/persona/stop",
-                      "typescript-sdk-reference/persona/create",
-                      "typescript-sdk-reference/persona/get",
-                      "typescript-sdk-reference/persona/use"
+                      "typescript-sdk-reference/persona/sms"
                     ]
                   },
                   {
@@ -518,8 +496,7 @@
                       "typescript-sdk-reference/manual/files",
                       "typescript-sdk-reference/files/download",
                       "typescript-sdk-reference/files/upload",
-                      "typescript-sdk-reference/files/list",
-                      "typescript-sdk-reference/files/delete"
+                      "typescript-sdk-reference/files/list"
                     ]
                   }
                 ]

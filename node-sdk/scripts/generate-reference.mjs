@@ -19,7 +19,23 @@ const methodOrder = {
   NottePersona: ['delete', 'addCredentials', 'emails', 'sms'],
   SessionFiles: ['download', 'upload', 'list', 'delete'],
 };
-const hiddenMethods = new Set(['function/getfunctionid', 'session/getid']);
+// Keep lifecycle/convenience helpers addressable without listing them as core tasks.
+const hiddenMethods = new Set([
+  'function/getfunctionid', 'session/getid', 'session/use', 'session/setcookiesfromfile',
+  'vault/start', 'vault/stop', 'vault/delete', 'vault/addcredentialsfromenv',
+  'vault/setcreditcard', 'vault/getcreditcard', 'vault/deletecreditcard',
+  'persona/start', 'persona/stop', 'persona/create', 'persona/get', 'persona/use',
+  'files/delete',
+]);
+// Same action tasks and order as Python. Output suffixes are generated DTO names,
+// not separate user-facing actions; agent-only/internal actions stay linkable.
+const actionOrder = [
+  'GotoAction', 'GotoNewTabAction', 'SwitchTabAction', 'GoBackAction', 'GoForwardAction',
+  'ReloadAction', 'WaitAction', 'PressKeyAction', 'ScrollUpAction', 'ScrollDownAction',
+  'ClickAction', 'FillAction', 'CheckAction', 'FormFillAction', 'EvaluateJsAction',
+  'SelectDropdownOptionAction', 'UploadFileAction', 'DownloadFileAction', 'ScrapeAction',
+  'CaptchaSolveAction', 'SmsReadAction', 'EmailReadAction', 'EmailVerificationReadAction',
+];
 const diagnosticMethods = new Set(['client/getconfig', 'client/getclient', 'session/getresponse', 'session/issessionactive', 'agent/isrunning']);
 const portableType = text => text.replace(/import\("[^"]+"\)\./g, '');
 const fence = text => `\`\`\`typescript\n${text}\n\`\`\``;
@@ -256,8 +272,12 @@ export function createReference(root = sdkRoot) {
   const actions = actionSpace && checker.getTypeAtLocation(actionSpace).getProperty('actions');
   const actionType = actions && checker.getIndexTypeOfType(checker.getTypeOfSymbolAtLocation(actions, actionSpace), ts.IndexKind.Number);
   if (actionType) {
-    const paths = (actionType.isUnion() ? actionType.types : [actionType]).map(type => type.aliasSymbol?.name ?? type.getSymbol()?.name)
-      .filter(name => types.has(name)).map(name => `${prefix}/types/${name.toLowerCase()}`);
+    const available = (actionType.isUnion() ? actionType.types : [actionType]).map(type => type.aliasSymbol?.name ?? type.getSymbol()?.name)
+      .filter(name => types.has(name));
+    const paths = actionOrder.flatMap(task => {
+      const name = available.find(name => name.replace(/(?:Input|Output)$/, '').toLowerCase() === task.toLowerCase());
+      return name ? [`${prefix}/types/${name.toLowerCase()}`] : [];
+    });
     const sessionIndex = categories['Core Features'].findIndex(group => group.group === 'Session');
     categories['Core Features'].splice(sessionIndex + 1, 0, { group: 'Actions', collapsed: true, pages: paths });
   }

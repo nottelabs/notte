@@ -27,6 +27,13 @@ Feature landing pages derive their creation API from `NotteClient` factory
 return types and put direct constructors in a collapsed reference section.
 Method titles are unqualified; navigation follows task order rather than source
 order. Computed iterator hooks are hidden and diagnostic methods live in Debug.
+Vault mirrors Python's credential and password operations; credit-card operations
+are hidden in both SDK sidebars. Persona and File Storage show
+shared tasks; lifecycle and convenience helpers remain generated but hidden.
+Node's filtered `files.list` covers Python's two list operations; absent Node
+APIs (such as Persona phone-number management) are not invented in navigation.
+Actions follow Python's task order, excluding agent-only/internal variants.
+Tests compare Vault and Actions against the Python navigation to detect drift.
 Methods marked with JSDoc `@deprecated` are hidden from navigation and overview
 links, while their reference URLs and deprecation notices remain available.
 For overloaded methods, navigation is retained if any overload is not deprecated.

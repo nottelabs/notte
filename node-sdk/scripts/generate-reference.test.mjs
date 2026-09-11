@@ -89,7 +89,7 @@ test('navigation and generated reference links resolve; supporting APIs can rema
   walk(actual.navigation);
   for (const name of listed) assert.ok(actual.pages.has(name), `Missing navigation page: ${name}`);
   for (const name of actual.pages.keys()) {
-    if (!listed.has(name) && !actual.pages.get(name).includes('**deprecated:**')) assert.match(name, /\/types\/|\/encryption\/|\/manual\/(?:encryption|index)\.mdx$|\/client\/(?:session|files|agent|vault|persona|nottefunction)\.mdx$|\/symbol-asynciterator\.mdx$|\/function\/getfunctionid\.mdx$|\/session\/getid\.mdx$/);
+    if (!listed.has(name) && !actual.pages.get(name).includes('**deprecated:**')) assert.match(name, /\/types\/|\/encryption\/|\/manual\/(?:encryption|index)\.mdx$|\/client\/(?:session|files|agent|vault|persona|nottefunction)\.mdx$|\/symbol-asynciterator\.mdx$|\/function\/getfunctionid\.mdx$|\/session\/(?:getid|use|setcookiesfromfile)\.mdx$|\/vault\/(?:start|stop|delete|addcredentialsfromenv|setcreditcard|getcreditcard|deletecreditcard)\.mdx$|\/persona\/(?:start|stop|create|get|use)\.mdx$|\/files\/delete\.mdx$/);
   }
   for (const [name, content] of actual.pages) {
     for (const [, link] of content.matchAll(/\]\(\/(typescript-sdk-reference\/[^)#]+)(?:#[^)]*)?\)/g)) {
@@ -180,6 +180,37 @@ test('Node SDK mirrors Python categories and appears below Python in the sidebar
   const node = navigation.indexOf('"group":"Node SDK"');
   assert.ok(python >= 0 && node > python, 'Python SDK must appear before Node SDK');
   assert.ok(!navigation.includes('"group":"TypeScript SDK"'));
+});
+
+test('Tooling and Actions mirror Python tasks without Node lifecycle clutter', () => {
+  const docs = JSON.parse(readFileSync(new URL('../../docs/src/docs.json', import.meta.url), 'utf8'));
+  const findGroup = (node, name) => {
+    if (node?.group === name) return node;
+    if (node && typeof node === 'object') {
+      for (const value of Object.values(node)) {
+        if (value && typeof value === 'object') {
+          const found = findGroup(value, name);
+          if (found) return found;
+        }
+      }
+    }
+  };
+  const python = findGroup(docs.navigation, 'Python SDK');
+  const paths = (nav, name) => findGroup(nav, name).pages;
+  const task = path => path.split('/').at(-1).replace(/_/g, '').replace(/(?:input|output)$/, '');
+  assert.deepEqual(paths(actual.navigation, 'Vault').slice(1).map(task), paths(python, 'Vault').slice(1).map(task));
+  for (const nav of [python, actual.navigation]) assert.doesNotMatch(JSON.stringify(nav), /(?:set|get|delete)_?credit_?card/);
+  assert.deepEqual(paths(actual.navigation, 'Actions').map(task), paths(python, 'Actions').map(task));
+  assert.deepEqual(paths(actual.navigation, 'Persona').slice(1).map(task), ['delete', 'addcredentials', 'emails', 'sms']);
+  assert.deepEqual(paths(actual.navigation, 'File Storage').slice(1).map(task), ['download', 'upload', 'list']);
+  for (const [section, methods] of Object.entries({ vault: ['start', 'stop', 'delete', 'addcredentialsfromenv', 'setcreditcard', 'getcreditcard', 'deletecreditcard'], persona: ['start', 'stop', 'create', 'get', 'use'], session: ['use', 'setcookiesfromfile'], files: ['delete'] })) {
+    for (const method of methods) {
+      const path = `typescript-sdk-reference/${section}/${method}`;
+      assert.ok(actual.pages.has(`${path}.mdx`), 'Hidden helpers must retain their URLs');
+      assert.ok(!JSON.stringify(actual.navigation).includes(`"${path}"`));
+      assert.ok(!actual.pages.get(`typescript-sdk-reference/manual/${section}.mdx`).includes(`](/${path})`));
+    }
+  }
 });
 
 test('review regressions preserve complete summaries and accurate Node descriptions', () => {
