@@ -133,6 +133,7 @@ export function createReference(root = sdkRoot) {
     return names.size ? `## Related types\n\n${[...names].sort().map(name => `- [${name}](/${prefix}/types/${name.toLowerCase()})`).join('\n')}` : '';
   };
   const groups = [];
+  const navigableMethods = new Set();
   for (const { symbol, node } of classes) {
     const name = symbol.name;
     const classSlug = slug(name);
@@ -160,7 +161,9 @@ export function createReference(root = sdkRoot) {
       }
       contents.push(tags(method), related(overloads));
       pages.set(`${path}.mdx`, page(methodName, method, contents.filter(Boolean).join('\n\n')));
-      if (!ts.isComputedPropertyName(method.name) && !hiddenMethods.has(`${classSlug}/${memberSlug(methodName)}`)) {
+      const deprecated = overloads.every(node => ts.getJSDocTags(node).some(tag => tag.tagName.text === 'deprecated'));
+      if (!deprecated && !ts.isComputedPropertyName(method.name) && !hiddenMethods.has(`${classSlug}/${memberSlug(methodName)}`)) {
+        navigableMethods.add(path);
         nav.push(path);
         if (!diagnosticMethods.has(`${classSlug}/${memberSlug(methodName)}`)) methodLinks.push(`- [${methodName}](/${path})${doc(checker.getSymbolAtLocation(method.name)) ? `: ${doc(checker.getSymbolAtLocation(method.name)).split('\n')[0]}` : ''}`);
       }
@@ -207,9 +210,9 @@ export function createReference(root = sdkRoot) {
   }
   pages.set(`${prefix}/manual/index.mdx`, page('Node SDK reference', null, `This reference is generated from the public high-level classes, their signatures, JSDoc, and related types in \`node-sdk/src\`. It documents the checked-in SDK source; match it to the version you use.\n\nInstall the SDK:\n\n\`\`\`sh\nnpm install notte-sdk\n\`\`\`\n\n${classes.filter(({ symbol }) => symbol.name !== 'Encryption').map(({ symbol }) => `- [${symbol.name}](/${prefix}/manual/${slug(symbol.name)})`).join('\n')}\n\nThe generated low-level HTTP functions, legacy client helpers, and proxy subpath entrypoints are not part of this high-level reference. See the [API reference](/api-reference/authentication) for HTTP endpoints and the [Python SDK reference](/sdk-reference/manual/index) for Python.\n\nTo update these pages, edit the TypeScript source or its JSDoc and run \`npm run docs:generate --prefix node-sdk\`. CI checks for stale generated pages.`));
   const debugPaths = [...diagnosticMethods]
-    .map(path => `${prefix}/${path}`).filter(path => pages.has(`${path}.mdx`));
+    .map(path => `${prefix}/${path}`).filter(path => navigableMethods.has(path));
   const categories = { 'Getting Started': [], 'Core Features': [], Tooling: [], Debug: debugPaths.length ? [{ group: 'Debug Methods', collapsed: true, pages: debugPaths }] : [] };
-  if (pages.has(`${prefix}/client/scrape.mdx`)) categories['Core Features'].push(`${prefix}/client/scrape`);
+  if (navigableMethods.has(`${prefix}/client/scrape`)) categories['Core Features'].push(`${prefix}/client/scrape`);
   categories['Getting Started'].push(`${prefix}/manual/index`);
   const labels = { NotteClient: 'Client', NotteFunction: 'Function', NotteVault: 'Vault', NottePersona: 'Persona', SessionFiles: 'File Storage' };
   const classOrder = ['NotteClient', 'Session', 'Agent', 'NotteFunction', 'NotteVault', 'NottePersona', 'SessionFiles'];

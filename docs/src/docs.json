@@ -476,7 +476,6 @@
                       "typescript-sdk-reference/function/createrun",
                       "typescript-sdk-reference/function/run",
                       "typescript-sdk-reference/function/getrun",
-                      "typescript-sdk-reference/function/retrieve",
                       "typescript-sdk-reference/function/download",
                       "typescript-sdk-reference/function/geturl",
                       "typescript-sdk-reference/function/runs"

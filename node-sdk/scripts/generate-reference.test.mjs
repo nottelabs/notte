@@ -89,13 +89,22 @@ test('navigation and generated reference links resolve; supporting APIs can rema
   walk(actual.navigation);
   for (const name of listed) assert.ok(actual.pages.has(name), `Missing navigation page: ${name}`);
   for (const name of actual.pages.keys()) {
-    if (!listed.has(name)) assert.match(name, /\/types\/|\/encryption\/|\/manual\/encryption\.mdx$|\/symbol-asynciterator\.mdx$|\/function\/getfunctionid\.mdx$|\/session\/getid\.mdx$/);
+    if (!listed.has(name) && !actual.pages.get(name).includes('**deprecated:**')) assert.match(name, /\/types\/|\/encryption\/|\/manual\/encryption\.mdx$|\/symbol-asynciterator\.mdx$|\/function\/getfunctionid\.mdx$|\/session\/getid\.mdx$/);
   }
   for (const [name, content] of actual.pages) {
     for (const [, link] of content.matchAll(/\]\(\/(typescript-sdk-reference\/[^)#]+)(?:#[^)]*)?\)/g)) {
       assert.ok(actual.pages.has(`${link}.mdx`), `${name} links to missing ${link}`);
     }
   }
+});
+
+test('deprecated methods remain documented but are excluded from navigation and overview links', () => {
+  assert.ok(!JSON.stringify(generated.navigation).includes('/session/old'));
+  assert.match(generated.pages.get('typescript-sdk-reference/session/old.mdx'), /\*\*deprecated:\*\*/);
+  assert.ok(!JSON.stringify(actual.navigation).includes('/function/retrieve'));
+  assert.ok(JSON.stringify(actual.navigation).includes('/function/getrun'));
+  assert.match(actual.pages.get('typescript-sdk-reference/function/retrieve.mdx'), /Use getRun\(\) instead/);
+  assert.ok(!actual.pages.get('typescript-sdk-reference/manual/function.mdx').includes('[retrieve]'));
 });
 
 test('feature landing pages use factories and method navigation follows user tasks', () => {

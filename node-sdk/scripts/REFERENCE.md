@@ -22,6 +22,9 @@ Feature landing pages derive their creation API from `NotteClient` factory
 return types and put direct constructors in a collapsed reference section.
 Method titles are unqualified; navigation follows task order rather than source
 order. Computed iterator hooks are hidden and diagnostic methods live in Debug.
+Methods marked with JSDoc `@deprecated` are hidden from navigation and overview
+links, while their reference URLs and deprecation notices remain available.
+For overloaded methods, navigation is retained if any overload is not deprecated.
 It does not import or execute the SDK, call OpenAPI, or require credentials.
 
 Edit SDK declarations/JSDoc to change API documentation. Generated pages live in
