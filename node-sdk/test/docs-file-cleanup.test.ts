@@ -47,7 +47,7 @@ vi.mock('notte-sdk', () => {
 
 afterEach(() => vi.restoreAllMocks());
 
-for (const example of ['uploading_files', 'attach_before_starting']) {
+for (const example of ['uploading_files', 'attach_before_starting', 'descriptive_filenames']) {
   for (const failure of ['status', 'list', 'delete', ...(example === 'uploading_files' ? ['second-upload'] : [])]) {
     it(`${example} cleans successful uploads after ${failure} failure`, async () => {
       vi.resetModules();
@@ -57,10 +57,18 @@ for (const example of ['uploading_files', 'attach_before_starting']) {
         RemoteFileStorage: { prototype: { upload: unknown } };
       }>('notte-sdk');
       const original = RemoteFileStorage.prototype.upload;
-      const message = failure === 'delete' ? 'Failed to delete uploaded example files'
+      const message = failure === 'delete'
+        ? (example === 'descriptive_filenames' ? 'Example file cleanup failed' : 'Failed to delete uploaded example files')
         : failure === 'second-upload' ? 'upload failed' : `${failure} failed`;
-      await expect(import(`../../docs/src/testers/file-storage/${example}.ts`)).rejects.toThrow(message);
-      const count = example === 'attach_before_starting' || failure === 'second-upload' ? 1 : 2;
+      const execution = import(`../../docs/src/testers/file-storage/${example}.ts`);
+      await expect(execution).rejects.toThrow(message);
+      if (example === 'descriptive_filenames' && failure === 'delete') {
+        await expect(execution).rejects.toBeInstanceOf(AggregateError);
+        await expect(execution).rejects.toMatchObject({
+          errors: [new Error('status failed'), new Error('delete failed')],
+        });
+      }
+      const count = example !== 'uploading_files' || failure === 'second-upload' ? 1 : 2;
       expect(fixture.deleted).toEqual(Array.from({ length: count }, (_, i) => String(i + 1)));
       expect(fixture.stopped).toBe(true);
       expect(RemoteFileStorage.prototype.upload).toBe(original);

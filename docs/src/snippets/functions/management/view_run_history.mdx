@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/management/view_run_history.py */}
 
+<CodeGroup>
+
 ```python view_run_history.py
 from notte_sdk import NotteClient
 
@@ -8,7 +10,7 @@ client = NotteClient()
 
 # Get recent runs
 runs = client.functions.list_runs(
-    function_id="function_abc123",
+    function_id=function_id,
     only_active=False,  # Include completed runs
 )
 
@@ -19,3 +21,24 @@ for run in runs.items:
     print(f"Updated: {run.updated_at}")
     print("---")
 ```
+
+```typescript view_run_history.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+// Get recent runs
+const runs = await client.NotteFunction({ function_id: functionId }).runs({
+  only_active: false, // Include completed runs
+});
+
+for (const run of runs.items) {
+  console.log(`Run ID: ${run.function_run_id}`);
+  console.log(`Status: ${run.status}`);
+  console.log(`Created: ${run.created_at}`);
+  console.log(`Updated: ${run.updated_at}`);
+  console.log('---');
+}
+```
+
+</CodeGroup>
