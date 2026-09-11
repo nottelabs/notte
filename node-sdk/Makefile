@@ -45,11 +45,24 @@ release:
 		exit 1; \
 	fi
 	@echo "Building notte-sdk version: $(filter-out $@,$(MAKECMDGOALS))"
-	npm version "$(filter-out $@,$(MAKECMDGOALS))" --no-git-tag-version
-	npm run build
-	node scripts/check-package.js
+	@set -eu; \
+	package_backup=$$(mktemp); \
+	lock_backup=$$(mktemp); \
+	cp package.json "$$package_backup"; \
+	cp package-lock.json "$$lock_backup"; \
+	cleanup() { \
+		status=$$?; \
+		trap - EXIT HUP INT TERM; \
+		cp "$$package_backup" package.json; \
+		cp "$$lock_backup" package-lock.json; \
+		rm -f "$$package_backup" "$$lock_backup"; \
+		exit $$status; \
+	}; \
+	trap cleanup EXIT HUP INT TERM; \
+	npm version "$(filter-out $@,$(MAKECMDGOALS))" --no-git-tag-version; \
+	npm run build; \
+	node scripts/check-package.js; \
 	npm pack --dry-run
-	@git checkout package.json package-lock.json
 
 # Run all tests
 tests:

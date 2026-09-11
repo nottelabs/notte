@@ -44,5 +44,6 @@ Versions on `main` are placeholders (`1.4.4.dev` in the `pyproject.toml` files,
 Do not bump versions in pull requests.
 
 If one workflow fails after the other succeeded, re-run the failed workflow from
-the Actions tab; PyPI uploads skip files that already exist and npm refuses to
-republish an existing version, so re-runs are safe.
+the Actions tab. PyPI uploads skip files that already exist, and the npm workflow
+detects an existing matching version, skips publishing it again, and continues
+with installation verification.

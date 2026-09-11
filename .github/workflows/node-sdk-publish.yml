@@ -30,6 +30,8 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -38,8 +40,6 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
-          cache: npm
-          cache-dependency-path: node-sdk/package-lock.json
           registry-url: https://registry.npmjs.org
 
       - run: npm ci
@@ -67,11 +67,32 @@ jobs:
         run: node scripts/check-package.js
 
       - name: Publish to npm
-        run: npm publish --access public --provenance
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          published_version=$(npm view "notte-sdk@${RELEASE_VERSION}" version 2>/dev/null || true)
+          if [ "$published_version" = "$RELEASE_VERSION" ]; then
+            echo "notte-sdk@$RELEASE_VERSION is already published; continuing to verification"
+          else
+            npm publish --access public --provenance
+          fi
+
+  verify:
+    name: Verify notte-sdk from npm
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions: {}
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
 
       - name: Install the package from npm
         env:
-          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_VERSION: ${{ needs.publish.outputs.version }}
+        working-directory: ${{ runner.temp }}
         run: |
           set -euo pipefail
           workdir=$(mktemp -d)
@@ -86,7 +107,7 @@ jobs:
 
           while [ $attempt -le $max_attempts ]; do
             echo "Attempt $attempt of $max_attempts: Installing notte-sdk@${RELEASE_VERSION}..."
-            if npm install --prefer-online --no-audit --no-fund "notte-sdk@${RELEASE_VERSION}"; then
+            if npm install --ignore-scripts --prefer-online --no-audit --no-fund "notte-sdk@${RELEASE_VERSION}"; then
               echo "Installation successful!"
               break
             fi
