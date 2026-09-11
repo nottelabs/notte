@@ -57,6 +57,7 @@ jobs:
       NOTTE_API_URL: https://us-staging.notte.cc
       NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
       NOTTE_DOCS_LIVE: '1'
+      VITEST_INTEGRATION: '1'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:

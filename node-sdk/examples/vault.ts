@@ -1,6 +1,6 @@
 // Example usage of the Vault functionality in the TypeScript SDK
 
-import { NotteClient } from '@notte/sdk';
+import { NotteClient } from 'notte-sdk';
 
 async function vaultExample() {
   const client = new NotteClient();
@@ -28,14 +28,6 @@ async function vaultExample() {
   // Get specific credentials
   const githubCreds = await newVault.getCredentials('https://github.com/');
   console.log('GitHub credentials:', githubCreds);
-
-  // Add credit card information
-  await newVault.setCreditCard({
-    card_holder_name: 'John Doe',
-    card_number: '4111111111111111',
-    card_cvv: '123',
-    card_full_expiration: '12/25'
-  });
 
   // Example 2: Access existing vault
   console.log('\n=== Using existing vault ===');
@@ -77,9 +69,6 @@ async function vaultExample() {
 
   // Delete specific credentials
   await newVault.deleteCredentials('https://gmail.com/');
-
-  // Delete credit card
-  await newVault.deleteCreditCard();
 
   // Delete entire vault (this also stops it)
   await newVault.stop();

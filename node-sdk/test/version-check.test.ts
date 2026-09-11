@@ -20,7 +20,7 @@ describe('version check', () => {
     });
 
     expect(warnFn).toHaveBeenCalledWith(
-      '[notte-sdk] A newer version is available: 1.2.3 -> 1.2.4. Update with: npm install notte-sdk@latest'
+      "⚠️ You are using notte-sdk version 1.2.3, but version 1.2.4 is available on npm. Run 'npm install notte-sdk@1.2.4' to avoid any interruptions."
     );
   });
 

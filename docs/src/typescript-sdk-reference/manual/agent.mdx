@@ -31,6 +31,8 @@ client.Agent(options: AgentConstructor): Agent;
 - [start](/typescript-sdk-reference/agent/start): Start an agent task (non-blocking) - mirrors Python start method
 - [stop](/typescript-sdk-reference/agent/stop): Stop the agent - mirrors Python stop method
 - [status](/typescript-sdk-reference/agent/status): Get agent status - mirrors Python status method
+- [hasStarted](/typescript-sdk-reference/agent/hasstarted): Whether `start()`/`run()` was called on this instance (or it was built from an agent id). This is a local check and does not contact the API.
+- [isActive](/typescript-sdk-reference/agent/isactive): Whether the agent is still active on the server. Fetches the current status, like calling `agent.status()` in Python; an agent that was never started is not active.
 
 <Accordion title="Direct constructor reference">
 

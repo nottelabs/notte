@@ -11,7 +11,7 @@ The API returns HTTP `429` when a rate limit is exceeded. See the [API rate-limi
 
 ## Handling rate limits
 
-High-level Node SDK methods do not consistently preserve HTTP status codes or response headers on thrown errors. Do not copy Python examples that inspect `error.status_code`, or assume every failed request was rate-limited.
+Check `error instanceof NotteAPIError` and `error.statusCode === 429` to identify rate limiting. Response headers are available through `error.response?.headers`; Node uses `statusCode`, not Python’s `status_code`.
 
 When your HTTP integration exposes a verified `429` response, honor `Retry-After` if provided; otherwise use bounded exponential backoff with jitter. Set a retry limit and retry only operations that are safe to repeat. Automatic rate-limit retries are not provided by the high-level client.
 

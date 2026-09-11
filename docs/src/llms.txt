@@ -349,7 +349,7 @@ The SDK docs below are for generated-code editing and reference. They are not th
 <!-- openapi:end -->
 
 
-## SDK
+## Python SDK
 
 
 ### Getting Started
@@ -438,9 +438,6 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [get_credentials](https://docs.notte.cc/sdk-reference/nottevault/get_credentials.md): No description available
 - [delete_credentials](https://docs.notte.cc/sdk-reference/nottevault/delete_credentials.md): No description available
 - [list_credentials](https://docs.notte.cc/sdk-reference/nottevault/list_credentials.md): No description available
-- [set_credit_card](https://docs.notte.cc/sdk-reference/nottevault/set_credit_card.md): No description available
-- [get_credit_card](https://docs.notte.cc/sdk-reference/nottevault/get_credit_card.md): No description available
-- [delete_credit_card](https://docs.notte.cc/sdk-reference/nottevault/delete_credit_card.md): No description available
 - [generate_password](https://docs.notte.cc/sdk-reference/nottevault/generate_password.md): Generate a secure random password
 
 #### Persona
@@ -469,6 +466,157 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [health_check](https://docs.notte.cc/sdk-reference/notteclient/health_check.md): Health check the Notte API
 - [debug_info](https://docs.notte.cc/sdk-reference/remotesession/debug_info.md): Get detailed debug information for the session
 - [offset](https://docs.notte.cc/sdk-reference/remotesession/offset.md): Get the trajectory offset of the session
+
+## Node SDK
+
+
+### Getting Started
+
+- [NotteClient](https://docs.notte.cc/typescript-sdk-reference/manual/client.md)
+- [Authentication](https://docs.notte.cc/typescript-sdk-reference/authentication.md)
+- [Error Handling](https://docs.notte.cc/typescript-sdk-reference/errors.md)
+- [Rate Limits](https://docs.notte.cc/typescript-sdk-reference/rate-limits.md)
+
+### Core Features
+
+- [scrape](https://docs.notte.cc/typescript-sdk-reference/client/scrape.md)
+- [search](https://docs.notte.cc/typescript-sdk-reference/client/search.md)
+
+#### Session
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/session.md)
+- [start](https://docs.notte.cc/typescript-sdk-reference/session/start.md)
+- [stop](https://docs.notte.cc/typescript-sdk-reference/session/stop.md)
+- [observe](https://docs.notte.cc/typescript-sdk-reference/session/observe.md)
+- [execute](https://docs.notte.cc/typescript-sdk-reference/session/execute.md)
+- [scrape](https://docs.notte.cc/typescript-sdk-reference/session/scrape.md)
+- [replay](https://docs.notte.cc/typescript-sdk-reference/session/replay.md)
+- [setCookies](https://docs.notte.cc/typescript-sdk-reference/session/setcookies.md)
+- [getCookies](https://docs.notte.cc/typescript-sdk-reference/session/getcookies.md)
+- [viewer](https://docs.notte.cc/typescript-sdk-reference/session/viewer.md)
+- [status](https://docs.notte.cc/typescript-sdk-reference/session/status.md)
+- [downloadReplay](https://docs.notte.cc/typescript-sdk-reference/session/downloadreplay.md)
+- [debugInfo](https://docs.notte.cc/typescript-sdk-reference/session/debuginfo.md)
+- [debugTabInfo](https://docs.notte.cc/typescript-sdk-reference/session/debugtabinfo.md)
+- [cdpUrl](https://docs.notte.cc/typescript-sdk-reference/session/cdpurl.md)
+- [page](https://docs.notte.cc/typescript-sdk-reference/session/page.md)
+- [getScript](https://docs.notte.cc/typescript-sdk-reference/session/getscript.md)
+- [evaluateJs](https://docs.notte.cc/typescript-sdk-reference/session/evaluatejs.md)
+- [fetch](https://docs.notte.cc/typescript-sdk-reference/session/fetch.md)
+
+#### Actions
+
+- [GotoAction](https://docs.notte.cc/typescript-sdk-reference/types/gotoaction.md)
+- [GotoNewTabAction](https://docs.notte.cc/typescript-sdk-reference/types/gotonewtabaction.md)
+- [SwitchTabAction](https://docs.notte.cc/typescript-sdk-reference/types/switchtabaction.md)
+- [GoBackAction](https://docs.notte.cc/typescript-sdk-reference/types/gobackaction.md)
+- [GoForwardAction](https://docs.notte.cc/typescript-sdk-reference/types/goforwardaction.md)
+- [ReloadAction](https://docs.notte.cc/typescript-sdk-reference/types/reloadaction.md)
+- [WaitAction](https://docs.notte.cc/typescript-sdk-reference/types/waitaction.md)
+- [PressKeyAction](https://docs.notte.cc/typescript-sdk-reference/types/presskeyaction.md)
+- [ScrollUpAction](https://docs.notte.cc/typescript-sdk-reference/types/scrollupaction.md)
+- [ScrollDownAction](https://docs.notte.cc/typescript-sdk-reference/types/scrolldownaction.md)
+- [ClickActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/clickactionoutput.md)
+- [FillActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/fillactionoutput.md)
+- [CheckActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/checkactionoutput.md)
+- [FormFillAction](https://docs.notte.cc/typescript-sdk-reference/types/formfillaction.md)
+- [EvaluateJsAction](https://docs.notte.cc/typescript-sdk-reference/types/evaluatejsaction.md)
+- [SelectDropdownOptionActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/selectdropdownoptionactionoutput.md)
+- [UploadFileActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/uploadfileactionoutput.md)
+- [DownloadFileActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/downloadfileactionoutput.md)
+- [ScrapeAction](https://docs.notte.cc/typescript-sdk-reference/types/scrapeaction.md)
+- [CaptchaSolveAction](https://docs.notte.cc/typescript-sdk-reference/types/captchasolveaction.md)
+- [SmsReadAction](https://docs.notte.cc/typescript-sdk-reference/types/smsreadaction.md)
+- [EmailReadAction](https://docs.notte.cc/typescript-sdk-reference/types/emailreadaction.md)
+- [EmailVerificationReadAction](https://docs.notte.cc/typescript-sdk-reference/types/emailverificationreadaction.md)
+
+#### Agent
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/agent.md)
+- [run](https://docs.notte.cc/typescript-sdk-reference/agent/run.md)
+- [start](https://docs.notte.cc/typescript-sdk-reference/agent/start.md)
+- [stop](https://docs.notte.cc/typescript-sdk-reference/agent/stop.md)
+- [status](https://docs.notte.cc/typescript-sdk-reference/agent/status.md)
+- [hasStarted](https://docs.notte.cc/typescript-sdk-reference/agent/hasstarted.md)
+- [isActive](https://docs.notte.cc/typescript-sdk-reference/agent/isactive.md)
+
+#### Function
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/function.md)
+- [createRun](https://docs.notte.cc/typescript-sdk-reference/function/createrun.md)
+- [run](https://docs.notte.cc/typescript-sdk-reference/function/run.md)
+- [getRun](https://docs.notte.cc/typescript-sdk-reference/function/getrun.md)
+- [download](https://docs.notte.cc/typescript-sdk-reference/function/download.md)
+- [getUrl](https://docs.notte.cc/typescript-sdk-reference/function/geturl.md)
+- [get](https://docs.notte.cc/typescript-sdk-reference/function/get.md)
+- [update](https://docs.notte.cc/typescript-sdk-reference/function/update.md)
+- [updateMetadata](https://docs.notte.cc/typescript-sdk-reference/function/updatemetadata.md)
+- [delete](https://docs.notte.cc/typescript-sdk-reference/function/delete.md)
+- [setSchedule](https://docs.notte.cc/typescript-sdk-reference/function/setschedule.md)
+- [deleteSchedule](https://docs.notte.cc/typescript-sdk-reference/function/deleteschedule.md)
+- [rollback](https://docs.notte.cc/typescript-sdk-reference/function/rollback.md)
+- [runs](https://docs.notte.cc/typescript-sdk-reference/function/runs.md)
+
+#### Anything
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/notteanything.md)
+- [start](https://docs.notte.cc/typescript-sdk-reference/notteanything/start.md)
+
+### Tooling
+
+
+#### Vault
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/vault.md)
+- [addCredentials](https://docs.notte.cc/typescript-sdk-reference/vault/addcredentials.md)
+- [getCredentials](https://docs.notte.cc/typescript-sdk-reference/vault/getcredentials.md)
+- [deleteCredentials](https://docs.notte.cc/typescript-sdk-reference/vault/deletecredentials.md)
+- [listCredentials](https://docs.notte.cc/typescript-sdk-reference/vault/listcredentials.md)
+- [generatePassword](https://docs.notte.cc/typescript-sdk-reference/vault/generatepassword.md)
+- [hasCredential](https://docs.notte.cc/typescript-sdk-reference/vault/hascredential.md)
+
+#### Persona
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/persona.md)
+- [delete](https://docs.notte.cc/typescript-sdk-reference/persona/delete.md)
+- [addCredentials](https://docs.notte.cc/typescript-sdk-reference/persona/addcredentials.md)
+- [emails](https://docs.notte.cc/typescript-sdk-reference/persona/emails.md)
+- [sms](https://docs.notte.cc/typescript-sdk-reference/persona/sms.md)
+
+#### File Storage
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/remotefilestorage.md)
+- [download](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/download.md)
+- [downloadBlob](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/downloadblob.md)
+- [upload](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/upload.md)
+- [list](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/list.md)
+- [metadata](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/metadata.md)
+- [stream](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/stream.md)
+- [delete](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/delete.md)
+
+#### Secrets
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/nottesecrets.md)
+- [list](https://docs.notte.cc/typescript-sdk-reference/nottesecrets/list.md)
+- [store](https://docs.notte.cc/typescript-sdk-reference/nottesecrets/store.md)
+- [get](https://docs.notte.cc/typescript-sdk-reference/nottesecrets/get.md)
+- [delete](https://docs.notte.cc/typescript-sdk-reference/nottesecrets/delete.md)
+
+#### Usage
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/notteusage.md)
+- [get](https://docs.notte.cc/typescript-sdk-reference/notteusage/get.md)
+- [logs](https://docs.notte.cc/typescript-sdk-reference/notteusage/logs.md)
+
+### Debug
+
+
+#### Debug Methods
+
+- [getConfig](https://docs.notte.cc/typescript-sdk-reference/client/getconfig.md)
+- [getClient](https://docs.notte.cc/typescript-sdk-reference/client/getclient.md)
+- [getResponse](https://docs.notte.cc/typescript-sdk-reference/session/getresponse.md)
+- [isSessionActive](https://docs.notte.cc/typescript-sdk-reference/session/issessionactive.md)
 
 
 # Resources

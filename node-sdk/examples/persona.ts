@@ -1,16 +1,28 @@
 // Example usage of the Persona functionality in the TypeScript SDK
 
-import { NotteClient, NottePersona } from '@notte/sdk';
+import { NotteClient } from 'notte-sdk';
+
+/**
+ * Persona used by the "existing persona" examples. Set NOTTE_PERSONA_ID to the
+ * id of a persona you own (see `client.personas.list()`).
+ */
+function requirePersonaId(): string {
+  const personaId = process.env.NOTTE_PERSONA_ID;
+  if (!personaId) {
+    throw new Error('Set NOTTE_PERSONA_ID to the id of an existing persona to run this example');
+  }
+  return personaId;
+}
 
 async function personaExample() {
+  // Validate the environment before creating remote resources so a missing
+  // variable cannot skip the cleanup at the end of the example.
+  const existingPersonaId = requirePersonaId();
   const client = new NotteClient();
 
-  // Example 1: Try to create a new persona with vault and phone number
+  // Example 1: Try to create a new persona with a vault
   console.log('=== Creating a new persona ===');
-  const persona = client.Persona({
-    create_vault: true,
-    create_phone_number: false
-  });
+  const persona = client.Persona({ create_vault: true });
 
   // Wait for persona to be created and get info
   console.log('Persona created, checking info...');
@@ -18,9 +30,7 @@ async function personaExample() {
   await persona.emails({ limit: 1 }); // This will trigger initialization
   const info = persona.info;
   console.log(`Email: ${info.email}`);
-  console.log(`Phone: ${info.phone_number}`);
   console.log(`Has vault: ${persona.hasVault}`);
-
 
   // List existing personas and use one of them
   console.log('\n=== Using existing persona instead ===');
@@ -37,7 +47,6 @@ async function personaExample() {
   await newPersona.emails({ limit: 1 }); // This will trigger initialization
   const newInfo = newPersona.info;
   console.log(`Email: ${newInfo.email}`);
-  console.log(`Phone: ${newInfo.phone_number || 'No phone number'}`);
   console.log(`Has vault: ${newPersona.hasVault}`);
 
   // Example 2: Read emails sent to the persona
@@ -55,18 +64,16 @@ async function personaExample() {
 
   // Example 3: Read SMS messages for 2FA codes
   console.log('\n=== Reading persona SMS messages ===');
-  if (persona.info.phone_number) {
-    const smsMessages = await persona.sms({
-      limit: 5,
-      only_unread: true
-    });
-    console.log(`Received ${smsMessages.length} SMS messages:`);
-    smsMessages.forEach(sms => {
-      console.log(`- Body: ${sms.body}`);
-      console.log(`  From: ${sms.sender}`);
-      console.log(`  Date: ${sms.created_at}`);
-    });
-  }
+  const smsMessages = await persona.sms({
+    limit: 5,
+    only_unread: true
+  });
+  console.log(`Received ${smsMessages.length} SMS messages:`);
+  smsMessages.forEach(sms => {
+    console.log(`- Body: ${sms.body}`);
+    console.log(`  From: ${sms.sender}`);
+    console.log(`  Date: ${sms.created_at}`);
+  });
 
   // Example 4: Add credentials to persona's vault
   console.log('\n=== Adding credentials to vault ===');
@@ -82,7 +89,7 @@ async function personaExample() {
         const agent = client.Agent({
           session,
           max_steps: 10,
-          vault_id: persona.info.vault_id // Use vault_id from persona info
+          vault_id: persona.vault.vaultId // Use the persona's vault
         });
 
         const result = await agent.run({
@@ -99,28 +106,16 @@ async function personaExample() {
     console.log('Persona has no vault, skipping agent example with credentials');
   }
 
-  // Example 6: Access existing persona
+  // Example 6: Access an existing persona by id
   console.log('\n=== Using existing persona ===');
-  const existingPersona = client.Persona({ persona_id: '23ae78af-93b4-4aeb-ba21-d18e1496bdd9' });
+  const existingPersona = client.Persona({ persona_id: existingPersonaId });
 
   const existingEmails = await existingPersona.emails();
   console.log(`Existing persona has ${existingEmails.length} emails`);
 
-  // Example 7: Phone number management
-  console.log('\n=== Phone number management ===');
-
-  if (!persona.info.phone_number) {
-    const phoneResult = await persona.createNumber();
-    console.log(`Phone number created: ${phoneResult.phone_number}`);
-  }
-
-  // Delete phone number
-  await persona.deleteNumber();
-  console.log('Phone number deleted');
-
-  // Example 8: Cleanup (only if we created a new persona)
+  // Example 7: Cleanup (only if we created a new persona)
   console.log('\n=== Cleanup ===');
-  console.log('Skipping cleanup to preserve existing personas. In production, call persona.stop() to delete personas you create.');
+  console.log('Deleting the persona created by this example. Borrowed personas are left untouched.');
   await persona.delete();
 }
 
@@ -132,10 +127,7 @@ async function pythonLikeUsage() {
   // persona = notte.Persona(create_vault=True)
   // emails = persona.emails(only_unread=True)
 
-  const persona = client.Persona({
-    create_vault: true,
-    create_phone_number: true
-  });
+  const persona = client.Persona({ create_vault: true });
 
   const emails = await persona.emails({ only_unread: true });
   const sms = await persona.sms({ limit: 10 });
@@ -152,7 +144,7 @@ async function pythonLikeUsage() {
 async function messageFilteringExample() {
   const client = new NotteClient();
 
-  const persona = client.Persona({ persona_id: '23ae78af-93b4-4aeb-ba21-d18e1496bdd9' });
+  const persona = client.Persona({ persona_id: requirePersonaId() });
 
   // Different filtering options
   console.log('=== Message filtering examples ===');

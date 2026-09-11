@@ -27,6 +27,14 @@
   "seo.indexing": "all",
   "redirects": [
     {
+      "source": "/typescript-sdk-reference/manual/nottesearch",
+      "destination": "/typescript-sdk-reference/client/search"
+    },
+    {
+      "source": "/typescript-sdk-reference/nottesearch/search",
+      "destination": "/typescript-sdk-reference/client/search"
+    },
+    {
       "source": "/integrations/mcp",
       "destination": "/mcp-server"
     },
@@ -391,6 +399,7 @@
                 "group": "Core Features",
                 "pages": [
                   "typescript-sdk-reference/client/scrape",
+                  "typescript-sdk-reference/client/search",
                   {
                     "group": "Session",
                     "collapsed": true,
@@ -405,7 +414,15 @@
                       "typescript-sdk-reference/session/setcookies",
                       "typescript-sdk-reference/session/getcookies",
                       "typescript-sdk-reference/session/viewer",
-                      "typescript-sdk-reference/session/status"
+                      "typescript-sdk-reference/session/status",
+                      "typescript-sdk-reference/session/downloadreplay",
+                      "typescript-sdk-reference/session/debuginfo",
+                      "typescript-sdk-reference/session/debugtabinfo",
+                      "typescript-sdk-reference/session/cdpurl",
+                      "typescript-sdk-reference/session/page",
+                      "typescript-sdk-reference/session/getscript",
+                      "typescript-sdk-reference/session/evaluatejs",
+                      "typescript-sdk-reference/session/fetch"
                     ]
                   },
                   {
@@ -445,7 +462,9 @@
                       "typescript-sdk-reference/agent/run",
                       "typescript-sdk-reference/agent/start",
                       "typescript-sdk-reference/agent/stop",
-                      "typescript-sdk-reference/agent/status"
+                      "typescript-sdk-reference/agent/status",
+                      "typescript-sdk-reference/agent/hasstarted",
+                      "typescript-sdk-reference/agent/isactive"
                     ]
                   },
                   {
@@ -458,7 +477,22 @@
                       "typescript-sdk-reference/function/getrun",
                       "typescript-sdk-reference/function/download",
                       "typescript-sdk-reference/function/geturl",
+                      "typescript-sdk-reference/function/get",
+                      "typescript-sdk-reference/function/update",
+                      "typescript-sdk-reference/function/updatemetadata",
+                      "typescript-sdk-reference/function/delete",
+                      "typescript-sdk-reference/function/setschedule",
+                      "typescript-sdk-reference/function/deleteschedule",
+                      "typescript-sdk-reference/function/rollback",
                       "typescript-sdk-reference/function/runs"
+                    ]
+                  },
+                  {
+                    "group": "Anything",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/notteanything",
+                      "typescript-sdk-reference/notteanything/start"
                     ]
                   }
                 ]
@@ -475,7 +509,8 @@
                       "typescript-sdk-reference/vault/getcredentials",
                       "typescript-sdk-reference/vault/deletecredentials",
                       "typescript-sdk-reference/vault/listcredentials",
-                      "typescript-sdk-reference/vault/generatepassword"
+                      "typescript-sdk-reference/vault/generatepassword",
+                      "typescript-sdk-reference/vault/hascredential"
                     ]
                   },
                   {
@@ -493,10 +528,34 @@
                     "group": "File Storage",
                     "collapsed": true,
                     "pages": [
-                      "typescript-sdk-reference/manual/files",
-                      "typescript-sdk-reference/files/download",
-                      "typescript-sdk-reference/files/upload",
-                      "typescript-sdk-reference/files/list"
+                      "typescript-sdk-reference/manual/remotefilestorage",
+                      "typescript-sdk-reference/remotefilestorage/download",
+                      "typescript-sdk-reference/remotefilestorage/downloadblob",
+                      "typescript-sdk-reference/remotefilestorage/upload",
+                      "typescript-sdk-reference/remotefilestorage/list",
+                      "typescript-sdk-reference/remotefilestorage/metadata",
+                      "typescript-sdk-reference/remotefilestorage/stream",
+                      "typescript-sdk-reference/remotefilestorage/delete"
+                    ]
+                  },
+                  {
+                    "group": "Secrets",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/nottesecrets",
+                      "typescript-sdk-reference/nottesecrets/list",
+                      "typescript-sdk-reference/nottesecrets/store",
+                      "typescript-sdk-reference/nottesecrets/get",
+                      "typescript-sdk-reference/nottesecrets/delete"
+                    ]
+                  },
+                  {
+                    "group": "Usage",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/notteusage",
+                      "typescript-sdk-reference/notteusage/get",
+                      "typescript-sdk-reference/notteusage/logs"
                     ]
                   }
                 ]
@@ -511,8 +570,7 @@
                       "typescript-sdk-reference/client/getconfig",
                       "typescript-sdk-reference/client/getclient",
                       "typescript-sdk-reference/session/getresponse",
-                      "typescript-sdk-reference/session/issessionactive",
-                      "typescript-sdk-reference/agent/isrunning"
+                      "typescript-sdk-reference/session/issessionactive"
                     ]
                   }
                 ]

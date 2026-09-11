@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { NotteClient } from '@/client';
+import { NotteAPIError } from '@/errors';
 import { config } from 'dotenv';
 import { cleanupVaults } from './helpers/cleanup-vaults';
 config();
@@ -49,6 +50,15 @@ describe('Vault Integration Tests', () => {
 			expect(newVault.vaultId).toBeDefined();
 			createdVaultIds.push(newVault.vaultId);
 		});
+
+		it('should list the created vault with client.vaults.list()', { timeout: 30000 }, async () => {
+			const newVault = client.Vault({ name: 'Listed Vault' });
+			await newVault.listCredentials();
+			createdVaultIds.push(newVault.vaultId);
+
+			const vaults = await client.vaults.list();
+			expect(vaults.some(vault => vault.vault_id === newVault.vaultId)).toBe(true);
+		});
 	});
 
 	describe('Credentials Management', () => {
@@ -63,14 +73,10 @@ describe('Vault Integration Tests', () => {
 
 			createdVaultIds.push(newVault.vaultId);
 
-			// Verify credentials were added
+			// Verify credentials were added; the SDK and the API both normalise URLs to the root domain.
 			const credentials = await newVault.listCredentials();
 			expect(credentials.length).toBeGreaterThan(0);
-			// The API normalizes credential URLs to a hostname.
-			const githubCreds = credentials.find(c =>
-				new URL(c.url.includes('://') ? c.url : `https://${c.url}`).hostname === 'github.com'
-			);
-			expect(githubCreds).toBeDefined();
+			expect(credentials.some(c => c.url === 'github.com')).toBe(true);
 		});
 
 		it('should add credentials with auto-generated password', { timeout: 30000 }, async () => {
@@ -116,11 +122,30 @@ describe('Vault Integration Tests', () => {
 			createdVaultIds.push(newVault.vaultId);
 
 			const githubCreds = await newVault.getCredentials('https://github.com/');
-			expect(githubCreds).toBeDefined();
-			expect(githubCreds).not.toBeNull();
-			if (githubCreds) {
-				expect(githubCreds.email).toBe('user@example.com');
-			}
+			expect(githubCreds.email).toBe('user@example.com');
+			expect(githubCreds.password).toBe('secure-password-123');
+		});
+
+		it('should reject getCredentials for an unknown website with a NotteAPIError', { timeout: 30000 }, async () => {
+			const newVault = client.Vault({ name: 'Test Vault' });
+			await newVault.listCredentials();
+			createdVaultIds.push(newVault.vaultId);
+
+			await expect(newVault.getCredentials('https://nonexistent.example.com/')).rejects.toBeInstanceOf(NotteAPIError);
+		});
+
+		it('should report hasCredential', { timeout: 30000 }, async () => {
+			const newVault = client.Vault({ name: 'Test Vault' });
+
+			await newVault.addCredentials('https://github.com/', {
+				email: 'user@example.com',
+				password: 'secure-password-123' // pragma: allowlist secret
+			});
+			createdVaultIds.push(newVault.vaultId);
+
+			await expect(newVault.hasCredential('https://github.com/login')).resolves.toBe(true);
+			await expect(newVault.hasCredential('github.com')).resolves.toBe(true);
+			await expect(newVault.hasCredential('https://gitlab.com/')).resolves.toBe(false);
 		});
 
 		it('should delete specific credentials', { timeout: 30000 }, async () => {
@@ -143,68 +168,7 @@ describe('Vault Integration Tests', () => {
 			// Verify credentials were deleted
 			credentials = await newVault.listCredentials();
 			expect(credentials.length).toBeLessThan(initialCount);
-		});
-	});
-
-	describe('Credit Card Management', () => {
-		it('should set credit card information', { timeout: 30000 }, async () => {
-			const newVault = client.Vault({ name: 'Test Vault' });
-
-			await newVault.setCreditCard({
-				card_holder_name: 'John Doe',
-				card_number: '4111111111111111',
-				card_cvv: '123',
-				card_full_expiration: '12/25'
-			});
-
-			createdVaultIds.push(newVault.vaultId);
-
-			// Verify credit card was set
-			const creditCard = await newVault.getCreditCard();
-			expect(creditCard).toBeDefined();
-			expect(creditCard.card_holder_name).toBe('John Doe');
-		});
-
-		it('should get credit card information', { timeout: 30000 }, async () => {
-			const newVault = client.Vault({ name: 'Test Vault' });
-
-			await newVault.setCreditCard({
-				card_holder_name: 'John Doe',
-				card_number: '4111111111111111',
-				card_cvv: '123',
-				card_full_expiration: '12/25'
-			});
-
-			createdVaultIds.push(newVault.vaultId);
-
-			const creditCard = await newVault.getCreditCard();
-			expect(creditCard).toBeDefined();
-			expect(creditCard.card_holder_name).toBeDefined();
-		});
-
-		it('should delete credit card', { timeout: 30000 }, async () => {
-			const newVault = client.Vault({ name: 'Test Vault' });
-
-			await newVault.setCreditCard({
-				card_holder_name: 'John Doe',
-				card_number: '4111111111111111',
-				card_cvv: '123',
-				card_full_expiration: '12/25'
-			});
-
-			createdVaultIds.push(newVault.vaultId);
-
-			// Delete credit card
-			await newVault.deleteCreditCard();
-
-			// Verify credit card was deleted (should throw or return null)
-			try {
-				await newVault.getCreditCard();
-				// If we get here, the credit card might still exist (which is acceptable)
-			} catch (error) {
-				// Expected if credit card was deleted
-				expect(error).toBeDefined();
-			}
+			await expect(newVault.hasCredential('https://gmail.com/')).resolves.toBe(false);
 		});
 	});
 
@@ -286,15 +250,9 @@ describe('Vault Integration Tests', () => {
 
 			await newVault.stop();
 
-			// Verify deletion by trying to access the vault
-			try {
-				const deletedVault = client.Vault({ vault_id: vaultId });
-				await deletedVault.listCredentials();
-				// If we get here, the vault still exists (which might be expected in some cases)
-			} catch (error) {
-				// Expected if vault was deleted
-				expect(error).toBeDefined();
-			}
+			// The deleted vault can no longer be opened.
+			const deletedVault = client.Vault({ vault_id: vaultId });
+			await expect(deletedVault.listCredentials()).rejects.toBeInstanceOf(NotteAPIError);
 		});
 	});
 

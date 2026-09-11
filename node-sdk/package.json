@@ -38,7 +38,8 @@
     "test": "vitest",
     "test:unit": "vitest --exclude='**/*integration.test.ts'",
     "test:integration": "VITEST_INTEGRATION=1 vitest --run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [
     "notte",
@@ -55,15 +56,28 @@
   },
   "bugs": "https://github.com/nottelabs/notte/issues",
   "homepage": "https://github.com/nottelabs/notte/tree/main/node-sdk",
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
+    "tldts": "^7.4.12",
     "ws": "^8.18.0",
     "zod": "^4.1.9"
+  },
+  "peerDependencies": {
+    "playwright-core": ">=1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright-core": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.99.0",
     "@mdx-js/mdx": "^3.1.1",
     "@types/node": "^20.14.0",
     "@types/ws": "^8.5.10",
+    "@vitest/coverage-v8": "^4.1.11",
     "dotenv": "^16.4.5",
     "playwright-core": "1.63.0",
     "tsup": "^8.5.1",

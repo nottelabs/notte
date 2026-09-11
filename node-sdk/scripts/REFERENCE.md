@@ -15,8 +15,9 @@ It reads signatures, overloads, parameter defaults, accessors, JSDoc, exported
 option types, and the transitive source-defined types those APIs reference.
 Generated OpenAPI request/response models are included; low-level HTTP transport
 implementation types are excluded.
-Supporting type pages and Encryption remain generated but are hidden from the
-sidebar. The SDK's `ActionSpace.actions` union supplies Core Features / Actions;
+Supporting type pages, error classes, PageFetchResponse, and Encryption remain
+generated but are hidden from the sidebar. Error classes are linked from the
+Error Handling guide and the reference overview. The SDK's `ActionSpace.actions` union supplies Core Features / Actions;
 other type pages are reachable through related-type links on API pages.
 Getting Started mirrors Python's flat navigation: NotteClient, Authentication,
 Error Handling, and Rate Limits. Narrative guidance lives in
@@ -33,7 +34,9 @@ shared tasks; lifecycle and convenience helpers remain generated but hidden.
 Node's filtered `files.list` covers Python's two list operations; absent Node
 APIs (such as Persona phone-number management) are not invented in navigation.
 Actions follow Python's task order, excluding agent-only/internal variants.
-Tests compare Vault and Actions against the Python navigation to detect drift.
+Tests compare shared Vault and Actions tasks against the Python navigation and
+check the additional Node helpers explicitly. Removed credit-card methods no
+longer produce pages.
 Methods marked with JSDoc `@deprecated` are hidden from navigation and overview
 links, while their reference URLs and deprecation notices remain available.
 For overloaded methods, navigation is retained if any overload is not deprecated.

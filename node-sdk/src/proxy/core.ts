@@ -76,6 +76,9 @@ export async function handleProxyRequest(
     // Step 4: Build headers
     const forwardHeaders = new Headers();
     forwardHeaders.set('Authorization', `Bearer ${apiKey}`);
+    // Function run endpoints authenticate with their own header (the API does
+    // not forward `Authorization` to the runtime), so inject it as well.
+    forwardHeaders.set('x-notte-api-key', apiKey);
     forwardHeaders.set(
       'x-notte-request-origin',
       config.requestOrigin || 'sdk-proxy',

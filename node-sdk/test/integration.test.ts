@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { NotteClient } from '@/client';
+import { AuthenticationError } from '@/errors';
 import { config } from 'dotenv';
 config();
 
@@ -70,7 +71,10 @@ describe('Integration Tests', () => {
 
       expect(() => {
         new NotteClient();
-      }).toThrow('API key is required. Provide it via config.apiKey or set the NOTTE_API_KEY environment variable.');
+      }).toThrow(AuthenticationError);
+      expect(() => {
+        new NotteClient();
+      }).toThrow('NOTTE_API_KEY needs to be provided');
 
       // Restore the original environment variable
       if (originalApiKey) {

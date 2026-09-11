@@ -1,88 +1,220 @@
 import { createClient } from '@/lib/client/client';
+import { getParseAs } from '@/lib/client/client/utils.gen';
 import { Session, type SessionOptions } from '@/session';
-import type { GlobalScrapeRequest } from '@/lib/client/types.gen';
+import type {
+  AgentResponse,
+  FunctionListItemResponse,
+  GlobalScrapeRequest,
+  ListAgentsData,
+  ListFunctionsData,
+  ListSessionsData,
+  ListVaultsData,
+  PersonaResponse,
+  SessionResponse,
+  Vault,
+} from '@/lib/client/types.gen';
 import { Agent, type AgentConstructor } from '@/agent';
 import { NotteVault, type VaultConstructor } from '@/vaults';
 import { NottePersona, type PersonaConstructor, type PersonaListOptions } from '@/personas';
 import { NotteFunction, type FunctionConstructor } from '@/functions';
-import { scrapeWebpage, listPersonas } from '@/lib/client/sdk.gen';
-import { processScrapeResponse } from '@/session';
-import { z } from 'zod';
-import type { PersonaResponse } from '@/lib/client/types.gen';
+import {
+  healthCheck,
+  listAgents,
+  listFunctions,
+  listPersonas,
+  listSessions,
+  listVaults,
+  scrapeWebpage,
+  searchWeb,
+} from '@/lib/client/sdk.gen';
+import {
+  buildScrapeBody,
+  processScrapeResponse,
+  type ScrapeOptions,
+  type ScrapeResult,
+  type StructuredData,
+  type ZodLikeSchema,
+} from '@/scrape';
 import { SDK_VERSION } from '@/version';
-import { SessionFiles } from '@/files';
+import { RemoteFileStorage, SessionFiles } from '@/files';
+import type { SearchOptions, SearchResponse, SearchResultsResponse, SearchSourcedAnswerResponse, SearchStructuredResponse } from '@/search';
+import { NotteAnything } from '@/anything';
+import { NotteSecrets } from '@/secrets';
+import { NotteUsage } from '@/usage';
+import {
+  AuthenticationError,
+  InvalidRequestError,
+  NotteAPIError,
+  NotteAPIExecutionError,
+  NotteTimeoutError,
+  normalizeErrorBody,
+} from '@/errors';
+import { createUpgradeErrorMessage, startVersionCheck, upgradeSuggestion } from '@/version-check';
 
+export const DEFAULT_NOTTE_API_URL = 'https://api.notte.cc';
+export const DEFAULT_REQUEST_TIMEOUT_MS = 60_000;
+/** Request origin header, the Node counterpart of `sdk-python`. */
+export const REQUEST_ORIGIN = 'sdk-node';
+/**
+ * Per-call header read by the client's request interceptor to override the
+ * default request timeout. `0` disables the timeout (streaming responses).
+ * The header is stripped before the request leaves the process.
+ */
+export const TIMEOUT_HEADER = 'x-notte-timeout-ms';
+const DB_PREVIEW_ENV = 'NOTTE_DB_PREVIEW_BRANCH';
+const DB_PREVIEW_HEADER = 'x-db-preview';
+const EXECUTION_ERROR_CLASS = 'NotteApiExecutionError';
 
 export interface NotteClientConfig {
-  /** API base URL. Defaults to NOTTE_API_URL, then https://api.notte.cc. */
+  /** API base URL. Defaults to `NOTTE_API_URL` or `https://api.notte.cc`. */
   baseUrl?: string;
-  /** API key. Defaults to NOTTE_API_KEY; required except when using a relative proxy URL. */
+  /** API key. Defaults to `NOTTE_API_KEY`. Optional only for relative proxy base URLs. */
   apiKey?: string;
+  /** Default per-request timeout in milliseconds. Defaults to 60 000, like the Python SDK. */
+  timeoutMs?: number;
+  /** Database preview branch. Defaults to `NOTTE_DB_PREVIEW_BRANCH`. Internal. */
+  dbPreview?: string;
+  /** Log every request like `NotteClient(verbose=True)` in Python. */
+  verbose?: boolean;
+}
+
+export type SessionListOptions = NonNullable<ListSessionsData['query']>;
+export type AgentListOptions = NonNullable<ListAgentsData['query']>;
+export type VaultListOptions = NonNullable<ListVaultsData['query']>;
+export type FunctionListOptions = NonNullable<ListFunctionsData['query']>;
+/** Options of `client.scrape()`: the global scrape request minus `url`, plus the SDK-only scrape options. */
+export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' | 'response_format'> & ScrapeOptions<T>;
+
+type ResolvedConfig = Required<Pick<NotteClientConfig, 'baseUrl' | 'timeoutMs' | 'verbose'>> &
+  Pick<NotteClientConfig, 'apiKey' | 'dbPreview'>;
+
+function isRelativeProxyUrl(baseUrl: string): boolean {
+  // '/api/notte' is a same-origin proxy path; '//host' is protocol-relative and not allowed.
+  return /^\/(?!\/)/.test(baseUrl);
 }
 
 /** Entry point for sessions, agents, functions, vaults, personas, and session files. */
 export class NotteClient {
-  private config: NotteClientConfig;
+  private readonly config: ResolvedConfig;
   private readonly client = createClient();
 
   constructor(config: NotteClientConfig = {}) {
-    // Get API key from config or environment variable
     const apiKey = config.apiKey || process.env.NOTTE_API_KEY;
-    const baseUrl = config.baseUrl || process.env.NOTTE_API_URL || 'https://api.notte.cc';
+    const baseUrl = config.baseUrl || process.env.NOTTE_API_URL || DEFAULT_NOTTE_API_URL;
+    const dbPreview = config.dbPreview || process.env[DB_PREVIEW_ENV] || undefined;
+    const timeoutMs = config.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+    if (!(timeoutMs >= 0)) {
+      throw new InvalidRequestError('timeoutMs must be a non-negative number');
+    }
 
     // Only skip the apiKey check for relative proxy paths (e.g. '/api/notte').
     // Any HTTPS URL—including staging—still requires a key.
-    const isProxyMode = /^\/(?!\/)/.test(baseUrl);
+    const isProxyMode = isRelativeProxyUrl(baseUrl);
     if (!isProxyMode) {
       const url = new URL(baseUrl);
       const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
       if (url.protocol !== 'https:' && !(url.protocol === 'http:' && loopback)) {
-        throw new Error('API base URL must use HTTPS (HTTP is only allowed on loopback for local development)');
+        throw new InvalidRequestError(
+          'API base URL must use HTTPS (HTTP is only allowed on loopback for local development)',
+        );
       }
     }
     if (!apiKey && !isProxyMode) {
-      throw new Error('API key is required. Provide it via config.apiKey or set the NOTTE_API_KEY environment variable.');
+      throw new AuthenticationError(
+        'NOTTE_API_KEY needs to be provided. Pass config.apiKey or set the NOTTE_API_KEY environment variable.',
+      );
     }
 
-    this.config = {
-      baseUrl,
-      apiKey,
-    };
+    this.config = { baseUrl, apiKey, timeoutMs, dbPreview, verbose: config.verbose ?? false };
+
+    if (baseUrl !== DEFAULT_NOTTE_API_URL && !isProxyMode) {
+      console.warn(`NOTTE_API_URL is set to: ${baseUrl}`);
+    }
 
     // Use redirect:'manual' so we handle 3xx ourselves.
     // Node's undici drops POST bodies on cross-origin 307 redirects
     // (e.g. when the API gateway redirects to AWS Lambda function URLs).
+    // throwOnError makes every generated call reject with the typed error
+    // built by the error interceptor below, like `BaseClient.request` in Python.
     this.client.setConfig({
       baseUrl: this.config.baseUrl,
       redirect: 'manual',
+      throwOnError: true,
     });
 
-    this.client.interceptors.request.use((request: any) => {
-      if (this.config.apiKey) request.headers.set('Authorization', `Bearer ${this.config.apiKey}`);
-      request.headers.set('x-notte-request-origin', 'sdk-node');
-      request.headers.set('x-notte-sdk-version', SDK_VERSION);
-      return request;
+    this.client.interceptors.request.use((request: Request) => {
+      const headers = new Headers(request.headers);
+      if (this.config.apiKey) headers.set('Authorization', `Bearer ${this.config.apiKey}`);
+      headers.set('x-notte-request-origin', REQUEST_ORIGIN);
+      headers.set('x-notte-sdk-version', SDK_VERSION);
+      if (this.config.dbPreview) headers.set(DB_PREVIEW_HEADER, this.config.dbPreview);
+
+      const override = headers.get(TIMEOUT_HEADER);
+      headers.delete(TIMEOUT_HEADER);
+      const timeoutMs = override !== null ? Number(override) : this.config.timeoutMs;
+
+      if (this.config.verbose) {
+        console.info(`Making \`${request.method}\` request to \`${request.url}\``);
+      }
+      if (!(timeoutMs > 0)) {
+        return new Request(request, { headers });
+      }
+      const deadline = withTimeout(request.signal, timeoutMs);
+      const timed = new Request(request, { headers, signal: deadline.signal });
+      // Released by the response/error interceptors below so a completed
+      // request does not keep its timer alive until the deadline.
+      pendingDeadlines.set(timed, deadline.release);
+      return timed;
     });
 
     // Follow 307/308 redirects manually, replaying the original body.
     // Also normalizes Content-Type from text/plain to application/json
     // (AWS Lambda function URLs return JSON with the wrong Content-Type).
-    this.client.interceptors.response.use(async (response: any, request: any, opts: any) => {
-      if ((response.status === 307 || response.status === 308) && response.headers.get('location')) {
-        const location = response.headers.get('location')!;
-        const headers = new Headers(request.headers);
-        // Strip auth on cross-origin redirects to avoid leaking credentials
-        if (new URL(location).origin !== new URL(request.url).origin) {
-          headers.delete('Authorization');
+    this.client.interceptors.response.use(async (response: Response, request: Request, opts: any) => {
+      const initialUrl = new URL(request.url);
+      let currentUrl = initialUrl;
+      const headers = new Headers(request.headers);
+      // Only the configured API's execution endpoint can delegate runtime
+      // authentication. Its first HTTPS redirect is the runtime handoff, not
+      // a blanket trust in an AWS domain or in arbitrary API redirects.
+      const apiUrl = new URL(this.config.baseUrl, initialUrl);
+      const executionPrefix = `${apiUrl.pathname.replace(/\/$/, '')}/functions/`;
+      const executionPath = initialUrl.pathname.slice(executionPrefix.length);
+      const runtimeHandoff = request.method === 'POST' &&
+        initialUrl.origin === apiUrl.origin && initialUrl.pathname.startsWith(executionPrefix) &&
+        /^[^/]+\/runs\/[^/]+$/.test(executionPath) && !executionPath.endsWith('/create');
+      for (let hop = 0; (response.status === 307 || response.status === 308) && response.headers.get('location'); hop++) {
+        if (hop >= 10) throw new InvalidRequestError('Too many API redirects');
+        const location = new URL(response.headers.get('location')!, currentUrl);
+        const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+        if (location.protocol !== 'https:' && !(location.protocol === 'http:' && loopback)) {
+          throw new InvalidRequestError(`Refusing to follow a redirect to an insecure URL: ${location.origin}`);
         }
+        if (location.username || location.password) {
+          throw new InvalidRequestError('Refusing to follow a redirect containing URL credentials');
+        }
+        if (location.origin !== currentUrl.origin) {
+          headers.delete('Authorization');
+          const localHandoff = location.protocol === 'http:' && initialUrl.protocol === 'http:' &&
+            ['localhost', '127.0.0.1', '[::1]'].includes(initialUrl.hostname) && loopback;
+          if (!(hop === 0 && runtimeHandoff && (location.protocol === 'https:' || localHandoff))) {
+            headers.delete('x-notte-api-key');
+          }
+        }
+        // A runtime cannot delegate the key again, even to another path on
+        // its own origin. Handle every hop ourselves so fetch cannot leak it.
+        if (hop > 0) headers.delete('x-notte-api-key');
+        await response.body?.cancel();
         const headerRecord: Record<string, string> = {};
-        headers.forEach((v: string, k: string) => { headerRecord[k] = v; });
-        const redirected = await fetch(location, {
+        headers.forEach((v, k) => { headerRecord[k] = v; });
+        response = await (opts.fetch ?? fetch)(location.toString(), {
           method: request.method,
           headers: headerRecord,
           body: opts.serializedBody ?? undefined,
+          signal: request.signal,
+          redirect: 'manual',
         });
-        return redirected;
+        currentUrl = location;
       }
 
       // Normalize text/plain → application/json (Lambda function URLs)
@@ -96,6 +228,105 @@ export class NotteClient {
 
       return response;
     });
+
+    // Non-streaming calls are not finished until their body has arrived.
+    // Buffer under the deadline, then let the generated client parse normally.
+    // Explicit streams have a caller-owned lifetime (Function.run supplies its
+    // own signal/deadline); do not buffer them or delay delivery of live logs.
+    this.client.interceptors.response.use(async (response: Response, request: Request, opts: any) => {
+      try {
+        const parseAs = opts.parseAs === 'auto'
+          ? getParseAs(response.headers.get('content-type'))
+          : opts.parseAs;
+        if (parseAs !== 'stream' && response.body) {
+          const body = await response.arrayBuffer();
+          const buffered = new Response(body, {
+            status: response.status, statusText: response.statusText, headers: response.headers,
+          });
+          Object.defineProperty(buffered, 'url', { value: response.url });
+          return buffered;
+        }
+        return response;
+      } finally {
+        releaseDeadline(request);
+      }
+    });
+
+    // Turn raw failures into the typed error hierarchy.
+    this.client.interceptors.error.use((error: unknown, response: Response | undefined, request: Request | undefined) => {
+      releaseDeadline(request);
+      return this.toTypedError(error, response, request);
+    });
+
+    startVersionCheck();
+  }
+
+  /**
+   * Map the raw value the generated client rejects with into a `NotteError`.
+   * HTTP failures become `NotteAPIError` (or `NotteAPIExecutionError` when the
+   * API flags them), timeouts become `NotteTimeoutError`, anything else is
+   * returned untouched.
+   */
+  private toTypedError(error: unknown, response: Response | undefined, request: Request | undefined): unknown {
+    if (error instanceof NotteAPIError) {
+      return error;
+    }
+    // Fetch body reads may throw AbortError even when the signal's reason is
+    // TimeoutError. Preserve caller cancellation and report SDK deadlines as
+    // timeouts rather than HTTP errors with a misleading status of 200.
+    if (request?.signal.aborted) {
+      error = request.signal.reason ?? error;
+    }
+    if (isTimeoutAbort(error)) {
+      const target = request ? ` to \`${requestPath(request)}\`` : '';
+      return new NotteTimeoutError(`Request${target} ${(error as Error).message}`, { cause: error });
+    }
+    if (request?.signal.aborted) return error;
+    if (response) {
+      const path = requestPath(request, response);
+      const body = normalizeErrorBody(error);
+      if (response.status === 422) {
+        const latest = upgradeSuggestion();
+        const message = typeof body.message === 'string' ? body.message : '';
+        const looksLikeSchemaMismatch =
+          message.includes('extra_forbidden') || message.includes('Extra inputs are not permitted') || message.includes("'type':");
+        if (latest && looksLikeSchemaMismatch) {
+          return new NotteAPIError(
+            path,
+            response.status,
+            { ...body, message: createUpgradeErrorMessage('API returned 422 validation error', latest, message) },
+            response,
+          );
+        }
+      }
+      if (response.headers.get('x-error-class') === EXECUTION_ERROR_CLASS) {
+        return new NotteAPIExecutionError(path, response.status, body, response);
+      }
+      return new NotteAPIError(path, response.status, body, response);
+    }
+    return error;
+  }
+
+  /**
+   * Add the database preview branch to a websocket URL served by the Notte API.
+   * The websocket handshake reads the branch from the query string, so without
+   * it a preview-branch session is looked up in the default database.
+   */
+  withDbPreview(url: string): string {
+    if (!this.config.dbPreview) {
+      return url;
+    }
+    const parsed = new URL(url);
+    parsed.searchParams.set('db_preview', this.config.dbPreview);
+    return parsed.toString();
+  }
+
+  /**
+   * Health check the Notte API. Resolves when the API answers 200 and rejects
+   * with a `NotteAPIError` (or a network error) otherwise.
+   */
+  async healthCheck(): Promise<void> {
+    await healthCheck({ client: this.client });
   }
 
   /**
@@ -108,6 +339,21 @@ export class NotteClient {
   /** Access files owned by a specific session, including closed sessions. */
   Files(sessionId: string): SessionFiles {
     return new SessionFiles(this.getClient(), sessionId);
+  }
+
+  /**
+   * File storage to attach to a session, the counterpart of `client.FileStorage()`.
+   *
+   * ```ts
+   * const storage = client.FileStorage();
+   * await client.Session({ storage }).use(async session => {
+   *   await storage.upload('./invoice.pdf');
+   *   const files = await storage.list({ source: 'session_download' });
+   * });
+   * ```
+   */
+  FileStorage(sessionId?: string): RemoteFileStorage {
+    return new RemoteFileStorage(this, sessionId);
   }
 
   /**
@@ -138,6 +384,92 @@ export class NotteClient {
     return new NotteFunction(this, options);
   }
 
+  /** Alias of `NotteFunction`, matching `client.Function` in Python. */
+  Function(options: FunctionConstructor): NotteFunction {
+    return this.NotteFunction(options);
+  }
+
+  /** Sessions listing, the counterpart of `client.sessions.list()`. */
+  get sessions() {
+    return {
+      list: async (options: SessionListOptions = {}): Promise<SessionResponse[]> => {
+        const response = await listSessions({ client: this.getClient(), query: options });
+        return response.data?.items ?? [];
+      },
+    };
+  }
+
+  /** Agents listing, the counterpart of `client.agents.list()`. */
+  get agents() {
+    return {
+      list: async (options: AgentListOptions = {}): Promise<AgentResponse[]> => {
+        const response = await listAgents({ client: this.getClient(), query: options });
+        return response.data?.items ?? [];
+      },
+    };
+  }
+
+  /** Vaults listing, the counterpart of `client.vaults.list()`. */
+  get vaults() {
+    return {
+      list: async (options: VaultListOptions = {}): Promise<Vault[]> => {
+        const response = await listVaults({ client: this.getClient(), query: options });
+        return response.data?.items ?? [];
+      },
+    };
+  }
+
+  /** Functions listing, the counterpart of `client.functions.list()`. */
+  get functions() {
+    return {
+      list: async (options: FunctionListOptions = {}): Promise<FunctionListItemResponse[]> => {
+        const response = await listFunctions({ client: this.getClient(), query: options });
+        return response.data?.items ?? [];
+      },
+    };
+  }
+
+  /**
+   * Search the public web (`POST /search`). Returns ranked results by default,
+   * an answer with sources with `outputType: 'sourcedAnswer'`, or structured
+   * output with `outputType: 'structured'`.
+   *
+   * ```ts
+   * import { NotteClient } from 'notte-sdk';
+   *
+   * const client = new NotteClient();
+   * const { results } = await client.search('notte browser agents');
+   * const { answer } = await client.search('what is notte?', { outputType: 'sourcedAnswer' });
+   * ```
+   */
+  async search(query: string, options?: SearchOptions & { outputType?: 'searchResults' }): Promise<SearchResultsResponse>;
+  async search(query: string, options: SearchOptions & { outputType: 'sourcedAnswer' }): Promise<SearchSourcedAnswerResponse>;
+  async search(query: string, options: SearchOptions & { outputType: 'structured' }): Promise<SearchStructuredResponse>;
+  async search(query: string, options: SearchOptions): Promise<SearchResponse>;
+  async search(query: string, options: SearchOptions = {}): Promise<SearchResponse> {
+    const response = await searchWeb({
+      client: this.getClient(),
+      body: { ...options, q: query },
+      throwOnError: true,
+    });
+    return response.data as SearchResponse;
+  }
+
+  /** Anything API (`POST /anything/start`). */
+  get anything(): NotteAnything {
+    return new NotteAnything(this);
+  }
+
+  /** Workspace secrets (`/secrets`). */
+  get secrets(): NotteSecrets {
+    return new NotteSecrets(this);
+  }
+
+  /** Usage and billing (`/usage`, `/usage/logs`). */
+  get usage(): NotteUsage {
+    return new NotteUsage(this);
+  }
+
   /**
    * Personas client for listing and managing personas
    */
@@ -146,15 +478,10 @@ export class NotteClient {
       list: async (options?: PersonaListOptions): Promise<PersonaResponse[]> => {
         const response = await listPersonas({
           client: this.getClient(),
-          query: options || {}
+          query: options || {},
         });
-
-        if (response?.error) {
-          throw new Error(`Failed to list personas: ${JSON.stringify(response.error)}`);
-        }
-
         return (response.data as any)?.items || [];
-      }
+      },
     };
   }
 
@@ -166,57 +493,111 @@ export class NotteClient {
   }
 
   /**
-   * Scrape a webpage directly (without session)
+   * Scrape a webpage directly (without session).
+   *
+   * ```ts
+   * const markdown = await client.scrape('https://www.notte.cc', { only_main_content: true });
+   * const product = await client.scrape('https://www.notte.cc', { response_format: Product, instructions: 'Extract the product' });
+   * ```
+   *
+   * With `response_format` or `instructions`, the extracted data is returned
+   * directly and a failed extraction throws `ScrapeFailedError`. Pass
+   * `raiseOnFailure: false` to receive the `StructuredData` wrapper instead.
    */
-  async scrape(url: string, options?: Omit<GlobalScrapeRequest, 'url'>): Promise<string | any>;
-  async scrape<T>(url: string, options: Omit<GlobalScrapeRequest, 'url'> & { response_format: z.ZodSchema<T>; json_schema?: any }): Promise<T>;
-  async scrape<T = any>(url: string, options: Omit<GlobalScrapeRequest, 'url'> & { response_format?: z.ZodSchema<T> | any; json_schema?: any } = {}): Promise<string | T | any> {
-    // If response_format is a Zod schema, we need to convert it to JSON schema for the API
-    const apiOptions = { ...options };
-    if (options.response_format && typeof options.response_format.parse === 'function') {
-      // Use provided JSON schema or convert Zod schema to JSON schema for API compatibility
-      if (options.json_schema) {
-        apiOptions.response_format = options.json_schema;
-      } else {
-        apiOptions.response_format = z.toJSONSchema(options.response_format);
-      }
-
-      // Add more specific instructions to help the API understand what to extract
-      if (!apiOptions.instructions) {
-        // Try to infer what kind of data to extract from the schema structure
-        const schemaStr = JSON.stringify(apiOptions.response_format);
-        if (schemaStr.includes('plans') || schemaStr.includes('plan')) {
-          apiOptions.instructions = "Extract pricing plans from the page";
-        } else if (schemaStr.includes('products') || schemaStr.includes('product')) {
-          apiOptions.instructions = "Extract product information from the page";
-        } else if (schemaStr.includes('articles') || schemaStr.includes('article')) {
-          apiOptions.instructions = "Extract article information from the page";
-        } else {
-          apiOptions.instructions = "Extract structured data from the page based on the provided schema";
-        }
-      }
-    }
-
+  async scrape(url: string, options?: GlobalScrapeOptions<unknown> & { response_format?: undefined; instructions?: undefined | null }): Promise<string>;
+  async scrape<T>(url: string, options: GlobalScrapeOptions<T> & { response_format: ZodLikeSchema<T>; raiseOnFailure?: true }): Promise<T>;
+  async scrape<T>(url: string, options: GlobalScrapeOptions<T> & { response_format: ZodLikeSchema<T>; raiseOnFailure: false }): Promise<StructuredData<T>>;
+  async scrape(url: string, options: GlobalScrapeOptions<unknown>): Promise<ScrapeResult<unknown>>;
+  async scrape<T = unknown>(url: string, options: GlobalScrapeOptions<T> = {}): Promise<ScrapeResult<T>> {
+    const body = await buildScrapeBody(options);
     const response = await scrapeWebpage({
       client: this.getClient(),
-      body: {
-        url,
-        ...apiOptions
-      }
+      body: { url, ...body } as GlobalScrapeRequest,
     });
-
-    if (response?.error) {
-      throw new Error(`Failed to scrape webpage: ${JSON.stringify(response.error)}`);
-    }
-
-    const scrapeResponse = response.data;
-    return processScrapeResponse(scrapeResponse, options);
+    return processScrapeResponse<T>(response.data, options);
   }
 
   /**
    * Get the client configuration
    */
   getConfig(): NotteClientConfig {
-    return this.config;
+    return { ...this.config };
   }
+}
+
+function requestPath(request: Request | undefined, response?: Response): string {
+  const url = request?.url ?? response?.url;
+  if (!url) {
+    return 'unknown';
+  }
+  try {
+    return new URL(url).pathname;
+  } catch {
+    return url;
+  }
+}
+
+function isTimeoutAbort(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && (error as { name?: string }).name === 'TimeoutError';
+}
+
+function timeoutReason(timeoutMs: number): DOMException {
+  return new DOMException(`timed out after ${timeoutMs}ms`, 'TimeoutError');
+}
+
+const pendingDeadlines = new WeakMap<Request, () => void>();
+
+function releaseDeadline(request: Request | undefined): void {
+  if (!request) return;
+  const release = pendingDeadlines.get(request);
+  if (release) {
+    pendingDeadlines.delete(request);
+    release();
+  }
+}
+
+interface Deadline {
+  signal: AbortSignal;
+  /** Clear the timer and detach from the caller's signal. Idempotent. */
+  release: () => void;
+}
+
+/**
+ * Combine the caller's signal with a deadline. `AbortSignal.any` (Node 20.3+)
+ * lets the runtime drop the composite signal once the request settles, so a
+ * long-lived caller signal never accumulates listeners.
+ */
+function withTimeout(signal: AbortSignal | null | undefined, timeoutMs: number): Deadline {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(timeoutReason(timeoutMs)), timeoutMs);
+  timer.unref?.();
+  let detach: () => void = () => undefined;
+  let composite: AbortSignal;
+
+  const signalAny = (AbortSignal as unknown as { any?: (signals: AbortSignal[]) => AbortSignal }).any;
+  if (typeof signalAny === 'function') {
+    composite = signalAny.call(AbortSignal, signal ? [signal, controller.signal] : [controller.signal]);
+  } else {
+    // Fallback for runtimes without AbortSignal.any.
+    composite = controller.signal;
+    if (signal) {
+      if (signal.aborted) {
+        controller.abort(signal.reason);
+      } else {
+        const forward = () => controller.abort(signal.reason);
+        signal.addEventListener('abort', forward, { once: true });
+        detach = () => signal.removeEventListener('abort', forward);
+      }
+    }
+  }
+
+  let released = false;
+  const release = () => {
+    if (released) return;
+    released = true;
+    clearTimeout(timer);
+    detach();
+  };
+  composite.addEventListener('abort', release, { once: true });
+  return { signal: composite, release };
 }

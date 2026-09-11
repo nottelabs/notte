@@ -23,12 +23,20 @@ export default defineConfig({
     include: process.env.VITEST_INTEGRATION
       ? ['test/**/*.integration.test.ts', 'test/integration.test.ts']
       : ['test/**/*.test.ts'],
+    // Live tests need credentials and the integration timeouts above, so a
+    // plain `npm test` never picks them up.
+    exclude: process.env.VITEST_INTEGRATION
+      ? ['**/node_modules/**']
+      : ['**/node_modules/**', 'test/**/*.integration.test.ts', 'test/integration.test.ts'],
     coverage: {
-      reporter: ['text', 'json', 'html'],
+      provider: 'v8',
+      reporter: ['text', 'json-summary', 'html'],
+      include: ['src/**/*.ts'],
+      thresholds: { statements: 80, branches: 75, functions: 80, lines: 80 },
       exclude: [
         'node_modules/',
         'test/',
-        'lib/',
+        'src/lib/**',
         'dist/',
         '*.config.*'
       ]
