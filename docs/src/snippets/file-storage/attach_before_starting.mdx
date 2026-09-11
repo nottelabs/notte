@@ -14,16 +14,11 @@ with client.Session() as session:
 ```
 
 ```typescript attach_before_starting.ts
-import { NotteClient } from 'notte-sdk';
-import { readFile } from 'node:fs/promises';
-
 const client = new NotteClient();
-
-const status = await client.Session().use(async session => {
+const storage = client.FileStorage();
+await client.Session({ storage }).use(async session => {
   // Storage is always available and scoped to the session.
-  const storage = client.Files(session.getId()!);
-  await storage.upload(new Blob([new Uint8Array(await readFile('file.pdf'))]), 'file.pdf');
-  return await session.status();
+  await storage.upload('file.pdf');
 });
 ```
 

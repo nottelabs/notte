@@ -14,17 +14,12 @@ with client.Session() as session:
 ```
 
 ```typescript uploading_files.ts
-import { NotteClient } from 'notte-sdk';
-import { readFile } from 'node:fs/promises';
-
 const client = new NotteClient();
-const status = await client.Session().use(async session => {
-  const storage = client.Files(session.getId()!);
-  const report = new Blob([new Uint8Array(await readFile('report.pdf'))]);
-  await storage.upload(report, 'report.pdf');
-  await storage.upload(report, 'quarterly_report.pdf');
+const storage = client.FileStorage();
+await client.Session({ storage }).use(async session => {
+  await storage.upload('report.pdf');
+  await storage.upload('report.pdf', 'quarterly_report.pdf');
   console.log((await storage.list({ source: 'user_upload' })).files);
-  return await session.status();
 });
 ```
 
