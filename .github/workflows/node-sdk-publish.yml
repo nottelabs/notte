@@ -1,0 +1,52 @@
+name: Publish Node SDK
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: node-sdk-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    # Enable only after npm trusted publishing is configured and the previous
+    # publisher is disabled. Python release tags must never publish this package.
+    if: vars.NODE_SDK_PUBLISH_ENABLED == 'true' && startsWith(github.event.release.tag_name, 'node-sdk-v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: node-sdk
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: node-sdk/package-lock.json
+      - run: npm ci
+      - name: Set release version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          RELEASE_VERSION="${RELEASE_TAG#node-sdk-v}"
+          if ! echo "$RELEASE_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo 'Expected a stable node-sdk-vX.Y.Z release tag'
+            exit 1
+          fi
+          npm version "$RELEASE_VERSION" --no-git-tag-version
+      - run: npm run typecheck
+      - run: npm run test:unit -- --run
+      - run: npx vitest run test/function-stream.integration.test.ts
+      - run: npm run build
+      - run: node scripts/check-package.js
+      - run: npm publish --access public --provenance

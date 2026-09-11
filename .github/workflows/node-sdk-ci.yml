@@ -1,0 +1,80 @@
+name: Node SDK
+
+on:
+  pull_request:
+    paths: ['node-sdk/**', '.github/workflows/node-sdk-*.yml']
+  push:
+    branches: [main]
+    paths: ['node-sdk/**', '.github/workflows/node-sdk-*.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: node-sdk-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: node-sdk
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: node-sdk/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:unit -- --run
+      - name: Test streaming over local HTTP
+        run: npx vitest run test/function-stream.integration.test.ts
+      - run: npm run build
+      - run: npm pack --dry-run
+      - name: Smoke-test built package exports
+        run: node scripts/check-package.js
+
+  live:
+    # Never give API credentials to pull request code, including fork PRs.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: node-sdk/package-lock.json
+      - run: npm ci
+      - name: Run isolated function lifecycle tests
+        env:
+          NOTTE_API_URL: https://us-staging.notte.cc
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+        run: |
+          test -n "$NOTTE_API_KEY" || { echo 'NOTTE_API_KEY is required'; exit 1; }
+          npx vitest run test/function-create-run.integration.test.ts
+
+  generated:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: node-sdk/package-lock.json
+      - run: npm ci
+      - run: npm run check:staging
