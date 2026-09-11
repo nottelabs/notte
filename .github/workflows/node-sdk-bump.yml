@@ -1,0 +1,132 @@
+name: bump-node-sdk
+
+# Three times a day, regenerate the Node SDK from the staging OpenAPI schema
+# together with its generated TypeScript reference. If either has drifted, open
+# (or refresh) a pull request and merge it once the required checks pass.
+
+on:
+  schedule:
+    # Match the monorepo OpenAPI-client refresh cadence. GitHub cron is UTC.
+    - cron: '0 5 * * *'
+    - cron: '30 10 * * *'
+    - cron: '0 14 * * *'
+  workflow_dispatch: # allow manual triggering
+
+concurrency:
+  group: bump-node-sdk
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  bump:
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'github'] }}
+    timeout-minutes: 45
+    env:
+      # Use a real account so pushes from the stable branch trigger PR checks.
+      GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
+      BRANCH: chore/bump-node-sdk
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SUBMODULE_BUMP_PAT }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: node-sdk/package-lock.json
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Install Node SDK dependencies
+        working-directory: node-sdk
+        run: npm ci
+
+      - name: Regenerate Node SDK from staging
+        working-directory: node-sdk
+        run: npm run generate:staging
+
+      - name: Regenerate TypeScript SDK reference
+        working-directory: node-sdk
+        run: npm run docs:generate
+
+      - name: Validate generated SDK and reference
+        working-directory: node-sdk
+        run: |
+          npm run typecheck
+          npm run docs:test
+          npm run docs:check
+
+      - name: Detect generated drift
+        id: generate
+        run: |
+          set -euo pipefail
+
+          git add -A -- \
+            node-sdk/src/lib/client \
+            node-sdk/src/proxy/patterns.ts \
+            docs/src/typescript-sdk-reference \
+            docs/src/docs.json
+
+          if git diff --cached --quiet; then
+            echo "The Node SDK and TypeScript reference are already up to date."
+            echo "changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "changes=true" >> "$GITHUB_OUTPUT"
+          git diff --cached --stat
+
+      - name: Open or update the bump pull request
+        if: steps.generate.outputs.changes == 'true'
+        run: |
+          set -euo pipefail
+
+          DATE=$(date -u '+%Y-%m-%d %H:%M UTC')
+          TITLE="chore: regenerate Node SDK from staging OpenAPI"
+          BODY=$(printf '%s\n\n%s\n\n%s\n' \
+            "Automated regeneration of the Node SDK and its TypeScript reference from the staging OpenAPI schema." \
+            "**Last regenerated:** $DATE" \
+            "Opened by \`.github/workflows/node-sdk-bump.yml\`. Merges automatically once the required checks pass.")
+
+          # Rebuild the stable branch from the checked-out main commit so each
+          # scheduled run refreshes one PR instead of stacking new branches.
+          git checkout -B "$BRANCH"
+          git commit -m "$TITLE"
+          git push --force origin "$BRANCH"
+
+          PR_NUMBER=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
+          if [ -n "$PR_NUMBER" ]; then
+            echo "Updating existing PR #$PR_NUMBER"
+            gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY"
+          else
+            PR_NUMBER=$(gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY" \
+              | sed -n 's|.*pull/\([0-9]*\).*|\1|p' | head -1)
+            echo "Created PR #$PR_NUMBER"
+          fi
+
+          echo "PR: https://github.com/${{ github.repository }}/pull/$PR_NUMBER"
+
+          for _ in $(seq 1 10); do
+            if gh pr checks "$PR_NUMBER" >/dev/null 2>&1; then
+              break
+            fi
+            echo "Waiting for checks to be reported on PR #$PR_NUMBER."
+            sleep 30
+          done
+
+          if gh pr checks "$PR_NUMBER" --watch --fail-fast --interval 30; then
+            gh pr merge "$PR_NUMBER" --squash --delete-branch --admin
+            echo "Merged PR #$PR_NUMBER."
+          else
+            echo "::error::Checks did not pass on PR #$PR_NUMBER, so it was left open. The next scheduled run rebuilds the branch from main and retries."
+            exit 1
+          fi
