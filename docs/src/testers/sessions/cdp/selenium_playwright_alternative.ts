@@ -1,23 +1,5 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/sessions/cdp/selenium_playwright_alternative.py */}
-
-<CodeGroup>
-
-```python selenium_playwright_alternative.py
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
-    # Access the Playwright page directly
-    page = session.page
-
-    # Use Playwright for automation
-    page.goto("https://example.com")
-    print(f"Title: {page.title()}")
-```
-
-```typescript selenium_playwright_alternative.ts
+// @sniptest filename=selenium_playwright_alternative.ts
+// @sniptest show=1-18
 import { NotteClient } from 'notte-sdk';
 import { chromium } from 'playwright-core';
 
@@ -36,6 +18,5 @@ const status = await client.Session().use(async session => {
   }
   return status;
 });
-```
 
-</CodeGroup>
+export { status };

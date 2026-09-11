@@ -28,6 +28,9 @@ export function collectExampleResult(
       ...('idle_timeout_minutes' in contract.expected
         ? { idle_timeout_minutes: status.idle_timeout_minutes }
         : {}),
+      ...('max_duration_minutes' in contract.expected
+        ? { max_duration_minutes: status.max_duration_minutes }
+        : {}),
       ...('title' in contract.expected ? { title: values.title } : {}),
       ...('viewport' in contract.expected ? { viewport: values.viewport } : {}),
     };

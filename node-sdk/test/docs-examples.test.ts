@@ -5,11 +5,12 @@ import {
 } from './helpers/docs-examples';
 
 describe('paired example output contracts', () => {
-  it('checks idle timeout only when the example explicitly demonstrates it', () => {
+  it('checks timeout bounds only when the example explicitly demonstrates them', () => {
     const status = {
       session_id: 'owned-session',
       status: 'active',
       idle_timeout_minutes: 15,
+      max_duration_minutes: 20,
     };
     const ordinary = { expected: { status: 'active' }, closedSession: true };
     expect(collectExampleResult({ status }, ordinary)).toEqual({
@@ -17,12 +18,13 @@ describe('paired example output contracts', () => {
       status: 'active',
     });
     const timeout = {
-      expected: { status: 'active', idle_timeout_minutes: 15 },
+      expected: { status: 'active', idle_timeout_minutes: 15, max_duration_minutes: 20 },
       closedSession: true,
     };
     expect(collectExampleResult({ status }, timeout).idle_timeout_minutes).toBe(
       15,
     );
+    expect(collectExampleResult({ status }, timeout).max_duration_minutes).toBe(20);
   });
 
   it('collects SDK return values without requiring prints in the example', () => {
