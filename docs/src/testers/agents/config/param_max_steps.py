@@ -8,3 +8,6 @@ with client.Session() as session:
         session=session,
         max_steps=20,  # Allow up to 20 actions
     )
+    status = session.status()
+    assert agent.request.max_steps == 20
+    assert agent.request.session_id == status.session_id

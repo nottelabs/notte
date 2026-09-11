@@ -13,6 +13,36 @@ from parser import parse_file
 
 
 class RepositoryExamplesTest(unittest.TestCase):
+    def test_agent_configuration_pairs_hide_setup_and_assertions(self):
+        testers = Path(__file__).resolve().parents[1] / "testers/agents/config"
+        cases = {
+            "param_max_steps": "max_steps",
+            "param_use_vision": "use_vision",
+            "param_session": "open_viewer",
+            "param_notifier": "Notifications can be configured in the Notte console",
+        }
+        for name, teaching_text in cases.items():
+            for suffix in (".py", ".ts"):
+                with self.subTest(name=name, language=suffix):
+                    config, rendered = parse_file(testers / f"{name}{suffix}")
+                    self.assertIsNotNone(config.show)
+                    if suffix == ".ts" and name in ("param_session", "param_notifier", "creating_agent"):
+                        self.assertIn("await client.Session", rendered)
+                        self.assertIn("const agent = client.Agent", rendered)
+                        self.assertNotIn("const agent = await", rendered)
+
+                    self.assertIn(teaching_text, rendered)
+                    self.assertIn("session", rendered)
+                    for hidden in (
+                        "import ",
+                        "assert",
+                        "export {",
+                        "sessionStatus",
+                        "status =",
+                        "idle_timeout_minutes",
+                    ):
+                        self.assertNotIn(hidden, rendered)
+
     def test_python_page_examples_use_the_node_page_helper(self):
         root = Path(__file__).resolve().parents[1] / "testers"
         for path in root.rglob("*.ts"):

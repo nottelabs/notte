@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/agents/config/param_notifier.py */}
 
+<CodeGroup>
+
 ```python param_notifier.py
 with client.Session() as session:
     # Agent with notification via email
@@ -9,3 +11,16 @@ with client.Session() as session:
         # Notifications can be configured in the Notte console
     )
 ```
+
+```typescript param_notifier.ts
+await client.Session().use(async session => {
+  // Agent with notification via email
+  const agent = client.Agent({
+    session,
+    // Notifications can be configured in the Notte console
+  });
+  // Use the agent here, while its session is active.
+});
+```
+
+</CodeGroup>

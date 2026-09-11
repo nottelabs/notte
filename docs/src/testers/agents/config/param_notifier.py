@@ -9,3 +9,6 @@ with client.Session() as session:
         session=session,
         # Notifications can be configured in the Notte console
     )
+    status = session.status()
+    assert agent.request.session_id == status.session_id
+status = client.sessions.status(agent.request.session_id)
