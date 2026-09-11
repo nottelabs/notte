@@ -5,7 +5,7 @@ from notte_sdk import NotteClient
 client = NotteClient()
 
 # 4K resolution
-with client.Session(idle_timeout_minutes=2, viewport_width=3840, viewport_height=2160) as session:
+with client.Session(viewport_width=3840, viewport_height=2160) as session:
     page = session.page
     page.goto("https://example.com")
 

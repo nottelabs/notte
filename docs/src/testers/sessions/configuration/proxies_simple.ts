@@ -7,7 +7,7 @@ const client = new NotteClient();
 let status: SessionResponse | undefined;
 let title: string | undefined;
 
-const session = client.Session({ idle_timeout_minutes: 2, proxies: true });
+const session = client.Session({ proxies: true });
 await session.use(async () => {
   status = await session.status();
   if (status.status !== 'active') throw new Error('Session is not active');

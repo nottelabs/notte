@@ -2,7 +2,6 @@
   "sessions/configuration/quick_start.ts": {
     "expected": {
       "status": "active",
-      "idle_timeout_minutes": 2,
       "title": "Example Domain"
     },
     "closedSession": true
@@ -18,7 +17,6 @@
   "sessions/configuration/viewport.ts": {
     "expected": {
       "status": "active",
-      "idle_timeout_minutes": 2,
       "title": "Example Domain",
       "viewport": {
         "width": 3840,
@@ -42,7 +40,6 @@
   "sessions/configuration/proxies_simple.ts": {
     "expected": {
       "status": "active",
-      "idle_timeout_minutes": 2,
       "title": "Example Domain"
     },
     "closedSession": true
@@ -50,7 +47,6 @@
   "sessions/lifecycle/create_session.ts": {
     "expected": {
       "status": "active",
-      "idle_timeout_minutes": 10,
       "title": "Example Domain",
       "viewport": {
         "width": 1920,
@@ -62,22 +58,19 @@
   "sessions/lifecycle/create_session_2.ts": {
     "expected": {
       "status": "active",
-      "idle_timeout_minutes": 10,
       "title": "Example Domain"
     },
     "closedSession": true
   },
   "sessions/lifecycle/stop_session.ts": {
     "expected": {
-      "status": "active",
-      "idle_timeout_minutes": 2
+      "status": "active"
     },
     "closedSession": true
   },
   "sessions/lifecycle/monitor_state.ts": {
     "expected": {
-      "status": "active",
-      "idle_timeout_minutes": 2
+      "status": "active"
     },
     "closedSession": true
   },

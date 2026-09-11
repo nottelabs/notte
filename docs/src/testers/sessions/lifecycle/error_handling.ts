@@ -7,7 +7,7 @@ const client = new NotteClient();
 let sessionId: string | null = null;
 let errorMessage: string | undefined;
 
-const session = client.Session({ idle_timeout_minutes: 2 });
+const session = client.Session();
 const expectedError = new Error('Example automation failure');
 try {
   await session.use(async () => {

@@ -5,6 +5,26 @@ import {
 } from './helpers/docs-examples';
 
 describe('paired example output contracts', () => {
+  it('checks idle timeout only when the example explicitly demonstrates it', () => {
+    const status = {
+      session_id: 'owned-session',
+      status: 'active',
+      idle_timeout_minutes: 15,
+    };
+    const ordinary = { expected: { status: 'active' }, closedSession: true };
+    expect(collectExampleResult({ status }, ordinary)).toEqual({
+      session_id: 'owned-session',
+      status: 'active',
+    });
+    const timeout = {
+      expected: { status: 'active', idle_timeout_minutes: 15 },
+      closedSession: true,
+    };
+    expect(collectExampleResult({ status }, timeout).idle_timeout_minutes).toBe(
+      15,
+    );
+  });
+
   it('collects SDK return values without requiring prints in the example', () => {
     const contract = {
       expected: { status: 'closed', result: { url: 'https://example.com' } },

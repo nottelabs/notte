@@ -4,7 +4,7 @@
 <CodeGroup>
 
 ```python Python - Automatic Cleanup
-session = client.Session(idle_timeout_minutes=2)
+session = client.Session()
 try:
     with session:
         session_id = session.session_id
@@ -19,7 +19,7 @@ except ValueError as error:
 ```
 
 ```typescript TypeScript - Automatic Cleanup
-const session = client.Session({ idle_timeout_minutes: 2 });
+const session = client.Session();
 const expectedError = new Error('Example automation failure');
 try {
   await session.use(async () => {
@@ -44,7 +44,7 @@ try {
 ```
 
 ```python Python - Manual Error Handling
-session = client.Session(idle_timeout_minutes=2)
+session = client.Session()
 try:
     session.start()
     try:
@@ -62,7 +62,7 @@ except ValueError as error:
 ```
 
 ```typescript TypeScript - Manual Error Handling
-const session = client.Session({ idle_timeout_minutes: 2 });
+const session = client.Session();
 const expectedError = new Error('Example automation failure');
 try {
   await session.start();

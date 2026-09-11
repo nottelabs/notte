@@ -4,7 +4,7 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-session = client.Session(idle_timeout_minutes=2)
+session = client.Session()
 session.start()
 try:
     status = session.status()

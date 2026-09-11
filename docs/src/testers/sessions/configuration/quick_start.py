@@ -4,7 +4,7 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-with client.Session(idle_timeout_minutes=2) as session:
+with client.Session() as session:
     print(f"Session ID: {session.session_id}")
     page = session.page  # Playwright-compatible page
     page.goto("https://example.com")

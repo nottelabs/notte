@@ -85,8 +85,9 @@ npx vitest run test/docs-snippets.integration.test.ts
 
 The live suite deploys an isolated echo function (with an explicit failure mode), supplies its ID through
 `NOTTE_FUNCTION_ID`, checks returned values and closed session state, and deletes
-only its own function in teardown. Session examples use context-managed cleanup
-and a short idle timeout as a fallback. Tests have bounded timeouts. Hard process
+only its own function in teardown. Session examples use context-managed or
+try/finally cleanup; examples unrelated to timeouts use the SDK defaults rather
+than adding test-specific idle-timeout settings. Tests have bounded timeouts. Hard process
 termination can prevent teardown; the function may require manual removal.
 The CDP examples navigate to the same URL and write PNG screenshots in both
 languages. Tests override `NOTTE_SCREENSHOT_PATH` to owned temporary files,

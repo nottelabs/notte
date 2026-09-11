@@ -5,7 +5,7 @@
 
 ```python Python - Context Manager
 # Recommended: Use context manager for automatic cleanup
-with client.Session(idle_timeout_minutes=10, viewport_width=1920, viewport_height=1080) as session:
+with client.Session(viewport_width=1920, viewport_height=1080) as session:
     print(f"Session {session.session_id} is active")
 
     # Access Playwright page
@@ -16,7 +16,6 @@ with client.Session(idle_timeout_minutes=10, viewport_width=1920, viewport_heigh
 
 ```typescript TypeScript - Context Manager
 const session = client.Session({
-  idle_timeout_minutes: 10,
   viewport_width: 1920,
   viewport_height: 1080,
 });
@@ -43,7 +42,7 @@ await session.use(async () => {
 ```
 
 ```python Python - Manual Management
-session = client.Session(idle_timeout_minutes=10)
+session = client.Session()
 session.start()
 try:
     print(f"Session {session.session_id} is active")
@@ -59,7 +58,7 @@ finally:
 ```
 
 ```typescript TypeScript - Manual Management
-const session = client.Session({ idle_timeout_minutes: 10 });
+const session = client.Session();
 await session.start();
 try {
   console.log(`Session ${session.getId()} is active`);

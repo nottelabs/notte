@@ -13,6 +13,23 @@ from parser import parse_file
 
 
 class RepositoryExamplesTest(unittest.TestCase):
+    def test_non_timeout_examples_do_not_configure_idle_timeouts(self):
+        testers = Path(__file__).resolve().parents[1] / "testers"
+        for name in (
+            "sessions/configuration/proxies_simple",
+            "sessions/configuration/quick_start",
+            "sessions/configuration/viewport",
+            "sessions/lifecycle/create_session",
+            "sessions/lifecycle/create_session_2",
+            "sessions/lifecycle/monitor_state",
+            "sessions/lifecycle/stop_session",
+            "sessions/lifecycle/error_handling",
+            "sessions/lifecycle/error_handling_2",
+        ):
+            for suffix in (".py", ".ts"):
+                with self.subTest(name=name, language=suffix):
+                    self.assertNotIn("idle_timeout_minutes", (testers / f"{name}{suffix}").read_text())
+
     def test_all_new_pairs_keep_test_plumbing_out_of_displayed_code(self):
         directory = Path(__file__).resolve().parent
         contracts = json.loads((directory / "live-examples.json").read_text())

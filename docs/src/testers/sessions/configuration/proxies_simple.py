@@ -4,7 +4,7 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-with client.Session(idle_timeout_minutes=2, proxies=True) as session:
+with client.Session(proxies=True) as session:
     page = session.page
     page.goto("https://example.com")
 

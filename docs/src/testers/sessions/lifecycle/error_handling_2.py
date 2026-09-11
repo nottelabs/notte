@@ -6,7 +6,7 @@ client = NotteClient()
 session_id = None
 error_message = None
 
-session = client.Session(idle_timeout_minutes=2)
+session = client.Session()
 try:
     session.start()
     try:

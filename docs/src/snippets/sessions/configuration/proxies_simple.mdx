@@ -4,13 +4,13 @@
 <CodeGroup>
 
 ```python proxies_simple.py
-with client.Session(idle_timeout_minutes=2, proxies=True) as session:
+with client.Session(proxies=True) as session:
     page = session.page
     page.goto("https://example.com")
 ```
 
 ```typescript proxies_simple.ts
-const session = client.Session({ idle_timeout_minutes: 2, proxies: true });
+const session = client.Session({ proxies: true });
 await session.use(async () => {
   status = await session.status();
   if (status.status !== 'active') throw new Error('Session is not active');

@@ -5,7 +5,7 @@ import { NotteClient, type SessionResponse } from 'notte-sdk';
 const client = new NotteClient();
 let status: SessionResponse | undefined;
 
-const session = client.Session({ idle_timeout_minutes: 2 });
+const session = client.Session();
 await session.use(async () => {
   status = await session.status();
   if (status.status !== 'active') throw new Error('Session is not active');

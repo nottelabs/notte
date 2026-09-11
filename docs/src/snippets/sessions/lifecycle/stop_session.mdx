@@ -4,7 +4,7 @@
 <CodeGroup>
 
 ```python Python
-session = client.Session(idle_timeout_minutes=2)
+session = client.Session()
 session.start()
 try:
     status = session.status()
@@ -16,7 +16,7 @@ print("Session stopped successfully")
 ```
 
 ```typescript TypeScript
-const session = client.Session({ idle_timeout_minutes: 2 });
+const session = client.Session();
 await session.start();
 try {
   status = await session.status();

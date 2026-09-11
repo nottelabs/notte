@@ -5,7 +5,7 @@ from notte_sdk import NotteClient
 client = NotteClient()
 
 # Recommended: Use context manager for automatic cleanup
-with client.Session(idle_timeout_minutes=10, viewport_width=1920, viewport_height=1080) as session:
+with client.Session(viewport_width=1920, viewport_height=1080) as session:
     print(f"Session {session.session_id} is active")
 
     # Access Playwright page

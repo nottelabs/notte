@@ -25,7 +25,9 @@ export function collectExampleResult(
     return {
       session_id: status.session_id,
       status: status.status,
-      idle_timeout_minutes: status.idle_timeout_minutes,
+      ...('idle_timeout_minutes' in contract.expected
+        ? { idle_timeout_minutes: status.idle_timeout_minutes }
+        : {}),
       ...('title' in contract.expected ? { title: values.title } : {}),
       ...('viewport' in contract.expected ? { viewport: values.viewport } : {}),
     };

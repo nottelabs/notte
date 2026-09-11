@@ -1,5 +1,5 @@
 // @sniptest filename=create_session.ts
-// @sniptest show=9-33
+// @sniptest show=9-32
 import { NotteClient, type SessionResponse } from 'notte-sdk';
 import { chromium } from 'playwright-core';
 
@@ -9,7 +9,6 @@ let title: string | undefined;
 let viewport: { width: number; height: number } | undefined;
 
 const session = client.Session({
-  idle_timeout_minutes: 10,
   viewport_width: 1920,
   viewport_height: 1080,
 });

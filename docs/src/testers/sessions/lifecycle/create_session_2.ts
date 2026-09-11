@@ -7,7 +7,7 @@ const client = new NotteClient();
 let status: SessionResponse | undefined;
 let title: string | undefined;
 
-const session = client.Session({ idle_timeout_minutes: 10 });
+const session = client.Session();
 await session.start();
 try {
   console.log(`Session ${session.getId()} is active`);

@@ -4,7 +4,7 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-with client.Session(idle_timeout_minutes=2) as session:
+with client.Session() as session:
     status = session.status()
     if status.status != "active":
         raise Exception("Session is no longer active")
