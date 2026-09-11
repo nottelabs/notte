@@ -1,17 +1,19 @@
+# @sniptest filename=error_handling.py
+import json
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
+session = client.Session(idle_timeout_minutes=2)
+session_id = None
 
 try:
-    with client.Session() as session:
-        page = session.page
-        page.goto("https://example.com")
-
-        # Simulate an error
-        raise ValueError("Something went wrong!")
-
-except ValueError as e:
-    print(f"Automation failed: {e}")
-    # Session is still automatically stopped
-
-print("Session was cleaned up despite the error")
+    with session:
+        session_id = session.session_id
+        session.page.goto("https://example.com")
+        raise ValueError("Example automation failure")
+except ValueError as error:
+    if str(error) != "Example automation failure":
+        raise
+    print(json.dumps({"session_id": session_id, "error": str(error)}))
+# Cleanup happens even when automation raises.

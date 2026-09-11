@@ -957,7 +957,13 @@
         "source": "sessions/configuration/full_config.py",
         "language": "python",
         "title": "Python",
-        "execution_pending": "Legacy example from sessions/configuration/full_config.mdx; needs owned fixtures and behavior assertions before live execution."
+        "live_tested": true
+      },
+      {
+        "source": "sessions/configuration/full_config.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "live_tested": true
       }
     ]
   },
@@ -979,7 +985,13 @@
         "source": "sessions/configuration/quick_start.py",
         "language": "python",
         "title": "Python",
-        "execution_pending": "Legacy example from sessions/configuration/quick_start.mdx; needs owned fixtures and behavior assertions before live execution."
+        "live_tested": true
+      },
+      {
+        "source": "sessions/configuration/quick_start.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "live_tested": true
       }
     ]
   },
@@ -990,7 +1002,13 @@
         "source": "sessions/configuration/timeout.py",
         "language": "python",
         "title": "Python",
-        "execution_pending": "Legacy example from sessions/configuration/timeout.mdx; needs owned fixtures and behavior assertions before live execution."
+        "live_tested": true
+      },
+      {
+        "source": "sessions/configuration/timeout.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "live_tested": true
       }
     ]
   },
@@ -1001,7 +1019,13 @@
         "source": "sessions/configuration/viewport.py",
         "language": "python",
         "title": "Python",
-        "execution_pending": "Legacy example from sessions/configuration/viewport.mdx; needs owned fixtures and behavior assertions before live execution."
+        "live_tested": true
+      },
+      {
+        "source": "sessions/configuration/viewport.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "live_tested": true
       }
     ]
   },
@@ -1034,13 +1058,25 @@
         "source": "sessions/lifecycle/create_session.py",
         "language": "python",
         "title": "Python - Context Manager",
-        "execution_pending": "Legacy example from sessions/lifecycle/create_session.mdx; needs owned fixtures and behavior assertions before live execution."
+        "live_tested": true
+      },
+      {
+        "source": "sessions/lifecycle/create_session.ts",
+        "language": "typescript",
+        "title": "TypeScript - Context Manager",
+        "live_tested": true
       },
       {
         "source": "sessions/lifecycle/create_session_2.py",
         "language": "python",
         "title": "Python - Manual Management",
-        "execution_pending": "Legacy example from sessions/lifecycle/create_session.mdx; needs owned fixtures and behavior assertions before live execution."
+        "live_tested": true
+      },
+      {
+        "source": "sessions/lifecycle/create_session_2.ts",
+        "language": "typescript",
+        "title": "TypeScript - Manual Management",
+        "live_tested": true
       }
     ]
   },
@@ -1051,13 +1087,25 @@
         "source": "sessions/lifecycle/error_handling.py",
         "language": "python",
         "title": "Python - Automatic Cleanup",
-        "execution_pending": "Legacy example from sessions/lifecycle/error_handling.mdx; needs owned fixtures and behavior assertions before live execution."
+        "live_tested": true
+      },
+      {
+        "source": "sessions/lifecycle/error_handling.ts",
+        "language": "typescript",
+        "title": "TypeScript - Automatic Cleanup",
+        "live_tested": true
       },
       {
         "source": "sessions/lifecycle/error_handling_2.py",
         "language": "python",
         "title": "Python - Manual Error Handling",
-        "execution_pending": "Legacy example from sessions/lifecycle/error_handling.mdx; needs owned fixtures and behavior assertions before live execution."
+        "live_tested": true
+      },
+      {
+        "source": "sessions/lifecycle/error_handling_2.ts",
+        "language": "typescript",
+        "title": "TypeScript - Manual Error Handling",
+        "live_tested": true
       }
     ]
   },
@@ -1090,7 +1138,13 @@
         "source": "sessions/lifecycle/stop_session.py",
         "language": "python",
         "title": "Python",
-        "execution_pending": "Legacy example from sessions/lifecycle/stop_session.mdx; needs owned fixtures and behavior assertions before live execution."
+        "live_tested": true
+      },
+      {
+        "source": "sessions/lifecycle/stop_session.ts",
+        "language": "typescript",
+        "title": "TypeScript",
+        "live_tested": true
       }
     ]
   },

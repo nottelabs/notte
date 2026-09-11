@@ -1,20 +1,12 @@
 # @sniptest filename=handling_results.py
+import json
+import os
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
+function = client.Function(os.environ["NOTTE_FUNCTION_ID"])
 
-function = client.Function(function_id="workflow_abc123")
+# Check the final status and structured return value.
 result = function.run(url="https://example.com")
-
-# Check status
-if result.status == "closed":
-    print("Success!")
-    print(result.result)  # Function return value
-elif result.status == "failed":
-    print("Function failed")
-    print(result.result)  # Error message
-
-# Access metadata
-print(f"Workflow ID: {result.workflow_id}")
-print(f"Run ID: {result.workflow_run_id}")
-print(f"Session ID: {result.session_id}")
+print(json.dumps({"status": result.status, "result": result.result}))

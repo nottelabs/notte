@@ -1,0 +1,156 @@
+{
+  "sessions/configuration/quick_start.ts": {
+    "expected": {
+      "status": "active",
+      "idle_timeout_minutes": 2,
+      "title": "Example Domain"
+    },
+    "closedSession": true
+  },
+  "sessions/configuration/timeout.ts": {
+    "expected": {
+      "status": "active",
+      "idle_timeout_minutes": 10,
+      "title": "Example Domain"
+    },
+    "closedSession": true
+  },
+  "sessions/configuration/viewport.ts": {
+    "expected": {
+      "status": "active",
+      "idle_timeout_minutes": 2,
+      "title": "Example Domain",
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      }
+    },
+    "closedSession": true
+  },
+  "sessions/configuration/full_config.ts": {
+    "expected": {
+      "status": "active",
+      "idle_timeout_minutes": 10,
+      "title": "Example Domain",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      }
+    },
+    "closedSession": true
+  },
+  "sessions/configuration/proxies_simple.ts": {
+    "expected": {
+      "status": "active",
+      "idle_timeout_minutes": 2,
+      "title": "Example Domain"
+    },
+    "closedSession": true
+  },
+  "sessions/lifecycle/create_session.ts": {
+    "expected": {
+      "status": "active",
+      "idle_timeout_minutes": 10,
+      "title": "Example Domain",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      }
+    },
+    "closedSession": true
+  },
+  "sessions/lifecycle/create_session_2.ts": {
+    "expected": {
+      "status": "active",
+      "idle_timeout_minutes": 10,
+      "title": "Example Domain"
+    },
+    "closedSession": true
+  },
+  "sessions/lifecycle/stop_session.ts": {
+    "expected": {
+      "status": "active",
+      "idle_timeout_minutes": 2
+    },
+    "closedSession": true
+  },
+  "sessions/lifecycle/monitor_state.ts": {
+    "expected": {
+      "status": "active",
+      "idle_timeout_minutes": 2
+    },
+    "closedSession": true
+  },
+  "sessions/lifecycle/timeout_example.ts": {
+    "expected": {
+      "status": "active",
+      "idle_timeout_minutes": 15
+    },
+    "closedSession": true
+  },
+  "sessions/lifecycle/error_handling.ts": {
+    "expected": {
+      "error": "Example automation failure"
+    },
+    "closedSession": true
+  },
+  "sessions/lifecycle/error_handling_2.ts": {
+    "expected": {
+      "error": "Example automation failure"
+    },
+    "closedSession": true
+  },
+  "functions/invocations/cloud_execution.ts": {
+    "expected": {
+      "status": "closed",
+      "result": {
+        "url": "https://example.com",
+        "search_query": ""
+      }
+    }
+  },
+  "functions/invocations/stream_sdk.ts": {
+    "expected": {
+      "status": "closed",
+      "result": {
+        "url": "https://example.com",
+        "search_query": ""
+      }
+    },
+    "logContains": "Running docs echo"
+  },
+  "functions/invocations/sequential.ts": {
+    "expected": {
+      "results": [
+        {
+          "url": "https://example.com",
+          "search_query": ""
+        },
+        {
+          "url": "https://example.org",
+          "search_query": ""
+        }
+      ]
+    }
+  },
+  "functions/invocations/check_run_status.ts": {
+    "expected": {
+      "status": "closed",
+      "same_run": true
+    }
+  },
+  "functions/invocations/handling_results.ts": {
+    "expected": {
+      "status": "closed",
+      "result": {
+        "url": "https://example.com",
+        "search_query": ""
+      }
+    }
+  },
+  "functions/invocations/disable_raise.ts": {
+    "expected": {
+      "status": "failed"
+    }
+  }
+}

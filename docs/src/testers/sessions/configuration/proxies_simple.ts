@@ -1,35 +1,4 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/sessions/configuration/proxies_simple.py */}
-
-<CodeGroup>
-
-```python proxies_simple.py
-import json
-
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session(idle_timeout_minutes=2, proxies=True) as session:
-    status = session.status()
-    if status.status != "active":
-        raise RuntimeError("Session is not active")
-    page = session.page
-    page.goto("https://example.com")
-    print(
-        json.dumps(
-            {
-                "session_id": session.session_id,
-                "status": status.status,
-                "idle_timeout_minutes": status.idle_timeout_minutes,
-                "title": page.title(),
-            }
-        )
-    )
-# Automatically stopped here.
-```
-
-```typescript proxies_simple.ts
+// @sniptest filename=proxies_simple.ts
 import { NotteClient } from 'notte-sdk';
 import { chromium } from 'playwright-core';
 
@@ -59,6 +28,3 @@ await client
     }
   });
 // Automatically stopped here.
-```
-
-</CodeGroup>

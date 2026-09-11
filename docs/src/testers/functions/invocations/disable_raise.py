@@ -1,15 +1,12 @@
 # @sniptest filename=disable_raise.py
+import json
+import os
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
+function = client.Function(os.environ["NOTTE_FUNCTION_ID"])
 
-function = client.Function(function_id="workflow_abc123")
-
-# Don't raise exception on failure
-result = function.run(url="https://example.com", raise_on_failure=False)
-
-# Check status manually
-if result.status == "failed":
-    print(f"Function failed: {result.result}")
-else:
-    print(f"Success: {result.result}")
+# Inspect a failed run without raising an exception.
+result = function.run(url="https://example.com", fail=True, raise_on_failure=False)
+print(json.dumps({"status": result.status}))

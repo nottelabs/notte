@@ -1,11 +1,12 @@
 # @sniptest filename=cloud_execution.py
+import json
+import os
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
+function = client.Function(os.environ["NOTTE_FUNCTION_ID"])
 
-function = client.Function(function_id="workflow_abc123")
-# Runs on Notte infrastructure
-result = function.run(
-    url="https://example.com",
-    local=False,  # Default
-)
+# Run on Notte infrastructure (the default).
+result = function.run(url="https://example.com", local=False)
+print(json.dumps({"status": result.status, "result": result.result}))

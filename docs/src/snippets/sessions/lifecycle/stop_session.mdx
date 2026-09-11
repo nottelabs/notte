@@ -1,21 +1,56 @@
 {/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/sessions/lifecycle/stop_session.py */}
+{/* @sniptest testers/sessions/lifecycle/stop_session.py, testers/sessions/lifecycle/stop_session.ts */}
 
 <CodeGroup>
 
 ```python Python
+import json
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
-# Manual stop
-session = client.Session()
+# Manual lifecycle: always stop in finally.
+session = client.Session(idle_timeout_minutes=2)
 session.start()
+try:
+    status = session.status()
+    if status.status != "active":
+        raise RuntimeError("Session is not active")
+    print(
+        json.dumps(
+            {
+                "session_id": session.session_id,
+                "status": status.status,
+                "idle_timeout_minutes": status.idle_timeout_minutes,
+            }
+        )
+    )
+finally:
+    session.stop()
+```
 
-# ... do work ...
+```typescript TypeScript
+import { NotteClient } from 'notte-sdk';
 
-session.stop()
-print("Session stopped successfully")
+const client = new NotteClient();
+
+// Manual lifecycle: always stop in finally.
+const session = client.Session({ idle_timeout_minutes: 2 });
+await session.start();
+try {
+  const status = await session.status();
+  if (status.status !== 'active') throw new Error('Session is not active');
+  console.log(
+    JSON.stringify({
+      session_id: session.getId(),
+      status: status.status,
+      idle_timeout_minutes: status.idle_timeout_minutes,
+    }),
+  );
+} finally {
+  await session.stop();
+}
 ```
 
 </CodeGroup>

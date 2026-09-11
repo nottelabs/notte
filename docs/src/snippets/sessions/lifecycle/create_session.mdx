@@ -1,41 +1,137 @@
 {/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/sessions/lifecycle/create_session.py, testers/sessions/lifecycle/create_session_2.py */}
+{/* @sniptest testers/sessions/lifecycle/create_session.py, testers/sessions/lifecycle/create_session.ts, testers/sessions/lifecycle/create_session_2.py, testers/sessions/lifecycle/create_session_2.ts */}
 
 <CodeGroup>
 
 ```python Python - Context Manager
+import json
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
-# Recommended: Use context manager for automatic cleanup
-with client.Session(timeout_minutes=10, viewport_width=1920, viewport_height=1080) as session:
-    print(f"Session {session.session_id} is active")
-
-    # Access Playwright page
+with client.Session(idle_timeout_minutes=10, viewport_width=1920, viewport_height=1080) as session:
+    status = session.status()
+    if status.status != "active":
+        raise RuntimeError("Session is not active")
     page = session.page
     page.goto("https://example.com")
-    print(f"Page title: {page.title()}")
+    print(
+        json.dumps(
+            {
+                "session_id": session.session_id,
+                "status": status.status,
+                "idle_timeout_minutes": status.idle_timeout_minutes,
+                "title": page.title(),
+                "viewport": page.evaluate("({width: window.innerWidth, height: window.innerHeight})"),
+            }
+        )
+    )
+# Automatically stopped here.
+```
 
-# Session automatically stopped here
+```typescript TypeScript - Context Manager
+import { NotteClient } from 'notte-sdk';
+import { chromium } from 'playwright-core';
+
+const client = new NotteClient();
+
+await client
+  .Session({
+    idle_timeout_minutes: 10,
+    viewport_width: 1920,
+    viewport_height: 1080,
+  })
+  .use(async (session) => {
+    const status = await session.status();
+    if (status.status !== 'active') throw new Error('Session is not active');
+    const cdpUrl = status.cdp_url;
+    if (!cdpUrl) throw new Error('Session did not return a CDP URL');
+    const browser = await chromium.connectOverCDP(cdpUrl);
+    try {
+      const page = browser.contexts()[0].pages()[0];
+      await page.goto('https://example.com');
+      console.log(
+        JSON.stringify({
+          session_id: session.getId(),
+          status: status.status,
+          idle_timeout_minutes: status.idle_timeout_minutes,
+          title: await page.title(),
+          viewport: await page.evaluate(() => ({
+            width: window.innerWidth,
+            height: window.innerHeight,
+          })),
+        }),
+      );
+    } finally {
+      await browser.close();
+    }
+  });
+// Automatically stopped here.
 ```
 
 ```python Python - Manual Management
+import json
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
-# Manual management (not recommended)
-session = client.Session(timeout_minutes=10)
+# Manual lifecycle: always stop in finally.
+session = client.Session(idle_timeout_minutes=10)
 session.start()
-
 try:
-    print(f"Session {session.session_id} is active")
+    status = session.status()
+    if status.status != "active":
+        raise RuntimeError("Session is not active")
     page = session.page
     page.goto("https://example.com")
+    print(
+        json.dumps(
+            {
+                "session_id": session.session_id,
+                "status": status.status,
+                "idle_timeout_minutes": status.idle_timeout_minutes,
+                "title": page.title(),
+            }
+        )
+    )
 finally:
-    # Always stop the session
     session.stop()
+```
+
+```typescript TypeScript - Manual Management
+import { NotteClient } from 'notte-sdk';
+import { chromium } from 'playwright-core';
+
+const client = new NotteClient();
+
+// Manual lifecycle: always stop in finally.
+const session = client.Session({ idle_timeout_minutes: 10 });
+await session.start();
+try {
+  const status = await session.status();
+  if (status.status !== 'active') throw new Error('Session is not active');
+  const cdpUrl = status.cdp_url;
+  if (!cdpUrl) throw new Error('Session did not return a CDP URL');
+  const browser = await chromium.connectOverCDP(cdpUrl);
+  try {
+    const page = browser.contexts()[0].pages()[0];
+    await page.goto('https://example.com');
+    console.log(
+      JSON.stringify({
+        session_id: session.getId(),
+        status: status.status,
+        idle_timeout_minutes: status.idle_timeout_minutes,
+        title: await page.title(),
+      }),
+    );
+  } finally {
+    await browser.close();
+  }
+} finally {
+  await session.stop();
+}
 ```
 
 </CodeGroup>

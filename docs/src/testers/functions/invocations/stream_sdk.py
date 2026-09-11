@@ -1,11 +1,12 @@
 # @sniptest filename=stream_sdk.py
+import json
+import os
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
+function = client.Function(os.environ["NOTTE_FUNCTION_ID"])
 
-function = client.Function(function_id="workflow_abc123")
-# Stream logs while running
-result = function.run(
-    url="https://example.com",
-    stream=True,  # Logs printed to console
-)
+# Stream logs while waiting for the final result.
+result = function.run(url="https://example.com", stream=True)
+print(json.dumps({"status": result.status, "result": result.result}))
