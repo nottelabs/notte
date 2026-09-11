@@ -47,6 +47,15 @@ Edit SDK declarations/JSDoc to change API documentation. Generated pages live in
 generated too. Existing Python reference pages and URLs are not relocated.
 The small class-slug mapping controls presentation only, not which methods exist.
 
+Follow the Python reference's structure using idiomatic JSDoc: a short task
+summary, behavior and lifecycle notes, `@param` descriptions, `@returns`,
+`@throws`, and `@example`. The generator puts return descriptions beside the
+inferred/declared return type and renders Raises and Example sections separately.
+Document actual Node behavior rather than copying Python exception names or
+return conventions. Use option-interface comments for individual option defaults.
+Method examples should use `@example` without nested Markdown fences. These
+short API illustrations do not replace the paired, live-tested snippet suite.
+
 Scope: high-level root-exported classes and related types. Generated HTTP
 functions, legacy root helper functions, and proxy subpath entrypoints are not
 documented by this generator. Referenced types may be internal source types;

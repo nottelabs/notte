@@ -175,12 +175,10 @@ export class Session {
    * `CLUSTER_OVERLOAD_RETRY_DELAY_MS` on HTTP 529 (cluster overload). 4xx
    * errors are never retried.
    *
-   * ```ts
+   * Prefer `session.use(async session => { ... })`, which also stops the session.
+   * @example
    * const session = client.Session();
    * await session.start();
-   * ```
-   *
-   * Prefer `session.use(async session => { ... })`, which also stops the session.
    */
   async start(): Promise<void> {
     if (this.legacyHeadless === false) {
@@ -263,9 +261,8 @@ export class Session {
    * session cookies are appended to it first. A session the API reports as
    * already stopped is tolerated with a warning.
    *
-   * ```ts
+   * @example
    * await session.stop();
-   * ```
    */
   async stop(closeReason: SessionCloseReason = 'manual'): Promise<void> {
     if (!this.isActive || !this.sessionId) {
@@ -323,10 +320,12 @@ export class Session {
    * Get the current status of the session. Like Python, this keeps working
    * after `stop()` (for example to read the recorded `steps`).
    *
-   * ```ts
+   * @returns Current session metadata, including lifecycle status and recorded steps. Works after `stop()`.
+   * @throws Error if this session has never been started.
+   * @throws NotteAPIError if the status request fails.
+   * @example
    * const status = await session.status();
    * console.log(status.status); // 'active'
-   * ```
    */
   async status(): Promise<SessionResponse> {
     const response = await sessionStatus({
@@ -400,14 +399,12 @@ export class Session {
    * the session is closed, so by default this polls on 404 until the replay is
    * ready. It keeps working after `stop()`.
    *
-   * ```ts
+   * Throws an `Error` when the API reports the session is still active and a
+   * `NotteTimeoutError` when the replay is not ready within `timeoutMs`.
+   * @example
    * await session.stop();
    * const replay = await session.replay();
    * console.log(replay.mp4_url);
-   * ```
-   *
-   * Throws an `Error` when the API reports the session is still active and a
-   * `NotteTimeoutError` when the replay is not ready within `timeoutMs`.
    */
   async replay(options: ReplayOptions = {}): Promise<ReplayResponse> {
     const { wait = true, timeoutMs = 240_000, pollIntervalMs = 5_000 } = options;
@@ -455,10 +452,9 @@ export class Session {
    * in Python. Resolves with the absolute path of the written file and throws
    * when the replay has no `mp4_url`.
    *
-   * ```ts
+   * @example
    * await session.stop();
    * const file = await session.downloadReplay('session.mp4');
-   * ```
    */
   async downloadReplay(path = 'replay.mp4', options: ReplayOptions = {}): Promise<string> {
     const replay = await this.replay(options);
@@ -481,9 +477,8 @@ export class Session {
   /**
    * Upload cookies to the session.
    *
-   * ```ts
+   * @example
    * await session.setCookies([{ name: 'token', value: 'abc', domain: 'example.com', path: '/', httpOnly: false }]);
-   * ```
    */
   async setCookies(cookies: Cookie[]): Promise<ExecutionResponse> {
     const response = await sessionCookiesSet({
@@ -498,9 +493,8 @@ export class Session {
   /**
    * Upload cookies from a JSON file (a list of cookies, like `getCookies()` returns).
    *
-   * ```ts
+   * @example
    * await session.setCookiesFromFile('cookies.json');
-   * ```
    */
   async setCookiesFromFile(cookieFile: string): Promise<ExecutionResponse> {
     return this.setCookies(await readCookiesFile(cookieFile));
@@ -509,10 +503,9 @@ export class Session {
   /**
    * Get the cookies of the session.
    *
-   * ```ts
+   * @example
    * const cookies = await session.getCookies();
    * await fs.writeFile('cookies.json', JSON.stringify(cookies));
-   * ```
    */
   async getCookies(): Promise<Cookie[]> {
     const response = await sessionCookiesGet({
@@ -557,9 +550,10 @@ export class Session {
    * untouched. Notte-served URLs, from the start response or the debug info,
    * carry the database preview branch when one is configured.
    *
-   * ```ts
+   * @returns The CDP WebSocket URL for connecting a browser automation client.
+   * @throws Error if no session ID or CDP URL is available.
+   * @example
    * const browser = await chromium.connectOverCDP(await session.cdpUrl());
-   * ```
    */
   async cdpUrl(): Promise<string> {
     if (!this.response) {
@@ -588,11 +582,10 @@ export class Session {
    * Requires the optional `playwright-core` peer dependency
    * (`npm install playwright-core`).
    *
-   * ```ts
+   * @example
    * const page = await session.page();
    * await page.goto('https://www.google.com');
    * await page.screenshot({ path: 'screenshot.png' });
-   * ```
    */
   async page(): Promise<Page> {
     if (this.playwrightPage) {
@@ -629,9 +622,8 @@ export class Session {
    * Get the workflow code generated from the session steps
    * (`GET /sessions/{id}/workflow/code`).
    *
-   * ```ts
+   * @example
    * const { python_script } = await session.getScript();
-   * ```
    */
   async getScript(options: SessionScriptOptions = {}): Promise<AgentFunctionCodeResponse> {
     const { as_workflow = true, infer_response_format } = options;
@@ -651,20 +643,24 @@ export class Session {
   /**
    * Execute an action on the current page.
    *
-   * ```ts
+   * When the action fails and `raiseOnFailure` is true (the default, see the
+   * session option), the structured `exception_detail` returned by the API is
+   * rehydrated into an `ActionExecutionError` whose `errorType` names the
+   * server-side error class. `captcha_solve` actions get a 100 s request
+   * timeout and are retried up to 3 times on HTTP 408.
+   *
+   * @param action - Action type, target, and action-specific arguments.
+   * @param options - Override failure handling for this call; otherwise use the session setting.
+   * @returns The execution response, including `success` and failure details when throwing is disabled.
+   * @throws ActionExecutionError if the action fails and failure throwing is enabled.
+   * @throws NotteAPIError if the API request fails.
+   * @example
    * import { actions } from 'notte-sdk';
    *
    * await session.execute({ type: 'goto', url: 'https://www.notte.cc' });
    * await session.execute(actions.fill({ selector: "input[name='email']", value: 'user@example.com' }));
    * const result = await session.execute({ type: 'click', id: 'B1' }, { raiseOnFailure: false });
    * if (!result.success) console.log(result.message);
-   * ```
-   *
-   * When the action fails and `raiseOnFailure` is true (the default, see the
-   * session option), the structured `exception_detail` returned by the API is
-   * rehydrated into an `ActionExecutionError` whose `errorType` names the
-   * server-side error class. `captcha_solve` actions get a 100 s request
-   * timeout and are retried up to 3 times on HTTP 408.
    */
   async execute(action: ExecuteAction, options: boolean | ExecuteOptions = {}): Promise<ApiExecutionResponse> {
     const sessionId = this.requireSessionId();
@@ -722,10 +718,9 @@ export class Session {
    * `ActionExecutionError` is thrown with the actual JavaScript error; pass
    * `raiseOnFailure: false` to get the execution result envelope instead.
    *
-   * ```ts
+   * @example
    * const title = await session.evaluateJs('document.title');
    * const payload = JSON.parse(await session.evaluateJs('(async () => JSON.stringify(await (await fetch("/api")).json()))()'));
-   * ```
    */
   async evaluateJs(code: string, options?: { raiseOnFailure?: true }): Promise<string>;
   async evaluateJs(code: string, options: { raiseOnFailure: false }): Promise<ApiExecutionResponse>;
@@ -756,10 +751,13 @@ export class Session {
    * `json` is serialised as the body with an `application/json` content type,
    * `data` as a form body when it is an object or verbatim when it is a string.
    *
-   * ```ts
+   * @param url - Absolute URL or a path relative to the current page.
+   * @param options - HTTP method, headers, and request body settings.
+   * @returns A response with status, headers, and body readers. Non-2xx responses are not automatically thrown.
+   * @throws ActionExecutionError if browser-side execution fails.
+   * @example
    * await session.execute({ type: 'goto', url: 'https://en.wikipedia.org/wiki/Main_Page' });
    * const summary = await (await session.fetch('/api/rest_v1/page/summary/Main_Page')).json();
-   * ```
    */
   async fetch(url: string, options: PageFetchOptions = {}): Promise<PageFetchResponse> {
     const script = buildFetchScript(url, options);
@@ -770,14 +768,16 @@ export class Session {
    * Observe the current page: the list of actions that can be taken, a
    * screenshot and page metadata.
    *
-   * ```ts
+   * The `perception_type` defaults to the session option (`fast`). A bare
+   * string argument is accepted as the perception type.
+   *
+   * @param options - Observation settings, including an optional URL, or a perception-mode string.
+   * @returns Structured page analysis, available actions, and page metadata.
+   * @throws NotteAPIError if observation fails.
+   * @example
    * const obs = await session.observe();
    * console.log(obs.space.description);
    * const deep = await session.observe({ perception_type: 'deep', max_nb_actions: 50 });
-   * ```
-   *
-   * The `perception_type` defaults to the session option (`fast`). A bare
-   * string argument is accepted as the perception type.
    */
   async observe(options: ObserveRequest | PerceptionType = {}): Promise<Observation> {
     const body: ObserveRequest = typeof options === 'string' ? { perception_type: options } : { ...options };
@@ -796,17 +796,15 @@ export class Session {
   /**
    * Scrape the current page.
    *
-   * ```ts
+   * With `response_format` or `instructions`, the extracted data is returned
+   * directly and a failed extraction throws `ScrapeFailedError`. Pass
+   * `raiseOnFailure: false` to receive the `StructuredData` wrapper instead.
+   * @example
    * const markdown = await session.scrape({ only_main_content: true });
    * const images = await session.scrape({ only_images: true });
    * const product = await session.scrape({ response_format: Product, instructions: 'Extract the product' });
    * const result = await session.scrape({ response_format: Product, raiseOnFailure: false });
    * if (result.success) console.log(result.data);
-   * ```
-   *
-   * With `response_format` or `instructions`, the extracted data is returned
-   * directly and a failed extraction throws `ScrapeFailedError`. Pass
-   * `raiseOnFailure: false` to receive the `StructuredData` wrapper instead.
    */
   async scrape(options: SessionScrapeOptions<unknown> & { only_images: true }): Promise<ImageData[]>;
   async scrape(options?: SessionScrapeOptions<unknown> & { response_format?: undefined; instructions?: undefined | null; only_images?: false }): Promise<string>;
@@ -833,11 +831,13 @@ export class Session {
    * Context manager pattern: start the session, run the callback and stop the
    * session, with close reason `error` when the callback throws.
    *
-   * ```ts
+   * @param callback - Async work to perform with the started session.
+   * @returns The callback's return value after session cleanup has been attempted.
+   * @throws Error if startup fails, the callback throws, or cleanup fails after a successful callback.
+   * @example
    * await client.Session().use(async session => {
    *   await session.execute({ type: 'goto', url: 'https://www.notte.cc' });
    * });
-   * ```
    */
   async use<T>(callback: (session: Session) => Promise<T>): Promise<T> {
     await this.start();

@@ -12,12 +12,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 Context manager pattern: start the session, run the callback and stop the
 session, with close reason `error` when the callback throws.
 
-```ts
-await client.Session().use(async session => {
-  await session.execute({ type: 'goto', url: 'https://www.notte.cc' });
-});
-```
-
 ```typescript
 Session.use<T>(callback: (session: Session) => Promise<T>): Promise<T>;
 ```
@@ -25,11 +19,25 @@ Session.use<T>(callback: (session: Session) => Promise<T>): Promise<T>;
 ## Parameters
 
 <ParamField body="callback" type={"(session: Session) => Promise<T>"} required>
-
+Async work to perform with the started session.
 </ParamField>
 
 ## Returns
 
 ```typescript
 Promise<T>
+```
+
+The callback's return value after session cleanup has been attempted.
+
+## Raises
+
+- Error if startup fails, the callback throws, or cleanup fails after a successful callback.
+
+## Example
+
+```typescript
+await client.Session().use(async session => {
+  await session.execute({ type: 'goto', url: 'https://www.notte.cc' });
+});
 ```
