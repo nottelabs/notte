@@ -1,15 +1,32 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/management/check_run_status.py */}
 
+<CodeGroup>
+
 ```python check_run_status.py
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
 # Get run details
-run_status = client.functions.get_run("function_abc123", "run_xyz789")
+run_status = client.functions.get_run(function_id, run_id)
 
 print(f"Status: {run_status.status}")  # "active", "closed", "failed"
 print(f"Result: {run_status.result}")
 print(f"Session ID: {run_status.session_id}")
 ```
+
+```typescript check_run_status.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+// Get run details
+const runStatus = await client.NotteFunction({ function_id: functionId }).getRun(runId);
+
+console.log(`Status: ${runStatus.status}`); // "active", "closed", "failed"
+console.log('Result:', runStatus.result);
+console.log(`Session ID: ${runStatus.session_id}`);
+```
+
+</CodeGroup>

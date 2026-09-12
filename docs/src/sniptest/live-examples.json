@@ -1,4 +1,12 @@
 {
+  "functions/management/check_run_status.ts": {
+    "expected": { "status": "closed", "same_run": true },
+    "logContains": "Session ID:"
+  },
+  "functions/management/high_failure_rate.ts": {
+    "expected": { "results": ["failed", true] },
+    "logContains": "Example function failure"
+  },
   "functions/management/view_run_history.ts": {
     "expected": { "results": ["closed"] },
     "logContains": "Status: closed"
