@@ -1,16 +1,34 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/sessions/capabilities/match_viewport.py */}
 
+<CodeGroup>
+
 ```python match_viewport.py
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
 # Desktop
-with client.Session(viewport_width=1920, viewport_height=1080) as session:
+with client.Session(viewport_width=1920, viewport_height=1080) as desktop:
     pass
 
 # Laptop
 with client.Session(viewport_width=1366, viewport_height=768) as session:
     pass
 ```
+
+```typescript match_viewport.ts
+import { NotteClient } from "notte-sdk";
+
+const client = new NotteClient();
+
+// Desktop
+const desktop = client.Session({ viewport_width: 1920, viewport_height: 1080 });
+await desktop.use(async () => {});
+
+// Laptop
+const session = client.Session({ viewport_width: 1366, viewport_height: 768 });
+await session.use(async () => {});
+```
+
+</CodeGroup>
