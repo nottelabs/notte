@@ -1,4 +1,8 @@
 {
+  "functions/deploy_function.ts": {"expected":{"results":["Search Automation","Searches a website and extracts results",false,"paired deployment"]},"logContains":"Function deployed:"},
+  "functions/creating/deploy_sdk.ts": {"expected":{"results":["Website Scraper","Scrapes data from websites",false,"paired deployment"]},"logContains":"Function deployed:"},
+  "functions/creating/deployment_options.ts": {"expected":{"results":["My Function","What this function does",false,"paired deployment"]}},
+  "functions/management/private_function.ts": {"expected":{"results":["Private Automation",null,false,"paired deployment"]}},
   "browser-controls/conditional_actions.ts": {
     "expected": { "status": "closed" },
     "closedSession": true,

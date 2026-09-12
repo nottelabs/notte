@@ -10,6 +10,14 @@ Do not remove an exemption until the corresponding scripts and assertions exist.
 
 ## Next batches
 
+The deployment batch pairs `functions/deploy_function`, `creating/deploy_sdk`,
+`creating/deployment_options`, and `management/private_function`. Isolated
+temporary directories supply harmless Python runtime files with the original
+documented filenames. Both SDKs upload private functions, check metadata and
+version membership, execute the uploaded code, and delete their own functions.
+This tests Node as a deployment client for Python handlers, not a Node function
+runtime. All displayed Python code is preserved.
+
 The browser/configuration follow-up adds two live browser pairs (`eval_js` and
 `conditional_actions`) and three executable configuration pairs (model selection,
 step-limit recommendations, and a French proxy descriptor). Browser contracts
