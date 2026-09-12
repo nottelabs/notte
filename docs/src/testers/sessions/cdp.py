@@ -1,4 +1,5 @@
 # @sniptest filename=cdp_playwright.py
+# @sniptest show=1-13
 from notte_sdk import NotteClient
 from patchright.sync_api import sync_playwright
 
@@ -12,3 +13,6 @@ with client.Session(proxies=False) as session:
         _ = page.goto("https://www.google.com")
         screenshot = page.screenshot(path="screenshot.png")
         assert screenshot is not None
+        assert screenshot.startswith(b"\x89PNG\r\n\x1a\n")
+        assert len(screenshot) > 1000
+        status = session.status()

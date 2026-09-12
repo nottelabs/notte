@@ -335,6 +335,26 @@
     "expected": { "status": "closed" },
     "closedSession": true
   },
+  "sessions/cdp.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "sessions/configuration/cookie_file.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "sessions/cdp/selenium_builtin_page.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "sessions/capabilities/match_viewport.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "sessions/stealth/match_viewport.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
   "sessions/capabilities/dev_environment.ts": {
     "expected": { "status": "closed" },
     "closedSession": true

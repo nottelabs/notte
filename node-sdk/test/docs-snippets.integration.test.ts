@@ -66,7 +66,7 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
   }, 60_000);
 
   async function runExample(name: string) {
-    if (name.startsWith('file-storage/')) {
+    if (name.startsWith('file-storage/') || name === 'sessions/cdp.ts' || name === 'sessions/configuration/cookie_file.ts') {
       const directory = await mkdtemp(join(tmpdir(), 'notte-docs-files-'));
       const contract = contracts[name];
       try {
@@ -75,8 +75,15 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
           const cwd = join(directory, language);
           await mkdir(cwd);
           // Owned fixture files; never depend on or overwrite a developer's files.
-          for (const filename of ['report.pdf', 'file.pdf']) {
-            await writeFile(join(cwd, filename), '%PDF-1.4\nNotte paired upload fixture\n%%EOF\n');
+          if (name.startsWith('file-storage/')) {
+            for (const filename of ['report.pdf', 'file.pdf']) {
+              await writeFile(join(cwd, filename), '%PDF-1.4\nNotte paired upload fixture\n%%EOF\n');
+            }
+          }
+          if (name === 'sessions/configuration/cookie_file.ts') {
+            await writeFile(join(cwd, 'cookies.json'), JSON.stringify([
+              { name: 'sniptest_cookie', value: 'paired', domain: 'example.com', path: '/', httpOnly: false },
+            ]));
           }
           const source = `${testers}${name.replace(/\.ts$/, language === 'python' ? '.py' : '.ts')}`;
           const runner = fileURLToPath(new URL(`../../docs/src/sniptest/run_${language}.` + (language === 'python' ? 'py' : 'mjs'), import.meta.url));
@@ -86,10 +93,25 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
             { cwd, env: process.env, timeout: 120_000, maxBuffer: 2 * 1024 * 1024 },
           );
           const values = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!);
+          if (contract.closedSession && contract.expected.status === 'closed') {
+            expect(values.status?.session_id).toBeTruthy();
+            values.status = await expectSessionClosed(client, values.status.session_id, `${name} (${language})`);
+          }
           const id = verifyExampleOutput(JSON.stringify(collectExampleResult(values, contract)), contract, `${stdout}\n${stderr}`);
           expect(id).toBeTruthy();
           ids.push(id!);
           await expectSessionClosed(client, id!, `${name} (${language})`);
+          if (name === 'sessions/cdp.ts') {
+            const png = await readFile(join(cwd, 'screenshot.png'));
+            expect(png.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+            expect(png.length).toBeGreaterThan(1000);
+          }
+          if (name === 'sessions/configuration/cookie_file.ts') {
+            const cookies = JSON.parse(await readFile(join(cwd, 'cookies.json'), 'utf8'));
+            // stop() appends browser cookies to the fixture, proving load + save.
+            expect(cookies.filter((cookie: { name: string; value: string }) =>
+              cookie.name === 'sniptest_cookie' && cookie.value === 'paired')).toHaveLength(2);
+          }
         }
         expect(ids[0]).not.toBe(ids[1]);
       } finally {
@@ -150,6 +172,18 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
         exported = { status: logged[0][0] };
       }
       const pythonValues = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!);
+      if (name === 'sessions/capabilities/match_viewport.ts' || name === 'sessions/stealth/match_viewport.ts') {
+        const ids = [];
+        for (const [language, values] of [['typescript', exported!], ['python', pythonValues]] as const) {
+          expect(values.results).toHaveLength(2);
+          for (const id of values.results as string[]) {
+            expect(id).toEqual(expect.any(String));
+            ids.push(id);
+            await expectSessionClosed(client, id, `${name} (${language})`);
+          }
+        }
+        expect(new Set(ids).size).toBe(4);
+      }
       // Post-stop snapshots can precede asynchronous cleanup. For contracts
       // teaching completed lifecycle, verify the actual persisted response.
       if (contract.closedSession && contract.expected.status === 'closed') {
