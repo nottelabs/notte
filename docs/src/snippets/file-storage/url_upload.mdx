@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/file-storage/url_upload.py */}
 
+<CodeGroup>
+
 ```python url_upload.py
 from notte_sdk import NotteClient
 
@@ -14,3 +16,22 @@ with client.Session() as session:
         file_path="https://test-resources-lovat.vercel.app/text1.txt",
     )
 ```
+
+```typescript url_upload.ts
+const { NotteClient } = await import('notte-sdk');
+
+const client = new NotteClient();
+
+await client.Session().use(async session => {
+  await session.execute({
+    type: 'goto', url: 'https://test-resources-lovat.vercel.app/upload_fixture.html',
+  });
+  await session.execute({
+    type: 'upload_file',
+    selector: 'input[type="file"]',
+    file_path: 'https://test-resources-lovat.vercel.app/text1.txt',
+  });
+});
+```
+
+</CodeGroup>
