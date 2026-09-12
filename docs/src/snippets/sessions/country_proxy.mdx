@@ -1,8 +1,18 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/sessions/country_proxy.py */}
 
+<CodeGroup>
+
 ```python country_proxy.py
 from notte_sdk.types import NotteProxy
 
 proxies = NotteProxy.from_country("fr")
 ```
+
+```typescript country_proxy.ts
+import type { NotteProxy } from 'notte-sdk';
+
+const proxies: NotteProxy = { type: 'notte', country: 'fr' };
+```
+
+</CodeGroup>

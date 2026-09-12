@@ -1,4 +1,22 @@
 {
+  "browser-controls/conditional_actions.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true,
+    "logContains": "Optional button not found, continuing..."
+  },
+  "browser-controls/eval_js.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "agents/config/bp_model_selection.ts": {
+    "expected": { "results": ["anthropic/claude-3.5-sonnet"] }
+  },
+  "agents/config/bp_step_limits.ts": {
+    "expected": { "results": [30] }
+  },
+  "sessions/country_proxy.ts": {
+    "expected": { "results": ["notte", "fr"] }
+  },
   "scraping/quick_scrape.ts": {
     "expected": { "results": [true, true] }
   },
