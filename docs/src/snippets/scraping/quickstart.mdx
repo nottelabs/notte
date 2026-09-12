@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/scraping/quickstart.py */}
 
+<CodeGroup>
+
 ```python quickstart.py
 from notte_sdk import NotteClient
 
@@ -8,3 +10,13 @@ client = NotteClient()
 markdown = client.scrape("https://example.com")
 print(markdown)
 ```
+
+```typescript quickstart.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+const markdown = await client.scrape('https://example.com');
+console.log(markdown);
+```
+
+</CodeGroup>

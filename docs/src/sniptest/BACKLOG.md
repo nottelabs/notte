@@ -44,6 +44,16 @@ requiring an immediate closed snapshot in the displayed examples.
 
 ## SDK/API differences to address separately
 
+The scraping basics batch adds six executable pairs: `quick_scrape`, `quickstart`,
+`simple`, `content_filtering`, `link_placeholders`, and `links_and_images`. Four
+promote existing legacy TypeScript examples. Their live contracts check real
+markdown content from the original public URLs, not just successful process exit.
+They also check the actual IANA link placeholder and link inclusion/exclusion.
+The example.com page has no images or substantial navigation/sidebar content:
+these examples execute the displayed options but do not prove image inclusion
+or main-content filtering differences. Controlled-page option-sensitive coverage,
+structured extraction, and placeholder-domain examples remain follow-up work.
+
 Source inspection during this batch found that Python examples use convenience
 APIs not exposed by the current Node `Session` wrapper: attaching an existing
 session by ID, a built-in Playwright `page`, automatic `cookie_file` persistence,

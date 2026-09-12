@@ -1,4 +1,23 @@
 {
+  "scraping/quick_scrape.ts": {
+    "expected": { "results": [true, true] }
+  },
+  "scraping/quickstart.ts": {
+    "expected": { "results": [true, true] },
+    "logContains": "Example Domain"
+  },
+  "scraping/simple.ts": {
+    "expected": { "results": [true, true] }
+  },
+  "scraping/content_filtering.ts": {
+    "expected": { "results": [true, true] }
+  },
+  "scraping/link_placeholders.ts": {
+    "expected": { "results": [true, true, true, true] }
+  },
+  "scraping/links_and_images.ts": {
+    "expected": { "results": [true, true, true, true] }
+  },
   "functions/management/get_function_details.ts": {
     "expected": { "results": [true, true] },
     "logContains": "Latest Version:"
