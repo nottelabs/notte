@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/deploy_function.py */}
 
+<CodeGroup>
+
 ```python deploy_function.py
 from notte_sdk import NotteClient
 
@@ -14,3 +16,22 @@ function = client.Function(
 print(f"Function deployed: {function.function_id}")
 print(f"Version: {function.response.latest_version}")
 ```
+
+```typescript deploy_function.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+// Deploy function
+const fn = client.NotteFunction({
+  path: 'my_automation.py',
+  name: 'Search Automation',
+  description: 'Searches a website and extracts results',
+});
+
+const response = await fn.get();
+console.log(`Function deployed: ${response.function_id}`);
+console.log(`Version: ${response.latest_version}`);
+```
+
+</CodeGroup>

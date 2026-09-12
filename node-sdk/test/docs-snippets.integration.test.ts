@@ -66,6 +66,37 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
   }, 60_000);
 
   async function runExample(name: string) {
+    if ([
+      'functions/deploy_function.ts',
+      'functions/creating/deploy_sdk.ts',
+      'functions/creating/deployment_options.ts',
+      'functions/management/private_function.ts',
+    ].includes(name)) {
+      const directory = await mkdtemp(join(tmpdir(), 'notte-docs-deploy-'));
+      try {
+        for (const language of ['typescript', 'python']) {
+          const cwd = join(directory, language);
+          await mkdir(cwd);
+          // Each example uploads only owned, harmless Python runtime code.
+          for (const filename of ['my_automation.py', 'scraper_function.py', 'my_function.py']) {
+            await writeFile(join(cwd, filename), 'def run(url: str) -> str:\n    return "paired deployment"\n');
+          }
+          const source = `${testers}${name.replace(/\.ts$/, language === 'python' ? '.py' : '.ts')}`;
+          const runner = fileURLToPath(new URL(`../../docs/src/sniptest/run_${language}.` + (language === 'python' ? 'py' : 'mjs'), import.meta.url));
+          const { stdout, stderr } = await execute(
+            language === 'python' ? process.env.NOTTE_DOCS_PYTHON || 'python' : process.execPath,
+            language === 'python' ? [runner, source] : ['--experimental-strip-types', runner, source],
+            { cwd, env: process.env, timeout: 120_000, maxBuffer: 2 * 1024 * 1024 },
+          );
+          const values = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!);
+          const contract = contracts[name];
+          verifyExampleOutput(JSON.stringify(collectExampleResult(values, contract)), contract, `${stdout}\n${stderr}`);
+        }
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+      return;
+    }
     if (name.startsWith('file-storage/')) {
       const directory = await mkdtemp(join(tmpdir(), 'notte-docs-files-'));
       const contract = contracts[name];
