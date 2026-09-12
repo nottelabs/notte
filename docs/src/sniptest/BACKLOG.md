@@ -10,6 +10,19 @@ Do not remove an exemption until the corresponding scripts and assertions exist.
 
 ## Next batches
 
+The browser/configuration follow-up adds two live browser pairs (`eval_js` and
+`conditional_actions`) and three executable configuration pairs (model selection,
+step-limit recommendations, and a French proxy descriptor). Browser contracts
+check returned JavaScript values, the real missing-button result and branch, and
+session cleanup. Configuration contracts check local values only: they do not
+validate model availability/quality, agent execution, or proxy geolocation.
+
+The history/tab examples still need a fixture that checks actual browser URL and
+tab state while preserving their displayed Python code. A successful persisted
+action response alone is not sufficient proof of the resulting browser state.
+Underspecified agent tasks and placeholder shopping pages likewise remain pending;
+they have not been translated into tests accepting arbitrary agent failures.
+
 The browser/settings batch adds 17 executable pairs (34 script executions):
 navigation, reload, keyboard actions, scrolling, explicit waits, built-in proxies,
 captcha configuration, stealth configuration, and environment-dependent viewing.

@@ -141,13 +141,18 @@ class RepositoryExamplesTest(unittest.TestCase):
                     config, rendered = parse_file(path)
                     self.assertIsNotNone(config.show)
                     for unwanted in (
-                        "import json",
                         "NOTTE_FUNCTION_ID",
                         "same_run",
                         "export {",
                         "Values retained",
                     ):
                         self.assertNotIn(unwanted, rendered)
+                    if name == "browser-controls/eval_js.ts" and suffix == ".py":
+                        # JSON parsing is the original lesson, not test serialization.
+                        self.assertIn("import json", rendered)
+                        self.assertIn("json.loads(session.evaluate_js", rendered)
+                    else:
+                        self.assertNotIn("import json", rendered)
                     if name == "sessions/capabilities/dev_environment.ts" and suffix == ".py":
                         # This lesson intentionally teaches environment-dependent
                         # viewer configuration; os is teaching code, not a fixture.
