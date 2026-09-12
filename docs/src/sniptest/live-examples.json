@@ -245,5 +245,73 @@
     "expected": {
       "status": "failed"
     }
+  },
+  "browser-controls/goto.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "browser-controls/reload.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "browser-controls/scroll_down.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "browser-controls/scroll_up.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "browser-controls/press_key.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "browser-controls/wait.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "guides/wait_time.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "sessions/capabilities/captcha_combine_stealth.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "sessions/captcha/combine_stealth.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "sessions/capabilities/captcha_ensure_requirements.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "sessions/captcha/ensure_requirements.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "sessions/capabilities/captcha_increase_timeout.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "sessions/capabilities/combine_stealth.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "sessions/stealth/combine_techniques.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "sessions/default_proxy.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "sessions/stealth_configuration.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
+  },
+  "sessions/capabilities/dev_environment.ts": {
+    "expected": { "status": "closed" },
+    "closedSession": true
   }
 }

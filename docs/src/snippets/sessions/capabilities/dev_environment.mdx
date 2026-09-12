@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/sessions/capabilities/dev_environment.py */}
 
+<CodeGroup>
+
 ```python dev_environment.py
 import os
 
@@ -14,3 +16,19 @@ is_dev = os.getenv("ENV") == "development"
 with client.Session(open_viewer=is_dev) as session:
     session.execute(type="goto", url="https://example.com")
 ```
+
+```typescript dev_environment.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+// Only use live view in development
+const isDev = process.env.ENV === 'development';
+
+const session = client.Session({ open_viewer: isDev });
+await session.use(async () => {
+  await session.execute({ type: "goto", url: "https://example.com" });
+});
+```
+
+</CodeGroup>

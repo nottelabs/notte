@@ -1,4 +1,5 @@
 # @sniptest filename=press_key.py
+# @sniptest show=1-15
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -14,3 +15,5 @@ with client.Session() as session:
 
     # Press Tab
     session.execute(type="press_key", key="Tab")
+
+status = session.status()

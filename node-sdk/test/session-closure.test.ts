@@ -27,7 +27,7 @@ describe('session closure checks', () => {
       .mockResolvedValueOnce(status('closed'));
     const check = expectSessionClosed(client, 'owned-session', 'example (python)');
     await vi.advanceTimersByTimeAsync(1000);
-    await check;
+    expect(await check).toEqual({ status: 'closed' });
     expect(sessionStatus).toHaveBeenCalledTimes(3);
     expect(vi.getTimerCount()).toBe(0);
   });

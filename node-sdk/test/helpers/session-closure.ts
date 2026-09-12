@@ -1,7 +1,7 @@
-import { type NotteClient, sessionStatus } from '@/index';
+import { type NotteClient, type SessionResponse, sessionStatus } from '@/index';
 
 /** Stop acknowledges in-memory closure before background cleanup persists it. */
-export async function expectSessionClosed(client: NotteClient, sessionId: string, example: string): Promise<void> {
+export async function expectSessionClosed(client: NotteClient, sessionId: string, example: string): Promise<SessionResponse> {
   const timeout = 15_000;
   const interval = 500;
   const started = Date.now();
@@ -22,7 +22,7 @@ export async function expectSessionClosed(client: NotteClient, sessionId: string
       const status = response.data.status;
       observations.push(`${Date.now() - started}ms=${status}`);
       if (controller.signal.aborted) throw failure();
-      if (status === 'closed') return;
+      if (status === 'closed') return response.data;
       if (status !== 'active') {
         throw new Error(`${example}: session ${sessionId} returned unexpected status ${status}`);
       }

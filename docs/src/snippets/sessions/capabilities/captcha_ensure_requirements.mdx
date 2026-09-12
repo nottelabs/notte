@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/sessions/capabilities/captcha_ensure_requirements.py */}
 
+<CodeGroup>
+
 ```python captcha_ensure_requirements.py
 from notte_sdk import NotteClient
 
@@ -13,3 +15,19 @@ with client.Session(
 ) as session:
     pass
 ```
+
+```typescript captcha_ensure_requirements.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const session = client.Session({
+  solve_captchas: true,
+  proxies: true,
+});
+await session.use(async () => {
+  // Use your session here
+});
+```
+
+</CodeGroup>
