@@ -1,13 +1,15 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/management/get_function_details.py */}
 
+<CodeGroup>
+
 ```python get_function_details.py
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
 # Get function by ID
-function = client.Function(function_id="func_abc123")
+function = client.Function(function_id=function_id)
 
 # Access function properties
 print(f"Function ID: {function.function_id}")
@@ -16,3 +18,22 @@ print(f"Description: {function.response.description}")
 print(f"Latest Version: {function.response.latest_version}")
 print(f"Versions: {function.response.versions}")
 ```
+
+```typescript get_function_details.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+// Get function by ID
+const fn = client.NotteFunction({ function_id: functionId });
+const response = await fn.get();
+
+// Access function properties
+console.log(`Function ID: ${response.function_id}`);
+console.log(`Name: ${response.name}`);
+console.log(`Description: ${response.description}`);
+console.log(`Latest Version: ${response.latest_version}`);
+console.log(`Versions: ${response.versions}`);
+```
+
+</CodeGroup>

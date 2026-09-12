@@ -1,4 +1,16 @@
 {
+  "functions/management/get_function_details.ts": {
+    "expected": { "results": [true, true] },
+    "logContains": "Latest Version:"
+  },
+  "functions/management/version_history.ts": {
+    "expected": { "results": [true, true] },
+    "logContains": "Versions:"
+  },
+  "file-storage/url_upload.ts": {
+    "expected": { "status": "active" },
+    "closedSession": true
+  },
   "functions/management/view_run_history.ts": {
     "expected": { "results": ["closed"] },
     "logContains": "Status: closed"
