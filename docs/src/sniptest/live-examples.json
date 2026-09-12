@@ -18,6 +18,12 @@
   "scraping/links_and_images.ts": {
     "expected": { "results": [true, true, true, true] }
   },
+  "functions/invoke_function.ts": {"expected":{"status":"closed","result":{"url":"https://example.com","search_query":"laptop"}}},
+  "functions/batch_invocation.ts": {"expected":{"results":[{"url":"https://site1.com","search_query":""},{"url":"https://site2.com","search_query":""},{"url":"https://site3.com","search_query":""}]}},
+  "functions/monitor_runs.ts": {"expected":{"status":"closed","same_run":true},"logContains":"Final result:"},
+  "functions/invocations/timeout_examples.ts": {"expected":{"status":"closed","result":{"url":"https://example.com","search_query":""}}},
+  "functions/management/check_run_status.ts": {"expected":{"status":"closed","same_run":true},"logContains":"Session ID:"},
+  "functions/management/version_management.ts": {"expected":{"results":[true,true]},"logContains":"Latest:"},
   "functions/management/get_function_details.ts": {
     "expected": { "results": [true, true] },
     "logContains": "Latest Version:"

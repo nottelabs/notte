@@ -53,6 +53,15 @@ The example.com page has no images or substantial navigation/sidebar content:
 these examples execute the displayed options but do not prove image inclusion
 or main-content filtering differences. Controlled-page option-sensitive coverage,
 structured extraction, and placeholder-domain examples remain follow-up work.
+The function invocation/monitoring batch adds six caller-side pairs: parameterized
+invocation, parallel invocation, timeout configuration, polling, run inspection,
+and version inspection. Fixtures use an owned echo function and verify returned
+values, run identities, and version metadata. Python function-runtime handlers
+remain separate work; these examples do not imply a Node deployment runtime.
+
+Node now exposes `FunctionRunOptions.timeoutMs`; the paired timeout lesson converts
+Python's seconds to milliseconds. This supersedes the missing-timeout observation
+below without changing either SDK.
 
 Source inspection during this batch found that Python examples use convenience
 APIs not exposed by the current Node `Session` wrapper: attaching an existing
