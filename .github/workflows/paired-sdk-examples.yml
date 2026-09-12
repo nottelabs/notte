@@ -70,7 +70,9 @@ jobs:
         with:
           enable-cache: false
       - run: uv sync --locked --package notte-sdk --no-dev
-      - run: uv pip install playwright==1.62.0
+      - run: uv pip install playwright==1.62.0 patchright==1.55.1
+      - name: Verify Python browser dependencies before live execution
+        run: .venv/bin/python -c "import playwright.sync_api; import patchright.sync_api"
       - run: npm ci --prefix node-sdk
       - run: npm run build --prefix node-sdk
       - name: Execute both languages against the local SDK packages

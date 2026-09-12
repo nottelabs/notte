@@ -10,6 +10,14 @@ Do not remove an exemption until the corresponding scripts and assertions exist.
 
 ## Next batches
 
+The session-artifacts follow-up pairs explicit CDP screenshots, the built-in
+Playwright page, automatic cookie-file loading/saving, and both desktop/laptop
+viewport examples. Artifact examples execute in separate owned temporary
+directories for each language. Their tests verify PNG bytes and persisted
+browser cookies; viewport tests verify both configurations and both closures.
+Recording examples still need review: several use nonexistent selectors on
+example.com or request replay while the session is still active.
+
 The browser/settings batch adds 17 executable pairs (34 script executions):
 navigation, reload, keyboard actions, scrolling, explicit waits, built-in proxies,
 captcha configuration, stealth configuration, and environment-dependent viewing.
