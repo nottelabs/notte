@@ -203,7 +203,6 @@
     "functions/management/document_changes.py",
     "functions/management/download_code.py",
     "functions/management/fork_function.py",
-    "functions/management/high_failure_rate.py",
     "functions/management/make_public.py",
     "functions/management/missing_env_vars.py",
     "functions/management/modify_forked.py",

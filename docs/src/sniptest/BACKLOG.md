@@ -93,3 +93,11 @@ validation and the staging API both reject that configuration because the defaul
 maximum duration is 15 minutes. This example now explicitly sets
 `max_duration_minutes=20` in both languages, and the live contract checks both
 bounds. No SDK behavior was changed.
+
+## Failed Function run inspection
+
+The `functions/management/high_failure_rate` pair exposed a staging inconsistency
+on 2026-09-12: execution returned `failed`, but metadata and completed-run listings
+returned `closed`. The backend correction was merged separately in monorepo PR
+#2761. Keep the failed-status assertion enabled while revalidating the deployed
+staging behavior in both languages; do not skip or weaken the regression.
