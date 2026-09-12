@@ -44,6 +44,16 @@ requiring an immediate closed snapshot in the displayed examples.
 
 ## SDK/API differences to address separately
 
+The function invocation/monitoring batch adds six caller-side pairs: parameterized
+invocation, parallel invocation, timeout configuration, polling, run inspection,
+and version inspection. Fixtures use an owned echo function and verify returned
+values, run identities, and version metadata. Python function-runtime handlers
+remain separate work; these examples do not imply a Node deployment runtime.
+
+Node now exposes `FunctionRunOptions.timeoutMs`; the paired timeout lesson converts
+Python's seconds to milliseconds. This supersedes the missing-timeout observation
+below without changing either SDK.
+
 Source inspection during this batch found that Python examples use convenience
 APIs not exposed by the current Node `Session` wrapper: attaching an existing
 session by ID, a built-in Playwright `page`, automatic `cookie_file` persistence,
