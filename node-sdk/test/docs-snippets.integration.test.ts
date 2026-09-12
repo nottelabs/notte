@@ -125,7 +125,9 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
     let exported: Record<string, unknown>;
     const log = vi.spyOn(console, 'log').mockImplementation((...args) => { logged.push(args); });
     try {
-      exported = await import(/* @vite-ignore */ `${testers}${name}`);
+      // Module namespace exports are read-only; normalize captured snapshots
+      // on a copy, never by assigning back into the imported example.
+      exported = { ...await import(/* @vite-ignore */ `${testers}${name}`) };
     } finally {
       log.mockRestore();
     }
