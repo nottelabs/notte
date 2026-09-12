@@ -11,7 +11,7 @@ const session = client.Session({
   viewport_height: 1080,
 });
 await session.use(async () => {
-  // Maximum stealth configuration
+  // Maximum captcha success rate
 });
 
 const status = await session.status();

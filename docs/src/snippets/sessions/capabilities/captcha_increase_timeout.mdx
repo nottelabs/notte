@@ -22,7 +22,7 @@ const client = new NotteClient();
 
 const session = client.Session({
   solve_captchas: true,
-  idle_timeout_minutes: 15,
+  idle_timeout_minutes: 15, // Longer timeout
 });
 await session.use(async () => {
   // Use your session here
