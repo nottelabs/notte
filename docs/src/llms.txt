@@ -285,10 +285,6 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [POST Improve Prompt](https://docs.notte.cc/api-reference/prompts/improve-prompt.md)
 - [POST Nudge Prompt](https://docs.notte.cc/api-reference/prompts/nudge-prompt.md)
 
-## Proxies
-
-- [POST Mint a short-lived proxy credential](https://docs.notte.cc/api-reference/proxies/mint-proxy-credentials.md): Returns a derived username/password for `proxy.notte.cc`, signed for this workspace and valid for your plan's maximum session duration (see `expires_at`). Traffic through it is billed to this API key's workspace at the proxy rate. Clients that support TLS to a proxy can also use the API key itself as the proxy password on port 443.
-
 ## Scrape
 
 - [POST Scrape From Html](https://docs.notte.cc/api-reference/scrape/scrape-from-html.md)
