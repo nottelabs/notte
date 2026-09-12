@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/batch_invocation.py */}
 
+<CodeGroup>
+
 ```python batch_invocation.py
 from concurrent.futures import ThreadPoolExecutor
 
@@ -8,7 +10,7 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-function = client.Function(function_id="func_abc123")
+function = client.Function(function_id=function_id)
 
 urls = ["https://site1.com", "https://site2.com", "https://site3.com"]
 
@@ -24,3 +26,26 @@ with ThreadPoolExecutor(max_workers=3) as executor:
 for result in results:
     print(result.result)
 ```
+
+```typescript batch_invocation.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const fn = client.NotteFunction({ function_id: functionId });
+
+const urls = ['https://site1.com', 'https://site2.com', 'https://site3.com'];
+
+async function invokeFunction(url: string) {
+  return fn.run({ url });
+}
+
+// Run in parallel
+const results = await Promise.all(urls.map(invokeFunction));
+
+for (const result of results) {
+  console.log(result.result);
+}
+```
+
+</CodeGroup>

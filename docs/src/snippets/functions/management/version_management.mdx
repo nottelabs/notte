@@ -1,12 +1,14 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/management/version_management.py */}
 
+<CodeGroup>
+
 ```python version_management.py
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
-function = client.Function(function_id="func_abc123")
+function = client.Function(function_id=function_id)
 
 # Get all versions
 print(f"Available versions: {function.response.versions}")
@@ -14,3 +16,20 @@ print(f"Available versions: {function.response.versions}")
 # Get latest version
 print(f"Latest: {function.response.latest_version}")
 ```
+
+```typescript version_management.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const fn = client.NotteFunction({ function_id: functionId });
+const response = await fn.get();
+
+// Get all versions
+console.log('Available versions:', response.versions);
+
+// Get latest version
+console.log(`Latest: ${response.latest_version}`);
+```
+
+</CodeGroup>
