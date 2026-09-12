@@ -104,6 +104,9 @@ to the ID of the Function whose history you want to inspect.
 
 Monitor specific execution:
 
+Set `function_id` and `run_id` (Python), or `functionId` and `runId` (Node),
+to your Function's ID and the run ID returned by its execution.
+
 <CheckRunStatus />
 
 **Status values:**
@@ -272,6 +275,9 @@ Verify configuration:
 ### High Failure Rate
 
 Analyze failure patterns:
+
+Set `function_id` (Python) or `functionId` (Node) to your Function's ID.
+Include completed runs with `only_active=False` / `only_active: false` so failed runs appear.
 
 <HighFailureRate />
 

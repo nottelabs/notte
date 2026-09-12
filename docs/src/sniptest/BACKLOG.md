@@ -25,6 +25,24 @@ Do not remove an exemption until the corresponding scripts and assertions exist.
 
 ## SDK/API differences to address separately
 
+### Failed Function runs reported as closed (2026-09-12)
+
+The `functions/management/high_failure_rate` pair reproduces a staging API
+inconsistency: `run(..., fail=True, raise_on_failure=False, stream=False)` returns
+`status="failed"`, but metadata and `list_runs(only_active=False)` for that same
+run return `status="closed"`. This was reproduced with both SDKs using owned
+Functions; it is not explained by the default active-only list filter.
+
+Keep the live assertion requiring the seeded failed run to appear among failed
+runs. The new pair is registered in live CI and is currently expected to fail on
+staging; it is not skipped or counted as a live pass. Investigate failure-status
+persistence in an API-focused PR, then rerun both languages. No SDK or backend
+implementation changes belong in this example batch.
+
+Separately, successful run metadata exposes `result` as a JSON string, unlike the
+decoded result returned by execution. The run-status pair decodes it only in its
+hidden validation; the displayed example still prints the returned value.
+
 Source inspection during this batch found that Python examples use convenience
 APIs not exposed by the current Node `Session` wrapper: attaching an existing
 session by ID, a built-in Playwright `page`, automatic `cookie_file` persistence,
