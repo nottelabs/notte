@@ -381,7 +381,7 @@
         "source": "scraping/content_filtering.ts",
         "language": "typescript",
         "title": "TypeScript",
-        "execution_pending": "Legacy example from scraping/content_filtering.mdx; needs owned fixtures and behavior assertions before live execution."
+        "live_tested": true
       }
     ]
   },
@@ -500,7 +500,7 @@
         "source": "scraping/link_placeholders.ts",
         "language": "typescript",
         "title": "TypeScript",
-        "execution_pending": "Legacy example from scraping/link_placeholders.mdx; needs owned fixtures and behavior assertions before live execution."
+        "live_tested": true
       }
     ]
   },
@@ -517,7 +517,7 @@
         "source": "scraping/links_and_images.ts",
         "language": "typescript",
         "title": "TypeScript",
-        "execution_pending": "Legacy example from scraping/links_and_images.mdx; needs owned fixtures and behavior assertions before live execution."
+        "live_tested": true
       }
     ]
   },
@@ -585,7 +585,7 @@
         "source": "scraping/quick_scrape.ts",
         "language": "typescript",
         "title": "TypeScript",
-        "execution_pending": "Legacy example from scraping/quick_scrape.mdx; needs owned fixtures and behavior assertions before live execution."
+        "live_tested": true
       }
     ]
   },

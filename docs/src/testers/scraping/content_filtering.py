@@ -10,3 +10,5 @@ markdown = client.scrape(url, only_main_content=True)  # Default
 
 # Include all page content
 markdown = client.scrape(url, only_main_content=False)
+
+results = [isinstance(markdown, str), "Example Domain" in markdown]

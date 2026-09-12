@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/scraping/simple.py */}
 
+<CodeGroup>
+
 ```python simple_scrape.py
 from notte_sdk import NotteClient
 
@@ -11,3 +13,15 @@ markdown = client.scrape(
 )
 print(markdown)
 ```
+
+```typescript simple_scrape.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+const markdown = await client.scrape('https://www.notte.cc', {
+  only_main_content: true,
+});
+console.log(markdown);
+```
+
+</CodeGroup>

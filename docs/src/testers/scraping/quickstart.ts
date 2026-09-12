@@ -1,10 +1,9 @@
-// @sniptest filename=quick_scrape.ts
-// @sniptest show=1-6
+// @sniptest filename=quickstart.ts
+// @sniptest show=1-5
 import { NotteClient } from 'notte-sdk';
 
 const client = new NotteClient();
-
-// Returns markdown content
 const markdown = await client.scrape('https://example.com');
+console.log(markdown);
 
 export const results = [typeof markdown === 'string', markdown.includes('Example Domain')];

@@ -271,8 +271,6 @@
     "personas/create_account.py",
     "personas/index.py",
     "scraping/agent.py",
-    "scraping/quickstart.py",
-    "scraping/simple.py",
     "scraping/structured.py",
     "search/quick_start.py",
     "sessions/capabilities/agent_replay_alt.py",

@@ -15,9 +15,7 @@ markdown = client.scrape("https://example.com")
 ```typescript TypeScript
 import { NotteClient } from 'notte-sdk';
 
-const client = new NotteClient({
-  apiKey: process.env.NOTTE_API_KEY,
-});
+const client = new NotteClient();
 
 // Returns markdown content
 const markdown = await client.scrape('https://example.com');
