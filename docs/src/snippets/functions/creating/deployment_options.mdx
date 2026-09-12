@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/creating/deployment_options.py */}
 
+<CodeGroup>
+
 ```python deployment_options.py
 from notte_sdk import NotteClient
 
@@ -13,3 +15,18 @@ function = client.Function(
     shared=False,  # Private by default
 )
 ```
+
+```typescript deployment_options.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const fn = client.NotteFunction({
+  path: 'my_function.py',
+  name: 'My Function', // Display name
+  description: 'What this function does', // Description
+  shared: false, // Private by default
+});
+```
+
+</CodeGroup>
