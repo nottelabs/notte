@@ -125,7 +125,9 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
     let exported: Record<string, unknown>;
     const log = vi.spyOn(console, 'log').mockImplementation((...args) => { logged.push(args); });
     try {
-      exported = await import(/* @vite-ignore */ `${testers}${name}`);
+      // Module namespace exports are read-only; normalize captured snapshots
+      // on a copy, never by assigning back into the imported example.
+      exported = { ...await import(/* @vite-ignore */ `${testers}${name}`) };
     } finally {
       log.mockRestore();
     }
@@ -148,6 +150,15 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
         exported = { status: logged[0][0] };
       }
       const pythonValues = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!);
+      // Post-stop snapshots can precede asynchronous cleanup. For contracts
+      // teaching completed lifecycle, verify the actual persisted response.
+      if (contract.closedSession && contract.expected.status === 'closed') {
+        for (const [language, values] of [['typescript', exported!], ['python', pythonValues]] as const) {
+          const snapshot = values.status as { session_id?: string };
+          expect(snapshot?.session_id).toBeTruthy();
+          values.status = await expectSessionClosed(client, snapshot.session_id!, name + ' (' + language + ')');
+        }
+      }
       const ids = [
         verifyExampleOutput(JSON.stringify(collectExampleResult(exported!, contract)), contract, logged.map(args => args.join(' ')).join('\n')),
         verifyExampleOutput(JSON.stringify(collectExampleResult(pythonValues, contract)), contract, `${stdout}\n${stderr}`),

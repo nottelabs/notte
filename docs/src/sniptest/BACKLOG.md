@@ -10,6 +10,25 @@ Do not remove an exemption until the corresponding scripts and assertions exist.
 
 ## Next batches
 
+The browser/settings batch adds 17 executable pairs (34 script executions):
+navigation, reload, keyboard actions, scrolling, explicit waits, built-in proxies,
+captcha configuration, stealth configuration, and environment-dependent viewing.
+The two scroll examples now use a long page, with downward movement before
+scrolling up. The two proxy/stealth observation examples explicitly navigate
+before observing because the current SDK rejects `observe(url=...)`.
+
+This leaves 369 entries in `parity.json`, plus 70 legacy catalog scripts awaiting
+execution fixtures. There are 65 executable paired cases in total. Captcha
+configuration coverage checks session setup and cleanup, not successful solving
+of a third-party captcha. External proxies, billable identities, Python function
+handlers, and third-party integrations still need individual review; they have
+not been hidden behind new exemptions.
+
+Post-stop status can briefly remain active while cleanup persists (reproduced
+as active, then closed 500 ms later). Completed-lifecycle contracts use the
+existing bounded closure poll and verify its returned response, rather than
+requiring an immediate closed snapshot in the displayed examples.
+
 - Promote the existing scraping TypeScript sources from syntax-only checks to
   typed, paired execution. Use a controlled page and check extracted content,
   schemas, missing values, links, and images against the same expectations.

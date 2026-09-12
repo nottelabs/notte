@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/sessions/capabilities/captcha_increase_timeout.py */}
 
+<CodeGroup>
+
 ```python captcha_increase_timeout.py
 from notte_sdk import NotteClient
 
@@ -12,3 +14,19 @@ with client.Session(
 ) as session:
     pass
 ```
+
+```typescript captcha_increase_timeout.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const session = client.Session({
+  solve_captchas: true,
+  idle_timeout_minutes: 15, // Longer timeout
+});
+await session.use(async () => {
+  // Use your session here
+});
+```
+
+</CodeGroup>

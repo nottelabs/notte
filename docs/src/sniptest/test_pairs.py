@@ -142,13 +142,19 @@ class RepositoryExamplesTest(unittest.TestCase):
                     self.assertIsNotNone(config.show)
                     for unwanted in (
                         "import json",
-                        "import os",
                         "NOTTE_FUNCTION_ID",
                         "same_run",
                         "export {",
                         "Values retained",
                     ):
                         self.assertNotIn(unwanted, rendered)
+                    if name == "sessions/capabilities/dev_environment.ts" and suffix == ".py":
+                        # This lesson intentionally teaches environment-dependent
+                        # viewer configuration; os is teaching code, not a fixture.
+                        self.assertIn('os.getenv("ENV") == "development"', rendered)
+                        self.assertIn("open_viewer=is_dev", rendered)
+                    else:
+                        self.assertNotIn("import os", rendered)
                     self.assertNotIn("json.dumps", path.read_text())
                     self.assertNotIn("JSON.stringify", path.read_text())
 

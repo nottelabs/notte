@@ -27,8 +27,8 @@ identifies scripts needing fixtures/type validation; `live_tested` identifies
 catalog examples executed by the paired runner. The legacy execution backlog
 cannot grow on subsequent PRs. It is not a Python-only exception or a passing live test.
 
-Translation is incremental: there are 488 Python sources and 65
-TypeScript sources, including 52 same-name pairs. 436 Python sources still lack a
+Translation is incremental: there are 488 Python sources and 106
+TypeScript sources, including 93 same-name pairs. 395 Python sources still lack a
 same-name TypeScript counterpart; some describe Python-only integrations or
 function-runtime code. Review these individually before classifying exceptions.
 All 86 previously manual snippet files now use the catalog.
@@ -59,7 +59,7 @@ legacy execution backlog and executes both files unchanged;
 when adding examples needing other resources, extend the owned fixtures first.
 Do not add examples that depend on somebody's existing resource IDs.
 
-`live-examples.json` declares exact expected results for 18 pairs; the six
+`live-examples.json` declares exact expected results for 59 pairs; the six
 original cases retain dedicated checks in the runner. Each new executable pair
 must have a nonempty behavior contract. CI rejects missing counterparts, pending
 Python counterparts, stale contracts, and contract typos. The runner collects

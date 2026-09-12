@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/sessions/capabilities/combine_stealth.py */}
 
+<CodeGroup>
+
 ```python combine_stealth.py
 from notte_sdk import NotteClient
 
@@ -16,3 +18,22 @@ with client.Session(
     # Maximum stealth configuration
     pass
 ```
+
+```typescript combine_stealth.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const session = client.Session({
+  browser_type: "chrome",
+  proxies: true,
+  viewport_width: 1920,
+  viewport_height: 1080,
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+});
+await session.use(async () => {
+  // Maximum stealth configuration
+});
+```
+
+</CodeGroup>

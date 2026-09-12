@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/browser-controls/goto.py */}
 
+<CodeGroup>
+
 ```python goto.py
 from notte_sdk import NotteClient
 
@@ -9,3 +11,16 @@ client = NotteClient()
 with client.Session() as session:
     session.execute(type="goto", url="https://example.com")
 ```
+
+```typescript goto.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const session = client.Session();
+await session.use(async () => {
+  await session.execute({ type: "goto", url: "https://example.com" });
+});
+```
+
+</CodeGroup>
