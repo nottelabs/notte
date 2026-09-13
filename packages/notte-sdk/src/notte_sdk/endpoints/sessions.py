@@ -1214,7 +1214,14 @@ class RemoteSession(SyncResource):
         if capability and self.request.cdp_url is None:
             target = urlsplit(cdp_url)
             api = urlsplit(self.client.server_url)
-            if target.hostname == api.hostname and target.port == api.port:
+            target_port = target.port if target.port is not None else 443
+            api_port = api.port if api.port is not None else 443
+            if (
+                target.scheme == "wss"
+                and api.scheme == "https"
+                and target.hostname == api.hostname
+                and target_port == api_port
+            ):
                 return {"x-notte-auth-capability": capability}
         return None
 
