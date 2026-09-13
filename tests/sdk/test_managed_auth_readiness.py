@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+import requests
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.types import SessionStartRequest
 
@@ -78,3 +79,42 @@ async def test_cancelled_async_wait_closes_the_started_session():
 def test_login_retry_is_only_serialized_for_managed_auth(mode):
     assert "auth_retry" not in SessionStartRequest().model_dump(mode=mode)
     assert SessionStartRequest(auth_ids=["connection"], auth_retry=2).model_dump(mode=mode)["auth_retry"] == 2
+
+
+@pytest.mark.parametrize("failures", [1, 2, 3])
+def test_start_retries_final_metadata_refresh(monkeypatch, failures):
+    monkeypatch.setattr("notte_sdk.endpoints.sessions.time.sleep", lambda _: None)
+    session = bare_session()
+    ready = session.client.status.return_value
+    session.client.status.side_effect = [requests.ConnectionError("temporary") for _ in range(failures)] + [ready]
+    if failures == 3:
+        with pytest.raises(requests.ConnectionError):
+            session.start()
+        session.stop.assert_called_once_with(close_reason="error")
+        assert session.client.status.call_count == 3
+    else:
+        session.start()
+        assert session.response is ready
+        session.stop.assert_not_called()
+        assert session.client.status.call_count == failures + 1
+    session.client.start.assert_called_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failures", [1, 2, 3])
+async def test_async_entry_retries_final_metadata_refresh(monkeypatch, failures):
+    monkeypatch.setattr("notte_sdk.endpoints.sessions.asyncio.sleep", AsyncMock())
+    session = bare_session()
+    ready = session.client.status.return_value
+    session.client.status.side_effect = [requests.ConnectionError("temporary") for _ in range(failures)] + [ready]
+    if failures == 3:
+        with pytest.raises(requests.ConnectionError):
+            await session.__aenter__()
+        session.stop.assert_called_once_with(close_reason="error")
+        assert session.client.status.call_count == 3
+    else:
+        assert await session.__aenter__() is session
+        assert session.response is ready
+        session.stop.assert_not_called()
+        assert session.client.status.call_count == failures + 1
+    session.client.start.assert_called_once()

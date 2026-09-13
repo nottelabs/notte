@@ -878,6 +878,11 @@ class RemoteSession(SyncResource):
         while time.monotonic() < deadline:
             try:
                 result = self.client.auth_status(self.response.session_id)
+                if result.status == "active":
+                    result = self.client.status(self.response.session_id)
+                    if result.status == "active":
+                        self.response = result
+                        return
                 errors = 0
             except (requests.RequestException, NotteAPIError) as exc:
                 if isinstance(exc, NotteAPIError) and 400 <= (exc.error.get("status") or 0) < 500:
@@ -887,9 +892,6 @@ class RemoteSession(SyncResource):
                     raise
                 time.sleep(1)
                 continue
-            if result.status == "active":
-                self.response = self.client.status(self.response.session_id)
-                return
             if result.status != "authenticating":
                 raise RuntimeError(result.error or "Session authentication failed")
             time.sleep(random.uniform(0.8, 1.2))
@@ -906,6 +908,11 @@ class RemoteSession(SyncResource):
         while time.monotonic() < deadline:
             try:
                 result = await asyncio.to_thread(self.client.auth_status, self.response.session_id)
+                if result.status == "active":
+                    result = await asyncio.to_thread(self.client.status, self.response.session_id)
+                    if result.status == "active":
+                        self.response = result
+                        return
                 errors = 0
             except (requests.RequestException, NotteAPIError) as exc:
                 if isinstance(exc, NotteAPIError) and 400 <= (exc.error.get("status") or 0) < 500:
@@ -915,9 +922,6 @@ class RemoteSession(SyncResource):
                     raise
                 await asyncio.sleep(1)
                 continue
-            if result.status == "active":
-                self.response = await asyncio.to_thread(self.client.status, self.response.session_id)
-                return
             if result.status != "authenticating":
                 raise RuntimeError(result.error or "Session authentication failed")
             await asyncio.sleep(random.uniform(0.8, 1.2))
