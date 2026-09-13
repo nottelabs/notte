@@ -23,11 +23,15 @@ export async function trackDeployments(apiUrl: string) {
   const pending = new Set<Promise<void>>();
   const nonCreation = new Set<AbortController>();
   async function forward(req: IncomingMessage, res: ServerResponse) {
-    const target = new URL(req.url ?? '/', origin);
-    if (target.origin !== origin.origin || !/^\/functions(?:\/|$)/.test(target.pathname)) {
+    const incoming = new URL(req.url ?? '/', origin);
+    if (incoming.origin !== origin.origin || !/^\/functions(?:\/|$)/.test(incoming.pathname)) {
       res.writeHead(403).end();
       return;
     }
+    // Copy only path/query onto a trusted URL; request input cannot set its host.
+    const target = new URL(origin.href);
+    target.pathname = incoming.pathname;
+    target.search = incoming.search;
     const creating = req.method === 'POST' && target.pathname.replace(/\/$/, '') === '/functions';
     const running = req.method === 'POST' && /^\/functions\/[^/]+\/runs\/[0-9a-f-]{36}$/i.test(target.pathname);
     const abort = new AbortController();
