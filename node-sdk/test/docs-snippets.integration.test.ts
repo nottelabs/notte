@@ -153,7 +153,9 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
       const load = () => import(/* @vite-ignore */ `${testers}${name}`);
       if (name === 'sessions/cdp/selenium_builtin_page.ts') {
         // Use the same built SDK as the unchanged example, not the source alias.
-        const { Session } = await import('notte-sdk');
+        // Unit CI typechecks before dist exists; resolve the live package at runtime.
+        const sdkPackage: string = 'notte-sdk';
+        const { Session } = await import(/* @vite-ignore */ sdkPackage);
         exported = { ...await withUsableBuiltinPage(Session.prototype, load) };
       } else {
         exported = { ...await load() };
