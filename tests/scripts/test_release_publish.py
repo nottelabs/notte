@@ -52,7 +52,8 @@ def test_python_and_node_releases_share_the_same_tag() -> None:
     node = _load_workflow("node-sdk-publish.yml")
 
     assert _triggers(python) == {"push": {"tags": ["v*"]}}
-    assert _triggers(node) == _triggers(python)
+    assert _triggers(node)["push"] == _triggers(python)["push"]
+    assert _triggers(node)["workflow_dispatch"]["inputs"]["version"]["required"] is True
 
     text = (ROOT / ".github/workflows/node-sdk-publish.yml").read_text()
     assert "node-sdk-v" not in text, "node releases must not use a separate tag prefix"
@@ -77,13 +78,15 @@ def test_node_release_publishes_the_tag_version_with_provenance() -> None:
     assert "cache" not in setup["with"]
     assert "cache-dependency-path" not in setup["with"]
 
-    version = next(step for step in publish_steps if step.get("name") == "Set release version from tag")
-    assert version["env"] == {"RELEASE_TAG": "${{ github.ref_name }}"}
+    version = next(step for step in publish_steps if step.get("name") == "Set release version")
+    assert version["env"] == {
+        "RELEASE_TAG": "${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}"
+    }
     assert 'RELEASE_VERSION="${RELEASE_TAG#v}"' in version["run"]
     assert 'npm version "$RELEASE_VERSION" --no-git-tag-version' in version["run"]
 
     assert (
-        publish_names.index("Set release version from tag")
+        publish_names.index("Set release version")
         < publish_names.index("Smoke-test built package exports")
         < publish_names.index("Publish to npm")
     )
