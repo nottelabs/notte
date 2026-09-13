@@ -9,6 +9,7 @@ import { NotteClient, functionCreate, functionDelete, listFunctionRunsByFunction
 import { withPythonPageRetry } from './helpers/python-page-retry';
 import { expectSessionClosed } from './helpers/session-closure';
 import { collectExampleResult, verifyExampleOutput, type ExampleContract } from './helpers/docs-examples';
+import { withUsableBuiltinPage } from './helpers/builtin-page-check';
 
 const execute = promisify(execFile);
 const testers = fileURLToPath(new URL('../../docs/src/testers/', import.meta.url));
@@ -149,7 +150,14 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
     try {
       // Module namespace exports are read-only; normalize captured snapshots
       // on a copy, never by assigning back into the imported example.
-      exported = { ...await import(/* @vite-ignore */ `${testers}${name}`) };
+      const load = () => import(/* @vite-ignore */ `${testers}${name}`);
+      if (name === 'sessions/cdp/selenium_builtin_page.ts') {
+        // Use the same built SDK as the unchanged example, not the source alias.
+        const { Session } = await import('notte-sdk');
+        exported = { ...await withUsableBuiltinPage(Session.prototype, load) };
+      } else {
+        exported = { ...await load() };
+      }
     } finally {
       log.mockRestore();
     }
