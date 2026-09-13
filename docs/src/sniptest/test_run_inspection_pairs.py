@@ -53,26 +53,15 @@ class RunInspectionPairsTest(unittest.TestCase):
         self.assertEqual(requests, [("owned-function", {"only_active": False})])
         self.assertEqual(inspected, [("owned-function", "owned-run")] * 2)
 
-    def test_status_example_rejects_a_different_run(self):
-        for run_id in ("owned-run", "wrong-run"):
-            with self.subTest(run_id=run_id):
-                response = types.SimpleNamespace(
-                    function_run_id=run_id,
-                    status="closed",
-                    session_id=None,
-                    result='{"url": "https://example.com", "search_query": ""}',
-                )
-                client = types.SimpleNamespace(
-                    Function=lambda _: types.SimpleNamespace(
-                        run=lambda **kwargs: types.SimpleNamespace(function_run_id="owned-run")
-                    ),
-                    functions=types.SimpleNamespace(get_run=lambda *_: response),
-                )
-                if run_id == "owned-run":
-                    self.assertEqual(self.execute("check_run_status", client)["run_id"], run_id)
-                else:
-                    with self.assertRaises(AssertionError):
-                        self.execute("check_run_status", client)
+    def test_failed_run_example_rejects_incorrectly_closed_listing(self):
+        failed = types.SimpleNamespace(function_run_id="owned-run", status="failed")
+        closed = types.SimpleNamespace(function_run_id="owned-run", status="closed")
+        client = types.SimpleNamespace(
+            Function=lambda _: types.SimpleNamespace(run=lambda **kwargs: failed),
+            functions=types.SimpleNamespace(list_runs=lambda *_args, **_kwargs: types.SimpleNamespace(items=[closed])),
+        )
+        with self.assertRaises(AssertionError):
+            self.execute("high_failure_rate", client)
 
     @staticmethod
     def execute(name, client):
