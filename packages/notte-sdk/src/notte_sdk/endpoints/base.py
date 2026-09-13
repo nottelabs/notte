@@ -348,10 +348,6 @@ class BaseClient(ABC):
         if self.db_preview:
             separator = "&" if "?" in url else "?"
             url = f"{url}{separator}db_preview={quote(self.db_preview, safe='')}"
-        capability = os.getenv("NOTTE_AUTH_CAPABILITY")
-        if capability:
-            separator = "&" if "?" in url else "?"
-            url = f"{url}{separator}auth_capability={quote(capability, safe='')}"
         return url
 
     def request_path(self, endpoint: NotteEndpoint[TResponse]) -> str:

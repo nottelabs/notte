@@ -12,7 +12,10 @@ def bare_session():
     session = object.__new__(RemoteSession)
     session.response = None
     session.request = SimpleNamespace(
-        auth_ids=["connection"], wait_for_authentication=True, model_dump=lambda **kwargs: {"auth_ids": ["connection"]}
+        auth_ids=["connection"],
+        cdp_url=None,
+        wait_for_authentication=True,
+        model_dump=lambda **kwargs: {"auth_ids": ["connection"]},
     )
     session.client = MagicMock()
     session.client.start.return_value = SimpleNamespace(session_id="session", status="authenticating")
@@ -118,3 +121,31 @@ async def test_async_entry_retries_final_metadata_refresh(monkeypatch, failures)
         session.stop.assert_not_called()
         assert session.client.status.call_count == failures + 1
     session.client.start.assert_called_once()
+
+
+@pytest.mark.parametrize("asynchronous", [False, True])
+def test_capability_does_not_bypass_failed_readiness(monkeypatch, asynchronous):
+    monkeypatch.setenv("NOTTE_AUTH_CAPABILITY", "runner-capability")
+    session = bare_session()
+    session.response = SimpleNamespace(session_id="session", status="authenticating")
+    session.client.auth_status.return_value = SimpleNamespace(status="failed", error="Login failed")
+    with pytest.raises(RuntimeError, match="Login failed"):
+        if asynchronous:
+            asyncio.run(session.await_for_auth())
+        else:
+            session.wait_for_auth()
+    session.client.auth_status.assert_called_once_with("session")
+
+
+def test_cdp_capability_is_header_only_and_not_sent_to_external_provider(monkeypatch):
+    from notte_sdk.endpoints.base import BaseClient
+
+    monkeypatch.setenv("NOTTE_AUTH_CAPABILITY", "runner-capability")
+    session = bare_session()
+    assert session._cdp_auth_headers() == {"x-notte-auth-capability": "runner-capability"}
+    client = SimpleNamespace(db_preview=None)
+    assert (
+        BaseClient._with_db_preview(client, "wss://api.notte.cc/sessions/s/cdp") == "wss://api.notte.cc/sessions/s/cdp"
+    )
+    session.request.cdp_url = "wss://external.invalid/cdp"
+    assert session._cdp_auth_headers() is None

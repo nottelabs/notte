@@ -871,7 +871,7 @@ class RemoteSession(SyncResource):
         """Wait for this browser to be ready without restarting or relogging it."""
         if self.response is None:
             raise ValueError("Session has not started")
-        if self.response.status == "active" or os.getenv("NOTTE_AUTH_CAPABILITY"):
+        if self.response.status == "active":
             return
         deadline = time.monotonic() + timeout
         errors = 0
@@ -901,7 +901,7 @@ class RemoteSession(SyncResource):
         """Async readiness wait; blocking HTTP calls run outside the event loop."""
         if self.response is None:
             raise ValueError("Session has not started")
-        if self.response.status == "active" or os.getenv("NOTTE_AUTH_CAPABILITY"):
+        if self.response.status == "active":
             return
         deadline = time.monotonic() + timeout
         errors = 0
@@ -1207,6 +1207,13 @@ class RemoteSession(SyncResource):
         debug = self.debug_info()
         return self.client._with_db_preview(debug.ws.cdp)  # pyright: ignore [reportPrivateUsage]
 
+    def _cdp_auth_headers(self) -> dict[str, str] | None:
+        """Send the runner capability only to this API's CDP connection."""
+        capability = os.getenv("NOTTE_AUTH_CAPABILITY")
+        if capability and self.request.cdp_url is None:
+            return {"x-notte-auth-capability": capability}
+        return None
+
     @property
     def page(self) -> "PageSync":
         """
@@ -1255,7 +1262,9 @@ class RemoteSession(SyncResource):
             # Connect to browser via CDP
             if self._playwright_browser is None:
                 cdp_url = self.cdp_url()
-                self._playwright_browser = self._playwright_context.chromium.connect_over_cdp(cdp_url)
+                self._playwright_browser = self._playwright_context.chromium.connect_over_cdp(
+                    cdp_url, headers=self._cdp_auth_headers()
+                )
                 _install_server_owned_dialog_policy(self._playwright_browser)
 
             # Get the first page from the first context
@@ -1311,7 +1320,9 @@ class RemoteSession(SyncResource):
             # Connect to browser via CDP
             if self._async_playwright_browser is None:
                 cdp_url = self.cdp_url()
-                self._async_playwright_browser = await self._async_playwright_context.chromium.connect_over_cdp(cdp_url)
+                self._async_playwright_browser = await self._async_playwright_context.chromium.connect_over_cdp(
+                    cdp_url, headers=self._cdp_auth_headers()
+                )
                 _install_server_owned_dialog_policy(self._async_playwright_browser)
 
             # Get the first page from the first context
