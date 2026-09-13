@@ -18,6 +18,7 @@ def bare_session():
         model_dump=lambda **kwargs: {"auth_ids": ["connection"]},
     )
     session.client = MagicMock()
+    session.client.server_url = "https://api.notte.cc"
     session.client.start.return_value = SimpleNamespace(session_id="session", status="authenticating")
     session.client.auth_status.return_value = SimpleNamespace(status="active", error=None)
     session.client.status.return_value = SimpleNamespace(session_id="session", status="active")
@@ -142,10 +143,13 @@ def test_cdp_capability_is_header_only_and_not_sent_to_external_provider(monkeyp
 
     monkeypatch.setenv("NOTTE_AUTH_CAPABILITY", "runner-capability")
     session = bare_session()
-    assert session._cdp_auth_headers() == {"x-notte-auth-capability": "runner-capability"}
+    assert session._cdp_auth_headers("wss://api.notte.cc/sessions/s/cdp") == {
+        "x-notte-auth-capability": "runner-capability"
+    }
     client = SimpleNamespace(db_preview=None)
     assert (
         BaseClient._with_db_preview(client, "wss://api.notte.cc/sessions/s/cdp") == "wss://api.notte.cc/sessions/s/cdp"
     )
+    assert session._cdp_auth_headers("wss://external.invalid/cdp") is None
     session.request.cdp_url = "wss://external.invalid/cdp"
-    assert session._cdp_auth_headers() is None
+    assert session._cdp_auth_headers("wss://api.notte.cc/sessions/s/cdp") is None

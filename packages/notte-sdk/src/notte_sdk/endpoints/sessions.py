@@ -7,6 +7,7 @@ from enum import StrEnum
 from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
+from urllib.parse import urlsplit
 from webbrowser import open as open_browser
 
 import requests
@@ -1207,11 +1208,14 @@ class RemoteSession(SyncResource):
         debug = self.debug_info()
         return self.client._with_db_preview(debug.ws.cdp)  # pyright: ignore [reportPrivateUsage]
 
-    def _cdp_auth_headers(self) -> dict[str, str] | None:
+    def _cdp_auth_headers(self, cdp_url: str) -> dict[str, str] | None:
         """Send the runner capability only to this API's CDP connection."""
         capability = os.getenv("NOTTE_AUTH_CAPABILITY")
         if capability and self.request.cdp_url is None:
-            return {"x-notte-auth-capability": capability}
+            target = urlsplit(cdp_url)
+            api = urlsplit(self.client.server_url)
+            if target.hostname == api.hostname and target.port == api.port:
+                return {"x-notte-auth-capability": capability}
         return None
 
     @property
@@ -1263,7 +1267,7 @@ class RemoteSession(SyncResource):
             if self._playwright_browser is None:
                 cdp_url = self.cdp_url()
                 self._playwright_browser = self._playwright_context.chromium.connect_over_cdp(
-                    cdp_url, headers=self._cdp_auth_headers()
+                    cdp_url, headers=self._cdp_auth_headers(cdp_url)
                 )
                 _install_server_owned_dialog_policy(self._playwright_browser)
 
@@ -1321,7 +1325,7 @@ class RemoteSession(SyncResource):
             if self._async_playwright_browser is None:
                 cdp_url = self.cdp_url()
                 self._async_playwright_browser = await self._async_playwright_context.chromium.connect_over_cdp(
-                    cdp_url, headers=self._cdp_auth_headers()
+                    cdp_url, headers=self._cdp_auth_headers(cdp_url)
                 )
                 _install_server_owned_dialog_policy(self._async_playwright_browser)
 
