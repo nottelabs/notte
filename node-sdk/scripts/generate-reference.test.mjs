@@ -40,6 +40,21 @@ class NotExported { visible(): void {} }
 });
 after(() => rmSync(fixture, { recursive: true, force: true }));
 
+test('source links remain stable when declarations move to different lines', () => {
+  const path = resolve(fixture, 'src/index.ts');
+  const source = readFileSync(path, 'utf8');
+  try {
+    writeFileSync(path, `// Unrelated source change.\n\n${source}`);
+    const moved = createReference(fixture);
+    assert.deepEqual(moved.pages, generated.pages);
+    const page = moved.pages.get('typescript-sdk-reference/session/start.mdx');
+    assert.match(page, /\[Source: node-sdk\/src\/index\.ts\]\(https:\/\/github\.com\/nottelabs\/notte\/blob\/main\/node-sdk\/src\/index\.ts\)/);
+    assert.doesNotMatch(page, /#L\d+/);
+  } finally {
+    writeFileSync(path, source);
+  }
+});
+
 test('discovers exported public API, preserves overloads, excludes implementations and internals', () => {
   const page = generated.pages.get('typescript-sdk-reference/session/start.mdx');
   assert.match(page, /Session.start\(url: string\): Promise<string>/);

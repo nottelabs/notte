@@ -95,8 +95,7 @@ export function createReference(root = sdkRoot) {
   const typeText = type => portableType(checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation));
   const sourceLink = node => {
     const file = `node-sdk/${relative(root, node.getSourceFile().fileName).replaceAll('\\', '/')}`;
-    const line = node.getSourceFile().getLineAndCharacterOfPosition(node.getStart()).line + 1;
-    return `[Source: ${file}](https://github.com/nottelabs/notte/blob/main/${file}#L${line})`;
+    return `[Source: ${file}](https://github.com/nottelabs/notte/blob/main/${file})`;
   };
   const page = (title, node, content) => `---\ntitle: ${attr(title)}\n---\nimport AgentMdNotice from '/partials/agent-md-notice.mdx';\n\n<AgentMdNotice />\n\n${marker}\n\n${node ? `${sourceLink(node)}\n\n` : ''}${content.trim()}\n`.replace(/ +$/gm, '');
   const classes = [];
