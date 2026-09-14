@@ -136,21 +136,19 @@ jobs:
       group: next-python-development-version
       cancel-in-progress: false
     env:
-      # Reuse the existing automation PAT so the new PR triggers CI.
-      GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
       RELEASE_TAG: ${{ github.ref_name }}
       BASE_BRANCH: ${{ github.event.repository.default_branch }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.repository.default_branch }}
-          token: ${{ secrets.SUBMODULE_BUMP_PAT }}
+          persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version-file: .python-version
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
 
       - name: Advance workspace version and lockfile
         run: |
@@ -160,6 +158,9 @@ jobs:
           fi
 
       - name: Open version bump pull request
+        env:
+          # Scope the existing automation PAT to repository writes so PR checks run.
+          GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
         run: |
           set -euo pipefail
           if git diff --quiet -- pyproject.toml packages/ uv.lock; then
@@ -176,6 +177,7 @@ jobs:
             exit 0
           fi
 
+          gh auth setup-git
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           # Recover a push that succeeded before PR creation failed on an earlier run.

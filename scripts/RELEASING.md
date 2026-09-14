@@ -10,6 +10,10 @@ and workspace `.dev`/`.dev0` suffix. Other prerelease forms are rejected.
 The build writes the stable version into all package manifests and internal
 pins. An already-stable matching workspace is also accepted.
 
+`make release <version>` builds locally and restores the original manifests and
+lockfile on success or failure, preserving pre-existing edits and the build exit
+status. The CI workflow uses `build.sh` directly to retain stable manifests.
+
 Tag-triggered Node releases validate the same Python workspace version before
 publishing. The existing manual Node recovery release remains independent.
 

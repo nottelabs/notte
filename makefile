@@ -166,5 +166,4 @@ release:
 			exit 1; \
 	fi
 	@echo "\033[0;35mBuilding version: $(filter-out $@,$(MAKECMDGOALS))\033[0m"
-	bash build.sh $(filter-out $@,$(MAKECMDGOALS))
-	@git checkout pyproject.toml uv.lock packages/*/pyproject.toml
+	python3 scripts/build_release.py $(filter-out $@,$(MAKECMDGOALS))

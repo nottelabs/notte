@@ -97,3 +97,40 @@ def test_cli_rejects_invalid_tag() -> None:
     )
     assert result.returncode == 1
     assert "Expected a stable" in result.stderr
+
+
+@pytest.mark.parametrize("exit_code", [0, 42])
+@pytest.mark.parametrize("use_make", [False, True])
+def test_local_build_restores_preexisting_edits_and_lockfile(workspace: Path, exit_code: int, use_make: bool) -> None:
+    import os
+
+    scripts = workspace / "scripts"
+    scripts.mkdir()
+    for name in ("release_version.py", "build_release.py"):
+        (scripts / name).write_bytes((ROOT / "scripts" / name).read_bytes())
+    for name in ("build.sh", "makefile"):
+        (workspace / name).write_bytes((ROOT / name).read_bytes())
+    (workspace / "uv.lock").write_text("original lockfile\n")
+    for manifest in workspace.rglob("pyproject.toml"):
+        manifest.write_text(manifest.read_text() + "\n# pre-existing local edit\n")
+    originals = {path: path.read_bytes() for path in [*workspace.rglob("pyproject.toml"), workspace / "uv.lock"]}
+    fake_bin = workspace / "bin"
+    fake_bin.mkdir()
+    uv = fake_bin / "uv"
+    uv.write_text(f'#!/bin/sh\nprintf changed > "$TEST_WORKSPACE/uv.lock"\nexit {exit_code}\n')
+    uv.chmod(0o755)
+    command = ["make", "release", "1.9.1"] if use_make else [sys.executable, str(scripts / "build_release.py"), "1.9.1"]
+    result = subprocess.run(
+        command,
+        cwd=workspace,
+        env={**os.environ, "PATH": f"{fake_bin}:{os.environ['PATH']}", "TEST_WORKSPACE": str(workspace)},
+        capture_output=True,
+        text=True,
+    )
+    if use_make:
+        assert (result.returncode == 0) == (exit_code == 0)
+        if exit_code:
+            assert f"Error {exit_code}" in result.stderr
+    else:
+        assert result.returncode == exit_code
+    assert originals == {path: path.read_bytes() for path in originals}
