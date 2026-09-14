@@ -24,3 +24,7 @@ of SessionsClient, AgentsClient, VaultsClient, and PersonasClient.
 
 <ParamField path="viewer_type" type="SessionViewerType" default="browser">
 </ParamField>
+
+<ParamField path="captcha_timeout_seconds" type="float" default="180">
+  Total CAPTCHA wait budget, separate from action and HTTP timeouts.
+</ParamField>

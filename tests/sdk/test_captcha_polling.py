@@ -7,7 +7,7 @@ from notte_core.browser.observation import utc_now
 from notte_sdk.client import NotteClient
 from notte_sdk.endpoints.page import PageClient
 from notte_sdk.types import CaptchaStatus, ExecutionResultResponse
-from requests.exceptions import Timeout
+from requests.exceptions import ChunkedEncodingError, Timeout
 
 
 @pytest.fixture
@@ -100,19 +100,21 @@ def test_total_deadline_is_not_reset_by_polls(client):
     assert page.request.call_count == 3
 
 
-def test_ordinary_transport_timeout_never_retries(client):
+@pytest.mark.parametrize("error", [Timeout, ChunkedEncodingError])
+def test_ordinary_transport_timeout_never_retries(client, error):
     page, _ = client
-    page.request = MagicMock(side_effect=Timeout())
-    with pytest.raises(Timeout):
+    page.request = MagicMock(side_effect=error())
+    with pytest.raises(error):
         page.execute("session", ClickAction(selector="#submit"))
     assert page.request.call_count == 1
 
 
-def test_poll_transport_timeout_resumes_same_solve(client):
+@pytest.mark.parametrize("error", [Timeout, ChunkedEncodingError])
+def test_poll_transport_timeout_resumes_same_solve(client, error):
     page, _ = client
     action = CaptchaSolveAction()
     page.request = MagicMock(
-        side_effect=[response(action, "solving"), Timeout(), response(action, "solved", success=True)]
+        side_effect=[response(action, "solving"), error(), response(action, "solved", success=True)]
     )
     assert page.execute("session", action).success
     assert page.request.call_args.args[0].params.captcha_id == "solve"
@@ -121,7 +123,7 @@ def test_poll_transport_timeout_resumes_same_solve(client):
 @pytest.mark.parametrize("budget", [0, -1, float("inf"), float("nan")])
 def test_invalid_wait_budget(budget):
     with pytest.raises(ValueError, match="captcha_timeout_seconds"):
-        NotteClient(api_key="test", captcha_timeout_seconds=budget)
+        NotteClient(api_key="test", captcha_timeout_seconds=budget)  # pragma: allowlist secret
 
 
 def test_missing_poll_status_cannot_report_action_success(client):

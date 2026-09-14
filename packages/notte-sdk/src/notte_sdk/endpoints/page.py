@@ -9,6 +9,7 @@ from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.processing import ScrapeFailedError
 from pydantic import BaseModel, RootModel
+from requests.exceptions import ChunkedEncodingError
 from requests.exceptions import ConnectionError as RequestsConnectionError
 from requests.exceptions import Timeout as RequestsTimeout
 from typing_extensions import final
@@ -349,7 +350,7 @@ class PageClient(BaseClient):
                 result = self.request(
                     endpoint.with_request(request_action).with_params(params.model_copy()), timeout=request_timeout
                 )
-            except (RequestsTimeout, RequestsConnectionError):
+            except (RequestsTimeout, RequestsConnectionError, ChunkedEncodingError):
                 if not polling:
                     raise
                 time.sleep(min(1.0, max(0, (deadline or time.monotonic()) - time.monotonic())))
