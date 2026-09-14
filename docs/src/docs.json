@@ -223,8 +223,7 @@
             "pages": [
               "api-reference/authentication",
               "api-reference/errors",
-              "api-reference/rate-limits",
-              "api-reference/using-session-replay"
+              "api-reference/rate-limits"
             ]
           },
           {
