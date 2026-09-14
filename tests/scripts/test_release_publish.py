@@ -172,3 +172,90 @@ def test_node_release_dry_run_restores_existing_manifest_changes(tmp_path: Path,
     assert (result.returncode == 0) is (build_exit_code == 0)
     assert package.read_bytes() == original_package
     assert lock.read_bytes() == original_lock
+
+
+def test_release_tag_guard_runs_before_node_publish_and_python_build() -> None:
+    node = _load_workflow("node-sdk-publish.yml")["jobs"]["publish"]["steps"]
+    names = [step.get("name") for step in node]
+    guard = next(step for step in node if step.get("name") == "Validate shared release tag")
+    assert guard["if"] == "github.event_name == 'push'"
+    assert guard["working-directory"] == "."
+    assert 'release_version.py validate "$RELEASE_TAG"' in guard["run"]
+    assert names.index("Validate shared release tag") < names.index("Publish to npm")
+    build = (ROOT / "build.sh").read_text()
+    assert build.index('release_version.py release "$version"') < build.index("uv build")
+    assert "set -euo pipefail" in build
+
+
+def test_development_bump_waits_for_successful_publish_and_opens_reviewable_pr() -> None:
+    workflow = _load_workflow("pypi-release.yml")
+    job = workflow["jobs"]["next-development-version"]
+    assert job["needs"] == "build"
+    assert job["concurrency"]["cancel-in-progress"] is False
+    assert "GH_TOKEN" not in job["env"]
+    write_step = next(step for step in job["steps"] if step.get("name") == "Open version bump pull request")
+    assert write_step["env"]["GH_TOKEN"] == "${{ secrets.SUBMODULE_BUMP_PAT }}"
+    checkout = job["steps"][0]
+    assert checkout["with"]["ref"] == "${{ github.event.repository.default_branch }}"
+    assert checkout["with"]["persist-credentials"] is False
+    assert "token" not in checkout["with"]
+    assert "gh auth setup-git" in write_step["run"]
+    commands = "\n".join(step.get("run", "") for step in job["steps"])
+    assert 'release_version.py next "$RELEASE_TAG"' in commands
+    assert "uv lock" in commands
+    assert "gh pr create" in commands
+    assert "--state all" in commands
+    assert "gh pr merge" not in commands
+
+
+@pytest.mark.parametrize("scenario", ["new", "existing_branch", "existing_pr", "no_changes"])
+def test_bump_pr_creation_and_recovery(tmp_path: Path, scenario: str) -> None:
+    workflow = _load_workflow("pypi-release.yml")
+    step = next(
+        step
+        for step in workflow["jobs"]["next-development-version"]["steps"]
+        if step.get("name") == "Open version bump pull request"
+    )
+    (tmp_path / "pyproject.toml").write_text('[project]\nversion = "1.9.2.dev0"\n')
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    log = tmp_path / "commands.log"
+    for tool, behavior in {
+        "git": """case "$1" in
+  diff) [ "$SCENARIO" = no_changes ]; exit $? ;;
+  ls-remote) [ "$SCENARIO" = existing_branch ]; exit $? ;;
+esac
+""",
+        "gh": """if [ "$1 $2" = 'pr list' ] && [ "$SCENARIO" = existing_pr ]; then
+  echo 'https://github.com/nottelabs/notte/pull/1234'
+fi
+if [ "$1 $2" = 'pr create' ]; then
+  test -s "$RUNNER_TEMP/python-version-pr.md" || exit 1
+fi
+""",
+    }.items():
+        script = fake_bin / tool
+        script.write_text(f'#!/bin/sh\nprintf "{tool} %s\\n" "$*" >> "$COMMAND_LOG"\n' + behavior + "exit 0\n")
+        script.chmod(0o755)
+    result = subprocess.run(
+        ["bash", "-e", "-c", step["run"]],
+        cwd=tmp_path,
+        env={
+            **os.environ,
+            "PATH": f"{fake_bin}:{os.environ['PATH']}",
+            "COMMAND_LOG": str(log),
+            "SCENARIO": scenario,
+            "RUNNER_TEMP": str(tmp_path),
+            "RELEASE_TAG": "v1.9.1",
+            "BASE_BRANCH": "main",
+        },
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    commands = log.read_text()
+    assert ("gh pr create" in commands) == (scenario in ("new", "existing_branch"))
+    assert ("git push" in commands) == (scenario == "new")
+    if scenario == "new":
+        assert "git push origin chore/python-version-after-v1.9.1" in commands
+    assert "gh pr merge" not in commands
