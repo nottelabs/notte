@@ -1,3 +1,4 @@
+import { NotteManagedAuth } from '@/managed-auth';
 import { createClient } from '@/lib/client/client';
 import { createResources } from '@/resources.gen';
 import { getParseAs } from '@/lib/client/client/utils.gen';
@@ -478,6 +479,10 @@ export class NotteClient {
   }
 
   /** Usage and billing (`/usage`, `/usage/logs`). */
+  get managedAuth(): NotteManagedAuth {
+    return new NotteManagedAuth(this);
+  }
+
   get usage(): NotteUsage {
     return new NotteUsage(this);
   }

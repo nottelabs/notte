@@ -41,6 +41,10 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^managed-auth\/connect-links\/mailboxes\/sync$/, // /managed-auth/connect-links/mailboxes/sync
   /^managed-auth\/connect-links\/status$/, // /managed-auth/connect-links/status
   /^managed-auth\/connect-links\/submit$/, // /managed-auth/connect-links/submit
+  /^managed-auth\/connections\/[^\/]+\/check$/, // /managed-auth/connections/{connection_id}/check
+  /^managed-auth\/connections\/[^\/]+\/reauthenticate$/, // /managed-auth/connections/{connection_id}/reauthenticate
+  /^managed-auth\/connections\/[^\/]+\/refresh$/, // /managed-auth/connections/{connection_id}/refresh
+  /^managed-auth\/operations\/[^\/]+$/, // /managed-auth/operations/{operation_id}
 
   // Personas endpoints
   /^personas$/, // /personas

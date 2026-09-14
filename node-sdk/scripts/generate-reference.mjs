@@ -242,7 +242,7 @@ export function createReference(root = sdkRoot) {
         '## Parameters\n\nUse the defaults or pass these options to `client.Session(options)`:\n\n' + fieldsFor(options).join('\n\n'),
         `<Accordion title="Direct constructor reference">\n\n${constructor}\n\n</Accordion>`);
     }
-    pages.set(`${prefix}/manual/${classSlug}.mdx`, page(factory || ['NotteUsage', 'NotteSecrets', 'NotteAnything'].includes(name) ? 'Get started' : name, node, contents.filter(Boolean).join('\n\n')));
+    pages.set(`${prefix}/manual/${classSlug}.mdx`, page(factory || ['NotteUsage', 'NotteSecrets', 'NotteAnything', 'NotteManagedAuth'].includes(name) ? 'Get started' : name, node, contents.filter(Boolean).join('\n\n')));
     groups.push({ group: name, collapsed: true, pages: nav });
   }
   for (const [name, node] of [...types].sort(([a], [b]) => a.localeCompare(b, 'en'))) {
@@ -266,7 +266,7 @@ export function createReference(root = sdkRoot) {
       categories['Getting Started'].push(`${prefix}/${guide.slug}`);
     }
   }
-  const labels = { NotteClient: 'Client', NotteFunction: 'Function', NotteVault: 'Vault', NottePersona: 'Persona', SessionFiles: 'File Storage', RemoteFileStorage: 'File Storage', NotteAnything: 'Anything', NotteSecrets: 'Secrets', NotteUsage: 'Usage' }; // pragma: allowlist secret (public navigation labels)
+  const labels = { NotteClient: 'Client', NotteFunction: 'Function', NotteVault: 'Vault', NottePersona: 'Persona', SessionFiles: 'File Storage', RemoteFileStorage: 'File Storage', NotteAnything: 'Anything', NotteSecrets: 'Secrets', NotteUsage: 'Usage', NotteManagedAuth: 'Managed Auth' }; // pragma: allowlist secret (public navigation labels)
   const classOrder = ['NotteClient', 'Session', 'Agent', 'NotteFunction', 'NotteVault', 'NottePersona', 'RemoteFileStorage'];
   for (const group of groups.sort((a, b) => (classOrder.indexOf(a.group) + 1 || 100) - (classOrder.indexOf(b.group) + 1 || 100))) {
     // Client factories remain linked from NotteClient's overview, not a nested sidebar.

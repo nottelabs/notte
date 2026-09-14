@@ -13,13 +13,21 @@ Context manager pattern: start the session, run the callback and stop the
 session, with close reason `error` when the callback throws.
 
 ```typescript
-Session.use<T>(callback: (session: Session) => Promise<T>): Promise<T>;
+Session.use<T>(callback: (session: Session) => Promise<T>, options?: AuthWaitOptions): Promise<T>;
 ```
 
 ## Parameters
 
 <ParamField body="callback" type={"(session: Session) => Promise<T>"} required>
 Async work to perform with the started session.
+</ParamField>
+
+<ParamField body="options" type={"AuthWaitOptions"}>
+Default:
+
+```typescript
+{}
+```
 </ParamField>
 
 ## Returns
@@ -41,3 +49,7 @@ await client.Session().use(async session => {
   await session.execute({ type: 'goto', url: 'https://www.notte.cc' });
 });
 ```
+
+## Related types
+
+- [AuthWaitOptions](/typescript-sdk-reference/types/authwaitoptions)

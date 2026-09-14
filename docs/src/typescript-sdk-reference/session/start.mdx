@@ -15,11 +15,26 @@ Retries up to `SESSION_START_TRIES` times on 5xx errors, waiting
 `CLUSTER_OVERLOAD_RETRY_DELAY_MS` on HTTP 529 (cluster overload). 4xx
 errors are never retried.
 
+Managed-auth sessions wait for readiness by default. Pass
+`{ wait_for_authentication: false }` for an explicit nonblocking start,
+then call `waitForAuth()` before executing actions or connecting over CDP.
+Cancellation during creation waits for its response so the new session can
+be closed. Cancellation or failure during the startup wait also closes it.
 Prefer `session.use(async session => { ... })`, which also stops the session.
 
 ```typescript
-Session.start(): Promise<void>;
+Session.start(options?: SessionStartOptions): Promise<void>;
 ```
+
+## Parameters
+
+<ParamField body="options" type={"SessionStartOptions"}>
+Default:
+
+```typescript
+{}
+```
+</ParamField>
 
 ## Returns
 
@@ -33,3 +48,7 @@ Promise<void>
 const session = client.Session();
 await session.start();
 ```
+
+## Related types
+
+- [SessionStartOptions](/typescript-sdk-reference/types/sessionstartoptions)

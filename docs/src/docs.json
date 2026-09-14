@@ -414,6 +414,7 @@
                       "typescript-sdk-reference/session/getcookies",
                       "typescript-sdk-reference/session/viewer",
                       "typescript-sdk-reference/session/status",
+                      "typescript-sdk-reference/session/waitforauth",
                       "typescript-sdk-reference/session/downloadreplay",
                       "typescript-sdk-reference/session/debuginfo",
                       "typescript-sdk-reference/session/debugtabinfo",
@@ -492,6 +493,18 @@
                     "pages": [
                       "typescript-sdk-reference/manual/notteanything",
                       "typescript-sdk-reference/notteanything/start"
+                    ]
+                  },
+                  {
+                    "group": "Managed Auth",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/nottemanagedauth",
+                      "typescript-sdk-reference/nottemanagedauth/checkconnection",
+                      "typescript-sdk-reference/nottemanagedauth/getoperation",
+                      "typescript-sdk-reference/nottemanagedauth/waitforauth",
+                      "typescript-sdk-reference/nottemanagedauth/refreshconnection",
+                      "typescript-sdk-reference/nottemanagedauth/reauthenticateconnection"
                     ]
                   }
                 ]

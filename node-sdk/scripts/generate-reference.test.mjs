@@ -191,7 +191,7 @@ test('Node SDK mirrors Python categories and appears below Python in the sidebar
   assert.match(actual.pages.get('typescript-sdk-reference/errors.mdx'), /NotteAPIError/);
   assert.match(actual.pages.get('typescript-sdk-reference/authentication.mdx'), /NOTTE_API_KEY/);
   assert.match(actual.pages.get('typescript-sdk-reference/rate-limits.mdx'), /error.statusCode === 429/);
-  assert.deepEqual(categoryNames('Core Features'), ['Session', 'Actions', 'Agent', 'Function', 'Anything']);
+  assert.deepEqual(categoryNames('Core Features'), ['Session', 'Actions', 'Agent', 'Function', 'Anything', 'Managed Auth']);
   assert.deepEqual(categoryNames('Tooling'), ['Vault', 'Persona', 'File Storage', 'Secrets', 'Usage']);
   const actions = actual.navigation.pages.find(group => group.group === 'Core Features').pages.find(group => group.group === 'Actions');
   assert.ok(actions.pages.includes('typescript-sdk-reference/types/gotoaction'));

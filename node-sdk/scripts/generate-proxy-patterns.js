@@ -41,6 +41,13 @@ for (const url of removedDuringSessionFilesRollout) urls.delete(url);
 urls.add('/sessions/{session_id}/files');
 urls.add('/sessions/{session_id}/files/{file_id}');
 
+// Managed-auth lifecycle endpoints are not all exposed in staging's schema yet.
+urls.add('/sessions/{session_id}/auth');
+urls.add('/managed-auth/operations/{operation_id}');
+for (const action of ['check', 'refresh', 'reauthenticate']) {
+  urls.add(`/managed-auth/connections/{connection_id}/${action}`);
+}
+
 // Convert URL paths to regex patterns:
 //   "/sessions/{session_id}/stop"  →  "^sessions\\/[^\\/]+\\/stop$"
 //   "/"                            →  "^$"

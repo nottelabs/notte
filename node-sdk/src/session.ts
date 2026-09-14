@@ -1,3 +1,4 @@
+import { pollAuth, validateAuthRetry, ManagedAuthError, type AuthWaitOptions, type AuthSessionResponse as SessionResponse, type ManagedAuthReadiness } from '@/managed-auth';
 import { existsSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -16,7 +17,6 @@ import type {
   ReplayResponse,
   ScrapeRequest,
   SessionDebugResponse,
-  SessionResponse,
   TabSessionDebugResponse,
 } from '@/lib/client/types.gen';
 import {
@@ -79,7 +79,16 @@ export interface SessionScriptOptions {
   infer_response_format?: boolean;
 }
 
+export interface SessionStartOptions extends AuthWaitOptions {
+  /** Override the session default; false returns while authentication continues. */
+  wait_for_authentication?: boolean;
+}
+
 export interface SessionOptions extends ApiSessionStartRequest {
+  /** Wait in the SDK for managed authentication on start(). Defaults to true; use() always waits. */
+  wait_for_authentication?: boolean;
+  /** Additional server-side login attempts, from 0 to 2. Only sent with auth_ids. */
+  auth_retry?: number;
   /**
    * @deprecated Remote sessions always use the supported browser launch mode.
    * Retained as a boolean so existing typed configuration still compiles.
@@ -131,12 +140,13 @@ export function installServerOwnedDialogPolicy(browser: Pick<Browser, 'contexts'
  */
 export class Session {
   private client: NotteClient;
-  private options: ApiSessionStartRequest & { use_file_storage?: boolean };
+  private options: ApiSessionStartRequest & { use_file_storage?: boolean; auth_retry?: number };
   private openViewer: boolean;
   private legacyHeadless: boolean | undefined;
   private defaultRaiseOnFailure: boolean;
   private defaultPerceptionType: PerceptionType;
   private cookieFile: string | undefined;
+  private cookiesLoaded = false;
   private fileStorage: RemoteFileStorage | undefined;
   private sessionId: string | null = null;
   private isActive = false;
@@ -175,12 +185,17 @@ export class Session {
    * `CLUSTER_OVERLOAD_RETRY_DELAY_MS` on HTTP 529 (cluster overload). 4xx
    * errors are never retried.
    *
+   * Managed-auth sessions wait for readiness by default. Pass
+   * `{ wait_for_authentication: false }` for an explicit nonblocking start,
+   * then call `waitForAuth()` before executing actions or connecting over CDP.
+   * Cancellation during creation waits for its response so the new session can
+   * be closed. Cancellation or failure during the startup wait also closes it.
    * Prefer `session.use(async session => { ... })`, which also stops the session.
    * @example
    * const session = client.Session();
    * await session.start();
    */
-  async start(): Promise<void> {
+  async start(options: SessionStartOptions = {}): Promise<void> {
     if (this.legacyHeadless === false) {
       throw new Error(
         'Remote `headless: false` is no longer supported. `headless: true` sessions still include session replays and access to the live viewer.'
@@ -194,7 +209,14 @@ export class Session {
       throw new Error('Session is already active');
     }
 
-    const body: ApiSessionStartRequest = this.options;
+    options.signal?.throwIfAborted();
+    validateAuthRetry(this.options.auth_retry ?? 0);
+    const { auth_retry, wait_for_authentication, ...request } = this.options;
+    const body = {
+      ...request,
+      ...(request.auth_ids?.length ? { auth_retry: auth_retry ?? 0, wait_for_authentication: false } : {}),
+    };
+    const shouldWait = options.wait_for_authentication ?? wait_for_authentication ?? true;
     let tries = SESSION_START_TRIES;
     const origTries = tries;
     let sessionData: SessionResponse | undefined;
@@ -227,6 +249,7 @@ export class Session {
     this.sessionId = sessionData.session_id;
     this.isActive = true;
     this.response = sessionData;
+    this.cookiesLoaded = false;
     // `forSession` clones a storage already bound to another session, so one
     // RemoteFileStorage reused across sessions never points at the wrong one.
     this.fileStorage = this.fileStorage?.forSession(sessionData.session_id);
@@ -234,17 +257,12 @@ export class Session {
     // The remote browser exists from here on: if any post-start step fails,
     // stop it before rethrowing so a bad cookie file cannot leak a session.
     try {
+      options.signal?.throwIfAborted();
+      if (shouldWait) await this.waitForAuth(options);
       if (this.openViewer) {
         this.openViewerInBrowser();
       }
-      if (this.cookieFile !== undefined) {
-        if (existsSync(this.cookieFile)) {
-          console.info(`🍪 Automatically loading cookies from ${this.cookieFile}`);
-          await this.setCookiesFromFile(this.cookieFile);
-        } else {
-          console.warn(`🍪 Cookie file ${this.cookieFile} not found, skipping cookie loading`);
-        }
-      }
+      if (this.response?.status === 'active') await this.loadInitialCookies();
     } catch (error) {
       try {
         await this.stop('error');
@@ -253,6 +271,48 @@ export class Session {
       }
       throw error;
     }
+  }
+
+  /**
+   * Wait for this session to become usable without creating a session or submitting another login.
+   * A standalone wait leaves session ownership with the caller, including on timeout or cancellation.
+   */
+  async waitForAuth(options: AuthWaitOptions = {}): Promise<void> {
+    options.signal?.throwIfAborted();
+    if (!this.response) throw new Error('Session has not started');
+    if (this.response.status === 'active') {
+      await this.loadInitialCookies();
+      return;
+    }
+    const sessionId = this.lastSessionId();
+    this.response = await pollAuth(async signal => {
+      const response = await this.client.getClient().get<{ 200: ManagedAuthReadiness }, unknown, true>({
+        url: `/sessions/${encodeURIComponent(sessionId)}/auth`,
+        headers: { [TIMEOUT_HEADER]: '10000' }, signal, throwOnError: true,
+      });
+      let result: ManagedAuthReadiness | SessionResponse = response.data;
+      if (result.status === 'active') {
+        result = (await sessionStatus({
+          client: this.client.getClient(), path: { session_id: sessionId },
+          headers: { [TIMEOUT_HEADER]: '10000' }, signal, throwOnError: true,
+        })).data;
+        if (result.status === 'active') return result as SessionResponse;
+      }
+      if (result.status !== 'authenticating') throw new ManagedAuthError(result.error || 'Session authentication failed');
+      return undefined;
+    }, options);
+    await this.loadInitialCookies();
+  }
+
+  private async loadInitialCookies(): Promise<void> {
+    if (this.cookiesLoaded || this.cookieFile === undefined) return;
+    if (existsSync(this.cookieFile)) {
+      console.info(`🍪 Automatically loading cookies from ${this.cookieFile}`);
+      await this.setCookiesFromFile(this.cookieFile);
+    } else {
+      console.warn(`🍪 Cookie file ${this.cookieFile} not found, skipping cookie loading`);
+    }
+    this.cookiesLoaded = true;
   }
 
   /**
@@ -271,7 +331,7 @@ export class Session {
     const sessionId = this.sessionId;
     await this.closePlaywright();
 
-    if (this.cookieFile !== undefined) {
+    if (this.cookieFile !== undefined && this.response?.status === 'active') {
       try {
         const cookies = await this.getCookies();
         await createOrAppendCookiesToFile(this.cookieFile, cookies);
@@ -821,8 +881,8 @@ export class Session {
    *   await session.execute({ type: 'goto', url: 'https://www.notte.cc' });
    * });
    */
-  async use<T>(callback: (session: Session) => Promise<T>): Promise<T> {
-    await this.start();
+  async use<T>(callback: (session: Session) => Promise<T>, options: AuthWaitOptions = {}): Promise<T> {
+    await this.start({ ...options, wait_for_authentication: true });
     let callbackFailed = false;
     try {
       return await callback(this);
