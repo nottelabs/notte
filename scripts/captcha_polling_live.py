@@ -189,7 +189,13 @@ if __name__ == "__main__":
         try:
             row = run(args)
         except Exception as exc:
-            row = {"kind": args.kind, "scenario": args.scenario, "error_type": type(exc).__name__}
+            row = {
+                "kind": args.kind,
+                "scenario": args.scenario,
+                "assessment": "failed",
+                "error_type": type(exc).__name__,
+                "http_status": getattr(exc, "status_code", None),
+            }
         results.append(row)
         args.output.write_text(json.dumps(results, indent=2))
         print(json.dumps(row), flush=True)

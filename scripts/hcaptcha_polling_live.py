@@ -143,7 +143,12 @@ if __name__ == "__main__":
     try:
         row = run(args)
     except Exception as exc:
-        row = {"assessment": "failed", "error_type": type(exc).__name__}
+        row = {
+            "scenario": args.scenario,
+            "assessment": "failed",
+            "error_type": type(exc).__name__,
+            "http_status": getattr(exc, "status_code", None),
+        }
     args.output.write_text(json.dumps(row, indent=2))
     print(json.dumps(row), flush=True)
     raise SystemExit(0 if row["assessment"] == "passed" else 2 if row["assessment"].startswith("inconclusive") else 1)
