@@ -77,6 +77,7 @@ describe('NotteClient transport', () => {
         apiKey: API_KEY,
         baseUrl: DEFAULT_NOTTE_API_URL,
         timeoutMs: 60_000,
+        captchaTimeoutSeconds: 180,
         dbPreview: undefined,
         verbose: false,
       });

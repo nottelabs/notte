@@ -377,7 +377,7 @@ class BaseClient(ABC):
         return path
 
     def _request(
-        self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: int | None = None
+        self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: float | None = None
     ) -> dict[str, Any]:
         """
         Executes an HTTP request for the given API endpoint.
@@ -477,7 +477,7 @@ class BaseClient(ABC):
         return response_dict
 
     def request(
-        self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: int | None = None
+        self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: float | None = None
     ) -> TResponse:
         """
         Requests the specified API endpoint and returns the validated response.

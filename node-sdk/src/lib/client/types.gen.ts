@@ -520,15 +520,19 @@ export type ApiSessionStartRequest = {
     /**
      * Auth Ids
      *
-     * Managed Auth connection IDs to verify and, when necessary, authenticate inside this session. Authentication finishes before the session is returned unless wait_for_authentication is false.
+     * Managed Auth connection IDs to verify and, when necessary, authenticate inside this session. Initial verification runs before returning; when login is needed, the session returns as authenticating. Poll /sessions/{id}/auth for readiness.
      */
     auth_ids?: Array<string>;
     /**
      * Wait For Authentication
      *
-     * Whether to wait for Managed Auth profile restoration and authentication before returning the session. When false, authentication continues in the background after the browser is ready.
+     * SDK waiting preference. The API always verifies inline and returns authenticating when background login is needed; SDKs implement waiting through readiness polling.
      */
     wait_for_authentication?: boolean;
+    /**
+     * Auth Retry
+     */
+    auth_retry?: number;
     /**
      * Advanced Stealth
      *
@@ -2757,6 +2761,10 @@ export type GlobalScrapeRequest = {
      */
     wait_for_authentication?: boolean;
     /**
+     * Auth Retry
+     */
+    auth_retry?: number;
+    /**
      * Advanced Stealth
      *
      * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
@@ -3234,6 +3242,90 @@ export type ManagedAuthCredentials = {
      * Mfa Secret
      */
     mfa_secret?: null;
+};
+
+/**
+ * ManagedAuthOperation
+ */
+export type ManagedAuthOperation = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Connection Id
+     */
+    connection_id: string;
+    /**
+     * Session Id
+     */
+    session_id?: string | null;
+    /**
+     * Source
+     */
+    source: string;
+    /**
+     * Status
+     */
+    status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+    /**
+     * Phase
+     */
+    phase: string;
+    /**
+     * Attempt
+     */
+    attempt?: number;
+    /**
+     * Auth Retry
+     */
+    auth_retry?: number;
+    /**
+     * Authenticated
+     */
+    authenticated?: boolean | null;
+    /**
+     * Failure Code
+     */
+    failure_code?: string | null;
+    /**
+     * Error
+     */
+    error?: string | null;
+    /**
+     * Deadline
+     */
+    deadline: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * ManagedAuthReadiness
+ */
+export type ManagedAuthReadiness = {
+    /**
+     * Session Id
+     */
+    session_id: string;
+    /**
+     * Status
+     */
+    status: 'authenticating' | 'active' | 'failed' | 'closed';
+    /**
+     * Operations
+     */
+    operations?: Array<ManagedAuthOperation>;
+    /**
+     * Error
+     */
+    error?: string | null;
 };
 
 /**
@@ -4831,10 +4923,8 @@ export type SessionResponse = {
     duration?: string;
     /**
      * Status
-     *
-     * Session status
      */
-    status: 'active' | 'closed' | 'error' | 'timed_out';
+    status: 'active' | 'authenticating' | 'closed' | 'error' | 'timed_out';
     /**
      * Close Reason
      *
@@ -6751,10 +6841,8 @@ export type SessionResponseWritable = {
     duration?: string;
     /**
      * Status
-     *
-     * Session status
      */
-    status: 'active' | 'closed' | 'error' | 'timed_out';
+    status: 'active' | 'authenticating' | 'closed' | 'error' | 'timed_out';
     /**
      * Close Reason
      *
@@ -6879,6 +6967,46 @@ export type UpdateFunctionRunResponseWritable = {
      */
     status?: 'updated' | 'stopped';
 };
+
+export type SessionAuthReadinessData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: never;
+    url: '/sessions/{session_id}/auth';
+};
+
+export type SessionAuthReadinessErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionAuthReadinessError = SessionAuthReadinessErrors[keyof SessionAuthReadinessErrors];
+
+export type SessionAuthReadinessResponses = {
+    /**
+     * Successful Response
+     */
+    200: ManagedAuthReadiness;
+};
+
+export type SessionAuthReadinessResponse = SessionAuthReadinessResponses[keyof SessionAuthReadinessResponses];
 
 export type ListSessionsData = {
     body?: never;

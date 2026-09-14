@@ -17,6 +17,8 @@ export interface NotteClientConfig {
   apiKey?: string;
   /** Default per-request timeout in milliseconds. Defaults to 60 000, like the Python SDK. */
   timeoutMs?: number;
+  /** Maximum CAPTCHA wait in seconds, separate from each HTTP timeout. Defaults to 180. */
+  captchaTimeoutSeconds?: number;
   /** Database preview branch. Defaults to `NOTTE_DB_PREVIEW_BRANCH`. Internal. */
   dbPreview?: string;
   /** Log every request like `NotteClient(verbose=True)` in Python. */
@@ -36,6 +38,10 @@ API key. Defaults to `NOTTE_API_KEY`. Optional only for relative proxy base URLs
 
 <ParamField body="timeoutMs" type={"number | undefined"}>
 Default per-request timeout in milliseconds. Defaults to 60 000, like the Python SDK.
+</ParamField>
+
+<ParamField body="captchaTimeoutSeconds" type={"number | undefined"}>
+Maximum CAPTCHA wait in seconds, separate from each HTTP timeout. Defaults to 180.
 </ParamField>
 
 <ParamField body="dbPreview" type={"string | undefined"}>

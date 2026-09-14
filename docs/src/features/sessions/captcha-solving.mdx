@@ -108,6 +108,28 @@ For reCAPTCHA challenges, use the `captcha_solve` action with `captcha_type="rec
 
 <RecaptchaSolveAction />
 
+### Waiting for a solve in Python
+
+The Python SDK polls one ongoing solve through short HTTP requests. Repeated
+`captcha_solve` calls join that solve or return its completed result. Configure the
+total wait separately from ordinary action timeouts:
+
+```python
+client = notte.NotteClient(captcha_timeout_seconds=180)
+with client.Session(solve_captchas=True) as session:
+    session.execute(type="goto", url="https://www.google.com/recaptcha/api2/demo")
+    session.execute(type="captcha_solve", captcha_type="recaptcha")
+```
+
+The default CAPTCHA wait is three minutes. A terminal solver failure, page change,
+or expired wait budget follows the usual `raise_on_failure` behavior. Polling does
+not restart the solve or extend the session's maximum lifetime.
+
+SDK actions blocked before execution wait for the CAPTCHA and then retry. If an
+action already executed and triggered a CAPTCHA, the SDK waits without replaying
+it. This coordination applies to Python SDK actions; direct Playwright/CDP calls
+do not participate. It requires a backend version that supports CAPTCHA polling.
+
 ### Text CAPTCHAs
 
 Text CAPTCHAs are the old-school challenges that show distorted letters, numbers, or a short phrase and ask the user to type the answer into a field. For these challenges, use `captcha_type="text"`. This example comes from the [text CAPTCHA template](https://www.notte.cc/templates/captcha-bot-handling/basic-text-captcha).

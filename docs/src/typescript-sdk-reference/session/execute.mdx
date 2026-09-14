@@ -18,7 +18,7 @@ server-side error class. `captcha_solve` actions get a 100 s request
 timeout and are retried up to 3 times on HTTP 408.
 
 ```typescript
-Session.execute(action: ExecuteAction, options?: boolean | ExecuteOptions): Promise<ApiExecutionResponse>;
+Session.execute(action: ExecuteAction, options?: boolean | ExecuteOptions): Promise<CaptchaExecutionResponse>;
 ```
 
 ## Parameters
@@ -40,7 +40,7 @@ Default:
 ## Returns
 
 ```typescript
-Promise<ApiExecutionResponse>
+Promise<CaptchaExecutionResponse>
 ```
 
 The execution response, including `success` and failure details when throwing is disabled.
@@ -63,6 +63,6 @@ if (!result.success) console.log(result.message);
 
 ## Related types
 
-- [ApiExecutionResponse](/typescript-sdk-reference/types/apiexecutionresponse)
+- [CaptchaExecutionResponse](/typescript-sdk-reference/types/captchaexecutionresponse)
 - [ExecuteAction](/typescript-sdk-reference/types/executeaction)
 - [ExecuteOptions](/typescript-sdk-reference/types/executeoptions)

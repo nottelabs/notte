@@ -11,6 +11,7 @@ import type {
   ExecutionResponse,
   ImageData,
   Observation,
+  PageExecuteData,
   ObserveRequest,
   ReplayResponse,
   ScrapeRequest,
@@ -32,7 +33,8 @@ import {
   sessionStop,
 } from '@/lib/client/sdk.gen';
 import { ActionExecutionError, EvaluateJsNoDataError, NotteAPIError, NotteTimeoutError, sleep } from '@/errors';
-import { isCaptchaSolveAction, type ExecuteAction } from '@/actions';
+import type { ExecuteAction } from '@/actions';
+import { executeWithCaptcha, type CaptchaExecutionResponse } from '@/captcha';
 import { buildFetchScript, responseFromEvaluated, type PageFetchOptions, type PageFetchResponse } from '@/page-fetch';
 import { createOrAppendCookiesToFile, readCookiesFile } from '@/cookies';
 import {
@@ -50,10 +52,8 @@ import type { RemoteFileStorage } from '@/files';
 export const SESSION_START_TRIES = 3;
 /** Delay before retrying `start()` after an HTTP 529 (cluster overload). */
 export const CLUSTER_OVERLOAD_RETRY_DELAY_MS = 30_000;
-/** Request timeout for `captcha_solve` actions, like `PageClient.execute` in Python. */
+/** @deprecated Legacy request limit; CAPTCHA polls now use at most 10 seconds per request. */
 export const CAPTCHA_SOLVE_TIMEOUT_MS = 100_000;
-/** Number of attempts a `captcha_solve` action gets when the API answers 408. */
-export const CAPTCHA_SOLVE_TRIES = 3;
 
 export type PerceptionType = NonNullable<ObserveRequest['perception_type']>;
 export type SessionCloseReason = 'manual' | 'error';
@@ -662,38 +662,20 @@ export class Session {
    * const result = await session.execute({ type: 'click', id: 'B1' }, { raiseOnFailure: false });
    * if (!result.success) console.log(result.message);
    */
-  async execute(action: ExecuteAction, options: boolean | ExecuteOptions = {}): Promise<ApiExecutionResponse> {
+  async execute(action: ExecuteAction, options: boolean | ExecuteOptions = {}): Promise<CaptchaExecutionResponse> {
     const sessionId = this.requireSessionId();
     const raiseOnFailure =
       typeof options === 'boolean' ? options : (options.raiseOnFailure ?? this.defaultRaiseOnFailure);
-    const isCaptcha = isCaptchaSolveAction(action);
-
-    let result: ApiExecutionResponse | undefined;
-    let lastError: unknown;
-    for (let attempt = 0; attempt < CAPTCHA_SOLVE_TRIES; attempt += 1) {
-      try {
+    const result = await executeWithCaptcha(action, this.client.getConfig().captchaTimeoutSeconds ?? 180,
+      async (requestAction, params, timeoutMs) => {
+        const query: typeof params & NonNullable<PageExecuteData['query']> = params;
         const response = await pageExecute({
-          client: this.client.getClient(),
-          path: { session_id: sessionId },
-          body: action,
-          headers: isCaptcha ? { [TIMEOUT_HEADER]: String(CAPTCHA_SOLVE_TIMEOUT_MS) } : undefined,
+          client: this.client.getClient(), path: { session_id: sessionId }, body: requestAction,
+          query, headers: timeoutMs === undefined ? undefined : { [TIMEOUT_HEADER]: String(timeoutMs) },
           throwOnError: true,
         });
-        result = response.data;
-        break;
-      } catch (error) {
-        if (isCaptcha && error instanceof NotteAPIError && error.statusCode === 408) {
-          lastError = error;
-          console.warn('Solve captcha action timed out. This can happen for long and complex captchas. Retrying...');
-          continue;
-        }
-        throw error;
-      }
-    }
-    if (!result) {
-      // Every attempt timed out: surface the last typed 408 rather than a generic message.
-      throw lastError ?? new Error(`Failed to execute action '${action.type}'. This should not happen. Please report this issue.`);
-    }
+        return response.data;
+      });
 
     // Gate on "did the action fail", not "did something throw", to mirror the local session.
     if (raiseOnFailure && !result.success) {

@@ -73,6 +73,8 @@ export interface NotteClientConfig {
   apiKey?: string;
   /** Default per-request timeout in milliseconds. Defaults to 60 000, like the Python SDK. */
   timeoutMs?: number;
+  /** Maximum CAPTCHA wait in seconds, separate from each HTTP timeout. Defaults to 180. */
+  captchaTimeoutSeconds?: number;
   /** Database preview branch. Defaults to `NOTTE_DB_PREVIEW_BRANCH`. Internal. */
   dbPreview?: string;
   /** Log every request like `NotteClient(verbose=True)` in Python. */
@@ -86,7 +88,7 @@ export type FunctionListOptions = NonNullable<ListFunctionsData['query']>;
 /** Options of `client.scrape()`: the global scrape request minus `url`, plus the SDK-only scrape options. */
 export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' | 'response_format'> & ScrapeOptions<T>;
 
-type ResolvedConfig = Required<Pick<NotteClientConfig, 'baseUrl' | 'timeoutMs' | 'verbose'>> &
+type ResolvedConfig = Required<Pick<NotteClientConfig, 'baseUrl' | 'timeoutMs' | 'verbose' | 'captchaTimeoutSeconds'>> &
   Pick<NotteClientConfig, 'apiKey' | 'dbPreview'>;
 
 function isRelativeProxyUrl(baseUrl: string): boolean {
@@ -105,6 +107,10 @@ export class NotteClient {
     const baseUrl = config.baseUrl || process.env.NOTTE_API_URL || DEFAULT_NOTTE_API_URL;
     const dbPreview = config.dbPreview || process.env[DB_PREVIEW_ENV] || undefined;
     const timeoutMs = config.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+    const captchaTimeoutSeconds = config.captchaTimeoutSeconds ?? 180;
+    if (!Number.isFinite(captchaTimeoutSeconds) || captchaTimeoutSeconds <= 0) {
+      throw new InvalidRequestError('captchaTimeoutSeconds must be positive and finite');
+    }
     if (!(timeoutMs >= 0)) {
       throw new InvalidRequestError('timeoutMs must be a non-negative number');
     }
@@ -127,7 +133,7 @@ export class NotteClient {
       );
     }
 
-    this.config = { baseUrl, apiKey, timeoutMs, dbPreview, verbose: config.verbose ?? false };
+    this.config = { baseUrl, apiKey, timeoutMs, captchaTimeoutSeconds, dbPreview, verbose: config.verbose ?? false };
 
     if (baseUrl !== DEFAULT_NOTTE_API_URL && !isProxyMode) {
       console.warn(`NOTTE_API_URL is set to: ${baseUrl}`);
