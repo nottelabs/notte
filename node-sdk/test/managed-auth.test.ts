@@ -33,7 +33,7 @@ describe('managed auth transport and lifecycle', () => {
       calls.push(request.clone());
       return handle(request);
     }));
-    client = new NotteClient({ apiKey: 'test-key' });
+    client = new NotteClient({ apiKey: 'test-key' }); // pragma: allowlist secret (test fixture)
   });
   afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 

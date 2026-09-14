@@ -149,5 +149,5 @@ export { NotteClient as default } from '@/client';
 
 export type { CaptchaStatus, CaptchaExecutionResponse } from '@/captcha';
 export { NotteManagedAuth, ManagedAuthError } from '@/managed-auth';
-export type { AuthSessionResponse, ManagedAuthOperation, ManagedAuthReadiness, ManagedAuthRunResponse, AuthWaitOptions, ManagedAuthRunOptions } from '@/managed-auth';
+export type { AuthSessionResponse as SessionResponse, AuthSessionResponse, ManagedAuthOperation, ManagedAuthReadiness, ManagedAuthRunResponse, AuthWaitOptions, ManagedAuthRunOptions } from '@/managed-auth';
 export type { SessionStartOptions } from '@/session';

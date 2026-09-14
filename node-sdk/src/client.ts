@@ -1,4 +1,4 @@
-import { NotteManagedAuth } from '@/managed-auth';
+import { NotteManagedAuth, type AuthSessionResponse as SessionResponse } from '@/managed-auth';
 import { createClient } from '@/lib/client/client';
 import { createResources } from '@/resources.gen';
 import { getParseAs } from '@/lib/client/client/utils.gen';
@@ -12,7 +12,6 @@ import type {
   ListSessionsData,
   ListVaultsData,
   PersonaResponse,
-  SessionResponse,
   Vault,
 } from '@/lib/client/types.gen';
 import { Agent, type AgentConstructor } from '@/agent';
