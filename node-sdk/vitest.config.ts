@@ -38,6 +38,8 @@ export default defineConfig({
         'node_modules/',
         'test/',
         'src/lib/**',
+        // Generated adapters are verified by generator and request-contract tests.
+        'src/resources.gen.ts',
         'dist/',
         '*.config.*'
       ]
