@@ -1,6 +1,6 @@
 """Opt-in hCaptcha polling checks on NopeCHA, using backend CAPTCHA_API_KEY.
 
-Run with --api-url URL --scenario resume|navigate|close|concurrent --output FILE.
+Run with --api-url URL --scenario auto|resume|navigate|close|concurrent --output FILE.
 The demo checks token delivery/callbacks, not server-side token acceptance.
 """
 
@@ -54,7 +54,7 @@ def run(args):
 
     c = client()
     row = {"scenario": args.scenario, "wire": wire, "provider": "anti-captcha", "started_at": time.time()}
-    with c.Session(headless=True, proxies=False, solve_captchas=False, idle_timeout_minutes=3) as s:
+    with c.Session(headless=True, proxies=False, solve_captchas=args.scenario == "auto", idle_timeout_minutes=3) as s:
         row["session_id"] = s.session_id
         print(json.dumps({"session_id": s.session_id, "scenario": args.scenario}), flush=True)
         p = s.page
@@ -62,8 +62,18 @@ def run(args):
         p.locator('iframe[src*="hcaptcha.com"]').first.wait_for(timeout=30000)
         p.evaluate("window.__hcaptchaProbe = 0")
         other = client().Session(session_id=s.session_id)
+        row["before_action_at"] = time.time()
         with ThreadPoolExecutor(max_workers=2) as pool:
-            solve = pool.submit(s.execute, type="captcha_solve", captcha_type="hcaptcha", raise_on_failure=False)
+            solve = (
+                pool.submit(
+                    s.execute,
+                    type="evaluate_js",
+                    code="window.__hcaptchaProbe += 1; document.title",
+                    raise_on_failure=False,
+                )
+                if args.scenario == "auto"
+                else pool.submit(s.execute, type="captcha_solve", captcha_type="hcaptcha", raise_on_failure=False)
+            )
             deadline = time.monotonic() + 250
             while not pending.is_set() and not solve.done() and time.monotonic() < deadline:
                 p.wait_for_timeout(100)
@@ -73,11 +83,15 @@ def run(args):
                     other.execute, type="captcha_solve", captcha_type="hcaptcha", raise_on_failure=False
                 )
             else:
-                action = pool.submit(
-                    other.execute,
-                    type="evaluate_js",
-                    code="window.__hcaptchaProbe += 1; document.title",
-                    raise_on_failure=False,
+                action = (
+                    solve
+                    if args.scenario == "auto"
+                    else pool.submit(
+                        other.execute,
+                        type="evaluate_js",
+                        code="window.__hcaptchaProbe += 1; document.title",
+                        raise_on_failure=False,
+                    )
                 )
                 while not action_pending.is_set() and not action.done() and time.monotonic() < deadline:
                     p.wait_for_timeout(100)
@@ -94,7 +108,7 @@ def run(args):
                     p.wait_for_timeout(100)
             row["solve_result"] = outcome(solve)
             row["action_result"] = outcome(action)
-        if args.scenario in ("resume", "concurrent"):
+        if args.scenario in ("auto", "resume", "concurrent"):
             row["executions_final"] = p.evaluate("window.__hcaptchaProbe")
             row["callback_success"] = p.locator(".response").inner_text().strip() == "success"
             row["response_present"] = p.locator('[name="h-captcha-response"]').evaluate_all(
@@ -127,7 +141,7 @@ def assess(row):
     else:
         passed = all(row[k].get("success") for k in ("solve_result", "action_result"))
         passed = passed and row["callback_success"] and row["response_present"]
-        if row["scenario"] == "resume":
+        if row["scenario"] in ("auto", "resume"):
             passed = passed and row["executions_while_pending"] == 0 and row["executions_final"] == 1
         else:
             passed = passed and len({r["captcha"]["captcha_id"] for r in row["wire"] if r.get("captcha")}) == 1
@@ -137,7 +151,7 @@ def assess(row):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--api-url", required=True)
-    parser.add_argument("--scenario", choices=["resume", "navigate", "close", "concurrent"], required=True)
+    parser.add_argument("--scenario", choices=["auto", "resume", "navigate", "close", "concurrent"], required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
