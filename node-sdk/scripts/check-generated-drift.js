@@ -18,6 +18,7 @@ const SDK_DIR = path.resolve(__dirname, '..');
 const GENERATED_PATHS = [
   'src/lib/client',
   'src/proxy/patterns.ts',
+  'src/resources.gen.ts',
 ];
 
 function run(command, args, options = {}) {

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/client/client';
+import { createResources } from '@/resources.gen';
 import { getParseAs } from '@/lib/client/client/utils.gen';
 import { Session, type SessionOptions } from '@/session';
 import type {
@@ -97,6 +98,7 @@ function isRelativeProxyUrl(baseUrl: string): boolean {
 export class NotteClient {
   private readonly config: ResolvedConfig;
   private readonly client = createClient();
+  private readonly resources = createResources(this.client, () => this.config.apiKey ?? '');
 
   constructor(config: NotteClientConfig = {}) {
     const apiKey = config.apiKey || process.env.NOTTE_API_KEY;
@@ -389,9 +391,10 @@ export class NotteClient {
     return this.NotteFunction(options);
   }
 
-  /** Sessions listing, the counterpart of `client.sessions.list()`. */
+  /** Client-bound session API operations. `list()` retains its array return value. */
   get sessions() {
     return {
+      ...this.resources.sessions,
       list: async (options: SessionListOptions = {}): Promise<SessionResponse[]> => {
         const response = await listSessions({ client: this.getClient(), query: options });
         return response.data?.items ?? [];
@@ -399,9 +402,10 @@ export class NotteClient {
     };
   }
 
-  /** Agents listing, the counterpart of `client.agents.list()`. */
+  /** Client-bound agent API operations. `list()` retains its array return value. */
   get agents() {
     return {
+      ...this.resources.agents,
       list: async (options: AgentListOptions = {}): Promise<AgentResponse[]> => {
         const response = await listAgents({ client: this.getClient(), query: options });
         return response.data?.items ?? [];
@@ -409,9 +413,10 @@ export class NotteClient {
     };
   }
 
-  /** Vaults listing, the counterpart of `client.vaults.list()`. */
+  /** Client-bound vault API operations. `list()` retains its array return value. */
   get vaults() {
     return {
+      ...this.resources.vaults,
       list: async (options: VaultListOptions = {}): Promise<Vault[]> => {
         const response = await listVaults({ client: this.getClient(), query: options });
         return response.data?.items ?? [];
@@ -419,9 +424,10 @@ export class NotteClient {
     };
   }
 
-  /** Functions listing, the counterpart of `client.functions.list()`. */
+  /** Client-bound function API operations. `list()` retains its array return value. */
   get functions() {
     return {
+      ...this.resources.functions,
       list: async (options: FunctionListOptions = {}): Promise<FunctionListItemResponse[]> => {
         const response = await listFunctions({ client: this.getClient(), query: options });
         return response.data?.items ?? [];
@@ -475,6 +481,7 @@ export class NotteClient {
    */
   get personas() {
     return {
+      ...this.resources.personas,
       list: async (options?: PersonaListOptions): Promise<PersonaResponse[]> => {
         const response = await listPersonas({
           client: this.getClient(),
@@ -490,6 +497,11 @@ export class NotteClient {
    */
   getClient() {
     return this.client;
+  }
+
+  /** Client-bound profile API operations, generated from OpenAPI. */
+  get profiles() {
+    return this.resources.profiles;
   }
 
   /**

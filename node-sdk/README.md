@@ -24,6 +24,36 @@ npm pack --dry-run
 To update the generated client, run `npm run generate:staging`, review the diff,
 and commit it. `npm run check:staging` checks for drift without editing your files.
 
+### Generated resource methods
+
+The SDK generates client-bound methods for `sessions`, `agents`, `functions`,
+`vaults`, `personas`, and `profiles` from the checked-in OpenAPI-derived types
+and operations. No per-call client or `throwOnError` is needed:
+
+```ts
+const client = new NotteClient();
+await client.sessions.stop(sessionId);
+const vault = await client.vaults.create({ name: 'default' });
+const copy = await client.functions.fork(functionId);
+```
+
+Arguments are path IDs in URL order, then the request body (if any), query
+parameters (if any), and optional `{ signal }` cancellation options. For example,
+`client.sessions.stop(sessionId, { close_reason: 'manual' }, { signal })`.
+Methods return the API response body and throw the client's typed API errors.
+The five existing `list()` methods still return arrays for compatibility;
+the newly added `profiles.list()` returns the API pagination response.
+
+These are API operations, not lifecycle helpers: they do not poll for completion,
+decrypt credentials, or manage cleanup. Continue using `Session().use()`,
+`Agent().run()`, `Function().run()`, and `Vault()` for those behaviors. Existing
+standalone generated exports remain supported.
+
+`npm run generate` refreshes this layer too. Use `npm run resources:generate`
+to regenerate it offline, `npm run resources:check` to detect stale output, and
+`npm run resources:test` for generator regressions. Method-name aliases live in
+the generator; request shapes and routes come from generated OpenAPI types.
+
 For the isolated live test, set `NOTTE_API_KEY` and
 `NOTTE_API_URL=https://us-staging.notte.cc`, then run:
 
