@@ -36,6 +36,8 @@ jobs:
           cache: npm
           cache-dependency-path: node-sdk/package-lock.json
       - run: npm ci
+      - run: npm run resources:check
+      - run: npm run resources:test
       - run: npm run typecheck
       - run: npm run test:coverage
       - name: Upload coverage report
