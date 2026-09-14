@@ -78,7 +78,7 @@ def run(args):
             page.frame_locator('iframe[src*="/recaptcha/api2/anchor"]').locator("#recaptcha-anchor").wait_for(
                 timeout=30000
             )
-        page.wait_for_timeout(2500)
+        page.wait_for_timeout(args.settle_seconds * 1000)
         row["before_action_at"] = time.time()
         row["frames_before_action"] = [f.url.split("?")[0] for f in page.frames]
         action = (
@@ -173,10 +173,11 @@ if __name__ == "__main__":
     parser.add_argument("--kind", choices=DEMOS, required=True)
     parser.add_argument("--scenario", choices=["auto", "explicit", "navigate", "close", "concurrent"], required=True)
     parser.add_argument("--runs", type=int, default=1)
+    parser.add_argument("--settle-seconds", type=float, default=2.5)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    if args.runs < 1:
-        parser.error("--runs must be positive")
+    if args.runs < 1 or args.settle_seconds < 0:
+        parser.error("--runs must be positive and --settle-seconds nonnegative")
     results = []
     for attempt in range(args.runs):
         if attempt:
@@ -188,4 +189,6 @@ if __name__ == "__main__":
         results.append(row)
         args.output.write_text(json.dumps(results, indent=2))
         print(json.dumps(row), flush=True)
-    sys.exit(1 if any(r.get("assessment", "failed") == "failed" for r in results) else 0)
+    if any(r.get("assessment", "failed") == "failed" for r in results):
+        sys.exit(1)
+    sys.exit(2 if any(r["assessment"].startswith("inconclusive") for r in results) else 0)
