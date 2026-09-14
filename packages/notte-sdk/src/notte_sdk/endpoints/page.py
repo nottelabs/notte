@@ -351,7 +351,7 @@ class PageClient(BaseClient):
                     endpoint.with_request(request_action).with_params(params.model_copy()), timeout=request_timeout
                 )
             except (RequestsTimeout, RequestsConnectionError, ChunkedEncodingError):
-                if not polling:
+                if not polling or params.captcha_id is None:
                     raise
                 time.sleep(min(1.0, max(0, (deadline or time.monotonic()) - time.monotonic())))
                 continue

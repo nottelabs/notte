@@ -1,8 +1,10 @@
-"""Opt-in functional checks against 2Captcha demos using an updated SDK.
+"""Use NOTTE_TEST_API_KEY with a scoped key for the selected test environment.
+
+Opt-in functional checks against 2Captcha demos using an updated SDK.
 
 Example: python scripts/captcha_polling_live.py --api-url https://preview-7-dev-test.notte.cc \
   --kind recaptcha --scenario auto --runs 3 --output /tmp/captcha-auto.json
-Credentials come from NOTTE_API_KEY. This creates real sessions/provider work.
+Credentials come from NOTTE_TEST_API_KEY. This creates real sessions/provider work.
 For reCAPTCHA, configure RECAPTCHA_SOLVER_PROVIDER=2captcha and a nonempty
 TWOCAPTCHA_API_KEY on the backend. Sessions use a proxy for 2Captcha token solving.
 Confirm the deployed backend disables provider fallback before treating results
@@ -12,12 +14,14 @@ as 2Captcha evidence; the demo hostname alone does not establish the provider.
 import argparse
 import json
 import os
+import re
 import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from notte_core.common.logging import logger
 from notte_sdk.client import NotteClient
@@ -29,11 +33,32 @@ DEMOS = {
 CHECK = 'button[data-action="demo_action"]'
 
 
+def validate_api_url(value: str) -> str:
+    """Only staging and isolated development previews may receive a test key."""
+    parsed = urlsplit(value)
+    approved = parsed.hostname == "us-staging.notte.cc" or re.fullmatch(
+        r"preview-[1-9][0-9]*-dev-test\.notte\.cc", parsed.hostname or ""
+    )
+    if (
+        parsed.scheme != "https"
+        or not approved
+        or parsed.port not in (None, 443)
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.path not in ("", "/")
+        or parsed.query
+        or parsed.fragment
+    ):
+        raise ValueError("Use an approved HTTPS staging or isolated preview API origin")
+    return value
+
+
 def run(args: Any) -> dict[str, Any]:
+    args.api_url = validate_api_url(args.api_url)
     logger.remove()
     wire: list[dict[str, Any]] = []
     pending = threading.Event()
-    client = NotteClient(api_key=os.environ["NOTTE_API_KEY"], server_url=args.api_url, captcha_timeout_seconds=180)
+    client = NotteClient(api_key=os.environ["NOTTE_TEST_API_KEY"], server_url=args.api_url, captcha_timeout_seconds=180)
     request = client.sessions.page.request
 
     def record(endpoint: Any, headers: Any = None, timeout: Any = None, *, _request: Any = request) -> Any:
@@ -95,7 +120,7 @@ def run(args: Any) -> dict[str, Any]:
             second = None
             if args.scenario == "concurrent":
                 other = NotteClient(
-                    api_key=os.environ["NOTTE_API_KEY"], server_url=args.api_url, captcha_timeout_seconds=180
+                    api_key=os.environ["NOTTE_TEST_API_KEY"], server_url=args.api_url, captcha_timeout_seconds=180
                 )
                 other_request = other.sessions.page.request
 
@@ -114,7 +139,7 @@ def run(args: Any) -> dict[str, Any]:
                 _ = page.goto("https://example.com", wait_until="domcontentloaded")
             elif pending.is_set() and args.scenario == "close":
                 # Separate HTTP caller closes the actual backend session.
-                other = NotteClient(api_key=os.environ["NOTTE_API_KEY"], server_url=args.api_url)
+                other = NotteClient(api_key=os.environ["NOTTE_TEST_API_KEY"], server_url=args.api_url)
                 _ = other.sessions.stop(session.session_id)
             while not future.done() and time.monotonic() < deadline:
                 if args.scenario == "close":
@@ -175,7 +200,7 @@ def assess(row: dict[str, Any]) -> str:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    _ = parser.add_argument("--api-url", required=True)
+    _ = parser.add_argument("--api-url", type=validate_api_url, required=True)
     _ = parser.add_argument("--kind", choices=DEMOS, required=True)
     _ = parser.add_argument(
         "--scenario", choices=["auto", "explicit", "navigate", "close", "concurrent"], required=True

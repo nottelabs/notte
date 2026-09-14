@@ -56,7 +56,7 @@ export async function executeWithCaptcha(
       const transport = error instanceof NotteTimeoutError || error instanceof TypeError || error instanceof SyntaxError;
       const transient = params.captcha_id !== undefined && error instanceof NotteAPIError &&
         [408, 429, 502, 503, 504].includes(error.statusCode);
-      if (!polling || (!transport && !transient)) throw error;
+      if (!polling || params.captcha_id === undefined || (!transport && !transient)) throw error;
       await pause();
       continue;
     }

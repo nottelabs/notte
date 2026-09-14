@@ -57,6 +57,11 @@ describe('CAPTCHA polling', () => {
     expect((await result).success).toBe(true);
     expect(request.mock.calls.slice(1).every(c => c[1].captcha_id === 'c')).toBe(true);
   });
+  it('does not resend an initial explicit solve after losing its response', async () => {
+    const request = vi.fn().mockRejectedValue(new NotteTimeoutError('initial response lost'));
+    await expect(executeWithCaptcha({ type: 'captcha_solve' }, 180, request)).rejects.toThrow('initial response lost');
+    expect(request).toHaveBeenCalledTimes(1);
+  });
   it('does not retry ambiguous transport failures of ordinary actions', async () => {
     const request = vi.fn().mockRejectedValue(new NotteTimeoutError('timeout'));
     await expect(executeWithCaptcha(action, 180, request)).rejects.toThrow('timeout');
@@ -73,7 +78,7 @@ describe('CAPTCHA polling', () => {
     expect(await result).toMatchObject({ code: 'captcha_timeout' });
   });
   it.each([0, -1, Infinity, NaN])('rejects invalid budget %s', value => {
-    expect(() => new NotteClient({ apiKey: 'test', captchaTimeoutSeconds: value })).toThrow('positive and finite');
+    expect(() => new NotteClient({ apiKey: 'test', captchaTimeoutSeconds: value })).toThrow('positive and finite'); // pragma: allowlist secret - dummy test credential
   });
   it('carries the polling protocol through the real client and HTTP transport', async () => {
     const received: { body: ExecuteAction; url: URL }[] = [];
@@ -87,7 +92,7 @@ describe('CAPTCHA polling', () => {
     await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
     try {
       const address = server.address() as { port: number };
-      const client = new NotteClient({ apiKey: 'test', baseUrl: `http://127.0.0.1:${address.port}`, captchaTimeoutSeconds: 30 });
+      const client = new NotteClient({ apiKey: 'test', baseUrl: `http://127.0.0.1:${address.port}`, captchaTimeoutSeconds: 30 }); // pragma: allowlist secret - local test credential
       const session = client.Session(); await session.start();
       expect((await session.execute(action)).success).toBe(true);
       expect(received.map(r => r.body.type)).toEqual(['click', 'captcha_solve', 'click']);

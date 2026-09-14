@@ -1,4 +1,6 @@
-"""Opt-in hCaptcha polling checks on NopeCHA, using backend CAPTCHA_API_KEY.
+"""Use NOTTE_TEST_API_KEY with a scoped key for the selected test environment.
+
+Opt-in hCaptcha polling checks on NopeCHA, using backend CAPTCHA_API_KEY.
 
 Run with --api-url URL --scenario auto|resume|navigate|close|concurrent --output FILE.
 The demo checks token delivery/callbacks, not server-side token acceptance.
@@ -7,24 +9,47 @@ The demo checks token delivery/callbacks, not server-side token acceptance.
 import argparse
 import json
 import os
+import re
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from notte_core.common.logging import logger
 from notte_sdk.client import NotteClient
 
 
+def validate_api_url(value: str) -> str:
+    """Only staging and isolated development previews may receive a test key."""
+    parsed = urlsplit(value)
+    approved = parsed.hostname == "us-staging.notte.cc" or re.fullmatch(
+        r"preview-[1-9][0-9]*-dev-test\.notte\.cc", parsed.hostname or ""
+    )
+    if (
+        parsed.scheme != "https"
+        or not approved
+        or parsed.port not in (None, 443)
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.path not in ("", "/")
+        or parsed.query
+        or parsed.fragment
+    ):
+        raise ValueError("Use an approved HTTPS staging or isolated preview API origin")
+    return value
+
+
 def run(args: Any) -> dict[str, Any]:
+    args.api_url = validate_api_url(args.api_url)
     logger.remove()
     wire: list[dict[str, Any]] = []
     pending = threading.Event()
     action_pending = threading.Event()
 
     def client() -> NotteClient:
-        c = NotteClient(api_key=os.environ["NOTTE_API_KEY"], server_url=args.api_url, captcha_timeout_seconds=240)
+        c = NotteClient(api_key=os.environ["NOTTE_TEST_API_KEY"], server_url=args.api_url, captcha_timeout_seconds=240)
         request = c.sessions.page.request
 
         def record(endpoint: Any, headers: Any = None, timeout: Any = None) -> Any:
@@ -156,7 +181,7 @@ def assess(row: dict[str, Any]) -> str:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    _ = parser.add_argument("--api-url", required=True)
+    _ = parser.add_argument("--api-url", type=validate_api_url, required=True)
     _ = parser.add_argument("--scenario", choices=["auto", "resume", "navigate", "close", "concurrent"], required=True)
     _ = parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()

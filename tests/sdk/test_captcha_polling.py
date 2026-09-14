@@ -134,3 +134,12 @@ def test_missing_poll_status_cannot_report_action_success(client):
     assert not result.success and result.code == "captcha_protocol_error"
     assert result.action == action
     assert page.request.call_count == 2
+
+
+@pytest.mark.parametrize("error", [Timeout, ChunkedEncodingError])
+def test_initial_solve_transport_failure_is_not_retried(client, error):
+    page, _ = client
+    page.request = MagicMock(side_effect=error("initial response lost"))
+    with pytest.raises(error):
+        page.execute("session", CaptchaSolveAction())
+    assert page.request.call_count == 1
