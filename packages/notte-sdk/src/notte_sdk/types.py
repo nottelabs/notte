@@ -761,10 +761,9 @@ class _SessionStartRequestDict(TypedDict, total=False):
         cdp_url: The CDP URL of another remote session provider.
         screenshot_type: The type of screenshot to use for the session.
         profile: Browser profile configuration for state persistence.
-        auth_ids: Up to 10 unique Managed Auth connection IDs to authenticate before the session is returned.
-        wait_for_authentication: Defaults to True. Wait for Managed Auth before returning the session;
-            authentication failure or timeout fails session creation. When False, return after the browser is
-            ready while authentication continues in the background.
+        auth_ids: Up to 10 unique Managed Auth connection IDs. The API verifies them inline and can return an authenticating session while login continues.
+        wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.
+        auth_retry: Number of additional retries for transient managed-auth login failures, from 0 to 2. Each retry verifies the session again before submitting credentials. A blocked connection permits one explicit login attempt.
     """
 
     solve_captchas: bool
@@ -790,6 +789,7 @@ class _SessionStartRequestDict(TypedDict, total=False):
 
 
 class SessionStartRequestDict(_SessionStartRequestDict, total=False):
+    auth_retry: int
     """Public request dictionary for starting a remote session."""
 
     advanced_stealth: bool
@@ -1030,6 +1030,8 @@ class _SessionStartRequest(SdkRequest):
 class SessionStartRequest(_SessionStartRequest):
     """Public request for starting a remote Notte browser session."""
 
+    auth_retry: int = Field(default=0, ge=0, le=2)
+
     proxies: Annotated[
         list[ProxySettings] | bool,
         Field(
@@ -1052,6 +1054,8 @@ class SessionStartRequest(_SessionStartRequest):
         data = cast(dict[str, Any], handler(self))
         if not self.advanced_stealth:
             data.pop("advanced_stealth", None)
+        if not self.auth_ids:
+            data.pop("auth_retry", None)
         return data
 
     @model_validator(mode="before")
@@ -1122,7 +1126,31 @@ class SessionListRequest(ListRequest):
     ] = None
 
 
+class ManagedAuthOperation(SdkResponse):
+    id: str
+    connection_id: str
+    session_id: str | None = None
+    source: str
+    status: Literal["pending", "running", "succeeded", "failed", "cancelled"]
+    phase: str
+    attempt: int = 0
+    auth_retry: int = 0
+    authenticated: bool | None = None
+    failure_code: str | None = None
+    error: str | None = None
+    deadline: dt.datetime
+
+
+class SessionAuthResponse(SdkResponse):
+    session_id: str
+    status: Literal["authenticating", "active", "failed", "closed"]
+    operations: list[ManagedAuthOperation] = Field(default_factory=list)
+    error: str | None = None
+
+
 class ManagedAuthRunResponse(SdkResponse):
+    operation_id: str | None = None
+    authenticated: bool | None = None
     connection_id: str
     status: str
     message: str
@@ -1176,7 +1204,7 @@ class SessionResponse(SdkResponse):
         Field(description="Session duration", json_schema_extra=_drop_duration_format),
     ] = Field(default_factory=lambda: dt.timedelta(0))
     status: Annotated[
-        Literal["active", "closed", "error", "timed_out"],
+        Literal["active", "authenticating", "closed", "error", "timed_out"],
         Field(description="Session status"),
     ]
     close_reason: Annotated[

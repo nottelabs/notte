@@ -1,9 +1,13 @@
+import asyncio
+import os
+import random
 import time
 from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
+from urllib.parse import urlsplit
 from webbrowser import open as open_browser
 
 import requests
@@ -65,6 +69,7 @@ from notte_sdk.types import (
     ReplayResponse,
     ScrapeMarkdownParamsDict,
     ScrapeRequestDict,
+    SessionAuthResponse,
     SessionDebugResponse,
     SessionListRequest,
     SessionListRequestDict,
@@ -342,6 +347,11 @@ class SessionsClient(BaseClient):
         request = SessionStartRequest.model_validate(data)
         response = self.request(SessionsClient._session_start_endpoint().with_request(request))
         return response
+
+    def auth_status(self, session_id: str) -> SessionAuthResponse:
+        return self.request(
+            NotteEndpoint(path=f"{session_id}/auth", response=SessionAuthResponse, method="GET"), timeout=10
+        )
 
     @track_usage("cloud.session.stop")
     def stop(self, session_id: str, close_reason: Literal["manual", "error"] = "manual") -> SessionResponse:
@@ -651,9 +661,7 @@ class RemoteSession(SyncResource):
             open_viewer: Whether to open the live viewer when the session starts (default: False).
                 This controls only the viewer popup and is independent of the browser environment.
             advanced_stealth: Enable Notte's highest-fidelity browser environment. Available to approved workspaces.
-            wait_for_authentication: Defaults to True. Wait for Managed Auth before returning the
-                session; authentication failure or timeout fails session creation. When False,
-                return after the browser is ready while authentication continues in the background.
+            wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.
             **data: Keyword arguments for the session creation request.
 
         Returns:
@@ -724,7 +732,20 @@ class RemoteSession(SyncResource):
         Returns:
             RemoteSession: The session instance.
         """
-        self.start()
+        start_task = asyncio.create_task(asyncio.to_thread(self.start, wait_for_authentication=False))
+        try:
+            await asyncio.shield(start_task)
+            if self.request.wait_for_authentication:
+                await self.await_for_auth()
+        except BaseException:
+            # A cancelled to_thread call continues creating the session. Reap its result.
+            try:
+                await start_task
+                if self.response is not None:
+                    await asyncio.to_thread(self.stop, close_reason="error")
+            except Exception:
+                logger.exception("Could not clean up session after cancelled entry")
+            raise
         return self
 
     async def __aexit__(
@@ -760,7 +781,7 @@ class RemoteSession(SyncResource):
     # #######################################################################
 
     @override
-    def start(self, tries: int = 3) -> None:
+    def start(self, tries: int = 3, *, wait_for_authentication: bool | None = None) -> None:
         """
         Start the session using the configured request.
 
@@ -794,6 +815,8 @@ class RemoteSession(SyncResource):
         if self.response is not None:
             raise ValueError("Session already started")
 
+        if self.request.auth_ids:
+            tries = 1  # A timed-out create may already have submitted credentials.
         orig_tries = tries
         while tries > 0:
             tries -= 1
@@ -825,6 +848,16 @@ class RemoteSession(SyncResource):
         self.storage = self.storage.for_session(self.session_id)
 
         logger.info(f"[Session] {self.session_id} started with request: {self.request.model_dump(exclude_none=True)}")
+        should_wait = (
+            self.request.wait_for_authentication if wait_for_authentication is None else wait_for_authentication
+        )
+        if should_wait:
+            try:
+                self.wait_for_auth()
+            except BaseException:
+                self.stop(close_reason="error")
+                raise
+
         if self._open_viewer:
             self.viewer()
         # try to load cookies from file
@@ -834,6 +867,66 @@ class RemoteSession(SyncResource):
                 _ = self.set_cookies(cookie_file=self._cookie_file)
             else:
                 logger.warning(f"🍪 Cookie file {self._cookie_file} not found, skipping cookie loading")
+
+    def wait_for_auth(self, timeout: float = 615) -> None:
+        """Wait for this browser to be ready without restarting or relogging it."""
+        if self.response is None:
+            raise ValueError("Session has not started")
+        if self.response.status == "active":
+            return
+        deadline = time.monotonic() + timeout
+        errors = 0
+        while time.monotonic() < deadline:
+            try:
+                result = self.client.auth_status(self.response.session_id)
+                if result.status == "active":
+                    result = self.client.status(self.response.session_id)
+                    if result.status == "active":
+                        self.response = result
+                        return
+                errors = 0
+            except (requests.RequestException, NotteAPIError) as exc:
+                if isinstance(exc, NotteAPIError) and 400 <= (exc.error.get("status") or 0) < 500:
+                    raise
+                errors += 1
+                if errors >= 3:
+                    raise
+                time.sleep(1)
+                continue
+            if result.status != "authenticating":
+                raise RuntimeError(result.error or "Session authentication failed")
+            time.sleep(random.uniform(0.8, 1.2))
+        raise TimeoutError("Timed out waiting for session authentication")
+
+    async def await_for_auth(self, timeout: float = 615) -> None:
+        """Async readiness wait; blocking HTTP calls run outside the event loop."""
+        if self.response is None:
+            raise ValueError("Session has not started")
+        if self.response.status == "active":
+            return
+        deadline = time.monotonic() + timeout
+        errors = 0
+        while time.monotonic() < deadline:
+            try:
+                result = await asyncio.to_thread(self.client.auth_status, self.response.session_id)
+                if result.status == "active":
+                    result = await asyncio.to_thread(self.client.status, self.response.session_id)
+                    if result.status == "active":
+                        self.response = result
+                        return
+                errors = 0
+            except (requests.RequestException, NotteAPIError) as exc:
+                if isinstance(exc, NotteAPIError) and 400 <= (exc.error.get("status") or 0) < 500:
+                    raise
+                errors += 1
+                if errors >= 3:
+                    raise
+                await asyncio.sleep(1)
+                continue
+            if result.status != "authenticating":
+                raise RuntimeError(result.error or "Session authentication failed")
+            await asyncio.sleep(random.uniform(0.8, 1.2))
+        raise TimeoutError("Timed out waiting for session authentication")
 
     @override
     def stop(self, close_reason: Literal["manual", "error"] = "manual") -> None:
@@ -1115,6 +1208,23 @@ class RemoteSession(SyncResource):
         debug = self.debug_info()
         return self.client._with_db_preview(debug.ws.cdp)  # pyright: ignore [reportPrivateUsage]
 
+    def _cdp_auth_headers(self, cdp_url: str) -> dict[str, str] | None:
+        """Send the runner capability only to this API's CDP connection."""
+        capability = os.getenv("NOTTE_AUTH_CAPABILITY")
+        if capability and self.request.cdp_url is None:
+            target = urlsplit(cdp_url)
+            api = urlsplit(self.client.server_url)
+            target_port = target.port if target.port is not None else 443
+            api_port = api.port if api.port is not None else 443
+            if (
+                target.scheme == "wss"
+                and api.scheme == "https"
+                and target.hostname == api.hostname
+                and target_port == api_port
+            ):
+                return {"x-notte-auth-capability": capability}
+        return None
+
     @property
     def page(self) -> "PageSync":
         """
@@ -1163,7 +1273,9 @@ class RemoteSession(SyncResource):
             # Connect to browser via CDP
             if self._playwright_browser is None:
                 cdp_url = self.cdp_url()
-                self._playwright_browser = self._playwright_context.chromium.connect_over_cdp(cdp_url)
+                self._playwright_browser = self._playwright_context.chromium.connect_over_cdp(
+                    cdp_url, headers=self._cdp_auth_headers(cdp_url)
+                )
                 _install_server_owned_dialog_policy(self._playwright_browser)
 
             # Get the first page from the first context
@@ -1219,7 +1331,9 @@ class RemoteSession(SyncResource):
             # Connect to browser via CDP
             if self._async_playwright_browser is None:
                 cdp_url = self.cdp_url()
-                self._async_playwright_browser = await self._async_playwright_context.chromium.connect_over_cdp(cdp_url)
+                self._async_playwright_browser = await self._async_playwright_context.chromium.connect_over_cdp(
+                    cdp_url, headers=self._cdp_auth_headers(cdp_url)
+                )
                 _install_server_owned_dialog_policy(self._async_playwright_browser)
 
             # Get the first page from the first context

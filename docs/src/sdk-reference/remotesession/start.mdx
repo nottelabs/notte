@@ -37,6 +37,9 @@ with client.Session() as session:
 <ParamField path="tries" type="int" default="3">
 </ParamField>
 
+<ParamField path="wait_for_authentication" type="UnionType[bool, None]" default="None">
+</ParamField>
+
 ## Returns
 
 `None`

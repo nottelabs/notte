@@ -61,6 +61,16 @@ def preserve_function_runtime_default(app: Sphinx, exception: Exception | None) 
             content.replace("runtime: FunctionRuntime = standard", 'runtime: FunctionRuntime = "standard"')
         )
 
+    session_reference = Path(app.confdir).parent / "src/sdk-reference/misc/remotesession.mdx"
+    if session_reference.exists():
+        content = session_reference.read_text()
+        _ = session_reference.write_text(
+            content.replace(
+                "start(tries: <class 'int'> = 3, wait_for_authentication:",
+                "start(tries: <class 'int'> = 3, *, wait_for_authentication:",
+            )
+        )
+
 
 def setup(app: Sphinx) -> None:
     _ = app.connect("build-finished", preserve_function_runtime_default)
