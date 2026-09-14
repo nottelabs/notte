@@ -2,6 +2,7 @@ import { pollAuth, validateAuthRetry, ManagedAuthError, type AuthWaitOptions, ty
 import { existsSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import type { Browser, BrowserContext, Dialog, Page } from 'playwright-core';
 import { NotteClient, TIMEOUT_HEADER } from '@/client';
 import type {
@@ -223,6 +224,7 @@ export class Session {
     const origTries = tries;
     let sessionData: SessionResponse | undefined;
     while (tries > 0) {
+      options.signal?.throwIfAborted();
       tries -= 1;
       try {
         const response = await sessionStart({ client: this.client.getClient(), body, throwOnError: true });
@@ -238,7 +240,16 @@ export class Session {
           console.warn(
             `Failed to start session due to cluster overload, retrying in ${CLUSTER_OVERLOAD_RETRY_DELAY_MS / 1000} seconds (${retryStr})...`
           );
-          await sleep(CLUSTER_OVERLOAD_RETRY_DELAY_MS);
+          if (options.signal) {
+            try {
+              await delay(CLUSTER_OVERLOAD_RETRY_DELAY_MS, undefined, { signal: options.signal });
+            } catch (error) {
+              options.signal.throwIfAborted();
+              throw error;
+            }
+          } else {
+            await sleep(CLUSTER_OVERLOAD_RETRY_DELAY_MS);
+          }
         } else {
           console.warn(`Failed to start session: retrying (${retryStr})`);
         }

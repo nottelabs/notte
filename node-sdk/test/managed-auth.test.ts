@@ -41,24 +41,36 @@ describe('managed auth transport and lifecycle', () => {
   afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 
   it('supports cancellation without AbortSignal.any and removes its listener', async () => {
-    const originalAny = Object.getOwnPropertyDescriptor(AbortSignal, 'any')!;
+    const originalAny = Object.getOwnPropertyDescriptor(AbortSignal, 'any');
     Object.defineProperty(AbortSignal, 'any', { configurable: true, value: undefined });
     try {
-    const controller = new AbortController();
-    const remove = vi.spyOn(controller.signal, 'removeEventListener');
-    handle = request => request.method === 'DELETE' ? json(session('closed'))
-      : request.url.endsWith('/sessions/start') ? json(session('authenticating'))
-      : new Promise((_, reject) => {
-        request.signal.addEventListener('abort', () => reject(request.signal.reason), { once: true });
-      });
-    const started = client.Session({ auth_ids: ['connection-1'] }).start({ signal: controller.signal });
-    setTimeout(() => controller.abort(new Error('cancelled by caller')), 10);
-    await expect(started).rejects.toThrow('cancelled by caller');
-    expect(remove).toHaveBeenCalledWith('abort', expect.any(Function));
-    expect(calls.filter(r => r.method === 'DELETE')).toHaveLength(1);
+      const controller = new AbortController();
+      const remove = vi.spyOn(controller.signal, 'removeEventListener');
+      handle = request => request.method === 'DELETE' ? json(session('closed'))
+        : request.url.endsWith('/sessions/start') ? json(session('authenticating'))
+        : new Promise((_, reject) => {
+          request.signal.addEventListener('abort', () => reject(request.signal.reason), { once: true });
+        });
+      const started = client.Session({ auth_ids: ['connection-1'] }).start({ signal: controller.signal });
+      setTimeout(() => controller.abort(new Error('cancelled by caller')), 10);
+      await expect(started).rejects.toThrow('cancelled by caller');
+      expect(remove).toHaveBeenCalledWith('abort', expect.any(Function));
+      expect(calls.filter(r => r.method === 'DELETE')).toHaveLength(1);
     } finally {
-      Object.defineProperty(AbortSignal, 'any', originalAny);
+      if (originalAny) Object.defineProperty(AbortSignal, 'any', originalAny);
+      else Reflect.deleteProperty(AbortSignal, 'any');
     }
+  });
+
+  it.each([500, 529])('does not retry session creation after cancellation on HTTP %s', async status => {
+    const controller = new AbortController();
+    handle = () => {
+      if (status === 529) setTimeout(() => controller.abort(new Error('cancelled retry')), 10);
+      else controller.abort(new Error('cancelled retry'));
+      return json({ detail: 'capacity unavailable' }, status);
+    };
+    await expect(client.Session().start({ signal: controller.signal })).rejects.toThrow('cancelled retry');
+    expect(calls).toHaveLength(1);
   });
 
   it('persists cookies when metadata fails after readiness succeeds', async () => {
