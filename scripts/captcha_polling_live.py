@@ -3,6 +3,10 @@
 Example: python scripts/captcha_polling_live.py --api-url https://preview-7-dev-test.notte.cc \
   --kind recaptcha --scenario auto --runs 3 --output /tmp/captcha-auto.json
 Credentials come from NOTTE_API_KEY. This creates real sessions/provider work.
+For reCAPTCHA, configure RECAPTCHA_SOLVER_PROVIDER=2captcha and a nonempty
+TWOCAPTCHA_API_KEY on the backend. Sessions use a proxy for 2Captcha token solving.
+Confirm the deployed backend disables provider fallback before treating results
+as 2Captcha evidence; the demo hostname alone does not establish the provider.
 """
 
 import argparse
@@ -62,7 +66,7 @@ def run(args):
     with client.Session(
         headless=True,
         browser_type="chromium",
-        proxies=False,
+        proxies=args.kind == "recaptcha",
         solve_captchas=args.scenario != "explicit",
         idle_timeout_minutes=3,
     ) as session:
