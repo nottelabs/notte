@@ -11,24 +11,25 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any
 
-from loguru import logger
+from notte_core.common.logging import logger
 from notte_sdk.client import NotteClient
 
 
-def run(args):
+def run(args: Any) -> dict[str, Any]:
     logger.remove()
-    wire = []
+    wire: list[dict[str, Any]] = []
     pending = threading.Event()
     action_pending = threading.Event()
 
-    def client():
+    def client() -> NotteClient:
         c = NotteClient(api_key=os.environ["NOTTE_API_KEY"], server_url=args.api_url, captcha_timeout_seconds=240)
         request = c.sessions.page.request
 
-        def record(endpoint, **kwargs):
+        def record(endpoint: Any, headers: Any = None, timeout: Any = None) -> Any:
             start = time.monotonic()
-            r = request(endpoint, **kwargs)
+            r = request(endpoint, headers=headers, timeout=timeout)
             wire.append(
                 {
                     "seconds": time.monotonic() - start,
@@ -45,7 +46,7 @@ def run(args):
         c.sessions.page.request = record
         return c
 
-    def outcome(future):
+    def outcome(future: Any) -> dict[str, Any]:
         try:
             r = future.result(timeout=5)
             return r.model_dump(mode="json", include={"success", "code", "action_executed", "captcha"})
@@ -53,14 +54,19 @@ def run(args):
             return {"error_type": type(exc).__name__, "http_status": getattr(exc, "status_code", None)}
 
     c = client()
-    row = {"scenario": args.scenario, "wire": wire, "provider": "anti-captcha", "started_at": time.time()}
-    with c.Session(headless=True, proxies=False, solve_captchas=args.scenario == "auto", idle_timeout_minutes=3) as s:
+    row: dict[str, Any] = {
+        "scenario": args.scenario,
+        "wire": wire,
+        "provider": "anti-captcha",
+        "started_at": time.time(),
+    }
+    with c.Session(proxies=False, solve_captchas=args.scenario == "auto", idle_timeout_minutes=3) as s:
         row["session_id"] = s.session_id
         print(json.dumps({"session_id": s.session_id, "scenario": args.scenario}), flush=True)
         p = s.page
-        p.goto("https://nopecha.com/captcha/hcaptcha", wait_until="domcontentloaded", timeout=45000)
+        _ = p.goto("https://nopecha.com/captcha/hcaptcha", wait_until="domcontentloaded", timeout=45000)
         p.locator('iframe[src*="hcaptcha.com"]').first.wait_for(timeout=30000)
-        p.evaluate("window.__hcaptchaProbe = 0")
+        _ = p.evaluate("window.__hcaptchaProbe = 0")
         other = client().Session(session_id=s.session_id)
         row["before_action_at"] = time.time()
         with ThreadPoolExecutor(max_workers=2) as pool:
@@ -98,9 +104,9 @@ def run(args):
                 row["observed_blocked_action"] = action_pending.is_set()
                 row["executions_while_pending"] = p.evaluate("window.__hcaptchaProbe")
             if args.scenario == "navigate" and action_pending.is_set():
-                p.goto("https://example.com", wait_until="domcontentloaded")
+                _ = p.goto("https://example.com", wait_until="domcontentloaded")
             elif args.scenario == "close" and action_pending.is_set():
-                client().sessions.stop(s.session_id)
+                _ = client().sessions.stop(s.session_id)
             while (not solve.done() or not action.done()) and time.monotonic() < deadline:
                 if args.scenario == "close":
                     time.sleep(0.1)
@@ -119,14 +125,14 @@ def run(args):
     return row
 
 
-def assess(row):
+def assess(row: dict[str, Any]) -> str:
     if not row["observed_pending"]:
         return "inconclusive: no pending solve observed"
     if row["scenario"] != "concurrent" and not row["observed_blocked_action"]:
         return "inconclusive: no blocked action observed"
     if row["scenario"] in ("navigate", "close"):
 
-        def cancelled(result):
+        def cancelled(result: dict[str, Any]) -> bool:
             return result.get("code") in ("captcha_cancelled", "captcha_page_changed") or (
                 row["scenario"] == "close" and result.get("http_status") in (404, 410)
             )
@@ -150,9 +156,9 @@ def assess(row):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--api-url", required=True)
-    parser.add_argument("--scenario", choices=["auto", "resume", "navigate", "close", "concurrent"], required=True)
-    parser.add_argument("--output", type=Path, required=True)
+    _ = parser.add_argument("--api-url", required=True)
+    _ = parser.add_argument("--scenario", choices=["auto", "resume", "navigate", "close", "concurrent"], required=True)
+    _ = parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
         row = run(args)
@@ -163,6 +169,8 @@ if __name__ == "__main__":
             "error_type": type(exc).__name__,
             "http_status": getattr(exc, "status_code", None),
         }
-    args.output.write_text(json.dumps(row, indent=2))
+    _ = args.output.write_text(json.dumps(row, indent=2))
     print(json.dumps(row), flush=True)
-    raise SystemExit(0 if row["assessment"] == "passed" else 2 if row["assessment"].startswith("inconclusive") else 1)
+    raise SystemExit(
+        0 if row["assessment"] == "passed" else 2 if str(row["assessment"]).startswith("inconclusive") else 1
+    )

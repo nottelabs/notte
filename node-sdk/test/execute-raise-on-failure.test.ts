@@ -5,8 +5,9 @@
  * `tests/sdk/test_execute_raise_on_failure.py`.
  */
 import { beforeEach, describe, it, expect, expectTypeOf, vi } from 'vitest';
-import { CAPTCHA_SOLVE_TIMEOUT_MS, Session } from '@/session';
+import { Session } from '@/session';
 import { TIMEOUT_HEADER } from '@/client';
+import type { CaptchaExecutionResponse } from '@/captcha';
 import { actions, type ExecuteAction } from '@/actions';
 import { ActionExecutionError, NotteAPIError, NotteError } from '@/errors';
 import { pageExecute, sessionStart } from '@/lib/client/sdk.gen';
@@ -146,7 +147,7 @@ describe('execute raise on failure', () => {
 
   it('is typed against the generated action union', () => {
     expectTypeOf<Parameters<Session['execute']>[0]>().toEqualTypeOf<ExecuteAction>();
-    expectTypeOf<Awaited<ReturnType<Session['execute']>>>().toEqualTypeOf<ApiExecutionResponse>();
+    expectTypeOf<Awaited<ReturnType<Session['execute']>>>().toEqualTypeOf<CaptchaExecutionResponse>();
     // @ts-expect-error unknown action types are rejected at compile time
     void ((s: Session) => s.execute({ type: 'teleport' }));
     // @ts-expect-error a goto action needs a url
@@ -157,11 +158,10 @@ describe('execute raise on failure', () => {
     const CAPTCHA = actions.captchaSolve({ captcha_type: 'recaptcha' });
     const timeout = () => new NotteAPIError('/sessions/session-123/page/execute', 408, { message: 'Request Timeout' });
 
-    it('uses the long request timeout header', async () => {
+    it('uses a short polling request timeout', async () => {
       const session = await remoteSession(executionResult({ action: CAPTCHA }));
       await session.execute(CAPTCHA);
-      expect(CAPTCHA_SOLVE_TIMEOUT_MS).toBe(100_000);
-      expect(pageExecute).toHaveBeenCalledWith(expect.objectContaining({ headers: { [TIMEOUT_HEADER]: '100000' } }));
+      expect(pageExecute).toHaveBeenCalledWith(expect.objectContaining({ headers: { [TIMEOUT_HEADER]: '10000' } }));
     });
 
     it('does not set the header for other actions', async () => {
@@ -170,27 +170,11 @@ describe('execute raise on failure', () => {
       expect(pageExecute).toHaveBeenCalledWith(expect.objectContaining({ headers: undefined }));
     });
 
-    it('retries on 408 and returns the eventual result', async () => {
-      const session = await remoteSession(executionResult({ action: CAPTCHA }));
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      vi.mocked(pageExecute)
-        .mockRejectedValueOnce(timeout())
-        .mockRejectedValueOnce(timeout())
-        .mockResolvedValueOnce({ data: executionResult({ action: CAPTCHA }) } as never);
-
-      expect((await session.execute(CAPTCHA)).success).toBe(true);
-      expect(pageExecute).toHaveBeenCalledTimes(3);
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Solve captcha action timed out'));
-    });
-
-    it('gives up after three timeouts', async () => {
+    it('surfaces an initial HTTP error before a solve ID is known', async () => {
       const session = await remoteSession(executionResult({ action: CAPTCHA }));
       vi.mocked(pageExecute).mockRejectedValue(timeout());
-
-      const error = await session.execute(CAPTCHA).catch((e: unknown) => e);
-      expect(error).toBeInstanceOf(NotteAPIError);
-      expect((error as NotteAPIError).statusCode).toBe(408);
-      expect(pageExecute).toHaveBeenCalledTimes(3);
+      await expect(session.execute(CAPTCHA)).rejects.toBeInstanceOf(NotteAPIError);
+      expect(pageExecute).toHaveBeenCalledTimes(1);
     });
 
     it('does not retry other actions or other status codes', async () => {

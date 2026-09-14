@@ -914,6 +914,14 @@ try {
 
 ### Timeouts and retries
 
+CAPTCHA solving has a separate `captchaTimeoutSeconds` budget (default 180).
+`session.execute()` polls pending solves using requests of at most 10 seconds,
+then resumes an ordinary action only when the backend confirms it did not execute.
+Actions that already ran are never replayed. Navigation, closure, provider failure,
+and deadline expiry preserve the normal `raiseOnFailure` behavior. Ordinary HTTP
+transport failures are not automatically retried. Deploy backend CAPTCHA polling
+support before upgrading the SDK.
+
 The client applies a per-request timeout (`timeoutMs`, default 60 000 ms; `0`
 disables it) through response-body consumption and rejects with `NotteTimeoutError`
 when it elapses. Explicit streams use the caller's signal for body cancellation;

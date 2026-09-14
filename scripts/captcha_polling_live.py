@@ -17,8 +17,9 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any
 
-from loguru import logger
+from notte_core.common.logging import logger
 from notte_sdk.client import NotteClient
 
 DEMOS = {
@@ -28,17 +29,17 @@ DEMOS = {
 CHECK = 'button[data-action="demo_action"]'
 
 
-def run(args):
+def run(args: Any) -> dict[str, Any]:
     logger.remove()
-    wire = []
+    wire: list[dict[str, Any]] = []
     pending = threading.Event()
     client = NotteClient(api_key=os.environ["NOTTE_API_KEY"], server_url=args.api_url, captcha_timeout_seconds=180)
     request = client.sessions.page.request
 
-    def record(endpoint, *, _request=request, **kwargs):
+    def record(endpoint: Any, headers: Any = None, timeout: Any = None, *, _request: Any = request) -> Any:
         start = time.monotonic()
         try:
-            result = _request(endpoint, **kwargs)
+            result = _request(endpoint, headers=headers, timeout=timeout)
         except Exception as exc:
             wire.append(
                 {
@@ -62,9 +63,8 @@ def run(args):
         return result
 
     client.sessions.page.request = record
-    row = {"kind": args.kind, "scenario": args.scenario, "started_at": time.time(), "wire": wire}
+    row: dict[str, Any] = {"kind": args.kind, "scenario": args.scenario, "started_at": time.time(), "wire": wire}
     with client.Session(
-        headless=True,
         browser_type="chromium",
         proxies=args.kind == "recaptcha",
         solve_captchas=args.scenario != "explicit",
@@ -76,7 +76,7 @@ def run(args):
           document.addEventListener('click', e => {
             if(e.target.closest('button[data-action="demo_action"]')) window.__captchaClicks++;
           },true);""")
-        page.goto(DEMOS[args.kind], wait_until="domcontentloaded")
+        _ = page.goto(DEMOS[args.kind], wait_until="domcontentloaded")
         page.locator(CHECK).wait_for(timeout=30000)
         if args.kind == "recaptcha":
             page.frame_locator('iframe[src*="/recaptcha/api2/anchor"]').locator("#recaptcha-anchor").wait_for(
@@ -85,7 +85,7 @@ def run(args):
         page.wait_for_timeout(args.settle_seconds * 1000)
         row["before_action_at"] = time.time()
         row["frames_before_action"] = [f.url.split("?")[0] for f in page.frames]
-        action = (
+        action: dict[str, Any] = (
             {"type": "captcha_solve"}
             if args.scenario in ("explicit", "concurrent")
             else {"type": "click", "selector": CHECK}
@@ -98,9 +98,11 @@ def run(args):
                     api_key=os.environ["NOTTE_API_KEY"], server_url=args.api_url, captcha_timeout_seconds=180
                 )
                 other_request = other.sessions.page.request
-                other.sessions.page.request = lambda endpoint, **kwargs: record(
-                    endpoint, _request=other_request, **kwargs
-                )
+
+                def record_other(endpoint: Any, headers: Any = None, timeout: Any = None) -> Any:
+                    return record(endpoint, headers, timeout, _request=other_request)
+
+                other.sessions.page.request = record_other
                 other_session = other.Session(session_id=session.session_id)
                 second = pool.submit(other_session.execute, type="captcha_solve", raise_on_failure=False)
             deadline = time.monotonic() + 190
@@ -109,11 +111,11 @@ def run(args):
             row["observed_pending"] = pending.is_set()
             row["clicks_while_pending"] = page.evaluate("window.__captchaClicks")
             if pending.is_set() and args.scenario == "navigate":
-                page.goto("https://example.com", wait_until="domcontentloaded")
+                _ = page.goto("https://example.com", wait_until="domcontentloaded")
             elif pending.is_set() and args.scenario == "close":
                 # Separate HTTP caller closes the actual backend session.
                 other = NotteClient(api_key=os.environ["NOTTE_API_KEY"], server_url=args.api_url)
-                other.sessions.stop(session.session_id)
+                _ = other.sessions.stop(session.session_id)
             while not future.done() and time.monotonic() < deadline:
                 if args.scenario == "close":
                     time.sleep(0.1)
@@ -146,8 +148,8 @@ def run(args):
     return row
 
 
-def assess(row):
-    pending_responses = [r for r in row["wire"] if (r.get("captcha") or {}).get("state") == "solving"]
+def assess(row: dict[str, Any]) -> str:
+    pending_responses = [r for r in row["wire"] if r.get("captcha") and r["captcha"].get("state") == "solving"]
     if row["scenario"] in ("navigate", "close"):
         if not row.get("observed_pending") or row.get("clicks_while_pending") != 0:
             return "inconclusive: no blocked action observed"
@@ -173,16 +175,18 @@ def assess(row):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--api-url", required=True)
-    parser.add_argument("--kind", choices=DEMOS, required=True)
-    parser.add_argument("--scenario", choices=["auto", "explicit", "navigate", "close", "concurrent"], required=True)
-    parser.add_argument("--runs", type=int, default=1)
-    parser.add_argument("--settle-seconds", type=float, default=2.5)
-    parser.add_argument("--output", type=Path, required=True)
+    _ = parser.add_argument("--api-url", required=True)
+    _ = parser.add_argument("--kind", choices=DEMOS, required=True)
+    _ = parser.add_argument(
+        "--scenario", choices=["auto", "explicit", "navigate", "close", "concurrent"], required=True
+    )
+    _ = parser.add_argument("--runs", type=int, default=1)
+    _ = parser.add_argument("--settle-seconds", type=float, default=2.5)
+    _ = parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.runs < 1 or args.settle_seconds < 0:
         parser.error("--runs must be positive and --settle-seconds nonnegative")
-    results = []
+    results: list[dict[str, Any]] = []
     for attempt in range(args.runs):
         if attempt:
             time.sleep(5)
@@ -197,7 +201,7 @@ if __name__ == "__main__":
                 "http_status": getattr(exc, "status_code", None),
             }
         results.append(row)
-        args.output.write_text(json.dumps(results, indent=2))
+        _ = args.output.write_text(json.dumps(results, indent=2))
         print(json.dumps(row), flush=True)
     if any(r.get("assessment", "failed") == "failed" for r in results):
         sys.exit(1)

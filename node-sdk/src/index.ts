@@ -146,3 +146,5 @@ export const createClient = (config?: { baseUrl?: string; token?: string }) => {
 
 // Default export - NotteClient for convenience
 export { NotteClient as default } from '@/client';
+
+export type { CaptchaStatus, CaptchaExecutionResponse } from '@/captcha';
