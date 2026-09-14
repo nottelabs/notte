@@ -55,10 +55,8 @@ export type SessionResponse = {
     duration?: string;
     /**
      * Status
-     *
-     * Session status
      */
-    status: 'active' | 'closed' | 'error' | 'timed_out';
+    status: 'active' | 'authenticating' | 'closed' | 'error' | 'timed_out';
     /**
      * Close Reason
      *
@@ -195,8 +193,8 @@ Last access time
 Session duration
 </ParamField>
 
-<ParamField body="status" type={"\"active\" | \"closed\" | \"error\" | \"timed_out\""} required>
-Session status
+<ParamField body="status" type={"\"active\" | \"closed\" | \"authenticating\" | \"error\" | \"timed_out\""} required>
+
 </ParamField>
 
 <ParamField body="close_reason" type={"\"unknown\" | \"error\" | \"manual\" | \"idle_timeout\" | \"max_duration\" | null | undefined"}>

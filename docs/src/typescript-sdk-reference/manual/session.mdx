@@ -157,11 +157,15 @@ The vault to use for the session
 </ParamField>
 
 <ParamField body="auth_ids" type={"string[] | undefined"}>
-Managed Auth connection IDs to verify and, when necessary, authenticate inside this session. Authentication finishes before the session is returned unless wait_for_authentication is false.
+Managed Auth connection IDs to verify and, when necessary, authenticate inside this session. Initial verification runs before returning; when login is needed, the session returns as authenticating. Poll /sessions/&#123;id&#125;/auth for readiness.
 </ParamField>
 
 <ParamField body="wait_for_authentication" type={"boolean | undefined"}>
-Whether to wait for Managed Auth profile restoration and authentication before returning the session. When false, authentication continues in the background after the browser is ready.
+SDK waiting preference. The API always verifies inline and returns authenticating when background login is needed; SDKs implement waiting through readiness polling.
+</ParamField>
+
+<ParamField body="auth_retry" type={"number | undefined"}>
+
 </ParamField>
 
 <ParamField body="advanced_stealth" type={"boolean | undefined"}>

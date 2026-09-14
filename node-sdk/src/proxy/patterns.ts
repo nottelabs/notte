@@ -79,6 +79,7 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   // Sessions endpoints
   /^sessions$/, // /sessions
   /^sessions\/[^\/]+$/, // /sessions/{session_id}
+  /^sessions\/[^\/]+\/auth$/, // /sessions/{session_id}/auth
   /^sessions\/[^\/]+\/cookies$/, // /sessions/{session_id}/cookies
   /^sessions\/[^\/]+\/debug$/, // /sessions/{session_id}/debug
   /^sessions\/[^\/]+\/files$/, // /sessions/{session_id}/files

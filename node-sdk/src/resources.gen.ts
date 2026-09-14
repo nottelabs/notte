@@ -10,6 +10,11 @@ export interface ResourceRequestOptions { signal?: AbortSignal }
 export function createResources(client: Client, getApiKey: () => string) {
   return {
   sessions: {
+    /** sessionAuthReadiness: /sessions/{session_id}/auth. Returns the API response body. */
+    authReadiness: async (sessionId: Types.SessionAuthReadinessData['path']["session_id"], requestOptions: ResourceRequestOptions = {}) => {
+      const response = await operations.sessionAuthReadiness({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId } });
+      return response.data;
+    },
     /** sessionDebugInfo: /sessions/{session_id}/debug. Returns the API response body. */
     debugInfo: async (sessionId: Types.SessionDebugInfoData['path']["session_id"], query: Types.SessionDebugInfoData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
       const response = await operations.sessionDebugInfo({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId }, query });
