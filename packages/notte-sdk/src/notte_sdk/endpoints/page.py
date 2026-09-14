@@ -1,3 +1,4 @@
+import time
 from typing import TYPE_CHECKING, Any, Literal, Unpack, cast, overload
 
 from notte_core.actions import ActionUnion, CaptchaSolveAction, InteractionActionUnion
@@ -5,13 +6,17 @@ from notte_core.common.config import PerceptionType
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
+from notte_core.errors.base import NotteBaseError
 from notte_core.errors.processing import ScrapeFailedError
 from pydantic import BaseModel, RootModel
+from requests.exceptions import ConnectionError as RequestsConnectionError
+from requests.exceptions import Timeout as RequestsTimeout
 from typing_extensions import final
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
+    CaptchaExecuteParams,
     ExecutionResultResponse,
     ObserveRequest,
     ObserveRequestDict,
@@ -289,18 +294,103 @@ class PageClient(BaseClient):
             An Observation object constructed from the API response.
         """
         endpoint = PageClient._page_execute_endpoint(session_id=session_id)
-        is_captcha = isinstance(action, CaptchaSolveAction)
-        request_timeout = 100 if is_captcha else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
+        budget = self.root_client.captcha_timeout_seconds
+        deadline: float | None = time.monotonic() + budget if isinstance(action, CaptchaSolveAction) else None
+        params = CaptchaExecuteParams(captcha_timeout_seconds=budget)
+        original: ExecutionResultResponse | None = None
+        request_action = action
+        last: ExecutionResultResponse | None = None
 
-        for _ in range(3):
+        def finished(result: ExecutionResultResponse) -> ExecutionResultResponse:
+            if deadline is not None:
+                logger.info(
+                    f"CAPTCHA wait finished after {time.monotonic() - (deadline - budget):.2f}s: success={result.success}"
+                )
+            return result
+
+        def failure(message: str, code: str) -> ExecutionResultResponse:
+            from notte_core.browser.observation import utc_now
+
+            result = (
+                original
+                or last
+                or ExecutionResultResponse(
+                    action=action,
+                    success=False,
+                    message=message,
+                    started_at=utc_now(),
+                    ended_at=utc_now(),
+                )
+            )
+            return finished(
+                result.model_copy(
+                    update={
+                        "action": action,
+                        "success": False,
+                        "message": message,
+                        "code": code,
+                        "exception": NotteBaseError(message, message, message),
+                        "exception_detail": None,
+                        "captcha": last.captcha if last is not None else result.captcha,
+                    }
+                )
+            )
+
+        while True:
+            remaining = budget if deadline is None else deadline - time.monotonic()
+            if remaining <= 0:
+                return failure("CAPTCHA wait deadline exceeded", "captcha_timeout")
+            params.captcha_timeout_seconds = remaining
+            polling = isinstance(request_action, CaptchaSolveAction)
+            # A solve request only starts/reads background work. Ordinary actions
+            # retain their normal request timeout and are never retried on transport errors.
+            request_timeout = min(10.0, remaining) if polling else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
             try:
-                obs_response = self.request(endpoint.with_request(action), timeout=request_timeout)
-                return obs_response
-            except NotteAPIError as e:
-                if e.status_code == 408 and is_captcha:
-                    logger.warning(
-                        "Solve captcha action timed out. This can happen for long and complex captchas. Retrying..."
-                    )
-                    continue
-                raise e
-        raise ValueError(f"Failed to execute action '{action.type}'. This should not happen. Please report this issue.")
+                result = self.request(
+                    endpoint.with_request(request_action).with_params(params.model_copy()), timeout=request_timeout
+                )
+            except (RequestsTimeout, RequestsConnectionError):
+                if not polling:
+                    raise
+                time.sleep(min(1.0, max(0, (deadline or time.monotonic()) - time.monotonic())))
+                continue
+            except NotteAPIError as exc:
+                if not polling or params.captcha_id is None or exc.status_code not in (408, 429, 502, 503, 504):
+                    raise
+                time.sleep(min(1.0, max(0, (deadline or time.monotonic()) - time.monotonic())))
+                continue
+            last = result
+            status = result.captcha
+            if status is None:
+                if params.captcha_id is not None:
+                    return failure("Server omitted CAPTCHA polling status", "captcha_protocol_error")
+                return finished(result)
+            if params.captcha_id is not None and status.captcha_id != params.captcha_id:
+                return failure("Server returned a different CAPTCHA solve", "captcha_protocol_error")
+            if deadline is None:
+                deadline = time.monotonic() + budget
+            if original is None and not isinstance(action, CaptchaSolveAction) and result.action_executed is True:
+                original = result
+            if status.state in ("failed", "cancelled"):
+                return failure(status.message or f"CAPTCHA {status.state}", f"captcha_{status.state}")
+            if status.state == "solved":
+                if isinstance(action, CaptchaSolveAction):
+                    return finished(result)
+                if original is not None:
+                    return finished(original.model_copy(update={"captcha": status}))
+                # Only the explicit not-executed contract permits replay.
+                if params.captcha_id is None and result.action_executed is not False:
+                    return finished(result)
+                params = CaptchaExecuteParams(
+                    captcha_timeout_seconds=max(0.001, deadline - time.monotonic()),
+                    target_page_id=status.page_id,
+                    target_generation=status.generation,
+                )
+                request_action = action
+                continue
+            if not isinstance(action, CaptchaSolveAction) and original is None and params.captcha_id is None:
+                if result.action_executed is not False:
+                    return failure("Server did not confirm whether the action executed", "captcha_execution_unknown")
+            params.captcha_id = status.captcha_id
+            request_action = CaptchaSolveAction()
+            time.sleep(min(max(0.1, status.retry_after_ms / 1000), 1.0, max(0, deadline - time.monotonic())))

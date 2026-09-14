@@ -2026,7 +2026,32 @@ class ExecutionRequest(SdkRequest):
 
 ObserveResponse = Observation
 ScrapeResponse = DataSpace
-ExecutionResultResponse = ExecutionResult
+
+
+class CaptchaStatus(BaseModel):
+    """One page-scoped CAPTCHA solve; polling never starts another attempt."""
+
+    captcha_id: str
+    page_id: str
+    generation: int
+    state: Literal["solving", "solved", "failed", "cancelled"]
+    retry_after_ms: int = 1000
+    message: str = ""
+
+
+class ExecutionResultResponse(ExecutionResult):
+    captcha: CaptchaStatus | None = None
+    action_executed: bool | None = None
+    code: str | None = None
+
+
+class CaptchaExecuteParams(BaseModel):
+    captcha_id: str | None = None
+    captcha_timeout_seconds: float = Field(default=180, gt=0, allow_inf_nan=False)
+    target_page_id: str | None = None
+    target_generation: int | None = None
+
+
 # ############################################################
 # Agent endpoints
 # ############################################################
