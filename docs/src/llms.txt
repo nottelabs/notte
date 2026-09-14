@@ -490,6 +490,7 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [getCookies](https://docs.notte.cc/typescript-sdk-reference/session/getcookies.md)
 - [viewer](https://docs.notte.cc/typescript-sdk-reference/session/viewer.md)
 - [status](https://docs.notte.cc/typescript-sdk-reference/session/status.md)
+- [waitForAuth](https://docs.notte.cc/typescript-sdk-reference/session/waitforauth.md)
 - [downloadReplay](https://docs.notte.cc/typescript-sdk-reference/session/downloadreplay.md)
 - [debugInfo](https://docs.notte.cc/typescript-sdk-reference/session/debuginfo.md)
 - [debugTabInfo](https://docs.notte.cc/typescript-sdk-reference/session/debugtabinfo.md)
@@ -556,6 +557,15 @@ The SDK docs below are for generated-code editing and reference. They are not th
 
 - [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/notteanything.md)
 - [start](https://docs.notte.cc/typescript-sdk-reference/notteanything/start.md)
+
+#### Managed Auth
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/nottemanagedauth.md)
+- [checkConnection](https://docs.notte.cc/typescript-sdk-reference/nottemanagedauth/checkconnection.md)
+- [getOperation](https://docs.notte.cc/typescript-sdk-reference/nottemanagedauth/getoperation.md)
+- [waitForAuth](https://docs.notte.cc/typescript-sdk-reference/nottemanagedauth/waitforauth.md)
+- [refreshConnection](https://docs.notte.cc/typescript-sdk-reference/nottemanagedauth/refreshconnection.md)
+- [reauthenticateConnection](https://docs.notte.cc/typescript-sdk-reference/nottemanagedauth/reauthenticateconnection.md)
 
 ### Tooling
 
