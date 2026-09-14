@@ -52,6 +52,18 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
 
+      - uses: actions/setup-python@v5
+        if: github.event_name == 'push'
+        with:
+          python-version-file: .python-version
+
+      - name: Validate shared release tag
+        if: github.event_name == 'push'
+        working-directory: .
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python3 scripts/release_version.py validate "$RELEASE_TAG"
+
       - run: npm ci
 
       - name: Set release version

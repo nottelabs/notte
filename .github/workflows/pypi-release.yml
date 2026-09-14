@@ -125,3 +125,69 @@ jobs:
           fi
 
           echo "Mintlify docs deployment queued successfully"
+
+  next-development-version:
+    needs: build
+    name: Open next Python development version PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: next-python-development-version
+      cancel-in-progress: false
+    env:
+      # Reuse the existing automation PAT so the new PR triggers CI.
+      GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
+      RELEASE_TAG: ${{ github.ref_name }}
+      BASE_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          token: ${{ secrets.SUBMODULE_BUMP_PAT }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Advance workspace version and lockfile
+        run: |
+          python3 scripts/release_version.py next "$RELEASE_TAG"
+          if ! git diff --quiet -- pyproject.toml packages/; then
+            uv lock
+          fi
+
+      - name: Open version bump pull request
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- pyproject.toml packages/ uv.lock; then
+            echo "The development version is already ahead of this release."
+            exit 0
+          fi
+
+          NEXT_VERSION=$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
+          BRANCH="chore/python-version-after-${RELEASE_TAG}"
+          TITLE="chore: advance Python packages to ${NEXT_VERSION}"
+          PR=$(gh pr list --head "$BRANCH" --base "$BASE_BRANCH" --state all --json url --jq '.[0].url // empty')
+          if [ -n "$PR" ]; then
+            echo "A bump PR already exists for this release: $PR"
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # Recover a push that succeeded before PR creation failed on an earlier run.
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null; then
+            echo "Reusing the existing branch $BRANCH"
+          else
+            git checkout -b "$BRANCH"
+            git add pyproject.toml packages/*/pyproject.toml uv.lock
+            git commit -m "$TITLE"
+            git push origin "$BRANCH"
+          fi
+          BODY_FILE="$RUNNER_TEMP/python-version-pr.md"
+          printf 'After publishing %s, advance all Python workspace packages and internal pins to %s.\n\nThe lockfile is refreshed with uv lock. This PR is left open for review and CI.\n' \
+            "$RELEASE_TAG" "$NEXT_VERSION" > "$BODY_FILE"
+          gh pr create --base "$BASE_BRANCH" --head "$BRANCH" --title "$TITLE" --body-file "$BODY_FILE"
