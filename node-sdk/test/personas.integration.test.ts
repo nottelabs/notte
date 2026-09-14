@@ -601,7 +601,7 @@ describe('Persona Integration Tests', () => {
           }
         }
       }
-    }, 60000); // 60 second timeout for form filling
+    }); // Use the live suite's 120-second budget for the agent and resource cleanup.
   });
 
 });
