@@ -67,7 +67,11 @@ export async function pollAuth<T>(read: (signal: AbortSignal) => Promise<T | und
   }
   const deadline = new AbortController();
   const timer = setTimeout(() => deadline.abort(new NotteTimeoutError('Timed out waiting for authentication')), timeoutMs);
-  const signal = options.signal ? AbortSignal.any([options.signal, deadline.signal]) : deadline.signal;
+  // Forward caller cancellation without AbortSignal.any (unavailable in Node 20.0–20.2).
+  const cancel = () => deadline.abort(options.signal?.reason);
+  if (options.signal?.aborted) cancel();
+  else options.signal?.addEventListener('abort', cancel, { once: true });
+  const signal = deadline.signal;
   let errors = 0;
   try {
     while (true) {
@@ -90,6 +94,7 @@ export async function pollAuth<T>(read: (signal: AbortSignal) => Promise<T | und
     throw error;
   } finally {
     clearTimeout(timer);
+    options.signal?.removeEventListener('abort', cancel);
   }
 }
 

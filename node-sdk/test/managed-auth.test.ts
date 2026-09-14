@@ -1,4 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { NotteClient } from '@/client';
 import { ManagedAuthError, type ManagedAuthOperation } from '@/managed-auth';
 import { InvalidRequestError, NotteAPIError, NotteTimeoutError } from '@/errors';
@@ -36,6 +39,64 @@ describe('managed auth transport and lifecycle', () => {
     client = new NotteClient({ apiKey: 'test-key' }); // pragma: allowlist secret (test fixture)
   });
   afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
+
+  it('supports cancellation without AbortSignal.any and removes its listener', async () => {
+    const originalAny = Object.getOwnPropertyDescriptor(AbortSignal, 'any')!;
+    Object.defineProperty(AbortSignal, 'any', { configurable: true, value: undefined });
+    try {
+    const controller = new AbortController();
+    const remove = vi.spyOn(controller.signal, 'removeEventListener');
+    handle = request => request.method === 'DELETE' ? json(session('closed'))
+      : request.url.endsWith('/sessions/start') ? json(session('authenticating'))
+      : new Promise((_, reject) => {
+        request.signal.addEventListener('abort', () => reject(request.signal.reason), { once: true });
+      });
+    const started = client.Session({ auth_ids: ['connection-1'] }).start({ signal: controller.signal });
+    setTimeout(() => controller.abort(new Error('cancelled by caller')), 10);
+    await expect(started).rejects.toThrow('cancelled by caller');
+    expect(remove).toHaveBeenCalledWith('abort', expect.any(Function));
+    expect(calls.filter(r => r.method === 'DELETE')).toHaveLength(1);
+    } finally {
+      Object.defineProperty(AbortSignal, 'any', originalAny);
+    }
+  });
+
+  it('persists cookies when metadata fails after readiness succeeds', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'notte-auth-'));
+    const cookieFile = join(directory, 'cookies.json');
+    try {
+      const browser = client.Session({ auth_ids: ['connection-1'], cookie_file: cookieFile });
+      const cookies = [{ name: 'auth', value: 'updated', domain: 'example.com', path: '/', httpOnly: true }];
+      vi.spyOn(browser, 'getCookies').mockResolvedValue(cookies);
+      const original = handle;
+      handle = request => request.method === 'GET' && request.url.endsWith('/sessions/session-1')
+        ? json({ detail: 'metadata unavailable' }, 503) : original(request);
+      await expect(browser.start({ pollIntervalMs: 1 })).rejects.toThrow();
+      expect(JSON.parse(await readFile(cookieFile, 'utf8'))).toEqual(cookies);
+      expect(calls.filter(r => r.method === 'DELETE')).toHaveLength(1);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('shares one cookie upload between concurrent readiness waits', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'notte-auth-'));
+    const cookieFile = join(directory, 'cookies.json');
+    await writeFile(cookieFile, '[]');
+    try {
+      const browser = client.Session({ auth_ids: ['connection-1'], cookie_file: cookieFile });
+      await browser.start({ wait_for_authentication: false });
+      let release!: () => void;
+      const upload = vi.spyOn(browser, 'setCookiesFromFile').mockImplementation(() => new Promise(resolve => { release = () => resolve({} as never); }));
+      const waits = [browser.waitForAuth(), browser.waitForAuth()];
+      await vi.waitFor(() => expect(upload).toHaveBeenCalledTimes(1));
+      release();
+      await Promise.all(waits);
+      expect(upload).toHaveBeenCalledTimes(1);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
 
   it('waits before use, sends bounded login retries, then closes exactly once', async () => {
     const browser = client.Session({ auth_ids: ['connection-1'], auth_retry: 2, wait_for_authentication: false });

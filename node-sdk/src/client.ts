@@ -86,7 +86,10 @@ export type AgentListOptions = NonNullable<ListAgentsData['query']>;
 export type VaultListOptions = NonNullable<ListVaultsData['query']>;
 export type FunctionListOptions = NonNullable<ListFunctionsData['query']>;
 /** Options of `client.scrape()`: the global scrape request minus `url`, plus the SDK-only scrape options. */
-export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' | 'response_format'> & ScrapeOptions<T>;
+export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' | 'response_format' | 'wait_for_authentication'> & ScrapeOptions<T> & {
+  /** Whether to wait for Managed Auth before the scrape request completes. Defaults to true. Authentication failure or timeout can fail the scrape request. */
+  wait_for_authentication?: boolean;
+};
 
 type ResolvedConfig = Required<Pick<NotteClientConfig, 'baseUrl' | 'timeoutMs' | 'verbose' | 'captchaTimeoutSeconds'>> &
   Pick<NotteClientConfig, 'apiKey' | 'dbPreview'>;
@@ -477,11 +480,12 @@ export class NotteClient {
     return new NotteSecrets(this);
   }
 
-  /** Usage and billing (`/usage`, `/usage/logs`). */
+  /** Managed authentication: verify connections, request login, and wait for readiness. */
   get managedAuth(): NotteManagedAuth {
     return new NotteManagedAuth(this);
   }
 
+  /** Usage and billing (`/usage`, `/usage/logs`). */
   get usage(): NotteUsage {
     return new NotteUsage(this);
   }

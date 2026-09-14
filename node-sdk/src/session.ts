@@ -147,6 +147,8 @@ export class Session {
   private defaultPerceptionType: PerceptionType;
   private cookieFile: string | undefined;
   private cookiesLoaded = false;
+  private cookieLoadPromise: Promise<void> | undefined;
+  private authenticationReady = false;
   private fileStorage: RemoteFileStorage | undefined;
   private sessionId: string | null = null;
   private isActive = false;
@@ -250,6 +252,8 @@ export class Session {
     this.isActive = true;
     this.response = sessionData;
     this.cookiesLoaded = false;
+    this.cookieLoadPromise = undefined;
+    this.authenticationReady = false;
     // `forSession` clones a storage already bound to another session, so one
     // RemoteFileStorage reused across sessions never points at the wrong one.
     this.fileStorage = this.fileStorage?.forSession(sessionData.session_id);
@@ -292,11 +296,13 @@ export class Session {
       });
       let result: ManagedAuthReadiness | SessionResponse = response.data;
       if (result.status === 'active') {
+        this.authenticationReady = true;
         result = (await sessionStatus({
           client: this.client.getClient(), path: { session_id: sessionId },
           headers: { [TIMEOUT_HEADER]: '10000' }, signal, throwOnError: true,
         })).data;
-        if (result.status === 'active') return result as SessionResponse;
+        this.authenticationReady = result.status === 'active';
+        if (this.authenticationReady) return result as SessionResponse;
       }
       if (result.status !== 'authenticating') throw new ManagedAuthError(result.error || 'Session authentication failed');
       return undefined;
@@ -306,13 +312,24 @@ export class Session {
 
   private async loadInitialCookies(): Promise<void> {
     if (this.cookiesLoaded || this.cookieFile === undefined) return;
-    if (existsSync(this.cookieFile)) {
-      console.info(`🍪 Automatically loading cookies from ${this.cookieFile}`);
-      await this.setCookiesFromFile(this.cookieFile);
-    } else {
-      console.warn(`🍪 Cookie file ${this.cookieFile} not found, skipping cookie loading`);
+    if (!this.cookieLoadPromise) {
+      const cookieFile = this.cookieFile;
+      this.cookieLoadPromise = (async () => {
+        if (existsSync(cookieFile)) {
+          console.info(`🍪 Automatically loading cookies from ${cookieFile}`);
+          await this.setCookiesFromFile(cookieFile);
+        } else {
+          console.warn(`🍪 Cookie file ${cookieFile} not found, skipping cookie loading`);
+        }
+        this.cookiesLoaded = true;
+      })();
     }
-    this.cookiesLoaded = true;
+    const pending = this.cookieLoadPromise;
+    try {
+      await pending;
+    } finally {
+      if (this.cookieLoadPromise === pending) this.cookieLoadPromise = undefined;
+    }
   }
 
   /**
@@ -331,7 +348,7 @@ export class Session {
     const sessionId = this.sessionId;
     await this.closePlaywright();
 
-    if (this.cookieFile !== undefined && this.response?.status === 'active') {
+    if (this.cookieFile !== undefined && (this.authenticationReady || this.response?.status === 'active')) {
       try {
         const cookies = await this.getCookies();
         await createOrAppendCookiesToFile(this.cookieFile, cookies);
@@ -873,7 +890,10 @@ export class Session {
    * Context manager pattern: start the session, run the callback and stop the
    * session, with close reason `error` when the callback throws.
    *
-   * @param callback - Async work to perform with the started session.
+   * Always waits for Managed Auth readiness before invoking the callback.
+   *
+   * @param callback - Async work to perform with the ready session.
+   * @param options - Controls the Managed Auth readiness wait, including timeout and cancellation.
    * @returns The callback's return value after session cleanup has been attempted.
    * @throws Error if startup fails, the callback throws, or cleanup fails after a successful callback.
    * @example

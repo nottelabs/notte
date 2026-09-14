@@ -12,7 +12,10 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 Options of `client.scrape()`: the global scrape request minus `url`, plus the SDK-only scrape options.
 
 ```typescript
-export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' | 'response_format'> & ScrapeOptions<T>;
+export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' | 'response_format' | 'wait_for_authentication'> & ScrapeOptions<T> & {
+  /** Whether to wait for Managed Auth before the scrape request completes. Defaults to true. Authentication failure or timeout can fail the scrape request. */
+  wait_for_authentication?: boolean;
+};
 ```
 
 ## Fields
@@ -101,10 +104,6 @@ HTML tags to ignore from the page
 Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.
 </ParamField>
 
-<ParamField body="wait_for_authentication" type={"boolean | undefined"}>
-Whether to wait for Managed Auth before returning the session. Defaults to true. When true, authentication failure or timeout fails session creation; when false, authentication continues in the background after the browser is ready.
-</ParamField>
-
 <ParamField body="chrome_args" type={"string[] | null | undefined"}>
 Overwrite the chrome instance arguments
 </ParamField>
@@ -141,6 +140,10 @@ JSON Schema to send instead of converting `response_format`. Only used with a Zo
 When true (default) a failed structured extraction throws `ScrapeFailedError`
 and the extracted data is returned directly. When false the `StructuredData`
 wrapper is returned so callers can inspect `.success`.
+</ParamField>
+
+<ParamField body="wait_for_authentication" type={"boolean | undefined"}>
+Whether to wait for Managed Auth before the scrape request completes. Defaults to true. Authentication failure or timeout can fail the scrape request.
 </ParamField>
 
 ## Related types
