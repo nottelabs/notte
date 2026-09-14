@@ -9,10 +9,10 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/managed-auth.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/managed-auth.ts)
 
+Session response including managed authentication readiness.
+
 ```typescript
-export type AuthSessionResponse = {
-  [K in keyof ApiSessionResponse]: K extends 'status' ? ApiSessionResponse[K] | 'authenticating' : ApiSessionResponse[K];
-};
+export type AuthSessionResponse = SessionResponse;
 ```
 
 ## Fields

@@ -2,34 +2,11 @@ import { setTimeout as delay } from 'node:timers/promises';
 import type { NotteClient } from '@/client';
 import { TIMEOUT_HEADER } from '@/client';
 import { InvalidRequestError, NotteAPIError, NotteError, NotteTimeoutError } from '@/errors';
-import type { SessionResponse as ApiSessionResponse } from '@/lib/client/types.gen';
+import type { SessionResponse, ManagedAuthOperation } from '@/lib/client/types.gen';
+export type { ManagedAuthOperation, ManagedAuthReadiness } from '@/lib/client/types.gen';
 
-// Lifecycle contracts are additive to the generated, pre-rollout API schema.
-export type AuthSessionResponse = {
-  [K in keyof ApiSessionResponse]: K extends 'status' ? ApiSessionResponse[K] | 'authenticating' : ApiSessionResponse[K];
-};
-export interface ManagedAuthOperation {
-  id: string;
-  connection_id: string;
-  session_id?: string | null;
-  source: string;
-  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
-  phase: string;
-  attempt: number;
-  auth_retry: number;
-  authenticated?: boolean | null;
-  failure_code?: string | null;
-  error?: string | null;
-  deadline: string;
-  created_at: string;
-  updated_at: string;
-}
-export interface ManagedAuthReadiness {
-  session_id: string;
-  status: 'authenticating' | 'active' | 'failed' | 'closed';
-  operations: ManagedAuthOperation[];
-  error?: string | null;
-}
+/** Session response including managed authentication readiness. */
+export type AuthSessionResponse = SessionResponse;
 export interface ManagedAuthRunResponse {
   operation_id?: string | null;
   authenticated?: boolean | null;

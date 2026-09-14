@@ -1,4 +1,4 @@
-import { pollAuth, validateAuthRetry, ManagedAuthError, type AuthWaitOptions, type AuthSessionResponse as SessionResponse, type ManagedAuthReadiness } from '@/managed-auth';
+import { pollAuth, validateAuthRetry, ManagedAuthError, type AuthWaitOptions, type AuthSessionResponse as SessionResponse } from '@/managed-auth';
 import { existsSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -30,6 +30,7 @@ import {
   sessionDebugInfo,
   sessionReplay,
   sessionStart,
+  sessionAuthReadiness,
   sessionStatus,
   sessionStop,
 } from '@/lib/client/sdk.gen';
@@ -141,7 +142,7 @@ export function installServerOwnedDialogPolicy(browser: Pick<Browser, 'contexts'
  */
 export class Session {
   private client: NotteClient;
-  private options: ApiSessionStartRequest & { use_file_storage?: boolean; auth_retry?: number };
+  private options: ApiSessionStartRequest & { use_file_storage?: boolean };
   private openViewer: boolean;
   private legacyHeadless: boolean | undefined;
   private defaultRaiseOnFailure: boolean;
@@ -301,11 +302,11 @@ export class Session {
     }
     const sessionId = this.lastSessionId();
     this.response = await pollAuth(async signal => {
-      const response = await this.client.getClient().get<{ 200: ManagedAuthReadiness }, unknown, true>({
-        url: `/sessions/${encodeURIComponent(sessionId)}/auth`,
+      const response = await sessionAuthReadiness({
+        client: this.client.getClient(), path: { session_id: sessionId },
         headers: { [TIMEOUT_HEADER]: '10000' }, signal, throwOnError: true,
       });
-      let result: ManagedAuthReadiness | SessionResponse = response.data;
+      let result: typeof response.data | SessionResponse = response.data;
       if (result.status === 'active') {
         this.authenticationReady = true;
         result = (await sessionStatus({
