@@ -15,6 +15,18 @@ function response(state: CaptchaStatus['state'], executed: boolean | null = fals
 afterEach(() => vi.useRealTimers());
 
 describe('CAPTCHA polling', () => {
+  it('uses the default polling delay when the optional retry hint is absent', async () => {
+    vi.useFakeTimers();
+    const pending = response('solving');
+    delete pending.captcha!.retry_after_ms;
+    const request = vi.fn().mockResolvedValueOnce(pending).mockResolvedValueOnce(response('solved'));
+    const result = executeWithCaptcha({ type: 'captcha_solve' }, 180, request);
+    await vi.advanceTimersByTimeAsync(999);
+    expect(request).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect((await result).success).toBe(true);
+    expect(request).toHaveBeenCalledTimes(2);
+  });
   it('resubmits a blocked action only after solved and with page guards', async () => {
     const request = vi.fn().mockResolvedValueOnce(response('solving'))
       .mockResolvedValueOnce(response('solved')).mockResolvedValueOnce(executionResult());

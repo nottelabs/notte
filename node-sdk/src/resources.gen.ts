@@ -11,343 +11,348 @@ export function createResources(client: Client, getApiKey: () => string) {
   return {
   sessions: {
     /** sessionAuthReadiness: /sessions/{session_id}/auth. Returns the API response body. */
-    authReadiness: async (sessionId: Types.SessionAuthReadinessData['path']["session_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.sessionAuthReadiness({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId } });
+    authReadiness: async (sessionId: Types.SessionAuthReadinessData['path']["session_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionAuthReadinessData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionAuthReadiness({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId } });
+      return response.data;
+    },
+    /** createPayment: /sessions/{session_id}/payments. Returns the API response body. */
+    createPayment: async (sessionId: Types.CreatePaymentData['path']["session_id"], body: Types.CreatePaymentData['body'], query: Types.CreatePaymentData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers: Omit<NonNullable<Types.CreatePaymentData['headers']>, 'x-notte-api-key'> }) => {
+      const response = await operations.createPayment({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, body, query });
       return response.data;
     },
     /** sessionDebugInfo: /sessions/{session_id}/debug. Returns the API response body. */
-    debugInfo: async (sessionId: Types.SessionDebugInfoData['path']["session_id"], query: Types.SessionDebugInfoData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.sessionDebugInfo({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId }, query });
+    debugInfo: async (sessionId: Types.SessionDebugInfoData['path']["session_id"], query: Types.SessionDebugInfoData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionDebugInfoData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionDebugInfo({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
       return response.data;
     },
     /** deleteSessionFile: /sessions/{session_id}/files/{file_id}. Returns the API response body. */
-    deleteSessionFile: async (sessionId: Types.DeleteSessionFileData['path']["session_id"], fileId: Types.DeleteSessionFileData['path']["file_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.deleteSessionFile({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId, "file_id": fileId } });
+    deleteSessionFile: async (sessionId: Types.DeleteSessionFileData['path']["session_id"], fileId: Types.DeleteSessionFileData['path']["file_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.DeleteSessionFileData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.deleteSessionFile({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId, "file_id": fileId } });
       return response.data;
     },
     /** downloadSessionFile: /sessions/{session_id}/files/{file_id}. Returns the API response body. */
-    downloadSessionFile: async (sessionId: Types.DownloadSessionFileData['path']["session_id"], fileId: Types.DownloadSessionFileData['path']["file_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.downloadSessionFile({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId, "file_id": fileId } });
+    downloadSessionFile: async (sessionId: Types.DownloadSessionFileData['path']["session_id"], fileId: Types.DownloadSessionFileData['path']["file_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.DownloadSessionFileData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.downloadSessionFile({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId, "file_id": fileId } });
       return response.data;
     },
     /** pageExecute: /sessions/{session_id}/page/execute. Returns the API response body. */
-    execute: async (sessionId: Types.PageExecuteData['path']["session_id"], body: Types.PageExecuteData['body'], query: Types.PageExecuteData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.pageExecute({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId }, body, query });
+    execute: async (sessionId: Types.PageExecuteData['path']["session_id"], body: Types.PageExecuteData['body'], query: Types.PageExecuteData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PageExecuteData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.pageExecute({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, body, query });
       return response.data;
     },
     /** sessionCookiesGet: /sessions/{session_id}/cookies. Returns the API response body. */
-    getCookies: async (sessionId: Types.SessionCookiesGetData['path']["session_id"], query: Types.SessionCookiesGetData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.sessionCookiesGet({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId }, query });
+    getCookies: async (sessionId: Types.SessionCookiesGetData['path']["session_id"], query: Types.SessionCookiesGetData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionCookiesGetData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionCookiesGet({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
       return response.data;
     },
     /** getSessionScript: /sessions/{session_id}/workflow/code. Returns the API response body. */
-    getSessionScript: async (sessionId: Types.GetSessionScriptData['path']["session_id"], query: Types.GetSessionScriptData['query'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.getSessionScript({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId }, query });
+    getSessionScript: async (sessionId: Types.GetSessionScriptData['path']["session_id"], query: Types.GetSessionScriptData['query'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.GetSessionScriptData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.getSessionScript({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
       return response.data;
     },
     /** listSessions: /sessions. Returns the API response body. */
-    list: async (query: Types.ListSessionsData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.listSessions({ client, throwOnError: true, signal: requestOptions.signal, query });
+    list: async (query: Types.ListSessionsData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ListSessionsData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.listSessions({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, query });
       return response.data;
     },
     /** listSessionFiles: /sessions/{session_id}/files. Returns the API response body. */
-    listSessionFiles: async (sessionId: Types.ListSessionFilesData['path']["session_id"], query: Types.ListSessionFilesData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.listSessionFiles({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId }, query });
+    listSessionFiles: async (sessionId: Types.ListSessionFilesData['path']["session_id"], query: Types.ListSessionFilesData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ListSessionFilesData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.listSessionFiles({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
       return response.data;
     },
     /** sessionNetworkLogs: /sessions/{session_id}/network/logs. Returns the API response body. */
-    networkLogs: async (sessionId: Types.SessionNetworkLogsData['path']["session_id"], query: Types.SessionNetworkLogsData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.sessionNetworkLogs({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId }, query });
+    networkLogs: async (sessionId: Types.SessionNetworkLogsData['path']["session_id"], query: Types.SessionNetworkLogsData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionNetworkLogsData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionNetworkLogs({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
       return response.data;
     },
     /** pageObserve: /sessions/{session_id}/page/observe. Returns the API response body. */
-    observe: async (sessionId: Types.PageObserveData['path']["session_id"], body: Types.PageObserveData['body'], query: Types.PageObserveData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.pageObserve({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId }, body, query });
+    observe: async (sessionId: Types.PageObserveData['path']["session_id"], body: Types.PageObserveData['body'], query: Types.PageObserveData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PageObserveData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.pageObserve({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, body, query });
       return response.data;
     },
     /** sessionOffset: /sessions/{session_id}/offset. Returns the API response body. */
-    offset: async (sessionId: Types.SessionOffsetData['path']["session_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.sessionOffset({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId } });
+    offset: async (sessionId: Types.SessionOffsetData['path']["session_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionOffsetData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionOffset({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId } });
       return response.data;
     },
     /** pageScreenshot: /sessions/{session_id}/page/screenshot. Returns the API response body. */
-    pageScreenshot: async (sessionId: Types.PageScreenshotData['path']["session_id"], query: Types.PageScreenshotData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.pageScreenshot({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId }, query });
+    pageScreenshot: async (sessionId: Types.PageScreenshotData['path']["session_id"], query: Types.PageScreenshotData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PageScreenshotData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.pageScreenshot({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
       return response.data;
     },
     /** sessionReplay: /sessions/{session_id}/replay. Returns the API response body. */
-    replay: async (sessionId: Types.SessionReplayData['path']["session_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.sessionReplay({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId } });
+    replay: async (sessionId: Types.SessionReplayData['path']["session_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionReplayData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionReplay({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId } });
       return response.data;
     },
     /** pageScrape: /sessions/{session_id}/page/scrape. Returns the API response body. */
-    scrape: async (sessionId: Types.PageScrapeData['path']["session_id"], body: Types.PageScrapeData['body'], query: Types.PageScrapeData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.pageScrape({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId }, body, query });
+    scrape: async (sessionId: Types.PageScrapeData['path']["session_id"], body: Types.PageScrapeData['body'], query: Types.PageScrapeData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PageScrapeData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.pageScrape({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, body, query });
       return response.data;
     },
     /** sessionCookiesSet: /sessions/{session_id}/cookies. Returns the API response body. */
-    setCookies: async (sessionId: Types.SessionCookiesSetData['path']["session_id"], body: Types.SessionCookiesSetData['body'], query: Types.SessionCookiesSetData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.sessionCookiesSet({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId }, body, query });
+    setCookies: async (sessionId: Types.SessionCookiesSetData['path']["session_id"], body: Types.SessionCookiesSetData['body'], query: Types.SessionCookiesSetData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionCookiesSetData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionCookiesSet({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, body, query });
       return response.data;
     },
     /** sessionStart: /sessions/start. Returns the API response body. */
-    start: async (body: Types.SessionStartData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.sessionStart({ client, throwOnError: true, signal: requestOptions.signal, body });
+    start: async (body: Types.SessionStartData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionStartData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionStart({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, body });
       return response.data;
     },
     /** sessionStatus: /sessions/{session_id}. Returns the API response body. */
-    status: async (sessionId: Types.SessionStatusData['path']["session_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.sessionStatus({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId } });
+    status: async (sessionId: Types.SessionStatusData['path']["session_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionStatusData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionStatus({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId } });
       return response.data;
     },
     /** sessionStop: /sessions/{session_id}/stop. Returns the API response body. */
-    stop: async (sessionId: Types.SessionStopData['path']["session_id"], query: Types.SessionStopData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.sessionStop({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId }, query });
+    stop: async (sessionId: Types.SessionStopData['path']["session_id"], query: Types.SessionStopData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionStopData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionStop({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
       return response.data;
     },
     /** uploadSessionFile: /sessions/{session_id}/files. Returns the API response body. */
-    uploadSessionFile: async (sessionId: Types.UploadSessionFileData['path']["session_id"], body: Types.UploadSessionFileData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.uploadSessionFile({ client, throwOnError: true, signal: requestOptions.signal, path: { "session_id": sessionId }, body });
+    uploadSessionFile: async (sessionId: Types.UploadSessionFileData['path']["session_id"], body: Types.UploadSessionFileData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.UploadSessionFileData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.uploadSessionFile({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, body });
       return response.data;
     },
   },
   agents: {
     /** getScript: /agents/{agent_id}/workflow/code. Returns the API response body. */
-    getScript: async (agentId: Types.GetScriptData['path']["agent_id"], query: Types.GetScriptData['query'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.getScript({ client, throwOnError: true, signal: requestOptions.signal, path: { "agent_id": agentId }, query });
+    getScript: async (agentId: Types.GetScriptData['path']["agent_id"], query: Types.GetScriptData['query'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.GetScriptData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.getScript({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "agent_id": agentId }, query });
       return response.data;
     },
     /** listAgents: /agents. Returns the API response body. */
-    list: async (query: Types.ListAgentsData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.listAgents({ client, throwOnError: true, signal: requestOptions.signal, query });
+    list: async (query: Types.ListAgentsData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ListAgentsData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.listAgents({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, query });
       return response.data;
     },
     /** agentStart: /agents/start. Returns the API response body. */
-    start: async (body: Types.AgentStartData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.agentStart({ client, throwOnError: true, signal: requestOptions.signal, body });
+    start: async (body: Types.AgentStartData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.AgentStartData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.agentStart({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, body });
       return response.data;
     },
     /** agentStatus: /agents/{agent_id}. Returns the API response body. */
-    status: async (agentId: Types.AgentStatusData['path']["agent_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.agentStatus({ client, throwOnError: true, signal: requestOptions.signal, path: { "agent_id": agentId } });
+    status: async (agentId: Types.AgentStatusData['path']["agent_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.AgentStatusData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.agentStatus({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "agent_id": agentId } });
       return response.data;
     },
     /** agentStop: /agents/{agent_id}/stop. Returns the API response body. */
-    stop: async (agentId: Types.AgentStopData['path']["agent_id"], query: Types.AgentStopData['query'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.agentStop({ client, throwOnError: true, signal: requestOptions.signal, path: { "agent_id": agentId }, query });
+    stop: async (agentId: Types.AgentStopData['path']["agent_id"], query: Types.AgentStopData['query'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.AgentStopData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.agentStop({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "agent_id": agentId }, query });
       return response.data;
     },
   },
   functions: {
     /** functionCreate: /functions. Returns the API response body. */
-    create: async (body: Types.FunctionCreateData['body'], query: Types.FunctionCreateData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.functionCreate({ client, throwOnError: true, signal: requestOptions.signal, body, query });
+    create: async (body: Types.FunctionCreateData['body'], query: Types.FunctionCreateData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionCreateData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionCreate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, body, query });
       return response.data;
     },
     /** functionDelete: /functions/{function_id}. Returns the API response body. */
-    delete: async (functionId: Types.FunctionDeleteData['path']["function_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.functionDelete({ client, throwOnError: true, signal: requestOptions.signal, path: { "function_id": functionId } });
+    delete: async (functionId: Types.FunctionDeleteData['path']["function_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionDeleteData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionDelete({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId } });
       return response.data;
     },
     /** functionScheduleDelete: /functions/{function_id}/schedule. Returns the API response body. */
-    deleteSchedule: async (functionId: Types.FunctionScheduleDeleteData['path']["function_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.functionScheduleDelete({ client, throwOnError: true, signal: requestOptions.signal, path: { "function_id": functionId } });
+    deleteSchedule: async (functionId: Types.FunctionScheduleDeleteData['path']["function_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionScheduleDeleteData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionScheduleDelete({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId } });
       return response.data;
     },
     /** functionDownloadUrl: /functions/{function_id}. Returns the API response body. */
-    downloadUrl: async (functionId: Types.FunctionDownloadUrlData['path']["function_id"], query: Types.FunctionDownloadUrlData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.functionDownloadUrl({ client, throwOnError: true, signal: requestOptions.signal, path: { "function_id": functionId }, query });
+    downloadUrl: async (functionId: Types.FunctionDownloadUrlData['path']["function_id"], query: Types.FunctionDownloadUrlData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionDownloadUrlData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionDownloadUrl({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId }, query });
       return response.data;
     },
     /** functionFork: /functions/{function_id}/fork. Returns the API response body. */
-    fork: async (functionId: Types.FunctionForkData['path']["function_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.functionFork({ client, throwOnError: true, signal: requestOptions.signal, path: { "function_id": functionId } });
+    fork: async (functionId: Types.FunctionForkData['path']["function_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionForkData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionFork({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId } });
       return response.data;
     },
     /** listFunctions: /functions. Returns the API response body. */
-    list: async (query: Types.ListFunctionsData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.listFunctions({ client, throwOnError: true, signal: requestOptions.signal, query });
+    list: async (query: Types.ListFunctionsData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ListFunctionsData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.listFunctions({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, query });
       return response.data;
     },
     /** listFunctionRunsByFunctionId: /functions/{function_id}/runs. Returns the API response body. */
-    listRuns: async (functionId: Types.ListFunctionRunsByFunctionIdData['path']["function_id"], query: Types.ListFunctionRunsByFunctionIdData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.listFunctionRunsByFunctionId({ client, throwOnError: true, signal: requestOptions.signal, path: { "function_id": functionId }, query });
+    listRuns: async (functionId: Types.ListFunctionRunsByFunctionIdData['path']["function_id"], query: Types.ListFunctionRunsByFunctionIdData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ListFunctionRunsByFunctionIdData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.listFunctionRunsByFunctionId({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId }, query });
       return response.data;
     },
     /** functionMetadataUpdate: /functions/{function_id}. Returns the API response body. */
-    metadataUpdate: async (functionId: Types.FunctionMetadataUpdateData['path']["function_id"], body: Types.FunctionMetadataUpdateData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.functionMetadataUpdate({ client, throwOnError: true, signal: requestOptions.signal, path: { "function_id": functionId }, body });
+    metadataUpdate: async (functionId: Types.FunctionMetadataUpdateData['path']["function_id"], body: Types.FunctionMetadataUpdateData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionMetadataUpdateData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionMetadataUpdate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId }, body });
       return response.data;
     },
     /** functionRollback: /functions/{function_id}/rollback. Returns the API response body. */
-    rollback: async (functionId: Types.FunctionRollbackData['path']["function_id"], body: Types.FunctionRollbackData['body'], query: Types.FunctionRollbackData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.functionRollback({ client, throwOnError: true, signal: requestOptions.signal, path: { "function_id": functionId }, body, query });
+    rollback: async (functionId: Types.FunctionRollbackData['path']["function_id"], body: Types.FunctionRollbackData['body'], query: Types.FunctionRollbackData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRollbackData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionRollback({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId }, body, query });
       return response.data;
     },
     /** functionRunGetMetadata: /functions/{function_id}/runs/{run_id}. Returns the API response body. */
-    runGetMetadata: async (functionId: Types.FunctionRunGetMetadataData['path']["function_id"], runId: Types.FunctionRunGetMetadataData['path']["run_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.functionRunGetMetadata({ client, throwOnError: true, signal: requestOptions.signal, path: { "function_id": functionId, "run_id": runId } });
+    runGetMetadata: async (functionId: Types.FunctionRunGetMetadataData['path']["function_id"], runId: Types.FunctionRunGetMetadataData['path']["run_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRunGetMetadataData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionRunGetMetadata({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId, "run_id": runId } });
       return response.data;
     },
     /** functionRunStart: /functions/{function_id}/runs/start. Returns the API response body. */
-    runStart: async (functionId: Types.FunctionRunStartData['path']["function_id"], body: Types.FunctionRunStartData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.functionRunStart({ client, throwOnError: true, signal: requestOptions.signal, headers: { 'x-notte-api-key': getApiKey() }, path: { "function_id": functionId }, body });
+    runStart: async (functionId: Types.FunctionRunStartData['path']["function_id"], body: Types.FunctionRunStartData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRunStartData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionRunStart({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers, 'x-notte-api-key': getApiKey() }, path: { "function_id": functionId }, body });
       return response.data;
     },
     /** functionRunStop: /functions/{function_id}/runs/{run_id}. Returns the API response body. */
-    runStop: async (functionId: Types.FunctionRunStopData['path']["function_id"], runId: Types.FunctionRunStopData['path']["run_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.functionRunStop({ client, throwOnError: true, signal: requestOptions.signal, path: { "function_id": functionId, "run_id": runId } });
+    runStop: async (functionId: Types.FunctionRunStopData['path']["function_id"], runId: Types.FunctionRunStopData['path']["run_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRunStopData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionRunStop({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId, "run_id": runId } });
       return response.data;
     },
     /** functionRunUpdateMetadata: /functions/{function_id}/runs/{run_id}. Returns the API response body. */
-    runUpdateMetadata: async (functionId: Types.FunctionRunUpdateMetadataData['path']["function_id"], runId: Types.FunctionRunUpdateMetadataData['path']["run_id"], body: Types.FunctionRunUpdateMetadataData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.functionRunUpdateMetadata({ client, throwOnError: true, signal: requestOptions.signal, path: { "function_id": functionId, "run_id": runId }, body });
+    runUpdateMetadata: async (functionId: Types.FunctionRunUpdateMetadataData['path']["function_id"], runId: Types.FunctionRunUpdateMetadataData['path']["run_id"], body: Types.FunctionRunUpdateMetadataData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRunUpdateMetadataData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionRunUpdateMetadata({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId, "run_id": runId }, body });
       return response.data;
     },
     /** functionRuntimeHealth: /functions/health. Returns the API response body. */
-    runtimeHealth: async (requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.functionRuntimeHealth({ client, throwOnError: true, signal: requestOptions.signal });
+    runtimeHealth: async (requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRuntimeHealthData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionRuntimeHealth({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers } });
       return response.data;
     },
     /** functionScheduleSet: /functions/{function_id}/schedule. Returns the API response body. */
-    setSchedule: async (functionId: Types.FunctionScheduleSetData['path']["function_id"], body: Types.FunctionScheduleSetData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.functionScheduleSet({ client, throwOnError: true, signal: requestOptions.signal, path: { "function_id": functionId }, body });
+    setSchedule: async (functionId: Types.FunctionScheduleSetData['path']["function_id"], body: Types.FunctionScheduleSetData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionScheduleSetData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionScheduleSet({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId }, body });
       return response.data;
     },
     /** functionUpdate: /functions/{function_id}. Returns the API response body. */
-    update: async (functionId: Types.FunctionUpdateData['path']["function_id"], body: Types.FunctionUpdateData['body'], query: Types.FunctionUpdateData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.functionUpdate({ client, throwOnError: true, signal: requestOptions.signal, path: { "function_id": functionId }, body, query });
+    update: async (functionId: Types.FunctionUpdateData['path']["function_id"], body: Types.FunctionUpdateData['body'], query: Types.FunctionUpdateData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionUpdateData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionUpdate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId }, body, query });
       return response.data;
     },
   },
   vaults: {
     /** vaultCreate: /vaults/create. Returns the API response body. */
-    create: async (body: Types.VaultCreateData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.vaultCreate({ client, throwOnError: true, signal: requestOptions.signal, body });
+    create: async (body: Types.VaultCreateData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.VaultCreateData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.vaultCreate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, body });
       return response.data;
     },
     /** vaultCredentialsAdd: /vaults/{vault_id}/credentials. Returns the API response body. */
-    credentialsAdd: async (vaultId: Types.VaultCredentialsAddData['path']["vault_id"], body: Types.VaultCredentialsAddData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.vaultCredentialsAdd({ client, throwOnError: true, signal: requestOptions.signal, path: { "vault_id": vaultId }, body });
+    credentialsAdd: async (vaultId: Types.VaultCredentialsAddData['path']["vault_id"], body: Types.VaultCredentialsAddData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.VaultCredentialsAddData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.vaultCredentialsAdd({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "vault_id": vaultId }, body });
       return response.data;
     },
     /** vaultCredentialsDelete: /vaults/{vault_id}/credentials. Returns the API response body. */
-    credentialsDelete: async (vaultId: Types.VaultCredentialsDeleteData['path']["vault_id"], query: Types.VaultCredentialsDeleteData['query'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.vaultCredentialsDelete({ client, throwOnError: true, signal: requestOptions.signal, path: { "vault_id": vaultId }, query });
+    credentialsDelete: async (vaultId: Types.VaultCredentialsDeleteData['path']["vault_id"], query: Types.VaultCredentialsDeleteData['query'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.VaultCredentialsDeleteData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.vaultCredentialsDelete({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "vault_id": vaultId }, query });
       return response.data;
     },
     /** vaultCredentialsGet: /vaults/{vault_id}/credentials. Returns the API response body. */
-    credentialsGet: async (vaultId: Types.VaultCredentialsGetData['path']["vault_id"], query: Types.VaultCredentialsGetData['query'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.vaultCredentialsGet({ client, throwOnError: true, signal: requestOptions.signal, path: { "vault_id": vaultId }, query });
+    credentialsGet: async (vaultId: Types.VaultCredentialsGetData['path']["vault_id"], query: Types.VaultCredentialsGetData['query'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.VaultCredentialsGetData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.vaultCredentialsGet({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "vault_id": vaultId }, query });
       return response.data;
     },
     /** vaultCredentialsList: /vaults/{vault_id}. Returns the API response body. */
-    credentialsList: async (vaultId: Types.VaultCredentialsListData['path']["vault_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.vaultCredentialsList({ client, throwOnError: true, signal: requestOptions.signal, path: { "vault_id": vaultId } });
+    credentialsList: async (vaultId: Types.VaultCredentialsListData['path']["vault_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.VaultCredentialsListData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.vaultCredentialsList({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "vault_id": vaultId } });
       return response.data;
     },
     /** vaultCreditCardDelete: /vaults/{vault_id}/card. Returns the API response body. */
-    creditCardDelete: async (vaultId: Types.VaultCreditCardDeleteData['path']["vault_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.vaultCreditCardDelete({ client, throwOnError: true, signal: requestOptions.signal, path: { "vault_id": vaultId } });
+    creditCardDelete: async (vaultId: Types.VaultCreditCardDeleteData['path']["vault_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.VaultCreditCardDeleteData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.vaultCreditCardDelete({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "vault_id": vaultId } });
       return response.data;
     },
     /** vaultCreditCardGet: /vaults/{vault_id}/card. Returns the API response body. */
-    creditCardGet: async (vaultId: Types.VaultCreditCardGetData['path']["vault_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.vaultCreditCardGet({ client, throwOnError: true, signal: requestOptions.signal, path: { "vault_id": vaultId } });
+    creditCardGet: async (vaultId: Types.VaultCreditCardGetData['path']["vault_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.VaultCreditCardGetData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.vaultCreditCardGet({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "vault_id": vaultId } });
       return response.data;
     },
     /** vaultCreditCardSet: /vaults/{vault_id}/card. Returns the API response body. */
-    creditCardSet: async (vaultId: Types.VaultCreditCardSetData['path']["vault_id"], body: Types.VaultCreditCardSetData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.vaultCreditCardSet({ client, throwOnError: true, signal: requestOptions.signal, path: { "vault_id": vaultId }, body });
+    creditCardSet: async (vaultId: Types.VaultCreditCardSetData['path']["vault_id"], body: Types.VaultCreditCardSetData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.VaultCreditCardSetData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.vaultCreditCardSet({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "vault_id": vaultId }, body });
       return response.data;
     },
     /** vaultDelete: /vaults/{vault_id}. Returns the API response body. */
-    delete: async (vaultId: Types.VaultDeleteData['path']["vault_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.vaultDelete({ client, throwOnError: true, signal: requestOptions.signal, path: { "vault_id": vaultId } });
+    delete: async (vaultId: Types.VaultDeleteData['path']["vault_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.VaultDeleteData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.vaultDelete({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "vault_id": vaultId } });
       return response.data;
     },
     /** listVaults: /vaults. Returns the API response body. */
-    list: async (query: Types.ListVaultsData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.listVaults({ client, throwOnError: true, signal: requestOptions.signal, query });
+    list: async (query: Types.ListVaultsData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ListVaultsData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.listVaults({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, query });
       return response.data;
     },
     /** vaultUpdate: /vaults/{vault_id}. Returns the API response body. */
-    update: async (vaultId: Types.VaultUpdateData['path']["vault_id"], body: Types.VaultUpdateData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.vaultUpdate({ client, throwOnError: true, signal: requestOptions.signal, path: { "vault_id": vaultId }, body });
+    update: async (vaultId: Types.VaultUpdateData['path']["vault_id"], body: Types.VaultUpdateData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.VaultUpdateData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.vaultUpdate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "vault_id": vaultId }, body });
       return response.data;
     },
   },
   personas: {
     /** personaCreate: /personas/create. Returns the API response body. */
-    create: async (body: Types.PersonaCreateData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.personaCreate({ client, throwOnError: true, signal: requestOptions.signal, body });
+    create: async (body: Types.PersonaCreateData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaCreateData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.personaCreate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, body });
       return response.data;
     },
     /** personaDelete: /personas/{persona_id}. Returns the API response body. */
-    delete: async (personaId: Types.PersonaDeleteData['path']["persona_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.personaDelete({ client, throwOnError: true, signal: requestOptions.signal, path: { "persona_id": personaId } });
+    delete: async (personaId: Types.PersonaDeleteData['path']["persona_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaDeleteData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.personaDelete({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "persona_id": personaId } });
       return response.data;
     },
     /** personaEmailsList: /personas/{persona_id}/emails. Returns the API response body. */
-    emailsList: async (personaId: Types.PersonaEmailsListData['path']["persona_id"], query: Types.PersonaEmailsListData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.personaEmailsList({ client, throwOnError: true, signal: requestOptions.signal, path: { "persona_id": personaId }, query });
+    emailsList: async (personaId: Types.PersonaEmailsListData['path']["persona_id"], query: Types.PersonaEmailsListData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaEmailsListData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.personaEmailsList({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "persona_id": personaId }, query });
       return response.data;
     },
     /** personaGet: /personas/{persona_id}. Returns the API response body. */
-    get: async (personaId: Types.PersonaGetData['path']["persona_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.personaGet({ client, throwOnError: true, signal: requestOptions.signal, path: { "persona_id": personaId } });
+    get: async (personaId: Types.PersonaGetData['path']["persona_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaGetData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.personaGet({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "persona_id": personaId } });
       return response.data;
     },
     /** listPersonas: /personas. Returns the API response body. */
-    list: async (query: Types.ListPersonasData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.listPersonas({ client, throwOnError: true, signal: requestOptions.signal, query });
+    list: async (query: Types.ListPersonasData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ListPersonasData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.listPersonas({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, query });
       return response.data;
     },
     /** personaSmsList: /personas/{persona_id}/sms. Returns the API response body. */
-    smsList: async (personaId: Types.PersonaSmsListData['path']["persona_id"], query: Types.PersonaSmsListData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.personaSmsList({ client, throwOnError: true, signal: requestOptions.signal, path: { "persona_id": personaId }, query });
+    smsList: async (personaId: Types.PersonaSmsListData['path']["persona_id"], query: Types.PersonaSmsListData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaSmsListData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.personaSmsList({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "persona_id": personaId }, query });
       return response.data;
     },
     /** personaUpdate: /personas/{persona_id}. Returns the API response body. */
-    update: async (personaId: Types.PersonaUpdateData['path']["persona_id"], body: Types.PersonaUpdateData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.personaUpdate({ client, throwOnError: true, signal: requestOptions.signal, path: { "persona_id": personaId }, body });
+    update: async (personaId: Types.PersonaUpdateData['path']["persona_id"], body: Types.PersonaUpdateData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaUpdateData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.personaUpdate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "persona_id": personaId }, body });
       return response.data;
     },
   },
   profiles: {
     /** profileCookiesGet: /profiles/{profile_id}/cookies. Returns the API response body. */
-    cookiesGet: async (profileId: Types.ProfileCookiesGetData['path']["profile_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.profileCookiesGet({ client, throwOnError: true, signal: requestOptions.signal, path: { "profile_id": profileId } });
+    cookiesGet: async (profileId: Types.ProfileCookiesGetData['path']["profile_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ProfileCookiesGetData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.profileCookiesGet({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "profile_id": profileId } });
       return response.data;
     },
     /** profileCookiesSet: /profiles/{profile_id}/cookies. Returns the API response body. */
-    cookiesSet: async (profileId: Types.ProfileCookiesSetData['path']["profile_id"], body: Types.ProfileCookiesSetData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.profileCookiesSet({ client, throwOnError: true, signal: requestOptions.signal, path: { "profile_id": profileId }, body });
+    cookiesSet: async (profileId: Types.ProfileCookiesSetData['path']["profile_id"], body: Types.ProfileCookiesSetData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ProfileCookiesSetData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.profileCookiesSet({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "profile_id": profileId }, body });
       return response.data;
     },
     /** profileCreate: /profiles/create. Returns the API response body. */
-    create: async (body: Types.ProfileCreateData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.profileCreate({ client, throwOnError: true, signal: requestOptions.signal, body });
+    create: async (body: Types.ProfileCreateData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ProfileCreateData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.profileCreate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, body });
       return response.data;
     },
     /** profileDelete: /profiles/{profile_id}. Returns the API response body. */
-    delete: async (profileId: Types.ProfileDeleteData['path']["profile_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.profileDelete({ client, throwOnError: true, signal: requestOptions.signal, path: { "profile_id": profileId } });
+    delete: async (profileId: Types.ProfileDeleteData['path']["profile_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ProfileDeleteData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.profileDelete({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "profile_id": profileId } });
       return response.data;
     },
     /** profileDuplicate: /profiles/{profile_id}/duplicate. Returns the API response body. */
-    duplicate: async (profileId: Types.ProfileDuplicateData['path']["profile_id"], body: Types.ProfileDuplicateData['body'], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.profileDuplicate({ client, throwOnError: true, signal: requestOptions.signal, path: { "profile_id": profileId }, body });
+    duplicate: async (profileId: Types.ProfileDuplicateData['path']["profile_id"], body: Types.ProfileDuplicateData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ProfileDuplicateData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.profileDuplicate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "profile_id": profileId }, body });
       return response.data;
     },
     /** profileGet: /profiles/{profile_id}. Returns the API response body. */
-    get: async (profileId: Types.ProfileGetData['path']["profile_id"], requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.profileGet({ client, throwOnError: true, signal: requestOptions.signal, path: { "profile_id": profileId } });
+    get: async (profileId: Types.ProfileGetData['path']["profile_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ProfileGetData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.profileGet({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "profile_id": profileId } });
       return response.data;
     },
     /** profileList: /profiles. Returns the API response body. */
-    list: async (query: Types.ProfileListData['query'] = undefined, requestOptions: ResourceRequestOptions = {}) => {
-      const response = await operations.profileList({ client, throwOnError: true, signal: requestOptions.signal, query });
+    list: async (query: Types.ProfileListData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ProfileListData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.profileList({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, query });
       return response.data;
     },
   },

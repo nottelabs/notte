@@ -1,15 +1,8 @@
-import type { ApiExecutionResponse } from '@/lib/client/types.gen';
+import type { ApiExecutionResponse, CaptchaStatus } from '@/lib/client/types.gen';
 import type { ExecuteAction } from '@/actions';
 import { NotteAPIError, NotteTimeoutError, sleep } from '@/errors';
 
-export interface CaptchaStatus {
-  captcha_id: string;
-  page_id: string;
-  generation: number;
-  state: 'solving' | 'solved' | 'failed' | 'cancelled';
-  retry_after_ms: number;
-  message?: string;
-}
+export type { CaptchaStatus } from '@/lib/client/types.gen';
 
 /** Execution envelope with the backend's additive CAPTCHA coordination fields. */
 export type CaptchaExecutionResponse = ApiExecutionResponse & {
@@ -88,6 +81,6 @@ export async function executeWithCaptcha(
     }
     params.captcha_id = status.captcha_id;
     requestAction = { type: 'captcha_solve' };
-    await pause(Math.min(1000, Math.max(100, status.retry_after_ms)));
+    await pause(Math.min(1000, Math.max(100, status.retry_after_ms ?? 1000)));
   }
 }

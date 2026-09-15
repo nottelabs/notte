@@ -46,6 +46,9 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^managed-auth\/connections\/[^\/]+\/refresh$/, // /managed-auth/connections/{connection_id}/refresh
   /^managed-auth\/operations\/[^\/]+$/, // /managed-auth/operations/{operation_id}
 
+  // Payments endpoints
+  /^payments\/[^\/]+$/, // /payments/{payment_id}
+
   // Personas endpoints
   /^personas$/, // /personas
   /^personas\/[^\/]+$/, // /personas/{persona_id}
@@ -94,6 +97,7 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^sessions\/[^\/]+\/page\/observe$/, // /sessions/{session_id}/page/observe
   /^sessions\/[^\/]+\/page\/scrape$/, // /sessions/{session_id}/page/scrape
   /^sessions\/[^\/]+\/page\/screenshot$/, // /sessions/{session_id}/page/screenshot
+  /^sessions\/[^\/]+\/payments$/, // /sessions/{session_id}/payments
   /^sessions\/[^\/]+\/replay$/, // /sessions/{session_id}/replay
   /^sessions\/[^\/]+\/stop$/, // /sessions/{session_id}/stop
   /^sessions\/[^\/]+\/workflow\/code$/, // /sessions/{session_id}/workflow/code

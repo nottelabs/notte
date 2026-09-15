@@ -40,6 +40,10 @@ const copy = await client.functions.fork(functionId);
 Arguments are path IDs in URL order, then the request body (if any), query
 parameters (if any), and optional `{ signal }` cancellation options. For example,
 `client.sessions.stop(sessionId, { close_reason: 'manual' }, { signal })`.
+Operations with required request headers require a final options object, for
+example `client.sessions.createPayment(sessionId, body, undefined, { headers: { 'idempotency-key': key } })`.
+Keep the same idempotency key when retrying the same payment request. The SDK
+binds `x-notte-api-key` automatically; callers cannot override it through typed headers.
 Methods return the API response body and throw the client's typed API errors.
 The five existing `list()` methods still return arrays for compatibility;
 the newly added `profiles.list()` returns the API pagination response.

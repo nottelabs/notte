@@ -64,6 +64,24 @@ it('binds the required function-run header without asking the caller for credent
   expect(requests[0].headers.get('authorization')).toBe('Bearer test-key');
 });
 
+it('forwards required payment headers through the generated transport', async () => {
+  const requests: Request[] = [];
+  vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
+    requests.push(request);
+    return Response.json({ id: 'payment', status: 'pending' });
+  }));
+  const body = { amount: '1.00', currency: 'USD', merchant_url: 'https://example.test', merchant_name: 'Example', description: 'Test', mode: 'test' as const };
+  const result = await client().sessions.createPayment('session', body, undefined, {
+    headers: { 'idempotency-key': 'retry-key' },
+  });
+  expect(result.id).toBe('payment');
+  expect(requests[0].method).toBe('POST');
+  expect(requests[0].url).toBe('https://api.example.test/sessions/session/payments');
+  expect(requests[0].headers.get('idempotency-key')).toBe('retry-key');
+  expect(requests[0].headers.get('authorization')).toBe('Bearer test-key');
+  expect(await requests[0].json()).toEqual(body);
+});
+
 it('retains generated multipart serialization for uploads', async () => {
   const requests: Request[] = [];
   vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
@@ -78,6 +96,14 @@ it('retains generated multipart serialization for uploads', async () => {
 
 // These calls are intentionally never executed; tsc guards the public signatures.
 if (false) {
+  const body = { amount: 1, currency: 'USD', merchant_url: 'https://example.test', merchant_name: 'Example', description: 'Test', mode: 'test' as const };
+  void client().sessions.createPayment('session', body, undefined, { headers: { 'idempotency-key': 'retry-key' } });
+  // @ts-expect-error Required payment headers cannot be omitted.
+  void client().sessions.createPayment('session', body);
+  // @ts-expect-error The idempotency key is required.
+  void client().sessions.createPayment('session', body, undefined, { headers: {} });
+  // @ts-expect-error Authentication remains bound to the client.
+  void client().sessions.createPayment('session', body, undefined, { headers: { 'idempotency-key': 'retry-key', 'x-notte-api-key': 'override' } });
   // @ts-expect-error Session ID is required.
   void client().sessions.stop();
   // @ts-expect-error IDs are strings, not numbers.

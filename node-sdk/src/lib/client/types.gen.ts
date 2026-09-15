@@ -415,6 +415,15 @@ export type ApiExecutionResponse = {
      */
     exception?: string | null;
     exception_detail?: SerializedError | null;
+    captcha?: CaptchaStatus | null;
+    /**
+     * Action Executed
+     */
+    action_executed?: boolean | null;
+    /**
+     * Code
+     */
+    code?: string | null;
 };
 
 /**
@@ -688,6 +697,36 @@ export type CaptchaSolveAction = {
      * Captcha Type
      */
     captcha_type?: 'recaptcha' | 'hcaptcha' | 'image' | 'text' | 'auth0' | 'cloudflare' | 'datadome' | 'arkose labs' | 'geetest' | 'press&hold' | 'unknown' | null;
+};
+
+/**
+ * CaptchaStatus
+ */
+export type CaptchaStatus = {
+    /**
+     * Captcha Id
+     */
+    captcha_id: string;
+    /**
+     * Page Id
+     */
+    page_id: string;
+    /**
+     * Generation
+     */
+    generation: number;
+    /**
+     * State
+     */
+    state: 'solving' | 'solved' | 'failed' | 'cancelled';
+    /**
+     * Retry After Ms
+     */
+    retry_after_ms?: number;
+    /**
+     * Message
+     */
+    message?: string;
 };
 
 /**
@@ -3835,6 +3874,129 @@ export type ParameterInfo = {
 };
 
 /**
+ * PaymentNextAction
+ */
+export type PaymentNextAction = {
+    /**
+     * Type
+     */
+    type: 'ssn_verification' | 'identity_verification' | 'contact_support' | 'select_payment_method' | 'add_payment_method' | 'update_payment_method' | 're_authorize' | 'three_d_secure' | 'three_d_secure_retry';
+    /**
+     * Resolution
+     */
+    resolution: 'auto_resume' | 'create_new_spend_request' | 'create_new_spend_request_after_completion';
+    /**
+     * Action Url
+     */
+    action_url?: string | null;
+    /**
+     * Expires At
+     */
+    expires_at?: string | null;
+};
+
+/**
+ * PaymentRequest
+ */
+export type PaymentRequest = {
+    /**
+     * Amount
+     *
+     * Amount in currency units, e.g. 100.91 means USD 100.91. Never rounded.
+     */
+    amount: number | string;
+    /**
+     * Currency
+     */
+    currency: string;
+    /**
+     * Merchant Url
+     */
+    merchant_url: string;
+    /**
+     * Merchant Name
+     */
+    merchant_name: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Mode
+     */
+    mode?: 'test' | 'live';
+};
+
+/**
+ * PaymentResponse
+ */
+export type PaymentResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Session Id
+     */
+    session_id: string;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Mode
+     */
+    mode: string;
+    /**
+     * Amount
+     *
+     * Amount in currency units, serialized as an exact decimal string.
+     */
+    amount: string;
+    /**
+     * Currency
+     */
+    currency: string;
+    /**
+     * Merchant Name
+     */
+    merchant_name: string;
+    /**
+     * Merchant Url
+     */
+    merchant_url: string;
+    /**
+     * Vault Id
+     */
+    vault_id?: string | null;
+    /**
+     * Approval Url
+     */
+    approval_url?: string | null;
+    /**
+     * Connection Url
+     */
+    connection_url?: string | null;
+    /**
+     * Connection Phrase
+     */
+    connection_phrase?: string | null;
+    /**
+     * Expires At
+     */
+    expires_at?: string | null;
+    /**
+     * Error Code
+     */
+    error_code?: string | null;
+    next_action?: PaymentNextAction | null;
+    /**
+     * Purchase Status
+     */
+    purchase_status?: 'unverified';
+};
+
+/**
  * PersonaCreateRequest
  */
 export type PersonaCreateRequest = {
@@ -5663,6 +5825,15 @@ export type ApiExecutionResponseWritable = {
      */
     exception?: string | null;
     exception_detail?: SerializedError | null;
+    captcha?: CaptchaStatus | null;
+    /**
+     * Action Executed
+     */
+    action_executed?: boolean | null;
+    /**
+     * Code
+     */
+    code?: string | null;
 };
 
 /**
@@ -7589,6 +7760,22 @@ export type PageExecuteData = {
     };
     query?: {
         /**
+         * Captcha Id
+         */
+        captcha_id?: string | null;
+        /**
+         * Captcha Timeout Seconds
+         */
+        captcha_timeout_seconds?: number;
+        /**
+         * Target Page Id
+         */
+        target_page_id?: string | null;
+        /**
+         * Target Generation
+         */
+        target_generation?: number | null;
+        /**
          * Update Metadata
          */
         update_metadata?: boolean;
@@ -9405,6 +9592,95 @@ export type ListVaultsResponses = {
 };
 
 export type ListVaultsResponse = ListVaultsResponses[keyof ListVaultsResponses];
+
+export type CreatePaymentData = {
+    body: PaymentRequest;
+    headers: {
+        /**
+         * Idempotency-Key
+         */
+        'idempotency-key': string;
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: {
+        /**
+         * Update Metadata
+         */
+        update_metadata?: boolean;
+    };
+    url: '/sessions/{session_id}/payments';
+};
+
+export type CreatePaymentErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreatePaymentError = CreatePaymentErrors[keyof CreatePaymentErrors];
+
+export type CreatePaymentResponses = {
+    /**
+     * Successful Response
+     */
+    202: PaymentResponse;
+};
+
+export type CreatePaymentResponse = CreatePaymentResponses[keyof CreatePaymentResponses];
+
+export type GetPaymentData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Payment Id
+         */
+        payment_id: string;
+    };
+    query?: never;
+    url: '/payments/{payment_id}';
+};
+
+export type GetPaymentErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetPaymentError = GetPaymentErrors[keyof GetPaymentErrors];
+
+export type GetPaymentResponses = {
+    /**
+     * Successful Response
+     */
+    200: PaymentResponse;
+};
+
+export type GetPaymentResponse = GetPaymentResponses[keyof GetPaymentResponses];
 
 export type ProfileCreateData = {
     body: ProfileCreateRequest;

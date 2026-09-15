@@ -89,6 +89,22 @@ export type PageExecuteData = {
     };
     query?: {
         /**
+         * Captcha Id
+         */
+        captcha_id?: string | null;
+        /**
+         * Captcha Timeout Seconds
+         */
+        captcha_timeout_seconds?: number;
+        /**
+         * Target Page Id
+         */
+        target_page_id?: string | null;
+        /**
+         * Target Generation
+         */
+        target_generation?: number | null;
+        /**
          * Update Metadata
          */
         update_metadata?: boolean;
@@ -111,7 +127,7 @@ Action
 
 </ParamField>
 
-<ParamField body="query" type={"{ update_metadata?: boolean | undefined; } | undefined"}>
+<ParamField body="query" type={"{ captcha_id?: string | null | undefined; captcha_timeout_seconds?: number | undefined; target_page_id?: string | null | undefined; target_generation?: number | null | undefined; update_metadata?: boolean | undefined; } | undefined"}>
 
 </ParamField>
 

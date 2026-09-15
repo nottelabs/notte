@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
+import ts from 'typescript';
 import { generateResources } from './generate-resources.mjs';
 
 const sdk = name => `export const ${name} = (options: Options<ExampleData, true>) => client.get(options);`;
@@ -24,10 +25,41 @@ test('required query and optional body retain valid argument ordering', () => {
   assert.match(generated, /body: Types.ExampleData\['body'\], query:/);
 });
 
-test('unknown required headers fail rather than generating an unauthenticated call', () => {
-  assert.throws(() => generateResources(sdk('sessionExample'), data(`
-    headers: { custom: string }; url: '/sessions/example';
-  `)), /Unbound required headers/);
+test('requires caller headers without moving existing path/body/query arguments', async () => {
+  const generated = generateResources(sdk('sessionExample'), data(`
+    path: { session_id: string }; body: Payload; query?: { update_metadata?: boolean };
+    headers: { 'idempotency-key': string; 'x-notte-api-key': string };
+    url: '/sessions/{session_id}/payments';
+  `));
+  assert.match(generated, /sessionId:.*body:.*query:.*requestOptions: ResourceRequestOptions & \{ headers: Omit<NonNullable<Types.ExampleData\['headers'\]>, 'x-notte-api-key'> \}\) =>/);
+  // Execute the generated adapter with a stub operation, not a payment request.
+  const js = ts.transpile(generated, { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 });
+  let request;
+  const exports = {};
+  new Function('require', 'exports', js)(() => ({ sessionExample: async options => {
+    request = options;
+    return { data: 'result' };
+  } }), exports);
+  const client = {};
+  const result = await exports.createResources(client, () => 'bound-key').sessions.example(
+    'session', { amount: 1 }, undefined,
+    { headers: { 'idempotency-key': 'same-key-on-retry', 'x-notte-api-key': 'override' } },
+  );
+  assert.equal(result, 'result');
+  assert.equal(request.client, client);
+  assert.deepEqual(request.headers, { 'idempotency-key': 'same-key-on-retry', 'x-notte-api-key': 'bound-key' });
+});
+
+test('optional headers remain optional and authentication-only methods keep their signature', () => {
+  const optional = generateResources(sdk('sessionExample'), data(`
+    headers?: { custom?: string }; url: '/sessions/example';
+  `));
+  assert.match(optional, /headers\?: Omit<.*\} = \{\}/);
+  const bound = generateResources(sdk('sessionExample'), data(`
+    headers: { 'x-notte-api-key': string }; url: '/sessions/example';
+  `));
+  assert.match(bound, /requestOptions: ResourceRequestOptions = \{\}/);
+  assert.match(bound, /headers: \{ 'x-notte-api-key': getApiKey\(\) \}/);
 });
 
 test('rejects method collisions', () => {

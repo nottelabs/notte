@@ -49,11 +49,19 @@ export function generateResources(sdkSource, typesSource) {
       const args = [];
       const request = ['client', 'throwOnError: true', 'signal: requestOptions.signal'];
       const headers = members.get('headers');
-      if (headers && !headers.questionToken && headers.type?.kind !== ts.SyntaxKind.NeverKeyword) {
-        if (!ts.isTypeLiteralNode(headers.type)) throw new Error(`Unsupported required headers: ${operation}`);
-        const required = headers.type.members.filter(member => !member.questionToken).map(member => member.name.getText(types).replace(/^['"]|['"]$/g, ''));
-        if (required.some(name => name !== 'x-notte-api-key')) throw new Error(`Unbound required headers: ${operation}`);
-        request.push(`headers: { 'x-notte-api-key': getApiKey() }`);
+      let requestOptions = 'ResourceRequestOptions';
+      let requiredHeaders = false;
+      if (headers?.type && headers.type.kind !== ts.SyntaxKind.NeverKeyword) {
+        if (!ts.isTypeLiteralNode(headers.type)) throw new Error(`Unsupported headers: ${operation}`);
+        const headerName = member => member.name.getText(types).replace(/^['"]|['"]$/g, '');
+        const bound = headers.type.members.some(member => headerName(member) === 'x-notte-api-key');
+        const supplied = headers.type.members.filter(member => headerName(member) !== 'x-notte-api-key');
+        requiredHeaders = !headers.questionToken && supplied.some(member => !member.questionToken);
+        if (supplied.length) {
+          requestOptions += ` & { headers${requiredHeaders ? '' : '?'}: Omit<NonNullable<Types.${data}['headers']>, 'x-notte-api-key'> }`;
+        }
+        const values = [supplied.length ? '...requestOptions.headers' : '', bound ? "'x-notte-api-key': getApiKey()" : ''].filter(Boolean);
+        if (values.length) request.push(`headers: { ${values.join(', ')} }`);
       }
       const pathMember = members.get('path');
       if (pathMember?.type && pathMember.type.kind !== ts.SyntaxKind.NeverKeyword) {
@@ -77,7 +85,7 @@ export function generateResources(sdkSource, typesSource) {
         args.push(`${field}: Types.${data}['${field}']${optional && !laterRequired ? ' = undefined' : ''}`);
         request.push(field);
       }
-      args.push('requestOptions: ResourceRequestOptions = {}');
+      args.push(`requestOptions: ${requestOptions}${requiredHeaders ? '' : ' = {}'}`);
       const comment = `    /** ${operation}: ${url.literal.text.replaceAll('*/', '* /')}. Returns the API response body. */`;
       output.get(group).set(method, `${comment}\n    ${method}: async (${args.join(', ')}) => {\n      const response = await operations.${operation}({ ${request.join(', ')} });\n      return response.data;\n    },`);
     }

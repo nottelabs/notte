@@ -93,6 +93,15 @@ export type ApiExecutionResponse = {
      */
     exception?: string | null;
     exception_detail?: SerializedError | null;
+    captcha?: CaptchaStatus | null;
+    /**
+     * Action Executed
+     */
+    action_executed?: boolean | null;
+    /**
+     * Code
+     */
+    code?: string | null;
 };
 ```
 
@@ -130,9 +139,22 @@ export type ApiExecutionResponse = {
 
 </ParamField>
 
+<ParamField body="captcha" type={"CaptchaStatus | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="action_executed" type={"boolean | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="code" type={"string | null | undefined"}>
+
+</ParamField>
+
 ## Related types
 
 - [CaptchaSolveAction](/typescript-sdk-reference/types/captchasolveaction)
+- [CaptchaStatus](/typescript-sdk-reference/types/captchastatus)
 - [CheckActionOutput](/typescript-sdk-reference/types/checkactionoutput)
 - [ClickActionOutput](/typescript-sdk-reference/types/clickactionoutput)
 - [CloseTabAction](/typescript-sdk-reference/types/closetabaction)
