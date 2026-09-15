@@ -6,7 +6,7 @@ export type { CaptchaStatus } from '@/lib/client/types.gen';
 
 /** Execution envelope with the backend's additive CAPTCHA coordination fields. */
 export type CaptchaExecutionResponse = ApiExecutionResponse & {
-  captcha?: CaptchaStatus | null;
+  captcha?: (CaptchaStatus & { cancel_reason?: string | null }) | null;
   action_executed?: boolean | null;
   code?: string | null;
 };
@@ -63,6 +63,10 @@ export async function executeWithCaptcha(
     }
     deadline ??= performance.now() + budgetSeconds * 1000;
     if (!original && !explicit && result.action_executed === true) original = result;
+    if (status.state === 'cancelled' && status.cancel_reason === 'navigation' && original) {
+      // Preserve the executed action, without claiming the old CAPTCHA solved or replaying input.
+      return { ...original, captcha: status };
+    }
     if (status.state === 'failed' || status.state === 'cancelled') {
       return failure(status.message || `CAPTCHA ${status.state}`, `captcha_${status.state}`);
     }

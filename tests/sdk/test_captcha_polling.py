@@ -143,3 +143,32 @@ def test_initial_solve_transport_failure_is_not_retried(client, error):
     with pytest.raises(error):
         page.execute("session", CaptchaSolveAction())
     assert page.request.call_count == 1
+
+
+@pytest.mark.parametrize("success", [False, True])
+def test_navigation_preserves_executed_result_without_replay(client, success):
+    page, _ = client
+    action = ClickAction(selector="#submit")
+    original = response(action, "solving", executed=True, success=success)
+    cancelled = response(CaptchaSolveAction(), "cancelled")
+    cancelled.captcha.cancel_reason = "navigation"
+    page.request = MagicMock(side_effect=[original, cancelled])
+    result = page.execute("session", action)
+    assert result.success is success
+    assert result.message == original.message
+    assert result.action == action
+    assert result.action_executed is True
+    assert result.captcha.state == "cancelled"
+    assert page.request.call_count == 2
+
+
+@pytest.mark.parametrize("explicit", [False, True])
+def test_navigation_does_not_resume_blocked_action_or_succeed_explicit_solve(client, explicit):
+    page, _ = client
+    action = CaptchaSolveAction() if explicit else ClickAction(selector="#submit")
+    cancelled = response(CaptchaSolveAction(), "cancelled")
+    cancelled.captcha.cancel_reason = "navigation"
+    page.request = MagicMock(side_effect=[response(action, "solving"), cancelled])
+    result = page.execute("session", action)
+    assert not result.success and result.code == "captcha_cancelled"
+    assert page.request.call_count == 2
