@@ -1138,3 +1138,54 @@ For issues and questions:
 - GitHub Issues: [Report issues](https://github.com/nottelabs/notte/issues)
 - Documentation: [docs.notte.cc](https://docs.notte.cc)
 - Python SDK: [notte-sdk](https://pypi.org/project/notte-sdk/)
+
+## Managed authentication
+
+Use existing connection IDs with a session. `start()` waits for authentication by
+default, and `.use()` always invokes its callback only after the session is ready:
+
+```typescript
+const session = client.Session({ auth_ids: ["<connection-id>"], auth_retry: 2 });
+await session.use(async (ready) => {
+  await ready.execute({ type: "goto", url: "https://example.com" });
+});
+```
+
+For a nonblocking start, wait explicitly before browser actions or CDP access:
+
+```typescript
+const abortController = new AbortController();
+const session = client.Session({ auth_ids: ["<connection-id>"] });
+await session.start({ wait_for_authentication: false });
+try {
+  await session.waitForAuth({ timeoutMs: 615_000, signal: abortController.signal });
+  await session.execute({ type: "goto", url: "https://example.com" });
+} finally {
+  await session.stop();
+}
+```
+
+Waiting polls session readiness through short requests. It never restarts the
+session or submits another login. `auth_retry` controls server-side login retries
+(0 to 2) and is omitted from requests without `auth_ids`. A failed or cancelled
+startup wait closes the created session. A standalone `waitForAuth()` leaves
+cleanup to the caller.
+
+Connection operations are available through `client.managedAuth`:
+
+```typescript
+const check = await client.managedAuth.checkConnection("<connection-id>");
+// checkConnection only verifies; refreshConnection can log in if needed.
+const operation = await client.managedAuth.refreshConnection("<connection-id>", {
+  wait: false,
+  auth_retry: 2,
+});
+const completed = await client.managedAuth.waitForAuth(operation);
+// To explicitly request a new login:
+await client.managedAuth.reauthenticateConnection("<connection-id>");
+```
+
+Refresh and reauthentication wait by default. Use `getOperation(operation.id)`
+for individual status reads. Cancelling an operation wait does not cancel the
+server operation. An HTTP 409 remains an ownership conflict and is not retried.
+These helpers require a backend with the managed-auth lifecycle endpoints.

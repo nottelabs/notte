@@ -1,3 +1,4 @@
+import { NotteManagedAuth, type AuthSessionResponse as SessionResponse } from '@/managed-auth';
 import { createClient } from '@/lib/client/client';
 import { createResources } from '@/resources.gen';
 import { getParseAs } from '@/lib/client/client/utils.gen';
@@ -11,7 +12,6 @@ import type {
   ListSessionsData,
   ListVaultsData,
   PersonaResponse,
-  SessionResponse,
   Vault,
 } from '@/lib/client/types.gen';
 import { Agent, type AgentConstructor } from '@/agent';
@@ -86,7 +86,10 @@ export type AgentListOptions = NonNullable<ListAgentsData['query']>;
 export type VaultListOptions = NonNullable<ListVaultsData['query']>;
 export type FunctionListOptions = NonNullable<ListFunctionsData['query']>;
 /** Options of `client.scrape()`: the global scrape request minus `url`, plus the SDK-only scrape options. */
-export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' | 'response_format'> & ScrapeOptions<T>;
+export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' | 'response_format' | 'wait_for_authentication'> & ScrapeOptions<T> & {
+  /** Whether to wait for Managed Auth before the scrape request completes. Defaults to true. Authentication failure or timeout can fail the scrape request. */
+  wait_for_authentication?: boolean;
+};
 
 type ResolvedConfig = Required<Pick<NotteClientConfig, 'baseUrl' | 'timeoutMs' | 'verbose' | 'captchaTimeoutSeconds'>> &
   Pick<NotteClientConfig, 'apiKey' | 'dbPreview'>;
@@ -475,6 +478,11 @@ export class NotteClient {
   /** Workspace secrets (`/secrets`). */
   get secrets(): NotteSecrets {
     return new NotteSecrets(this);
+  }
+
+  /** Managed authentication: verify connections, request login, and wait for readiness. */
+  get managedAuth(): NotteManagedAuth {
+    return new NotteManagedAuth(this);
   }
 
   /** Usage and billing (`/usage`, `/usage/logs`). */

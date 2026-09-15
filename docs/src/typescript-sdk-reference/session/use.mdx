@@ -12,14 +12,26 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 Context manager pattern: start the session, run the callback and stop the
 session, with close reason `error` when the callback throws.
 
+Always waits for Managed Auth readiness before invoking the callback.
+
 ```typescript
-Session.use<T>(callback: (session: Session) => Promise<T>): Promise<T>;
+Session.use<T>(callback: (session: Session) => Promise<T>, options?: AuthWaitOptions): Promise<T>;
 ```
 
 ## Parameters
 
 <ParamField body="callback" type={"(session: Session) => Promise<T>"} required>
-Async work to perform with the started session.
+Async work to perform with the ready session.
+</ParamField>
+
+<ParamField body="options" type={"AuthWaitOptions"}>
+Controls the Managed Auth readiness wait, including timeout and cancellation.
+
+Default:
+
+```typescript
+{}
+```
 </ParamField>
 
 ## Returns
@@ -41,3 +53,7 @@ await client.Session().use(async session => {
   await session.execute({ type: 'goto', url: 'https://www.notte.cc' });
 });
 ```
+
+## Related types
+
+- [AuthWaitOptions](/typescript-sdk-reference/types/authwaitoptions)

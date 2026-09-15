@@ -59,6 +59,14 @@ timeout and are retried up to 3 times on HTTP 408.
 
 Use the defaults or pass these options to `client.Session(options)`:
 
+<ParamField body="wait_for_authentication" type={"boolean | undefined"}>
+Wait in the SDK for managed authentication on start(). Defaults to true; use() always waits.
+</ParamField>
+
+<ParamField body="auth_retry" type={"number | undefined"}>
+Additional server-side login attempts, from 0 to 2. Only sent with auth_ids.
+</ParamField>
+
 <ParamField body="headless" type={"boolean | undefined"}>
 
 
@@ -158,14 +166,6 @@ The vault to use for the session
 
 <ParamField body="auth_ids" type={"string[] | undefined"}>
 Managed Auth connection IDs to verify and, when necessary, authenticate inside this session. Initial verification runs before returning; when login is needed, the session returns as authenticating. Poll /sessions/&#123;id&#125;/auth for readiness.
-</ParamField>
-
-<ParamField body="wait_for_authentication" type={"boolean | undefined"}>
-SDK waiting preference. The API always verifies inline and returns authenticating when background login is needed; SDKs implement waiting through readiness polling.
-</ParamField>
-
-<ParamField body="auth_retry" type={"number | undefined"}>
-
 </ParamField>
 
 <ParamField body="advanced_stealth" type={"boolean | undefined"}>
