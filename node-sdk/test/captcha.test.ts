@@ -127,6 +127,17 @@ describe('navigation during post-action CAPTCHA waiting', () => {
     });
     expect(request).toHaveBeenCalledTimes(2);
   });
+  it.each([undefined, null, 'unknown'])('fails an executed cancellation with reason %s', async reason => {
+    const original = { ...response('solving', true), success: true };
+    const cancelled = response('cancelled');
+    cancelled.captcha!.cancel_reason = reason;
+    const request = vi.fn().mockResolvedValueOnce(original).mockResolvedValueOnce(cancelled);
+    expect(await executeWithCaptcha(action, 180, request)).toMatchObject({
+      success: false, action_executed: true, code: 'captcha_cancelled',
+    });
+    expect(request.mock.calls.map(call => call[0].type)).toEqual(['click', 'captcha_solve']);
+    expect(request).toHaveBeenCalledTimes(2);
+  });
   it.each([action, { type: 'captcha_solve' } as ExecuteAction])('still fails an unexecuted $type', async input => {
     const cancelled = response('cancelled');
     cancelled.captcha!.cancel_reason = 'navigation';

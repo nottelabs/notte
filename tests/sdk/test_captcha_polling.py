@@ -76,17 +76,20 @@ def test_action_that_triggered_captcha_is_not_replayed(client):
 
 
 @pytest.mark.parametrize("state", ["failed", "cancelled"])
-def test_terminal_failure_keeps_execution_state(client, state):
+@pytest.mark.parametrize("reason", [None, "unknown"])
+def test_terminal_failure_keeps_execution_state(client, state, reason):
     page, _ = client
     action = ClickAction(selector="#submit")
-    page.request = MagicMock(
-        side_effect=[response(action, "solving", executed=True, success=True), response(CaptchaSolveAction(), state)]
-    )
+    terminal = response(CaptchaSolveAction(), state)
+    terminal.captcha.cancel_reason = reason
+    page.request = MagicMock(side_effect=[response(action, "solving", executed=True, success=True), terminal])
     result = page.execute("session", action)
     assert not result.success
     assert result.action_executed is True
     assert result.exception is not None
     assert result.code == f"captcha_{state}"
+    assert page.request.call_count == 2
+    assert [call.args[0].request.type for call in page.request.call_args_list] == ["click", "captcha_solve"]
 
 
 def test_total_deadline_is_not_reset_by_polls(client):
