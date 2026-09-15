@@ -77,7 +77,6 @@ def main() -> None:
             if process.wait() != 0:
                 raise RuntimeError(f"{case} failed")
             outcome = json.loads(process.stdout.readline())
-            peak = max(peak, outcome["high_water_rss"])
             print(
                 json.dumps(
                     {

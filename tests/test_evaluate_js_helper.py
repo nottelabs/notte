@@ -1,5 +1,8 @@
 """`evaluate_js()` returns the evaluated string; the envelope stays on the `False` overload."""
 
+import gc
+import weakref
+
 import notte_browser.session as session_module
 import pytest
 from notte_browser.session import NotteSession
@@ -54,3 +57,39 @@ async def test_large_result_fails_action_and_session_remains_usable(monkeypatch)
         assert await session.aevaluate_js("1 + 1") == "2"
         with pytest.raises(EvaluateJsResultLimitError):
             await session.aevaluate_js(code)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("raise_on_failure", [False, True])
+async def test_saved_limit_errors_do_not_retain_rejected_results(monkeypatch, raise_on_failure) -> None:
+    class TrackedList(list):
+        pass
+
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 1024}))
+    references = []
+    failures = []
+    async with NotteSession(headless=True) as session:
+        original_evaluate = session.window.page.evaluate
+
+        async def evaluate(expression, *args, **kwargs):
+            if expression == "rejected_result":
+                value = TrackedList(["x" * 4096])
+                references.append(weakref.ref(value))
+                return value
+            return await original_evaluate(expression, *args, **kwargs)
+
+        monkeypatch.setattr(session.window.page, "evaluate", evaluate)
+        for _ in range(3):
+            if raise_on_failure:
+                try:
+                    await session.aevaluate_js("rejected_result")
+                except EvaluateJsResultLimitError as error:
+                    failures.append(error)
+                else:
+                    pytest.fail("expected a result-limit error")
+            else:
+                failures.append(await session.aevaluate_js("rejected_result", raise_on_failure=False))
+        gc.collect()
+        assert len(failures) == 3  # Keep errors and the active session trajectory alive.
+        assert len(references) == 3
+        assert all(reference() is None for reference in references)
