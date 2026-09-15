@@ -114,3 +114,50 @@ describe('CAPTCHA polling', () => {
     } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
   });
 });
+
+describe('navigation during post-action CAPTCHA waiting', () => {
+  it.each([true, false])('preserves the executed result (success=%s) without replay', async success => {
+    const original = { ...response('solving', true), success, data: { value: 42 } };
+    const cancelled = response('cancelled');
+    cancelled.captcha!.cancel_reason = 'navigation';
+    const request = vi.fn().mockResolvedValueOnce(original).mockResolvedValueOnce(cancelled);
+    expect(await executeWithCaptcha(action, 180, request)).toMatchObject({
+      success, data: { value: 42 }, action_executed: true,
+      captcha: { state: 'cancelled', cancel_reason: 'navigation' },
+    });
+    expect(request).toHaveBeenCalledTimes(2);
+  });
+  it.each([action, { type: 'captcha_solve' } as ExecuteAction])('still fails an unexecuted $type', async input => {
+    const cancelled = response('cancelled');
+    cancelled.captcha!.cancel_reason = 'navigation';
+    const request = vi.fn().mockResolvedValueOnce(response('solving')).mockResolvedValueOnce(cancelled);
+    expect(await executeWithCaptcha(input, 180, request)).toMatchObject({ success: false, code: 'captcha_cancelled' });
+    expect(request).toHaveBeenCalledTimes(2);
+  });
+});
+
+it('returns an executed goto through Session.execute after a navigation cancellation', async () => {
+  const received: ExecuteAction[] = [];
+  const goto: ExecuteAction = { type: 'goto', url: 'https://fixture.test/' };
+  const server = createServer(async (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    if (!req.url?.includes('/page/execute')) { res.end(JSON.stringify(sessionResponse())); return; }
+    let raw = ''; for await (const chunk of req) raw += chunk;
+    received.push(JSON.parse(raw));
+    const result = received.length === 1
+      ? { ...response('solving', true), action: goto, success: true }
+      : response('cancelled');
+    if (received.length > 1) result.captcha!.cancel_reason = 'navigation';
+    res.end(JSON.stringify(result));
+  });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address() as { port: number };
+    const client = new NotteClient({ apiKey: 'test', baseUrl: `http://127.0.0.1:${address.port}` }); // pragma: allowlist secret - local fixture
+    const session = client.Session(); await session.start();
+    const result = await session.execute(goto);
+    expect(result.success).toBe(true);
+    expect(result.action).toMatchObject(goto);
+    expect(received.map(input => input.type)).toEqual(['goto', 'captcha_solve']);
+  } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
+});

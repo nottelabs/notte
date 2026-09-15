@@ -372,6 +372,10 @@ class PageClient(BaseClient):
                 deadline = time.monotonic() + budget
             if original is None and not isinstance(action, CaptchaSolveAction) and result.action_executed is True:
                 original = result
+            if status.state == "cancelled" and status.cancel_reason == "navigation" and original is not None:
+                # Navigation ends the old page's wait, not the action that already
+                # executed. Retain cancellation metadata and never replay input.
+                return finished(original.model_copy(update={"captcha": status}))
             if status.state in ("failed", "cancelled"):
                 return failure(status.message or f"CAPTCHA {status.state}", f"captcha_{status.state}")
             if status.state == "solved":

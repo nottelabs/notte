@@ -13,7 +13,7 @@ Execution envelope with the backend's additive CAPTCHA coordination fields.
 
 ```typescript
 export type CaptchaExecutionResponse = ApiExecutionResponse & {
-  captcha?: CaptchaStatus | null;
+  captcha?: (CaptchaStatus & { cancel_reason?: string | null }) | null;
   action_executed?: boolean | null;
   code?: string | null;
 };
@@ -53,7 +53,7 @@ export type CaptchaExecutionResponse = ApiExecutionResponse & {
 
 </ParamField>
 
-<ParamField body="captcha" type={"CaptchaStatus | null | undefined"}>
+<ParamField body="captcha" type={"(CaptchaStatus & { cancel_reason?: string | null | undefined; }) | null | undefined"}>
 
 </ParamField>
 

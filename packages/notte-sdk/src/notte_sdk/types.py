@@ -2037,6 +2037,7 @@ class CaptchaStatus(BaseModel):
     state: Literal["solving", "solved", "failed", "cancelled"]
     retry_after_ms: int = 1000
     message: str = ""
+    cancel_reason: str | None = None
 
 
 class ExecutionResultResponse(ExecutionResult):
