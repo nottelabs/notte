@@ -21,6 +21,8 @@ max_consecutive_failures = 3
 headless = false
 browser_type = "chromium"
 browser_backend = "patchright"
+# Maximum UTF-8 text returned by evaluate_js (16 MiB). Checked during conversion.
+evaluate_js_max_result_bytes = 16777216
 screenshot_type = "last_action"  # one of ["raw", "full", "last_action"]
 web_security = true
 solve_captchas = false

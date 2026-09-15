@@ -57,6 +57,28 @@ describe('evaluateJs', () => {
     expect(result.message).toBe('JavaScript evaluation failed: boom');
   });
 
+  it('preserves server result-limit errors in both failure modes', async () => {
+    const message = 'JavaScript result exceeds conversion limits (output size; output limit 16777216 bytes). Return fewer fields.';
+    const detail = serializedError({
+      error_type: 'EvaluateJsResultLimitError',
+      dev_message: message,
+      user_message: message,
+      agent_message: message,
+      should_retry_later: false,
+      should_notify_team: false,
+    });
+    const session = await remoteSession(overTheWire(evalResult({ success: false, detail })));
+    await expect(session.evaluateJs(CODE)).rejects.toMatchObject({
+      errorType: 'EvaluateJsResultLimitError',
+      message,
+      shouldRetryLater: false,
+      shouldNotifyTeam: false,
+    });
+    const result = await session.evaluateJs(CODE, { raiseOnFailure: false });
+    expect(result.success).toBe(false);
+    expect(result.exception_detail).toEqual(detail);
+  });
+
   it('raises instead of returning undefined when success comes without data', async () => {
     // an API build that predates the eval-js fix can report success with no data
     const session = await remoteSession(overTheWire(evalResult({ success: true })));

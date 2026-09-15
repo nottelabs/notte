@@ -21,3 +21,19 @@ import notte
 ```
 
 Otherwise, the default config will be used and your changes will not be applied.
+
+## JavaScript result size
+
+`evaluate_js_max_result_bytes` defaults to 16777216 (16 MiB). It limits the UTF-8
+text returned by `evaluate_js`, including escaped JSON and indentation. Conversion
+stops at the limit and returns a failed action advising you to return fewer fields
+or retrieve the result in smaller batches. Values within the limit keep their
+existing text format. JSON nesting is limited to 128 levels.
+
+```toml
+evaluate_js_max_result_bytes = 16777216
+```
+
+This is an output budget, not a hard process-memory limit. It bounds conversion
+buffering, but excludes the browser result already decoded into Python and memory
+used by other concurrent requests. Raising it increases the possible memory peak.

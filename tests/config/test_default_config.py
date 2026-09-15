@@ -22,6 +22,7 @@ def test_default_config():
     assert config.wait_short_ms == 500
     assert config.empty_page_max_retry == 5
     assert config.viewport_expansion == 0
+    assert config.evaluate_js_max_result_bytes == 16 * 1024 * 1024
 
 
 def test_default_is_headless():
@@ -38,3 +39,9 @@ def test_default_is_headless():
 def test_agent_timeout_config_values_must_be_positive(field: str, value: float):
     with pytest.raises(ValidationError, match=field):
         _ = NotteConfig.from_toml(**{field: value})
+
+
+@pytest.mark.parametrize("limit", [0, -1])
+def test_evaluate_js_limit_must_be_positive(limit: int):
+    with pytest.raises(ValidationError, match="evaluate_js_max_result_bytes"):
+        _ = NotteConfig.from_toml(evaluate_js_max_result_bytes=limit)

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
-import json
 import re
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -66,7 +65,12 @@ from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.data.fetch import FetchData, build_fetch_script, response_from_evaluated
 from notte_core.data.space import DataSpace, ImageData, StructuredData, TBaseModel
-from notte_core.errors.actions import ActionExecutionError, EvaluateJsNoDataError, InvalidActionError
+from notte_core.errors.actions import (
+    ActionExecutionError,
+    EvaluateJsNoDataError,
+    EvaluateJsResultLimitError,
+    InvalidActionError,
+)
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
 from notte_core.profiling import profiler
@@ -103,6 +107,7 @@ from notte_browser.errors import (
     PlaywrightError,
     ScrapeFailedError,
 )
+from notte_browser.evaluation_result import format_evaluation_result
 from notte_browser.playwright import PlaywrightManager
 from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import NodeResolutionPipe
@@ -781,13 +786,14 @@ class NotteSession(AsyncResource, SyncResource):
                             success = False
                             message = f"JavaScript evaluation failed: {js_err}"
                         else:
-                            # Convert result to string representation for markdown
-                            if result is None:
-                                result_str = "null"
-                            elif isinstance(result, (dict, list)):
-                                result_str = json.dumps(result, indent=2, default=str)
-                            else:
-                                result_str = str(result)
+                            try:
+                                result_str = format_evaluation_result(
+                                    result, max_bytes=config.evaluate_js_max_result_bytes
+                                )
+                            finally:
+                                # The action's frame can itself be retained when a
+                                # failure is raised later or saved in the trajectory.
+                                result = None
                             scraped_data = DataSpace(markdown=result_str)
                             success = True
                     case ToolAction():
@@ -837,6 +843,10 @@ class NotteSession(AsyncResource, SyncResource):
                 )
                 exception = e
             except NotteBaseError as e:
+                if isinstance(e, EvaluateJsResultLimitError):
+                    # Saved failures must not own the formatter's recursive frames
+                    # and their references to the rejected browser result.
+                    e.__traceback__ = None
                 # When raise_on_failure is True, we use the dev message to give more details to the user
                 success = False
                 message = e.dev_message
