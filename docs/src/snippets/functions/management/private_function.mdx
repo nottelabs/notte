@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/management/private_function.py */}
 
+<CodeGroup>
+
 ```python private_function.py
 from notte_sdk import NotteClient
 
@@ -12,3 +14,17 @@ function = client.Function(
     shared=False,  # Private (default)
 )
 ```
+
+```typescript private_function.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const fn = client.NotteFunction({
+  path: 'my_function.py',
+  name: 'Private Automation',
+  shared: false, // Private (default)
+});
+```
+
+</CodeGroup>
