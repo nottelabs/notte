@@ -3,7 +3,6 @@ title: 'Sign in to Okta with MFA'
 description: 'Let an agent clear an Okta MFA challenge using a TOTP secret stored in a Vault'
 noindex: true
 ---
-import OktaMfaAgent from '/snippets/guides/okta_mfa.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -18,11 +17,17 @@ one-time code at the moment the challenge appears.
   authenticator instead, as described below.
 </Note>
 
-## Before you start
+## Prerequisites
+
+- Admin access to your Okta org
+- The [Notte CLI](/integrations/claude-code-ai-agents) installed and authenticated with `notte auth login`
+- A coding assistant such as Claude Code, with the Notte skill installed via `notte skill add`
 
 Use a dedicated service account rather than a person's identity. A TOTP secret is equivalent to the
 factor itself, so anyone holding it can pass the challenge. Grant the account only the app access the
 automation needs.
+
+## Set up the Okta side
 
 <Steps>
   <Step title="Create a service account">
@@ -42,7 +47,8 @@ automation needs.
     <Warning>
       Check **Security** then **Authentication Policies** too. If the rule protecting your app
       requires a phishing-resistant or device-bound factor, Okta rejects TOTP and keeps asking for
-      Okta Verify. The rule has to accept any possession factor.
+      Okta Verify. The rule has to accept any possession factor. This is the step most likely to
+      block you.
     </Warning>
   </Step>
 
@@ -53,9 +59,20 @@ automation needs.
     ![Okta Google Authenticator enrollment screen with the Can't scan link marked](/images/okta-mfa/reveal-secret.png)
 
     Copy that value. It is the `mfa-secret` in the next step.
-  </Step>
 
+    <Tip>
+      Okta Verify shows a QR too, but it encodes an `oktaverify://` activation URL with no secret in
+      it. Only a TOTP authenticator gives you a reusable seed.
+    </Tip>
+  </Step>
+</Steps>
+
+## Set up the Notte side
+
+<Steps>
   <Step title="Store the credentials in a Vault">
+    Create a vault and add the Okta credentials. Keep the `vault_id` it returns.
+
     ```bash
     notte vaults create
 
@@ -68,15 +85,50 @@ automation needs.
     ```
 
     Credentials are encrypted at rest and never reach the model. Notte substitutes the real values
-    into the page only at fill time.
+    into the page only at fill time, and generates the one-time code from the stored secret.
   </Step>
 
-  <Step title="Run the session">
-    Attach the vault to a session and let an agent drive the sign-in.
+  <Step title="Start a session">
+    Create a profile so the signed-in state can be saved, then start a session with both attached.
 
-    <OktaMfaAgent />
+    ```bash
+    notte profiles create
 
-    Create the profile first with `notte profiles create` if you do not have one.
+    notte sessions start -y \
+      --vault-id <vault-id> \
+      --profile-id <profile-id> \
+      --profile-persist
+    ```
+
+    <Warning>
+      Pass `-y`. Without it the CLI can stop on a confirmation prompt when another session is already
+      running, and in a non-interactive shell the session still starts but your flags are dropped,
+      leaving you with no vault and no profile.
+    </Warning>
+  </Step>
+
+  <Step title="Let your coding assistant drive the sign-in">
+    With the Notte CLI and skill installed, ask Claude Code to walk the flow in plain language:
+
+    ```text
+    Using the notte CLI on session <session-id>, sign in to https://<your-org>.okta.com.
+    The credentials are in the attached vault. If Okta offers a choice of security method,
+    choose Google Authenticator, not Okta Verify. Observe the page after each step and stop
+    when the Okta dashboard has loaded.
+    ```
+
+    It drives the browser with `notte page goto`, `notte page observe`, `notte page click` and
+    `notte page fill`, checking the page between actions. See
+    [Claude Code & AI Agents](/integrations/claude-code-ai-agents) for the full loop.
+  </Step>
+
+  <Step title="Confirm it worked">
+    ```bash
+    notte page observe --session-id <session-id>
+    ```
+
+    A successful sign-in lands on `/app/UserHome`. You can also download the recording with
+    `notte sessions replay --session-id <session-id>`.
   </Step>
 </Steps>
 
@@ -90,12 +142,12 @@ person in the loop.
   <video autoPlay muted loop playsInline className="w-full rounded-xl" src="/images/okta-mfa/agent-login-8x.mp4" />
 </Frame>
 
-Because the agent reads each page before acting, it follows whatever order your org uses. The run
-above asks for the factor before the password, which is an Okta policy choice rather than a fixed
-sequence.
+Because the assistant reads the page before each action, it follows whatever order your org uses. The
+run above asks for the factor before the password, which is an Okta policy choice rather than a fixed
+sequence, and a hardcoded script would break on it.
 
 ## Reuse the signed-in state
 
-With `persist` set on the profile, the browser state is written back when the session closes, so the
-Okta domain carries its cookies into the next session that attaches the same profile. See
+With `--profile-persist`, the browser state is written back when the session closes, so the Okta
+domain carries its cookies into the next session that attaches the same profile. See
 [Browser Profiles](/features/sessions/browser-profiles) for how to reuse and refresh that state.

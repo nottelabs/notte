@@ -246,7 +246,6 @@
     "guides/close_popup.py",
     "guides/combine_selectors.py",
     "guides/handle_optional_popup.py",
-    "guides/okta_mfa.py",
     "guides/partial_text.py",
     "guides/playwright_access.py",
     "guides/schema_design.py",
