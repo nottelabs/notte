@@ -1,0 +1,101 @@
+---
+title: 'Sign in to Okta with MFA'
+description: 'Let an agent clear an Okta MFA challenge using a TOTP secret stored in a Vault'
+noindex: true
+---
+import OktaMfaAgent from '/snippets/guides/okta_mfa.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+An agent can complete an Okta sign-in end to end, including the MFA step, when the second factor is a
+TOTP authenticator. You store the TOTP secret in a [Vault](/concepts/vaults) and Notte generates the
+one-time code at the moment the challenge appears.
+
+<Note>
+  Okta Verify push cannot be automated. Approval happens on an enrolled physical device, and the
+  enrollment QR carries a one-time activation token rather than a shared secret. Use a TOTP
+  authenticator instead, as described below.
+</Note>
+
+## Before you start
+
+Use a dedicated service account rather than a person's identity. A TOTP secret is equivalent to the
+factor itself, so anyone holding it can pass the challenge. Grant the account only the app access the
+automation needs.
+
+<Steps>
+  <Step title="Create a service account">
+    In the Okta Admin Console, go to **Directory** then **People** and add a user for the automation,
+    for example `agent-svc@yourcompany.com`.
+  </Step>
+
+  <Step title="Enable Google Authenticator">
+    Go to **Security** then **Authenticators**, click **Add authenticator**, and add Google
+    Authenticator. It registers as a possession factor.
+
+    ![Okta Authenticators page with the Add authenticator button marked and Google Authenticator listed as active](/images/okta-mfa/authenticators.png)
+
+    On the **Enrollment** tab, set Google Authenticator to Optional or Required for the group your
+    service account belongs to.
+
+    <Warning>
+      Check **Security** then **Authentication Policies** too. If the rule protecting your app
+      requires a phishing-resistant or device-bound factor, Okta rejects TOTP and keeps asking for
+      Okta Verify. The rule has to accept any possession factor.
+    </Warning>
+  </Step>
+
+  <Step title="Enroll and reveal the secret">
+    Sign in as the service account, open its end-user settings, and set up Google Authenticator. On
+    the QR screen, click **Can't scan?** to reveal the base32 secret.
+
+    ![Okta Google Authenticator enrollment screen with the Can't scan link marked](/images/okta-mfa/reveal-secret.png)
+
+    Copy that value. It is the `mfa-secret` in the next step.
+  </Step>
+
+  <Step title="Store the credentials in a Vault">
+    ```bash
+    notte vaults create
+
+    notte vaults credentials add \
+      --vault-id <vault-id> \
+      --url "https://<your-org>.okta.com" \
+      --email "agent-svc@yourcompany.com" \
+      --password "<password>" \
+      --mfa-secret "<base32-secret>"
+    ```
+
+    Credentials are encrypted at rest and never reach the model. Notte substitutes the real values
+    into the page only at fill time.
+  </Step>
+
+  <Step title="Run the session">
+    Attach the vault to a session and let an agent drive the sign-in.
+
+    <OktaMfaAgent />
+
+    Create the profile first with `notte profiles create` if you do not have one.
+  </Step>
+</Steps>
+
+## Result
+
+The agent fills the username, picks Google Authenticator from the security method list, enters a code
+generated from the stored secret, submits the password, and lands on the dashboard. No device and no
+person in the loop.
+
+<Frame caption="Session replay at 8x speed. Account identifiers are masked.">
+  <video autoPlay muted loop playsInline className="w-full rounded-xl" src="/images/okta-mfa/agent-login-8x.mp4" />
+</Frame>
+
+Because the agent reads each page before acting, it follows whatever order your org uses. The run
+above asks for the factor before the password, which is an Okta policy choice rather than a fixed
+sequence.
+
+## Reuse the signed-in state
+
+With `persist` set on the profile, the browser state is written back when the session closes, so the
+Okta domain carries its cookies into the next session that attaches the same profile. See
+[Browser Profiles](/features/sessions/browser-profiles) for how to reuse and refresh that state.
