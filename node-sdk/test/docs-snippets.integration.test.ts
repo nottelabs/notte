@@ -10,6 +10,7 @@ import { withPythonPageRetry } from './helpers/python-page-retry';
 import { expectSessionClosed } from './helpers/session-closure';
 import { collectExampleResult, verifyExampleOutput, type ExampleContract } from './helpers/docs-examples';
 import { withUsableBuiltinPage } from './helpers/builtin-page-check';
+import { deploymentExamples, trackDeployments, cleanupDeployments, DEPLOYMENT_CHILD_TIMEOUT_MS, DEPLOYMENT_PAIR_TIMEOUT_MS, DEPLOYMENT_DRAIN_TIMEOUT_MS, DEPLOYMENT_CLEANUP_TIMEOUT_MS } from './helpers/deployment-tracker';
 
 const execute = promisify(execFile);
 const testers = fileURLToPath(new URL('../../docs/src/testers/', import.meta.url));
@@ -70,6 +71,43 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
     // Examples execute at import time. A retry must rerun TypeScript too,
     // rather than reuse its cached exports while only rerunning Python.
     vi.resetModules();
+    if (deploymentExamples.has(name)) {
+      const directory = await mkdtemp(join(tmpdir(), 'notte-docs-deploy-'));
+      let tracker: Awaited<ReturnType<typeof trackDeployments>> | undefined;
+      const failures: unknown[] = [];
+      try {
+        tracker = await trackDeployments(process.env.NOTTE_API_URL!);
+        for (const language of ['typescript', 'python']) {
+          const cwd = join(directory, language);
+          await mkdir(cwd);
+          // Each example uploads only owned, harmless Python runtime code.
+          for (const filename of ['my_automation.py', 'scraper_function.py', 'my_function.py']) {
+            await writeFile(join(cwd, filename), 'def run(url: str) -> str:\n    return "paired deployment"\n');
+          }
+          const source = `${testers}${name.replace(/\.ts$/, language === 'python' ? '.py' : '.ts')}`;
+          const runner = fileURLToPath(new URL(`../../docs/src/sniptest/run_${language}.` + (language === 'python' ? 'py' : 'mjs'), import.meta.url));
+          const { stdout, stderr } = await execute(
+            language === 'python' ? process.env.NOTTE_DOCS_PYTHON || 'python' : process.execPath,
+            language === 'python' ? [runner, source] : ['--experimental-strip-types', runner, source],
+            { cwd, env: { ...process.env, NOTTE_API_URL: tracker.url }, timeout: DEPLOYMENT_CHILD_TIMEOUT_MS, maxBuffer: 2 * 1024 * 1024 },
+          );
+          const values = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!);
+          const contract = contracts[name];
+          verifyExampleOutput(JSON.stringify(collectExampleResult(values, contract)), contract, `${stdout}\n${stderr}`);
+        }
+      } catch (error) {
+        failures.push(error);
+      } finally {
+        if (tracker) {
+          try { await tracker.close(); } catch (error) { failures.push(error); }
+          try { await cleanupDeployments(client, tracker.ids); } catch (error) { failures.push(error); }
+        }
+        try { await rm(directory, { recursive: true, force: true }); } catch (error) { failures.push(error); }
+      }
+      if (failures.length === 1) throw failures[0];
+      if (failures.length) throw new AggregateError(failures, 'Deployment execution and cleanup failed');
+      return;
+    }
     if (name.startsWith('file-storage/') || name === 'sessions/cdp.ts' || name === 'sessions/configuration/cookie_file.ts') {
       const directory = await mkdtemp(join(tmpdir(), 'notte-docs-files-'));
       const contract = contracts[name];
@@ -236,10 +274,54 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
     }
   }
 
+  it('cleans deployments when either language is killed while starting a blocking cloud run', async () => {
+    for (const language of ['typescript', 'python']) {
+      const directory = await mkdtemp(join(tmpdir(), 'notte-deploy-kill-'));
+      const tracker = await trackDeployments(process.env.NOTTE_API_URL!);
+      try {
+        await writeFile(join(directory, 'blocking.py'), 'import time\ndef run():\n    time.sleep(30)\n    return "done"\n');
+        const source = join(directory, language === 'python' ? 'example.py' : 'example.ts');
+        await writeFile(source, language === 'python'
+          ? 'from notte_sdk import NotteClient\nfn = NotteClient().Function(path="blocking.py")\nfn.run(stream=False)\n'
+          : 'import { NotteClient } from "notte-sdk";\nconst fn = new NotteClient().NotteFunction({path:"blocking.py"});\nawait fn.run({}, {stream:false});\n');
+        const runner = fileURLToPath(new URL(`../../docs/src/sniptest/run_${language}.` + (language === 'python' ? 'py' : 'mjs'), import.meta.url));
+        const child = execute(language === 'python' ? process.env.NOTTE_DOCS_PYTHON || 'python' : process.execPath,
+          language === 'python' ? [runner, source] : ['--experimental-strip-types', runner, source],
+          { cwd: directory, env: { ...process.env, NOTTE_API_URL: tracker.url }, timeout: DEPLOYMENT_CHILD_TIMEOUT_MS });
+        // Install rejection handling before waiting on the relay.
+        const outcome = child.then(() => ({ failed: false }), error => ({ failed: true, error }));
+        try {
+          await Promise.race([tracker.runStarted, outcome.then(() => { throw new Error('Child exited before starting its cloud run'); })]);
+          child.child.kill('SIGTERM');
+          expect((await outcome).failed).toBe(true);
+        } finally {
+          child.child.kill('SIGTERM');
+          await outcome;
+        }
+      } finally {
+        try { await tracker.close(); }
+        finally {
+          try { await cleanupDeployments(client, tracker.ids); }
+          finally { await rm(directory, { recursive: true, force: true }); }
+        }
+      }
+      expect(tracker.ids.size).toBe(1);
+      for (const id of tracker.ids) {
+        // Deletion is a soft delete: the API retains the ID but refuses use.
+        await expect(client.NotteFunction({ function_id: id }).get()).rejects.toMatchObject({
+          statusCode: 400,
+          error: { message: `The function '${id}' is not active. Please provide a different function_id` },
+        });
+      }
+    }
+  // This regression drains and cleans up separately for each language.
+  }, DEPLOYMENT_PAIR_TIMEOUT_MS + DEPLOYMENT_DRAIN_TIMEOUT_MS + DEPLOYMENT_CLEANUP_TIMEOUT_MS);
+
   for (const name of snippets) {
     it(`${name} and its Python counterpart execute unchanged`, {
       // The timeout example may run Python twice, each with a 120s deadline.
-      timeout: name === 'sessions/configuration/timeout.ts' ? 300_000 : 180_000,
+      timeout: deploymentExamples.has(name) ? DEPLOYMENT_PAIR_TIMEOUT_MS
+        : name === 'sessions/configuration/timeout.ts' ? 300_000 : 180_000,
     }, () => runExample(name));
   }
 });
