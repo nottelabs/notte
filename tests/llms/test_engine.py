@@ -73,6 +73,8 @@ class TestGetVertexLocation:
             "gemini/gemini-3.5-flash",
             "openrouter/google/gemini-3.5-flash",
             "vertex_ai/claude-sonnet-4-5",
+            "vertex_ai/mistral-large",
+            "vertex_ai/meta/llama-3.3-70b-instruct-maas",
             "openai/gpt-4o",
         ],
     )

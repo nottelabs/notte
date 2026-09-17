@@ -174,7 +174,7 @@ def get_vertex_location(model: str) -> str | None:
     served from the global endpoint and a few regions. Default to global unless a location is
     already configured.
     """
-    if not model.startswith("vertex_ai/") or not is_gemini_model(model):
+    if not model.lower().startswith("vertex_ai/gemini"):
         return None
     return litellm.vertex_location or os.getenv("VERTEXAI_LOCATION") or os.getenv("VERTEX_LOCATION") or "global"
 
