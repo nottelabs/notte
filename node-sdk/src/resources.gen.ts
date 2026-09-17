@@ -80,6 +80,11 @@ export function createResources(client: Client, getApiKey: () => string) {
       const response = await operations.pageScreenshot({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
       return response.data;
     },
+    /** sessionProfilePreview: /sessions/{session_id}/profile-preview. Returns the API response body. */
+    profilePreview: async (sessionId: Types.SessionProfilePreviewData['path']["session_id"], query: Types.SessionProfilePreviewData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionProfilePreviewData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionProfilePreview({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
+      return response.data;
+    },
     /** sessionReplay: /sessions/{session_id}/replay. Returns the API response body. */
     replay: async (sessionId: Types.SessionReplayData['path']["session_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionReplayData['headers']>, 'x-notte-api-key'> } = {}) => {
       const response = await operations.sessionReplay({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId } });
