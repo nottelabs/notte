@@ -48,6 +48,8 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
 
   // Payments endpoints
   /^payments\/[^\/]+$/, // /payments/{payment_id}
+  /^payments\/connect$/, // /payments/connect
+  /^payments\/disconnect$/, // /payments/disconnect
 
   // Personas endpoints
   /^personas$/, // /personas

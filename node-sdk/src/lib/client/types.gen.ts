@@ -727,6 +727,10 @@ export type CaptchaStatus = {
      * Message
      */
     message?: string;
+    /**
+     * Cancel Reason
+     */
+    cancel_reason?: 'navigation' | null;
 };
 
 /**
@@ -3871,6 +3875,64 @@ export type ParameterInfo = {
      * Default
      */
     default?: string | null;
+};
+
+/**
+ * PaymentConnectRequest
+ */
+export type PaymentConnectRequest = {
+    /**
+     * Mode
+     */
+    mode?: 'test' | 'live';
+};
+
+/**
+ * PaymentConnectionResponse
+ */
+export type PaymentConnectionResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Mode
+     */
+    mode: string;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Connection Url
+     */
+    connection_url?: string | null;
+    /**
+     * Connection Phrase
+     */
+    connection_phrase?: string | null;
+    /**
+     * Expires At
+     */
+    expires_at?: string | null;
+    /**
+     * Error Code
+     */
+    error_code?: string | null;
+};
+
+/**
+ * PaymentDisconnectResponse
+ */
+export type PaymentDisconnectResponse = {
+    /**
+     * Mode
+     */
+    mode: 'test' | 'live';
+    /**
+     * Status
+     */
+    status?: 'disconnected';
 };
 
 /**
@@ -9592,6 +9654,76 @@ export type ListVaultsResponses = {
 };
 
 export type ListVaultsResponse = ListVaultsResponses[keyof ListVaultsResponses];
+
+export type ConnectPaymentWalletData = {
+    body: PaymentConnectRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/payments/connect';
+};
+
+export type ConnectPaymentWalletErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ConnectPaymentWalletError = ConnectPaymentWalletErrors[keyof ConnectPaymentWalletErrors];
+
+export type ConnectPaymentWalletResponses = {
+    /**
+     * Successful Response
+     */
+    200: PaymentConnectionResponse;
+};
+
+export type ConnectPaymentWalletResponse = ConnectPaymentWalletResponses[keyof ConnectPaymentWalletResponses];
+
+export type DisconnectPaymentWalletData = {
+    body: PaymentConnectRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/payments/disconnect';
+};
+
+export type DisconnectPaymentWalletErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DisconnectPaymentWalletError = DisconnectPaymentWalletErrors[keyof DisconnectPaymentWalletErrors];
+
+export type DisconnectPaymentWalletResponses = {
+    /**
+     * Successful Response
+     */
+    200: PaymentDisconnectResponse;
+};
+
+export type DisconnectPaymentWalletResponse = DisconnectPaymentWalletResponses[keyof DisconnectPaymentWalletResponses];
 
 export type CreatePaymentData = {
     body: PaymentRequest;
