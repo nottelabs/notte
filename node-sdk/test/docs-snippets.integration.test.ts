@@ -67,6 +67,9 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
   }, 60_000);
 
   async function runExample(name: string) {
+    // Examples execute at import time. A retry must rerun TypeScript too,
+    // rather than reuse its cached exports while only rerunning Python.
+    vi.resetModules();
     if (name.startsWith('file-storage/') || name === 'sessions/cdp.ts' || name === 'sessions/configuration/cookie_file.ts') {
       const directory = await mkdtemp(join(tmpdir(), 'notte-docs-files-'));
       const contract = contracts[name];

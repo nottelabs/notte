@@ -79,4 +79,6 @@ jobs:
         working-directory: node-sdk
         run: |
           export NOTTE_DOCS_PYTHON="$GITHUB_WORKSPACE/.venv/bin/python"
-          npx vitest run test/docs-snippets.integration.test.ts
+          # Retry a failed live example once, without rerunning the whole suite.
+          # A second failure still fails this job; other jobs keep their retry policy.
+          npx vitest run test/docs-snippets.integration.test.ts --retry 1
