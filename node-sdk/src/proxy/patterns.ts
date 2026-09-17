@@ -100,6 +100,7 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^sessions\/[^\/]+\/page\/scrape$/, // /sessions/{session_id}/page/scrape
   /^sessions\/[^\/]+\/page\/screenshot$/, // /sessions/{session_id}/page/screenshot
   /^sessions\/[^\/]+\/payments$/, // /sessions/{session_id}/payments
+  /^sessions\/[^\/]+\/profile-preview$/, // /sessions/{session_id}/profile-preview
   /^sessions\/[^\/]+\/replay$/, // /sessions/{session_id}/replay
   /^sessions\/[^\/]+\/stop$/, // /sessions/{session_id}/stop
   /^sessions\/[^\/]+\/workflow\/code$/, // /sessions/{session_id}/workflow/code
