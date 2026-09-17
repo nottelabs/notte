@@ -3922,6 +3922,16 @@ export type PaymentConnectionResponse = {
 };
 
 /**
+ * PaymentDisconnectError
+ */
+export type PaymentDisconnectError = {
+    /**
+     * Detail
+     */
+    detail: string;
+};
+
+/**
  * PaymentDisconnectResponse
  */
 export type PaymentDisconnectResponse = {
@@ -5097,6 +5107,17 @@ export type SessionProfile = {
      * Whether to save browser state to profile on session close
      */
     persist?: boolean;
+};
+
+/**
+ * SessionProfilePreviewResponse
+ */
+export type SessionProfilePreviewResponse = {
+    profile?: SessionProfile | null;
+    /**
+     * Cookie Domains
+     */
+    cookie_domains?: Array<string> | null;
 };
 
 /**
@@ -7381,6 +7402,51 @@ export type SessionStatusResponses = {
 };
 
 export type SessionStatusResponse = SessionStatusResponses[keyof SessionStatusResponses];
+
+export type SessionProfilePreviewData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: {
+        /**
+         * Include Cookies
+         */
+        include_cookies?: boolean;
+    };
+    url: '/sessions/{session_id}/profile-preview';
+};
+
+export type SessionProfilePreviewErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionProfilePreviewError = SessionProfilePreviewErrors[keyof SessionProfilePreviewErrors];
+
+export type SessionProfilePreviewResponses = {
+    /**
+     * Successful Response
+     */
+    200: SessionProfilePreviewResponse;
+};
+
+export type SessionProfilePreviewResponse2 = SessionProfilePreviewResponses[keyof SessionProfilePreviewResponses];
 
 export type GetSessionScriptData = {
     body?: never;
@@ -9709,9 +9775,21 @@ export type DisconnectPaymentWalletData = {
 
 export type DisconnectPaymentWalletErrors = {
     /**
+     * Caller cannot disconnect the wallet
+     */
+    403: PaymentDisconnectError;
+    /**
+     * Wallet has active payments
+     */
+    409: PaymentDisconnectError;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Payments unavailable or wallet revocation must be retried
+     */
+    503: PaymentDisconnectError;
 };
 
 export type DisconnectPaymentWalletError = DisconnectPaymentWalletErrors[keyof DisconnectPaymentWalletErrors];
