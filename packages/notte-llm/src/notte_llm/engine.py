@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -164,6 +165,18 @@ def is_gemini_model(model: str) -> bool:
     if "vertex_ai" in model_lower and ("claude" in model_lower or "anthropic" in model_lower):
         return False
     return "gemini" in model_lower or "vertex_ai" in model_lower
+
+
+def get_vertex_location(model: str) -> str | None:
+    """Vertex AI location to use for a Gemini model, or None for other models.
+
+    litellm defaults to us-central1, but recent Gemini models (e.g. gemini-3.5-flash) are only
+    served from the global endpoint and a few regions. Default to global unless a location is
+    already configured.
+    """
+    if not model.startswith("vertex_ai/") or not is_gemini_model(model):
+        return None
+    return litellm.vertex_location or os.getenv("VERTEXAI_LOCATION") or os.getenv("VERTEX_LOCATION") or "global"
 
 
 def is_anthropic_model(model: str) -> bool:
@@ -558,6 +571,8 @@ class LLMEngine:
         model = self._get_model(model)
         # Apply model-specific temperature overrides
         temperature = LlmModel.get_temperature(model, temperature)
+        vertex_location = get_vertex_location(model)
+        vertex_kwargs: dict[str, Any] = {"vertex_location": vertex_location} if vertex_location is not None else {}
         try:
             response = await litellm.acompletion(  # pyright: ignore [reportUnknownMemberType]
                 model,
@@ -572,6 +587,7 @@ class LLMEngine:
                 # indefinitely. Without this, httpx has no read timeout and silent server
                 # stalls hang the whole agent run.
                 timeout=60,
+                **vertex_kwargs,
             )
             # Cast to ModelResponse since we know it's not streaming in this case
             return cast(ModelResponse, response)

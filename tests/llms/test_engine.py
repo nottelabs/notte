@@ -3,7 +3,13 @@ from unittest.mock import Mock, patch
 import pytest
 from litellm import Message
 from notte_core.errors.base import ErrorConfig
-from notte_llm.engine import LLMEngine, StructuredContent, fix_schema_for_gemini, fix_schema_for_openai
+from notte_llm.engine import (
+    LLMEngine,
+    StructuredContent,
+    fix_schema_for_gemini,
+    fix_schema_for_openai,
+    get_vertex_location,
+)
 
 
 @pytest.fixture
@@ -41,6 +47,58 @@ async def test_completion_error(llm_engine: LLMEngine) -> None:
                 _ = await llm_engine.completion(messages=messages, model=model)
 
             assert "API Error" in str(exc_info.value)
+
+
+class TestGetVertexLocation:
+    @pytest.fixture(autouse=True)
+    def _no_configured_location(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr("litellm.vertex_location", None)
+        monkeypatch.delenv("VERTEXAI_LOCATION", raising=False)
+        monkeypatch.delenv("VERTEX_LOCATION", raising=False)
+
+    def test_vertex_gemini_defaults_to_global(self) -> None:
+        assert get_vertex_location("vertex_ai/gemini-3.5-flash") == "global"
+
+    def test_env_location_is_respected(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("VERTEXAI_LOCATION", "europe-west2")
+        assert get_vertex_location("vertex_ai/gemini-3.5-flash") == "europe-west2"
+
+    def test_litellm_location_is_respected(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr("litellm.vertex_location", "us")
+        assert get_vertex_location("vertex_ai/gemini-3.5-flash") == "us"
+
+    @pytest.mark.parametrize(
+        "model",
+        [
+            "gemini/gemini-3.5-flash",
+            "openrouter/google/gemini-3.5-flash",
+            "vertex_ai/claude-sonnet-4-5",
+            "openai/gpt-4o",
+        ],
+    )
+    def test_other_models_have_no_location(self, model: str) -> None:
+        assert get_vertex_location(model) is None
+
+
+@pytest.mark.asyncio
+async def test_completion_passes_global_location_for_vertex_gemini(
+    llm_engine: LLMEngine, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("litellm.vertex_location", None)
+    monkeypatch.delenv("VERTEXAI_LOCATION", raising=False)
+    monkeypatch.delenv("VERTEX_LOCATION", raising=False)
+    with patch("litellm.acompletion", return_value=Mock()) as acompletion:
+        await llm_engine.completion(
+            messages=[Message(role="user", content="Hello")], model="vertex_ai/gemini-3.5-flash"
+        )
+    assert acompletion.call_args.kwargs["vertex_location"] == "global"
+
+
+@pytest.mark.asyncio
+async def test_completion_omits_location_for_other_models(llm_engine: LLMEngine) -> None:
+    with patch("litellm.acompletion", return_value=Mock()) as acompletion:
+        await llm_engine.completion(messages=[Message(role="user", content="Hello")], model="gpt-3.5-turbo")
+    assert "vertex_location" not in acompletion.call_args.kwargs
 
 
 class TestStructuredContent:
