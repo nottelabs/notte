@@ -132,8 +132,8 @@ class LlmProvider(StrEnum):
 
 class LlmModel(StrEnum):
     openai = "openai/gpt-4o"
-    gemini = "gemini/gemini-2.5-flash"
-    gemini_vertex = "vertex_ai/gemini-2.5-flash"
+    gemini = "gemini/gemini-3.5-flash"
+    gemini_vertex = "vertex_ai/gemini-3.5-flash"
     gemma = "openrouter/google/gemma-3-27b-it"
     cerebras = "cerebras/gpt-oss-120b"
     groq = "groq/gpt-oss-120b"

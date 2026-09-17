@@ -59,7 +59,7 @@ describe('Agent Integration Tests', () => {
       await client.Session({ proxies: false, headless: true, idle_timeout_minutes: 2 }).use(async (session) => {
         const agent = client.Agent({
           session,
-          reasoning_model: 'gemini/gemini-2.5-flash',
+          reasoning_model: 'gemini/gemini-3.5-flash',
           max_steps: 3
         });
 
