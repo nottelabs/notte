@@ -6,7 +6,7 @@ export type { CaptchaStatus } from '@/lib/client/types.gen';
 
 /** Execution envelope with the backend's additive CAPTCHA coordination fields. */
 export type CaptchaExecutionResponse = ApiExecutionResponse & {
-  captcha?: (CaptchaStatus & { cancel_reason?: string | null }) | null;
+  captcha?: CaptchaStatus | null;
   action_executed?: boolean | null;
   code?: string | null;
 };

@@ -35,6 +35,10 @@ export type CaptchaStatus = {
      * Message
      */
     message?: string;
+    /**
+     * Cancel Reason
+     */
+    cancel_reason?: 'navigation' | null;
 };
 ```
 
@@ -61,5 +65,9 @@ export type CaptchaStatus = {
 </ParamField>
 
 <ParamField body="message" type={"string | undefined"}>
+
+</ParamField>
+
+<ParamField body="cancel_reason" type={"\"navigation\" | null | undefined"}>
 
 </ParamField>

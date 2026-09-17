@@ -130,7 +130,8 @@ describe('navigation during post-action CAPTCHA waiting', () => {
   it.each([undefined, null, 'unknown'])('fails an executed cancellation with reason %s', async reason => {
     const original = { ...response('solving', true), success: true };
     const cancelled = response('cancelled');
-    cancelled.captcha!.cancel_reason = reason;
+    // Simulate an unexpected server value without widening the generated API contract.
+    Object.assign(cancelled.captcha!, { cancel_reason: reason });
     const request = vi.fn().mockResolvedValueOnce(original).mockResolvedValueOnce(cancelled);
     expect(await executeWithCaptcha(action, 180, request)).toMatchObject({
       success: false, action_executed: true, code: 'captcha_cancelled',
