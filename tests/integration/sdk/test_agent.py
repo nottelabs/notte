@@ -33,7 +33,7 @@ def test_agent_gemini_form_fill_no_null_fields():
     _ = load_dotenv()
     client = NotteClient()
     with client.Session(proxies=False) as session:
-        agent = client.Agent(session=session, max_steps=3, reasoning_model="vertex_ai/gemini-2.5-flash")
+        agent = client.Agent(session=session, max_steps=3, reasoning_model="vertex_ai/gemini-3.5-flash")
         response = agent.run(
             task="Ignore the web page. Simply return a form fill action with email='lucas@notte.cc' and password='123456'. Stop immediately after this",
             url="https://github.com/login",
@@ -49,7 +49,7 @@ def test_local_agent_gemini_form_fill_no_null_fields():
     """Local agent: Gemini should only fill requested fields, not all fields with null."""
     _ = load_dotenv()
     with notte.Session(headless=True) as session:
-        agent = notte.Agent(session=session, max_steps=3, reasoning_model="vertex_ai/gemini-2.5-flash")
+        agent = notte.Agent(session=session, max_steps=3, reasoning_model="vertex_ai/gemini-3.5-flash")
         response = agent.run(
             task="Ignore the web page. Simply return a form fill action with email='lucas@notte.cc' and password='123456'. Stop immediately after this",
             url="https://console.notte.cc/login",
@@ -65,7 +65,7 @@ def test_start_agent_with_gemini_reasoning():
     _ = load_dotenv()
     notte = NotteClient()
     with notte.Session(proxies=False) as session:
-        agent = notte.Agent(session=session, reasoning_model="gemini/gemini-2.5-flash", max_steps=3)
+        agent = notte.Agent(session=session, reasoning_model="gemini/gemini-3.5-flash", max_steps=3)
         _ = agent.run(task="Go notte.cc and describe the page")
     resp = agent.status()
     assert resp.status == "closed"

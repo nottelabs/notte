@@ -55,7 +55,7 @@ class TestGetOpenrouterProvider:
         assert LlmModel.get_openrouter_provider("anthropic/claude-sonnet-4-5-20250929") is None
 
     def test_gemini_model_returns_none(self) -> None:
-        assert LlmModel.get_openrouter_provider("gemini/gemini-2.5-flash") is None
+        assert LlmModel.get_openrouter_provider("gemini/gemini-3.5-flash") is None
 
 
 class TestGetOpenrouterModel:
@@ -82,12 +82,12 @@ class TestGetOpenrouterModel:
         assert result == "openrouter/anthropic/claude-sonnet-4-5"
 
     def test_vertex_ai_conversion(self) -> None:
-        result = LlmModel.get_openrouter_model("vertex_ai/gemini-2.5-flash")
-        assert result == "openrouter/google/gemini-2.5-flash"
+        result = LlmModel.get_openrouter_model("vertex_ai/gemini-3.5-flash")
+        assert result == "openrouter/google/gemini-3.5-flash"
 
     def test_gemini_prefix_conversion(self) -> None:
-        result = LlmModel.get_openrouter_model("gemini/gemini-2.5-flash")
-        assert result == "openrouter/google/gemini-2.5-flash"
+        result = LlmModel.get_openrouter_model("gemini/gemini-3.5-flash")
+        assert result == "openrouter/google/gemini-3.5-flash"
 
     def test_kimi_conversion(self) -> None:
         result = LlmModel.get_openrouter_model("moonshot/kimi-k2.5")

@@ -1,5 +1,5 @@
 import pytest
-from notte_core.common.config import NotteConfig, config
+from notte_core.common.config import LlmModel, NotteConfig, config
 from pydantic import ValidationError
 
 
@@ -23,6 +23,16 @@ def test_default_config():
     assert config.empty_page_max_retry == 5
     assert config.viewport_expansion == 0
     assert config.evaluate_js_max_result_bytes == 16 * 1024 * 1024
+
+
+def test_default_llm_model_uses_vertex_with_google_credentials(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("GOOGLE_APPLICATION_CREDENTIALS", "credentials.json")
+    assert LlmModel.default() == "vertex_ai/gemini-3.5-flash"
+
+
+def test_default_llm_model_uses_gemini_without_google_credentials(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.delenv("GOOGLE_APPLICATION_CREDENTIALS", raising=False)
+    assert LlmModel.default() == "gemini/gemini-3.5-flash"
 
 
 def test_default_is_headless():

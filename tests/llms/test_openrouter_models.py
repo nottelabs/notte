@@ -18,7 +18,7 @@ import notte
 # Update this list as new models become available
 OPENROUTER_MODELS = [
     "google/gemini-3-flash-preview",
-    "google/gemini-2.5-flash",
+    "google/gemini-3.5-flash",
     "anthropic/claude-opus-4.6",
     "anthropic/claude-sonnet-4.6",
     "anthropic/claude-haiku-4.5",

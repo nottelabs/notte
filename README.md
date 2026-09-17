@@ -54,7 +54,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 with notte.Session(headless=False) as session:
-    model = os.getenv("NOTTE_EXAMPLE_MODEL", "gemini/gemini-2.5-flash")
+    model = os.getenv("NOTTE_EXAMPLE_MODEL", "gemini/gemini-3.5-flash")
     agent = notte.Agent(session=session, reasoning_model=model, max_steps=10)
     response = agent.run(task="Find three cat memes on Google Images and describe them")
 ```
@@ -70,7 +70,7 @@ import os
 client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
 with client.Session(open_viewer=True) as session:
-    agent = client.Agent(session=session, reasoning_model='gemini/gemini-2.5-flash', max_steps=30)
+    agent = client.Agent(session=session, reasoning_model='gemini/gemini-3.5-flash', max_steps=30)
     response = agent.run(task="doom scroll cat memes on google images")
 ```
 
@@ -108,7 +108,7 @@ class TopPosts(BaseModel):
 
 client = NotteClient()
 with client.Session(open_viewer=True, browser_type="chrome") as session:
-    agent = client.Agent(session=session, reasoning_model='gemini/gemini-2.5-flash', max_steps=15)
+    agent = client.Agent(session=session, reasoning_model='gemini/gemini-3.5-flash', max_steps=15)
     response = agent.run(
         task="Go to Hacker News (news.ycombinator.com) and extract the top 5 posts with their titles, URLs, points, authors, and comment counts.",
         response_format=TopPosts,
