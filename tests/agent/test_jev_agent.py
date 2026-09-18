@@ -3,18 +3,22 @@ from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
+from notte_agent.falco.perception import FalcoPerception
 from notte_agent.jev.agent import (
     COMPLETION,
     NB_PAUSED_STEPS,
     CompletionParameter,
     JevAgent,
+    TaskValues,
     effective_action_type,
     value_candidates,
 )
+from notte_agent.jev.validator import DecisionValidator
 from notte_agent.main import Agent, AgentType
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, CompletionAction, FillAction, SelectDropdownOptionAction, WaitAction
 from notte_core.agent_types import AgentCompletion, AgentState
+from notte_core.browser.observation import ExecutionResult, TimedSpan, TrajectoryProgress
 from notte_llm.decision import (
     ChoiceAnswer,
     ChoiceQuestion,
@@ -142,7 +146,9 @@ async def test_fill_value_selected_from_task(monkeypatch: pytest.MonkeyPatch):
             return first_option(criteria, "fill(id=I"), 0.99, 0.02
         return COMPLETION, 0.99, 0.98
 
-    mock_llm = MockLLMEngine([CompletionParameter(success=True, answer="Filled")])  # pyright: ignore [reportArgumentType]
+    # 1st LLM call: extract the values of the task (only once), 2nd LLM call: answer of the completion action
+    llm_sequence: Any = [TaskValues(values=["admin", "made up"]), CompletionParameter(success=True, answer="Filled")]
+    mock_llm = MockLLMEngine(llm_sequence)
     async with NotteSession(headless=True) as session:
         agent = make_agent(session, monkeypatch)
         with (
@@ -157,9 +163,10 @@ async def test_fill_value_selected_from_task(monkeypatch: pytest.MonkeyPatch):
     fill = list(response.trajectory.agent_completions())[1].action
     assert isinstance(fill, FillAction)
     assert fill.value == "admin"
-    # no LLM call required to fill the value
-    assert agent.nb_parameter_llm_calls == 1
-    assert mock_llm.call_count == 1
+    # values that are not part of the task are ignored
+    assert agent.task_values == ["admin", "hunter2"]
+    assert agent.nb_parameter_llm_calls == 2
+    assert mock_llm.call_count == 2
 
 
 def test_value_candidates():
@@ -291,3 +298,46 @@ def test_decision_engine_requires_api_key(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
     with pytest.raises(ValueError):
         _ = DecisionEngine()
+
+
+class MockNoulDecisionEngine:
+    def __init__(self, noul: float):
+        self.noul: float = noul
+        self.states: list[Any] = []
+
+    async def decide(self, state: Any, questions: dict[str, DecisionQuestion]) -> DecisionResponse:
+        self.states.append(state)
+        return DecisionResponse(model="mock", answers={qid: NoulAnswer(noul=self.noul) for qid in questions})
+
+
+class FailingValidator:
+    def __init__(self):
+        self.nb_calls: int = 0
+
+    async def validate(self, *args: Any, **kwargs: Any) -> ExecutionResult:
+        self.nb_calls += 1
+        span = TimedSpan.empty()
+        return ExecutionResult(
+            action=kwargs["output"], success=False, message="nope", started_at=span.started_at, ended_at=span.ended_at
+        )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("noul,expected_success,expected_llm_calls", [(0.95, True, 0), (0.3, False, 1)])
+async def test_decision_validator(noul: float, expected_success: bool, expected_llm_calls: int):
+    output = CompletionAction(success=True, answer="Example Domain")
+    llm_validator, decision = FailingValidator(), MockNoulDecisionEngine(noul)
+    async with NotteSession(headless=True) as session:
+        _ = await session.aexecute(type="goto", url="https://example.com")
+        _ = await session.aobserve()
+        validator = DecisionValidator(decision=decision, llm_validator=llm_validator, perception=FalcoPerception())  # pyright: ignore [reportArgumentType]
+        result = await validator.validate(
+            task="Return the title of the page",
+            output=output,
+            history=session.trajectory,
+            progress=TrajectoryProgress(current_step=1, max_steps=5),
+        )
+    assert result.success is expected_success
+    assert llm_validator.nb_calls == expected_llm_calls
+    assert decision.states[0]["agent_answer"] == "Example Domain"
+    assert "example" in decision.states[0]["page"].lower()

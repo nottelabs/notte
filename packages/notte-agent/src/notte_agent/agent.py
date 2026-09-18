@@ -32,7 +32,7 @@ from notte_agent.common.conversation import Conversation
 from notte_agent.common.perception import BasePerception
 from notte_agent.common.prompt import BasePrompt
 from notte_agent.common.types import AgentResponse
-from notte_agent.common.validator import CompletionValidator
+from notte_agent.common.validator import BaseValidator, CompletionValidator
 from notte_agent.errors import MaxConsecutiveFailuresError
 
 # #########################################################
@@ -68,7 +68,7 @@ class NotteAgent(BaseAgent):
         self.max_consecutive_failures: int = config.max_consecutive_failures
         self.consecutive_failures: int = 0
         # validator a LLM as a Judge that validates the agent's attempt at completing the task (i.e. `CompletionAction`)
-        self.validator: CompletionValidator = CompletionValidator(
+        self.validator: BaseValidator = CompletionValidator(
             llm=self.llm, perception=self.perception, use_vision=self.config.use_vision
         )
         self.has_run: bool = False

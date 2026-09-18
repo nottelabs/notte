@@ -45,11 +45,14 @@ from pydantic import BaseModel
 from typing_extensions import override
 
 from notte_agent.common.types import AgentResponse
+from notte_agent.common.validator import BaseValidator, CompletionValidator
 from notte_agent.falco.agent import FalcoAgent
+from notte_agent.jev.validator import DecisionValidator
 
 NEXT_INSTRUCTIONS = (
     "A web browsing agent must complete `task`. Given `previous_actions` and the current `page`, "
-    "which single action should it take next?"
+    "which single action should it take next? When several actions are still required (e.g. multiple form fields), "
+    "select the one that comes first on the page. Only submit or search once every value required by `task` is set."
 )
 DONE_INSTRUCTIONS = "The task is fully completed given `previous_actions` and the current `page`"
 VALUE_INSTRUCTIONS = "Which value should the web browsing agent provide for `action` to make progress on `task`?"
@@ -64,6 +67,12 @@ NB_PAUSED_STEPS = 5
 # decision models have a small context window (32k tokens, ~2 chars per token on html heavy inputs)
 MAX_DECISION_INPUT_CHARS = 60_000
 
+TASK_VALUES_PROMPT = """List every literal value of the following task that may have to be typed or selected
+in a web page to complete it (e.g. names, places, dates, quantities, search queries, etc.).
+Copy the values verbatim from the task, one entry per value, without any explanation.
+
+Task: """
+
 PARAMETERS_SYSTEM_PROMPT = """You are part of a web browsing agent. The next action to take has already been selected.
 Your only job is to provide the missing parameters of this action so that it makes progress on the task.
 Be concise, don't explain yourself, and only use information from the task, the history or the current page."""
@@ -73,6 +82,10 @@ TParameter = typing.TypeVar("TParameter", bound=BaseModel)
 
 class ValueParameter(BaseModel):
     value: str
+
+
+class TaskValues(BaseModel):
+    values: list[str]
 
 
 class CheckParameter(BaseModel):
@@ -213,6 +226,12 @@ class JevAgent(FalcoAgent):
         self.fallback_reasons: Counter[str] = Counter()
         self.nb_consecutive_low_confidence: int = 0
         self.nb_paused_steps: int = 0
+        self.task_values: list[str] | None = None
+        # the LLM validator is only used if the decision model is not confident that the answer is valid
+        llm_validator = CompletionValidator(llm=self.llm, perception=self.perception, use_vision=self.config.use_vision)
+        self.validator: BaseValidator = DecisionValidator(
+            decision=self.decision, llm_validator=llm_validator, perception=self.perception
+        )
 
     # ############################################
     # ######### Decision model inputs ############
@@ -263,10 +282,29 @@ class JevAgent(FalcoAgent):
     # ########### Action parameters ##############
     # ############################################
 
+    async def _task_values(self, request: AgentRunRequest) -> list[str]:
+        """Values given in the task: extracted once by the LLM so that the decision model can select them afterwards"""
+        if self.task_values is None:
+            candidates = value_candidates(request.task)
+            try:
+                self.nb_parameter_llm_calls += 1
+                messages: list[AllMessageValues] = [{"role": "user", "content": TASK_VALUES_PROMPT + request.task}]
+                with ErrorConfig.message_mode("developer"):
+                    extracted = await self.llm.structured_completion(messages, response_format=TaskValues)
+                # only keep verbatim values: the decision model should never type something the LLM made up
+                candidates += [value for value in extracted.values if value in request.task and len(value) <= 80]
+            except NotteBaseError as e:
+                logger.warning(f"🎲 Failed to extract the task values: {e.dev_message}")
+            self.task_values = [c for c in dict.fromkeys(candidates) if not c.startswith("http")][:MAX_VALUE_CANDIDATES]
+            logger.info(f"🎲 Task values: {self.task_values}")
+        return self.task_values
+
     async def _select_value(self, request: AgentRunRequest, option_key: str, option: ActionOption) -> str | None:
         """Let the decision model pick the value if it is explicitly given in the task"""
-        candidates = value_candidates(request.task)
-        if len(candidates) == 0 or self.vault is not None:
+        if self.vault is not None:
+            return None
+        candidates = await self._task_values(request)
+        if len(candidates) == 0:
             return None
         criteria = {candidate: "value given in the task" for candidate in candidates}
         criteria[NO_VALUE] = "None of the other values is the right one: the value has to be written from scratch"
