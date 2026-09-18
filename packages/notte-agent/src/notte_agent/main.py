@@ -15,15 +15,20 @@ from notte_agent.common.base import BaseAgent
 from notte_agent.common.notifier import NotifierAgent
 from notte_agent.common.types import AgentResponse
 from notte_agent.falco.agent import FalcoAgent
+from notte_agent.jev.agent import JevAgent
 
 
 class AgentType(StrEnum):
     FALCO = "falco"
+    # falco + decision model to select the next action (LLM only used as a fallback)
+    JEV = "jev"
 
     def get_agent_class(self) -> type[FalcoAgent]:
         match self:
             case AgentType.FALCO:
                 return FalcoAgent
+            case AgentType.JEV:
+                return JevAgent
 
 
 class Agent(BaseAgent):
