@@ -61,6 +61,7 @@ OTHER = "other"
 COMPLETION = "completion"
 MAX_HISTORY_ACTIONS = 15
 MAX_VALUE_CANDIDATES = 20
+MAX_RECENT_ACTIONS = 6
 # the decision model is paused after too many low confidence steps in a row (i.e. the website is too ambiguous for it)
 MAX_CONSECUTIVE_LOW_CONFIDENCE = 3
 NB_PAUSED_STEPS = 5
@@ -410,13 +411,24 @@ Provide the missing parameters of the selected action."""
     # ############################################
 
     def _is_repeated(self, action: BaseAction) -> bool:
-        last = self.trajectory.last_completion
-        if last is None or last.action.type != action.type:
+        """
+        The decision model doesn't see the effect of its actions: repeating an action that was already taken recently
+        (including cycles, e.g. fill -> press_key -> fill -> etc.) means that it is stuck => let the LLM reason.
+        """
+        if isinstance(action, (ScrollDownAction, ScrollUpAction, WaitAction)):
+            # scrolling / waiting multiple times in a row is fine
             return False
-        if isinstance(action, InteractionAction) and isinstance(last.action, InteractionAction):
-            return action.id == last.action.id
-        # scrolling / waiting multiple times in a row is fine, the rest is suspicious
-        return not isinstance(action, (ScrollDownAction, ScrollUpAction, WaitAction))
+
+        def signature(a: BaseAction) -> tuple[str, str]:
+            return a.type, a.id if isinstance(a, InteractionAction) else ""
+
+        recent = list(self.trajectory.agent_completions())[-MAX_RECENT_ACTIONS:]
+        nb_same = sum(signature(completion.action) == signature(action) for completion in recent)
+        if isinstance(action, InteractionAction):
+            # the same element can legitimately be used twice (e.g. 'next' page), but not back to back
+            is_last = len(recent) > 0 and signature(recent[-1].action) == signature(action)
+            return is_last or nb_same >= 2
+        return nb_same >= 1
 
     def _agent_state(self, obs: Observation, answer: ChoiceAnswer, options: dict[str, ActionOption]) -> AgentState:
         last_result, last_completion = self.trajectory.last_result, self.trajectory.last_completion

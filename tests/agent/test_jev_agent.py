@@ -169,6 +169,31 @@ async def test_fill_value_selected_from_task(monkeypatch: pytest.MonkeyPatch):
     assert mock_llm.call_count == 2
 
 
+@pytest.mark.asyncio
+async def test_action_cycle_falls_back_to_llm(monkeypatch: pytest.MonkeyPatch):
+    def policy(criteria: dict[str, str], nb_calls: int) -> Any:
+        if nb_calls == -1:
+            return "admin"
+        # fill -> escape -> fill -> escape -> ...
+        return (first_option(criteria, "fill(id=I") if nb_calls % 2 == 1 else "press_key(Escape)"), 0.99, 0.02
+
+    llm_sequence: Any = [TaskValues(values=["admin"]), llm_completion()]
+    async with NotteSession(headless=True) as session:
+        agent = make_agent(session, monkeypatch, max_steps=8)
+        with (
+            patch.object(agent, "llm", MockLLMEngine(llm_sequence)),
+            patch.object(agent, "validator", MockValidator()),
+            patch.object(agent, "decision", MockDecisionEngine(policy)),
+        ):
+            response = await agent.arun(task="Fill the username with 'admin'", url="https://quotes.toscrape.com/login")
+
+    assert response.success
+    actions = [c.action.type for c in response.trajectory.agent_completions()]
+    # the second `press_key` is the start of a cycle: the LLM takes over
+    assert actions == ["goto", "fill", "press_key", "fill", "completion"]
+    assert dict(agent.fallback_reasons) == {"repeated action": 1}
+
+
 def test_value_candidates():
     assert value_candidates("Log in with 'admin' and \"hunter2\", then 'admin' again") == ["admin", "hunter2"]
     assert value_candidates("Go to page 3") == []
