@@ -3,10 +3,10 @@ from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
-from notte_agent.jev.agent import DONE, JevAgent
+from notte_agent.jev.agent import COMPLETION, CompletionParameter, JevAgent, value_candidates
 from notte_agent.main import Agent, AgentType
 from notte_browser.session import NotteSession
-from notte_core.actions import ClickAction, CompletionAction
+from notte_core.actions import ClickAction, CompletionAction, FillAction
 from notte_core.agent_types import AgentCompletion, AgentState
 from notte_llm.decision import (
     ChoiceAnswer,
@@ -38,8 +38,12 @@ class MockDecisionEngine:
         self.states: list[Any] = []
 
     async def decide(self, state: Any, questions: dict[str, DecisionQuestion]) -> DecisionResponse:
-        self.nb_calls += 1
         self.states.append(state)
+        if "value" in questions:
+            value = self.policy(questions["value"].criteria, -1)  # pyright: ignore [reportAttributeAccessIssue]
+            answer = ChoiceAnswer(choice=value, probabilities={value: 0.99}, confidence=0.99)
+            return DecisionResponse(model="mock", answers={"value": answer})
+        self.nb_calls += 1
         question = questions["next"]
         assert isinstance(question, ChoiceQuestion)
         choice, confidence, done = self.policy(question.criteria, self.nb_calls)
@@ -66,8 +70,12 @@ def llm_completion() -> Any:
     )
 
 
+def first_option(criteria: dict[str, str], prefix: str) -> str:
+    return next(option for option in criteria if option.startswith(prefix))
+
+
 def first_link(criteria: dict[str, str]) -> str:
-    return next(option for option, desc in criteria.items() if desc.startswith("click") and option.startswith("L"))
+    return first_option(criteria, "click(id=L")
 
 
 def make_agent(session: NotteSession, monkeypatch: pytest.MonkeyPatch, **kwargs: Any) -> JevAgent:
@@ -87,9 +95,11 @@ async def test_confident_click_bypasses_llm(monkeypatch: pytest.MonkeyPatch):
     def policy(criteria: dict[str, str], nb_calls: int) -> tuple[str, float, float]:
         if nb_calls == 1:
             return first_link(criteria), 0.99, 0.02
-        return DONE, 0.99, 0.98
+        return COMPLETION, 0.99, 0.98
 
-    mock_llm, mock_decision = MockLLMEngine([llm_completion()]), MockDecisionEngine(policy)
+    # the LLM is only used to write the answer of the completion action selected by the decision model
+    mock_llm = MockLLMEngine([CompletionParameter(success=True, answer="Opened the link")])  # pyright: ignore [reportArgumentType]
+    mock_decision = MockDecisionEngine(policy)
     async with NotteSession(headless=True) as session:
         agent = make_agent(session, monkeypatch)
         with (
@@ -100,16 +110,54 @@ async def test_confident_click_bypasses_llm(monkeypatch: pytest.MonkeyPatch):
             response = await agent.arun(task="Open the first link", url="https://example.com")
 
     assert response.success
+    assert response.answer == "Opened the link"
     completions = list(response.trajectory.agent_completions())
-    # initial goto + decision model click + llm completion
+    # initial goto + decision model click + decision model completion
     assert [c.action.type for c in completions] == ["goto", "click", "completion"]
     assert isinstance(completions[1].action, ClickAction)
     assert "decision model" in completions[1].state.next_goal
     assert isinstance(completions[2].action, CompletionAction)
-    assert agent.nb_decision_steps == 1
-    assert dict(agent.fallback_reasons) == {"task completion": 1}
+    assert agent.nb_decision_steps == 2
+    assert agent.nb_parameter_llm_calls == 1
+    assert dict(agent.fallback_reasons) == {}
     assert mock_decision.states[0]["task"] == "Open the first link"
     assert "example" in mock_decision.states[0]["page"].lower()
+
+
+@pytest.mark.asyncio
+async def test_fill_value_selected_from_task(monkeypatch: pytest.MonkeyPatch):
+    def policy(criteria: dict[str, str], nb_calls: int) -> Any:
+        if nb_calls == -1:
+            # value question: candidates are the quoted values of the task
+            assert set(criteria) == {"admin", "hunter2", "NONE_OF_THESE"}
+            return "admin"
+        if nb_calls == 1:
+            return first_option(criteria, "fill(id=I"), 0.99, 0.02
+        return COMPLETION, 0.99, 0.98
+
+    mock_llm = MockLLMEngine([CompletionParameter(success=True, answer="Filled")])  # pyright: ignore [reportArgumentType]
+    async with NotteSession(headless=True) as session:
+        agent = make_agent(session, monkeypatch)
+        with (
+            patch.object(agent, "llm", mock_llm),
+            patch.object(agent, "validator", MockValidator()),
+            patch.object(agent, "decision", MockDecisionEngine(policy)),
+        ):
+            task = "Fill the username with 'admin' and the password with 'hunter2'"
+            response = await agent.arun(task=task, url="https://quotes.toscrape.com/login")
+
+    assert response.success
+    fill = list(response.trajectory.agent_completions())[1].action
+    assert isinstance(fill, FillAction)
+    assert fill.value == "admin"
+    # no LLM call required to fill the value
+    assert agent.nb_parameter_llm_calls == 1
+    assert mock_llm.call_count == 1
+
+
+def test_value_candidates():
+    assert value_candidates("Log in with 'admin' and \"hunter2\", then 'admin' again") == ["admin", "hunter2"]
+    assert value_candidates("Go to page 3") == []
 
 
 @pytest.mark.asyncio
