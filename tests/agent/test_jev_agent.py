@@ -3,10 +3,17 @@ from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
-from notte_agent.jev.agent import COMPLETION, CompletionParameter, JevAgent, value_candidates
+from notte_agent.jev.agent import (
+    COMPLETION,
+    NB_PAUSED_STEPS,
+    CompletionParameter,
+    JevAgent,
+    effective_action_type,
+    value_candidates,
+)
 from notte_agent.main import Agent, AgentType
 from notte_browser.session import NotteSession
-from notte_core.actions import ClickAction, CompletionAction, FillAction
+from notte_core.actions import ClickAction, CompletionAction, FillAction, SelectDropdownOptionAction, WaitAction
 from notte_core.agent_types import AgentCompletion, AgentState
 from notte_llm.decision import (
     ChoiceAnswer,
@@ -78,9 +85,9 @@ def first_link(criteria: dict[str, str]) -> str:
     return first_option(criteria, "click(id=L")
 
 
-def make_agent(session: NotteSession, monkeypatch: pytest.MonkeyPatch, **kwargs: Any) -> JevAgent:
+def make_agent(session: NotteSession, monkeypatch: pytest.MonkeyPatch, max_steps: int = 5) -> JevAgent:
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")  # pragma: allowlist secret
-    return JevAgent(session=session, max_steps=5, **kwargs)
+    return JevAgent(session=session, max_steps=max_steps)
 
 
 def test_agent_type_jev(monkeypatch: pytest.MonkeyPatch):
@@ -158,6 +165,47 @@ async def test_fill_value_selected_from_task(monkeypatch: pytest.MonkeyPatch):
 def test_value_candidates():
     assert value_candidates("Log in with 'admin' and \"hunter2\", then 'admin' again") == ["admin", "hunter2"]
     assert value_candidates("Go to page 3") == []
+    # the start url of the task is not a value
+    assert value_candidates("Go to 'https://example.com' and search for 'notte'") == ["notte"]
+
+
+def test_effective_action_type():
+    def select(id: str, html: str) -> SelectDropdownOptionAction:
+        return SelectDropdownOptionAction(id=id, value="", description=html)
+
+    assert effective_action_type(select("I1", "<select name='country'></select>")) == "select_dropdown_option"
+    # autocomplete inputs have to be filled, custom dropdowns and their options have to be clicked
+    assert effective_action_type(select("I3", '<input type="text" role="combobox"></input>')) == "fill"
+    assert effective_action_type(select("I1", '<div role="combobox"></div>')) == "click"
+    assert effective_action_type(select("O2", "<li role='option'>One way</li>")) == "click"
+    assert effective_action_type(ClickAction(id="B1")) == "click"
+
+
+@pytest.mark.asyncio
+async def test_decision_model_paused_after_consecutive_low_confidence(monkeypatch: pytest.MonkeyPatch):
+    def policy(criteria: dict[str, str], nb_calls: int) -> tuple[str, float, float]:
+        return first_link(criteria), 0.3, 0.02
+
+    def llm_wait() -> Any:
+        completion = llm_completion()
+        completion.action = WaitAction(time_ms=10)
+        return completion
+
+    mock_decision = MockDecisionEngine(policy)
+    async with NotteSession(headless=True) as session:
+        agent = make_agent(session, monkeypatch, max_steps=8)
+        with (
+            patch.object(agent, "llm", MockLLMEngine([llm_wait() for _ in range(6)] + [llm_completion()])),
+            patch.object(agent, "validator", MockValidator()),
+            patch.object(agent, "decision", mock_decision),
+        ):
+            response = await agent.arun(task="Open the first link", url="https://example.com")
+
+    assert response.success
+    # 3 low confidence steps, then the decision model is not called anymore
+    assert mock_decision.nb_calls == 3
+    assert dict(agent.fallback_reasons) == {"low confidence": 3, "decision model paused": 4}
+    assert NB_PAUSED_STEPS >= 4
 
 
 @pytest.mark.asyncio

@@ -58,6 +58,9 @@ OTHER = "other"
 COMPLETION = "completion"
 MAX_HISTORY_ACTIONS = 15
 MAX_VALUE_CANDIDATES = 20
+# the decision model is paused after too many low confidence steps in a row (i.e. the website is too ambiguous for it)
+MAX_CONSECUTIVE_LOW_CONFIDENCE = 3
+NB_PAUSED_STEPS = 5
 # decision models have a small context window (32k tokens, ~2 chars per token on html heavy inputs)
 MAX_DECISION_INPUT_CHARS = 60_000
 
@@ -138,13 +141,30 @@ def browser_options(obs: Observation) -> dict[str, ActionOption]:
     return options
 
 
+def effective_action_type(action: InteractionAction) -> str:
+    """
+    Comboboxes are typed as `select_dropdown_option`, but only native `<select>` elements can be handled this way:
+    - text inputs with suggestions (e.g. autocomplete) have to be filled
+    - custom dropdowns and their options have to be clicked
+    """
+    if action.type != "select_dropdown_option":
+        return action.type
+    html = action.description.lstrip()
+    if html.startswith("<select"):
+        return "select_dropdown_option"
+    if html.startswith("<input") and not action.id.startswith("O"):
+        return "fill"
+    return "click"
+
+
 def flatten_action_space(obs: Observation) -> dict[str, ActionOption]:
     """Flattened action space: one option per (action, element) pair + the browser actions"""
     options: dict[str, ActionOption] = {}
     for action in obs.space.interaction_actions:
-        param = f", {action.param.name}" if action.param is not None else ""
-        options[f"{action.type}(id={action.id}{param})"] = ActionOption(
-            action_type=action.type,
+        action_type = effective_action_type(action)
+        param = ", value" if action_type in ("fill", "select_dropdown_option", "check") else ""
+        options[f"{action_type}(id={action.id}{param})"] = ActionOption(
+            action_type=action_type,
             id=action.id,
             description=f"{action.text_label or ''!r} {action.description[:160]}",
         )
@@ -155,6 +175,8 @@ def value_candidates(task: str) -> list[str]:
     """Values that are explicitly given within the task (i.e. quoted text)"""
     quoted: list[tuple[str, str]] = re.findall(r"'([^'\n]{1,80})'|\"([^\"\n]{1,80})\"", task)
     candidates = [single or double for single, double in quoted]
+    # urls are never typed into a field (the task is prefixed with the start url)
+    candidates = [candidate for candidate in candidates if not candidate.startswith(("http://", "https://"))]
     return list(dict.fromkeys(candidates))[:MAX_VALUE_CANDIDATES]
 
 
@@ -189,6 +211,8 @@ class JevAgent(FalcoAgent):
         self.nb_decision_steps: int = 0
         self.nb_parameter_llm_calls: int = 0
         self.fallback_reasons: Counter[str] = Counter()
+        self.nb_consecutive_low_confidence: int = 0
+        self.nb_paused_steps: int = 0
 
     # ############################################
     # ######### Decision model inputs ############
@@ -378,6 +402,11 @@ Provide the missing parameters of the selected action."""
 
     async def _fallback(self, request: AgentRunRequest, reason: str) -> AgentCompletion.InnerLlmCompletion:
         self.fallback_reasons[reason] += 1
+        if reason == "low confidence":
+            self.nb_consecutive_low_confidence += 1
+            if self.nb_consecutive_low_confidence >= MAX_CONSECUTIVE_LOW_CONFIDENCE:
+                # still uncertain after the pause => pause again right away
+                self.nb_paused_steps = NB_PAUSED_STEPS
         logger.info(f"🧠 Decision model fallback to LLM: {reason}")
         return await super().completion(request)
 
@@ -390,6 +419,9 @@ Provide the missing parameters of the selected action."""
         if last_result is not None and not last_result.success:
             # let the LLM reason about failures
             return await self._fallback(request, "previous action failed")
+        if self.nb_paused_steps > 0:
+            self.nb_paused_steps -= 1
+            return await self._fallback(request, "decision model paused")
         options = flatten_action_space(obs)
         if len(options) > MAX_CHOICE_OPTIONS:
             return await self._fallback(request, "too many actions")
@@ -423,6 +455,7 @@ Provide the missing parameters of the selected action."""
             return await self._fallback(request, "repeated action")
 
         self.nb_decision_steps += 1
+        self.nb_consecutive_low_confidence = 0
         return AgentCompletion.InnerLlmCompletion(state=self._agent_state(obs, answer, options), action=action)
 
     @override
