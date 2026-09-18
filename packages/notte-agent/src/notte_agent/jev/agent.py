@@ -1,3 +1,4 @@
+import json
 import typing
 from collections import Counter
 from typing import Any, Literal
@@ -46,6 +47,8 @@ NEXT_INSTRUCTIONS = (
 )
 DONE_INSTRUCTIONS = "The task is fully completed given `previous_actions` and the current `page`"
 MAX_HISTORY_ACTIONS = 15
+# decision models have a small context window (32k tokens, ~2 chars per token on html heavy inputs)
+MAX_DECISION_INPUT_CHARS = 60_000
 
 
 class JevAgent(FalcoAgent):
@@ -163,6 +166,9 @@ class JevAgent(FalcoAgent):
         if self.vault is not None:
             # hide vault leaked credentials within decision model inputs
             state = BaseVault.recursive_replace_mapping(state, self.vault.get_replacement_map())
+        nb_chars = len(json.dumps(state)) + sum(len(q.model_dump_json()) for q in questions.values())
+        if nb_chars > MAX_DECISION_INPUT_CHARS:
+            return await self._fallback(request, "page too large")
         try:
             response = await self.decision.decide(state=state, questions=questions)
         except DecisionModelError as e:
