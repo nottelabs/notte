@@ -40,6 +40,7 @@ from notte_llm.decision import (
     DecisionQuestion,
     NoulQuestion,
 )
+from notte_llm.engine import LLMEngine
 from notte_sdk.types import AgentCreateRequestDict, AgentRunRequest
 from pydantic import BaseModel
 from typing_extensions import override
@@ -216,9 +217,18 @@ class JevAgent(FalcoAgent):
         trajectory: Trajectory | None = None,
         decision_model: str = DEFAULT_DECISION_MODEL,
         confidence_threshold: float = 0.6,
+        parameter_model: str | None = None,
         **data: typing.Unpack[AgentCreateRequestDict],
     ):
         super().__init__(session=session, vault=vault, tools=tools, trajectory=trajectory, **data)
+        # action parameters are short and easy to generate: a small & fast model can be used instead of the reasoning one
+        self.parameter_llm: LLMEngine | None = None
+        if parameter_model is not None:
+            self.parameter_llm = LLMEngine(model=parameter_model, tracer=self.llm_tracer)
+            if self.vault is not None:
+                self.parameter_llm.structured_completion = self.vault.patch_structured_completion(  # pyright: ignore [reportAttributeAccessIssue]
+                    0, self.vault.get_replacement_map
+                )(self.parameter_llm.structured_completion)
         self.decision: DecisionEngine = DecisionEngine(model=decision_model)
         self.confidence_threshold: float = confidence_threshold
         # step counts to keep track of how often the reasoning LLM is actually bypassed
@@ -291,7 +301,8 @@ class JevAgent(FalcoAgent):
                 self.nb_parameter_llm_calls += 1
                 messages: list[AllMessageValues] = [{"role": "user", "content": TASK_VALUES_PROMPT + request.task}]
                 with ErrorConfig.message_mode("developer"):
-                    extracted = await self.llm.structured_completion(messages, response_format=TaskValues)
+                    llm = self.parameter_llm or self.llm
+                    extracted = await llm.structured_completion(messages, response_format=TaskValues)
                 # only keep verbatim values: the decision model should never type something the LLM made up
                 candidates = [value for value in extracted.values if value in request.task and len(value) <= 80]
             except NotteBaseError as e:
@@ -375,7 +386,8 @@ Provide the missing parameters of the selected action."""
         self.nb_parameter_llm_calls += 1
         messages = self._parameter_messages(request, obs, option_key, option)
         with ErrorConfig.message_mode("developer"):
-            return await self.llm.structured_completion(messages, response_format=response_format)
+            llm = self.parameter_llm or self.llm
+            return await llm.structured_completion(messages, response_format=response_format)
 
     async def _build_action(
         self, request: AgentRunRequest, obs: Observation, option_key: str, option: ActionOption
