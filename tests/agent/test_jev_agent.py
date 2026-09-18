@@ -136,18 +136,29 @@ async def test_confident_click_bypasses_llm(monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.mark.asyncio
-async def test_fill_value_selected_from_task(monkeypatch: pytest.MonkeyPatch):
+@pytest.mark.parametrize(
+    "task,nb_llm_calls",
+    [
+        # quoted values are selected without any LLM call
+        ("Fill the username with 'admin' and the password with 'hunter2'", 1),
+        # otherwise the values of the task are extracted once by the LLM
+        ("Fill the username with admin and the password with hunter2", 2),
+    ],
+)
+async def test_fill_value_selected_from_task(monkeypatch: pytest.MonkeyPatch, task: str, nb_llm_calls: int):
     def policy(criteria: dict[str, str], nb_calls: int) -> Any:
         if nb_calls == -1:
-            # value question: candidates are the quoted values of the task
+            # value question: candidates are the values of the task
             assert set(criteria) == {"admin", "hunter2", "NONE_OF_THESE"}
             return "admin"
         if nb_calls == 1:
             return first_option(criteria, "fill(id=I"), 0.99, 0.02
         return COMPLETION, 0.99, 0.98
 
-    # 1st LLM call: extract the values of the task (only once), 2nd LLM call: answer of the completion action
-    llm_sequence: Any = [TaskValues(values=["admin", "made up"]), CompletionParameter(success=True, answer="Filled")]
+    llm_sequence: Any = [CompletionParameter(success=True, answer="Filled")]
+    if nb_llm_calls == 2:
+        # values that are not part of the task are ignored
+        llm_sequence.insert(0, TaskValues(values=["admin", "hunter2", "made up"]))
     mock_llm = MockLLMEngine(llm_sequence)
     async with NotteSession(headless=True) as session:
         agent = make_agent(session, monkeypatch)
@@ -156,17 +167,14 @@ async def test_fill_value_selected_from_task(monkeypatch: pytest.MonkeyPatch):
             patch.object(agent, "validator", MockValidator()),
             patch.object(agent, "decision", MockDecisionEngine(policy)),
         ):
-            task = "Fill the username with 'admin' and the password with 'hunter2'"
             response = await agent.arun(task=task, url="https://quotes.toscrape.com/login")
 
     assert response.success
     fill = list(response.trajectory.agent_completions())[1].action
     assert isinstance(fill, FillAction)
     assert fill.value == "admin"
-    # values that are not part of the task are ignored
-    assert agent.task_values == ["admin", "hunter2"]
-    assert agent.nb_parameter_llm_calls == 2
-    assert mock_llm.call_count == 2
+    assert agent.nb_parameter_llm_calls == nb_llm_calls
+    assert mock_llm.call_count == nb_llm_calls
 
 
 @pytest.mark.asyncio
@@ -177,7 +185,7 @@ async def test_action_cycle_falls_back_to_llm(monkeypatch: pytest.MonkeyPatch):
         # fill -> escape -> fill -> escape -> ...
         return (first_option(criteria, "fill(id=I") if nb_calls % 2 == 1 else "press_key(Escape)"), 0.99, 0.02
 
-    llm_sequence: Any = [TaskValues(values=["admin"]), llm_completion()]
+    llm_sequence: Any = [llm_completion()]
     async with NotteSession(headless=True) as session:
         agent = make_agent(session, monkeypatch, max_steps=8)
         with (

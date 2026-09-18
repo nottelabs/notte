@@ -286,27 +286,23 @@ class JevAgent(FalcoAgent):
     async def _task_values(self, request: AgentRunRequest) -> list[str]:
         """Values given in the task: extracted once by the LLM so that the decision model can select them afterwards"""
         if self.task_values is None:
-            candidates = value_candidates(request.task)
+            candidates: list[str] = []
             try:
                 self.nb_parameter_llm_calls += 1
                 messages: list[AllMessageValues] = [{"role": "user", "content": TASK_VALUES_PROMPT + request.task}]
                 with ErrorConfig.message_mode("developer"):
                     extracted = await self.llm.structured_completion(messages, response_format=TaskValues)
                 # only keep verbatim values: the decision model should never type something the LLM made up
-                candidates += [value for value in extracted.values if value in request.task and len(value) <= 80]
+                candidates = [value for value in extracted.values if value in request.task and len(value) <= 80]
             except NotteBaseError as e:
                 logger.warning(f"🎲 Failed to extract the task values: {e.dev_message}")
             self.task_values = [c for c in dict.fromkeys(candidates) if not c.startswith("http")][:MAX_VALUE_CANDIDATES]
             logger.info(f"🎲 Task values: {self.task_values}")
         return self.task_values
 
-    async def _select_value(self, request: AgentRunRequest, option_key: str, option: ActionOption) -> str | None:
-        """Let the decision model pick the value if it is explicitly given in the task"""
-        if self.vault is not None:
-            return None
-        candidates = await self._task_values(request)
-        if len(candidates) == 0:
-            return None
+    async def _pick_value(
+        self, request: AgentRunRequest, option_key: str, option: ActionOption, candidates: list[str]
+    ) -> str | None:
         criteria = {candidate: "value given in the task" for candidate in candidates}
         criteria[NO_VALUE] = "None of the other values is the right one: the value has to be written from scratch"
         state = {
@@ -321,6 +317,21 @@ class JevAgent(FalcoAgent):
         if answer.choice == NO_VALUE or answer.confidence < self.confidence_threshold:
             return None
         return answer.choice
+
+    async def _select_value(self, request: AgentRunRequest, option_key: str, option: ActionOption) -> str | None:
+        """Let the decision model pick the value if it is explicitly given in the task"""
+        if self.vault is not None:
+            return None
+        # quoted values don't require any LLM call
+        quoted = value_candidates(request.task)
+        if len(quoted) > 0:
+            value = await self._pick_value(request, option_key, option, quoted)
+            if value is not None:
+                return value
+        candidates = [value for value in await self._task_values(request) if value not in quoted]
+        if len(candidates) == 0:
+            return None
+        return await self._pick_value(request, option_key, option, candidates)
 
     def _parameter_messages(
         self, request: AgentRunRequest, obs: Observation, option_key: str, option: ActionOption
@@ -410,25 +421,27 @@ Provide the missing parameters of the selected action."""
     # ############# Agent completion #############
     # ############################################
 
-    def _is_repeated(self, action: BaseAction) -> bool:
+    def _is_repeated(self, option: ActionOption) -> bool:
         """
         The decision model doesn't see the effect of its actions: repeating an action that was already taken recently
         (including cycles, e.g. fill -> press_key -> fill -> etc.) means that it is stuck => let the LLM reason.
         """
-        if isinstance(action, (ScrollDownAction, ScrollUpAction, WaitAction)):
-            # scrolling / waiting multiple times in a row is fine
+        if option.action_type in ("scroll_down", "scroll_up", "wait", "goto", "scrape", "completion"):
+            # scrolling / waiting multiple times in a row is fine, and the others depend on their parameters
             return False
 
-        def signature(a: BaseAction) -> tuple[str, str]:
-            return a.type, a.id if isinstance(a, InteractionAction) else ""
+        def signature(action: BaseAction) -> tuple[str, str | None]:
+            if isinstance(action, InteractionAction):
+                return action.type, action.id
+            return action.type, action.key if isinstance(action, PressKeyAction) else None
 
-        recent = list(self.trajectory.agent_completions())[-MAX_RECENT_ACTIONS:]
-        nb_same = sum(signature(completion.action) == signature(action) for completion in recent)
-        if isinstance(action, InteractionAction):
+        target = (option.action_type, option.id or option.key)
+        recent = [signature(completion.action) for completion in self.trajectory.agent_completions()]
+        recent = recent[-MAX_RECENT_ACTIONS:]
+        if option.id is not None:
             # the same element can legitimately be used twice (e.g. 'next' page), but not back to back
-            is_last = len(recent) > 0 and signature(recent[-1].action) == signature(action)
-            return is_last or nb_same >= 2
-        return nb_same >= 1
+            return (len(recent) > 0 and recent[-1] == target) or recent.count(target) >= 2
+        return recent.count(target) >= 1
 
     def _agent_state(self, obs: Observation, answer: ChoiceAnswer, options: dict[str, ActionOption]) -> AgentState:
         last_result, last_completion = self.trajectory.last_result, self.trajectory.last_completion
@@ -491,6 +504,8 @@ Provide the missing parameters of the selected action."""
             elif done >= self.confidence_threshold:
                 return await self._fallback(request, "conflicting completion signal")
             option = options[answer.choice]
+            if self._is_repeated(option):
+                return await self._fallback(request, "repeated action")
             action = await self._build_action(request, obs, answer.choice, option)
         except DecisionModelError as e:
             logger.warning(f"🎲 {e.dev_message}")
@@ -501,7 +516,8 @@ Provide the missing parameters of the selected action."""
 
         if action is None:
             return await self._fallback(request, f"unsupported action: {option.action_type}")
-        if self._is_repeated(action):
+        last_completion = self.trajectory.last_completion
+        if isinstance(action, GotoAction) and last_completion is not None and last_completion.action == action:
             return await self._fallback(request, "repeated action")
 
         self.nb_decision_steps += 1
