@@ -259,6 +259,13 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [POST  Connect Link Submit](https://docs.notte.cc/api-reference/managed-auth/connect-link-submit.md)
 - [POST Managed Auth Connect Link Create](https://docs.notte.cc/api-reference/managed-auth/managed-auth-connect-link-create.md)
 
+## Payments
+
+- [POST Connect Payment Wallet](https://docs.notte.cc/api-reference/payments/connect-payment-wallet.md)
+- [POST Create Payment](https://docs.notte.cc/api-reference/payments/create-payment.md)
+- [POST Disconnect Payment Wallet](https://docs.notte.cc/api-reference/payments/disconnect-payment-wallet.md)
+- [GET Get Payment](https://docs.notte.cc/api-reference/payments/get-payment.md)
+
 ## Personas
 
 - [GET List Personas](https://docs.notte.cc/api-reference/personas/list-personas.md)
@@ -311,11 +318,13 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [POST Page Observe](https://docs.notte.cc/api-reference/sessions/page-observe.md)
 - [POST Page Scrape](https://docs.notte.cc/api-reference/sessions/page-scrape.md)
 - [POST Page Screenshot](https://docs.notte.cc/api-reference/sessions/page-screenshot.md)
+- [GET Session Auth Readiness](https://docs.notte.cc/api-reference/sessions/session-auth-readiness.md)
 - [GET Session Cookies Get](https://docs.notte.cc/api-reference/sessions/session-cookies-get.md)
 - [POST Session Cookies Set](https://docs.notte.cc/api-reference/sessions/session-cookies-set.md)
 - [GET Session Debug Info](https://docs.notte.cc/api-reference/sessions/session-debug-info.md)
 - [GET Session Network Logs](https://docs.notte.cc/api-reference/sessions/session-network-logs.md)
 - [GET Session Offset](https://docs.notte.cc/api-reference/sessions/session-offset.md)
+- [GET Session Profile Preview](https://docs.notte.cc/api-reference/sessions/session-profile-preview.md)
 - [GET Session Replay](https://docs.notte.cc/api-reference/sessions/session-replay.md)
 - [POST Session Start](https://docs.notte.cc/api-reference/sessions/session-start.md)
 - [GET Session Status](https://docs.notte.cc/api-reference/sessions/session-status.md)
