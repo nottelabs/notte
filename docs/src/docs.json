@@ -49,6 +49,10 @@
     {
       "source": "/products",
       "destination": "/"
+    },
+    {
+      "source": "/product/anything-api",
+      "destination": "/concepts/anything"
     }
   ],
   "errors": {
@@ -138,7 +142,8 @@
             "icon": "download",
             "pages": [
               "concepts/scraping",
-              "concepts/search"
+              "concepts/search",
+              "concepts/anything"
             ]
           },
           {

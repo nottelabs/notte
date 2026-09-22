@@ -74,7 +74,7 @@ The API streams the agent's work back as an AI SDK UI message stream. The `x-thr
 
 ### Streamed (default)
 
-By default, the response is an [AI SDK UI message stream](https://ai-sdk.dev/docs/ai-sdk-ui/stream-protocol) -- the same format the Vercel AI SDK's `useChat` hook consumes, so you can point a chat UI straight at the endpoint or read the stream yourself.
+By default, the response is an [AI SDK UI message stream](https://ai-sdk.dev/docs/ai-sdk-ui/stream-protocol) -- the same format the Vercel AI SDK's `useChat` hook consumes, so you can back a chat UI with it or read the stream yourself. Call it from your server, not from the browser: see [Calling from a browser](#calling-from-a-browser).
 
 **Response headers**
 
@@ -154,26 +154,71 @@ console.log("Thread ID:", threadId);
 const reader = response.body.getReader();
 const decoder = new TextDecoder();
 let buffer = "";
+let finished = false;
 
-while (true) {
+while (!finished) {
   const { done, value } = await reader.read();
   if (done) break;
 
   buffer += decoder.decode(value, { stream: true });
   const lines = buffer.split("\n");
-  buffer = lines.pop()!;
+  // The last element is a partial line: keep it for the next chunk
+  buffer = lines.pop() ?? "";
 
-  for (const line of lines) {
+  for (const rawLine of lines) {
+    // Lines may be terminated with CRLF, so drop any trailing carriage return
+    const line = rawLine.replace(/\r$/, "");
     if (!line.startsWith("data: ")) continue;
     const payload = line.slice("data: ".length);
-    if (payload === "[DONE]") break;
+    if (payload === "[DONE]") {
+      finished = true;
+      break;
+    }
     const chunk = JSON.parse(payload);
     console.log(chunk.type, chunk);
   }
 }
 ```
 
-If you are building a chat interface, you can skip the manual parsing: the stream is directly compatible with the [AI SDK's `useChat` hook](https://ai-sdk.dev/docs/ai-sdk-ui/chatbot).
+If you are building a chat interface, you can skip the manual parsing: the stream is directly compatible with the [AI SDK's `useChat` hook](https://ai-sdk.dev/docs/ai-sdk-ui/chatbot). Point it at [your own proxy route](#calling-from-a-browser), not at `anything.notte.cc`.
+
+## Calling from a browser
+
+<Warning>
+Your `NOTTE_API_KEY` is a server-side secret. A browser client that sends `Authorization: Bearer <NOTTE_API_KEY>` ships the key to every visitor, who can then spend your credits. There are no browser-scoped keys for this endpoint.
+</Warning>
+
+Put a route on your own server between the browser and the Anything API. The route holds the key, forwards the request, and pipes the stream back unchanged -- so `useChat` still sees the AI SDK UI message stream it expects:
+
+```typescript app/api/anything/route.ts
+export async function POST(request: Request) {
+  const upstream = await fetch("https://anything.notte.cc/api/anything/start", {
+    method: "POST",
+    headers: {
+      // Read server-side; never sent to the browser
+      Authorization: `Bearer ${process.env.NOTTE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(await request.json()),
+  });
+
+  // Forward the stream-format header, or useChat will not recognise the stream,
+  // and the thread ID, so the client can send follow-up turns
+  const headers = new Headers();
+  for (const name of [
+    "content-type",
+    "x-vercel-ai-ui-message-stream",
+    "x-thread-id",
+  ]) {
+    const value = upstream.headers.get(name);
+    if (value) headers.set(name, value);
+  }
+
+  return new Response(upstream.body, { status: upstream.status, headers });
+}
+```
+
+Then point the browser at your route -- `useChat({ api: "/api/anything" })`. Authenticate and authorize your own users in that route: it is now the thing standing between them and your Notte credits.
 
 ## Re-running a created function
 
