@@ -114,7 +114,7 @@ export type {
   SearchStructuredResponse,
 } from '@/search';
 export { NotteAnything } from '@/anything';
-export type { AnythingStartOptions, AnythingStartResponse } from '@/anything';
+export type { AnythingStartOptions, AnythingStartResult, AnythingStreamChunk } from '@/anything';
 export { NotteSecrets } from '@/secrets';
 export type { SecretListOptions, SecretStoreOptions } from '@/secrets';
 export { NotteUsage } from '@/usage';

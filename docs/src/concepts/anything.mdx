@@ -182,6 +182,30 @@ while (!finished) {
 
 If you are building a chat interface, you can skip the manual parsing: the stream is directly compatible with the [AI SDK's `useChat` hook](https://ai-sdk.dev/docs/ai-sdk-ui/chatbot). Point it at [your own proxy route](#calling-from-a-browser), not at `anything.notte.cc`.
 
+## Using the Node SDK
+
+The Node SDK wraps this endpoint as [`client.anything.start()`](/typescript-sdk-reference/notteanything/start). It posts to `api.notte.cc/anything/start`, which proxies to the same v2 backend and pipes the stream back, so you get the parsed events without writing the reader yourself:
+
+```typescript
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+const run = await client.anything.start({ task: 'fetch the top 3 hacker news posts' });
+
+console.log('Thread ID:', run.threadId);
+
+for await (const chunk of run.chunks) {
+  console.log(chunk.type, chunk);
+}
+```
+
+Two differences from calling the endpoint directly:
+
+- The SDK field is `task`, not `query` -- the proxy maps it before forwarding.
+- The proxy forwards only that field, so `thread_id`, `detach`, `model`, and `reasoningEffort` are not available through it. `run.threadId` still tells you which thread ran, but sending a follow-up turn into it means calling `anything.notte.cc` directly, as above.
+
+The Python SDK does not wrap the Anything API yet -- use the HTTP example above.
+
 ## Calling from a browser
 
 <Warning>

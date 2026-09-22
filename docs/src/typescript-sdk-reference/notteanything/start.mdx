@@ -9,21 +9,26 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/anything.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/anything.ts)
 
-Start building a function for `task`. Building is slow (minutes) and
-billable; prefer the marketplace (`client.functions.list()`) when a
-ready-made function already fits.
+Start a run for `task` and stream the agent's progress back.
+
+Running is slow (minutes) and billable; prefer the marketplace
+(`client.functions.list()`) when a ready-made function already fits.
+
+The returned `chunks` generator holds the connection open — iterate it to
+completion, or `return`/`break` out of the loop to cancel and release the
+stream.
 
 ```ts
-const result = await client.anything.start({ task: 'get the weather in Paris' });
-if (typeof result.function_id === 'string') {
-  const fn = client.NotteFunction({ function_id: result.function_id });
+const run = await client.anything.start({ task: 'get the weather in Paris' });
+for await (const chunk of run.chunks) {
+  if (chunk.type === 'text-delta') process.stdout.write(String(chunk.delta ?? ''));
 }
 ```
 
 Rejects with a `NotteAPIError` when the API answers with a non-2xx status.
 
 ```typescript
-NotteAnything.start(body: AnythingStartOptions): Promise<AnythingStartResponse>;
+NotteAnything.start(body: AnythingStartOptions): Promise<AnythingStartResult>;
 ```
 
 ## Parameters
@@ -35,10 +40,10 @@ NotteAnything.start(body: AnythingStartOptions): Promise<AnythingStartResponse>;
 ## Returns
 
 ```typescript
-Promise<AnythingStartResponse>
+Promise<AnythingStartResult>
 ```
 
 ## Related types
 
 - [AnythingStartOptions](/typescript-sdk-reference/types/anythingstartoptions)
-- [AnythingStartResponse](/typescript-sdk-reference/types/anythingstartresponse)
+- [AnythingStartResult](/typescript-sdk-reference/types/anythingstartresult)

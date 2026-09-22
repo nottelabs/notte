@@ -10,11 +10,14 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 [Source: node-sdk/src/anything.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/anything.ts)
 
 Anything API, the counterpart of `POST /anything/start`: turn a plain-English
-description of a web task into a deployed, reusable function.
+description of a web task into a running automation.
 
 ```ts
-const started = await client.anything.start({ task: 'fetch the top 3 hacker news posts' });
-console.log(started);
+const { threadId, chunks } = await client.anything.start({ task: 'fetch the top 3 hacker news posts' });
+console.log('Thread ID:', threadId);
+for await (const chunk of chunks) {
+  console.log(chunk.type, chunk);
+}
 ```
 
 ```typescript
@@ -33,4 +36,4 @@ new NotteAnything(client: NotteClient): NotteAnything;
 
 ## Usage
 
-- [start](/typescript-sdk-reference/notteanything/start): Start building a function for `task`. Building is slow (minutes) and billable; prefer the marketplace (`client.functions.list()`) when a ready-made function already fits.
+- [start](/typescript-sdk-reference/notteanything/start): Start a run for `task` and stream the agent's progress back.
