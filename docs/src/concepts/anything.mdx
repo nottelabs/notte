@@ -87,7 +87,8 @@ By default, the response is an [AI SDK UI message stream](https://ai-sdk.dev/doc
 
 Pass `detach: true` to start the run and return immediately with `202 Accepted`:
 
-```bash
+<CodeGroup>
+```bash cURL
 curl -X POST https://anything.notte.cc/api/anything/start \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $NOTTE_API_KEY" \
@@ -95,6 +96,7 @@ curl -X POST https://anything.notte.cc/api/anything/start \
 ```
 
 <StartDetached />
+</CodeGroup>
 
 The response body contains:
 
@@ -122,7 +124,61 @@ Follow-up turns work in both streamed and detached mode.
 
 ## Consuming the stream
 
+### Python
+
 <ConsumeStream />
+
+### TypeScript
+
+```typescript
+const response = await fetch("https://anything.notte.cc/api/anything/start", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${NOTTE_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ query: "fetch the top 3 hacker news posts" }),
+});
+
+if (!response.ok) {
+  throw new Error(`HTTP ${response.status}`);
+}
+if (!response.body) {
+  throw new Error("ReadableStream not available");
+}
+
+// The thread ID lets you send follow-up turns later
+const threadId = response.headers.get("x-thread-id");
+console.log("Thread ID:", threadId);
+
+const reader = response.body.getReader();
+const decoder = new TextDecoder();
+let buffer = "";
+let finished = false;
+
+while (!finished) {
+  const { done, value } = await reader.read();
+  if (done) break;
+
+  buffer += decoder.decode(value, { stream: true });
+  const lines = buffer.split("\n");
+  // The last element is a partial line: keep it for the next chunk
+  buffer = lines.pop() ?? "";
+
+  for (const rawLine of lines) {
+    // Lines may be terminated with CRLF, so drop any trailing carriage return
+    const line = rawLine.replace(/\r$/, "");
+    if (!line.startsWith("data: ")) continue;
+    const payload = line.slice("data: ".length);
+    if (payload === "[DONE]") {
+      finished = true;
+      break;
+    }
+    const chunk = JSON.parse(payload);
+    console.log(chunk.type, chunk);
+  }
+}
+```
 
 If you are building a chat interface, you can skip the manual parsing: the stream is directly compatible with the [AI SDK's `useChat` hook](https://ai-sdk.dev/docs/ai-sdk-ui/chatbot). Point it at [your own proxy route](#calling-from-a-browser), not at `anything.notte.cc`.
 
