@@ -1,6 +1,6 @@
 [project]
 name = "notte"
-version = "1.9.2.dev0"
+version = "1.9.3.dev0"
 description = "Notte, the full-stack web AI agent framework"
 readme = "README.md"
 license = "SSPL-1.0"
@@ -9,16 +9,16 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "notte-core==1.9.2.dev0",
-    "notte-sdk==1.9.2.dev0",
-    "notte-browser==1.9.2.dev0",
-    "notte-agent==1.9.2.dev0",
+    "notte-core==1.9.3.dev0",
+    "notte-sdk==1.9.3.dev0",
+    "notte-browser==1.9.3.dev0",
+    "notte-agent==1.9.3.dev0",
     "google-auth>=2.39.0",
     "toml>=0.10.2",
 ]
 
 [project.optional-dependencies]
-integrations = ["notte-integrations==1.9.2.dev0"]
+integrations = ["notte-integrations==1.9.3.dev0"]
 
 [tool.uv.sources]
 notte-core = { workspace = true }
