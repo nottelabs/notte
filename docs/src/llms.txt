@@ -133,6 +133,7 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 
 - [Fetch](https://docs.notte.cc/concepts/scraping.md): Extract content and structured data from web pages
 - [Search](https://docs.notte.cc/concepts/search.md): Search the web and get URLs, snippets, or a sourced answer
+- [Anything API](https://docs.notte.cc/concepts/anything.md): Build and run web automations from a single API call
 
 ## Guides
 

@@ -124,7 +124,6 @@
     "agents/workflows/testing-variations.py",
     "agents/workflows/use-function-api.py",
     "agents/workflows/version-control.py",
-    "anything-api/consume_sse.py",
     "anything-api/run_function.py",
     "browser-controls/action_chaining.py",
     "browser-controls/check.py",
@@ -347,5 +346,8 @@
     "vaults/manual.py",
     "zinzin/hello.py"
   ],
-  "python_only": {}
+  "python_only": {
+    "anything-api/consume_stream.py": "Raw HTTP example for anything.notte.cc; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it bills a real 2-10 minute Anything API agent build.",
+    "anything-api/start_detached.py": "Raw HTTP example for anything.notte.cc; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it bills a real 2-10 minute Anything API agent build."
+  }
 }
