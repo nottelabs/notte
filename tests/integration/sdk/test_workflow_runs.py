@@ -257,7 +257,8 @@ class TestFunctionRunExecution:
         mock_post.side_effect = [create_run_mock_response, run_workflow_mock_response]
 
         # Create a run first
-        create_response = client.functions.create_run(function_id=test_workflow.workflow_id)
+        with patch("notte_sdk._transport._RequestSession.post", side_effect=mock_post):
+            create_response = client.functions.create_run(function_id=test_workflow.workflow_id)
 
         # Run the workflow
         response = client.functions.run(
