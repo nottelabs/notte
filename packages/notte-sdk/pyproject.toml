@@ -13,6 +13,8 @@ packages = [
 requires-python = ">=3.11"
 dependencies = [
     "halo>=0.0.28",
+    "requests>=2.32.3,<3",
+    "urllib3>=2.2.3,<3",
     "notte-core==1.9.3.dev0",
     "websockets>=13.1",
 ]
