@@ -3024,6 +3024,7 @@ version = "1.9.3.dev0"
 source = { editable = "packages/notte-llm" }
 dependencies = [
     { name = "chevron" },
+    { name = "httpx" },
     { name = "json-repair" },
     { name = "litellm" },
     { name = "llamux" },
@@ -3038,6 +3039,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "chevron", specifier = ">=0.14.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "json-repair", specifier = ">=0.57.1" },
     { name = "litellm", specifier = ">=1.74.12" },
     { name = "llamux", specifier = ">=0.1.9" },

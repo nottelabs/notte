@@ -13,6 +13,7 @@ packages = [
 requires-python = ">=3.11"
 dependencies = [
     "chevron>=0.14.0",
+    "httpx>=0.28.1",
     "json-repair>=0.57.1",
     "litellm>=1.74.12",
     "openai<1.100.0",
