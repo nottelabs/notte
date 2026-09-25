@@ -22,9 +22,6 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 45
     env:
-      # A single token is used for the checkout, the push, and the pull request,
-      # so that the PR is opened by a real account and therefore runs CI.
-      GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
       BRANCH: chore/bump-submodules
     steps:
       - name: Checkout
@@ -84,6 +81,9 @@ jobs:
       - name: Open or update the bump pull request
         if: steps.bump.outputs.changes == 'true'
         env:
+          # The same token as the checkout, so the push and the pull request come
+          # from a real account and the PR therefore runs CI.
+          GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
           SUMMARY: ${{ steps.bump.outputs.summary }}
         run: |
           set -euo pipefail

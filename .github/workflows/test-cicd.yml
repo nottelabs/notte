@@ -26,13 +26,7 @@ concurrency:
 
 env:
   CACHE_TYPE: "pip"
-  NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
   NOTTE_API_URL: "https://us-staging.notte.cc"
-  NOTTE_VAULT_TEST_EMAIL: ${{ secrets.NOTTE_VAULT_TEST_EMAIL }}
-  NOTTE_VAULT_TEST_PASSWORD: ${{ secrets.NOTTE_VAULT_TEST_PASSWORD }}
-  SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-  EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
-  EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
   DISABLE_TELEMETRY: "true"
   PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright-browsers
   # True for push, manual dispatch, and same-repo PRs; false for fork PRs. Steps that
@@ -51,7 +45,7 @@ jobs:
     steps:
       - name: Checkout PR code (manual trigger)
         if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
           # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
@@ -59,31 +53,31 @@ jobs:
 
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
             ref: ${{ github.event.pull_request.head.sha }}
 
       - id: 'auth'
         if: ${{ env.IS_TRUSTED == 'true' }}
-        uses: 'google-github-actions/auth@v2'
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2.1.13
         with:
           credentials_json: ${{ secrets.VERTEX_AI }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
         with:
             enable-cache: true
             cache-dependency-glob: "uv.lock"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version-file: ".python-version"
           cache: ${{ env.CACHE_TYPE }}
 
       - name: Cache patchright
         id: cache-patchright
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ github.workspace }}/.playwright-browsers
           key: ${{ runner.os }}-patchright-${{ hashFiles('**/uv.lock') }}-v2
@@ -103,7 +97,7 @@ jobs:
 
       - name: Cache pre-commit
         id: cache-pre-commit
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/pre-commit
           key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml', '**/pyproject.toml') }}-v1
@@ -137,6 +131,11 @@ jobs:
 
       - name: Verify environment variables
         if: ${{ env.IS_TRUSTED == 'true' }}
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: |
           if [ -z "$NOTTE_API_KEY" ]; then
             echo "NOTTE_API_KEY is not set. For an external/fork PR, a maintainer should review the diff and run this workflow via 'Run workflow' (workflow_dispatch) with the PR number."
@@ -162,17 +161,26 @@ jobs:
 
       - name: Run unit tests
         if: ${{ env.IS_TRUSTED == 'true' }}
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_VAULT_TEST_EMAIL: ${{ secrets.NOTTE_VAULT_TEST_EMAIL }}
+          NOTTE_VAULT_TEST_PASSWORD: ${{ secrets.NOTTE_VAULT_TEST_PASSWORD }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: |
           set -o pipefail
           uv run pytest -n logical tests --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages | tee pytest-coverage.txt
 
       - name: Cleanup vaults created by this run
         if: ${{ always() && env.IS_TRUSTED == 'true' }}
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
         run: uv run python scripts/cleanup_ci_vaults.py
 
       - name: Pytest coverage comment
         if: ${{ always() && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}
-        uses: MishaKav/pytest-coverage-comment@main
+        uses: MishaKav/pytest-coverage-comment@432ac90e8d345c93e1d90ee0838b35913abc9c9b # v1.12.2
         with:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml

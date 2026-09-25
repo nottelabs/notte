@@ -55,7 +55,6 @@ jobs:
     timeout-minutes: 20
     env:
       NOTTE_API_URL: https://us-staging.notte.cc
-      NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
       NOTTE_DOCS_LIVE: '1'
       VITEST_INTEGRATION: '1'
     steps:
@@ -77,6 +76,8 @@ jobs:
       - run: npm run build --prefix node-sdk
       - name: Execute both languages against the local SDK packages
         working-directory: node-sdk
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
         run: |
           export NOTTE_DOCS_PYTHON="$GITHUB_WORKSPACE/.venv/bin/python"
           # Retry a failed live example once, without rerunning the whole suite.

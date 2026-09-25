@@ -25,9 +25,6 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 45
     env:
-      # A single token is used for the checkout, the push, and the pull request,
-      # so that the PR is opened by a real account and therefore runs CI.
-      GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
       BRANCH: chore/refresh-llms
       TARGET: docs/src/llms.txt
     steps:
@@ -38,13 +35,13 @@ jobs:
           token: ${{ secrets.SUBMODULE_BUMP_PAT }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version-file: ".python-version"
 
@@ -99,6 +96,9 @@ jobs:
       - name: Open or update the refresh pull request
         if: steps.generate.outputs.changes == 'true'
         env:
+          # The same token as the checkout, so the push and the pull request come
+          # from a real account and the PR therefore runs CI.
+          GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
           STAT: ${{ steps.generate.outputs.stat }}
         run: |
           set -euo pipefail
