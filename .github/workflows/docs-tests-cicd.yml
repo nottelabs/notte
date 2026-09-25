@@ -27,13 +27,13 @@ jobs:
       DOCS_TEST_FAST_MODE: "true"
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version-file: ".python-version"
 
@@ -56,13 +56,13 @@ jobs:
       DOCS_TEST_TYPE_CHECK: "true"
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version-file: ".python-version"
 
@@ -82,21 +82,17 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     env:
-      NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
-      NOTTE_GITHUB_COM_EMAIL: ${{ secrets.NOTTE_GITHUB_COM_EMAIL }}
-      NOTTE_GITHUB_COM_PASSWORD: ${{ secrets.NOTTE_GITHUB_COM_PASSWORD }}
-      NOTTE_GITHUB_COM_MFA_SECRET: ${{ secrets.NOTTE_GITHUB_COM_MFA_SECRET }}
       # Scope vault creates to this job only; cleanup deletes only this prefix.
       NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version-file: ".python-version"
 
@@ -112,6 +108,8 @@ jobs:
         run: uv run patchright install --no-shell
 
       - name: Verify environment variables
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
         run: |
           if [ -z "$NOTTE_API_KEY" ]; then
             echo "NOTTE_API_KEY is not set"
@@ -120,10 +118,17 @@ jobs:
           echo "Environment variables are set"
 
       - name: Run execution tests
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_GITHUB_COM_EMAIL: ${{ secrets.NOTTE_GITHUB_COM_EMAIL }}
+          NOTTE_GITHUB_COM_PASSWORD: ${{ secrets.NOTTE_GITHUB_COM_PASSWORD }}
+          NOTTE_GITHUB_COM_MFA_SECRET: ${{ secrets.NOTTE_GITHUB_COM_MFA_SECRET }}
         run: cd docs/src && uv run pytest -v --tb=no
 
       - name: Cleanup vaults created by this run
         if: always()
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
         run: |
           source .venv/bin/activate
           python scripts/cleanup_ci_vaults.py

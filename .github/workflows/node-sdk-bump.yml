@@ -24,8 +24,6 @@ jobs:
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'github'] }}
     timeout-minutes: 45
     env:
-      # Use a real account so pushes from the stable branch trigger PR checks.
-      GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
       BRANCH: chore/bump-node-sdk
     steps:
       - name: Checkout
@@ -87,6 +85,9 @@ jobs:
 
       - name: Open or update the bump pull request
         if: steps.generate.outputs.changes == 'true'
+        env:
+          # Use a real account so pushes from the stable branch trigger PR checks.
+          GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
         run: |
           set -euo pipefail
 

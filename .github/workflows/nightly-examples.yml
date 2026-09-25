@@ -14,24 +14,8 @@ on:
 env:
   CACHE_TYPE: "pip"
   DISABLE_TELEMETRY: "true"
-  NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
-  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   # Use the Vertex credentials configured below for the local-agent example.
   NOTTE_EXAMPLE_MODEL: "vertex_ai/gemini-3.5-flash"
-  GITHUB_COM_EMAIL: ${{ secrets.BOT_GITHUB_COM_EMAIL }}
-  GITHUB_COM_PASSWORD: ${{ secrets.BOT_GITHUB_COM_PASSWORD }}
-  GITHUB_COM_MFA_SECRET: ${{ secrets.BOT_GITHUB_COM_MFA_SECRET }}
-  LEETCODE_COM_USERNAME: ${{ secrets.BOT_LEETCODE_COM_USERNAME }}
-  LEETCODE_COM_PASSWORD: ${{ secrets.BOT_LEETCODE_COM_PASSWORD }}
-  UBER_EMAIL: ${{ secrets.BOT_UBER_EMAIL }}
-  UBER_PASSWORD: ${{ secrets.BOT_UBER_PASSWORD }}
-  UBER_MFA_SECRET: ${{ secrets.BOT_UBER_MFA_SECRET }}
-  STEEL_API_KEY: ${{ secrets.STEEL_API_KEY }}
-  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_WEBHOOK_URL }}
-  SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-  EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
-  EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-  EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
   CREDIT_CARD_HOLDER: "Marcel Pagnol"
   CREDIT_CARD_NUMBER: 4242424242424242
   CREDIT_CARD_CVV: 777
@@ -48,21 +32,21 @@ jobs:
         run: echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - id: 'auth'
-        uses: 'google-github-actions/auth@v2'
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2.1.13
         with:
           credentials_json: ${{ secrets.VERTEX_AI }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
         with:
             enable-cache: true
             cache-dependency-glob: "uv.lock"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version-file: ".python-version"
           cache: ${{ env.CACHE_TYPE }}
@@ -108,6 +92,9 @@ jobs:
           uv run patchright install --with-deps chromium --no-shell
 
       - name: Verify environment variables
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           if [ -z "$NOTTE_API_KEY" ]; then
             echo "NOTTE_API_KEY is not set"
@@ -122,10 +109,27 @@ jobs:
       - name: Run example tests
         env:
           EXAMPLE_TEST_FILTER: ${{ inputs.test_filter || '' }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_COM_EMAIL: ${{ secrets.BOT_GITHUB_COM_EMAIL }}
+          GITHUB_COM_PASSWORD: ${{ secrets.BOT_GITHUB_COM_PASSWORD }}
+          GITHUB_COM_MFA_SECRET: ${{ secrets.BOT_GITHUB_COM_MFA_SECRET }}
+          LEETCODE_COM_USERNAME: ${{ secrets.BOT_LEETCODE_COM_USERNAME }}
+          LEETCODE_COM_PASSWORD: ${{ secrets.BOT_LEETCODE_COM_PASSWORD }}
+          UBER_EMAIL: ${{ secrets.BOT_UBER_EMAIL }}
+          UBER_PASSWORD: ${{ secrets.BOT_UBER_PASSWORD }}
+          UBER_MFA_SECRET: ${{ secrets.BOT_UBER_MFA_SECRET }}
+          STEEL_API_KEY: ${{ secrets.STEEL_API_KEY }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
         run: xvfb-run --auto-servernum bash tests/run_examples.sh -k "$EXAMPLE_TEST_FILTER"
 
       - name: Cleanup vaults created by this run
         if: always()
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
         run: uv run python scripts/cleanup_ci_vaults.py --allow-production
 
       - name: Build Slack notification
@@ -152,7 +156,7 @@ jobs:
 
       - name: Send Slack Notification
         if: always()
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@e28cf165c92ffef168d23c5c9000cffc8a25e117 # v1.24.0
         with:
           payload-file-path: slack-payload.json
         env:
