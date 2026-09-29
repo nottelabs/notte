@@ -2862,6 +2862,12 @@ export type GlobalScrapeRequest = {
      */
     instructions?: string | null;
     /**
+     * Model
+     *
+     * The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model.
+     */
+    model?: LlmModel | string | null;
+    /**
      * Use Link Placeholders
      *
      * Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.
@@ -4643,6 +4649,12 @@ export type ScrapeFromHtmlRequest = {
      */
     instructions?: string;
     /**
+     * Model
+     *
+     * The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model.
+     */
+    model?: LlmModel | string | null;
+    /**
      * Use Link Placeholders
      *
      * Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.
@@ -4708,6 +4720,12 @@ export type ScrapeRequest = {
      * Additional instructions to use for the scrape. E.g. 'Extract only the title, date and content of the articles.'
      */
     instructions?: string | null;
+    /**
+     * Model
+     *
+     * The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model.
+     */
+    model?: LlmModel | string | null;
     /**
      * Use Link Placeholders
      *

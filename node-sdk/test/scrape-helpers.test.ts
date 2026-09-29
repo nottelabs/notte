@@ -6,7 +6,8 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { z } from 'zod';
 import { ScrapeFailedError } from '@/errors';
-import { buildScrapeBody, processScrapeResponse, type ScrapeResult, type StructuredData } from '@/scrape';
+import { buildScrapeBody, processScrapeResponse, type ScrapeResult, type SessionScrapeOptions, type StructuredData } from '@/scrape';
+import type { GlobalScrapeOptions } from '@/client';
 import type { DataSpace } from '@/lib/client/types.gen';
 
 /** Generated `DataSpace` uses opaque model types; fixtures are plain objects. */
@@ -40,6 +41,17 @@ describe('buildScrapeBody', () => {
     const schema = { type: 'object' };
     const body = await buildScrapeBody({ response_format: schema });
     expect(body.response_format).toBe(schema);
+  });
+
+  it('forwards the extraction model and omits it when unset', async () => {
+    const body = await buildScrapeBody({ instructions: 'Extract the title', model: 'vertex_ai/gemini-3.1-flash-lite' });
+    expect(body.model).toBe('vertex_ai/gemini-3.1-flash-lite');
+    expect(await buildScrapeBody({ instructions: 'Extract the title' })).not.toHaveProperty('model');
+  });
+
+  it('accepts a model on session and client scrape options', () => {
+    expectTypeOf<SessionScrapeOptions['model']>().toEqualTypeOf<string | null | undefined>();
+    expectTypeOf<GlobalScrapeOptions['model']>().toEqualTypeOf<string | null | undefined>();
   });
 });
 

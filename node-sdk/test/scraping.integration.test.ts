@@ -134,6 +134,18 @@ describe('Scraping Integration Tests', () => {
       });
     });
 
+    it('should scrape structured data with a chosen extraction model', { timeout: 60_000 }, async () => {
+      await client.Session({ proxies: false, idle_timeout_minutes: 1 }).use(async session => {
+        await session.execute(actions.goto({ url: 'https://example.com' }));
+        const data = await session.scrape({
+          instructions: 'Extract the main heading of the page',
+          response_format: z.object({ title: z.string() }),
+          model: 'vertex_ai/gemini-3.1-flash-lite',
+        });
+        expect(data.title.toLowerCase()).toContain('example domain');
+      });
+    });
+
     it('should scrape images only', { timeout: 60_000 }, async () => {
       await client.Session({ proxies: false }).use(async session => {
         await session.execute(actions.goto({ url: 'https://gymbeam.pl' }));
@@ -214,6 +226,16 @@ describe('Scraping Integration Tests', () => {
       const data = await client.scrape('https://www.notte.cc', { proxies: false, ignored_tags: ['script', 'style'] });
       expect(typeof data).toBe('string');
       expect(data.length).toBeGreaterThan(0);
+    });
+
+    it('should scrape with a chosen extraction model', { timeout: 60_000 }, async () => {
+      const data = await client.scrape('https://example.com', {
+        proxies: false,
+        instructions: 'Extract the main heading of the page',
+        response_format: z.object({ title: z.string() }),
+        model: 'vertex_ai/gemini-3.1-flash-lite',
+      });
+      expect(data.title.toLowerCase()).toContain('example domain');
     });
 
     it('should scrape with scrape_links and scrape_images disabled', { timeout: 60_000 }, async () => {

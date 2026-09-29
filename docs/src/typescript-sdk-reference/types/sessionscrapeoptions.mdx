@@ -43,6 +43,10 @@ Whether to scrape images from the page. Images are scraped by default.
 HTML tags to ignore from the page
 </ParamField>
 
+<ParamField body="model" type={"string | null | undefined"}>
+The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model.
+</ParamField>
+
 <ParamField body="use_link_placeholders" type={"boolean | undefined"}>
 Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.
 </ParamField>
