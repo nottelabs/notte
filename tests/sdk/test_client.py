@@ -241,6 +241,23 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, session_id: str, head
     mock_post.assert_called_once()
     actual_call = mock_post.call_args
     assert actual_call.kwargs["headers"] == headers
+    assert "model" not in json.loads(actual_call.kwargs["data"])
+
+
+@patch("notte_sdk._transport._RequestSession.post")
+def test_scrape_sends_model(mock_post: MagicMock, client: NotteClient, session_id: str) -> None:
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = {
+        "markdown": "test space",
+        "structured": {"success": True, "error": None, "data": {"title": "t"}},
+        "session": session_response_dict(session_id),
+    }
+
+    _ = client.sessions.page.scrape(session_id, instructions="extract", model="vertex_ai/gemini-3.1-flash-lite")
+
+    body = json.loads(mock_post.call_args.kwargs["data"])
+    assert body["model"] == "vertex_ai/gemini-3.1-flash-lite"
+    assert body["instructions"] == "extract"
 
 
 @pytest.mark.parametrize("start_session", [True, False])

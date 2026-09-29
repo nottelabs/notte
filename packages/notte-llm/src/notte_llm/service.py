@@ -32,11 +32,12 @@ class LLMService:
     LLM service for Notte.
     """
 
-    def __init__(self, base_model: str | None = None) -> None:
+    def __init__(self, base_model: str | None = None, use_router: bool = True) -> None:
         self.lib: PromptLibrary = PromptLibrary(str(PROMPT_DIR))
         self.router: Router | None = None
 
-        if config.use_llamux:
+        # A caller-chosen model must not be overridden by the router.
+        if config.use_llamux and use_router:
             llamux_config = get_llamux_config(config.verbose)
             path = Path(llamux_config)
             if not path.exists():

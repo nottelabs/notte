@@ -31,6 +31,10 @@ def _check_remote_session(session: RemoteSession) -> None:
     reveal_type(markdown_params)
     wrapped = session.scrape(response_format=Profile, raise_on_failure=False)
     reveal_type(wrapped)
+    with_model = session.scrape(response_format=Profile, model="vertex_ai/gemini-3.1-flash-lite")
+    reveal_type(with_model)
+    instructions_model = session.scrape(instructions="extract profile", model="vertex_ai/gemini-3.1-flash-lite")
+    reveal_type(instructions_model)
 
 
 def _check_client(client: NotteClient) -> None:
@@ -42,6 +46,8 @@ def _check_client(client: NotteClient) -> None:
     reveal_type(images)
     markdown = client.scrape("https://example.com")
     reveal_type(markdown)
+    with_model = client.scrape("https://example.com", response_format=Profile, model="vertex_ai/gemini-3.1-flash-lite")
+    reveal_type(with_model)
 
 
 def _check_page(page: PageClient) -> None:
@@ -53,6 +59,8 @@ def _check_page(page: PageClient) -> None:
     reveal_type(images)
     markdown = page.scrape("session-id")
     reveal_type(markdown)
+    with_model = page.scrape("session-id", instructions="extract", model="vertex_ai/gemini-3.1-flash-lite")
+    reveal_type(with_model)
 
 
 def _check_local_session(session: NotteSession) -> None:
