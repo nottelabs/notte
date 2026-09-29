@@ -222,7 +222,9 @@ def test_invalid_credentials_in_local_agent():
     with client.Vault() as vault, notte.Session() as session:
         agent = notte.Agent(session=session, vault=vault)
         with pytest.raises(NoCredentialsFoundError):
-            _ = agent.run(task="go to console.notte.cc and login then retrieve the current active usage.")
+            _ = agent.run(
+                task="go to https://apartment-board-demo-nine.vercel.app/auth/signin and login then list the apartments."
+            )
 
 
 # ============================================
