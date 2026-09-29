@@ -178,6 +178,12 @@ export type GlobalScrapeRequest = {
      */
     instructions?: string | null;
     /**
+     * Model
+     *
+     * The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model.
+     */
+    model?: LlmModel | string | null;
+    /**
      * Use Link Placeholders
      *
      * Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.
@@ -304,6 +310,10 @@ The response format to use for the scrape. Use a JSON Schema object; high-level 
 Additional instructions to use for the scrape. E.g. 'Extract only the title, date and content of the articles.'
 </ParamField>
 
+<ParamField body="model" type={"string | null | undefined"}>
+The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model.
+</ParamField>
+
 <ParamField body="use_link_placeholders" type={"boolean | undefined"}>
 Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.
 </ParamField>
@@ -315,6 +325,7 @@ Whether to use link/image placeholders to reduce the number of tokens in the pro
 ## Related types
 
 - [ExternalProxy](/typescript-sdk-reference/types/externalproxy)
+- [LlmModel](/typescript-sdk-reference/types/llmmodel)
 - [NotteProxy](/typescript-sdk-reference/types/notteproxy)
 - [SessionProfile](/typescript-sdk-reference/types/sessionprofile)
 - [TailnetProxy](/typescript-sdk-reference/types/tailnetproxy)
