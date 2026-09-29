@@ -23,6 +23,6 @@ without_links = client.scrape(url, scrape_links=False)
 results = [
     isinstance(markdown, str),
     "Example Domain" in markdown,
-    "[Learn more](https://iana.org/domains/example)" in with_links,
+    "[Learn more](https://iana.org/help/example-domains)" in with_links,
     "Learn more" in without_links and "iana.org" not in without_links,
 ]

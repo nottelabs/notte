@@ -228,28 +228,28 @@ async def test_falco_agent_consistent_trajectory_with_completion():
 
     # Define the sequence with a completion action at the end
     sequence = [
-        # Step 1: goto: url=notte.cc
+        # Step 1: goto: demo sign-in page
         create_agent_step_response(
-            action=GotoAction(url="https://console.notte.cc/signin"),
-            page_summary="Navigating to notte.cc",
-            next_goal="Navigate to the website",
+            action=GotoAction(url="https://apartment-board-demo-nine.vercel.app/auth/signin"),
+            page_summary="Navigating to the demo sign-in page",
+            next_goal="Navigate to the sign-in page",
         ),
-        # Step 2: fill: "I1" hello@notte.c
+        # Step 2: fill: "I1" alder
         create_agent_step_response(
-            action=FillAction(id="I1", value="hello@notte.c"),
-            page_summary="On notte.cc homepage",
+            action=FillAction(id="I1", value="alder"),
+            page_summary="On the demo sign-in page",
             previous_goal_status="success",
-            previous_goal_eval="Successfully navigated to notte.cc",
-            memory="Navigated to notte.cc",
-            next_goal="Fill the email input field",
+            previous_goal_eval="Successfully navigated to the sign-in page",
+            memory="Navigated to the sign-in page",
+            next_goal="Fill the username field",
         ),
         # Step 3: click B1
         create_agent_step_response(
             action=ClickAction(id="B1"),
             page_summary="Email field filled",
             previous_goal_status="success",
-            previous_goal_eval="Successfully filled email field",
-            memory="Filled email field with hello@notte.c",
+            previous_goal_eval="Successfully filled username field",
+            memory="Filled username field with alder",
             next_goal="Click the submit button",
         ),
         # Step 4: scroll down
@@ -363,28 +363,28 @@ async def test_falco_consistent_trajectory_failed_validation():
 
     # Define the sequence with a completion action at the end
     sequence = [
-        # Step 1: goto: url=notte.cc
+        # Step 1: goto: demo sign-in page
         create_agent_step_response(
-            action=GotoAction(url="https://console.notte.cc/signin"),
-            page_summary="Navigating to notte.cc",
-            next_goal="Navigate to the website",
+            action=GotoAction(url="https://apartment-board-demo-nine.vercel.app/auth/signin"),
+            page_summary="Navigating to the demo sign-in page",
+            next_goal="Navigate to the sign-in page",
         ),
-        # Step 2: fill: "I1" hello@notte.c
+        # Step 2: fill: "I1" alder
         create_agent_step_response(
-            action=FillAction(id="I1", value="hello@notte.c"),
-            page_summary="On notte.cc homepage",
+            action=FillAction(id="I1", value="alder"),
+            page_summary="On the demo sign-in page",
             previous_goal_status="success",
-            previous_goal_eval="Successfully navigated to notte.cc",
-            memory="Navigated to notte.cc",
-            next_goal="Fill the email input field",
+            previous_goal_eval="Successfully navigated to the sign-in page",
+            memory="Navigated to the sign-in page",
+            next_goal="Fill the username field",
         ),
         # Step 3: click B1
         create_agent_step_response(
             action=ClickAction(id="B1"),
             page_summary="Email field filled",
             previous_goal_status="success",
-            previous_goal_eval="Successfully filled email field",
-            memory="Filled email field with hello@notte.c",
+            previous_goal_eval="Successfully filled username field",
+            memory="Filled username field with alder",
             next_goal="Click the submit button",
         ),
         # Step 4: scroll down

@@ -2,6 +2,7 @@ import pytest
 from dotenv import load_dotenv
 from notte_core.common.config import BrowserType
 from notte_sdk import NotteClient
+from notte_sdk.errors import NotteAPIError
 
 _ = load_dotenv()
 
@@ -34,9 +35,17 @@ def test_start_close_session_with_proxy():
     assert session.response is not None
 
 
+def test_start_session_with_too_small_viewport_is_rejected():
+    client = NotteClient()
+    with pytest.raises(NotteAPIError) as exc_info:
+        with client.Session(proxies=False, viewport_height=100, viewport_width=100):
+            pass
+    assert 400 <= exc_info.value.status_code < 500
+
+
 def test_start_close_session_with_viewport():
     client = NotteClient()
-    with client.Session(proxies=False, viewport_height=100, viewport_width=100) as session:
+    with client.Session(proxies=False, viewport_height=768, viewport_width=1024) as session:
         assert session.session_id is not None
         status = session.status()
         assert status.status == "active"
