@@ -1818,6 +1818,7 @@ class ScrapeMarkdownParamsDict(TypedDict, total=False):
         scrape_images: Whether to scrape images from the page. Images are not scraped by default.
         only_main_content: Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
         use_link_placeholders: Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations.
+        model: The LLM used to extract structured data when `instructions` or `response_format` is set. Defaults to the platform model.
     """
 
     selector: str | None
@@ -1825,6 +1826,7 @@ class ScrapeMarkdownParamsDict(TypedDict, total=False):
     scrape_images: bool
     only_main_content: bool
     use_link_placeholders: bool
+    model: LlmModel | str | None
 
 
 class ScrapeStructuredParamsDict(TypedDict, total=False):
@@ -1894,6 +1896,13 @@ class ScrapeParams(SdkRequest):
         str | None,
         Field(
             description="Additional instructions to use for the scrape. E.g. 'Extract only the title, date and content of the articles.'"
+        ),
+    ] = None
+
+    model: Annotated[
+        LlmModel | str | None,
+        Field(
+            description="The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model."
         ),
     ] = None
 

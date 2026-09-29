@@ -23,16 +23,20 @@ EXPECTED_REVEALS = (
     "str",
     "str",
     "StructuredData[Profile]",
+    "Profile",
+    "dict[str, Any]",
     # NotteClient
     "Profile",
     "dict[str, Any]",
     "list[ImageData]",
     "str",
+    "Profile",
     # PageClient
     "Profile",
     "dict[str, Any]",
     "list[ImageData]",
     "str",
+    "dict[str, Any]",
     # NotteSession (local)
     "Profile",
     "dict[str, Any]",

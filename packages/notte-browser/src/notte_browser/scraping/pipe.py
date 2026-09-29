@@ -157,7 +157,13 @@ class DataScrapingPipe:
         if params.requires_schema():
             if config.verbose:
                 logger.trace("🎞️ Structuring data with schema pipe")
-            structured = await self.schema_pipe.forward(
+            # A per-call model gets its own pipe; the shared one is used by concurrent calls.
+            schema_pipe = (
+                SchemaScrapingPipe(llmserve=LLMService(base_model=str(params.model), use_router=False))
+                if params.model is not None
+                else self.schema_pipe
+            )
+            structured = await schema_pipe.forward(
                 url=snapshot.metadata.url,
                 document=markdown,
                 response_format=params.response_format,
