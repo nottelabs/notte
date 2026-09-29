@@ -23,6 +23,6 @@ const withoutLinks = await client.scrape(url, { scrape_links: false });
 export const results = [
   typeof markdown === 'string',
   markdown.includes('Example Domain'),
-  withLinks.includes('[Learn more](https://iana.org/domains/example)'),
+  withLinks.includes('[Learn more](https://iana.org/help/example-domains)'),
   withoutLinks.includes('Learn more') && !withoutLinks.includes('iana.org'),
 ];
