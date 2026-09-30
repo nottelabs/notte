@@ -68,6 +68,17 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      - name: Wait for the API to be reachable
+        # The staging API scales to zero when idle and wakes on the first
+        # request; poll until it answers before running anything against it.
+        env:
+          NOTTE_API_URL: https://us-staging.notte.cc
+        run: |
+          deadline=$((SECONDS + 900))
+          until [ "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' "$NOTTE_API_URL/health")" = "200" ]; do
+            [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
+            sleep 10
+          done
       - name: Run complete live integration suite
         env:
           NOTTE_API_URL: https://us-staging.notte.cc
@@ -87,4 +98,15 @@ jobs:
           cache: npm
           cache-dependency-path: node-sdk/package-lock.json
       - run: npm ci
+      - name: Wait for the API to be reachable
+        # The staging API scales to zero when idle and wakes on the first
+        # request; poll until it answers before running anything against it.
+        env:
+          NOTTE_API_URL: https://us-staging.notte.cc
+        run: |
+          deadline=$((SECONDS + 900))
+          until [ "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' "$NOTTE_API_URL/health")" = "200" ]; do
+            [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
+            sleep 10
+          done
       - run: npm run check:staging
