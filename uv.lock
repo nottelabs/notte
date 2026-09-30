@@ -1577,16 +1577,18 @@ wheels = [
 
 [[package]]
 name = "hyperbrowser"
-version = "0.60.0"
+version = "1.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "jsonref" },
     { name = "pydantic" },
+    { name = "typing-extensions" },
+    { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/87/17/dae0e1c56eef7f404ef8a19442119891694cf51d710375b7b87e16bed218/hyperbrowser-0.60.0.tar.gz", hash = "sha256:8a9d3dfde25c16f94b87135d4d09ba130fc5936908adadb232fe2c3da3f846c4", size = 26338, upload-time = "2025-10-03T08:42:12.784Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/11/5b5d0528f113b8193839326cf8d579e49fcee39355d86ecd61d65e270a25/hyperbrowser-1.9.0.tar.gz", hash = "sha256:9bc49e41db95b7869d88d35dd7a53d5b3fa82e0af255d89eb2f7ffce747cd000", size = 129633, upload-time = "2026-09-27T04:38:55.354Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1b/5c/890c450150591b48ec158c67d287cb05bdf5ef5b6bfb36000f0b6ca5f9a3/hyperbrowser-0.60.0-py3-none-any.whl", hash = "sha256:2c2385ae4faea9bc35f1e9912700996b05e7a3d621663d06b327fb257692d554", size = 53121, upload-time = "2025-10-03T08:42:11.409Z" },
+    { url = "https://files.pythonhosted.org/packages/98/0c/88e78e974c0253523b0b81caa61ed463bde327c73422174f052ca1062dd5/hyperbrowser-1.9.0-py3-none-any.whl", hash = "sha256:2a6f835dae128d448d590d8c0a9e73021106c203931784ea30bf54c0d806c9ef", size = 188485, upload-time = "2026-09-27T04:38:53.78Z" },
 ]
 
 [[package]]
