@@ -475,13 +475,13 @@ export type ApiSessionStartRequest = {
     /**
      * Viewport Width
      *
-     * The width of the viewport
+     * Viewport width in pixels (minimum 500). Set together with viewport_height.
      */
     viewport_width?: number | null;
     /**
      * Viewport Height
      *
-     * The height of the viewport
+     * Viewport height in pixels (minimum 500). Set together with viewport_width.
      */
     viewport_height?: number | null;
     /**
@@ -2740,13 +2740,13 @@ export type GlobalScrapeRequest = {
     /**
      * Viewport Width
      *
-     * The width of the viewport
+     * Viewport width in pixels (minimum 500). Set together with viewport_height.
      */
     viewport_width?: number | null;
     /**
      * Viewport Height
      *
-     * The height of the viewport
+     * Viewport height in pixels (minimum 500). Set together with viewport_width.
      */
     viewport_height?: number | null;
     /**
