@@ -85,7 +85,7 @@
     "playwright-core": "1.63.0",
     "tsup": "^8.5.1",
     "typescript": "^5.5.4",
-    "vitest": "^4.0.10"
+    "vitest": "^5.0.2"
   },
   "publishConfig": {
     "access": "public"
