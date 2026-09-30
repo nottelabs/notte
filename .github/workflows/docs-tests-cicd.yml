@@ -117,6 +117,15 @@ jobs:
           fi
           echo "Environment variables are set"
 
+      - name: Wait for the API to be reachable
+        # The staging API scales to zero when idle and wakes on the first
+        # request; poll until it answers before running anything against it.
+        run: |
+          deadline=$((SECONDS + 900))
+          until [ "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' "$NOTTE_API_URL/health")" = "200" ]; do
+            [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
+            sleep 10
+          done
       - name: Run execution tests
         env:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
