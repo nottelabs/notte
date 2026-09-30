@@ -2957,7 +2957,7 @@ tempo = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiohttp", specifier = "~=3.11.13" },
+    { name = "aiohttp", specifier = ">=3.11.13,<4" },
     { name = "cryptography", specifier = ">=43.0.3" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "nest-asyncio", specifier = ">=1.6.0" },
