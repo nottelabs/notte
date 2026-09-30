@@ -134,7 +134,7 @@ class Screenshot(BaseModel):
             img = Image.open(io.BytesIO(v))
             # Image.open is lazy. Force decoding here so a truncated image
             # cannot escape validation and fail later in display or replay code.
-            _ = img.load()  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+            _ = img.load()
             orig_img = img
 
             # Pad to even width and height (required for video encoding)
