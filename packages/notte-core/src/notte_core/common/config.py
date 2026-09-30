@@ -197,7 +197,10 @@ class LlmModel(StrEnum):
         if "/llama-3.3-70b-instruct" in _model:
             _model = "meta-llama/llama-3.3-70b-instruct"
 
-        if "xai/" in _model:
+        if "/grok-4-1-fast-non-reasoning" in _model:
+            # Legacy public value: xAI retired grok-4.1-fast and recommends 4.3
+            _model = "x-ai/grok-4.3"
+        elif "xai/" in _model:
             _model = _model.replace("xai/", "x-ai/")
 
         if "zai/" in _model:

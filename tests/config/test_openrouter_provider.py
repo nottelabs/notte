@@ -101,6 +101,15 @@ class TestGetOpenrouterModel:
         result = LlmModel.get_openrouter_model("openai/gpt-4o")
         assert result == "openrouter/openai/gpt-4o"
 
+    def test_grok_conversion(self) -> None:
+        result = LlmModel.get_openrouter_model("xai/grok-4.3")
+        assert result == "openrouter/x-ai/grok-4.3"
+
+    def test_legacy_grok_value_maps_to_grok_4_3(self) -> None:
+        """The retired public value must not be forwarded to OpenRouter verbatim."""
+        result = LlmModel.get_openrouter_model("xai/grok-4-1-fast-non-reasoning")
+        assert result == "openrouter/x-ai/grok-4.3"
+
 
 class TestLlmModelOpenrouterIntegration:
     """Tests for LlmModel enum values with OpenRouter methods."""
