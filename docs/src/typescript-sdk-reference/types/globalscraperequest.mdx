@@ -56,13 +56,13 @@ export type GlobalScrapeRequest = {
     /**
      * Viewport Width
      *
-     * The width of the viewport
+     * Viewport width in pixels (minimum 500). Set together with viewport_height.
      */
     viewport_width?: number | null;
     /**
      * Viewport Height
      *
-     * The height of the viewport
+     * Viewport height in pixels (minimum 500). Set together with viewport_width.
      */
     viewport_height?: number | null;
     /**
@@ -227,11 +227,11 @@ Overwrite the chrome instance arguments
 </ParamField>
 
 <ParamField body="viewport_width" type={"number | null | undefined"}>
-The width of the viewport
+Viewport width in pixels (minimum 500). Set together with viewport_height.
 </ParamField>
 
 <ParamField body="viewport_height" type={"number | null | undefined"}>
-The height of the viewport
+Viewport height in pixels (minimum 500). Set together with viewport_width.
 </ParamField>
 
 <ParamField body="aspect_ratio" type={"\"5:4\" | \"16:9\" | null | undefined"}>
