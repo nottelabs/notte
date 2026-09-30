@@ -28,7 +28,7 @@ OPENROUTER_MODELS = [
     "minimax/minimax-m2.5",
     "moonshotai/kimi-k2.5",
     "deepseek/deepseek-v3.2",
-    "x-ai/grok-4.1-fast",
+    "x-ai/grok-4.3",
     "z-ai/glm-5",
     "qwen/qwen3.5-flash-02-23",
 ]
