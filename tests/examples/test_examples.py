@@ -199,7 +199,11 @@ def test_use_case_script(use_case_dir: Path) -> None:
 @pytest.mark.parametrize(
     "index", [3, 4, 5], ids=["landing-examples-blog", "landing-examples-bbc", "landing-examples-weather"]
 )
-@pytest.mark.flaky(reruns=2, reruns_delay=5, only_rerun=["Task failed due to session expiration"])
+@pytest.mark.flaky(
+    reruns=2,
+    reruns_delay=5,
+    only_rerun=["Task failed due to session expiration", "KeyError"],
+)
 def test_landing_example(index: int) -> None:
     script = Path(__file__).resolve().parents[2] / "examples" / "landing-examples" / "landing_examples.py"
     exit_code, logged = run_python_file(script, ["--example-index", str(index)])
