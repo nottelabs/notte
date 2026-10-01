@@ -48,6 +48,9 @@ jobs:
       - name: Run syntax checks
         run: cd docs/src && uv run pytest -v --tb=no
 
+      - name: Test shared setup synchronization
+        run: python docs/src/scripts/test_sync_quickstart_setup_prompt.py
+
   type-check:
     needs: syntax-check
     runs-on: blacksmith-4vcpu-ubuntu-2404
