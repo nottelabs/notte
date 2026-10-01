@@ -13,6 +13,10 @@ from notte_core.errors.actions import EvaluateJsResultLimitError
 
 _STRING_CHUNK_CHARS = 8192
 _MAX_DEPTH = 128
+# Bytes of JSON text a value may take beyond what the guard charges for it:
+# the tag that carries a special number, BigInt, Date or URL (about 70 bytes
+# with the 32-character token), or the digits of a typed-array element.
+_TRANSFER_ALLOWANCE_PER_VALUE = 96
 
 # Prefix of the error thrown by the page-side guard. Each call appends a random
 # token that the evaluated code cannot read, so a page error that merely
@@ -386,10 +390,28 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
     }
     return done(copy);
   };
+  // A top-level string is sent as is: its length, which a page cannot
+  // override, was already checked against maxBytes.
+  if (typeof value === "string") {
+    chargeText(value, true);
+    return "s" + value;
+  }
   // A cycle fails the action as a JavaScript error (above) instead of
   // crashing the formatter after the transfer, as it did before.
-  return stringify(visit(value, 0));
-}""" % (_MAX_DEPTH, json.dumps(RESULT_LIMIT_MARKER))
+  const snapshot = visit(value, 0);
+  // JSON.stringify belongs to the page and may have been replaced before this
+  // call, so its output is only accepted as a string no longer than what the
+  // walk measured plus a fixed allowance per value for tags and punctuation.
+  // typeof and the length of a primitive string cannot be overridden.
+  const text = stringify(snapshot);
+  if (typeof text !== "string") {
+    throw new Error("evaluate_js result could not be serialized");
+  }
+  if (!(text.length <= size + %d * values + %d)) {
+    tooLarge();
+  }
+  return "j" + text;
+}""" % (_MAX_DEPTH, json.dumps(RESULT_LIMIT_MARKER), _TRANSFER_ALLOWANCE_PER_VALUE, _TRANSFER_ALLOWANCE_PER_VALUE)
 
 
 def new_guard_token() -> str:
@@ -401,12 +423,25 @@ _EPOCH = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
 _SPECIAL_NUMBERS = {"NaN": math.nan, "Infinity": math.inf, "-Infinity": -math.inf, "-0": -0.0}
 
 
-def decode_page_result(text: str, token: str) -> Any:
-    """Decode the guard's JSON into the values Playwright would have produced.
+def decode_page_result(payload: object, token: str, *, max_bytes: int, max_values: int) -> Any:
+    """Decode the guard's payload into the values Playwright would have produced.
 
-    The guard tags values JSON cannot express with the per-call token; each tag
-    becomes what Playwright's own decoder returns for that value.
+    The payload is "s" plus a top-level string, or "j" plus JSON in which values
+    JSON cannot express are tagged with the per-call token; each tag becomes
+    what Playwright's own decoder returns for that value. The guard bounds the
+    payload before sending it; the same bound is checked again here before
+    parsing.
     """
+    if not isinstance(payload, str) or payload[:1] not in ("s", "j"):
+        raise ValueError("evaluate_js returned an unexpected payload")
+    body = payload[1:]
+    if payload[0] == "s":
+        if len(body) > max_bytes:
+            raise EvaluateJsResultLimitError(max_bytes, "output size")
+        return body
+    if len(body) > max_bytes + _TRANSFER_ALLOWANCE_PER_VALUE * (max_values + 1):
+        raise EvaluateJsResultLimitError(max_bytes, "output size")
+    text = body
 
     def untag(item: dict[str, Any]) -> Any:
         kind = item.get(token)

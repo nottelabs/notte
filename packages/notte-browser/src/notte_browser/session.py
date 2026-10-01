@@ -816,7 +816,12 @@ class NotteSession(AsyncResource, SyncResource):
                                 # The guard returns the result as one JSON string,
                                 # decoded once here instead of value by value by
                                 # Playwright, which cost several times the memory.
-                                result = decode_page_result(result, guard_token)
+                                result = decode_page_result(
+                                    result,
+                                    guard_token,
+                                    max_bytes=config.evaluate_js_max_result_bytes,
+                                    max_values=config.evaluate_js_max_result_values,
+                                )
                                 result_str = format_evaluation_result(
                                     result, max_bytes=config.evaluate_js_max_result_bytes
                                 )

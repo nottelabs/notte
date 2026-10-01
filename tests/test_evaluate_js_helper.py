@@ -72,9 +72,9 @@ async def test_saved_limit_errors_do_not_retain_rejected_results(monkeypatch, ra
     failures = []
     original_decode = session_module.decode_page_result
 
-    def decode(text, token):
+    def decode(payload, token, **limits):
         # Track the decoded result, the value the formatter then rejects.
-        value = original_decode(text, token)
+        value = original_decode(payload, token, **limits)
         if isinstance(value, list):
             value = TrackedList(value)
             references.append(weakref.ref(value))
@@ -87,7 +87,7 @@ async def test_saved_limit_errors_do_not_retain_rejected_results(monkeypatch, ra
         async def evaluate(expression, *args, **kwargs):
             # The user code is the first argument of the page-side guard.
             if args and args[0][0] == "rejected_result":
-                return json.dumps(["x" * 4096])
+                return "j" + json.dumps(["x" * 4096])
             return await original_evaluate(expression, *args, **kwargs)
 
         monkeypatch.setattr(session.window.page, "evaluate", evaluate)
@@ -142,8 +142,8 @@ async def test_oversized_result_is_rejected_inside_the_page(monkeypatch) -> None
         assert "serialized result exceeds 16384 bytes" in result.message
         assert transferred == [], "the rejected value must not reach the driver"
         assert await session.aevaluate_js('"y".repeat(100)') == "y" * 100
-        # The guard transfers the result as JSON text: the quoted string.
-        assert transferred == [102]
+        # A top-level string is transferred as itself behind a one-letter prefix.
+        assert transferred == [101]
 
 
 @pytest.mark.asyncio
@@ -511,3 +511,23 @@ async def test_inherited_tojson_does_not_change_the_result() -> None:
         assert await session.aevaluate_js(code) == (
             '{\n  "a": [\n    1,\n    {\n      "b": 2\n    }\n  ],\n  "d": "1970-01-01 00:00:00+00:00"\n}'
         )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "replacement",
+    [
+        "() => '[\"' + 'x'.repeat(4 * 1024 * 1024) + '\"]'",
+        "() => ({length: 2})",
+    ],
+)
+async def test_a_replaced_json_stringify_cannot_inflate_the_transfer(monkeypatch, replacement) -> None:
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    async with NotteSession(headless=True) as session:
+        await session.window.page.evaluate(f"() => {{ JSON.stringify = {replacement}; }}", isolated_context=False)
+        transferred = await _transfers(session, monkeypatch)
+        result = await session.aevaluate_js("({a: [1, 2]})", raise_on_failure=False)
+        assert result.success is False
+        assert all(size < 1000 for size in transferred)
+        # A top-level string never goes through JSON.stringify.
+        assert await session.aevaluate_js("'plain'") == "plain"
