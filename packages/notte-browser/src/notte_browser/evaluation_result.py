@@ -74,14 +74,17 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
     "Uint32Array", "Float32Array", "Float64Array", "BigInt64Array", "BigUint64Array",
   ]) {
     const Kind = attempt(() => globalThis[name]);
-    if (typeof Kind === "function" && typeof Kind.BYTES_PER_ELEMENT === "number") {
-      typedArrays[name] = { Kind, width: Kind.BYTES_PER_ELEMENT };
+    const width = attempt(() => Kind.BYTES_PER_ELEMENT);
+    if (typeof Kind === "function" && typeof width === "number" && width > 0) {
+      typedArrays[name] = { Kind, width };
     }
   }
   const WindowType = attempt(() => Window);
   const DocumentType = attempt(() => Document);
   const NodeType = attempt(() => Node);
   const ErrorType = Error;
+  const ObjectPrototype = Object.prototype;
+  const ArrayPrototype = Array.prototype;
   const instanceOf = (item, Type) => {
     try {
       return typeof Type === "function" && item instanceof Type;
@@ -152,7 +155,14 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
     return width;
   };
   const chargeText = (text, topLevel) => {
-    charge(topLevel ? utf8Width(text, maxBytes - size) : escapedWidth(text, maxBytes - size));
+    if (topLevel) {
+      // Each UTF-16 unit is 1 to 3 UTF-8 bytes, so only a string between the
+      // two bounds needs an exact count.
+      const room = maxBytes - size;
+      charge(text.length * 3 <= room ? text.length : utf8Width(text, room));
+    } else {
+      charge(escapedWidth(text, maxBytes - size));
+    }
   };
   const isError = (item) => {
     try {
@@ -171,7 +181,20 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
   const copies = new Map();
   const visit = (item, depth) => {
     const topLevel = depth === 0;
-    if (item && typeof item === "object") {
+    // Plain objects and arrays, which make up most results, skip the
+    // special-type checks below: those identify a type by calling a built-in
+    // accessor that throws on a mismatch, which is slow per value.
+    let plain = false;
+    if (item !== null && typeof item === "object") {
+      let proto;
+      try {
+        proto = prototypeOf(item);
+      } catch (error) {
+        proto = undefined;
+      }
+      plain = proto === ObjectPrototype || proto === null || proto === ArrayPrototype;
+    }
+    if (!plain && item && typeof item === "object") {
       const ref =
         (instanceOf(item, WindowType) && "ref: <Window>") ||
         (instanceOf(item, DocumentType) && "ref: <Document>") ||
@@ -193,6 +216,7 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
       charge(4);
       return item;
     }
+    if (!plain) {
     if (isError(item)) {
       const message = item.message;
       const text = typeof message === "string" ? message : String(message);
@@ -247,6 +271,7 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
       const copy = new typed.Kind(count);
       apply(typedArraySet, copy, [item]);
       return copy;
+    }
     }
     if (copies.has(item)) {
       charge(1);

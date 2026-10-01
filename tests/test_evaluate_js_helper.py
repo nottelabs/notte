@@ -346,7 +346,8 @@ async def test_forged_special_types_are_sent_as_plain_objects(monkeypatch) -> No
 async def test_guard_survives_pages_that_replace_builtins() -> None:
     async with NotteSession(headless=True) as session:
         await session.window.page.evaluate(
-            "() => { window.URL = function () {}; window.RegExp = class {}; window.Uint8Array = function () {}; }",
+            "() => { window.URL = function () {}; window.RegExp = class {}; window.Uint8Array = function () {};"
+            " window.Int16Array = Object.defineProperty(function () {}, 'BYTES_PER_ELEMENT', {get() { throw new Error('no'); }}); }",
             isolated_context=False,
         )
         assert await session.aevaluate_js("1 + 1") == "2"
