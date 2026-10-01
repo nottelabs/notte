@@ -1,6 +1,7 @@
 """`evaluate_js()` returns the evaluated string; the envelope stays on the `False` overload."""
 
 import gc
+import json
 import weakref
 
 import notte_browser.session as session_module
@@ -69,15 +70,24 @@ async def test_saved_limit_errors_do_not_retain_rejected_results(monkeypatch, ra
     monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 1024}))
     references = []
     failures = []
+    original_decode = session_module.decode_page_result
+
+    def decode(text, token):
+        # Track the decoded result, the value the formatter then rejects.
+        value = original_decode(text, token)
+        if isinstance(value, list):
+            value = TrackedList(value)
+            references.append(weakref.ref(value))
+        return value
+
+    monkeypatch.setattr(session_module, "decode_page_result", decode)
     async with NotteSession(headless=True) as session:
         original_evaluate = session.window.page.evaluate
 
         async def evaluate(expression, *args, **kwargs):
             # The user code is the first argument of the page-side guard.
             if args and args[0][0] == "rejected_result":
-                value = TrackedList(["x" * 4096])
-                references.append(weakref.ref(value))
-                return value
+                return json.dumps(["x" * 4096])
             return await original_evaluate(expression, *args, **kwargs)
 
         monkeypatch.setattr(session.window.page, "evaluate", evaluate)
@@ -132,7 +142,8 @@ async def test_oversized_result_is_rejected_inside_the_page(monkeypatch) -> None
         assert "serialized result exceeds 16384 bytes" in result.message
         assert transferred == [], "the rejected value must not reach the driver"
         assert await session.aevaluate_js('"y".repeat(100)') == "y" * 100
-        assert transferred == [100]
+        # The guard transfers the result as JSON text: the quoted string.
+        assert transferred == [102]
 
 
 @pytest.mark.asyncio
@@ -234,7 +245,6 @@ async def test_getter_values_are_measured_and_read_once(monkeypatch) -> None:
         "new Float64Array([0.5, -0])",
         "({toJSON() { return {a: 1}; }})",
         "Object.assign(Object.create({toJSON: () => ({a: 1})}), {})",
-        "JSON.parse('{\"__proto__\": 1}')",
         "(() => { const a = [1]; return [a, a]; })()",
         "[NaN, Infinity, -0, 10n, undefined, null, true, 'q\"\\\\\\n']",
         "({b: 1, a: 2, 2: 'x', 1: 'y'})",
@@ -247,6 +257,18 @@ async def test_getter_values_are_measured_and_read_once(monkeypatch) -> None:
         "/a+b/gi",
         "[/x/, /y/m]",
         "new BigInt64Array([1n, -2n])",
+        "new BigUint64Array([18446744073709551615n])",
+        "new Float64Array([NaN, -0, 1.5, Infinity])",
+        "new Float32Array([0.1])",
+        "({f: () => 1, s: Symbol('x'), u: undefined, n: 1})",
+        "[() => 1, Symbol('x'), undefined, 2]",
+        "[1, , 3]",
+        "[NaN, Infinity, -Infinity, -0, 10n, 12345678901234567890n]",
+        "Symbol('top')",
+        "[new Date(NaN), new Date(1e12)]",
+        "({nested: {deep: [{a: 'é\\u0000\\n\\t\"'}]}})",
+        "'plain text with \"quotes\" and é'",
+        "(() => { const shared = {x: 1}; return {a: shared, b: [shared, shared]}; })()",
         "new Uint8ClampedArray([300])",
         "document.body",
         "[document, window]",
@@ -439,3 +461,53 @@ async def test_default_value_cap_rejects_large_row_results_in_the_page(monkeypat
         result = await session.aevaluate_js("new Uint8Array(1000000)", raise_on_failure=False)
         assert "more than 50000 values" in result.message
         assert transferred == []
+
+
+@pytest.mark.asyncio
+async def test_cyclic_results_fail_as_javascript_errors() -> None:
+    # Before the JSON transfer, a cycle crashed the formatter after transfer.
+    async with NotteSession(headless=True) as session:
+        result = await session.aevaluate_js("(() => { const a = {}; a.self = a; return a; })()", raise_on_failure=False)
+        assert result.success is False
+        assert "circular" in result.message.lower()
+
+
+@pytest.mark.asyncio
+async def test_own_proto_key_is_kept() -> None:
+    # Playwright's driver drops an own "__proto__" key when it rebuilds the
+    # object; the JSON transfer keeps the key the page returned.
+    async with NotteSession(headless=True) as session:
+        assert await session.aevaluate_js('JSON.parse(\'{"__proto__": 1, "a": 2}\')') == (
+            '{\n  "__proto__": 1,\n  "a": 2\n}'
+        )
+
+
+@pytest.mark.asyncio
+async def test_repeated_references_cost_their_full_size(monkeypatch) -> None:
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_values": 100}))
+    async with NotteSession(headless=True) as session:
+        transferred = await _transfers(session, monkeypatch)
+        # A 20-value row referenced 4 times is 1 + 4 x 20 values when written out.
+        fits = "(() => { const row = Object.fromEntries(Array.from({length: 19}, (_, i) => ['k' + i, i])); return [row, row, row, row]; })()"
+        assert (await session.aevaluate_js(fits)).startswith("[")
+        transferred.clear()
+        over = "(() => { const row = Object.fromEntries(Array.from({length: 19}, (_, i) => ['k' + i, i])); return [row, row, row, row, row]; })()"
+        result = await session.aevaluate_js(over, raise_on_failure=False)
+        assert "more than 100 values" in result.message
+        assert transferred == []
+
+
+@pytest.mark.asyncio
+async def test_inherited_tojson_does_not_change_the_result() -> None:
+    # The page can define toJSON on the shared prototypes; the snapshot has no
+    # prototype, so JSON.stringify never calls it.
+    async with NotteSession(headless=True) as session:
+        code = (
+            "(() => { Object.prototype.toJSON = () => 'x'.repeat(1000);"
+            " Array.prototype.toJSON = () => 'y'.repeat(1000);"
+            " try { return {a: [1, {b: 2}], d: new Date(0)}; }"
+            " finally { delete Object.prototype.toJSON; delete Array.prototype.toJSON; } })()"
+        )
+        assert await session.aevaluate_js(code) == (
+            '{\n  "a": [\n    1,\n    {\n      "b": 2\n    }\n  ],\n  "d": "1970-01-01 00:00:00+00:00"\n}'
+        )

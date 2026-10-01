@@ -1,10 +1,13 @@
 """Bound conversion allocations without changing the evaluate_js text format."""
 
+import datetime
 import json
+import math
 import re
 import secrets
 from json.encoder import encode_basestring_ascii
 from typing import Any, cast
+from urllib.parse import urlparse
 
 from notte_core.errors.actions import EvaluateJsResultLimitError
 
@@ -54,6 +57,8 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
   const keysOf = Object.keys;
   const prototypeOf = Object.getPrototypeOf;
   const createObject = Object.create;
+  const setPrototypeOf = Object.setPrototypeOf;
+  const stringify = JSON.stringify;
   const isArray = Array.isArray;
   const objectToString = Object.prototype.toString;
   const tagOf = (item) => apply(objectToString, item, []);
@@ -175,14 +180,25 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
       return false;
     }
   };
-  const tagged = (tag, text) => {
+  // Values JSON cannot express are sent as {[token]: kind, v: text}; the
+  // per-call token cannot appear in page data. Everything in the snapshot has
+  // a null prototype, so JSON.stringify finds no inherited toJSON to call.
+  const tag = (kind, text) => {
     const snapshot = createObject(null);
-    snapshot[Symbol.toStringTag] = tag;
-    snapshot.toJSON = () => text;
+    snapshot[token] = kind;
+    snapshot.v = text;
     return snapshot;
   };
+  const newArray = () => setPrototypeOf([], null);
+  const encodeNumber = (n) =>
+    n !== n ? tag("n", "NaN")
+    : n === Infinity ? tag("n", "Infinity")
+    : n === -Infinity ? tag("n", "-Infinity")
+    : n === 0 && 1 / n < 0 ? tag("n", "-0")
+    : n;
 
   const copies = new Map();
+  const costs = new Map();
   const visit = (item, depth) => {
     values += 1;
     if (values > maxValues) {
@@ -216,13 +232,23 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
       chargeText(item, topLevel);
       return item;
     }
-    if (typeof item === "number" || typeof item === "boolean" || typeof item === "bigint") {
+    if (typeof item === "number") {
+      charge(String(item).length);
+      return encodeNumber(item);
+    }
+    if (typeof item === "boolean") {
       charge(String(item).length);
       return item;
     }
+    if (typeof item === "bigint") {
+      const digits = String(item);
+      charge(digits.length);
+      return tag("bi", digits);
+    }
     if (item === null || item === undefined || typeof item !== "object") {
+      // undefined, functions and symbols arrive in Python as None.
       charge(4);
-      return item;
+      return null;
     }
     if (!plain) {
     if (isError(item)) {
@@ -242,7 +268,7 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
       } else {
         fail("Date.toJSON() did not return a string");
       }
-      return tagged("Date", text);
+      return tag("d", text);
     }
     if (succeeds(urlHref, item)) {
       const text = item.toJSON();
@@ -250,7 +276,7 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
         fail("URL.toJSON() did not return a string");
       }
       charge(text.length);
-      return tagged("URL", text);
+      return tag("u", text);
     }
     // The source accessor throws for anything that is not a RegExp, so no
     // page getter runs on other objects. Playwright reads source and flags
@@ -283,26 +309,47 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
       charge(count === 0 ? 2 : 2 + 2 * count);
       const copy = new typed.Kind(count);
       apply(typedArraySet, copy, [item]);
-      return copy;
+      const list = newArray();
+      for (let i = 0; i < count; ++i) {
+        const element = copy[i];
+        list[i] = typeof element === "bigint" ? tag("bi", String(element)) : encodeNumber(element);
+      }
+      return list;
     }
     }
     if (copies.has(item)) {
-      charge(1);
+      // JSON writes a repeated reference out in full, so it costs what its
+      // first occurrence cost. An entry still being built is a cycle.
+      const cost = costs.get(item);
+      if (cost === undefined) {
+        throw new Error("evaluate_js result contains a circular reference");
+      }
+      values += cost.count;
+      if (!(values <= maxValues)) {
+        fail("result has more than " + maxValues + " values");
+      }
+      charge(cost.bytes);
       return copies.get(item);
     }
     if (depth >= maxDepth) {
       fail("nesting depth exceeds " + maxDepth);
     }
+    const startSize = size;
+    const startValues = values;
+    const done = (snapshot) => {
+      copies.set(item, snapshot);
+      costs.set(item, { bytes: size - startSize, count: values - startValues });
+      return snapshot;
+    };
     if (isArray(item)) {
-      const copy = [];
+      const copy = newArray();
       copies.set(item, copy);
       charge(2 + item.length);
       for (let i = 0; i < item.length; ++i) {
-        copy.push(visit(item[i], depth + 1));
+        copy[i] = visit(item[i], depth + 1);
       }
-      return copy;
+      return done(copy);
     }
-    // Null prototype so that an own "__proto__" key stays a key.
     const copy = createObject(null);
     copies.set(item, copy);
     charge(2);
@@ -334,19 +381,52 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
       }
       if (json) {
         size -= 2;
-        copies.set(item, undefined);
-        return visit(json.value, depth);
+        return done(visit(json.value, depth));
       }
     }
-    return copy;
+    return done(copy);
   };
-  return visit(value, 0);
+  // A cycle fails the action as a JavaScript error (above) instead of
+  // crashing the formatter after the transfer, as it did before.
+  return stringify(visit(value, 0));
 }""" % (_MAX_DEPTH, json.dumps(RESULT_LIMIT_MARKER))
 
 
 def new_guard_token() -> str:
     """Return a token that identifies one guarded evaluation's limit error."""
     return secrets.token_hex(16)
+
+
+_EPOCH = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+_SPECIAL_NUMBERS = {"NaN": math.nan, "Infinity": math.inf, "-Infinity": -math.inf, "-0": -0.0}
+
+
+def decode_page_result(text: str, token: str) -> Any:
+    """Decode the guard's JSON into the values Playwright would have produced.
+
+    The guard tags values JSON cannot express with the per-call token; each tag
+    becomes what Playwright's own decoder returns for that value.
+    """
+
+    def untag(item: dict[str, Any]) -> Any:
+        kind = item.get(token)
+        if kind is None or len(item) != 2:
+            return item
+        value = item.get("v")
+        if kind == "n" and isinstance(value, str):
+            return _SPECIAL_NUMBERS[value]
+        if kind == "bi" and isinstance(value, str):
+            return int(value)
+        if kind == "d":
+            # Playwright decodes an invalid Date (toJSON() is null) as the epoch.
+            if value is None:
+                return _EPOCH
+            return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=datetime.timezone.utc)
+        if kind == "u":
+            return urlparse(value)
+        return item
+
+    return json.loads(text, object_hook=untag)
 
 
 def page_expression(code: str) -> str:

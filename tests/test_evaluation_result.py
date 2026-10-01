@@ -133,3 +133,36 @@ def test_guard_tokens_are_unique():
 def test_page_guard_is_a_function_taking_code_budgets_and_token():
     assert PAGE_RESULT_GUARD.startswith("async ([code, maxBytes, maxValues, token]) =>")
     assert RESULT_LIMIT_MARKER in PAGE_RESULT_GUARD
+
+
+def test_decode_page_result_restores_playwright_values():
+    import datetime as _dt
+    import math as _math
+    from urllib.parse import urlparse as _urlparse
+
+    from notte_browser.evaluation_result import decode_page_result
+
+    token = new_guard_token()
+    text = json.dumps(
+        {
+            "nan": {token: "n", "v": "NaN"},
+            "neg0": {token: "n", "v": "-0"},
+            "inf": [{token: "n", "v": "Infinity"}, {token: "n", "v": "-Infinity"}],
+            "big": {token: "bi", "v": "18446744073709551615"},
+            "date": {token: "d", "v": "2026-10-01T12:00:00.123Z"},
+            "invalid_date": {token: "d", "v": None},
+            "url": {token: "u", "v": "https://example.com/a?b=1#c"},
+            "lookalike": {"other-token": "n", "v": "NaN"},
+            "plain": {"v": 1},
+        }
+    )
+    value = decode_page_result(text, token)
+    assert _math.isnan(value["nan"])
+    assert str(value["neg0"]) == "-0.0"
+    assert value["inf"] == [_math.inf, -_math.inf]
+    assert value["big"] == 18446744073709551615
+    assert value["date"] == _dt.datetime(2026, 10, 1, 12, 0, 0, 123000, tzinfo=_dt.timezone.utc)
+    assert value["invalid_date"] == _dt.datetime(1970, 1, 1, tzinfo=_dt.timezone.utc)
+    assert value["url"] == _urlparse("https://example.com/a?b=1#c")
+    assert value["lookalike"] == {"other-token": "n", "v": "NaN"}
+    assert value["plain"] == {"v": 1}

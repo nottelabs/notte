@@ -109,6 +109,7 @@ from notte_browser.errors import (
 )
 from notte_browser.evaluation_result import (
     PAGE_RESULT_GUARD,
+    decode_page_result,
     format_evaluation_result,
     new_guard_token,
     page_expression,
@@ -812,6 +813,10 @@ class NotteSession(AsyncResource, SyncResource):
                             message = f"JavaScript evaluation failed: {js_err}"
                         else:
                             try:
+                                # The guard returns the result as one JSON string,
+                                # decoded once here instead of value by value by
+                                # Playwright, which cost several times the memory.
+                                result = decode_page_result(result, guard_token)
                                 result_str = format_evaluation_result(
                                     result, max_bytes=config.evaluate_js_max_result_bytes
                                 )
