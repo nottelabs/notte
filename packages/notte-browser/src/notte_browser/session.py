@@ -107,7 +107,12 @@ from notte_browser.errors import (
     PlaywrightError,
     ScrapeFailedError,
 )
-from notte_browser.evaluation_result import format_evaluation_result
+from notte_browser.evaluation_result import (
+    PAGE_RESULT_GUARD,
+    format_evaluation_result,
+    page_expression,
+    page_limit_reason,
+)
 from notte_browser.playwright import PlaywrightManager
 from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import NodeResolutionPipe
@@ -775,14 +780,27 @@ class NotteSession(AsyncResource, SyncResource):
                             evaluate_kwargs: dict[str, bool] = {}
                             if config.browser_backend == BrowserBackend.PATCHRIGHT:
                                 evaluate_kwargs["isolated_context"] = False
+                            # The guard measures the value inside the page and
+                            # throws past the budget, so an oversized result is
+                            # never serialized by the browser, decoded by the
+                            # driver, or rebuilt as Python objects.
                             result = await asyncio.wait_for(
-                                self.window.page.evaluate(js_code, **evaluate_kwargs),
+                                self.window.page.evaluate(
+                                    PAGE_RESULT_GUARD,
+                                    [page_expression(js_code), config.evaluate_js_max_result_bytes],
+                                    **evaluate_kwargs,
+                                ),
                                 timeout=config.timeout_evaluate_js_ms / 1000.0,
                             )
                         except asyncio.TimeoutError:
                             success = False
                             message = f"JavaScript evaluation timed out after {config.timeout_evaluate_js_ms}ms"
                         except PlaywrightError as js_err:
+                            limit_reason = page_limit_reason(str(js_err))
+                            if limit_reason is not None:
+                                raise EvaluateJsResultLimitError(
+                                    config.evaluate_js_max_result_bytes, limit_reason
+                                ) from None
                             success = False
                             message = f"JavaScript evaluation failed: {js_err}"
                         else:
