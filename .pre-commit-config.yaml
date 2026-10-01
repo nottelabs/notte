@@ -95,8 +95,8 @@ repos:
         files: ^(docs/src/features/sessions/configuration\.mdx|docs/src/scripts/check_config_docs_defaults\.py|packages/notte-sdk/src/notte_sdk/types\.py|packages/notte-core/src/notte_core/config\.toml)$
         pass_filenames: false
       - id: docs-quickstart-setup-prompt
-        name: Inline Quickstart setup prompt
-        entry: bash -c "cd docs/src && uv run python scripts/inline_quickstart_setup_prompt.py --check"
+        name: Check shared Quickstart setup link
+        entry: bash -c "cd docs/src && uv run python scripts/sync_quickstart_setup_prompt.py --check"
         language: system
         files: ^docs/src/
         pass_filenames: false
