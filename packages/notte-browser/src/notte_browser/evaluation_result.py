@@ -20,26 +20,30 @@ _FUNCTION_DECLARATION = re.compile(r"^(async)?\s*function(\s|\()")
 
 # Runs in the page with [code, maxBytes, token]. It reproduces what Playwright
 # does with a bare expression string (global eval, call the value when it is a
-# function, await it) and measures the result before the driver serializes it.
+# function, await it), then walks the result exactly as Playwright's
+# serializer does: same type checks in the same order, same depth-first key
+# order, each property read once. Arrays and plain objects are copied as they
+# are read and the copy is returned, so Playwright transfers the values that
+# were measured and never calls a getter a second time.
 #
-# Every charge is a lower bound on what format_evaluation_result writes for the
-# same value, so the guard never rejects a result the exact budget would
+# Every charge is a lower bound on what format_evaluation_result writes for
+# the same value, so the guard never rejects a result the exact budget would
 # accept: strings and keys inside containers cost their ASCII-escaped JSON
-# width, a top-level string costs its UTF-8 bytes, numbers cost their text, and
-# indentation is not counted. The exact budget still runs after the transfer.
-#
-# Properties are read through their descriptors and getters are never called,
-# so Playwright still reads each getter exactly once. A getter's value is not
-# measured here; it is left to the exact budget.
+# width, a top-level string costs its UTF-8 bytes, numbers cost their text,
+# repeated references cost one byte, and indentation is not counted. Nesting
+# is limited to the formatter's depth. The exact budget still runs after the
+# transfer.
 PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
   let value = (0, eval)(code);
   if (typeof value === "function") {
     value = value();
   }
   value = await value;
-  const fail = () => {
-    throw new Error(%s + token + ":serialized result exceeds " + maxBytes + " bytes");
+  const maxDepth = %d;
+  const fail = (reason) => {
+    throw new Error(%s + token + ":" + reason);
   };
+  const tooLarge = () => fail("serialized result exceeds " + maxBytes + " bytes");
   const utf8Width = (text, limit) => {
     if (text.length > limit) {
       return limit + 1;
@@ -70,72 +74,136 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
     }
     return width;
   };
-  if (typeof value === "string") {
-    if (utf8Width(value, maxBytes) > maxBytes) {
-      fail();
+  const is = (item, ctor, tag) => {
+    try {
+      return (typeof ctor === "function" && item instanceof ctor) || Object.prototype.toString.call(item) === tag;
+    } catch (error) {
+      return false;
     }
-    return value;
-  }
-  const own = (target, key) => {
-    const descriptor = Object.getOwnPropertyDescriptor(target, key);
-    return descriptor !== undefined && "value" in descriptor ? { value: descriptor.value } : undefined;
   };
-  const seen = new Set();
-  const stack = [value];
+  const isError = (item) => {
+    try {
+      return item instanceof Error || (Object.getPrototypeOf(item) || {}).name === "Error";
+    } catch (error) {
+      return false;
+    }
+  };
+  const typedArrays = [
+    Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array,
+    Uint32Array, Float32Array, Float64Array, BigInt64Array, BigUint64Array,
+  ];
   let size = 0;
-  while (stack.length > 0) {
-    const item = stack.pop();
-    if (typeof item === "string") {
-      size += escapedWidth(item, maxBytes - size);
-    } else if (typeof item === "number" || typeof item === "boolean" || typeof item === "bigint") {
-      size += String(item).length;
-    } else if (item === null || typeof item !== "object") {
-      size += 4;
-    } else if (seen.has(item)) {
-      size += 1;
-    } else {
-      seen.add(item);
-      if (ArrayBuffer.isView(item) || item instanceof ArrayBuffer) {
-        size += item.byteLength + 3;
-      } else if (item instanceof Date) {
-        size += 21;
-      } else if (item instanceof RegExp || item instanceof URL || item instanceof Error || (typeof Node === "function" && item instanceof Node)) {
-        size += 4;
-      } else if (Array.isArray(item)) {
-        size += 2 + item.length;
-        for (let i = item.length - 1; i >= 0; i--) {
-          const slot = own(item, i);
-          if (slot !== undefined) {
-            stack.push(slot.value);
-          }
-        }
-      } else if (item instanceof Map) {
-        size += 2;
-        for (const [key, entry] of item) {
-          stack.push(key, entry);
-        }
-      } else if (item instanceof Set) {
-        size += 2;
-        for (const entry of item) {
-          stack.push(entry);
-        }
-      } else {
-        size += 2;
-        for (const key of Object.keys(item)) {
-          size += escapedWidth(key, maxBytes - size) + 1;
-          const slot = own(item, key);
-          if (slot !== undefined) {
-            stack.push(slot.value);
-          }
-        }
+  const charge = (amount) => {
+    size += amount;
+    if (size > maxBytes) {
+      tooLarge();
+    }
+  };
+  const chargeText = (text, topLevel) => {
+    charge(topLevel ? utf8Width(text, maxBytes - size) : escapedWidth(text, maxBytes - size));
+  };
+  const copies = new Map();
+  const visit = (item, depth) => {
+    const topLevel = depth === 0;
+    if (item && typeof item === "object") {
+      const ref =
+        (typeof Window === "function" && item instanceof Window && "ref: <Window>") ||
+        (typeof Document === "function" && item instanceof Document && "ref: <Document>") ||
+        (typeof Node === "function" && item instanceof Node && "ref: <Node>");
+      if (ref) {
+        chargeText(ref, topLevel);
+        return item;
       }
     }
-    if (size > maxBytes) {
-      fail();
+    if (typeof item === "string") {
+      chargeText(item, topLevel);
+      return item;
     }
-  }
-  return value;
-}""" % json.dumps(RESULT_LIMIT_MARKER)
+    if (typeof item === "number" || typeof item === "boolean" || typeof item === "bigint") {
+      charge(String(item).length);
+      return item;
+    }
+    if (item === null || item === undefined || typeof item !== "object") {
+      charge(4);
+      return item;
+    }
+    if (isError(item)) {
+      // Converted to its message text. Read the data property only, so a
+      // message getter still runs once, in Playwright's serializer.
+      const message = Object.getOwnPropertyDescriptor(item, "message");
+      if (message !== undefined && typeof message.value === "string") {
+        chargeText(message.value, topLevel);
+      }
+      return item;
+    }
+    if (is(item, Date, "[object Date]") || is(item, URL, "[object URL]")) {
+      return item;
+    }
+    if (is(item, RegExp, "[object RegExp]")) {
+      return item;
+    }
+    for (const ctor of typedArrays) {
+      if (is(item, ctor, "[object " + ctor.name + "]")) {
+        charge(item.length === 0 ? 2 : 2 + 2 * item.length);
+        return item;
+      }
+    }
+    if (copies.has(item)) {
+      charge(1);
+      return copies.get(item);
+    }
+    if (depth >= maxDepth) {
+      fail("nesting depth exceeds " + maxDepth);
+    }
+    if (Array.isArray(item)) {
+      const copy = [];
+      copies.set(item, copy);
+      charge(2 + item.length);
+      for (let i = 0; i < item.length; ++i) {
+        copy.push(visit(item[i], depth + 1));
+      }
+      return copy;
+    }
+    // Null prototype so that an own "__proto__" key stays a key.
+    const copy = Object.create(null);
+    copies.set(item, copy);
+    charge(2);
+    let entries = 0;
+    for (const name of Object.keys(item)) {
+      let entry;
+      try {
+        entry = item[name];
+      } catch (error) {
+        continue;
+      }
+      entries += 1;
+      chargeText(name, false);
+      charge(1);
+      if (name === "toJSON" && typeof entry === "function") {
+        charge(2);
+        copy[name] = entry;
+      } else {
+        copy[name] = visit(entry, depth + 1);
+      }
+    }
+    if (entries === 0) {
+      let json;
+      try {
+        if (item.toJSON && typeof item.toJSON === "function") {
+          json = { value: item.toJSON() };
+        }
+      } catch (error) {
+      }
+      if (json) {
+        size -= 2;
+        copies.set(item, undefined);
+        return visit(json.value, depth);
+      }
+    }
+    return copy;
+  };
+  return visit(value, 0);
+}""" % (_MAX_DEPTH, json.dumps(RESULT_LIMIT_MARKER))
 
 
 def new_guard_token() -> str:

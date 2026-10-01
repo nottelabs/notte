@@ -28,7 +28,7 @@ Otherwise, the default config will be used and your changes will not be applied.
 text returned by `evaluate_js`, including escaped JSON and indentation. The value
 is first measured inside the page, and a result whose data alone exceeds the
 limit is rejected before the browser transfers it. The exact budget, including
-indentation and values read through getters, is applied during conversion.
+indentation, is applied during conversion.
 Either check returns a failed action advising you to return fewer fields or
 retrieve the result in smaller batches.
 Values within the limit keep their existing text format. JSON nesting is limited

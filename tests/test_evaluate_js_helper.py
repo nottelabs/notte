@@ -200,3 +200,64 @@ async def test_page_errors_that_imitate_the_guard_stay_javascript_failures() -> 
         assert result.success is False
         assert not isinstance(result.exception, EvaluateJsResultLimitError)
         assert "JavaScript evaluation failed" in result.message
+
+
+@pytest.mark.asyncio
+async def test_getter_values_are_measured_and_read_once(monkeypatch) -> None:
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    async with NotteSession(headless=True) as session:
+        transferred: list[int] = []
+        original_evaluate = session.window.page.evaluate
+
+        async def evaluate(expression, *args, **kwargs):
+            value = await original_evaluate(expression, *args, **kwargs)
+            transferred.append(1)
+            return value
+
+        monkeypatch.setattr(session.window.page, "evaluate", evaluate)
+        big = "({ get data() { return 'x'.repeat(4 * 1024 * 1024); } })"
+        result = await session.aevaluate_js(big, raise_on_failure=False)
+        assert isinstance(result.exception, EvaluateJsResultLimitError)
+        assert transferred == []
+        code = "(() => { let reads = 0; return { get a() { reads += 1; return reads; }, get b() { reads += 1; return reads; } }; })()"
+        assert await session.aevaluate_js(code) == '{\n  "a": 1,\n  "b": 2\n}'
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "code",
+    [
+        "new Map([['k', 'é'.repeat(3000)]])",
+        "new Set(['é'.repeat(3000)])",
+        "new Uint8Array(0)",
+        "new Uint8Array([1, 2])",
+        "new Float64Array([0.5, -0])",
+        "({toJSON() { return {a: 1}; }})",
+        "Object.assign(Object.create({toJSON: () => ({a: 1})}), {})",
+        "JSON.parse('{\"__proto__\": 1}')",
+        "(() => { const a = [1]; return [a, a]; })()",
+        "[NaN, Infinity, -0, 10n, undefined, null, true, 'q\"\\\\\\n']",
+        "({b: 1, a: 2, 2: 'x', 1: 'y'})",
+        "new Date(0)",
+        "[new Date(0)]",
+        "new Error('boom')",
+        "document.body",
+        "[document, window]",
+    ],
+)
+async def test_guarded_results_match_playwright(monkeypatch, code) -> None:
+    # The guard returns a snapshot of the value. Whatever Playwright would
+    # have transferred for the original must come out of the snapshot too.
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    async with NotteSession(headless=True) as session:
+        native = format_evaluation_result(await session.window.page.evaluate(code), max_bytes=16384)
+        assert await session.aevaluate_js(code) == native
+
+
+@pytest.mark.asyncio
+async def test_tiny_budgets_accept_results_that_fit(monkeypatch) -> None:
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 2}))
+    async with NotteSession(headless=True) as session:
+        assert await session.aevaluate_js("[]") == "[]"
+        assert await session.aevaluate_js("new Uint8Array(0)") == "[]"
+        assert await session.aevaluate_js("({})") == "{}"
