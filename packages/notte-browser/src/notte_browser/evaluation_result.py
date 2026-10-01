@@ -275,6 +275,11 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
     const typed = typeof kind === "string" ? typedArrays[kind] : undefined;
     if (typed !== undefined && typedArrayBytes !== undefined && typeof typedArraySet === "function") {
       const count = typedArrayBytes(item) / typed.width;
+      // Python unpacks a typed array into one object per element.
+      values += count;
+      if (!(values <= maxValues)) {
+        fail("result has more than " + maxValues + " values");
+      }
       charge(count === 0 ? 2 : 2 + 2 * count);
       const copy = new typed.Kind(count);
       apply(typedArraySet, copy, [item]);

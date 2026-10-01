@@ -409,7 +409,15 @@ async def test_value_cap_counts_every_value(monkeypatch) -> None:
         # Each {a, b} row is 3 values: 33 rows plus the array are 100, 34 rows are 103.
         assert (await session.aevaluate_js("Array.from({length: 33}, () => ({a: 1, b: 'x'}))")).startswith("[")
         transferred.clear()
-        for code in ("Array(100).fill(0)", "Array.from({length: 34}, () => ({a: 1, b: 'x'}))"):
+        # A typed array is one value plus one per element: 99 elements fit, 100 do not.
+        assert (await session.aevaluate_js("new Uint8Array(99)")).startswith("[")
+        transferred.clear()
+        for code in (
+            "Array(100).fill(0)",
+            "Array.from({length: 34}, () => ({a: 1, b: 'x'}))",
+            "new Uint8Array(100)",
+            "[new Float64Array(60), new Int8Array(60)]",
+        ):
             result = await session.aevaluate_js(code, raise_on_failure=False)
             assert result.success is False
             assert isinstance(result.exception, EvaluateJsResultLimitError)
@@ -427,3 +435,7 @@ async def test_default_value_cap_rejects_large_row_results_in_the_page(monkeypat
         assert "more than 50000 values" in result.message
         assert transferred == []
         assert (await session.aevaluate_js("Array.from({length: 10000}, (_, i) => ({id: i}))")).startswith("[")
+        transferred.clear()
+        result = await session.aevaluate_js("new Uint8Array(1000000)", raise_on_failure=False)
+        assert "more than 50000 values" in result.message
+        assert transferred == []
