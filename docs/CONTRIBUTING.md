@@ -32,7 +32,8 @@ one version. To cut a release:
 1. Merge the previous release's automatic development-version PR. Check that
    the Python workspace version matches the intended release by running
    `python3 scripts/release_version.py validate vX.Y.Z` on `main`.
-   If the previous workflow failed before opening that PR, run
+   If the previous Python release published and passed its installation check,
+   but the workflow failed before opening that PR, run
    `python3 scripts/release_version.py next vPREVIOUS_VERSION` and `uv lock`,
    then commit the changes, open the version PR, and merge it into `main`
    before cutting the next release.
