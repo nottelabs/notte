@@ -1,7 +1,7 @@
 /** Mirrors `tests/integration/sdk/test_sessions.py` plus the session lifecycle helpers. */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { NotteClient } from '@/client';
-import { NotteTimeoutError } from '@/errors';
+import { NotteAPIError, NotteTimeoutError } from '@/errors';
 import { actions, type ExecuteAction } from '@/actions';
 
 // Load environment variables
@@ -58,7 +58,7 @@ describe('Session Integration Tests', () => {
     });
 
     it('should create session with viewport settings', async () => {
-      const session = client.Session({ proxies: false, viewport_height: 100, viewport_width: 100 });
+      const session = client.Session({ proxies: false, viewport_height: 768, viewport_width: 1024 });
 
       await session.use(async s => {
         const status = await s.status();
@@ -66,6 +66,16 @@ describe('Session Integration Tests', () => {
       });
 
       expect(session.getResponse()).not.toBeNull();
+    });
+
+    it('rejects a viewport smaller than the 500px minimum', async () => {
+      // The API validates viewport_width / viewport_height >= 500 (see the
+      // SessionStartRequest schema); mirrors test_start_session_with_too_small_viewport_is_rejected.
+      const session = client.Session({ proxies: false, viewport_height: 100, viewport_width: 100 });
+      const error = await session.start().catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(NotteAPIError);
+      expect((error as NotteAPIError).statusCode).toBe(422);
+      expect((error as NotteAPIError).message).toContain('viewport_width');
     });
 
     it.each(['chrome', 'chromium'] as const)('should work with the %s browser type', async browserType => {
