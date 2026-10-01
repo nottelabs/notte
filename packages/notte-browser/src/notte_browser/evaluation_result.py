@@ -58,6 +58,7 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
     }
   };
   const apply = Reflect.apply;
+  const substring = attempt(() => String.prototype.substring);
   const keysOf = Object.keys;
   const prototypeOf = Object.getPrototypeOf;
   const createObject = Object.create;
@@ -411,7 +412,6 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
   // values; its length must match the length computed alongside it, and fit
   // what the walk measured plus a fixed allowance per value.
   const controlEscapes = {"\\u0000": "\\\\u0000", "\\u0001": "\\\\u0001", "\\u0002": "\\\\u0002", "\\u0003": "\\\\u0003", "\\u0004": "\\\\u0004", "\\u0005": "\\\\u0005", "\\u0006": "\\\\u0006", "\\u0007": "\\\\u0007", "\\b": "\\\\b", "\\t": "\\\\t", "\\n": "\\\\n", "\\u000b": "\\\\u000b", "\\f": "\\\\f", "\\r": "\\\\r", "\\u000e": "\\\\u000e", "\\u000f": "\\\\u000f", "\\u0010": "\\\\u0010", "\\u0011": "\\\\u0011", "\\u0012": "\\\\u0012", "\\u0013": "\\\\u0013", "\\u0014": "\\\\u0014", "\\u0015": "\\\\u0015", "\\u0016": "\\\\u0016", "\\u0017": "\\\\u0017", "\\u0018": "\\\\u0018", "\\u0019": "\\\\u0019", "\\u001a": "\\\\u001a", "\\u001b": "\\\\u001b", "\\u001c": "\\\\u001c", "\\u001d": "\\\\u001d", "\\u001e": "\\\\u001e", "\\u001f": "\\\\u001f"};
-  const substring = String.prototype.substring;
   let out = "";
   let expected = 0;
   let written = 0;
@@ -424,6 +424,25 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
     if (!(written <= maxValues)) {
       fail("result has more than " + maxValues + " values");
     }
+  };
+  // substring belongs to the page, which may have replaced it before this
+  // call, so every copied run is compared with the source string through
+  // primitive indexing, which a page cannot override.
+  const unreadable = () => {
+    throw new Error("evaluate_js result could not be serialized");
+  };
+  const copyRun = (text, from, to) => {
+    const piece = typeof substring === "function" ? apply(substring, text, [from, to]) : undefined;
+    if (typeof piece !== "string" || piece.length !== to - from) {
+      unreadable();
+    }
+    for (let k = 0; k < piece.length; k++) {
+      if (piece[k] !== text[from + k]) {
+        unreadable();
+      }
+    }
+    out += piece;
+    expected += to - from;
   };
   const writeString = (text) => {
     const n = text.length;
@@ -449,15 +468,13 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
         continue;
       }
       if (i > run) {
-        out += apply(substring, text, [run, i]);
-        expected += i - run;
+        copyRun(text, run, i);
       }
       literal(escape);
       run = i + 1;
     }
     if (run < n) {
-      out += apply(substring, text, [run, n]);
-      expected += n - run;
+      copyRun(text, run, n);
     }
     literal('"');
   };

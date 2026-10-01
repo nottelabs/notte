@@ -603,3 +603,31 @@ async def test_an_unreadable_payload_fails_the_action(monkeypatch, raise_on_fail
             result = await session.aevaluate_js("({a: 1})", raise_on_failure=False)
             assert result.success is False
             assert "JavaScript evaluation failed" in result.message
+
+
+SAME_LENGTH_FORGERY = (
+    "String.prototype.substring = function (from, to) {"
+    " const n = to - from; return ',0'.repeat(n >> 1) + (n % 2 ? ',' : ''); };"
+)
+
+
+@pytest.mark.asyncio
+async def test_a_substring_replaced_before_the_call_cannot_forge_values(monkeypatch) -> None:
+    # A replacement that returns text of the right length but different content
+    # would splice values into an escaped string; every copied run is compared
+    # with the source, so the action fails instead.
+    async with NotteSession(headless=True) as session:
+        await session.window.page.evaluate(f"() => {{ {SAME_LENGTH_FORGERY} }}", isolated_context=False)
+        transferred = await _transfers(session, monkeypatch)
+        result = await session.aevaluate_js("['A'.repeat(1000) + '\"' + 'B'.repeat(1000)]", raise_on_failure=False)
+        assert result.success is False
+        assert "could not be serialized" in result.message
+        assert transferred == []
+
+
+@pytest.mark.asyncio
+async def test_a_substring_replaced_by_the_evaluated_code_is_not_used() -> None:
+    # The guard captures substring before the user code runs.
+    async with NotteSession(headless=True) as session:
+        code = f"(() => {{ {SAME_LENGTH_FORGERY} return ['A\"B']; }})()"
+        assert await session.aevaluate_js(code) == '[\n  "A\\"B"\n]'
