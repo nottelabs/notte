@@ -240,7 +240,14 @@ async def test_getter_values_are_measured_and_read_once(monkeypatch) -> None:
         "({b: 1, a: 2, 2: 'x', 1: 'y'})",
         "new Date(0)",
         "[new Date(0)]",
+        "new Date(NaN)",
         "new Error('boom')",
+        "[new Error('boom')]",
+        "new URL('https://example.com/a?b=1#c')",
+        "/a+b/gi",
+        "[/x/, /y/m]",
+        "new BigInt64Array([1n, -2n])",
+        "new Uint8ClampedArray([300])",
         "document.body",
         "[document, window]",
     ],
@@ -261,3 +268,75 @@ async def test_tiny_budgets_accept_results_that_fit(monkeypatch) -> None:
         assert await session.aevaluate_js("[]") == "[]"
         assert await session.aevaluate_js("new Uint8Array(0)") == "[]"
         assert await session.aevaluate_js("({})") == "{}"
+
+
+HUGE = "4 * 1024 * 1024"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "code",
+    [
+        f"Object.defineProperty(new Error(''), 'message', {{get: () => 'x'.repeat({HUGE})}})",
+        f"Object.assign(new Date(0), {{toJSON: () => 'x'.repeat({HUGE})}})",
+        f"Object.assign(new URL('https://example.com'), {{toJSON: () => 'x'.repeat({HUGE})}})",
+        f"Object.defineProperty(/a/, 'source', {{get: () => 'x'.repeat({HUGE})}})",
+        f"(() => {{ class T extends Uint8Array {{ get length() {{ return 0; }} }} return new T({HUGE}); }})()",
+        f"[{{[Symbol.toStringTag]: 'Uint8Array'}}, 'x'.repeat({HUGE})]",
+    ],
+)
+async def test_special_values_cannot_smuggle_data_past_the_guard(monkeypatch, code) -> None:
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    async with NotteSession(headless=True) as session:
+        transferred: list[int] = []
+        original_evaluate = session.window.page.evaluate
+
+        async def evaluate(expression, *args, **kwargs):
+            value = await original_evaluate(expression, *args, **kwargs)
+            transferred.append(len(repr(value)))
+            return value
+
+        monkeypatch.setattr(session.window.page, "evaluate", evaluate)
+        result = await session.aevaluate_js(code, raise_on_failure=False)
+        assert result.success is False
+        assert isinstance(result.exception, EvaluateJsResultLimitError)
+        assert transferred == []
+
+
+@pytest.mark.asyncio
+async def test_error_stack_is_not_transferred(monkeypatch) -> None:
+    # Only the message is printed, so a huge stack is neither measured nor sent.
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    async with NotteSession(headless=True) as session:
+        transferred: list[int] = []
+        original_evaluate = session.window.page.evaluate
+
+        async def evaluate(expression, *args, **kwargs):
+            value = await original_evaluate(expression, *args, **kwargs)
+            transferred.append(len(repr(value)))
+            return value
+
+        monkeypatch.setattr(session.window.page, "evaluate", evaluate)
+        code = f"Object.assign(new Error('boom'), {{stack: 'x'.repeat({HUGE})}})"
+        assert await session.aevaluate_js(code) == "boom"
+        assert transferred and transferred[0] < 100
+
+
+@pytest.mark.asyncio
+async def test_forged_special_types_are_sent_as_plain_objects(monkeypatch) -> None:
+    # Only genuine Dates are sent as dates, so a forged tag cannot make
+    # Playwright call a page-supplied toJSON after the measurement.
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    async with NotteSession(headless=True) as session:
+        transferred: list[int] = []
+        original_evaluate = session.window.page.evaluate
+
+        async def evaluate(expression, *args, **kwargs):
+            value = await original_evaluate(expression, *args, **kwargs)
+            transferred.append(len(repr(value)))
+            return value
+
+        monkeypatch.setattr(session.window.page, "evaluate", evaluate)
+        code = f"[{{[Symbol.toStringTag]: 'Date', toJSON: () => 'x'.repeat({HUGE})}}]"
+        assert await session.aevaluate_js(code) == '[\n  {\n    "toJSON": {}\n  }\n]'
+        assert transferred and transferred[0] < 100

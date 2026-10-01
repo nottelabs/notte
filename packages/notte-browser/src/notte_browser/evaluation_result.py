@@ -20,30 +20,76 @@ _FUNCTION_DECLARATION = re.compile(r"^(async)?\s*function(\s|\()")
 
 # Runs in the page with [code, maxBytes, token]. It reproduces what Playwright
 # does with a bare expression string (global eval, call the value when it is a
-# function, await it), then walks the result exactly as Playwright's
-# serializer does: same type checks in the same order, same depth-first key
-# order, each property read once. Arrays and plain objects are copied as they
-# are read and the copy is returned, so Playwright transfers the values that
-# were measured and never calls a getter a second time.
+# function, await it), then walks the result with the same routing as
+# Playwright's serializer and returns a snapshot built only from values it has
+# read and charged. Playwright then serializes the snapshot, never the original,
+# so nothing on the page is read after the measurement:
 #
-# Every charge is a lower bound on what format_evaluation_result writes for
-# the same value, so the guard never rejects a result the exact budget would
-# accept: strings and keys inside containers cost their ASCII-escaped JSON
-# width, a top-level string costs its UTF-8 bytes, numbers cost their text,
-# repeated references cost one byte, and indentation is not counted. Nesting
-# is limited to the formatter's depth. The exact budget still runs after the
-# transfer.
+# - arrays and objects become copies; each property is read once, getters
+#   included, and getters are not run again by Playwright;
+# - an Error becomes its message, which is the text the formatter prints;
+# - a RegExp becomes the {r: {p, f}} object Python receives for it;
+# - a Date or URL becomes a tagged object whose toJSON returns the text that
+#   was read and charged;
+# - a typed array is recognised and sized through the built-in typed-array
+#   accessors, not instanceof or .length, and copied into a fresh array.
+#
+# Built-ins are captured before the user code runs. Every charge is a lower
+# bound on what format_evaluation_result writes, so the guard never rejects a
+# result the exact budget would accept; non-finite charges are rejected.
 PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
+  const maxDepth = %d;
+  const keysOf = Object.keys;
+  const descriptorOf = Object.getOwnPropertyDescriptor;
+  const prototypeOf = Object.getPrototypeOf;
+  const createObject = Object.create;
+  const isArray = Array.isArray;
+  const tagOf = (item) => Object.prototype.toString.call(item);
+  const callable = (fn) => (thisArg) => Function.prototype.call.call(fn, thisArg);
+  const typedArrayPrototype = prototypeOf(Uint8Array.prototype);
+  const typedArrayKind = callable(descriptorOf(typedArrayPrototype, Symbol.toStringTag).get);
+  const typedArrayBytes = callable(descriptorOf(typedArrayPrototype, "byteLength").get);
+  const typedArraySet = typedArrayPrototype.set;
+  const dateTime = callable(Date.prototype.getTime);
+  const urlHref = typeof URL === "function" ? callable(descriptorOf(URL.prototype, "href").get) : undefined;
+  const regexpFlags = callable(descriptorOf(RegExp.prototype, "flags").get);
+  const typedArrays = {
+    Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array,
+    Uint32Array, Float32Array, Float64Array, BigInt64Array, BigUint64Array,
+  };
+  const WindowType = typeof Window === "function" ? Window : undefined;
+  const DocumentType = typeof Document === "function" ? Document : undefined;
+  const NodeType = typeof Node === "function" ? Node : undefined;
+  const ErrorType = Error;
+  const succeeds = (read, item) => {
+    try {
+      read(item);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
   let value = (0, eval)(code);
   if (typeof value === "function") {
     value = value();
   }
   value = await value;
-  const maxDepth = %d;
+
   const fail = (reason) => {
     throw new Error(%s + token + ":" + reason);
   };
   const tooLarge = () => fail("serialized result exceeds " + maxBytes + " bytes");
+  let size = 0;
+  const charge = (amount) => {
+    if (!(amount >= 0 && amount <= maxBytes)) {
+      tooLarge();
+    }
+    size += amount;
+    if (size > maxBytes) {
+      tooLarge();
+    }
+  };
   const utf8Width = (text, limit) => {
     if (text.length > limit) {
       return limit + 1;
@@ -74,45 +120,34 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
     }
     return width;
   };
-  const is = (item, ctor, tag) => {
-    try {
-      return (typeof ctor === "function" && item instanceof ctor) || Object.prototype.toString.call(item) === tag;
-    } catch (error) {
-      return false;
-    }
-  };
-  const isError = (item) => {
-    try {
-      return item instanceof Error || (Object.getPrototypeOf(item) || {}).name === "Error";
-    } catch (error) {
-      return false;
-    }
-  };
-  const typedArrays = [
-    Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array,
-    Uint32Array, Float32Array, Float64Array, BigInt64Array, BigUint64Array,
-  ];
-  let size = 0;
-  const charge = (amount) => {
-    size += amount;
-    if (size > maxBytes) {
-      tooLarge();
-    }
-  };
   const chargeText = (text, topLevel) => {
     charge(topLevel ? utf8Width(text, maxBytes - size) : escapedWidth(text, maxBytes - size));
   };
+  const isError = (item) => {
+    try {
+      return item instanceof ErrorType || (prototypeOf(item) || {}).name === "Error";
+    } catch (error) {
+      return false;
+    }
+  };
+  const tagged = (tag, text) => {
+    const snapshot = createObject(null);
+    snapshot[Symbol.toStringTag] = tag;
+    snapshot.toJSON = () => text;
+    return snapshot;
+  };
+
   const copies = new Map();
   const visit = (item, depth) => {
     const topLevel = depth === 0;
     if (item && typeof item === "object") {
       const ref =
-        (typeof Window === "function" && item instanceof Window && "ref: <Window>") ||
-        (typeof Document === "function" && item instanceof Document && "ref: <Document>") ||
-        (typeof Node === "function" && item instanceof Node && "ref: <Node>");
+        (WindowType && item instanceof WindowType && "ref: <Window>") ||
+        (DocumentType && item instanceof DocumentType && "ref: <Document>") ||
+        (NodeType && item instanceof NodeType && "ref: <Node>");
       if (ref) {
         chargeText(ref, topLevel);
-        return item;
+        return ref;
       }
     }
     if (typeof item === "string") {
@@ -128,25 +163,54 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
       return item;
     }
     if (isError(item)) {
-      // Converted to its message text. Read the data property only, so a
-      // message getter still runs once, in Playwright's serializer.
-      const message = Object.getOwnPropertyDescriptor(item, "message");
-      if (message !== undefined && typeof message.value === "string") {
-        chargeText(message.value, topLevel);
+      const message = item.message;
+      const text = typeof message === "string" ? message : String(message);
+      chargeText(text, topLevel);
+      return text;
+    }
+    if (succeeds(dateTime, item)) {
+      const text = item.toJSON();
+      if (text === null) {
+        charge(4);
+      } else if (typeof text === "string") {
+        // A 24-character ISO timestamp prints as at least 25 characters once
+        // Python parses it, so its own width is a lower bound.
+        chargeText(text, topLevel);
+      } else {
+        fail("Date.toJSON() did not return a string");
       }
-      return item;
+      return tagged("Date", text);
     }
-    if (is(item, Date, "[object Date]") || is(item, URL, "[object URL]")) {
-      return item;
-    }
-    if (is(item, RegExp, "[object RegExp]")) {
-      return item;
-    }
-    for (const ctor of typedArrays) {
-      if (is(item, ctor, "[object " + ctor.name + "]")) {
-        charge(item.length === 0 ? 2 : 2 + 2 * item.length);
-        return item;
+    if (urlHref !== undefined && succeeds(urlHref, item)) {
+      const text = item.toJSON();
+      if (typeof text !== "string") {
+        fail("URL.toJSON() did not return a string");
       }
+      charge(text.length);
+      return tagged("URL", text);
+    }
+    if (succeeds(regexpFlags, item) && tagOf(item) === "[object RegExp]") {
+      const source = item.source;
+      const flags = item.flags;
+      if (typeof source !== "string" || typeof flags !== "string") {
+        fail("RegExp source or flags is not a string");
+      }
+      charge(source.length + flags.length);
+      const pattern = createObject(null);
+      pattern.p = source;
+      pattern.f = flags;
+      const snapshot = createObject(null);
+      snapshot.r = pattern;
+      return snapshot;
+    }
+    const kind = typedArrayKind(item);
+    if (kind !== undefined) {
+      const Kind = typedArrays[kind];
+      const count = typedArrayBytes(item) / Kind.BYTES_PER_ELEMENT;
+      charge(count === 0 ? 2 : 2 + 2 * count);
+      const copy = new Kind(count);
+      Function.prototype.call.call(typedArraySet, copy, item);
+      return copy;
     }
     if (copies.has(item)) {
       charge(1);
@@ -155,7 +219,7 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
     if (depth >= maxDepth) {
       fail("nesting depth exceeds " + maxDepth);
     }
-    if (Array.isArray(item)) {
+    if (isArray(item)) {
       const copy = [];
       copies.set(item, copy);
       charge(2 + item.length);
@@ -165,11 +229,11 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
       return copy;
     }
     // Null prototype so that an own "__proto__" key stays a key.
-    const copy = Object.create(null);
+    const copy = createObject(null);
     copies.set(item, copy);
     charge(2);
     let entries = 0;
-    for (const name of Object.keys(item)) {
+    for (const name of keysOf(item)) {
       let entry;
       try {
         entry = item[name];
@@ -181,7 +245,7 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
       charge(1);
       if (name === "toJSON" && typeof entry === "function") {
         charge(2);
-        copy[name] = entry;
+        copy[name] = createObject(null);
       } else {
         copy[name] = visit(entry, depth + 1);
       }
