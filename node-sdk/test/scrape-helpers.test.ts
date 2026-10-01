@@ -6,6 +6,7 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { z } from 'zod';
 import { ScrapeFailedError } from '@/errors';
+import { normalizeJsonSchema } from '@/utils';
 import { buildScrapeBody, processScrapeResponse, type ScrapeResult, type SessionScrapeOptions, type StructuredData } from '@/scrape';
 import type { GlobalScrapeOptions } from '@/client';
 import type { DataSpace } from '@/lib/client/types.gen';
@@ -105,5 +106,23 @@ describe('processScrapeResponse', () => {
 
   it('is typed as ScrapeResult<T>', () => {
     expectTypeOf(processScrapeResponse<ProductT>(dataSpace, { response_format: Product })).toEqualTypeOf<ScrapeResult<ProductT>>();
+  });
+});
+
+describe('normalizeJsonSchema', () => {
+  it('expands zod >= 4.6 nullable type arrays into the anyOf form the API accepts', async () => {
+    const Plan = z.object({ name: z.string(), price: z.string().nullable().optional(), tags: z.array(z.string().nullable()) });
+    const body = await buildScrapeBody({ response_format: Plan });
+    const schema = body.response_format as any;
+    expect(schema.properties.price).toEqual({ anyOf: [{ type: 'string' }, { type: 'null' }] });
+    expect(schema.properties.tags.items).toEqual({ anyOf: [{ type: 'string' }, { type: 'null' }] });
+    expect(JSON.stringify(schema)).not.toContain('"type":["');
+  });
+
+  it('leaves schemas without type arrays unchanged', () => {
+    const plain = z.toJSONSchema(Product);
+    expect(normalizeJsonSchema(plain)).toEqual(plain);
+    expect(normalizeJsonSchema(null)).toBeNull();
+    expect(normalizeJsonSchema('x')).toBe('x');
   });
 });

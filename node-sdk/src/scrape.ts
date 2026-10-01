@@ -2,6 +2,7 @@
  * Shared scrape request/response handling for `client.scrape()` and
  * `session.scrape()`, mirroring `PageClient.scrape` in the Python SDK.
  */
+import { normalizeJsonSchema } from '@/utils';
 import type { DataSpace, ImageData, ScrapeRequest, StructuredDataBaseModel } from '@/lib/client/types.gen';
 import { ScrapeFailedError } from '@/errors';
 
@@ -57,7 +58,7 @@ export async function buildScrapeBody<T>(
       body.response_format = json_schema;
     } else {
       const { z } = await import('zod');
-      body.response_format = z.toJSONSchema(response_format as never);
+      body.response_format = normalizeJsonSchema(z.toJSONSchema(response_format as never));
     }
   } else if (response_format) {
     body.response_format = response_format;
