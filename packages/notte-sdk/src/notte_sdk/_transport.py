@@ -51,7 +51,7 @@ class _HandshakePool(HTTPSConnectionPool):
 class _HandshakeAdapter(HTTPAdapter):
     @override
     def init_poolmanager(self, connections: int, maxsize: int, block: bool = False, **pool_kwargs: Any) -> None:
-        super().init_poolmanager(connections, maxsize, block=block, **pool_kwargs)  # pyright: ignore[reportUnknownMemberType]
+        super().init_poolmanager(connections, maxsize, block=block, **pool_kwargs)
         # PoolManager initially references a shared dictionary. Copy it so
         # unrelated clients and proxy managers are never affected.
         self.poolmanager.pool_classes_by_scheme = {

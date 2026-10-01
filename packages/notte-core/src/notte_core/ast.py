@@ -21,8 +21,12 @@ from typing import Any, Callable, ClassVar, Literal, Protocol, cast, final
 
 from pydantic import BaseModel, ConfigDict
 from RestrictedPython import compile_restricted, safe_globals  # type: ignore [reportMissingTypeStubs]
-from RestrictedPython.transformer import RestrictingNodeTransformer  # type: ignore [reportMissingTypeStubs]
+from RestrictedPython._types import T_pos_ast
+from RestrictedPython.transformer import RestrictingNodeTransformer
 from typing_extensions import override
+
+# Return type of RestrictingNodeTransformer.visit_* (RestrictedPython >= 8.5 types it this way)
+_VisitReturn = ast.AST | Iterable[ast.AST] | None
 
 
 class MissingRunFunctionError(Exception):
@@ -328,7 +332,7 @@ class ScriptValidator(RestrictingNodeTransformer):
     }
 
     @override
-    def visit_Call(self, node: ast.Call) -> ast.AST:
+    def visit_Call(self, node: ast.Call) -> _VisitReturn:
         """Override to add custom call restrictions"""
         call_name = self._get_call_name(node)
 
@@ -360,7 +364,7 @@ class ScriptValidator(RestrictingNodeTransformer):
         return None
 
     @override
-    def visit_Attribute(self, node: ast.Attribute) -> ast.AST:
+    def visit_Attribute(self, node: ast.Attribute) -> _VisitReturn:
         """Override to add custom attribute access restrictions"""
         # Block access to private attributes
         if hasattr(node, "attr") and node.attr.startswith("_"):
@@ -368,10 +372,10 @@ class ScriptValidator(RestrictingNodeTransformer):
         return super().visit_Attribute(node)
 
     @override
-    def check_name(self, node: ast.AST, name: str | None, allow_magic_methods: bool = False) -> None:
+    def check_name(self, node: T_pos_ast, name: str | None, allow_magic_methods: bool = False) -> None:
         if name == "__name__" and isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
             return
-        return super().check_name(node, name, allow_magic_methods)  # pyright: ignore[reportUnknownMemberType]
+        return super().check_name(node, name, allow_magic_methods)
 
     @staticmethod
     def check_valid_import(name: str, import_type: Literal["import", "import from"] = "import") -> None:
@@ -385,14 +389,14 @@ class ScriptValidator(RestrictingNodeTransformer):
             )
 
     @override
-    def visit_Import(self, node: ast.Import) -> ast.AST:
+    def visit_Import(self, node: ast.Import) -> _VisitReturn:
         """Override to validate allowed imports"""
         for alias in node.names:
             ScriptValidator.check_valid_import(alias.name, import_type="import")
         return super().visit_Import(node)
 
     @override
-    def visit_ImportFrom(self, node: ast.ImportFrom) -> ast.AST:
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> _VisitReturn:
         """Override to validate allowed from imports"""
         if node.module is None:
             raise SyntaxError("Relative imports are not allowed")
@@ -407,7 +411,7 @@ class ScriptValidator(RestrictingNodeTransformer):
         return super().visit_ImportFrom(node)
 
     @override
-    def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.AST:
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> _VisitReturn:
         """Override to allow type annotations (useful for response schemas).
 
         RestrictedPython's default policy forbids AnnAssign.
@@ -516,11 +520,11 @@ class ScriptValidator(RestrictingNodeTransformer):
             return ParsedScriptInfo(code=code, variables=run_parameters)
 
         # 4. Compile with RestrictedPython validation (strict mode only)
-        code: types.CodeType = compile_restricted(  # pyright: ignore [reportUnknownVariableType]
+        code: types.CodeType = compile_restricted(
             code_string, filename="<user_script.py>", mode="exec", policy=ScriptValidator
         )
 
-        return ParsedScriptInfo(code=code, variables=run_parameters)  # pyright: ignore [reportUnknownArgumentType]
+        return ParsedScriptInfo(code=code, variables=run_parameters)
 
 
 @final

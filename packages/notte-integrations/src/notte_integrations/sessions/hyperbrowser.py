@@ -8,8 +8,8 @@ from typing_extensions import override
 from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionManager
 
 try:
-    from hyperbrowser import AsyncHyperbrowser  # type: ignore
-    from hyperbrowser.models import CreateSessionParams  # type: ignore
+    from hyperbrowser import AsyncHyperbrowser
+    from hyperbrowser.models import CreateSessionParams
 except ImportError:
     raise ImportError("Install with notte[hyperbrowser] to include hyperbrowser integration")
 
