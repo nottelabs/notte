@@ -340,3 +340,46 @@ async def test_forged_special_types_are_sent_as_plain_objects(monkeypatch) -> No
         code = f"[{{[Symbol.toStringTag]: 'Date', toJSON: () => 'x'.repeat({HUGE})}}]"
         assert await session.aevaluate_js(code) == '[\n  {\n    "toJSON": {}\n  }\n]'
         assert transferred and transferred[0] < 100
+
+
+@pytest.mark.asyncio
+async def test_guard_survives_pages_that_replace_builtins() -> None:
+    async with NotteSession(headless=True) as session:
+        await session.window.page.evaluate(
+            "() => { window.URL = function () {}; window.RegExp = class {}; window.Uint8Array = function () {}; }",
+            isolated_context=False,
+        )
+        assert await session.aevaluate_js("1 + 1") == "2"
+        assert await session.aevaluate_js("({a: [1, 'b']})") == '{\n  "a": [\n    1,\n    "b"\n  ]\n}'
+
+
+@pytest.mark.asyncio
+async def test_getters_named_like_regexp_flags_run_once() -> None:
+    async with NotteSession(headless=True) as session:
+        code = (
+            "(() => { const reads = {}; const o = {};"
+            " for (const k of ['global', 'ignoreCase', 'multiline', 'sticky', 'unicode', 'dotAll', 'hasIndices']) {"
+            " Object.defineProperty(o, k, {enumerable: true, get() { reads[k] = (reads[k] || 0) + 1; return reads[k]; }}); }"
+            " return o; })()"
+        )
+        result = await session.aevaluate_js(code)
+        assert '"global": 1' in result
+        assert '"hasIndices": 1' in result
+        assert ": 2" not in result
+
+
+@pytest.mark.asyncio
+async def test_unencoded_typed_arrays_and_prototype_pollution(monkeypatch) -> None:
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        if await page.evaluate("typeof Float16Array === 'function'"):
+            native = format_evaluation_result(await page.evaluate("new Float16Array([1.5, 2])"), max_bytes=16384)
+            assert await session.aevaluate_js("new Float16Array([1.5, 2])") == native
+        polluted = (
+            "(() => { Object.prototype.Uint8Array = {Kind: function () { return new Uint8Array(0); }, width: 1e9};"
+            " try { return new Uint8Array(4 * 1024 * 1024); } finally { delete Object.prototype.Uint8Array; } })()"
+        )
+        result = await session.aevaluate_js(polluted, raise_on_failure=False)
+        assert result.success is False
+        assert isinstance(result.exception, EvaluateJsResultLimitError)

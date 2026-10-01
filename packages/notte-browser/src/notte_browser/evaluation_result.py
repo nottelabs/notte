@@ -39,29 +39,60 @@ _FUNCTION_DECLARATION = re.compile(r"^(async)?\s*function(\s|\()")
 # result the exact budget would accept; non-finite charges are rejected.
 PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
   const maxDepth = %d;
+  // Capture built-ins before the user code runs. A lookup that fails, for
+  // example because the page replaced URL, disables only that branch; values
+  // it would have handled take the plain-object path, whose snapshot carries
+  // no tag, so Playwright still reads nothing from the original.
+  const attempt = (read) => {
+    try {
+      return read();
+    } catch (error) {
+      return undefined;
+    }
+  };
+  const apply = Reflect.apply;
   const keysOf = Object.keys;
-  const descriptorOf = Object.getOwnPropertyDescriptor;
   const prototypeOf = Object.getPrototypeOf;
   const createObject = Object.create;
   const isArray = Array.isArray;
-  const tagOf = (item) => Object.prototype.toString.call(item);
-  const callable = (fn) => (thisArg) => Function.prototype.call.call(fn, thisArg);
-  const typedArrayPrototype = prototypeOf(Uint8Array.prototype);
-  const typedArrayKind = callable(descriptorOf(typedArrayPrototype, Symbol.toStringTag).get);
-  const typedArrayBytes = callable(descriptorOf(typedArrayPrototype, "byteLength").get);
-  const typedArraySet = typedArrayPrototype.set;
-  const dateTime = callable(Date.prototype.getTime);
-  const urlHref = typeof URL === "function" ? callable(descriptorOf(URL.prototype, "href").get) : undefined;
-  const regexpFlags = callable(descriptorOf(RegExp.prototype, "flags").get);
-  const typedArrays = {
-    Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array,
-    Uint32Array, Float32Array, Float64Array, BigInt64Array, BigUint64Array,
+  const objectToString = Object.prototype.toString;
+  const tagOf = (item) => apply(objectToString, item, []);
+  const accessor = (read) => {
+    const get = attempt(read);
+    return typeof get === "function" ? (item) => apply(get, item, []) : undefined;
   };
-  const WindowType = typeof Window === "function" ? Window : undefined;
-  const DocumentType = typeof Document === "function" ? Document : undefined;
-  const NodeType = typeof Node === "function" ? Node : undefined;
+  const typedArrayPrototype = attempt(() => prototypeOf(Uint8Array.prototype));
+  const typedArrayKind = accessor(() => Object.getOwnPropertyDescriptor(typedArrayPrototype, Symbol.toStringTag).get);
+  const typedArrayBytes = accessor(() => Object.getOwnPropertyDescriptor(typedArrayPrototype, "byteLength").get);
+  const typedArraySet = attempt(() => typedArrayPrototype.set);
+  const dateTime = accessor(() => Date.prototype.getTime);
+  const urlHref = accessor(() => Object.getOwnPropertyDescriptor(URL.prototype, "href").get);
+  const regexpSource = accessor(() => Object.getOwnPropertyDescriptor(RegExp.prototype, "source").get);
+  const typedArrays = createObject(null);
+  for (const name of [
+    "Int8Array", "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array",
+    "Uint32Array", "Float32Array", "Float64Array", "BigInt64Array", "BigUint64Array",
+  ]) {
+    const Kind = attempt(() => globalThis[name]);
+    if (typeof Kind === "function" && typeof Kind.BYTES_PER_ELEMENT === "number") {
+      typedArrays[name] = { Kind, width: Kind.BYTES_PER_ELEMENT };
+    }
+  }
+  const WindowType = attempt(() => Window);
+  const DocumentType = attempt(() => Document);
+  const NodeType = attempt(() => Node);
   const ErrorType = Error;
+  const instanceOf = (item, Type) => {
+    try {
+      return typeof Type === "function" && item instanceof Type;
+    } catch (error) {
+      return false;
+    }
+  };
   const succeeds = (read, item) => {
+    if (read === undefined) {
+      return false;
+    }
     try {
       read(item);
       return true;
@@ -125,7 +156,7 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
   };
   const isError = (item) => {
     try {
-      return item instanceof ErrorType || (prototypeOf(item) || {}).name === "Error";
+      return instanceOf(item, ErrorType) || (prototypeOf(item) || {}).name === "Error";
     } catch (error) {
       return false;
     }
@@ -142,9 +173,9 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
     const topLevel = depth === 0;
     if (item && typeof item === "object") {
       const ref =
-        (WindowType && item instanceof WindowType && "ref: <Window>") ||
-        (DocumentType && item instanceof DocumentType && "ref: <Document>") ||
-        (NodeType && item instanceof NodeType && "ref: <Node>");
+        (instanceOf(item, WindowType) && "ref: <Window>") ||
+        (instanceOf(item, DocumentType) && "ref: <Document>") ||
+        (instanceOf(item, NodeType) && "ref: <Node>");
       if (ref) {
         chargeText(ref, topLevel);
         return ref;
@@ -181,7 +212,7 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
       }
       return tagged("Date", text);
     }
-    if (urlHref !== undefined && succeeds(urlHref, item)) {
+    if (succeeds(urlHref, item)) {
       const text = item.toJSON();
       if (typeof text !== "string") {
         fail("URL.toJSON() did not return a string");
@@ -189,7 +220,10 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
       charge(text.length);
       return tagged("URL", text);
     }
-    if (succeeds(regexpFlags, item) && tagOf(item) === "[object RegExp]") {
+    // The source accessor throws for anything that is not a RegExp, so no
+    // page getter runs on other objects. Playwright reads source and flags
+    // from the value itself; so does this, once each.
+    if (succeeds(regexpSource, item) && tagOf(item) === "[object RegExp]") {
       const source = item.source;
       const flags = item.flags;
       if (typeof source !== "string" || typeof flags !== "string") {
@@ -203,13 +237,15 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
       snapshot.r = pattern;
       return snapshot;
     }
-    const kind = typedArrayKind(item);
-    if (kind !== undefined) {
-      const Kind = typedArrays[kind];
-      const count = typedArrayBytes(item) / Kind.BYTES_PER_ELEMENT;
+    // Kinds Playwright does not encode, such as Float16Array, have no entry
+    // and take the plain-object path, as they do in Playwright.
+    const kind = typedArrayKind === undefined ? undefined : typedArrayKind(item);
+    const typed = typeof kind === "string" ? typedArrays[kind] : undefined;
+    if (typed !== undefined && typedArrayBytes !== undefined && typeof typedArraySet === "function") {
+      const count = typedArrayBytes(item) / typed.width;
       charge(count === 0 ? 2 : 2 + 2 * count);
-      const copy = new Kind(count);
-      Function.prototype.call.call(typedArraySet, copy, item);
+      const copy = new typed.Kind(count);
+      apply(typedArraySet, copy, [item]);
       return copy;
     }
     if (copies.has(item)) {
