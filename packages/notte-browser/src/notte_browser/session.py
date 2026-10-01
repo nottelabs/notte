@@ -789,7 +789,12 @@ class NotteSession(AsyncResource, SyncResource):
                             result = await asyncio.wait_for(
                                 self.window.page.evaluate(
                                     PAGE_RESULT_GUARD,
-                                    [page_expression(js_code), config.evaluate_js_max_result_bytes, guard_token],
+                                    [
+                                        page_expression(js_code),
+                                        config.evaluate_js_max_result_bytes,
+                                        config.evaluate_js_max_result_values,
+                                        guard_token,
+                                    ],
                                     **evaluate_kwargs,
                                 ),
                                 timeout=config.timeout_evaluate_js_ms / 1000.0,

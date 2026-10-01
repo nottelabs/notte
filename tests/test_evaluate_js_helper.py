@@ -384,3 +384,46 @@ async def test_unencoded_typed_arrays_and_prototype_pollution(monkeypatch) -> No
         result = await session.aevaluate_js(polluted, raise_on_failure=False)
         assert result.success is False
         assert isinstance(result.exception, EvaluateJsResultLimitError)
+
+
+async def _transfers(session, monkeypatch) -> list[int]:
+    transferred: list[int] = []
+    original_evaluate = session.window.page.evaluate
+
+    async def evaluate(expression, *args, **kwargs):
+        value = await original_evaluate(expression, *args, **kwargs)
+        transferred.append(len(repr(value)))
+        return value
+
+    monkeypatch.setattr(session.window.page, "evaluate", evaluate)
+    return transferred
+
+
+@pytest.mark.asyncio
+async def test_value_cap_counts_every_value(monkeypatch) -> None:
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_values": 100}))
+    async with NotteSession(headless=True) as session:
+        transferred = await _transfers(session, monkeypatch)
+        # The array plus 99 numbers is exactly 100 values.
+        assert await session.aevaluate_js("Array(99).fill(0)") == format_evaluation_result([0] * 99, max_bytes=16384)
+        # Each {a, b} row is 3 values: 33 rows plus the array are 100, 34 rows are 103.
+        assert (await session.aevaluate_js("Array.from({length: 33}, () => ({a: 1, b: 'x'}))")).startswith("[")
+        transferred.clear()
+        for code in ("Array(100).fill(0)", "Array.from({length: 34}, () => ({a: 1, b: 'x'}))"):
+            result = await session.aevaluate_js(code, raise_on_failure=False)
+            assert result.success is False
+            assert isinstance(result.exception, EvaluateJsResultLimitError)
+            assert "more than 100 values" in result.message
+        assert transferred == []
+
+
+@pytest.mark.asyncio
+async def test_default_value_cap_rejects_large_row_results_in_the_page(monkeypatch) -> None:
+    async with NotteSession(headless=True) as session:
+        transferred = await _transfers(session, monkeypatch)
+        rows = "Array.from({length: 20000}, (_, i) => ({id: i, name: 'row' + i}))"
+        result = await session.aevaluate_js(rows, raise_on_failure=False)
+        assert result.success is False
+        assert "more than 50000 values" in result.message
+        assert transferred == []
+        assert (await session.aevaluate_js("Array.from({length: 10000}, (_, i) => ({id: i}))")).startswith("[")

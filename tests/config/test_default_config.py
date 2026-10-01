@@ -23,6 +23,7 @@ def test_default_config():
     assert config.empty_page_max_retry == 5
     assert config.viewport_expansion == 0
     assert config.evaluate_js_max_result_bytes == 16 * 1024 * 1024
+    assert config.evaluate_js_max_result_values == 50_000
 
 
 def test_default_llm_model_uses_vertex_with_google_credentials(monkeypatch: pytest.MonkeyPatch):
@@ -55,3 +56,9 @@ def test_agent_timeout_config_values_must_be_positive(field: str, value: float):
 def test_evaluate_js_limit_must_be_positive(limit: int):
     with pytest.raises(ValidationError, match="evaluate_js_max_result_bytes"):
         _ = NotteConfig.from_toml(evaluate_js_max_result_bytes=limit)
+
+
+@pytest.mark.parametrize("limit", [0, -1])
+def test_evaluate_js_value_limit_must_be_positive(limit: int):
+    with pytest.raises(ValidationError, match="evaluate_js_max_result_values"):
+        _ = NotteConfig.from_toml(evaluate_js_max_result_values=limit)
