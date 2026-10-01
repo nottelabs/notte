@@ -318,7 +318,9 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
         const element = copy[i];
         list[i] = typeof element === "bigint" ? tag("bi", String(element)) : encodeNumber(element);
       }
-      return list;
+      // Playwright unpacks Float32Array and Float64Array elements as floats;
+      // JSON would turn 1.0 into the integer 1, so the array is tagged.
+      return kind === "Float32Array" || kind === "Float64Array" ? tag("fa", list) : list;
     }
     }
     if (copies.has(item)) {
@@ -423,6 +425,10 @@ _EPOCH = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
 _SPECIAL_NUMBERS = {"NaN": math.nan, "Infinity": math.inf, "-Infinity": -math.inf, "-0": -0.0}
 
 
+class InvalidPagePayloadError(ValueError):
+    """The guard's payload could not be decoded."""
+
+
 def decode_page_result(payload: object, token: str, *, max_bytes: int, max_values: int) -> Any:
     """Decode the guard's payload into the values Playwright would have produced.
 
@@ -433,7 +439,7 @@ def decode_page_result(payload: object, token: str, *, max_bytes: int, max_value
     parsing.
     """
     if not isinstance(payload, str) or payload[:1] not in ("s", "j"):
-        raise ValueError("evaluate_js returned an unexpected payload")
+        raise InvalidPagePayloadError("evaluate_js returned an unexpected payload")
     body = payload[1:]
     if payload[0] == "s":
         if len(body) > max_bytes:
@@ -459,9 +465,16 @@ def decode_page_result(payload: object, token: str, *, max_bytes: int, max_value
             return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=datetime.timezone.utc)
         if kind == "u":
             return urlparse(value)
+        if kind == "fa" and isinstance(value, list):
+            elements = cast(list[float], value)
+            return [float(element) for element in elements]
         return item
 
-    return json.loads(text, object_hook=untag)
+    try:
+        return json.loads(text, object_hook=untag)
+    except (ValueError, TypeError, KeyError, OverflowError) as error:
+        # Only reachable when the page replaced JSON.stringify.
+        raise InvalidPagePayloadError(f"evaluate_js result is not valid JSON ({type(error).__name__})") from None
 
 
 def page_expression(code: str) -> str:

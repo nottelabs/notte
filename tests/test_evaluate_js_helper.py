@@ -260,6 +260,9 @@ async def test_getter_values_are_measured_and_read_once(monkeypatch) -> None:
         "new BigUint64Array([18446744073709551615n])",
         "new Float64Array([NaN, -0, 1.5, Infinity])",
         "new Float32Array([0.1])",
+        "new Float64Array([1, 1e20, -2.5])",
+        "new Float32Array([1, 3])",
+        "[new Float64Array([4]), new Int16Array([4])]",
         "({f: () => 1, s: Symbol('x'), u: undefined, n: 1})",
         "[() => 1, Symbol('x'), undefined, 2]",
         "[1, , 3]",
@@ -531,3 +534,17 @@ async def test_a_replaced_json_stringify_cannot_inflate_the_transfer(monkeypatch
         assert all(size < 1000 for size in transferred)
         # A top-level string never goes through JSON.stringify.
         assert await session.aevaluate_js("'plain'") == "plain"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("raise_on_failure", [False, True])
+async def test_an_unreadable_payload_fails_the_action(raise_on_failure) -> None:
+    async with NotteSession(headless=True) as session:
+        await session.window.page.evaluate("() => { JSON.stringify = () => 'not JSON'; }", isolated_context=False)
+        if raise_on_failure:
+            with pytest.raises(ActionExecutionError, match="not valid JSON"):
+                await session.aevaluate_js("({a: 1})")
+        else:
+            result = await session.aevaluate_js("({a: 1})", raise_on_failure=False)
+            assert result.success is False
+            assert "not valid JSON" in result.message
