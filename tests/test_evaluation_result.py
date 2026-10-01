@@ -3,7 +3,14 @@ import json
 import tracemalloc
 
 import pytest
-from notte_browser.evaluation_result import format_evaluation_result
+from notte_browser.evaluation_result import (
+    PAGE_RESULT_GUARD,
+    RESULT_LIMIT_MARKER,
+    format_evaluation_result,
+    new_guard_token,
+    page_expression,
+    page_limit_reason,
+)
 from notte_core.errors.actions import EvaluateJsResultLimitError
 
 
@@ -91,3 +98,38 @@ def test_excessive_depth_returns_action_error():
 def test_invalid_dict_key_keeps_existing_error():
     with pytest.raises(TypeError, match="keys must be"):
         format_evaluation_result({(1, 2): "value"}, max_bytes=1024)
+
+
+@pytest.mark.parametrize(
+    ("code", "expected"),
+    [
+        ("1 + 1", "1 + 1"),
+        ("  1 + 1\n", "1 + 1"),
+        ("() => 1", "() => 1"),
+        ("(function () { return 1 })()", "(function () { return 1 })()"),
+        ("function f() { return 1 }", "(function f() { return 1 })"),
+        ("async function f() { return 1 }", "(async function f() { return 1 })"),
+        ("function(){ return 1 }", "(function(){ return 1 })"),
+        ("functionName()", "functionName()"),
+    ],
+)
+def test_page_expression_matches_playwright_normalization(code, expected):
+    assert page_expression(code) == expected
+
+
+def test_page_limit_reason_requires_this_evaluations_token():
+    token = new_guard_token()
+    message = f"Page.evaluate: Error: {RESULT_LIMIT_MARKER}{token}:serialized result exceeds 16 bytes\n    at eval"
+    assert page_limit_reason(message, token) == "serialized result exceeds 16 bytes"
+    assert page_limit_reason(message, new_guard_token()) is None
+    assert page_limit_reason(f"Page.evaluate: Error: {RESULT_LIMIT_MARKER}x", token) is None
+    assert page_limit_reason("Page.evaluate: TypeError: boom", token) is None
+
+
+def test_guard_tokens_are_unique():
+    assert len({new_guard_token() for _ in range(100)}) == 100
+
+
+def test_page_guard_is_a_function_taking_code_budget_and_token():
+    assert PAGE_RESULT_GUARD.startswith("async ([code, maxBytes, token]) =>")
+    assert RESULT_LIMIT_MARKER in PAGE_RESULT_GUARD
