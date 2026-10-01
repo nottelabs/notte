@@ -109,6 +109,8 @@ from notte_browser.errors import (
 )
 from notte_browser.evaluation_result import (
     PAGE_RESULT_GUARD,
+    InvalidPagePayloadError,
+    decode_page_result,
     format_evaluation_result,
     new_guard_token,
     page_expression,
@@ -811,16 +813,29 @@ class NotteSession(AsyncResource, SyncResource):
                             success = False
                             message = f"JavaScript evaluation failed: {js_err}"
                         else:
+                            result_str: str | None = None
                             try:
+                                # The guard returns the result as one JSON string,
+                                # decoded once here instead of value by value by
+                                # Playwright, which cost several times the memory.
+                                result = decode_page_result(
+                                    result,
+                                    guard_token,
+                                    max_bytes=config.evaluate_js_max_result_bytes,
+                                    max_values=config.evaluate_js_max_result_values,
+                                )
                                 result_str = format_evaluation_result(
                                     result, max_bytes=config.evaluate_js_max_result_bytes
                                 )
+                            except InvalidPagePayloadError as payload_err:
+                                message = f"JavaScript evaluation failed: {payload_err}"
                             finally:
                                 # The action's frame can itself be retained when a
                                 # failure is raised later or saved in the trajectory.
                                 result = None
-                            scraped_data = DataSpace(markdown=result_str)
-                            success = True
+                            success = result_str is not None
+                            if result_str is not None:
+                                scraped_data = DataSpace(markdown=result_str)
                     case ToolAction():
                         tool_found = False
                         success = False

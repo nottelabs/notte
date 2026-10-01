@@ -1,15 +1,22 @@
 """Bound conversion allocations without changing the evaluate_js text format."""
 
+import datetime
 import json
+import math
 import re
 import secrets
 from json.encoder import encode_basestring_ascii
 from typing import Any, cast
+from urllib.parse import urlparse
 
 from notte_core.errors.actions import EvaluateJsResultLimitError
 
 _STRING_CHUNK_CHARS = 8192
 _MAX_DEPTH = 128
+# Bytes of JSON text a value may take beyond what the guard charges for it:
+# the tag that carries a special number, BigInt, Date or URL (about 70 bytes
+# with the 32-character token), or the digits of a typed-array element.
+_TRANSFER_ALLOWANCE_PER_VALUE = 96
 
 # Prefix of the error thrown by the page-side guard. Each call appends a random
 # token that the evaluated code cannot read, so a page error that merely
@@ -51,9 +58,11 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
     }
   };
   const apply = Reflect.apply;
+  const substring = attempt(() => String.prototype.substring);
   const keysOf = Object.keys;
   const prototypeOf = Object.getPrototypeOf;
   const createObject = Object.create;
+  const setPrototypeOf = Object.setPrototypeOf;
   const isArray = Array.isArray;
   const objectToString = Object.prototype.toString;
   const tagOf = (item) => apply(objectToString, item, []);
@@ -175,14 +184,28 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
       return false;
     }
   };
-  const tagged = (tag, text) => {
-    const snapshot = createObject(null);
-    snapshot[Symbol.toStringTag] = tag;
-    snapshot.toJSON = () => text;
-    return snapshot;
+  // The snapshot is built from the guard's own nodes, and the guard writes
+  // the JSON itself (see write below), so nothing on the page serializes it.
+  // Values JSON cannot express become {[token]: kind, v: text}; the per-call
+  // token cannot appear in page data.
+  const newArray = () => setPrototypeOf([], null);
+  const node = (kind, a, b) => {
+    const n = newArray();
+    n[0] = kind;
+    n[1] = a;
+    n[2] = b;
+    return n;
   };
+  const tag = (kind, payload) => node("t", kind, payload);
+  const encodeNumber = (n) =>
+    n !== n ? tag("n", "NaN")
+    : n === Infinity ? tag("n", "Infinity")
+    : n === -Infinity ? tag("n", "-Infinity")
+    : n === 0 && 1 / n < 0 ? tag("n", "-0")
+    : n;
 
   const copies = new Map();
+  const costs = new Map();
   const visit = (item, depth) => {
     values += 1;
     if (values > maxValues) {
@@ -216,13 +239,23 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
       chargeText(item, topLevel);
       return item;
     }
-    if (typeof item === "number" || typeof item === "boolean" || typeof item === "bigint") {
+    if (typeof item === "number") {
+      charge(String(item).length);
+      return encodeNumber(item);
+    }
+    if (typeof item === "boolean") {
       charge(String(item).length);
       return item;
     }
+    if (typeof item === "bigint") {
+      const digits = String(item);
+      charge(digits.length);
+      return tag("bi", digits);
+    }
     if (item === null || item === undefined || typeof item !== "object") {
+      // undefined, functions and symbols arrive in Python as None.
       charge(4);
-      return item;
+      return null;
     }
     if (!plain) {
     if (isError(item)) {
@@ -242,7 +275,7 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
       } else {
         fail("Date.toJSON() did not return a string");
       }
-      return tagged("Date", text);
+      return tag("d", text);
     }
     if (succeeds(urlHref, item)) {
       const text = item.toJSON();
@@ -250,7 +283,7 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
         fail("URL.toJSON() did not return a string");
       }
       charge(text.length);
-      return tagged("URL", text);
+      return tag("u", text);
     }
     // The source accessor throws for anything that is not a RegExp, so no
     // page getter runs on other objects. Playwright reads source and flags
@@ -261,13 +294,9 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
       if (typeof source !== "string" || typeof flags !== "string") {
         fail("RegExp source or flags is not a string");
       }
-      charge(source.length + flags.length);
-      const pattern = createObject(null);
-      pattern.p = source;
-      pattern.f = flags;
-      const snapshot = createObject(null);
-      snapshot.r = pattern;
-      return snapshot;
+      chargeText(source, false);
+      chargeText(flags, false);
+      return node("r", source, flags);
     }
     // Kinds Playwright does not encode, such as Float16Array, have no entry
     // and take the plain-object path, as they do in Playwright.
@@ -283,27 +312,54 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
       charge(count === 0 ? 2 : 2 + 2 * count);
       const copy = new typed.Kind(count);
       apply(typedArraySet, copy, [item]);
-      return copy;
+      const list = newArray();
+      for (let i = 0; i < count; ++i) {
+        const element = copy[i];
+        list[i] = typeof element === "bigint" ? tag("bi", String(element)) : encodeNumber(element);
+      }
+      // Playwright unpacks Float32Array and Float64Array elements as floats;
+      // JSON would turn 1.0 into the integer 1, so the array is tagged.
+      const array = node("a", list);
+      return kind === "Float32Array" || kind === "Float64Array" ? tag("fa", array) : array;
     }
     }
     if (copies.has(item)) {
-      charge(1);
+      // JSON writes a repeated reference out in full, so it costs what its
+      // first occurrence cost. An entry still being built is a cycle.
+      const cost = costs.get(item);
+      if (cost === undefined) {
+        throw new Error("evaluate_js result contains a circular reference");
+      }
+      values += cost.count;
+      if (!(values <= maxValues)) {
+        fail("result has more than " + maxValues + " values");
+      }
+      charge(cost.bytes);
       return copies.get(item);
     }
     if (depth >= maxDepth) {
       fail("nesting depth exceeds " + maxDepth);
     }
+    const startSize = size;
+    const startValues = values;
+    const done = (snapshot) => {
+      copies.set(item, snapshot);
+      costs.set(item, { bytes: size - startSize, count: values - startValues });
+      return snapshot;
+    };
     if (isArray(item)) {
-      const copy = [];
+      const items = newArray();
+      const copy = node("a", items);
       copies.set(item, copy);
       charge(2 + item.length);
       for (let i = 0; i < item.length; ++i) {
-        copy.push(visit(item[i], depth + 1));
+        items[i] = visit(item[i], depth + 1);
       }
-      return copy;
+      return done(copy);
     }
-    // Null prototype so that an own "__proto__" key stays a key.
-    const copy = createObject(null);
+    const keys = newArray();
+    const vals = newArray();
+    const copy = node("o", keys, vals);
     copies.set(item, copy);
     charge(2);
     let entries = 0;
@@ -314,15 +370,16 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
       } catch (error) {
         continue;
       }
-      entries += 1;
       chargeText(name, false);
       charge(1);
+      keys[entries] = name;
       if (name === "toJSON" && typeof entry === "function") {
         charge(2);
-        copy[name] = createObject(null);
+        vals[entries] = node("e");
       } else {
-        copy[name] = visit(entry, depth + 1);
+        vals[entries] = visit(entry, depth + 1);
       }
+      entries += 1;
     }
     if (entries === 0) {
       let json;
@@ -334,19 +391,250 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
       }
       if (json) {
         size -= 2;
-        copies.set(item, undefined);
-        return visit(json.value, depth);
+        return done(visit(json.value, depth));
       }
     }
-    return copy;
+    return done(copy);
   };
-  return visit(value, 0);
-}""" % (_MAX_DEPTH, json.dumps(RESULT_LIMIT_MARKER))
+  // A top-level string is sent as is: its length, which a page cannot
+  // override, was already checked against maxBytes.
+  if (typeof value === "string") {
+    chargeText(value, true);
+    return "s" + value;
+  }
+  // A cycle fails the action as a JavaScript error (above) instead of
+  // crashing the formatter after the transfer, as it did before.
+  const snapshot = visit(value, 0);
+
+  // The JSON is written here with operators, string indexing and length only,
+  // none of which a page can override. The writer counts values and depth
+  // itself, so whatever the walk produced, the payload holds at most maxValues
+  // values; its length must match the length computed alongside it, and fit
+  // what the walk measured plus a fixed allowance per value.
+  const controlEscapes = {"\\u0000": "\\\\u0000", "\\u0001": "\\\\u0001", "\\u0002": "\\\\u0002", "\\u0003": "\\\\u0003", "\\u0004": "\\\\u0004", "\\u0005": "\\\\u0005", "\\u0006": "\\\\u0006", "\\u0007": "\\\\u0007", "\\b": "\\\\b", "\\t": "\\\\t", "\\n": "\\\\n", "\\u000b": "\\\\u000b", "\\f": "\\\\f", "\\r": "\\\\r", "\\u000e": "\\\\u000e", "\\u000f": "\\\\u000f", "\\u0010": "\\\\u0010", "\\u0011": "\\\\u0011", "\\u0012": "\\\\u0012", "\\u0013": "\\\\u0013", "\\u0014": "\\\\u0014", "\\u0015": "\\\\u0015", "\\u0016": "\\\\u0016", "\\u0017": "\\\\u0017", "\\u0018": "\\\\u0018", "\\u0019": "\\\\u0019", "\\u001a": "\\\\u001a", "\\u001b": "\\\\u001b", "\\u001c": "\\\\u001c", "\\u001d": "\\\\u001d", "\\u001e": "\\\\u001e", "\\u001f": "\\\\u001f"};
+  let out = "";
+  let expected = 0;
+  let written = 0;
+  const literal = (text) => {
+    out += text;
+    expected += text.length;
+  };
+  const countValue = () => {
+    written += 1;
+    if (!(written <= maxValues)) {
+      fail("result has more than " + maxValues + " values");
+    }
+  };
+  // substring belongs to the page, which may have replaced it before this
+  // call, so every copied run is compared with the source string through
+  // primitive indexing, which a page cannot override.
+  const unreadable = () => {
+    throw new Error("evaluate_js result could not be serialized");
+  };
+  const copyRun = (text, from, to) => {
+    const piece = typeof substring === "function" ? apply(substring, text, [from, to]) : undefined;
+    if (typeof piece !== "string" || piece.length !== to - from) {
+      unreadable();
+    }
+    for (let k = 0; k < piece.length; k++) {
+      if (piece[k] !== text[from + k]) {
+        unreadable();
+      }
+    }
+    out += piece;
+    expected += to - from;
+  };
+  const writeString = (text) => {
+    const n = text.length;
+    let plain = true;
+    for (let i = 0; i < n; i++) {
+      const c = text[i];
+      if (c < " " || c === '"' || c === "\\\\") {
+        plain = false;
+        break;
+      }
+    }
+    if (plain) {
+      out += '"' + text + '"';
+      expected += n + 2;
+      return;
+    }
+    literal('"');
+    let run = 0;
+    for (let i = 0; i < n; i++) {
+      const c = text[i];
+      const escape = c === '"' ? '\\\\"' : c === "\\\\" ? "\\\\\\\\" : c < " " ? controlEscapes[c] : undefined;
+      if (escape === undefined) {
+        continue;
+      }
+      if (i > run) {
+        copyRun(text, run, i);
+      }
+      literal(escape);
+      run = i + 1;
+    }
+    if (run < n) {
+      copyRun(text, run, n);
+    }
+    literal('"');
+  };
+  const writeText = (text) => writeString(typeof text === "string" ? text : "");
+  const write = (item, depth) => {
+    if (depth > maxDepth + 2) {
+      fail("nesting depth exceeds " + maxDepth);
+    }
+    if (typeof item === "string") {
+      countValue();
+      writeString(item);
+      return;
+    }
+    if (typeof item === "number") {
+      countValue();
+      literal(item === item && item !== Infinity && item !== -Infinity ? "" + item : "null");
+      return;
+    }
+    if (typeof item === "boolean") {
+      countValue();
+      literal(item ? "true" : "false");
+      return;
+    }
+    if (item === null || typeof item !== "object") {
+      countValue();
+      literal("null");
+      return;
+    }
+    const kind = item[0];
+    if (kind === "a") {
+      countValue();
+      const items = item[1];
+      const n = items === null || typeof items !== "object" ? 0 : items.length;
+      literal("[");
+      for (let i = 0; i < n; i++) {
+        if (i > 0) {
+          literal(",");
+        }
+        write(items[i], depth + 1);
+      }
+      literal("]");
+    } else if (kind === "o") {
+      countValue();
+      const keys = item[1];
+      const vals = item[2];
+      const n = keys === null || typeof keys !== "object" || vals === null || typeof vals !== "object" ? 0 : keys.length;
+      literal("{");
+      for (let i = 0; i < n; i++) {
+        if (i > 0) {
+          literal(",");
+        }
+        writeText(keys[i]);
+        literal(":");
+        write(vals[i], depth + 1);
+      }
+      literal("}");
+    } else if (kind === "e") {
+      literal("{}");
+    } else if (kind === "r") {
+      countValue();
+      literal('{"r":{"p":');
+      writeText(item[1]);
+      literal(',"f":');
+      writeText(item[2]);
+      literal("}}");
+    } else if (kind === "t") {
+      const tagKind = item[1];
+      const payload = item[2];
+      if (tagKind !== "fa") {
+        countValue();
+      }
+      literal("{");
+      writeString(token);
+      literal(":");
+      writeText(tagKind);
+      literal(',"v":');
+      if (tagKind === "fa") {
+        write(payload, depth + 1);
+      } else if (typeof payload === "string") {
+        writeString(payload);
+      } else {
+        literal("null");
+      }
+      literal("}");
+    } else {
+      countValue();
+      literal("null");
+    }
+  };
+  write(snapshot, 0);
+  if (!(out.length === expected)) {
+    throw new Error("evaluate_js result could not be serialized");
+  }
+  if (!(expected <= size + %d * values + %d)) {
+    tooLarge();
+  }
+  return "j" + out;
+}""" % (_MAX_DEPTH, json.dumps(RESULT_LIMIT_MARKER), _TRANSFER_ALLOWANCE_PER_VALUE, _TRANSFER_ALLOWANCE_PER_VALUE)
 
 
 def new_guard_token() -> str:
     """Return a token that identifies one guarded evaluation's limit error."""
     return secrets.token_hex(16)
+
+
+_EPOCH = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+_SPECIAL_NUMBERS = {"NaN": math.nan, "Infinity": math.inf, "-Infinity": -math.inf, "-0": -0.0}
+
+
+class InvalidPagePayloadError(ValueError):
+    """The guard's payload could not be decoded."""
+
+
+def decode_page_result(payload: object, token: str, *, max_bytes: int, max_values: int) -> Any:
+    """Decode the guard's payload into the values Playwright would have produced.
+
+    The payload is "s" plus a top-level string, or "j" plus JSON in which values
+    JSON cannot express are tagged with the per-call token; each tag becomes
+    what Playwright's own decoder returns for that value. The guard bounds the
+    payload before sending it; the same bound is checked again here before
+    parsing.
+    """
+    if not isinstance(payload, str) or payload[:1] not in ("s", "j"):
+        raise InvalidPagePayloadError("evaluate_js returned an unexpected payload")
+    body = payload[1:]
+    if payload[0] == "s":
+        if len(body) > max_bytes:
+            raise EvaluateJsResultLimitError(max_bytes, "output size")
+        return body
+    if len(body) > max_bytes + _TRANSFER_ALLOWANCE_PER_VALUE * (max_values + 1):
+        raise EvaluateJsResultLimitError(max_bytes, "output size")
+    text = body
+
+    def untag(item: dict[str, Any]) -> Any:
+        kind = item.get(token)
+        if kind is None or len(item) != 2:
+            return item
+        value = item.get("v")
+        if kind == "n" and isinstance(value, str):
+            return _SPECIAL_NUMBERS[value]
+        if kind == "bi" and isinstance(value, str):
+            return int(value)
+        if kind == "d":
+            # Playwright decodes an invalid Date (toJSON() is null) as the epoch.
+            if value is None:
+                return _EPOCH
+            return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=datetime.timezone.utc)
+        if kind == "u":
+            return urlparse(value)
+        if kind == "fa" and isinstance(value, list):
+            elements = cast(list[float], value)
+            return [float(element) for element in elements]
+        return item
+
+    try:
+        return json.loads(text, object_hook=untag)
+    except (ValueError, TypeError, KeyError, OverflowError, RecursionError) as error:
+        # The guard writes the payload itself, so this only guards against a
+        # corrupted transfer.
+        raise InvalidPagePayloadError(f"evaluate_js result is not valid JSON ({type(error).__name__})") from None
 
 
 def page_expression(code: str) -> str:

@@ -1,11 +1,14 @@
 import datetime as dt
 import json
+import math
 import tracemalloc
+from urllib.parse import urlparse
 
 import pytest
 from notte_browser.evaluation_result import (
     PAGE_RESULT_GUARD,
     RESULT_LIMIT_MARKER,
+    decode_page_result,
     format_evaluation_result,
     new_guard_token,
     page_expression,
@@ -133,3 +136,41 @@ def test_guard_tokens_are_unique():
 def test_page_guard_is_a_function_taking_code_budgets_and_token():
     assert PAGE_RESULT_GUARD.startswith("async ([code, maxBytes, maxValues, token]) =>")
     assert RESULT_LIMIT_MARKER in PAGE_RESULT_GUARD
+
+
+def test_decode_page_result_restores_playwright_values():
+    token = new_guard_token()
+    text = json.dumps(
+        {
+            "nan": {token: "n", "v": "NaN"},
+            "neg0": {token: "n", "v": "-0"},
+            "inf": [{token: "n", "v": "Infinity"}, {token: "n", "v": "-Infinity"}],
+            "big": {token: "bi", "v": "18446744073709551615"},
+            "date": {token: "d", "v": "2026-10-01T12:00:00.123Z"},
+            "invalid_date": {token: "d", "v": None},
+            "url": {token: "u", "v": "https://example.com/a?b=1#c"},
+            "lookalike": {"other-token": "n", "v": "NaN"},
+            "plain": {"v": 1},
+        }
+    )
+    value = decode_page_result("j" + text, token, max_bytes=1 << 20, max_values=1000)
+    assert math.isnan(value["nan"])
+    assert str(value["neg0"]) == "-0.0"
+    assert value["inf"] == [math.inf, -math.inf]
+    assert value["big"] == 18446744073709551615
+    assert value["date"] == dt.datetime(2026, 10, 1, 12, 0, 0, 123000, tzinfo=dt.timezone.utc)
+    assert value["invalid_date"] == dt.datetime(1970, 1, 1, tzinfo=dt.timezone.utc)
+    assert value["url"] == urlparse("https://example.com/a?b=1#c")
+    assert value["lookalike"] == {"other-token": "n", "v": "NaN"}
+    assert value["plain"] == {"v": 1}
+
+
+def test_decode_page_result_checks_the_payload_before_parsing():
+    token = new_guard_token()
+    assert decode_page_result("s" + "é" * 10, token, max_bytes=100, max_values=10) == "é" * 10
+    with pytest.raises(EvaluateJsResultLimitError):
+        decode_page_result("s" + "x" * 101, token, max_bytes=100, max_values=10)
+    with pytest.raises(EvaluateJsResultLimitError):
+        decode_page_result("j" + json.dumps(["x" * 2000]), token, max_bytes=100, max_values=10)
+    with pytest.raises(ValueError):
+        decode_page_result({"not": "a string"}, token, max_bytes=100, max_values=10)
