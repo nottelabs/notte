@@ -7,6 +7,7 @@ from notte_browser.evaluation_result import (
     PAGE_RESULT_GUARD,
     RESULT_LIMIT_MARKER,
     format_evaluation_result,
+    new_guard_token,
     page_expression,
     page_limit_reason,
 )
@@ -116,12 +117,19 @@ def test_page_expression_matches_playwright_normalization(code, expected):
     assert page_expression(code) == expected
 
 
-def test_page_limit_reason_extracts_the_guard_message():
-    message = f"Page.evaluate: Error: {RESULT_LIMIT_MARKER}serialized result exceeds 16 bytes\n    at eval (eval at <anonymous>)"
-    assert page_limit_reason(message) == "serialized result exceeds 16 bytes"
-    assert page_limit_reason("Page.evaluate: TypeError: boom") is None
+def test_page_limit_reason_requires_this_evaluations_token():
+    token = new_guard_token()
+    message = f"Page.evaluate: Error: {RESULT_LIMIT_MARKER}{token}:serialized result exceeds 16 bytes\n    at eval"
+    assert page_limit_reason(message, token) == "serialized result exceeds 16 bytes"
+    assert page_limit_reason(message, new_guard_token()) is None
+    assert page_limit_reason(f"Page.evaluate: Error: {RESULT_LIMIT_MARKER}x", token) is None
+    assert page_limit_reason("Page.evaluate: TypeError: boom", token) is None
 
 
-def test_page_guard_is_a_function_taking_code_and_budget():
-    assert PAGE_RESULT_GUARD.startswith("async ([code, maxBytes]) =>")
+def test_guard_tokens_are_unique():
+    assert len({new_guard_token() for _ in range(100)}) == 100
+
+
+def test_page_guard_is_a_function_taking_code_budget_and_token():
+    assert PAGE_RESULT_GUARD.startswith("async ([code, maxBytes, token]) =>")
     assert RESULT_LIMIT_MARKER in PAGE_RESULT_GUARD

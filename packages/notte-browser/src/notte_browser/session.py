@@ -110,6 +110,7 @@ from notte_browser.errors import (
 from notte_browser.evaluation_result import (
     PAGE_RESULT_GUARD,
     format_evaluation_result,
+    new_guard_token,
     page_expression,
     page_limit_reason,
 )
@@ -776,6 +777,7 @@ class NotteSession(AsyncResource, SyncResource):
                         is_already_function = bool(re.match(r"^(?:\(|function\b|async\s+(?:function\b|\())", stripped))
                         needs_wrap = bool(re.search(r"\breturn\b", stripped)) and not is_already_function
                         js_code = f"(() => {{\n{code}\n}})()" if needs_wrap else code
+                        guard_token = new_guard_token()
                         try:
                             evaluate_kwargs: dict[str, bool] = {}
                             if config.browser_backend == BrowserBackend.PATCHRIGHT:
@@ -787,7 +789,7 @@ class NotteSession(AsyncResource, SyncResource):
                             result = await asyncio.wait_for(
                                 self.window.page.evaluate(
                                     PAGE_RESULT_GUARD,
-                                    [page_expression(js_code), config.evaluate_js_max_result_bytes],
+                                    [page_expression(js_code), config.evaluate_js_max_result_bytes, guard_token],
                                     **evaluate_kwargs,
                                 ),
                                 timeout=config.timeout_evaluate_js_ms / 1000.0,
@@ -796,7 +798,7 @@ class NotteSession(AsyncResource, SyncResource):
                             success = False
                             message = f"JavaScript evaluation timed out after {config.timeout_evaluate_js_ms}ms"
                         except PlaywrightError as js_err:
-                            limit_reason = page_limit_reason(str(js_err))
+                            limit_reason = page_limit_reason(str(js_err), guard_token)
                             if limit_reason is not None:
                                 raise EvaluateJsResultLimitError(
                                     config.evaluate_js_max_result_bytes, limit_reason

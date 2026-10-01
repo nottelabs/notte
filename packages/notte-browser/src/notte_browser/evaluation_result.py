@@ -2,6 +2,7 @@
 
 import json
 import re
+import secrets
 from json.encoder import encode_basestring_ascii
 from typing import Any, cast
 
@@ -10,51 +11,103 @@ from notte_core.errors.actions import EvaluateJsResultLimitError
 _STRING_CHUNK_CHARS = 8192
 _MAX_DEPTH = 128
 
-# Marker thrown by the page-side guard. The driver surfaces it as the message
-# of a PlaywrightError; the reason text follows the marker.
+# Prefix of the error thrown by the page-side guard. Each call appends a random
+# token that the evaluated code cannot read, so a page error that merely
+# contains this text is never mistaken for a limit rejection.
 RESULT_LIMIT_MARKER = "notte_evaluate_js_result_limit:"
 
 _FUNCTION_DECLARATION = re.compile(r"^(async)?\s*function(\s|\()")
 
-# Runs in the page with [code, maxBytes]. It reproduces what Playwright does
-# with a bare expression string (global eval, call the value when it is a
-# function, await it) and then estimates the serialized size of the value
-# before anything is handed to the driver. The estimate counts characters,
-# not UTF-8 bytes, so it can admit up to three times the budget for non-ASCII
-# text; format_evaluation_result applies the exact budget afterwards. Shared
-# references are counted once, as Playwright serializes them as references.
-PAGE_RESULT_GUARD = """async ([code, maxBytes]) => {
+# Runs in the page with [code, maxBytes, token]. It reproduces what Playwright
+# does with a bare expression string (global eval, call the value when it is a
+# function, await it) and measures the result before the driver serializes it.
+#
+# Every charge is a lower bound on what format_evaluation_result writes for the
+# same value, so the guard never rejects a result the exact budget would
+# accept: strings and keys inside containers cost their ASCII-escaped JSON
+# width, a top-level string costs its UTF-8 bytes, numbers cost their text, and
+# indentation is not counted. The exact budget still runs after the transfer.
+#
+# Properties are read through their descriptors and getters are never called,
+# so Playwright still reads each getter exactly once. A getter's value is not
+# measured here; it is left to the exact budget.
+PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
   let value = (0, eval)(code);
   if (typeof value === "function") {
     value = value();
   }
   value = await value;
-  const marker = %s;
+  const fail = () => {
+    throw new Error(%s + token + ":serialized result exceeds " + maxBytes + " bytes");
+  };
+  const utf8Width = (text, limit) => {
+    if (text.length > limit) {
+      return limit + 1;
+    }
+    let width = 0;
+    for (let i = 0; i < text.length && width <= limit; i++) {
+      const c = text.charCodeAt(i);
+      width += c < 0x80 ? 1 : c < 0x800 ? 2 : c >= 0xd800 && c <= 0xdfff ? 2 : 3;
+    }
+    return width;
+  };
+  const escapedWidth = (text, limit) => {
+    if (text.length + 2 > limit) {
+      return limit + 1;
+    }
+    let width = 2;
+    for (let i = 0; i < text.length && width <= limit; i++) {
+      const c = text.charCodeAt(i);
+      if (c === 0x22 || c === 0x5c) {
+        width += 2;
+      } else if (c >= 0x20 && c < 0x7f) {
+        width += 1;
+      } else if (c === 0x08 || c === 0x09 || c === 0x0a || c === 0x0c || c === 0x0d) {
+        width += 2;
+      } else {
+        width += 6;
+      }
+    }
+    return width;
+  };
+  if (typeof value === "string") {
+    if (utf8Width(value, maxBytes) > maxBytes) {
+      fail();
+    }
+    return value;
+  }
+  const own = (target, key) => {
+    const descriptor = Object.getOwnPropertyDescriptor(target, key);
+    return descriptor !== undefined && "value" in descriptor ? { value: descriptor.value } : undefined;
+  };
   const seen = new Set();
   const stack = [value];
   let size = 0;
   while (stack.length > 0) {
     const item = stack.pop();
-    if (item === null || item === undefined) {
+    if (typeof item === "string") {
+      size += escapedWidth(item, maxBytes - size);
+    } else if (typeof item === "number" || typeof item === "boolean" || typeof item === "bigint") {
+      size += String(item).length;
+    } else if (item === null || typeof item !== "object") {
       size += 4;
-    } else if (typeof item === "string") {
-      size += item.length + 2;
-    } else if (typeof item !== "object") {
-      size += typeof item === "function" ? 2 : 8;
     } else if (seen.has(item)) {
-      size += 8;
+      size += 1;
     } else {
       seen.add(item);
-      if (ArrayBuffer.isView(item)) {
-        size += Math.ceil(item.byteLength * 4 / 3) + 2;
-      } else if (item instanceof ArrayBuffer) {
-        size += Math.ceil(item.byteLength * 4 / 3) + 2;
-      } else if (item instanceof Date || item instanceof RegExp || item instanceof URL || item instanceof Error) {
-        size += String(item).length + 2;
+      if (ArrayBuffer.isView(item) || item instanceof ArrayBuffer) {
+        size += item.byteLength + 3;
+      } else if (item instanceof Date) {
+        size += 21;
+      } else if (item instanceof RegExp || item instanceof URL || item instanceof Error || (typeof Node === "function" && item instanceof Node)) {
+        size += 4;
       } else if (Array.isArray(item)) {
         size += 2 + item.length;
-        for (let i = 0; i < item.length; i++) {
-          stack.push(item[i]);
+        for (let i = item.length - 1; i >= 0; i--) {
+          const slot = own(item, i);
+          if (slot !== undefined) {
+            stack.push(slot.value);
+          }
         }
       } else if (item instanceof Map) {
         size += 2;
@@ -69,17 +122,25 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes]) => {
       } else {
         size += 2;
         for (const key of Object.keys(item)) {
-          size += key.length + 4;
-          stack.push(item[key]);
+          size += escapedWidth(key, maxBytes - size) + 1;
+          const slot = own(item, key);
+          if (slot !== undefined) {
+            stack.push(slot.value);
+          }
         }
       }
     }
     if (size > maxBytes) {
-      throw new Error(marker + "serialized result exceeds " + maxBytes + " bytes");
+      fail();
     }
   }
   return value;
 }""" % json.dumps(RESULT_LIMIT_MARKER)
+
+
+def new_guard_token() -> str:
+    """Return a token that identifies one guarded evaluation's limit error."""
+    return secrets.token_hex(16)
 
 
 def page_expression(code: str) -> str:
@@ -95,12 +156,13 @@ def page_expression(code: str) -> str:
     return code
 
 
-def page_limit_reason(error_message: str) -> str | None:
-    """Return the guard's reason when the error came from the page-side guard."""
-    index = error_message.find(RESULT_LIMIT_MARKER)
+def page_limit_reason(error_message: str, token: str) -> str | None:
+    """Return the guard's reason when the error is this evaluation's limit error."""
+    prefix = f"{RESULT_LIMIT_MARKER}{token}:"
+    index = error_message.find(prefix)
     if index < 0:
         return None
-    return error_message[index + len(RESULT_LIMIT_MARKER) :].splitlines()[0].strip()
+    return error_message[index + len(prefix) :].splitlines()[0].strip()
 
 
 def format_evaluation_result(value: Any, *, max_bytes: int) -> str:

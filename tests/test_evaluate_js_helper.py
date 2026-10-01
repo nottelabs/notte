@@ -5,6 +5,7 @@ import weakref
 
 import notte_browser.session as session_module
 import pytest
+from notte_browser.evaluation_result import format_evaluation_result
 from notte_browser.session import NotteSession
 from notte_core.browser.observation import ExecutionResult
 from notte_core.common.config import config
@@ -145,3 +146,57 @@ async def test_guard_works_on_a_page_without_unsafe_eval() -> None:
         )
         assert await session.aevaluate_js("document.getElementById('x').textContent") == "hello"
         assert await session.aevaluate_js("const n = 2; n * 21") == "42"
+
+
+@pytest.mark.asyncio
+async def test_guard_counts_escaped_width_in_containers_and_utf8_for_text(monkeypatch) -> None:
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    async with NotteSession(headless=True) as session:
+        transferred: list[int] = []
+        original_evaluate = session.window.page.evaluate
+
+        async def evaluate(expression, *args, **kwargs):
+            value = await original_evaluate(expression, *args, **kwargs)
+            transferred.append(1)
+            return value
+
+        monkeypatch.setattr(session.window.page, "evaluate", evaluate)
+        # 3000 characters, but 18002 bytes once escaped as JSON inside a list:
+        # a character count would have admitted it.
+        result = await session.aevaluate_js('["\u00e9".repeat(3000)]', raise_on_failure=False)
+        assert result.success is False
+        assert isinstance(result.exception, EvaluateJsResultLimitError)
+        assert transferred == []
+        # As plain text the same characters are 6000 UTF-8 bytes, within the
+        # budget the conversion step applies, so the guard must admit it.
+        assert await session.aevaluate_js('"\u00e9".repeat(3000)') == "\u00e9" * 3000
+        assert transferred == [1]
+
+
+@pytest.mark.asyncio
+async def test_guard_never_rejects_what_the_formatter_accepts(monkeypatch) -> None:
+    # 2500 zeros format to about 12.5 KB of indented JSON, within the budget.
+    # A guard charging a fixed size per number would have rejected them.
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    expected = format_evaluation_result([0] * 2500, max_bytes=16384)
+    async with NotteSession(headless=True) as session:
+        assert await session.aevaluate_js("Array(2500).fill(0)") == expected
+
+
+@pytest.mark.asyncio
+async def test_guard_does_not_call_getters() -> None:
+    async with NotteSession(headless=True) as session:
+        code = "(() => { let reads = 0; return { get count() { reads += 1; return reads; } }; })()"
+        assert await session.aevaluate_js(code) == '{\n  "count": 1\n}'
+
+
+@pytest.mark.asyncio
+async def test_page_errors_that_imitate_the_guard_stay_javascript_failures() -> None:
+    async with NotteSession(headless=True) as session:
+        result = await session.aevaluate_js(
+            "throw new Error('notte_evaluate_js_result_limit:serialized result exceeds 1 bytes')",
+            raise_on_failure=False,
+        )
+        assert result.success is False
+        assert not isinstance(result.exception, EvaluateJsResultLimitError)
+        assert "JavaScript evaluation failed" in result.message
