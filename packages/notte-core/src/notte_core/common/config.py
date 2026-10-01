@@ -309,6 +309,7 @@ class NotteConfigDict(TypedDict, total=False):
     chrome_args: list[str] | None
     raise_on_session_execution_failure: bool
     evaluate_js_max_result_bytes: int
+    evaluate_js_max_result_values: int
 
     # [perception]
     perception_type: PerceptionType
@@ -416,6 +417,7 @@ class NotteConfig(TomlConfig):
     chrome_args: list[str] | None = None
     raise_on_session_execution_failure: bool
     evaluate_js_max_result_bytes: int = Field(default=16 * 1024 * 1024, gt=0)
+    evaluate_js_max_result_values: int = Field(default=50_000, gt=0)
 
     # [perception]
     perception_type: PerceptionType

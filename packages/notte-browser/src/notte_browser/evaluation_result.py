@@ -18,7 +18,7 @@ RESULT_LIMIT_MARKER = "notte_evaluate_js_result_limit:"
 
 _FUNCTION_DECLARATION = re.compile(r"^(async)?\s*function(\s|\()")
 
-# Runs in the page with [code, maxBytes, token]. It reproduces what Playwright
+# Runs in the page with [code, maxBytes, maxValues, token]. It reproduces what Playwright
 # does with a bare expression string (global eval, call the value when it is a
 # function, await it), then walks the result with the same routing as
 # Playwright's serializer and returns a snapshot built only from values it has
@@ -37,7 +37,7 @@ _FUNCTION_DECLARATION = re.compile(r"^(async)?\s*function(\s|\()")
 # Built-ins are captured before the user code runs. Every charge is a lower
 # bound on what format_evaluation_result writes, so the guard never rejects a
 # result the exact budget would accept; non-finite charges are rejected.
-PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
+PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
   const maxDepth = %d;
   // Capture built-ins before the user code runs. A lookup that fails, for
   // example because the page replaced URL, disables only that branch; values
@@ -114,6 +114,10 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
     throw new Error(%s + token + ":" + reason);
   };
   const tooLarge = () => fail("serialized result exceeds " + maxBytes + " bytes");
+  // Transfer memory grows with the number of values, not the formatted size:
+  // each one becomes several objects in the driver and in Python. Every visit
+  // counts once, including repeated references, which Python also expands.
+  let values = 0;
   let size = 0;
   const charge = (amount) => {
     if (!(amount >= 0 && amount <= maxBytes)) {
@@ -180,6 +184,10 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
 
   const copies = new Map();
   const visit = (item, depth) => {
+    values += 1;
+    if (values > maxValues) {
+      fail("result has more than " + maxValues + " values");
+    }
     const topLevel = depth === 0;
     // Plain objects and arrays, which make up most results, skip the
     // special-type checks below: those identify a type by calling a built-in
@@ -267,6 +275,11 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, token]) => {
     const typed = typeof kind === "string" ? typedArrays[kind] : undefined;
     if (typed !== undefined && typedArrayBytes !== undefined && typeof typedArraySet === "function") {
       const count = typedArrayBytes(item) / typed.width;
+      // Python unpacks a typed array into one object per element.
+      values += count;
+      if (!(values <= maxValues)) {
+        fail("result has more than " + maxValues + " values");
+      }
       charge(count === 0 ? 2 : 2 + 2 * count);
       const copy = new typed.Kind(count);
       apply(typedArraySet, copy, [item]);

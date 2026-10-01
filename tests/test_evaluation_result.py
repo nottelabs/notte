@@ -130,6 +130,6 @@ def test_guard_tokens_are_unique():
     assert len({new_guard_token() for _ in range(100)}) == 100
 
 
-def test_page_guard_is_a_function_taking_code_budget_and_token():
-    assert PAGE_RESULT_GUARD.startswith("async ([code, maxBytes, token]) =>")
+def test_page_guard_is_a_function_taking_code_budgets_and_token():
+    assert PAGE_RESULT_GUARD.startswith("async ([code, maxBytes, maxValues, token]) =>")
     assert RESULT_LIMIT_MARKER in PAGE_RESULT_GUARD

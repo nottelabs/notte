@@ -34,8 +34,15 @@ retrieve the result in smaller batches.
 Values within the limit keep their existing text format. JSON nesting is limited
 to 128 levels.
 
+`evaluate_js_max_result_values` defaults to 50000. It limits how many values a
+result may contain, counting every string, number, boolean, null, array and
+object, including repeated references. Transferring a result costs memory per
+value regardless of its formatted size, so this is checked in the page before
+anything is transferred. A larger result fails with the same advice.
+
 ```toml
 evaluate_js_max_result_bytes = 16777216
+evaluate_js_max_result_values = 50000
 ```
 
 This is an output budget, not a hard process-memory limit. It bounds conversion
