@@ -522,29 +522,84 @@ async def test_inherited_tojson_does_not_change_the_result() -> None:
     [
         "() => '[\"' + 'x'.repeat(4 * 1024 * 1024) + '\"]'",
         "() => ({length: 2})",
+        "() => 'not JSON'",
     ],
 )
-async def test_a_replaced_json_stringify_cannot_inflate_the_transfer(monkeypatch, replacement) -> None:
+async def test_a_replaced_json_stringify_has_no_effect(monkeypatch, replacement) -> None:
+    # The guard writes the JSON itself, so a page's JSON.stringify is never called.
     monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
     async with NotteSession(headless=True) as session:
         await session.window.page.evaluate(f"() => {{ JSON.stringify = {replacement}; }}", isolated_context=False)
         transferred = await _transfers(session, monkeypatch)
-        result = await session.aevaluate_js("({a: [1, 2]})", raise_on_failure=False)
-        assert result.success is False
-        assert all(size < 1000 for size in transferred)
-        # A top-level string never goes through JSON.stringify.
-        assert await session.aevaluate_js("'plain'") == "plain"
+        assert await session.aevaluate_js("({a: [1, 2]})") == '{\n  "a": [\n    1,\n    2\n  ]\n}'
+        assert all(size < 100 for size in transferred)
+
+
+@pytest.mark.asyncio
+async def test_forged_values_within_the_byte_allowance_are_rejected(monkeypatch) -> None:
+    # The byte bound allows some text per value for tags and digits. A page
+    # that tampers a built-in to splice 40,000 one-digit values into a result
+    # near the value cap would fit that allowance; the writer's own value count
+    # must still reject it in the page.
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_values": 1000}))
+    async with NotteSession(headless=True) as session:
+        await session.window.page.evaluate(
+            "() => { const forged = ['a', Array(40000).fill(0)]; const get = Map.prototype.get;"
+            " Map.prototype.get = function (key) { const found = get.call(this, key);"
+            " return found && typeof found.count === 'number' ? found : forged; }; }",
+            isolated_context=False,
+        )
+        transferred = await _transfers(session, monkeypatch)
+        code = "(() => { const shared = {a: 1}; return [shared, shared, Array(900).fill(0)]; })()"
+        result = await session.aevaluate_js(code, raise_on_failure=False)
+        assert isinstance(result.exception, EvaluateJsResultLimitError)
+        assert "more than 1000 values" in result.message
+        assert transferred == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tamper",
+    [
+        # More keys than the object has: each counts as a value.
+        "Object.keys = () => Array.from({length: 1000000}, (_, i) => 'k' + i);",
+        # A forged snapshot node returned for a repeated reference.
+        "Map.prototype.get = () => ['a', Array(1000000).fill(0)];",
+        # Index setters on the shared prototype that the guard's arrays use.
+        "Object.defineProperty(Array.prototype, '1', {get: () => ['a', Array(1000000).fill(0)], set() {}, configurable: true});",
+    ],
+)
+async def test_tampered_builtins_cannot_inflate_the_payload(monkeypatch, tamper) -> None:
+    # A page can replace built-ins before evaluate_js runs. The guard's writer
+    # counts values itself, so the payload still holds at most the value cap.
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_values": 1000}))
+    async with NotteSession(headless=True) as session:
+        await session.window.page.evaluate(f"() => {{ {tamper} }}", isolated_context=False)
+        transferred = await _transfers(session, monkeypatch)
+        code = "(() => { const shared = {a: 1}; return [shared, shared, {b: [1, 2, 3]}]; })()"
+        result = await session.aevaluate_js(code, raise_on_failure=False)
+        assert all(size < 200_000 for size in transferred), transferred
+        if not result.success:
+            assert isinstance(result.exception, (EvaluateJsResultLimitError, ActionExecutionError))
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("raise_on_failure", [False, True])
-async def test_an_unreadable_payload_fails_the_action(raise_on_failure) -> None:
+@pytest.mark.parametrize("payload", ["jnot JSON", "j" + "[" * 5000 + "]" * 5000, {"not": "a string"}])
+async def test_an_unreadable_payload_fails_the_action(monkeypatch, raise_on_failure, payload) -> None:
     async with NotteSession(headless=True) as session:
-        await session.window.page.evaluate("() => { JSON.stringify = () => 'not JSON'; }", isolated_context=False)
+        original_evaluate = session.window.page.evaluate
+
+        async def evaluate(expression, *args, **kwargs):
+            if args and args[0][0] == "({a: 1})":
+                return payload
+            return await original_evaluate(expression, *args, **kwargs)
+
+        monkeypatch.setattr(session.window.page, "evaluate", evaluate)
         if raise_on_failure:
-            with pytest.raises(ActionExecutionError, match="not valid JSON"):
+            with pytest.raises(ActionExecutionError, match="evaluate_js"):
                 await session.aevaluate_js("({a: 1})")
         else:
             result = await session.aevaluate_js("({a: 1})", raise_on_failure=False)
             assert result.success is False
-            assert "not valid JSON" in result.message
+            assert "JavaScript evaluation failed" in result.message
