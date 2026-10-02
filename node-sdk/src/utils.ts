@@ -56,10 +56,14 @@ const SCHEMA_KEYWORDS = new Set([
 ]);
 /** Keywords whose value is an array of subschemas. */
 const SCHEMA_ARRAY_KEYWORDS = new Set(['anyOf', 'oneOf', 'allOf', 'prefixItems']);
-/** Annotation keywords that describe a schema node rather than constrain it. */
-const ANNOTATION_KEYWORDS = new Set([
-  '$schema', '$id', '$comment', 'title', 'description', 'default', 'examples',
-  'deprecated', 'readOnly', 'writeOnly', '$defs', 'definitions',
+/**
+ * Keywords that shape the value of one specific type and are read by the API's
+ * converter from the branch carrying that type.
+ */
+const TYPE_SCOPED_KEYWORDS = new Set([
+  'items', 'prefixItems', 'additionalItems', 'contains', 'unevaluatedItems',
+  'properties', 'patternProperties', 'required', 'additionalProperties', 'propertyNames', 'unevaluatedProperties',
+  'format',
 ]);
 /** Keywords whose value is a map from name to subschema. */
 const SCHEMA_MAP_KEYWORDS = new Set(['properties', 'patternProperties', '$defs', 'definitions', 'dependentSchemas']);
@@ -75,10 +79,15 @@ const SCHEMA_MAP_KEYWORDS = new Set(['properties', 'patternProperties', '$defs',
  * `default`, `examples`, `const` and `enum` hold caller data, not schemas, and
  * are passed through untouched even if they happen to contain a `type` key.
  *
- * When a type array is expanded, annotations (`description`, `default`, ...)
- * stay on the parent and every other keyword (`items`, `properties`, `enum`,
- * `minLength`, an existing `anyOf`, ...) is copied into each non-null branch,
- * so validators that read branches independently keep the full constraint.
+ * When a type array is expanded, the split mirrors how the API's converter
+ * (`notte_core.utils.pydantic_schema.create_model_from_schema`) reads a
+ * property: it resolves the Python type by recursing into each `anyOf` branch,
+ * so type-scoped keywords (`items`, `properties`, `required`, `format`, ...)
+ * move into the matching typed branch, while field constraints and
+ * annotations (`minimum`, `minItems`, `enum`, `description`, `default`, ...)
+ * are read from the property itself and therefore stay on the parent. A
+ * pre-existing `anyOf` is intersected with the allowed types instead of being
+ * overwritten.
  */
 function normalizeJsonSchema(schema: unknown): unknown {
   if (schema === null || typeof schema !== 'object' || Array.isArray(schema)) return schema;
@@ -97,15 +106,31 @@ function normalizeJsonSchema(schema: unknown): unknown {
     }
   }
   if (Array.isArray(out.type)) {
-    const { type, ...rest } = out;
+    const { type, anyOf: existing, ...rest } = out;
     const types = type as string[];
     const parent: Record<string, unknown> = {};
-    const constraints: Record<string, unknown> = {};
+    const scoped: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(rest)) {
-      (ANNOTATION_KEYWORDS.has(key) ? parent : constraints)[key] = value;
+      (TYPE_SCOPED_KEYWORDS.has(key) ? scoped : parent)[key] = value;
     }
-    const branches = types.map((t) => (t === 'null' ? { type: t } : { type: t, ...constraints }));
-    if (!types.some((t) => t !== 'null')) Object.assign(parent, constraints);
+    const typed = (t: string): Record<string, unknown> => (t === 'null' ? { type: t } : { type: t, ...scoped });
+    let branches: Record<string, unknown>[];
+    if (Array.isArray(existing)) {
+      // Intersect the existing alternatives with the allowed types: typed
+      // branches survive only if their type is allowed; untyped branches are
+      // expanded once per allowed non-null type.
+      branches = [];
+      for (const branch of existing as Record<string, unknown>[]) {
+        if (typeof branch.type === 'string') {
+          if (types.includes(branch.type)) branches.push(branch.type === 'null' ? branch : { ...scoped, ...branch });
+        } else {
+          for (const t of types) if (t !== 'null') branches.push({ ...typed(t), ...branch });
+        }
+      }
+      if (types.includes('null') && !branches.some((b) => b.type === 'null')) branches.push({ type: 'null' });
+    } else {
+      branches = types.map(typed);
+    }
     return { ...parent, anyOf: branches };
   }
   return out;
