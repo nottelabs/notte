@@ -49,19 +49,42 @@ function openBrowser(url: string): void {
 	child.unref();
 }
 
+/** JSON Schema keywords whose value is a single subschema (or a boolean). */
+const SCHEMA_KEYWORDS = new Set([
+  'items', 'additionalItems', 'additionalProperties', 'contains', 'propertyNames',
+  'not', 'if', 'then', 'else', 'unevaluatedItems', 'unevaluatedProperties',
+]);
+/** Keywords whose value is an array of subschemas. */
+const SCHEMA_ARRAY_KEYWORDS = new Set(['anyOf', 'oneOf', 'allOf', 'prefixItems']);
+/** Keywords whose value is a map from name to subschema. */
+const SCHEMA_MAP_KEYWORDS = new Set(['properties', 'patternProperties', '$defs', 'definitions', 'dependentSchemas']);
+
 /**
  * Normalise a JSON Schema produced by `z.toJSONSchema()` into the shape the
  * Notte API accepts. zod >= 4.6 emits nullable fields as a type array
  * (`{ type: ['string', 'null'] }`); the API's structured-output validator
  * only understands the `anyOf` form zod used to emit, so expand type arrays
- * back into `anyOf` branches. Everything else is passed through untouched.
+ * back into `anyOf` branches.
+ *
+ * Only schema-bearing keywords are traversed. Instance-valued keywords such as
+ * `default`, `examples`, `const` and `enum` hold caller data, not schemas, and
+ * are passed through untouched even if they happen to contain a `type` key.
  */
 function normalizeJsonSchema(schema: unknown): unknown {
-  if (Array.isArray(schema)) return schema.map(normalizeJsonSchema);
-  if (schema === null || typeof schema !== 'object') return schema;
+  if (schema === null || typeof schema !== 'object' || Array.isArray(schema)) return schema;
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(schema as Record<string, unknown>)) {
-    out[key] = normalizeJsonSchema(value);
+    if (SCHEMA_KEYWORDS.has(key) || (key === 'items' && Array.isArray(value))) {
+      out[key] = Array.isArray(value) ? value.map(normalizeJsonSchema) : normalizeJsonSchema(value);
+    } else if (SCHEMA_ARRAY_KEYWORDS.has(key) && Array.isArray(value)) {
+      out[key] = value.map(normalizeJsonSchema);
+    } else if (SCHEMA_MAP_KEYWORDS.has(key) && value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      out[key] = Object.fromEntries(
+        Object.entries(value as Record<string, unknown>).map(([name, sub]) => [name, normalizeJsonSchema(sub)]),
+      );
+    } else {
+      out[key] = value;
+    }
   }
   if (Array.isArray(out.type)) {
     const { type, ...rest } = out;

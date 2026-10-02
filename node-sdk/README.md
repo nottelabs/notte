@@ -6,7 +6,9 @@ The official TypeScript SDK for Notte API, providing cloud-hosted browser sessio
 
 ## Contributing
 
-This directory is a standalone npm package. Node.js 22 and 24 are tested in CI;
+This directory is a standalone npm package. The published SDK runs on Node.js 20 or
+newer; developing it (the Vitest 5 test and coverage scripts) needs Node.js 22.12 or
+newer, which `npm` enforces through `devEngines`. Node.js 22 and 24 are tested in CI;
 Python tooling is not required to build or test it.
 
 ```bash

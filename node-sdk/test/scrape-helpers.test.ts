@@ -125,4 +125,40 @@ describe('normalizeJsonSchema', () => {
     expect(normalizeJsonSchema(null)).toBeNull();
     expect(normalizeJsonSchema('x')).toBe('x');
   });
+
+  it('does not rewrite instance data inside default, examples, const or enum', () => {
+    // An example object that happens to carry a `type` key holding an array must
+    // reach the API verbatim; only schema nodes are normalised.
+    const Shop = z
+      .object({ type: z.array(z.string()), label: z.string().nullable() })
+      .meta({ examples: [{ type: ['retail'], label: null }] });
+    const schema = normalizeJsonSchema(z.toJSONSchema(Shop)) as any;
+    expect(schema.examples).toEqual([{ type: ['retail'], label: null }]);
+    expect(schema.properties.label).toEqual({ anyOf: [{ type: 'string' }, { type: 'null' }] });
+
+    const raw = {
+      type: 'object',
+      properties: { kind: { type: ['string', 'null'], default: { type: ['a', 'b'] }, enum: [{ type: ['x'] }, null] } },
+      const: { type: ['keep', 'me'] },
+    };
+    const out = normalizeJsonSchema(raw) as any;
+    expect(out.const).toEqual({ type: ['keep', 'me'] });
+    expect(out.properties.kind.anyOf).toEqual([{ type: 'string' }, { type: 'null' }]);
+    expect(out.properties.kind.default).toEqual({ type: ['a', 'b'] });
+    expect(out.properties.kind.enum).toEqual([{ type: ['x'] }, null]);
+  });
+
+  it('normalises nested schemas under $defs, prefixItems and allOf', () => {
+    const raw = {
+      $defs: { N: { type: ['number', 'null'] } },
+      prefixItems: [{ type: ['string', 'null'] }],
+      allOf: [{ properties: { a: { type: ['boolean', 'null'] } } }],
+      items: [{ type: ['integer', 'null'] }],
+    };
+    const out = normalizeJsonSchema(raw) as any;
+    expect(out.$defs.N).toEqual({ anyOf: [{ type: 'number' }, { type: 'null' }] });
+    expect(out.prefixItems[0]).toEqual({ anyOf: [{ type: 'string' }, { type: 'null' }] });
+    expect(out.allOf[0].properties.a).toEqual({ anyOf: [{ type: 'boolean' }, { type: 'null' }] });
+    expect(out.items[0]).toEqual({ anyOf: [{ type: 'integer' }, { type: 'null' }] });
+  });
 });
