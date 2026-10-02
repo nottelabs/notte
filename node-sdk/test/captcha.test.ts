@@ -173,3 +173,46 @@ it('returns an executed goto through Session.execute after a navigation cancella
     expect(received.map(input => input.type)).toEqual(['goto', 'captcha_solve']);
   } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
 });
+
+describe('navigation before a wait executes', () => {
+  const wait: ExecuteAction = { type: 'wait', time_ms: 5000 };
+  const navigation = () => {
+    const result = response('cancelled');
+    result.captcha!.cancel_reason = 'navigation';
+    return result;
+  };
+  it('checks the new page and resumes the wait after its challenge', async () => {
+    const next = response('solving');
+    Object.assign(next.captcha!, { captcha_id: 'next', generation: 4 });
+    const solved = { ...response('solved'), captcha: { ...next.captcha!, state: 'solved' as const } };
+    const request = vi.fn().mockResolvedValueOnce(response('solving')).mockResolvedValueOnce(navigation())
+      .mockResolvedValueOnce(next).mockResolvedValueOnce(solved)
+      .mockResolvedValueOnce({ ...executionResult(), action: wait, action_executed: true });
+    expect(await executeWithCaptcha(wait, 180, request)).toMatchObject({ success: true, action_executed: true });
+    expect(request.mock.calls.map(c => c[0].type)).toEqual(['wait', 'captcha_solve', 'wait', 'captcha_solve', 'wait']);
+    expect(request.mock.calls[2][1].captcha_id).toBeUndefined();
+    expect(request.mock.calls[2][1].target_generation).toBeUndefined();
+    expect(request.mock.calls[3][1].captcha_id).toBe('next');
+    expect(request.mock.calls[4][1].target_generation).toBe(4);
+    expect(request.mock.calls[2][1].captcha_timeout_seconds).toBeLessThan(180);
+  });
+  it('bounds repeated navigation by the original deadline', async () => {
+    vi.useFakeTimers();
+    const request = vi.fn().mockResolvedValue(navigation());
+    const pending = executeWithCaptcha(wait, 3, request);
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(await pending).toMatchObject({ success: false, code: 'captcha_timeout' });
+    expect(request).toHaveBeenCalledTimes(3);
+  });
+  it.each(['failed', 'cancelled'] as const)('does not hide other %s outcomes', async state => {
+    const request = vi.fn().mockResolvedValue(response(state));
+    expect(await executeWithCaptcha(wait, 180, request)).toMatchObject({ success: false, code: `captcha_${state}` });
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+  it('does not repeat an already executed wait', async () => {
+    const request = vi.fn().mockResolvedValueOnce({ ...response('solving', true), success: true })
+      .mockResolvedValueOnce(navigation());
+    expect(await executeWithCaptcha(wait, 180, request)).toMatchObject({ success: true, action_executed: true });
+    expect(request).toHaveBeenCalledTimes(2);
+  });
+});
