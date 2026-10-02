@@ -385,6 +385,8 @@ class PageClient(BaseClient):
                 # A passive wait has no old-page target. Recheck readiness on
                 # the new document without restarting the CAPTCHA deadline.
                 # Clicks and other actions still fail rather than crossing pages.
+                # Keep the requested wait duration: the CAPTCHA budget is
+                # separate from action execution and its HTTP timeout.
                 params = CaptchaExecuteParams(captcha_timeout_seconds=max(0.001, deadline - time.monotonic()))
                 request_action = action
                 time.sleep(min(1.0, max(0, deadline - time.monotonic())))

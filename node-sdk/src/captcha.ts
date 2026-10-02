@@ -71,6 +71,7 @@ export async function executeWithCaptcha(
       action.type === 'wait' && result.action_executed === false) {
       // A passive wait can check the new document; targeted actions cannot.
       // Drop the old solve/page guards while retaining the original deadline.
+      // The CAPTCHA budget does not shorten the action's requested wait duration.
       params = { captcha_timeout_seconds: remaining() };
       requestAction = action;
       await pause();
