@@ -15,7 +15,7 @@ dependencies = [
     "chevron>=0.14.0",
     "json-repair>=0.57.1",
     "litellm>=1.74.12",
-    "openai<1.100.0",
+    "openai<3.21.0",
     "llamux>=0.1.9",
     "loguru>=0.7.3",
     "pydantic>=2.10.6",
