@@ -56,6 +56,11 @@ const SCHEMA_KEYWORDS = new Set([
 ]);
 /** Keywords whose value is an array of subschemas. */
 const SCHEMA_ARRAY_KEYWORDS = new Set(['anyOf', 'oneOf', 'allOf', 'prefixItems']);
+/** Annotation keywords that describe a schema node rather than constrain it. */
+const ANNOTATION_KEYWORDS = new Set([
+  '$schema', '$id', '$comment', 'title', 'description', 'default', 'examples',
+  'deprecated', 'readOnly', 'writeOnly', '$defs', 'definitions',
+]);
 /** Keywords whose value is a map from name to subschema. */
 const SCHEMA_MAP_KEYWORDS = new Set(['properties', 'patternProperties', '$defs', 'definitions', 'dependentSchemas']);
 
@@ -69,6 +74,11 @@ const SCHEMA_MAP_KEYWORDS = new Set(['properties', 'patternProperties', '$defs',
  * Only schema-bearing keywords are traversed. Instance-valued keywords such as
  * `default`, `examples`, `const` and `enum` hold caller data, not schemas, and
  * are passed through untouched even if they happen to contain a `type` key.
+ *
+ * When a type array is expanded, annotations (`description`, `default`, ...)
+ * stay on the parent and every other keyword (`items`, `properties`, `enum`,
+ * `minLength`, an existing `anyOf`, ...) is copied into each non-null branch,
+ * so validators that read branches independently keep the full constraint.
  */
 function normalizeJsonSchema(schema: unknown): unknown {
   if (schema === null || typeof schema !== 'object' || Array.isArray(schema)) return schema;
@@ -88,7 +98,15 @@ function normalizeJsonSchema(schema: unknown): unknown {
   }
   if (Array.isArray(out.type)) {
     const { type, ...rest } = out;
-    return { ...rest, anyOf: (type as string[]).map((t) => ({ type: t })) };
+    const types = type as string[];
+    const parent: Record<string, unknown> = {};
+    const constraints: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(rest)) {
+      (ANNOTATION_KEYWORDS.has(key) ? parent : constraints)[key] = value;
+    }
+    const branches = types.map((t) => (t === 'null' ? { type: t } : { type: t, ...constraints }));
+    if (!types.some((t) => t !== 'null')) Object.assign(parent, constraints);
+    return { ...parent, anyOf: branches };
   }
   return out;
 }

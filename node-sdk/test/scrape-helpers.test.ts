@@ -143,9 +143,41 @@ describe('normalizeJsonSchema', () => {
     };
     const out = normalizeJsonSchema(raw) as any;
     expect(out.const).toEqual({ type: ['keep', 'me'] });
-    expect(out.properties.kind.anyOf).toEqual([{ type: 'string' }, { type: 'null' }]);
+    // `default` is an annotation and stays on the node; `enum` constrains the string branch.
     expect(out.properties.kind.default).toEqual({ type: ['a', 'b'] });
-    expect(out.properties.kind.enum).toEqual([{ type: ['x'] }, null]);
+    expect(out.properties.kind.anyOf).toEqual([{ type: 'string', enum: [{ type: ['x'] }, null] }, { type: 'null' }]);
+  });
+
+  it('keeps nested constraints inside the matching branch when expanding a type array', () => {
+    const raw = {
+      type: 'object',
+      properties: {
+        tags: { type: ['array', 'null'], items: { type: 'string' }, minItems: 1, description: 'labels' },
+        meta: { type: ['object', 'null'], properties: { k: { type: 'string' } }, required: ['k'] },
+        code: { type: ['string', 'null'], minLength: 2, default: null },
+        either: { type: ['string', 'number', 'null'] },
+      },
+    };
+    const out = normalizeJsonSchema(raw) as any;
+    expect(out.properties.tags).toEqual({
+      description: 'labels',
+      anyOf: [{ type: 'array', items: { type: 'string' }, minItems: 1 }, { type: 'null' }],
+    });
+    expect(out.properties.meta.anyOf).toEqual([
+      { type: 'object', properties: { k: { type: 'string' } }, required: ['k'] },
+      { type: 'null' },
+    ]);
+    expect(out.properties.code).toEqual({ default: null, anyOf: [{ type: 'string', minLength: 2 }, { type: 'null' }] });
+    expect(out.properties.either.anyOf).toEqual([{ type: 'string' }, { type: 'number' }, { type: 'null' }]);
+  });
+
+  it('preserves an existing anyOf when expanding a type array', () => {
+    const raw = { type: ['string', 'null'], anyOf: [{ const: 'approved' }, { type: 'null' }] };
+    const out = normalizeJsonSchema(raw) as any;
+    // The original constraint rides inside the string branch, so only 'approved' or null validate.
+    expect(out).toEqual({
+      anyOf: [{ type: 'string', anyOf: [{ const: 'approved' }, { type: 'null' }] }, { type: 'null' }],
+    });
   });
 
   it('normalises nested schemas under $defs, prefixItems and allOf', () => {
