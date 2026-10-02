@@ -220,6 +220,29 @@ def test_wait_navigation_retries_keep_the_original_deadline(client):
     assert page.request.call_count == 3
 
 
+def test_resumed_wait_duration_is_separate_from_captcha_budget(client):
+    page, clock = client
+    page.root_client.captcha_timeout_seconds = 2
+    action = WaitAction(time_ms=5000)
+    cancelled = response(action, "cancelled")
+    cancelled.captcha.cancel_reason = "navigation"
+
+    def request(endpoint, *, timeout):
+        if page.request.call_count == 1:
+            return cancelled
+        assert endpoint.request == action
+        assert endpoint.params.captcha_timeout_seconds == 1
+        assert timeout == page.DEFAULT_REQUEST_TIMEOUT_SECONDS
+        clock[0] += action.time_ms / 1000
+        return response(action, executed=True, success=True)
+
+    page.request = MagicMock(side_effect=request)
+    result = page.execute("session", action)
+    assert result.success and result.action == action
+    assert clock[0] == 6
+    assert page.request.call_count == 2
+
+
 @pytest.mark.parametrize("state,reason", [("failed", "navigation"), ("cancelled", None)])
 def test_wait_does_not_hide_other_captcha_failures(client, state, reason):
     page, _ = client
