@@ -16,17 +16,17 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Europe/Paris"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 2
     commit-message:
       prefix: "chore(deps)"
     labels:
       - "dependencies"
       - "python:uv"
     groups:
-      # One PR per week for all minor/patch bumps. Majors get their own PR.
-      python-minor-patch:
+      # One PR per week for every Python bump, majors included.
+      python:
         applies-to: version-updates
-        update-types: ["minor", "patch"]
+        patterns: ["*"]
       # All security fixes in a single PR.
       python-security:
         applies-to: security-updates
@@ -40,16 +40,17 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Europe/Paris"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     commit-message:
       prefix: "chore(deps)"
     labels:
       - "dependencies"
     groups:
-      node-minor-patch:
+      # One PR per week for every Node SDK bump, majors included.
+      node-sdk:
         applies-to: version-updates
-        update-types: ["minor", "patch"]
-      node-security:
+        patterns: ["*"]
+      node-sdk-security:
         applies-to: security-updates
         patterns: ["*"]
 

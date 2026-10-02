@@ -16,7 +16,7 @@ dependencies = [
     "notte_core==1.9.5.dev0",
     "notte_browser==1.9.5.dev0",
     "notte_agent==1.9.5.dev0",
-    "discord-py>=2.3.0,<2.5.0",
+    "discord-py>=2.3.0,<2.8.0",
     "fastapi>=0.115.8",
     "uvicorn>=0.29.0",
     "hvac>=2.3.0",

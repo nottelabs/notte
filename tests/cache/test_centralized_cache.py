@@ -10,6 +10,7 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
+from notte_core.common import cache as cache_module
 from notte_core.common.cache import (
     CacheDirectory,
     check_for_legacy_data,
@@ -19,6 +20,20 @@ from notte_core.common.cache import (
     get_legacy_cache_locations,
 )
 from notte_llm import tracer
+
+
+@pytest.fixture(autouse=True)
+def reset_cache_root():
+    """get_cache_root() memoises its result in module globals. Tests that force the
+    temp fallback (patched HOME / _is_writable) must not leak that choice into the
+    next test on the same xdist worker, so reset the memo around every test."""
+    with cache_module._cache_lock:  # pyright: ignore[reportPrivateUsage]
+        cache_module._cache_root = None  # pyright: ignore[reportPrivateUsage]
+        cache_module._using_temp_fallback = False  # pyright: ignore[reportPrivateUsage]
+    yield
+    with cache_module._cache_lock:  # pyright: ignore[reportPrivateUsage]
+        cache_module._cache_root = None  # pyright: ignore[reportPrivateUsage]
+        cache_module._using_temp_fallback = False  # pyright: ignore[reportPrivateUsage]
 
 
 class TestCacheRoot:
