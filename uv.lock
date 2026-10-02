@@ -3343,7 +3343,7 @@ requires-dist = [
     { name = "pyroscope-otel", marker = "extra == 'pyroscope'", specifier = ">=0.1.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "requests", specifier = ">=2.32.3" },
-    { name = "restrictedpython", specifier = ">=8.0" },
+    { name = "restrictedpython", specifier = ">=8.4" },
     { name = "scarf-sdk", specifier = ">=0.1.2" },
     { name = "tldextract", specifier = ">=5.3.0" },
     { name = "toml", specifier = ">=0.10.2" },

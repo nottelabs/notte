@@ -17,13 +17,18 @@ import json
 import traceback
 import types
 from collections.abc import Iterable, Mapping
-from typing import Any, Callable, ClassVar, Literal, Protocol, cast, final
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Literal, Protocol, cast, final
 
 from pydantic import BaseModel, ConfigDict
 from RestrictedPython import compile_restricted, safe_globals  # type: ignore [reportMissingTypeStubs]
-from RestrictedPython._types import T_pos_ast
 from RestrictedPython.transformer import RestrictingNodeTransformer
 from typing_extensions import override
+
+if TYPE_CHECKING:
+    # Private alias used only for annotations: positioned AST nodes accepted by
+    # RestrictingNodeTransformer.check_name. Imported under TYPE_CHECKING so the
+    # module still imports on RestrictedPython releases that predate `_types`.
+    from RestrictedPython._types import T_pos_ast
 
 # Return type of RestrictingNodeTransformer.visit_* (RestrictedPython >= 8.5 types it this way)
 _VisitReturn = ast.AST | Iterable[ast.AST] | None
@@ -372,7 +377,7 @@ class ScriptValidator(RestrictingNodeTransformer):
         return super().visit_Attribute(node)
 
     @override
-    def check_name(self, node: T_pos_ast, name: str | None, allow_magic_methods: bool = False) -> None:
+    def check_name(self, node: "T_pos_ast", name: str | None, allow_magic_methods: bool = False) -> None:
         if name == "__name__" and isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
             return
         return super().check_name(node, name, allow_magic_methods)
