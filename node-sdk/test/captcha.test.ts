@@ -173,3 +173,107 @@ it('returns an executed goto through Session.execute after a navigation cancella
     expect(received.map(input => input.type)).toEqual(['goto', 'captcha_solve']);
   } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
 });
+
+describe('navigation before a wait executes', () => {
+  const wait: ExecuteAction = { type: 'wait', time_ms: 5000 };
+  const navigation = () => {
+    const result = response('cancelled');
+    result.captcha!.cancel_reason = 'navigation';
+    return result;
+  };
+  it('checks the new page and resumes the wait after its challenge', async () => {
+    const next = response('solving');
+    Object.assign(next.captcha!, { captcha_id: 'next', generation: 4 });
+    const solved = { ...response('solved'), captcha: { ...next.captcha!, state: 'solved' as const } };
+    const request = vi.fn().mockResolvedValueOnce(response('solving')).mockResolvedValueOnce(navigation())
+      .mockResolvedValueOnce(next).mockResolvedValueOnce(solved)
+      .mockResolvedValueOnce({ ...executionResult(), action: wait, action_executed: true });
+    expect(await executeWithCaptcha(wait, 180, request)).toMatchObject({ success: true, action_executed: true });
+    expect(request.mock.calls.map(c => c[0].type)).toEqual(['wait', 'captcha_solve', 'wait', 'captcha_solve', 'wait']);
+    expect(request.mock.calls[2][1].captcha_id).toBeUndefined();
+    expect(request.mock.calls[2][1].target_generation).toBeUndefined();
+    expect(request.mock.calls[3][1].captcha_id).toBe('next');
+    expect(request.mock.calls[4][1].target_generation).toBe(4);
+    expect(request.mock.calls[2][1].captcha_timeout_seconds).toBeLessThan(180);
+  });
+  it('bounds repeated navigation by the original deadline', async () => {
+    vi.useFakeTimers();
+    const request = vi.fn().mockResolvedValue(navigation());
+    const pending = executeWithCaptcha(wait, 3, request);
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(await pending).toMatchObject({ success: false, code: 'captcha_timeout' });
+    expect(request).toHaveBeenCalledTimes(3);
+  });
+  it('keeps the requested wait duration separate from the CAPTCHA budget', async () => {
+    vi.useFakeTimers();
+    const request = vi.fn().mockResolvedValueOnce(navigation()).mockImplementationOnce(async () => {
+      await new Promise(resolve => setTimeout(resolve, wait.time_ms));
+      return { ...executionResult(), action: wait, action_executed: true };
+    });
+    const pending = executeWithCaptcha(wait, 2, request);
+    await vi.advanceTimersByTimeAsync(6000);
+    expect(await pending).toMatchObject({ success: true, action: wait, action_executed: true });
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(request.mock.calls[1]).toEqual([wait, { captcha_timeout_seconds: 1 }, undefined]);
+  });
+  it.each(['failed', 'cancelled'] as const)('does not hide other %s outcomes', async state => {
+    const request = vi.fn().mockResolvedValue(response(state));
+    expect(await executeWithCaptcha(wait, 180, request)).toMatchObject({ success: false, code: `captcha_${state}` });
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+  it('does not repeat an already executed wait', async () => {
+    const request = vi.fn().mockResolvedValueOnce({ ...response('solving', true), success: true })
+      .mockResolvedValueOnce(navigation());
+    expect(await executeWithCaptcha(wait, 180, request)).toMatchObject({ success: true, action_executed: true });
+    expect(request).toHaveBeenCalledTimes(2);
+  });
+  it.each(['poll', 'guarded retry'])('recovers through Session.execute and HTTP after navigation during %s', async phase => {
+    const next = response('solving');
+    Object.assign(next.captcha!, { captcha_id: 'next', page_id: 'destination', generation: 4 });
+    const responses = [
+      response('solving'),
+      ...(phase === 'guarded retry' ? [response('solved')] : []),
+      navigation(),
+      next,
+      { ...response('solved'), captcha: { ...next.captcha!, state: 'solved' as const } },
+      { ...executionResult(), action: wait, action_executed: true },
+    ];
+    const received: { body: ExecuteAction; url: URL }[] = [];
+    const server = createServer(async (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      if (!req.url?.includes('/page/execute')) { res.end(JSON.stringify(sessionResponse())); return; }
+      let raw = ''; for await (const chunk of req) raw += chunk;
+      const body: ExecuteAction = JSON.parse(raw);
+      const result = responses[received.length];
+      received.push({ body, url: new URL(req.url, 'http://localhost') });
+      if (!result) { res.writeHead(500); res.end('{}'); return; }
+      res.end(JSON.stringify({ ...result, action: body }));
+    });
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    try {
+      const address = server.address() as { port: number };
+      const client = new NotteClient({ apiKey: 'test', baseUrl: `http://127.0.0.1:${address.port}`, captchaTimeoutSeconds: 30 }); // pragma: allowlist secret - local fixture
+      const session = client.Session(); await session.start();
+      expect(await session.execute(wait)).toMatchObject({ success: true, action: wait, action_executed: true });
+      expect(received.map(r => r.body.type)).toEqual([
+        'wait', 'captcha_solve', ...(phase === 'guarded retry' ? ['wait'] : []),
+        'wait', 'captcha_solve', 'wait',
+      ]);
+      expect(received[1].url.searchParams.get('captcha_id')).toBe('c');
+      if (phase === 'guarded retry') {
+        expect(received[2].url.searchParams.get('target_page_id')).toBe('p');
+        expect(received[2].url.searchParams.get('target_generation')).toBe('3');
+      }
+      const [retry, poll, resumed] = received.slice(-3);
+      expect(retry.body).toEqual(wait);
+      expect([...retry.url.searchParams.keys()]).toEqual(['captcha_timeout_seconds']);
+      expect(poll.url.searchParams.get('captcha_id')).toBe('next');
+      expect(resumed.body).toEqual(wait);
+      expect(resumed.url.searchParams.get('captcha_id')).toBeNull();
+      expect(resumed.url.searchParams.get('target_page_id')).toBe('destination');
+      expect(resumed.url.searchParams.get('target_generation')).toBe('4');
+      const budgets = received.map(r => Number(r.url.searchParams.get('captcha_timeout_seconds')));
+      expect(budgets.every((budget, i) => budget > 0 && (i === 0 || budget < budgets[i - 1]))).toBe(true);
+    } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
+  });
+});

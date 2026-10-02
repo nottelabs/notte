@@ -67,6 +67,16 @@ export async function executeWithCaptcha(
       // Preserve the executed action, without claiming the old CAPTCHA solved or replaying input.
       return { ...original, captcha: status };
     }
+    if (status.state === 'cancelled' && status.cancel_reason === 'navigation' &&
+      action.type === 'wait' && result.action_executed === false) {
+      // A passive wait can check the new document; targeted actions cannot.
+      // Drop the old solve/page guards while retaining the original deadline.
+      // The CAPTCHA budget does not shorten the action's requested wait duration.
+      params = { captcha_timeout_seconds: remaining() };
+      requestAction = action;
+      await pause();
+      continue;
+    }
     if (status.state === 'failed' || status.state === 'cancelled') {
       return failure(status.message || `CAPTCHA ${status.state}`, `captcha_${status.state}`);
     }
