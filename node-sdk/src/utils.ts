@@ -118,16 +118,24 @@ function normalizeJsonSchema(schema: unknown): unknown {
     if (Array.isArray(existing)) {
       // Intersect the existing alternatives with the allowed types: typed
       // branches survive only if their type is allowed; untyped branches are
-      // expanded once per allowed non-null type.
+      // expanded once per allowed type, null included, so the result never
+      // accepts a value the original rejected (e.g. null when no branch did).
+      const seen = new Set<string>();
       branches = [];
+      const push = (b: Record<string, unknown>) => {
+        const key = JSON.stringify(b);
+        if (!seen.has(key)) {
+          seen.add(key);
+          branches.push(b);
+        }
+      };
       for (const branch of existing as Record<string, unknown>[]) {
         if (typeof branch.type === 'string') {
-          if (types.includes(branch.type)) branches.push(branch.type === 'null' ? branch : { ...scoped, ...branch });
+          if (types.includes(branch.type)) push(branch.type === 'null' ? branch : { ...scoped, ...branch });
         } else {
-          for (const t of types) if (t !== 'null') branches.push({ ...typed(t), ...branch });
+          for (const t of types) push({ ...typed(t), ...branch });
         }
       }
-      if (types.includes('null') && !branches.some((b) => b.type === 'null')) branches.push({ type: 'null' });
     } else {
       branches = types.map(typed);
     }

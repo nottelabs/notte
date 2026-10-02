@@ -190,12 +190,20 @@ describe('normalizeJsonSchema', () => {
       anyOf: [{ type: 'string' }, { type: 'null' }],
     });
     // An existing anyOf is intersected with the allowed types, not overwritten.
+    // The untyped branch is expanded over every allowed type, so null is only
+    // accepted through the branch that already accepted it.
     expect(normalizeJsonSchema({ type: ['string', 'null'], anyOf: [{ const: 'approved' }, { type: 'null' }] })).toEqual({
-      anyOf: [{ type: 'string', const: 'approved' }, { type: 'null' }],
+      anyOf: [{ type: 'string', const: 'approved' }, { type: 'null', const: 'approved' }, { type: 'null' }],
     });
+    // No existing branch accepts null: the result must not grow a bare null branch.
+    expect(normalizeJsonSchema({ type: ['string', 'null'], anyOf: [{ enum: ['approved'] }] })).toEqual({
+      anyOf: [{ type: 'string', enum: ['approved'] }, { type: 'null', enum: ['approved'] }],
+    });
+    // Typed branches outside the allowed types are dropped; no branch accepted
+    // null, so none is added.
     expect(
       normalizeJsonSchema({ type: ['string', 'null'], anyOf: [{ type: 'string', minLength: 1 }, { type: 'number' }] }),
-    ).toEqual({ anyOf: [{ type: 'string', minLength: 1 }, { type: 'null' }] });
+    ).toEqual({ anyOf: [{ type: 'string', minLength: 1 }] });
   });
 
   it('normalises nested schemas under $defs, prefixItems and allOf', () => {
