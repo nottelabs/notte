@@ -1,4 +1,4 @@
-from typing import final
+from typing import Protocol, final
 
 import chevron
 from notte_core.actions import CompletionAction
@@ -33,6 +33,17 @@ Example:
 class CompletionValidation(BaseModel):
     is_valid: bool
     reason: str
+
+
+class BaseValidator(Protocol):
+    async def validate(
+        self,
+        task: str,
+        output: CompletionAction,
+        history: Trajectory,
+        progress: TrajectoryProgress,
+        response_format: type[BaseModel] | None = None,
+    ) -> ExecutionResult: ...
 
 
 @final
