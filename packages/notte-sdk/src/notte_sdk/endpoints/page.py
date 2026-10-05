@@ -1,7 +1,7 @@
 import time
 from typing import TYPE_CHECKING, Any, Literal, Unpack, cast, overload
 
-from notte_core.actions import ActionUnion, CaptchaSolveAction, InteractionActionUnion
+from notte_core.actions import ActionUnion, CaptchaSolveAction, InteractionActionUnion, WaitAction
 from notte_core.common.config import PerceptionType
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
@@ -376,6 +376,21 @@ class PageClient(BaseClient):
                 # Navigation ends the old page's wait, not the action that already
                 # executed. Retain cancellation metadata and never replay input.
                 return finished(original.model_copy(update={"captcha": status}))
+            if (
+                status.state == "cancelled"
+                and status.cancel_reason == "navigation"
+                and isinstance(action, WaitAction)
+                and result.action_executed is False
+            ):
+                # A passive wait has no old-page target. Recheck readiness on
+                # the new document without restarting the CAPTCHA deadline.
+                # Clicks and other actions still fail rather than crossing pages.
+                # Keep the requested wait duration: the CAPTCHA budget is
+                # separate from action execution and its HTTP timeout.
+                params = CaptchaExecuteParams(captcha_timeout_seconds=max(0.001, deadline - time.monotonic()))
+                request_action = action
+                time.sleep(min(1.0, max(0, deadline - time.monotonic())))
+                continue
             if status.state in ("failed", "cancelled"):
                 return failure(status.message or f"CAPTCHA {status.state}", f"captcha_{status.state}")
             if status.state == "solved":

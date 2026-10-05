@@ -2,7 +2,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
-from notte_core.actions import CaptchaSolveAction, ClickAction
+from notte_core.actions import CaptchaSolveAction, ClickAction, WaitAction
 from notte_core.browser.observation import utc_now
 from notte_sdk.client import NotteClient
 from notte_sdk.endpoints.page import PageClient
@@ -174,4 +174,94 @@ def test_navigation_does_not_resume_blocked_action_or_succeed_explicit_solve(cli
     page.request = MagicMock(side_effect=[response(action, "solving"), cancelled])
     result = page.execute("session", action)
     assert not result.success and result.code == "captcha_cancelled"
+    assert page.request.call_count == 2
+
+
+def test_unexecuted_wait_follows_navigation_and_a_new_challenge(client):
+    page, _ = client
+    action = WaitAction(time_ms=5000)
+    cancelled = response(CaptchaSolveAction(), "cancelled")
+    cancelled.captcha.cancel_reason = "navigation"
+    next_challenge = response(action, "solving")
+    next_challenge.captcha.captcha_id = "next-solve"
+    next_challenge.captcha.generation = 1
+    solved = response(CaptchaSolveAction(), "solved", success=True)
+    solved.captcha = next_challenge.captcha.model_copy(update={"state": "solved"})
+    page.request = MagicMock(
+        side_effect=[
+            response(action, "solving"),
+            cancelled,
+            next_challenge,
+            solved,
+            response(action, executed=True, success=True),
+        ]
+    )
+    result = page.execute("session", action)
+    assert result.success and result.action_executed is True
+    calls = page.request.call_args_list
+    assert [c.args[0].request.type for c in calls] == ["wait", "captcha_solve", "wait", "captcha_solve", "wait"]
+    assert calls[2].args[0].params.captcha_id is None
+    assert calls[2].args[0].params.target_generation is None
+    assert calls[3].args[0].params.captcha_id == "next-solve"
+    assert calls[4].args[0].params.target_generation == 1
+    assert calls[2].args[0].params.captcha_timeout_seconds < 180
+
+
+def test_wait_navigation_retries_keep_the_original_deadline(client):
+    page, clock = client
+    page.root_client.captcha_timeout_seconds = 3
+    action = WaitAction(time_ms=5000)
+    cancelled = response(action, "cancelled")
+    cancelled.captcha.cancel_reason = "navigation"
+    page.request = MagicMock(return_value=cancelled)
+    result = page.execute("session", action)
+    assert result.code == "captcha_timeout"
+    assert clock[0] == 3
+    assert page.request.call_count == 3
+
+
+def test_resumed_wait_duration_is_separate_from_captcha_budget(client):
+    page, clock = client
+    page.root_client.captcha_timeout_seconds = 2
+    action = WaitAction(time_ms=5000)
+    cancelled = response(action, "cancelled")
+    cancelled.captcha.cancel_reason = "navigation"
+
+    def request(endpoint, *, timeout):
+        if page.request.call_count == 1:
+            return cancelled
+        assert endpoint.request == action
+        assert endpoint.params.captcha_timeout_seconds == 1
+        assert timeout == page.DEFAULT_REQUEST_TIMEOUT_SECONDS
+        clock[0] += action.time_ms / 1000
+        return response(action, executed=True, success=True)
+
+    page.request = MagicMock(side_effect=request)
+    result = page.execute("session", action)
+    assert result.success and result.action == action
+    assert clock[0] == 6
+    assert page.request.call_count == 2
+
+
+@pytest.mark.parametrize("state,reason", [("failed", "navigation"), ("cancelled", None)])
+def test_wait_does_not_hide_other_captcha_failures(client, state, reason):
+    page, _ = client
+    action = WaitAction(time_ms=5000)
+    terminal = response(action, state)
+    terminal.captcha.cancel_reason = reason
+    page.request = MagicMock(return_value=terminal)
+    result = page.execute("session", action)
+    assert result.code == f"captcha_{state}"
+    assert page.request.call_count == 1
+
+
+def test_executed_wait_is_not_repeated_after_navigation(client):
+    page, _ = client
+    action = WaitAction(time_ms=5000)
+    initial = response(action, "solving", executed=True, success=True)
+    cancelled = response(CaptchaSolveAction(), "cancelled")
+    cancelled.captcha.cancel_reason = "navigation"
+    page.request = MagicMock(side_effect=[initial, cancelled])
+    result = page.execute("session", action)
+    assert result.success and result.action_executed is True
     assert page.request.call_count == 2
