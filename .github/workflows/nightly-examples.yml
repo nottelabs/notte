@@ -158,6 +158,6 @@ jobs:
         if: always()
         uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
+          webhook: ${{ secrets.SLACK_NIGHTLY_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
           payload-file-path: slack-payload.json
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_WEBHOOK_URL }}
