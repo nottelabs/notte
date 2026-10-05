@@ -78,14 +78,14 @@
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.99.0",
     "@mdx-js/mdx": "^3.1.1",
-    "@types/node": "^20.14.0",
+    "@types/node": "^26.6.4",
     "@types/ws": "^8.5.10",
-    "@vitest/coverage-v8": "^4.1.11",
-    "dotenv": "^16.4.5",
+    "@vitest/coverage-v8": "^5.0.3",
+    "dotenv": "^18.0.5",
     "playwright-core": "1.63.0",
     "tsup": "^8.5.1",
-    "typescript": "^5.5.4",
-    "vitest": "^4.0.10"
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
   },
   "publishConfig": {
     "access": "public"
