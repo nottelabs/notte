@@ -457,10 +457,10 @@ def test_solve_captchas_defaults_to_enabled_but_can_be_disabled() -> None:
     assert SessionStartRequest(solve_captchas=False).solve_captchas is False
 
 
-@pytest.mark.parametrize("options, expected", [({}, True), ({"block_ads": True}, True), ({"block_ads": False}, False)])
+@pytest.mark.parametrize("options, expected", [({}, None), ({"block_ads": True}, True), ({"block_ads": False}, False)])
 @pytest.mark.parametrize("high_level", [True, False])
 def test_ad_blocking_is_serialized_for_remote_sessions(
-    client: NotteClient, session_id: str, options: SessionStartRequestDict, expected: bool, high_level: bool
+    client: NotteClient, session_id: str, options: SessionStartRequestDict, expected: bool | None, high_level: bool
 ) -> None:
     with patch("notte_sdk._transport._RequestSession.post") as mock_post:
         mock_post.return_value.status_code = 200
@@ -472,7 +472,10 @@ def test_ad_blocking_is_serialized_for_remote_sessions(
             _ = client.sessions.start(**options)
     mock_post.assert_called_once()
     payload = json.loads(mock_post.call_args.kwargs["data"])
-    assert payload["block_ads"] is expected
+    if expected is None:
+        assert "block_ads" not in payload
+    else:
+        assert payload["block_ads"] is expected
 
 
 def test_ad_blocking_option_is_remote_only() -> None:

@@ -49,6 +49,7 @@ Customize your session with these options:
 <ParamField path="block_ads" type="boolean" default={true}>
   Block ads and trackers in managed browsers using Basic filtering, without cosmetic filtering or injected scriptlets.
   To opt out, use `client.Session(block_ads=False)` in Python or `client.Session({ block_ads: false })` in TypeScript.
+  When omitted, the SDK leaves the setting to the API default. Explicit values require an API that supports `block_ads`.
   This setting does not configure local browsers or externally connected CDP browsers.
 </ParamField>
 

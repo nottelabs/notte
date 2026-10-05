@@ -1067,6 +1067,9 @@ class SessionStartRequest(_SessionStartRequest):
             data.pop("advanced_stealth", None)
         if not self.auth_ids:
             data.pop("auth_retry", None)
+        # Let the API apply its default so ordinary starts also work with older APIs.
+        if "block_ads" not in self.model_fields_set:
+            data.pop("block_ads", None)
         return data
 
     @model_validator(mode="before")
