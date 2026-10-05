@@ -83,6 +83,20 @@ describe('Session Unit Tests', () => {
   });
 
   describe('start', () => {
+    it.each([true, false])('forwards block_ads=%s to the session API', async block_ads => {
+      const options: SessionOptions = { block_ads };
+      expectTypeOf<SessionOptions['block_ads']>().toEqualTypeOf<boolean | undefined>();
+      const session = new Session(mockClient, options);
+      await session.start();
+      expect(sessionStart).toHaveBeenCalledWith(expect.objectContaining({ body: { block_ads } }));
+    });
+
+    it('leaves omitted ad blocking to the server default', async () => {
+      const session = new Session(mockClient);
+      await session.start();
+      expect(sessionStart).toHaveBeenCalledWith(expect.objectContaining({ body: {} }));
+    });
+
     it('should discard deprecated headless true before calling the API', async () => {
       const session = new Session(mockClient, { headless: true });
       await session.start();

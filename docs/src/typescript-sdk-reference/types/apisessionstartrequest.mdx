@@ -130,6 +130,12 @@ export type ApiSessionStartRequest = {
      */
     advanced_stealth?: boolean;
     /**
+     * Block Ads
+     *
+     * Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers.
+     */
+    block_ads?: boolean;
+    /**
      * Demonstrate
      *
      * Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.
@@ -218,6 +224,10 @@ SDK waiting preference. The API always verifies inline and returns authenticatin
 
 <ParamField body="advanced_stealth" type={"boolean | undefined"}>
 Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
+</ParamField>
+
+<ParamField body="block_ads" type={"boolean | undefined"}>
+Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers.
 </ParamField>
 
 <ParamField body="demonstrate" type={"boolean | undefined"}>
