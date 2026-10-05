@@ -107,6 +107,15 @@ def test_download_verifies_all_bytes_before_decoding(failure):
     assert session.get.call_args.kwargs["stream"] is True
 
 
+@pytest.mark.parametrize("urls", [{}, {"logs": ""}, {"logs": None}])
+def test_missing_download_url_fails_before_storage_request(urls):
+    data = {"payloads": {"logs": reference(b"[]").model_dump()}, "payload_urls": urls}
+    with patch("notte_sdk.endpoints.run_payloads.requests.Session") as storage:
+        with pytest.raises(ValueError, match="Missing download URL.*logs"):
+            resolve_run_fields(data)
+    storage.assert_not_called()
+
+
 def test_result_preview_is_bounded_and_full_result_is_in_storage():
     result = "x" * 20000
     raw = json.dumps(result).encode()

@@ -116,11 +116,14 @@ def resolve_run_fields(data: dict[str, Any]) -> dict[str, Any]:
         reference = UploadReference.model_validate(raw_reference)
         if not 0 < reference.size_bytes <= MAX_PAYLOAD_BYTES:
             raise ValueError("Invalid function run payload size")
+        url = urls.get(field)
+        if not url:
+            raise ValueError(f"Missing download URL for function run payload field: {field}")
         with TemporaryFile(mode="w+b") as payload:
             digest = hashlib.sha256()
             with requests.Session() as storage_session:
                 with storage_session.get(
-                    _storage_url(urls[field]), stream=True, timeout=(30, 300), allow_redirects=False
+                    _storage_url(url), stream=True, timeout=(30, 300), allow_redirects=False
                 ) as response:
                     response.raise_for_status()
                     if response.status_code != 200:
