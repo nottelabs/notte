@@ -32,7 +32,7 @@ describe('Persona Integration Tests', () => {
     client = new NotteClient({ apiKey: API_KEY });
   });
 
-  describe.sequential('Basic Persona Operations', () => {
+  describe('Basic Persona Operations', () => {
     // Run tests sequentially to avoid concurrency limits
     it('should handle persona creation limits', async () => {
       // Try to create a new persona
@@ -125,7 +125,7 @@ describe('Persona Integration Tests', () => {
 
   });
 
-  describe.sequential('Persona Context Manager', () => {
+  describe('Persona Context Manager', () => {
     it('should delete persona after context exit', async () => {
       let personaId: string | null = null;
 
@@ -192,7 +192,7 @@ describe('Persona Integration Tests', () => {
     });
   });
 
-  describe.sequential('Persona with Vault Integration', () => {
+  describe('Persona with Vault Integration', () => {
     it('should create persona with vault', { timeout: 30000 }, async () => {
       const persona = client.Persona({ create_vault: true });
       let personaId: string | null = null;
@@ -319,7 +319,7 @@ describe('Persona Integration Tests', () => {
     });
   });
 
-  describe.sequential('Persona with Agent Integration', () => {
+  describe('Persona with Agent Integration', () => {
     it('should let a local agent read persona email', async () => {
       const persona = client.Persona({ create_vault: true });
       let personaId: string | null = null;
@@ -538,7 +538,7 @@ describe('Persona Integration Tests', () => {
     });
   });
 
-  describe.sequential('Form Filling Integration', () => {
+  describe('Form Filling Integration', () => {
     it('should fill form with persona information', async () => {
       const persona = client.Persona({ create_vault: false, create_phone_number: false });
       let personaId: string | null = null;

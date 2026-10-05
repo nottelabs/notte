@@ -12,7 +12,7 @@ import {
   agentStop,
   sessionDebugInfo
 } from '@/lib/client/sdk.gen';
-import { formatError } from '@/utils';
+import { formatError, normalizeJsonSchema } from '@/utils';
 import { NotteVault } from './vaults';
 import { NottePersona } from './personas';
 import { z } from 'zod';
@@ -28,7 +28,7 @@ export function prepareAgentRequest<T = unknown>(
   const apiData: AgentRunRequest = { ...data };
   const rf: any = data.response_format;
   if (rf && typeof rf.parse === 'function' && typeof rf.safeParse === 'function') {
-    apiData.response_format = z.toJSONSchema(rf);
+    apiData.response_format = normalizeJsonSchema(z.toJSONSchema(rf));
     return { apiData, zodSchema: rf as z.ZodSchema<T> };
   }
   return { apiData, zodSchema: null };
