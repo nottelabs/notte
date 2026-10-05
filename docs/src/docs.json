@@ -489,6 +489,7 @@
                       "typescript-sdk-reference/function/setschedule",
                       "typescript-sdk-reference/function/deleteschedule",
                       "typescript-sdk-reference/function/rollback",
+                      "typescript-sdk-reference/function/updaterun",
                       "typescript-sdk-reference/function/runs"
                     ]
                   },

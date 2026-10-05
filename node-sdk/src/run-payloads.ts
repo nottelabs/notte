@@ -1,7 +1,56 @@
 import { createHash } from 'node:crypto';
-import type { GetFunctionRunResponse } from '@/lib/client/types.gen';
+import type { NotteClient } from '@/client';
+import type { FunctionRunUpdateRequest, GetFunctionRunResponse } from '@/lib/client/types.gen';
 
 type PayloadField = 'result' | 'logs' | 'variables';
+type UploadReference = { upload_id: string; size_bytes: number; sha256: string };
+type UploadResponse = { reference: UploadReference; url: string; headers: Record<string, string> };
+const INLINE_FIELD_BYTES = 1024 * 1024;
+const MAX_PAYLOAD_BYTES = 256 * 1024 * 1024;
+
+/** Upload large fields before sending the run's final metadata update. */
+export async function offloadRunPayloads(
+	client: ReturnType<NotteClient['getClient']>,
+	path: { function_id: string; run_id: string },
+	fields: FunctionRunUpdateRequest,
+): Promise<Record<string, unknown>> {
+	const data: Record<string, unknown> = { ...fields };
+	const references: Partial<Record<PayloadField, UploadReference>> = {};
+	// The persisted result and read contract are text, including structured results.
+	if (data.result != null && typeof data.result !== 'string') data.result = JSON.stringify(data.result);
+	for (const field of ['result', 'logs', 'variables'] as const) {
+		if (data[field] == null) continue;
+		const payload = Buffer.from(JSON.stringify(data[field]), 'utf8');
+		if (payload.length > MAX_PAYLOAD_BYTES) throw new Error(`Function run ${field} exceeds the payload limit`);
+		if (payload.length <= INLINE_FIELD_BYTES) continue;
+		const checksum = createHash('sha256').update(payload).digest('base64');
+		const prepared = await client.post<{ 200: UploadResponse }, unknown, true>({
+			url: '/functions/{function_id}/runs/{run_id}/payloads/{field}/upload',
+			path: { ...path, field },
+			body: { size_bytes: payload.length, sha256: checksum },
+			headers: { 'Content-Type': 'application/json' },
+			throwOnError: true,
+		});
+		const upload = prepared.data;
+		if (upload.reference.size_bytes !== payload.length || upload.reference.sha256 !== checksum) {
+			throw new Error('Run payload upload reference does not match the local payload');
+		}
+		if (new URL(upload.url).protocol !== 'https:') throw new Error('Invalid run payload URL');
+		// This request bypasses the authenticated API client and cannot follow redirects.
+		const response = await fetch(upload.url, {
+			method: 'PUT', body: payload, headers: upload.headers,
+			redirect: 'error', signal: AbortSignal.timeout(300_000),
+		});
+		await response.body?.cancel();
+		if (!response.ok) throw new Error(`Run payload upload failed (${response.status})`);
+		references[field] = upload.reference;
+		if (field === 'result' && typeof data.result === 'string') data.result_preview = data.result.slice(0, 16000);
+		delete data[field];
+	}
+	if (Object.keys(references).length) data.payloads = references;
+	return data;
+}
+
 export type RunWithPayloads = GetFunctionRunResponse & {
 	payloads?: Partial<Record<PayloadField, { size_bytes: number; sha256: string }>>;
 	payload_urls?: Partial<Record<PayloadField, string>>;

@@ -2,12 +2,13 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { NotteClient, TIMEOUT_HEADER } from '@/client';
 import { Encryption } from '@/encryption';
-import { resolveRunPayloads } from '@/run-payloads';
+import { offloadRunPayloads, resolveRunPayloads } from '@/run-payloads';
 import { FailedToRunCloudFunctionError, InvalidRequestError, NotteAPIError, NotteError, NotteTimeoutError } from '@/errors';
 import type {
 	DeleteFunctionResponse,
 	FunctionMetadataUpdateRequest,
 	FunctionResponse,
+	FunctionRunUpdateRequest,
 	FunctionRollbackRequest,
 	FunctionScheduleCreateRequest,
 	FunctionWithLinkResponse,
@@ -17,6 +18,7 @@ import type {
 	RunFunctionRequest,
 	ScheduleDeleteResponse,
 	ScheduleResponse,
+	UpdateFunctionRunResponse,
 } from '@/lib/client/types.gen';
 import {
 	functionCreate,
@@ -431,6 +433,28 @@ export class NotteFunction {
 			throwOnError: true,
 		});
 		return resolveRunPayloads(response.data);
+	}
+
+	/**
+	 * Update a run, uploading fields above 1 MiB directly to private storage.
+	 *
+	 * @param functionRunId - ID of a run belonging to this function.
+	 * @param fields - Status and fields to update. Omitted fields remain unchanged.
+	 * @returns Confirmation of the persisted update.
+	 * @throws Error if a field exceeds 256 MiB or an upload fails; the update is not finalized.
+	 * @example
+	 * await fn.updateRun(runId, { status: 'closed', result: { records } });
+	 */
+	async updateRun(functionRunId: string, fields: FunctionRunUpdateRequest): Promise<UpdateFunctionRunResponse> {
+		const functionId = await this.ensureInitialized();
+		const client = this.client.getClient();
+		const path = { function_id: functionId, run_id: functionRunId };
+		const body = await offloadRunPayloads(client, path, fields);
+		const response = await client.patch<{ 200: UpdateFunctionRunResponse }, unknown, true>({
+			url: '/functions/{function_id}/runs/{run_id}', path, body,
+			headers: { 'Content-Type': 'application/json' }, throwOnError: true,
+		});
+		return response.data;
 	}
 
 	/**
