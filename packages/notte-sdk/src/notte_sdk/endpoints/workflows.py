@@ -18,6 +18,7 @@ from pydantic import TypeAdapter
 from typing_extensions import deprecated
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.endpoints.run_payloads import PayloadMode, RunUpdateBody, offload_run_fields, resolve_run_fields
 from notte_sdk.endpoints.sessions import CONSOLE_VIEWER_URL
 from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
@@ -432,13 +433,17 @@ class WorkflowsClient(BaseClient):
         return self.request(self._stop_workflow_run_endpoint(function_id, run_id))
 
     def get_run(self, function_id: str, run_id: str) -> GetFunctionRunResponse:
-        return self.request(self._get_workflow_run_endpoint(function_id, run_id))
+        endpoint = self._get_workflow_run_endpoint(function_id, run_id).with_params(PayloadMode())
+        return GetFunctionRunResponse.model_validate(resolve_run_fields(self._request(endpoint)))
 
     def update_run(
         self, function_id: str, run_id: str, **data: Unpack[FunctionRunUpdateRequestDict]
     ) -> UpdateFunctionRunResponse:
         request = FunctionRunUpdateRequest.model_validate(data)
-        return self.request(self._update_workflow_run_endpoint(function_id, run_id).with_request(request))
+        endpoint = self._update_workflow_run_endpoint(function_id, run_id)
+        fields = request.model_dump(mode="json", exclude_unset=True)
+        body = offload_run_fields(self, endpoint.path, fields)
+        return self.request(endpoint.with_request(RunUpdateBody(body)))
 
     def list_runs(self, function_id: str, **data: Unpack[ListFunctionRunsRequestDict]) -> ListFunctionRunsResponse:
         """

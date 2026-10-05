@@ -2,6 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { NotteClient, TIMEOUT_HEADER } from '@/client';
 import { Encryption } from '@/encryption';
+import { resolveRunPayloads } from '@/run-payloads';
 import { FailedToRunCloudFunctionError, InvalidRequestError, NotteAPIError, NotteError, NotteTimeoutError } from '@/errors';
 import type {
 	DeleteFunctionResponse,
@@ -23,7 +24,6 @@ import {
 	functionDownloadUrl,
 	functionMetadataUpdate,
 	functionRollback,
-	functionRunGetMetadata,
 	functionScheduleDelete,
 	functionScheduleSet,
 	functionUpdate,
@@ -424,12 +424,13 @@ export class NotteFunction {
 	 */
 	async getRun(functionRunId: string): Promise<GetFunctionRunResponse> {
 		const functionId = await this.ensureInitialized();
-		const response = await functionRunGetMetadata({
-			client: this.client.getClient(),
-			throwOnError: true,
+		const response = await this.client.getClient().get<{ 200: GetFunctionRunResponse }, unknown, true>({
+			url: '/functions/{function_id}/runs/{run_id}',
 			path: { function_id: functionId, run_id: functionRunId },
+			query: { payload_mode: 'references' },
+			throwOnError: true,
 		});
-		return response.data;
+		return resolveRunPayloads(response.data);
 	}
 
 	/**
