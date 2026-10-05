@@ -549,6 +549,12 @@ export type ApiSessionStartRequest = {
      */
     advanced_stealth?: boolean;
     /**
+     * Block Ads
+     *
+     * Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers.
+     */
+    block_ads?: boolean;
+    /**
      * Demonstrate
      *
      * Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.

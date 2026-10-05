@@ -793,6 +793,8 @@ class SessionStartRequestDict(_SessionStartRequestDict, total=False):
     """Public request dictionary for starting a remote session."""
 
     advanced_stealth: bool
+    block_ads: bool
+    """Block ads and trackers in managed browsers with Basic filtering. Defaults to True."""
 
 
 class LocalSessionStartRequestDict(_SessionStartRequestDict, total=False):
@@ -1031,6 +1033,15 @@ class SessionStartRequest(_SessionStartRequest):
     """Public request for starting a remote Notte browser session."""
 
     auth_retry: int = Field(default=0, ge=0, le=2)
+    block_ads: Annotated[
+        bool,
+        Field(
+            description=(
+                "Block ads and trackers in managed browsers using Basic filtering. Set false to disable. "
+                "Does not configure externally supplied CDP browsers."
+            ),
+        ),
+    ] = True
 
     proxies: Annotated[
         list[ProxySettings] | bool,
@@ -1056,6 +1067,9 @@ class SessionStartRequest(_SessionStartRequest):
             data.pop("advanced_stealth", None)
         if not self.auth_ids:
             data.pop("auth_retry", None)
+        # Let the API apply its default so ordinary starts also work with older APIs.
+        if "block_ads" not in self.model_fields_set:
+            data.pop("block_ads", None)
         return data
 
     @model_validator(mode="before")

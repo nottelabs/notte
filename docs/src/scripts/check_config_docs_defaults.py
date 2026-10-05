@@ -45,6 +45,7 @@ def code_defaults() -> dict[str, Any]:
     return {
         "advanced_stealth": field_default("advanced_stealth"),
         "solve_captchas": field_default("solve_captchas"),
+        "block_ads": field_default("block_ads"),
         "proxies": field_default("proxies"),
         # the docs param is the SDK's idle timeout
         "timeout_minutes": field_default("idle_timeout_minutes"),
