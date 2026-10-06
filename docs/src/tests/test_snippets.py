@@ -2,6 +2,7 @@ import io
 import os
 import re
 import subprocess
+import sys
 import tempfile
 from collections.abc import Callable, Generator
 from pathlib import Path
@@ -377,6 +378,16 @@ def get_disabled_codes_for_file(source_path: Path) -> list[str]:
     return disabled_codes
 
 
+# Mypy diagnostics look like `path:line:col: error: message  [code]`.
+MYPY_DIAGNOSTIC_RE = re.compile(r"^(?P<path>[^:\n]+):\d+(?::\d+)?: (?:error|note|warning): ")
+# A cold run has to analyse the whole SDK; warm incremental runs take well under a second.
+MYPY_TIMEOUT_SECONDS = 120
+
+
+class MypyNotRunError(RuntimeError):
+    """Raised when mypy could not check a snippet at all (as opposed to finding type errors)."""
+
+
 def mypy_check_code(code: str, source_name: str | Path) -> None:
     """
     Run mypy type checking on a code snippet.
@@ -386,7 +397,10 @@ def mypy_check_code(code: str, source_name: str | Path) -> None:
         source_name: Name/path for error reporting
 
     Raises:
-        TypeError: If mypy finds type errors
+        TypeError: If mypy finds type errors in the snippet
+        MypyNotRunError: If mypy did not actually check the snippet (missing binary,
+            crash, timeout, ...). This must never pass silently, otherwise the whole
+            type-check job passes vacuously.
     """
     # Write code to a temporary file
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as tmp:
@@ -398,10 +412,12 @@ def mypy_check_code(code: str, source_name: str | Path) -> None:
         source_path = Path(source_name) if isinstance(source_name, str) else source_name
         disabled_codes = get_disabled_codes_for_file(source_path)
 
-        # Build mypy command with disabled error codes
+        # Run mypy with the interpreter pytest itself runs under: that is the project
+        # environment, so no nested `uv run` re-sync (which can alter or drop packages
+        # installed with `uv pip install`) and no dependency on `uv` being on PATH.
         mypy_cmd = [
-            "uv",
-            "run",
+            sys.executable,
+            "-m",
             "mypy",
             tmp_path,
             "--ignore-missing-imports",  # Don't fail on missing stub files
@@ -416,25 +432,55 @@ def mypy_check_code(code: str, source_name: str | Path) -> None:
             mypy_cmd.append(f"--disable-error-code={error_code}")
 
         # Run mypy on the temporary file
-        result = subprocess.run(
-            mypy_cmd,
-            capture_output=True,
-            text=True,
-            timeout=30,
+        try:
+            result = subprocess.run(
+                mypy_cmd,
+                capture_output=True,
+                text=True,
+                timeout=MYPY_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired as e:
+            raise MypyNotRunError(f"mypy timed out after {MYPY_TIMEOUT_SECONDS}s while checking {source_name}") from e
+
+        # Exit code 0 means mypy checked the snippet and found nothing; it may still
+        # print informational notes (e.g. annotation-unchecked), which are not failures.
+        if result.returncode == 0:
+            return
+
+        # Match diagnostics on the temp file's unique basename: mypy echoes the path as
+        # given, but it may be relative to the cwd or go through a symlinked tmp dir
+        # (`/var/...` vs `/private/var/...` on macOS), so a full-path match can drop lines.
+        tmp_name = os.path.basename(tmp_path)
+        tmp_realpath = os.path.realpath(tmp_path)
+        errors: list[str] = []
+        diagnostics = 0
+        for line in result.stdout.splitlines():
+            match = MYPY_DIAGNOSTIC_RE.match(line)
+            if match is None:
+                continue
+            diagnostics += 1
+            if os.path.basename(match.group("path")) != tmp_name:
+                continue
+            for path in (tmp_realpath, tmp_path, match.group("path")):
+                line = line.replace(path, str(source_name))
+            errors.append(line)
+
+        if errors:
+            error_msg = f"Type checking failed for {source_name}:\n" + "\n".join(errors)
+            raise TypeError(error_msg)
+
+        # mypy exits 1 when it reported errors; a non-zero exit without a single
+        # diagnostic means the snippet was never checked: fail loudly with the reason.
+        if diagnostics == 0:
+            raise MypyNotRunError(
+                f"mypy did not type check {source_name} (exit code {result.returncode}).\n"
+                f"command: {' '.join(mypy_cmd)}\n"
+                f"stdout:\n{result.stdout.strip() or '<empty>'}\n"
+                f"stderr:\n{result.stderr.strip() or '<empty>'}"
+            )
+        logger.warning(
+            f"mypy reported {diagnostics} diagnostic(s) outside {source_name} (exit code {result.returncode})"
         )
-
-        if result.returncode != 0:
-            # Parse and format mypy errors
-            errors = []
-            for line in result.stdout.splitlines():
-                if tmp_path in line:
-                    # Replace temp path with source name
-                    line = line.replace(tmp_path, str(source_name))
-                    errors.append(line)
-
-            if errors:
-                error_msg = f"Type checking failed for {source_name}:\n" + "\n".join(errors)
-                raise TypeError(error_msg)
     finally:
         # Clean up temp file
         try:
@@ -468,8 +514,11 @@ def run_typecheck_only(code: str, source_name: str) -> None:
         logger.info(f"✓ Syntax check passed: {source_name}")
     except SyntaxError as e:
         raise SyntaxError(f"Syntax error in {source_name}: {e}")
-    mypy_check_code(code, source_name)
-    logger.info(f"✓ Type check passed: {source_name}")
+    # mypy is only installed in the type-check job; the syntax-check and execution
+    # jobs must not depend on it (they used to call it and pass vacuously).
+    if TYPE_CHECK_MODE:
+        mypy_check_code(code, source_name)
+        logger.info(f"✓ Type check passed: {source_name}")
 
 
 def run_example(
