@@ -168,12 +168,12 @@ The vault to use for the session
 Managed Auth connection IDs to verify and, when necessary, authenticate inside this session. Initial verification runs before returning; when login is needed, the session returns as authenticating. Poll /sessions/&#123;id&#125;/auth for readiness.
 </ParamField>
 
-<ParamField body="advanced_stealth" type={"boolean | undefined"}>
-Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
-</ParamField>
-
 <ParamField body="block_ads" type={"boolean | undefined"}>
 Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers.
+</ParamField>
+
+<ParamField body="advanced_stealth" type={"boolean | undefined"}>
+Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
 </ParamField>
 
 <ParamField body="demonstrate" type={"boolean | undefined"}>

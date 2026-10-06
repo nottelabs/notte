@@ -543,17 +543,17 @@ export type ApiSessionStartRequest = {
      */
     auth_retry?: number;
     /**
-     * Advanced Stealth
-     *
-     * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
-     */
-    advanced_stealth?: boolean;
-    /**
      * Block Ads
      *
      * Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers.
      */
     block_ads?: boolean;
+    /**
+     * Advanced Stealth
+     *
+     * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
+     */
+    advanced_stealth?: boolean;
     /**
      * Demonstrate
      *
@@ -2813,6 +2813,12 @@ export type GlobalScrapeRequest = {
      * Auth Retry
      */
     auth_retry?: number;
+    /**
+     * Block Ads
+     *
+     * Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers.
+     */
+    block_ads?: boolean;
     /**
      * Advanced Stealth
      *

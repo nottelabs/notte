@@ -124,6 +124,12 @@ export type GlobalScrapeRequest = {
      */
     auth_retry?: number;
     /**
+     * Block Ads
+     *
+     * Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers.
+     */
+    block_ads?: boolean;
+    /**
      * Advanced Stealth
      *
      * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
@@ -272,6 +278,10 @@ Whether to wait for Managed Auth before returning the session. Defaults to true.
 
 <ParamField body="auth_retry" type={"number | undefined"}>
 
+</ParamField>
+
+<ParamField body="block_ads" type={"boolean | undefined"}>
+Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers.
 </ParamField>
 
 <ParamField body="advanced_stealth" type={"boolean | undefined"}>

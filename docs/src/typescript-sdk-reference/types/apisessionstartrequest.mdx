@@ -124,17 +124,17 @@ export type ApiSessionStartRequest = {
      */
     auth_retry?: number;
     /**
-     * Advanced Stealth
-     *
-     * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
-     */
-    advanced_stealth?: boolean;
-    /**
      * Block Ads
      *
      * Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers.
      */
     block_ads?: boolean;
+    /**
+     * Advanced Stealth
+     *
+     * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
+     */
+    advanced_stealth?: boolean;
     /**
      * Demonstrate
      *
@@ -222,12 +222,12 @@ SDK waiting preference. The API always verifies inline and returns authenticatin
 
 </ParamField>
 
-<ParamField body="advanced_stealth" type={"boolean | undefined"}>
-Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
-</ParamField>
-
 <ParamField body="block_ads" type={"boolean | undefined"}>
 Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers.
+</ParamField>
+
+<ParamField body="advanced_stealth" type={"boolean | undefined"}>
+Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
 </ParamField>
 
 <ParamField body="demonstrate" type={"boolean | undefined"}>
