@@ -1,26 +1,35 @@
 ---
-title: MCP Server
-description: Give your AI agents access to the Notte MCP server
+title: Notte Browser MCP
+description: Connect your AI assistant to cloud browsers with Notte Browser MCP
 ---
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Give your AI agents access to the entire Notte ecosystem. Notte MCP lets it start cloud browser sessions, interact with the pages, fetch data, build scripts, and more.
+Notte Browser MCP gives your AI assistant cloud browsers for navigating websites, interacting with pages, extracting data, and reusing saved logins. Browser sessions consume credits while active, so stop them when your task is finished.
 
-## Add the Notte MCP
+## Connect Notte Browser MCP
 
-Create a [Notte API key](https://console.notte.cc/apikeys) and connect your client to the hosted MCP endpoint:
+Connect your client to the hosted MCP endpoint:
 
 ```text
-https://api.notte.cc/mcp/
+https://api.notte.cc/mcp
 ```
+
+Clients that support OAuth can prompt you to sign in with your Notte account and choose a workspace. For clients or scripts that use bearer authentication, create a [Notte API key](https://console.notte.cc/apikeys).
 
 <Tabs>
   <Tab title="Claude Code" icon="/images/claude-logo.svg">
-    Run this command and verify the connection with `claude mcp list`
+    Add the server, then run `/mcp` in Claude Code and authenticate with your Notte account:
+
     ```bash
-    claude mcp add --transport http notte https://api.notte.cc/mcp/ --header "Authorization: Bearer $NOTTE_API_KEY"
+    claude mcp add --transport http notte https://api.notte.cc/mcp
+    ```
+
+    If you prefer an API key, add the header explicitly:
+
+    ```bash
+    claude mcp add --transport http notte https://api.notte.cc/mcp --header "Authorization: Bearer $NOTTE_API_KEY"
     ```
   </Tab>
   <Tab title="Codex" icon="/images/openai-logo.svg">
@@ -28,7 +37,7 @@ https://api.notte.cc/mcp/
 
     ```toml
     [mcp_servers.notte]
-    url = "https://api.notte.cc/mcp/"
+    url = "https://api.notte.cc/mcp"
     bearer_token_env_var = "NOTTE_API_KEY"
     ```
   </Tab>
@@ -39,7 +48,7 @@ https://api.notte.cc/mcp/
     {
       "mcpServers": {
         "notte": {
-          "url": "https://api.notte.cc/mcp/",
+          "url": "https://api.notte.cc/mcp",
           "headers": {
             "Authorization": "Bearer ${env:NOTTE_API_KEY}"
           }
@@ -49,26 +58,13 @@ https://api.notte.cc/mcp/
     ```
   </Tab>
   <Tab title="Claude Desktop" icon="/images/claude-logo.svg">
-    Add this to your Claude Desktop configuration:
+    Open **Settings > Connectors > Add custom connector**. Use **Notte Browser MCP** as the name and enter:
 
-    ```json
-    {
-      "mcpServers": {
-        "notte": {
-          "command": "npx",
-          "args": [
-            "mcp-remote",
-            "https://api.notte.cc/mcp/",
-            "--header",
-            "Authorization:${AUTH_HEADER}"
-          ],
-          "env": {
-            "AUTH_HEADER": "Bearer <your-notte-api-key>"
-          }
-        }
-      }
-    }
+    ```text
+    https://api.notte.cc/mcp
     ```
+
+    Connect, sign in with your Notte account, and choose the workspace Claude should use. You can use the same custom-connector flow on claude.ai.
   </Tab>
   <Tab title="Others" icon="/images/mcp-logo.svg">
     Add this to your MCP configuration:
@@ -77,7 +73,7 @@ https://api.notte.cc/mcp/
     {
       "mcpServers": {
         "notte": {
-          "url": "https://api.notte.cc/mcp/",
+          "url": "https://api.notte.cc/mcp",
           "headers": {
             "Authorization": "Bearer <your-notte-api-key>"
           }
@@ -88,12 +84,44 @@ https://api.notte.cc/mcp/
   </Tab>
 </Tabs>
 
-## Post setup verify
-Run this prompt in your assistant to check that setup is all good:
+## Browser tools
+
+The browser workflow is `manage_browsers(start)` → `browser_action(goto)` → `browser_observe` → act and observe again → `manage_browsers(stop)`.
+
+Listing and inspection use separate read-only tools. Operations that change browser or website state use write tools and may require confirmation in your client.
+
+| Tool | Access | Actions or purpose |
+| --- | --- | --- |
+| `read_browsers` | Read | `list`, `status` |
+| `manage_browsers` | Write | `start`, `stop` |
+| `browser_observe` | Read | Read page state, tabs, and available element IDs |
+| `browser_scrape` | Read | Extract page markdown or structured data |
+| `browser_screenshot` | Read | Capture the current viewport |
+| `browser_action` | Write | Navigate, click, fill forms, and interact with pages |
+| `read_files` | Read | `list_uploads`, `get_upload`, `list_downloads`, `get_download` |
+| `manage_files` | Write | `upload` |
+| `read_profiles` | Read | `list`, `get` |
+| `manage_profiles` | Write | `create`, `duplicate`, `delete` |
+| `read_auth` | Read | `list`, `get` |
+| `manage_auth` | Write | `check`, `reauthenticate` |
+
+If you previously used the `manage_*` tools for listing or inspection, move those actions to the corresponding `read_*` tools and refresh your client's cached tool definitions. Read action names, arguments, and results stay the same.
+
+To save a login, create a profile with `manage_profiles`, then start a browser with both `profile_id` and `persist_profile=true`. Stop the browser to save its state; before reusing it, check `persisted_domains` with `read_profiles(action="get")`.
+
+## Verify the connection
+
+Run this prompt in your assistant:
 
 ```text
-Use the Notte MCP server to verify that it is correctly configured. Start a new browser session, goto apple.com, open the live viewer, extract the navbar into structured JSON. Report to user and close all resources. Also report a concise table breakdown of main MCP endpoints with highlevel description to educate user/agent.
+Use Notte Browser MCP to start a browser, navigate to https://example.com, observe the page, and extract its heading as structured JSON. Report the result and stop the browser when finished, including if any step fails.
 ```
+
+## Other Notte MCP endpoints
+
+For the broader developer API, including function and agent administration, use `https://api.notte.cc/mcp/full`. It accepts the same OAuth sign-in or Notte API key. The browser connector at `/mcp` does not expose those administration tools.
+
+[Anything API](https://anything.notte.cc) has its own MCP endpoint at `https://anything.notte.cc/mcp` for finding, running, and building reusable APIs.
 
 ## Notte Documentation MCP
 
