@@ -113,6 +113,7 @@ def test_local_run_close_retries_an_attempt_that_already_landed(
     with pytest.raises(NotteAPIError) as exc:
         close_behind_gateway_error(**{**sent, "result": "a different result"})
     assert exc.value.status_code == 400
+    assert "already closed with a different result" in str(exc.value)
     unchanged = function.get_run(run_id)
     assert unchanged.status == "closed"
     assert unchanged.result == sent["result"]
