@@ -421,6 +421,10 @@ def mypy_check_code(code: str, source_name: str | Path) -> None:
             "mypy",
             tmp_path,
             "--ignore-missing-imports",  # Don't fail on missing stub files
+            # Analyse followed modules (the SDK) but never report their diagnostics: every
+            # line mypy prints then belongs to the snippet, so "non-zero exit without a
+            # snippet diagnostic" has exactly one meaning: the snippet was not checked.
+            "--follow-imports=silent",
             "--no-error-summary",
             "--show-column-numbers",
             "--show-error-codes",
@@ -469,17 +473,17 @@ def mypy_check_code(code: str, source_name: str | Path) -> None:
             error_msg = f"Type checking failed for {source_name}:\n" + "\n".join(errors)
             raise TypeError(error_msg)
 
-        # mypy exits 1 when it reported errors; a non-zero exit without a single
-        # diagnostic means the snippet was never checked: fail loudly with the reason.
-        if diagnostics == 0:
-            raise MypyNotRunError(
-                f"mypy did not type check {source_name} (exit code {result.returncode}).\n"
-                f"command: {' '.join(mypy_cmd)}\n"
-                f"stdout:\n{result.stdout.strip() or '<empty>'}\n"
-                f"stderr:\n{result.stderr.strip() or '<empty>'}"
-            )
-        logger.warning(
-            f"mypy reported {diagnostics} diagnostic(s) outside {source_name} (exit code {result.returncode})"
+        # mypy exits 1 when it reported errors and 2 on usage errors or crashes. A
+        # non-zero exit without a single snippet diagnostic means the snippet was never
+        # checked (missing module, import crash, internal error, diagnostics attributed
+        # to another file): fail loudly with everything needed to debug it. This must
+        # never degrade to a warning, or the whole job passes vacuously again.
+        raise MypyNotRunError(
+            f"mypy did not type check {source_name} (exit code {result.returncode}, "
+            f"{diagnostics} diagnostic(s) outside the snippet).\n"
+            f"command: {' '.join(mypy_cmd)}\n"
+            f"stdout:\n{result.stdout.strip() or '<empty>'}\n"
+            f"stderr:\n{result.stderr.strip() or '<empty>'}"
         )
     finally:
         # Clean up temp file
