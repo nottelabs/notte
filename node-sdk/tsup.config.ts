@@ -4,7 +4,8 @@ import pkg from './package.json';
 export default defineConfig({
   entry: ['src/index.ts', 'src/proxy/next.ts', 'src/proxy/core.ts'],
   format: ['cjs', 'esm'],
-  dts: true,
+  // tsup always injects `baseUrl` into the DTS build, which TypeScript 6 deprecates.
+  dts: { compilerOptions: { ignoreDeprecations: '6.0' } },
   clean: true,
   sourcemap: true,
   splitting: false,
