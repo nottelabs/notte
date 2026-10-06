@@ -88,26 +88,20 @@ Clients that support OAuth can prompt you to sign in with your Notte account and
 
 The browser workflow is `manage_browsers(start)` → `browser_action(goto)` → `browser_observe` → act and observe again → `manage_browsers(stop)`.
 
-Listing and inspection use separate read-only tools. Operations that change browser or website state use write tools and may require confirmation in your client.
+The three page-reading tools are read-only. Management tools group inspection with state-changing actions and are marked as write tools, so your client may request confirmation even for their list or get actions.
 
-| Tool | Access | Actions or purpose |
+| Tool | Permission hint | Actions or purpose |
 | --- | --- | --- |
-| `read_browsers` | Read | `list`, `status` |
-| `manage_browsers` | Write | `start`, `stop` |
+| `manage_browsers` | Write | `start`, `list`, `status`, `stop` |
 | `browser_observe` | Read | Read page state, tabs, and available element IDs |
 | `browser_scrape` | Read | Extract page markdown or structured data |
 | `browser_screenshot` | Read | Capture the current viewport |
 | `browser_action` | Write | Navigate, click, fill forms, and interact with pages |
-| `read_files` | Read | `list_uploads`, `get_upload`, `list_downloads`, `get_download` |
-| `manage_files` | Write | `upload` |
-| `read_profiles` | Read | `list`, `get` |
-| `manage_profiles` | Write | `create`, `duplicate`, `delete` |
-| `read_auth` | Read | `list`, `get` |
-| `manage_auth` | Write | `check`, `reauthenticate` |
+| `manage_files` | Write | `upload`, `list_uploads`, `get_upload`, `list_downloads`, `get_download` |
+| `manage_profiles` | Write | `create`, `list`, `get`, `duplicate`, `delete` |
+| `manage_auth` | Write | `list`, `get`, `check`, `reauthenticate` |
 
-If you previously used the `manage_*` tools for listing or inspection, move those actions to the corresponding `read_*` tools and refresh your client's cached tool definitions. Read action names, arguments, and results stay the same.
-
-To save a login, create a profile with `manage_profiles`, then start a browser with both `profile_id` and `persist_profile=true`. Stop the browser to save its state; before reusing it, check `persisted_domains` with `read_profiles(action="get")`.
+To save a login, create a profile with `manage_profiles`, then start a browser with both `profile_id` and `persist_profile=true`. Stop the browser to save its state; before reusing it, check `persisted_domains` with `manage_profiles(action="get")`.
 
 ## Verify the connection
 
