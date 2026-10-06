@@ -87,6 +87,7 @@ export type {
   FunctionRuntime,
   FunctionRunStatus,
   GetFunctionRunResponse,
+  GetFunctionRunResponseWritable,
   FunctionRunUpdateRequest,
   FunctionRunResponse,
   FunctionRunOptions,

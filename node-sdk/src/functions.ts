@@ -13,6 +13,7 @@ import type {
 	FunctionScheduleCreateRequest,
 	FunctionWithLinkResponse,
 	RunDetailResponse,
+	RunDetailResponseWritable,
 	ListFunctionRunsByFunctionIdData,
 	PaginatedResponseFunctionRunListItemResponse,
 	RunFunctionRequest,
@@ -59,6 +60,8 @@ export const RUN_API_KEY_HEADER = 'x-notte-api-key'; // pragma: allowlist secret
 export type FunctionRuntime = NonNullable<RunFunctionRequest['runtime']>;
 /** Function run values after the SDK downloads stored payloads. */
 export type GetFunctionRunResponse = Omit<RunDetailResponse, 'payloads' | 'payload_urls'>;
+/** Writable run fields retained for compatibility with existing SDK consumers. */
+export type GetFunctionRunResponseWritable = Omit<RunDetailResponseWritable, 'payloads' | 'payload_urls'>;
 /** Inline fields accepted by updateRun; the SDK manages storage references. */
 export type FunctionRunUpdateRequest = Omit<RunUpdateRequest, 'payloads' | 'result_preview'>;
 

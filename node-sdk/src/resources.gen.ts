@@ -205,7 +205,7 @@ export function createResources(client: Client, getApiKey: () => string) {
       return response.data;
     },
     /** functionRunGetMetadata: /functions/{function_id}/runs/{run_id}. Returns the API response body. */
-    runGetMetadata: async (functionId: Types.FunctionRunGetMetadataData['path']["function_id"], runId: Types.FunctionRunGetMetadataData['path']["run_id"], query: Types.FunctionRunGetMetadataData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRunGetMetadataData['headers']>, 'x-notte-api-key'> } = {}) => {
+    runGetMetadata: async (functionId: Types.FunctionRunGetMetadataData['path']["function_id"], runId: Types.FunctionRunGetMetadataData['path']["run_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRunGetMetadataData['headers']>, 'x-notte-api-key'> } = {}, query: Types.FunctionRunGetMetadataData['query'] = undefined) => {
       const response = await operations.functionRunGetMetadata({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId, "run_id": runId }, query });
       return response.data;
     },
