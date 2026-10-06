@@ -15,10 +15,10 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "baseUrl": ".",
+    "types": ["node"],
     "paths": {
-      "@/*": ["src/*"],
-      "@/lib/*": ["src/lib/*"]
+      "@/*": ["./src/*"],
+      "@/lib/*": ["./src/lib/*"]
     }
   },
   "include": ["src/**/*", "lib/**/*", "test/**/*"],
