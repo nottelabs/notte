@@ -59,7 +59,7 @@ function normalizeFile(filePath) {
 }
 
 // Normalize all generated files
-GENERATED_FILES.forEach(file => {
+for (const file of GENERATED_FILES) {
 	const filePath = path.join(GENERATED_DIR, file);
 	if (fs.existsSync(filePath)) {
 		normalizeFile(filePath);
@@ -67,6 +67,6 @@ GENERATED_FILES.forEach(file => {
 	} else {
 		console.warn(`Warning: ${file} not found`);
 	}
-});
+}
 
 console.log('✅ All generated files normalized');

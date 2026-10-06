@@ -5,6 +5,10 @@
 # version updates as well, so dependency PRs actually get opened on a schedule.
 #
 # Docs: https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# Every ecosystem waits 7 days (`cooldown`) before proposing a newly published
+# version, so a malicious or broken release has time to be caught and yanked.
+# Cooldown only delays version updates; security updates are never held back.
 version: 2
 
 updates:
@@ -22,6 +26,8 @@ updates:
     labels:
       - "dependencies"
       - "python:uv"
+    cooldown:
+      default-days: 7
     groups:
       # One PR per week for every Python bump, majors included.
       python:
@@ -45,6 +51,8 @@ updates:
       prefix: "chore(deps)"
     labels:
       - "dependencies"
+    cooldown:
+      default-days: 7
     groups:
       # One PR per week for every Node SDK bump, majors included.
       node-sdk:
@@ -73,6 +81,8 @@ updates:
       prefix: "chore(ci)"
     labels:
       - "dependencies"
+    cooldown:
+      default-days: 7
     groups:
       actions:
         patterns: ["*"]

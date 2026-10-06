@@ -26,7 +26,7 @@ async function exampleUsage() {
       task: "Check the weather today",
       url: "https://www.google.com/search?q=weather",
       updateHandler: (update) => {
-        console.log(`[${update.timestamp}] ${update.type}`, update.data);
+        console.log('[%s] %s', update.timestamp, update.type, update.data);
       }
     });
 
