@@ -100,6 +100,7 @@ export function createReference(root = sdkRoot) {
   const page = (title, node, content) => `---\ntitle: ${attr(title)}\n---\nimport AgentMdNotice from '/partials/agent-md-notice.mdx';\n\n<AgentMdNotice />\n\n${marker}\n\n${node ? `${sourceLink(node)}\n\n` : ''}${content.trim()}\n`.replace(/ +$/gm, '');
   const classes = [];
   const types = new Map();
+  const typeNames = new Map();
   const publicSymbols = new Set(exports.map(unalias));
   for (const symbol of publicSymbols) {
     const node = symbol.declarations?.[0];
@@ -108,7 +109,10 @@ export function createReference(root = sdkRoot) {
     const path = relative(resolve(root, 'src'), node.getSourceFile().fileName);
     if (path.includes('/') || path.includes('\\')) continue;
     if (ts.isClassDeclaration(node)) classes.push({ symbol, node });
-    if (ts.isTypeAliasDeclaration(node) || ts.isInterfaceDeclaration(node)) types.set(symbol.name, node);
+    if (ts.isTypeAliasDeclaration(node) || ts.isInterfaceDeclaration(node)) {
+      types.set(symbol.name, node);
+      typeNames.set(node, symbol.name);
+    }
   }
   classes.sort((a, b) => a.symbol.name.localeCompare(b.symbol.name, 'en'));
   const collectTypes = node => {
@@ -118,8 +122,15 @@ export function createReference(root = sdkRoot) {
       const declaration = symbol?.declarations?.[0];
       if (modelType(declaration) && !isInternal(declaration) &&
           (ts.isTypeAliasDeclaration(declaration) || ts.isInterfaceDeclaration(declaration))) {
-        if (types.has(symbol.name) && types.get(symbol.name) !== declaration) throw new Error(`Ambiguous type name: ${symbol.name}`);
-        types.set(symbol.name, declaration);
+        let name = typeNames.get(declaration) ?? symbol.name;
+        if (types.has(name) && types.get(name) !== declaration) {
+          // A public wrapper may reuse a generated model's name. Preserve
+          // its explicit import alias as the model's documentation identity.
+          name = node.text;
+          if (types.has(name) && types.get(name) !== declaration) throw new Error(`Ambiguous type name: ${name}`);
+        }
+        types.set(name, declaration);
+        typeNames.set(declaration, name);
       }
     }
     ts.forEachChild(node, collectTypes);
@@ -165,7 +176,8 @@ export function createReference(root = sdkRoot) {
       if (!n) return;
       if (ts.isIdentifier(n)) {
         const symbol = unalias(checker.getSymbolAtLocation(n));
-        if (types.has(symbol?.name)) names.add(symbol.name);
+        const name = typeNames.get(symbol?.declarations?.[0]);
+        if (name) names.add(name);
       }
       ts.forEachChild(n, visit);
     };
@@ -250,7 +262,10 @@ export function createReference(root = sdkRoot) {
     if (pages.has(`${path}.mdx`)) throw new Error(`Duplicate reference path: ${path}`);
     const symbol = checker.getSymbolAtLocation(node.name);
     const fields = fieldsFor(node);
-    pages.set(`${path}.mdx`, page(name, node, [doc(symbol), fence(schemaDoc(node.getText(), node)), tags(node), fields.length ? `## Fields\n\n${fields.join('\n\n')}` : '', related([node])].filter(Boolean).join('\n\n')));
+    const declaration = node.getText();
+    const nameOffset = node.name.getStart() - node.getStart();
+    const namedDeclaration = declaration.slice(0, nameOffset) + name + declaration.slice(nameOffset + node.name.getWidth());
+    pages.set(`${path}.mdx`, page(name, node, [doc(symbol), fence(schemaDoc(namedDeclaration, node)), tags(node), fields.length ? `## Fields\n\n${fields.join('\n\n')}` : '', related([node])].filter(Boolean).join('\n\n')));
   }
   pages.set(`${prefix}/manual/index.mdx`, page('Node SDK reference', null, `This reference is generated from the public high-level classes, their signatures, JSDoc, and related types in \`node-sdk/src\`. It documents the checked-in SDK source; match it to the version you use.\n\nInstall the SDK:\n\n\`\`\`sh\nnpm install notte-sdk\n\`\`\`\n\n${classes.filter(({ symbol }) => symbol.name !== 'Encryption').map(({ symbol }) => `- [${symbol.name}](/${prefix}/manual/${slug(symbol.name)})`).join('\n')}\n\nThe generated low-level HTTP functions, legacy client helpers, and proxy subpath entrypoints are not part of this high-level reference. See the [API reference](/api-reference/authentication) for HTTP endpoints and the [Python SDK reference](/sdk-reference/manual/index) for Python.\n\nTo update these pages, edit the TypeScript source or its JSDoc and run \`npm run docs:generate --prefix node-sdk\`. CI checks for stale generated pages.`));
   const debugPaths = [...diagnosticMethods]

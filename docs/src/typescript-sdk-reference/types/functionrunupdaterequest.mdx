@@ -12,7 +12,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 Inline fields accepted by updateRun; the SDK manages storage references.
 
 ```typescript
-export type FunctionRunUpdateRequest = Omit<RunUpdateRequest, 'payloads' | 'result_preview'>;
+export type FunctionRunUpdateRequest = Omit<ApiFunctionRunUpdateRequest, 'payloads' | 'result_preview'>;
 ```
 
 ## Fields
@@ -39,4 +39,4 @@ The variables of the workflow run
 
 ## Related types
 
-- [RunUpdateRequest](/typescript-sdk-reference/types/runupdaterequest)
+- [ApiFunctionRunUpdateRequest](/typescript-sdk-reference/types/apifunctionrunupdaterequest)

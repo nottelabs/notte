@@ -8,12 +8,12 @@ import type {
 	DeleteFunctionResponse,
 	FunctionMetadataUpdateRequest,
 	FunctionResponse,
-	RunUpdateRequest,
+	FunctionRunUpdateRequest as ApiFunctionRunUpdateRequest,
 	FunctionRollbackRequest,
 	FunctionScheduleCreateRequest,
 	FunctionWithLinkResponse,
-	RunDetailResponse,
-	RunDetailResponseWritable,
+	GetFunctionRunResponse as ApiGetFunctionRunResponse,
+	GetFunctionRunResponseWritable as ApiGetFunctionRunResponseWritable,
 	ListFunctionRunsByFunctionIdData,
 	PaginatedResponseFunctionRunListItemResponse,
 	RunFunctionRequest,
@@ -59,11 +59,11 @@ export const RUN_API_KEY_HEADER = 'x-notte-api-key'; // pragma: allowlist secret
 
 export type FunctionRuntime = NonNullable<RunFunctionRequest['runtime']>;
 /** Function run values after the SDK downloads stored payloads. */
-export type GetFunctionRunResponse = Omit<RunDetailResponse, 'payloads' | 'payload_urls'>;
+export type GetFunctionRunResponse = Omit<ApiGetFunctionRunResponse, 'payloads' | 'payload_urls'>;
 /** Writable run fields retained for compatibility with existing SDK consumers. */
-export type GetFunctionRunResponseWritable = Omit<RunDetailResponseWritable, 'payloads' | 'payload_urls'>;
+export type GetFunctionRunResponseWritable = Omit<ApiGetFunctionRunResponseWritable, 'payloads' | 'payload_urls'>;
 /** Inline fields accepted by updateRun; the SDK manages storage references. */
-export type FunctionRunUpdateRequest = Omit<RunUpdateRequest, 'payloads' | 'result_preview'>;
+export type FunctionRunUpdateRequest = Omit<ApiFunctionRunUpdateRequest, 'payloads' | 'result_preview'>;
 
 export type FunctionRunStatus = GetFunctionRunResponse['status'];
 const FUNCTION_RUNTIMES: readonly FunctionRuntime[] = ['standard', 'extended'];

@@ -12,7 +12,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 Function run values after the SDK downloads stored payloads.
 
 ```typescript
-export type GetFunctionRunResponse = Omit<RunDetailResponse, 'payloads' | 'payload_urls'>;
+export type GetFunctionRunResponse = Omit<ApiGetFunctionRunResponse, 'payloads' | 'payload_urls'>;
 ```
 
 ## Fields
@@ -75,4 +75,4 @@ Whether the workflow has been run locally or on the cloud
 
 ## Related types
 
-- [RunDetailResponse](/typescript-sdk-reference/types/rundetailresponse)
+- [ApiGetFunctionRunResponse](/typescript-sdk-reference/types/apigetfunctionrunresponse)

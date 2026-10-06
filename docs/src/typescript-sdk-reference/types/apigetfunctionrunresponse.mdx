@@ -1,5 +1,5 @@
 ---
-title: "RunDetailResponseWritable"
+title: "ApiGetFunctionRunResponse"
 ---
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
@@ -9,10 +9,8 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/lib/client/types.gen.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/lib/client/types.gen.ts)
 
-RunDetailResponse
-
 ```typescript
-export type RunDetailResponseWritable = {
+export type ApiGetFunctionRunResponse = {
     /**
      * Function Id
      *
@@ -89,6 +87,14 @@ export type RunDetailResponseWritable = {
     payload_urls?: {
         [key: string]: string;
     };
+    /**
+     * Workflow Id
+     */
+    readonly workflow_id: string;
+    /**
+     * Workflow Run Id
+     */
+    readonly workflow_run_id: string;
 };
 ```
 
@@ -147,6 +153,14 @@ Whether the workflow has been run locally or on the cloud
 </ParamField>
 
 <ParamField body="payload_urls" type={"{ [key: string]: string; } | undefined"}>
+
+</ParamField>
+
+<ParamField body="workflow_id" type={"string"} required>
+
+</ParamField>
+
+<ParamField body="workflow_run_id" type={"string"} required>
 
 </ParamField>
 

@@ -12,7 +12,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 Writable run fields retained for compatibility with existing SDK consumers.
 
 ```typescript
-export type GetFunctionRunResponseWritable = Omit<RunDetailResponseWritable, 'payloads' | 'payload_urls'>;
+export type GetFunctionRunResponseWritable = Omit<ApiGetFunctionRunResponseWritable, 'payloads' | 'payload_urls'>;
 ```
 
 ## Fields
@@ -67,4 +67,4 @@ Whether the workflow has been run locally or on the cloud
 
 ## Related types
 
-- [RunDetailResponseWritable](/typescript-sdk-reference/types/rundetailresponsewritable)
+- [ApiGetFunctionRunResponseWritable](/typescript-sdk-reference/types/apigetfunctionrunresponsewritable)
