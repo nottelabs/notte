@@ -184,9 +184,13 @@ function main() {
   }
 }
 
-try {
-  main();
-} catch (err) {
-  console.error('Error checking SDK status:', err.message);
-  process.exit(1);
+module.exports = { collectGeneratedDiffs, listFiles, resolveInside, run };
+
+if (require.main === module) {
+  try {
+    main();
+  } catch (err) {
+    console.error('Error checking SDK status:', err.message);
+    process.exit(1);
+  }
 }
