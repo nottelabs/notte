@@ -441,6 +441,7 @@ def mypy_check_code(code: str, source_name: str | Path) -> None:
                 mypy_cmd,
                 capture_output=True,
                 text=True,
+                check=False,  # the exit code is inspected by hand below
                 timeout=MYPY_TIMEOUT_SECONDS,
             )
         except subprocess.TimeoutExpired as e:
