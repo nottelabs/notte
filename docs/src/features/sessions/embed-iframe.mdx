@@ -31,7 +31,7 @@ console.log(status.viewer_url);
 // https://console.notte.cc/static/viewer?ws=wss://...&jwt=...
 ```
 
-The returned URL is signed with a short-lived JWT scoped to that session, so you can pass it straight to the browser without any extra auth handling on your side.
+The returned URL is signed with a JWT scoped to that session and valid while the session runs, so you can pass it straight to the browser without any extra auth handling on your side.
 
 ## Quick start (Next.js)
 
@@ -102,7 +102,7 @@ The viewer accepts a few query parameters you can append to `viewer_url` to tune
 | Param | Values | Effect |
 |-------|--------|--------|
 | `mode` | `embed-minimal` | Shows only the CDP viewer. Without `mode=embed-minimal`, the iframe shows the full Notte viewer, including the step timeline and Notte branding |
-| `interactive` | `0` / `1` | `0` makes the iframe 100% non-interactive. `1` requires the user to click the iframe once before they can interact with the embedded browser |
+| `interactive` | `0` / `1` | `0` hides and disables the viewer's controls in the embed. `1` requires the user to click the iframe once before they can interact with the embedded browser |
 | `theme` | `light` / `dark` | Force a theme on the viewer chrome |
 
 ```tsx
