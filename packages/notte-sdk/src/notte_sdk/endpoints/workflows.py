@@ -60,6 +60,12 @@ if TYPE_CHECKING:
 LOCAL_RUN_CLOSE_RETRY_DELAYS: tuple[float, ...] = (2.0, 5.0, 10.0)
 
 
+def _is_transient(error: Exception) -> bool:
+    if isinstance(error, NotteAPIError):
+        return error.status_code >= 500
+    return isinstance(error, (requests.ConnectionError, requests.Timeout))
+
+
 def _close_local_run(
     client: WorkflowsClient, function_id: str, run_id: str, **data: Unpack[FunctionRunUpdateRequestDict]
 ) -> None:
@@ -68,26 +74,28 @@ def _close_local_run(
     The script has already finished, so a transient gateway error here must not turn
     its result into a failure. An attempt that failed at the gateway may still have
     reached the API: if a retry is rejected because the run is no longer active, the
-    run is already finalized and there is nothing left to write.
+    stored run is read back and accepted only if it holds this exact outcome.
     """
     delays = (*LOCAL_RUN_CLOSE_RETRY_DELAYS, None)
     for attempt, delay in enumerate(delays, start=1):
         try:
             _ = client.update_run(function_id=function_id, run_id=run_id, **data)
             return
-        except NotteAPIError as e:
-            if attempt > 1 and e.status_code == 400:
-                run = client.get_run(function_id=function_id, run_id=run_id)
-                if run.status != "active":
-                    logger.warning(f"[Function Run] {run_id} was already finalized with status '{run.status}'.")
-                    return
-            if e.status_code < 500 or delay is None:
-                raise
-            error: Exception = e
-        except (requests.ConnectionError, requests.Timeout) as e:
-            if delay is None:
-                raise
+        except Exception as e:
             error = e
+            if attempt > 1 and isinstance(e, NotteAPIError) and e.status_code == 400:
+                try:
+                    run = client.get_run(function_id=function_id, run_id=run_id)
+                except Exception as read_error:
+                    if not _is_transient(read_error) or delay is None:
+                        raise
+                    error = read_error
+                else:
+                    if run.status == data.get("status") and run.result == data.get("result"):
+                        return
+                    raise
+            elif not _is_transient(e) or delay is None:
+                raise
         logger.warning(
             f"[Function Run] {run_id} failed to persist its result ({attempt}/{len(delays)}), retrying in {delay}s: {error}"
         )

@@ -46,24 +46,60 @@ def test_transient_close_failure_is_retried(monkeypatch, sleeps, transient):
     client.get_run.assert_not_called()
 
 
+def stored_as_sent(client, **overrides):
+    """A get_run mock returning the outcome the SDK sent, optionally altered."""
+
+    def get_run(**kwargs):
+        sent = client.update_run.call_args.kwargs
+        return SimpleNamespace(**{"status": sent["status"], "result": sent["result"], **overrides})
+
+    return Mock(side_effect=get_run)
+
+
 def test_retry_rejected_because_first_attempt_landed(monkeypatch, sleeps):
-    client = SimpleNamespace(
-        update_run=Mock(side_effect=[api_error(502), api_error(400)]),
-        get_run=Mock(return_value=SimpleNamespace(status="closed")),
-    )
+    client = SimpleNamespace(update_run=Mock(side_effect=[api_error(502), api_error(400)]))
+    client.get_run = stored_as_sent(client)
     result = run_locally(monkeypatch, client)
     assert result.status == "closed"
     client.get_run.assert_called_once_with(function_id="function", run_id="run")
 
 
-def test_retry_rejected_while_run_still_active_raises(monkeypatch, sleeps):
-    client = SimpleNamespace(
-        update_run=Mock(side_effect=[api_error(502), api_error(400)]),
-        get_run=Mock(return_value=SimpleNamespace(status="active")),
-    )
+@pytest.mark.parametrize("stored", [{"status": "active"}, {"status": "failed"}, {"result": "stopped by user"}])
+def test_retry_rejected_with_a_different_stored_outcome_raises(monkeypatch, sleeps, stored):
+    client = SimpleNamespace(update_run=Mock(side_effect=[api_error(502), api_error(400)]))
+    client.get_run = stored_as_sent(client, **stored)
     with pytest.raises(NotteAPIError) as exc:
         _ = run_locally(monkeypatch, client)
     assert exc.value.status_code == 400
+    assert client.update_run.call_count == 2
+
+
+def test_transient_verification_read_is_retried(monkeypatch, sleeps):
+    client = SimpleNamespace(update_run=Mock(side_effect=[api_error(502), api_error(400), api_error(400)]))
+    verified = stored_as_sent(client)
+    reads = iter([requests.Timeout("read timed out")])
+
+    def get_run(**kwargs):
+        error = next(reads, None)
+        if error is not None:
+            raise error
+        return verified(**kwargs)
+
+    client.get_run = Mock(side_effect=get_run)
+    result = run_locally(monkeypatch, client)
+    assert result.status == "closed"
+    assert client.update_run.call_count == 3
+    assert client.get_run.call_count == 2
+
+
+def test_non_transient_verification_read_error_raises(monkeypatch, sleeps):
+    client = SimpleNamespace(
+        update_run=Mock(side_effect=[api_error(502), api_error(400)]), get_run=Mock(side_effect=api_error(404))
+    )
+    with pytest.raises(NotteAPIError) as exc:
+        _ = run_locally(monkeypatch, client)
+    assert exc.value.status_code == 404
+    assert client.update_run.call_count == 2
 
 
 @pytest.mark.parametrize("status_code", [400, 403, 404, 422])
