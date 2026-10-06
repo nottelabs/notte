@@ -11,7 +11,7 @@ with client.Session() as session:
     element = page.query_selector("div.content")
 
     # XPath (use locator with xpath)
-    element = page.locator("xpath=//div[@class='content']")
+    xpath_element = page.locator("xpath=//div[@class='content']")
 
     # Get text content
     text = page.locator("h1").inner_text()

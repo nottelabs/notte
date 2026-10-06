@@ -3,12 +3,12 @@
 
 ```python consistent_identity.py
 from notte_sdk import NotteClient
-from notte_sdk.types import ExternalProxy, NotteProxy
+from notte_sdk.types import ExternalProxy, ProxySettings
 
 client = NotteClient()
 
 static_proxy = ExternalProxy(server="http://static-ip.example.com:8080", username="user", password="pass")
-proxies: list[NotteProxy | ExternalProxy] = [static_proxy]
+proxies: list[ProxySettings] = [static_proxy]
 
 # Day 1: Setup account
 with client.Session(proxies=proxies, cookie_file="account.json") as session:
