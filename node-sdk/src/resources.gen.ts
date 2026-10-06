@@ -71,8 +71,8 @@ export function createResources(client: Client, getApiKey: () => string) {
       return response.data;
     },
     /** sessionOffset: /sessions/{session_id}/offset. Returns the API response body. */
-    offset: async (sessionId: Types.SessionOffsetData['path']["session_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionOffsetData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.sessionOffset({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId } });
+    offset: async (sessionId: Types.SessionOffsetData['path']["session_id"], query: Types.SessionOffsetData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionOffsetData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionOffset({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
       return response.data;
     },
     /** pageScreenshot: /sessions/{session_id}/page/screenshot. Returns the API response body. */

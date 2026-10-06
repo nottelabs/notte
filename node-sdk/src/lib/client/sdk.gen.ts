@@ -920,6 +920,7 @@ export const connectLinkStatus = <ThrowOnError extends boolean = false>(options:
  * Improve Prompt
  */
 export const improvePrompt = <ThrowOnError extends boolean = false>(options: Options<ImprovePromptData, ThrowOnError>): RequestResult<ImprovePromptResponses, ImprovePromptErrors, ThrowOnError> => (options.client ?? client).post<ImprovePromptResponses, ImprovePromptErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/prompts/improve',
     ...options,
     headers: {
@@ -932,6 +933,7 @@ export const improvePrompt = <ThrowOnError extends boolean = false>(options: Opt
  * Nudge Prompt
  */
 export const nudgePrompt = <ThrowOnError extends boolean = false>(options: Options<NudgePromptData, ThrowOnError>): RequestResult<NudgePromptResponses, NudgePromptErrors, ThrowOnError> => (options.client ?? client).post<NudgePromptResponses, NudgePromptErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/prompts/nudge',
     ...options,
     headers: {

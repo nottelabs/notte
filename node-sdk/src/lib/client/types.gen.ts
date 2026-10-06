@@ -7828,7 +7828,12 @@ export type SessionOffsetData = {
          */
         session_id: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Update Metadata
+         */
+        update_metadata?: boolean;
+    };
     url: '/sessions/{session_id}/offset';
 };
 
@@ -11231,6 +11236,16 @@ export type ConnectLinkStatusResponse2 = ConnectLinkStatusResponses[keyof Connec
 
 export type ImprovePromptData = {
     body: ImprovePromptRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
     path?: never;
     query?: never;
     url: '/prompts/improve';
@@ -11256,6 +11271,16 @@ export type ImprovePromptResponse2 = ImprovePromptResponses[keyof ImprovePromptR
 
 export type NudgePromptData = {
     body: NudgePromptRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
     path?: never;
     query?: never;
     url: '/prompts/nudge';
