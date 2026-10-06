@@ -348,7 +348,11 @@ export class Client {
     assert.match(wrapper, /export type RunResponse = Omit<ApiRunResponse, 'payloads'>/);
     assert.doesNotMatch(wrapper, /body="payloads"/);
     assert.match(wrapper, /\[ApiRunResponse\]\(\/typescript-sdk-reference\/types\/apirunresponse\)/);
-    assert.match(api, /export type ApiRunResponse =/);
+    assert.match(api, /type ApiRunResponse =/);
+    assert.doesNotMatch(api, /export type ApiRunResponse/);
+    assert.match(api, /internal import alias for the API model `RunResponse`/);
+    assert.match(api, /not exported by `notte-sdk`/);
+    assert.doesNotMatch(wrapper, /internal import alias/);
     assert.match(api, /body="payloads"/);
     assert.match(reference.pages.get('typescript-sdk-reference/client/getrun.mdx'),
       /\[RunResponse\]\(\/typescript-sdk-reference\/types\/runresponse\)/);

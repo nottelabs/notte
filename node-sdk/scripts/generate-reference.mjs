@@ -264,8 +264,13 @@ export function createReference(root = sdkRoot) {
     const fields = fieldsFor(node);
     const declaration = node.getText();
     const nameOffset = node.name.getStart() - node.getStart();
-    const namedDeclaration = declaration.slice(0, nameOffset) + name + declaration.slice(nameOffset + node.name.getWidth());
-    pages.set(`${path}.mdx`, page(name, node, [doc(symbol), fence(schemaDoc(namedDeclaration, node)), tags(node), fields.length ? `## Fields\n\n${fields.join('\n\n')}` : '', related([node])].filter(Boolean).join('\n\n')));
+    const internalAlias = name !== symbol.name;
+    const aliasNotice = internalAlias
+      ? `This is an internal import alias for the API model \`${symbol.name}\`. It is not exported by \`notte-sdk\`.`
+      : '';
+    let namedDeclaration = declaration.slice(0, nameOffset) + name + declaration.slice(nameOffset + node.name.getWidth());
+    if (internalAlias) namedDeclaration = namedDeclaration.replace(/^export\s+/, '');
+    pages.set(`${path}.mdx`, page(name, node, [aliasNotice, doc(symbol), fence(schemaDoc(namedDeclaration, node)), tags(node), fields.length ? `## Fields\n\n${fields.join('\n\n')}` : '', related([node])].filter(Boolean).join('\n\n')));
   }
   pages.set(`${prefix}/manual/index.mdx`, page('Node SDK reference', null, `This reference is generated from the public high-level classes, their signatures, JSDoc, and related types in \`node-sdk/src\`. It documents the checked-in SDK source; match it to the version you use.\n\nInstall the SDK:\n\n\`\`\`sh\nnpm install notte-sdk\n\`\`\`\n\n${classes.filter(({ symbol }) => symbol.name !== 'Encryption').map(({ symbol }) => `- [${symbol.name}](/${prefix}/manual/${slug(symbol.name)})`).join('\n')}\n\nThe generated low-level HTTP functions, legacy client helpers, and proxy subpath entrypoints are not part of this high-level reference. See the [API reference](/api-reference/authentication) for HTTP endpoints and the [Python SDK reference](/sdk-reference/manual/index) for Python.\n\nTo update these pages, edit the TypeScript source or its JSDoc and run \`npm run docs:generate --prefix node-sdk\`. CI checks for stale generated pages.`));
   const debugPaths = [...diagnosticMethods]
