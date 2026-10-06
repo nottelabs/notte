@@ -13,7 +13,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Introduction](https://docs.notte.cc/index.md)
 - [Quickstart](https://docs.notte.cc/quickstart.md): Get started in a few seconds
-- [MCP Server](https://docs.notte.cc/mcp-server.md): Give your AI agents access to the Notte MCP server
+- [Notte Browser MCP](https://docs.notte.cc/mcp-server.md): Connect your AI assistant to cloud browsers with Notte Browser MCP
 - [Migrate to Notte](https://docs.notte.cc/migrate-to-notte.md): Safely migrate browser automation from another provider to Notte with an AI coding agent.
 
 ## Sessions
@@ -81,7 +81,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 ## Integrations
 
 - [Integrations](https://docs.notte.cc/integrations/index.md): Connect Notte to the tools your team already uses.
-- [MCP Server](https://docs.notte.cc/mcp-server.md): Give your AI agents access to the Notte MCP server
+- [Notte Browser MCP](https://docs.notte.cc/mcp-server.md): Connect your AI assistant to cloud browsers with Notte Browser MCP
 
 ## Coding Agents
 

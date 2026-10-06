@@ -61,9 +61,11 @@ Watch AI agents make decisions in real-time:
 
 ## Sharing Live View
 
-Share the viewer URL with your team for collaborative debugging:
+Share the `viewer_url` with your team for collaborative debugging:
 
 <SharingViewer />
+
+Do not share `debug_url` or `cdp_url`. They grant full control of the browser and its signed-in state, so treat them like credentials.
 
 ## Viewer Configuration
 
