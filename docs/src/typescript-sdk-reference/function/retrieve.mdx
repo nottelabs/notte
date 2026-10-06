@@ -12,7 +12,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 Compatibility alias for getRun().
 
 ```typescript
-NotteFunction.retrieve(functionRunId: string): Promise<GetFunctionRunResponse>;
+NotteFunction.retrieve(functionRunId: string): Promise<RunDetailResponse>;
 ```
 
 ## Parameters
@@ -24,7 +24,7 @@ NotteFunction.retrieve(functionRunId: string): Promise<GetFunctionRunResponse>;
 ## Returns
 
 ```typescript
-Promise<GetFunctionRunResponse>
+Promise<RunDetailResponse>
 ```
 
 **deprecated:**
@@ -33,4 +33,4 @@ Use getRun() instead. Retained for backwards compatibility.
 
 ## Related types
 
-- [GetFunctionRunResponse](/typescript-sdk-reference/types/getfunctionrunresponse)
+- [RunDetailResponse](/typescript-sdk-reference/types/rundetailresponse)

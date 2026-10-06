@@ -100,6 +100,8 @@ export type {
   FunctionRollbackOptions,
   FunctionUrlOptions,
   FunctionDownloadOptions,
+  GetFunctionRunResponse,
+  FunctionRunUpdateRequest,
 } from '@/functions';
 export { FUNCTION_RUN_TIMEOUT_MS, FUNCTION_RUN_ENDPOINTS, RUN_API_KEY_HEADER } from '@/functions';
 

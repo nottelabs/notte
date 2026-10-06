@@ -2329,44 +2329,6 @@ export type FunctionRunListItemResponse = {
 };
 
 /**
- * FunctionRunUpdateRequest
- */
-export type FunctionRunUpdateRequest = {
-    /**
-     * Session Id
-     *
-     * The ID of the session
-     */
-    session_id?: string | null;
-    /**
-     * Logs
-     *
-     * The logs of the workflow run
-     */
-    logs?: Array<string>;
-    /**
-     * Variables
-     *
-     * The variables of the workflow run
-     */
-    variables?: {
-        [key: string]: unknown;
-    } | null;
-    /**
-     * Result
-     *
-     * The result of the workflow run
-     */
-    result?: unknown | null;
-    /**
-     * Status
-     *
-     * The status of the workflow run
-     */
-    status: 'closed' | 'active' | 'failed';
-};
-
-/**
  * FunctionRuntimeHealthResponse
  */
 export type FunctionRuntimeHealthResponse = {
@@ -2625,76 +2587,6 @@ export type GetCreditCardResponse = {
      * Retrieved credit card
      */
     credit_card: CreditCardDictOutput;
-};
-
-/**
- * GetFunctionRunResponse
- */
-export type GetFunctionRunResponse = {
-    /**
-     * Function Id
-     *
-     * The ID of the function
-     */
-    function_id: string;
-    /**
-     * Function Run Id
-     *
-     * The ID of the function run
-     */
-    function_run_id: string;
-    /**
-     * Created At
-     */
-    created_at: string;
-    /**
-     * Updated At
-     */
-    updated_at: string;
-    /**
-     * Status
-     */
-    status: 'closed' | 'active' | 'failed';
-    /**
-     * Session Id
-     *
-     * The ID of the session
-     */
-    session_id?: string | null;
-    /**
-     * Logs
-     *
-     * The logs of the workflow run
-     */
-    logs?: Array<string>;
-    /**
-     * Variables
-     *
-     * The variables of the workflow run
-     */
-    variables?: {
-        [key: string]: unknown;
-    } | null;
-    /**
-     * Result
-     *
-     * The result of the workflow run (if any)
-     */
-    result?: string | null;
-    /**
-     * Local
-     *
-     * Whether the workflow has been run locally or on the cloud
-     */
-    local?: boolean;
-    /**
-     * Workflow Id
-     */
-    readonly workflow_id: string;
-    /**
-     * Workflow Run Id
-     */
-    readonly workflow_run_id: string;
 };
 
 /**
@@ -4405,6 +4297,96 @@ export type ReplayResponse = {
 export type RootModelAny = unknown;
 
 /**
+ * RunDetailResponse
+ */
+export type RunDetailResponse = {
+    /**
+     * Function Id
+     *
+     * The ID of the function
+     */
+    function_id: string;
+    /**
+     * Function Run Id
+     *
+     * The ID of the function run
+     */
+    function_run_id: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    /**
+     * Status
+     */
+    status: 'closed' | 'active' | 'failed';
+    /**
+     * Session Id
+     *
+     * The ID of the session
+     */
+    session_id?: string | null;
+    /**
+     * Logs
+     *
+     * The logs of the workflow run
+     */
+    logs?: Array<string>;
+    /**
+     * Variables
+     *
+     * The variables of the workflow run
+     */
+    variables?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Result
+     *
+     * The result of the workflow run (if any)
+     */
+    result?: string | null;
+    /**
+     * Local
+     *
+     * Whether the workflow has been run locally or on the cloud
+     */
+    local?: boolean;
+    /**
+     * Function Version
+     */
+    function_version?: string | null;
+    /**
+     * Payloads
+     */
+    payloads?: {
+        [key: string]: RunPayloadReference;
+    };
+    /**
+     * Stopped At
+     */
+    stopped_at?: string | null;
+    /**
+     * Payload Urls
+     */
+    payload_urls?: {
+        [key: string]: string;
+    };
+    /**
+     * Workflow Id
+     */
+    readonly workflow_id: string;
+    /**
+     * Workflow Run Id
+     */
+    readonly workflow_run_id: string;
+};
+
+/**
  * RunFunctionRequest
  */
 export type RunFunctionRequest = {
@@ -4434,6 +4416,103 @@ export type RunFunctionRequest = {
      * Whether to stream logs, or only return final response
      */
     stream?: boolean;
+};
+
+/**
+ * RunPayloadReference
+ */
+export type RunPayloadReference = {
+    /**
+     * Size Bytes
+     */
+    size_bytes: number;
+    /**
+     * Sha256
+     */
+    sha256: string;
+    /**
+     * Upload Id
+     */
+    upload_id: string;
+};
+
+/**
+ * RunPayloadUploadRequest
+ */
+export type RunPayloadUploadRequest = {
+    /**
+     * Size Bytes
+     */
+    size_bytes: number;
+    /**
+     * Sha256
+     */
+    sha256: string;
+};
+
+/**
+ * RunPayloadUploadResponse
+ */
+export type RunPayloadUploadResponse = {
+    reference: RunPayloadReference;
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Headers
+     */
+    headers: {
+        [key: string]: string;
+    };
+};
+
+/**
+ * RunUpdateRequest
+ */
+export type RunUpdateRequest = {
+    /**
+     * Session Id
+     *
+     * The ID of the session
+     */
+    session_id?: string | null;
+    /**
+     * Logs
+     *
+     * The logs of the workflow run
+     */
+    logs?: Array<string>;
+    /**
+     * Variables
+     *
+     * The variables of the workflow run
+     */
+    variables?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Result
+     *
+     * The result of the workflow run
+     */
+    result?: unknown | null;
+    /**
+     * Status
+     *
+     * The status of the workflow run
+     */
+    status: 'closed' | 'active' | 'failed';
+    /**
+     * Payloads
+     */
+    payloads?: {
+        [key: string]: RunPayloadReference;
+    };
+    /**
+     * Result Preview
+     */
+    result_preview?: string | null;
 };
 
 /**
@@ -6606,68 +6685,6 @@ export type FunctionWithLinkResponseWritable = {
 };
 
 /**
- * GetFunctionRunResponse
- */
-export type GetFunctionRunResponseWritable = {
-    /**
-     * Function Id
-     *
-     * The ID of the function
-     */
-    function_id: string;
-    /**
-     * Function Run Id
-     *
-     * The ID of the function run
-     */
-    function_run_id: string;
-    /**
-     * Created At
-     */
-    created_at: string;
-    /**
-     * Updated At
-     */
-    updated_at: string;
-    /**
-     * Status
-     */
-    status: 'closed' | 'active' | 'failed';
-    /**
-     * Session Id
-     *
-     * The ID of the session
-     */
-    session_id?: string | null;
-    /**
-     * Logs
-     *
-     * The logs of the workflow run
-     */
-    logs?: Array<string>;
-    /**
-     * Variables
-     *
-     * The variables of the workflow run
-     */
-    variables?: {
-        [key: string]: unknown;
-    } | null;
-    /**
-     * Result
-     *
-     * The result of the workflow run (if any)
-     */
-    result?: string | null;
-    /**
-     * Local
-     *
-     * Whether the workflow has been run locally or on the cloud
-     */
-    local?: boolean;
-};
-
-/**
  * ManagedAuthCredentials
  */
 export type ManagedAuthCredentialsWritable = {
@@ -6986,6 +7003,88 @@ export type PaginatedResponseVaultWritable = {
      * Has Next
      */
     has_next: boolean;
+};
+
+/**
+ * RunDetailResponse
+ */
+export type RunDetailResponseWritable = {
+    /**
+     * Function Id
+     *
+     * The ID of the function
+     */
+    function_id: string;
+    /**
+     * Function Run Id
+     *
+     * The ID of the function run
+     */
+    function_run_id: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    /**
+     * Status
+     */
+    status: 'closed' | 'active' | 'failed';
+    /**
+     * Session Id
+     *
+     * The ID of the session
+     */
+    session_id?: string | null;
+    /**
+     * Logs
+     *
+     * The logs of the workflow run
+     */
+    logs?: Array<string>;
+    /**
+     * Variables
+     *
+     * The variables of the workflow run
+     */
+    variables?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Result
+     *
+     * The result of the workflow run (if any)
+     */
+    result?: string | null;
+    /**
+     * Local
+     *
+     * Whether the workflow has been run locally or on the cloud
+     */
+    local?: boolean;
+    /**
+     * Function Version
+     */
+    function_version?: string | null;
+    /**
+     * Payloads
+     */
+    payloads?: {
+        [key: string]: RunPayloadReference;
+    };
+    /**
+     * Stopped At
+     */
+    stopped_at?: string | null;
+    /**
+     * Payload Urls
+     */
+    payload_urls?: {
+        [key: string]: string;
+    };
 };
 
 /**
@@ -9133,7 +9232,12 @@ export type FunctionRunGetMetadataData = {
          */
         function_id: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Payload Mode
+         */
+        payload_mode?: 'inline' | 'references';
+    };
     url: '/functions/{function_id}/runs/{run_id}';
 };
 
@@ -9150,13 +9254,13 @@ export type FunctionRunGetMetadataResponses = {
     /**
      * Successful Response
      */
-    200: GetFunctionRunResponse;
+    200: RunDetailResponse;
 };
 
 export type FunctionRunGetMetadataResponse = FunctionRunGetMetadataResponses[keyof FunctionRunGetMetadataResponses];
 
 export type FunctionRunUpdateMetadataData = {
-    body: FunctionRunUpdateRequest;
+    body: RunUpdateRequest;
     headers?: {
         /**
          * X-Notte-Request-Origin
@@ -9198,6 +9302,100 @@ export type FunctionRunUpdateMetadataResponses = {
 };
 
 export type FunctionRunUpdateMetadataResponse = FunctionRunUpdateMetadataResponses[keyof FunctionRunUpdateMetadataResponses];
+
+export type PrepareRunPayloadUploadData = {
+    body: RunPayloadUploadRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Run Id
+         */
+        run_id: string;
+        /**
+         * Function Id
+         */
+        function_id: string;
+        /**
+         * Field
+         */
+        field: 'result' | 'logs' | 'variables';
+    };
+    query?: never;
+    url: '/functions/{function_id}/runs/{run_id}/payloads/{field}/upload';
+};
+
+export type PrepareRunPayloadUploadErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PrepareRunPayloadUploadError = PrepareRunPayloadUploadErrors[keyof PrepareRunPayloadUploadErrors];
+
+export type PrepareRunPayloadUploadResponses = {
+    /**
+     * Successful Response
+     */
+    200: RunPayloadUploadResponse;
+};
+
+export type PrepareRunPayloadUploadResponse = PrepareRunPayloadUploadResponses[keyof PrepareRunPayloadUploadResponses];
+
+export type DownloadRunPayloadData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Run Id
+         */
+        run_id: string;
+        /**
+         * Function Id
+         */
+        function_id: string;
+        /**
+         * Field
+         */
+        field: 'result' | 'logs' | 'variables';
+    };
+    query?: never;
+    url: '/functions/{function_id}/runs/{run_id}/payloads/{field}';
+};
+
+export type DownloadRunPayloadErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DownloadRunPayloadError = DownloadRunPayloadErrors[keyof DownloadRunPayloadErrors];
+
+export type DownloadRunPayloadResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type ListFunctionRunsByFunctionIdData = {
     body?: never;

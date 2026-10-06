@@ -10,10 +10,11 @@ import type {
 	FunctionRollbackRequest,
 	FunctionScheduleCreateRequest,
 	FunctionWithLinkResponse,
-	GetFunctionRunResponse,
 	ListFunctionRunsByFunctionIdData,
 	PaginatedResponseFunctionRunListItemResponse,
+	RunDetailResponse,
 	RunFunctionRequest,
+	RunUpdateRequest,
 	ScheduleDeleteResponse,
 	ScheduleResponse,
 } from '@/lib/client/types.gen';
@@ -55,7 +56,11 @@ export const FUNCTION_RUN_ENDPOINTS = {
 export const RUN_API_KEY_HEADER = 'x-notte-api-key'; // pragma: allowlist secret
 
 export type FunctionRuntime = NonNullable<RunFunctionRequest['runtime']>;
-export type FunctionRunStatus = GetFunctionRunResponse['status'];
+export type FunctionRunStatus = RunDetailResponse['status'];
+/** @deprecated Renamed upstream; use `RunDetailResponse`. */
+export type GetFunctionRunResponse = RunDetailResponse;
+/** @deprecated Renamed upstream; use `RunUpdateRequest`. */
+export type FunctionRunUpdateRequest = RunUpdateRequest;
 const FUNCTION_RUNTIMES: readonly FunctionRuntime[] = ['standard', 'extended'];
 const FUNCTION_RUN_STATUSES: readonly FunctionRunStatus[] = ['closed', 'active', 'failed'];
 
@@ -422,7 +427,7 @@ export class NotteFunction {
 	 * const run = await fn.getRun(result.function_run_id);
 	 * console.log(run.status, run.logs);
 	 */
-	async getRun(functionRunId: string): Promise<GetFunctionRunResponse> {
+	async getRun(functionRunId: string): Promise<RunDetailResponse> {
 		const functionId = await this.ensureInitialized();
 		const response = await functionRunGetMetadata({
 			client: this.client.getClient(),
@@ -436,7 +441,7 @@ export class NotteFunction {
 	 * Compatibility alias for getRun().
 	 * @deprecated Use getRun() instead. Retained for backwards compatibility.
 	 */
-	async retrieve(functionRunId: string): Promise<GetFunctionRunResponse> {
+	async retrieve(functionRunId: string): Promise<RunDetailResponse> {
 		return this.getRun(functionRunId);
 	}
 
