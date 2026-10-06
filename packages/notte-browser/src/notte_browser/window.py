@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Callable, ClassVar, Literal, Self
 
 import httpx
-from notte_core.browser.dom_tree import A11yNode, A11yTree, DomNode
+from notte_core.browser.dom_tree import DomNode
 from notte_core.browser.snapshot import (
     BrowserSnapshot,
     SnapshotMetadata,
@@ -498,21 +498,6 @@ class BrowserWindow(BaseModel):
             # Skip CDP on recursion if already exhausted — otherwise up to 30s of CDP retries
             # compound on every outer retry (5 × 30s = 150s worst case).
             return await self.screenshot(retries=retries - 1, _skip_cdp=cdp_exhausted)
-
-    async def a11y(self) -> A11yTree | None:
-        a11y_simple: A11yNode | None = await profiler.profiled(service_name="observation")(
-            self.page.accessibility.snapshot  # pyright: ignore [reportUnknownArgumentType, reportUnknownMemberType]
-        )()  # type: ignore[attr-defined]
-        a11y_raw: A11yNode | None = await profiler.profiled(service_name="observation")(
-            self.page.accessibility.snapshot  # pyright: ignore [reportUnknownMemberType, reportUnknownArgumentType]
-        )(interesting_only=False)  # type: ignore[attr-defined]
-        if a11y_simple is None or a11y_raw is None or len(a11y_simple.get("children", [])) == 0:
-            logger.warning("A11y tree is empty, this might cause unforeseen issues")
-            return None
-        return A11yTree(
-            simple=a11y_simple,
-            raw=a11y_raw,
-        )
 
     @profiler.profiled(service_name="observation")
     async def snapshot(

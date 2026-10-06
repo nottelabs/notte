@@ -97,7 +97,7 @@ def run(args: Any) -> dict[str, Any]:
     ) as session:
         row["session_id"] = session.session_id
         page = session.page
-        page.add_init_script("""window.__captchaClicks=0;
+        _ = page.add_init_script("""window.__captchaClicks=0;
           document.addEventListener('click', e => {
             if(e.target.closest('button[data-action="demo_action"]')) window.__captchaClicks++;
           },true);""")
