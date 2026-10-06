@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { NotteClient } from '@/client';
-import type { FunctionRunUpdateRequest, GetFunctionRunResponse } from '@/lib/client/types.gen';
+import type { FunctionRunUpdateRequest, GetFunctionRunResponse } from '@/functions';
 
 type PayloadField = 'result' | 'logs' | 'variables';
 type UploadReference = { upload_id: string; size_bytes: number; sha256: string };

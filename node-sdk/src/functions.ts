@@ -8,11 +8,11 @@ import type {
 	DeleteFunctionResponse,
 	FunctionMetadataUpdateRequest,
 	FunctionResponse,
-	FunctionRunUpdateRequest,
+	RunUpdateRequest,
 	FunctionRollbackRequest,
 	FunctionScheduleCreateRequest,
 	FunctionWithLinkResponse,
-	GetFunctionRunResponse,
+	RunDetailResponse,
 	ListFunctionRunsByFunctionIdData,
 	PaginatedResponseFunctionRunListItemResponse,
 	RunFunctionRequest,
@@ -57,6 +57,11 @@ export const FUNCTION_RUN_ENDPOINTS = {
 export const RUN_API_KEY_HEADER = 'x-notte-api-key'; // pragma: allowlist secret
 
 export type FunctionRuntime = NonNullable<RunFunctionRequest['runtime']>;
+/** Function run values after the SDK downloads stored payloads. */
+export type GetFunctionRunResponse = Omit<RunDetailResponse, 'payloads' | 'payload_urls'>;
+/** Inline fields accepted by updateRun; the SDK manages storage references. */
+export type FunctionRunUpdateRequest = Omit<RunUpdateRequest, 'payloads' | 'result_preview'>;
+
 export type FunctionRunStatus = GetFunctionRunResponse['status'];
 const FUNCTION_RUNTIMES: readonly FunctionRuntime[] = ['standard', 'extended'];
 const FUNCTION_RUN_STATUSES: readonly FunctionRunStatus[] = ['closed', 'active', 'failed'];

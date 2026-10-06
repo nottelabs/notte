@@ -86,6 +86,8 @@ export type {
   FunctionConstructorCreate,
   FunctionRuntime,
   FunctionRunStatus,
+  GetFunctionRunResponse,
+  FunctionRunUpdateRequest,
   FunctionRunResponse,
   FunctionRunOptions,
   FunctionRunStartResult,
