@@ -79,9 +79,13 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Every file `npm run generate:staging` writes must be listed here, or
+          # the PR it opens fails its own drift checks (generated, resources:check,
+          # docs:check) on the file that was regenerated but never committed.
           git add -A -- \
             node-sdk/src/lib/client \
             node-sdk/src/proxy/patterns.ts \
+            node-sdk/src/resources.gen.ts \
             docs/src/typescript-sdk-reference \
             docs/src/docs.json
 
