@@ -164,6 +164,11 @@ export function createResources(client: Client, getApiKey: () => string) {
       const response = await operations.functionScheduleDelete({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId } });
       return response.data;
     },
+    /** downloadRunPayload: /functions/{function_id}/runs/{run_id}/payloads/{field}. Returns the API response body. */
+    downloadRunPayload: async (functionId: Types.DownloadRunPayloadData['path']["function_id"], runId: Types.DownloadRunPayloadData['path']["run_id"], field: Types.DownloadRunPayloadData['path']["field"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.DownloadRunPayloadData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.downloadRunPayload({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId, "run_id": runId, "field": field } });
+      return response.data;
+    },
     /** functionDownloadUrl: /functions/{function_id}. Returns the API response body. */
     downloadUrl: async (functionId: Types.FunctionDownloadUrlData['path']["function_id"], query: Types.FunctionDownloadUrlData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionDownloadUrlData['headers']>, 'x-notte-api-key'> } = {}) => {
       const response = await operations.functionDownloadUrl({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId }, query });
@@ -189,14 +194,19 @@ export function createResources(client: Client, getApiKey: () => string) {
       const response = await operations.functionMetadataUpdate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId }, body });
       return response.data;
     },
+    /** prepareRunPayloadUpload: /functions/{function_id}/runs/{run_id}/payloads/{field}/upload. Returns the API response body. */
+    prepareRunPayloadUpload: async (functionId: Types.PrepareRunPayloadUploadData['path']["function_id"], runId: Types.PrepareRunPayloadUploadData['path']["run_id"], field: Types.PrepareRunPayloadUploadData['path']["field"], body: Types.PrepareRunPayloadUploadData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PrepareRunPayloadUploadData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.prepareRunPayloadUpload({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId, "run_id": runId, "field": field }, body });
+      return response.data;
+    },
     /** functionRollback: /functions/{function_id}/rollback. Returns the API response body. */
     rollback: async (functionId: Types.FunctionRollbackData['path']["function_id"], body: Types.FunctionRollbackData['body'], query: Types.FunctionRollbackData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRollbackData['headers']>, 'x-notte-api-key'> } = {}) => {
       const response = await operations.functionRollback({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId }, body, query });
       return response.data;
     },
     /** functionRunGetMetadata: /functions/{function_id}/runs/{run_id}. Returns the API response body. */
-    runGetMetadata: async (functionId: Types.FunctionRunGetMetadataData['path']["function_id"], runId: Types.FunctionRunGetMetadataData['path']["run_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRunGetMetadataData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.functionRunGetMetadata({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId, "run_id": runId } });
+    runGetMetadata: async (functionId: Types.FunctionRunGetMetadataData['path']["function_id"], runId: Types.FunctionRunGetMetadataData['path']["run_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRunGetMetadataData['headers']>, 'x-notte-api-key'> } = {}, query: Types.FunctionRunGetMetadataData['query'] = undefined) => {
+      const response = await operations.functionRunGetMetadata({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId, "run_id": runId }, query });
       return response.data;
     },
     /** functionRunStart: /functions/{function_id}/runs/start. Returns the API response body. */

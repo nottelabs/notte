@@ -42,7 +42,6 @@ import {
 	functionDownloadUrl,
 	functionMetadataUpdate,
 	functionRollback,
-	functionRunGetMetadata,
 	functionScheduleDelete,
 	functionScheduleSet,
 	functionUpdate,
@@ -60,7 +59,8 @@ const PLAIN_URL = 'https://files.us-script.notte.cc/tenant/function/v1.py?signat
 const SCRIPT = 'def run(value: str) -> dict:\n    return {"echo": value}\n';
 
 const post = vi.fn();
-const generatedClient = { post };
+const get = vi.fn();
+const generatedClient = { post, get };
 const mockClient = {
 	getClient: () => generatedClient,
 	getConfig: () => ({ apiKey: API_KEY, baseUrl: 'https://api.notte.cc' }),
@@ -431,25 +431,26 @@ describe('NotteFunction', () => {
 		};
 
 		it('calls GET /functions/{function_id}/runs/{run_id}', async () => {
-			vi.mocked(functionRunGetMetadata).mockResolvedValue(resolved(metadata) as never);
+			get.mockResolvedValue(resolved(metadata) as never);
 
 			await expect(fn.getRun('test-run-id')).resolves.toEqual(metadata);
-			expect(functionRunGetMetadata).toHaveBeenCalledWith({
-				client: generatedClient,
+			expect(get).toHaveBeenCalledWith({
+				url: '/functions/{function_id}/runs/{run_id}',
+				query: { payload_mode: 'references' },
 				throwOnError: true,
 				path: { function_id: FUNCTION_ID, run_id: 'test-run-id' },
 			});
 		});
 
 		it('keeps retrieve() as an alias', async () => {
-			vi.mocked(functionRunGetMetadata).mockResolvedValue(resolved(metadata) as never);
+			get.mockResolvedValue(resolved(metadata) as never);
 
 			await expect(fn.retrieve('test-run-id')).resolves.toEqual(metadata);
 		});
 
 		it('propagates API errors as NotteAPIError', async () => {
 			const error = new NotteAPIError(`/functions/${FUNCTION_ID}/runs/test-run-id`, 404, { message: 'Run not found' });
-			vi.mocked(functionRunGetMetadata).mockRejectedValue(error);
+			get.mockRejectedValue(error);
 
 			const rejection = fn.retrieve('test-run-id');
 			await expect(rejection).rejects.toBe(error);

@@ -489,6 +489,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [setSchedule](https://docs.notte.cc/typescript-sdk-reference/function/setschedule.md)
 - [deleteSchedule](https://docs.notte.cc/typescript-sdk-reference/function/deleteschedule.md)
 - [rollback](https://docs.notte.cc/typescript-sdk-reference/function/rollback.md)
+- [updateRun](https://docs.notte.cc/typescript-sdk-reference/function/updaterun.md)
 - [runs](https://docs.notte.cc/typescript-sdk-reference/function/runs.md)
 
 #### Anything

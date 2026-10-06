@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { NotteClient, NotteAPIError, sessionStop } from '@/index';
+import { NotteClient, NotteAPIError, sessionStop, type GetFunctionRunResponseWritable } from '@/index';
 
 afterEach(() => vi.unstubAllGlobals());
 const client = () => new NotteClient({ baseUrl: 'https://api.example.test', apiKey: 'test-key' }); // pragma: allowlist secret
@@ -125,4 +125,29 @@ it('forwards cancellation', async () => {
     throw new DOMException('Aborted', 'AbortError');
   }));
   await expect(client().sessions.stop('one', undefined, { signal: controller.signal })).rejects.toMatchObject({ name: 'AbortError' });
+});
+
+it('preserves third-argument run request options and accepts a payload query afterward', async () => {
+  const requests: Request[] = [];
+  const controller = new AbortController();
+  const run: GetFunctionRunResponseWritable = {
+    function_id: 'function', function_run_id: 'run', status: 'closed',
+    created_at: '2026-10-06T00:00:00Z', updated_at: '2026-10-06T00:00:00Z',
+  };
+  vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
+    requests.push(request);
+    return Response.json(run);
+  }));
+  const api = client();
+  const options = { signal: controller.signal, headers: { 'x-notte-request-origin': 'compatibility-test' } };
+  expect(await api.functions.runGetMetadata('function', 'run', options)).toEqual(run);
+  await api.functions.runGetMetadata('function', 'run', options, { payload_mode: 'references' });
+  expect(requests[0].url).toBe('https://api.example.test/functions/function/runs/run');
+  expect(requests[1].url).toBe('https://api.example.test/functions/function/runs/run?payload_mode=references');
+  for (const request of requests) {
+    expect(request.headers.get('x-notte-request-origin')).toBe('sdk-node');
+    expect(request.signal.aborted).toBe(false);
+  }
+  controller.abort();
+  expect(requests.every(request => request.signal.aborted)).toBe(true);
 });

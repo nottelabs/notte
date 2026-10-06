@@ -323,3 +323,40 @@ test('source changes update generated signatures without a separate documentatio
   assert.match(updated.pages.get('typescript-sdk-reference/session/old.mdx'), /count\?: number/);
   writeFileSync(path, source);
 });
+
+
+test('documents an aliased API model separately from a public wrapper with the same name', () => {
+  const root = mkdtempSync(resolve(tmpdir(), 'notte-reference-alias-'));
+  try {
+    mkdirSync(resolve(root, 'src/lib/client'), { recursive: true });
+    writeFileSync(resolve(root, 'tsconfig.json'), JSON.stringify({ compilerOptions: {
+      strict: true, target: 'ES2022', module: 'ESNext', types: [], noEmit: true,
+    } }));
+    writeFileSync(resolve(root, 'src/lib/client/types.gen.ts'), `
+export type RunResponse = { result: string; payloads?: Record<string, string> };
+`);
+    writeFileSync(resolve(root, 'src/index.ts'), `
+import type { RunResponse as ApiRunResponse } from './lib/client/types.gen';
+export type RunResponse = Omit<ApiRunResponse, 'payloads'>;
+export class Client {
+  getRun(): RunResponse { return { result: 'complete' }; }
+}
+`);
+    const reference = createReference(root);
+    const wrapper = reference.pages.get('typescript-sdk-reference/types/runresponse.mdx');
+    const api = reference.pages.get('typescript-sdk-reference/types/apirunresponse.mdx');
+    assert.match(wrapper, /export type RunResponse = Omit<ApiRunResponse, 'payloads'>/);
+    assert.doesNotMatch(wrapper, /body="payloads"/);
+    assert.match(wrapper, /\[ApiRunResponse\]\(\/typescript-sdk-reference\/types\/apirunresponse\)/);
+    assert.match(api, /type ApiRunResponse =/);
+    assert.doesNotMatch(api, /export type ApiRunResponse/);
+    assert.match(api, /internal import alias for the API model `RunResponse`/);
+    assert.match(api, /not exported by `notte-sdk`/);
+    assert.doesNotMatch(wrapper, /internal import alias/);
+    assert.match(api, /body="payloads"/);
+    assert.match(reference.pages.get('typescript-sdk-reference/client/getrun.mdx'),
+      /\[RunResponse\]\(\/typescript-sdk-reference\/types\/runresponse\)/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

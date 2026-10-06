@@ -84,6 +84,23 @@ curl -X POST https://api.notte.cc/functions/{function_id}/runs/start \
   }'
 ```
 
+## Large run outputs
+
+The Python and TypeScript SDKs upload individual run results, logs, and variables
+larger than 1 MiB to private storage. Python `functions.update_run()` and TypeScript
+`fn.updateRun(runId, fields)` save a small reference. Python `functions.get_run()`
+and TypeScript `fn.getRun()` download and verify the full value automatically.
+Each stored field can be up to 256 MiB. Small fields continue to use inline updates.
+
+Upgrade your SDK to use this behavior. An inline run update above 8 MiB is
+rejected. Reading a run with externally stored fields through an older client
+returns an explicit error rather than a partial result.
+
+For HTTP integrations, request a run with `?payload_mode=references`. The response
+includes `payloads` descriptors and short-lived `payload_urls` for the external
+fields. Download these URLs without your API authorization header, verify each
+field's `size_bytes` and base64 SHA-256 checksum, and decode its JSON value.
+
 ## Function Structure
 
 ### The Handler Function

@@ -148,7 +148,7 @@ describe('function endpoint paths', () => {
 
 		await fn.getRun(RUN_ID);
 
-		expect(calls).toEqual([expect.objectContaining({ method: 'GET', path: `/functions/${FUNCTION_ID}/runs/${RUN_ID}` })]);
+		expect(calls).toEqual([expect.objectContaining({ method: 'GET', path: `/functions/${FUNCTION_ID}/runs/${RUN_ID}?payload_mode=references` })]);
 	});
 
 	it('runs lists /functions/{id}/runs with only_active=false', async () => {

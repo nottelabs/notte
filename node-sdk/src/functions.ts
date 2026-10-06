@@ -2,20 +2,24 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { NotteClient, TIMEOUT_HEADER } from '@/client';
 import { Encryption } from '@/encryption';
+import { offloadRunPayloads, resolveRunPayloads } from '@/run-payloads';
 import { FailedToRunCloudFunctionError, InvalidRequestError, NotteAPIError, NotteError, NotteTimeoutError } from '@/errors';
 import type {
 	DeleteFunctionResponse,
 	FunctionMetadataUpdateRequest,
 	FunctionResponse,
+	FunctionRunUpdateRequest as ApiFunctionRunUpdateRequest,
 	FunctionRollbackRequest,
 	FunctionScheduleCreateRequest,
 	FunctionWithLinkResponse,
-	GetFunctionRunResponse,
+	GetFunctionRunResponse as ApiGetFunctionRunResponse,
+	GetFunctionRunResponseWritable as ApiGetFunctionRunResponseWritable,
 	ListFunctionRunsByFunctionIdData,
 	PaginatedResponseFunctionRunListItemResponse,
 	RunFunctionRequest,
 	ScheduleDeleteResponse,
 	ScheduleResponse,
+	UpdateFunctionRunResponse,
 } from '@/lib/client/types.gen';
 import {
 	functionCreate,
@@ -23,7 +27,6 @@ import {
 	functionDownloadUrl,
 	functionMetadataUpdate,
 	functionRollback,
-	functionRunGetMetadata,
 	functionScheduleDelete,
 	functionScheduleSet,
 	functionUpdate,
@@ -55,6 +58,13 @@ export const FUNCTION_RUN_ENDPOINTS = {
 export const RUN_API_KEY_HEADER = 'x-notte-api-key'; // pragma: allowlist secret
 
 export type FunctionRuntime = NonNullable<RunFunctionRequest['runtime']>;
+/** Function run values after the SDK downloads stored payloads. */
+export type GetFunctionRunResponse = Omit<ApiGetFunctionRunResponse, 'payloads' | 'payload_urls'>;
+/** Writable run fields retained for compatibility with existing SDK consumers. */
+export type GetFunctionRunResponseWritable = Omit<ApiGetFunctionRunResponseWritable, 'payloads' | 'payload_urls'>;
+/** Inline fields accepted by updateRun; the SDK manages storage references. */
+export type FunctionRunUpdateRequest = Omit<ApiFunctionRunUpdateRequest, 'payloads' | 'result_preview'>;
+
 export type FunctionRunStatus = GetFunctionRunResponse['status'];
 const FUNCTION_RUNTIMES: readonly FunctionRuntime[] = ['standard', 'extended'];
 const FUNCTION_RUN_STATUSES: readonly FunctionRunStatus[] = ['closed', 'active', 'failed'];
@@ -424,10 +434,33 @@ export class NotteFunction {
 	 */
 	async getRun(functionRunId: string): Promise<GetFunctionRunResponse> {
 		const functionId = await this.ensureInitialized();
-		const response = await functionRunGetMetadata({
-			client: this.client.getClient(),
-			throwOnError: true,
+		const response = await this.client.getClient().get<{ 200: GetFunctionRunResponse }, unknown, true>({
+			url: '/functions/{function_id}/runs/{run_id}',
 			path: { function_id: functionId, run_id: functionRunId },
+			query: { payload_mode: 'references' },
+			throwOnError: true,
+		});
+		return resolveRunPayloads(response.data);
+	}
+
+	/**
+	 * Update a run, uploading fields above 1 MiB directly to private storage.
+	 *
+	 * @param functionRunId - ID of a run belonging to this function.
+	 * @param fields - Status and fields to update. Omitted fields remain unchanged.
+	 * @returns Confirmation of the persisted update.
+	 * @throws Error if a field exceeds 256 MiB or an upload fails; the update is not finalized.
+	 * @example
+	 * await fn.updateRun(runId, { status: 'closed', result: { records } });
+	 */
+	async updateRun(functionRunId: string, fields: FunctionRunUpdateRequest): Promise<UpdateFunctionRunResponse> {
+		const functionId = await this.ensureInitialized();
+		const client = this.client.getClient();
+		const path = { function_id: functionId, run_id: functionRunId };
+		const body = await offloadRunPayloads(client, path, fields);
+		const response = await client.patch<{ 200: UpdateFunctionRunResponse }, unknown, true>({
+			url: '/functions/{function_id}/runs/{run_id}', path, body,
+			headers: { 'Content-Type': 'application/json' }, throwOnError: true,
 		});
 		return response.data;
 	}

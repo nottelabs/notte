@@ -81,3 +81,31 @@ test('checked-in output is reproducible from the checked-in OpenAPI-derived SDK'
   const read = file => fs.readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8');
   assert.equal(generateResources(read('lib/client/sdk.gen.ts'), read('lib/client/types.gen.ts')), read('resources.gen.ts'));
 });
+
+
+test('preserves run metadata request options before its new payload query', async () => {
+  const generated = generateResources(sdk('functionRunGetMetadata'), data(`
+    path: { function_id: string; run_id: string };
+    headers?: { 'x-notte-request-origin'?: string };
+    query?: { payload_mode?: 'inline' | 'references' };
+    url: '/functions/{function_id}/runs/{run_id}';
+  `));
+  const js = ts.transpile(generated, { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 });
+  const requests = [];
+  const exports = {};
+  new Function('require', 'exports', js)(() => ({ functionRunGetMetadata: async options => {
+    requests.push(options);
+    return { data: 'result' };
+  } }), exports);
+  const { runGetMetadata } = exports.createResources({}, () => 'bound-key').functions;
+  const signal = new AbortController().signal;
+  const headers = { 'x-notte-request-origin': 'custom-origin' };
+  assert.equal(await runGetMetadata('function', 'run', { signal, headers }), 'result');
+  await runGetMetadata('function', 'run', { signal, headers }, { payload_mode: 'references' });
+  for (const request of requests) {
+    assert.equal(request.signal, signal);
+    assert.deepEqual(request.headers, headers);
+  }
+  assert.equal(requests[0].query, undefined);
+  assert.deepEqual(requests[1].query, { payload_mode: 'references' });
+});

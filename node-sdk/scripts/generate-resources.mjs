@@ -75,6 +75,10 @@ export function generateResources(sdkSource, typesSource) {
         for (const key of keys) args.push(`${camel(key)}: Types.${data}['path'][${JSON.stringify(key)}]`);
         request.push(`path: { ${keys.map(key => `${JSON.stringify(key)}: ${camel(key)}`).join(', ')} }`);
       }
+      // This operation originally had no query. Keep request options in the
+      // third position for existing callers and append its new payload query.
+      const queryAfterOptions = operation === 'functionRunGetMetadata';
+      let trailingQuery;
       for (const field of ['body', 'query']) {
         const member = members.get(field);
         if (!member?.type || member.type.kind === ts.SyntaxKind.NeverKeyword) continue;
@@ -82,10 +86,13 @@ export function generateResources(sdkSource, typesSource) {
         // Use an optional default only when no required parameter follows it.
         const laterRequired = field === 'body' && members.get('query')?.type?.kind !== ts.SyntaxKind.NeverKeyword
           && members.has('query') && !members.get('query').questionToken;
-        args.push(`${field}: Types.${data}['${field}']${optional && !laterRequired ? ' = undefined' : ''}`);
+        const argument = `${field}: Types.${data}['${field}']${optional && !laterRequired ? ' = undefined' : ''}`;
+        if (field === 'query' && queryAfterOptions) trailingQuery = argument;
+        else args.push(argument);
         request.push(field);
       }
       args.push(`requestOptions: ${requestOptions}${requiredHeaders ? '' : ' = {}'}`);
+      if (trailingQuery) args.push(trailingQuery);
       const comment = `    /** ${operation}: ${url.literal.text.replaceAll('*/', '* /')}. Returns the API response body. */`;
       output.get(group).set(method, `${comment}\n    ${method}: async (${args.join(', ')}) => {\n      const response = await operations.${operation}({ ${request.join(', ')} });\n      return response.data;\n    },`);
     }

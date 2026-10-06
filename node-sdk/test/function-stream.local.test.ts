@@ -68,7 +68,7 @@ describe('Function streaming HTTP integration', () => {
 		expect(await fn.run({ functionRunId: 'script-input' }, { functionRunId: created.function_run_id, stream })).toEqual(finalResult);
 		expect(await fn.getRun(created.function_run_id)).toEqual(metadata);
 		expect(await fn.retrieve(created.function_run_id)).toEqual(metadata);
-		expect(paths).toEqual(['/functions/fixture/runs/create', '/functions/fixture/runs/run-1', '/functions/fixture/runs/run-1', '/functions/fixture/runs/run-1']);
+		expect(paths).toEqual(['/functions/fixture/runs/create', '/functions/fixture/runs/run-1', '/functions/fixture/runs/run-1?payload_mode=references', '/functions/fixture/runs/run-1?payload_mode=references']);
 	});
 
 	it('creates its own record instead of reusing a pre-created run', async () => {

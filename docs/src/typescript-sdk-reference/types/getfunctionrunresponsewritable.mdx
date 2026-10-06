@@ -1,5 +1,5 @@
 ---
-title: "GetFunctionRunResponse"
+title: "GetFunctionRunResponseWritable"
 ---
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
@@ -9,10 +9,10 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/functions.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/functions.ts)
 
-Function run values after the SDK downloads stored payloads.
+Writable run fields retained for compatibility with existing SDK consumers.
 
 ```typescript
-export type GetFunctionRunResponse = Omit<ApiGetFunctionRunResponse, 'payloads' | 'payload_urls'>;
+export type GetFunctionRunResponseWritable = Omit<ApiGetFunctionRunResponseWritable, 'payloads' | 'payload_urls'>;
 ```
 
 ## Fields
@@ -65,14 +65,6 @@ Whether the workflow has been run locally or on the cloud
 
 </ParamField>
 
-<ParamField body="workflow_id" type={"string"} required>
-
-</ParamField>
-
-<ParamField body="workflow_run_id" type={"string"} required>
-
-</ParamField>
-
 ## Related types
 
-- [ApiGetFunctionRunResponse](/typescript-sdk-reference/types/apigetfunctionrunresponse)
+- [ApiGetFunctionRunResponseWritable](/typescript-sdk-reference/types/apigetfunctionrunresponsewritable)
