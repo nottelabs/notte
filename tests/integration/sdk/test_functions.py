@@ -67,8 +67,8 @@ def test_local_run_close_retries_an_attempt_that_already_landed(
 ) -> None:
     """Replay a local run's close as if its first attempt landed behind a gateway error.
 
-    The live API accepts terminal updates but must still reject reopening a run.
-    Unit tests separately cover reconciliation when a server rejects the retry.
+    The live API accepts a repeated close with the same outcome, but rejects a
+    different result or reopening the run with a 400 and keeps what it stored.
     """
     monkeypatch.setattr(workflows.time, "sleep", lambda _: None)
     client = function.client
@@ -109,13 +109,14 @@ def test_local_run_close_retries_an_attempt_that_already_landed(
     assert replayed.result == sent["result"]
     assert replayed.updated_at == original.updated_at
 
-    # Terminal updates may replace output without restarting the billing clock.
-    replacement = "a different result"
-    close_behind_gateway_error(**{**sent, "result": replacement})
-    updated = function.get_run(run_id)
-    assert updated.status == "closed"
-    assert updated.result == replacement
-    assert updated.updated_at == original.updated_at
+    # A different outcome was never stored, so the API's rejection must surface.
+    with pytest.raises(NotteAPIError) as exc:
+        close_behind_gateway_error(**{**sent, "result": "a different result"})
+    assert exc.value.status_code == 400
+    assert "already closed with a different result" in str(exc.value)
+    unchanged = function.get_run(run_id)
+    assert unchanged.status == "closed"
+    assert unchanged.result == sent["result"]
 
     # Reopening is forbidden; the SDK must surface that rejection.
     with pytest.raises(NotteAPIError) as exc:
@@ -123,5 +124,5 @@ def test_local_run_close_retries_an_attempt_that_already_landed(
     assert exc.value.status_code == 400
     persisted = function.get_run(run_id)
     assert persisted.status == "closed"
-    assert persisted.result == replacement
+    assert persisted.result == sent["result"]
     assert persisted.updated_at == original.updated_at
