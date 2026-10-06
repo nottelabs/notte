@@ -15,8 +15,9 @@ with client.Session() as session:
     uploaded = page.locator('input[type="file"]').evaluate(
         "async input => ({name: input.files[0].name, text: await input.files[0].text()})"
     )
-    from urllib.request import urlopen
+    import requests
 
-    with urlopen("https://test-resources-lovat.vercel.app/text1.txt", timeout=30) as response:
-        assert uploaded == {"name": "text1.txt", "text": response.read().decode()}
+    response = requests.get("https://test-resources-lovat.vercel.app/text1.txt", timeout=30)
+    response.raise_for_status()
+    assert uploaded == {"name": "text1.txt", "text": response.text}
     status = session.status()

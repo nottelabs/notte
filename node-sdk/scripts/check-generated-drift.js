@@ -20,8 +20,15 @@ const GENERATED_PATHS = [
   'src/proxy/patterns.ts',
   'src/resources.gen.ts',
 ];
+// The only programs this script shells out to.
+const ALLOWED_COMMANDS = new Set(['git', 'npm']);
 
 function run(command, args, options = {}) {
+  if (!ALLOWED_COMMANDS.has(command)) {
+    throw new Error(`Refusing to run unexpected command: ${command}`);
+  }
+
+  // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process -- command is allowlisted above
   const result = spawnSync(command, args, {
     cwd: options.cwd || SDK_DIR,
     env: process.env,
@@ -41,6 +48,19 @@ function runIn(cwd, command, args, options = {}) {
   return run(command, args, { cwd, ...options });
 }
 
+// Resolves segments under baseDir and refuses any result that escapes it.
+// Segments come from `git ls-files` and directory listings, never from users,
+// so this is a guard against a malformed path rather than an expected failure.
+function resolveInside(baseDir, ...segments) {
+  // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- checked below
+  const resolved = path.resolve(baseDir, ...segments);
+  const relative = path.relative(baseDir, resolved);
+  if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new Error(`Path escapes ${baseDir}: ${segments.join('/')}`);
+  }
+  return resolved;
+}
+
 function copyFile(source, destination) {
   fs.mkdirSync(path.dirname(destination), { recursive: true });
   fs.copyFileSync(source, destination);
@@ -54,36 +74,36 @@ function copyTrackedSdkFiles(destinationSdkDir) {
     .filter(Boolean);
 
   for (const repoRelativeFile of trackedFiles) {
-    const source = path.join(repoRoot, repoRelativeFile);
+    const source = resolveInside(repoRoot, repoRelativeFile);
     if (!fs.existsSync(source)) {
       continue;
     }
 
     const sdkRelativeFile = path.relative(sdkRelativePath, repoRelativeFile);
-    copyFile(source, path.join(destinationSdkDir, sdkRelativeFile));
+    copyFile(source, resolveInside(destinationSdkDir, sdkRelativeFile));
   }
 }
 
-function listFiles(targetPath) {
+// Lists files under targetPath, relative to rootPath. A file root yields ['']
+// (the root itself).
+function listFiles(rootPath, targetPath = rootPath) {
   if (!fs.existsSync(targetPath)) {
     return [];
   }
 
   const stat = fs.lstatSync(targetPath);
   if (stat.isFile() || stat.isSymbolicLink()) {
-    return [''];
+    return [path.relative(rootPath, targetPath)];
   }
 
   const files = [];
   const entries = fs.readdirSync(targetPath, { withFileTypes: true });
   for (const entry of entries) {
-    const entryPath = path.join(targetPath, entry.name);
+    const entryPath = resolveInside(targetPath, entry.name);
     if (entry.isDirectory()) {
-      for (const child of listFiles(entryPath)) {
-        files.push(path.join(entry.name, child));
-      }
+      files.push(...listFiles(rootPath, entryPath));
     } else if (entry.isFile() || entry.isSymbolicLink()) {
-      files.push(entry.name);
+      files.push(path.relative(rootPath, entryPath));
     }
   }
 
@@ -94,14 +114,14 @@ function collectGeneratedDiffs(expectedSdkDir, actualSdkDir) {
   const changed = new Set();
 
   for (const generatedPath of GENERATED_PATHS) {
-    const expectedPath = path.join(expectedSdkDir, generatedPath);
-    const actualPath = path.join(actualSdkDir, generatedPath);
+    const expectedPath = resolveInside(expectedSdkDir, generatedPath);
+    const actualPath = resolveInside(actualSdkDir, generatedPath);
     const relativeFiles = new Set([...listFiles(expectedPath), ...listFiles(actualPath)]);
 
     for (const relativeFile of relativeFiles) {
-      const displayPath = relativeFile ? path.join(generatedPath, relativeFile) : generatedPath;
-      const expectedFile = relativeFile ? path.join(expectedPath, relativeFile) : expectedPath;
-      const actualFile = relativeFile ? path.join(actualPath, relativeFile) : actualPath;
+      const expectedFile = resolveInside(expectedPath, relativeFile);
+      const actualFile = resolveInside(actualPath, relativeFile);
+      const displayPath = path.relative(expectedSdkDir, expectedFile);
 
       if (!fs.existsSync(expectedFile) || !fs.existsSync(actualFile)) {
         changed.add(displayPath);
@@ -164,9 +184,13 @@ function main() {
   }
 }
 
-try {
-  main();
-} catch (err) {
-  console.error('Error checking SDK status:', err.message);
-  process.exit(1);
+module.exports = { collectGeneratedDiffs, listFiles, resolveInside, run };
+
+if (require.main === module) {
+  try {
+    main();
+  } catch (err) {
+    console.error('Error checking SDK status:', err.message);
+    process.exit(1);
+  }
 }

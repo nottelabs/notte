@@ -11,7 +11,7 @@ with client.Session() as session:
 
     # Configure Selenium options
     chrome_options = Options()
-    chrome_options.add_experimental_option("debuggerAddress", cdp_url.replace("ws://", "").replace("wss://", ""))
+    chrome_options.add_experimental_option("debuggerAddress", cdp_url.split("://", 1)[-1])
 
     # Connect Selenium to Notte session
     driver = webdriver.Remote(command_executor=cdp_url, options=chrome_options)
