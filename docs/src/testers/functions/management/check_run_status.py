@@ -23,4 +23,5 @@ print(f"Result: {run_status.result}")
 print(f"Session ID: {run_status.session_id}")
 
 assert run_status.status == "closed"
+assert run_status.result is not None
 assert loads(run_status.result) == {"url": "https://example.com", "search_query": ""}

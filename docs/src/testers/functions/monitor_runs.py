@@ -36,5 +36,6 @@ while True:
 
 assert status.status == "closed"
 assert status.function_run_id == run_id
+assert status.result is not None
 assert loads(status.result) == {"url": "https://example.com", "search_query": ""}
 run_status = status

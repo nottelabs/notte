@@ -14,5 +14,5 @@ tailnet_proxy = TailnetProxy(
 # Start a session routed through your tailnet
 proxies: list[ProxySettings] = [tailnet_proxy]
 with client.Session(proxies=proxies) as session:
-    _ = session.execute(type="goto", url="https://grafana.your-tailnet.ts.net/")
-    _ = session.observe().screenshot.bytes()
+    result = session.execute(type="goto", url="https://grafana.your-tailnet.ts.net/")
+    screenshot = session.observe().screenshot.bytes()

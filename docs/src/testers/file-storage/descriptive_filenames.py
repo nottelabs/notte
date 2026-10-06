@@ -5,7 +5,7 @@ from pathlib import Path
 from notte_sdk.endpoints.files import RemoteFileStorage
 
 # Record each successful upload before any subsequent request can fail.
-owned_uploads = []
+owned_uploads: list[tuple[RemoteFileStorage, str]] = []
 original_upload = RemoteFileStorage.upload
 
 
@@ -15,7 +15,7 @@ def tracked_upload(self, *args, **kwargs):
     return uploaded
 
 
-RemoteFileStorage.upload = tracked_upload
+RemoteFileStorage.upload = tracked_upload  # type: ignore[method-assign]
 primary_error = None
 try:
     from datetime import datetime
@@ -37,7 +37,7 @@ except BaseException as error:
     primary_error = error
     raise
 finally:
-    RemoteFileStorage.upload = original_upload
+    RemoteFileStorage.upload = original_upload  # type: ignore[method-assign]
     cleanup_errors = []
     for storage, file_id in owned_uploads:
         try:

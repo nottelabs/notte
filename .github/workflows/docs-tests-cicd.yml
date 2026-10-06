@@ -75,10 +75,19 @@ jobs:
           source .venv/bin/activate
 
       - name: Install dependencies
-        run: uv pip install notte-sdk pytest-examples mypy
+        # Sync the workspace explicitly (what `uv run` would otherwise do on first
+        # use), then install mypy into that same environment. Installing mypy first
+        # and letting `uv run` sync afterwards is how this job used to lose mypy:
+        # the sync downgraded mypy's requirements under it, mypy crashed on import,
+        # and every snippet "passed" without being checked.
+        run: |
+          uv sync --locked
+          uv pip install pytest-examples mypy
 
       - name: Run type checks
-        run: cd docs/src && uv run pytest -v --tb=no
+        # --no-sync: pytest and the mypy it spawns must see exactly the environment
+        # prepared above; nothing may re-sync and alter it.
+        run: cd docs/src && uv run --no-sync pytest -v --tb=no
 
   execution:
     needs: type-check
