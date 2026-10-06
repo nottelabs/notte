@@ -23,6 +23,8 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^functions\/[^\/]+\/rollback$/, // /functions/{function_id}/rollback
   /^functions\/[^\/]+\/runs$/, // /functions/{function_id}/runs
   /^functions\/[^\/]+\/runs\/[^\/]+$/, // /functions/{function_id}/runs/{run_id}
+  /^functions\/[^\/]+\/runs\/[^\/]+\/payloads\/[^\/]+$/, // /functions/{function_id}/runs/{run_id}/payloads/{field}
+  /^functions\/[^\/]+\/runs\/[^\/]+\/payloads\/[^\/]+\/upload$/, // /functions/{function_id}/runs/{run_id}/payloads/{field}/upload
   /^functions\/[^\/]+\/runs\/start$/, // /functions/{function_id}/runs/start
   /^functions\/[^\/]+\/schedule$/, // /functions/{function_id}/schedule
   /^functions\/health$/, // /functions/health

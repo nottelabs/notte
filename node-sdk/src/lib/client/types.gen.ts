@@ -2364,6 +2364,16 @@ export type FunctionRunUpdateRequest = {
      * The status of the workflow run
      */
     status: 'closed' | 'active' | 'failed';
+    /**
+     * Payloads
+     */
+    payloads?: {
+        [key: string]: RunPayloadReference;
+    };
+    /**
+     * Result Preview
+     */
+    result_preview?: string | null;
 };
 
 /**
@@ -2687,6 +2697,26 @@ export type GetFunctionRunResponse = {
      * Whether the workflow has been run locally or on the cloud
      */
     local?: boolean;
+    /**
+     * Function Version
+     */
+    function_version?: string | null;
+    /**
+     * Payloads
+     */
+    payloads?: {
+        [key: string]: RunPayloadReference;
+    };
+    /**
+     * Stopped At
+     */
+    stopped_at?: string | null;
+    /**
+     * Payload Urls
+     */
+    payload_urls?: {
+        [key: string]: string;
+    };
     /**
      * Workflow Id
      */
@@ -4434,6 +4464,55 @@ export type RunFunctionRequest = {
      * Whether to stream logs, or only return final response
      */
     stream?: boolean;
+};
+
+/**
+ * RunPayloadReference
+ */
+export type RunPayloadReference = {
+    /**
+     * Size Bytes
+     */
+    size_bytes: number;
+    /**
+     * Sha256
+     */
+    sha256: string;
+    /**
+     * Upload Id
+     */
+    upload_id: string;
+};
+
+/**
+ * RunPayloadUploadRequest
+ */
+export type RunPayloadUploadRequest = {
+    /**
+     * Size Bytes
+     */
+    size_bytes: number;
+    /**
+     * Sha256
+     */
+    sha256: string;
+};
+
+/**
+ * RunPayloadUploadResponse
+ */
+export type RunPayloadUploadResponse = {
+    reference: RunPayloadReference;
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Headers
+     */
+    headers: {
+        [key: string]: string;
+    };
 };
 
 /**
@@ -6665,6 +6744,26 @@ export type GetFunctionRunResponseWritable = {
      * Whether the workflow has been run locally or on the cloud
      */
     local?: boolean;
+    /**
+     * Function Version
+     */
+    function_version?: string | null;
+    /**
+     * Payloads
+     */
+    payloads?: {
+        [key: string]: RunPayloadReference;
+    };
+    /**
+     * Stopped At
+     */
+    stopped_at?: string | null;
+    /**
+     * Payload Urls
+     */
+    payload_urls?: {
+        [key: string]: string;
+    };
 };
 
 /**
@@ -9133,7 +9232,12 @@ export type FunctionRunGetMetadataData = {
          */
         function_id: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Payload Mode
+         */
+        payload_mode?: 'inline' | 'references';
+    };
     url: '/functions/{function_id}/runs/{run_id}';
 };
 
@@ -9198,6 +9302,100 @@ export type FunctionRunUpdateMetadataResponses = {
 };
 
 export type FunctionRunUpdateMetadataResponse = FunctionRunUpdateMetadataResponses[keyof FunctionRunUpdateMetadataResponses];
+
+export type PrepareRunPayloadUploadData = {
+    body: RunPayloadUploadRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Run Id
+         */
+        run_id: string;
+        /**
+         * Function Id
+         */
+        function_id: string;
+        /**
+         * Field
+         */
+        field: 'result' | 'logs' | 'variables';
+    };
+    query?: never;
+    url: '/functions/{function_id}/runs/{run_id}/payloads/{field}/upload';
+};
+
+export type PrepareRunPayloadUploadErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PrepareRunPayloadUploadError = PrepareRunPayloadUploadErrors[keyof PrepareRunPayloadUploadErrors];
+
+export type PrepareRunPayloadUploadResponses = {
+    /**
+     * Successful Response
+     */
+    200: RunPayloadUploadResponse;
+};
+
+export type PrepareRunPayloadUploadResponse = PrepareRunPayloadUploadResponses[keyof PrepareRunPayloadUploadResponses];
+
+export type DownloadRunPayloadData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Run Id
+         */
+        run_id: string;
+        /**
+         * Function Id
+         */
+        function_id: string;
+        /**
+         * Field
+         */
+        field: 'result' | 'logs' | 'variables';
+    };
+    query?: never;
+    url: '/functions/{function_id}/runs/{run_id}/payloads/{field}';
+};
+
+export type DownloadRunPayloadErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DownloadRunPayloadError = DownloadRunPayloadErrors[keyof DownloadRunPayloadErrors];
+
+export type DownloadRunPayloadResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type ListFunctionRunsByFunctionIdData = {
     body?: never;

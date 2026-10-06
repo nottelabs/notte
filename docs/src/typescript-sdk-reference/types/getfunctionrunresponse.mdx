@@ -68,6 +68,26 @@ export type GetFunctionRunResponse = {
      */
     local?: boolean;
     /**
+     * Function Version
+     */
+    function_version?: string | null;
+    /**
+     * Payloads
+     */
+    payloads?: {
+        [key: string]: RunPayloadReference;
+    };
+    /**
+     * Stopped At
+     */
+    stopped_at?: string | null;
+    /**
+     * Payload Urls
+     */
+    payload_urls?: {
+        [key: string]: string;
+    };
+    /**
      * Workflow Id
      */
     readonly workflow_id: string;
@@ -120,6 +140,22 @@ The result of the workflow run (if any)
 Whether the workflow has been run locally or on the cloud
 </ParamField>
 
+<ParamField body="function_version" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="payloads" type={"{ [key: string]: RunPayloadReference; } | undefined"}>
+
+</ParamField>
+
+<ParamField body="stopped_at" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="payload_urls" type={"{ [key: string]: string; } | undefined"}>
+
+</ParamField>
+
 <ParamField body="workflow_id" type={"string"} required>
 
 </ParamField>
@@ -127,3 +163,7 @@ Whether the workflow has been run locally or on the cloud
 <ParamField body="workflow_run_id" type={"string"} required>
 
 </ParamField>
+
+## Related types
+
+- [RunPayloadReference](/typescript-sdk-reference/types/runpayloadreference)
