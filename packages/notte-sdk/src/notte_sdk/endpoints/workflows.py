@@ -19,7 +19,6 @@ from typing_extensions import deprecated
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.run_payloads import PayloadMode, RunUpdateBody, offload_run_fields, resolve_run_fields
-from notte_sdk.endpoints.sessions import CONSOLE_VIEWER_URL
 from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
     CreateFunctionRequest,
@@ -578,9 +577,17 @@ class WorkflowsClient(BaseClient):
                             result = log_msg
                         elif message["type"] == "session_start":
                             session_id = log_msg
-                            logger.info(
-                                f"Live viewer for session available at: {CONSOLE_VIEWER_URL.format(session_id=session_id, token=self.token)}"
-                            )
+                            try:
+                                viewer_url = self.root_client.sessions.status(session_id=session_id).viewer_url
+                            except Exception:
+                                # Viewer discovery is optional; errors may also contain credentials.
+                                viewer_url = None
+                            if viewer_url and self.token not in viewer_url:
+                                logger.info(f"Live viewer for session available at: {viewer_url}")
+                            else:
+                                logger.info(
+                                    f"Session {session_id} started. View it with client.sessions.viewer({session_id!r})."
+                                )
 
                 except json.JSONDecodeError:
                     continue
