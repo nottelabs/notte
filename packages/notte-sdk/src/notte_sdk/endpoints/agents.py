@@ -52,9 +52,10 @@ if RUNNING_IN_PYODIDE:
         create_proxy,  # pyright: ignore[reportUnknownVariableType]
     )
 
+    ConnectionClosed = ConnectionError
     ConnectionClosedOK = ConnectionError
 else:
-    from websockets.exceptions import ConnectionClosedOK
+    from websockets.exceptions import ConnectionClosed, ConnectionClosedOK
     from websockets.sync import client as sync_client
 
 
@@ -390,6 +391,10 @@ class AgentsClient(BaseClient):
                         return None
         except ConnectionClosedOK:
             return None
+        except ConnectionClosed as e:
+            # Abnormal close (e.g. 1012 during a server restart): the agent keeps running server-side
+            logger.warning(f"[Agent] {agent_id} websocket closed abnormally ({e}). Falling back to status polling.")
+            return None
         except ConnectionError as e:
             logger.error(f"Connection error: {agent_id} {e}")
             return None
@@ -487,7 +492,14 @@ class AgentsClient(BaseClient):
             logger.error("WebSocket error occurred")
             message_queue.put_nowait(None)  # Signal consumer to stop on error
 
-        def on_close(_event: Any) -> None:
+        def on_close(event: Any) -> None:
+            # Abnormal close (e.g. 1012 during a server restart): the agent keeps running server-side
+            code = getattr(event, "code", 1000)
+            if not getattr(event, "wasClean", True) or code != 1000:
+                reason = getattr(event, "reason", "")
+                logger.warning(
+                    f"[Agent] {agent_id} websocket closed abnormally (code={code}, reason={reason!r}). Falling back to status polling."
+                )
             message_queue.put_nowait(None)
 
         # Initialize proxies to None for cleanup handling
