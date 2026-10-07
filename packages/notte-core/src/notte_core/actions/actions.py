@@ -563,6 +563,7 @@ class ScrollUpAction(BrowserAction):
     ```python
     session.execute(type="scroll_up", amount=500)  # Scroll up 500 pixels
     session.execute(type="scroll_up")  # Scroll up one page
+    session.execute(type="scroll_up", selector="#results", amount=500)  # Scroll a container
     ```
     """
 
@@ -570,6 +571,9 @@ class ScrollUpAction(BrowserAction):
     description: str = "Scroll up by a given amount of pixels. Use `null` for scrolling up one page"
     # amount of pixels to scroll. None for scrolling up one page
     amount: int | None = None
+    selector: str | None = Field(
+        default=None, min_length=1, description="Optional selector for the scroll container, including iframe paths."
+    )
 
     @override
     def execution_message(self) -> str:
@@ -594,6 +598,7 @@ class ScrollDownAction(BrowserAction):
     ```python
     session.execute(type="scroll_down", amount=500)  # Scroll down 500 pixels
     session.execute(type="scroll_down")  # Scroll down one page
+    session.execute(type="scroll_down", selector="#results", amount=500)  # Scroll a container
     ```
     """
 
@@ -601,6 +606,9 @@ class ScrollDownAction(BrowserAction):
     description: str = "Scroll down by a given amount of pixels. Use `null` for scrolling down one page"
     # amount of pixels to scroll. None for scrolling down one page
     amount: int | None = None
+    selector: str | None = Field(
+        default=None, min_length=1, description="Optional selector for the scroll container, including iframe paths."
+    )
 
     @override
     def execution_message(self) -> str:

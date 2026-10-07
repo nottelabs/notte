@@ -4881,6 +4881,12 @@ export type ScrollDownAction = {
      * Amount
      */
     amount?: number | null;
+    /**
+     * Selector
+     *
+     * Optional selector for the scroll container, including iframe paths.
+     */
+    selector?: string | null;
 };
 
 /**
@@ -4903,6 +4909,12 @@ export type ScrollUpAction = {
      * Amount
      */
     amount?: number | null;
+    /**
+     * Selector
+     *
+     * Optional selector for the scroll container, including iframe paths.
+     */
+    selector?: string | null;
 };
 
 /**

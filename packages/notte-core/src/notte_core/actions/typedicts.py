@@ -158,11 +158,13 @@ class PressKeyActionDict(TypedDict):
 class ScrollUpActionDict(TypedDict, total=False):
     type: Required[Literal["scroll_up"]]
     amount: NotRequired[int | None]
+    selector: NotRequired[str | None]
 
 
 class ScrollDownActionDict(TypedDict, total=False):
     type: Required[Literal["scroll_down"]]
     amount: NotRequired[int | None]
+    selector: NotRequired[str | None]
 
 
 class CaptchaSolveActionDict(TypedDict, total=False):

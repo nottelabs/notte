@@ -38,6 +38,7 @@ from notte_core.actions import (
     # WriteFileAction,
 )
 from notte_core.browser.snapshot import BrowserSnapshot
+from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import ActionExecutionError
@@ -90,6 +91,28 @@ _SCROLL_TRACKER = """
     };
 }
 """
+
+_SCROLL_BOUNDARY = """
+(element, delta) => {
+    const max = Math.max(0, element.scrollHeight - element.clientHeight);
+    const isContainer = element === document.scrollingElement ||
+        /^(auto|scroll|overlay)$/.test(getComputedStyle(element).overflowY) ||
+        (max > 0 && getComputedStyle(element).overflowY === 'hidden');
+    return isContainer && (delta > 0 ? element.scrollTop >= max - 1 : element.scrollTop <= 1);
+}
+"""
+
+
+def _scroll_context_disappeared(frame: Frame, error: Error) -> bool:
+    return frame.is_detached() or any(
+        message in str(error).lower()
+        for message in (
+            "execution context was destroyed",
+            "cannot find context with specified id",
+            "frame was detached",
+        )
+    )
+
 
 # Installed once per download action. Wraps URL.createObjectURL so we retain a
 # strong JS reference to each Blob under its URL key, which lets us read the
@@ -206,6 +229,33 @@ class BrowserController:
         self.verbose: bool = verbose
         self.storage: BaseStorage | None = storage
 
+    async def _scroll_target(self, window: BrowserWindow, action: ScrollUpAction | ScrollDownAction) -> None:
+        assert action.selector is not None
+        locator = window.page.locator(action.selector)
+        # Hover both reveals hover-only scrollbars and directs native wheel events
+        # to the selected container instead of the last clicked control.
+        await locator.hover(timeout=config.timeout_action_ms)
+        target = await locator.evaluate_handle(
+            "element => element === document.documentElement ? document.scrollingElement : element"
+        )
+        try:
+            amount = action.amount
+            if amount is None:
+                amount = int(await target.evaluate("element => element.clientHeight") * 0.7)
+            delta = -amount if isinstance(action, ScrollUpAction) else amount
+            if delta == 0 or await target.evaluate(_SCROLL_BOUNDARY, delta):
+                logger.info("Scroll target is already at its boundary; no movement needed.")
+                return
+            before = await target.evaluate("element => element.scrollTop")
+            await window.page.mouse.wheel(delta_x=0, delta_y=delta)
+            await window.page.wait_for_timeout(200)
+            after = await target.evaluate("element => element.scrollTop")
+            if before == after and not await target.evaluate(_SCROLL_BOUNDARY, delta):
+                raise ScrollActionFailedError()
+        finally:
+            with suppress(Error):
+                await target.dispose()
+
     def _can_create_tab(self, action: BaseAction) -> bool:
         """
         Check if an action can potentially create a new browser tab.
@@ -274,11 +324,18 @@ class BrowserController:
                     }
                 """)
                 await window.page.wait_for_timeout(200)
-                trackers: list[JSHandle] = []
+                if action.selector is not None:
+                    await self._scroll_target(window, action)
+                    return True
+                trackers: list[tuple[Frame, JSHandle]] = []
                 try:
                     # Wheel events stay in their frame, so observe each document.
                     for frame in window.page.frames:
-                        trackers.append(await frame.evaluate_handle(_SCROLL_TRACKER))
+                        try:
+                            trackers.append((frame, await frame.evaluate_handle(_SCROLL_TRACKER)))
+                        except Error as error:
+                            if not _scroll_context_disappeared(frame, error):
+                                raise
                     if amount is None:
                         viewport_height = await window.page.evaluate("window.innerHeight")
                         amount = int(viewport_height * 0.7)
@@ -287,15 +344,19 @@ class BrowserController:
                     )
                     await window.page.wait_for_timeout(200)
                     scrolled = False
-                    for tracker in trackers:
-                        if await tracker.evaluate("tracker => tracker.hasScrolled()"):
-                            scrolled = True
-                            break
+                    for frame, tracker in trackers:
+                        try:
+                            if await tracker.evaluate("tracker => tracker.hasScrolled()"):
+                                scrolled = True
+                                break
+                        except Error as error:
+                            if not _scroll_context_disappeared(frame, error):
+                                raise
                     if not scrolled:
                         logger.info("🪦 Scroll action did not move the page or a scroll container. Failing action...")
                         raise ScrollActionFailedError()
                 finally:
-                    for tracker in trackers:
+                    for _, tracker in trackers:
                         # Navigation or frame removal can destroy the JS context.
                         with suppress(Error):
                             await tracker.evaluate("tracker => tracker.dispose()")
