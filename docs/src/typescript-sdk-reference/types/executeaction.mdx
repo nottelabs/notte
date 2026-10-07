@@ -12,9 +12,14 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 Discriminated union of every action `session.execute()` accepts.
 
 ```typescript
-export type ExecuteAction = PageExecuteData['body'];
+export type ExecuteAction =
+  | Exclude<PageExecuteData['body'], { type: 'scroll_up' | 'scroll_down' }>
+  | ({ type: 'scroll_up' } & ScrollUpAction)
+  | ({ type: 'scroll_down' } & ScrollDownAction);
 ```
 
 ## Related types
 
 - [PageExecuteData](/typescript-sdk-reference/types/pageexecutedata)
+- [ScrollDownAction](/typescript-sdk-reference/types/scrolldownaction)
+- [ScrollUpAction](/typescript-sdk-reference/types/scrollupaction)

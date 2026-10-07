@@ -72,16 +72,16 @@ The vault to use for the session
 
 </ParamField>
 
-<ParamField body="selector" type={"string | null | undefined"}>
-Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
-</ParamField>
-
 <ParamField body="instructions" type={"string | null | undefined"}>
 Additional instructions to use for the scrape. E.g. 'Extract only the title, date and content of the articles.'
 </ParamField>
 
 <ParamField body="only_main_content" type={"boolean | undefined"}>
 Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
+</ParamField>
+
+<ParamField body="selector" type={"string | null | undefined"}>
+Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
 </ParamField>
 
 <ParamField body="only_images" type={"boolean | undefined"}>

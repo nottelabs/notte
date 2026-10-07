@@ -12,10 +12,31 @@
  * await session.execute(actions.goBack());
  * ```
  */
-import type { PageExecuteData } from '@/lib/client/types.gen';
+import type {
+  PageExecuteData,
+  ScrollDownAction as GeneratedScrollDownAction,
+  ScrollUpAction as GeneratedScrollUpAction,
+} from '@/lib/client/types.gen';
+
+// Keep additions for the local browser runtime in the handwritten SDK layer
+// until the deployed schema includes them. Generated files must match staging.
+/** Scroll down on the page or in a selected container. */
+export type ScrollDownAction = GeneratedScrollDownAction & {
+  /** Optional selector for the scroll container, including iframe paths. */
+  selector?: string | null;
+};
+
+/** Scroll up on the page or in a selected container. */
+export type ScrollUpAction = GeneratedScrollUpAction & {
+  /** Optional selector for the scroll container, including iframe paths. */
+  selector?: string | null;
+};
 
 /** Discriminated union of every action `session.execute()` accepts. */
-export type ExecuteAction = PageExecuteData['body'];
+export type ExecuteAction =
+  | Exclude<PageExecuteData['body'], { type: 'scroll_up' | 'scroll_down' }>
+  | ({ type: 'scroll_up' } & ScrollUpAction)
+  | ({ type: 'scroll_down' } & ScrollDownAction);
 
 /** The `type` discriminator of an `ExecuteAction`. */
 export type ActionType = ExecuteAction['type'];
