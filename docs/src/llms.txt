@@ -147,6 +147,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 
 ## Functions
 
+- [GET Download Run Payload](https://docs.notte.cc/api-reference/functions/download-run-payload.md)
 - [POST Function Create](https://docs.notte.cc/api-reference/functions/function-create.md)
 - [DELETE Function Delete](https://docs.notte.cc/api-reference/functions/function-delete.md)
 - [GET Function Download Url](https://docs.notte.cc/api-reference/functions/function-download-url.md)
@@ -163,6 +164,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [POST Function Update](https://docs.notte.cc/api-reference/functions/function-update.md)
 - [GET List Function Runs By Function Id](https://docs.notte.cc/api-reference/functions/list-function-runs-by-function-id.md)
 - [GET List Functions](https://docs.notte.cc/api-reference/functions/list-functions.md)
+- [POST Prepare Run Payload Upload](https://docs.notte.cc/api-reference/functions/prepare-run-payload-upload.md)
 
 ## Health
 
