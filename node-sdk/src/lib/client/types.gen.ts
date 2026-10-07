@@ -4447,9 +4447,9 @@ export type RunFunctionRequest = {
     /**
      * Variables
      *
-     * The variables to run the workflow with
+     * The variables to run the function with
      */
-    variables: {
+    variables?: {
         [key: string]: unknown;
     };
     /**
@@ -4464,6 +4464,10 @@ export type RunFunctionRequest = {
      * Whether to stream logs, or only return final response
      */
     stream?: boolean;
+    /**
+     * Callback Url
+     */
+    callback_url?: string | null;
 };
 
 /**
@@ -7783,12 +7787,7 @@ export type SessionDebugInfoData = {
          */
         session_id: string;
     };
-    query?: {
-        /**
-         * Update Metadata
-         */
-        update_metadata?: boolean;
-    };
+    query?: never;
     url: '/sessions/{session_id}/debug';
 };
 
@@ -8037,10 +8036,6 @@ export type PageExecuteData = {
          * Target Generation
          */
         target_generation?: number | null;
-        /**
-         * Update Metadata
-         */
-        update_metadata?: boolean;
     };
     url: '/sessions/{session_id}/page/execute';
 };
