@@ -3204,7 +3204,7 @@ wheels = [
 
 [[package]]
 name = "notte"
-version = "1.9.6.dev0"
+version = "1.9.7.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "google-auth" },
@@ -3299,7 +3299,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 
 [[package]]
 name = "notte-agent"
-version = "1.9.6.dev0"
+version = "1.9.7.dev0"
 source = { editable = "packages/notte-agent" }
 dependencies = [
     { name = "notte-browser" },
@@ -3316,7 +3316,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-browser"
-version = "1.9.6.dev0"
+version = "1.9.7.dev0"
 source = { editable = "packages/notte-browser" }
 dependencies = [
     { name = "html2text" },
@@ -3345,7 +3345,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-core"
-version = "1.9.6.dev0"
+version = "1.9.7.dev0"
 source = { editable = "packages/notte-core" }
 dependencies = [
     { name = "aiohttp" },
@@ -3411,7 +3411,7 @@ provides-extras = ["tempo", "pyroscope", "observability"]
 
 [[package]]
 name = "notte-integrations"
-version = "1.9.6.dev0"
+version = "1.9.7.dev0"
 source = { editable = "packages/notte-integrations" }
 dependencies = [
     { name = "browser-use" },
@@ -3446,7 +3446,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-llm"
-version = "1.9.6.dev0"
+version = "1.9.7.dev0"
 source = { editable = "packages/notte-llm" }
 dependencies = [
     { name = "chevron" },
@@ -3477,7 +3477,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-sdk"
-version = "1.9.6.dev0"
+version = "1.9.7.dev0"
 source = { editable = "packages/notte-sdk" }
 dependencies = [
     { name = "halo" },
