@@ -580,7 +580,9 @@ class WorkflowsClient(BaseClient):
                             session_id = log_msg
                             try:
                                 # Keep this optional lookup from using the normal 60-second request timeout.
-                                status_endpoint = SessionsClient._session_status_endpoint(session_id=session_id)
+                                status_endpoint = SessionsClient._session_status_endpoint(  # pyright: ignore[reportPrivateUsage]
+                                    session_id=session_id
+                                )
                                 viewer_url = self.root_client.sessions.request(status_endpoint, timeout=2).viewer_url
                             except Exception:
                                 # Viewer discovery is optional; errors may also contain credentials.
