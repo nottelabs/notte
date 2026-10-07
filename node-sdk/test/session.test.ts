@@ -8,6 +8,7 @@ import { NotteAPIError, NotteTimeoutError, sleep } from '@/errors';
 import {
   getSessionScript,
   pageObserve,
+  pageExecute,
   sessionCookiesGet,
   sessionCookiesSet,
   sessionDebugInfo,
@@ -18,7 +19,7 @@ import {
 } from '@/lib/client/sdk.gen';
 import type { Cookie, ReplayResponse, SessionDebugResponse } from '@/index';
 import { openBrowser } from '@/utils';
-import { mockNotteClient, sessionResponse } from './helpers/session-mocks';
+import { executionResult, mockNotteClient, sessionResponse } from './helpers/session-mocks';
 
 vi.mock('@/lib/client/sdk.gen', () => ({
   sessionStart: vi.fn(),
@@ -58,6 +59,16 @@ describe('Session Unit Tests', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(sessionStart).mockResolvedValue({ data: sessionResponse() } as never);
     vi.mocked(sessionStop).mockResolvedValue({ data: sessionResponse({ status: 'closed' }) } as never);
+  });
+
+  it.each(['scroll_up', 'scroll_down'] as const)('forwards the selector for %s', async type => {
+    vi.mocked(pageExecute).mockResolvedValue({ data: executionResult({ success: true }) } as never);
+    const session = new Session(mockClient);
+    await session.start();
+    await session.execute({ type, selector: '#panel', amount: 54 });
+    expect(pageExecute).toHaveBeenCalledWith(expect.objectContaining({
+      body: { type, selector: '#panel', amount: 54 },
+    }));
   });
 
   describe('constructor', () => {

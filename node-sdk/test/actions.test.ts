@@ -1,5 +1,6 @@
 import { describe, it, expect, expectTypeOf } from 'vitest';
 import * as builders from '@/actions';
+import type { ScrollDownAction, ScrollUpAction } from '@/index';
 import { actions, isCaptchaSolveAction, type ActionOfType, type ExecuteAction } from '@/actions';
 
 const EXPECTED_BUILDERS = [
@@ -36,6 +37,19 @@ describe('actions', () => {
     expect(actions.captchaSolve()).toEqual({ type: 'captcha_solve' });
     expect(actions.scrollDown()).toEqual({ type: 'scroll_down' });
     expect(actions.help({ reason: 'stuck' })).toEqual({ type: 'help', reason: 'stuck' });
+  });
+
+  it('exposes targeted scrolls through the public types and builders', () => {
+    const down: ScrollDownAction = { type: 'scroll_down', selector: '#panel', amount: 54 };
+    const up: ScrollUpAction = { type: 'scroll_up', selector: '#panel' };
+    expect(actions.scrollDown({ selector: '#panel', amount: 54 })).toEqual(down);
+    expect(actions.scrollUp({ selector: '#panel' })).toEqual(up);
+    expectTypeOf<ActionOfType<'scroll_down'>>().toMatchTypeOf<ScrollDownAction>();
+    expectTypeOf<ActionOfType<'scroll_up'>>().toMatchTypeOf<ScrollUpAction>();
+    expectTypeOf(actions.scrollDown({ selector: '#panel' })).toMatchTypeOf<ExecuteAction>();
+    expectTypeOf(actions.scrollUp({ selector: '#panel' })).toMatchTypeOf<ExecuteAction>();
+    // @ts-expect-error selectors must be strings or null
+    void actions.scrollDown({ selector: 123 });
   });
 
   it('does not let the input override the type', () => {

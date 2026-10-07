@@ -67,7 +67,7 @@ export {
 
 // Typed actions for `session.execute()` (`import { actions } from 'notte-sdk'`)
 export { actions, isCaptchaSolveAction } from '@/actions';
-export type { ExecuteAction, ActionType, ActionOfType, ActionInput } from '@/actions';
+export type { ExecuteAction, ActionType, ActionOfType, ActionInput, ScrollUpAction, ScrollDownAction } from '@/actions';
 
 // In-page fetch helpers used by `session.fetch()`
 export { PageFetchResponse, PageFetchHTTPError, buildFetchScript, responseFromEvaluated } from '@/page-fetch';
