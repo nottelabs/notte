@@ -21,8 +21,8 @@ export function createResources(client: Client, getApiKey: () => string) {
       return response.data;
     },
     /** sessionDebugInfo: /sessions/{session_id}/debug. Returns the API response body. */
-    debugInfo: async (sessionId: Types.SessionDebugInfoData['path']["session_id"], query: Types.SessionDebugInfoData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionDebugInfoData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.sessionDebugInfo({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
+    debugInfo: async (sessionId: Types.SessionDebugInfoData['path']["session_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionDebugInfoData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionDebugInfo({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId } });
       return response.data;
     },
     /** deleteSessionFile: /sessions/{session_id}/files/{file_id}. Returns the API response body. */

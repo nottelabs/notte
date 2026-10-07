@@ -20,9 +20,9 @@ export type RunFunctionRequest = {
     /**
      * Variables
      *
-     * The variables to run the workflow with
+     * The variables to run the function with
      */
-    variables: {
+    variables?: {
         [key: string]: unknown;
     };
     /**
@@ -37,6 +37,10 @@ export type RunFunctionRequest = {
      * Whether to stream logs, or only return final response
      */
     stream?: boolean;
+    /**
+     * Callback Url
+     */
+    callback_url?: string | null;
 };
 ```
 
@@ -46,8 +50,8 @@ export type RunFunctionRequest = {
 The ID of the function to run
 </ParamField>
 
-<ParamField body="variables" type={"{ [key: string]: unknown; }"} required>
-The variables to run the workflow with
+<ParamField body="variables" type={"{ [key: string]: unknown; } | undefined"}>
+The variables to run the function with
 </ParamField>
 
 <ParamField body="runtime" type={"\"standard\" | \"extended\" | null | undefined"}>
@@ -56,4 +60,8 @@ Override the saved function runtime; omit to inherit its default
 
 <ParamField body="stream" type={"boolean | undefined"}>
 Whether to stream logs, or only return final response
+</ParamField>
+
+<ParamField body="callback_url" type={"string | null | undefined"}>
+
 </ParamField>
