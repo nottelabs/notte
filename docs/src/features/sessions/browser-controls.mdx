@@ -229,9 +229,9 @@ Issue an HTTP request from the page the session is on. `session.fetch(url)` runs
 ## Scrolling Actions
 
 Both scroll actions accept an optional `selector` for a scroll container, including iframe selectors.
-For example, pass `selector="#results"` to scroll a results panel. The pointer moves over the
-container before scrolling. If `amount` is omitted, the action scrolls by 70% of the container's
-height. Reaching the requested boundary succeeds without moving or scrolling the parent page.
+For example, pass `selector="#results"` to scroll a results panel. The action calls `scrollBy`
+on that container directly, emitting scroll events without sending a wheel event or moving the
+pointer. If `amount` is omitted, the action scrolls by 70% of the container's height. Reaching the requested boundary succeeds without moving or scrolling the parent page.
 A missing target or a blocked scroll before the boundary still fails.
 
 Without a selector, the action sends a wheel event at the current pointer position and fails

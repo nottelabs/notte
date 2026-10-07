@@ -95,10 +95,14 @@ _SCROLL_TRACKER = """
 _SCROLL_BOUNDARY = """
 (element, delta) => {
     const max = Math.max(0, element.scrollHeight - element.clientHeight);
+    const style = getComputedStyle(element);
     const isContainer = element === document.scrollingElement ||
-        /^(auto|scroll|overlay)$/.test(getComputedStyle(element).overflowY) ||
-        (max > 0 && getComputedStyle(element).overflowY === 'hidden');
-    return isContainer && (delta > 0 ? element.scrollTop >= max - 1 : element.scrollTop <= 1);
+        /^(auto|scroll|overlay)$/.test(style.overflowY) ||
+        (max > 0 && style.overflowY === 'hidden');
+    const reversed = /^(flex|inline-flex)$/.test(style.display) && style.flexDirection === 'column-reverse';
+    const lower = reversed ? -max : 0;
+    const upper = reversed ? 0 : max;
+    return isContainer && (delta > 0 ? element.scrollTop >= upper - 1 : element.scrollTop <= lower + 1);
 }
 """
 
@@ -232,11 +236,9 @@ class BrowserController:
     async def _scroll_target(self, window: BrowserWindow, action: ScrollUpAction | ScrollDownAction) -> None:
         assert action.selector is not None
         locator = window.page.locator(action.selector)
-        # Hover both reveals hover-only scrollbars and directs native wheel events
-        # to the selected container instead of the last clicked control.
-        await locator.hover(timeout=config.timeout_action_ms)
         target = await locator.evaluate_handle(
-            "element => element === document.documentElement ? document.scrollingElement : element"
+            "element => element === document.documentElement ? document.scrollingElement : element",
+            timeout=config.timeout_action_ms,
         )
         try:
             amount = action.amount
@@ -247,7 +249,9 @@ class BrowserController:
                 logger.info("Scroll target is already at its boundary; no movement needed.")
                 return
             before = await target.evaluate("element => element.scrollTop")
-            await window.page.mouse.wheel(delta_x=0, delta_y=delta)
+            # Address the container directly: a wheel at its center can hit a nested
+            # scroller, and hovering an offscreen target can move its parents.
+            await target.evaluate("(element, delta) => element.scrollBy({top: delta, behavior: 'instant'})", delta)
             await window.page.wait_for_timeout(200)
             after = await target.evaluate("element => element.scrollTop")
             if before == after and not await target.evaluate(_SCROLL_BOUNDARY, delta):

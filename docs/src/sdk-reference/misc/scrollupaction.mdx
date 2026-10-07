@@ -12,6 +12,7 @@ Use `None` for scrolling up one page.
 ```python
 session.execute(type="scroll_up", amount=500)  # Scroll up 500 pixels
 session.execute(type="scroll_up")  # Scroll up one page
+session.execute(type="scroll_up", selector="#results", amount=500)  # Scroll a container
 ```
 
 ## Fields
@@ -26,6 +27,10 @@ session.execute(type="scroll_up")  # Scroll up one page
 </ParamField>
 
 <ParamField path="amount" type="UnionType[int, None]">
+</ParamField>
+
+<ParamField path="selector" type="UnionType[str, None]">
+  Optional selector for the scroll container, including iframe paths.
 </ParamField>
 
 

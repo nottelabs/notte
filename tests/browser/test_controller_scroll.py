@@ -115,21 +115,23 @@ async def test_scroll_still_fails_on_non_scrollable_page(page: Page) -> None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("selector", [None, "#panel"])
-async def test_prevented_wheel_does_not_count_as_scroll(page: Page, selector: str | None) -> None:
+async def test_prevented_wheel_does_not_count_as_scroll(page: Page) -> None:
     await page.set_content(PANEL_HTML)
     await page.evaluate("window.addEventListener('wheel', event => event.preventDefault(), {passive: false})")
     await page.mouse.move(100, 100)
 
     with pytest.raises(ScrollActionFailedError):
-        await scroll(page, ScrollDownAction(amount=250, selector=selector))
+        await scroll(page, ScrollDownAction(amount=250))
     assert await page.locator("#panel").evaluate("panel => panel.scrollTop") == 0
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("up", [False, True])
-async def test_targeted_boundary_is_noop_without_scrolling_parent(page: Page, up: bool) -> None:
+@pytest.mark.parametrize("offscreen", [False, True])
+async def test_targeted_boundary_is_noop_without_scrolling_parent(page: Page, up: bool, offscreen: bool) -> None:
     await page.set_content(PANEL_HTML + '<style>body {overflow:auto}</style><div style="height:3000px"></div>')
+    if offscreen:
+        await page.locator("#panel").evaluate("panel => panel.style.marginTop = '1200px'")
     if not up:
         await page.locator("#panel").evaluate("panel => panel.scrollTop = panel.scrollHeight")
     before = await page.locator("#panel").evaluate("panel => panel.scrollTop")
@@ -211,3 +213,61 @@ async def test_scroll_ignores_unrelated_destroyed_frame(phase: str) -> None:
     handle.dispose.assert_awaited_once()
     if phase == "check":
         lost_handle.dispose.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("up", [False, True])
+@pytest.mark.parametrize("boundary", [False, True])
+async def test_targeted_scroll_handles_reversed_panel(page: Page, up: bool, boundary: bool) -> None:
+    await page.set_content(
+        PANEL_HTML
+        + """
+        <style>
+            #panel { display: flex; flex-direction: column-reverse; }
+            #content { flex-shrink: 0; }
+        </style>
+    """
+    )
+    panel = page.locator("#panel")
+    position = (-2600 if up else 0) if boundary else -1200
+    await panel.evaluate("(panel, position) => panel.scrollTop = position", position)
+    assert await panel.evaluate("panel => panel.scrollTop") == position
+    action = ScrollUpAction(selector="#panel", amount=250) if up else ScrollDownAction(selector="#panel", amount=250)
+    assert await scroll(page, action)
+    after = await panel.evaluate("panel => panel.scrollTop")
+    if boundary:
+        assert after == position
+    else:
+        assert after < position if up else after > position
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("up", [False, True])
+async def test_targeted_scroll_moves_parent_instead_of_nested_child(page: Page, up: bool) -> None:
+    await page.set_content(
+        PANEL_HTML
+        + """
+        <style> #child {height: 800px; overflow: auto;} </style>
+        <script>
+            document.querySelector('#content').innerHTML =
+                '<div id="child"><div style="height:3000px">Nested content</div></div>';
+        </script>
+    """
+    )
+    panel = page.locator("#panel")
+    await panel.evaluate("panel => panel.scrollTop = 300")
+    await page.locator("#child").evaluate("child => child.scrollTop = 500")
+    await page.mouse.move(750, 550)
+    action = ScrollUpAction(selector="#panel", amount=100) if up else ScrollDownAction(selector="#panel", amount=100)
+    assert await scroll(page, action)
+    assert await panel.evaluate("panel => panel.scrollTop") == (200 if up else 400)
+    assert await page.locator("#child").evaluate("child => child.scrollTop") == 500
+    assert await page.evaluate("window.scrollY") == 0
+
+
+@pytest.mark.asyncio
+async def test_targeted_scroll_fails_when_container_clips_scrolling(page: Page) -> None:
+    await page.set_content(PANEL_HTML + "<style>#panel {overflow:clip}</style>")
+    with pytest.raises(ScrollActionFailedError):
+        await scroll(page, ScrollDownAction(selector="#panel", amount=250))
+    assert await page.locator("#panel").evaluate("panel => panel.scrollTop") == 0
