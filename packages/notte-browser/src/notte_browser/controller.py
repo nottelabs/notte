@@ -1,6 +1,7 @@
 import base64
 import json
 import traceback
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, cast
 
@@ -59,8 +60,36 @@ from notte_browser.errors import (
     capture_playwright_errors,
 )
 from notte_browser.form_filling import FormFiller
-from notte_browser.playwright_async_api import CDPSession, Frame, Locator, evaluate_in_main_world
+from notte_browser.playwright_async_api import CDPSession, Error, Frame, JSHandle, Locator, evaluate_in_main_world
 from notte_browser.window import BrowserWindow
+
+# Capture the wheel target's ancestors before the browser performs its default
+# scroll. Keeping element references avoids mistaking DOM replacement for motion,
+# and composedPath includes scroll containers inside open shadow roots.
+_SCROLL_TRACKER = """
+() => {
+    const initialY = window.scrollY;
+    const positions = new Map();
+    const onWheel = (event) => {
+        for (const node of event.composedPath()) {
+            if (node instanceof Element && !positions.has(node)) {
+                positions.set(node, node.scrollTop);
+            }
+        }
+    };
+    // A passive listener can run after compositor scrolling has already happened.
+    // This listener never cancels the event, but must snapshot before its default action.
+    window.addEventListener('wheel', onWheel, {capture: true, passive: false});
+    return {
+        hasScrolled: () => window.scrollY !== initialY ||
+            Array.from(positions).some(([node, top]) => node.isConnected && node.scrollTop !== top),
+        dispose: () => {
+            window.removeEventListener('wheel', onWheel, true);
+            positions.clear();
+        },
+    };
+}
+"""
 
 # Installed once per download action. Wraps URL.createObjectURL so we retain a
 # strong JS reference to each Blob under its URL key, which lets us read the
@@ -245,26 +274,33 @@ class BrowserController:
                     }
                 """)
                 await window.page.wait_for_timeout(200)
-                # compute current scroll position for comparison after execution
-                scroll_position = await window.page.evaluate("window.scrollY")
-                if amount is not None:
+                trackers: list[JSHandle] = []
+                try:
+                    # Wheel events stay in their frame, so observe each document.
+                    for frame in window.page.frames:
+                        trackers.append(await frame.evaluate_handle(_SCROLL_TRACKER))
+                    if amount is None:
+                        viewport_height = await window.page.evaluate("window.innerHeight")
+                        amount = int(viewport_height * 0.7)
                     await window.page.mouse.wheel(
                         delta_x=0, delta_y=(-amount if isinstance(action, ScrollUpAction) else amount)
                     )
-                else:
-                    # Calculate 70% of viewport height for scroll amount
-                    viewport_height = await window.page.evaluate("window.innerHeight")
-                    scroll_amount = int(viewport_height * 0.7)
-                    await window.page.mouse.wheel(
-                        delta_x=0, delta_y=(-scroll_amount if isinstance(action, ScrollUpAction) else scroll_amount)
-                    )
-                await window.page.wait_for_timeout(200)
-                new_scroll_position = await window.page.evaluate("window.scrollY")
-                if new_scroll_position == scroll_position:
-                    logger.info(
-                        f"🪦 Scroll action did not change scroll position (i.e before={scroll_position}, after={new_scroll_position}). Failing action..."
-                    )
-                    raise ScrollActionFailedError()
+                    await window.page.wait_for_timeout(200)
+                    scrolled = False
+                    for tracker in trackers:
+                        if await tracker.evaluate("tracker => tracker.hasScrolled()"):
+                            scrolled = True
+                            break
+                    if not scrolled:
+                        logger.info("🪦 Scroll action did not move the page or a scroll container. Failing action...")
+                        raise ScrollActionFailedError()
+                finally:
+                    for tracker in trackers:
+                        # Navigation or frame removal can destroy the JS context.
+                        with suppress(Error):
+                            await tracker.evaluate("tracker => tracker.dispose()")
+                        with suppress(Error):
+                            await tracker.dispose()
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         return True

@@ -16,6 +16,7 @@ match config.browser_backend:
             Error,
             Frame,
             FrameLocator,
+            JSHandle,
             Locator,
             Page,
             Playwright,
@@ -34,6 +35,7 @@ match config.browser_backend:
             Error,
             Frame,
             FrameLocator,
+            JSHandle,
             Locator,
             Page,
             Playwright,
@@ -112,6 +114,7 @@ __all__ = [
     "Page",
     "CDPSession",
     "FrameLocator",
+    "JSHandle",
     "ConsoleMessage",
     "evaluate_in_main_world",
 ]
