@@ -7,14 +7,15 @@ import requests
 from notte_core.common.logging import logger
 from notte_sdk.endpoints import workflows
 from notte_sdk.endpoints.base import BaseClient
+from notte_sdk.endpoints.sessions import SessionsClient
 from notte_sdk.endpoints.workflows import WorkflowsClient
 
 
 @pytest.mark.parametrize("key_source", ["argument", "environment"])
 @pytest.mark.parametrize("explicit_stream", [False, True])
-@pytest.mark.parametrize("viewer_state", ["jwt", "missing", "error", "legacy_api_key"])
+@pytest.mark.parametrize("viewer_state", ["jwt", "missing", "error", "timeout", "legacy_api_key"])
 def test_session_start_does_not_log_api_key(monkeypatch, key_source, explicit_stream, viewer_state):
-    api_key = "test-only-secret-function-stream-key"
+    api_key = "test-only-secret-function-stream-key"  # pragma: allowlist secret
     session_id = "session-123"
     monkeypatch.setenv("NOTTE_API_KEY", api_key)
     monkeypatch.setattr(BaseClient, "check_and_warn_version_mismatch", lambda self: None)
@@ -25,13 +26,15 @@ def test_session_start_does_not_log_api_key(monkeypatch, key_source, explicit_st
     )
     match viewer_state:
         case "jwt":
-            root_client.sessions.status.return_value.viewer_url = viewer_url
+            root_client.sessions.request.return_value.viewer_url = viewer_url
         case "missing":
-            root_client.sessions.status.return_value.viewer_url = None
+            root_client.sessions.request.return_value.viewer_url = None
         case "error":
-            root_client.sessions.status.side_effect = requests.ConnectionError(f"Request failed: {api_key}")
+            root_client.sessions.request.side_effect = requests.ConnectionError(f"Request failed: {api_key}")
+        case "timeout":
+            root_client.sessions.request.side_effect = requests.Timeout(f"Request timed out: {api_key}")
         case "legacy_api_key":
-            root_client.sessions.status.return_value.viewer_url = viewer_url.replace(
+            root_client.sessions.request.return_value.viewer_url = viewer_url.replace(
                 "&jwt=fake-session-jwt", f"?token={api_key}"
             )
     client = WorkflowsClient(
@@ -75,7 +78,9 @@ def test_session_start_does_not_log_api_key(monkeypatch, key_source, explicit_st
         assert viewer_url in output
     else:
         assert "client.sessions.viewer" in output
-    root_client.sessions.status.assert_called_once_with(session_id=session_id)
+    root_client.sessions.request.assert_called_once_with(
+        SessionsClient._session_status_endpoint(session_id=session_id), timeout=2
+    )
     assert "Function is running" in output
     assert completed.session_id == session_id
     assert completed.result == {"ok": True}

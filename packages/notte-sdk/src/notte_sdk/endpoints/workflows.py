@@ -19,6 +19,7 @@ from typing_extensions import deprecated
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.run_payloads import PayloadMode, RunUpdateBody, offload_run_fields, resolve_run_fields
+from notte_sdk.endpoints.sessions import SessionsClient
 from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
     CreateFunctionRequest,
@@ -578,7 +579,9 @@ class WorkflowsClient(BaseClient):
                         elif message["type"] == "session_start":
                             session_id = log_msg
                             try:
-                                viewer_url = self.root_client.sessions.status(session_id=session_id).viewer_url
+                                # Keep this optional lookup from using the normal 60-second request timeout.
+                                status_endpoint = SessionsClient._session_status_endpoint(session_id=session_id)
+                                viewer_url = self.root_client.sessions.request(status_endpoint, timeout=2).viewer_url
                             except Exception:
                                 # Viewer discovery is optional; errors may also contain credentials.
                                 viewer_url = None
