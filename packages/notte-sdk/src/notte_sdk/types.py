@@ -584,6 +584,10 @@ class TailnetProxy(SdkRequest):
     type: Literal["tailnet"] = "tailnet"
     oauth_client_id: str
     oauth_client_secret: str | None = None
+    # Tailnet device to use as an exit node for public traffic, by hostname,
+    # MagicDNS name, or Tailscale IP. When unset, only tailnet addresses are
+    # routed through the tailnet.
+    exit_node: str | None = None
 
 
 class ExternalProxyDict(TypedDict, total=False):
@@ -605,6 +609,7 @@ class TailnetProxyDict(TypedDict, total=False):
     type: Literal["tailnet"]
     oauth_client_id: Required[str]
     oauth_client_secret: str | None
+    exit_node: str | None
 
 
 ProxySettings = Annotated[NotteProxy | ExternalProxy | TailnetProxy, Field(discriminator="type")]
