@@ -39,13 +39,18 @@ def _debug_info(token: str) -> SimpleNamespace:
     return SimpleNamespace(ws=SimpleNamespace(logs=f"wss://api.notte.cc/sessions/session-id/debug/logs?token={token}"))
 
 
-def _agents_client(debug_info: Callable[..., SimpleNamespace] | None = None) -> AgentsClient:
+def _agents_client(debug_info: Callable[[str], SimpleNamespace] | None = None) -> AgentsClient:
+    get_debug_info = debug_info or (lambda _session_id: _debug_info(VIEWER_TOKEN))
+
+    def request(endpoint: Any, timeout: float | None = None) -> SimpleNamespace:
+        assert endpoint.path == "session-id/debug"
+        assert timeout == AgentsClient.LOGS_TOKEN_TIMEOUT_SECONDS
+        return get_debug_info("session-id")
+
     client = object.__new__(AgentsClient)
     client.token = API_KEY
     client.db_preview = None
-    client.root_client = SimpleNamespace(  # type: ignore[assignment]
-        sessions=SimpleNamespace(debug_info=debug_info or (lambda session_id: _debug_info(VIEWER_TOKEN)))
-    )
+    client.root_client = SimpleNamespace(sessions=SimpleNamespace(request=request))  # type: ignore[assignment]
     client.request_path = lambda _endpoint: (  # type: ignore[method-assign]
         "https://api.notte.cc/agents/{agent_id}/debug/logs?token={token}&session_id={session_id}"
     )

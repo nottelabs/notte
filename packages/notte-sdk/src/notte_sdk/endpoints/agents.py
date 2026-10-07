@@ -24,7 +24,7 @@ from typing_extensions import final
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.personas import NottePersona
-from notte_sdk.endpoints.sessions import RemoteSession
+from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient
 from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.types import (
     AgentCreateRequestDict,
@@ -95,6 +95,7 @@ class AgentsClient(BaseClient):
     AGENT_FUNCTION = "{agent_id}/workflow/code"
     AGENT_LIST = ""
     AGENT_LOGS_WS = "{agent_id}/debug/logs?token={token}&session_id={session_id}"
+    LOGS_TOKEN_TIMEOUT_SECONDS = 5
 
     def __init__(
         self,
@@ -347,7 +348,9 @@ class AgentsClient(BaseClient):
         available, so callers fall back to status polling.
         """
         try:
-            debug = self.root_client.sessions.debug_info(session_id=session_id)
+            # Short timeout: the Pyodide watcher makes this call on its event loop.
+            debug_endpoint = SessionsClient._session_debug_endpoint(session_id=session_id)  # pyright: ignore[reportPrivateUsage]
+            debug = self.root_client.sessions.request(debug_endpoint, timeout=self.LOGS_TOKEN_TIMEOUT_SECONDS)
             token = parse_qs(urlsplit(debug.ws.logs).query).get("token", [None])[0]
         except Exception:
             # Exception text is not logged: request errors may echo credentials.
