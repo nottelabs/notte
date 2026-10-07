@@ -29,6 +29,12 @@ type GeneratedScrollDownAction = {
      * Amount
      */
     amount?: number | null;
+    /**
+     * Selector
+     *
+     * Optional selector for the scroll container, including iframe paths.
+     */
+    selector?: string | null;
 };
 ```
 
@@ -48,4 +54,8 @@ type GeneratedScrollDownAction = {
 
 <ParamField body="amount" type={"number | null | undefined"}>
 
+</ParamField>
+
+<ParamField body="selector" type={"string | null | undefined"}>
+Optional selector for the scroll container, including iframe paths.
 </ParamField>
