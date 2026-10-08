@@ -59,7 +59,7 @@ Notte can join your [Tailscale](https://tailscale.com) tailnet directly from wit
 Authentication uses [Tailscale OAuth client credentials](https://tailscale.com/kb/1215/oauth-clients). In your Tailscale admin console:
 
 1. In your tailnet policy file, add `tag:notte` to `tagOwners`.
-2. Under **Settings → Trust credentials**, create an OAuth client with write access to the `auth_keys` scope and tag it with `tag:notte`.
+2. Under **Settings → Trust credentials**, create an OAuth client with write access to the `auth_keys` scope and tag it with `tag:notte` only. Tailscale requires every auth key the client creates to carry exactly the client's tags, so any other tag on the client makes Notte's sessions fail to join.
 3. In the **Access controls** tab, grant `tag:notte` access to the resources you want to reach from the session.
 
 You can then give Notte the client in one of two ways.
