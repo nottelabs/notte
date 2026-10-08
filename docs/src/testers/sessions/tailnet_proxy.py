@@ -5,8 +5,11 @@ from notte_sdk.types import ProxySettings, TailnetProxy
 
 client = NotteClient()
 
-# Uses the Tailscale OAuth client connected to your workspace in the console
-tailnet_proxy = TailnetProxy()
+# Configure a Tailscale tsnet proxy using OAuth client credentials
+tailnet_proxy = TailnetProxy(
+    oauth_client_id="your-tailscale-oauth-client-id",
+    oauth_client_secret="your-tailscale-oauth-client-secret",
+)
 
 # Start a session routed through your tailnet
 proxies: list[ProxySettings] = [tailnet_proxy]

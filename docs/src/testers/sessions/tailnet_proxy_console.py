@@ -1,21 +1,15 @@
-{/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/sessions/tailnet_proxy.py */}
-
-```python tailnet_proxy.py
+# @sniptest filename=tailnet_proxy_console.py
+# @sniptest typecheck_only=true
 from notte_sdk import NotteClient
 from notte_sdk.types import ProxySettings, TailnetProxy
 
 client = NotteClient()
 
-# Configure a Tailscale tsnet proxy using OAuth client credentials
-tailnet_proxy = TailnetProxy(
-    oauth_client_id="your-tailscale-oauth-client-id",
-    oauth_client_secret="your-tailscale-oauth-client-secret",
-)
+# No credentials: uses the Tailscale OAuth client connected to your workspace
+tailnet_proxy = TailnetProxy()
 
 # Start a session routed through your tailnet
 proxies: list[ProxySettings] = [tailnet_proxy]
 with client.Session(proxies=proxies) as session:
     result = session.execute(type="goto", url="https://grafana.your-tailnet.ts.net/")
     screenshot = session.observe().screenshot.bytes()
-```
