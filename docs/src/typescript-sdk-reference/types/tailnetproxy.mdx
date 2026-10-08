@@ -18,7 +18,7 @@ export type TailnetProxy = {
     /**
      * Oauth Client Id
      */
-    oauth_client_id: string;
+    oauth_client_id?: string | null;
     /**
      * Oauth Client Secret
      */
@@ -36,7 +36,7 @@ export type TailnetProxy = {
 
 </ParamField>
 
-<ParamField body="oauth_client_id" type={"string"} required>
+<ParamField body="oauth_client_id" type={"string | null | undefined"}>
 
 </ParamField>
 
