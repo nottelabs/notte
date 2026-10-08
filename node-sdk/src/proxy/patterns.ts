@@ -16,6 +16,9 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   // Anything endpoints
   /^anything\/start$/, // /anything/start
 
+  // Audit-events endpoints
+  /^audit-events$/, // /audit-events
+
   // Functions endpoints
   /^functions$/, // /functions
   /^functions\/[^\/]+$/, // /functions/{function_id}
