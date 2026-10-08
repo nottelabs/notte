@@ -8,6 +8,7 @@ import warnings
 from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Unpack, overload
+from urllib.parse import parse_qs, quote, urlsplit
 
 # import websockets
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
@@ -23,7 +24,7 @@ from typing_extensions import final
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.personas import NottePersona
-from notte_sdk.endpoints.sessions import RemoteSession
+from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient
 from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.types import (
     AgentCreateRequestDict,
@@ -94,6 +95,7 @@ class AgentsClient(BaseClient):
     AGENT_FUNCTION = "{agent_id}/workflow/code"
     AGENT_LIST = ""
     AGENT_LOGS_WS = "{agent_id}/debug/logs?token={token}&session_id={session_id}"
+    LOGS_TOKEN_TIMEOUT_SECONDS = 5
 
     def __init__(
         self,
@@ -338,6 +340,32 @@ class AgentsClient(BaseClient):
                 logger.error(f"Error parsing agent logs for message: {message}: {e}")
             return (None, False)
 
+    def _agent_logs_ws_url(self, agent_id: str, session_id: str) -> str | None:
+        """Build the agent log websocket URL with the session-scoped viewer token.
+
+        The URL authenticates with the short-lived token the API issues for the
+        session, never with the API key. Returns None when no such token is
+        available, so callers fall back to status polling.
+        """
+        try:
+            # Short timeout: the Pyodide watcher makes this call on its event loop.
+            debug_endpoint = SessionsClient._session_debug_endpoint(session_id=session_id)  # pyright: ignore[reportPrivateUsage]
+            debug = self.root_client.sessions.request(debug_endpoint, timeout=self.LOGS_TOKEN_TIMEOUT_SECONDS)
+            token = parse_qs(urlsplit(debug.ws.logs).query).get("token", [None])[0]
+        except Exception:
+            # Exception text is not logged: request errors may echo credentials.
+            logger.warning(f"[Agent] {agent_id} could not get a log stream token. Falling back to status polling.")
+            return None
+        if not token or token == self.token:
+            logger.warning(f"[Agent] {agent_id} log stream token unavailable. Falling back to status polling.")
+            return None
+        endpoint = NotteEndpoint(path=AgentsClient.AGENT_LOGS_WS, response=BaseModel, method="GET")
+        wss_url = self.request_path(endpoint).format(
+            agent_id=agent_id, token=quote(token, safe=""), session_id=session_id
+        )
+        wss_url = wss_url.replace("https://", "wss://").replace("http://", "ws://")
+        return self._with_db_preview(wss_url)
+
     def watch_logs(
         self,
         agent_id: str,
@@ -347,17 +375,16 @@ class AgentsClient(BaseClient):
         """
         Watch the logs of the specified agent.
         """
-        endpoint = NotteEndpoint(path=AgentsClient.AGENT_LOGS_WS, response=BaseModel, method="GET")
-        wss_url = self.request_path(endpoint).format(agent_id=agent_id, token=self.token, session_id=session_id)
-        wss_url = wss_url.replace("https://", "wss://").replace("http://", "ws://")
-        wss_url = self._with_db_preview(wss_url)
-
-        counter = [0]  # mutable container for step count
-
         if RUNNING_IN_PYODIDE:
             raise NotImplementedError(
                 "Synchronous watch_logs is not supported in Pyodide. Use async_watch_logs() or async_watch_logs_and_wait() instead."
             )
+
+        wss_url = self._agent_logs_ws_url(agent_id=agent_id, session_id=session_id)
+        if wss_url is None:
+            return None
+
+        counter = [0]  # mutable container for step count
 
         # Use native Python sync websockets library
         try:
@@ -474,10 +501,9 @@ class AgentsClient(BaseClient):
         if not RUNNING_IN_PYODIDE:
             raise NotImplementedError("async_watch_logs is only supported in Pyodide. Use watch_logs instead.")
 
-        endpoint = NotteEndpoint(path=AgentsClient.AGENT_LOGS_WS, response=BaseModel, method="GET")
-        wss_url = self.request_path(endpoint).format(agent_id=agent_id, token=self.token, session_id=session_id)
-        wss_url = wss_url.replace("https://", "wss://").replace("http://", "ws://")
-        wss_url = self._with_db_preview(wss_url)
+        wss_url = self._agent_logs_ws_url(agent_id=agent_id, session_id=session_id)
+        if wss_url is None:
+            return None
 
         counter = [0]  # mutable container for step count
 

@@ -1,11 +1,14 @@
 import asyncio
 import datetime as dt
+import io
 import json
+from collections.abc import Callable, Iterator
 from types import SimpleNamespace
 from typing import Any
 
 import notte_sdk.endpoints.agents as agents_module
 import pytest
+from notte_core.common.logging import logger
 from notte_sdk.endpoints.agents import AgentsClient
 from notte_sdk.types import AgentStatus, AgentStatusResponse
 from typing_extensions import override
@@ -28,13 +31,40 @@ class _TimeoutWebsocket:
         raise TimeoutError
 
 
-def _agents_client() -> AgentsClient:
+API_KEY = "test-only-secret-agent-logs-key"  # pragma: allowlist secret
+VIEWER_TOKEN = "viewer.jwt.token"
+
+
+def _debug_info(token: str) -> SimpleNamespace:
+    return SimpleNamespace(ws=SimpleNamespace(logs=f"wss://api.notte.cc/sessions/session-id/debug/logs?token={token}"))
+
+
+def _agents_client(debug_info: Callable[[str], SimpleNamespace] | None = None) -> AgentsClient:
+    get_debug_info = debug_info or (lambda _session_id: _debug_info(VIEWER_TOKEN))
+
+    def request(endpoint: Any, timeout: float | None = None) -> SimpleNamespace:
+        assert endpoint.path == "session-id/debug"
+        assert timeout == AgentsClient.LOGS_TOKEN_TIMEOUT_SECONDS
+        return get_debug_info("session-id")
+
     client = object.__new__(AgentsClient)
-    client.token = "token"
+    client.token = API_KEY
+    client.db_preview = None
+    client.root_client = SimpleNamespace(sessions=SimpleNamespace(request=request))  # type: ignore[assignment]
     client.request_path = lambda _endpoint: (  # type: ignore[method-assign]
         "https://api.notte.cc/agents/{agent_id}/debug/logs?token={token}&session_id={session_id}"
     )
     return client
+
+
+@pytest.fixture
+def captured_logs() -> Iterator[io.StringIO]:
+    captured = io.StringIO()
+    handler = logger.add(captured, level="DEBUG")
+    try:
+        yield captured
+    finally:
+        logger.remove(handler)
 
 
 def _closed_agent_status(agent_id: str, session_id: str) -> AgentStatusResponse:
@@ -203,3 +233,62 @@ async def test_async_watch_logs_and_wait_polls_status_after_abnormal_websocket_c
     assert status_calls == ["agent-id"]
     assert response.status == AgentStatus.closed
     assert ws.listeners == {}
+
+
+def test_watch_logs_authenticates_with_viewer_token_not_api_key(monkeypatch, captured_logs) -> None:
+    urls: list[str] = []
+
+    def connect(**kwargs: Any) -> _TimeoutWebsocket:
+        urls.append(kwargs["uri"])
+        return _TimeoutWebsocket()
+
+    monkeypatch.setattr("notte_sdk.endpoints.agents.sync_client.connect", connect)
+    monkeypatch.setattr(agents_module, "config", SimpleNamespace(agent_logs_inactivity_timeout_seconds=1.0))
+
+    _ = _agents_client().watch_logs(agent_id="agent-id", session_id="session-id", log=False)
+
+    assert urls == [f"wss://api.notte.cc/agents/agent-id/debug/logs?token={VIEWER_TOKEN}&session_id=session-id"]
+    assert API_KEY not in captured_logs.getvalue()
+
+
+@pytest.mark.parametrize("failure", ["api_key_token", "missing_token", "request_error"])
+def test_watch_logs_never_puts_api_key_in_url(monkeypatch, captured_logs, failure) -> None:
+    def debug_info(session_id: str) -> SimpleNamespace:
+        match failure:
+            case "api_key_token":
+                return _debug_info(API_KEY)
+            case "missing_token":
+                return SimpleNamespace(ws=SimpleNamespace(logs="wss://api.notte.cc/sessions/session-id/debug/logs"))
+            case _:
+                raise ConnectionError(f"Request failed: {API_KEY}")
+
+    def connect(**_kwargs: Any) -> _TimeoutWebsocket:
+        raise AssertionError("must not open a websocket without a viewer token")
+
+    monkeypatch.setattr("notte_sdk.endpoints.agents.sync_client.connect", connect)
+
+    response = _agents_client(debug_info).watch_logs(agent_id="agent-id", session_id="session-id", log=False)
+
+    assert response is None
+    output = captured_logs.getvalue()
+    assert "Falling back to status polling" in output
+    assert API_KEY not in output
+
+
+@pytest.mark.asyncio
+async def test_async_watch_logs_authenticates_with_viewer_token_not_api_key(monkeypatch, captured_logs) -> None:
+    urls: list[str] = []
+
+    def new(url: str) -> _FakeJsWebSocket:
+        urls.append(url)
+        return _FakeJsWebSocket()
+
+    monkeypatch.setattr(agents_module, "RUNNING_IN_PYODIDE", True)
+    monkeypatch.setattr(agents_module, "js", SimpleNamespace(WebSocket=SimpleNamespace(new=new)), raising=False)
+    monkeypatch.setattr(agents_module, "create_proxy", lambda fn: fn, raising=False)
+    monkeypatch.setattr(agents_module, "config", SimpleNamespace(agent_logs_inactivity_timeout_seconds=1.0))
+
+    _ = await _agents_client().async_watch_logs(agent_id="agent-id", session_id="session-id", log=False)
+
+    assert urls == [f"wss://api.notte.cc/agents/agent-id/debug/logs?token={VIEWER_TOKEN}&session_id=session-id"]
+    assert API_KEY not in captured_logs.getvalue()
