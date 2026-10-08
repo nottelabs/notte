@@ -582,7 +582,9 @@ class ExternalProxy(SdkRequest):
 
 class TailnetProxy(SdkRequest):
     type: Literal["tailnet"] = "tailnet"
-    oauth_client_id: str
+    # Leave both unset to use the Tailscale OAuth client connected to your
+    # workspace in the Notte console (Settings > Integrations).
+    oauth_client_id: str | None = None
     oauth_client_secret: str | None = None
     # Tailnet device to use as an exit node for public traffic, by hostname,
     # MagicDNS name, or Tailscale IP. When unset, only tailnet addresses are
@@ -607,7 +609,7 @@ class NotteProxyDict(TypedDict, total=False):
 
 class TailnetProxyDict(TypedDict, total=False):
     type: Literal["tailnet"]
-    oauth_client_id: Required[str]
+    oauth_client_id: str | None
     oauth_client_secret: str | None
     exit_node: str | None
 

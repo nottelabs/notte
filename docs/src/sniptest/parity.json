@@ -348,6 +348,7 @@
   ],
   "python_only": {
     "anything-api/consume_stream.py": "Raw HTTP example for anything.notte.cc; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it bills a real 2-10 minute Anything API agent build.",
-    "anything-api/start_detached.py": "Raw HTTP example for anything.notte.cc; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it bills a real 2-10 minute Anything API agent build."
+    "anything-api/start_detached.py": "Raw HTTP example for anything.notte.cc; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it bills a real 2-10 minute Anything API agent build.",
+    "sessions/tailnet_proxy_console.py": "Tailscale session example; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it needs a real Tailscale OAuth client connected to the workspace and a reachable tailnet host."
   }
 }

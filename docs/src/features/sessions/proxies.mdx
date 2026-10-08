@@ -6,6 +6,7 @@ import DefaultProxy from '/snippets/sessions/default_proxy.mdx';
 import CustomProxy from '/snippets/sessions/custom_proxy.mdx';
 import CountryProxy from '/snippets/sessions/country_proxy.mdx';
 import TailnetProxy from '/snippets/sessions/tailnet_proxy.mdx';
+import TailnetProxyConsole from '/snippets/sessions/tailnet_proxy_console.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -57,14 +58,33 @@ Notte can join your [Tailscale](https://tailscale.com) tailnet directly from wit
 
 Authentication uses [Tailscale OAuth client credentials](https://tailscale.com/kb/1215/oauth-clients). In your Tailscale admin console:
 
-1. Under **Settings → Trust credentials**, create an OAuth client with write access to the `auth_keys` scope and tag it with `tag:notte`.
-2. In the **Access controls** tab, grant `tag:notte` access to the resources you want to reach from the session.
+1. In your tailnet policy file, add `tag:notte` to `tagOwners`.
+2. Under **Settings → Trust credentials**, create an OAuth client with write access to the `auth_keys` scope and tag it with `tag:notte` only. Tailscale requires every auth key the client creates to carry exactly the client's tags, so any other tag on the client makes Notte's sessions fail to join.
+3. In the **Access controls** tab, grant `tag:notte` access to the resources you want to reach from the session.
 
-Pass the client ID and secret when creating the session:
+You can then give Notte the client in one of two ways.
+
+### Option 1: Connect Tailscale in the console
+
+Open **[Settings → Integrations](https://console.notte.cc/settings/integrations)** in the Notte console and add the OAuth client ID and secret. Notte checks them with Tailscale before saving and stores the secret encrypted. Each workspace has one Tailscale connection, and only workspace admins can add or remove it.
+
+Sessions in that workspace then use it without any credentials in your code:
+
+<TailnetProxyConsole/>
+
+### Option 2: Pass the OAuth credentials in code
+
+Pass the client ID and secret when creating the session. This works without a console connection, and credentials passed here take precedence over it:
 
 <TailnetProxy/>
 
-Once the session is created, you can navigate to any hostname reachable on your tailnet — for example a MagicDNS name like `https://grafana.your-tailnet.ts.net/`.
+With either option, you can navigate to any hostname reachable on your tailnet once the session is created, for example a MagicDNS name like `https://grafana.your-tailnet.ts.net/`.
+
+### Exit nodes
+
+By default only tailnet addresses go through your tailnet, and public sites are reached from Notte's network. Set `exit_node` to send the session's public traffic out through one of your own devices instead, such as your laptop, so sites see your connection's IP address. It works with both options, for example `TailnetProxy(exit_node="my-laptop")`.
+
+Name the device by hostname, MagicDNS name, or Tailscale IP. It must be [advertised and approved as an exit node](https://tailscale.com/kb/1103/exit-nodes), and your policy must let `tag:notte` reach `autogroup:internet`. If the device is offline or not usable as an exit node, the session fails to start rather than falling back to Notte's network.
 
 ## Usage Measurement
 
