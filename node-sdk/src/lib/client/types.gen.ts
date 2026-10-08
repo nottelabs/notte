@@ -563,6 +563,94 @@ export type ApiSessionStartRequest = {
 };
 
 /**
+ * AuditEvent
+ */
+export type AuditEvent = {
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Entity Type
+     */
+    entity_type: string;
+    /**
+     * Entity Id
+     */
+    entity_id: string;
+    /**
+     * Action
+     */
+    action: string;
+    /**
+     * User Id
+     */
+    user_id?: string | null;
+    /**
+     * Actor Id
+     */
+    actor_id?: string | null;
+    /**
+     * Actor Type
+     */
+    actor_type: string;
+    /**
+     * Actor Email
+     *
+     * Email of the actor when it is a workspace member the caller may see. Null for system actors.
+     */
+    actor_email?: string | null;
+    /**
+     * Actor Name
+     */
+    actor_name?: string | null;
+    /**
+     * Resource Name
+     *
+     * Human-readable name of the resource (an API key's label, a secret's name, a member's email) when one is known. Never a secret value.
+     */
+    resource_name?: string | null;
+    /**
+     * Source
+     */
+    source: string;
+    /**
+     * Metadata
+     */
+    metadata?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Org Id
+     */
+    org_id?: string | null;
+};
+
+/**
+ * AuditEventListResponse
+ */
+export type AuditEventListResponse = {
+    /**
+     * Items
+     */
+    items: Array<AuditEvent>;
+    /**
+     * Next Cursor
+     *
+     * Opaque cursor for the next (older) page. Null when there are no more events.
+     */
+    next_cursor?: string | null;
+    /**
+     * Has More
+     */
+    has_more: boolean;
+};
+
+/**
  * BaseModel
  */
 export type BaseModel = {
@@ -4982,7 +5070,7 @@ export type SecretMetadata = {
 /**
  * SecretNamespace
  */
-export type SecretNamespace = 'llm_provider' | 'function_env'; // pragma: allowlist secret
+export type SecretNamespace = 'llm_provider' | 'function_env' | 'tailscale'; // pragma: allowlist secret
 
 /**
  * SecretStoreRequest
@@ -5561,7 +5649,7 @@ export type TailnetProxy = {
     /**
      * Oauth Client Id
      */
-    oauth_client_id: string;
+    oauth_client_id?: string | null;
     /**
      * Oauth Client Secret
      */
@@ -11618,6 +11706,84 @@ export type DeleteSecretResponses = {
 };
 
 export type DeleteSecretResponse = DeleteSecretResponses[keyof DeleteSecretResponses];
+
+export type ListAuditEventsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Limit
+         *
+         * Events per page
+         */
+        limit?: number;
+        /**
+         * Cursor
+         *
+         * `next_cursor` from the previous page
+         */
+        cursor?: string | null;
+        /**
+         * Since
+         *
+         * Only events at or after this time (ISO-8601)
+         */
+        since?: string | null;
+        /**
+         * Until
+         *
+         * Only events before this time (ISO-8601)
+         */
+        until?: string | null;
+        /**
+         * Action
+         *
+         * Only events with this action, e.g. `created`
+         */
+        action?: string | null;
+        /**
+         * Entity Type
+         *
+         * Only events about this kind of resource, e.g. `api_key`
+         */
+        entity_type?: string | null;
+        /**
+         * Actor Id
+         *
+         * Only events performed by this user
+         */
+        actor_id?: string | null;
+    };
+    url: '/audit-events';
+};
+
+export type ListAuditEventsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListAuditEventsError = ListAuditEventsErrors[keyof ListAuditEventsErrors];
+
+export type ListAuditEventsResponses = {
+    /**
+     * Successful Response
+     */
+    200: AuditEventListResponse;
+};
+
+export type ListAuditEventsResponse = ListAuditEventsResponses[keyof ListAuditEventsResponses];
 
 export type HealthCheckData = {
     body?: never;
