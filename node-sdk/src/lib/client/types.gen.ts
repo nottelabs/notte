@@ -5561,7 +5561,7 @@ export type TailnetProxy = {
     /**
      * Oauth Client Id
      */
-    oauth_client_id?: string | null;
+    oauth_client_id: string;
     /**
      * Oauth Client Secret
      */
