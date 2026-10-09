@@ -145,6 +145,10 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 
 - [POST Anything Start](https://docs.notte.cc/api-reference/anything/anything-start.md)
 
+## Audit
+
+- [GET List Audit Events](https://docs.notte.cc/api-reference/audit/list-audit-events.md)
+
 ## Functions
 
 - [GET Download Run Payload](https://docs.notte.cc/api-reference/functions/download-run-payload.md)
