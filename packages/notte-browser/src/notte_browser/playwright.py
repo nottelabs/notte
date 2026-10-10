@@ -162,7 +162,10 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
         if not self.is_started():
             _ = await self.astart()
         options = options or BrowserWindowOptions.from_request(LocalSessionStartRequest())
-        browser = await self.create_playwright_browser(options)
+        if options.cdp_url is not None:
+            browser = await self.connect_cdp_browser(options)
+        else:
+            browser = await self.create_playwright_browser(options)
         resource = await self.get_browser_resource(options, browser)
 
         async def on_close() -> None:
