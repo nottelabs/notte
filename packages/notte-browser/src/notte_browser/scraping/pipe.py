@@ -4,18 +4,27 @@ from typing import final
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import ScrapingType, config
 from notte_core.common.logging import logger
+from notte_core.data.extraction import StructuredExtractor
+from notte_core.data.pruning import MarkdownPruningPipe
 from notte_core.data.space import DataSpace
-from notte_llm.service import LLMService
 from notte_sdk.types import ScrapeParams
 
+from notte_browser.errors import StructuredExtractorNotAvailableError
 from notte_browser.scraping.images import ImageScrapingPipe
 from notte_browser.scraping.markdown import (
     MainContentScrapingPipe,
     MarkdownifyScrapingPipe,
 )
-from notte_browser.scraping.pruning import MarkdownPruningPipe
-from notte_browser.scraping.schema import SchemaScrapingPipe
 from notte_browser.window import BrowserWindow
+
+
+def default_extractor() -> StructuredExtractor:
+    """The LLM extractor from the optional `notte-llm` package, when it is installed."""
+    try:
+        from notte_llm import LlmExtractor
+    except ImportError as e:
+        raise StructuredExtractorNotAvailableError() from e
+    return LlmExtractor()
 
 
 def _calculate_url_percentage(text: str) -> float:
@@ -66,14 +75,17 @@ class DataScrapingPipe:
     Data scraping pipe that scrapes data from the page
     """
 
-    def __init__(
-        self,
-        llmserve: LLMService,
-        type: ScrapingType,
-    ) -> None:
-        self.schema_pipe = SchemaScrapingPipe(llmserve=llmserve)
+    def __init__(self, type: ScrapingType, extractor: StructuredExtractor | None = None) -> None:
+        self._extractor: StructuredExtractor | None = extractor
         self.image_pipe = ImageScrapingPipe(verbose=config.verbose)
         self.scraping_type = type
+
+    @property
+    def extractor(self) -> StructuredExtractor:
+        # Resolved on first structured scrape so that sessions never load an LLM unless they need one.
+        if self._extractor is None:
+            self._extractor = default_extractor()
+        return self._extractor
 
     def get_markdown_scraping_type(self, params: ScrapeParams) -> ScrapingType:
         # otherwise, use config.type
@@ -157,18 +169,12 @@ class DataScrapingPipe:
         if params.requires_schema():
             if config.verbose:
                 logger.trace("🎞️ Structuring data with schema pipe")
-            # A per-call model gets its own pipe; the shared one is used by concurrent calls.
-            schema_pipe = (
-                SchemaScrapingPipe(llmserve=LLMService(base_model=str(params.model), use_router=False))
-                if params.model is not None
-                else self.schema_pipe
-            )
-            structured = await schema_pipe.forward(
+            structured = await self.extractor.extract(
                 url=snapshot.metadata.url,
                 document=markdown,
                 response_format=params.response_format,
                 instructions=params.instructions,
-                verbose=config.verbose,
+                model=params.model,
                 use_link_placeholders=params.use_link_placeholders,
             )
         return DataSpace(markdown=markdown, images=images, structured=structured)

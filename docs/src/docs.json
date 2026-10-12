@@ -53,6 +53,70 @@
     {
       "source": "/product/anything-api",
       "destination": "/concepts/anything"
+    },
+    {
+      "source": "/concepts/agents",
+      "destination": "/concepts/anything"
+    },
+    {
+      "source": "/concepts/bua",
+      "destination": "/concepts/anything"
+    },
+    {
+      "source": "/features/agents/hello",
+      "destination": "/concepts/anything"
+    },
+    {
+      "source": "/features/agents/configuration",
+      "destination": "/concepts/anything"
+    },
+    {
+      "source": "/features/agents/lifecycle",
+      "destination": "/concepts/anything"
+    },
+    {
+      "source": "/features/agents/replay",
+      "destination": "/features/sessions/recordings"
+    },
+    {
+      "source": "/features/agents/structured-output",
+      "destination": "/concepts/scraping"
+    },
+    {
+      "source": "/features/agents/fallback",
+      "destination": "/concepts/functions"
+    },
+    {
+      "source": "/features/agents/workflows",
+      "destination": "/concepts/functions"
+    },
+    {
+      "source": "/sdk-reference/manual/agent",
+      "destination": "/sdk-reference/notteclient"
+    },
+    {
+      "source": "/sdk-reference/manual/agent_fallback",
+      "destination": "/sdk-reference/notteclient"
+    },
+    {
+      "source": "/sdk-reference/manual/workflow",
+      "destination": "/sdk-reference/manual/function"
+    },
+    {
+      "source": "/sdk-reference/remoteagent/:slug*",
+      "destination": "/sdk-reference/notteclient"
+    },
+    {
+      "source": "/sdk-reference/remoteagentfallback/:slug*",
+      "destination": "/sdk-reference/notteclient"
+    },
+    {
+      "source": "/sdk-reference/agentsclient/:slug*",
+      "destination": "/sdk-reference/notteclient"
+    },
+    {
+      "source": "/sdk-reference/remoteworkflow/:slug*",
+      "destination": "/sdk-reference/manual/function"
     }
   ],
   "errors": {
@@ -261,7 +325,7 @@
                       "sdk-reference/remotesession/observe",
                       "sdk-reference/remotesession/execute",
                       "sdk-reference/remotesession/scrape",
-"sdk-reference/remotesession/fetch",
+                      "sdk-reference/remotesession/fetch",
                       "sdk-reference/remotesession/replay",
                       "sdk-reference/remotesession/cdp_url",
                       "sdk-reference/remotesession/set_cookies",
@@ -302,23 +366,10 @@
                     ]
                   },
                   {
-                    "group": "Agent",
-                    "collapsed": true,
-                    "pages": [
-                      "sdk-reference/manual/agent",
-                      "sdk-reference/remoteagent/run",
-                      "sdk-reference/remoteagent/replay",
-                      "sdk-reference/remoteagent/start",
-                      "sdk-reference/remoteagent/stop",
-                      "sdk-reference/remoteagent/status",
-                      "sdk-reference/manual/agent_fallback"
-                    ]
-                  },
-                  {
                     "group": "Function",
                     "collapsed": true,
                     "pages": [
-                      "sdk-reference/manual/workflow",
+                      "sdk-reference/manual/function",
                       "sdk-reference/nottefunction/create_run",
                       "sdk-reference/nottefunction/run",
                       "sdk-reference/nottefunction/update",

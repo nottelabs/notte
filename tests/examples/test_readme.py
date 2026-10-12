@@ -62,7 +62,7 @@ def test_pip_install_notte_sdk():
 
 @pytest.mark.skip(reason="Fails for some weird reason")
 def test_pip_install_notte():
-    _test_pip_install("notte", "from notte import Agent")
+    _test_pip_install("notte", "from notte import Session")
 
 
 @pytest.mark.skip(reason="Fails for some weird reason")
@@ -81,12 +81,6 @@ def test_readme_python_code(example: CodeExample, eval_example: EvalExample):
 
 @pytest.mark.parametrize("example", find_examples("docs/sdk_tutorial.md"), ids=str)
 def test_sdk_tutorial(example: CodeExample, eval_example: EvalExample):
-    _ = load_dotenv()
-    run_example_safely(example, eval_example)
-
-
-@pytest.mark.parametrize("example", find_examples("docs/run_notte_with_external_browsers.md"), ids=str)
-def test_external_session_tutorial(example: CodeExample, eval_example: EvalExample):
     _ = load_dotenv()
     run_example_safely(example, eval_example)
 

@@ -154,6 +154,9 @@ class BrowserAction(BaseAction, metaclass=ABCMeta):
     category: str = "Special Browser Actions"
 
     BROWSER_ACTION_REGISTRY: ClassVar[dict[str, typeAlias["BrowserAction"]]] = {}
+    # Actions of the legacy agent loop. They stay registered so that steps recorded by agents still
+    # parse, but they are not offered as available actions anymore.
+    LEGACY_AGENT_ACTION_TYPES: ClassVar[frozenset[str]] = frozenset({"help", "completion"})
 
     def __init_subclass__(cls, **kwargs: dict[Any, Any]):
         super().__init_subclass__(**kwargs)
@@ -175,7 +178,11 @@ class BrowserAction(BaseAction, metaclass=ABCMeta):
 
     @staticmethod
     def list() -> list["BrowserAction"]:
-        return [action.example() for action in BrowserAction.BROWSER_ACTION_REGISTRY.values()]
+        return [
+            action.example()
+            for name, action in BrowserAction.BROWSER_ACTION_REGISTRY.items()
+            if name not in BrowserAction.LEGACY_AGENT_ACTION_TYPES
+        ]
 
     @property
     @abstractmethod
@@ -199,7 +206,7 @@ class FormFillAction(BrowserAction):
     Fill a form with multiple values. Critical: If you detect a form on a page, try to use this action at first, and otherwise use the regular fill action.
 
     The `form_fill` action requires field keys that match the page's actual field mapping.
-    Do not guess keys from labels or HTML alone; use live observation or generated workflow
+    Do not guess keys from labels or HTML alone; use live observation or generated function
     code to confirm the field mapping first.
 
     **Example:**
@@ -698,6 +705,8 @@ class HelpAction(BrowserAction):
     """
     Ask for clarification.
 
+    Legacy agent-loop action: kept so that recorded agent steps still parse.
+
     **Example:**
     ```python
     session.execute(type="help", reason="The page layout is unclear")
@@ -726,6 +735,8 @@ class HelpAction(BrowserAction):
 class CompletionAction(BrowserAction):
     """
     Complete the task by returning the answer and terminate the browser session.
+
+    Legacy agent-loop action: kept so that recorded agent steps still parse.
 
     **Example:**
     ```python

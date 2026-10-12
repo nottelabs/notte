@@ -1,7 +1,7 @@
 [project]
 name = "notte-llm"
-version = "1.9.7.dev0"
-description = "LLM integration for Notte"
+version = "2.0.0.dev0"
+description = "LLM-based structured data extraction for Notte sessions"
 readme = "README.md"
 authors = [
     { name = "Notte Team ", email = "hello@notte.cc" }
@@ -12,19 +12,15 @@ packages = [
 
 requires-python = ">=3.11"
 dependencies = [
+    "notte_core==2.0.0.dev0",
     "chevron>=0.14.0",
+    "google-auth>=2.39.0",
     "json-repair>=0.57.1",
     "litellm>=1.74.12",
     "openai<3.24.0",
-    "llamux>=0.1.9",
-    "loguru>=0.7.3",
-    "pydantic>=2.10.6",
-    "python-dotenv>=1.0.1",
     "tiktoken>=0.8.0",
-    "notte-core==1.9.7.dev0",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-

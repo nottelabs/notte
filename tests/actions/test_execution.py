@@ -5,11 +5,6 @@ import pytest
 from notte_browser.session import NotteSession
 from notte_sdk.types import ExecutionRequest
 
-from tests.mock.mock_service import MockLLMService
-from tests.mock.mock_service import patch_llm_service as _patch_llm_service
-
-patch_llm_service = _patch_llm_service
-
 
 @pytest.fixture
 def headless() -> bool:
@@ -20,11 +15,6 @@ def headless() -> bool:
 class ExecutionTest:
     url: str
     steps: list[ExecutionRequest]
-
-
-@pytest.fixture
-def mock_llm_service() -> MockLLMService:
-    return MockLLMService(mock_response="")
 
 
 @pytest.fixture
@@ -40,19 +30,19 @@ def phantombuster_login() -> ExecutionTest:
     )
 
 
-async def _test_execution(test: ExecutionTest, headless: bool, patch_llm_service: MockLLMService) -> None:
+async def _test_execution(test: ExecutionTest, headless: bool) -> None:
     async with NotteSession(
         headless=headless,
     ) as page:
         _ = await page.aexecute(type="goto", value=test.url)
-        _ = await page.aobserve(perception_type="fast")
+        _ = await page.aobserve()
         for step in test.steps:
             if step.id is not None and not page.snapshot.dom_node.find(step.id):
                 inodes = [(n.id, n.text) for n in page.snapshot.interaction_nodes()]
                 raise ValueError(f"Action {step.id} not found in context with interactions {inodes}")
             _ = await page.aexecute(**step.model_dump(exclude_none=True))
-            _ = await page.aobserve(perception_type="fast")
+            _ = await page.aobserve()
 
 
-def test_execution(phantombuster_login: ExecutionTest, headless: bool, patch_llm_service: MockLLMService) -> None:
-    asyncio.run(_test_execution(phantombuster_login, headless, patch_llm_service))
+def test_execution(phantombuster_login: ExecutionTest, headless: bool) -> None:
+    asyncio.run(_test_execution(phantombuster_login, headless))

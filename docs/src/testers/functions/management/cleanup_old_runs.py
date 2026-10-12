@@ -19,7 +19,7 @@ def archive_old_runs(function_id: str, days_old: int = 30):
             run_detail = client.functions.get_run(function_id, run.function_run_id)
             archive.append(
                 {
-                    "run_id": run.workflow_run_id,
+                    "run_id": run.function_run_id,
                     "status": run.status,
                     "created_at": run.created_at.isoformat(),
                     "result": str(run_detail.result)[:100],  # First 100 chars

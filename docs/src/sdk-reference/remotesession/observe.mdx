@@ -37,7 +37,7 @@ print(obs.space.description)
 
 At the cost of a slower query since this uses an LLM call to format the interactive elements.
 
-Additionally, you can use the `instructions` parameter to narrow down the action space to a specific intent on a website. This is useful if you want to quickly create a workflow using natural language:
+Additionally, you can use the `instructions` parameter to narrow down the action space to a specific intent on a website. This is useful if you want to quickly build an automation using natural language:
 
 ```python
 _ = session.execute(type="goto", url="https://console.notte.cc")

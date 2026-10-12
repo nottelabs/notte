@@ -17,7 +17,6 @@ from notte_core.actions.typedicts import (
     CheckActionDict,
     ClickActionDict,
     CloseTabActionDict,
-    CompletionActionDict,
     DownloadFileActionDict,
     EmailReadActionDict,
     EmailVerificationReadActionDict,
@@ -29,7 +28,6 @@ from notte_core.actions.typedicts import (
     GoForwardActionDict,
     GotoActionDict,
     GotoNewTabActionDict,
-    HelpActionDict,
     MultiFactorFillActionDict,
     PressKeyActionDict,
     ReloadActionDict,
@@ -627,7 +625,7 @@ class RemoteSession(SyncResource):
         self,
         *,
         storage: RemoteFileStorage | None = None,
-        perception_type: PerceptionType = config.perception_type,
+        perception_type: PerceptionType = "fast",
         raise_on_failure: bool = config.raise_on_session_execution_failure,
         cookie_file: str | Path | None = None,
         open_viewer: bool = False,
@@ -643,7 +641,7 @@ class RemoteSession(SyncResource):
         session_id: str | None = None,
         *,
         storage: RemoteFileStorage | None = None,
-        perception_type: PerceptionType = config.perception_type,
+        perception_type: PerceptionType = "fast",
         cookie_file: str | Path | None = None,
         raise_on_failure: bool = config.raise_on_session_execution_failure,
         open_viewer: bool = False,
@@ -1488,7 +1486,7 @@ class RemoteSession(SyncResource):
 
         At the cost of a slower query since this uses an LLM call to format the interactive elements.
 
-        Additionally, you can use the `instructions` parameter to narrow down the action space to a specific intent on a website. This is useful if you want to quickly create a workflow using natural language:
+        Additionally, you can use the `instructions` parameter to narrow down the action space to a specific intent on a website. This is useful if you want to quickly build an automation using natural language:
 
         ```python
         _ = session.execute(type="goto", url="https://console.notte.cc")
@@ -1555,12 +1553,6 @@ class RemoteSession(SyncResource):
     @overload
     def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CaptchaSolveActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[HelpActionDict]) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CompletionActionDict]
     ) -> ExecutionResult: ...
     @overload
     def execute(
@@ -1681,7 +1673,7 @@ class RemoteSession(SyncResource):
         ```
 
         This syntax also supports Xpath (e.g. `xpath=/html/body/div[3]/div/button[1]`) or CSS selectors (e.g. `css=button.submit`).
-        > Note that we strongly advice to use selectors over IDs for workflows automation because IDs are dependent on the page structure and can change over time.
+        > Note that we strongly advice to use selectors over IDs for automations because IDs are dependent on the page structure and can change over time.
 
 
         Args:

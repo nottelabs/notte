@@ -42,11 +42,6 @@ def check_notte_version(package_name: str) -> str:
 # Default to agent mode
 LoggingSetup.set_logger_mode("agent")
 
-# Initialize telemetry
-# This import only initializes the module, actual tracking will be disabled
-# if DISABLE_TELEMETRY is set or if PostHog is not installed
-from notte_core.common import telemetry  # type: ignore # noqa
-
 nest_asyncio_enabled: bool = False
 
 

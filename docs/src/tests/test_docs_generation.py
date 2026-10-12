@@ -23,40 +23,6 @@ def extract_param_fields(content: str) -> list[str]:
     return sorted(normalized_params)
 
 
-def test_agent_parameters_in_sync():
-    """
-    Test that parameters in sdk/manual/agent.mdx are synchronized with
-    the source parameters in sdk/remoteagentfactory/__call__.mdx
-    """
-    agent_file = SDK_DIR / "manual" / "agent.mdx"
-    factory_file = SDK_DIR / "remoteagent" / "__init__.mdx"
-
-    assert agent_file.exists(), f"Agent file not found: {agent_file}"
-    assert factory_file.exists(), f"Factory file not found: {factory_file}"
-
-    agent_content = agent_file.read_text("utf-8")
-    factory_content = factory_file.read_text("utf-8")
-
-    # Extract parameter sections from both files
-    agent_params = extract_param_fields(agent_content)
-    factory_params = extract_param_fields(factory_content)
-
-    # Compare the normalized parameter lists
-    missing_in_agent = set(factory_params) - set(agent_params)
-    extra_in_agent = set(agent_params) - set(factory_params)
-
-    error_messages = []
-    if missing_in_agent:
-        error_messages.append(f"Parameters missing in agent.mdx: {missing_in_agent}")
-    if extra_in_agent:
-        error_messages.append(f"Extra parameters in agent.mdx: {extra_in_agent}")
-
-    if error_messages:
-        pytest.fail(
-            f"Parameter synchronization failed between {agent_file} and {factory_file}:\n" + "\n".join(error_messages)
-        )
-
-
 def test_session_parameters_in_sync():
     """
     Test that parameters in sdk/manual/session.mdx are synchronized with
@@ -88,41 +54,6 @@ def test_session_parameters_in_sync():
     if error_messages:
         pytest.fail(
             f"Parameter synchronization failed between {session_file} and {factory_file}:\n" + "\n".join(error_messages)
-        )
-
-
-def test_workflow_parameters_in_sync():
-    """
-    Test that parameters in sdk/manual/workflow.mdx are synchronized with
-    the source parameters in sdk/remoteworkflowfactory/__init__.mdx
-    """
-    workflow_file = SDK_DIR / "manual" / "workflow.mdx"
-    factory_file = SDK_DIR / "remoteworkflow" / "__init__.mdx"
-
-    assert workflow_file.exists(), f"Workflow file not found: {workflow_file}"
-    assert factory_file.exists(), f"Factory file not found: {factory_file}"
-
-    workflow_content = workflow_file.read_text("utf-8")
-    factory_content = factory_file.read_text("utf-8")
-
-    # Extract parameter sections from both files
-    workflow_params = extract_param_fields(workflow_content)
-    factory_params = extract_param_fields(factory_content)
-
-    # Compare the normalized parameter lists
-    missing_in_workflow = set(factory_params) - set(workflow_params)
-    extra_in_workflow = set(workflow_params) - set(factory_params)
-
-    error_messages = []
-    if missing_in_workflow:
-        error_messages.append(f"Parameters missing in workflow.mdx: {missing_in_workflow}")
-    if extra_in_workflow:
-        error_messages.append(f"Extra parameters in workflow.mdx: {extra_in_workflow}")
-
-    if error_messages:
-        pytest.fail(
-            f"Parameter synchronization failed between {workflow_file} and {factory_file}:\n"
-            + "\n".join(error_messages)
         )
 
 
@@ -225,41 +156,6 @@ def test_file_storage_parameters_in_sync():
     if error_messages:
         pytest.fail(
             f"Parameter synchronization failed between {file_storage_file} and {factory_file}:\n"
-            + "\n".join(error_messages)
-        )
-
-
-def test_agent_fallback_parameters_in_sync():
-    """
-    Test that parameters in sdk/manual/agent_fallback.mdx are synchronized with
-    the source parameters in sdk/remoteagentfallback/__init__.mdx
-    """
-    agent_fallback_file = SDK_DIR / "manual" / "agent_fallback.mdx"
-    factory_file = SDK_DIR / "remoteagentfallback" / "__init__.mdx"
-
-    assert agent_fallback_file.exists(), f"Agent fallback file not found: {agent_fallback_file}"
-    assert factory_file.exists(), f"Factory file not found: {factory_file}"
-
-    agent_fallback_content = agent_fallback_file.read_text("utf-8")
-    factory_content = factory_file.read_text("utf-8")
-
-    # Extract parameter sections from both files
-    agent_fallback_params = extract_param_fields(agent_fallback_content)
-    factory_params = extract_param_fields(factory_content)
-
-    # Compare the normalized parameter lists
-    missing_in_agent_fallback = set(factory_params) - set(agent_fallback_params)
-    extra_in_agent_fallback = set(agent_fallback_params) - set(factory_params)
-
-    error_messages = []
-    if missing_in_agent_fallback:
-        error_messages.append(f"Parameters missing in agent_fallback.mdx: {missing_in_agent_fallback}")
-    if extra_in_agent_fallback:
-        error_messages.append(f"Extra parameters in agent_fallback.mdx: {extra_in_agent_fallback}")
-
-    if error_messages:
-        pytest.fail(
-            f"Parameter synchronization failed between {agent_fallback_file} and {factory_file}:\n"
             + "\n".join(error_messages)
         )
 

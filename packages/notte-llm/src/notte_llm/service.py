@@ -1,80 +1,36 @@
-import os
 from pathlib import Path
 from typing import Any
 
 import tiktoken
 from litellm import ModelResponse  # type: ignore[import]
-from llamux import Router  # type: ignore[import]
-from notte_core.common.config import LlmModel, PerceptionType, config
+from notte_core.common.config import config
 from notte_core.common.logging import logger
+from notte_core.common.types import TResponseFormat
 from notte_core.errors.llm import InvalidPromptTemplateError
 
+from notte_llm.config import LlmSettings
 from notte_llm.engine import LLMEngine
+from notte_llm.models import LlmModel
 from notte_llm.prompt import PromptLibrary
-from notte_llm.types import TResponseFormat
 
 PROMPT_DIR = Path(__file__).parent / "prompts"
-LLAMUX_CONFIG = Path(__file__).parent / "config" / "endpoints.csv"
-
-
-def get_llamux_config(verbose: bool = False) -> str:
-    if "LLAMUX_CONFIG_PATH" in os.environ:
-        if verbose:
-            logger.debug(f"Using custom LLAMUX config path: {os.environ['LLAMUX_CONFIG_PATH']}")
-    else:
-        if verbose:
-            logger.debug(f"Using default LLAMUX config path: {LLAMUX_CONFIG}")
-    return os.getenv("LLAMUX_CONFIG_PATH", str(LLAMUX_CONFIG))
 
 
 class LLMService:
     """
-    LLM service for Notte.
+    LLM service used for structured data extraction (`scrape(instructions=..., response_format=...)`).
     """
 
-    def __init__(self, base_model: str | None = None, use_router: bool = True) -> None:
+    def __init__(self, base_model: str | None = None) -> None:
         self.lib: PromptLibrary = PromptLibrary(str(PROMPT_DIR))
-        self.router: Router | None = None
-
-        # A caller-chosen model must not be overridden by the router.
-        if config.use_llamux and use_router:
-            llamux_config = get_llamux_config(config.verbose)
-            path = Path(llamux_config)
-            if not path.exists():
-                raise FileNotFoundError(f"LLAMUX config file not found at {path}")
-            self.router = Router.from_csv(llamux_config)
-        self.base_model: str = base_model or LlmModel.default()
+        settings = LlmSettings.from_env()
+        self.base_model: str = base_model or settings.model
         self.tokenizer: tiktoken.Encoding = tiktoken.get_encoding("cl100k_base")
         self.verbose: bool = config.verbose
-        self.nb_retries_structured_output: int = config.nb_retries_structured_output
-
-    @staticmethod
-    def from_config(perception_type: PerceptionType = config.perception_type) -> "LLMService":
-        model = config.perception_model
-        if model is None:
-            model = config.reasoning_model
-            if perception_type == "deep":
-                logger.warning(f"No perception model set, using reasoning model: {config.reasoning_model}")
-        return LLMService(base_model=model)
+        self.nb_retries_structured_output: int = settings.nb_retries_structured_output
 
     def context_length(self) -> int:
         return LlmModel.get_provider(self.base_model).context_length
-
-    def get_base_model(self, messages: list[dict[str, Any]]) -> tuple[str, str | None]:
-        eid: str | None = None
-
-        if self.router is not None:
-            router = "llamux"
-            provider, model, eid, _ = self.router.query(messages=messages)
-            base_model = f"{provider}/{model}"
-        else:
-            router = "fixed"
-            base_model = self.base_model
-
-        token_len = self.estimate_tokens(text="\n".join([m["content"] for m in messages]))
-        if self.verbose:
-            logger.debug(f"llm router '{router}' selected '{base_model}' for approx {token_len} tokens")
-        return base_model, eid
 
     def clip_tokens(self, document: str, max_tokens: int | None = None) -> str:
         max_tokens = max_tokens or (self.context_length() - 2000)
@@ -105,13 +61,12 @@ class LLMService:
         use_strict_response_format: bool = True,
     ) -> TResponseFormat:
         messages = self.lib.materialize(prompt_id, variables)
-        base_model, _ = self.get_base_model(messages)
         return await LLMEngine(
             nb_retries_structured_output=self.nb_retries_structured_output, verbose=self.verbose
         ).structured_completion(
             messages=messages,  # type: ignore[arg-type]
             response_format=response_format,
-            model=base_model,
+            model=self.base_model,
             use_strict_response_format=use_strict_response_format,
         )
 
@@ -121,13 +76,7 @@ class LLMService:
         variables: dict[str, Any] | None = None,
     ) -> ModelResponse:
         messages = self.lib.materialize(prompt_id, variables)
-        base_model, eid = self.get_base_model(messages)
-        response = await LLMEngine(verbose=self.verbose).completion(
+        return await LLMEngine(verbose=self.verbose).completion(
             messages=messages,  # type: ignore[arg-type]
-            model=base_model,
+            model=self.base_model,
         )
-        if eid is not None and self.router is not None:
-            # log usage to LLAMUX router if eid is provided
-            tokens: int = response.usage.total_tokens  # type: ignore[attr-defined]
-            self.router.log(tokens=tokens, endpoint_id=eid)  # type: ignore[arg-type]
-        return response

@@ -24,8 +24,8 @@ from litellm.exceptions import (
     ContextWindowExceededError as LiteLLMContextWindowExceededError,
 )
 from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTypeStubs]
-from notte_core.common.config import LlmModel, config, enable_openrouter
 from notte_core.common.logging import logger
+from notte_core.common.types import TResponseFormat
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.llm import LLmModelOverloadedError, LLMParsingError
 from notte_core.errors.provider import (
@@ -42,9 +42,8 @@ from notte_core.errors.provider import RateLimitError as NotteRateLimitError
 from notte_core.profiling import profiler
 from pydantic import BaseModel, ValidationError, create_model
 
-from notte_llm.logging import trace_llm_usage
-from notte_llm.tracer import LlmTracer, LlmUsageFileTracer
-from notte_llm.types import TResponseFormat
+from notte_llm.config import LlmSettings
+from notte_llm.models import LlmModel, enable_openrouter
 
 
 def _resolve_schema_refs(schema: dict[str, Any]) -> dict[str, Any]:
@@ -349,18 +348,14 @@ class LLMEngine:
     def __init__(
         self,
         model: str | None = None,
-        tracer: LlmTracer | None = None,
-        nb_retries_structured_output: int = config.nb_retries_structured_output,
+        nb_retries_structured_output: int | None = None,
         verbose: bool = False,
     ):
         self.model: str = model or LlmModel.default()
         self.sc: StructuredContent = StructuredContent(inner_tag="json", fail_if_inner_tag=False)
 
-        if tracer is None:
-            tracer = LlmUsageFileTracer()
-
-        self.tracer: LlmTracer = tracer
-        self.completion = trace_llm_usage(tracer=self.tracer)(self.completion)  # pyright: ignore [reportAttributeAccessIssue]
+        if nb_retries_structured_output is None:
+            nb_retries_structured_output = LlmSettings.from_env().nb_retries_structured_output
         self.nb_retries_structured_output: int = nb_retries_structured_output
         self.verbose: bool = verbose
 
@@ -525,7 +520,7 @@ class LLMEngine:
         self,
         messages: list[AllMessageValues],
         model: str | None = None,
-        temperature: float = config.temperature,
+        temperature: float | None = None,
         response_format: dict[str, str] | type[BaseModel] | None = None,
     ) -> str | None:
         model = model or self.model
@@ -563,12 +558,14 @@ class LLMEngine:
         self,
         messages: list[AllMessageValues],
         model: str | None = None,
-        temperature: float = config.temperature,
+        temperature: float | None = None,
         response_format: dict[str, str] | type[BaseModel] | None = None,
         n: int = 1,
     ) -> ModelResponse:
         extra_body = self._get_extra_body(model)
         model = self._get_model(model)
+        if temperature is None:
+            temperature = LlmSettings.from_env().temperature
         # Apply model-specific temperature overrides
         temperature = LlmModel.get_temperature(model, temperature)
         vertex_location = get_vertex_location(model)

@@ -1,6 +1,6 @@
 ---
 title: 'Secret Vaults'
-description: 'Enterprise-grade credential management for your Sessions & Agents'
+description: 'Enterprise-grade credential management for your Sessions'
 ---
 import VaultPython from '/snippets/vaults/index.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
@@ -9,9 +9,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 ## Overview
 
-Notte provides an enterprise-grade secure vault system that allows you to safely share authentication details with AI agents.
-All sensitive data is encrypted at rest and in transit, and credentials are never exposed to LLMs or third-party services during agent execution.
-This ensures your passwords, API keys, and other secrets remain protected while enabling agents to authenticate and interact with services on your behalf.
+Notte provides an enterprise-grade secure vault system that lets your sessions authenticate without your code ever handling the secrets.
+All sensitive data is encrypted at rest and in transit, and credentials are never exposed to LLMs (including the coding agents that write your automations) or third-party services.
+This ensures your passwords, API keys, and other secrets remain protected while your automations log in and interact with services on your behalf.
 
 ## Secure your credentials
 
@@ -19,19 +19,19 @@ Your credentials are protected with multiple layers of security:
 
 - **End-to-End Encryption**: All secrets are encrypted at rest and in transit.
 - **Zero Trust Architecture**: Credentials are never forwarded to LLM calls or external services.
-- **Restricted Access**: Only your agents can access your credentials.
+- **Restricted Access**: Only sessions you attach the vault to can use your credentials.
 - **2FA Support**: Comprehensive support for two-factor authentication credentials.
 
 ## How it works
 
 ![vault-fill-action](/images/vault-fill-action.png)
 
-The Vault acts as an intermediary between the LLM agent and the browser session.
-Some actions like `FillActions` may contain secure information such as passwords, credit card numbers, MFA secrets, etc.
-When the system detects that the intent of the LLM Agent is to use such sensitive information, the vault takes over the execution and manually replaces the dummy
-credentials provided by the LLM with the actual credentials based on the content of the vault.
+The Vault acts as an intermediary between your code and the browser session.
+Attach a vault to a session with `client.Session(vault_id=...)`, then fill forms with placeholder values (`EMAIL`, `PASSWORD`, `MFA`, ... from `notte_core.credentials`).
+When a `fill` or `form_fill` action contains a placeholder, the vault takes over the execution and replaces the dummy value with the actual
+credential for the current website, directly inside the browser.
 
-The significant security benefit of this approach is that the LLM never actually sees the actual credentials.
+The significant security benefit of this approach is that neither your code nor the LLM that wrote it ever sees the actual credentials.
 
 ## Vault Management
 

@@ -5,14 +5,18 @@ from notte_sdk import NotteClient
 def validate_before_production():
     client = NotteClient()
 
-    # Test locally first - decryption key needed for local execution
-    function = client.Function(function_id="func_abc123", decryption_key="your-key")
+    # Deploy the new version as a separate staging function first
+    staging = client.Function(path="tested_function.py", name="my-function-staging")
 
-    # Run with local=True for testing
-    test_result = function.run(url="https://test-site.com", local=True)
+    # Run it in the cloud against a test site
+    test_result = staging.run(url="https://test-site.com")
 
     if test_result.status == "closed":
         print("Test passed, ready to update production")
-        function.update(path="tested_function.py")
+        production = client.Function(function_id="func_abc123")
+        production.update(path="tested_function.py")
     else:
         print(f"Test failed: {test_result.result}")
+
+    # Remove the staging function once validated
+    staging.delete()

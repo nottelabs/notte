@@ -1,7 +1,7 @@
 import difflib
 from pathlib import Path
 
-from notte_browser.scraping.pruning import MarkdownPruningPipe, MaskedDocument
+from notte_core.data.pruning import MarkdownPruningPipe, MaskedDocument
 from pydantic import BaseModel
 
 

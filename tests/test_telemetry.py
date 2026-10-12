@@ -1,3 +1,5 @@
+import subprocess
+import sys
 from typing import Any
 
 import pytest
@@ -75,3 +77,13 @@ async def test_track_usage_captures_async_failures_after_await(monkeypatch: pyte
 
     assert events == [("test.async_error", {"status": "error", "error_type": "ValueError"})]
     assert secret not in repr(events)
+
+
+def test_importing_the_sdk_does_not_start_telemetry() -> None:
+    """Telemetry clients (and their imports) are only created on the first captured event."""
+    code = (
+        "import sys, notte_sdk, notte_core.common.telemetry as t\n"
+        "assert 'posthog' not in sys.modules and 'scarf' not in sys.modules, sorted(sys.modules)\n"
+        "assert t._clients.cache_info().currsize == 0\n"
+    )
+    _ = subprocess.run([sys.executable, "-c", code], check=True, capture_output=True)

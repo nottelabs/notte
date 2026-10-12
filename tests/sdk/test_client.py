@@ -15,7 +15,6 @@ from notte_sdk.errors import AuthenticationError
 from notte_sdk.types import (
     DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES,
     DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
-    AgentListRequest,
     ExecutionRequest,
     ExecutionRequestDict,
     LocalSessionStartRequest,
@@ -541,7 +540,6 @@ def test_managed_auth_connection_check(mock_post: MagicMock, client: NotteClient
 def test_system_session_filter_is_session_specific_and_only_sent_explicitly() -> None:
     assert "include_system" not in SessionListRequest().model_dump(exclude_none=True)
     assert SessionListRequest(include_system=False).model_dump(exclude_none=True)["include_system"] is False
-    assert "include_system" not in AgentListRequest().model_dump()
     assert "include_system" not in VaultListRequest().model_dump()
 
 

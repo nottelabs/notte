@@ -21,6 +21,7 @@ permissions:
 
 jobs:
   bump:
+    if: github.repository == 'nottelabs/notte'
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'github'] }}
     timeout-minutes: 45
     env:

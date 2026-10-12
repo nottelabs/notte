@@ -42,27 +42,20 @@ you can also easily visualize the live session using `session.viewer()`. This wi
 > You can also use the `session.viewer_cdp()` method to open Chrome CDP viewer.
 
 
-## Manage your agents
+## Record and replay your sessions
 
 ```python
 from notte_sdk.client import NotteClient
-import os
 
-notte = NotteClient()
-# start a session and attach an agent
-with notte.Session() as session:
-    agent = notte.Agent(session=session, max_steps=10)
-    response = agent.run(
-        task="Summarize the job offers on the Notte careers page.",
-        url="https://notte.cc",
-    )
+client = NotteClient()
+with client.Session() as session:
+    _ = session.execute(type="goto", url="https://notte.cc")
+    summary = session.scrape(instructions="Summarize what Notte does in two sentences.")
 # Retrieve the replay after closing the session
 replay = session.replay()
 ```
 
-The session context manager stops the session when the block exits. You can run multiple agents in the same session before closing it.
-
-You can use a non blocking approach to control the execution flow using the `agent.start(...)`, `agent.status(...)` and `agent.stop(...)` methods.
+The session context manager stops the session when the block exits. Every action executed in the session is recorded, and `session.replay()` returns a presigned URL to the MP4 recording.
 
 
 ## Execute actions in a session
@@ -85,11 +78,7 @@ with notte.Session() as session:
     # scrape the page content
     markdown = session.scrape()
     print(markdown)
-    # print the scraped content)
-    agent = notte.Agent(session=session)
-    response =agent.run(
-        task="Summarize the content of the page",
-        url="https://www.google.com",
-    )
-    print(response.answer)
+    # extract structured content from the page with instructions
+    summary = session.scrape(instructions="Summarize the content of the page")
+    print(summary)
 ```

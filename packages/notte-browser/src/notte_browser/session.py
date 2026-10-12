@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any, ClassVar, Literal, Unpack, overload
 
 import requests
-from litellm import BaseModel
 from notte_core import enable_nest_asyncio
 from notte_core.actions import (
     ActionList,
@@ -18,7 +17,6 @@ from notte_core.actions import (
     FillAction,
     FormFillAction,
     InteractionAction,
-    InteractionActionUnion,
     MultiFactorFillAction,
     # ReadFileAction,
     ScrapeAction,
@@ -30,7 +28,6 @@ from notte_core.actions.typedicts import (
     CheckActionDict,
     ClickActionDict,
     CloseTabActionDict,
-    CompletionActionDict,
     DownloadFileActionDict,
     EmailReadActionDict,
     EmailVerificationReadActionDict,
@@ -42,7 +39,6 @@ from notte_core.actions.typedicts import (
     GoForwardActionDict,
     GotoActionDict,
     GotoNewTabActionDict,
-    HelpActionDict,
     MultiFactorFillActionDict,
     PressKeyActionDict,
     ReloadActionDict,
@@ -58,11 +54,12 @@ from notte_core.actions.typedicts import (
 )
 from notte_core.browser.observation import ExecutionResult, Observation, Screenshot, TimedSpan
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import BrowserBackend, CookieDict, PerceptionType, RaiseCondition, ScreenshotType, config
+from notte_core.common.config import BrowserBackend, CookieDict, RaiseCondition, ScreenshotType, config
 from notte_core.common.logging import logger, timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault, LocatorAttributes
+from notte_core.data.extraction import StructuredExtractor
 from notte_core.data.fetch import FetchData, build_fetch_script, response_from_evaluated
 from notte_core.data.space import DataSpace, ImageData, StructuredData, TBaseModel
 from notte_core.errors.actions import (
@@ -79,7 +76,6 @@ from notte_core.storage import BaseStorage
 from notte_core.trajectory import Trajectory
 from notte_core.utils.files import create_or_append_cookies_to_file
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
-from notte_llm.service import LLMService
 from notte_sdk.endpoints.personas import BasePersona
 from notte_sdk.types import (
     LocalSessionStartRequest,
@@ -90,10 +86,9 @@ from notte_sdk.types import (
     ScrapeParams,
     ScrapeParamsDict,
 )
-from pydantic import RootModel, ValidationError
+from pydantic import BaseModel, RootModel, ValidationError
 from typing_extensions import override
 
-from notte_browser.action_selection.pipe import ActionSelectionPipe
 from notte_browser.captcha import CaptchaHandler
 from notte_browser.controller import BrowserController
 from notte_browser.dom.locate import locate_element
@@ -140,7 +135,6 @@ class NotteSession(AsyncResource, SyncResource):
     def __init__(
         self,
         *,
-        perception_type: PerceptionType = config.perception_type,
         raise_on_failure: bool = config.raise_on_session_execution_failure,
         cookie_file: str | Path | None = None,
         storage: BaseStorage | None = None,
@@ -149,6 +143,7 @@ class NotteSession(AsyncResource, SyncResource):
         persona: BasePersona | None = None,
         window: BrowserWindow | None = None,
         keep_alive: bool = False,
+        extractor: StructuredExtractor | None = None,
         **data: Unpack[LocalSessionStartRequestDict],
     ) -> None:
         if storage is not None and storage.is_remote:
@@ -165,17 +160,15 @@ class NotteSession(AsyncResource, SyncResource):
         self._window: BrowserWindow | None = window
         self.controller: BrowserController = BrowserController(verbose=config.verbose, storage=storage)
         self.storage: BaseStorage | None = storage
-        llmserve = LLMService.from_config(perception_type=perception_type)
-        self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe(llmserve=llmserve)
-        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, type=config.scraping_type)
-        self._action_selection_pipe: ActionSelectionPipe = ActionSelectionPipe(llmserve=llmserve)
+        self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe()
+        # Structured scraping hands the page markdown to `extractor` (by default `notte_llm.LlmExtractor`, if installed).
+        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(type=config.scraping_type, extractor=extractor)
         self.tools: list[BaseTool] = tools or []
         self.vault: BaseVault | None = vault
         if persona is not None:
             self.attach_persona(persona)
         else:
             self.persona: BasePersona | None = None
-        self.default_perception_type: PerceptionType = perception_type
         self.default_raise_on_failure: bool = raise_on_failure
         self.trajectory: Trajectory = Trajectory()
         self._snapshot: BrowserSnapshot | None = None
@@ -209,7 +202,7 @@ class NotteSession(AsyncResource, SyncResource):
 
     @staticmethod
     def script(storage: BaseStorage | None = None, **data: Unpack[LocalSessionStartRequestDict]) -> NotteSession:
-        return NotteSession(storage=storage, raise_on_failure=True, perception_type="fast", **data)
+        return NotteSession(storage=storage, raise_on_failure=True, **data)
 
     @track_usage("local.session.cookies.get")
     async def aget_cookies(self) -> list[CookieDict]:
@@ -315,12 +308,11 @@ class NotteSession(AsyncResource, SyncResource):
     async def _interaction_action_listing(
         self,
         pagination: PaginationParams,
-        perception_type: PerceptionType,
         retry: int = observe_max_retry_after_snapshot_update,
     ) -> ActionSpace:
         if config.verbose:
-            logger.info(f"🧿 observing page {self.snapshot.metadata.url} and {perception_type} perception")
-        space = await self._action_space_pipe.with_perception(perception_type=perception_type).forward(
+            logger.info(f"🧿 observing page {self.snapshot.metadata.url}")
+        space = await self._action_space_pipe.forward(
             snapshot=self.snapshot,
             previous_action_list=self.previous_interaction_actions,
             pagination=pagination,
@@ -344,9 +336,7 @@ class NotteSession(AsyncResource, SyncResource):
                         "Snapshot changed since the beginning of the action listing, retrying to observe again"
                     )
                 self.snapshot = check_snapshot
-                return await self._interaction_action_listing(
-                    perception_type=perception_type, retry=retry - 1, pagination=pagination
-                )
+                return await self._interaction_action_listing(retry=retry - 1, pagination=pagination)
 
         return space
 
@@ -376,45 +366,17 @@ class NotteSession(AsyncResource, SyncResource):
     ) -> Screenshot:
         return asyncio.run(self.ascreenshot())
 
-    @overload
-    async def aobserve(
-        self,
-        *,
-        instructions: str,
-        perception_type: PerceptionType | None = None,
-        **pagination: Unpack[PaginationParamsDict],
-    ) -> list[InteractionActionUnion]: ...
-
-    @overload
-    async def aobserve(
-        self,
-        *,
-        instructions: None = None,
-        perception_type: PerceptionType | None = None,
-        **pagination: Unpack[PaginationParamsDict],
-    ) -> Observation: ...
-
     @timeit("observe")
     @track_usage("local.session.observe")
-    async def aobserve(
-        self,
-        instructions: str | None = None,
-        perception_type: PerceptionType | None = None,
-        **pagination: Unpack[PaginationParamsDict],
-    ) -> Observation | list[InteractionActionUnion]:
+    async def aobserve(self, **pagination: Unpack[PaginationParamsDict]) -> Observation:
         # Profile with URL attribute
         async with profiler.profile("aobserve", service_name="observation") as span:
             if span is not None:
                 span.set_attribute("url", self.window.page.url)
 
-            return await self._aobserve_impl(instructions, perception_type, **pagination)
+            return await self._aobserve_impl(**pagination)
 
-    async def _aobserve_impl(
-        self,
-        instructions: str | None = None,
-        perception_type: PerceptionType | None = None,
-        **pagination: Unpack[PaginationParamsDict],
-    ) -> Observation | list[InteractionActionUnion]:
+    async def _aobserve_impl(self, **pagination: Unpack[PaginationParamsDict]) -> Observation:
         # --------------------------------
         # ------ Step 1: snapshot --------
         # --------------------------------
@@ -442,18 +404,9 @@ class NotteSession(AsyncResource, SyncResource):
             # --------------------------------
 
             space = await self._interaction_action_listing(
-                perception_type=perception_type or self.default_perception_type,
                 pagination=PaginationParams.model_validate(pagination),
                 retry=self.observe_max_retry_after_snapshot_update,
             )
-        if instructions is not None:
-            obs = Observation.from_snapshot(self.snapshot, space=space, span=span.close())
-            selected_actions = await self._action_selection_pipe.forward(obs, instructions=instructions)
-            if not selected_actions.success:
-                logger.warning(f"❌ Action selection failed: {selected_actions.reason}. Space will be empty.")
-                return []
-            space = space.filter(action_ids=[a.action_id for a in selected_actions.actions])
-            return list(space.interaction_actions)
 
         # --------------------------------
         # ------- Step 3: tracing --------
@@ -464,31 +417,8 @@ class NotteSession(AsyncResource, SyncResource):
         await self.trajectory.append(obs)
         return obs
 
-    @overload
-    def observe(
-        self,
-        *,
-        instructions: str,
-        perception_type: PerceptionType | None = None,
-        **pagination: Unpack[PaginationParamsDict],
-    ) -> list[InteractionActionUnion]: ...
-
-    @overload
-    def observe(
-        self,
-        *,
-        instructions: None = None,
-        perception_type: PerceptionType | None = None,
-        **pagination: Unpack[PaginationParamsDict],
-    ) -> Observation: ...
-
-    def observe(
-        self,
-        instructions: str | None = None,
-        perception_type: PerceptionType | None = None,
-        **pagination: Unpack[PaginationParamsDict],
-    ) -> Observation | list[InteractionActionUnion]:
-        return asyncio.run(self.aobserve(instructions=instructions, perception_type=perception_type, **pagination))
+    def observe(self, **pagination: Unpack[PaginationParamsDict]) -> Observation:
+        return asyncio.run(self.aobserve(**pagination))
 
     def _has_any_persona_tool(self) -> bool:
         return any(isinstance(tool, PersonaTool) for tool in self.tools)
@@ -655,14 +585,6 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     async def aexecute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CaptchaSolveActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    async def aexecute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[HelpActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    async def aexecute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CompletionActionDict]
     ) -> ExecutionResult: ...
     @overload
     async def aexecute(
@@ -988,7 +910,7 @@ class NotteSession(AsyncResource, SyncResource):
             if not res.success:
                 logger.error("🚨 Stopping execution of saved actions since last action failed...")
                 return
-            obs = self.observe(perception_type="fast")
+            obs = self.observe()
             logger.info(f"🌌 Observation. Current URL: {obs.clean_url}")
         logger.info("🎉 All actions executed successfully")
 
@@ -1041,12 +963,6 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CaptchaSolveActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[HelpActionDict]) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CompletionActionDict]
     ) -> ExecutionResult: ...
     @overload
     def execute(

@@ -1,7 +1,7 @@
 [project]
 name = "notte-browser"
-version = "1.9.7.dev0"
-description = "The web browser for LLMs agents"
+version = "2.0.0.dev0"
+description = "Playwright-based browser sessions: observe pages, execute actions, scrape content"
 readme = "README.md"
 authors = [
     { name = "Notte Team ", email = "hello@notte.cc" }
@@ -13,9 +13,11 @@ packages = [
 
 requires-python = ">=3.11"
 dependencies = [
-    "notte_core==1.9.7.dev0",
-    "notte_llm==1.9.7.dev0",
+    "notte_core==2.0.0.dev0",
+    "notte_sdk==2.0.0.dev0",
+    "beautifulsoup4>=4.12.0",
     "html2text>=2025.4.15",
+    "httpx>=0.27.0",
     "lxml>=5.3.1",
     "markdownify>=0.14.1",
     "pillow>=11.2.1",

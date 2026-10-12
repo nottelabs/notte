@@ -30,7 +30,10 @@ PARAM_FIELD_RE = re.compile(r'<ParamField\s+path="([^"]+)"[^>]*?\sdefault=(\{[^}
 
 
 def code_defaults() -> dict[str, Any]:
+    import inspect
+
     from notte_core.common.config import config
+    from notte_sdk.endpoints.sessions import RemoteSession
     from notte_sdk.types import (
         DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
         DEFAULT_HEADLESS_VIEWPORT_WIDTH,
@@ -54,7 +57,7 @@ def code_defaults() -> dict[str, Any]:
         "viewport_width": DEFAULT_HEADLESS_VIEWPORT_WIDTH,
         "viewport_height": DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
         "browser_type": field_default("browser_type"),
-        "perception_type": config.perception_type,
+        "perception_type": inspect.signature(RemoteSession.__init__).parameters["perception_type"].default,
         "raise_on_failure": config.raise_on_session_execution_failure,
     }
 

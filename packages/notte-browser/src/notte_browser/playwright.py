@@ -6,8 +6,7 @@ from notte_core.common.logging import logger
 from notte_core.common.resource import AsyncResource
 from notte_core.profiling import profiler
 from notte_sdk.types import LocalSessionStartRequest
-from openai import BaseModel
-from pydantic import PrivateAttr
+from pydantic import BaseModel, PrivateAttr
 from typing_extensions import override
 
 from notte_browser.errors import BrowserNotAvailableError, BrowserNotStartedError, CdpConnectionError
@@ -26,7 +25,7 @@ class BaseWindowManager(AsyncResource, ABC):
         pass
 
 
-class PlaywrightManager(BaseModel, BaseWindowManager):
+class PlaywrightManager(BaseModel, BaseWindowManager):  # pyright: ignore[reportUnsafeMultipleInheritance]
     model_config = {  # pyright: ignore[reportUnannotatedClassAttribute]
         "arbitrary_types_allowed": True
     }

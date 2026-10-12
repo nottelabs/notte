@@ -1,7 +1,7 @@
 [project]
 name = "notte"
-version = "1.9.7.dev0"
-description = "Notte, the full-stack web AI agent framework"
+version = "2.0.0.dev0"
+description = "Notte: browser infrastructure for AI agents and web automation"
 readme = "README.md"
 license = "SSPL-1.0"
 authors = [
@@ -9,24 +9,21 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "notte-core==1.9.7.dev0",
-    "notte-sdk==1.9.7.dev0",
-    "notte-browser==1.9.7.dev0",
-    "notte-agent==1.9.7.dev0",
-    "google-auth>=2.39.0",
-    "toml>=0.10.2",
+    "notte-core==2.0.0.dev0",
+    "notte-sdk==2.0.0.dev0",
+    "notte-browser==2.0.0.dev0",
 ]
 
 [project.optional-dependencies]
-integrations = ["notte-integrations==1.9.7.dev0"]
+llm = ["notte-llm==2.0.0.dev0"]
+# Drive cloud sessions with Playwright over CDP (session.page / session.cdp_url()).
+playwright = ["notte-sdk[playwright]==2.0.0.dev0"]
 
 [tool.uv.sources]
 notte-core = { workspace = true }
 notte-sdk = { workspace = true }
 notte-browser = { workspace = true }
-notte-agent = { workspace = true }
 notte-llm = { workspace = true }
-notte-integrations = { workspace = true }
 
 
 [tool.uv.workspace]
@@ -65,6 +62,7 @@ dev = [
     "pytest-rerunfailures>=15.0",
     "pytest-timeout>=2.4.0",
     "pytest-xdist[psutil]>=3.8.0",
+    "python-dotenv>=1.0.1",
     "sphinx>=8.2.3",
     "sphinx-mintlify>=0.1.0",
     "twine>=6.1.0",

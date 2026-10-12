@@ -36,6 +36,8 @@ env:
   NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}
 
 permissions:
+  # Needed to check out private repositories (e.g. the notte-v2 staging repo).
+  contents: read
   pull-requests: write
 
 jobs:
@@ -57,6 +59,7 @@ jobs:
         with:
             ref: ${{ github.event.pull_request.head.sha }}
 
+      # Vertex credentials are only used by the notte-llm tests (tests/llm).
       - id: 'auth'
         if: ${{ env.IS_TRUSTED == 'true' }}
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
@@ -145,18 +148,12 @@ jobs:
             echo "GOOGLE_APPLICATION_CREDENTIALS is not set"
             exit 1
           fi
-          if [ -z "$SMTP_SERVER" ]; then
-            echo "SMTP_SERVER is not set"
-            exit 1
-          fi
-          if [ -z "$EMAIL_SENDER" ]; then
-            echo "EMAIL_SENDER is not set"
-            exit 1
-          fi
-          if [ -z "$EMAIL_PASSWORD" ]; then
-            echo "EMAIL_PASSWORD is not set"
-            exit 1
-          fi
+          # The SMTP tests (tests/browser/test_tools.py) skip themselves without these, so only warn.
+          for name in SMTP_SERVER EMAIL_SENDER EMAIL_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::warning::$name is not set, the SMTP tests will be skipped"
+            fi
+          done
           echo "Environment variables are set"
 
       - name: Wait for the API to be reachable

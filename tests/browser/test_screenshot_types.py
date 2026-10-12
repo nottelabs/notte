@@ -21,7 +21,7 @@ async def test_different_screenshot_types_produce_different_screenshots() -> Non
         # Navigate to Google
         _ = await session.aexecute(GotoAction(url="https://www.google.com"))
 
-        _ = await session.aobserve(perception_type="fast")
+        _ = await session.aobserve()
         # Fill the search box with id=I1 (Google's search input)
         _ = await session.aexecute(FillAction(id="I1", value="test value"))
 

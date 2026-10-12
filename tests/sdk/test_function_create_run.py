@@ -6,8 +6,7 @@ from notte_sdk import NotteClient
 from notte_sdk.types import CreateFunctionRunResponse, FunctionRunResponse
 
 
-@pytest.mark.parametrize("local", [False, True])
-def test_create_run_does_not_execute_or_fetch_function(local: bool) -> None:
+def test_create_run_does_not_execute_or_fetch_function() -> None:
     client = NotteClient(api_key="test-api-key", server_url="https://api.notte.cc")
     function = client.Function("function-123")
     created = CreateFunctionRunResponse(
@@ -18,10 +17,10 @@ def test_create_run_does_not_execute_or_fetch_function(local: bool) -> None:
         patch.object(client.functions, "get") as get,
         patch.object(client.functions, "run") as run,
     ):
-        response = function.create_run(local=True) if local else function.create_run()
+        response = function.create_run()
 
     assert response is created
-    create.assert_called_once_with("function-123", local=local)
+    create.assert_called_once_with("function-123")
     get.assert_not_called()
     run.assert_not_called()
     assert function._function_run_id is None
@@ -46,7 +45,7 @@ def test_created_run_can_be_executed_without_creating_another() -> None:
         result = function.run(function_run_id=response.function_run_id, url="https://example.com")
 
     assert result is completed
-    create.assert_called_once_with("function-123", local=False)
+    create.assert_called_once_with("function-123")
     assert run.call_args.kwargs["function_run_id"] == "run-123"
     assert run.call_args.kwargs["variables"] == {"url": "https://example.com"}
 

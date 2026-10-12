@@ -10,7 +10,8 @@ def test_functions_get_curl_uses_functions_endpoint() -> None:
     assert "/workflows/" not in curl
 
 
-def test_functions_remains_workflows_alias() -> None:
+def test_client_has_no_workflows_alias() -> None:
     client = NotteClient(api_key="test-api-key", server_url="https://api.notte.cc")
 
-    assert client.functions is client.workflows
+    assert not hasattr(client, "workflows")
+    assert not hasattr(client, "Workflow")

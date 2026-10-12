@@ -3,16 +3,6 @@ import asyncio
 import pytest
 from notte_browser.session import NotteSession
 
-from tests.mock.mock_service import MockLLMService
-from tests.mock.mock_service import patch_llm_service as _patch_llm_service
-
-patch_llm_service = _patch_llm_service
-
-
-@pytest.fixture
-def mock_llm_service() -> MockLLMService:
-    return MockLLMService(mock_response="")
-
 
 async def simulate_paste(page: NotteSession, text: str) -> None:
     """Helper function to simulate paste operation in a page."""
@@ -84,7 +74,7 @@ async def try_access_clipboard(page: NotteSession) -> str:
 
 @pytest.mark.skip(reason="Skip on CICD because it's failing to often")
 @pytest.mark.asyncio
-async def test_clipboard_isolation(patch_llm_service):
+async def test_clipboard_isolation():
     """Test that clipboard data doesn't leak between browser contexts."""
     # Create two separate Notte environments
     page1 = NotteSession(
@@ -103,8 +93,8 @@ async def test_clipboard_isolation(patch_llm_service):
         _ = await p1.aexecute(type="goto", value=url)
         _ = await p2.aexecute(type="goto", value=url)
 
-        _ = await p1.aobserve(perception_type="fast")
-        _ = await p2.aobserve(perception_type="fast")
+        _ = await p1.aobserve()
+        _ = await p2.aobserve()
 
         for page in [p1, p2]:
             print(page.snapshot.dom_node.interaction_nodes())

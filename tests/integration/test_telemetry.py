@@ -17,10 +17,9 @@ def test_track_usage_delivers_metadata_only_to_telemetry_clients(monkeypatch: py
             scarf_events.append(properties.copy())
 
     monkeypatch.setattr(telemetry, "DISABLE_TELEMETRY", False)
-    monkeypatch.setattr(telemetry, "INSTALLATION_ID", "test-installation")
     monkeypatch.setattr(telemetry, "get_system_info", lambda: {})
-    monkeypatch.setattr(telemetry, "posthog_client", RecordingPosthogClient())
-    monkeypatch.setattr(telemetry, "scarf_client", RecordingScarfClient())
+    clients = (RecordingPosthogClient(), RecordingScarfClient(), "test-installation")
+    monkeypatch.setattr(telemetry, "_clients", lambda: clients)
 
     secret = "delivery-boundary-secret"  # noqa: S105  # pragma: allowlist secret
 

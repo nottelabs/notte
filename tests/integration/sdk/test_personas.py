@@ -5,8 +5,6 @@ from dotenv import load_dotenv
 from notte_sdk import NotteClient
 from notte_sdk.errors import NotteAPIError
 
-import notte
-
 # Persistent fixtures shared by CI, frontend tests, and developers. Never delete
 # these from automated cleanup. Cleanup must remain scoped to resources created
 # by the current test run rather than listing and sweeping the whole account.
@@ -33,16 +31,6 @@ def test_persona_id() -> str:
     return "7abb4f37-25a1-4409-98d9-c4c916918254"
 
 
-def test_persona_in_local_agent():
-    _ = load_dotenv()
-    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-
-    with client.Persona(create_vault=True) as persona:
-        with notte.Session() as session:
-            agent = notte.Agent(session=session, max_steps=5, persona=persona)
-            _ = agent.run(task="Go to the persona's email and check for any new messages")
-
-
 def test_persona_should_be_deleted_after_exit_context():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
@@ -52,31 +40,6 @@ def test_persona_should_be_deleted_after_exit_context():
     assert persona_id is not None
     with pytest.raises(NotteAPIError):
         _ = client.personas.get(persona_id)
-
-
-def test_persona_with_vault_in_remote_agent():
-    _ = load_dotenv()
-
-    client = NotteClient()
-    # Create a new persona with vault
-    with client.Persona(create_vault=True) as persona, client.Session(proxies=False, open_viewer=False) as session:
-        # Add credentials to the persona's vault
-        with pytest.raises(NotteAPIError, match="This vault can only store one email address accross all credentials"):
-            _ = persona.vault.add_credentials(
-                url="https://github.com/",
-                email="<your-email>",
-                password="<your-password>",  # pragma: allowlist secret
-            )
-        # add a new credentials with the same personal email
-        _ = persona.vault.add_credentials(
-            url="https://github.com/",
-            email=persona.info.email,
-            password="<your-password>",  # pragma: allowlist secret
-        )
-
-        # Run an agent with secure credential access
-        agent = client.Agent(session=session, max_steps=1, persona=persona)
-        _ = agent.run(task="try to login to github.com with the persona's credentials")
 
 
 @pytest.mark.skip(reason="This test should not be run as it costs money")
@@ -312,35 +275,3 @@ def test_persona_error_handling():
     # Try to list SMS for non-existent persona
     with pytest.raises(NotteAPIError):
         _ = client.personas.list_sms("non-existent-persona-id")
-
-
-@pytest.mark.flaky(reruns=3, reruns_delay=2)
-def test_persona_form_filling():
-    _ = load_dotenv()
-    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-
-    with client.Persona(create_vault=False, create_phone_number=False) as persona:
-        with client.Session(
-            proxies=False, browser_type="chrome", viewport_width=1280, viewport_height=1080, open_viewer=False
-        ) as session:
-            agent = client.Agent(
-                session=session,
-                max_steps=5,
-                persona=persona,
-            )
-
-            response = agent.run(
-                task="Open the Google form and fill your name.\n"
-                + " Don't fill the form completely. Simply stop once you filled your name. Return your name.",
-                url="https://docs.google.com/forms/d/e/1FAIpQLScjj4EZm-Iz68RrRiv6Gf_K5PhS1Z9d34YRYr5t-sjwDtMOtQ/viewform?usp=dialog",
-            )
-            assert response.success is True
-            assert response.answer is not None
-            assert persona.info.first_name is not None
-            assert persona.info.last_name is not None
-            assert persona.info.first_name in response.answer, (
-                f"First name {persona.info.first_name} not in {response.answer}"
-            )
-            assert persona.info.last_name in response.answer, (
-                f"Last name {persona.info.last_name} not in {response.answer}"
-            )

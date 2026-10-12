@@ -1,20 +1,8 @@
-import os
 from typing import ClassVar, get_args, get_origin, get_type_hints
 
 import pytest
-from dotenv import load_dotenv
-from notte_core.common.config import CookieDict, LlmModel, NotteConfig, NotteConfigDict
+from notte_core.common.config import CookieDict, NotteConfig, NotteConfigDict
 from notte_sdk.types import (
-    DEFAULT_MAX_NB_STEPS,
-    AgentCreateRequest,
-    AgentCreateRequestDict,
-    AgentListRequest,
-    AgentListRequestDict,
-    AgentRunRequest,
-    AgentRunRequestDict,
-    AgentStartRequest,
-    AgentStatusRequest,
-    AgentStatusRequestDict,
     Cookie,
     CreateFunctionRequest,
     CreateFunctionRequestDict,
@@ -63,9 +51,6 @@ from notte_sdk.types import (
     ScrapeParamsDict,
     ScrapeRequest,
     ScrapeRequestDict,
-    SdkAgentCreateRequest,
-    SdkAgentCreateRequestDict,
-    SdkAgentStartRequestDict,
     SdkRequest,
     SdkResponse,
     SessionListRequest,
@@ -154,14 +139,6 @@ def _test_request_dict_alignment(base_request: type[BaseModel], base_request_dic
         )
 
 
-def test_agent_run_request_dict_alignment():
-    _test_request_dict_alignment(AgentRunRequest, AgentRunRequestDict)
-
-
-def test_agent_status_request_dict_alignment():
-    _test_request_dict_alignment(AgentStatusRequest, AgentStatusRequestDict)
-
-
 def test_session_start_request_dict_alignment():
     _test_request_dict_alignment(SessionStartRequest, SessionStartRequestDict)
 
@@ -172,10 +149,6 @@ def test_session_profile_dict_alignment():
 
 def test_session_list_request_dict_alignment():
     _test_request_dict_alignment(SessionListRequest, SessionListRequestDict)
-
-
-def test_agent_list_request_dict_alignment():
-    _test_request_dict_alignment(AgentListRequest, AgentListRequestDict)
 
 
 def test_message_read_request_dict_alignment():
@@ -200,14 +173,6 @@ def test_delete_credentials_request_dict_alignment():
 
 def test_pagination_params_dict_alignment():
     _test_request_dict_alignment(PaginationParams, PaginationParamsDict)
-
-
-def test_local_agent_create_request_dict_alignment():
-    _test_request_dict_alignment(AgentCreateRequest, AgentCreateRequestDict)
-
-
-def test_sdk_agent_create_request_dict_alignment():
-    _test_request_dict_alignment(SdkAgentCreateRequest, SdkAgentCreateRequestDict)
 
 
 def test_create_vault_request_dict_alignment():
@@ -256,46 +221,6 @@ def test_notte_config_dict_alignment():
 
 def test_cookie_dict_alignment():
     _test_request_dict_alignment(Cookie, CookieDict)
-
-
-def test_agent_run_request_default_values():
-    """Test that AgentRunRequest has the correct default values."""
-    request = AgentRunRequest(
-        task="test_task",
-        url="https://notte.cc",
-    )
-
-    assert request.task == "test_task"
-    assert request.url == "https://notte.cc"
-
-
-def test_agent_start_request_default_values():
-    request = AgentStartRequest(
-        task="test_task",
-        session_id="test_session_id",
-    )
-
-    assert request.task == "test_task"
-    assert request.reasoning_model == LlmModel.default()
-    assert request.use_vision is True
-    assert request.max_steps == DEFAULT_MAX_NB_STEPS
-    assert request.vault_id is None
-    assert request.session_id == "test_session_id"
-
-
-@pytest.mark.parametrize("model", ["notavalid/gpt-4o-mini", "openrouter/google/gemma-3-27b-it"])
-def test_agent_create_request_with_invalid_model(model: str):
-    with pytest.raises(ValueError):
-        _ = AgentCreateRequest(reasoning_model=model)
-
-
-def test_agent_create_request_with_valid_model():
-    _ = load_dotenv()
-    if os.getenv("OPENAI_API_KEY") is None:
-        with pytest.raises(ValueError):
-            _ = AgentCreateRequest(reasoning_model="openai/gpt-4o")
-    else:
-        _ = AgentCreateRequest(reasoning_model="openai/gpt-4o")
 
 
 def test_should_be_able_to_start_cdp_session_with_default_session_parameters():
@@ -349,10 +274,6 @@ def test_function_run_update_request_dict_alignment():
 
 def test_list_function_runs_request_dict_alignment():
     _test_request_dict_alignment(ListFunctionRunsRequest, ListFunctionRunsRequestDict)
-
-
-def test_agent_start_request_dict_alignment():
-    _test_request_dict_alignment(AgentStartRequest, SdkAgentStartRequestDict)
 
 
 def test_create_function_run_request_dict_alignment():
@@ -416,11 +337,8 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
     exceptions_no_dict = {
         "SdkRequest",  # Base request class
         "ScrapeRequest",  # Inherits from ScrapeParams, uses ScrapeRequestDict indirectly
-        "__AgentCreateRequest",  # Private base class, has AgentCreateRequestDict
-        "AgentStartRequest",  # Composite class, uses SdkAgentStartRequestDict
         "ForkFunctionRequest",  # Simple class, no dict needed
         # Classes that are missing Dict types but legitimately don't need them
-        "AgentSessionRequest",  # Simple base class with single field
         "DownloadFileRequest",  # Simple class with single field
         "SetCookiesRequest",  # Uses existing Cookie structures
         "StartFunctionRunRequest",  # Complex composition, may not need Dict
@@ -437,7 +355,6 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
     # Special dict mappings that exist but have different names
     special_dict_mappings = {
         "ScrapeRequest": "ScrapeRequestDict",  # Actually exists as part of ScrapeParams
-        "AgentStartRequest": "SdkAgentStartRequestDict",  # Different name pattern
     }
 
     # Dict types that exist for Request classes that are in our exceptions
@@ -470,10 +387,6 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
             "_SessionStartRequest",
         ]
         valid_composite_bases = [
-            "SdkAgentCreateRequest",
-            "AgentRunRequest",
-            "__AgentCreateRequest",
-            "AgentSessionRequest",
             "RunFunctionRequest",
         ]
 
@@ -578,7 +491,7 @@ def test_all_response_classes_inherit_from_sdk_response():
     # Valid inheritance patterns - build hierarchy aware validation
     def is_valid_response_inheritance(class_name: str, inheritance_chain: str) -> bool:
         valid_direct_bases = ["SdkResponse", "BaseModel"]
-        valid_response_bases = ["SessionResponse", "AgentResponse", "GetFunctionResponse", "ReplayResponse"]
+        valid_response_bases = ["SessionResponse", "GetFunctionResponse", "ReplayResponse"]
         valid_composite_bases = ["ExecutionResult", "Observation", "DataSpace"]
 
         # Handle multiple inheritance and complex inheritance patterns

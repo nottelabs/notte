@@ -5,27 +5,17 @@ from notte_core.actions import BrowserAction, ClickAction
 from notte_core.browser.observation import ExecutionResult
 from notte_core.errors.base import ErrorConfig
 
-from tests.mock.mock_service import MockLLMService
-from tests.mock.mock_service import patch_llm_service as _patch_llm_service
-
-patch_llm_service = _patch_llm_service
-
-
-@pytest.fixture
-def mock_llm_service():
-    return MockLLMService(mock_response="<data-extraction> # Hello World </data-extraction>")
-
 
 def test_browser_actions_list():
     """Test that all special actions are properly defined"""
     browser_actions = BrowserAction.list()
 
-    # Test we have all 8 special actions
-    assert len(browser_actions) == len(BrowserAction.BROWSER_ACTION_REGISTRY)
+    # Every registered browser action is listed, except the legacy agent-loop actions
+    expected_ids = set(BrowserAction.BROWSER_ACTION_REGISTRY.keys()) - BrowserAction.LEGACY_AGENT_ACTION_TYPES
+    assert len(browser_actions) == len(expected_ids)
 
     # Test each special action ID exists
     action_ids = set([action.type for action in browser_actions])
-    expected_ids = set(BrowserAction.BROWSER_ACTION_REGISTRY.keys())
     assert action_ids == expected_ids
 
     # Test special action detection
@@ -44,7 +34,7 @@ async def test_goto_and_scrape():
     async with NotteSession(headless=True) as page:
         # Test S1: Go to URL
         _ = await page.aexecute(type="goto", url="https://example.com/")
-        obs = await page.aobserve(perception_type="fast")
+        obs = await page.aobserve()
         assert obs.clean_url == "example.com"
 
         example_com_str = "This domain is for use in documentation examples without needing permission."
@@ -57,9 +47,9 @@ async def test_goto_and_scrape():
 
 
 @pytest.mark.asyncio
-async def test_go_back_and_forward(patch_llm_service: MockLLMService):
+async def test_go_back_and_forward():
     """Test the execution of various special actions"""
-    async with NotteSession(headless=True, perception_type="fast") as page:
+    async with NotteSession(headless=True) as page:
         # Test S4: Go to notte
         _ = await page.aexecute(type="goto", value="https://github.com/")
         obs = await page.aobserve()
@@ -79,27 +69,27 @@ async def test_go_back_and_forward(patch_llm_service: MockLLMService):
 
 
 @pytest.mark.asyncio
-async def test_wait_and_complete(patch_llm_service: MockLLMService):
+async def test_wait_and_complete():
     """Test the execution of various special actions"""
     async with NotteSession(headless=True) as page:
         # Test S4: Go goto goole
         _ = await page.aexecute(type="goto", value="https://www.google.com/")
-        obs = await page.aobserve(perception_type="fast")
+        obs = await page.aobserve()
 
         assert "google.com" in obs.clean_url
 
         # Test S7: Wait
         _ = await page.aexecute(type="wait", value=1)
 
-        _ = await page.aobserve(perception_type="fast")
+        _ = await page.aobserve()
 
 
 @pytest.mark.asyncio
-async def test_special_action_validation(patch_llm_service: MockLLMService):
+async def test_special_action_validation():
     """Test validation of special action parameters"""
     async with NotteSession(headless=True, raise_on_failure=False) as page:
         _ = await page.aexecute(type="goto", value="https://github.com/")
-        _ = await page.aobserve(perception_type="fast")
+        _ = await page.aobserve()
         # Test S1 requires URL parameter
         with pytest.raises(ValueError, match="validation error for GotoAction"):
             _ = await page.aexecute(type="goto")
@@ -128,11 +118,11 @@ async def test_special_action_validation(patch_llm_service: MockLLMService):
 
 
 @pytest.mark.asyncio
-async def test_switch_tab(patch_llm_service: MockLLMService):
+async def test_switch_tab():
     """Test the execution of the switch tab action"""
     with NotteSession(headless=True) as page:
         _ = await page.aexecute(type="goto", value="https://github.com/")
-        obs = await page.aobserve(perception_type="fast")
+        obs = await page.aobserve()
         assert len(obs.metadata.tabs) == 1
         assert obs.clean_url == "github.com"
 
@@ -140,7 +130,7 @@ async def test_switch_tab(patch_llm_service: MockLLMService):
             type="goto_new_tab",
             value="https://www.google.com/",
         )
-        obs = await page.aobserve(perception_type="fast")
+        obs = await page.aobserve()
         assert len(obs.metadata.tabs) == 2
         assert "google.com" in obs.clean_url
 
@@ -159,7 +149,7 @@ async def test_scroll_on_non_scrollable_page_should_fail():
     async with NotteSession(raise_on_failure=False) as session:
         assert ErrorConfig.get_message_mode().value == "developer"
         _ = await session.aexecute(type="goto", value="https://www.google.com/")
-        _ = await session.aobserve(perception_type="fast")
+        _ = await session.aobserve()
         assert ErrorConfig.get_message_mode().value == "developer"
         res = await session.aexecute(type="scroll_down")
         assert not res.success
@@ -172,15 +162,15 @@ async def test_scroll_on_scrollable_page_should_succeed():
     async with NotteSession(browser_type="chrome") as session:
         res = await session.aexecute(type="goto", value="https://duckduckgo.com/")
         assert res.success
-        obs = await session.aobserve(perception_type="fast")
+        obs = await session.aobserve()
         res = await session.aexecute(type="scroll_down")
-        obs2 = await session.aobserve(perception_type="fast")
+        obs2 = await session.aobserve()
         assert res.success, f"Viewport obs2: {obs2.metadata.viewport}"
         assert obs.metadata.viewport.scroll_x == obs2.metadata.viewport.scroll_x
         assert obs.metadata.viewport.scroll_y != obs2.metadata.viewport.scroll_y
         res = await session.aexecute(type="scroll_up")
         assert res.success
-        obs3 = await session.aobserve(perception_type="fast")
+        obs3 = await session.aobserve()
         assert obs3.metadata.viewport.scroll_x == obs2.metadata.viewport.scroll_x
         assert obs3.metadata.viewport.scroll_y != obs2.metadata.viewport.scroll_y
         assert obs3.metadata.viewport.scroll_y == obs.metadata.viewport.scroll_y

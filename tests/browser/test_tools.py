@@ -68,7 +68,7 @@ def test_tool_execution_in_session(persona: NottePersona, action: EmailReadActio
 
 
 def _send_test_email(recipient: str, subject: str) -> str:
-    missing_env = [name for name in [SMTP_SERVER_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV] if os.getenv(name) is None]
+    missing_env = [name for name in [SMTP_SERVER_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV] if not os.getenv(name)]
     if missing_env:
         pytest.skip(f"{', '.join(missing_env)} required")
 
@@ -103,7 +103,7 @@ def _send_test_email(recipient: str, subject: str) -> str:
 
 @pytest.mark.flaky(reruns=3, reruns_delay=5)
 def test_signup_email_extraction():
-    missing_env = [name for name in [SMTP_SERVER_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV] if os.getenv(name) is None]
+    missing_env = [name for name in [SMTP_SERVER_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV] if not os.getenv(name)]
     if missing_env:
         pytest.skip(f"{', '.join(missing_env)} required")
 

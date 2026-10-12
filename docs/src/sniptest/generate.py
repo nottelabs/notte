@@ -12,7 +12,7 @@ Usage:
     python process.py --verbose          # Show detailed output
 
 Directory mapping:
-    testers/agents/fallback.py  →  snippets/agents/fallback.mdx
+    testers/scraping/simple.py  →  snippets/scraping/simple.mdx
     testers/sessions/basic.py   →  snippets/sessions/basic.mdx
 """
 

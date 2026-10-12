@@ -27,7 +27,7 @@ defaults:
 
 jobs:
   publish:
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'nottelabs/notte' && (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch')
     name: Build and publish notte-sdk to npm
     runs-on: ubuntu-latest
     timeout-minutes: 30
