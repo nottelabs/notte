@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, NodeSelectors
 from notte_core.browser.dom_tree import DomNode as NotteDomNode
@@ -117,6 +118,8 @@ class DOMElementNode(DOMBaseNode):
     is_top_element: bool = False
     shadow_root: bool = False
     is_editable: bool = False
+    # live element handle (see `ComputedDomAttributes.handle`)
+    handle: Any = field(default=None, repr=False, compare=False)
 
     @override
     def __post_init__(self) -> None:
@@ -286,8 +289,6 @@ class DOMElementNode(DOMBaseNode):
     @property
     @override
     def name(self) -> str:
-        if len(self.attributes) == 0:
-            return ""
         # Check explicit ARIA labeling
         if "aria-label" in self.attributes:
             if len(self.attributes["aria-label"]) > 0:
@@ -420,8 +421,7 @@ class DOMElementNode(DOMBaseNode):
                 in_viewport=self.is_visible,
                 is_editable=self.is_editable,
                 shadow_root=self.shadow_root,
-                _frame_selector=self.attributes.get("_frame_selector", ""),
-                _element_handle=self.attributes.get("_element_handle", ""),
+                handle=self.handle,
                 selectors=NodeSelectors(
                     css_selector=self.css_path,
                     xpath_selector=self.xpath,

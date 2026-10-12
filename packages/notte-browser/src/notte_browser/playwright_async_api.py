@@ -13,6 +13,7 @@ match config.browser_backend:
             BrowserContext,
             CDPSession,
             ConsoleMessage,
+            ElementHandle,
             Error,
             Frame,
             FrameLocator,
@@ -32,6 +33,7 @@ match config.browser_backend:
             BrowserContext,
             CDPSession,
             ConsoleMessage,
+            ElementHandle,
             Error,
             Frame,
             FrameLocator,
@@ -115,6 +117,7 @@ __all__ = [
     "CDPSession",
     "FrameLocator",
     "JSHandle",
+    "ElementHandle",
     "ConsoleMessage",
     "evaluate_in_main_world",
 ]
