@@ -9,7 +9,6 @@ import PydanticModel from '/snippets/scraping/pydantic_model.mdx';
 import InstructionsOnly from '/snippets/scraping/instructions_only.mdx';
 import ExtractLists from '/snippets/scraping/extract_lists.mdx';
 import NestedStructures from '/snippets/scraping/nested_structures.mdx';
-import ImageExtraction from '/snippets/scraping/image_extraction.mdx';
 import ContentFiltering from '/snippets/scraping/content_filtering.mdx';
 import LinksAndImages from '/snippets/scraping/links_and_images.mdx';
 import ScopedScraping from '/snippets/scraping/scoped_scraping.mdx';
@@ -83,12 +82,6 @@ Handle complex, nested data:
 
 <NestedStructures />
 
-## Image Extraction
-
-Extract all images from a page:
-
-<ImageExtraction />
-
 ## Configuration Options
 
 ### Content Filtering
@@ -124,7 +117,6 @@ The scrape method returns different types based on parameters:
 | None | `str` (markdown) |
 | `instructions` | `StructuredData[BaseModel]` |
 | `response_format` | `StructuredData[YourModel]` |
-| `only_images=True` | `list[ImageData]` |
 
 ### StructuredData Response
 
