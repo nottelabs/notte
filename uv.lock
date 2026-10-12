@@ -2745,7 +2745,6 @@ dependencies = [
     { name = "notte-sdk" },
     { name = "patchright" },
     { name = "pillow" },
-    { name = "tqdm" },
     { name = "trafilatura" },
 ]
 
@@ -2759,7 +2758,6 @@ requires-dist = [
     { name = "notte-sdk", editable = "packages/notte-sdk" },
     { name = "patchright", specifier = "~=1.55" },
     { name = "pillow", specifier = ">=11.2.1" },
-    { name = "tqdm", specifier = ">=4.66.0" },
     { name = "trafilatura", specifier = ">=2.0.0" },
 ]
 
