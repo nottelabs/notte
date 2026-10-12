@@ -29,8 +29,6 @@ from notte_core.actions.typedicts import (
     ClickActionDict,
     CloseTabActionDict,
     DownloadFileActionDict,
-    EmailReadActionDict,
-    EmailVerificationReadActionDict,
     EvaluateJsActionDict,
     FallbackFillActionDict,
     FillActionDict,
@@ -46,7 +44,6 @@ from notte_core.actions.typedicts import (
     ScrollDownActionDict,
     ScrollUpActionDict,
     SelectDropdownOptionActionDict,
-    SmsReadActionDict,
     SwitchTabActionDict,
     UploadFileActionDict,
     WaitActionDict,
@@ -96,9 +93,9 @@ from notte_browser.errors import (
     BrowserNotStartedError,
     CaptchaSolverNotAvailableError,
     EmptyPageContentError,
+    InboxActionNotSupportedLocallyError,
     NoSnapshotObservedError,
     NoStorageObjectProvidedError,
-    NoToolProvidedError,
     PlaywrightError,
     ScrapeFailedError,
 )
@@ -116,7 +113,6 @@ from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe
 from notte_browser.tagging.action.pipe import MainActionSpacePipe
-from notte_browser.tools.base import BaseTool, PersonaTool
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
 
 enable_nest_asyncio()
@@ -138,7 +134,6 @@ class NotteSession(AsyncResource, SyncResource):
         raise_on_failure: bool = config.raise_on_session_execution_failure,
         cookie_file: str | Path | None = None,
         storage: BaseStorage | None = None,
-        tools: list[BaseTool] | None = None,
         vault: BaseVault | None = None,
         persona: BasePersona | None = None,
         window: BrowserWindow | None = None,
@@ -163,7 +158,6 @@ class NotteSession(AsyncResource, SyncResource):
         self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe()
         # Structured scraping hands the page markdown to `extractor` (by default `notte_llm.LlmExtractor`, if installed).
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(type=config.scraping_type, extractor=extractor)
-        self.tools: list[BaseTool] = tools or []
         self.vault: BaseVault | None = vault
         if persona is not None:
             self.attach_persona(persona)
@@ -176,20 +170,11 @@ class NotteSession(AsyncResource, SyncResource):
         self._keep_alive: bool = keep_alive
         self._keep_alive_msg: str = "🌌 Keep alive mode enabled, skipping session stop... Use `session.close()` to manually stop the session. Never `keep_alive=True` is production."
 
-    def _has_persona_tool(self, persona: BasePersona) -> bool:
-        for tool in self.tools:
-            if not isinstance(tool, PersonaTool):
-                continue
-            if tool.persona.info.persona_id == persona.info.persona_id:
-                return True
-        return False
-
     def attach_persona(self, persona: BasePersona) -> None:
+        """Use the persona's vault (if any) for credential placeholders. Read its inbox with `persona.emails()`."""
         self.persona = persona
         if self.vault is None and persona.has_vault:
             self.vault = persona.vault
-        if not self._has_persona_tool(persona):
-            self.tools.append(PersonaTool(persona))
 
     def set_vault(self, vault: BaseVault | None) -> None:
         self.vault = vault
@@ -420,81 +405,6 @@ class NotteSession(AsyncResource, SyncResource):
     def observe(self, **pagination: Unpack[PaginationParamsDict]) -> Observation:
         return asyncio.run(self.aobserve(**pagination))
 
-    def _has_any_persona_tool(self) -> bool:
-        return any(isinstance(tool, PersonaTool) for tool in self.tools)
-
-    async def aread_emails(
-        self,
-        *,
-        only_unread: bool | None = None,
-        time_window: dt.timedelta | None = None,
-        limit: int | None = None,
-        raise_on_failure: bool = False,
-    ) -> ExecutionResult:
-        if not self._has_any_persona_tool():
-            raise ValueError(
-                "No persona tool attached to session. Pass `persona=...` when creating the session or call `attach_persona(...)`."
-            )
-        payload: dict[str, Any] = {"type": "email_read"}
-        if only_unread is not None:
-            payload["only_unread"] = only_unread
-        if time_window is not None:
-            payload["timedelta"] = time_window
-        if limit is not None:
-            payload["limit"] = limit
-        # reads are queries: a tool reporting "nothing yet" is data, not an error,
-        # so polling `while not session.read_emails().success` keeps working
-        return await self.aexecute(raise_on_failure=raise_on_failure, **payload)
-
-    def read_emails(
-        self,
-        *,
-        only_unread: bool | None = None,
-        time_window: dt.timedelta | None = None,
-        limit: int | None = None,
-        raise_on_failure: bool = False,
-    ) -> ExecutionResult:
-        return asyncio.run(
-            self.aread_emails(
-                only_unread=only_unread, time_window=time_window, limit=limit, raise_on_failure=raise_on_failure
-            )
-        )
-
-    async def aread_sms(
-        self,
-        *,
-        only_unread: bool | None = None,
-        time_window: dt.timedelta | None = None,
-        limit: int | None = None,
-        raise_on_failure: bool = False,
-    ) -> ExecutionResult:
-        if not self._has_any_persona_tool():
-            raise ValueError(
-                "No persona tool attached to session. Pass `persona=...` when creating the session or call `attach_persona(...)`."
-            )
-        payload: dict[str, Any] = {"type": "sms_read"}
-        if only_unread is not None:
-            payload["only_unread"] = only_unread
-        if time_window is not None:
-            payload["timedelta"] = time_window
-        if limit is not None:
-            payload["limit"] = limit
-        return await self.aexecute(raise_on_failure=raise_on_failure, **payload)
-
-    def read_sms(
-        self,
-        *,
-        only_unread: bool | None = None,
-        time_window: dt.timedelta | None = None,
-        limit: int | None = None,
-        raise_on_failure: bool = False,
-    ) -> ExecutionResult:
-        return asyncio.run(
-            self.aread_sms(
-                only_unread=only_unread, time_window=time_window, limit=limit, raise_on_failure=raise_on_failure
-            )
-        )
-
     async def locate(self, action: BaseAction) -> Locator | None:
         action_with_selector = await NodeResolutionPipe.forward(action, self._snapshot)
         if isinstance(action_with_selector, InteractionAction) and action_with_selector.selectors is not None:
@@ -589,18 +499,6 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     async def aexecute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrapeActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    async def aexecute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailReadActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    async def aexecute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailVerificationReadActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    async def aexecute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SmsReadActionDict]
     ) -> ExecutionResult: ...
     @overload
     async def aexecute(
@@ -777,19 +675,7 @@ class NotteSession(AsyncResource, SyncResource):
                             if result_str is not None:
                                 scraped_data = DataSpace(markdown=result_str)
                     case ToolAction():
-                        tool_found = False
-                        success = False
-                        for tool in self.tools:
-                            tool_func = tool.get_tool(type(resolved_action))
-                            if tool_func is not None:
-                                tool_found = True
-                                res = await tool_func(resolved_action)
-                                message = res.message
-                                scraped_data = res.data
-                                success = res.success
-                                break
-                        if not tool_found:
-                            raise NoToolProvidedError(resolved_action)
+                        raise InboxActionNotSupportedLocallyError(resolved_action)
                     case _:
                         resolved_action = await self._action_with_vault(resolved_action)
                         if isinstance(resolved_action, InteractionAction):
@@ -803,7 +689,7 @@ class NotteSession(AsyncResource, SyncResource):
                             # `message` still holds the success-phrased execution_message.
                             message = f"Action '{resolved_action.type}' failed during browser execution"
 
-            except (NoSnapshotObservedError, NoStorageObjectProvidedError, NoToolProvidedError) as e:
+            except (NoSnapshotObservedError, NoStorageObjectProvidedError, InboxActionNotSupportedLocallyError) as e:
                 # this should be handled by the caller
                 raise e
             except InvalidActionError as e:
@@ -967,18 +853,6 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrapeActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailReadActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailVerificationReadActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SmsReadActionDict]
     ) -> ExecutionResult: ...
     @overload
     def execute(

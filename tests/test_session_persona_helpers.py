@@ -1,10 +1,11 @@
 import asyncio
 import datetime as dt
+from typing import TypeVar
 
 import pytest
+from notte_browser.errors import InboxActionNotSupportedLocallyError
 from notte_browser.session import NotteSession
-from notte_browser.tools.base import PersonaTool
-from notte_core.actions import FormFillAction
+from notte_core.actions import EmailReadAction, FormFillAction, SmsReadAction
 from notte_core.credentials import EMAIL, PASSWORD
 from notte_core.credentials.base import BaseVault
 from notte_core.credentials.types import ValueWithPlaceholder
@@ -14,6 +15,8 @@ from notte_sdk.types import EmailResponse, PersonaResponse, SMSResponse
 from tests.mock.mock_vault import MockVault
 from tests.mock.snapshot_factory import make_snapshot
 
+T = TypeVar("T")
+
 
 class StubPersona(BasePersona):
     def __init__(
@@ -22,9 +25,13 @@ class StubPersona(BasePersona):
         sms: list[SMSResponse],
         vault: BaseVault | None = None,
         persona_id: str = "persona_test",
+        empty_reads: int = 0,
     ) -> None:
         self._emails = emails
         self._sms = sms
+        # Number of reads that return an empty inbox before the messages "arrive".
+        self._empty_reads = empty_reads
+        self.nb_reads = 0
         self._vault = vault
         self._info = PersonaResponse(
             persona_id=persona_id,
@@ -37,11 +44,15 @@ class StubPersona(BasePersona):
             phone_number=None,
         )
 
+    def _read(self, messages: list[T]) -> list[T]:
+        self.nb_reads += 1
+        return [] if self.nb_reads <= self._empty_reads else messages
+
     async def aemails(self, **data):  # type: ignore[override]
-        return self._emails
+        return self._read(self._emails)
 
     async def asms(self, **data):  # type: ignore[override]
-        return self._sms
+        return self._read(self._sms)
 
     def _get_info(self) -> PersonaResponse:
         return self._info
@@ -57,69 +68,69 @@ def test_persona_exposes_readable_and_internal_email_addresses() -> None:
     assert persona.internal_email == "persona_test@example.com"
 
 
-def test_session_read_emails_and_sms() -> None:
-    emails = [
-        EmailResponse(
-            subject="Test",
-            email_id="email_1",
-            created_at=dt.datetime.now(),
-            sender_email="sender@example.com",
-            sender_name="Sender",
-            text_content="Hello",
-        )
-    ]
-    sms = [
-        SMSResponse(
-            body="123456",
-            sms_id="sms_1",
-            created_at=dt.datetime.now(),
-            sender="+1234567890",
-        )
-    ]
-    persona = StubPersona(emails=emails, sms=sms)
-    session = NotteSession(persona=persona)
-
-    email_result = session.read_emails()
-    sms_result = session.read_sms()
-
-    assert email_result.success is True
-    assert email_result.data is not None
-    assert sms_result.success is True
-    assert sms_result.data is not None
+def make_email() -> EmailResponse:
+    return EmailResponse(
+        subject="Test",
+        email_id="email_1",
+        created_at=dt.datetime.now(),
+        sender_email="sender@example.com",
+        sender_name="Sender",
+        text_content="Hello",
+    )
 
 
-def test_session_read_emails_requires_persona() -> None:
-    session = NotteSession()
-    with pytest.raises(ValueError):
-        session.read_emails()
+def make_sms() -> SMSResponse:
+    return SMSResponse(
+        body="123456",
+        sms_id="sms_1",
+        created_at=dt.datetime.now(),
+        sender="+1234567890",
+    )
 
 
-def test_session_attach_persona_adds_persona_tool() -> None:
-    """Test that attach_persona adds a PersonaTool to session.tools."""
+def test_persona_wait_for_emails_and_sms_poll_until_messages_arrive() -> None:
+    persona = StubPersona(emails=[make_email()], sms=[make_sms()], empty_reads=2)
+
+    emails = persona.wait_for_emails(timeout=1, poll_interval=0)
+    assert [email.email_id for email in emails] == ["email_1"]
+    assert persona.nb_reads == 3
+
+    sms = persona.wait_for_sms(timeout=1, poll_interval=0)
+    assert [message.sms_id for message in sms] == ["sms_1"]
+
+
+def test_persona_await_emails_polls_until_messages_arrive() -> None:
+    persona = StubPersona(emails=[make_email()], sms=[], empty_reads=1)
+
+    emails = asyncio.run(persona.await_emails(timeout=1, poll_interval=0))
+    assert [email.email_id for email in emails] == ["email_1"]
+
+
+def test_persona_wait_for_emails_times_out() -> None:
+    persona = StubPersona(emails=[], sms=[])
+
+    with pytest.raises(TimeoutError):
+        _ = persona.wait_for_emails(timeout=0.05, poll_interval=0.01)
+    with pytest.raises(TimeoutError):
+        _ = asyncio.run(persona.await_sms(timeout=0.05, poll_interval=0.01))
+
+
+@pytest.mark.parametrize("action", [EmailReadAction(), SmsReadAction()])
+def test_local_session_rejects_inbox_actions(action: EmailReadAction | SmsReadAction) -> None:
+    session = NotteSession(persona=StubPersona(emails=[make_email()], sms=[make_sms()]))
+
+    with pytest.raises(InboxActionNotSupportedLocallyError, match="persona"):
+        _ = asyncio.run(session.aexecute(action))
+
+
+def test_session_attach_persona_sets_persona() -> None:
     persona = StubPersona(emails=[], sms=[])
     session = NotteSession()
-
-    # No persona tools initially
-    assert not any(isinstance(t, PersonaTool) for t in session.tools)
+    assert session.persona is None
 
     session.attach_persona(persona)
 
-    # Now there should be a PersonaTool
-    persona_tools = [t for t in session.tools if isinstance(t, PersonaTool)]
-    assert len(persona_tools) == 1
-    assert persona_tools[0].persona.info.persona_id == "persona_test"
-
-
-def test_session_attach_persona_does_not_duplicate_tool() -> None:
-    """Test that attaching the same persona twice doesn't add duplicate tools."""
-    persona = StubPersona(emails=[], sms=[])
-    session = NotteSession()
-
-    session.attach_persona(persona)
-    session.attach_persona(persona)  # Attach again
-
-    persona_tools = [t for t in session.tools if isinstance(t, PersonaTool)]
-    assert len(persona_tools) == 1  # Should still be just one
+    assert session.persona is persona
 
 
 def test_session_attach_persona_extracts_vault() -> None:
@@ -162,20 +173,3 @@ def test_session_persona_vault_enables_credential_replacement() -> None:
     assert updated.value["email"].get_secret_value() == "persona@test.com"
     assert isinstance(updated.value["current_password"], ValueWithPlaceholder)
     assert updated.value["current_password"].get_secret_value() == "persona_pw"
-
-
-def test_session_read_sms_requires_persona() -> None:
-    """Test that read_sms raises ValueError when no persona is attached."""
-    session = NotteSession()
-    with pytest.raises(ValueError):
-        session.read_sms()
-
-
-def test_session_persona_init_attaches_tool() -> None:
-    """Test that passing persona to constructor attaches PersonaTool."""
-    persona = StubPersona(emails=[], sms=[])
-    session = NotteSession(persona=persona)
-
-    persona_tools = [t for t in session.tools if isinstance(t, PersonaTool)]
-    assert len(persona_tools) == 1
-    assert session.persona is persona

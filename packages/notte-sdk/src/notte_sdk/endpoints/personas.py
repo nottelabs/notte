@@ -1,4 +1,5 @@
 import asyncio
+import time
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from functools import cached_property
@@ -260,6 +261,28 @@ class BasePersona(ABC):
     async def asms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
         raise NotImplementedError("Subclasses must implement this method")
 
+    async def await_emails(
+        self, *, timeout: float = 60.0, poll_interval: float = 5.0, **data: Unpack[MessageReadRequestDict]
+    ) -> Sequence[EmailResponse]:
+        """Poll the inbox until at least one email matches `data` (e.g. `only_unread=True`); see `wait_for_emails`."""
+        deadline = time.monotonic() + timeout
+        while not (emails := await self.aemails(**data)):
+            if time.monotonic() + poll_interval > deadline:
+                raise TimeoutError(f"No email received within {timeout}s")
+            await asyncio.sleep(poll_interval)
+        return emails
+
+    async def await_sms(
+        self, *, timeout: float = 60.0, poll_interval: float = 5.0, **data: Unpack[MessageReadRequestDict]
+    ) -> Sequence[SMSResponse]:
+        """Poll the inbox until at least one SMS matches `data`; see `wait_for_sms`."""
+        deadline = time.monotonic() + timeout
+        while not (sms := await self.asms(**data)):
+            if time.monotonic() + poll_interval > deadline:
+                raise TimeoutError(f"No SMS received within {timeout}s")
+            await asyncio.sleep(poll_interval)
+        return sms
+
     @abstractmethod
     def _get_info(self) -> PersonaResponse:
         raise NotImplementedError("Subclasses must implement this method")
@@ -301,6 +324,44 @@ class BasePersona(ABC):
 
     def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
         return asyncio.run(self.asms(**data))
+
+    def wait_for_emails(
+        self, *, timeout: float = 60.0, poll_interval: float = 5.0, **data: Unpack[MessageReadRequestDict]
+    ) -> Sequence[EmailResponse]:
+        """
+        Poll the persona inbox until at least one email matches, e.g. to read a sign-up code.
+
+        ```python
+        emails = persona.wait_for_emails(only_unread=True, timeout=120)
+        ```
+
+        Raises `TimeoutError` if nothing arrives within `timeout` seconds. Listed emails are marked as read.
+        """
+        deadline = time.monotonic() + timeout
+        while not (emails := self.emails(**data)):
+            if time.monotonic() + poll_interval > deadline:
+                raise TimeoutError(f"No email received within {timeout}s")
+            time.sleep(poll_interval)
+        return emails
+
+    def wait_for_sms(
+        self, *, timeout: float = 60.0, poll_interval: float = 5.0, **data: Unpack[MessageReadRequestDict]
+    ) -> Sequence[SMSResponse]:
+        """
+        Poll the persona inbox until at least one SMS matches, e.g. to read a 2FA code.
+
+        ```python
+        sms = persona.wait_for_sms(only_unread=True, timeout=120)
+        ```
+
+        Raises `TimeoutError` if nothing arrives within `timeout` seconds. Listed SMS are marked as read.
+        """
+        deadline = time.monotonic() + timeout
+        while not (sms := self.sms(**data)):
+            if time.monotonic() + poll_interval > deadline:
+                raise TimeoutError(f"No SMS received within {timeout}s")
+            time.sleep(poll_interval)
+        return sms
 
 
 @final
