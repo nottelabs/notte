@@ -1,4 +1,4 @@
-ImageCategory.FAVICON	http://golden.test/duckduckgo.html/favicon.ico
+ImageCategory.FAVICON	data:image/x-icon;base64,sha256:c79f5cdd1c767918
 ImageCategory.DECORATIVE	data:image/svg+xml;base64,sha256:be89c73ea28565fe
 ImageCategory.SVG_ICON	None
 ImageCategory.SVG_ICON	None

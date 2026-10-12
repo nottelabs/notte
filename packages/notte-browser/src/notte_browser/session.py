@@ -320,7 +320,8 @@ class NotteSession(AsyncResource, SyncResource):
                     logger.warning(
                         "Snapshot changed since the beginning of the action listing, retrying to observe again"
                     )
-                self.snapshot = check_snapshot
+                # the check snapshot was taken without a screenshot, but the observation needs one
+                self.snapshot = check_snapshot.model_copy(update={"screenshot": await self.window.screenshot()})
                 return await self._interaction_action_listing(retry=retry - 1, pagination=pagination)
 
         return space
@@ -1107,7 +1108,8 @@ class NotteSession(AsyncResource, SyncResource):
             scrape_params = ScrapeParams.model_validate(params)
             return await self._data_scraping_pipe.forward(
                 window=self.window,
-                snapshot=await self.window.snapshot(selector=scrape_params.selector, skip_dom=True),
+                # scrapes only read the html: skip the dom tree and the screenshot
+                snapshot=await self.window.snapshot(selector=scrape_params.selector, skip_dom=True, screenshot=False),
                 params=scrape_params,
             )
         except EmptyPageContentError as e:

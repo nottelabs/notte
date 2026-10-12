@@ -1,4 +1,4 @@
-ImageCategory.FAVICON	http://golden.test/checkout/anthropologie.html/favicon.ico
+ImageCategory.FAVICON	data:image/x-icon;base64,sha256:2fe16363dd494585
 ImageCategory.SVG_ICON	None
 ImageCategory.CONTENT_IMAGE	data:image/svg+xml;base64,sha256:238a9f87b513f9d4
 ImageCategory.CONTENT_IMAGE	data:image/svg+xml;base64,sha256:ff2cbf2ee97a95d8

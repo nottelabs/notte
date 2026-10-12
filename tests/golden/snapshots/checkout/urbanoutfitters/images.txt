@@ -1,4 +1,4 @@
-ImageCategory.FAVICON	http://golden.test/checkout/urbanoutfitters.html/favicon.ico
+ImageCategory.FAVICON	data:image/x-icon;base64,sha256:b755b8a515b5d5ae
 ImageCategory.CONTENT_IMAGE	data:image/svg+xml;base64,sha256:cda33fd11a716bd1
 ImageCategory.SVG_ICON	None
 ImageCategory.SVG_ICON	None

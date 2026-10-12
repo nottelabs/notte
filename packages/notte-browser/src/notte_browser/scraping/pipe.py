@@ -163,6 +163,7 @@ class DataScrapingPipe:
                 window,
                 snapshot.html_content,
                 snapshot.metadata.url,
+                selector=params.selector,
             )
 
         # scrape structured data if required

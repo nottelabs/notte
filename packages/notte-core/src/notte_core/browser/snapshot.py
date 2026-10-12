@@ -39,7 +39,8 @@ class BrowserSnapshot(BaseModel):
     html_content: str
     a11y_tree: A11yTree | None
     dom_node: DomNode
-    screenshot: bytes = Field(repr=False)
+    # None when the snapshot was taken with `screenshot=False` (e.g. scrapes)
+    screenshot: bytes | None = Field(default=None, repr=False)
 
     model_config = {  # type: ignore[reportUnknownMemberType]
         "json_encoders": {

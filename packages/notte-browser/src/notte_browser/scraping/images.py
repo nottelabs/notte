@@ -1,3 +1,5 @@
+from urllib.parse import urljoin
+
 from bs4 import BeautifulSoup, Tag
 from notte_core.common.logging import logger
 from notte_core.data.space import ImageCategory, ImageData
@@ -166,6 +168,25 @@ def get_surrounding_text(element: Tag, max_depth: int = 3) -> str | None:
     return None
 
 
+async def get_favicon_url(window: BrowserWindow, base_url: str) -> str:
+    """The href of the page's first `<link rel="... icon ...">`, else `/favicon.ico` at the page origin."""
+    try:
+        href = await window.page.evaluate(
+            """() => {
+            for (const link of document.querySelectorAll('link[rel~="icon" i][href]')) {
+                if (link.getAttribute("href").trim()) return link.href;
+            }
+            return null;
+        }"""
+        )
+    except Exception as e:
+        logger.debug(f"Failed to read the favicon link: {e}")
+        href = None
+    if isinstance(href, str) and len(href) > 0:
+        return href
+    return urljoin(base_url, "/favicon.ico")
+
+
 async def get_svg_content(locator: Locator | None = None) -> str | None:
     """Get the content of an SVG element."""
     if locator is None:
@@ -187,6 +208,7 @@ class ImageScrapingPipe:
         window: BrowserWindow,
         html_content: str,
         base_url: str,
+        selector: str | None = None,
     ) -> list[ImageData]:
         """
         Extract images from HTML content using BeautifulSoup.
@@ -195,6 +217,7 @@ class ImageScrapingPipe:
             window: BrowserWindow for Playwright locator access (for classification)
             html_content: The raw HTML content to parse
             base_url: The base URL for constructing absolute image URLs
+            selector: The selector `html_content` was scoped to, if any
         """
         from notte_core.utils.url import clean_url
 
@@ -207,14 +230,15 @@ class ImageScrapingPipe:
             # first image is the favicon
             ImageData(
                 category=ImageCategory.FAVICON,
-                url=f"{base_url}/favicon.ico",
+                url=await get_favicon_url(window, base_url),
                 description=f"Favicon for {clean_url(base_url)}",
             )
         ]
 
-        # Get all Playwright locators for images and SVGs for classification
-        img_locators = await window.page.locator("img").all()
-        svg_locators = await window.page.locator("svg").all()
+        # Get the Playwright locators for images and SVGs for classification, within the same scope as html_content
+        root = window.page if selector is None else window.page.locator(selector)
+        img_locators = await root.locator("img").all()
+        svg_locators = await root.locator("svg").all()
 
         img_idx = 0
         svg_idx = 0
