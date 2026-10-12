@@ -5,7 +5,7 @@ from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.space import ActionSpace
-from notte_sdk.types import PaginationParams
+from notte_core.types import PaginationParams
 from typing_extensions import override
 
 from notte_browser.tagging.action.base import BaseActionSpacePipe

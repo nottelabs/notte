@@ -5,7 +5,7 @@ from notte_core.browser.dom_tree import DomNode, InteractionDomNode
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.errors.processing import InvalidInternalCheckError
 from notte_core.space import ActionSpace
-from notte_sdk.types import PaginationParams
+from notte_core.types import PaginationParams
 from typing_extensions import override
 
 from notte_browser.rendering.interaction_only import InteractionOnlyDomNodeRenderingPipe

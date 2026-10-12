@@ -1,4 +1,4 @@
-# Known drift between notte_sdk.types and openapi/openapi.json; see scripts/openapi_contract.py.
+# Known drift between notte_core.types and openapi/openapi.json; see scripts/openapi_contract.py.
 FunctionRunListItemResponse: api-only field workflow_id (required)
 FunctionRunListItemResponse: api-only field workflow_run_id (required)
 FunctionRunUpdateRequest: api-only field payloads

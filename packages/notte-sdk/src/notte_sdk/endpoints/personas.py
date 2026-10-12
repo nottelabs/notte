@@ -9,11 +9,7 @@ from notte_core.common.logging import logger
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault
-from typing_extensions import final, override
-
-from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.endpoints.vaults import NotteVault
-from notte_sdk.types import (
+from notte_core.types import (
     CreatePhoneNumberRequest,
     CreatePhoneNumberRequestDict,
     CreatePhoneNumberResponse,
@@ -29,6 +25,10 @@ from notte_sdk.types import (
     PersonaResponse,
     SMSResponse,
 )
+from typing_extensions import final, override
+
+from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.endpoints.vaults import NotteVault
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient

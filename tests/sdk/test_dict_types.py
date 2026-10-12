@@ -300,7 +300,9 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
     from pathlib import Path
 
     # Read the types.py file
-    types_file_path = Path(__file__).parent.parent.parent / "packages" / "notte-sdk" / "src" / "notte_sdk" / "types.py"
+    types_file_path = (
+        Path(__file__).parent.parent.parent / "packages" / "notte-core" / "src" / "notte_core" / "types.py"
+    )
     with open(types_file_path, "r") as f:
         types_content = f.read()
 
@@ -464,7 +466,9 @@ def test_all_response_classes_inherit_from_sdk_response():
     from pathlib import Path
 
     # Read the types.py file
-    types_file_path = Path(__file__).parent.parent.parent / "packages" / "notte-sdk" / "src" / "notte_sdk" / "types.py"
+    types_file_path = (
+        Path(__file__).parent.parent.parent / "packages" / "notte-core" / "src" / "notte_core" / "types.py"
+    )
     with open(types_file_path, "r") as f:
         types_content = f.read()
 

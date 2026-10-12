@@ -8,6 +8,20 @@ from pathlib import Path
 from types import NoneType
 from typing import Annotated, Any, ClassVar, Literal, Required, cast, get_args
 
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    computed_field,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
+from pyotp import TOTP
+from typing_extensions import NotRequired, TypedDict, deprecated, override
+
 from notte_core.actions import (
     ActionUnion,
     ActionValidation,
@@ -32,19 +46,6 @@ from notte_core.data.space import DataSpace
 from notte_core.storage import FileInfo as FileInfo  # noqa: E402
 from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
 from notte_core.utils.url import get_root_domain
-from pydantic import (
-    AliasChoices,
-    BaseModel,
-    ConfigDict,
-    Field,
-    SerializerFunctionWrapHandler,
-    computed_field,
-    field_validator,
-    model_serializer,
-    model_validator,
-)
-from pyotp import TOTP
-from typing_extensions import NotRequired, TypedDict, deprecated, override
 
 # ############################################################
 # Session Management

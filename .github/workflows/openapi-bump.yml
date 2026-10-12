@@ -1,10 +1,10 @@
 name: bump-openapi
 
-# Refresh openapi/openapi.json from staging. The wire models in notte_sdk.types are the
+# Refresh openapi/openapi.json from staging. The wire models in notte_core.types are the
 # source of truth and the API renders them into this schema, so the refresh PR is the
 # contract check: it merges itself once checks pass (like bump-node-sdk), and stays open
 # when the API drifted from the models (the `openapi-contract` pre-commit hook fails).
-# See docs/design/openapi-generated-sdk-types.md.
+# See docs/design/openapi-contract.md.
 
 on:
   schedule:
@@ -93,7 +93,7 @@ jobs:
           BODY=$(printf '%s\n\n%s\n\n%s\n\n```\n%s\n```\n' \
             "Automated refresh of \`openapi/openapi.json\` from $NOTTE_API_URL ($(date -u '+%Y-%m-%d %H:%M UTC'))." \
             "Opened by \`.github/workflows/openapi-bump.yml\`. Merges automatically once the required checks pass." \
-            "Contract check (\`scripts/openapi_contract.py\`). If it reports new drift, change \`notte_sdk.types\` instead of merging:" \
+            "Contract check (\`scripts/openapi_contract.py\`). If it reports new drift, change \`notte_core.types\` instead of merging:" \
             "$REPORT")
 
           git checkout -B "$BRANCH"

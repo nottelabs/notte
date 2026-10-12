@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from notte_core.actions import InteractionAction
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.space import ActionSpace
-from notte_sdk.types import PaginationParams
+from notte_core.types import PaginationParams
 
 
 class BaseActionSpacePipe(ABC):

@@ -92,7 +92,7 @@ repos:
         name: Check documented session-config defaults against the SDK
         entry: bash -c "uv run python docs/src/scripts/check_config_docs_defaults.py"
         language: system
-        files: ^(docs/src/features/sessions/configuration\.mdx|docs/src/scripts/check_config_docs_defaults\.py|packages/notte-sdk/src/notte_sdk/types\.py|packages/notte-core/src/notte_core/config\.toml)$
+        files: ^(docs/src/features/sessions/configuration\.mdx|docs/src/scripts/check_config_docs_defaults\.py|packages/notte-core/src/notte_core/types\.py|packages/notte-core/src/notte_core/config\.toml)$
         pass_filenames: false
       - id: docs-quickstart-setup-prompt
         name: Check shared Quickstart setup link

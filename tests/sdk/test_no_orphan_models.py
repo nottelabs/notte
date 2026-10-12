@@ -3,8 +3,8 @@ import re
 from pathlib import Path
 
 import notte_sdk
-from notte_sdk import types as types_module
-from notte_sdk.types import SdkRequest, SdkResponse
+from notte_core import types as types_module
+from notte_core.types import SdkRequest, SdkResponse
 
 SDK_SRC = Path(inspect.getfile(notte_sdk)).parent
 
@@ -30,7 +30,8 @@ def _models() -> set[str]:
 def _sdk_code() -> str:
     """SDK source with per-line comments stripped, so commented-out code never counts as a reference."""
     lines: list[str] = []
-    for path in sorted(SDK_SRC.rglob("*.py")):
+    # The models live in notte_core.types; models embedded in other models count as referenced.
+    for path in [*sorted(SDK_SRC.rglob("*.py")), Path(inspect.getfile(types_module))]:
         lines.extend(line.split("#", 1)[0] for line in path.read_text().splitlines())
     return "\n".join(lines)
 
@@ -49,7 +50,7 @@ def test_every_model_is_referenced_somewhere() -> None:
     code = _sdk_code()
     orphans = {name for name in _models() if _reference_count(name, code) <= 1 and name not in ALLOWED_UNREFERENCED}
     assert not orphans, (
-        f"Models defined in notte_sdk/types.py but referenced nowhere else in the SDK: {sorted(orphans)}. "
+        f"Models defined in notte_core/types.py but referenced nowhere else in the SDK: {sorted(orphans)}. "
         "Wire each to an endpoint, delete it, or add it to ALLOWED_UNREFERENCED with a reason."
     )
 

@@ -8,15 +8,7 @@ from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.processing import ScrapeFailedError
-from pydantic import BaseModel, RootModel
-from requests.exceptions import ChunkedEncodingError
-from requests.exceptions import ConnectionError as RequestsConnectionError
-from requests.exceptions import Timeout as RequestsTimeout
-from typing_extensions import final
-
-from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.errors import NotteAPIError
-from notte_sdk.types import (
+from notte_core.types import (
     CaptchaExecuteParams,
     ExecutionResultResponse,
     ObserveRequest,
@@ -28,6 +20,14 @@ from notte_sdk.types import (
     ScrapeRequestDict,
     ScrapeResponse,
 )
+from pydantic import BaseModel, RootModel
+from requests.exceptions import ChunkedEncodingError
+from requests.exceptions import ConnectionError as RequestsConnectionError
+from requests.exceptions import Timeout as RequestsTimeout
+from typing_extensions import final
+
+from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.errors import NotteAPIError
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient

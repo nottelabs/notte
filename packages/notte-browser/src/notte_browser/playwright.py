@@ -5,7 +5,7 @@ from typing import ClassVar
 from notte_core.common.logging import logger
 from notte_core.common.resource import AsyncResource
 from notte_core.profiling import profiler
-from notte_sdk.types import LocalSessionStartRequest
+from notte_core.types import LocalSessionStartRequest
 from pydantic import BaseModel, PrivateAttr
 from typing_extensions import override
 

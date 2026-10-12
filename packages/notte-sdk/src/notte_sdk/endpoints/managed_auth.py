@@ -1,10 +1,10 @@
 import time
 from typing import TYPE_CHECKING, final
 
+from notte_core.types import ManagedAuthOperation, ManagedAuthRunResponse, SdkRequest
 from pydantic import Field
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.types import ManagedAuthOperation, ManagedAuthRunResponse, SdkRequest
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient

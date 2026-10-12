@@ -4,10 +4,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, Unpack
 
 from notte_core.common.telemetry import track_usage
-from typing_extensions import final
-
-from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.types import (
+from notte_core.types import (
     ExecutionResponse,
     ProfileCreateRequest,
     ProfileCreateRequestDict,
@@ -15,6 +12,9 @@ from notte_sdk.types import (
     ProfileListRequestDict,
     ProfileResponse,
 )
+from typing_extensions import final
+
+from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient

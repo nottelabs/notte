@@ -21,15 +21,15 @@ from notte_core.common.config import BrowserType, CookieDict, PlaywrightProxySet
 from notte_core.common.logging import logger
 from notte_core.errors.processing import SnapshotProcessingError
 from notte_core.profiling import profiler
-from notte_core.utils.raw_file import get_empty_dom_node, get_file_ext, get_filename
-from notte_core.utils.url import is_valid_url
-from notte_sdk.types import (
+from notte_core.types import (
     DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
     DEFAULT_HEADLESS_VIEWPORT_WIDTH,
     AspectRatio,
     Cookie,
     LocalSessionStartRequest,
 )
+from notte_core.utils.raw_file import get_empty_dom_node, get_file_ext, get_filename
+from notte_core.utils.url import is_valid_url
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from typing_extensions import override
 

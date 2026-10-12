@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that the API's OpenAPI schema matches the hand-written wire models.
 
-The models in ``notte_sdk.types`` are the source of truth: notte-api imports them and
+The models in ``notte_core.types`` are the source of truth: notte-api imports them and
 FastAPI renders them into ``openapi.json``. Drift appears when the API overrides or
 extends a model instead of changing it here. This script diffs every model against the
 schema of the same name (fields, required, nullable) and compares the result with the
@@ -29,7 +29,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any, cast
 
-from notte_sdk import types as wire_types
+from notte_core import types as wire_types
 from pydantic import BaseModel
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -119,7 +119,7 @@ def main() -> int:
 
     if args.update_baseline:
         lines = drift(cast(JsonObject, json.loads(SNAPSHOT.read_text())))
-        header = "# Known drift between notte_sdk.types and openapi/openapi.json; see scripts/openapi_contract.py.\n"
+        header = "# Known drift between notte_core.types and openapi/openapi.json; see scripts/openapi_contract.py.\n"
         _ = BASELINE.write_text(header + "".join(f"{line}\n" for line in lines))
         print(f"wrote {BASELINE.relative_to(REPO_ROOT)} ({len(lines)} entries)")
         return 0
@@ -136,7 +136,7 @@ def main() -> int:
         for line in new:
             print(f"new drift: {line}", file=sys.stderr)
         print(
-            f"The wire models don't match {source}. Change notte_sdk.types (the source of truth) so the API "
+            f"The wire models don't match {source}. Change notte_core.types (the source of truth) so the API "
             + "uses the same models, or record the drift with --update-baseline.",
             file=sys.stderr,
         )
