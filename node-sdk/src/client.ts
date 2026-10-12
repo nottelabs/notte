@@ -86,7 +86,7 @@ export type AgentListOptions = NonNullable<ListAgentsData['query']>;
 export type VaultListOptions = NonNullable<ListVaultsData['query']>;
 export type FunctionListOptions = NonNullable<ListFunctionsData['query']>;
 /** Options of `client.scrape()`: the global scrape request minus `url`, plus the SDK-only scrape options. */
-export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' | 'response_format' | 'wait_for_authentication'> & ScrapeOptions<T> & {
+export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' | 'response_format' | 'wait_for_authentication' | 'only_images'> & ScrapeOptions<T> & {
   /** Whether to wait for Managed Auth before the scrape request completes. Defaults to true. Authentication failure or timeout can fail the scrape request. */
   wait_for_authentication?: boolean;
 };

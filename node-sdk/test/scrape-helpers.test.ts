@@ -1,7 +1,7 @@
 /**
  * Counterpart of tests/sdk/test_scrape_overload_typing.py for the shared
  * scrape helpers: body construction, raiseOnFailure semantics and the
- * markdown / images / structured branches.
+ * markdown / structured branches.
  */
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { z } from 'zod';
@@ -69,9 +69,14 @@ describe('processScrapeResponse', () => {
     expect(processScrapeResponse(dataSpace, {})).toBe('# Hello');
   });
 
-  it('returns the image list with only_images', () => {
-    expect(processScrapeResponse(dataSpace, { only_images: true })).toEqual(images);
-    expect(processScrapeResponse(space({ markdown: '', images: null }), { only_images: true })).toEqual([]);
+  it('ignores the images a 1.x API still returns', () => {
+    expect(processScrapeResponse(space({ markdown: '# Hello', images: null }), {})).toBe('# Hello');
+    expect(processScrapeResponse(dataSpace, {})).toBe('# Hello');
+  });
+
+  it('does not accept only_images any more', () => {
+    expectTypeOf<SessionScrapeOptions>().not.toHaveProperty('only_images');
+    expectTypeOf<GlobalScrapeOptions>().not.toHaveProperty('only_images');
   });
 
   it('returns the validated model with a Zod response_format', () => {
