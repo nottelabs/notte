@@ -1,9 +1,12 @@
 ---
 title: "Screenshot"
-description: ""
+description: "A page screenshot (JPEG) and the bounding boxes of the interactive elements it shows"
 ---
 
 
+
+`bytes()` returns the image as captured. `highlighted()` draws the bounding boxes and
+element ids on top of it
 
 ## Fields
 
@@ -11,9 +14,6 @@ description: ""
 </ParamField>
 
 <ParamField path="bboxes" type="list[BoundingBox]" required>
-</ParamField>
-
-<ParamField path="last_action_id" type="UnionType[str, None]">
 </ParamField>
 
 

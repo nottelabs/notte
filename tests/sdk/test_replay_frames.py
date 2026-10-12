@@ -1,7 +1,4 @@
-import io
-
 from notte_sdk import NotteClient
-from PIL import Image
 
 import notte
 
@@ -17,44 +14,15 @@ def test_sdk_screenshots():
         _ = session.execute(dict(type="goto", url="https://linkedin.com"))
         obs = session.observe()
 
-    for screenshot_type in [None, "raw", "last_action", "full"]:
-        for text in [None, "sample text"]:
-            res = obs.screenshot.bytes(type=screenshot_type, text=text)  # pyright: ignore [reportArgumentType]
-            assert isinstance(res, bytes)
-            decoded = res[offset].decode().strip()
-            assert decoded == "JFIF"
+    for res in (obs.screenshot.bytes(), obs.screenshot.highlighted()):
+        assert isinstance(res, bytes)
+        assert res[offset].decode().strip() == "JFIF"
 
     ## remote
     with client.Session(proxies=False, open_viewer=False) as session:
         _ = session.execute(dict(type="goto", url="https://linkedin.com"))
         obs = session.observe()
 
-    for screenshot_type in [None, "raw", "last_action", "full"]:
-        for text in [None, "sample text"]:
-            res = obs.screenshot.bytes(type=screenshot_type, text=text)  # pyright: ignore [reportArgumentType]
-            assert isinstance(res, bytes)
-            decoded = res[offset].decode().strip()
-            assert decoded == "JFIF"
-
-
-def test_replay_frame_counts_local() -> None:
-    """Test that replays contain the expected number of frames for different scenarios (local version)."""
-
-    with notte.Session(headless=True, screenshot_type="last_action") as session:
-        _ = session.execute(dict(type="goto", url="https://linkedin.com"))
-        rep = session.replay().replay
-        print(rep[:20])
-        img = Image.open(io.BytesIO(rep))
-        img.save("first_frames.webp")
-        assert img.n_frames == 2  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue]
-
-        _ = session.execute(dict(type="goto", url="https://duckduckgo.com"))
-        session_pre_end_img = Image.open(io.BytesIO(session.replay().replay))
-        session_pre_end_img.save("second_frames.webp")
-        assert session_pre_end_img.n_frames == 3  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue]
-
-        _ = session.execute(dict(type="goto", url="https://qwant.com"))
-
-    session_end_img = Image.open(io.BytesIO(session.replay().replay))
-    session_end_img.save("final_frames.webp")
-    assert session_end_img.n_frames == 4  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue]
+    for res in (obs.screenshot.bytes(), obs.screenshot.highlighted()):
+        assert isinstance(res, bytes)
+        assert res[offset].decode().strip() == "JFIF"

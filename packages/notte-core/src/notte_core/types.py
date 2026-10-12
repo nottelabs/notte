@@ -36,7 +36,6 @@ from notte_core.common.config import (
     BrowserType,
     PerceptionType,
     PlaywrightProxySettings,
-    ScreenshotType,
     config,
 )
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict
@@ -762,7 +761,6 @@ class _SessionStartRequestDict(TypedDict, total=False):
         viewport_height: The height of the viewport
         aspect_ratio: Viewport shape preset ("5:4" or "16:9"). Cannot be combined with viewport_width/viewport_height.
         cdp_url: The CDP URL of another remote session provider.
-        screenshot_type: The type of screenshot to use for the session.
         profile: Browser profile configuration for state persistence.
         auth_ids: Up to 10 unique Managed Auth connection IDs. The API verifies them inline and can return an authenticating session while login continues.
         wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.
@@ -782,7 +780,6 @@ class _SessionStartRequestDict(TypedDict, total=False):
     viewport_height: int | None
     aspect_ratio: AspectRatio | None
     cdp_url: str | None
-    screenshot_type: ScreenshotType
     profile: SessionProfileDict | SessionProfile | None
     web_bot_auth: bool
     extra_http_headers: dict[str, str] | None
@@ -854,10 +851,6 @@ class _SessionStartRequest(SdkRequest):
 
     cdp_url: Annotated[str | None, Field(description="The CDP URL of another remote session provider.")] = (
         config.cdp_url
-    )
-
-    screenshot_type: Annotated[ScreenshotType, Field(description="The type of screenshot to use for the session.")] = (
-        config.screenshot_type
     )
 
     profile: Annotated[

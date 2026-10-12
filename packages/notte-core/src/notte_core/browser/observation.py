@@ -2,7 +2,7 @@ import base64
 import datetime as dt
 import io
 from base64 import b64decode, b64encode
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from io import BytesIO
 from textwrap import dedent
@@ -13,15 +13,12 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from typing_extensions import override
 
 from notte_core.actions import ActionUnion
-from notte_core.browser.highlighter import BoundingBox, ScreenshotHighlighter
+from notte_core.browser.highlighter import BoundingBox, highlight_screenshot
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
-from notte_core.common.config import ScreenshotType, config
 from notte_core.common.logging import logger
 from notte_core.data.space import DataSpace
 from notte_core.errors.base import NotteBaseError
-from notte_core.profiling import profiler
 from notte_core.space import ActionSpace
-from notte_core.utils.image import draw_text_with_rounded_background
 from notte_core.utils.url import clean_url
 
 _empty_observation_instance = None
@@ -78,14 +75,22 @@ class FilledTimedSpan(BaseModel):
 
 
 class Screenshot(BaseModel):
+    """A page screenshot (JPEG) and the bounding boxes of the interactive elements it shows.
+
+    `bytes()` returns the image as captured. `highlighted()` draws the bounding boxes and
+    element ids on top of it.
+    """
+
     raw: bytes = Field(repr=False)
     bboxes: list[BoundingBox] = Field(default_factory=list)
-    last_action_id: str | None = None
 
     model_config = {  # type: ignore[reportUnknownMemberType]
         "json_encoders": {
             bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
-        }
+        },
+        # notte 1.x servers also send `last_action_id`, which only served the removed local
+        # replay. Unknown fields are ignored so their payloads keep parsing.
+        "extra": "ignore",
     }
 
     @field_validator("raw", mode="before")
@@ -172,67 +177,26 @@ class Screenshot(BaseModel):
         data["raw"] = b64encode(self.raw).decode("utf-8")
         return data
 
-    @profiler.profiled(service_name="observation")
-    def bytes(self, type: ScreenshotType | None = None, text: str | None = None) -> bytes:
-        def _bytes():
-            nonlocal type
-            type = type or ("full" if config.highlight_elements else "raw")
-            # config.highlight_elements
-            match type:
-                case "raw":
-                    return self.raw
-                case "full":
-                    if len(self.bboxes) > 0:
-                        return ScreenshotHighlighter.forward(self.raw, self.bboxes)
-                    return self.raw
-                case "last_action":
-                    bboxes = [bbox for bbox in self.bboxes if bbox.notte_id == self.last_action_id]
+    def highlighted(self, action_ids: Iterable[str] | None = None) -> bytes:
+        """The screenshot with the bounding box and id of each interactive element drawn on it.
 
-                    if self.last_action_id is None or len(bboxes) == 0:
-                        return self.raw
-                    return ScreenshotHighlighter.forward(self.raw, bboxes)
-                case _:  # pyright: ignore[reportUnnecessaryComparison]
-                    raise ValueError(f"Invalid screenshot type: {type}")  # pyright: ignore[reportUnreachable]
+        Args:
+            action_ids: only highlight these elements (e.g. `["B1", "I2"]`). Defaults to all of them.
 
-        img_bytes = _bytes()
+        Returns:
+            A JPEG image. The raw image is returned unchanged when there is nothing to highlight.
+        """
+        return highlight_screenshot(self.raw, self.bboxes, action_ids=action_ids)
 
-        if text is None:
-            return img_bytes
+    # Defined after `highlighted`: inside the class body, `bytes` names this method from here on.
+    def bytes(self) -> bytes:
+        """The screenshot image as captured, without annotations."""
+        return self.raw
 
-        img = Image.open(io.BytesIO(img_bytes))
-        width, height = img.size
-        min_len = max(min(width, height), 25)
-        font_size = min_len // 25
-
-        # Use the modular function to draw text with rounded background (with emoji support)
-        draw_text_with_rounded_background(
-            img=img,
-            text=text,
-            position=(width // 2, 4 * height // 5),
-            font=None,  # Will use emoji-capable font automatically
-            text_color="white",
-            bg_color=(0, 0, 0, 166),  # Black with 65% opacity
-            padding=10,
-            corner_radius=12,
-            anchor="mm",
-            max_width=30,
-            font_size=font_size,
-        )
-
-        buffer = io.BytesIO()
-        img = img.convert("RGB")
-        img.save(
-            buffer,
-            "JPEG",
-        )
-        _ = buffer.seek(0)
-        return buffer.getvalue()
-
-    def display(self, type: ScreenshotType | None = None) -> "Image.Image | None":
+    def display(self, highlighted: bool = False) -> "Image.Image | None":
         from notte_core.utils.image import image_from_bytes
 
-        data = self.bytes(type)
-        return image_from_bytes(data)
+        return image_from_bytes(self.highlighted() if highlighted else self.raw)
 
 
 class Observation(FilledTimedSpan):
@@ -253,7 +217,7 @@ class Observation(FilledTimedSpan):
         bboxes = [node.bbox.with_id(node.id) for node in snapshot.interaction_nodes() if node.bbox is not None]
         return Observation(
             metadata=snapshot.metadata,
-            screenshot=Screenshot(raw=snapshot.screenshot, bboxes=bboxes, last_action_id=None),
+            screenshot=Screenshot(raw=snapshot.screenshot, bboxes=bboxes),
             space=space,
             started_at=span.started_at,
             ended_at=span.ended_at,
@@ -265,7 +229,7 @@ class Observation(FilledTimedSpan):
         if isinstance(v, str):
             v = base64.b64decode(v)
         if isinstance(v, bytes):
-            return Screenshot(raw=v, bboxes=[], last_action_id=None)
+            return Screenshot(raw=v)
         return v
 
     @staticmethod
@@ -304,7 +268,7 @@ class Observation(FilledTimedSpan):
                     ),
                     tabs=[],
                 ),
-                screenshot=Screenshot(raw=generate_empty_picture(), bboxes=[], last_action_id=None),
+                screenshot=Screenshot(raw=generate_empty_picture()),
                 space=ActionSpace(interaction_actions=[], description=""),
                 started_at=utc_now(),
                 ended_at=utc_now(),

@@ -1,4 +1,5 @@
 import io
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from typing import ClassVar
@@ -593,7 +594,7 @@ class ScreenshotHighlighter:
 
     @profiler.profiled(service_name="observation")
     @staticmethod
-    def forward(screenshot: bytes, bounding_boxes: list[BoundingBox]) -> bytes:
+    def forward(screenshot: bytes, bounding_boxes: Sequence[BoundingBox]) -> bytes:
         """Add highlights to screenshot based on bounding boxes"""
         image = Image.open(io.BytesIO(screenshot)).convert("RGB")
         draw = ImageDraw.Draw(image, "RGBA")  # Enable alpha channel for transparency
@@ -609,7 +610,7 @@ class ScreenshotHighlighter:
 
         placed_labels: list[Rectangle] = []
 
-        for i, bbox in enumerate(bounding_boxes):
+        for bbox in bounding_boxes:
             if bbox.notte_id is None:
                 raise ValueError("Bounding box must have a valid notte_id")
 
@@ -627,7 +628,6 @@ class ScreenshotHighlighter:
                 placement_optimizer=placement_optimizer,
                 arrow_renderer=arrow_renderer,
                 config=config,
-                bbox_index=i,
             )
 
         # Convert back to bytes
@@ -649,7 +649,6 @@ class ScreenshotHighlighter:
         placement_optimizer: LabelPlacementOptimizer,
         arrow_renderer: ArrowLabelRenderer,
         config: LabelConfig,
-        bbox_index: int,
     ):
         """Draw a single highlight rectangle and label"""
         # Transform coordinates
@@ -680,7 +679,6 @@ class ScreenshotHighlighter:
             placement_optimizer=placement_optimizer,
             arrow_renderer=arrow_renderer,
             config=config,
-            bbox_index=bbox_index,
         )
 
     @staticmethod
@@ -694,7 +692,6 @@ class ScreenshotHighlighter:
         placement_optimizer: LabelPlacementOptimizer,
         arrow_renderer: ArrowLabelRenderer,
         config: LabelConfig,
-        bbox_index: int,  # pyright: ignore [reportUnusedParameter]
     ):
         """Create and place a label with optimal positioning"""
         # Create font and calculate label dimensions
@@ -735,3 +732,25 @@ class ScreenshotHighlighter:
         draw.text((text_x, text_y), label, fill="white", font=font, anchor="mm")
 
         placed_labels.append(best_rect)
+
+
+def highlight_screenshot(
+    screenshot: bytes,
+    bboxes: Sequence[BoundingBox],
+    action_ids: Iterable[str] | None = None,
+) -> bytes:
+    """Draw the bounding box and id of each interactive element on a screenshot.
+
+    Args:
+        screenshot: the screenshot image (e.g. `Screenshot.raw`).
+        bboxes: element bounding boxes (e.g. `Screenshot.bboxes`). Boxes without an id are skipped.
+        action_ids: only highlight these elements (e.g. `["B1", "I2"]`). Defaults to all of them.
+
+    Returns:
+        A JPEG image, or `screenshot` unchanged when there is nothing to highlight.
+    """
+    selected = None if action_ids is None else set(action_ids)
+    boxes = [bbox for bbox in bboxes if bbox.notte_id is not None and (selected is None or bbox.notte_id in selected)]
+    if not boxes:
+        return screenshot
+    return ScreenshotHighlighter.forward(screenshot, boxes)
