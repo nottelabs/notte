@@ -219,3 +219,4 @@ flamegraph*.html
 # npm pack / inspect artifacts
 .npm-inspect/
 *.tgz
+nike_results/
