@@ -553,7 +553,6 @@ class BrowserWindow(BaseModel):
             return BrowserSnapshot(
                 metadata=snapshot_metadata,
                 html_content=html_content,
-                a11y_tree=None,
                 dom_node=dom_node,
                 screenshot=snapshot_screenshot,
             )

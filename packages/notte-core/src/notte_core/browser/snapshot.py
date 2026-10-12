@@ -4,7 +4,7 @@ from collections.abc import Sequence
 
 from pydantic import BaseModel, Field
 
-from notte_core.browser.dom_tree import A11yTree, DomNode, InteractionDomNode
+from notte_core.browser.dom_tree import DomNode, InteractionDomNode
 from notte_core.common.logging import logger
 from notte_core.utils.url import clean_url
 
@@ -37,7 +37,6 @@ class SnapshotMetadata(BaseModel):
 class BrowserSnapshot(BaseModel):
     metadata: SnapshotMetadata
     html_content: str
-    a11y_tree: A11yTree | None
     dom_node: DomNode
     # None when the snapshot was taken with `screenshot=False` (e.g. scrapes)
     screenshot: bytes | None = Field(default=None, repr=False)

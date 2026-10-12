@@ -20,7 +20,6 @@ def make_snapshot(url: str) -> BrowserSnapshot:
             tabs=[],
         ),
         html_content="<html></html>",
-        a11y_tree=None,
         dom_node=DomNode(
             id="root",
             type=NodeType.OTHER,

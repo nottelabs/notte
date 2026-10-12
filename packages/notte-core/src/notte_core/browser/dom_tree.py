@@ -1,51 +1,15 @@
 import re
 from collections.abc import Sequence
-from dataclasses import asdict, dataclass, field
-from typing import Callable, ClassVar, Required, TypeAlias, TypeVar
+from dataclasses import asdict, dataclass
+from typing import Callable, ClassVar, TypeAlias
 
 from pydantic import BaseModel
-from typing_extensions import TypedDict, override
+from typing_extensions import override
 
 from notte_core.browser.highlighter import BoundingBox
 from notte_core.browser.node_type import NodeCategory, NodeRole, NodeType
 from notte_core.common.logging import logger
 from notte_core.errors.processing import InvalidInternalCheckError
-
-T = TypeVar("T", bound="DomNode")  # T must be a subclass of DomNode
-
-
-class A11yNode(TypedDict, total=False):
-    # from the a11y tree
-    role: Required[str]
-    name: Required[str]
-    children: list["A11yNode"]
-    url: str
-    # added by the tree processing
-    only_text_roles: bool
-    nb_pruned_children: int
-    children_roles_count: dict[str, int]
-    group_role: str
-    group_roles: list[str]
-    markdown: str
-    # added by the notte processing
-    id: str
-    path: str  # url:parent-path:role:name
-    # stuff for the action listing
-    modal: bool
-    required: bool
-    description: str
-    visible: bool
-    selected: bool
-    checked: bool
-    enabled: bool
-
-    is_interactive: bool
-
-
-@dataclass
-class A11yTree:
-    raw: A11yNode
-    simple: A11yNode
 
 
 class NodeSelectors(BaseModel):
@@ -335,13 +299,8 @@ class DomAttributes:
 @dataclass(frozen=True)
 class ComputedDomAttributes:
     in_viewport: bool = False
-    is_interactive: bool = False
-    is_top_element: bool = False
     is_editable: bool = False
     shadow_root: bool = False
-    pointer_element: bool = False
-    disabled_reason: str | None = None
-    highlight_index: int | None = None
     selectors: NodeSelectors | None = None
     _frame_selector: str = ""
     _element_handle: str = ""
@@ -356,7 +315,6 @@ class DomNode:
     children: list["DomNode"]
     attributes: DomAttributes | None
     computed_attributes: ComputedDomAttributes
-    subtree_ids: list[str] = field(init=False, default_factory=list)
     bbox: BoundingBox | None = None
     # parents cannot be set in the constructor because it is a recursive structure
     # we need to set it after the constructor
@@ -370,10 +328,6 @@ class DomNode:
         return f"{self.__class__.__name__}(id={self.id}, role={self.get_role_str()}, text={self.text[:40]}...)\n{children_repr}"
 
     def __post_init__(self) -> None:
-        subtree_ids: list[str] = [] if self.id is None else [self.id]
-        for child in self.children:
-            subtree_ids.extend(child.subtree_ids)
-        object.__setattr__(self, "subtree_ids", subtree_ids)
         if isinstance(self.role, str):
             object.__setattr__(self, "role", NodeRole.from_value(self.role))
 
@@ -467,7 +421,7 @@ class DomNode:
     def find_all_matching_subtrees_with_parents(
         node: "DomNode", predicate: Callable[["DomNode"], bool]
     ) -> Sequence["DomNode"]:
-        """TODO: same implementation for A11yNode and DomNode"""
+        """Return the topmost subtrees whose root matches `predicate`."""
 
         if predicate(node):
             return [node]
@@ -480,7 +434,7 @@ class DomNode:
         return matches
 
     def prune_non_dialogs_if_present(self) -> Sequence["DomNode"]:
-        """TODO: make it work with A11yNode and DomNode"""
+        """Return the visible dialogs that contain interaction nodes, or `[self]` if there are none."""
 
         def is_dialog(node: DomNode) -> bool:
             if node.role != NodeRole.DIALOG:

@@ -67,24 +67,6 @@ class NodeFilteringResultsInEmptyGraph(SnapshotProcessingError):
         )
 
 
-class InvalidA11yTreeType(InvalidInternalCheckError):
-    def __init__(self, type: str) -> None:
-        super().__init__(
-            check=f"Unknown a11y tree type {type}. Valid types are: 'processed', 'simple', 'raw'.",
-            dev_advice="This should not happen. Someone proably added a new type without updating properly the code.",
-            url=None,
-        )
-
-
-class InvalidA11yChildrenError(InvalidInternalCheckError):
-    def __init__(self, check: str, nb_children: int) -> None:
-        super().__init__(
-            check=f"{check}. Note that the number of children is {nb_children}.",
-            dev_advice="Some assupmtions are not met. You should check the code to see why this is happening.",
-            url=None,
-        )
-
-
 class InvalidPlaceholderError(NotteBaseError):
     def __init__(self, placeholder: str) -> None:
         dev_message = f"The placeholder {placeholder} is not handled by your current vault."
