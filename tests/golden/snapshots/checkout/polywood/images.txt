@@ -1,4 +1,4 @@
-ImageCategory.FAVICON	http://golden.test/checkout/polywood.html/favicon.ico
+ImageCategory.FAVICON	data:image/png;base64,sha256:9ee99fa55276eecc
 ImageCategory.DECORATIVE	data:image/png;base64,sha256:ec102620b0331402
 ImageCategory.SVG_ICON	None
 ImageCategory.SVG_ICON	None

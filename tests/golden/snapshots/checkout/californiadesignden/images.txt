@@ -1,4 +1,4 @@
-ImageCategory.FAVICON	http://golden.test/checkout/californiadesignden.html/favicon.ico
+ImageCategory.FAVICON	http://golden.test/favicon.ico
 ImageCategory.DECORATIVE	data:image/png;base64,sha256:c691ff9b1d7db26c
 ImageCategory.SVG_ICON	None
 ImageCategory.SVG_ICON	None

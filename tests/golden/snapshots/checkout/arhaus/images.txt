@@ -1,4 +1,4 @@
-ImageCategory.FAVICON	http://golden.test/checkout/arhaus.html/favicon.ico
+ImageCategory.FAVICON	data:image/png;base64,sha256:cc0abcf7253b69d5
 ImageCategory.DECORATIVE	data:image/png;base64,sha256:9b1160cb98e7ddd3
 ImageCategory.SVG_ICON	None
 ImageCategory.SVG_ICON	None

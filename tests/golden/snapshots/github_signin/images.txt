@@ -1,4 +1,4 @@
-ImageCategory.FAVICON	http://golden.test/github_signin.html/favicon.ico
+ImageCategory.FAVICON	https://github.githubassets.com/favicons/favicon-dark.png
 ImageCategory.SVG_ICON	None
 ImageCategory.SVG_ICON	None
 ImageCategory.SVG_ICON	None
