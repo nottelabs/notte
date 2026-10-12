@@ -40,6 +40,7 @@ RunFunctionRequest: api-only field callback_url
 RunFunctionRequest: sdk-only field function_id
 RunFunctionRequest: variables required api=False sdk=True
 SessionResponse: api-only field timeout_minutes (required)
+SessionStartRequest: api-only field screenshot_type
 SessionStartRequest: api-only field demonstrate
 UpdateFunctionRunResponse: api-only field workflow_id (required)
 UpdateFunctionRunResponse: api-only field workflow_run_id (required)

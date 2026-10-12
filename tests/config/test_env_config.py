@@ -58,11 +58,14 @@ def test_error_mode_context_manager():
 
 def test_config_file_with_removed_keys_still_loads(tmp_path, monkeypatch):
     config_file = tmp_path / "notte.toml"
-    _ = config_file.write_text('verbose = true\nmax_steps = 20\nreasoning_model = "openai/gpt-4o"\n')
+    _ = config_file.write_text(
+        'verbose = true\nmax_steps = 20\nreasoning_model = "openai/gpt-4o"\nscreenshot_type = "last_action"\n'
+    )
     monkeypatch.setenv("NOTTE_CONFIG_PATH", str(config_file))
     local_config = NotteConfig.from_toml()
     assert local_config.verbose is True
     assert not hasattr(local_config, "max_steps")
+    assert not hasattr(local_config, "screenshot_type")
 
 
 def test_unknown_keyword_argument_is_still_rejected():

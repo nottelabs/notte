@@ -1466,6 +1466,8 @@ class RemoteSession(SyncResource):
         print(obs.space.description)
         # get the screenshot
         screenshot = obs.screenshot.bytes()
+        # or the same screenshot with the interactive elements outlined and labelled with their ids
+        highlighted = obs.screenshot.highlighted()
         ```
 
         Once you have selected an action (either manually or using an LLM), you can execute it with:

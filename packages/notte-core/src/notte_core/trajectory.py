@@ -141,41 +141,8 @@ class Trajectory:
     def screenshots(self) -> Iterator[Screenshot]:
         return self.filter_by_type(Screenshot)
 
-    def _get_next_action_id(self, elements_list: list[TrajectoryHoldee], current_index: int) -> str | None:
-        """Get the action ID from the next ExecutionResult after the current index."""
-        for j in range(current_index + 1, len(elements_list)):
-            next_step = elements_list[j]
-            if isinstance(next_step, ExecutionResult):
-                if hasattr(next_step.action, "id"):
-                    return getattr(next_step.action, "id")
-                break
-        return None
-
-    def all_screenshots(self) -> Iterator[Screenshot]:
-        elements_list = self.elements
-
-        for i, step in enumerate(elements_list):
-            if isinstance(step, Observation):
-                next_action_id = self._get_next_action_id(elements_list, i)
-
-                # Create a new screenshot with the action ID of the following ExecutionResult
-                screenshot = step.screenshot
-                new_screenshot = Screenshot(raw=screenshot.raw, bboxes=screenshot.bboxes, last_action_id=next_action_id)
-                yield new_screenshot
-            elif isinstance(step, Screenshot):
-                yield step
-
     def observations(self) -> Iterator[Observation]:
-        elements_list = self.elements
-
-        for i, step in enumerate(elements_list):
-            if isinstance(step, Observation):
-                next_action_id = self._get_next_action_id(elements_list, i)
-
-                # Create a new screenshot with the action ID of the following ExecutionResult
-                screenshot = step.screenshot
-                new_screenshot = Screenshot(raw=screenshot.raw, bboxes=screenshot.bboxes, last_action_id=next_action_id)
-                yield step.model_copy(update={"screenshot": new_screenshot})
+        return self.filter_by_type(Observation)
 
     def execution_results(self) -> Iterator[ExecutionResult]:
         return self.filter_by_type(ExecutionResult)

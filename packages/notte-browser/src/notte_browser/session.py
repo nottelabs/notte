@@ -50,7 +50,7 @@ from notte_core.actions.typedicts import (
 )
 from notte_core.browser.observation import ExecutionResult, Observation, Screenshot, TimedSpan
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import BrowserBackend, CookieDict, RaiseCondition, ScreenshotType, config
+from notte_core.common.config import BrowserBackend, CookieDict, RaiseCondition, config
 from notte_core.common.logging import logger, timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
@@ -81,7 +81,6 @@ from notte_core.types import (
     ScrapeParamsDict,
 )
 from notte_core.utils.files import create_or_append_cookies_to_file
-from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_sdk.endpoints.personas import BasePersona
 from pydantic import BaseModel, RootModel, ValidationError
 from typing_extensions import override
@@ -122,10 +121,6 @@ enable_nest_asyncio()
 
 # TODO: ACT callback
 class NotteSession(AsyncResource, SyncResource):
-    # Screenshots appended to the trajectory are best-effort and must not keep a
-    # completed action request open when Chromium's compositor stops responding.
-    POST_ACTION_SCREENSHOT_TIMEOUT_SECONDS: ClassVar[float] = 5.0
-
     observe_max_retry_after_snapshot_update: ClassVar[int] = 2
     nb_seconds_between_snapshots_check: ClassVar[int] = 10
 
@@ -153,7 +148,6 @@ class NotteSession(AsyncResource, SyncResource):
         self._request: LocalSessionStartRequest = LocalSessionStartRequest.model_validate(data)
         if self._request.solve_captchas and not CaptchaHandler.is_available:
             raise CaptchaSolverNotAvailableError()
-        self.screenshot_type: ScreenshotType = self._request.screenshot_type
         self._window: BrowserWindow | None = window
         self.controller: BrowserController = BrowserController(verbose=config.verbose, storage=storage)
         self.storage: BaseStorage | None = storage
@@ -303,19 +297,6 @@ class NotteSession(AsyncResource, SyncResource):
             return None
         return actions
 
-    @track_usage("local.session.replay")
-    @profiler.profiled(service_name="observation")
-    def replay(self, screenshot_type: ScreenshotType | None = None) -> WebpReplay:
-        screenshot_type = screenshot_type or self.screenshot_type
-
-        screenshots_traj = list(self.trajectory.all_screenshots())
-        screenshots: list[bytes] = [screen.bytes(screenshot_type) for screen in screenshots_traj]
-        if len(screenshots) == 0:
-            raise ValueError("No screenshots found in agent trajectory")
-        elif len(screenshots) > 1 and screenshots[0] == Observation.empty().screenshot.bytes(screenshot_type):
-            screenshots = screenshots[1:]
-        return ScreenshotReplay.from_bytes(screenshots).get(quality=90)  # pyright: ignore [reportArgumentType]
-
     # ---------------------------- observe, step functions ----------------------------
 
     async def _interaction_action_listing(
@@ -357,23 +338,9 @@ class NotteSession(AsyncResource, SyncResource):
     @track_usage("local.session.screenshot")
     async def ascreenshot(self) -> Screenshot:
         screenshot_bytes = await self.window.screenshot()
-        screenshot = Screenshot(raw=screenshot_bytes, bboxes=[], last_action_id=None)
+        screenshot = Screenshot(raw=screenshot_bytes)
         await self.trajectory.append(screenshot)
         return screenshot
-
-    async def _capture_post_action_screenshot(self) -> None:
-        try:
-            _ = await asyncio.wait_for(
-                self.ascreenshot(),
-                timeout=self.POST_ACTION_SCREENSHOT_TIMEOUT_SECONDS,
-            )
-        except TimeoutError:
-            logger.warning(
-                "Post-action screenshot timed out after "
-                + f"{self.POST_ACTION_SCREENSHOT_TIMEOUT_SECONDS:.1f}s; returning the action result without it"
-            )
-        except Exception as e:
-            logger.warning(f"Failed to capture post-action screenshot: {e}")
 
     def screenshot(
         self,
@@ -787,10 +754,6 @@ class NotteSession(AsyncResource, SyncResource):
             ended_at=span.close().ended_at,
         )
         await self.trajectory.append(execution_result)
-
-        # add screenshot to trajectory (after the execution)
-        if self._window is not None:
-            await self._capture_post_action_screenshot()
 
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
         # Gate on "did the action fail", not "did something throw": after the synthesis
