@@ -1,12 +1,14 @@
 import asyncio
 from typing import Any
 
+import pytest
 from notte_browser.session import NotteSession
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import ScreenshotMask
 from notte_core.actions import FillAction, FormFillAction, MultiFactorFillAction
 from notte_core.credentials import EMAIL, MFA, PASSWORD, USERNAME
 from notte_core.credentials.types import ValueWithPlaceholder
+from notte_core.errors.actions import VaultCredentialError
 
 from tests.mock.mock_vault import MockVault
 from tests.mock.snapshot_factory import make_snapshot
@@ -205,3 +207,22 @@ def test_session_vault_keeps_custom_screenshot_mask() -> None:
 
     session.set_vault(None)
     assert window.screenshot_mask is custom_mask
+
+
+def test_session_vault_rejects_credential_for_unvalidated_element() -> None:
+    """A password must not be typed (as its placeholder) into an element that is not a password field."""
+    vault = MockVault({"https://example.com": {"email": "test@test.com", "password": "pw"}})
+    session = NoopLocateSession(vault=vault)
+    session.snapshot = make_snapshot("https://example.com")
+
+    with pytest.raises(VaultCredentialError, match="does not look like a 'password' field"):
+        _ = asyncio.run(session._action_with_vault(FillAction(selector="#name", value=PASSWORD)))
+
+
+def test_session_vault_rejects_credential_missing_from_vault() -> None:
+    vault = MockVault({"https://example.com": {"email": "test@test.com"}})
+    session = NoopLocateSession(vault=vault)
+    session.snapshot = make_snapshot("https://example.com")
+
+    with pytest.raises(VaultCredentialError, match="No credential of type password"):
+        _ = asyncio.run(session._action_with_vault(FillAction(selector="#pw", value=PASSWORD)))

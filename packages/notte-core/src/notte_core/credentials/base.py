@@ -25,7 +25,7 @@ from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.logging import logger
 from notte_core.common.types import TResponseFormat
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
-from notte_core.errors.actions import NoCredentialsFoundError
+from notte_core.errors.actions import NoCredentialsFoundError, VaultCredentialError
 from notte_core.errors.processing import InvalidPlaceholderError
 from notte_core.profiling import profiler
 from notte_core.utils.url import get_root_domain
@@ -643,6 +643,7 @@ class BaseVault(ABC):
         Raises:
             ValueError: If the action type is not supported or if no credentials are found
             InvalidPlaceholderError: If an invalid placeholder is used
+            VaultCredentialError: If the target element does not match the credential type
         """
         # Get credentials for current domain
 
@@ -700,7 +701,12 @@ class BaseVault(ABC):
                             timeout=action.timeout,
                         )
                 else:
-                    logger.trace(f"Could not validate element with attrs {attrs} for {cred_key}")
+                    # Never fall through with the placeholder: it would be typed into the page as is.
+                    raise VaultCredentialError(
+                        f"the target element (type={attrs.type!r}, autocomplete={attrs.autocomplete!r}) "
+                        + f"does not look like a '{cred_key}' field. Target the matching input "
+                        + '(e.g. an <input type="password"> for a password)'
+                    )
             else:
                 # dont validate because element chosen by regex
                 assert isinstance(action.value, dict)

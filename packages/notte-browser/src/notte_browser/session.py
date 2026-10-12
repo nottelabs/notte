@@ -63,6 +63,7 @@ from notte_core.errors.actions import (
     EvaluateJsNoDataError,
     EvaluateJsResultLimitError,
     InvalidActionError,
+    VaultCredentialError,
 )
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
@@ -464,10 +465,9 @@ class NotteSession(AsyncResource, SyncResource):
                 )
             return await self.vault.replace_credentials(action, attrs, snapshot)
         except ValueError as e:
-            # Credential field not found in vault (e.g., vault has email but action needs username)
-            # Return original action - it will fail at execution with a clearer error
-            logger.warning(f"Vault credential replacement failed: {e}")
-            return action
+            # Credential field not found in vault (e.g., vault has email but action needs username).
+            # Fail the action: executing it as is would type the raw placeholder into the page.
+            raise VaultCredentialError(str(e)) from e
 
     @overload
     async def aexecute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
