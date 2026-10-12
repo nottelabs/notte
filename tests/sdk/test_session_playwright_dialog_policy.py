@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -7,6 +8,8 @@ from notte_sdk.endpoints.sessions import RemoteSession
 
 def _bare_session() -> RemoteSession:
     session = object.__new__(RemoteSession)
+    session.request = SimpleNamespace(cdp_url=None)
+    session.client = SimpleNamespace(server_url="https://notte.example", REQUEST_ORIGIN="sdk-python")
     session._playwright_browser = None
     session._playwright_context = None
     session._playwright_page = None
