@@ -1,4 +1,6 @@
 # @sniptest filename=dependencies.py
+# @sniptest show=2-17
+# ruff: noqa: F401, I001 -- the imports are the lesson
 # Standard library
 import json
 import re

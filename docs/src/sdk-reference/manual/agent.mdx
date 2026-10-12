@@ -58,7 +58,7 @@ Agents can be provided a [vault](../manual/vault) with credentials in order to s
 You can use the default parameters to create your agent, or customize them:
 
 <ParamField path="session" type="UnionType[RemoteSession, None]" default="None">
-  The session the agent runs in. Required to create a new agent; only omit it when you pass `agent_id` to load an existing agent. The session's `open_viewer` parameter controls whether to display a live viewer.
+  The session to connect to. The session's `open_viewer` parameter controls         whether to display a live viewer.
 </ParamField>
 
 <ParamField path="vault" type="UnionType[NotteVault, None]" default="None">
@@ -73,19 +73,18 @@ You can use the default parameters to create your agent, or customize them:
 </ParamField>
 
 <ParamField path="agent_id" type="UnionType[str, None]" default="None">
-  The ID of an existing agent to load instead of creating a new one.
 </ParamField>
 
 <ParamField path="reasoning_model" type="notte_core.common.config.LlmModel | str">
   The language model to use for agent reasoning.
 </ParamField>
 
-<ParamField path="use_vision" type="bool" default="True">
-  Whether to enable vision capabilities for the agent. Not all reasoning models support vision.
+<ParamField path="use_vision" type="bool">
+  Whether to enable vision capabilities for the agent.
 </ParamField>
 
-<ParamField path="max_steps" type="int" default="20">
-  Maximum number of steps the agent can take, from 1 to 150.
+<ParamField path="max_steps" type="int">
+  Maximum number of steps the agent can take.
 </ParamField>
 
 <ParamField path="vault_id" type="str | None">
@@ -99,22 +98,13 @@ You can use the default parameters to create your agent, or customize them:
   Config used for the notifier.
 </ParamField>
 
+A `session` is required to create a new agent. Only omit it when you pass `agent_id` to load an existing agent. `max_steps` defaults to 20 and accepts values from 1 to 150. Not all reasoning models support vision.
+
 ## Run parameters
 
 `agent.run()` and `agent.start()` accept:
 
-<ParamField path="task" type="str" required>
-  The task description to execute.
-</ParamField>
-
-<ParamField path="url" type="str | None" default="None">
-  Optional URL to start the task from.
-</ParamField>
-
-<ParamField path="response_format" type="type[BaseModel] | None" default="None">
-  The format of the agent answer. You can use a Pydantic model or a JSON Schema dict.
-</ParamField>
-
-<ParamField path="session_offset" type="int | None" default="None">
-  Experimental. The session step from which the agent gathers context. If omitted, the agent starts with fresh memory.
-</ParamField>
+- `task` (`str`, required): the task description to execute.
+- `url` (`str | None`): optional URL to start the task from.
+- `response_format` (`type[BaseModel] | None`): the format of the agent answer. You can use a Pydantic model or a JSON Schema dict.
+- `session_offset` (`int | None`): experimental. The session step from which the agent gathers context. If omitted, the agent starts with fresh memory.

@@ -5,10 +5,10 @@ import { NotteClient } from 'notte-sdk';
 const client = new NotteClient();
 const url = 'https://example.com';
 
-// Include all page content (default)
-let markdown = await client.scrape(url, { only_main_content: false });
-
 // Only main content (excludes navbars, footers, sidebars)
-markdown = await client.scrape(url, { only_main_content: true });
+let markdown = await client.scrape(url, { only_main_content: true });
+
+// Include all page content (default)
+markdown = await client.scrape(url, { only_main_content: false });
 
 export const results = [typeof markdown === 'string', markdown.includes('Example Domain')];

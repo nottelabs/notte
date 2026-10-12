@@ -88,7 +88,7 @@ Parameters set when creating the agent instance.
 ### notifier
 
 <ParamField path="notifier" type="BaseNotifier">
-  Optional notifier that sends a message with the agent's result when it completes or fails. Useful for long-running tasks. Email, Slack, and Discord notifiers are available in the `notte-integrations` package (`EmailNotifier`, `SlackNotifier`, `DiscordNotifier` in `notte_integrations.notifiers`). The notifier configuration, including any credentials it contains, is sent to Notte so the notification can be delivered when the agent finishes. In TypeScript, pass the same configuration as a plain object with `notifier_config`.
+  Optional notifier that sends a message with the agent's result when it completes or fails. Useful for long-running tasks. Email, Slack, and Discord notifiers are available in the `notte-integrations` package (`EmailNotifier`, `SlackNotifier`, `DiscordNotifier` in `notte_integrations.notifiers`). The notifier configuration, including any credentials it contains, is sent to Notte so the notification can be delivered when the agent finishes. You can also pass the configuration as a plain dict with `notifier_config`, as in the example below.
 </ParamField>
 
 <ParamNotifier />

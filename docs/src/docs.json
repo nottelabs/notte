@@ -27,10 +27,6 @@
   "seo.indexing": "all",
   "redirects": [
     {
-      "source": "/sdk-reference/manual/function",
-      "destination": "/sdk-reference/manual/workflow"
-    },
-    {
       "source": "/features/sessions/browser-types",
       "destination": "/features/sessions/configuration"
     },
@@ -386,10 +382,7 @@
                       "sdk-reference/misc/captchasolveaction",
                       "sdk-reference/misc/smsreadaction",
                       "sdk-reference/misc/emailreadaction",
-                      "sdk-reference/misc/emailverificationreadaction",
-                      "sdk-reference/misc/closetabaction",
-                      "sdk-reference/misc/multifactorfillaction",
-                      "sdk-reference/misc/fallbackfillaction"
+                      "sdk-reference/misc/emailverificationreadaction"
                     ]
                   },
                   {
@@ -410,7 +403,7 @@
                     "group": "Function",
                     "collapsed": true,
                     "pages": [
-                      "sdk-reference/manual/workflow",
+                      "sdk-reference/manual/function",
                       "sdk-reference/nottefunction/create_run",
                       "sdk-reference/nottefunction/run",
                       "sdk-reference/nottefunction/update",
@@ -437,9 +430,7 @@
                       "sdk-reference/nottevault/get_credentials",
                       "sdk-reference/nottevault/delete_credentials",
                       "sdk-reference/nottevault/list_credentials",
-                      "sdk-reference/nottevault/generate_password",
-                      "sdk-reference/nottevault/has_credential",
-                      "sdk-reference/nottevault/add_credentials_from_env"
+                      "sdk-reference/nottevault/generate_password"
                     ]
                   },
                   {

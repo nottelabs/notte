@@ -41,9 +41,6 @@ class RepositoryExamplesTest(unittest.TestCase):
                         "status =",
                         "idle_timeout_minutes",
                     ):
-                        # The notifier lives in a separate package, so its import is part of the lesson.
-                        if hidden == "import " and name == "param_notifier" and suffix == ".py":
-                            continue
                         self.assertNotIn(hidden, rendered)
 
     def test_python_page_examples_use_the_node_page_helper(self):
