@@ -8,8 +8,8 @@ from notte_sdk import NotteClient
 def run(url: str):
     client = NotteClient()
 
-    # Set session timeout
-    with client.Session(idle_timeout_minutes=5) as session:
+    # Close the browser session after 5 idle minutes and cap it at 15 minutes
+    with client.Session(idle_timeout_minutes=5, max_duration_minutes=15) as session:
         session.execute(type="goto", url=url)
         data = session.scrape()
 

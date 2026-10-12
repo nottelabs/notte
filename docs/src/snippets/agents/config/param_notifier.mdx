@@ -4,20 +4,40 @@
 <CodeGroup>
 
 ```python param_notifier.py
-with client.Session() as session:
-    # Agent with notification via email
-    agent = client.Agent(
-        session=session,
-        # Notifications can be configured in the Notte console
+# Requires the integrations package: pip install "notte[integrations]"
+from notte_integrations.notifiers.mail import EmailConfig, EmailNotifier
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+notifier = EmailNotifier(
+    config=EmailConfig(
+        smtp_server="smtp.example.com",
+        sender_email="agent@example.com",
+        sender_password="your-smtp-password",
+        receiver_email="you@example.com",
     )
+)
+
+with client.Session() as session:
+    # Sends an email with the result when the agent finishes
+    agent = client.Agent(session=session, notifier=notifier)
 ```
 
 ```typescript param_notifier.ts
 await client.Session().use(async session => {
-  // Agent with notification via email
+  // Sends an email with the result when the agent finishes
   const agent = client.Agent({
     session,
-    // Notifications can be configured in the Notte console
+    notifier_config: {
+      type: 'email',
+      config: {
+        smtp_server: 'smtp.example.com',
+        sender_email: 'agent@example.com',
+        sender_password: 'your-smtp-password',
+        receiver_email: 'you@example.com',
+      },
+    },
   });
   // Use the agent here, while its session is active.
 });

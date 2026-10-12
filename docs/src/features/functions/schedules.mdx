@@ -1,332 +1,149 @@
 ---
 title: Function Schedules
-description: Schedule Functions to run automatically with cron expressions
+description: Run Functions automatically on a cron schedule
 ---
-import PriceMonitor from "/snippets/functions/price_monitor.mdx";
-import UptimeMonitor from "/snippets/functions/uptime_monitor.mdx";
-import HourlyDataCollection from "/snippets/functions/schedules/hourly_data_collection.mdx";
-import WeeklyReports from "/snippets/functions/schedules/weekly_reports.mdx";
-import DynamicParams from "/snippets/functions/schedules/dynamic_params.mdx";
-import ExecutionHistory from "/snippets/functions/schedules/execution_history.mdx";
-import FailedRuns from "/snippets/functions/schedules/failed_runs.mdx";
-import Alerts from "/snippets/functions/schedules/alerts.mdx";
-import ErrorHandling from "/snippets/functions/schedules/error_handling.mdx";
-import SetTimeouts from "/snippets/functions/schedules/set_timeouts.mdx";
-import HealthCheck from "/snippets/functions/schedules/health_check.mdx";
-import Idempotent from "/snippets/functions/schedules/idempotent.mdx";
-import Timezone from "/snippets/functions/schedules/timezone.mdx";
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Schedule Functions to run automatically at specific times using cron expressions.
+Schedule a Function to run automatically, for example to collect data every morning or check a page every hour. Each scheduled run executes the latest version of the Function with the variables you saved on the schedule.
 
-## Overview
+A Function has at most one schedule. You can manage it from the **Schedule** tab of the Function in the [Notte Console](https://console.notte.cc), over HTTP, or with the TypeScript SDK. The Python SDK has no schedule methods yet, so call the HTTP API from Python.
 
-Function scheduling allows you to:
-- Run automations on a regular schedule (daily, weekly, hourly, etc.)
-- Execute tasks at specific times
-- Automate recurring workflows
-- Monitor websites continuously
+## Cron Expressions
 
-Schedules are configured in the [Notte Console](https://console.notte.cc) and run automatically on Notte's infrastructure.
-
-## Creating a Schedule
-
-### Via Console
-
-1. Go to [console.notte.cc/functions](https://console.notte.cc/functions)
-2. Select your Function
-3. Click "Schedule"
-4. Enter cron expression
-5. Set parameters (variables)
-6. Save schedule
-
-### Cron Expression Format
-
-Cron expressions define when Functions run:
+Schedules use the AWS EventBridge cron format: **six** space-separated fields, minutes first. This is not the five-field Unix crontab format.
 
 ```
-* * * * *
-│ │ │ │ │
-│ │ │ │ └─── Day of week (0-6, Sunday=0)
-│ │ │ └───── Month (1-12)
-│ │ └─────── Day of month (1-31)
-│ └───────── Hour (0-23)
-└─────────── Minute (0-59)
+minutes  hours  day-of-month  month  day-of-week  year
 ```
 
-## Common Schedules
+- Exactly one of `day-of-month` and `day-of-week` must be `?`; the other must be a real value.
+- Schedules fire in UTC.
+- `rate(...)` expressions such as `rate(1 hour)` are also accepted.
 
-### Every Minute
+| Schedule | Expression |
+|----------|------------|
+| Every day at 9:00 UTC | `0 9 ? * * *` |
+| Every hour | `0 * ? * * *` |
+| Every 15 minutes | `0/15 * ? * * *` |
+| Every Monday at 8:00 UTC | `0 8 ? * MON *` |
+| Weekdays at 18:00 UTC | `0 18 ? * MON-FRI *` |
+| First day of the month at midnight UTC | `0 0 1 * ? *` |
+| Every hour (rate) | `rate(1 hour)` |
 
-```
-* * * * *
-```
+A five-field expression such as `0 9 * * *` is rejected.
 
-Run function every minute.
+## Variables
 
-**Use for:** Real-time monitoring, high-frequency updates
+Every scheduled run receives the same `variables`. They must supply every parameter of `run()` that has no default value, and must not include names that `run()` does not declare. A Function without parameters can use an empty object.
 
----
+## Create or Update a Schedule
 
-### Every Hour
+Setting a schedule replaces the existing one, if any.
 
-```
-0 * * * *
-```
-
-Run at the start of every hour (e.g., 1:00, 2:00, 3:00).
-
-**Use for:** Hourly data collection, periodic checks
-
----
-
-### Every Day at 9 AM
-
-```
-0 9 * * *
-```
-
-Run every day at 9:00 AM.
-
-**Use for:** Daily reports, morning data sync
-
----
-
-### Every Monday at 8 AM
-
-```
-0 8 * * 1
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.notte.cc/functions/YOUR_FUNCTION_ID/schedule \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"cron": "0 9 ? * * *", "variables": {"url": "https://example.com"}}'
 ```
 
-Run every Monday at 8:00 AM.
+```python Python
+import os
 
-**Use for:** Weekly reports, start-of-week tasks
+import requests
 
----
+function_id = "YOUR_FUNCTION_ID"
 
-### First Day of Month
-
-```
-0 0 1 * *
-```
-
-Run at midnight on the 1st of every month.
-
-**Use for:** Monthly reports, billing cycles
-
----
-
-### Every 15 Minutes
-
-```
-*/15 * * * *
+response = requests.post(
+    f"https://api.notte.cc/functions/{function_id}/schedule",
+    headers={"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"},
+    json={"cron": "0 9 ? * * *", "variables": {"url": "https://example.com"}},
+)
+response.raise_for_status()
+print(response.json())  # {"status": "ENABLED"}
 ```
 
-Run every 15 minutes.
+```typescript TypeScript
+import { NotteClient } from 'notte-sdk';
 
-**Use for:** Frequent monitoring, regular updates
+const client = new NotteClient();
+const fn = client.NotteFunction({ function_id: 'YOUR_FUNCTION_ID' });
 
----
-
-### Weekdays at 6 PM
-
+await fn.setSchedule({
+  cron: '0 9 ? * * *',
+  variables: { url: 'https://example.com' },
+});
 ```
-0 18 * * 1-5
-```
+</CodeGroup>
 
-Run at 6:00 PM Monday through Friday.
+## Check a Schedule
 
-**Use for:** End-of-day business tasks
+The Function's metadata (`GET /functions/{function_id}`, or `fn.get()` in TypeScript) includes:
 
----
+- `schedule_cron`: the expression, or `null` when the Function is not scheduled
+- `schedule_variables`: the variables passed to each scheduled run
+- `schedule_state`: `enabled`, `paused`, or `null` when there is no schedule
 
-### Multiple Times Per Day
-
-```
-0 9,12,15,18 * * *
-```
-
-Run at 9 AM, 12 PM, 3 PM, and 6 PM every day.
-
-**Use for:** Regular business hours monitoring
-
----
-
-## Use Cases
-
-### 1. Daily Price Monitoring
-
-Monitor competitor pricing every day:
-
-<PriceMonitor />
-
-**Schedule:** `0 9 * * *` (Every day at 9 AM)
-
----
-
-### 2. Hourly Data Collection
-
-Collect data every hour:
-
-<HourlyDataCollection />
-
-**Schedule:** `0 * * * *` (Every hour)
-
----
-
-### 3. Weekly Reports
-
-Generate reports every Monday:
-
-<WeeklyReports />
-
-**Schedule:** `0 8 * * 1` (Every Monday at 8 AM)
-
----
-
-### 4. Continuous Monitoring
-
-Monitor website availability every 5 minutes:
-
-<UptimeMonitor />
-
-**Schedule:** `*/5 * * * *` (Every 5 minutes)
-
----
-
-## Schedule Parameters
-
-### Static Parameters
-
-Set fixed parameters for scheduled runs:
-
-```
-Schedule: 0 9 * * *
-Parameters:
-  url: "https://example.com"
-  max_results: 10
+```typescript TypeScript
+const { schedule_cron, schedule_variables, schedule_state } = await fn.get();
 ```
 
-Every scheduled run uses these parameters.
+Scheduled runs appear in the Function's run history like any other run. See [Function Management](/features/functions/management#monitoring-executions).
 
-### Dynamic Parameters
+## Paused Schedules
 
-Use environment variables or context:
+Notte pauses a schedule when its runs cannot succeed without your intervention, for example when your workspace runs out of credit or the Function is no longer active. A paused schedule keeps its expression and variables but stops firing, and `schedule_state` becomes `paused`.
 
-<DynamicParams />
+To resume it, fix the cause and set the schedule again with the same request as above.
 
-## Managing Schedules
+## Delete a Schedule
 
-### View Scheduled Runs
+Deleting the schedule stops future runs. The Function itself is unchanged and can still be invoked manually.
 
-Check upcoming scheduled executions in the Console:
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.notte.cc/functions/YOUR_FUNCTION_ID/schedule \
+  -H "Authorization: Bearer $NOTTE_API_KEY"
+```
 
-1. Go to Function details
-2. View "Scheduled Runs" section
-3. See next execution time
-4. View execution history
+```python Python
+import os
 
-### Pause Schedule
+import requests
 
-Temporarily disable schedule:
+function_id = "YOUR_FUNCTION_ID"
 
-1. Go to Function schedules
-2. Toggle schedule off
-3. Resume later without losing configuration
+response = requests.delete(
+    f"https://api.notte.cc/functions/{function_id}/schedule",
+    headers={"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"},
+)
+response.raise_for_status()
+print(response.json())  # {"status": "DELETED"}
+```
 
-### Delete Schedule
-
-Remove schedule permanently:
-
-1. Go to Function schedules
-2. Delete schedule
-3. Function can still be invoked manually
-
-## Monitoring Scheduled Functions
-
-### Execution History
-
-View past scheduled runs:
-
-<ExecutionHistory />
-
-### Failed Runs
-
-Handle scheduled failures:
-
-<FailedRuns />
-
-### Alerts
-
-Set up alerts for failures:
-
-<Alerts />
+```typescript TypeScript
+await fn.deleteSchedule();
+```
+</CodeGroup>
 
 ## Best Practices
 
-### 1. Use Appropriate Frequency
-
-Match schedule to data update frequency:
-
-```
-# Data updates hourly
-0 * * * *  ✅ Good
-
-# Data updates hourly, but checking every minute
-* * * * *  ❌ Wasteful
-```
-
-### 2. Add Error Handling
-
-Scheduled functions should handle errors gracefully:
-
-<ErrorHandling />
-
-### 3. Set Reasonable Timeouts
-
-<SetTimeouts />
-
-### 4. Monitor Schedule Health
-
-Check that schedules are running:
-
-<HealthCheck />
-
-**Schedule:** `0 0 * * *` (Daily health check)
-
-### 5. Use Idempotent Operations
-
-Design functions to handle duplicate runs:
-
-<Idempotent />
-
-## Timezone Considerations
-
-Schedules run in UTC by default. Convert to your timezone:
-
-```python
-# If you want 9 AM EST (UTC-5), use:
-# 14 * * * * (9 AM + 5 hours = 14:00 UTC)
-
-# If you want 9 AM PST (UTC-8), use:
-# 17 * * * * (9 AM + 8 hours = 17:00 UTC)
-```
-
-Or handle timezone in function:
-
-<Timezone />
+- Match the frequency to how often the data actually changes; every run uses browser time and credits.
+- Make runs idempotent so a repeated or overlapping run does no harm.
+- Return structured results and raise on failure, so failed scheduled runs show up as `failed` in the run history.
 
 ## Next Steps
 
 <CardGroup cols={2}>
   <Card title="Invocations" icon="play" href="/features/functions/invocations">
-    Learn how to invoke Functions manually
+    Invoke Functions manually
   </Card>
 
   <Card title="Management" icon="sliders" href="/features/functions/management">
-    Update and monitor Functions
+    Monitor runs and manage versions
   </Card>
 
   <Card title="Creating Functions" icon="file-code" href="/features/functions/creating">
@@ -334,6 +151,6 @@ Or handle timezone in function:
   </Card>
 
   <Card title="Console" icon="browser" href="https://console.notte.cc">
-    Configure schedules in Console
+    Configure schedules in the Console
   </Card>
 </CardGroup>

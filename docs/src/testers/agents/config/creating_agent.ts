@@ -16,7 +16,7 @@ client.Agent = options => {
 await client.Session().use(async session => {
   const agent = client.Agent({
     session,
-    reasoning_model: 'gemini/gemini-2.0-flash',
+    reasoning_model: 'gemini/gemini-3.5-flash',
     use_vision: true,
     max_steps: 15,
     // vault, // Optional
@@ -28,7 +28,7 @@ await client.Session().use(async session => {
 assert.ok(capturedAgent);
 const request = capturedAgent['request'];
 assert.ok(request?.session_id);
-assert.equal(request.reasoning_model, 'gemini/gemini-2.0-flash');
+assert.equal(request.reasoning_model, 'gemini/gemini-3.5-flash');
 assert.equal(request.use_vision, true);
 assert.equal(request.max_steps, 15);
 const { data: status } = await sessionStatus({

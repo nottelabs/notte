@@ -4,15 +4,26 @@
 <CodeGroup>
 
 ```python country_proxy.py
+from notte_sdk import NotteClient
 from notte_sdk.types import NotteProxy
 
-proxies = NotteProxy.from_country("fr")
+client = NotteClient()
+
+# Shorthand: pass a country code
+session = client.Session(proxies="fr")
+
+# Equivalent explicit form
+session = client.Session(proxies=[NotteProxy.from_country("fr")])
 ```
 
 ```typescript country_proxy.ts
-import type { NotteProxy } from 'notte-sdk';
+import { NotteClient, type NotteProxy } from 'notte-sdk';
 
-const proxies: NotteProxy = { type: 'notte', country: 'fr' };
+const client = new NotteClient();
+
+// Route the session through a French residential proxy
+const proxies: NotteProxy[] = [{ type: 'notte', country: 'fr' }];
+const session = client.Session({ proxies });
 ```
 
 </CodeGroup>

@@ -4,19 +4,19 @@
 <CodeGroup>
 
 ```python Python
-# Only main content (excludes navbars, footers, sidebars)
-markdown = client.scrape(url, only_main_content=True)  # Default
-
-# Include all page content
+# Include all page content (default)
 markdown = client.scrape(url, only_main_content=False)
+
+# Only main content (excludes navbars, footers, sidebars)
+markdown = client.scrape(url, only_main_content=True)
 ```
 
 ```typescript TypeScript
-// Only main content (excludes navbars, footers, sidebars)
-let markdown = await client.scrape(url, { only_main_content: true }); // Default
+// Include all page content (default)
+let markdown = await client.scrape(url, { only_main_content: false });
 
-// Include all page content
-markdown = await client.scrape(url, { only_main_content: false });
+// Only main content (excludes navbars, footers, sidebars)
+markdown = await client.scrape(url, { only_main_content: true });
 ```
 
 </CodeGroup>

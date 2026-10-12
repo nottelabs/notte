@@ -27,18 +27,13 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 ### Session Capabilities
 
-- [Browser Types](https://docs.notte.cc/features/sessions/browser-types.md): Choose between Chromium or Chrome for your sessions
-- [Browser Pools](https://docs.notte.cc/features/sessions/browser-pools.md): Managed pools of browser instances for high-throughput automation
 - [Stealth Mode](https://docs.notte.cc/features/sessions/stealth-mode.md): Configure anti-detection features for your browser sessions
 - [Proxies](https://docs.notte.cc/features/sessions/proxies.md): Route your automation traffic with precision & control
-- [Multi-Region Support](https://docs.notte.cc/features/sessions/multi-region.md): Run browser sessions across multiple geographic regions
 - [CAPTCHA Solving](https://docs.notte.cc/features/sessions/captcha-solving.md): Automatically detect and solve captchas during browser automation
 - [Ad Blocking](https://docs.notte.cc/features/sessions/ad-blocking.md): Built-in ad and tracker blocking for browser sessions
-- [Static IPs](https://docs.notte.cc/features/sessions/static-ips.md): Use dedicated static IP addresses for your browser sessions
 - [Recordings](https://docs.notte.cc/features/sessions/recordings.md): Record and replay your browser sessions for debugging and analysis
 - [Live View](https://docs.notte.cc/features/sessions/live-view.md): Watch your browser sessions in real-time as they execute
 - [Embed in your app](https://docs.notte.cc/features/sessions/embed-iframe.md): Drop the live browser viewer into your own web app via iframe
-- [Browser Extensions](https://docs.notte.cc/features/sessions/browser-extensions.md): Load custom browser extensions in your sessions
 - [Cookies](https://docs.notte.cc/features/sessions/cookies.md): Persist authentication and manage cookies across sessions
 - [Cloudflare Web Bot Auth](https://docs.notte.cc/features/sessions/cloudflare-web-bot-auth.md): Access Cloudflare-protected websites by cryptographically signing browser requests
 
@@ -46,7 +41,6 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Connect with Playwright](https://docs.notte.cc/features/sessions/playwright.md): Use Playwright directly with Notte sessions via Chrome DevTools Protocol
 - [Connect with Puppeteer](https://docs.notte.cc/features/sessions/puppeteer.md): Use Puppeteer with Notte sessions via Chrome DevTools Protocol
-- [Connect with Selenium](https://docs.notte.cc/features/sessions/selenium.md): Use Selenium with Notte sessions via Chrome DevTools Protocol
 - [External Providers](https://docs.notte.cc/features/sessions/external-providers.md): Connect Notte to external browser infrastructure via Chrome DevTools Protocol
 
 ## Authentication
@@ -74,6 +68,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Advanced Scraping](https://docs.notte.cc/guides/scraping.md): How to build reliable web scrapers with Notte
 - [Anti-Detection Playbook](https://docs.notte.cc/guides/stealth.md): How to avoid CAPTCHAs and bot detection in Notte Sessions
 - [Create accounts with Personas](https://docs.notte.cc/guides/account_creation.md): How to use notte personas for account creation
+- [Web Automation Best Practices](https://docs.notte.cc/guides/web_automation_tips.md): Playwright guidelines and common pitfalls for reliable web automation
 
 
 # Integrations
@@ -97,7 +92,6 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Google ADK](https://docs.notte.cc/integrations/google-adk.md): Give Google ADK agents a browser with the Notte MCP server
 - [Vercel AI SDK](https://docs.notte.cc/integrations/vercel-ai-sdk.md): Give AI SDK agents a browser with the Notte MCP server
 - [Mastra](https://docs.notte.cc/integrations/mastra.md): Give Mastra agents a browser with the Notte MCP server
-- [OpenAI CUA](https://docs.notte.cc/integrations/openai-cua.md): Integrate OpenAI CUA with Notte Browser Sessions
 - [OpenClaw](https://docs.notte.cc/integrations/openclaw.md): Use Notte cloud browsers with OpenClaw
 - [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
 - [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Connecting Stagehand to Notte cloud browsers

@@ -27,6 +27,98 @@
   "seo.indexing": "all",
   "redirects": [
     {
+      "source": "/sdk-reference/manual/function",
+      "destination": "/sdk-reference/manual/workflow"
+    },
+    {
+      "source": "/features/sessions/browser-types",
+      "destination": "/features/sessions/configuration"
+    },
+    {
+      "source": "/features/sessions/browser-pools",
+      "destination": "/features/sessions/configuration"
+    },
+    {
+      "source": "/features/sessions/multi-region",
+      "destination": "/features/sessions/proxies"
+    },
+    {
+      "source": "/features/sessions/static-ips",
+      "destination": "/features/sessions/proxies"
+    },
+    {
+      "source": "/features/sessions/browser-extensions",
+      "destination": "/features/sessions/external-providers"
+    },
+    {
+      "source": "/features/sessions/selenium",
+      "destination": "/features/sessions/playwright"
+    },
+    {
+      "source": "/features/agents/hello",
+      "destination": "/features/sessions/external-providers"
+    },
+    {
+      "source": "/concepts/bua",
+      "destination": "/concepts/agents"
+    },
+    {
+      "source": "/zin",
+      "destination": "/"
+    },
+    {
+      "source": "/cli",
+      "destination": "/integrations/claude-code-ai-agents"
+    },
+    {
+      "source": "/intro/pricing",
+      "destination": "/pricing"
+    },
+    {
+      "source": "/releases/github",
+      "destination": "/resources"
+    },
+    {
+      "source": "/releases/pypi",
+      "destination": "/resources"
+    },
+    {
+      "source": "/integrations/openai-cua",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/openai-computer-use",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/claude-agent-sdk",
+      "destination": "/mcp-server"
+    },
+    {
+      "source": "/integrations/claude-computer-use",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/computer-use-openagi",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/gemini-computer-use",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/laminar",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/magnitude",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/val-town",
+      "destination": "/integrations"
+    },
+    {
       "source": "/typescript-sdk-reference/manual/nottesearch",
       "destination": "/typescript-sdk-reference/client/search"
     },
@@ -89,18 +181,13 @@
                 "group": "Session Capabilities",
                 "collapsed": true,
                 "pages": [
-                  "features/sessions/browser-types",
-                  "features/sessions/browser-pools",
                   "features/sessions/stealth-mode",
                   "features/sessions/proxies",
-                  "features/sessions/multi-region",
                   "features/sessions/captcha-solving",
                   "features/sessions/ad-blocking",
-                  "features/sessions/static-ips",
                   "features/sessions/recordings",
                   "features/sessions/live-view",
                   "features/sessions/embed-iframe",
-                  "features/sessions/browser-extensions",
                   "features/sessions/cookies",
                   "features/sessions/cloudflare-web-bot-auth"
                 ]
@@ -111,7 +198,6 @@
                 "pages": [
                   "features/sessions/playwright",
                   "features/sessions/puppeteer",
-                  "features/sessions/selenium",
                   "features/sessions/external-providers"
                 ]
               }
@@ -152,7 +238,8 @@
             "pages": [
               "guides/scraping",
               "guides/stealth",
-              "guides/account_creation"
+              "guides/account_creation",
+              "guides/web_automation_tips"
             ]
           }
         ]
@@ -187,7 +274,6 @@
               "integrations/google-adk",
               "integrations/vercel-ai-sdk",
               "integrations/mastra",
-              "integrations/openai-cua",
               "integrations/openclaw",
               "integrations/hermes",
               "integrations/stagehand"
@@ -269,7 +355,9 @@
                       "sdk-reference/remotesession/viewer_browser",
                       "sdk-reference/remotesession/viewer_cdp",
                       "sdk-reference/remotesession/viewer",
-                      "sdk-reference/remotesession/status"
+                      "sdk-reference/remotesession/status",
+                      "sdk-reference/remotesession/evaluate_js",
+                      "sdk-reference/remotesession/wait_for_auth"
                     ]
                   },
                   {
@@ -298,7 +386,10 @@
                       "sdk-reference/misc/captchasolveaction",
                       "sdk-reference/misc/smsreadaction",
                       "sdk-reference/misc/emailreadaction",
-                      "sdk-reference/misc/emailverificationreadaction"
+                      "sdk-reference/misc/emailverificationreadaction",
+                      "sdk-reference/misc/closetabaction",
+                      "sdk-reference/misc/multifactorfillaction",
+                      "sdk-reference/misc/fallbackfillaction"
                     ]
                   },
                   {
@@ -307,10 +398,11 @@
                     "pages": [
                       "sdk-reference/manual/agent",
                       "sdk-reference/remoteagent/run",
-                      "sdk-reference/remoteagent/replay",
                       "sdk-reference/remoteagent/start",
                       "sdk-reference/remoteagent/stop",
                       "sdk-reference/remoteagent/status",
+                      "sdk-reference/remoteagent/wait",
+                      "sdk-reference/remoteagent/watch_logs_and_wait",
                       "sdk-reference/manual/agent_fallback"
                     ]
                   },
@@ -325,7 +417,10 @@
                       "sdk-reference/nottefunction/delete",
                       "sdk-reference/nottefunction/download",
                       "sdk-reference/nottefunction/fork",
-                      "sdk-reference/nottefunction/get_curl"
+                      "sdk-reference/nottefunction/get_curl",
+                      "sdk-reference/nottefunction/get_run",
+                      "sdk-reference/nottefunction/get_url",
+                      "sdk-reference/nottefunction/stop_run"
                     ]
                   }
                 ]
@@ -342,7 +437,9 @@
                       "sdk-reference/nottevault/get_credentials",
                       "sdk-reference/nottevault/delete_credentials",
                       "sdk-reference/nottevault/list_credentials",
-                      "sdk-reference/nottevault/generate_password"
+                      "sdk-reference/nottevault/generate_password",
+                      "sdk-reference/nottevault/has_credential",
+                      "sdk-reference/nottevault/add_credentials_from_env"
                     ]
                   },
                   {
@@ -365,8 +462,8 @@
                       "sdk-reference/manual/file_storage",
                       "sdk-reference/remotefilestorage/download",
                       "sdk-reference/remotefilestorage/upload",
-                      "sdk-reference/remotefilestorage/list_downloaded_files",
-                      "sdk-reference/remotefilestorage/list_uploaded_files"
+                      "sdk-reference/remotefilestorage/list",
+                      "sdk-reference/remotefilestorage/delete"
                     ]
                   }
                 ]

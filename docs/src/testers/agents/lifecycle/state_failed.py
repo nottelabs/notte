@@ -5,6 +5,7 @@ client = NotteClient()
 
 with client.Session() as session:
     agent = client.Agent(session=session)
+    agent.start(task="Find the contact email on example.com")
 
     result = agent.wait()
     if not result.success:

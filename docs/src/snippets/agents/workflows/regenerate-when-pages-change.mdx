@@ -15,4 +15,6 @@ except Exception:
 
         if result.success:
             # Generate new function
+            new_function = agent.workflow.create_function()
+            print(f"New function created: {new_function.function_id}")
 ```

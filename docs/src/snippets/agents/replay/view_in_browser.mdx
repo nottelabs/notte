@@ -2,8 +2,17 @@
 {/* @sniptest testers/agents/replay/view_in_browser.py */}
 
 ```python view_in_browser.py
-result = agent.run(task="Complete task")
+import webbrowser
 
-# Get replay URL
-print(f"View replay: https://console.notte.cc/sessions/{session.session_id}")
+from notte_sdk import NotteClient
+
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(task="Complete task")
+
+# Open the replay (presigned MP4 URL) in your browser
+replay = session.replay()
+if replay.mp4_url is not None:
+    webbrowser.open(replay.mp4_url)
 ```

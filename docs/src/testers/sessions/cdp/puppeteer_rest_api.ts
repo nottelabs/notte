@@ -1,54 +1,23 @@
-const puppeteer = require('puppeteer-core');
-const fetch = require('node-fetch');
+import puppeteer from 'puppeteer-core';
+import { NotteClient } from 'notte-sdk';
 
-async function createNotteSession() {
-  const response = await fetch('https://api.notte.cc/sessions/start', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.NOTTE_API_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      headless: true,
-      timeout_minutes: 10,
-      browser_type: 'chromium'
-    })
-  });
+const client = new NotteClient(); // reads NOTTE_API_KEY
 
-  return await response.json();
-}
+// use() starts the session and always stops it when the callback ends
+await client.Session({ idle_timeout_minutes: 10 }).use(async session => {
+  const cdpUrl = await session.cdpUrl();
 
-async function main() {
-  // Start Notte session
-  const sessionData = await createNotteSession();
-  const cdpUrl = sessionData.cdp_url;
-  const sessionId = sessionData.session_id;
-
-  console.log(`Session started: ${sessionId}`);
+  // Connect Puppeteer
+  const browser = await puppeteer.connect({ browserWSEndpoint: cdpUrl });
 
   try {
-    // Connect Puppeteer
-    const browser = await puppeteer.connect({
-      browserWSEndpoint: cdpUrl
-    });
-
     const pages = await browser.pages();
     const page = pages[0];
 
     // Use Puppeteer
     await page.goto('https://example.com');
     console.log('Title:', await page.title());
-
-    await browser.disconnect();
   } finally {
-    // Stop session
-    await fetch(`https://api.notte.cc/sessions/${sessionId}/stop`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.NOTTE_API_KEY}`
-      }
-    });
+    await browser.disconnect();
   }
-}
-
-main().catch(console.error);
+});

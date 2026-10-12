@@ -1,5 +1,5 @@
 // @sniptest filename=full_config.ts
-// @sniptest show=8-30
+// @sniptest show=8-29
 import { NotteClient, type SessionResponse } from 'notte-sdk';
 
 const client = new NotteClient();
@@ -14,7 +14,6 @@ const session = client.Session({
   proxies: true,
   viewport_width: 1920,
   viewport_height: 1080,
-  browser_type: 'chromium',
 });
 await session.use(async () => {
   status = await session.status();

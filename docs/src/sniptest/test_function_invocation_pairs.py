@@ -43,7 +43,7 @@ class FunctionInvocationPairsTest(unittest.TestCase):
             for limit in (60, 600):
                 self.assertIn(f"timeout={limit})" if suffix == ".py" else f"timeoutMs: {limit}_000", timeout)
             _, monitor = parse_file(ROOT / "testers/functions" / f"monitor_runs{suffix}")
-            self.assertIn("stream=False" if suffix == ".py" else "stream: false", monitor)
+            self.assertIn("\"stream\": False" if suffix == ".py" else "stream: false", monitor)
             for text in ("Status:", "Final result:", "closed", "failed", "Check every 5 seconds"):
                 self.assertIn(text, monitor)
 

@@ -8,20 +8,56 @@
 // Every shell command that calls notte must prepend this.
 const PATH_FIX = 'export PATH="$PATH:$(go env GOROOT)/bin:$(go env GOPATH)/bin"';
 
+// 3. The agent: model, system prompt and tools. web_fetch and web_search are
+//    disabled so the agent can only see pages through a real Notte browser.
 const agent = await client.beta.agents.create({
   name: "browser-operator",
-  environment_id: env.id,
-  vault_id: vault.id,
-  system_prompt:
+  model: "claude-haiku-4-5",
+  system:
     `You drive real browsers with the notte CLI. ` +
     `Prefix every shell command with: ${PATH_FIX}`,
+  tools: [
+    {
+      type: "agent_toolset_20260401",
+      configs: [
+        { name: "web_fetch", enabled: false },
+        { name: "web_search", enabled: false },
+      ],
+    },
+  ],
 });
 
-const run = await client.beta.agents.runs.create(agent.id, {
-  input: "Open https://example.com and report its main heading.",
+// 4. A session binds the agent to the environment and the vault.
+const session = await client.beta.sessions.create({
+  agent: agent.id,
+  environment_id: env.id,
+  vault_ids: [vault.id],
+  title: "Notte browser task",
 });
 
-console.log(run.id);
+// 5. Open the event stream, send the task, and print the reply until idle.
+const stream = await client.beta.sessions.events.stream(session.id);
+
+await client.beta.sessions.events.send(session.id, {
+  events: [
+    {
+      type: "user.message",
+      content: [{ type: "text", text: "Open https://example.com and report its main heading." }],
+    },
+  ],
+});
+
+for await (const event of stream) {
+  if (event.type === "agent.message") {
+    for (const block of event.content) {
+      if (block.type === "text") process.stdout.write(block.text);
+    }
+  } else if (event.type === "session.status_idle") {
+    break;
+  }
+}
+
+await client.beta.sessions.delete(session.id);
 ```
 
 </CodeGroup>

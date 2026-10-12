@@ -1,5 +1,4 @@
 # @sniptest filename=price_monitor.py
-# @sniptest show=5-20
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -22,4 +21,5 @@ def run(product_urls: list[str]):
 # Deploy and schedule to run daily
 function = client.Function(path="price_monitor.py", name="Daily Price Monitor")
 
-# Schedule via console: every day at 9 AM
+# Then schedule it (Console Schedule tab or POST /functions/{id}/schedule)
+# with the cron expression 0 9 ? * * * (every day at 9:00 UTC)

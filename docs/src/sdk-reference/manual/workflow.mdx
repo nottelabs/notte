@@ -20,11 +20,8 @@ import FunctionsPython from '/snippets/workflows/index.mdx';
 <ParamField path="decryption_key" type="str | None" default="None">
 </ParamField>
 
-<ParamField path="workflow_path" type="str | None" default="None">
-</ParamField>
-
 <ParamField path="path" type="str" required>
-  The path to the function to upload.
+  The path to the Python file to upload (must end with `.py`). Required when creating a function, omit it when loading an existing one by `function_id`.
 </ParamField>
 
 <ParamField path="name" type="str | None">

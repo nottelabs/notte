@@ -1,25 +1,25 @@
-const puppeteer = require('puppeteer-core');
-const fetch = require('node-fetch');
+import puppeteer from 'puppeteer-core';
+
+const API = 'https://api.notte.cc';
+const headers = {
+  'Authorization': `Bearer ${process.env.NOTTE_API_KEY}`,
+  'Content-Type': 'application/json'
+};
 
 async function scrapeWithNotte() {
-  // Create Notte session
-  const sessionResponse = await fetch('https://api.notte.cc/sessions/start', {
+  // Create Notte session with the REST API
+  const sessionResponse = await fetch(`${API}/sessions/start`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.NOTTE_API_KEY}`,
-      'Content-Type': 'application/json'
-    },
+    headers,
     body: JSON.stringify({
-      headless: true,
       proxies: true,  // Use residential proxies
       solve_captchas: false,
-      timeout_minutes: 15,
+      idle_timeout_minutes: 10,
       browser_type: 'chromium'
     })
   });
 
-  const session = await sessionResponse.json();
-  const { cdp_url, session_id } = session;
+  const { cdp_url, session_id } = await sessionResponse.json();
 
   try {
     // Connect Puppeteer
@@ -50,11 +50,9 @@ async function scrapeWithNotte() {
     await browser.disconnect();
   } finally {
     // Stop session
-    await fetch(`https://api.notte.cc/sessions/${session_id}/stop`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.NOTTE_API_KEY}`
-      }
+    await fetch(`${API}/sessions/${session_id}/stop`, {
+      method: 'DELETE',
+      headers
     });
   }
 }

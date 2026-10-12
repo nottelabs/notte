@@ -5,9 +5,6 @@ const client = new NotteClient({
 });
 
 await client.Session().use(async (session) => {
-  const agent = client.Agent({ session });
-  await agent.run({
-    task: 'Find and summarize the top 5 AI news from today',
-    max_steps: 20, // Limit to 20 actions
-  });
+  const agent = client.Agent({ session, max_steps: 10 }); // Stop after at most 10 steps
+  await agent.run({ task: 'Find and summarize the top 5 AI news from today' });
 });

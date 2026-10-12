@@ -11,7 +11,8 @@ def run_automation():
 
     with client.Session(
         open_viewer=True,
-        timeout_minutes=10,
+        idle_timeout_minutes=5,
+        max_duration_minutes=30,
         cookie_file="cookies.json",  # Auto-load/save cookies
     ) as session:
         print(f"Session created: {session.session_id}")

@@ -22,7 +22,7 @@ const failures = runs.items.filter(run => run.status === 'failed');
 console.log(`Failed runs: ${failures.length}/${runs.items.length}`);
 
 // Analyze failure reasons
-for (const run of failures.slice(0, 5)) { // Last 5 failures
+for (const run of failures.slice(0, 5)) { // First 5 failures on this page
   const runDetail = await fn.getRun(run.function_run_id);
   console.log(`Run ${run.function_run_id}:`);
   console.log(`  Error: ${runDetail.result}`);

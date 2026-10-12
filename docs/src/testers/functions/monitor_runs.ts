@@ -11,15 +11,13 @@ const client = new NotteClient();
 
 const fn = client.NotteFunction({ function_id: functionId });
 
-// Start run
-const result = await fn.run(
-  { url: 'https://example.com' },
-  { stream: false }, // Don't stream logs
-);
+// Create the run first so you know its ID
+const { function_run_id: runId } = await fn.createRun();
 
-const runId = result.function_run_id;
+// Start it without awaiting: run() resolves only when the run finishes
+const execution = fn.run({ url: 'https://example.com' }, { functionRunId: runId, stream: false });
 
-// Poll status
+// Poll status while it runs
 while (true) {
   const status = await fn.getRun(runId);
 
@@ -32,6 +30,8 @@ while (true) {
 
   await sleep(5000); // Check every 5 seconds
 }
+
+await execution;
 
 const runStatus = await fn.getRun(runId);
 assert.equal(runStatus.status, 'closed');

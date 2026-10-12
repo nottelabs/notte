@@ -21,7 +21,8 @@ def request_with_backoff(max_retries=3):
     for attempt in range(max_retries):
         try:
             with client.Session() as session:
-                return session.scrape(url="https://example.com")
+                session.execute(type="goto", url="https://example.com")
+                return session.scrape()
         except NotteAPIError as e:
             if e.status_code == 429:
                 wait_time = 2 ** attempt  # 1, 2, 4 seconds
@@ -34,9 +35,9 @@ def request_with_backoff(max_retries=3):
 
 ## Best practices
 
-1. **Implement backoff** — Always handle 429 responses with exponential backoff
-2. **Batch requests** — Combine multiple operations when possible
-3. **Cache responses** — Avoid redundant API calls by caching results
+1. **Implement backoff** - Always handle 429 responses with exponential backoff
+2. **Batch requests** - Combine multiple operations when possible
+3. **Cache responses** - Avoid redundant API calls by caching results
 
 ## Increasing limits
 

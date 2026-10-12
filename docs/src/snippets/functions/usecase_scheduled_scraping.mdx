@@ -2,6 +2,10 @@
 {/* @sniptest testers/functions/usecase_scheduled_scraping.py */}
 
 ```python price_monitor.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
 
 # price_monitor.py
 def run(product_urls: list[str]):
@@ -18,4 +22,8 @@ def run(product_urls: list[str]):
 
 
 # Deploy and schedule to run daily
+function = client.Function(path="price_monitor.py", name="Daily Price Monitor")
+
+# Then schedule it (Console Schedule tab or POST /functions/{id}/schedule)
+# with the cron expression 0 9 ? * * * (every day at 9:00 UTC)
 ```

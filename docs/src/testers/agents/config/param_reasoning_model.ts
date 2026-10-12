@@ -6,9 +6,9 @@ import { NotteClient } from 'notte-sdk';
 const client = new NotteClient();
 
 const status = await client.Session().use(async session => {
-  const agent = client.Agent({ session, reasoning_model: 'anthropic/claude-3.5-sonnet' });
+  const agent = client.Agent({ session, reasoning_model: 'anthropic/claude-sonnet-4-5-20250929' });
   const status = await session.status();
-  assert.equal(agent['request']?.reasoning_model, 'anthropic/claude-3.5-sonnet');
+  assert.equal(agent['request']?.reasoning_model, 'anthropic/claude-sonnet-4-5-20250929');
   assert.equal(agent['request']?.session_id, status.session_id);
   return status;
 });

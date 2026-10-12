@@ -14,11 +14,11 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Profiles let you save and reuse browser state—including cookies, local storage, session storage, and cache—across multiple sessions. This is useful for maintaining login states, preserving user preferences, or building realistic multi-session workflows.
+Profiles let you save and reuse browser state (cookies, local storage, and session storage) across multiple sessions. This is useful for maintaining login states, preserving user preferences, or building realistic multi-session workflows.
 
 ## How Profiles Work
 
-A profile is a saved snapshot of a browser's user data directory. By default, each Notte session uses a fresh browser state to ensure isolation.
+A profile is a saved snapshot of a browser's cookies, local storage, and session storage. Other browser data, such as the HTTP cache, history, and extensions, is not saved. By default, each Notte session uses a fresh browser state to ensure isolation.
 
 When you create a profile and use it in a session with `persist=True`, Notte saves that session's browser state. You can then attach the profile to future sessions to restore the saved state.
 
@@ -131,21 +131,16 @@ Load a profile without saving changes by setting `persist=False`:
 - Delete profiles for accounts that are no longer needed
 - Use separate profiles for production and development environments
 
-### Performance
-
-- Profiles with large caches may take longer to load
-- Consider creating fresh profiles periodically if performance degrades
-
 ## Comparison: Profiles vs Cookies
 
 | Feature | Profiles | Cookies |
 |---------|----------|---------|
-| **Scope** | Full browser state (cookies, storage, cache) | Cookies only |
+| **Scope** | Cookies, local storage, and session storage | Cookies only |
 | **Storage** | Managed by Notte | JSON file you manage |
 | **Persistence** | Automatic on session end | Manual export/import |
 | **Use case** | Long-term state preservation | Quick cookie injection |
 
-Use profiles when you need complete browser state preservation. Use cookies when you only need to inject specific authentication tokens.
+Use profiles when you need to preserve cookies and web storage together. Use cookies when you only need to inject specific authentication tokens.
 
 ## Next Steps
 

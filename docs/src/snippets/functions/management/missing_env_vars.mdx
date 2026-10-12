@@ -6,12 +6,13 @@ import os
 
 
 def run():
+    # Names of the Function Secrets this code expects
     required_vars = ["API_KEY", "WEBHOOK_URL"]
 
-    missing = [var for var in required_vars if not os.getenv(var)]
+    missing = [var for var in required_vars if not os.environ.get(var)]
 
     if missing:
-        return {"error": f"Missing environment variables: {', '.join(missing)}"}
+        return {"error": f"Missing secrets: {', '.join(missing)}"}
 
     # Continue with automation
 ```

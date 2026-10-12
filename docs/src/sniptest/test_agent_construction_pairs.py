@@ -10,8 +10,8 @@ class AgentConstructionPairsTest(unittest.TestCase):
     def test_displayed_options_match_without_test_scaffolding(self):
         root = Path(__file__).resolve().parents[1] / "testers/agents/config"
         cases = {
-            "creating_agent": ("gemini/gemini-2.0-flash", "use_vision", "max_steps", "15", "Optional"),
-            "param_reasoning_model": ("anthropic/claude-3.5-sonnet",),
+            "creating_agent": ("gemini/gemini-3.5-flash", "use_vision", "max_steps", "15", "Optional"),
+            "param_reasoning_model": ("anthropic/claude-sonnet-4-5-20250929",),
             "bp_vision": ("Text-only site", "Image-heavy site", "use_vision"),
         }
         for name, expected in cases.items():

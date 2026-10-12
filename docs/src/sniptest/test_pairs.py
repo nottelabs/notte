@@ -19,7 +19,7 @@ class RepositoryExamplesTest(unittest.TestCase):
             "param_max_steps": "max_steps",
             "param_use_vision": "use_vision",
             "param_session": "open_viewer",
-            "param_notifier": "Notifications can be configured in the Notte console",
+            "param_notifier": "Sends an email with the result when the agent finishes",
         }
         for name, teaching_text in cases.items():
             for suffix in (".py", ".ts"):
@@ -41,6 +41,9 @@ class RepositoryExamplesTest(unittest.TestCase):
                         "status =",
                         "idle_timeout_minutes",
                     ):
+                        # The notifier lives in a separate package, so its import is part of the lesson.
+                        if hidden == "import " and name == "param_notifier" and suffix == ".py":
+                            continue
                         self.assertNotIn(hidden, rendered)
 
     def test_python_page_examples_use_the_node_page_helper(self):

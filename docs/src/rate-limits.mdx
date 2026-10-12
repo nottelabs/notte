@@ -7,41 +7,42 @@ url: https://www.notte.cc/pricing#rate-limits
 
 | | Free | Developer | Startup | Enterprise |
 |--|------|-----------|---------|------------|
-| **Concurrency** | 2 | 25 | 100 | 250+ |
-| **Session Duration** | 15 mins | 30 mins | 3 hours | 6+ hours |
-| **Replay Retention** | 7 days | 7 days | 30 days | Custom |
+| **Concurrent browsers** | 5 | 25 | 100 | 250+ |
+| **Concurrent agents** | 5 | 25 | 100 | Custom |
+| **Max session duration** | 15 mins | 2 hours | 5 hours | Custom |
+| **Session file retention** | 1 day | 7 days | 30 days | Custom |
 
-## Features
+## Request Limits
+
+Session starts, agent starts, and the prompt helper endpoints are rate limited per API key, with a separate budget for each endpoint. Requests over the limit return `429`. See [API rate limits](/api-reference/rate-limits).
 
 | | Free | Developer | Startup | Enterprise |
 |--|------|-----------|---------|------------|
-| **Browser Profiles** | — | ✓ | ✓ | ✓ |
-| **[Residential Proxies](/features/sessions/proxies#built-in-proxies)** | — | ✓ | ✓ | ✓ |
-| **[Captcha Solving](/features/sessions/captcha-solving)** | — | ✓ | ✓ | ✓ |
-| **Files I/O** | — | ✓ | ✓ | ✓ |
-| **Cronjobs** | — | ✓ | ✓ | ✓ |
+| **Per minute** | 50 | 50 | 100 | Custom |
+| **Per hour** | 200 | 200 | 1,000 | Custom |
+| **Per day** | 600 | 600 | 10,000 | Custom |
 
 ## Agent Tools
 
 | | Free | Developer | Startup | Enterprise |
 |--|------|-----------|---------|------------|
-| **[Vaults](/concepts/vaults)** | 1 | 2 | 5 | 10+ |
-| **[Personas](/concepts/personas)** | 1 | 10 | 100 | 100+ |
+| **[Vaults](/concepts/vaults)** | 5 | 50 | 200 | Custom |
+| **[Personas](/concepts/personas)** | 5 | 50 | 200 | Custom |
 
 ## BYO (Bring Your Own)
 
 | | Free | Developer | Startup | Enterprise |
 |--|------|-----------|---------|------------|
-| **[Custom Proxies](/features/sessions/proxies#custom-proxies)** | — | — | ✓ | ✓ |
-| **Model Keys** | — | — | ✓ | ✓ |
-| **Cloud (On-Prem)** | — | — | — | ✓ |
+| **[Custom Proxies](/features/sessions/proxies#custom-proxies)** | - | - | ✓ | ✓ |
+| **Model Keys** | - | - | ✓ | ✓ |
+| **Cloud (On-Prem)** | - | - | - | ✓ |
 
 ## Compliance & Support
 
 | | Free | Developer | Startup | Enterprise |
 |--|------|-----------|---------|------------|
 | **[SOC2](https://trust.notte.cc)** | ✓ | ✓ | ✓ | ✓ |
-| **HIPAA (BAA)** | — | — | — | ✓ |
-| **SLAs** | — | — | — | ✓ |
-| **SSO** | — | — | — | ✓ |
+| **HIPAA (BAA)** | - | - | - | ✓ |
+| **SLAs** | - | - | - | ✓ |
+| **SSO** | - | - | - | ✓ |
 | **[Support](https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA)** | Community | Community | Priority | Dedicated |

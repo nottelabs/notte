@@ -18,6 +18,9 @@
   "agents/config/bp_step_limits.ts": {
     "expected": { "results": [30] }
   },
+  "sessions/ad_blocking.ts": {
+    "expected": { "results": ["closed", "closed"] }
+  },
   "sessions/country_proxy.ts": {
     "expected": { "results": ["notte", "fr"] }
   },

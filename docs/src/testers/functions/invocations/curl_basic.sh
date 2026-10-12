@@ -1,5 +1,6 @@
 curl -X POST https://api.notte.cc/functions/function_abc123/runs/start \
   -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "x-notte-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "function_id": "function_abc123",

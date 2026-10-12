@@ -1,5 +1,5 @@
 // @sniptest filename=param_notifier.ts
-// @sniptest show=14-21
+// @sniptest show=14-29
 import assert from 'node:assert/strict';
 import { NotteClient, sessionStatus } from 'notte-sdk';
 
@@ -14,10 +14,18 @@ client.Agent = options => {
 };
 
 await client.Session().use(async session => {
-  // Agent with notification via email
+  // Sends an email with the result when the agent finishes
   const agent = client.Agent({
     session,
-    // Notifications can be configured in the Notte console
+    notifier_config: {
+      type: 'email',
+      config: {
+        smtp_server: 'smtp.example.com',
+        sender_email: 'agent@example.com',
+        sender_password: 'your-smtp-password',
+        receiver_email: 'you@example.com',
+      },
+    },
   });
   // Use the agent here, while its session is active.
 });
