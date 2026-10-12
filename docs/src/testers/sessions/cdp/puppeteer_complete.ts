@@ -14,8 +14,7 @@ async function scrapeWithNotte() {
     body: JSON.stringify({
       proxies: true,  // Use residential proxies
       solve_captchas: false,
-      idle_timeout_minutes: 10,
-      browser_type: 'chromium'
+      idle_timeout_minutes: 10
     })
   });
 

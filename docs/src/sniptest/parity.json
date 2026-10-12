@@ -237,7 +237,6 @@
     "getting-started/concept_observation.py",
     "getting-started/concept_session.py",
     "getting-started/concept_vault.py",
-    "guides/browser_type_selection.py",
     "guides/close_popup.py",
     "guides/combine_selectors.py",
     "guides/handle_optional_popup.py",
