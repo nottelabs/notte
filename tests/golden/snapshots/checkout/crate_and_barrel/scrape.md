@@ -6,8 +6,6 @@
 
 
 
-
-
 Furniture, Home Decor, Housewares & Gifts & Registry | Crate & Barrel
  
 
@@ -109,8 +107,6 @@ Close Popup
 
 Modal Popup
 
-
-
 normal
 
 IFRAME about:blank:
@@ -123,6 +119,3 @@ IFRAME about:srcdoc:
 PayPal
 
 IFRAME about:srcdoc:
-
-
-IFRAME about:blank:

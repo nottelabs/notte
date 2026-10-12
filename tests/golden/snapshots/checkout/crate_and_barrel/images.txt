@@ -1,4 +1,4 @@
-ImageCategory.FAVICON	file://<tests/data>/checkout/crate_and_barrel.html/favicon.ico
+ImageCategory.FAVICON	http://golden.test/checkout/crate_and_barrel.html/favicon.ico
 ImageCategory.SVG_ICON	None
 ImageCategory.SVG_ICON	None
 ImageCategory.SVG_ICON	None

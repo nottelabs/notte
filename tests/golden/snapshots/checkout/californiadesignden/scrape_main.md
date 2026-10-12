@@ -74,10 +74,4 @@ IFRAME about:blank:
 IFRAME about:blank:
 
 
-IFRAME about:blank:
-
-
-IFRAME about:blank:
-
-
 IFRAME about:srcdoc:

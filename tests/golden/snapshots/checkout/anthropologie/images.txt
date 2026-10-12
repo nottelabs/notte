@@ -1,4 +1,4 @@
-ImageCategory.FAVICON	file://<tests/data>/checkout/anthropologie.html/favicon.ico
+ImageCategory.FAVICON	http://golden.test/checkout/anthropologie.html/favicon.ico
 ImageCategory.SVG_ICON	None
 ImageCategory.CONTENT_IMAGE	data:image/svg+xml;base64,sha256:238a9f87b513f9d4
 ImageCategory.CONTENT_IMAGE	data:image/svg+xml;base64,sha256:ff2cbf2ee97a95d8
@@ -13,11 +13,11 @@ ImageCategory.SVG_CONTENT	<svg viewBox="0 0 381.5 381.5" xmlns="http://www.w3.or
 </svg>
 ImageCategory.SVG_ICON	None
 ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
 ImageCategory.CONTENT_IMAGE	data:image/png;base64,sha256:2705ae14a1498e95
 ImageCategory.SVG_ICON	None
 ImageCategory.CONTENT_IMAGE	data:image/png;base64,sha256:4ebe3f979525a508
-ImageCategory.SVG_ICON	None
-ImageCategory.SVG_ICON	None
 ImageCategory.SVG_ICON	None
 ImageCategory.SVG_ICON	None
 ImageCategory.CONTENT_IMAGE	data:image/svg+xml;base64,sha256:0d3d4c51a92917ab

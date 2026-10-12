@@ -1,7 +1,9 @@
 """Golden tests: pin what observe and scrape return on saved pages, offline.
 
-Each page in `tests/data` is opened from disk with every non-`file://` request blocked, so the
-output only depends on our code. The expected output lives next to this file in `snapshots/<page>/`:
+Each page in `tests/data` is served from disk at `http://golden.test/<page>` with its `<script>`
+tags stripped and every other request blocked, so the output only depends on our code: the saved pages' own
+scripts would otherwise rebuild parts of the DOM (iframes in particular) in a different order on
+each run. The expected output lives next to this file in `snapshots/<page>/`:
 
 - `observe.txt`: the action space description, then one line per interaction action
   (id, type, text label, CSS and XPath selectors, iframe / shadow-root flags)
@@ -18,6 +20,7 @@ intended, regenerate them and review the diff:
 import difflib
 import hashlib
 import os
+import re
 from pathlib import Path
 
 import pytest
@@ -29,15 +32,24 @@ import notte
 DATA_DIR = Path(__file__).parent.parent / "data"
 SNAPSHOTS_DIR = Path(__file__).parent / "snapshots"
 UPDATE = os.getenv("NOTTE_UPDATE_GOLDEN") == "1"
+BASE_URL = "http://golden.test/"
 
 PAGES = sorted(path.relative_to(DATA_DIR) for path in DATA_DIR.rglob("*.html"))
 
 
-async def _offline(route: Route) -> None:
-    if route.request.url.startswith("file:"):
-        await route.continue_()
-    else:
+_SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.IGNORECASE | re.DOTALL)
+
+
+async def _serve(route: Route) -> None:
+    request = route.request
+    if request.resource_type != "document" or not request.url.startswith(BASE_URL):
         await route.abort()
+        return
+    path = DATA_DIR / request.url.removeprefix(BASE_URL)
+    if not path.is_file():
+        await route.abort()
+        return
+    await route.fulfill(body=_SCRIPT.sub("", path.read_text()), content_type="text/html; charset=utf-8")
 
 
 def _render_observation(obs: Observation) -> str:
@@ -68,8 +80,6 @@ def _image_url(url: str | None) -> str:
 
 
 def _check(page: Path, name: str, actual: str) -> None:
-    # Pages are opened from disk: keep the checkout location out of the snapshots.
-    actual = actual.replace(str(DATA_DIR.resolve()), "<tests/data>")
     path = SNAPSHOTS_DIR / page.with_suffix("") / name
     if UPDATE:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -90,8 +100,8 @@ def _check(page: Path, name: str, actual: str) -> None:
 @pytest.mark.parametrize("page", PAGES, ids=str)
 async def test_observe_and_scrape(page: Path) -> None:
     async with notte.Session(headless=True, viewport_width=1280, viewport_height=720) as session:
-        await session.window.page.route("**/*", _offline)
-        _ = await session.window.page.goto(f"file://{(DATA_DIR / page).resolve()}")
+        await session.window.page.route("**/*", _serve)
+        _ = await session.window.page.goto(f"{BASE_URL}{page.as_posix()}")
 
         _check(page, "observe.txt", _render_observation(await session.aobserve()))
         _check(page, "scrape.md", await session.ascrape())

@@ -8,7 +8,6 @@ Checkout - Shipping | Joybird
 
 
 
-
 You need to enable JavaScript to run this app.
 
 [Skip to content](#skip-to-content)
@@ -116,9 +115,6 @@ If you need to cancel your order, you must cancel within 24 hours in order to re
 insert" srcdoc="
 
 " data-savepage-key="0-1">
-
-IFRAME about:blank:
-
 
 IFRAME about:blank:
 

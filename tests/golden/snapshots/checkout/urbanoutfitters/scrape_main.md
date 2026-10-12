@@ -106,6 +106,3 @@ IFRAME about:srcdoc:
 
 
 IFRAME about:srcdoc:
-
-
-IFRAME about:blank:

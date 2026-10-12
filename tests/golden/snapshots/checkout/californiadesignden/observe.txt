@@ -1,5 +1,154 @@
-### Content of 'dialog' component with text 'Sign in with Shop'
-B4[:]<button type="button" aria_label="Close"></button>
+### Content of 'WebArea' component with text 'body content'
+_[:]normal
+_[:]Skip to content
+L1[:]<a href="https://www.californiadesignden.com/"></a>
+_[:]Order summary
+_[:]Original price
+_[:]$59.99
+L2[:]<a href="https://www.californiadesignden.com/cart">Cart</a>
+_[:]Information
+_[:]Shipping
+_[:]Payment
+_[:]Information
+_[:]Express checkout
+L3[:]<a href="https://www.californiadesignden.com/checkouts/cn/Z2NwLXVzLXd..." aria_label="Shop Pay"></a>
+_[:]Checkout One Wallets Sandbox
+B1[:]<div title="" role="button" aria_label="Amazon Pay - Use your Amazon account"></div>
+_[:]Checkout One Wallets Sandbox
+B2[:]<button type="button"></button>
+M1[:]<div></div>
+_[:]Show more options
+_[:]OR
+_[:]Contact
+L4[:]<a href="https://shopify.com/authentication/2463760495/oauth/authoriz...">Log in</a>
+_[:]Email
+M2[:]<div></div>
+I1[:]<input type="email" value="" placeholder="Email" name="email"></input>
+B3[:]<input type="checkbox" name="marketing_opt_in"></input>
+M3[:]<label>Email me with news and offers</label>
+_[:]Shipping address
+_[:]Country/Region
+I2[:]<select name="countryCode">United States</select>
+_[:]First name
+M4[:]<div></div>
+I3[:]<input type="text" value="" placeholder="First name" name="firstName"></input>
+_[:]Last name
+M5[:]<div></div>
+I4[:]<input type="text" value="" placeholder="Last name" name="lastName"></input>
+_[:]Company (optional)
+M6[:]<div></div>
+I5[:]<input type="text" value="" placeholder="Company (optional)" name="company"></input>
+_[:]Address
+_[:]Apartment, suite, etc. (optional)
+_[:]City
+_[:]State
+_[:]Alabama
+_[:]Alaska
+_[:]American Samoa
+_[:]Arizona
+_[:]Arkansas
+_[:]California
+_[:]Colorado
+_[:]Connecticut
+_[:]Delaware
+_[:]Micronesia
+_[:]Florida
+_[:]Georgia
+_[:]Guam
+_[:]Hawaii
+_[:]Idaho
+_[:]Illinois
+_[:]Indiana
+_[:]Iowa
+_[:]Kansas
+_[:]Kentucky
+_[:]Louisiana
+_[:]Maine
+_[:]Marshall Islands
+_[:]Maryland
+_[:]Massachusetts
+_[:]Michigan
+_[:]Minnesota
+_[:]Mississippi
+_[:]Missouri
+_[:]Montana
+_[:]Nebraska
+_[:]Nevada
+_[:]New Hampshire
+_[:]New Jersey
+_[:]New Mexico
+_[:]New York
+_[:]North Carolina
+_[:]North Dakota
+_[:]Northern Mariana Islands
+_[:]Ohio
+_[:]Oklahoma
+_[:]Oregon
+_[:]Palau
+_[:]Pennsylvania
+_[:]Puerto Rico
+_[:]Rhode Island
+_[:]South Carolina
+_[:]South Dakota
+_[:]Tennessee
+_[:]Texas
+_[:]Utah
+_[:]Vermont
+_[:]Virginia
+_[:]Washington
+_[:]Washington DC
+_[:]West Virginia
+_[:]Wisconsin
+_[:]Wyoming
+_[:]U.S. Virgin Islands
+_[:]Armed Forces Americas
+_[:]Armed Forces Europe
+_[:]Armed Forces Pacific
+_[:]ZIP code
+_[:]Phone
+_[:]Text me with news and offers
+_[:]Continue to shipping
+_[:]Return to cart
+_[:]Continue to shipping
+_[:]Refund policy
+_[:]Privacy policy
+_[:]Terms of service
+_[:]Order summary
+_[:]Shopping cart
+_[:]Product image
+_[:]Description
+_[:]Quantity
+_[:]Price
+_[:]Quantity
+_[:]1
+_[:]Duvet Covers - 400 Thread Count - Dream Comfort
+_[:]Queen / Full - Duvet Cover & Sham Set
+_[:]Color: Bright White
+_[:]1
+_[:]$59.99
+_[:]Scroll for more items
+_[:]Discount code or gift card
+_[:]Discount code or gift card
+M7[:]<div></div>
+I6[:]<input type="text" value="" placeholder="Discount code or gift card" name="reductions"></input>
+_[:]Apply
+_[:]Submit
+_[:]Cost summary
+_[:]Item
+_[:]Value
+_[:]Subtotal
+_[:]$59.99
+_[:]Shipping
+_[:]Calculated at next step
+_[:]Total
+_[:]USD
+_[:]$59.99
+_[:]Opens external website in a new window.
+_[:]Opens in a new window.
+_[:]Opens external website.
+_[:]Updated total price: $59.99 USD
+_[:]Your order’s being processed.
+_[:]Shopify UI Extensions Internal
 
 # interaction actions
 L1	click	''	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > header > div > div > div > div > div > span > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi3.s2kwpi6.s2kwpi9.s2kwpi7._1fragem32._1fragempn[href="https://www.californiadesignden.com/"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/header/div/div/div/div/div/span/a	in_iframe=False	in_shadow_root=False
@@ -20,4 +169,5 @@ M5	click	'lastName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div 
 I4	fill	'lastName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > section > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="TextField8"][name="lastName"][placeholder="Last name"][required][type="text"][aria-labelledby="TextField8-label"][autocomplete="shipping family-name"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[2]/div/div[1]/div/section/div/div/div[1]/div/div[1]/div[2]/div[2]/div/div/input	in_iframe=False	in_shadow_root=False
 M6	click	'company'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > section > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[2]/div/div[1]/div/section/div/div/div[1]/div/div[1]/div[3]/div/div/div	in_iframe=False	in_shadow_root=False
 I5	fill	'company'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > section > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="TextField9"][name="company"][placeholder="Company (optional)"][type="text"][aria-labelledby="TextField9-label"][autocomplete="shipping organization"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[2]/div/div[1]/div/section/div/div/div[1]/div/div[1]/div[3]/div/div/div/input	in_iframe=False	in_shadow_root=False
-B4	click	''	section > div:nth-of-type(1) > div:nth-of-type(1) > button.group.relative.z-50.flex.size-6.cursor-pointer.rounded-max[aria-label="Close"][data-testid="authorize-modal-close-button"][type="button"]	section/div[1]/div[1]/button	in_iframe=False	in_shadow_root=True
+M7	click	'reductions'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div	in_iframe=False	in_shadow_root=False
+I6	fill	'reductions'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="ReductionsInput1"][name="reductions"][placeholder="Discount code or gift card"][type="text"][aria-labelledby="ReductionsInput1-label"][autocomplete="on"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div/input	in_iframe=False	in_shadow_root=False

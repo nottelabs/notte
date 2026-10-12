@@ -506,7 +506,6 @@ _[:]-
 _[:]Shop
 _[:]Copyright © 2025 Article.com. All rights reserved.
 _[:]normal
-B3[:]<button type="button" tabindex="0" aria_label="open-chat-widget"></button>
 
 # interaction actions
 L1	click	'Learn more.'	html > body > div:nth-of-type(1) > div > nav > div:nth-of-type(1) > div:nth-of-type(1) > div > span > a.secondary[target="_blank"][href="https://article.com/financing"]	html/body/div[1]/div/nav/div[1]/div[1]/div/span/a	in_iframe=False	in_shadow_root=False
@@ -531,4 +530,3 @@ I12	select_dropdown_option	'1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 2
 B2	click	''	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > button.basic-btn[aria-label="Remove Item"]	html/body/div[1]/div/main/div/div/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div/div[1]/div[2]/button	in_iframe=False	in_shadow_root=False
 L5	click	'Affirm financing'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > span > a.not-accent	html/body/div[1]/div/main/div/div/div[1]/div[2]/div[2]/div[1]/div[2]/div/div/span/a	in_iframe=False	in_shadow_root=False
 L6	click	'satisfaction guarantee.'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > span > a.accent.underline[target="_blank"][href="https://www.article.com/help-center/returns#30-day-satisfaction-guarantee"]	html/body/div[1]/div/main/div/div/div[1]/div[2]/div[2]/div[3]/div[2]/span/a	in_iframe=False	in_shadow_root=False
-B3	click	''	div > button.triggerButtonContainer_Y6_HL[type="button"][data-qa="trigger-button"][aria-label="open-chat-widget"]	div/button	in_iframe=False	in_shadow_root=True

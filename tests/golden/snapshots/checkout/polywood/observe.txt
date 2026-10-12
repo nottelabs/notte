@@ -1,5 +1,267 @@
-### Content of 'dialog' component with text 'Sign in with Shop'
-B7[:]<button type="button" aria_label="Close"></button>
+### Content of 'WebArea' component with text 'body content'
+_[:]normal
+_[:]Skip to content
+L1[:]<a href="https://www.polywood.com/"></a>
+L2[:]<a href="https://www.polywood.com/cart" aria_label="Cart"></a>
+_[:]Order summary
+_[:]Original price
+_[:]$229.00
+_[:]POLYWOOD Checkout
+_[:]Express checkout
+L3[:]<a href="https://www.polywood.com/checkouts/cn/Z2NwLXVzLXdlc3QxOjAxSz..." aria_label="Shop Pay"></a>
+_[:]Checkout One Wallets Sandbox
+_[:]PayPal Messaging Pixel
+_[:]Checkout One Wallets Sandbox
+B1[:]<button type="button"></button>
+M1[:]<div></div>
+_[:]Checkout One Wallets Sandbox
+_[:]PayPal Messaging Pixel
+_[:]Show more options
+_[:]OR
+_[:]Contact
+L4[:]<a href="https://account.polywood.com/authentication/oauth/authorize?...">Log in</a>
+_[:]Email
+M2[:]<div></div>
+I1[:]<input type="email" value="" placeholder="Email" name="email"></input>
+B2[:]<input type="checkbox" name="marketing_opt_in"></input>
+M3[:]<label>I'd like to receive emails from POLYWOOD about outdoor living, new products, and special offers.</label>
+_[:]Delivery
+_[:]Country/Region
+I2[:]<select name="countryCode">United States</select>
+_[:]First name
+M4[:]<div></div>
+I3[:]<input type="text" value="" placeholder="First name" name="firstName"></input>
+_[:]Last name
+M5[:]<div></div>
+I4[:]<input type="text" value="" placeholder="Last name" name="lastName"></input>
+_[:]Company (optional)
+M6[:]<div></div>
+I5[:]<input type="text" value="" placeholder="Company (optional)" name="company"></input>
+_[:]Address
+M7[:]<div></div>
+I6[:]<input type="text" value="" placeholder="Address" name="address1" role="combobox" aria_expanded="false"></input>
+_[:]Apartment, suite, etc. (optional)
+_[:]City
+_[:]State
+_[:]Alabama
+_[:]Alaska
+_[:]American Samoa
+_[:]Arizona
+_[:]Arkansas
+_[:]California
+_[:]Colorado
+_[:]Connecticut
+_[:]Delaware
+_[:]Micronesia
+_[:]Florida
+_[:]Georgia
+_[:]Guam
+_[:]Hawaii
+_[:]Idaho
+_[:]Illinois
+_[:]Indiana
+_[:]Iowa
+_[:]Kansas
+_[:]Kentucky
+_[:]Louisiana
+_[:]Maine
+_[:]Marshall Islands
+_[:]Maryland
+_[:]Massachusetts
+_[:]Michigan
+_[:]Minnesota
+_[:]Mississippi
+_[:]Missouri
+_[:]Montana
+_[:]Nebraska
+_[:]Nevada
+_[:]New Hampshire
+_[:]New Jersey
+_[:]New Mexico
+_[:]New York
+_[:]North Carolina
+_[:]North Dakota
+_[:]Northern Mariana Islands
+_[:]Ohio
+_[:]Oklahoma
+_[:]Oregon
+_[:]Palau
+_[:]Pennsylvania
+_[:]Puerto Rico
+_[:]Rhode Island
+_[:]South Carolina
+_[:]South Dakota
+_[:]Tennessee
+_[:]Texas
+_[:]Utah
+_[:]Vermont
+_[:]Virginia
+_[:]Washington
+_[:]Washington DC
+_[:]West Virginia
+_[:]Wisconsin
+_[:]Wyoming
+_[:]U.S. Virgin Islands
+_[:]Armed Forces Americas
+_[:]Armed Forces Europe
+_[:]Armed Forces Pacific
+_[:]ZIP code
+_[:]Phone
+_[:]Shipping method - Select the dropdown for White Glove Delivery
+_[:]Enter your shipping address to view available shipping methods.
+_[:]Payment
+_[:]All transactions are secure and encrypted.
+_[:]Credit card
+_[:]+4
+_[:]+5
+_[:]Additional payment methods
+_[:]Card number
+_[:]Card number
+I7[:]<input type="text" value="" placeholder="Card number" name="number"></input>
+_[:]Network Selector
+_[:]Name on card
+I8[:]<input type="text" value="" tabindex="-1" name="name"></input>
+_[:]Expiry month
+I9[:]<input type="text" value="" tabindex="-1" name="expiry_month"></input>
+_[:]Expiry year
+I10[:]<input type="text" value="" tabindex="-1" name="expiry_year"></input>
+_[:]Expiry date (MM / YY)
+I11[:]<input type="text" value="" tabindex="-1" name="expiry"></input>
+_[:]Security code
+I12[:]<input type="text" value="" tabindex="-1" name="verification_value"></input>
+_[:]Issue date (MM / YY)
+I13[:]<input type="text" value="" tabindex="-1" name="issue_date"></input>
+_[:]Issue number
+I14[:]<input type="text" value="" tabindex="-1" name="issue_number"></input>
+B3[:]<button type="submit" tabindex="-1"></button>
+_[:]Expiration date (MM / YY)
+_[:]Credit Card Number
+I15[:]<input type="text" value="" tabindex="-1" name="number"></input>
+_[:]Name on card
+I16[:]<input type="text" value="" tabindex="-1" name="name"></input>
+_[:]Expiry month
+I17[:]<input type="text" value="" tabindex="-1" name="expiry_month"></input>
+_[:]Expiry year
+I18[:]<input type="text" value="" tabindex="-1" name="expiry_year"></input>
+_[:]Expiration date (MM / YY)
+I19[:]<input type="text" value="" placeholder="Expiration date (MM / YY)" name="expiry"></input>
+_[:]Security code
+I20[:]<input type="text" value="" tabindex="-1" name="verification_value"></input>
+_[:]Issue date (MM / YY)
+I21[:]<input type="text" value="" tabindex="-1" name="issue_date"></input>
+_[:]Issue number
+I22[:]<input type="text" value="" tabindex="-1" name="issue_number"></input>
+B4[:]<button type="submit" tabindex="-1"></button>
+_[:]Security code
+_[:]Credit Card Number
+I23[:]<input type="text" value="" tabindex="-1" name="number"></input>
+_[:]Name on card
+I24[:]<input type="text" value="" tabindex="-1" name="name"></input>
+_[:]Expiry month
+I25[:]<input type="text" value="" tabindex="-1" name="expiry_month"></input>
+_[:]Expiry year
+I26[:]<input type="text" value="" tabindex="-1" name="expiry_year"></input>
+_[:]Expiry date (MM / YY)
+I27[:]<input type="text" value="" tabindex="-1" name="expiry"></input>
+_[:]Security code
+I28[:]<input type="text" value="" placeholder="Security code" name="verification_value"></input>
+_[:]Issue date (MM / YY)
+I29[:]<input type="text" value="" tabindex="-1" name="issue_date"></input>
+_[:]Issue number
+I30[:]<input type="text" value="" tabindex="-1" name="issue_number"></input>
+B5[:]<button type="submit" tabindex="-1"></button>
+_[:]Issue date (MM / YY)
+_[:]Credit Card Number
+_[:]Name on card
+_[:]Expiry month
+_[:]Expiry year
+_[:]Expiry date (MM / YY)
+_[:]Security code
+_[:]Issue date (MM / YY)
+_[:]Issue number
+_[:]Issue number
+_[:]Credit Card Number
+_[:]Name on card
+_[:]Expiry month
+_[:]Expiry year
+_[:]Expiry date (MM / YY)
+_[:]Security code
+_[:]Issue date (MM / YY)
+_[:]Issue number
+_[:]Name on card
+_[:]Credit Card Number
+I31[:]<input type="text" value="" tabindex="-1" name="number"></input>
+_[:]Name on card
+I32[:]<input type="text" value="" placeholder="Name on card" name="name"></input>
+_[:]Expiry month
+I33[:]<input type="text" value="" tabindex="-1" name="expiry_month"></input>
+_[:]Expiry year
+I34[:]<input type="text" value="" tabindex="-1" name="expiry_year"></input>
+_[:]Expiry date (MM / YY)
+I35[:]<input type="text" value="" tabindex="-1" name="expiry"></input>
+_[:]Security code
+I36[:]<input type="text" value="" tabindex="-1" name="verification_value"></input>
+_[:]Issue date (MM / YY)
+I37[:]<input type="text" value="" tabindex="-1" name="issue_date"></input>
+_[:]Issue number
+I38[:]<input type="text" value="" tabindex="-1" name="issue_number"></input>
+B6[:]<button type="submit" tabindex="-1"></button>
+_[:]Use shipping address as billing address
+_[:]PayPal
+_[:]Check / Money Order
+_[:]Remember me
+_[:]Save my information for a faster checkout with a Shop account
+_[:]Mobile phone number
+_[:]Secure and encrypted
+_[:]Pay now
+_[:]Your info will be saved to a Shop account. By continuing, you agree to Shop’s
+_[:]Terms of Service
+_[:]and acknowledge the
+_[:]Privacy Policy
+_[:].
+_[:]Submit
+_[:]Refund policy
+_[:]Shipping policy
+_[:]Privacy policy
+_[:]Terms of service
+_[:]Order summary
+_[:]Shopping cart
+_[:]Product image
+_[:]Description
+_[:]Quantity
+_[:]Price
+_[:]Quantity
+_[:]1
+_[:]Presidential Rocking Chair
+_[:]Slate Grey
+_[:]1
+_[:]$229.00
+_[:]Scroll for more items
+_[:]Discount code or gift card
+_[:]Discount code or gift card
+M8[:]<div></div>
+I39[:]<input type="text" value="" placeholder="Discount code or gift card" name="reductions"></input>
+_[:]Apply
+_[:]Submit
+_[:]Estimated Ship Date 7/23 - 7/25
+_[:](If you order by 3 PM ET 7/16)
+_[:]Cost summary
+_[:]Item
+_[:]Value
+_[:]Subtotal
+_[:]$229.00
+_[:]Shipping
+B7[:]<button type="button" aria_label="Shipping policy"></button>
+_[:]Enter shipping address
+_[:]Total
+_[:]USD
+_[:]$229.00
+_[:]Opens external website in a new window.
+_[:]Opens in a new window.
+_[:]Opens external website.
+_[:]Updated total price: $229.00 USD
+_[:]Your order’s being processed.
+_[:]Shopify UI Extensions Internal
 
 # interaction actions
 L1	click	''	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > header > div > div > div > div > div > div > span > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi3.s2kwpi6.s2kwpi9.s2kwpi7._1fragem32._1fragempn[href="https://www.polywood.com/"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/header/div/div/div/div/div/div/span/a	in_iframe=False	in_shadow_root=False
@@ -57,4 +319,6 @@ I36	fill	'verification_value'	html > body > form > input:nth-of-type(5).visually
 I37	fill	'issue_date'	html > body > form > input:nth-of-type(6).visually-hidden[autocomplete="off"][id="issue_date"][name="issue_date"][type="text"]	html/body/form/input[6]	in_iframe=True	in_shadow_root=False
 I38	fill	'issue_number'	html > body > form > input:nth-of-type(7).visually-hidden[autocomplete="off"][id="issue_number"][name="issue_number"][type="text"]	html/body/form/input[7]	in_iframe=True	in_shadow_root=False
 B6	click	''	html > body > form > button.visually-hidden[type="submit"]	html/body/form/button	in_iframe=True	in_shadow_root=False
-B7	click	''	section > div:nth-of-type(1) > div:nth-of-type(1) > button.group.relative.z-50.flex.size-6.cursor-pointer.rounded-max[aria-label="Close"][data-testid="authorize-modal-close-button"][type="button"]	section/div[1]/div[1]/button	in_iframe=False	in_shadow_root=True
+M8	click	'reductions'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div	in_iframe=False	in_shadow_root=False
+I39	fill	'reductions'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="ReductionsInput31"][name="reductions"][placeholder="Discount code or gift card"][type="text"][aria-labelledby="ReductionsInput31-label"][autocomplete="on"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div/input	in_iframe=False	in_shadow_root=False
+B7	click	''	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > section > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > button._1s82kpb1._1s82kpb0._1fragemor._1fragemms._1fragemtk._1fragemtv._1fragemtq._1fragemu5._1fragemte._1fragem32[type="button"][aria-label="Shipping policy"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/section/div[2]/div[2]/div[2]/div[1]/div/div/button	in_iframe=False	in_shadow_root=False

@@ -10,9 +10,6 @@ Sign in to GitHub · GitHub
 
 
 
-
-
-
 You signed in with another tab or window. [Reload](https://github.com/login) to refresh your session.
 You signed out in another tab or window. [Reload](https://github.com/login) to refresh your session.
 You switched accounts on another tab or window. [Reload](https://github.com/login) to refresh your session.

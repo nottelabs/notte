@@ -62,6 +62,3 @@ IFRAME about:srcdoc:
 PayPal
 
 IFRAME about:srcdoc:
-
-
-IFRAME about:blank:

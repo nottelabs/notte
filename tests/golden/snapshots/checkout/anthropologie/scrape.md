@@ -1,66 +1,5 @@
 Shipping | Anthropologie
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
 We use cookies. [Learn more](https://www.anthropologie.com/help/privacy-policy).
 
 [Skip to main content](#u-skip-anchor)
@@ -179,18 +118,6 @@ Start chat
 Close
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 normal
 
 Manage Cookie Preferences
@@ -262,6 +189,3 @@ IFRAME about:srcdoc:
 
 
 IFRAME about:srcdoc:
-
-
-IFRAME about:blank:

@@ -177,6 +177,8 @@ Updated total price: $269.10 USD
 
 Your order’s being processed.
 
+Shop
+
 IFRAME about:srcdoc:
 Checkout One Wallets Sandbox
 
@@ -301,12 +303,6 @@ Issue number
 
 IFRAME about:srcdoc:
 Shopify UI Extensions Internal
-
-IFRAME about:blank:
-
-
-IFRAME about:blank:
-
 
 IFRAME about:blank:
 
