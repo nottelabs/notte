@@ -5,7 +5,7 @@
 
 ```python country_proxy.py
 from notte_sdk import NotteClient
-from notte_sdk.types import NotteProxy
+from notte_sdk.types import NotteProxy, ProxySettings
 
 client = NotteClient()
 
@@ -13,7 +13,8 @@ client = NotteClient()
 session = client.Session(proxies="fr")
 
 # Equivalent explicit form
-session = client.Session(proxies=[NotteProxy.from_country("fr")])
+proxies: list[ProxySettings] = [NotteProxy.from_country("fr")]
+session = client.Session(proxies=proxies)
 ```
 
 ```typescript country_proxy.ts

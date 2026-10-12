@@ -2,6 +2,12 @@
 {/* @sniptest testers/agents/workflows/version-control.py */}
 
 ```python version-control.py
+from pathlib import Path
+
+from notte_sdk import NotteClient
+
+client = NotteClient()
+with client.Session() as session:
     agent = client.Agent(session=session)
     agent.run(task="Extract products")
 

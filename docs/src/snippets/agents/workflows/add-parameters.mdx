@@ -2,6 +2,15 @@
 {/* @sniptest testers/agents/workflows/add-parameters.py */}
 
 ```python add-parameters.py
+import textwrap
+
+from notte_sdk import NotteClient
+
+client = NotteClient()
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    agent.run(task="Complete task")
+
 # Steps only (no imports, client or session boilerplate)
 steps = agent.workflow.code(as_workflow=False).python_script
 

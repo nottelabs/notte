@@ -1,5 +1,5 @@
 # @sniptest filename=add-parameters.py
-# @sniptest show=10-26
+# @sniptest show=1-26
 import textwrap
 
 from notte_sdk import NotteClient

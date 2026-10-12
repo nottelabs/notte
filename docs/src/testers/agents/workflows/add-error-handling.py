@@ -1,5 +1,5 @@
 # @sniptest filename=add-error-handling.py
-# @sniptest show=10-31
+# @sniptest show=1-30
 import textwrap
 
 from notte_sdk import NotteClient
