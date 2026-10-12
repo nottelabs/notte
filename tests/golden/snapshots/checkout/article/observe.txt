@@ -1,0 +1,534 @@
+### Content of 'WebArea' component with text 'body content'
+_[:]Get financing as low as 0% APR for up to 12 months.
+L1[:]<a href="https://article.com/financing">Learn more.</a>
+B1[:]<button tabindex="0" aria_label="Close site message"></button>
+L2[:]<a href="https://www.article.com/"></a>
+_[:]USA ($ USD)
+_[:]Canada ($ CAD)
+_[:]1
+_[:]Rooms
+_[:]Living Room
+_[:]Sofas & Loveseats
+_[:]Sectionals
+_[:]Sofa Beds
+_[:]Modular Seating
+_[:]Lounge Chairs
+_[:]Swivel Chairs
+_[:]Coffee Tables
+_[:]Accent & Side Tables
+_[:]TV & Media Units
+_[:]Bookcases & Shelving
+_[:]Consoles
+_[:]Ottomans & Poufs
+_[:]Benches
+_[:]Living Room Bundles
+_[:]Living Room Collections
+_[:]All Living Room
+_[:]Bedroom
+_[:]Beds
+_[:]Dressers & Armoires
+_[:]Nightstands
+_[:]Headboards
+_[:]Bedding
+_[:]Bedroom Benches
+_[:]Mattresses
+_[:]Bedroom Bundles
+_[:]Bedroom Collections
+_[:]All Bedroom
+_[:]Dining & Kitchen
+_[:]Dining Tables
+_[:]Dining Chairs
+_[:]Counter & Bar Stools
+_[:]Dining Benches & Banquettes
+_[:]Sideboards & Cabinets
+_[:]Bar & Kitchen Furniture
+_[:]Dining & Kitchen Bundles
+_[:]All Dining & Kitchen
+_[:]Home Office
+_[:]Desks
+_[:]Office Chairs
+_[:]Bookcases & Shelving
+_[:]File Cabinets
+_[:]Table & Desk Lamps
+_[:]Wall Shelves
+_[:]Home Office Bundles
+_[:]All Home Office
+_[:]Entryway
+_[:]Consoles
+_[:]Bookcases & Shelving
+_[:]Storage Cabinets
+_[:]Benches
+_[:]Mirrors
+_[:]Wall Shelves
+_[:]Runners
+_[:]Baskets
+_[:]All Entryway
+_[:]Outdoor
+_[:]Outdoor Sets
+_[:]Sofas & Loveseats
+_[:]Sectionals & Modulars
+_[:]Lounge Chairs & Chaises
+_[:]Coffee & Side Tables
+_[:]Dining & Bar Tables
+_[:]Dining Chairs & Benches
+_[:]Ottomans & Poufs
+_[:]Rugs & Runners
+_[:]Planters
+_[:]Umbrellas & Stands
+_[:]Accessories & Decor
+_[:]Outdoor Bundles
+_[:]Outdoor Collections
+_[:]All Outdoor
+_[:]Decor
+_[:]Rugs & Runners
+_[:]Lighting
+_[:]Pillows & Throws
+_[:]Mirrors
+_[:]Wall Shelves
+_[:]Poufs
+_[:]Bedding & Inserts
+_[:]Planters & Pots
+_[:]Decor Bundles
+_[:]All Decor
+_[:]Products
+_[:]Seating
+_[:]Sofas, Sectionals, & Loveseats
+_[:]Lounge Chairs
+_[:]Dining Chairs & Stools
+_[:]Ottomans & Poufs
+_[:]Benches & Banquettes
+_[:]Office Chairs
+_[:]Swivel Chairs
+_[:]Modular Seating
+_[:]Sofa Beds
+_[:]Sofa Collections
+_[:]All Seating
+_[:]Tables
+_[:]Dining Tables
+_[:]Coffee Tables
+_[:]Accent & Side Tables
+_[:]Consoles
+_[:]Counter & Bar Tables
+_[:]Desks
+_[:]Kitchen Islands & Carts
+_[:]All Tables
+_[:]Beds & Bedroom
+_[:]Beds
+_[:]Nightstands
+_[:]Dressers & Armoires
+_[:]Headboards
+_[:]Bedding
+_[:]Mattresses
+_[:]All Bedroom
+_[:]Storage & Organization
+_[:]TV & Media Units
+_[:]Bookcases & Shelving
+_[:]Sideboards & Cabinets
+_[:]Dressers & Armoires
+_[:]Consoles
+_[:]File Cabinets
+_[:]Wall Shelves
+_[:]Storage Beds & Benches
+_[:]Bar & Kitchen Furniture
+_[:]All Storage & Organization
+_[:]Outdoor
+_[:]Lounge Furniture
+_[:]Dining Furniture
+_[:]Outdoor Sets
+_[:]Planters & Pots
+_[:]Accessories & Decor
+_[:]Outdoor Bundles
+_[:]Outdoor Collections
+_[:]All Outdoor
+_[:]Rugs, Lighting & Decor
+_[:]Rugs & Runners
+_[:]Lighting
+_[:]Pillows & Throws
+_[:]Floor & Wall Mirrors
+_[:]Poufs
+_[:]Wall Shelves
+_[:]Bedding
+_[:]Planters & Pots
+_[:]All Rugs, Lighting & Decor
+_[:]Shop By Material
+_[:]Leather
+_[:]Fabric
+_[:]Dark Wood
+_[:]Light Wood
+_[:]Outdoor
+_[:]Outdoor Lounging
+_[:]Sofas & Loveseats
+_[:]Sectionals & Modulars
+_[:]Lounge Chairs & Chaises
+_[:]Coffee & Side Tables
+_[:]Ottomans & Poufs
+_[:]Lounge Sets
+_[:]All Outdoor Lounging
+_[:]Outdoor Dining
+_[:]Dining & Bar Tables
+_[:]Dining Chairs & Benches
+_[:]Bar & Counter Stools
+_[:]Dining Sets
+_[:]All Outdoor Dining
+_[:]Decor & Accessories
+_[:]Rugs & Runners
+_[:]Pillows & Poufs
+_[:]Planters & Pots
+_[:]Umbrellas & Stands
+_[:]Furniture Covers
+_[:]Cushion Cover Sets
+_[:]Explore Outdoor
+_[:]New In Outdoor
+_[:]Outdoor Collections
+_[:]Best Sellers
+_[:]Outdoor Bundles
+_[:]Ideas & Inspiration
+_[:]All Outdoor
+_[:]Decor
+_[:]Lighting
+_[:]Table & Desk Lamps
+_[:]Floor Lamps
+_[:]Pendant & Ceiling Lights
+_[:]Sconces
+_[:]All Lighting
+_[:]Rugs
+_[:]Area Rugs & Runners
+_[:]Performance Rugs
+_[:]Outdoor Rugs
+_[:]Rug Pads
+_[:]All Rugs
+_[:]Pillows, Bedding & Poufs
+_[:]Pillows & Throws
+_[:]Bedding & Inserts
+_[:]Poufs
+_[:]All Pillows, Bedding & Poufs
+_[:]Mirrors, Shelves & Planters
+_[:]Wall & Floor Mirrors
+_[:]Wall Shelves
+_[:]Planters & Pots
+_[:]All Mirrors, Shelves & Planters
+_[:]Outdoor Decor
+_[:]Rugs & Runners
+_[:]Pillows & Poufs
+_[:]Planters & Pots
+_[:]Umbrellas & Stands
+_[:]Furniture Covers
+_[:]Cushion Cover Sets
+_[:]All Outdoor Decor
+_[:]All Decor
+_[:]Lighting, Pillows & Rug Bundles
+_[:]All Decor & Accessories
+_[:]Sofa Collections
+_[:]Sven
+_[:]Timber
+_[:]Cigar
+_[:]Abisko
+_[:]Burrard
+_[:]Ceni
+_[:]Leigh
+_[:]Beta
+_[:]All Collections
+_[:]Best Sellers
+_[:]All Best Sellers
+_[:]Outdoor
+_[:]Living Room
+_[:]Bedroom
+_[:]Dining Room
+_[:]Home Office
+_[:]Decor
+_[:]New Arrivals
+_[:]Bundles
+_[:]All Bundles
+_[:]Outdoor
+_[:]Living Room
+_[:]Bedroom
+_[:]Dining Room & Kitchen
+_[:]Home Office
+_[:]Decor
+_[:]Ideas & Inspiration
+_[:]All Ideas & Inspiration
+_[:]Customer Room Tours
+_[:]Free Interior Design Service
+_[:]Outdoor
+_[:]Living Room
+_[:]Bedroom
+_[:]Kitchen & Dining
+_[:]Sale
+_[:]Sale & Clearance
+_[:]My Account & Orders
+_[:]Help Center
+_[:]Live chat with us
+_[:]Call us
+_[:]Email us
+_[:]Interior Design Services
+_[:]Article for Trade
+_[:]About Article
+_[:]1. Shipping & Delivery
+_[:]Contact Details
+_[:]Email
+I1[:]<input type="email" value="" name="email"></input>
+_[:]Phone
+I2[:]<input type="tel" value="" placeholder="(000) 000-0000" name="tel"></input>
+_[:]Extension (Optional)
+I3[:]<input type="tel" value="" placeholder="0000" name="tel-extension"></input>
+_[:]Delivery Address
+_[:]First Name
+I4[:]<input type="text" value="" name="given-name"></input>
+_[:]Last Name
+I5[:]<input type="text" value="" name="family-name"></input>
+_[:]Street Address
+I6[:]<input type="text" value="" placeholder="Street Address" name="address-line1"></input>
+_[:]Apartment / Unit / Suite (Optional)
+I7[:]<input type="text" value="" placeholder="e.g. 412 or Unit 412" name="address-line2"></input>
+_[:]ZIP
+I8[:]<input type="text" value="94117" name="postal-code"></input>
+_[:]City
+I9[:]<input type="text" value="San Francisco" name="address-level2"></input>
+_[:]State
+I10[:]<select>Select…
+Alabama
+Alaska
+Arizona
+Arkansas
+California
+Colorado
+Connecticut
+Delaware
+District of Columbia
+Florida
+Georgia
+Hawaii
+Idaho
+Illinois
+Indiana
+Iowa
+Kansas
+Kentucky
+Louisiana
+Maine
+Maryland
+Massachusetts
+Michigan
+Minnesota
+Mississippi
+Missouri
+Montana
+Nebraska
+Nevada
+New Hampshire
+New Jersey
+New Mexico
+New York
+North Carolina
+North Dakota
+Ohio
+Oklahoma
+Oregon
+Pennsylvania
+Rhode Island
+South Carolina
+South Dakota
+Tennessee
+Texas
+Utah
+Vermont
+Virginia
+Washington
+West Virginia
+Wisconsin
+Wyoming</select>
+_[:]Country
+I11[:]<select>Select…
+United States
+Canada</select>
+_[:]Delivery Method
+_[:]Courier ($19). Small items, such as lamps or pillows, can be sent by courier. Please note that purchases exceeding $200 will automatically qualify for ground-level shipping.
+_[:]Delivery Instructions (Optional)
+_[:]Continue to Payment
+_[:]By completing your purchase, you agree to our
+_[:]Terms of Use
+_[:]and acknowledge that we will collect your email address and other personal information to send you order updates, promotional offers, and other communications. For more details on the categories of personal information we collect and how we use it, please review our
+_[:]Privacy Policy
+_[:]. You have the right to opt-out of the sale of your personal information at any time. To exercise this right, please visit our
+_[:]Do Not Sell My Personal Information
+_[:]page.
+_[:]Affirm financing
+_[:]as low as $
+_[:]20/month
+_[:].
+_[:]Limited stock available.
+_[:]Order now to ensure the fastest delivery.
+_[:]30 day
+_[:]satisfaction guarantee.
+_[:]Show Order Summary
+_[:]1
+_[:]$236.81
+_[:]Order Summary
+_[:]Delivery ETA:
+_[:]Jul 17 – 31
+L3[:]<a href="https://www.article.com/product/28855/portima-c-side-table-o..."></a>
+M1[:]<div></div>
+M2[:]<picture></picture>
+L4[:]<a href="https://www.article.com/product/28855/portima-c-side-table-o...">Portima C Side Table - Oak</a>
+I12[:]<select aria_label="Product quantity selector">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99</select>
+B2[:]<button aria_label="Remove Item"></button>
+_[:]$199
+_[:]Subtotal
+_[:]$199
+_[:]Shipping
+_[:]$19
+_[:]Tax (Sales)
+_[:]$18.81
+_[:]Total
+_[:]$236.81
+L5[:]<a>Affirm financing</a>
+_[:]as low as $
+_[:]20/month
+_[:].
+_[:]Limited stock available.
+_[:]Order now to ensure the fastest delivery.
+_[:]30 day
+L6[:]<a href="https://www.article.com/help-center/returns#30-day-satisfact...">satisfaction guarantee.</a>
+_[:]Help Center
+_[:]+1.888.746.3455
+_[:]LiveChat
+_[:]Email us
+_[:]Get new products and promotions in your inbox.
+_[:]Subscribe
+_[:]Terms of Use
+_[:]-
+_[:]Privacy Policy
+_[:]-
+_[:]Do Not Sell My Personal Information
+_[:]-
+_[:]Cookie Settings
+_[:]-
+_[:]Accessibility
+_[:]-
+_[:]Shop
+_[:]Copyright © 2025 Article.com. All rights reserved.
+_[:]normal
+B3[:]<button type="button" tabindex="0" aria_label="open-chat-widget"></button>
+
+# interaction actions
+L1	click	'Learn more.'	html > body > div:nth-of-type(1) > div > nav > div:nth-of-type(1) > div:nth-of-type(1) > div > span > a.secondary[target="_blank"][href="https://article.com/financing"]	html/body/div[1]/div/nav/div[1]/div[1]/div/span/a	in_iframe=False	in_shadow_root=False
+B1	click	''	html > body > div:nth-of-type(1) > div > nav > div:nth-of-type(1) > div:nth-of-type(1) > div > button.basic-btn.close-site-message[aria-label="Close site message"]	html/body/div[1]/div/nav/div[1]/div[1]/div/button	in_iframe=False	in_shadow_root=False
+L2	click	''	html > body > div:nth-of-type(1) > div > nav > div:nth-of-type(1) > div:nth-of-type(2) > div > a[href="https://www.article.com/"]	html/body/div[1]/div/nav/div[1]/div[2]/div/a	in_iframe=False	in_shadow_root=False
+I1	fill	'email'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > label > input[id="textInput_0"][type="email"][name="email"][autocomplete="email"]	html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]/label/input	in_iframe=False	in_shadow_root=False
+I2	fill	'tel'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > label > input.masked-input[type="tel"][placeholder="(000) 000-0000"][id="telephoneInput_1"][autocomplete="tel"][name="tel"]	html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]/div/label/input	in_iframe=False	in_shadow_root=False
+I3	fill	'tel-extension'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > label > input.masked-input[type="tel"][placeholder="0000"][id="telephoneInput_2"][autocomplete="tel-extension"][name="tel-extension"]	html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]/label/input	in_iframe=False	in_shadow_root=False
+I4	fill	'given-name'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > label:nth-of-type(1) > input[id="textInput_3"][type="text"][name="given-name"][autocomplete="given-name"]	html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[2]/label[1]/input	in_iframe=False	in_shadow_root=False
+I5	fill	'family-name'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > label:nth-of-type(2) > input[id="textInput_4"][type="text"][name="family-name"][autocomplete="family-name"]	html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[2]/label[2]/input	in_iframe=False	in_shadow_root=False
+I6	fill	'address-line1'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > label:nth-of-type(1) > input[id="textInput_5"][type="text"][placeholder="Street Address"][name="address-line1"][autocomplete="address-line1"]	html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[3]/label[1]/input	in_iframe=False	in_shadow_root=False
+I7	fill	'address-line2'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > label:nth-of-type(2) > input[id="textInput_6"][type="text"][placeholder="e.g. 412 or Unit 412"][name="address-line2"][autocomplete="address-line2"]	html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[3]/label[2]/input	in_iframe=False	in_shadow_root=False
+I8	fill	'postal-code'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > label:nth-of-type(3) > input[id="textInput_7"][type="text"][name="postal-code"][autocomplete="postal-code"]	html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[3]/label[3]/input	in_iframe=False	in_shadow_root=False
+I9	fill	'address-level2'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > label:nth-of-type(4) > input[id="textInput_8"][type="text"][name="address-level2"][autocomplete="address-level2"]	html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[3]/label[4]/input	in_iframe=False	in_shadow_root=False
+I10	select_dropdown_option	'Select… Alabama Alaska Arizona Arkansas California Colorado Connecticut Delaware District of Columbia Florida Georgia Hawaii Idaho Illinois Indiana Iowa Kansas Kentucky Louisiana Maine Maryland Massachusetts Michigan Minnesota Mississippi Missouri Montana Nebraska Nevada New Hampshire New Jersey New Mexico New York North Carolina North Dakota Ohio Oklahoma Oregon Pennsylvania Rhode Island South Carolina South Dakota Tennessee Texas Utah Vermont Virginia Washington West Virginia Wisconsin Wyoming'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > label:nth-of-type(5) > select[autocomplete="address-level1"]	html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[3]/label[5]/select	in_iframe=False	in_shadow_root=False
+I11	select_dropdown_option	'Select… United States Canada'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > label:nth-of-type(6) > select[autocomplete="country-name"]	html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[3]/label[6]/select	in_iframe=False	in_shadow_root=False
+L3	click	''	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > a.product-image[href="https://www.article.com/product/28855/portima-c-side-table-oak"]	html/body/div[1]/div/main/div/div/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div/a	in_iframe=False	in_shadow_root=False
+M1	click	''	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > a > div	html/body/div[1]/div/main/div/div/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div/a/div	in_iframe=False	in_shadow_root=False
+M2	click	''	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > a > div > picture	html/body/div[1]/div/main/div/div/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div/a/div/picture	in_iframe=False	in_shadow_root=False
+L4	click	'Portima C Side Table - Oak'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > a.product-name[href="https://www.article.com/product/28855/portima-c-side-table-oak"]	html/body/div[1]/div/main/div/div/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div/div[1]/a	in_iframe=False	in_shadow_root=False
+I12	select_dropdown_option	'1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > select.small[readonly][aria-label="Product quantity selector"]	html/body/div[1]/div/main/div/div/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div/div[1]/div[2]/div/select	in_iframe=False	in_shadow_root=False
+B2	click	''	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > button.basic-btn[aria-label="Remove Item"]	html/body/div[1]/div/main/div/div/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div/div[1]/div[2]/button	in_iframe=False	in_shadow_root=False
+L5	click	'Affirm financing'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > span > a.not-accent	html/body/div[1]/div/main/div/div/div[1]/div[2]/div[2]/div[1]/div[2]/div/div/span/a	in_iframe=False	in_shadow_root=False
+L6	click	'satisfaction guarantee.'	html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > span > a.accent.underline[target="_blank"][href="https://www.article.com/help-center/returns#30-day-satisfaction-guarantee"]	html/body/div[1]/div/main/div/div/div[1]/div[2]/div[2]/div[3]/div[2]/span/a	in_iframe=False	in_shadow_root=False
+B3	click	''	div > button.triggerButtonContainer_Y6_HL[type="button"][data-qa="trigger-button"][aria-label="open-chat-widget"]	div/button	in_iframe=False	in_shadow_root=True

@@ -1,0 +1,322 @@
+### Content of 'WebArea' component with text 'body content'
+_[:]normal
+_[:]Skip to content
+_[:]Order summary
+_[:]Original price
+_[:]$5,800.00
+_[:]Sale price
+_[:]$4,060.00
+L1[:]<a href="https://www.arhaus.com/"></a>
+L2[:]<a href="https://www.arhaus.com/cart" aria_label="Cart"></a>
+_[:]Arhaus Checkout
+_[:]Express checkout
+_[:]Checkout One Wallets Sandbox
+B1[:]<button type="button"></button>
+M1[:]<div></div>
+_[:]Show more options
+_[:]OR
+_[:]Contact
+L3[:]<a href="https://www.arhaus.com/account/login?checkout_url=%2Fcheckou...">Log in</a>
+_[:]Email
+M2[:]<div></div>
+I1[:]<input type="email" value="" placeholder="Email" name="email"></input>
+B2[:]<input type="checkbox" name="marketing_opt_in"></input>
+M3[:]<label>Email me with news and offers</label>
+_[:]Delivery
+_[:]Country/Region
+I2[:]<select name="countryCode">United States</select>
+_[:]First name
+M4[:]<div></div>
+I3[:]<input type="text" value="" placeholder="First name" name="firstName"></input>
+_[:]Last name
+M5[:]<div></div>
+I4[:]<input type="text" value="" placeholder="Last name" name="lastName"></input>
+_[:]Address
+M6[:]<div></div>
+I5[:]<input type="text" value="" placeholder="Address" name="address1" role="combobox" aria_expanded="false"></input>
+_[:]Apartment, suite, etc. (optional)
+M7[:]<div></div>
+I6[:]<input type="text" value="" placeholder="Apartment, suite, etc. (optional)" name="address2"></input>
+_[:]City
+_[:]State
+_[:]Alabama
+_[:]Alaska
+_[:]American Samoa
+_[:]Arizona
+_[:]Arkansas
+_[:]California
+_[:]Colorado
+_[:]Connecticut
+_[:]Delaware
+_[:]Micronesia
+_[:]Florida
+_[:]Georgia
+_[:]Guam
+_[:]Hawaii
+_[:]Idaho
+_[:]Illinois
+_[:]Indiana
+_[:]Iowa
+_[:]Kansas
+_[:]Kentucky
+_[:]Louisiana
+_[:]Maine
+_[:]Marshall Islands
+_[:]Maryland
+_[:]Massachusetts
+_[:]Michigan
+_[:]Minnesota
+_[:]Mississippi
+_[:]Missouri
+_[:]Montana
+_[:]Nebraska
+_[:]Nevada
+_[:]New Hampshire
+_[:]New Jersey
+_[:]New Mexico
+_[:]New York
+_[:]North Carolina
+_[:]North Dakota
+_[:]Northern Mariana Islands
+_[:]Ohio
+_[:]Oklahoma
+_[:]Oregon
+_[:]Palau
+_[:]Pennsylvania
+_[:]Puerto Rico
+_[:]Rhode Island
+_[:]South Carolina
+_[:]South Dakota
+_[:]Tennessee
+_[:]Texas
+_[:]Utah
+_[:]Vermont
+_[:]Virginia
+_[:]Washington
+_[:]Washington DC
+_[:]West Virginia
+_[:]Wisconsin
+_[:]Wyoming
+_[:]U.S. Virgin Islands
+_[:]Armed Forces Americas
+_[:]Armed Forces Europe
+_[:]Armed Forces Pacific
+_[:]ZIP code
+_[:]Phone
+_[:]Save this information for next time
+_[:]Shipping method
+_[:]Enter your shipping address to view available shipping methods.
+_[:]Payment
+_[:]All transactions are secure and encrypted.
+_[:]Credit card
+_[:]Card number
+_[:]Card number
+I7[:]<input type="text" value="" placeholder="Card number" name="number"></input>
+_[:]Network Selector
+_[:]Name on card
+I8[:]<input type="text" value="" tabindex="-1" name="name"></input>
+_[:]Expiry month
+I9[:]<input type="text" value="" tabindex="-1" name="expiry_month"></input>
+_[:]Expiry year
+I10[:]<input type="text" value="" tabindex="-1" name="expiry_year"></input>
+_[:]Expiry date (MM / YY)
+I11[:]<input type="text" value="" tabindex="-1" name="expiry"></input>
+_[:]Security code
+I12[:]<input type="text" value="" tabindex="-1" name="verification_value"></input>
+_[:]Issue date (MM / YY)
+I13[:]<input type="text" value="" tabindex="-1" name="issue_date"></input>
+_[:]Issue number
+I14[:]<input type="text" value="" tabindex="-1" name="issue_number"></input>
+B3[:]<button type="submit" tabindex="-1"></button>
+_[:]Expiration date (MM / YY)
+_[:]Credit Card Number
+I15[:]<input type="text" value="" tabindex="-1" name="number"></input>
+_[:]Name on card
+I16[:]<input type="text" value="" tabindex="-1" name="name"></input>
+_[:]Expiry month
+I17[:]<input type="text" value="" tabindex="-1" name="expiry_month"></input>
+_[:]Expiry year
+I18[:]<input type="text" value="" tabindex="-1" name="expiry_year"></input>
+_[:]Expiration date (MM / YY)
+I19[:]<input type="text" value="" placeholder="Expiration date (MM / YY)" name="expiry"></input>
+_[:]Security code
+I20[:]<input type="text" value="" tabindex="-1" name="verification_value"></input>
+_[:]Issue date (MM / YY)
+I21[:]<input type="text" value="" tabindex="-1" name="issue_date"></input>
+_[:]Issue number
+I22[:]<input type="text" value="" tabindex="-1" name="issue_number"></input>
+B4[:]<button type="submit" tabindex="-1"></button>
+_[:]Security code
+_[:]Credit Card Number
+I23[:]<input type="text" value="" tabindex="-1" name="number"></input>
+_[:]Name on card
+I24[:]<input type="text" value="" tabindex="-1" name="name"></input>
+_[:]Expiry month
+I25[:]<input type="text" value="" tabindex="-1" name="expiry_month"></input>
+_[:]Expiry year
+I26[:]<input type="text" value="" tabindex="-1" name="expiry_year"></input>
+_[:]Expiry date (MM / YY)
+I27[:]<input type="text" value="" tabindex="-1" name="expiry"></input>
+_[:]Security code
+I28[:]<input type="text" value="" placeholder="Security code" name="verification_value"></input>
+_[:]Issue date (MM / YY)
+I29[:]<input type="text" value="" tabindex="-1" name="issue_date"></input>
+_[:]Issue number
+I30[:]<input type="text" value="" tabindex="-1" name="issue_number"></input>
+B5[:]<button type="submit" tabindex="-1"></button>
+_[:]Issue date (MM / YY)
+_[:]Credit Card Number
+_[:]Name on card
+_[:]Expiry month
+_[:]Expiry year
+_[:]Expiry date (MM / YY)
+_[:]Security code
+_[:]Issue date (MM / YY)
+_[:]Issue number
+_[:]Issue number
+_[:]Credit Card Number
+_[:]Name on card
+_[:]Expiry month
+_[:]Expiry year
+_[:]Expiry date (MM / YY)
+_[:]Security code
+_[:]Issue date (MM / YY)
+_[:]Issue number
+_[:]Name on card
+_[:]Credit Card Number
+I31[:]<input type="text" value="" tabindex="-1" name="number"></input>
+_[:]Name on card
+I32[:]<input type="text" value="" placeholder="Name on card" name="name"></input>
+_[:]Expiry month
+I33[:]<input type="text" value="" tabindex="-1" name="expiry_month"></input>
+_[:]Expiry year
+I34[:]<input type="text" value="" tabindex="-1" name="expiry_year"></input>
+_[:]Expiry date (MM / YY)
+I35[:]<input type="text" value="" tabindex="-1" name="expiry"></input>
+_[:]Security code
+I36[:]<input type="text" value="" tabindex="-1" name="verification_value"></input>
+_[:]Issue date (MM / YY)
+I37[:]<input type="text" value="" tabindex="-1" name="issue_date"></input>
+_[:]Issue number
+I38[:]<input type="text" value="" tabindex="-1" name="issue_number"></input>
+B6[:]<button type="submit" tabindex="-1"></button>
+_[:]Use shipping address as billing address
+_[:]Archarge Credit Card
+_[:]Pay now
+_[:]Submit
+_[:]Refund policy
+_[:]Shipping policy
+_[:]Privacy policy
+_[:]Terms of service
+_[:]Contact information
+_[:]Order summary
+_[:]Shopping cart
+_[:]Product image
+_[:]Description
+_[:]Quantity
+_[:]Price
+_[:]Quantity
+_[:]1
+_[:]Agustin Floor Lamp
+_[:]Discount code
+_[:]30% OFF ORDERS OF $5,000+ (-$1,740.00)
+_[:]In Stock
+_[:]California Prop 65 Warning
+_[:]1
+_[:]Original price
+_[:]$5,800.00
+_[:]Discounted price
+_[:]$4,060.00
+_[:]Scroll for more items
+_[:]Discount
+_[:]Discount Code or Trade ID
+M8[:]<div></div>
+I39[:]<input type="text" value="" placeholder="Discount Code or Trade ID" name="reductions"></input>
+_[:]Apply
+_[:]Submit
+_[:]Have an Archarge reward?
+B7[:]<button type="button" aria_expanded="false">Click here</button>
+_[:]for details.
+_[:]Trade Member?
+B8[:]<button type="button" aria_expanded="false">Click here</button>
+_[:]for details.
+_[:]Cost summary
+_[:]Item
+_[:]Value
+_[:]Subtotal
+_[:]$4,060.00
+_[:]Shipping
+B9[:]<button type="button" aria_label="Shipping policy"></button>
+_[:]Enter shipping address
+_[:]Total
+_[:]USD
+_[:]$4,060.00
+_[:]TOTAL SAVINGS
+_[:]$1,740.00
+_[:]Opens external website in a new window.
+_[:]Opens in a new window.
+_[:]Opens external website.
+_[:]Updated total price: $4,060.00 USD
+_[:]Your order’s being processed.
+_[:]Shopify UI Extensions Internal
+
+# interaction actions
+L1	click	''	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > header > div > div > div > div > div > div > span > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi3.s2kwpi6.s2kwpi9.s2kwpi7._1fragem32._1fragempn[href="https://www.arhaus.com/"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/header/div/div/div/div/div/div/span/a	in_iframe=False	in_shadow_root=False
+L2	click	''	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > header > div > div > div > div > div > span > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi2.s2kwpi5.s2kwpi4._1fragemtm.s2kwpi9.s2kwpi7._1fragem32._1fragempn[aria-label="Cart"][id="cart-link"][href="https://www.arhaus.com/cart"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/header/div/div/div/div/div/span/a	in_iframe=False	in_shadow_root=False
+B1	click	''	html > body > button.dark[type="button"][id="google-pay-button"]	html/body/button	in_iframe=True	in_shadow_root=False
+M1	click	''	html > body > button > div	html/body/button/div	in_iframe=True	in_shadow_root=False
+L3	click	'Log in'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi2.s2kwpi5.s2kwpi4._1fragemtm.s2kwpi8[href="https://www.arhaus.com/account/login?checkout_url=%2Fcheckouts%2Fcn%2FZ2NwLXVzLXdlc3QxOjAxSzA4MllSNkM3NUdNRTBBMDQ2M1lHODZF%3Fcompany_location_id%26locale%3Den-US"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[1]/a	in_iframe=False	in_shadow_root=False
+M2	click	'email'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[1]/div/div/div/div	in_iframe=False	in_shadow_root=False
+I1	fill	'email'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u12._7ozb2u1j._7ozb2ur[id="email"][name="email"][placeholder="Email"][required][type="email"][aria-labelledby="email-label"][autocomplete="shipping email"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[1]/div/div/div/div/input	in_iframe=False	in_shadow_root=False
+B2	click	'marketing_opt_in'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > div > div > input._1mmswk96._1mmswk95._1fragemq1._1fragempz._1fragemq3._1fragempx._1fragemr1._1fragemqx._1fragemr5._1fragemqt._1fragemci._1fragemby._1fragemd2._1fragembe._1fragemor._1fragem32._1fragempm._1fragem2x._1fragemtv._1fragemtp._1fragemu2._1mmswk97._1fragemoi._1mmswk9a._1mmswk98._1fragemue[type="checkbox"][id="marketing_opt_in"][name="marketing_opt_in"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[2]/div/div/div/input	in_iframe=False	in_shadow_root=False
+M3	click	'Email me with news and offers'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > div > label._1mmswk9g._1mmswk9f._1fragem32._1fragemlo._1fragemor._1fragemjl[for="marketing_opt_in"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[2]/div/div/label	in_iframe=False	in_shadow_root=False
+I2	select_dropdown_option	'United States'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > select.ZHJU6._1k3449n5._1k3449n3._1fragemue.oAlPg.IWR5K.tu1VS[name="countryCode"][id="Select0"][required][autocomplete="shipping country"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[1]/div/div/div/select	in_iframe=False	in_shadow_root=False
+M4	click	'firstName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[1]/div/div	in_iframe=False	in_shadow_root=False
+I3	fill	'firstName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="TextField0"][name="firstName"][placeholder="First name"][required][type="text"][aria-labelledby="TextField0-label"][autocomplete="shipping given-name"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[1]/div/div/input	in_iframe=False	in_shadow_root=False
+M5	click	'lastName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[2]/div/div	in_iframe=False	in_shadow_root=False
+I4	fill	'lastName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="TextField1"][name="lastName"][placeholder="Last name"][required][type="text"][aria-labelledby="TextField1-label"][autocomplete="shipping family-name"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[2]/div/div/input	in_iframe=False	in_shadow_root=False
+M6	click	'address1'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[3]/div/div/div/div/div/div	in_iframe=False	in_shadow_root=False
+I5	select_dropdown_option	'address1'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2uv._7ozb2uu._1fragemqa._1fragemqm._7ozb2u11._7ozb2u1j._7ozb2ur[id="shipping-address1"][name="address1"][placeholder="Address"][required][type="text"][aria-labelledby="shipping-address1-label"][role="combobox"][autocomplete="shipping address-line1"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[3]/div/div/div/div/div/div/input	in_iframe=False	in_shadow_root=False
+M7	click	'address2'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(4) > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[4]/div/div/div	in_iframe=False	in_shadow_root=False
+I6	fill	'address2'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(4) > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="TextField2"][name="address2"][placeholder="Apartment, suite, etc. (optional)"][type="text"][aria-labelledby="TextField2-label"][autocomplete="shipping address-line2"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[4]/div/div/div/input	in_iframe=False	in_shadow_root=False
+I7	fill	'number'	html > body > form > div > input.input-placeholder-color--lvl-22[required][autocomplete="cc-number"][id="number"][name="number"][type="text"][aria-describedby="error-for-number tooltip-for-number"][placeholder="Card number"]	html/body/form/div/input	in_iframe=True	in_shadow_root=False
+I8	fill	'name'	html > body > form > input:nth-of-type(1).visually-hidden[autocomplete="cc-name"][id="name"][name="name"][type="text"]	html/body/form/input[1]	in_iframe=True	in_shadow_root=False
+I9	fill	'expiry_month'	html > body > form > input:nth-of-type(2).visually-hidden[autocomplete="cc-exp-month"][id="expiry_month"][name="expiry_month"][type="text"]	html/body/form/input[2]	in_iframe=True	in_shadow_root=False
+I10	fill	'expiry_year'	html > body > form > input:nth-of-type(3).visually-hidden[autocomplete="cc-exp-year"][id="expiry_year"][name="expiry_year"][type="text"]	html/body/form/input[3]	in_iframe=True	in_shadow_root=False
+I11	fill	'expiry'	html > body > form > input:nth-of-type(4).visually-hidden[autocomplete="cc-exp"][id="expiry"][name="expiry"][type="text"]	html/body/form/input[4]	in_iframe=True	in_shadow_root=False
+I12	fill	'verification_value'	html > body > form > input:nth-of-type(5).visually-hidden[autocomplete="cc-csc"][id="verification_value"][name="verification_value"][type="text"]	html/body/form/input[5]	in_iframe=True	in_shadow_root=False
+I13	fill	'issue_date'	html > body > form > input:nth-of-type(6).visually-hidden[autocomplete="off"][id="issue_date"][name="issue_date"][type="text"]	html/body/form/input[6]	in_iframe=True	in_shadow_root=False
+I14	fill	'issue_number'	html > body > form > input:nth-of-type(7).visually-hidden[autocomplete="off"][id="issue_number"][name="issue_number"][type="text"]	html/body/form/input[7]	in_iframe=True	in_shadow_root=False
+B3	click	''	html > body > form > button.visually-hidden[type="submit"]	html/body/form/button	in_iframe=True	in_shadow_root=False
+I15	fill	'number'	html > body > form > input:nth-of-type(1).visually-hidden[autocomplete="cc-number"][id="number"][name="number"][type="text"]	html/body/form/input[1]	in_iframe=True	in_shadow_root=False
+I16	fill	'name'	html > body > form > input:nth-of-type(2).visually-hidden[autocomplete="cc-name"][id="name"][name="name"][type="text"]	html/body/form/input[2]	in_iframe=True	in_shadow_root=False
+I17	fill	'expiry_month'	html > body > form > input:nth-of-type(3).visually-hidden[autocomplete="cc-exp-month"][id="expiry_month"][name="expiry_month"][type="text"]	html/body/form/input[3]	in_iframe=True	in_shadow_root=False
+I18	fill	'expiry_year'	html > body > form > input:nth-of-type(4).visually-hidden[autocomplete="cc-exp-year"][id="expiry_year"][name="expiry_year"][type="text"]	html/body/form/input[4]	in_iframe=True	in_shadow_root=False
+I19	fill	'expiry'	html > body > form > div > input.input-placeholder-color--lvl-22[required][autocomplete="cc-exp"][id="expiry"][name="expiry"][type="text"][aria-describedby="error-for-expiry tooltip-for-expiry"][placeholder="Expiration date (MM / YY)"]	html/body/form/div/input	in_iframe=True	in_shadow_root=False
+I20	fill	'verification_value'	html > body > form > input:nth-of-type(5).visually-hidden[autocomplete="cc-csc"][id="verification_value"][name="verification_value"][type="text"]	html/body/form/input[5]	in_iframe=True	in_shadow_root=False
+I21	fill	'issue_date'	html > body > form > input:nth-of-type(6).visually-hidden[autocomplete="off"][id="issue_date"][name="issue_date"][type="text"]	html/body/form/input[6]	in_iframe=True	in_shadow_root=False
+I22	fill	'issue_number'	html > body > form > input:nth-of-type(7).visually-hidden[autocomplete="off"][id="issue_number"][name="issue_number"][type="text"]	html/body/form/input[7]	in_iframe=True	in_shadow_root=False
+B4	click	''	html > body > form > button.visually-hidden[type="submit"]	html/body/form/button	in_iframe=True	in_shadow_root=False
+I23	fill	'number'	html > body > form > input:nth-of-type(1).visually-hidden[autocomplete="cc-number"][id="number"][name="number"][type="text"]	html/body/form/input[1]	in_iframe=True	in_shadow_root=False
+I24	fill	'name'	html > body > form > input:nth-of-type(2).visually-hidden[autocomplete="cc-name"][id="name"][name="name"][type="text"]	html/body/form/input[2]	in_iframe=True	in_shadow_root=False
+I25	fill	'expiry_month'	html > body > form > input:nth-of-type(3).visually-hidden[autocomplete="cc-exp-month"][id="expiry_month"][name="expiry_month"][type="text"]	html/body/form/input[3]	in_iframe=True	in_shadow_root=False
+I26	fill	'expiry_year'	html > body > form > input:nth-of-type(4).visually-hidden[autocomplete="cc-exp-year"][id="expiry_year"][name="expiry_year"][type="text"]	html/body/form/input[4]	in_iframe=True	in_shadow_root=False
+I27	fill	'expiry'	html > body > form > input:nth-of-type(5).visually-hidden[autocomplete="cc-exp"][id="expiry"][name="expiry"][type="text"]	html/body/form/input[5]	in_iframe=True	in_shadow_root=False
+I28	fill	'verification_value'	html > body > form > div > input.input-placeholder-color--lvl-22[autocomplete="cc-csc"][id="verification_value"][name="verification_value"][type="text"][aria-describedby="error-for-verification_value tooltip-for-verification_value"][placeholder="Security code"]	html/body/form/div/input	in_iframe=True	in_shadow_root=False
+I29	fill	'issue_date'	html > body > form > input:nth-of-type(6).visually-hidden[autocomplete="off"][id="issue_date"][name="issue_date"][type="text"]	html/body/form/input[6]	in_iframe=True	in_shadow_root=False
+I30	fill	'issue_number'	html > body > form > input:nth-of-type(7).visually-hidden[autocomplete="off"][id="issue_number"][name="issue_number"][type="text"]	html/body/form/input[7]	in_iframe=True	in_shadow_root=False
+B5	click	''	html > body > form > button.visually-hidden[type="submit"]	html/body/form/button	in_iframe=True	in_shadow_root=False
+I31	fill	'number'	html > body > form > input:nth-of-type(1).visually-hidden[autocomplete="cc-number"][id="number"][name="number"][type="text"]	html/body/form/input[1]	in_iframe=True	in_shadow_root=False
+I32	fill	'name'	html > body > form > div > input.input-placeholder-color--lvl-22[required][autocomplete="cc-name"][id="name"][name="name"][type="text"][aria-describedby="error-for-name tooltip-for-name"][placeholder="Name on card"]	html/body/form/div/input	in_iframe=True	in_shadow_root=False
+I33	fill	'expiry_month'	html > body > form > input:nth-of-type(2).visually-hidden[autocomplete="cc-exp-month"][id="expiry_month"][name="expiry_month"][type="text"]	html/body/form/input[2]	in_iframe=True	in_shadow_root=False
+I34	fill	'expiry_year'	html > body > form > input:nth-of-type(3).visually-hidden[autocomplete="cc-exp-year"][id="expiry_year"][name="expiry_year"][type="text"]	html/body/form/input[3]	in_iframe=True	in_shadow_root=False
+I35	fill	'expiry'	html > body > form > input:nth-of-type(4).visually-hidden[autocomplete="cc-exp"][id="expiry"][name="expiry"][type="text"]	html/body/form/input[4]	in_iframe=True	in_shadow_root=False
+I36	fill	'verification_value'	html > body > form > input:nth-of-type(5).visually-hidden[autocomplete="cc-csc"][id="verification_value"][name="verification_value"][type="text"]	html/body/form/input[5]	in_iframe=True	in_shadow_root=False
+I37	fill	'issue_date'	html > body > form > input:nth-of-type(6).visually-hidden[autocomplete="off"][id="issue_date"][name="issue_date"][type="text"]	html/body/form/input[6]	in_iframe=True	in_shadow_root=False
+I38	fill	'issue_number'	html > body > form > input:nth-of-type(7).visually-hidden[autocomplete="off"][id="issue_number"][name="issue_number"][type="text"]	html/body/form/input[7]	in_iframe=True	in_shadow_root=False
+B6	click	''	html > body > form > button.visually-hidden[type="submit"]	html/body/form/button	in_iframe=True	in_shadow_root=False
+M8	click	'reductions'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div	in_iframe=False	in_shadow_root=False
+I39	fill	'reductions'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="ReductionsInput0"][name="reductions"][placeholder="Discount Code or Trade ID"][type="text"][aria-labelledby="ReductionsInput0-label"][autocomplete="on"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div/input	in_iframe=False	in_shadow_root=False
+B7	click	'Click here'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > div > div > div > div > div:nth-of-type(1) > button._1m2hr9ge._1m2hr9gd._1fragemu6._1fragemms._1fragemor._1fragemtk._1fragemtz._1fragemu1._1fragemtq._1m2hr9g1h._1m2hr9g1e._1fragemu1._1fragemtz._1fragemtp._1fragemte._1m2hr9gi._1m2hr9gg._1fragem3m._1m2hr9g1v._1m2hr9g1b._1m2hr9g1j._1m2hr9g1i._1fragemtm[id="CommandInvoker0"][type="button"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/div/div/div/div/div[1]/button	in_iframe=False	in_shadow_root=False
+B8	click	'Click here'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > div > div > div > div > div:nth-of-type(3) > button._1m2hr9ge._1m2hr9gd._1fragemu6._1fragemms._1fragemor._1fragemtk._1fragemtz._1fragemu1._1fragemtq._1m2hr9g1h._1m2hr9g1e._1fragemu1._1fragemtz._1fragemtp._1fragemte._1m2hr9gi._1m2hr9gg._1fragem3m._1m2hr9g1v._1m2hr9g1b._1m2hr9g1j._1m2hr9g1i._1fragemtm[id="CommandInvoker1"][type="button"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/div/div/div/div/div[3]/button	in_iframe=False	in_shadow_root=False
+B9	click	''	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > section > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > button._1s82kpb1._1s82kpb0._1fragemor._1fragemms._1fragemtk._1fragemtv._1fragemtq._1fragemu5._1fragemte._1fragem32[type="button"][aria-label="Shipping policy"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/section/div[2]/div[2]/div[2]/div[1]/div/div/button	in_iframe=False	in_shadow_root=False

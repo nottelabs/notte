@@ -1,0 +1,17 @@
+ImageCategory.FAVICON	file://<tests/data>/checkout/urbanoutfitters.html/favicon.ico
+ImageCategory.CONTENT_IMAGE	data:image/svg+xml;base64,sha256:cda33fd11a716bd1
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.CONTENT_IMAGE	data:image/png;base64,sha256:5cf04852b1cc51c0
+ImageCategory.SVG_ICON	None
+ImageCategory.CONTENT_IMAGE	data:image/png;base64,sha256:2aff47e20cd6e4b1
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.CONTENT_IMAGE	data:image/svg+xml;base64,sha256:0d3d4c51a92917ab
