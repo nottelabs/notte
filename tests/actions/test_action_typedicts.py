@@ -29,13 +29,18 @@ def _get_action_to_typeddict_mapping() -> dict[str, tuple[type[BaseAction], type
     return mapping
 
 
-def _public_action_typedicts() -> set[str]:
-    """TypedDicts of the actions that sessions expose (legacy agent actions only stay parseable)."""
+def _public_action_typedicts(hidden: frozenset[str]) -> set[str]:
+    """TypedDicts of the actions that a session exposes (hidden actions only stay parseable)."""
     return {
         f"{action_cls.__name__}Dict"
         for action_type, action_cls in BaseAction.ACTION_REGISTRY.items()
-        if action_type not in BrowserAction.LEGACY_AGENT_ACTION_TYPES
+        if action_type not in hidden
     }
+
+
+# Local sessions can't run inbox reads; cloud sessions still run the API-side `email_verification_read`.
+LOCAL_SESSION_HIDDEN_ACTIONS = BrowserAction.unlisted_action_types()
+SDK_SESSION_HIDDEN_ACTIONS = BrowserAction.LEGACY_AGENT_ACTION_TYPES | BrowserAction.PERSONA_INBOX_ACTION_TYPES
 
 
 def test_all_actions_have_typeddict() -> None:
@@ -188,7 +193,7 @@ def test_browser_session_execute_overloads_present() -> None:
     overloaded_typedicts = _extract_overload_typedicts_from_file(session_file, "execute")
 
     # Get all expected TypedDicts
-    expected_typedicts = _public_action_typedicts()
+    expected_typedicts = _public_action_typedicts(LOCAL_SESSION_HIDDEN_ACTIONS)
 
     missing = expected_typedicts - overloaded_typedicts
     if missing:
@@ -208,7 +213,7 @@ def test_browser_session_aexecute_overloads_present() -> None:
     overloaded_typedicts = _extract_overload_typedicts_from_file(session_file, "aexecute")
 
     # Get all expected TypedDicts
-    expected_typedicts = _public_action_typedicts()
+    expected_typedicts = _public_action_typedicts(LOCAL_SESSION_HIDDEN_ACTIONS)
 
     missing = expected_typedicts - overloaded_typedicts
     if missing:
@@ -234,7 +239,7 @@ def test_sdk_session_execute_overloads_present() -> None:
     overloaded_typedicts = _extract_overload_typedicts_from_file(sessions_file, "execute")
 
     # Get all expected TypedDicts
-    expected_typedicts = _public_action_typedicts()
+    expected_typedicts = _public_action_typedicts(SDK_SESSION_HIDDEN_ACTIONS)
 
     missing = expected_typedicts - overloaded_typedicts
     if missing:

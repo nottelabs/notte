@@ -1,0 +1,36 @@
+---
+title: "wait_for_emails"
+description: "Poll the persona inbox until at least one email matches, e"
+---
+
+g. to read a sign-up code.
+
+```python
+emails = persona.wait_for_emails(only_unread=True, timeout=120)
+```
+
+Raises `TimeoutError` if nothing arrives within `timeout` seconds. Listed emails are marked as read
+
+
+## Parameters
+
+<ParamField path="timeout" type="float" default="60.0">
+</ParamField>
+
+<ParamField path="poll_interval" type="float" default="5.0">
+</ParamField>
+
+<ParamField path="limit" type="int">
+  Max number of emails to return
+</ParamField>
+
+<ParamField path="timedelta" type="datetime.timedelta | None">
+  Return only emails that are not older than `timedelta`
+</ParamField>
+
+<ParamField path="only_unread" type="bool">
+</ParamField>
+
+## Returns
+
+`Sequence`[<Visibility for="humans">[`EmailResponse`](/sdk-reference/misc/emailresponse)</Visibility><Visibility for="agents">[`EmailResponse`](/sdk-reference/misc/emailresponse.md)</Visibility>]

@@ -18,7 +18,6 @@ from notte_core.actions.typedicts import (
     ClickActionDict,
     CloseTabActionDict,
     DownloadFileActionDict,
-    EmailReadActionDict,
     EmailVerificationReadActionDict,
     EvaluateJsActionDict,
     FallbackFillActionDict,
@@ -35,7 +34,6 @@ from notte_core.actions.typedicts import (
     ScrollDownActionDict,
     ScrollUpActionDict,
     SelectDropdownOptionActionDict,
-    SmsReadActionDict,
     SwitchTabActionDict,
     UploadFileActionDict,
     WaitActionDict,
@@ -1560,15 +1558,7 @@ class RemoteSession(SyncResource):
     ) -> ExecutionResult: ...
     @overload
     def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailReadActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailVerificationReadActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SmsReadActionDict]
     ) -> ExecutionResult: ...
     @overload
     def execute(

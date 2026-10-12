@@ -14,9 +14,6 @@ from notte_core.actions import (
     DownloadFileAction as DownloadFile,
 )
 from notte_core.actions import (
-    EmailReadAction as EmailRead,
-)
-from notte_core.actions import (
     EmailVerificationReadAction as EmailVerificationRead,
 )
 from notte_core.actions import (
@@ -68,9 +65,6 @@ from notte_core.actions import (
     SelectDropdownOptionAction as SelectDropdownOption,
 )
 from notte_core.actions import (
-    SmsReadAction as SmsRead,
-)
-from notte_core.actions import (
     SwitchTabAction as SwitchTab,
 )
 from notte_core.actions import (
@@ -97,9 +91,7 @@ __all__ = [
     "ScrollDown",
     "CaptchaSolve",
     "Scrape",
-    "EmailRead",
     "EmailVerificationRead",
-    "SmsRead",
     "EvaluateJs",
     "Click",
     "Fill",
