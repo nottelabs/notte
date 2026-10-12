@@ -1,3 +1,4 @@
+import re
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from typing import Callable, ClassVar, Required, TypeAlias, TypeVar
@@ -410,15 +411,14 @@ class DomNode:
             return self.role
         return self.role.value
 
+    # each element on the path from the root appends `:<hash(xpath)>:<hash(css_path)>` to the page url
+    _NOTTE_SELECTOR_HASHES: ClassVar[re.Pattern[str]] = re.compile(r"(?::-?\d+:-?\d+)+$")
+
     def get_url(self) -> str | None:
         attr = self.computed_attributes.selectors
-        if attr is None or len(attr.notte_selector or "") == 0:
+        if attr is None or attr.notte_selector is None or len(attr.notte_selector) == 0:
             return None
-
-        if attr.notte_selector is not None:
-            return attr.notte_selector.split(":")[0]
-
-        return None
+        return self._NOTTE_SELECTOR_HASHES.sub("", attr.notte_selector, count=1)
 
     def find(self, id: str) -> "InteractionDomNode | None":
         if self.id == id:
