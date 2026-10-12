@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import asyncio
-import datetime as dt
 import re
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, ClassVar, Literal, Unpack, overload
+from typing import Any, Literal, Unpack, overload
 
 import requests
 from notte_core import enable_nest_asyncio
@@ -68,7 +67,6 @@ from notte_core.errors.actions import (
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
 from notte_core.profiling import profiler
-from notte_core.space import ActionSpace
 from notte_core.storage import BaseStorage
 from notte_core.trajectory import Trajectory
 from notte_core.types import (
@@ -121,9 +119,6 @@ enable_nest_asyncio()
 
 # TODO: ACT callback
 class NotteSession(AsyncResource, SyncResource):
-    observe_max_retry_after_snapshot_update: ClassVar[int] = 2
-    nb_seconds_between_snapshots_check: ClassVar[int] = 10
-
     @track_usage("local.session.create")
     def __init__(
         self,
@@ -285,37 +280,6 @@ class NotteSession(AsyncResource, SyncResource):
 
     # ---------------------------- observe, step functions ----------------------------
 
-    async def _interaction_action_listing(
-        self,
-        retry: int = observe_max_retry_after_snapshot_update,
-    ) -> ActionSpace:
-        if config.verbose:
-            logger.info(f"🧿 observing page {self.snapshot.metadata.url}")
-        space = build_action_space(self.snapshot.dom_node)
-        # TODO: improve this
-        # Check if the snapshot has changed since the beginning of the trajectory
-        # if it has, it means that the page was not fully loaded and that we should restart the oblisting
-        time_diff = dt.datetime.now(dt.timezone.utc) - self.snapshot.metadata.timestamp
-        if time_diff.total_seconds() > self.nb_seconds_between_snapshots_check:
-            if config.verbose:
-                logger.warning(
-                    (
-                        f"{time_diff.total_seconds()} seconds since the beginning of the action listing."
-                        "Check if page content has changed..."
-                    )
-                )
-            check_snapshot = await self.window.snapshot(screenshot=False)
-            if not self.snapshot.compare_with(check_snapshot) and retry > 0:
-                if config.verbose:
-                    logger.warning(
-                        "Snapshot changed since the beginning of the action listing, retrying to observe again"
-                    )
-                # the check snapshot was taken without a screenshot, but the observation needs one
-                self.snapshot = check_snapshot.model_copy(update={"screenshot": await self.window.screenshot()})
-                return await self._interaction_action_listing(retry=retry - 1)
-
-        return space
-
     @track_usage("local.session.screenshot")
     async def ascreenshot(self) -> Screenshot:
         screenshot_bytes = await self.window.screenshot()
@@ -331,6 +295,11 @@ class NotteSession(AsyncResource, SyncResource):
     @timeit("observe")
     @track_usage("local.session.observe")
     async def aobserve(self, **pagination: Unpack[PaginationParamsDict]) -> Observation:
+        """Snapshot the page and list its interaction actions.
+
+        The pagination parameters are kept for parity with the SDK's `observe`, but a local session
+        always lists every action: they are validated and otherwise ignored.
+        """
         # Profile with URL attribute
         async with profiler.profile("aobserve", service_name="observation") as span:
             if span is not None:
@@ -364,9 +333,10 @@ class NotteSession(AsyncResource, SyncResource):
             # ---- Step 2: action listing ----
             # --------------------------------
 
-            # local sessions list every action: the pagination parameters are only validated
             _ = PaginationParams.model_validate(pagination)
-            space = await self._interaction_action_listing(retry=self.observe_max_retry_after_snapshot_update)
+            if config.verbose:
+                logger.info(f"🧿 observing page {self.snapshot.metadata.url}")
+            space = build_action_space(self.snapshot.dom_node)
 
         # --------------------------------
         # ------- Step 3: tracing --------
