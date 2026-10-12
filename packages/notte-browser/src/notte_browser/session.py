@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import datetime as dt
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, ClassVar, Literal, Unpack, overload
 
@@ -112,7 +112,7 @@ from notte_browser.playwright import PlaywrightManager
 from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe
-from notte_browser.tagging.action.pipe import MainActionSpacePipe
+from notte_browser.tagging.action_space import build_action_space
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
 
@@ -151,7 +151,6 @@ class NotteSession(AsyncResource, SyncResource):
         self._window: BrowserWindow | None = window
         self.controller: BrowserController = BrowserController(verbose=config.verbose, storage=storage)
         self.storage: BaseStorage | None = storage
-        self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe()
         # Structured scraping hands the page markdown to `extractor` (by default `notte_llm.LlmExtractor`, if installed).
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(extractor=extractor)
         self._vault: BaseVault | None = None
@@ -284,33 +283,15 @@ class NotteSession(AsyncResource, SyncResource):
     async def apage(self) -> Page:
         return self.window.page
 
-    @property
-    def previous_interaction_actions(self) -> Sequence[InteractionAction] | None:
-        # This function is always called after trajectory.append(preobs)
-        # —This means trajectory[-1] is always the "current (pre)observation"
-        # And trajectory[-2] is the "previous observation" we're interested in.
-        last_observation = self.trajectory.last_observation
-        if last_observation is None or self.snapshot.clean_url != last_observation.clean_url:
-            return None  # the page has significantly changed
-        actions = last_observation.space.interaction_actions
-        if len(actions) == 0:
-            return None
-        return actions
-
     # ---------------------------- observe, step functions ----------------------------
 
     async def _interaction_action_listing(
         self,
-        pagination: PaginationParams,
         retry: int = observe_max_retry_after_snapshot_update,
     ) -> ActionSpace:
         if config.verbose:
             logger.info(f"🧿 observing page {self.snapshot.metadata.url}")
-        space = await self._action_space_pipe.forward(
-            snapshot=self.snapshot,
-            previous_action_list=self.previous_interaction_actions,
-            pagination=pagination,
-        )
+        space = build_action_space(self.snapshot.dom_node)
         # TODO: improve this
         # Check if the snapshot has changed since the beginning of the trajectory
         # if it has, it means that the page was not fully loaded and that we should restart the oblisting
@@ -331,7 +312,7 @@ class NotteSession(AsyncResource, SyncResource):
                     )
                 # the check snapshot was taken without a screenshot, but the observation needs one
                 self.snapshot = check_snapshot.model_copy(update={"screenshot": await self.window.screenshot()})
-                return await self._interaction_action_listing(retry=retry - 1, pagination=pagination)
+                return await self._interaction_action_listing(retry=retry - 1)
 
         return space
 
@@ -377,17 +358,15 @@ class NotteSession(AsyncResource, SyncResource):
             self.snapshot = await self.window.snapshot()
 
             if config.verbose:
-                logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_interaction_actions or []]}")
                 logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
 
             # --------------------------------
             # ---- Step 2: action listing ----
             # --------------------------------
 
-            space = await self._interaction_action_listing(
-                pagination=PaginationParams.model_validate(pagination),
-                retry=self.observe_max_retry_after_snapshot_update,
-            )
+            # local sessions list every action: the pagination parameters are only validated
+            _ = PaginationParams.model_validate(pagination)
+            space = await self._interaction_action_listing(retry=self.observe_max_retry_after_snapshot_update)
 
         # --------------------------------
         # ------- Step 3: tracing --------
