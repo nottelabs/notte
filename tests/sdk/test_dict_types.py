@@ -321,8 +321,13 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
         class_match = re.search(class_def_pattern, types_content)
         if class_match:
             inheritance = class_match.group(1)
-            # Check if it inherits from TypedDict or other dict types
-            if "TypedDict" in inheritance or "Dict" in inheritance or inheritance.strip().endswith("Dict"):
+            # Check if it inherits from TypedDict, another dict type, or a generated TypedDict
+            if (
+                "TypedDict" in inheritance
+                or "Dict" in inheritance
+                or inheritance.strip().endswith("Dict")
+                or inheritance.strip().startswith("wire_dicts.")
+            ):
                 request_dict_classes.append(dict_class)
 
     # Find inheritance patterns for Request classes

@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -424,7 +424,7 @@ class SessionResponse(BaseModel):
     created_at: Annotated[datetime, Field(description="Session creation time")]
     closed_at: Annotated[datetime | None, Field(description="Session closing time")] = None
     last_accessed_at: Annotated[datetime, Field(description="Last access time")]
-    duration: Annotated[str | None, Field(description="Session duration")] = None
+    duration: Annotated[timedelta | None, Field(description="Session duration")] = None
     status: Literal["active", "authenticating", "closed", "error", "timed_out"]
     close_reason: Annotated[
         Literal["manual", "idle_timeout", "max_duration", "error", "unknown"] | None,

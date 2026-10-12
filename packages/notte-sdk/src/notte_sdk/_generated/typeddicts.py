@@ -5,46 +5,46 @@ from __future__ import annotations
 
 from typing import Literal
 
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import Required, TypedDict
 
 
-class ApiSessionStartRequest(TypedDict):
-    solve_captchas: NotRequired[bool]
-    max_duration_minutes: NotRequired[int]
-    idle_timeout_minutes: NotRequired[int]
-    proxies: NotRequired[list[NotteProxy | ExternalProxy | TailnetProxy] | bool]
-    browser_type: NotRequired[Literal["chromium", "chrome", "chrome-nightly", "chrome-turbo"]]
-    user_agent: NotRequired[str | None]
-    chrome_args: NotRequired[list[str] | None]
-    viewport_width: NotRequired[int | None]
-    viewport_height: NotRequired[int | None]
-    aspect_ratio: NotRequired[Literal["5:4", "16:9"] | None]
-    cdp_url: NotRequired[str | None]
-    screenshot_type: NotRequired[Literal["raw", "full", "last_action"]]
-    profile: NotRequired[SessionProfile | None]
-    web_bot_auth: NotRequired[bool]
-    extra_http_headers: NotRequired[dict[str, str] | None]
-    vault_id: NotRequired[str | None]
-    auth_ids: NotRequired[list[str]]
-    wait_for_authentication: NotRequired[bool]
-    auth_retry: NotRequired[int]
-    block_ads: NotRequired[bool]
-    advanced_stealth: NotRequired[bool]
-    demonstrate: NotRequired[bool]
+class ApiSessionStartRequest(TypedDict, total=False):
+    solve_captchas: bool
+    max_duration_minutes: int
+    idle_timeout_minutes: int
+    proxies: list[NotteProxy | ExternalProxy | TailnetProxy] | bool
+    browser_type: Literal["chromium", "chrome", "chrome-nightly", "chrome-turbo"]
+    user_agent: str | None
+    chrome_args: list[str] | None
+    viewport_width: int | None
+    viewport_height: int | None
+    aspect_ratio: Literal["5:4", "16:9"] | None
+    cdp_url: str | None
+    screenshot_type: Literal["raw", "full", "last_action"]
+    profile: SessionProfile | None
+    web_bot_auth: bool
+    extra_http_headers: dict[str, str] | None
+    vault_id: str | None
+    auth_ids: list[str]
+    wait_for_authentication: bool
+    auth_retry: int
+    block_ads: bool
+    advanced_stealth: bool
+    demonstrate: bool
 
 
-class ExternalProxy(TypedDict):
-    type: NotRequired[Literal["external"]]
-    server: str
-    username: NotRequired[str | None]
-    password: NotRequired[str | None]
-    bypass: NotRequired[str | None]
+class ExternalProxy(TypedDict, total=False):
+    type: Literal["external"]
+    server: Required[str]
+    username: str | None
+    password: str | None
+    bypass: str | None
 
 
-class NotteProxy(TypedDict):
-    type: NotRequired[Literal["notte"]]
-    id: NotRequired[str | None]
-    country: NotRequired[
+class NotteProxy(TypedDict, total=False):
+    type: Literal["notte"]
+    id: str | None
+    country: (
         Literal[
             "ad",
             "ae",
@@ -250,23 +250,23 @@ class NotteProxy(TypedDict):
             "zw",
         ]
         | None
-    ]
-    city: NotRequired[str | None]
+    )
+    city: str | None
 
 
-class PersonaCreateRequest(TypedDict):
-    create_vault: NotRequired[bool]
-    create_phone_number: NotRequired[bool]
-    name: NotRequired[str | None]
+class PersonaCreateRequest(TypedDict, total=False):
+    create_vault: bool
+    create_phone_number: bool
+    name: str | None
 
 
-class SessionProfile(TypedDict):
-    id: str
-    persist: NotRequired[bool]
+class SessionProfile(TypedDict, total=False):
+    id: Required[str]
+    persist: bool
 
 
-class TailnetProxy(TypedDict):
-    type: NotRequired[Literal["tailnet"]]
-    oauth_client_id: NotRequired[str | None]
-    oauth_client_secret: NotRequired[str | None]
-    exit_node: NotRequired[str | None]
+class TailnetProxy(TypedDict, total=False):
+    type: Literal["tailnet"]
+    oauth_client_id: str | None
+    oauth_client_secret: str | None
+    exit_node: str | None
