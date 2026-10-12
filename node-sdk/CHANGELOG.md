@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `session.page()` sends the SDK's `x-notte-request-origin` and `x-notte-sdk-version`
+  headers on its CDP connection to Notte, as API calls already do.
 - `session.fetch()` refuses plaintext `http:` targets and redirects by default
   because the request carries the page's cookies; pass `allowInsecure: true`
   to override. Relative URLs resolve against the page.

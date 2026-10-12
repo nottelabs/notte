@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 from webbrowser import open as open_browser
 
 import requests
+from notte_core import __version__ as notte_core_version
 from notte_core.actions import BaseAction, InteractionActionUnion
 from notte_core.actions.typedicts import (
     CaptchaSolveActionDict,
@@ -1208,22 +1209,28 @@ class RemoteSession(SyncResource):
         debug = self.debug_info()
         return self.client._with_db_preview(debug.ws.cdp)  # pyright: ignore [reportPrivateUsage]
 
-    def _cdp_auth_headers(self, cdp_url: str) -> dict[str, str] | None:
-        """Send the runner capability only to this API's CDP connection."""
-        capability = os.getenv("NOTTE_AUTH_CAPABILITY")
-        if capability and self.request.cdp_url is None:
-            target = urlsplit(cdp_url)
-            api = urlsplit(self.client.server_url)
-            target_port = target.port if target.port is not None else 443
-            api_port = api.port if api.port is not None else 443
-            if (
-                target.scheme == "wss"
-                and api.scheme == "https"
-                and target.hostname == api.hostname
-                and target_port == api_port
-            ):
-                return {"x-notte-auth-capability": capability}
-        return None
+    def _cdp_headers(self, cdp_url: str) -> dict[str, str] | None:
+        """Headers for this API's CDP connection: the SDK identity, and the runner capability if set.
+
+        Nothing is sent to a CDP endpoint served by someone else.
+        """
+        if self.request.cdp_url is not None:
+            return None
+        target = urlsplit(cdp_url)
+        api = urlsplit(self.client.server_url)
+        target_port = target.port if target.port is not None else 443
+        api_port = api.port if api.port is not None else 443
+        if not (
+            target.scheme == "wss"
+            and api.scheme == "https"
+            and target.hostname == api.hostname
+            and target_port == api_port
+        ):
+            return None
+        headers = {"x-notte-request-origin": self.client.REQUEST_ORIGIN, "x-notte-sdk-version": notte_core_version}
+        if capability := os.getenv("NOTTE_AUTH_CAPABILITY"):
+            headers["x-notte-auth-capability"] = capability
+        return headers
 
     @property
     def page(self) -> "PageSync":
@@ -1274,7 +1281,7 @@ class RemoteSession(SyncResource):
             if self._playwright_browser is None:
                 cdp_url = self.cdp_url()
                 self._playwright_browser = self._playwright_context.chromium.connect_over_cdp(
-                    cdp_url, headers=self._cdp_auth_headers(cdp_url)
+                    cdp_url, headers=self._cdp_headers(cdp_url)
                 )
                 _install_server_owned_dialog_policy(self._playwright_browser)
 
@@ -1332,7 +1339,7 @@ class RemoteSession(SyncResource):
             if self._async_playwright_browser is None:
                 cdp_url = self.cdp_url()
                 self._async_playwright_browser = await self._async_playwright_context.chromium.connect_over_cdp(
-                    cdp_url, headers=self._cdp_auth_headers(cdp_url)
+                    cdp_url, headers=self._cdp_headers(cdp_url)
                 )
                 _install_server_owned_dialog_policy(self._async_playwright_browser)
 

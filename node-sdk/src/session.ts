@@ -4,7 +4,8 @@ import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import type { Browser, BrowserContext, Dialog, Page } from 'playwright-core';
-import { NotteClient, TIMEOUT_HEADER } from '@/client';
+import { NotteClient, REQUEST_ORIGIN, TIMEOUT_HEADER } from '@/client';
+import { SDK_VERSION } from '@/version';
 import type {
   AgentFunctionCodeResponse,
   ApiExecutionResponse,
@@ -691,7 +692,13 @@ export class Session {
     try {
       if (!this.playwrightBrowser) {
         const cdpUrl = await this.cdpUrl();
-        this.playwrightBrowser = await playwright.chromium.connectOverCDP(cdpUrl);
+        // Identify the SDK to Notte's CDP endpoint, as every API call does; a caller's
+        // own browser (`cdp_url` option) gets nothing extra.
+        this.playwrightBrowser = this.options.cdp_url
+          ? await playwright.chromium.connectOverCDP(cdpUrl)
+          : await playwright.chromium.connectOverCDP(cdpUrl, {
+              headers: { 'x-notte-request-origin': REQUEST_ORIGIN, 'x-notte-sdk-version': SDK_VERSION },
+            });
         installServerOwnedDialogPolicy(this.playwrightBrowser);
       }
       const page = this.playwrightBrowser.contexts()[0]?.pages()[0];
