@@ -52,7 +52,6 @@ class InteractionOnlyDomNodeRenderingPipe:
     @staticmethod
     def format(
         node: DomNode,
-        depth: int,
         node_texts: list[str],
         max_len_per_attribute: int | None,
         is_parent_interaction: bool = False,
@@ -78,7 +77,6 @@ class InteractionOnlyDomNodeRenderingPipe:
             for child in node.children:
                 _ = InteractionOnlyDomNodeRenderingPipe.format(
                     node=child,
-                    depth=depth + 1,
                     node_texts=node_texts,
                     max_len_per_attribute=max_len_per_attribute,
                     is_parent_interaction=is_parent_interaction,
@@ -86,13 +84,10 @@ class InteractionOnlyDomNodeRenderingPipe:
         return node_texts
 
     @staticmethod
-    def children_texts(root_node: DomNode, max_depth: int = -1) -> list[str]:
+    def children_texts(root_node: DomNode) -> list[str]:
         texts: list[str] = []
 
-        def collect_text(node: DomNode, current_depth: int) -> None:
-            if max_depth != -1 and current_depth > max_depth:
-                return
-
+        def collect_text(node: DomNode) -> None:
             # Skip this branch if we hit a highlighted element (except for the current node)
             if node.id is not None and node.id != root_node.id:
                 return
@@ -101,9 +96,9 @@ class InteractionOnlyDomNodeRenderingPipe:
                 texts.append(node.text.strip())
             else:
                 for child in node.children:
-                    collect_text(child, current_depth + 1)
+                    collect_text(child)
 
-        collect_text(root_node, 0)
+        collect_text(root_node)
         return texts
 
     @staticmethod
@@ -120,7 +115,6 @@ class InteractionOnlyDomNodeRenderingPipe:
         for component_node in components:
             formatted_text: list[str] = InteractionOnlyDomNodeRenderingPipe.format(
                 node=component_node,
-                depth=0,
                 node_texts=[],
                 max_len_per_attribute=max_len_per_attribute,
             )
