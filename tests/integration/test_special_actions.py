@@ -10,12 +10,12 @@ def test_browser_actions_list():
     """Test that all special actions are properly defined"""
     browser_actions = BrowserAction.list()
 
-    # Test we have all 8 special actions
-    assert len(browser_actions) == len(BrowserAction.BROWSER_ACTION_REGISTRY)
+    # Every registered browser action is listed, except the legacy agent-loop actions
+    expected_ids = set(BrowserAction.BROWSER_ACTION_REGISTRY.keys()) - BrowserAction.LEGACY_AGENT_ACTION_TYPES
+    assert len(browser_actions) == len(expected_ids)
 
     # Test each special action ID exists
     action_ids = set([action.type for action in browser_actions])
-    expected_ids = set(BrowserAction.BROWSER_ACTION_REGISTRY.keys())
     assert action_ids == expected_ids
 
     # Test special action detection

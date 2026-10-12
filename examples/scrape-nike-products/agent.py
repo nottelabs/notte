@@ -1,5 +1,6 @@
 import argparse
 import datetime as dt
+import re
 from pathlib import Path
 from typing import Annotated
 
@@ -64,15 +65,14 @@ class ShoppingList(BaseModel):
 
 @retry(max_tries=5)
 def scrape_categories(session: RemoteSession) -> ProductCategories:
+    # Category links are plain navigation links: read them from the page markdown, no LLM needed.
     _ = session.execute(type="goto", url=url)
-    return session.scrape(
-        response_format=ProductCategories,
-        instructions=(
-            "Get all the product categories from the nike.com home page (focus on the men's section). "
-            "Be as exhaustive as possible"
-        ),
-        scrape_links=True,
-    )
+    markdown = session.scrape(scrape_links=True, only_main_content=False)
+    links = re.findall(r"\[([^\]\n]+)\]\((https://www\.nike\.com/w/[^)\s]+)\)", markdown)
+    categories = {link: name for name, link in links}
+    if not categories:
+        raise Exception("No product categories found on the page")
+    return ProductCategories(categories=[ProductCategory(name=name, url=link) for link, name in categories.items()])
 
 
 @retry(max_tries=3)
