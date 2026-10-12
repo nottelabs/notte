@@ -1,0 +1,13 @@
+ImageCategory.FAVICON	http://golden.test/checkout/crate_and_barrel.html/favicon.ico
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.CONTENT_IMAGE	data:image/png;base64,sha256:9136e62a356f9ee5
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.SVG_ICON	None
+ImageCategory.CONTENT_IMAGE	https://www.crateandbarrel.com/akam/13/pixel_5cf6fb6b?a=dD0wMjMwYmE1MmU1ZDZlNDQ0YjM5NDVlNTFjMzMzMjk1NDZmZDVlMjk5JmpzPW9mZg==

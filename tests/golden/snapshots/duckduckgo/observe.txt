@@ -1,0 +1,147 @@
+### Content of 'WebArea' component with text 'body content'
+L1[:]<a href="https://duckduckgo.com/about" title="Learn about DuckDuckGo" aria_label="Learn about DuckDuckGo"></a>
+I1[:]<input type="text" value="" placeholder="Search without being tracked" name="q" role="combobox" aria_label="Search with DuckDuckGo" aria_expanded="true"></input>
+L2[:]<a href="https://duck.ai/">Chat</a>
+B1[:]<button>Menu</button>
+_[:]Switch to DuckDuckGo. It’s private and free!
+_[:]Make DuckDuckGo your default search engine.
+L3[:]<a>Set As Default Search</a>
+_[:]Add our free extension to block web trackers.
+L4[:]<a href="https://addons.mozilla.org/firefox/downloads/latest/duckduck...">Add Extension</a>
+_[:]Trusted by tens of millions worldwide!
+_[:]Learn more
+L5[:]<a href="#features"></a>
+_[:]Protection. Privacy. Peace of mind. Get our browser on all your devices.
+_[:]Search and browse with the DuckDuckGo browser for more protection. Unlike Chrome and other browsers, we don't track you.
+_[:]Download DuckDuckGo today!
+_[:]Available on the following platforms
+_[:]Desktop & Mobile Browser
+_[:]DuckDuckGo Browser
+_[:]Mac
+_[:]Windows
+_[:]iOS
+_[:]Android
+_[:]Desktop Browser Extension
+_[:]DuckDuckGo Extension
+_[:]Chrome
+_[:]Edge
+_[:]Firefox
+_[:]Opera
+_[:]How It Works
+_[:]Search Protection
+_[:]Search without being tracked.
+_[:]Other search engines track your every search, from where you go to what you buy. We don't track your search history. Ever.
+_[:]Learn more
+_[:]Web Tracking Protection
+_[:]Stop creepy tracking from Facebook and Google.
+_[:]DuckDuckGo's powerful tracker blocking, in our browser and extension, helps stop privacy-invasive companies from collecting your personal information.
+_[:]Learn more
+_[:]Email Protection
+_[:]Intercept and remove email trackers.
+_[:]85% of emails sent through Duck Addresses contained hidden email trackers before we stripped them out. Email Protection zaps most trackers and forwards email to your regular inbox so you can read in peace.
+_[:]Learn more
+_[:]† Available on Android
+_[:]App Tracking Protection
+_[:]Block app trackers, day and night.
+_[:]Over 96% of popular free Android apps we tested allow other companies to invade your privacy, like using your location to map everywhere you go. Stop most of their spying and take back control of your personal information on Android!
+_[:]Learn more
+_[:]It's a myth that companies need to track you to make money.
+_[:]The DuckDuckGo browser and search engine have been free to use since day one. We make money from privacy-respecting ads, not by exploiting your data. When you search for “car” we show you a car ad — it's that simple.
+_[:]See how we make money
+_[:]Get the same Internet, but with more protection.
+_[:]App Widgets
+_[:]All the features you expect, but with privacy built-in
+_[:]Voice Search
+_[:]Favorites
+_[:]Downloads
+_[:]Bookmarks
+_[:]Smarter Encryption
+_[:]Tracker Blocking
+_[:]Local search
+_[:]!bang shortcuts
+_[:]Application Lock
+_[:]Custom themes
+_[:]Maps
+_[:]Burn After Reading
+_[:]Clear your tabs and browsing data with one tap of the Fire Button.
+_[:]Dark Mode
+_[:]Trusted by tens of millions worldwide!
+_[:]100%
+_[:]Free
+_[:]3 Billion
+_[:]Monthly Searches
+_[:]6 Million
+_[:]Monthly Downloads
+_[:]Get the free all-in-one privacy app for mobile
+_[:]4.9
+_[:]1.8 million ratings
+_[:]4.7
+_[:]2.1 million reviews
+_[:]The company best known for its search engine is launching a new set of tools aimed at creating an ‘easy button’ for protecting your data online.
+_[:]Read article on WIRED Magazine
+_[:]Tackling email privacy has been a major goal for DuckDuckGo, as the company pushes for privacy-friendly methods for various online tasks.
+_[:]Read article on The Verge
+_[:]It doesn’t allow targeted advertising, results are not based on your search history, and you’ll see fewer ads based on your search. It’s easy to use and install, too.
+_[:]Read article on USA Today
+_[:]The 13-year-old company appears to be in a prime position to fulfill internet users’ increasing desire for privacy in an age of data leaks, breaches and scandals.
+_[:]Read article on CNET
+_[:]Still have questions?
+_[:]What is DuckDuckGo?
+_[:]At DuckDuckGo, we believe the best way to protect your personal information from hackers, scammers, and privacy-invasive companies is to stop it from being collected at all. That's why millions of people
+_[:]choose DuckDuckGo over Chrome and other browsers
+_[:]to search and browse online. Our built-in search engine is like Google but never tracks your searches. And our browsing protections, such as ad tracker blocking and cookie blocking, help stop other companies from collecting your data. Oh, and our browser is free — we make money from
+_[:]privacy-respecting search ads
+_[:], not by exploiting your data. Take back control of your personal information with the browser designed for data protection, not data collection.
+_[:]Learn more
+_[:]How does DuckDuckGo protect my privacy?
+_[:]Does DuckDuckGo block all trackers on websites I visit?
+_[:]How many people use DuckDuckGo?
+_[:]How does DuckDuckGo make money?
+_[:]Why use DuckDuckGo instead of Google?
+_[:]Is Incognito Mode private?
+_[:]How do DuckDuckGo Search results compare to Google's?
+_[:]Is DuckDuckGo owned by Google or any other entity?
+_[:]Learn More
+_[:]About DuckDuckGo
+_[:]About Our Browser
+_[:]Privacy Pro
+_[:]NEW
+_[:]What’s New
+_[:]Compare Privacy
+_[:]Blog
+_[:]Newsletter
+_[:]Other Resources
+_[:]Help
+_[:]Community
+_[:]Careers
+_[:]Privacy Policy
+_[:]Terms of Service
+_[:]Press Kit
+_[:]Advertise on Search
+_[:]About DuckDuckGo
+_[:]At DuckDuckGo, we believe the best way to protect your personal information from hackers, scammers, and privacy-invasive companies is to stop it from being collected at all. That's why millions of people
+_[:]choose DuckDuckGo over Chrome and other browsers
+_[:]to search and browse online. Our built-in search engine is like Google but never tracks your searches. And our browsing protections, such as ad tracker blocking and cookie blocking, help stop other companies from collecting your data. Oh, and our browser is free — we make money from
+_[:]privacy-respecting search ads
+_[:], not by exploiting your data. Take back control of your personal information with the browser designed for data protection, not data collection. Available to download on
+_[:]Mac
+_[:],
+_[:]Windows
+_[:],
+_[:]iOS
+_[:], and
+_[:]Android
+_[:].
+_[:]© 2025
+_[:]DuckDuckGo
+_[:]Protection. Privacy. Peace of mind.
+_[:]normal
+
+# interaction actions
+L1	click	''	html > body > div > div > main > article > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > header > div > section:nth-of-type(1) > a.header_logoHorizontal__KABN4.header_logoText__d_X6V.header_logoImg__85jCX[title="Learn about DuckDuckGo"][aria-label="Learn about DuckDuckGo"][href="https://duckduckgo.com/about"]	html/body/div/div/main/article/div[1]/div[1]/div[2]/div/header/div/section[1]/a	in_iframe=False	in_shadow_root=False
+I1	select_dropdown_option	'Search with DuckDuckGo'	html > body > div > div > main > article > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > header > div > section:nth-of-type(2) > form > div > div > input.searchbox_input__rnFzM[aria-label="Search with DuckDuckGo"][role="combobox"][type="text"][name="q"][autocomplete="off"][id="searchbox_input"][placeholder="Search without being tracked"][required]	html/body/div/div/main/article/div[1]/div[1]/div[2]/div/header/div/section[2]/form/div/div/input	in_iframe=False	in_shadow_root=False
+L2	click	'Chat'	html > body > div > div > main > article > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > header > div > section:nth-of-type(3) > a.header_aiChatButton__e_9yJ.button_button__GGtY1.button_ghost___IPIW.button_size-xs__kck8r[href="https://duck.ai/"][data-testid="aichat-button"]	html/body/div/div/main/article/div[1]/div[1]/div[2]/div/header/div/section[3]/a	in_iframe=False	in_shadow_root=False
+B1	click	'Menu'	html > body > div > div > main > article > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > header > div > section:nth-of-type(3) > nav > ul > li > button.header_headerButton__InWgw.header_menuButton__yMOSr[data-testid="sidemenu-button"]	html/body/div/div/main/article/div[1]/div[1]/div[2]/div/header/div/section[3]/nav/ul/li/button	in_iframe=False	in_shadow_root=False
+L3	click	'Set As Default Search'	html > body > div > div > main > article > div:nth-of-type(1) > div:nth-of-type(2) > section > ul > li:nth-of-type(1) > a.cta-cards_button__1dD9t.button_button__GGtY1.button_secondary__6Dv6R.button_size-sm__fklol[target="_blank"]	html/body/div/div/main/article/div[1]/div[2]/section/ul/li[1]/a	in_iframe=False	in_shadow_root=False
+L4	click	'Add Extension'	html > body > div > div > main > article > div:nth-of-type(1) > div:nth-of-type(2) > section > ul > li:nth-of-type(2) > a.cta-cards_button__1dD9t.button_button__GGtY1.button_primary__bqhFV.button_size-sm__fklol[href="https://addons.mozilla.org/firefox/downloads/latest/duckduckgo-for-firefox/addon-385621-latest.xpi"][target="_self"]	html/body/div/div/main/article/div[1]/div[2]/section/ul/li[2]/a	in_iframe=False	in_shadow_root=False
+L5	click	''	html > body > div > div > main > article > div:nth-of-type(1) > div:nth-of-type(3) > a.homepage-cta-section_scrollArow__of6hD.button_button__GGtY1.button_tertiary__HpNs_.button_size-md__1jSxL[href="#features"]	html/body/div/div/main/article/div[1]/div[3]/a	in_iframe=False	in_shadow_root=False
