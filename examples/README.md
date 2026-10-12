@@ -19,8 +19,8 @@ Note that some of the examples require a 2FA token. For the GitHub websites, you
 > If necessary, you can use a package like `pyotp` to get the current 2FA code, to validate the secret.
 
 
-## Run the agent
+## Run the example
 
 ```bash
-python agent.py
+python agent.py  # or main.py
 ```

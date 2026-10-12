@@ -333,6 +333,7 @@ with notte.Session() as session:
 
 For fast data extraction, we provide a dedicated scraping endpoint that automatically creates and manages sessions. You can pass custom instructions for structured outputs and enable stealth mode.
 
+<!-- release-test -->
 ```python
 from notte_sdk import NotteClient
 from pydantic import BaseModel

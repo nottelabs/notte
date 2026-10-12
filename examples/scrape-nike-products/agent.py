@@ -58,30 +58,21 @@ class ShoppingList(BaseModel):
 
 
 # ############################################
-# Agents
+# Scrapers
 # ############################################
 
 
 @retry(max_tries=5)
 def scrape_categories(session: RemoteSession) -> ProductCategories:
-    response = notte.Agent(session=session, max_steps=5).run(
-        task=f"""
-Get all the product categories from the nike.com home page (focus on the men's section).
-Return the response in a json format ```{ProductCategories.model_json_schema()}```
-Here is an example of successfull output
-
-```json
-{ProductCategories.example().model_dump_json()}
-```
-
-Your turn. Be as exhaustive as possible
-""",
-        url=url,
+    _ = session.execute(type="goto", url=url)
+    return session.scrape(
+        response_format=ProductCategories,
+        instructions=(
+            "Get all the product categories from the nike.com home page (focus on the men's section). "
+            "Be as exhaustive as possible"
+        ),
+        scrape_links=True,
     )
-    if response.answer is None:
-        raise Exception("No response from the agent")
-    categories = ProductCategories.model_validate_json(response.answer)
-    return categories
 
 
 @retry(max_tries=3)

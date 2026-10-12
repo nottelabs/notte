@@ -8,7 +8,6 @@ import time
 from pathlib import Path
 
 import pytest
-from notte_browser.llm.models import LlmModel
 
 
 def find_python_files(directory: Path) -> list[Path]:
@@ -158,8 +157,7 @@ def test_root_level_scripts(python_file: Path) -> None:
         python_file: Path to the Python file to test
     """
     OVERRIDE_ARGS: dict[str, list[str]] = {
-        "cli_agent.py": ["--task", "go to duckduckgo"],
-        "quickstart.py": ["go to duckduckgo", "3", str(LlmModel.default())],
+        "quickstart.py": ["https://duckduckgo.com"],
     }
     print(f"Running {python_file.name}...")
     exit_code, logs = run_python_file(python_file, OVERRIDE_ARGS.get(python_file.name, []))
@@ -167,9 +165,7 @@ def test_root_level_scripts(python_file: Path) -> None:
     assert exit_code == 0, f"Failed to run {python_file.name} {logs[-1] if len(logs) > 0 else ''}"
 
 
-@pytest.mark.parametrize(
-    "use_case_dir", get_use_cases_dirs(ignore_list=("__pycache__", "landing-examples")), ids=lambda p: p.name
-)
+@pytest.mark.parametrize("use_case_dir", get_use_cases_dirs(), ids=lambda p: p.name)
 @pytest.mark.flaky(reruns=2, reruns_delay=5, only_rerun=["Failed to solve captcha! Please try again"])
 def test_use_case_script(use_case_dir: Path) -> None:
     """
@@ -178,29 +174,11 @@ def test_use_case_script(use_case_dir: Path) -> None:
     Args:
         use_case_dir: Path to the use case directory to test
     """
-    OVERRIDE_ARGS: dict[str, list[str]] = {"human-in-the-loop": ["--task", "go to duckduckgo"]}
-    OVERRIDE_ARGS["scrape-nike-products"] = ["--max-categories", "1"]
-    entrypoints = {
-        "landing-examples": "landing_examples.py",
-        "session-solve-captcha": "main.py",
-    }
+    OVERRIDE_ARGS: dict[str, list[str]] = {"scrape-nike-products": ["--max-categories", "1"]}
+    entrypoints = {"session-solve-captcha": "main.py"}
 
     agent_file = use_case_dir / entrypoints.get(use_case_dir.name, "agent.py")
     assert agent_file.exists(), f"No example script found at {agent_file}"
     exit_code, logged = run_python_file(agent_file, OVERRIDE_ARGS.get(use_case_dir.name, []))
 
-    if use_case_dir.name == "github-auto-issues-trending-repos":
-        assert exit_code != 0
-        assert logged[-1] == "KeyError: 'AUTO_ISSUES_GITHUB_EMAIL'"
-    else:
-        assert exit_code == 0, f"Failed to run {use_case_dir.name} (exit code {exit_code}):\n" + "\n".join(logged[-30:])
-
-
-@pytest.mark.parametrize(
-    "index", [3, 4, 5], ids=["landing-examples-blog", "landing-examples-bbc", "landing-examples-weather"]
-)
-@pytest.mark.flaky(reruns=2, reruns_delay=5, only_rerun=["Task failed due to session expiration"])
-def test_landing_example(index: int) -> None:
-    script = Path(__file__).resolve().parents[2] / "examples" / "landing-examples" / "landing_examples.py"
-    exit_code, logged = run_python_file(script, ["--example-index", str(index)])
-    assert exit_code == 0, f"Landing example {index} failed (exit code {exit_code}):\n" + "\n".join(logged[-30:])
+    assert exit_code == 0, f"Failed to run {use_case_dir.name} (exit code {exit_code}):\n" + "\n".join(logged[-30:])
