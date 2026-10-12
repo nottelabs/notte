@@ -6,7 +6,7 @@ import pytest_asyncio
 from notte_browser.playwright_async_api import Error
 from notte_browser.session import NotteSession
 from notte_browser.window import BrowserWindow
-from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata
+from notte_core.browser.snapshot import SnapshotMetadata
 
 import notte
 
@@ -47,19 +47,6 @@ async def test_scrape_does_not_take_a_screenshot(session: NotteSession) -> None:
         markdown = await session.ascrape()
 
     assert "Title" in markdown
-
-
-@pytest.mark.asyncio
-async def test_observe_keeps_screenshot_when_page_changed_during_listing(session: NotteSession) -> None:
-    # force the "snapshot changed since the beginning of the listing" path, whose check snapshot has no screenshot
-    with (
-        patch.object(NotteSession, "nb_seconds_between_snapshots_check", -1),
-        patch.object(BrowserSnapshot, "compare_with", return_value=False),
-    ):
-        obs = await session.aobserve()
-
-    assert len(obs.screenshot.raw) > 0
-    assert session.snapshot.screenshot == obs.screenshot.raw
 
 
 @pytest.mark.asyncio
