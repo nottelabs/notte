@@ -3,6 +3,8 @@ import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { chromium } from 'playwright-core';
 import { Session, installServerOwnedDialogPolicy, observeServerOwnedDialog } from '@/session';
 import { sessionStart, sessionStop } from '@/lib/client/sdk.gen';
+import { REQUEST_ORIGIN } from '@/client';
+import { SDK_VERSION } from '@/version';
 import { mockNotteClient, sessionResponse } from './helpers/session-mocks';
 
 vi.mock('@/lib/client/sdk.gen', () => ({
@@ -37,10 +39,23 @@ describe('session.page()', () => {
 
     expect(await session.page()).toBe(page);
 
-    expect(chromium.connectOverCDP).toHaveBeenCalledWith('ws://notte.example/cdp');
+    expect(chromium.connectOverCDP).toHaveBeenCalledWith('ws://notte.example/cdp', {
+      headers: { 'x-notte-request-origin': REQUEST_ORIGIN, 'x-notte-sdk-version': SDK_VERSION },
+    });
     expect(context.on).toHaveBeenCalledTimes(1);
     expect(context.on).toHaveBeenCalledWith('dialog', observeServerOwnedDialog);
     expect(observeServerOwnedDialog({} as never)).toBeUndefined();
+  });
+
+  it("sends nothing extra to a caller's own browser", async () => {
+    const { browser } = browserWithPage();
+    vi.mocked(chromium.connectOverCDP).mockResolvedValue(browser as never);
+    const session = new Session(mockNotteClient(), { cdp_url: 'wss://other.example/cdp' });
+    await session.start();
+
+    await session.page();
+
+    expect(chromium.connectOverCDP).toHaveBeenCalledWith('wss://other.example/cdp');
   });
 
   it('caches the connection and closes it on stop', async () => {
