@@ -53,9 +53,6 @@ from notte_core.actions import (
     ReloadAction as Reload,
 )
 from notte_core.actions import (
-    ScrapeAction as Scrape,
-)
-from notte_core.actions import (
     ScrollDownAction as ScrollDown,
 )
 from notte_core.actions import (
@@ -90,7 +87,6 @@ __all__ = [
     "ScrollUp",
     "ScrollDown",
     "CaptchaSolve",
-    "Scrape",
     "EmailVerificationRead",
     "EvaluateJs",
     "Click",

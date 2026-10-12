@@ -354,6 +354,12 @@ class InboxActionNotSupportedLocallyError(NotteBaseError):
         )
 
 
+class ScrapeIsNotAnActionError(NotteBaseError):
+    def __init__(self) -> None:
+        msg = '`scrape` is not an action: call `session.scrape(...)` instead of `session.execute(type="scrape")`.'
+        super().__init__(dev_message=msg, user_message=msg, agent_message=msg)
+
+
 # #######################################################
 # ################## Scraping errors ####################
 # #######################################################

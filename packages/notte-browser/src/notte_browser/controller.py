@@ -28,7 +28,6 @@ from notte_core.actions import (
     PressKeyAction,
     # ReadFileAction,
     ReloadAction,
-    ScrapeAction,
     ScrollDownAction,
     ScrollUpAction,
     SelectDropdownOptionAction,
@@ -704,10 +703,6 @@ class BrowserController:
                     logger.info(
                         f"Completion action: status={'success' if success else 'failure'} with success = {success}, answer = {answer}"
                     )
-            case ScrapeAction():
-                if self.verbose:
-                    logger.error("Scrape action should not be executed inside the controller")
-                pass
             case EvaluateJsAction():
                 if self.verbose:
                     logger.error("EvaluateJs action should not be executed inside the controller")

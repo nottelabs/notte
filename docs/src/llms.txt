@@ -340,7 +340,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [SelectDropdownOptionAction](https://docs.notte.cc/sdk-reference/misc/selectdropdownoptionaction.md): Select an option from a dropdown
 - [UploadFileAction](https://docs.notte.cc/sdk-reference/misc/uploadfileaction.md): Upload file to interactive element with file path
 - [DownloadFileAction](https://docs.notte.cc/sdk-reference/misc/downloadfileaction.md): Download files from interactive elements
-- [ScrapeAction](https://docs.notte.cc/sdk-reference/misc/scrapeaction.md): Scrape the current page data in text format
+- [ScrapeAction](https://docs.notte.cc/sdk-reference/misc/scrapeaction.md): Record of a `session
 - [CaptchaSolveAction](https://docs.notte.cc/sdk-reference/misc/captchasolveaction.md): Solve a CAPTCHA challenge on the current page
 - [SmsReadAction](https://docs.notte.cc/sdk-reference/misc/smsreadaction.md): Read sms messages received recently
 - [EmailReadAction](https://docs.notte.cc/sdk-reference/misc/emailreadaction.md): Read recent emails from the mailbox

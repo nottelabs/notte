@@ -8,8 +8,13 @@ from notte_core.actions import BaseAction, BrowserAction
 def test_actions_registry_matches_sdk_imports():
     """Test that all actions from notte_core registry are imported in notte_sdk."""
     # Get all action classes from the core registry, except the legacy agent actions that are only
-    # kept so recorded agent steps still parse, and the persona inbox reads (`persona.emails()` / `persona.sms()`).
-    hidden = BrowserAction.LEGACY_AGENT_ACTION_TYPES | BrowserAction.PERSONA_INBOX_ACTION_TYPES
+    # kept so recorded agent steps still parse, the persona inbox reads (`persona.emails()` / `persona.sms()`) and
+    # `scrape`, which only records `session.scrape()` calls.
+    hidden = (
+        BrowserAction.LEGACY_AGENT_ACTION_TYPES
+        | BrowserAction.PERSONA_INBOX_ACTION_TYPES
+        | BrowserAction.RECORD_ONLY_ACTION_TYPES
+    )
     core_action_classes = {
         action_cls for action_type, action_cls in BaseAction.ACTION_REGISTRY.items() if action_type not in hidden
     }

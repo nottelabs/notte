@@ -40,7 +40,11 @@ def _public_action_typedicts(hidden: frozenset[str]) -> set[str]:
 
 # Local sessions can't run inbox reads; cloud sessions still run the API-side `email_verification_read`.
 LOCAL_SESSION_HIDDEN_ACTIONS = BrowserAction.unlisted_action_types()
-SDK_SESSION_HIDDEN_ACTIONS = BrowserAction.LEGACY_AGENT_ACTION_TYPES | BrowserAction.PERSONA_INBOX_ACTION_TYPES
+SDK_SESSION_HIDDEN_ACTIONS = (
+    BrowserAction.LEGACY_AGENT_ACTION_TYPES
+    | BrowserAction.PERSONA_INBOX_ACTION_TYPES
+    | BrowserAction.RECORD_ONLY_ACTION_TYPES
+)
 
 
 def test_all_actions_have_typeddict() -> None:

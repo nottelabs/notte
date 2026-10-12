@@ -4,7 +4,6 @@ from notte_core.actions import (
     ClickAction,
     FillAction,
     GotoAction,
-    ScrapeAction,
     ScrollDownAction,
     WaitAction,
 )
@@ -73,11 +72,9 @@ async def test_bbc_click_cookie_policy_link():
         _ = await page.aexecute(ClickAction(id="L1"))
         obs = await page.aobserve()
         assert len(obs.metadata.tabs) == 2
-        res = await page.aexecute(ScrapeAction())
-        assert res.data is not None
-        assert res.data.markdown is not None
-        assert "BBC" in res.data.markdown
-        assert "cookies" in res.data.markdown
+        markdown = await page.ascrape()
+        assert "BBC" in markdown
+        assert "cookies" in markdown
 
 
 @pytest.mark.asyncio
@@ -89,7 +86,7 @@ async def test_wikipedia_search():
         _ = await page.aobserve()
         _ = await page.aexecute(ClickAction(id="L11"))
         _ = await page.aobserve()
-        _ = await page.aexecute(ScrapeAction())
+        _ = await page.ascrape()
 
 
 @pytest.mark.skip(reason="Bot detection http 402")
@@ -107,7 +104,7 @@ async def test_allrecipes_search():
         _ = await page.aobserve()
         _ = await page.aexecute(ClickAction(id="B1"))
         _ = await page.aobserve()
-        _ = await page.aexecute(ScrapeAction())
+        _ = await page.ascrape()
         _ = await page.aobserve()
         _ = await page.aexecute(
             GotoAction(url="https://www.allrecipes.com/recipe/215076/chicken-with-quinoa-and-veggies/")
