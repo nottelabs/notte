@@ -12,13 +12,12 @@ from pydantic import BaseModel
 from typing_extensions import final
 
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
-from notte_sdk.endpoints.functions import NotteFunction
+from notte_sdk.endpoints.functions import FunctionsClient, NotteFunction
 from notte_sdk.endpoints.managed_auth import ManagedAuthClient
 from notte_sdk.endpoints.personas import NottePersona, PersonasClient
 from notte_sdk.endpoints.profiles import ProfilesClient
 from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
-from notte_sdk.endpoints.workflows import RemoteWorkflow, WorkflowsClient
 from notte_sdk.types import ScrapeMarkdownParamsDict, ScrapeRequestDict
 
 enable_nest_asyncio()
@@ -72,11 +71,9 @@ class NotteClient:
         self.files: FileStorageClient = FileStorageClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
-        self.workflows: WorkflowsClient = WorkflowsClient(
+        self.functions: FunctionsClient = FunctionsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
-
-        self.functions = self.workflows
 
         if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
             logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
@@ -100,10 +97,6 @@ class NotteClient:
     @property
     def FileStorage(self) -> type[RemoteFileStorage]:
         return cast(type[RemoteFileStorage], partial(RemoteFileStorage, _client=self.files))
-
-    @property
-    def Workflow(self) -> type[RemoteWorkflow]:
-        return cast(type[RemoteWorkflow], partial(RemoteWorkflow, _client=self))
 
     @property
     def Function(self) -> type[NotteFunction]:

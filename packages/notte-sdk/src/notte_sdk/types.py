@@ -16,7 +16,6 @@ from notte_core.actions import (
     InteractionAction,
 )
 from notte_core.agent_types import AgentCompletion
-from notte_core.ast import ParameterInfo as WorkflowParameterInfo
 from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.browser.observation import ExecutionResult, Observation
 from notte_core.browser.snapshot import TabsData
@@ -2082,12 +2081,20 @@ class CaptchaExecuteParams(BaseModel):
     target_generation: int | None = None
 
 
+class ParameterInfo(BaseModel):
+    """Information about a parameter of a function's `run` entrypoint."""
+
+    name: str
+    type: str | None = None
+    default: str | None = None
+
+
 # ############################################################
-# Workflow endpoints
+# Function endpoints
 # ############################################################
 
 
-# Workflow request dictionaries
+# Function request dictionaries
 class CreateFunctionRequestDict(TypedDict, total=True):
     """Request dictionary for creating a function.
 
@@ -2107,7 +2114,7 @@ class UpdateFunctionRequestDict(TypedDict):
     Args:
         path: The path to the function to upload.
         function_id: The ID of the function to update.
-        version: The version of the workflow to update.
+        version: The version of the function to update.
     """
 
     path: str
@@ -2115,23 +2122,23 @@ class UpdateFunctionRequestDict(TypedDict):
 
 
 class GetFunctionRequestDict(TypedDict, total=False):
-    """Request dictionary for getting a workflow.
+    """Request dictionary for getting a function.
 
     Args:
         function_id: The ID of the function to get.
-        version: The version of the workflow to get.
+        version: The version of the function to get.
     """
 
     version: str | None
 
 
 class ListFunctionsRequestDict(ListRequestDict, total=False):
-    """Request dictionary for listing workflows.
+    """Request dictionary for listing functions.
 
     Args:
-        only_active: Whether to only list active workflows.
-        page: The page number to list workflows for.
-        page_size: The number of workflows to list per page.
+        only_active: Whether to only list active functions.
+        page: The page number to list functions for.
+        page_size: The number of functions to list per page.
     """
 
     pass
@@ -2159,21 +2166,18 @@ class RunFunctionRequest(SdkRequest):
         str,
         Field(description="The ID of the function to run", validation_alias=AliasChoices("workflow_id", "function_id")),
     ]
-    variables: Annotated[dict[str, Any], Field(description="The variables to run the workflow with")]
+    variables: Annotated[dict[str, Any], Field(description="The variables to run the function with")]
     runtime: Annotated[
         FunctionRuntime | None, Field(description="Override the saved function runtime; omit to inherit its default")
     ] = None
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = True
 
 
-# Workflow request models
+# Function request models
 class CreateFunctionRequest(SdkRequest):
     path: Annotated[
         str,
-        Field(
-            description="The path to the function code to upload",
-            validation_alias=AliasChoices("workflow_path", "path"),
-        ),
+        Field(description="The path to the function code to upload"),
     ]
     name: Annotated[str | None, Field(description="The name of the function")] = None
     description: Annotated[str | None, Field(description="The description of the function")] = None
@@ -2194,31 +2198,23 @@ class GetFunctionResponse(SdkResponse):
     function_id: Annotated[
         str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
     ]
-    variables: Annotated[
-        list[WorkflowParameterInfo] | None, Field(description="The variables to run the workflow with")
-    ] = None
-    created_at: Annotated[dt.datetime, Field(description="The creation time of the workflow")]
-    updated_at: Annotated[dt.datetime, Field(description="The last update time of the workflow")]
-    latest_version: Annotated[str, Field(description="The version of the workflow")]
-    versions: Annotated[list[str], Field(description="The versions of the workflow")]
-    status: Annotated[str, Field(description="The status of the workflow")]
-    name: Annotated[str | None, Field(description="The name of the workflow")] = None
-    description: Annotated[str | None, Field(description="The description of the workflow")] = None
-    shared: Annotated[bool, Field(description="Whether the workflow is public and can beshared with other users")] = (
+    variables: Annotated[list[ParameterInfo] | None, Field(description="The variables to run the function with")] = None
+    created_at: Annotated[dt.datetime, Field(description="The creation time of the function")]
+    updated_at: Annotated[dt.datetime, Field(description="The last update time of the function")]
+    latest_version: Annotated[str, Field(description="The version of the function")]
+    versions: Annotated[list[str], Field(description="The versions of the function")]
+    status: Annotated[str, Field(description="The status of the function")]
+    name: Annotated[str | None, Field(description="The name of the function")] = None
+    description: Annotated[str | None, Field(description="The description of the function")] = None
+    shared: Annotated[bool, Field(description="Whether the function is public and can beshared with other users")] = (
         False
     )
     reference_workflow_id: Annotated[
         str | None,
         Field(
-            description="The ID of the reference workflow (i.e wether the workflow was forked from another workflow or not)"
+            description="The ID of the reference function (i.e whether the function was forked from another function or not)"
         ),
     ] = None
-
-    @computed_field
-    @property
-    def workflow_id(self) -> str:
-        """Legacy key for serialization"""
-        return self.function_id
 
 
 class GetFunctionWithLinkResponse(GetFunctionResponse, FileLinkResponse):
@@ -2228,12 +2224,9 @@ class GetFunctionWithLinkResponse(GetFunctionResponse, FileLinkResponse):
 class UpdateFunctionRequest(SdkRequest):
     path: Annotated[
         str,
-        Field(
-            description="The path to the function code to upload",
-            validation_alias=AliasChoices("workflow_path", "path"),
-        ),
+        Field(description="The path to the function code to upload"),
     ]
-    version: Annotated[str | None, Field(description="The version of the workflow to update")] = None
+    version: Annotated[str | None, Field(description="The version of the function to update")] = None
 
 
 class GetFunctionRequest(SdkRequest):
@@ -2258,16 +2251,16 @@ class ListFunctionsResponse(SdkResponse):
 
 
 # ############################################################
-# Workflow run endpoints
+# Function run endpoints
 # ############################################################
 
 
 class CreateFunctionRunRequestDict(TypedDict, total=False):
-    local: bool
+    pass
 
 
 class CreateFunctionRunRequest(SdkRequest):
-    local: Annotated[bool, Field(description="Whether to run the workflow locally, or in cloud")] = False
+    pass
 
 
 class StartFunctionRunRequest(SdkRequest):
@@ -2293,16 +2286,15 @@ class StartFunctionRunRequest(SdkRequest):
     ] = None
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = False
 
+    # The IDs above are excluded from the body: the API reads them from these keys.
     @computed_field
     @property
     def workflow_id(self) -> str:
-        """Legacy key for serialization"""
         return self.function_id
 
     @computed_field
     @property
     def workflow_run_id(self) -> str | None:
-        """Legacy key for serialization"""
         return self.function_run_id
 
 
@@ -2321,20 +2313,8 @@ class FunctionRunResponse(SdkResponse):
         ),
     ]
     session_id: Annotated[str | None, Field(description="The ID of the session")]
-    result: Annotated[Any, Field(description="The result of the workflow run")]
-    status: Annotated[FunctionRunStatus, Field(description="The status of the workflow run (closed, active, failed)")]
-
-    @computed_field
-    @property
-    def workflow_id(self) -> str:
-        """Legacy key for serialization"""
-        return self.function_id
-
-    @computed_field
-    @property
-    def workflow_run_id(self) -> str:
-        """Legacy key for serialization"""
-        return self.function_run_id
+    result: Annotated[Any, Field(description="The result of the function run")]
+    status: Annotated[FunctionRunStatus, Field(description="The status of the function run (closed, active, failed)")]
 
 
 class GetFunctionRunResponse(SdkResponse):
@@ -2352,24 +2332,12 @@ class GetFunctionRunResponse(SdkResponse):
     updated_at: dt.datetime
     status: FunctionRunStatus
     session_id: Annotated[str | None, Field(description="The ID of the session")] = None
-    logs: Annotated[list[str], Field(description="The logs of the workflow run")] = Field(default_factory=list)
-    variables: Annotated[dict[str, Any] | None, Field(description="The variables of the workflow run")] = Field(
+    logs: Annotated[list[str], Field(description="The logs of the function run")] = Field(default_factory=list)
+    variables: Annotated[dict[str, Any] | None, Field(description="The variables of the function run")] = Field(
         default_factory=dict
     )
-    result: Annotated[str | None, Field(description="The result of the workflow run (if any)")] = None
-    local: Annotated[bool, Field(description="Whether the workflow has been run locally or on the cloud")] = False
-
-    @computed_field
-    @property
-    def workflow_id(self) -> str:
-        """Legacy key for serialization"""
-        return self.function_id
-
-    @computed_field
-    @property
-    def workflow_run_id(self) -> str:
-        """Legacy key for serialization"""
-        return self.function_run_id
+    result: Annotated[str | None, Field(description="The result of the function run (if any)")] = None
+    local: Annotated[bool, Field(description="Whether the function has been run locally or on the cloud")] = False
 
 
 class FunctionRunListItemResponse(SdkResponse):
@@ -2391,18 +2359,6 @@ class FunctionRunListItemResponse(SdkResponse):
     session_id: Annotated[str | None, Field(description="The ID of the session")] = None
     local: Annotated[bool, Field(description="Whether the function has been run locally or on the cloud")] = False
 
-    @computed_field
-    @property
-    def workflow_id(self) -> str:
-        """Legacy key for serialization"""
-        return self.function_id
-
-    @computed_field
-    @property
-    def workflow_run_id(self) -> str:
-        """Legacy key for serialization"""
-        return self.function_run_id
-
 
 class FunctionRunUpdateRequestDict(TypedDict, total=False):
     session_id: str | None
@@ -2414,10 +2370,10 @@ class FunctionRunUpdateRequestDict(TypedDict, total=False):
 
 class FunctionRunUpdateRequest(SdkRequest):
     session_id: Annotated[str | None, Field(description="The ID of the session")] = None
-    logs: Annotated[list[str], Field(description="The logs of the workflow run")] = Field(default_factory=list)
-    variables: Annotated[dict[str, Any] | None, Field(description="The variables of the workflow run")] = None
-    result: Annotated[Any | None, Field(description="The result of the workflow run")] = None
-    status: Annotated[FunctionRunStatus, Field(description="The status of the workflow run")]
+    logs: Annotated[list[str], Field(description="The logs of the function run")] = Field(default_factory=list)
+    variables: Annotated[dict[str, Any] | None, Field(description="The variables of the function run")] = None
+    result: Annotated[Any | None, Field(description="The result of the function run")] = None
+    status: Annotated[FunctionRunStatus, Field(description="The status of the function run")]
 
 
 class CreateFunctionRunResponse(SdkResponse):
@@ -2434,18 +2390,6 @@ class CreateFunctionRunResponse(SdkResponse):
     created_at: dt.datetime
     status: Literal["created"] = "created"
 
-    @computed_field
-    @property
-    def workflow_id(self) -> str:
-        """Legacy key for serialization"""
-        return self.function_id
-
-    @computed_field
-    @property
-    def workflow_run_id(self) -> str:
-        """Legacy key for serialization"""
-        return self.function_run_id
-
 
 class UpdateFunctionRunResponse(SdkResponse):
     function_id: Annotated[
@@ -2460,18 +2404,6 @@ class UpdateFunctionRunResponse(SdkResponse):
     ]
     updated_at: dt.datetime
     status: Literal["updated", "stopped"] = "updated"
-
-    @computed_field
-    @property
-    def workflow_id(self) -> str:
-        """Legacy key for serialization"""
-        return self.function_id
-
-    @computed_field
-    @property
-    def workflow_run_id(self) -> str:
-        """Legacy key for serialization"""
-        return self.function_run_id
 
 
 class ListFunctionRunsRequestDict(ListRequestDict, total=False):

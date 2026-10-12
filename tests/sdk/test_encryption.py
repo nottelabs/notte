@@ -1,5 +1,5 @@
 import pytest
-from notte_core.utils.encryption import Encryption
+from notte_sdk._encryption import Encryption
 
 
 @pytest.fixture

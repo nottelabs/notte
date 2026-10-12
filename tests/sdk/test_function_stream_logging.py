@@ -5,10 +5,10 @@ from unittest.mock import MagicMock
 import pytest
 import requests
 from notte_core.common.logging import logger
-from notte_sdk.endpoints import workflows
+from notte_sdk.endpoints import functions
 from notte_sdk.endpoints.base import BaseClient
+from notte_sdk.endpoints.functions import FunctionsClient
 from notte_sdk.endpoints.sessions import SessionsClient
-from notte_sdk.endpoints.workflows import WorkflowsClient
 
 
 @pytest.mark.parametrize("key_source", ["argument", "environment"])
@@ -37,7 +37,7 @@ def test_session_start_does_not_log_api_key(monkeypatch, key_source, explicit_st
             root_client.sessions.request.return_value.viewer_url = viewer_url.replace(
                 "&jwt=fake-session-jwt", f"?token={api_key}"
             )
-    client = WorkflowsClient(
+    client = FunctionsClient(
         root_client=root_client,
         api_key=api_key if key_source == "argument" else None,
         server_url="https://example.invalid",
@@ -60,7 +60,7 @@ def test_session_start_does_not_log_api_key(monkeypatch, key_source, explicit_st
         ]
     ]
     post = MagicMock(return_value=response)
-    monkeypatch.setattr(workflows.requests, "post", post)
+    monkeypatch.setattr(functions.requests, "post", post)
     captured = io.StringIO()
     handler = logger.add(captured, level="INFO")
     try:

@@ -3325,7 +3325,6 @@ version = "2.0.0.dev0"
 source = { editable = "packages/notte-core" }
 dependencies = [
     { name = "aiohttp" },
-    { name = "cryptography" },
     { name = "loguru" },
     { name = "nest-asyncio" },
     { name = "opentelemetry-sdk" },
@@ -3337,7 +3336,6 @@ dependencies = [
     { name = "pyotp" },
     { name = "python-dotenv" },
     { name = "requests" },
-    { name = "restrictedpython" },
     { name = "scarf-sdk" },
     { name = "tldextract" },
     { name = "toml" },
@@ -3360,7 +3358,6 @@ tempo = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.13,<4" },
-    { name = "cryptography", specifier = ">=43.0.3" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "nest-asyncio", specifier = ">=1.6.0" },
     { name = "opentelemetry-exporter-otlp", marker = "extra == 'observability'", specifier = ">=1.27.0" },
@@ -3378,7 +3375,6 @@ requires-dist = [
     { name = "pyroscope-otel", marker = "extra == 'pyroscope'", specifier = ">=0.1.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "requests", specifier = ">=2.32.3" },
-    { name = "restrictedpython", specifier = ">=8.4" },
     { name = "scarf-sdk", specifier = ">=0.1.2" },
     { name = "tldextract", specifier = ">=5.3.0" },
     { name = "toml", specifier = ">=0.10.2" },
@@ -3454,6 +3450,7 @@ name = "notte-sdk"
 version = "2.0.0.dev0"
 source = { editable = "packages/notte-sdk" }
 dependencies = [
+    { name = "cryptography" },
     { name = "halo" },
     { name = "notte-core" },
     { name = "requests" },
@@ -3468,6 +3465,7 @@ playwright = [
 
 [package.metadata]
 requires-dist = [
+    { name = "cryptography", specifier = ">=43.0.3" },
     { name = "halo", specifier = ">=0.0.28" },
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "playwright", marker = "extra == 'playwright'", specifier = "~=1.55" },
@@ -7879,15 +7877,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f3/61/d7545dafb7ac2230c70d38d31cbfe4cc64f7144dc41f6e4e4b78ecd9f5bb/requests-toolbelt-1.0.0.tar.gz", hash = "sha256:7681a0a3d047012b5bdc0ee37d7f8f07ebe76ab08caeccfc3921ce23c88d5bc6", size = 206888, upload-time = "2023-05-01T04:11:33.229Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3f/51/d4db610ef29373b879047326cbf6fa98b6c1969d6f6dc423279de2b1be2c/requests_toolbelt-1.0.0-py2.py3-none-any.whl", hash = "sha256:cccfdd665f0a24fcf4726e690f65639d272bb0637b9b92dfd91a5568ccf6bd06", size = 54481, upload-time = "2023-05-01T04:11:28.427Z" },
-]
-
-[[package]]
-name = "restrictedpython"
-version = "8.5"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7c/3b/8e41f7cfabbb30b1013ebc7484303d6c87da2906ec432d69dea11d2f7d75/restrictedpython-8.5.tar.gz", hash = "sha256:4ed1269dbe3caa88db650d1af325198a952aeb1451eca05df0cfa65db4466215", size = 455879, upload-time = "2026-08-19T07:02:10.934Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/57/16ce3c721f5a33317e4110575d5c9976c0c45f7fd96ca2e0adeab06e6026/restrictedpython-8.5-py3-none-any.whl", hash = "sha256:6c70e0a3af13e830d37225788cdc8ab5804a8df4b500c135086eaef34b5c01e0", size = 30962, upload-time = "2026-08-19T07:02:09.553Z" },
 ]
 
 [[package]]

@@ -199,7 +199,7 @@ class FormFillAction(BrowserAction):
     Fill a form with multiple values. Critical: If you detect a form on a page, try to use this action at first, and otherwise use the regular fill action.
 
     The `form_fill` action requires field keys that match the page's actual field mapping.
-    Do not guess keys from labels or HTML alone; use live observation or generated workflow
+    Do not guess keys from labels or HTML alone; use live observation or generated function
     code to confirm the field mapping first.
 
     **Example:**
