@@ -245,31 +245,26 @@ class ClickActionDict(TypedDict, total=False):
     timeout: NotRequired[int]
 
 
-class FillActionDict(TypedDict, total=False):
+class _FillActionFields(TypedDict, total=False):
+    """Fields shared by the fill actions (`fill`, `multi_factor_fill`, `fallback_fill`)."""
+
+    id: NotRequired[str]
+    selector: NotRequired[NodeSelector]
+    value: Required[str | ValueWithPlaceholder]
+    clear_before_fill: NotRequired[bool]
+    timeout: NotRequired[int]
+
+
+class FillActionDict(_FillActionFields, total=False):
     type: Required[Literal["fill"]]
-    id: NotRequired[str]
-    selector: NotRequired[NodeSelector]
-    value: Required[str | ValueWithPlaceholder]
-    clear_before_fill: NotRequired[bool]
-    timeout: NotRequired[int]
 
 
-class MultiFactorFillActionDict(TypedDict, total=False):
+class MultiFactorFillActionDict(_FillActionFields, total=False):
     type: Required[Literal["multi_factor_fill"]]
-    id: NotRequired[str]
-    selector: NotRequired[NodeSelector]
-    value: Required[str | ValueWithPlaceholder]
-    clear_before_fill: NotRequired[bool]
-    timeout: NotRequired[int]
 
 
-class FallbackFillActionDict(TypedDict, total=False):
+class FallbackFillActionDict(_FillActionFields, total=False):
     type: Required[Literal["fallback_fill"]]
-    id: NotRequired[str]
-    selector: NotRequired[NodeSelector]
-    value: Required[str | ValueWithPlaceholder]
-    clear_before_fill: NotRequired[bool]
-    timeout: NotRequired[int]
 
 
 class CheckActionDict(TypedDict, total=False):
