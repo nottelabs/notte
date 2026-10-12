@@ -148,18 +148,12 @@ jobs:
             echo "GOOGLE_APPLICATION_CREDENTIALS is not set"
             exit 1
           fi
-          if [ -z "$SMTP_SERVER" ]; then
-            echo "SMTP_SERVER is not set"
-            exit 1
-          fi
-          if [ -z "$EMAIL_SENDER" ]; then
-            echo "EMAIL_SENDER is not set"
-            exit 1
-          fi
-          if [ -z "$EMAIL_PASSWORD" ]; then
-            echo "EMAIL_PASSWORD is not set"
-            exit 1
-          fi
+          # The SMTP tests (tests/browser/test_tools.py) skip themselves without these, so only warn.
+          for name in SMTP_SERVER EMAIL_SENDER EMAIL_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::warning::$name is not set, the SMTP tests will be skipped"
+            fi
+          done
           echo "Environment variables are set"
 
       - name: Wait for the API to be reachable
