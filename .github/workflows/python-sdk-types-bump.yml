@@ -2,8 +2,7 @@ name: bump-python-sdk-types
 
 # Refresh the Python SDK's OpenAPI snapshot from staging and regenerate the wire
 # models under notte_sdk/_generated. If they drifted, open (or refresh) one pull
-# request. Unlike bump-node-sdk this never merges by itself: a schema change can
-# change public notte_sdk.types, so a human reviews it.
+# request and merge it once the required checks pass, like bump-node-sdk.
 # See docs/design/openapi-generated-sdk-types.md.
 
 on:
@@ -68,10 +67,7 @@ jobs:
           git diff --cached --stat
 
       - name: Validate the regenerated types
-        # Report, don't block: a failing check is exactly what the reviewer needs to see on the PR.
         if: steps.drift.outputs.changes == 'true'
-        id: validate
-        continue-on-error: true
         run: |
           uv run --no-sync pre-commit run basedpyright --all-files
           uv run --no-sync pytest -q -p no:cacheprovider tests/sdk/test_generated_types.py tests/sdk/test_types.py tests/sdk/test_dict_types.py
@@ -80,7 +76,6 @@ jobs:
         if: steps.drift.outputs.changes == 'true'
         env:
           GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
-          VALIDATION: ${{ steps.validate.outcome }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -90,7 +85,7 @@ jobs:
           REPORT=$(uv run --no-sync python scripts/sdk_types_drift_report.py)
           BODY=$(printf '%s\n\n%s\n\n%s\n\n```\n%s\n```\n' \
             "Automated refresh of \`packages/notte-sdk/openapi/openapi.json\` and \`notte_sdk/_generated\` from $NOTTE_API_URL ($(date -u '+%Y-%m-%d %H:%M UTC'))." \
-            "Typecheck and SDK type tests: **$VALIDATION**. Review changes to public \`notte_sdk.types\` before merging; this PR is never merged automatically." \
+            "Opened by \`.github/workflows/python-sdk-types-bump.yml\`. Merges automatically once the required checks pass." \
             "Remaining drift in hand-written models:" \
             "$REPORT")
 
@@ -100,7 +95,26 @@ jobs:
 
           PR_NUMBER=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
           if [ -n "$PR_NUMBER" ]; then
+            echo "Updating existing PR #$PR_NUMBER"
             gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY"
           else
-            gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY"
+            PR_NUMBER=$(gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY" \
+              | sed -n 's|.*pull/\([0-9]*\).*|\1|p' | head -1)
+            echo "Created PR #$PR_NUMBER"
+          fi
+
+          for _ in $(seq 1 10); do
+            if gh pr checks "$PR_NUMBER" >/dev/null 2>&1; then
+              break
+            fi
+            echo "Waiting for checks to be reported on PR #$PR_NUMBER."
+            sleep 30
+          done
+
+          if gh pr checks "$PR_NUMBER" --watch --fail-fast --interval 30; then
+            gh pr merge "$PR_NUMBER" --squash --delete-branch --admin
+            echo "Merged PR #$PR_NUMBER."
+          else
+            echo "::error::Checks did not pass on PR #$PR_NUMBER, so it was left open. The next scheduled run rebuilds the branch from main and retries."
+            exit 1
           fi

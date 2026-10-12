@@ -309,7 +309,7 @@ def generate(spec: JsonObject) -> dict[Path, str]:
     return {MODELS_FILE: models, TYPEDDICTS_FILE: typeddicts}
 
 
-def fetch(url: str) -> None:
+def download(url: str) -> JsonObject:
     endpoint = f"{url.rstrip('/')}/openapi.json"
     print(f"Fetching {endpoint}")
     # The API's edge rejects urllib's default User-Agent.
@@ -317,7 +317,11 @@ def fetch(url: str) -> None:
         endpoint, headers={"User-Agent": "notte-sdk-codegen", "Accept": "application/json"}
     )
     with urllib.request.urlopen(request, timeout=120) as response:  # noqa: S310 - https endpoint from --url
-        spec = json.load(response)
+        return cast(JsonObject, json.load(response))
+
+
+def fetch(url: str) -> None:
+    spec = download(url)
     SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
     _ = SNAPSHOT.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + "\n")
 
@@ -327,7 +331,28 @@ def main() -> int:
     _ = parser.add_argument("--fetch", action="store_true", help="refresh the snapshot from the API first")
     _ = parser.add_argument("--url", default=DEFAULT_URL, help=f"API base URL for --fetch (default: {DEFAULT_URL})")
     _ = parser.add_argument("--check", action="store_true", help="fail if generated files differ from the snapshot")
+    _ = parser.add_argument(
+        "--against",
+        metavar="URL",
+        help="release gate: fail if the API at URL (e.g. production) would generate different types",
+    )
     args = parser.parse_args()
+
+    if args.against:
+        # Generated from staging, released against production: production must already serve every field.
+        outputs = generate(download(args.against))
+        stale = [path for path, content in outputs.items() if not path.exists() or path.read_text() != content]
+        if stale:
+            for path in stale:
+                print(f"differs: {path.relative_to(REPO_ROOT)}", file=sys.stderr)
+            print(
+                f"The committed SDK types don't match {args.against}. Deploy the API first, or release from a commit "
+                + "whose snapshot matches it.",
+                file=sys.stderr,
+            )
+            return 1
+        print(f"The committed SDK types match {args.against}.")
+        return 0
 
     if args.fetch:
         fetch(args.url)

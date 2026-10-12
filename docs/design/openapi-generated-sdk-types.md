@@ -202,7 +202,8 @@ Rules:
 | Generate | `make sdk-types` (`scripts/generate_sdk_types.py`) |
 | Refresh snapshot | `make sdk-types-fetch [SDK_TYPES_URL=https://api.notte.cc]` (default staging) |
 | Offline drift check | `make sdk-types-check`; also a pre-commit hook (`sdk-types-check`), so `test-cicd`'s `pre-commit run --all-files` enforces it with no network |
-| Live drift | `.github/workflows/python-sdk-types-bump.yml`: 3x/day, fetch staging, regenerate, run basedpyright + SDK type tests (non-blocking), open/refresh `chore/bump-python-sdk-types` with the outcome and the hand-written drift report; **no auto-merge** |
+| Live drift | `.github/workflows/python-sdk-types-bump.yml`: 3x/day, fetch staging, regenerate, run basedpyright + SDK type tests, open/refresh `chore/bump-python-sdk-types` with the hand-written drift report, and **auto-merge** once checks pass (like bump-node-sdk) |
+| Release gate | `make sdk-types-check-prod` in `pypi-release.yml`: regenerate from `https://api.notte.cc` and fail on diff, so a release never requires fields production doesn't serve yet |
 | Remaining drift | `scripts/sdk_types_drift_report.py` (informational) |
 
 Why a snapshot, unlike the Node SDK: PR checks stay hermetic (a staging deploy does not
@@ -240,10 +241,10 @@ reproducible. Staging->SDK loop for a developer: change the API, deploy to stagi
 - **Breaking public types.** Generated required fields make the SDK stricter: code that
   constructs `PersonaResponse(...)` by hand (tests, mocks, notte-browser stubs) must now pass
   `created_at` (one test fixture changed). Field removals in the API become removals in
-  the SDK; the no-auto-merge bump PR is the review point.
+  the SDK; the bump PR auto-merges once checks pass, so the typecheck/tests and the production release gate are the guard.
 - **Staging ahead of production.** Generating from staging can make the SDK require a
-  field production does not send yet. Add a release gate: before publishing to PyPI,
-  regenerate against `https://api.notte.cc` and fail on diff (the old
+  field production does not send yet. Release gate (done): before publishing to PyPI,
+  `make sdk-types-check-prod` regenerates against `https://api.notte.cc` and fails on diff (the old
   `tests/sdk/test_openapi_spec.py` compares staging vs prod but points at the legacy
   `staging.notte.cc` host).
 - **Backend imports SDK types.** While notte-api builds its models from `notte_sdk.types`,
@@ -268,11 +269,16 @@ reproducible. Staging->SDK loop for a developer: change the API, deploy to stagi
 - **Source-regex tests.** `tests/sdk/test_dict_types.py` parses `types.py` text; it was taught
   that a `wire_dicts.` base is a TypedDict.
 
+## Decisions (2026-10-12)
+
+1. The bump PR auto-merges once its checks pass, like bump-node-sdk.
+2. Staging feeds the bump PR; production is the release gate (`make sdk-types-check-prod`).
+3. notte-api renames `workflow_id` to `function_id` on the wire (keeping `workflow_id` as a
+   deprecated duplicate while 1.x SDKs are in use) before the functions step.
+4. The Node SDK moves to a committed snapshot too, so both SDKs pin the same spec.
+
 ## Open questions
 
-1. Should the bump PR auto-merge like the Node one once the hand-written layer is thin?
-2. Generate from staging or production? (Proposal: staging for the bump PR, production as a release gate.)
-3. Can notte-api move the `function_id`/`workflow_id` rename and the `-Input`/`-Output`
-   split (`separate_input_output_schemas=False`) to the server side before steps 7-8?
-4. Keep `ProxyGeolocationCountry` as a public StrEnum, or expose the generated `Literal`?
-5. Should the Node SDK also switch to a committed snapshot so both SDKs pin the same spec?
+1. Can notte-api stop splitting schemas into `-Input`/`-Output` pairs
+   (`separate_input_output_schemas=False`) before the actions step?
+2. Keep `ProxyGeolocationCountry` as a public StrEnum, or expose the generated `Literal`?

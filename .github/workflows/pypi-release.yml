@@ -35,6 +35,12 @@ jobs:
         with:
             python-version-file: ".python-version"
 
+      - name: Check the SDK types against production
+        # The types are generated from staging; don't publish fields production doesn't serve yet.
+        run: |
+          uv sync --all-packages
+          make sdk-types-check-prod
+
       - name: Build Python distributions
         env:
           RELEASE_TAG: ${{ github.ref_name }}

@@ -178,3 +178,8 @@ SDK_TYPES_URL ?= https://us-staging.notte.cc
 .PHONY: sdk-types-fetch
 sdk-types-fetch:
 	uv run --no-sync python scripts/generate_sdk_types.py --fetch --url $(SDK_TYPES_URL)
+
+# Release gate: production must generate the same types as the committed (staging) snapshot.
+.PHONY: sdk-types-check-prod
+sdk-types-check-prod:
+	uv run --no-sync python scripts/generate_sdk_types.py --against https://api.notte.cc
