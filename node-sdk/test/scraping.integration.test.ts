@@ -145,15 +145,6 @@ describe('Scraping Integration Tests', () => {
         expect(data.title.toLowerCase()).toContain('example domain');
       });
     });
-
-    it('should scrape images only', { timeout: 60_000 }, async () => {
-      await client.Session({ proxies: false }).use(async session => {
-        await session.execute(actions.goto({ url: 'https://gymbeam.pl' }));
-        const images = await session.scrape({ only_images: true });
-        expect(Array.isArray(images)).toBe(true);
-        expect(images.length).toBeGreaterThan(0);
-      });
-    });
   });
 
   describe('Direct Client Scraping', () => {

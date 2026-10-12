@@ -108,7 +108,6 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
             "status",
             "param",
             # ScrapeAction fields (have sensible defaults, don't need agent exposure)
-            "only_images",
             "scrape_links",
             "scrape_images",
             "ignored_tags",
@@ -809,7 +808,6 @@ class ScrapeAction(BrowserAction):
     ```python
     markdown = session.scrape()
     markdown = session.scrape(only_main_content=True)
-    images = session.scrape(only_images=True)
     data = session.scrape(instructions="Extract product title and price")
     ```
     """
@@ -834,10 +832,6 @@ class ScrapeAction(BrowserAction):
             description="Playwright selector to scope the scrape to. Only content inside this selector will be scraped."
         ),
     ] = None
-    only_images: Annotated[
-        bool,
-        Field(description="Whether to only scrape images from the page. If True, the page content is excluded."),
-    ] = False
     scrape_links: Annotated[
         bool,
         Field(description="Whether to scrape links from the page. Links are scraped by default."),
@@ -859,9 +853,6 @@ class ScrapeAction(BrowserAction):
 
     @override
     def execution_message(self) -> str:
-        if self.only_images:
-            return "Scraped images from the current page"
-
         if self.selector:
             content = f"content within selector '{self.selector}'"
         elif self.only_main_content:

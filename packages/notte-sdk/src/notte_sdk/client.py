@@ -6,7 +6,7 @@ from typing import Any, Literal, Unpack, cast, overload
 from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
 from notte_core.common.logging import logger
-from notte_core.data.space import ImageData, StructuredData, TBaseModel
+from notte_core.data.space import StructuredData, TBaseModel
 from notte_core.types import ScrapeMarkdownParamsDict, ScrapeRequestDict
 from pydantic import BaseModel
 from typing_extensions import final
@@ -103,12 +103,9 @@ class NotteClient:
         """
         return self.sessions.health_check()
 
-    @overload
-    def scrape(self, /, url: str, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
-
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
-    def scrape(
+    def scrape(  # pyright: ignore[reportOverlappingOverload]
         self,
         /,
         url: str,
@@ -164,7 +161,7 @@ class NotteClient:
 
     def scrape(
         self, /, url: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
-    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str:
         """
         Scrape the current page data.
 
@@ -205,7 +202,6 @@ class NotteClient:
             When using instructions/response_format and raise_on_failure=True: returns the extracted data directly.
             When raise_on_failure=False: returns StructuredData wrapper so user can check .success.
             For markdown scraping: returns str.
-            For image scraping: returns list[ImageData].
         """
         with self.Session(open_viewer=False, perception_type="fast") as session:
             # best-effort navigation: scrape whatever loaded unless the goto

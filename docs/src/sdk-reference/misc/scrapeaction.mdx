@@ -12,7 +12,6 @@ scrape()` call in the session trajectory. Not executable: scrape with the method
 ```python
 markdown = session.scrape()
 markdown = session.scrape(only_main_content=True)
-images = session.scrape(only_images=True)
 data = session.scrape(instructions="Extract product title and price")
 ```
 
@@ -36,10 +35,6 @@ data = session.scrape(instructions="Extract product title and price")
 
 <ParamField path="selector" type="UnionType[str, None]">
   Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
-</ParamField>
-
-<ParamField path="only_images" type="bool" default="False">
-  Whether to only scrape images from the page. If True, the page content is excluded.
 </ParamField>
 
 <ParamField path="scrape_links" type="bool" default="True">

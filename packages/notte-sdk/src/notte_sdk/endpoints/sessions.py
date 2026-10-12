@@ -44,7 +44,7 @@ from notte_core.common.logging import logger
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.data.fetch import FetchData, build_fetch_script, response_from_evaluated
-from notte_core.data.space import ImageData, StructuredData, TBaseModel
+from notte_core.data.space import StructuredData, TBaseModel
 from notte_core.errors.actions import EvaluateJsNoDataError
 from notte_core.errors.base import NotteBaseError
 from notte_core.types import (
@@ -1341,9 +1341,6 @@ class RemoteSession(SyncResource):
     # ############################# PAGE ####################################
     # #######################################################################
 
-    @overload
-    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore[reportOverlappingOverload]
-
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
     def scrape(
@@ -1384,7 +1381,7 @@ class RemoteSession(SyncResource):
 
     def scrape(
         self, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
-    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str:
         """
         Scrape the current page data.
 
@@ -1422,7 +1419,7 @@ class RemoteSession(SyncResource):
             **data: Arbitrary keyword arguments validated against ScrapeRequestDict,
 
         Returns:
-            Extracted data as structured data, markdown text, image data, or a StructuredData wrapper when
+            Extracted data as structured data, markdown text, or a StructuredData wrapper when
             ``raise_on_failure=False``.
 
         """

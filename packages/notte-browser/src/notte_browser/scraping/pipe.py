@@ -10,7 +10,6 @@ from notte_core.data.space import DataSpace
 from notte_core.types import ScrapeParams
 
 from notte_browser.errors import StructuredExtractorNotAvailableError
-from notte_browser.scraping.images import ImageScrapingPipe
 from notte_browser.scraping.markdown import (
     MainContentScrapingPipe,
     MarkdownifyScrapingPipe,
@@ -77,7 +76,6 @@ class DataScrapingPipe:
 
     def __init__(self, type: ScrapingType, extractor: StructuredExtractor | None = None) -> None:
         self._extractor: StructuredExtractor | None = extractor
-        self.image_pipe = ImageScrapingPipe(verbose=config.verbose)
         self.scraping_type = type
 
     @property
@@ -117,7 +115,6 @@ class DataScrapingPipe:
         markdown = await self.scrape_markdown(window, snapshot, params)
         if config.verbose:
             logger.trace(f"📀 Extracted page as markdown\n: {markdown}\n")
-        images = None
         structured = None
 
         # Warn if processing very large text (>= 100k chars)
@@ -155,17 +152,6 @@ class DataScrapingPipe:
             masked_document = MarkdownPruningPipe.mask(markdown)
             markdown = masked_document.content
 
-        # scrape images if required
-        if params.only_images:
-            if config.verbose:
-                logger.trace("🏞️ Scraping images with image pipe")
-            images = await self.image_pipe.forward(
-                window,
-                snapshot.html_content,
-                snapshot.metadata.url,
-                selector=params.selector,
-            )
-
         # scrape structured data if required
         if params.requires_schema():
             if config.verbose:
@@ -178,4 +164,4 @@ class DataScrapingPipe:
                 model=params.model,
                 use_link_placeholders=params.use_link_placeholders,
             )
-        return DataSpace(markdown=markdown, images=images, structured=structured)
+        return DataSpace(markdown=markdown, structured=structured)

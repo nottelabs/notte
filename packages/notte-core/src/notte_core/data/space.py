@@ -1,10 +1,8 @@
-from enum import Enum
 from typing import Annotated, Any, Generic, Self, TypeVar
 
-import requests
 from pydantic import BaseModel, Field, RootModel, model_serializer, model_validator
 
-from notte_core.errors.processing import InvalidInternalCheckError, ScrapeFailedError
+from notte_core.errors.processing import ScrapeFailedError
 
 TBaseModel = TypeVar("TBaseModel", bound=BaseModel, covariant=True)
 # Legacy name: used as the raw structured-data wrapper before validating
@@ -16,36 +14,6 @@ class NoStructuredData(BaseModel):
     """Placeholder model for when no structured data is present."""
 
     pass
-
-
-class ImageCategory(Enum):
-    """Category of the image."""
-
-    FAVICON = "favicon"
-    ICON = "icon"
-    CONTENT_IMAGE = "content_image"
-    DECORATIVE = "decorative"
-    SVG_ICON = "svg_icon"
-    SVG_CONTENT = "svg_content"
-
-
-class ImageData(BaseModel):
-    url: Annotated[str | None, Field(description="URL of the image")] = None
-    category: Annotated[ImageCategory | None, Field(description="Category of the image (icon, svg, content, etc.)")] = (
-        None
-    )
-    description: Annotated[str | None, Field(description="Description of the image")] = None
-
-    def bytes(self) -> bytes:
-        if self.url is None:
-            raise InvalidInternalCheckError(
-                check="image URL is not available. Cannot retrieve image bytes.",
-                url=self.url,
-                dev_advice=(
-                    "Check the `ImageData` construction process in the `DataScraping` pipeline to diagnose this issue."
-                ),
-            )
-        return requests.get(self.url).content
 
 
 class StructuredData(BaseModel, Generic[TBaseModel]):
@@ -102,9 +70,6 @@ class StructuredData(BaseModel, Generic[TBaseModel]):
 
 class DataSpace(BaseModel):
     markdown: Annotated[str, Field(description="Markdown representation of the extracted data")]
-    images: Annotated[
-        list[ImageData] | None, Field(description="List of images extracted from the page (ID and download link)")
-    ] = None
     structured: Annotated[
         StructuredData[BaseModel] | None, Field(description="Structured data extracted from the page in JSON format")
     ] = None

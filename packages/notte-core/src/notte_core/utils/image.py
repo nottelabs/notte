@@ -2,7 +2,7 @@ import io
 from base64 import b64encode
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 import aiohttp
 import requests
@@ -15,25 +15,6 @@ def image_from_bytes(image_bytes: bytes) -> Image.Image | None:
     except Image.UnidentifiedImageError:
         return None
     return image
-
-
-def construct_image_url(base_page_url: str, image_src: str) -> str:
-    """
-    Constructs absolute URL for image source, handling relative and absolute paths.
-
-    Args:
-        base_page_url: The URL of the page containing the image
-        image_src: The src attribute value from the img tag
-
-    Returns:
-        str: Absolute URL for the image
-    """
-    # If image_src is already absolute URL, return as is
-    if image_src.startswith(("http://", "https://", "//")):
-        return image_src.replace("//", "https://", 1) if image_src.startswith("//") else image_src
-
-    # For relative paths, use urljoin which handles path resolution
-    return urljoin(base_page_url, image_src)
 
 
 def img_down(link: str, output_dir: str | None = None) -> Path | None:

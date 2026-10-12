@@ -11,7 +11,6 @@ import type {
   ApiSessionStartRequest,
   Cookie,
   ExecutionResponse,
-  ImageData,
   Observation,
   PageExecuteData,
   ObserveRequest,
@@ -872,13 +871,11 @@ export class Session {
    * `raiseOnFailure: false` to receive the `StructuredData` wrapper instead.
    * @example
    * const markdown = await session.scrape({ only_main_content: true });
-   * const images = await session.scrape({ only_images: true });
    * const product = await session.scrape({ response_format: Product, instructions: 'Extract the product' });
    * const result = await session.scrape({ response_format: Product, raiseOnFailure: false });
    * if (result.success) console.log(result.data);
    */
-  async scrape(options: SessionScrapeOptions<unknown> & { only_images: true }): Promise<ImageData[]>;
-  async scrape(options?: SessionScrapeOptions<unknown> & { response_format?: undefined; instructions?: undefined | null; only_images?: false }): Promise<string>;
+  async scrape(options?: SessionScrapeOptions<unknown> & { response_format?: undefined; instructions?: undefined | null }): Promise<string>;
   async scrape<T>(options: SessionScrapeOptions<T> & { response_format: ZodLikeSchema<T>; raiseOnFailure?: true }): Promise<T>;
   async scrape<T>(options: SessionScrapeOptions<T> & { response_format: ZodLikeSchema<T>; raiseOnFailure: false }): Promise<StructuredData<T>>;
   async scrape(options: SessionScrapeOptions<unknown>): Promise<ScrapeResult<unknown>>;

@@ -57,7 +57,7 @@ from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.data.extraction import StructuredExtractor
 from notte_core.data.fetch import FetchData, build_fetch_script, response_from_evaluated
-from notte_core.data.space import DataSpace, ImageData, StructuredData, TBaseModel
+from notte_core.data.space import DataSpace, StructuredData, TBaseModel
 from notte_core.errors.actions import (
     ActionExecutionError,
     EvaluateJsNoDataError,
@@ -968,9 +968,6 @@ class NotteSession(AsyncResource, SyncResource):
             self.afetch(url, method=method, headers=headers, params=params, json=json, data=data, timeout=timeout)
         )
 
-    @overload
-    async def ascrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...
-
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
     async def ascrape(
@@ -1013,7 +1010,7 @@ class NotteSession(AsyncResource, SyncResource):
     @track_usage("local.session.scrape")
     async def ascrape(
         self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
-    ) -> StructuredData[BaseModel] | BaseModel | str | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | str:
         # Extract and convert response_format for the action (store as JSON schema)
         response_format = params.get("response_format")
         instructions = params.get("instructions")
@@ -1027,7 +1024,6 @@ class NotteSession(AsyncResource, SyncResource):
             instructions=instructions,
             only_main_content=params.get("only_main_content", False),
             selector=params.get("selector"),
-            only_images=params.get("only_images", False),
             scrape_links=params.get("scrape_links", True),
             scrape_images=params.get("scrape_images", False),
             ignored_tags=params.get("ignored_tags"),
@@ -1080,8 +1076,6 @@ class NotteSession(AsyncResource, SyncResource):
         await self.trajectory.append(execution_result)
 
         # Return data
-        if data.images is not None:
-            return data.images
         if is_structured_scrape:
             if data.structured is None:
                 raise ScrapeFailedError("Failed to extract structured data")
@@ -1110,9 +1104,6 @@ class NotteSession(AsyncResource, SyncResource):
             return await self._ascrape(retries=retries - 1, wait_time=wait_time, **params)
         except Exception as e:
             raise e
-
-    @overload
-    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore[reportOverlappingOverload]
 
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
@@ -1154,7 +1145,7 @@ class NotteSession(AsyncResource, SyncResource):
 
     def scrape(
         self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
-    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str:
         return asyncio.run(self.ascrape(raise_on_failure=raise_on_failure, **params))
 
     @timeit("reset")

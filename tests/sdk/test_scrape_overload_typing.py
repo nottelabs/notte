@@ -19,7 +19,6 @@ EXPECTED_REVEALS = (
     # RemoteSession
     "Profile",
     "dict[str, Any]",
-    "list[ImageData]",
     "str",
     "str",
     "StructuredData[Profile]",
@@ -28,19 +27,16 @@ EXPECTED_REVEALS = (
     # NotteClient
     "Profile",
     "dict[str, Any]",
-    "list[ImageData]",
     "str",
     "Profile",
     # PageClient
     "Profile",
     "dict[str, Any]",
-    "list[ImageData]",
     "str",
     "dict[str, Any]",
     # NotteSession (local)
     "Profile",
     "dict[str, Any]",
-    "list[ImageData]",
     "str",
 )
 

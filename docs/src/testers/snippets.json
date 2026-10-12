@@ -351,23 +351,6 @@
       }
     ]
   },
-  "scraping/image_extraction.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "scraping/image_extraction.py",
-        "language": "python",
-        "title": "Python",
-        "existing_python_test": true
-      },
-      {
-        "source": "scraping/image_extraction.ts",
-        "language": "typescript",
-        "title": "TypeScript",
-        "execution_pending": "Legacy example from scraping/image_extraction.mdx; needs owned fixtures and behavior assertions before live execution."
-      }
-    ]
-  },
   "scraping/instructions_only.mdx": {
     "group": true,
     "blocks": [
