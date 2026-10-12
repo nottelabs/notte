@@ -6,6 +6,7 @@ from pathlib import Path
 DOCS = Path(__file__).resolve().parents[2] / "docs" / "src"
 PRICING_CARDS = DOCS / "pricing.mdx"
 PRICING_INTRO = DOCS / "intro" / "pricing.mdx"
+BROWSER_RATE_PER_HOUR = 0.01
 
 
 def _search(pattern: str, text: str) -> re.Match[str]:
@@ -25,8 +26,9 @@ def _table_browser_rate(text: str) -> float:
     return float(match.group(1))
 
 
-def test_pricing_pages_agree_on_the_browser_rate() -> None:
-    assert _card_browser_rate() == _table_browser_rate(PRICING_INTRO.read_text())
+def test_pricing_pages_document_the_browser_rate() -> None:
+    assert _card_browser_rate() == BROWSER_RATE_PER_HOUR
+    assert _table_browser_rate(PRICING_INTRO.read_text()) == BROWSER_RATE_PER_HOUR
 
 
 def test_worked_example_adds_up() -> None:
