@@ -35,11 +35,11 @@ jobs:
         with:
             python-version-file: ".python-version"
 
-      - name: Check the SDK types against production
-        # The types are generated from staging; don't publish fields production doesn't serve yet.
+      - name: Check the wire models against production
+        # Don't publish models production doesn't serve yet.
         run: |
           uv sync --all-packages
-          make sdk-types-check-prod
+          make openapi-check-prod
 
       - name: Build Python distributions
         env:

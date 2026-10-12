@@ -100,11 +100,11 @@ repos:
         language: system
         files: ^docs/src/
         pass_filenames: false
-      - id: sdk-types-check
-        name: Check generated SDK types match the OpenAPI snapshot
-        entry: bash -c "uv run --no-sync python scripts/generate_sdk_types.py --check"
+      - id: openapi-contract
+        name: Check the wire models match the OpenAPI snapshot
+        entry: bash -c "uv run --no-sync python scripts/openapi_contract.py --check"
         language: system
-        files: ^(packages/notte-sdk/openapi/openapi\.json|packages/notte-sdk/src/notte_sdk/_generated/.*|scripts/generate_sdk_types\.py|\.pre-commit-config\.yaml)$
+        files: ^(openapi/.*|packages/notte-sdk/src/notte_sdk/types\.py|scripts/openapi_contract\.py|\.pre-commit-config\.yaml)$
         pass_filenames: false
       - id: no-loguru-logger-import
         name: Check for loguru logger imports

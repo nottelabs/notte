@@ -1,8 +1,9 @@
-name: bump-python-sdk-types
+name: bump-openapi
 
-# Refresh the Python SDK's OpenAPI snapshot from staging and regenerate the wire
-# models under notte_sdk/_generated. If they drifted, open (or refresh) one pull
-# request and merge it once the required checks pass, like bump-node-sdk.
+# Refresh openapi/openapi.json from staging. The wire models in notte_sdk.types are the
+# source of truth and the API renders them into this schema, so the refresh PR is the
+# contract check: it merges itself once checks pass (like bump-node-sdk), and stays open
+# when the API drifted from the models (the `openapi-contract` pre-commit hook fails).
 # See docs/design/openapi-generated-sdk-types.md.
 
 on:
@@ -14,7 +15,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: bump-python-sdk-types
+  group: bump-openapi
   cancel-in-progress: false
 
 permissions:
@@ -26,7 +27,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
-      BRANCH: chore/bump-python-sdk-types
+      BRANCH: chore/bump-openapi
       NOTTE_API_URL: https://us-staging.notte.cc
     steps:
       - name: Checkout
@@ -50,43 +51,49 @@ jobs:
             sleep 10
           done
 
-      - name: Refresh the snapshot and regenerate
-        run: make sdk-types-fetch SDK_TYPES_URL="$NOTTE_API_URL"
+      - name: Refresh the snapshot
+        run: make openapi-fetch OPENAPI_URL="$NOTTE_API_URL"
 
       - name: Detect drift
         id: drift
         run: |
           set -euo pipefail
-          git add -A -- packages/notte-sdk/openapi packages/notte-sdk/src/notte_sdk/_generated
+          git add -A -- openapi
           if git diff --cached --quiet; then
-            echo "The Python SDK types are up to date with staging."
+            echo "openapi/openapi.json is up to date with staging."
             echo "changes=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           echo "changes=true" >> "$GITHUB_OUTPUT"
           git diff --cached --stat
 
-      - name: Validate the regenerated types
+      - name: Check the contract
+        # Reported in the PR body; the PR's own pre-commit run is what blocks the merge.
         if: steps.drift.outputs.changes == 'true'
+        id: contract
         run: |
-          uv run --no-sync pre-commit run basedpyright --all-files
-          uv run --no-sync pytest -q -p no:cacheprovider tests/sdk/test_generated_types.py tests/sdk/test_types.py tests/sdk/test_dict_types.py
+          set -o pipefail
+          {
+            echo "report<<EOF"
+            uv run --no-sync python scripts/openapi_contract.py --check 2>&1 || true
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Open or update the pull request
         if: steps.drift.outputs.changes == 'true'
         env:
           GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
+          REPORT: ${{ steps.contract.outputs.report }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          TITLE="chore(sdk): regenerate Python SDK types from staging OpenAPI"
-          REPORT=$(uv run --no-sync python scripts/sdk_types_drift_report.py)
+          TITLE="chore: refresh the OpenAPI snapshot from staging"
           BODY=$(printf '%s\n\n%s\n\n%s\n\n```\n%s\n```\n' \
-            "Automated refresh of \`packages/notte-sdk/openapi/openapi.json\` and \`notte_sdk/_generated\` from $NOTTE_API_URL ($(date -u '+%Y-%m-%d %H:%M UTC'))." \
-            "Opened by \`.github/workflows/python-sdk-types-bump.yml\`. Merges automatically once the required checks pass." \
-            "Remaining drift in hand-written models:" \
+            "Automated refresh of \`openapi/openapi.json\` from $NOTTE_API_URL ($(date -u '+%Y-%m-%d %H:%M UTC'))." \
+            "Opened by \`.github/workflows/openapi-bump.yml\`. Merges automatically once the required checks pass." \
+            "Contract check (\`scripts/openapi_contract.py\`). If it reports new drift, change \`notte_sdk.types\` instead of merging:" \
             "$REPORT")
 
           git checkout -B "$BRANCH"

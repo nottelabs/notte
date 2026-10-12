@@ -1,0 +1,45 @@
+# Known drift between notte_sdk.types and openapi/openapi.json; see scripts/openapi_contract.py.
+FunctionRunListItemResponse: api-only field workflow_id (required)
+FunctionRunListItemResponse: api-only field workflow_run_id (required)
+FunctionRunUpdateRequest: api-only field payloads
+FunctionRunUpdateRequest: api-only field result_preview
+GetFunctionResponse: api-only field published
+GetFunctionResponse: api-only field required_secrets
+GetFunctionResponse: api-only field source
+GetFunctionResponse: api-only field self_healing
+GetFunctionResponse: api-only field domain
+GetFunctionResponse: api-only field instructions
+GetFunctionResponse: api-only field response_format
+GetFunctionResponse: api-only field schedule_cron
+GetFunctionResponse: api-only field schedule_variables
+GetFunctionResponse: api-only field schedule_state
+GetFunctionResponse: api-only field workflow_id (required)
+GetFunctionRunResponse: api-only field function_version
+GetFunctionRunResponse: api-only field payloads
+GetFunctionRunResponse: api-only field stopped_at
+GetFunctionRunResponse: api-only field payload_urls
+GetFunctionRunResponse: api-only field workflow_id (required)
+GetFunctionRunResponse: api-only field workflow_run_id (required)
+GetFunctionWithLinkResponse: api-only field published
+GetFunctionWithLinkResponse: api-only field required_secrets
+GetFunctionWithLinkResponse: api-only field source
+GetFunctionWithLinkResponse: api-only field self_healing
+GetFunctionWithLinkResponse: api-only field domain
+GetFunctionWithLinkResponse: api-only field instructions
+GetFunctionWithLinkResponse: api-only field response_format
+GetFunctionWithLinkResponse: api-only field schedule_cron
+GetFunctionWithLinkResponse: api-only field schedule_variables
+GetFunctionWithLinkResponse: api-only field schedule_state
+GetFunctionWithLinkResponse: api-only field workflow_id (required)
+ManagedAuthOperation: api-only field created_at (required)
+ManagedAuthOperation: api-only field updated_at (required)
+ReplayResponse: expires_at required api=True sdk=False
+ReplayResponse: expires_at nullable api=False sdk=True
+RunFunctionRequest: api-only field workflow_id (required)
+RunFunctionRequest: api-only field callback_url
+RunFunctionRequest: sdk-only field function_id
+RunFunctionRequest: variables required api=False sdk=True
+SessionResponse: api-only field timeout_minutes (required)
+SessionStartRequest: api-only field demonstrate
+UpdateFunctionRunResponse: api-only field workflow_id (required)
+UpdateFunctionRunResponse: api-only field workflow_run_id (required)

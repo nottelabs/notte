@@ -5,6 +5,7 @@ import re
 import warnings
 from enum import StrEnum
 from pathlib import Path
+from types import NoneType
 from typing import Annotated, Any, ClassVar, Literal, Required, cast, get_args
 
 from notte_core.actions import (
@@ -44,9 +45,6 @@ from pydantic import (
 )
 from pyotp import TOTP
 from typing_extensions import NotRequired, TypedDict, deprecated, override
-
-from notte_sdk._generated import models as wire
-from notte_sdk._generated import typeddicts as wire_dicts
 
 # ############################################################
 # Session Management
@@ -1187,15 +1185,19 @@ def _drop_duration_format(schema: dict[str, Any]) -> None:
     _ = schema.pop("format", None)
 
 
-class SessionResponse(wire.SessionResponse, SdkResponse):
-    # Fields come from the API schema. Client-side behavior layered on top:
-    # - the legacy `timeout_minutes` key is accepted for `idle_timeout_minutes` and
-    #   re-exposed as a deprecated computed field;
-    # - `duration` and `steps` are never None; `duration` is computed from the
-    #   timestamps when the API omits it.
+class SessionResponse(SdkResponse):
     # Preserve unknown response fields so legacy wire metadata such as
     # ``headless`` remains available without becoming part of current schemas.
     model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")
+    session_id: Annotated[
+        str,
+        Field(
+            description=(
+                "The ID of the session (created or existing). "
+                "Use this ID to interact with the session for the next operation."
+            )
+        ),
+    ]
     idle_timeout_minutes: Annotated[
         int,
         Field(
@@ -1203,19 +1205,71 @@ class SessionResponse(wire.SessionResponse, SdkResponse):
             validation_alias=AliasChoices("idle_timeout_minutes", "timeout_minutes"),
         ),
     ]
-    duration: Annotated[  # pyright: ignore[reportIncompatibleVariableOverride]
+    max_duration_minutes: Annotated[
+        int,
+        Field(
+            description="Session max duration in minutes. Will timeout if now() > creation time + max_duration_minutes",
+            default=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
+        ),
+    ]
+    created_at: Annotated[dt.datetime, Field(description="Session creation time")]
+    closed_at: Annotated[dt.datetime | None, Field(description="Session closing time")] = None
+    last_accessed_at: Annotated[dt.datetime, Field(description="Last access time")]
+    duration: Annotated[
         dt.timedelta,
         Field(description="Session duration", json_schema_extra=_drop_duration_format),
     ] = Field(default_factory=lambda: dt.timedelta(0))
-    steps: Annotated[  # pyright: ignore[reportIncompatibleVariableOverride]
-        list[dict[str, Any]], Field(description="Steps of the session", repr=False)
-    ] = Field(default_factory=lambda: [])
+    status: Annotated[
+        Literal["active", "authenticating", "closed", "error", "timed_out"],
+        Field(description="Session status"),
+    ]
+    close_reason: Annotated[
+        Literal["manual", "idle_timeout", "max_duration", "error", "unknown"] | None,
+        Field(description="Reason the session closed, if it is no longer active"),
+    ] = None
+    steps: Annotated[list[dict[str, Any]], Field(description="Steps of the session", repr=False)] = Field(
+        default_factory=lambda: []
+    )
+
+    # TODO: discuss if this is the best way to handle errors
+    error: Annotated[str | None, Field(description="Error message if the operation failed to complete")] = None
+    proxies: Annotated[
+        bool,
+        Field(
+            description="Whether proxies were used for the session. True if any proxy was applied during session creation."
+        ),
+    ] = False
+    # remaining args
+    browser_type: BrowserType = "chromium"
+    network_request_bytes: Annotated[int, Field(description="Total byte usage for network requests.")] = 0
+    network_response_bytes: Annotated[int, Field(description="Total byte usage for network responses.")] = 0
+    user_agent: Annotated[str | None, Field(description="The user agent to use for the session")] = None
+    viewport_width: Annotated[int | None, Field(description="The width of the viewport")] = None
+    viewport_height: Annotated[int | None, Field(description="The height of the viewport")] = None
 
     @property
     def headless(self) -> bool:
         """Legacy launch metadata retained for old session-status consumers."""
         extra = self.__pydantic_extra__
         return True if extra is None else bool(extra.get("headless", True))
+
+    solve_captchas: Annotated[bool | NoneType, Field(description="Whether to solve captchas.")] = None
+    cdp_url: Annotated[str | None, Field(description="The URL to connect to the CDP server.")] = None
+    viewer_url: Annotated[str | None, Field(description="The remote session viewer URL.")] = None
+    web_bot_auth: Annotated[bool, Field(description="Whether to use web bot authentication.")] = False
+    auth_ids: Annotated[
+        list[str],
+        Field(description="Managed Auth connection IDs attached to this session."),
+    ] = []
+    system_hidden: Annotated[
+        bool,
+        Field(
+            description=(
+                "Whether this session is an internal system run. Internal system runs are omitted "
+                "from session.list() unless include_system=True is requested."
+            )
+        ),
+    ] = False
 
     @field_validator("closed_at", mode="before")
     @classmethod
@@ -1608,20 +1662,36 @@ class ProfileListRequest(SdkRequest):
 # ############################################################
 
 
-class PersonaCreateRequestDict(wire_dicts.PersonaCreateRequest, total=False):
-    """Request dictionary for creating a new persona (generated from the API schema)."""
+class PersonaCreateRequestDict(TypedDict, total=False):
+    """Request dictionary for creating a new persona."""
+
+    create_vault: bool
+    create_phone_number: bool
+    name: str | None
 
 
-class PersonaCreateRequest(wire.PersonaCreateRequest, SdkRequest):
-    pass
+class PersonaCreateRequest(SdkRequest):
+    create_vault: Annotated[bool, Field(description="Whether to create a vault for the persona")] = False
+    create_phone_number: Annotated[bool, Field(description="Whether to create a phone number for the persona")] = False
+    name: Annotated[str | None, Field(description="Display name of the persona")] = None
 
 
-class PersonaResponse(wire.PersonaResponse, SdkResponse):
-    pass
+class PersonaResponse(SdkResponse):
+    persona_id: Annotated[str, Field(description="ID of the created persona")]
+    status: Annotated[str, Field(description="Status of the persona (active, closed)")]
+    first_name: Annotated[str, Field(description="First name of the persona")]
+    last_name: Annotated[str, Field(description="Last name of the persona")]
+    email: Annotated[str, Field(description="Readable email alias of the persona")]
+    internal_email: Annotated[str, Field(description="Internal UUID-backed email address of the persona")]
+    vault_id: Annotated[str | None, Field(description="ID of the vault")]
+    phone_number: Annotated[str | None, Field(description="Phone number of the persona (optional)")]
+    name: Annotated[str | None, Field(description="Display name of the persona")] = None
+    created_at: Annotated[dt.datetime, Field(description="Creation date")]
 
 
-class DeletePersonaResponse(wire.DeletePersonaResponse, SdkResponse):
-    pass
+class DeletePersonaResponse(SdkResponse):
+    status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
+    message: Annotated[str, Field(description="Message of the deletion")] = "Persona deleted successfully"
 
 
 class MessageReadRequestDict(TypedDict, total=False):
@@ -1646,7 +1716,17 @@ class MessageReadRequest(SdkRequest):
     only_unread: Annotated[bool, Field(description="Return only previously unread emails")] = False
 
 
-class EmailResponse(wire.EmailResponse, SdkResponse):
+class EmailResponse(SdkResponse):
+    subject: Annotated[str, Field(description="Subject of the email")]
+    email_id: Annotated[str, Field(description="Email UUID")]
+    created_at: Annotated[dt.datetime, Field(description="Creation date")]
+    sender_email: Annotated[str | None, Field(description="Email address of the sender")]
+    sender_name: Annotated[str | None, Field(description="Name (if available) of the sender")]
+    text_content: Annotated[
+        str | None, Field(description="Raw textual body, can be uncorrelated with html content")
+    ] = None
+    html_content: Annotated[str | None, Field(description="HTML body, can be uncorrelated with raw content")] = None
+
     def links(self) -> list[str]:
         if self.text_content is None:
             return []
@@ -1655,8 +1735,11 @@ class EmailResponse(wire.EmailResponse, SdkResponse):
         return re.findall(url_pattern, self.text_content)
 
 
-class SMSResponse(wire.SMSResponse, SdkResponse):
-    pass
+class SMSResponse(SdkResponse):
+    body: Annotated[str, Field(description="SMS message body")]
+    sms_id: Annotated[str, Field(description="SMS UUID")]
+    created_at: Annotated[dt.datetime, Field(description="Creation date")]
+    sender: Annotated[str | None, Field(description="SMS sender phone number")]
 
 
 class CreatePhoneNumberRequestDict(TypedDict, total=False):

@@ -163,23 +163,19 @@ release:
 	@echo "\033[0;35mBuilding version: $(filter-out $@,$(MAKECMDGOALS))\033[0m"
 	python3 scripts/build_release.py $(filter-out $@,$(MAKECMDGOALS))
 
-# Python SDK wire types, generated from packages/notte-sdk/openapi/openapi.json.
-# See docs/design/openapi-generated-sdk-types.md.
-.PHONY: sdk-types
-sdk-types:
-	uv run --no-sync python scripts/generate_sdk_types.py
+# The wire models in notte_sdk.types are the source of truth; openapi/openapi.json is the API's
+# rendering of them. See docs/design/openapi-generated-sdk-types.md.
+.PHONY: openapi-check
+openapi-check:
+	uv run --no-sync python scripts/openapi_contract.py --check
 
-.PHONY: sdk-types-check
-sdk-types-check:
-	uv run --no-sync python scripts/generate_sdk_types.py --check
+# Refresh the snapshot from staging (override with OPENAPI_URL=https://api.notte.cc).
+OPENAPI_URL ?= https://us-staging.notte.cc
+.PHONY: openapi-fetch
+openapi-fetch:
+	uv run --no-sync python scripts/openapi_contract.py --fetch --url $(OPENAPI_URL)
 
-# Refresh the snapshot from staging (override with SDK_TYPES_URL=https://api.notte.cc).
-SDK_TYPES_URL ?= https://us-staging.notte.cc
-.PHONY: sdk-types-fetch
-sdk-types-fetch:
-	uv run --no-sync python scripts/generate_sdk_types.py --fetch --url $(SDK_TYPES_URL)
-
-# Release gate: production must generate the same types as the committed (staging) snapshot.
-.PHONY: sdk-types-check-prod
-sdk-types-check-prod:
-	uv run --no-sync python scripts/generate_sdk_types.py --against https://api.notte.cc
+# Release gate: production must serve the wire models we are about to publish.
+.PHONY: openapi-check-prod
+openapi-check-prod:
+	uv run --no-sync python scripts/openapi_contract.py --check --against https://api.notte.cc
