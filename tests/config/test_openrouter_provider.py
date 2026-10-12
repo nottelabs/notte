@@ -1,7 +1,23 @@
 import pytest
 from notte_core.common.config import LlmModel, LlmProvider
 
-from tests.llms.test_openrouter_models import OPENROUTER_MODELS
+# OpenRouter models the LLM extra is expected to support.
+OPENROUTER_MODELS = [
+    "google/gemini-3-flash-preview",
+    "google/gemini-3.5-flash",
+    "anthropic/claude-opus-4.6",
+    "anthropic/claude-sonnet-4.6",
+    "anthropic/claude-haiku-4.5",
+    "openai/gpt-5.2",
+    "openai/gpt-5-nano",
+    "openai/gpt-4o-mini",
+    "minimax/minimax-m2.5",
+    "moonshotai/kimi-k2.5",
+    "deepseek/deepseek-v3.2",
+    "x-ai/grok-4.3",
+    "z-ai/glm-5",
+    "qwen/qwen3.5-flash-02-23",
+]
 
 # Mapping from OpenRouter provider names that differ from LlmProvider enum values.
 # e.g. OpenRouter uses "google" but LlmProvider uses "gemini".

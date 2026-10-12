@@ -48,7 +48,7 @@ async def test_form_fill(checkout_file: str):
 
         res = await session.aexecute(WaitAction(time_ms=100))
         assert res.success
-        _ = await session.aobserve(perception_type="fast")
+        _ = await session.aobserve()
 
         values = {
             "first_name": "John",

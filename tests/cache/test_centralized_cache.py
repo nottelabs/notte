@@ -19,7 +19,6 @@ from notte_core.common.cache import (
     get_cache_root,
     get_legacy_cache_locations,
 )
-from notte_llm import tracer
 
 
 @pytest.fixture(autouse=True)
@@ -185,17 +184,6 @@ class TestEnvironmentVariables:
                 # Check that files uses NOTTE_CACHE_DIR
                 assert tmpdir == str(files.NOTTE_CACHE_DIR)
 
-    def test_notte_traces_dir_override(self):
-        """Test NOTTE_TRACES_DIR override for tracing."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"NOTTE_TRACES_DIR": tmpdir, "DISABLE_NOTTE_LLM_TRACING": "false"}):
-                # Import tracer module to trigger directory creation
-                # Force reload to pick up new env var
-                _ = importlib.reload(tracer)
-
-                # Check that tracer uses NOTTE_TRACES_DIR
-                assert tmpdir == str(tracer.TRACES_DIR)
-
 
 class TestCacheInfo:
     """Tests for cache information functions."""
@@ -247,18 +235,6 @@ class TestIntegration:
 
         assert ".notte" in telemetry_path or (xdg_override is not None and xdg_override in telemetry_path)
         assert ".cache" in telemetry_path or (xdg_override is not None and xdg_override in telemetry_path)
-
-    def test_tracer_uses_cache(self):
-        """Test that tracer module uses centralized cache."""
-        # Force module reload to pick up current cache state
-        _ = importlib.reload(tracer)
-
-        # Only check if tracing is enabled and not overridden
-        if os.getenv("DISABLE_NOTTE_LLM_TRACING", "false").lower() == "false" and not os.getenv("NOTTE_TRACES_DIR"):
-            # Check that traces are under cache root
-            traces_path = str(tracer.TRACES_DIR)
-            assert ".notte" in traces_path
-            assert ".cache" in traces_path
 
     def test_files_uses_cache(self):
         """Test that files module uses centralized cache."""

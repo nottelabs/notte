@@ -2,20 +2,10 @@ import pytest
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction
 
-from tests.mock.mock_service import MockLLMService
-from tests.mock.mock_service import patch_llm_service as _patch_llm_service
-
-patch_llm_service = _patch_llm_service
-
-
-@pytest.fixture
-def mock_llm_service() -> MockLLMService:
-    return MockLLMService(mock_response="")
-
 
 @pytest.mark.asyncio
-async def test_google_flights(patch_llm_service) -> None:
-    async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080, perception_type="fast") as page:
+async def test_google_flights() -> None:
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080) as page:
         _ = await page.aexecute(type="goto", value="https://www.google.com/travel/flights")
         _ = await page.aobserve()
         cookie_node = page.snapshot.dom_node.find("B2")
@@ -30,16 +20,15 @@ async def test_google_flights(patch_llm_service) -> None:
 
 
 @pytest.mark.asyncio
-async def test_google_flights_with_agent(patch_llm_service) -> None:
+async def test_google_flights_with_agent() -> None:
     with NotteSession(
         headless=True,
         viewport_width=1280,
         viewport_height=1080,
     ) as page:
-        perception_type = "fast"
         # observe a webpage, and take a random action
         _ = await page.aexecute(type="goto", value="https://www.google.com/travel/flights")
-        _ = await page.aobserve(perception_type=perception_type)
+        _ = await page.aobserve()
         cookie_node = page.snapshot.dom_node.find("B2")
         if cookie_node is not None:
             _ = page.execute(ClickAction(id="B2"))
@@ -48,21 +37,3 @@ async def test_google_flights_with_agent(patch_llm_service) -> None:
         _ = page.execute(FillAction(id="I5", value="14/06/2025"))
         _ = page.execute(FillAction(id="I6", value="02/07/2025"))
         _ = page.execute(ClickAction(id="B7"))
-
-
-@pytest.mark.asyncio
-async def test_observe_with_instructions() -> None:
-    async with NotteSession(perception_type="fast") as session:
-        _ = await session.aexecute(type="goto", url="https://www.notte.cc")
-        actions = await session.aobserve(instructions="Open the console page")
-        if len(actions) == 0:
-            raise ValueError("No actions available")
-        _ = await session.aexecute(actions[0])
-        # The console links carry target="_blank", so the click lands in a new
-        # tab. Switch before observing: the controller's own new-tab detection
-        # polls the page count after a short wait and can miss a slow open.
-        _ = await session.aexecute(type="switch_tab", tab_index=-1)
-        obs = await session.aobserve()
-        assert obs.metadata.url.startswith("https://console.notte.cc"), (
-            f"Expected URL to start with https://console.notte.cc, got {obs.metadata.url}"
-        )

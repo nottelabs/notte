@@ -2,8 +2,8 @@ import os
 
 import pytest
 from dotenv import load_dotenv
+from notte_browser.llm.engine import LLMEngine
 from notte_core.common.config import LlmModel, enable_openrouter
-from notte_llm.engine import LLMEngine
 from pydantic import BaseModel
 
 

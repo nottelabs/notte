@@ -14,14 +14,27 @@ packages = [
 requires-python = ">=3.11"
 dependencies = [
     "notte_core==2.0.0.dev0",
-    "notte_llm==2.0.0.dev0",
+    "notte_sdk==2.0.0.dev0",
+    "beautifulsoup4>=4.12.0",
     "html2text>=2025.4.15",
+    "httpx>=0.27.0",
     "lxml>=5.3.1",
     "markdownify>=0.14.1",
     "pillow>=11.2.1",
     "patchright~=1.55",
     "tqdm>=4.66.0",
     "trafilatura>=2.0.0",
+]
+
+[project.optional-dependencies]
+# Structured scraping (`scrape(instructions=..., response_format=...)`) on local sessions.
+llm = [
+    "chevron>=0.14.0",
+    "google-auth>=2.39.0",
+    "json-repair>=0.57.1",
+    "litellm>=1.74.12",
+    "openai<3.24.0",
+    "tiktoken>=0.8.0",
 ]
 
 [build-system]

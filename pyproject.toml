@@ -15,13 +15,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+llm = ["notte-browser[llm]==2.0.0.dev0"]
 integrations = ["notte-integrations==2.0.0.dev0"]
 
 [tool.uv.sources]
 notte-core = { workspace = true }
 notte-sdk = { workspace = true }
 notte-browser = { workspace = true }
-notte-llm = { workspace = true }
 notte-integrations = { workspace = true }
 
 

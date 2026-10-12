@@ -22,7 +22,6 @@ members = [
     "notte-browser",
     "notte-core",
     "notte-integrations",
-    "notte-llm",
     "notte-sdk",
 ]
 
@@ -2627,19 +2626,6 @@ wheels = [
 ]
 
 [[package]]
-name = "llamux"
-version = "0.1.9"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "litellm" },
-    { name = "loguru" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/7b/2d/8bc6a0a7460ed6ab3aac0078f894408bf1e20d4c12f30cf52416bfe29803/llamux-0.1.9.tar.gz", hash = "sha256:0ca00469b92fb523a4e905159ac269c53b2146233de10c858f016536c75d68e9", size = 4821, upload-time = "2024-12-12T02:46:39.273Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ca/95/e48aa86223b5ad5ba3c8a615a90ee202e00202d9212530745c7492829aa1/llamux-0.1.9-py3-none-any.whl", hash = "sha256:5bd703fc754e78c6d43ad2900bb7ca373df678a41038da4520cd2e539e99fd4d", size = 5376, upload-time = "2024-12-12T02:46:36.977Z" },
-]
-
-[[package]]
 name = "log-symbols"
 version = "0.0.14"
 source = { registry = "https://pypi.org/simple" }
@@ -3215,6 +3201,9 @@ dependencies = [
 integrations = [
     { name = "notte-integrations" },
 ]
+llm = [
+    { name = "notte-browser", extra = ["llm"] },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -3253,11 +3242,12 @@ lint = [
 [package.metadata]
 requires-dist = [
     { name = "notte-browser", editable = "packages/notte-browser" },
+    { name = "notte-browser", extras = ["llm"], marker = "extra == 'llm'", editable = "packages/notte-browser" },
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "notte-integrations", marker = "extra == 'integrations'", editable = "packages/notte-integrations" },
     { name = "notte-sdk", editable = "packages/notte-sdk" },
 ]
-provides-extras = ["integrations"]
+provides-extras = ["llm", "integrations"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -3295,29 +3285,50 @@ name = "notte-browser"
 version = "2.0.0.dev0"
 source = { editable = "packages/notte-browser" }
 dependencies = [
+    { name = "beautifulsoup4" },
     { name = "html2text" },
+    { name = "httpx" },
     { name = "lxml" },
     { name = "markdownify" },
     { name = "notte-core" },
-    { name = "notte-llm" },
+    { name = "notte-sdk" },
     { name = "patchright" },
     { name = "pillow" },
     { name = "tqdm" },
     { name = "trafilatura" },
 ]
 
+[package.optional-dependencies]
+llm = [
+    { name = "chevron" },
+    { name = "google-auth" },
+    { name = "json-repair" },
+    { name = "litellm" },
+    { name = "openai" },
+    { name = "tiktoken" },
+]
+
 [package.metadata]
 requires-dist = [
+    { name = "beautifulsoup4", specifier = ">=4.12.0" },
+    { name = "chevron", marker = "extra == 'llm'", specifier = ">=0.14.0" },
+    { name = "google-auth", marker = "extra == 'llm'", specifier = ">=2.39.0" },
     { name = "html2text", specifier = ">=2025.4.15" },
+    { name = "httpx", specifier = ">=0.27.0" },
+    { name = "json-repair", marker = "extra == 'llm'", specifier = ">=0.57.1" },
+    { name = "litellm", marker = "extra == 'llm'", specifier = ">=1.74.12" },
     { name = "lxml", specifier = ">=5.3.1" },
     { name = "markdownify", specifier = ">=0.14.1" },
     { name = "notte-core", editable = "packages/notte-core" },
-    { name = "notte-llm", editable = "packages/notte-llm" },
+    { name = "notte-sdk", editable = "packages/notte-sdk" },
+    { name = "openai", marker = "extra == 'llm'", specifier = "<3.24.0" },
     { name = "patchright", specifier = "~=1.55" },
     { name = "pillow", specifier = ">=11.2.1" },
+    { name = "tiktoken", marker = "extra == 'llm'", specifier = ">=0.8.0" },
     { name = "tqdm", specifier = ">=4.66.0" },
     { name = "trafilatura", specifier = ">=2.0.0" },
 ]
+provides-extras = ["llm"]
 
 [[package]]
 name = "notte-core"
@@ -3412,37 +3423,6 @@ requires-dist = [
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "slack-sdk", specifier = ">=3.34.0" },
     { name = "uvicorn", specifier = ">=0.29.0" },
-]
-
-[[package]]
-name = "notte-llm"
-version = "2.0.0.dev0"
-source = { editable = "packages/notte-llm" }
-dependencies = [
-    { name = "chevron" },
-    { name = "json-repair" },
-    { name = "litellm" },
-    { name = "llamux" },
-    { name = "loguru" },
-    { name = "notte-core" },
-    { name = "openai" },
-    { name = "pydantic" },
-    { name = "python-dotenv" },
-    { name = "tiktoken" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "chevron", specifier = ">=0.14.0" },
-    { name = "json-repair", specifier = ">=0.57.1" },
-    { name = "litellm", specifier = ">=1.74.12" },
-    { name = "llamux", specifier = ">=0.1.9" },
-    { name = "loguru", specifier = ">=0.7.3" },
-    { name = "notte-core", editable = "packages/notte-core" },
-    { name = "openai", specifier = "<3.24.0" },
-    { name = "pydantic", specifier = ">=2.10.6" },
-    { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "tiktoken", specifier = ">=0.8.0" },
 ]
 
 [[package]]

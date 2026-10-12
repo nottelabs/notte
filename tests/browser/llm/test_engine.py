@@ -2,14 +2,14 @@ from unittest.mock import Mock, patch
 
 import pytest
 from litellm import Message
-from notte_core.errors.base import ErrorConfig
-from notte_llm.engine import (
+from notte_browser.llm.engine import (
     LLMEngine,
     StructuredContent,
     fix_schema_for_gemini,
     fix_schema_for_openai,
     get_vertex_location,
 )
+from notte_core.errors.base import ErrorConfig
 
 
 @pytest.fixture
