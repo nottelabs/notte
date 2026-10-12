@@ -558,7 +558,7 @@ class BrowserWindow(BaseModel):
                 screenshot=snapshot_screenshot,
             )
         except PlaywrightError:
-            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector)
+            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector, skip_dom=skip_dom)
 
     async def goto_and_wait(
         self,

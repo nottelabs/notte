@@ -3,9 +3,10 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 import pytest_asyncio
+from notte_browser.playwright_async_api import Error
 from notte_browser.session import NotteSession
 from notte_browser.window import BrowserWindow
-from notte_core.browser.snapshot import BrowserSnapshot
+from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 
 import notte
 
@@ -59,3 +60,25 @@ async def test_observe_keeps_screenshot_when_page_changed_during_listing(session
 
     assert len(obs.screenshot.raw) > 0
     assert session.snapshot.screenshot == obs.screenshot.raw
+
+
+@pytest.mark.asyncio
+async def test_snapshot_retry_after_playwright_error_keeps_arguments(session: NotteSession) -> None:
+    calls = 0
+    snapshot_metadata = BrowserWindow.snapshot_metadata
+
+    async def flaky_metadata(self: BrowserWindow) -> SnapshotMetadata:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise Error("transient failure")
+        return await snapshot_metadata(self)
+
+    with patch.object(BrowserWindow, "snapshot_metadata", new=flaky_metadata), _no_screenshot():
+        snapshot = await session.window.snapshot(screenshot=False, skip_dom=True, selector="main")
+
+    assert calls == 2
+    assert snapshot.screenshot is None
+    # skip_dom is kept on retry: the dom tree is the empty root, not the parsed page
+    assert len(snapshot.interaction_nodes()) == 0
+    assert snapshot.html_content.startswith("<h1>Title</h1>")
