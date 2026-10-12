@@ -15,6 +15,7 @@ intended, regenerate them and review the diff:
     NOTTE_UPDATE_GOLDEN=1 uv run pytest tests/golden
 """
 
+import difflib
 import hashlib
 import os
 from pathlib import Path
@@ -76,9 +77,13 @@ def _check(page: Path, name: str, actual: str) -> None:
         return
     assert path.exists(), f"Missing golden file {path}: run with NOTTE_UPDATE_GOLDEN=1"
     expected = path.read_text()
-    assert actual == expected, (
-        f"{path.relative_to(SNAPSHOTS_DIR)} changed: run with NOTTE_UPDATE_GOLDEN=1 and review the diff"
-    )
+    if actual != expected:
+        diff = difflib.unified_diff(expected.splitlines(), actual.splitlines(), "expected", "actual", lineterm="", n=1)
+        shown = "\n".join(list(diff)[:80])
+        pytest.fail(
+            f"{path.relative_to(SNAPSHOTS_DIR)} changed (run with NOTTE_UPDATE_GOLDEN=1 if intended):\n{shown}",
+            pytrace=False,
+        )
 
 
 @pytest.mark.asyncio
