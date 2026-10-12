@@ -1,5 +1,5 @@
 # @sniptest filename=monitor_status.py
-# @sniptest show=6-22
+# @sniptest show=6-23
 import time
 
 from notte_sdk import NotteClient
@@ -15,7 +15,8 @@ with client.Session() as session:
         if status.status == "closed":
             break
 
-        print(f"Steps: {len(status.steps)}")
+        nb_steps = sum(1 for s in status.steps if s["type"] == "agent_step_stop")
+        print(f"Steps completed: {nb_steps}")
 
         time.sleep(5)
 

@@ -1,8 +1,12 @@
 // @sniptest filename=country_proxy.ts
-// @sniptest show=1-3
-import type { NotteProxy } from 'notte-sdk';
+// @sniptest show=1-7
+import { NotteClient, type NotteProxy } from 'notte-sdk';
 
-const proxies: NotteProxy = { type: 'notte', country: 'fr' };
+const client = new NotteClient();
 
-const results = [proxies.type, proxies.country];
-export { results };
+// Route the session through a French residential proxy
+const proxies: NotteProxy[] = [{ type: 'notte', country: 'fr' }];
+const session = client.Session({ proxies });
+
+const results = [proxies[0].type, proxies[0].country];
+export { results, session };

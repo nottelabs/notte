@@ -5,6 +5,7 @@ const response = await fetch(
     method: 'POST',
     headers: {
       'Authorization': 'Bearer YOUR_API_KEY',
+      'x-notte-api-key': 'YOUR_API_KEY',
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
@@ -12,7 +13,8 @@ const response = await fetch(
       variables: {
         url: 'https://example.com',
         search_query: 'laptop'
-      }
+      },
+      stream: false
     })
   }
 );

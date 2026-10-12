@@ -13,6 +13,6 @@ def run(url: str):
         logger.info("Navigation complete")
 
         data = session.scrape()
-        logger.info(f"Extracted {len(data)} items")
+        logger.info(f"Extracted {len(data)} characters of markdown")
 
     return data

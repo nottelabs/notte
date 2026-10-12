@@ -1,5 +1,5 @@
 # @sniptest filename=full_config.py
-# @sniptest show=5-15
+# @sniptest show=5-14
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -11,7 +11,6 @@ with client.Session(
     viewport_width=1920,
     viewport_height=1080,
     idle_timeout_minutes=10,
-    browser_type="chromium",
 ) as session:
     page = session.page
     page.goto("https://example.com")

@@ -10,7 +10,8 @@ with client.Session() as session:
     print(f"Status: {status.status}")
     print(f"Created at: {status.created_at}")
     print(f"Last accessed: {status.last_accessed_at}")
-    print(f"Timeout: {status.timeout_minutes} minutes")
+    print(f"Idle timeout: {status.idle_timeout_minutes} minutes")
+    print(f"Max duration: {status.max_duration_minutes} minutes")
     print(f"Duration: {status.duration}")
 
     # Get CDP URL for external connections

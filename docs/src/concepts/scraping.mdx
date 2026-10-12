@@ -115,6 +115,10 @@ Reduce output size by using placeholders:
 
 <LinkPlaceholders />
 
+### Extraction Model
+
+When you pass `instructions` or `response_format`, the extraction runs on the platform's default model. Set `model` to use a different one, for example `client.scrape(url, instructions="...", model="anthropic/claude-sonnet-4-5-20250929")`. See [Agent Configuration](/features/agents/configuration#reasoning_model) for the list of supported models.
+
 ## Return Types
 
 The scrape method returns different types based on parameters:
@@ -122,13 +126,15 @@ The scrape method returns different types based on parameters:
 | Parameters | Return Type |
 |------------|-------------|
 | None | `str` (markdown) |
-| `instructions` | `StructuredData[BaseModel]` |
-| `response_format` | `StructuredData[YourModel]` |
+| `instructions` | `dict` with the extracted data |
+| `response_format` | An instance of your model |
 | `only_images=True` | `list[ImageData]` |
 
-### StructuredData Response
+If structured extraction fails, `scrape` raises an error. Pass `raise_on_failure=False` to get a `StructuredData` wrapper instead, with `success`, `error`, and `data` fields you can check yourself.
 
-When using structured extraction:
+### Structured Response
+
+When using structured extraction, the extracted data is returned directly:
 
 <StructuredDataResponse />
 

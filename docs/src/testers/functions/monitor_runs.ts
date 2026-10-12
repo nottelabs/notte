@@ -1,5 +1,5 @@
 // @sniptest filename=monitor_runs.ts
-// @sniptest show=5-32
+// @sniptest show=5-42
 import assert from 'node:assert/strict';
 
 const functionId = process.env.NOTTE_FUNCTION_ID!;
@@ -11,16 +11,24 @@ const client = new NotteClient();
 
 const fn = client.NotteFunction({ function_id: functionId });
 
-// Start run
-const result = await fn.run(
-  { url: 'https://example.com' },
-  { stream: false }, // Don't stream logs
-);
+// Create the run first so you know its ID
+const { function_run_id: runId } = await fn.createRun();
 
-const runId = result.function_run_id;
+// Start it without awaiting: run() resolves only when the run finishes
+let callError: unknown;
+const execution = fn
+  .run({ url: 'https://example.com' }, { functionRunId: runId, stream: false })
+  .catch((error: unknown) => {
+    callError = error;
+  });
 
-// Poll status
+// Poll status while it runs
 while (true) {
+  if (callError) {
+    console.log('Run failed:', callError);
+    break;
+  }
+
   const status = await fn.getRun(runId);
 
   console.log(`Status: ${status.status}`);
@@ -32,6 +40,8 @@ while (true) {
 
   await sleep(5000); // Check every 5 seconds
 }
+
+await execution;
 
 const runStatus = await fn.getRun(runId);
 assert.equal(runStatus.status, 'closed');

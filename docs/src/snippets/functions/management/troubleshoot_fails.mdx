@@ -14,7 +14,7 @@ if run.status == "failed":
     print(f"Error: {run.result}")
 
     # Run the function to get a replay
-    result = function.run()
+    result = function.run(url="https://example.com", raise_on_failure=False)
     replay = function.replay()
     replay.download("debug_replay.mp4")
 ```

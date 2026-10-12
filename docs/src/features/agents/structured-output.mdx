@@ -25,7 +25,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Agents can return structured data in a specific format using Pydantic models, ensuring type safety and validation.
+Agents can return structured data in a specific format using Pydantic models. The agent's answer follows your model's JSON schema, and you parse `result.answer` with the model to get typed, validated data.
 
 ## Overview
 
@@ -91,7 +91,7 @@ Extract social media profiles:
 
 ## Field Validation
 
-Use Pydantic validators for data quality:
+Pydantic constraints and validators run when you parse `result.answer` on your side, not inside the agent. Use them to reject bad data:
 
 <FieldValidation />
 
@@ -129,7 +129,7 @@ Begin with basic models:
 
 ## Error Handling
 
-Handle validation errors:
+`result.answer` is a JSON string (or `None` if the agent failed). Handle parsing and validation errors when you load it into your model:
 
 <ErrorHandling />
 

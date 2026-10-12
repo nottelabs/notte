@@ -53,7 +53,7 @@ Use external browser providers when you need:
 1. **Specialized Infrastructure**: Provider-specific optimizations or features
 2. **Existing Setup**: You already use a browser provider and want to add Notte's features
 3. **Compliance**: Browsers must run in specific regions or under specific conditions
-4. **Custom Configuration**: Complex browser setups or extensions
+4. **Custom Configuration**: Complex browser setups or custom Chrome extensions
 5. **Cost Optimization**: Leverage existing browser infrastructure contracts
 
 ### When to Use Notte's Browsers
@@ -113,6 +113,20 @@ When using external browsers, Notte supports:
 - Notte's built-in anti-detection (use provider's features instead)
 - Notte's captcha solving (use provider's features instead)
 - Notte's proxy management (use provider's proxies)
+- Notte's ad blocking (`block_ads` has no effect)
+
+### Session Options with `cdp_url`
+
+Settings that belong to the browser itself are configured with your provider, not with Notte. When `cdp_url` is set:
+
+- `user_agent`, `chrome_args`, `viewport_width`, `viewport_height` must be left unset
+- `proxies` defaults to off; passing proxies explicitly is rejected
+- `advanced_stealth` cannot be enabled
+- `block_ads` is ignored
+
+### Custom Browser Extensions
+
+Notte-hosted sessions do not load your own Chrome extensions, and extension management over the CDP connection is blocked. If your workflow needs a custom extension, launch a browser with that extension on your own infrastructure or with an external provider, and connect Notte to it with `cdp_url`.
 
 ## Troubleshooting
 

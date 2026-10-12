@@ -9,17 +9,20 @@ class Product(BaseModel):
     price: float
 
 
+class Products(BaseModel):
+    products: list[Product]
+
+
 with client.Session() as session:
     session.execute(type="goto", url="https://example.com/products")
 
-    # AI understands the page
-    obs = session.observe(instructions="Find the search box")
-    action = obs.space.first()  # AI picks the right element
-    session.execute(action.with_value("laptops"))
+    # AI understands the page and returns matching actions
+    actions = session.observe(instructions="Find the search box")
+    session.execute(type="fill", id=actions[0].id, value="laptops")
 
     # Structured extraction with LLM
-    products = session.scrape(response_format=list[Product], instructions="Extract all products with names and prices")
+    products = session.scrape(response_format=Products, instructions="Extract all products with names and prices")
 
-    # Every action is recorded
-    replay = session.replay()
-    replay.download("automation.mp4")
+# Every session is recorded
+replay = session.replay()
+replay.download("automation.mp4")

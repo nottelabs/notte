@@ -1,5 +1,5 @@
 # @sniptest filename=error_handling.py
-# @sniptest show=7-18
+# @sniptest show=7-24
 from loguru import logger
 from notte_sdk import NotteClient
 
@@ -16,8 +16,11 @@ try:
             session.execute(type="click", selector="#button")
 
         if not fb.success:
-            # Even agent couldn't complete the task
-            alert_failure(f"Task failed: {fb.steps[-1].message}")
+            # Even the agent couldn't complete the task
+            if fb.agent_response is not None:
+                alert_failure(f"Agent failed: {fb.agent_response.answer}")
+            else:
+                alert_failure("Task failed before the agent was invoked")
 except Exception as e:
     # Unexpected error
     logger.error(f"Fallback exception: {e}")

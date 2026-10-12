@@ -6,11 +6,12 @@
 ```python Python
 import time
 
+import requests
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
-function = client.Function(function_id="workflow_abc123")
+function = client.Function(function_id="function_abc123")
 
 
 def invoke_with_retry(function, **variables):
@@ -18,8 +19,8 @@ def invoke_with_retry(function, **variables):
     for attempt in range(max_retries):
         try:
             return function.run(**variables)
-        except Exception as e:
-            if "rate limit" in str(e).lower():
+        except requests.HTTPError as e:
+            if e.response is not None and e.response.status_code == 429:
                 wait_time = 2**attempt  # Exponential backoff
                 time.sleep(wait_time)
             else:

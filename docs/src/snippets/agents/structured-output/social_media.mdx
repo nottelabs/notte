@@ -2,6 +2,7 @@
 {/* @sniptest testers/agents/structured-output/social_media.py */}
 
 ```python social_media.py
+class SocialProfile(BaseModel):
     username: str
     display_name: str
     bio: str | None
@@ -17,4 +18,5 @@ with client.Session() as session:
     result = agent.run(
         task="Extract social media profile information",
         response_format=SocialProfile,
+    )
 ```

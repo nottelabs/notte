@@ -55,7 +55,7 @@ The simplest way to call a Function:
 
 ## Via HTTP API
 
-Call Functions as HTTP endpoints:
+Call Functions as HTTP endpoints. Send your API key both as `Authorization: Bearer` and in the `x-notte-api-key` header. Set `"stream": false` to get a single JSON response instead of a log stream:
 
 ### POST Request
 
@@ -162,7 +162,9 @@ Configure webhook in external service:
 ```
 Webhook URL: https://api.notte.cc/functions/function_abc123/runs/start
 Method: POST
-Headers: Authorization: Bearer YOUR_API_KEY
+Headers:
+  Authorization: Bearer YOUR_API_KEY
+  x-notte-api-key: YOUR_API_KEY
 ```
 
 ### Testing Webhooks
@@ -217,26 +219,26 @@ Test webhook locally:
 - No cloud execution costs
 
 **Requirements:**
-- Decryption key (from Console) - passed when creating Function instance
-- Function code accessible locally
+- Access to the function's code (you own it or it is shared with you)
+- Notte-managed functions also need their decryption key, passed as `decryption_key` when creating the Function instance
 
 ## Rate Limits
 
-### Account Limits
+### Rate-Limited Runs
 
-Functions have rate limits based on your plan:
-
-- **Free**: 10 concurrent runs
-- **Pro**: 50 concurrent runs
-- **Enterprise**: Custom limits
+Running a published function that you do not own is rate limited per caller. When you exceed the limit, the API answers with HTTP `429`.
 
 ### Handling Rate Limits
+
+Retry with backoff when a run is rejected with `429`:
 
 <RateLimitHandling />
 
 ## Best Practices
 
 ### 1. Use Appropriate Timeout
+
+In Python, `timeout` is how many seconds the SDK waits for data from the server before giving up (default 300); a long run that keeps streaming logs is not cut off. In TypeScript, `timeoutMs` is a deadline for the whole call (default 5 minutes) and throws `NotteTimeoutError` when it elapses. Both only control how long your code waits for the result.
 
 <TimeoutExamples />
 

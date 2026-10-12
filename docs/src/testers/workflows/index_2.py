@@ -4,7 +4,7 @@ client = NotteClient()
 
 # Create a new function from our local Python file
 function = client.Function(
-    workflow_path="my_scraping_function.py", name="My Scraping Function", description="A function for scraping the web"
+    path="my_scraping_function.py", name="My Scraping Function", description="A function for scraping the web"
 )
 print(f"Function created with ID: {function.function_id}. You can reference it using `client.Function(<function_id>)`")
 
@@ -13,7 +13,7 @@ response = function.run(url="https://shop.notte.cc/")
 print(f"Function completed with result: {response.result}")
 
 # Update function with new version, from our local python file
-function.update(workflow_path="my_scraping_function.py")
+function.update(path="my_scraping_function.py")
 
 # List all functions
 functions = client.functions.list()

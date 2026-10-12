@@ -40,9 +40,11 @@ Manage the lifecycle of your Functions including updates, versioning, monitoring
 
 ### List All Functions
 
-View all deployed Functions:
+View your deployed Functions:
 
 <ListFunctions />
+
+List calls are paginated (10 items per page by default, up to 100 with `page_size`). Use `page` and the response's `has_next` to read further pages. In Python, `client.functions.list()` and `list_runs()` default to `only_active=True`.
 
 ### Get Function Details
 
@@ -62,14 +64,26 @@ Deploy a new version of your Function:
 
 ### Update Function Metadata
 
-Change Function name or description:
+Change the name, description, or default runtime with `PATCH /functions/{function_id}`, or `fn.updateMetadata()` in TypeScript. The Python SDK has no wrapper for this call yet.
 
-```python
-# Update metadata (via console or API)
-# Name and description updates are available through the Console
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.notte.cc/functions/YOUR_FUNCTION_ID \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Price monitor", "description": "Checks competitor prices"}'
 ```
 
-**Note:** Function updates create new versions automatically. Previous versions remain accessible for rollback.
+```typescript TypeScript
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+const fn = client.NotteFunction({ function_id: 'YOUR_FUNCTION_ID' });
+await fn.updateMetadata({ name: 'Price monitor', description: 'Checks competitor prices' });
+```
+</CodeGroup>
+
+**Note:** Code updates create new versions automatically. Previous versions remain available for rollback.
 
 ## Versioning
 
@@ -79,9 +93,9 @@ Functions automatically version on each update:
 
 <VersionManagement />
 
-### Run Specific Version
+### Roll Back to a Previous Version
 
-Execute a specific Function version:
+Cloud runs always execute the latest version. To go back to an older one, roll back with `POST /functions/{function_id}/rollback` and a version from `versions`, or `fn.rollback({ version })` in TypeScript. The old code is redeployed as a new latest version:
 
 <RunSpecificVersion />
 
@@ -98,7 +112,7 @@ Track changes across versions:
 List recent Function executions:
 
 Before running this example, set `function_id` (Python) or `functionId` (Node)
-to the ID of the Function whose history you want to inspect.
+to the ID of the Function whose history you want to inspect. Pass `only_active=False` to include finished and failed runs.
 
 <ViewRunHistory />
 
@@ -185,8 +199,8 @@ Retrieve Function source code:
 <DownloadCode />
 
 **Requirements:**
-- Decryption key (available in Console) - passed when creating Function instance
 - Only works for Functions you own or have access to
+- Notte-managed functions also need their decryption key, passed as `decryption_key` when creating the Function instance
 
 ### Download for Backup
 
@@ -205,7 +219,6 @@ Remove a Function permanently:
 **Warning:**
 - Deletion is permanent
 - All versions are deleted
-- Run history is preserved
 - Cannot be undone
 
 ## Sharing Functions
@@ -220,7 +233,6 @@ Share Functions with others:
 - ✅ Others can view and fork
 - ✅ Original remains under your control
 - ❌ Others cannot modify your version
-- ✅ Usage tracked to your account
 
 ### Private Functions
 
@@ -268,9 +280,9 @@ Check run details for errors:
 
 <TroubleshootFails />
 
-### Missing Environment Variables
+### Missing Secrets
 
-Verify configuration:
+Function Secrets reach your code as environment variables (see [Secrets](/features/functions/creating#secrets)). Check for them at the start of `run()`:
 
 <MissingEnvVars />
 

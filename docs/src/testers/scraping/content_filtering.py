@@ -6,9 +6,9 @@ client = NotteClient()
 url = "https://example.com"
 
 # Only main content (excludes navbars, footers, sidebars)
-markdown = client.scrape(url, only_main_content=True)  # Default
+markdown = client.scrape(url, only_main_content=True)
 
-# Include all page content
+# Include all page content (default)
 markdown = client.scrape(url, only_main_content=False)
 
 results = [isinstance(markdown, str), "Example Domain" in markdown]

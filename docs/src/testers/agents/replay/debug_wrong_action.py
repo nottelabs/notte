@@ -6,7 +6,11 @@ with client.Session() as session:
     agent = client.Agent(session=session)
     result = agent.run(task="Fill the email field")
 
-    # Check what agent saw
+    # Check what the agent saw and decided at each step
     for step in result.steps:
-        print(f"Action: {step['action']}")
-        print(f"Reasoning: {step.get('reasoning', 'N/A')}")
+        if step["type"] != "agent_completion":
+            continue
+        completion = step["value"]
+        print(f"Page summary: {completion['state']['page_summary']}")
+        print(f"Next goal: {completion['state']['next_goal']}")
+        print(f"Action: {completion['action']}")
