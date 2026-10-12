@@ -1,7 +1,7 @@
 [project]
 name = "notte-sdk"
 version = "2.0.0.dev0"
-description = "The SDK for Notte"
+description = "Python SDK for the Notte API: cloud browser sessions, functions, vaults and personas"
 readme = "README.md"
 authors = [
     { name = "Notte Team ", email = "hello@notte.cc" }

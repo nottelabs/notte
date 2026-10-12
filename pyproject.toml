@@ -1,7 +1,7 @@
 [project]
 name = "notte"
 version = "2.0.0.dev0"
-description = "Notte, the full-stack web AI agent framework"
+description = "Notte: browser infrastructure for AI agents and web automation"
 readme = "README.md"
 license = "SSPL-1.0"
 authors = [

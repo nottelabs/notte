@@ -62,7 +62,7 @@ def test_pip_install_notte_sdk():
 
 @pytest.mark.skip(reason="Fails for some weird reason")
 def test_pip_install_notte():
-    _test_pip_install("notte", "from notte import Agent")
+    _test_pip_install("notte", "from notte import Session")
 
 
 @pytest.mark.skip(reason="Fails for some weird reason")

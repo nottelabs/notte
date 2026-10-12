@@ -4,7 +4,7 @@ description: 'How to build reliable web scrapers with Notte'
 ---
 import SimpleScrape from '/snippets/scraping/simple.mdx';
 import StructuredScrape from '/snippets/scraping/structured.mdx';
-import AgentScrape from '/snippets/scraping/agent.mdx';
+import AuthenticatedScrape from '/snippets/scraping/agent.mdx';
 import SchemaDesign from '/snippets/guides/schema_design.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
@@ -31,16 +31,16 @@ Let's say you want to extract pricing information from a website. First, define 
 
 <StructuredScrape />
 
-## Agent Scraping
+## Session Scraping
 
-Agent Scraping is a more powerful way to scrape web pages. It allows you to navigate through the page, fill forms, and extract data from dynamic content.
+Session Scraping is a more powerful way to scrape web pages. Open a session, navigate through the site, log in and fill forms with `session.execute(...)`, then extract data from the resulting page with `session.scrape(...)`.
 
-<AgentScrape />
+<AuthenticatedScrape />
 
 
 ## Topics & Tips
 
-### Scrape API vs Agent Scrape
+### Scrape API vs Session Scrape
 
 <Columns cols={2}>
   <Card title="Scrape API" icon="flag">
@@ -54,7 +54,7 @@ Perfect for
 
 **3. Static content**
   </Card>
-  <Card title="Agent Scrape" icon="robot">
+  <Card title="Session Scrape" icon="browser">
 Perfect for
 
 **1. Authentication or login flows**
@@ -78,7 +78,7 @@ Use `response_format` whenever possible to yield the best & most reliable result
 - Try a few different schemas to find what works best
 - If you ask for a `company_name` field but there is no `company_name` on the page, LLM scraping will fail
 - Design your schema carefully based on the actual content structure
-- Response format is available for both `scrape` and `agent.run`
+- Response format is available for both `client.scrape` and `session.scrape`
 
 **Example of good schema design:**
 

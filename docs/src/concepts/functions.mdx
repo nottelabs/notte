@@ -176,12 +176,10 @@ Functions are a **deployment layer** - they turn any automation into a reusable 
 │            (Deployment & Scheduling)                │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
-│   ┌─────────────────┐    ┌─────────────────┐       │
-│   │ Scripted        │ or │ Agent           │       │
-│   │ Automation      │    │ (AI-driven)     │       │
-│   └────────┬────────┘    └────────┬────────┘       │
-│            │                      │                 │
-│            └──────────┬───────────┘                 │
+│              ┌─────────────────┐                    │
+│              │    Your code    │                    │
+│              │ (actions, CDP)  │                    │
+│              └────────┬────────┘                    │
 │                       │                             │
 │              ┌────────▼────────┐                    │
 │              │    Session      │                    │
@@ -192,7 +190,7 @@ Functions are a **deployment layer** - they turn any automation into a reusable 
 ```
 
 - **Session** - The cloud browser that runs everything
-- **Scripted Automation vs Agent** - How you control the session
+- **Your code** - How you control the session (Notte actions, scraping, Playwright over CDP)
 - **Function** - Deploys your automation as an API with scheduling, versioning, and sharing
 
 **Use Functions when:**
@@ -200,8 +198,6 @@ Functions are a **deployment layer** - they turn any automation into a reusable 
 - You want to expose automation as an API
 - You need scheduling capabilities
 - You want to share automation with team or customers
-
-Functions can contain either scripted automation or agents - they're not mutually exclusive.
 
 ## Function Lifecycle
 

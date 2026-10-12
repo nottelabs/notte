@@ -16,7 +16,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
   CDP operation 'Extensions.loadUnpacked' is not permitted in Notte Cloud sessions.
   ```
 
-  This affects both the Python and the TypeScript SDK, and there is no client-side flag that skips the extension. Until Notte can preload the helper extension, use [Browser Use](/integrations/browser-use), [Playwright](/features/sessions/playwright), or a [Notte agent](/concepts/agents) instead.
+  This affects both the Python and the TypeScript SDK, and there is no client-side flag that skips the extension. Until Notte can preload the helper extension, use [Browser Use](/integrations/browser-use), [Playwright](/features/sessions/playwright), or [Notte actions](/features/sessions/browser-controls) instead.
 </Warning>
 
 ## How the connection is meant to work
@@ -38,8 +38,8 @@ The equivalent in TypeScript is `localBrowser.connect({ cdpUrl })` from `@browse
     An LLM driving a Notte browser over CDP, working today
   </Card>
 
-  <Card title="Browser Agents" icon="wand-magic-sparkles" href="/concepts/agents">
-    Hand the whole task to a Notte agent
+  <Card title="Anything API" icon="wand-magic-sparkles" href="/concepts/anything">
+    Describe a task in plain English and let Notte build and run it
   </Card>
 
   <Card title="Connect with Playwright" icon="p" href="/features/sessions/playwright">

@@ -6,10 +6,10 @@ If you want to change any parameter of the [notte config](../packages/notte-core
 export NOTTE_CONFIG_PATH="path/to/your/notte_config.toml"
 ```
 
-For instance, if you want to change the temperature of the LLM, you can create a blank `notte_config.toml` file and add the following:
+For instance, if you want to run local browsers in headless mode, you can create a blank `notte_config.toml` file and add the following:
 
 ```toml
-temperature = 0.5
+headless = true
 ```
 
 Note that it is very important to export the `NOTTE_CONFIG_PATH` environment variable before importing any notte module.
@@ -21,6 +21,16 @@ import notte
 ```
 
 Otherwise, the default config will be used and your changes will not be applied.
+
+## LLM settings
+
+The config file only covers browser, DOM parsing and timeout settings. Local LLM features (structured `scrape(instructions=..., response_format=...)` on a local `notte.Session`) are an optional extra installed with `pip install 'notte[llm]'`, and they are configured through environment variables instead:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NOTTE_LLM_MODEL` | provider default | LiteLLM model name used for structured extraction |
+| `NOTTE_LLM_NB_RETRIES_STRUCTURED_OUTPUT` | `2` | Retries when the LLM output does not match the schema |
+| `NOTTE_LLM_TEMPERATURE` | `0.0` | Sampling temperature |
 
 ## JavaScript result size
 

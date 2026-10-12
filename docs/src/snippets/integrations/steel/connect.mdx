@@ -5,9 +5,9 @@
 
 # Connect Notte to Steel's browser via CDP
 with client.Session(cdp_url=steel_session.websocket_url) as session:
-    # Create an agent with a task
-    agent = client.Agent(session=session, max_steps=10)
+    # Drive the Steel browser with Notte actions
+    session.execute(type="goto", url="https://www.notte.cc/pricing")
 
-    # Run your automation task
-    result = agent.run(task="extract pricing plans from https://www.notte.cc")
+    # Extract structured data from the page
+    pricing = session.scrape(instructions="extract the pricing plans")
 ```

@@ -51,7 +51,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 ## Authentication
 
-- [Secret Vaults](https://docs.notte.cc/concepts/vaults.md): Enterprise-grade credential management for your Sessions & Agents
+- [Secret Vaults](https://docs.notte.cc/concepts/vaults.md): Enterprise-grade credential management for your Sessions
 - [Browser Profiles](https://docs.notte.cc/features/sessions/browser-profiles.md): Persist browser state across sessions
 - [Persona Identities](https://docs.notte.cc/concepts/personas.md): Self-service identities for web automation (account creation, 2FA,etc.)
 
@@ -346,19 +346,9 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [EmailReadAction](https://docs.notte.cc/sdk-reference/misc/emailreadaction.md): Read recent emails from the mailbox
 - [EmailVerificationReadAction](https://docs.notte.cc/sdk-reference/misc/emailverificationreadaction.md): Read a recent verification code or link from a workspace mailbox
 
-#### Agent
-
-- [Get started](https://docs.notte.cc/sdk-reference/manual/agent.md): Running agents is a breeze
-- [run](https://docs.notte.cc/sdk-reference/remoteagent/run.md): Run an agent with the specified request parameters and wait for completion
-- [replay](https://docs.notte.cc/sdk-reference/remoteagent/replay.md): Get the replay for the agent's session
-- [start](https://docs.notte.cc/sdk-reference/remoteagent/start.md): Start the agent with the specified request parameters
-- [stop](https://docs.notte.cc/sdk-reference/remoteagent/stop.md): Stop the currently running agent
-- [status](https://docs.notte.cc/sdk-reference/remoteagent/status.md): Get the current status of the agent
-- [Agent Fallback](https://docs.notte.cc/sdk-reference/manual/agent_fallback.md): Gracefully handle script execution failures with Web Agents
-
 #### Function
 
-- [Get started](https://docs.notte.cc/sdk-reference/manual/workflow.md): Create, manage, and execute automated web functions
+- [Get started](https://docs.notte.cc/sdk-reference/manual/function.md): Create, manage, and execute Notte functions
 - [create_run](https://docs.notte.cc/sdk-reference/nottefunction/create_run.md): Create a run record without starting execution
 - [run](https://docs.notte.cc/sdk-reference/nottefunction/run.md): Run the function on the Notte cloud using the specified variables
 - [update](https://docs.notte.cc/sdk-reference/nottefunction/update.md): Update the function with a new code version

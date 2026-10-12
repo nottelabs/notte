@@ -12,12 +12,6 @@
     "expected": { "status": "closed" },
     "closedSession": true
   },
-  "agents/config/bp_model_selection.ts": {
-    "expected": { "results": ["anthropic/claude-3.5-sonnet"] }
-  },
-  "agents/config/bp_step_limits.ts": {
-    "expected": { "results": [30] }
-  },
   "sessions/country_proxy.ts": {
     "expected": { "results": ["notte", "fr"] }
   },
@@ -74,22 +68,6 @@
     "expected": { "status": "active" },
     "closedSession": true
   },
-  "agents/config/param_max_steps.ts": {
-    "expected": { "status": "active" },
-    "closedSession": true
-  },
-  "agents/config/param_use_vision.ts": {
-    "expected": { "status": "active" },
-    "closedSession": true
-  },
-  "agents/config/param_notifier.ts": {
-    "expected": { "status": "closed" },
-    "closedSession": true
-  },
-  "agents/config/param_session.ts": {
-    "expected": { "status": "closed" },
-    "closedSession": true
-  },
   "functions/management/filter_active_runs.ts": {
     "expected": { "results": [] },
     "logContains": "Active runs: 0"
@@ -110,18 +88,6 @@
     "expected": { "status": "active" },
     "closedSession": true,
     "logContains": "← https://example.com/ (200)"
-  },
-  "agents/config/creating_agent.ts": {
-    "expected": { "status": "closed" },
-    "closedSession": true
-  },
-  "agents/config/param_reasoning_model.ts": {
-    "expected": { "status": "active" },
-    "closedSession": true
-  },
-  "agents/config/bp_vision.ts": {
-    "expected": { "status": "active" },
-    "closedSession": true
   },
   "sessions/cdp/playwright_events.ts": {
     "expected": { "status": "active" },

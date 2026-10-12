@@ -1,7 +1,7 @@
 [project]
 name = "notte-core"
 version = "2.0.0.dev0"
-description = "The web browser for LLMs agents"
+description = "Shared models, actions and config for the Notte packages"
 readme = "README.md"
 authors = [
     { name = "Notte Team ", email = "hello@notte.cc" }

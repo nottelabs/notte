@@ -12,10 +12,10 @@ uv run pre-commit install
 uv run patchright install --with-deps chromium
 ```
 
-Copy the `.env.example` file to `.env` and fill in your API keys. Note that by default, `notte` uses `groq/llama-3.3-70b-versatile`. So you need to set the `GROQ_API_KEY` environment variable in your `.env` file. You can set up this key by creating a [GROQ account](https://groq.com/docs/api-reference/introduction) and creating an API key.
+Copy the `.env.example` file to `.env` and fill in your API keys (at least `NOTTE_API_KEY` to use the cloud SDK).
 
 ```sh
 cp .env.example .env
 ```
 
-Notte uses `litellm` to interface with multiple LLM providers. You can also set other API keys in your `.env` file to use other LLM providers (e.g. `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, etc.)
+The optional `notte[llm]` extra (structured scraping on local sessions) uses `litellm` to interface with multiple LLM providers. Set the API key of the provider you use in your `.env` file (e.g. `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) and pick the model with `NOTTE_LLM_MODEL` (see [change_local_config.md](change_local_config.md)).

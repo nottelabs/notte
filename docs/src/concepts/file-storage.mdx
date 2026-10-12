@@ -7,7 +7,6 @@ import UploadingFiles from '/snippets/file-storage/uploading_files.mdx';
 import UrlUpload from '/snippets/file-storage/url_upload.mdx';
 import DownloadingFiles from '/snippets/file-storage/downloading_files.mdx';
 import ForceOverwrite from '/snippets/file-storage/force_overwrite.mdx';
-import UsingWithAgents from '/snippets/file-storage/using_with_agents.mdx';
 import UsingWithSessions from '/snippets/file-storage/using_with_sessions.mdx';
 import AttachBeforeStarting from '/snippets/file-storage/attach_before_starting.mdx';
 import DescriptiveFilenames from '/snippets/file-storage/descriptive_filenames.mdx';
@@ -16,7 +15,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-File Storage provides a cloud bucket for uploading files to use in your automations and downloading files that agents retrieve from websites.
+File Storage provides a cloud bucket for uploading files to use in your automations and downloading files that your sessions retrieve from websites.
 
 ## Quick Start
 
@@ -28,8 +27,8 @@ File Storage has two buckets:
 
 | Bucket | Purpose | API |
 |--------|---------|-----|
-| **Uploads** | Files you upload for agents to use | `storage.upload()` |
-| **Downloads** | Files agents download from websites | `storage.download()` |
+| **Uploads** | Files you upload for sessions to use | `storage.upload()` |
+| **Downloads** | Files sessions download from websites | `storage.download()` |
 
 ```
 ┌─────────────┐                    ┌──────────────┐
@@ -39,7 +38,7 @@ File Storage has two buckets:
                                          v
                                   ┌──────────────┐
                                   │   Session    │
-                                  │   / Agent    │
+                                  │              │
                                   └──────┬───────┘
                                          │
                                          v
@@ -82,7 +81,7 @@ files; URL support belongs to the browser's `upload_file` action.
 
 ## Downloading Files
 
-Download files that agents retrieved from websites:
+Download files that your session retrieved from websites with the `download_file` action:
 
 <DownloadingFiles />
 
@@ -95,12 +94,6 @@ your storage's session ID, and `file_id` or `fileId` to the ID returned by uploa
 or listing the file. The Node example uses the `client` initialized above.
 
 <ForceOverwrite />
-
-## Using with Agents
-
-Agents can interact with files on websites when storage is attached:
-
-<UsingWithAgents />
 
 ## Using with Sessions
 
@@ -117,7 +110,7 @@ Use file storage with scripted automation:
 | `upload(file_path, upload_file_name=None)` | Upload a local file to storage |
 | `download(file_name, local_dir, force=False)` | Download a file to local directory |
 | `list_uploaded_files()` | List files you've uploaded |
-| `list_downloaded_files()` | List files downloaded by agents |
+| `list_downloaded_files()` | List files downloaded by sessions |
 
 ### Parameters
 
