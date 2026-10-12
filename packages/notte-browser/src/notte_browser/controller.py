@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import json
 import traceback
@@ -41,6 +42,7 @@ from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import ActionExecutionError
+from notte_core.errors.base import NotteTimeoutError
 from notte_core.profiling import profiler
 from notte_core.storage import BaseStorage
 from notte_core.utils.code import text_contains_tabs
@@ -247,6 +249,18 @@ async def _evaluate_blob_expression(
     return await evaluate_in_main_world(frame, expression)
 
 
+class _ActionBudget:
+    """What is left of an action's timeout, as a Playwright `timeout=` (milliseconds, never 0 = infinite)."""
+
+    def __init__(self, deadline: float) -> None:
+        self._deadline: float = deadline  # event loop time, in seconds
+
+    def remaining_ms(self, keep_ms: float = 0) -> float:
+        """Remaining budget, minus `keep_ms` held back for a later step (e.g. a fallback)."""
+        remaining = (self._deadline - asyncio.get_running_loop().time()) * 1000
+        return max(1.0, remaining - keep_ms)
+
+
 @final
 class BrowserController:
     def __init__(
@@ -263,7 +277,7 @@ class BrowserController:
         await window.page.keyboard.press(key="Backspace")
         await window.short_wait()
 
-    async def _append_text(self, window: BrowserWindow, locator: Locator, text: str, timeout: int) -> None:
+    async def _append_text(self, window: BrowserWindow, locator: Locator, text: str, timeout: float) -> None:
         """Type `text` after the element's current content instead of replacing it."""
         if await locator.evaluate(_IS_TEXT_FORM_CONTROL, timeout=timeout):
             existing = await locator.input_value(timeout=timeout)
@@ -423,18 +437,43 @@ class BrowserController:
         action: InteractionAction,
         prev_snapshot: BrowserSnapshot | None = None,
     ) -> bool:
+        """Interact with an element within `action.timeout`, then let a navigation it started settle.
+
+        The timeout covers locating the element and the interaction itself, fallbacks included.
+        Waiting for the page a successful interaction navigated to is best-effort: a slow load
+        is logged, it does not fail the action.
+        """
         if action.selectors is None:
             raise ValueError(f"Selector is required for {action.name()}")
-        press_enter = False
-        if action.press_enter is not None:
-            press_enter = action.press_enter
+        original_url = window.page.url
+        deadline = asyncio.get_running_loop().time() + action.timeout / 1000
+        scope = asyncio.timeout_at(deadline)
+        try:
+            async with scope:
+                await self._interact(window, action, _ActionBudget(deadline), prev_snapshot)
+        except TimeoutError as e:
+            if not scope.expired():
+                raise
+            raise NotteTimeoutError(message=f"Action timed out after {action.timeout}ms") from e
+        if original_url != window.page.url:
+            if self.verbose:
+                logger.info(f"🪦 Page navigation detected for action {action.id} waiting for networkidle")
+            try:
+                await window.long_wait()
+            except Error as e:
+                logger.warning(f"🪦 Page did not settle after action {action.id} navigated: {e}")
+        return True
+
+    async def _interact(
+        self,
+        window: BrowserWindow,
+        action: InteractionAction,
+        budget: _ActionBudget,
+        prev_snapshot: BrowserSnapshot | None,
+    ) -> None:
+        assert action.selectors is not None
         # locate element (possibly in iframe)
         locator: Locator = await locate_element(window.page, action.selectors)
-
-        original_url = window.page.url
-
-        # Use action's timeout (defaults to config.timeout_action_ms)
-        action_timeout = action.timeout
 
         match action:
             # Interaction actions
@@ -461,15 +500,16 @@ class BrowserController:
                         return false;
                     }
                     """,
-                    timeout=action_timeout,
+                    timeout=budget.remaining_ms(),
                 )
                 if is_disabled:
                     raise ActionExecutionError(action.id, window.page.url, reason="Element is disabled")
                 try:
-                    await locator.click(timeout=action_timeout)
+                    # hold back part of the budget for the JS click fallback
+                    await locator.click(timeout=budget.remaining_ms(keep_ms=action.timeout / 5))
                 except PlaywrightTimeoutError as e:
                     logger.warning(f"Failed to click on element: {e}, fallback to js click")
-                    await locator.evaluate("(el) => el.click()", timeout=action_timeout)
+                    await locator.evaluate("(el) => el.click()", timeout=budget.remaining_ms())
 
             case FillAction(value=value):
                 if text_contains_tabs(text=get_str_value(value)):
@@ -477,12 +517,12 @@ class BrowserController:
                         logger.info(
                             "🪦 Indentation detected in fill action: simulating clipboard copy/paste for better string formatting"
                         )
-                    await locator.focus()
+                    await locator.focus(timeout=budget.remaining_ms())
 
                     if action.clear_before_fill:
                         await self._clear_focused_field(window)
                     else:
-                        await locator.evaluate(_MOVE_CARET_TO_END, timeout=action_timeout)
+                        await locator.evaluate(_MOVE_CARET_TO_END, timeout=budget.remaining_ms())
 
                     # Use isolated clipboard variable instead of system clipboard
                     await window.page.evaluate(
@@ -505,12 +545,12 @@ class BrowserController:
                 elif action.clear_before_fill:
                     # `fill` replaces the current value. `force` (skip actionability checks) is what every
                     # default fill used before `clear_before_fill` stopped being passed as `force`.
-                    await locator.fill(get_str_value(value), timeout=action_timeout, force=True)
+                    await locator.fill(get_str_value(value), timeout=budget.remaining_ms(), force=True)
                 else:
-                    await self._append_text(window, locator, get_str_value(value), action_timeout)
+                    await self._append_text(window, locator, get_str_value(value), budget.remaining_ms())
             case MultiFactorFillAction(value=value):
                 # click the locator, then fill in one number at a time
-                await locator.click()
+                await locator.click(timeout=budget.remaining_ms())
                 if action.clear_before_fill:
                     await self._clear_focused_field(window)
 
@@ -518,27 +558,27 @@ class BrowserController:
                     await window.page.keyboard.press(key=num)
                     await window.page.wait_for_timeout(100)
             case FallbackFillAction(value=value):
-                await locator.click()
+                await locator.click(timeout=budget.remaining_ms())
                 if action.clear_before_fill:
                     await self._clear_focused_field(window)
                 else:
-                    await locator.evaluate(_MOVE_CARET_TO_END, timeout=action_timeout)
-                await locator.press_sequentially(get_str_value(value), delay=100)
+                    await locator.evaluate(_MOVE_CARET_TO_END, timeout=budget.remaining_ms())
+                await locator.press_sequentially(get_str_value(value), delay=100, timeout=budget.remaining_ms())
                 await window.short_wait()
             case CheckAction(value=value):
                 if value:
-                    await locator.check()
+                    await locator.check(timeout=budget.remaining_ms())
                 else:
-                    await locator.uncheck()
+                    await locator.uncheck(timeout=budget.remaining_ms())
             case SelectDropdownOptionAction(value=value):
                 # Check if it's a standard HTML select
-                tag_name: str = await locator.evaluate("el => el.tagName.toLowerCase()")
+                tag_name: str = await locator.evaluate("el => el.tagName.toLowerCase()", timeout=budget.remaining_ms())
                 if tag_name == "select":
                     # Handle standard HTML select
-                    _ = await locator.select_option(get_str_value(value))
+                    _ = await locator.select_option(get_str_value(value), timeout=budget.remaining_ms())
                 else:
                     try:
-                        _ = await locator.click()
+                        _ = await locator.click(timeout=budget.remaining_ms())
                     except Exception as e:
                         raise ActionExecutionError("select_dropdown", "", reason="Invalid selector") from e
             case UploadFileAction(file_path=file_path):
@@ -566,8 +606,8 @@ class BrowserController:
                         if locator_node.attributes.tag_name in clickable_els:
                             if self.verbose:
                                 logger.info("Attempting file chooser detection")
-                            async with window.page.expect_file_chooser() as fc:
-                                await locator.click()
+                            async with window.page.expect_file_chooser(timeout=budget.remaining_ms()) as fc:
+                                await locator.click(timeout=budget.remaining_ms())
                             file_chooser = await fc.value
                             await file_chooser.set_files(upload_file_path)
                             file_chooser_flag = True
@@ -603,12 +643,12 @@ class BrowserController:
                     try:
                         if self.verbose:
                             logger.info("Trying to set files")
-                        await locator.set_input_files(files=[upload_file_path])
+                        await locator.set_input_files(files=[upload_file_path], timeout=budget.remaining_ms())
                     except Exception as e:
                         if "Node is not an HTMLInputElement" in str(e):
                             # this is a special case where the element cannot be clicked on
                             # try to go to the root element throught the element bounding boxes and click on it
-                            bbox = await locator.bounding_box()
+                            bbox = await locator.bounding_box(timeout=budget.remaining_ms())
                             if bbox is None:
                                 raise FailedToUploadFileError(
                                     action_id=action.id,
@@ -617,13 +657,13 @@ class BrowserController:
                                 )
                             # click on the center of the element
                             try:
-                                async with window.page.expect_file_chooser() as fc_info:
+                                async with window.page.expect_file_chooser(timeout=budget.remaining_ms()) as fc_info:
                                     await window.page.mouse.click(
                                         bbox["x"] + bbox["width"] * 0.54, bbox["y"] + bbox["height"] * 0.35
                                     )
                                     fc = await fc_info.value
-                                    await fc.set_files(upload_file_path)
-                                    return True
+                                    await fc.set_files(upload_file_path, timeout=budget.remaining_ms())
+                                    return
                             except Exception:
                                 logger.warning("Error setting files through bounding box...")
                         else:
@@ -667,8 +707,8 @@ class BrowserController:
                         # main world directly. Firefox also uses this path.
                         _ = await _evaluate_blob_expression(blob_frame, _BLOB_CAPTURE_HOOK, cdp=cdp)
 
-                        async with window.page.expect_download() as dw:
-                            await locator.click()
+                        async with window.page.expect_download(timeout=budget.remaining_ms()) as dw:
+                            await locator.click(timeout=budget.remaining_ms())
                         download = await dw.value
 
                         dl_url = download.url
@@ -728,17 +768,11 @@ class BrowserController:
 
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
-        if press_enter:
+        if action.press_enter:
             if self.verbose:
                 logger.info(f"🪦 Pressing enter for action {action.id}")
                 await window.short_wait()
             await window.page.keyboard.press("Enter")
-        if original_url != window.page.url:
-            if self.verbose:
-                logger.info(f"🪦 Page navigation detected for action {action.id} waiting for networkidle")
-            await window.long_wait()
-
-        return True
 
     @profiler.profiled(service_name="execution")
     @capture_playwright_errors()

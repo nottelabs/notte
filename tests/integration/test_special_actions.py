@@ -51,11 +51,11 @@ async def test_go_back_and_forward():
     """Test the execution of various special actions"""
     async with NotteSession(headless=True) as page:
         # Test S4: Go to notte
-        _ = await page.aexecute(type="goto", value="https://github.com/")
+        _ = await page.aexecute(type="goto", url="https://github.com/")
         obs = await page.aobserve()
         assert obs.clean_url == "github.com"
         # Test S4: Go back
-        _ = await page.aexecute(type="goto", value="https://notte.cc/")
+        _ = await page.aexecute(type="goto", url="https://notte.cc/")
         obs = await page.aobserve()
         assert "notte.cc" in obs.clean_url
         _ = await page.aexecute(type="go_back")
@@ -73,13 +73,13 @@ async def test_wait_and_complete():
     """Test the execution of various special actions"""
     async with NotteSession(headless=True) as page:
         # Test S4: Go goto goole
-        _ = await page.aexecute(type="goto", value="https://www.google.com/")
+        _ = await page.aexecute(type="goto", url="https://www.google.com/")
         obs = await page.aobserve()
 
         assert "google.com" in obs.clean_url
 
         # Test S7: Wait
-        _ = await page.aexecute(type="wait", value=1)
+        _ = await page.aexecute(type="wait", time_ms=1)
 
         _ = await page.aobserve()
 
@@ -88,7 +88,7 @@ async def test_wait_and_complete():
 async def test_special_action_validation():
     """Test validation of special action parameters"""
     async with NotteSession(headless=True, raise_on_failure=False) as page:
-        _ = await page.aexecute(type="goto", value="https://github.com/")
+        _ = await page.aexecute(type="goto", url="https://github.com/")
         _ = await page.aobserve()
         # Test S1 requires URL parameter
         with pytest.raises(ValueError, match="validation error for GotoAction"):
@@ -121,24 +121,24 @@ async def test_special_action_validation():
 async def test_switch_tab():
     """Test the execution of the switch tab action"""
     with NotteSession(headless=True) as page:
-        _ = await page.aexecute(type="goto", value="https://github.com/")
+        _ = await page.aexecute(type="goto", url="https://github.com/")
         obs = await page.aobserve()
         assert len(obs.metadata.tabs) == 1
         assert obs.clean_url == "github.com"
 
         _ = await page.aexecute(
             type="goto_new_tab",
-            value="https://www.google.com/",
+            url="https://www.google.com/",
         )
         obs = await page.aobserve()
         assert len(obs.metadata.tabs) == 2
         assert "google.com" in obs.clean_url
 
-        _ = page.execute(type="switch_tab", value="0")
+        _ = page.execute(type="switch_tab", tab_index=0)
         obs = await page.aobserve()
         assert obs.clean_url == "github.com"
 
-        _ = page.execute(type="switch_tab", value="1")
+        _ = page.execute(type="switch_tab", tab_index=1)
         obs = await page.aobserve()
         assert "google.com" in obs.clean_url
 
@@ -148,7 +148,7 @@ async def test_scroll_on_non_scrollable_page_should_fail():
     assert ErrorConfig.get_message_mode().value == "developer"
     async with NotteSession(raise_on_failure=False) as session:
         assert ErrorConfig.get_message_mode().value == "developer"
-        _ = await session.aexecute(type="goto", value="https://www.google.com/")
+        _ = await session.aexecute(type="goto", url="https://www.google.com/")
         _ = await session.aobserve()
         assert ErrorConfig.get_message_mode().value == "developer"
         res = await session.aexecute(type="scroll_down")
@@ -160,7 +160,7 @@ async def test_scroll_on_non_scrollable_page_should_fail():
 @pytest.mark.asyncio
 async def test_scroll_on_scrollable_page_should_succeed():
     async with NotteSession(browser_type="chrome") as session:
-        res = await session.aexecute(type="goto", value="https://duckduckgo.com/")
+        res = await session.aexecute(type="goto", url="https://duckduckgo.com/")
         assert res.success
         obs = await session.aobserve()
         res = await session.aexecute(type="scroll_down")

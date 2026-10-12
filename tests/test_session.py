@@ -111,7 +111,7 @@ async def test_step_should_fail_without_observation() -> None:
 async def test_step_should_succeed_after_observation() -> None:
     """Test that step should fail without observation"""
     async with NotteSession() as page:
-        _ = await page.aexecute(type="goto", value="https://www.example.com")
+        _ = await page.aexecute(type="goto", url="https://www.example.com")
         _ = await page.aobserve()
         _ = await page.aexecute(ClickAction(id="L1"))
 
@@ -120,7 +120,7 @@ async def test_step_should_succeed_after_observation() -> None:
 async def test_step_should_return_valid_timed_span() -> None:
     """Test that step should fail without observation"""
     async with NotteSession() as page:
-        _ = await page.aexecute(type="goto", value="https://www.notte.cc")
+        _ = await page.aexecute(type="goto", url="https://www.notte.cc")
         obs = await page.aobserve()
         assert obs.started_at is not None
         assert obs.ended_at is not None
@@ -157,7 +157,7 @@ async def test_step_with_invalid_action_id_returns_failed_result(action_id: str)
 
     async with NotteSession() as session:
         # First observe a page to get a snapshot
-        _ = await session.aexecute(type="goto", value="https://www.example.com")
+        _ = await session.aexecute(type="goto", url="https://www.example.com")
         _ = await session.aobserve()
         # Try to step with an invalid action ID that doesn't exist on the page
         step_response = await session.aexecute(type="click", id=action_id, raise_on_failure=False)
@@ -174,7 +174,7 @@ async def test_step_with_empty_action_id_should_fail_validation_pydantic():
 
     async with NotteSession() as session:
         # First observe a page to get a snapshot
-        _ = await session.aexecute(type="goto", value="https://www.example.com")
+        _ = await session.aexecute(type="goto", url="https://www.example.com")
         _ = await session.aobserve()
         # Try to step with an invalid action ID that doesn't exist on the page
         res = await session.aexecute(type="click", id="action_id", raise_on_failure=False)
@@ -318,12 +318,11 @@ async def test_click_empty_selector_returns_failed_result() -> None:
 
 @pytest.mark.asyncio
 async def test_interaction_execution_timeout_returns_failed_result() -> None:
-    async def slow_execute(*_args, **_kwargs) -> bool:
+    async def slow_interaction(*_args, **_kwargs) -> None:
         await asyncio.sleep(0.05)
-        return True
 
     async with NotteSession(headless=True) as session:
-        session.controller.execute = slow_execute  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
+        session.controller._interact = slow_interaction  # pyright: ignore[reportAttributeAccessIssue, reportPrivateUsage]
 
         result = await session.aexecute(
             ClickAction(selector="#target", timeout=1),

@@ -9,7 +9,7 @@ async def test_sdk_special_action_validation():
     client = NotteClient()
     """Test validation of special action parameters"""
     with client.Session(proxies=False, open_viewer=False) as page:
-        _ = page.execute(type="goto", value="https://github.com/")
+        _ = page.execute(type="goto", url="https://github.com/")
         _ = page.observe(perception_type="fast")
         # Test S1 requires URL parameter
         with pytest.raises(ValueError, match="validation error for GotoAction"):

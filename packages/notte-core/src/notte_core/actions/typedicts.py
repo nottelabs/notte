@@ -8,6 +8,9 @@ type-safe keyword argument passing to execute methods.
 import datetime as dt
 from typing import TYPE_CHECKING, Any, Literal, NotRequired, Required, TypedDict
 
+from pydantic import ValidationError
+from pydantic_core import InitErrorDetails, PydanticCustomError
+
 from notte_core.actions.actions import ActionUnion
 from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.credentials.types import ValueWithPlaceholder
@@ -245,31 +248,26 @@ class ClickActionDict(TypedDict, total=False):
     timeout: NotRequired[int]
 
 
-class FillActionDict(TypedDict, total=False):
+class _FillActionFields(TypedDict, total=False):
+    """Fields shared by the fill actions (`fill`, `multi_factor_fill`, `fallback_fill`)."""
+
+    id: NotRequired[str]
+    selector: NotRequired[NodeSelector]
+    value: Required[str | ValueWithPlaceholder]
+    clear_before_fill: NotRequired[bool]
+    timeout: NotRequired[int]
+
+
+class FillActionDict(_FillActionFields, total=False):
     type: Required[Literal["fill"]]
-    id: NotRequired[str]
-    selector: NotRequired[NodeSelector]
-    value: Required[str | ValueWithPlaceholder]
-    clear_before_fill: NotRequired[bool]
-    timeout: NotRequired[int]
 
 
-class MultiFactorFillActionDict(TypedDict, total=False):
+class MultiFactorFillActionDict(_FillActionFields, total=False):
     type: Required[Literal["multi_factor_fill"]]
-    id: NotRequired[str]
-    selector: NotRequired[NodeSelector]
-    value: Required[str | ValueWithPlaceholder]
-    clear_before_fill: NotRequired[bool]
-    timeout: NotRequired[int]
 
 
-class FallbackFillActionDict(TypedDict, total=False):
+class FallbackFillActionDict(_FillActionFields, total=False):
     type: Required[Literal["fallback_fill"]]
-    id: NotRequired[str]
-    selector: NotRequired[NodeSelector]
-    value: Required[str | ValueWithPlaceholder]
-    clear_before_fill: NotRequired[bool]
-    timeout: NotRequired[int]
 
 
 class CheckActionDict(TypedDict, total=False):
@@ -338,6 +336,18 @@ ActionDict = (
 )
 
 
+def _removed_value_parameter_error(action_type: str, value: Any, replacement: str) -> ValidationError:
+    error = PydanticCustomError(
+        "removed_parameter",
+        "The 'value' parameter was removed for '{action_type}' actions: use '{replacement}' instead, "
+        + "e.g. execute(type='{action_type}', {replacement}=...)",
+        {"action_type": action_type, "replacement": replacement},
+    )
+    return ValidationError.from_exception_data(
+        title=action_type, line_errors=[InitErrorDetails(type=error, loc=("value",), input=value)]
+    )
+
+
 def action_dict_to_base_action(data: ActionDict) -> "BaseAction":
     """
     Fast mapping from action TypedDict to BaseAction instance.
@@ -346,58 +356,27 @@ def action_dict_to_base_action(data: ActionDict) -> "BaseAction":
     to the appropriate BaseAction subclass without going through Pydantic
     validation overhead where possible.
 
-    Supports backward compatibility with the deprecated `value` parameter,
-    which is transformed to the action-specific parameter name (e.g., `url` for goto).
+    Browser actions take a named parameter (e.g. `url` for goto): passing the
+    removed generic `value` parameter fails validation and names the parameter to use.
     """
-    import logging
-    import warnings
-
     from notte_core.actions.actions import (
         ActionValidation,
         BaseAction,
         BrowserAction,
-        InteractionAction,
     )
-
-    logger = logging.getLogger(__name__)
 
     try:
         action_type = data["type"]
     except KeyError as e:
         raise ValueError("Missing required action field: 'type'") from e
 
-    # Backward compatibility: transform deprecated `value` parameter to action-specific field
-    if "value" in data and action_type in BaseAction.ACTION_REGISTRY:
-        action_cls = BaseAction.ACTION_REGISTRY[action_type]
-
-        # Check if this action class has a `param` property that defines the expected field name
-        if issubclass(action_cls, BrowserAction):
-            # Get the param from the example instance
-            param = action_cls.example().param
-            if param is not None and param.name != "value":
-                # Transform `value` to the correct field name
-                mutable_data = dict(data)
-                mutable_data[param.name] = mutable_data.pop("value")
-                data = mutable_data  # type: ignore[assignment]
-
-                warnings.warn(
-                    f"Using 'value' parameter for '{action_type}' action is deprecated. "
-                    + f"Use '{param.name}' instead. Example: execute(type='{action_type}', {param.name}=...)",
-                    DeprecationWarning,
-                    stacklevel=4,
-                )
-                logger.warning(
-                    f"Deprecated: 'value' parameter used for '{action_type}' action. " + f"Use '{param.name}' instead."
-                )
-        elif issubclass(action_cls, InteractionAction):
-            # InteractionActions already use 'value' as the field name, no transformation needed
-            # But if they also have id/selector from old API, handle that
-            pass
-
     # Fast path: use registry to get the action class
     if action_type in BaseAction.ACTION_REGISTRY:
         action_cls = BaseAction.ACTION_REGISTRY[action_type]
-        # Use model_validate for fast conversion
+        if "value" in data and issubclass(action_cls, BrowserAction):
+            param = action_cls.example().param
+            if param is not None and param.name != "value":
+                raise _removed_value_parameter_error(action_type, data["value"], param.name)
         return action_cls.model_validate(data)
 
     # Fallback: use ActionValidation for validation

@@ -606,13 +606,8 @@ class NotteSession(AsyncResource, SyncResource):
                         raise InboxActionNotSupportedLocallyError(resolved_action)
                     case _:
                         resolved_action = await self._action_with_vault(resolved_action)
-                        if isinstance(resolved_action, InteractionAction):
-                            success = await asyncio.wait_for(
-                                self.controller.execute(self.window, resolved_action, self._snapshot),
-                                timeout=resolved_action.timeout / 1000.0,
-                            )
-                        else:
-                            success = await self.controller.execute(self.window, resolved_action, self._snapshot)
+                        # interactions bound themselves by `action.timeout` (see BrowserController)
+                        success = await self.controller.execute(self.window, resolved_action, self._snapshot)
                         if not success:
                             # `message` still holds the success-phrased execution_message.
                             message = f"Action '{resolved_action.type}' failed during browser execution"
@@ -622,9 +617,9 @@ class NotteSession(AsyncResource, SyncResource):
                 NoStorageObjectProvidedError,
                 InboxActionNotSupportedLocallyError,
                 ScrapeIsNotAnActionError,
-            ) as e:
+            ):
                 # this should be handled by the caller
-                raise e
+                raise
             except InvalidActionError as e:
                 success = False
                 message = e.dev_message
@@ -635,11 +630,7 @@ class NotteSession(AsyncResource, SyncResource):
                 exception = e
             except asyncio.TimeoutError as e:
                 success = False
-                message = (
-                    f"Action timed out after {resolved_action.timeout}ms"
-                    if isinstance(resolved_action, InteractionAction)
-                    else "Action timed out."
-                )
+                message = "Action timed out."
                 exception = e
             except NotteBaseError as e:
                 if isinstance(e, EvaluateJsResultLimitError):
@@ -675,12 +666,8 @@ class NotteSession(AsyncResource, SyncResource):
             raise exception
 
         if resolved_action is None:
-            # keep the initial action in the trajectory
-            if step_action is None:
-                # this shouldnt happen
-                raise InvalidActionError(reason="Could not resolve action", action_id="")
-            else:
-                resolved_action = step_action
+            # resolution failed: keep the initial action in the trajectory
+            resolved_action = step_action
 
         if not success and exception is None:
             # Actions that signal failure by returning (a tool returning `success=False`,
@@ -1051,8 +1038,6 @@ class NotteSession(AsyncResource, SyncResource):
             logger.warning(f"Scrape failed after empty page content, retrying in {wait_time / 1000} seconds...")
             await asyncio.sleep(wait_time / 1000)
             return await self._ascrape(retries=retries - 1, wait_time=wait_time, **params)
-        except Exception as e:
-            raise e
 
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload

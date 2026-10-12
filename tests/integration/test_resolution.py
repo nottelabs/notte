@@ -43,7 +43,7 @@ async def test_action_node_resolution_pipe(url: str) -> None:
     errors: list[str] = []
     total_count = 0
     async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080) as page:
-        _ = await page.aexecute(type="goto", value=url)
+        _ = await page.aexecute(type="goto", url=url)
         _ = await page.aobserve()
 
         for node in page.snapshot.interaction_nodes():

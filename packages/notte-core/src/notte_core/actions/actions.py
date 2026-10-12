@@ -1204,7 +1204,24 @@ class ClickAction(InteractionAction):
         return f"Clicked on the element with text label: {self.text_label}"
 
 
-class FillAction(InteractionAction):
+class BaseFillAction(InteractionAction, metaclass=ABCMeta):
+    """Fields shared by the fill actions: the value to type and whether to clear the field first.
+
+    `fill`, `multi_factor_fill` and `fallback_fill` differ only in how they type the value.
+    """
+
+    value: str | ValueWithPlaceholder
+    clear_before_fill: bool = True
+    param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def verify_value(cls, value: Any) -> Any:
+        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
+        return value
+
+
+class FillAction(BaseFillAction):
     """
     Fill an input field with a value.
 
@@ -1217,15 +1234,6 @@ class FillAction(InteractionAction):
 
     type: Literal["fill"] = "fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill an input field with a value"
-    value: str | ValueWithPlaceholder
-    clear_before_fill: bool = True
-    param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
-
-    @field_validator("value", mode="before")
-    @classmethod
-    def verify_value(cls, value: Any) -> Any:
-        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
-        return value
 
     @override
     def execution_message(self) -> str:
@@ -1233,7 +1241,7 @@ class FillAction(InteractionAction):
         return f"Filled input field{text_label}with the value: '{self.value}'"
 
 
-class MultiFactorFillAction(InteractionAction):
+class MultiFactorFillAction(BaseFillAction):
     """
     Fill an MFA input field with a value. CRITICAL: Only use it when filling in an OTP.
 
@@ -1245,22 +1253,13 @@ class MultiFactorFillAction(InteractionAction):
 
     type: Literal["multi_factor_fill"] = "multi_factor_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill an MFA input field with a value. CRITICAL: Only use it when filling in an OTP."
-    value: str | ValueWithPlaceholder
-    clear_before_fill: bool = True
-    param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
-
-    @field_validator("value", mode="before")
-    @classmethod
-    def verify_value(cls, value: Any) -> Any:
-        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
-        return value
 
     @override
     def execution_message(self) -> str:
         return f"Filled the MFA input field with the value: '{self.value}'"
 
 
-class FallbackFillAction(InteractionAction):
+class FallbackFillAction(BaseFillAction):
     """
     Fill an input field with a value. Only use if explicitly asked, or you failed to input with the normal fill action.
 
@@ -1272,15 +1271,6 @@ class FallbackFillAction(InteractionAction):
 
     type: Literal["fallback_fill"] = "fallback_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill an input field with a value. Only use if explicitly asked, or you failed to input with the normal fill action"
-    value: str | ValueWithPlaceholder
-    clear_before_fill: bool = True
-    param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
-
-    @field_validator("value", mode="before")
-    @classmethod
-    def verify_value(cls, value: Any) -> Any:
-        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
-        return value
 
     @override
     def execution_message(self) -> str:

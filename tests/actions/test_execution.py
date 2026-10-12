@@ -34,7 +34,7 @@ async def _test_execution(test: ExecutionTest, headless: bool) -> None:
     async with NotteSession(
         headless=headless,
     ) as page:
-        _ = await page.aexecute(type="goto", value=test.url)
+        _ = await page.aexecute(type="goto", url=test.url)
         _ = await page.aobserve()
         for step in test.steps:
             if step.id is not None and not page.snapshot.dom_node.find(step.id):
