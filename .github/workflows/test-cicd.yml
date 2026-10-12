@@ -36,6 +36,8 @@ env:
   NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}
 
 permissions:
+  # Needed to check out private repositories (e.g. the notte-v2 staging repo).
+  contents: read
   pull-requests: write
 
 jobs:
