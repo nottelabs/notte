@@ -30,7 +30,8 @@ from pathlib import Path
 from typing import Any, cast
 
 from notte_core import types as wire_types
-from pydantic import BaseModel
+from pydantic import AliasChoices, BaseModel
+from pydantic.fields import FieldInfo
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SNAPSHOT = REPO_ROOT / "openapi" / "openapi.json"
@@ -69,19 +70,46 @@ def _nullable(prop: JsonObject) -> bool:
     return any(branch.get("type") == "null" for branch in branches)
 
 
+def _wire_names(field_name: str, field: FieldInfo) -> list[str]:
+    """Every key a field reads on the wire: its name, its alias and its validation aliases.
+
+    A field such as `function_id` with `validation_alias=AliasChoices("workflow_id", "function_id")`
+    matches an API property named either way, so a legacy name the API still serves is not drift.
+    """
+    names = [field_name]
+    if field.alias is not None:
+        names.append(field.alias)
+    alias = field.validation_alias
+    choices = alias.choices if isinstance(alias, AliasChoices) else [alias] if alias is not None else []
+    for choice in choices:
+        if isinstance(choice, str):
+            names.append(choice)
+        elif isinstance(first := choice.path[0], str):  # an `AliasPath` reads a nested key: match its top level
+            names.append(first)
+    return names
+
+
 def _model_drift(name: str, model: type[BaseModel], schema: JsonObject) -> list[str]:
     props = cast(JsonObject, schema.get("properties", {}))
     required = set(cast(list[str], schema.get("required", [])))
-    fields = model.model_fields
-    drift = [f"{name}: api-only field {k}{' (required)' if k in required else ''}" for k in props if k not in fields]
-    drift += [f"{name}: sdk-only field {k}" for k in fields if k not in props]
-    for field_name in sorted(props.keys() & fields.keys()):
-        field, prop = fields[field_name], cast(JsonObject, props[field_name])
-        if (field_name in required) != field.is_required():
-            drift.append(f"{name}: {field_name} required api={field_name in required} sdk={field.is_required()}")
+    owner = {
+        wire: field_name for field_name, field in model.model_fields.items() for wire in _wire_names(field_name, field)
+    }
+    drift = [f"{name}: api-only field {k}{' (required)' if k in required else ''}" for k in props if k not in owner]
+    drift += [
+        f"{name}: sdk-only field {field_name}"
+        for field_name, field in model.model_fields.items()
+        if not any(wire in props for wire in _wire_names(field_name, field))
+    ]
+    for prop_name in sorted(props.keys() & owner.keys()):
+        field_name = owner[prop_name]
+        field, prop = model.model_fields[field_name], cast(JsonObject, props[prop_name])
+        label = prop_name if prop_name == field_name else f"{prop_name} (read as {field_name})"
+        if (prop_name in required) != field.is_required():
+            drift.append(f"{name}: {label} required api={prop_name in required} sdk={field.is_required()}")
         sdk_nullable = types.NoneType in typing.get_args(field.annotation)
         if _nullable(prop) != sdk_nullable:
-            drift.append(f"{name}: {field_name} nullable api={_nullable(prop)} sdk={sdk_nullable}")
+            drift.append(f"{name}: {label} nullable api={_nullable(prop)} sdk={sdk_nullable}")
     return drift
 
 

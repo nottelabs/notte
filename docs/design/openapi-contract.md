@@ -65,16 +65,21 @@ shows exactly which model drifted.
 
 ## Known drift (staging, 2026-10-12)
 
-44 entries in `openapi/known_drift.txt`, mostly:
+35 entries in `openapi/known_drift.txt` (as of 2026-10-13), mostly:
 
 | Model | Drift |
 | --- | --- |
-| Function and function-run models | the wire still says `workflow_id` / `workflow_run_id`; the models expose `function_id`. `GetFunctionResponse` lacks 10 API fields (`published`, `required_secrets`, `source`, `schedule_*`, ...), `GetFunctionRunResponse` lacks `function_version`, `payloads`, `payload_urls`, `stopped_at` |
+| Function and function-run models | `GetFunctionResponse` lacks 10 API fields (`published`, `required_secrets`, `source`, `schedule_*`, ...), `GetFunctionRunResponse` lacks `function_version`, `payloads`, `payload_urls`, `stopped_at` |
 | `RunFunctionRequest` | `callback_url` missing; `variables` optional in the API, required here |
 | `ManagedAuthOperation` | API returns required `created_at`, `updated_at` |
 | `ReplayResponse` | `expires_at` required in the API, optional here |
 | `SessionStartRequest` | API accepts `demonstrate` |
-| `SessionResponse` | the API names `idle_timeout_minutes` `timeout_minutes` |
+| Removed in v2 | `ScrapeRequest.only_images`, `SessionStartRequest.screenshot_type` (the API still accepts them) |
+
+A property the model reads through an alias is not drift: the check matches each API
+property against a field's name, `alias` and `validation_alias` choices. So the legacy
+`workflow_id` / `workflow_run_id` the API still returns next to `function_id` /
+`function_run_id`, and the `timeout_minutes` key of `SessionResponse`, are compatible.
 
 Fixed while building this: `PersonaCreateRequest.name` (the SDK rejected
 `persona.create(name=...)` before sending it) and `PersonaResponse.name` / `created_at`.
@@ -83,8 +88,8 @@ Fixed while building this: `PersonaCreateRequest.name` (the SDK rejected
 
 1. **This PR**: move the models to notte-core, add the snapshot, contract check,
    staging refresh and release gate.
-2. notte-api: rename `workflow_id` → `function_id` on the wire, returning both while 1.x SDKs
-   are in use and accepting both in requests; then drop the function entries from the baseline.
+2. ~~notte-api: rename `workflow_id` → `function_id` on the wire.~~ Not needed: responses already
+   return both names and requests accept either (dropped with monorepo#3307 on 2026-10-13).
 3. Shrink the baseline: add the missing fields to the models here, then delete the
    backend's local subclasses (`PersonaResponse`, ...) so it imports `notte_core.types` directly.
 4. node-sdk: generate from `openapi/openapi.json` instead of live staging, so both SDKs and
