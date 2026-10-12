@@ -208,6 +208,7 @@ class ImageScrapingPipe:
         window: BrowserWindow,
         html_content: str,
         base_url: str,
+        selector: str | None = None,
     ) -> list[ImageData]:
         """
         Extract images from HTML content using BeautifulSoup.
@@ -216,6 +217,7 @@ class ImageScrapingPipe:
             window: BrowserWindow for Playwright locator access (for classification)
             html_content: The raw HTML content to parse
             base_url: The base URL for constructing absolute image URLs
+            selector: The selector `html_content` was scoped to, if any
         """
         from notte_core.utils.url import clean_url
 
@@ -233,9 +235,10 @@ class ImageScrapingPipe:
             )
         ]
 
-        # Get all Playwright locators for images and SVGs for classification
-        img_locators = await window.page.locator("img").all()
-        svg_locators = await window.page.locator("svg").all()
+        # Get the Playwright locators for images and SVGs for classification, within the same scope as html_content
+        root = window.page if selector is None else window.page.locator(selector)
+        img_locators = await root.locator("img").all()
+        svg_locators = await root.locator("svg").all()
 
         img_idx = 0
         svg_idx = 0

@@ -52,3 +52,37 @@ async def test_favicon_uses_the_icon_link(open_page: Callable[[str], Any]) -> No
 
     assert images[0].category == ImageCategory.FAVICON
     assert images[0].url == "https://example.test/static/icon.png"
+
+
+SELECTOR_PAGE = (
+    '<header><img class="logo-icon" src="/logo.png" alt="logo">'
+    '<svg width="20" height="20"><rect width="20" height="20"/></svg></header>'
+    '<section id="gallery"><img src="/photo.png" alt="A photo" width="300" height="200">'
+    '<svg width="300" height="200"><rect width="300" height="200"/></svg></section>'
+)
+
+
+@pytest.mark.asyncio
+async def test_images_with_selector_are_classified_from_the_selected_elements(open_page: Callable[[str], Any]) -> None:
+    session: NotteSession = await open_page(SELECTOR_PAGE)
+
+    images = await session.ascrape(only_images=True, selector="#gallery")
+
+    assert [(image.category, image.url) for image in images[1:]] == [
+        (ImageCategory.CONTENT_IMAGE, "https://example.test/photo.png"),
+        (ImageCategory.SVG_CONTENT, '<svg width="300" height="200"><rect width="300" height="200"></rect></svg>'),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_images_without_selector(open_page: Callable[[str], Any]) -> None:
+    session: NotteSession = await open_page(SELECTOR_PAGE)
+
+    images = await session.ascrape(only_images=True)
+
+    assert [(image.category, image.url) for image in images[1:]] == [
+        (ImageCategory.ICON, "https://example.test/logo.png"),
+        (ImageCategory.SVG_ICON, None),
+        (ImageCategory.CONTENT_IMAGE, "https://example.test/photo.png"),
+        (ImageCategory.SVG_CONTENT, '<svg width="300" height="200"><rect width="300" height="200"></rect></svg>'),
+    ]
