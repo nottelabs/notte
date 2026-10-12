@@ -132,7 +132,7 @@ def test_calculate_url_percentage_threshold_50_percent() -> None:
 
 def test_calculate_url_percentage_uses_same_patterns_as_pruning() -> None:
     """Test that URL detection uses the same patterns as MarkdownPruningPipe."""
-    from notte_browser.scraping.pruning import MarkdownPruningPipe
+    from notte_core.data.pruning import MarkdownPruningPipe
 
     # Create markdown with various URL formats
     text = (

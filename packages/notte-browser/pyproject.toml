@@ -26,17 +26,6 @@ dependencies = [
     "trafilatura>=2.0.0",
 ]
 
-[project.optional-dependencies]
-# Structured scraping (`scrape(instructions=..., response_format=...)`) on local sessions.
-llm = [
-    "chevron>=0.14.0",
-    "google-auth>=2.39.0",
-    "json-repair>=0.57.1",
-    "litellm>=1.74.12",
-    "openai<3.24.0",
-    "tiktoken>=0.8.0",
-]
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

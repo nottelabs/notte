@@ -8,10 +8,10 @@ from notte_core.common.logging import logger
 from notte_core.common.types import TResponseFormat
 from notte_core.errors.llm import InvalidPromptTemplateError
 
-from notte_browser.llm.config import LlmSettings
-from notte_browser.llm.engine import LLMEngine
-from notte_browser.llm.models import LlmModel
-from notte_browser.llm.prompt import PromptLibrary
+from notte_llm.config import LlmSettings
+from notte_llm.engine import LLMEngine
+from notte_llm.models import LlmModel
+from notte_llm.prompt import PromptLibrary
 
 PROMPT_DIR = Path(__file__).parent / "prompts"
 

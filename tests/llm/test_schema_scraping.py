@@ -5,11 +5,11 @@ from typing import Any
 
 import pytest
 from dotenv import load_dotenv
-from notte_browser.llm.models import LlmModel
-from notte_browser.llm.service import LLMService
-from notte_browser.scraping.pruning import MarkdownPruningPipe
-from notte_browser.scraping.schema import SchemaScrapingPipe
+from notte_core.data.pruning import MarkdownPruningPipe
 from notte_core.data.space import DictBaseModel, StructuredData
+from notte_llm.extractor import LlmExtractor
+from notte_llm.models import LlmModel
+from notte_llm.service import LLMService
 from pydantic import BaseModel, RootModel
 from typing_extensions import override
 
@@ -24,6 +24,7 @@ class MockLLMServiceForSchema(LLMService):
         self.mock_data = mock_data
         self.tokenizer = None  # type: ignore[assignment]
         self.base_model = "mock-model"
+        self.verbose = False
 
     @override
     def clip_tokens(self, document: str, max_tokens: int | None = None) -> str:
@@ -110,14 +111,13 @@ class WeirdWrappedRoots(BaseModel):
 async def test_schema_scraping_validates_root_model_and_base_model_shapes(
     response_format: type[BaseModel], mock_data: Any, expected_success: bool
 ) -> None:
-    schema_pipe = SchemaScrapingPipe(llmserve=MockLLMServiceForSchema(mock_data))
+    schema_pipe = LlmExtractor(llmserve=MockLLMServiceForSchema(mock_data))
 
-    result = await schema_pipe.forward(
+    result = await schema_pipe.extract(
         url="https://example.com",
         document="[A](https://example.com/a) [B](https://example.com/b)",
         response_format=response_format,
         instructions="Extract test data",
-        verbose=False,
         use_link_placeholders=True,
     )
 
@@ -133,7 +133,7 @@ async def test_schema_scraping_validates_root_model_and_base_model_shapes(
 
 @pytest.mark.asyncio
 async def test_schema_scraping_unmasks_root_model_list() -> None:
-    schema_pipe = SchemaScrapingPipe(
+    schema_pipe = LlmExtractor(
         llmserve=MockLLMServiceForSchema(
             [
                 {"rank": 1, "title": "A", "url": "link1"},
@@ -142,12 +142,11 @@ async def test_schema_scraping_unmasks_root_model_list() -> None:
         )
     )
 
-    result = await schema_pipe.forward(
+    result = await schema_pipe.extract(
         url="https://example.com",
         document="[A](https://example.com/a) [B](https://example.com/b)",
         response_format=RootItemList,
         instructions="Extract items",
-        verbose=False,
         use_link_placeholders=True,
     )
 
@@ -159,9 +158,9 @@ async def test_schema_scraping_unmasks_root_model_list() -> None:
 @pytest.mark.skipif("OPENAI_API_KEY" not in os.environ, reason="requires OPENAI_API_KEY")
 @pytest.mark.asyncio
 async def test_schema_scraping_root_model_list_with_real_llm_round_trip() -> None:
-    schema_pipe = SchemaScrapingPipe(llmserve=LLMService(base_model=LlmModel.openai))
+    schema_pipe = LlmExtractor(llmserve=LLMService(base_model=LlmModel.openai))
 
-    result = await schema_pipe.forward(
+    result = await schema_pipe.extract(
         url="https://example.com/products",
         document="""
         # Product ranking
@@ -174,7 +173,6 @@ async def test_schema_scraping_root_model_list_with_real_llm_round_trip() -> Non
             "Extract the two product ranking entries. Return only the ranked items from the document with rank, "
             "title, and url populated."
         ),
-        verbose=False,
         use_link_placeholders=False,
     )
 
@@ -238,15 +236,14 @@ async def test_unmask_placeholders_with_instructions_only() -> None:
     }
 
     llm_service = MockLLMServiceForSchema(mock_data_with_placeholders)
-    schema_pipe = SchemaScrapingPipe(llmserve=llm_service)
+    schema_pipe = LlmExtractor(llmserve=llm_service)
 
-    # Call forward with instructions (no response_format) and use_link_placeholders=True
-    result = await schema_pipe.forward(
+    # Call extract with instructions (no response_format) and use_link_placeholders=True
+    result = await schema_pipe.extract(
         url="https://example.com",
         document=markdown,
         response_format=None,
         instructions="Extract booking results (name, review_score, reviewers, room_type, booking_url)",
-        verbose=False,
         use_link_placeholders=True,
     )
 

@@ -59,6 +59,7 @@ from notte_core.common.logging import logger, timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault, LocatorAttributes
+from notte_core.data.extraction import StructuredExtractor
 from notte_core.data.fetch import FetchData, build_fetch_script, response_from_evaluated
 from notte_core.data.space import DataSpace, ImageData, StructuredData, TBaseModel
 from notte_core.errors.actions import (
@@ -142,6 +143,7 @@ class NotteSession(AsyncResource, SyncResource):
         persona: BasePersona | None = None,
         window: BrowserWindow | None = None,
         keep_alive: bool = False,
+        extractor: StructuredExtractor | None = None,
         **data: Unpack[LocalSessionStartRequestDict],
     ) -> None:
         if storage is not None and storage.is_remote:
@@ -159,7 +161,8 @@ class NotteSession(AsyncResource, SyncResource):
         self.controller: BrowserController = BrowserController(verbose=config.verbose, storage=storage)
         self.storage: BaseStorage | None = storage
         self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe()
-        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(type=config.scraping_type)
+        # Structured scraping hands the page markdown to `extractor` (by default `notte_llm.LlmExtractor`, if installed).
+        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(type=config.scraping_type, extractor=extractor)
         self.tools: list[BaseTool] = tools or []
         self.vault: BaseVault | None = vault
         if persona is not None:

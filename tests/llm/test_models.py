@@ -1,6 +1,6 @@
 import pytest
-from notte_browser.llm.config import LlmSettings
-from notte_browser.llm.models import LlmModel
+from notte_llm.config import LlmSettings
+from notte_llm.models import LlmModel
 
 
 def test_default_llm_model_uses_vertex_with_google_credentials(monkeypatch: pytest.MonkeyPatch):

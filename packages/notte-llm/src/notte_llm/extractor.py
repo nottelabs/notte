@@ -3,11 +3,11 @@ import json
 
 from notte_core.common.logging import logger
 from notte_core.common.types import TResponseFormat
+from notte_core.data.pruning import MarkdownPruningPipe
 from notte_core.data.space import DictBaseModel, NoStructuredData, StructuredData
 from pydantic import BaseModel
 
-from notte_browser.llm.service import LLMService
-from notte_browser.scraping.pruning import MarkdownPruningPipe
+from notte_llm.service import LLMService
 
 
 class _Hotel(BaseModel):
@@ -23,13 +23,25 @@ class _Hotels(BaseModel):
     hotels: list[_Hotel]
 
 
-class SchemaScrapingPipe:
+class LlmExtractor:
     """
-    Data scraping pipe that scrapes data from the page into a structured JSON output format
+    Structured extractor (`notte_core.data.extraction.StructuredExtractor`) that asks an LLM to turn the
+    markdown of a page into JSON, optionally validated against a Pydantic model.
+
+    The model defaults to `NOTTE_LLM_MODEL` (see `notte_llm.config.LlmSettings`); a model passed to
+    `extract` is used for that call only.
     """
 
-    def __init__(self, llmserve: LLMService) -> None:
-        self.llmserve: LLMService = llmserve
+    def __init__(self, model: str | None = None, llmserve: LLMService | None = None) -> None:
+        self.llmserve: LLMService = llmserve or LLMService(base_model=model)
+        self._per_call_services: dict[str, LLMService] = {}
+
+    def _service(self, model: str | None) -> LLMService:
+        if model is None or model == self.llmserve.base_model:
+            return self.llmserve
+        if model not in self._per_call_services:
+            self._per_call_services[model] = LLMService(base_model=model)
+        return self._per_call_services[model]
 
     @staticmethod
     def success_example() -> StructuredData[_Hotels]:
@@ -65,24 +77,25 @@ class SchemaScrapingPipe:
             success=False, error="The user requested information about a cat but the document is about a dog", data=None
         )
 
-    async def forward(
+    async def extract(
         self,
+        *,
         url: str,
         document: str,
         response_format: type[TResponseFormat] | None,
         instructions: str | None,
-        verbose: bool = False,
+        model: str | None = None,
         use_link_placeholders: bool = True,
     ) -> StructuredData[BaseModel]:
-        # make LLM call
-        # TODO: add masking but needs more testing
+        llmserve = self._service(model)
+        verbose = llmserve.verbose
         masked_document = MarkdownPruningPipe.mask(document)
-        document = self.llmserve.clip_tokens(masked_document.content if use_link_placeholders else document)
+        document = llmserve.clip_tokens(masked_document.content if use_link_placeholders else document)
         match (response_format, instructions):
             case (None, None):
                 raise ValueError("response_format and instructions cannot be both None")
             case (None, _):
-                structured = await self.llmserve.structured_completion(
+                structured = await llmserve.structured_completion(
                     prompt_id="extract-without-json-schema",
                     variables={
                         "document": document,
@@ -103,7 +116,7 @@ class SchemaScrapingPipe:
                     )
                 return structured
             case (_response_format, _):
-                response: StructuredData[DictBaseModel] = await self.llmserve.structured_completion(
+                response: StructuredData[DictBaseModel] = await llmserve.structured_completion(
                     prompt_id="extract-json-schema/multi-entity",
                     response_format=StructuredData[DictBaseModel],
                     use_strict_response_format=False,

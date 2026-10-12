@@ -2,7 +2,7 @@ import os
 
 from pydantic import BaseModel
 
-from notte_browser.llm.models import LlmModel
+from notte_llm.models import LlmModel
 
 
 class LlmSettings(BaseModel):

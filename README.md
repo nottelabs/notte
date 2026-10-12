@@ -58,7 +58,7 @@ with notte.Session(headless=True) as session:
     markdown = session.scrape(only_main_content=True)
 ```
 
-Structured scraping on a local session calls an LLM with your own API keys: install it with `pip install 'notte[llm]'` and set `NOTTE_LLM_MODEL` (e.g. `gemini/gemini-3.5-flash`).
+Structured scraping on a local session hands the page markdown to an extractor. The LLM one runs with your own API keys: install it with `pip install 'notte[llm]'` and set `NOTTE_LLM_MODEL` (e.g. `gemini/gemini-3.5-flash`), or pass your own with `notte.Session(extractor=...)`.
 
 ## Cloud sessions
 

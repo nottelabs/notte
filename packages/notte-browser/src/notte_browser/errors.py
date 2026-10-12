@@ -361,6 +361,21 @@ class CaptchaSolverNotAvailableError(NotteBaseError):
         )
 
 
+class StructuredExtractorNotAvailableError(NotteBaseError):
+    message: str = (
+        "Structured scraping (`instructions` / `response_format`) on a local session needs a structured extractor. "
+        + "Install the LLM one with `pip install 'notte[llm]'`, pass your own with `NotteSession(extractor=...)`, "
+        + "or scrape the markdown and parse it yourself."
+    )
+
+    def __init__(self) -> None:
+        super().__init__(
+            dev_message=self.message,
+            user_message=self.message,
+            agent_message=self.message,
+        )
+
+
 class NoToolProvidedError(NotteBaseError):
     def __init__(self, action: ToolAction) -> None:
         msg = f"No provided tool is able to execute the action: {action.name()}. You should use `notte.Session(tools=[...])` to add tools to the session."

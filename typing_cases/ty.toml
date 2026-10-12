@@ -4,6 +4,7 @@ extra-paths = [
   "packages/notte-sdk/src",
   "packages/notte-core/src",
   "packages/notte-browser/src",
+  "packages/notte-llm/src",
 ]
 
 [terminal]

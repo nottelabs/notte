@@ -42,8 +42,8 @@ from notte_core.errors.provider import RateLimitError as NotteRateLimitError
 from notte_core.profiling import profiler
 from pydantic import BaseModel, ValidationError, create_model
 
-from notte_browser.llm.config import LlmSettings
-from notte_browser.llm.models import LlmModel, enable_openrouter
+from notte_llm.config import LlmSettings
+from notte_llm.models import LlmModel, enable_openrouter
 
 
 def _resolve_schema_refs(schema: dict[str, Any]) -> dict[str, Any]:

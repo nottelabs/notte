@@ -21,6 +21,7 @@ members = [
     "notte",
     "notte-browser",
     "notte-core",
+    "notte-llm",
     "notte-sdk",
 ]
 
@@ -2648,7 +2649,7 @@ dependencies = [
 
 [package.optional-dependencies]
 llm = [
-    { name = "notte-browser", extra = ["llm"] },
+    { name = "notte-llm" },
 ]
 
 [package.dev-dependencies]
@@ -2689,8 +2690,8 @@ lint = [
 [package.metadata]
 requires-dist = [
     { name = "notte-browser", editable = "packages/notte-browser" },
-    { name = "notte-browser", extras = ["llm"], marker = "extra == 'llm'", editable = "packages/notte-browser" },
     { name = "notte-core", editable = "packages/notte-core" },
+    { name = "notte-llm", marker = "extra == 'llm'", editable = "packages/notte-llm" },
     { name = "notte-sdk", editable = "packages/notte-sdk" },
 ]
 provides-extras = ["llm"]
@@ -2745,37 +2746,20 @@ dependencies = [
     { name = "trafilatura" },
 ]
 
-[package.optional-dependencies]
-llm = [
-    { name = "chevron" },
-    { name = "google-auth" },
-    { name = "json-repair" },
-    { name = "litellm" },
-    { name = "openai" },
-    { name = "tiktoken" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.12.0" },
-    { name = "chevron", marker = "extra == 'llm'", specifier = ">=0.14.0" },
-    { name = "google-auth", marker = "extra == 'llm'", specifier = ">=2.39.0" },
     { name = "html2text", specifier = ">=2025.4.15" },
     { name = "httpx", specifier = ">=0.27.0" },
-    { name = "json-repair", marker = "extra == 'llm'", specifier = ">=0.57.1" },
-    { name = "litellm", marker = "extra == 'llm'", specifier = ">=1.74.12" },
     { name = "lxml", specifier = ">=5.3.1" },
     { name = "markdownify", specifier = ">=0.14.1" },
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "notte-sdk", editable = "packages/notte-sdk" },
-    { name = "openai", marker = "extra == 'llm'", specifier = "<3.24.0" },
     { name = "patchright", specifier = "~=1.55" },
     { name = "pillow", specifier = ">=11.2.1" },
-    { name = "tiktoken", marker = "extra == 'llm'", specifier = ">=0.8.0" },
     { name = "tqdm", specifier = ">=4.66.0" },
     { name = "trafilatura", specifier = ">=2.0.0" },
 ]
-provides-extras = ["llm"]
 
 [[package]]
 name = "notte-core"
@@ -2832,6 +2816,31 @@ requires-dist = [
     { name = "tldextract", specifier = ">=5.3.0" },
 ]
 provides-extras = ["tempo", "pyroscope", "observability"]
+
+[[package]]
+name = "notte-llm"
+version = "2.0.0.dev0"
+source = { editable = "packages/notte-llm" }
+dependencies = [
+    { name = "chevron" },
+    { name = "google-auth" },
+    { name = "json-repair" },
+    { name = "litellm" },
+    { name = "notte-core" },
+    { name = "openai" },
+    { name = "tiktoken" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "chevron", specifier = ">=0.14.0" },
+    { name = "google-auth", specifier = ">=2.39.0" },
+    { name = "json-repair", specifier = ">=0.57.1" },
+    { name = "litellm", specifier = ">=1.74.12" },
+    { name = "notte-core", editable = "packages/notte-core" },
+    { name = "openai", specifier = "<3.24.0" },
+    { name = "tiktoken", specifier = ">=0.8.0" },
+]
 
 [[package]]
 name = "notte-sdk"
