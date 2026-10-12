@@ -39,7 +39,7 @@ find(id: <class 'str'>) -> InteractionDomNode | None
 find_all_matching_subtrees_with_parents(node: DomNode, predicate: typing.Callable[[ForwardRef('DomNode')], bool]) -> collections.abc.Sequence['DomNode']
 ```
 
-TODO: same implementation for A11yNode and DomNode
+Return the topmost subtrees whose root matches `predicate`
 
 **Returns:**
 
@@ -125,7 +125,7 @@ is_interaction() -> <class 'bool'>
 prune_non_dialogs_if_present() -> collections.abc.Sequence['DomNode']
 ```
 
-TODO: make it work with A11yNode and DomNode
+Return the visible dialogs that contain interaction nodes, or `[self]` if there are none
 
 **Returns:**
 

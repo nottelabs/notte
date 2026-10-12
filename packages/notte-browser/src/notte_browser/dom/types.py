@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Any
 
 from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, NodeSelectors
 from notte_core.browser.dom_tree import DomNode as NotteDomNode
@@ -8,8 +7,6 @@ from notte_core.browser.node_type import NodeRole, NodeType
 from notte_core.common.config import config
 from notte_core.common.logging import logger
 from typing_extensions import override
-
-VERBOSE = False
 
 
 # clean up aria attributes
@@ -48,9 +45,6 @@ class DOMBaseNode:
         self.children = [] if getattr(self, "children", None) is None else self.children
         self.notte_id = None if getattr(self, "notte_id", None) is None else self.notte_id
 
-    def to_dict(self) -> dict[str, str]:
-        raise NotImplementedError("to_dict method not implemented for DOMBaseNode")
-
     def to_notte_domnode(self) -> NotteDomNode:
         raise NotImplementedError("to_notte_domnode method not implemented for DOMBaseNode")
 
@@ -69,21 +63,6 @@ class DOMTextNode(DOMBaseNode):
     type: str = "TEXT_NODE"
     highlight_index: int | None = None
     bbox: dict[str, float] | None = None
-
-    def has_parent_with_highlight_index(self) -> bool:
-        current = self.parent
-        while current is not None:
-            if current.highlight_index is not None:
-                return True
-            current = current.parent
-        return False
-
-    @override
-    def to_dict(self) -> dict[str, str]:
-        return {
-            "role": "text",
-            "text": self.text,
-        }
 
     @property
     @override
@@ -138,8 +117,6 @@ class DOMElementNode(DOMBaseNode):
     is_top_element: bool = False
     shadow_root: bool = False
     is_editable: bool = False
-    pointer_element: bool = False
-    disabled_reason: str | None = None
 
     @override
     def __post_init__(self) -> None:
@@ -304,8 +281,6 @@ class DOMElementNode(DOMBaseNode):
                 if "popup" in clean_tag_name:
                     return "MenuListPopup"
 
-                if VERBOSE:
-                    logger.debug(f"No role found for tag: {self.tag_name} with attributes: {self.attributes}")
                 return "generic"
 
     @property
@@ -412,9 +387,6 @@ class DOMElementNode(DOMBaseNode):
         if self.tag_name.lower() in ["button"]:
             return self.attributes.get("type") or ""
 
-        first_5_attrs = list(self.attributes.items())[:5]
-        if VERBOSE:
-            logger.debug(f"No name found for element: {self} with attributes: {first_5_attrs}")
         return ""
 
     def _get_text_content(self) -> str:
@@ -429,16 +401,6 @@ class DOMElementNode(DOMBaseNode):
 
         result = extract_text(self)
         return result
-
-    @override
-    def to_dict(self) -> dict[str, Any]:
-        role, name = self.role, self.name
-        if (name == "" or role == "") and len(self.children) == 0:
-            return {}
-        base: dict[str, Any] = {"role": role, "name": name}
-        if self.children:
-            base["children"] = [child.to_dict() for child in self.children]
-        return base
 
     @override
     def to_notte_domnode(self) -> NotteDomNode:
@@ -456,13 +418,8 @@ class DOMElementNode(DOMBaseNode):
             ),
             computed_attributes=ComputedDomAttributes(
                 in_viewport=self.is_visible,
-                is_interactive=self.is_interactive,
-                is_top_element=self.is_top_element,
                 is_editable=self.is_editable,
                 shadow_root=self.shadow_root,
-                pointer_element=self.pointer_element,
-                disabled_reason=self.disabled_reason,
-                highlight_index=self.highlight_index,
                 _frame_selector=self.attributes.get("_frame_selector", ""),
                 _element_handle=self.attributes.get("_element_handle", ""),
                 selectors=NodeSelectors(

@@ -143,7 +143,6 @@ class MockBrowserDriver(AsyncResource):
                 ],
             ),
             html_content="<html><body>Mock HTML</body></html>",
-            a11y_tree=None,
             screenshot=Observation.empty().screenshot.raw,
             dom_node=self._mock_dom_node,
         )
@@ -194,7 +193,6 @@ class MockBrowserDriver(AsyncResource):
                 ],
             ),
             html_content="<html><body>Mock HTML</body></html>",
-            a11y_tree=None,
             screenshot=Observation.empty().screenshot.raw,
             dom_node=self._mock_dom_node,
         )

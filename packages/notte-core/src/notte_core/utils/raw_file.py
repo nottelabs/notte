@@ -101,8 +101,6 @@ def get_empty_dom_node(id: str, text: str) -> DomNode:
         attributes=DomAttributes.safe_init(tag_name="button", value=text),
         children=[],
         computed_attributes=ComputedDomAttributes(
-            is_interactive=True,
-            is_top_element=True,
             selectors=NodeSelectors.from_unique_selector(DEFAULT_RAW_FILE_SELECTORS[0]),
         ),
     )
