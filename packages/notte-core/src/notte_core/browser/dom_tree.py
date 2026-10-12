@@ -1,9 +1,9 @@
 import re
 from collections.abc import Sequence
-from dataclasses import asdict, dataclass
-from typing import Callable, ClassVar, TypeAlias
+from dataclasses import asdict, dataclass, field
+from typing import Annotated, Any, Callable, ClassVar, TypeAlias
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from notte_core.browser.highlighter import BoundingBox
@@ -245,8 +245,6 @@ class DomAttributes:
                 "eid",
                 "view",
                 "pivot",
-                "_frame_selector",
-                "_element_handle",
             ]
         )
 
@@ -302,8 +300,9 @@ class ComputedDomAttributes:
     is_editable: bool = False
     shadow_root: bool = False
     selectors: NodeSelectors | None = None
-    _frame_selector: str = ""
-    _element_handle: str = ""
+    # Live element handle, only kept when a selector generator is installed
+    # (see `notte_browser.resolution.set_selector_generator`). Never serialised.
+    handle: Annotated[Any, Field(exclude=True)] = field(default=None, repr=False, compare=False)
 
 
 @dataclass(frozen=True)

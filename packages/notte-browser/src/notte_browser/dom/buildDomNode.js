@@ -1,6 +1,10 @@
 // file taken from: https://github.com/browser-use/browser-use/blob/main/browser_use/dom/buildDomTree.js
+//
+// Builds the tree of ONE document: iframes are not descended into. The caller (dom/parsing.py)
+// evaluates this script in every frame and grafts each frame's tree under its iframe element,
+// which it identifies by passing the frames' iframe element handles in `frame_elements`.
 (
-	{ highlight_elements, focus_element, viewport_expansion, enable_pointer_elements }
+	{ highlight_elements, focus_element, viewport_expansion, enable_pointer_elements, frame_elements = [], collect_elements = false }
 ) => {
 	const { doHighlightElements, focusHighlightIndex, viewportExpansion, debugMode } = {
 		doHighlightElements: highlight_elements,
@@ -91,6 +95,14 @@
 	 * @type {Object<string, any>}
 	 */
 	const DOM_HASH_MAP = {};
+
+	/**
+	 * Highlighted elements by highlight index, only returned when `collect_elements` is set
+	 * (the caller then keeps an element handle per interaction node).
+	 *
+	 * @type {Object<number, HTMLElement> | null}
+	 */
+	const ELEMENTS = collect_elements ? {} : null;
 
 	const ID = { current: 0 };
 
@@ -1080,6 +1092,7 @@
 			// regardless of viewport status
 			if (nodeData.isInViewport || viewportExpansion === -1) {
 				nodeData.highlightIndex = highlightIndex++;
+				if (ELEMENTS) ELEMENTS[nodeData.highlightIndex] = node;
 
 				if (doHighlightElements) {
 					if (focusHighlightIndex >= 0) {
@@ -1262,18 +1275,20 @@
 		if (node.tagName) {
 			const tagName = node.tagName.toLowerCase();
 
-			// Handle iframes
+			// Iframes: their documents are built by separate evaluations (one per frame, which also
+			// works for cross-origin iframes). Mark the visible iframe elements the caller asked about
+			// so it can graft each frame's tree here, and give the position of the iframe's content
+			// box, which the caller adds to the bounding boxes of the frame's elements.
 			if (tagName === "iframe") {
-				try {
-					const iframeDoc = node.contentDocument || node.contentWindow?.document;
-					if (iframeDoc) {
-						for (const child of iframeDoc.childNodes) {
-							const domElement = buildDomTree(child, node, false);
-							if (domElement) nodeData.children.push(domElement);
-						}
-					}
-				} catch (e) {
-					console.warn("Unable to access iframe:", e);
+				const frameIndex = frame_elements.indexOf(node);
+				if (frameIndex !== -1 && nodeData.isVisible) {
+					const rect = getCachedBoundingRect(node);
+					const style = getCachedComputedStyle(node);
+					nodeData.frameIndex = frameIndex;
+					nodeData.frameOffset = {
+						x: rect.left + node.clientLeft + (parseFloat(style.paddingLeft) || 0),
+						y: rect.top + node.clientTop + (parseFloat(style.paddingTop) || 0),
+					};
 				}
 			}
 			// Handle rich text editors and contenteditable elements
@@ -1330,5 +1345,5 @@
 	// Clear the cache before starting
 	DOM_CACHE.clearCache();
 
-	return { rootId, map: DOM_HASH_MAP };
+	return ELEMENTS ? { rootId, map: DOM_HASH_MAP, elements: ELEMENTS } : { rootId, map: DOM_HASH_MAP };
 };
