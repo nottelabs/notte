@@ -61,10 +61,15 @@ def _unwrap_element(element: etree._Element) -> None:
     parent.remove(element)
 
 
+def _hides(style: str) -> bool:
+    """Whether an inline `style` hides its element."""
+    style = style.replace(" ", "")
+    return "display:none" in style or "visibility:hidden" in style
+
+
 def _remove_hidden_elements(root: etree._Element) -> None:
     for element in list(root.iter()):
-        style = str(element.get("style", "")).replace(" ", "").lower()
-        if "display:none" in style or "visibility:hidden" in style:
+        if _hides(str(element.get("style", "")).lower()):
             _remove_subtree(element)
 
 
@@ -190,8 +195,8 @@ class VisibleMarkdownConverter(MarkdownConverter):
             if not hasattr(element, "attrs") or element.attrs is None:  # pyright: ignore [reportUnnecessaryComparison]
                 continue
 
-            style = element.get("style", "")
-            if "display:none" in style.replace(" ", "") or "visibility:hidden" in style.replace(" ", ""):  # pyright: ignore [reportOptionalMemberAccess, reportAttributeAccessIssue]
+            # case-sensitive, unlike the main-content path: kept so that full-page output does not change
+            if _hides(element.get("style", "")):  # pyright: ignore [reportArgumentType]
                 element.decompose()
 
         return super().convert_soup(soup)  # pyright: ignore [reportUnknownVariableType]
