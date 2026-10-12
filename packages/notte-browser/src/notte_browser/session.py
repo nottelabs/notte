@@ -63,6 +63,7 @@ from notte_core.errors.actions import (
     EvaluateJsNoDataError,
     EvaluateJsResultLimitError,
     InvalidActionError,
+    VaultCredentialError,
 )
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
@@ -113,6 +114,7 @@ from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe
 from notte_browser.tagging.action.pipe import MainActionSpacePipe
+from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
 
 enable_nest_asyncio()
@@ -158,7 +160,9 @@ class NotteSession(AsyncResource, SyncResource):
         self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe()
         # Structured scraping hands the page markdown to `extractor` (by default `notte_llm.LlmExtractor`, if installed).
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(type=config.scraping_type, extractor=extractor)
-        self.vault: BaseVault | None = vault
+        self._vault: BaseVault | None = None
+        # Assigning through the `vault` property also masks the vault's secrets in screenshots.
+        self.vault = vault
         if persona is not None:
             self.attach_persona(persona)
         else:
@@ -178,6 +182,29 @@ class NotteSession(AsyncResource, SyncResource):
 
     def set_vault(self, vault: BaseVault | None) -> None:
         self.vault = vault
+
+    @property
+    def vault(self) -> BaseVault | None:
+        return self._vault
+
+    @vault.setter
+    def vault(self, vault: BaseVault | None) -> None:
+        self._vault = vault
+        self._sync_screenshot_mask()
+
+    def _sync_screenshot_mask(self) -> None:
+        """Mask the vault's secrets in every screenshot while a vault is attached.
+
+        A custom mask set on the window by the caller is left untouched.
+        """
+        if self._window is None:
+            return
+        current = self._window.screenshot_mask
+        if self._vault is not None:
+            if current is None or isinstance(current, VaultSecretsScreenshotMask):
+                self._window.screenshot_mask = VaultSecretsScreenshotMask(vault=self._vault)
+        elif isinstance(current, VaultSecretsScreenshotMask):
+            self._window.screenshot_mask = None
 
     @track_usage("local.session.cookies.set")
     async def aset_cookies(
@@ -207,6 +234,7 @@ class NotteSession(AsyncResource, SyncResource):
         manager = PlaywrightManager()
         options = BrowserWindowOptions.from_request(self._request)
         self._window = await manager.new_window(options)
+        self._sync_screenshot_mask()
         if self._cookie_file is not None:
             if Path(self._cookie_file).exists():
                 logger.info(f"🍪 Automatically loading cookies from {self._cookie_file}")
@@ -438,10 +466,9 @@ class NotteSession(AsyncResource, SyncResource):
                 )
             return await self.vault.replace_credentials(action, attrs, snapshot)
         except ValueError as e:
-            # Credential field not found in vault (e.g., vault has email but action needs username)
-            # Return original action - it will fail at execution with a clearer error
-            logger.warning(f"Vault credential replacement failed: {e}")
-            return action
+            # Credential field not found in vault (e.g., vault has email but action needs username).
+            # Fail the action: executing it as is would type the raw placeholder into the page.
+            raise VaultCredentialError(str(e)) from e
 
     @overload
     async def aexecute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...

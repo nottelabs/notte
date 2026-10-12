@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Any, final
 
 from loguru import logger
+from notte_browser.window import ScreenshotMask
 from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
 from notte_core.browser.node_type import NodeType
 from notte_core.browser.observation import Observation
@@ -94,6 +95,8 @@ class MockBrowserDriver(AsyncResource):
             timeout=timeout,
             screenshot=screenshot,
         )
+        # Mirrors BrowserWindow.screenshot_mask (set by the session when a vault is attached).
+        self.screenshot_mask: ScreenshotMask | None = None
 
         self._mock_dom_node = DomNode(
             id="mock",

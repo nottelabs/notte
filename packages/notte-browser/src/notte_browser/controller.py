@@ -117,6 +117,31 @@ def _scroll_context_disappeared(frame: Frame, error: Error) -> bool:
     )
 
 
+# Put the caret at the end of the element's text so typed or pasted text is appended.
+# Inputs without a selection API (e.g. type=email) keep the browser's caret placement.
+_MOVE_CARET_TO_END = """
+(el) => {
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+        try {
+            el.setSelectionRange(el.value.length, el.value.length);
+        } catch {}
+        return;
+    }
+    const selection = el.ownerDocument.getSelection();
+    if (selection === null) {
+        return;
+    }
+    const range = el.ownerDocument.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
+"""
+
+_IS_TEXT_FORM_CONTROL = "(el) => el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement"
+
+
 # Installed once per download action. Wraps URL.createObjectURL so we retain a
 # strong JS reference to each Blob under its URL key, which lets us read the
 # bytes even after the page's URL.revokeObjectURL runs (file-saver.js pattern).
@@ -232,6 +257,23 @@ class BrowserController:
         self.verbose: bool = verbose
         self.storage: BaseStorage | None = storage
 
+    async def _clear_focused_field(self, window: BrowserWindow) -> None:
+        await window.page.keyboard.press(key=f"{platform_control_key()}+A")
+        await window.short_wait()
+        await window.page.keyboard.press(key="Backspace")
+        await window.short_wait()
+
+    async def _append_text(self, window: BrowserWindow, locator: Locator, text: str, timeout: int) -> None:
+        """Type `text` after the element's current content instead of replacing it."""
+        if await locator.evaluate(_IS_TEXT_FORM_CONTROL, timeout=timeout):
+            existing = await locator.input_value(timeout=timeout)
+            await locator.fill(existing + text, timeout=timeout, force=True)
+            return
+        # contenteditable and other editable elements
+        await locator.focus(timeout=timeout)
+        await locator.evaluate(_MOVE_CARET_TO_END, timeout=timeout)
+        await window.page.keyboard.insert_text(text)
+
     async def _scroll_target(self, window: BrowserWindow, action: ScrollUpAction | ScrollDownAction) -> None:
         assert action.selector is not None
         locator = window.page.locator(action.selector)
@@ -294,7 +336,12 @@ class BrowserController:
             case FormFillAction(value=value):
                 form_filler = FormFiller(window.page)
                 unpacked_values = {k: get_str_value(v) for k, v in value.items()}
-                _ = await form_filler.fill_form(unpacked_values)
+                fill_results = await form_filler.fill_form(unpacked_values)
+                if not any(isinstance(field, Locator) for field in fill_results.values()):
+                    statuses = ", ".join(f"{key}: {status}" for key, status in fill_results.items())
+                    raise ActionExecutionError(
+                        action.type, window.page.url, reason=f"no form field could be filled ({statuses})"
+                    )
 
             case CaptchaSolveAction(captcha_type=_):
                 _ = await CaptchaHandler.handle_captchas(window, action)
@@ -433,10 +480,9 @@ class BrowserController:
                     await locator.focus()
 
                     if action.clear_before_fill:
-                        await window.page.keyboard.press(key=f"{platform_control_key()}+A")
-                        await window.short_wait()
-                        await window.page.keyboard.press(key="Backspace")
-                        await window.short_wait()
+                        await self._clear_focused_field(window)
+                    else:
+                        await locator.evaluate(_MOVE_CARET_TO_END, timeout=action_timeout)
 
                     # Use isolated clipboard variable instead of system clipboard
                     await window.page.evaluate(
@@ -452,21 +498,31 @@ class BrowserController:
                             }));
                         }
                     """,
-                        value,
+                        get_str_value(value),
                     )
 
                     await window.short_wait()
+                elif action.clear_before_fill:
+                    # `fill` replaces the current value. `force` (skip actionability checks) is what every
+                    # default fill used before `clear_before_fill` stopped being passed as `force`.
+                    await locator.fill(get_str_value(value), timeout=action_timeout, force=True)
                 else:
-                    await locator.fill(get_str_value(value), timeout=action_timeout, force=action.clear_before_fill)
+                    await self._append_text(window, locator, get_str_value(value), action_timeout)
             case MultiFactorFillAction(value=value):
                 # click the locator, then fill in one number at a time
                 await locator.click()
+                if action.clear_before_fill:
+                    await self._clear_focused_field(window)
 
                 for num in get_str_value(value):
                     await window.page.keyboard.press(key=num)
                     await window.page.wait_for_timeout(100)
             case FallbackFillAction(value=value):
                 await locator.click()
+                if action.clear_before_fill:
+                    await self._clear_focused_field(window)
+                else:
+                    await locator.evaluate(_MOVE_CARET_TO_END, timeout=action_timeout)
                 await locator.press_sequentially(get_str_value(value), delay=100)
                 await window.short_wait()
             case CheckAction(value=value):

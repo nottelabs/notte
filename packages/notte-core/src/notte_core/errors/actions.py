@@ -90,6 +90,14 @@ class InputActionShouldHaveOneParameterError(InvalidActionError):
         )
 
 
+class VaultCredentialError(ActionError):
+    """A vault credential could not be filled, so its placeholder was not typed into the page."""
+
+    def __init__(self, reason: str) -> None:
+        msg = f"Could not fill a vault credential: {reason.rstrip('.')}. The credential placeholder was not typed into the page."
+        super().__init__(dev_message=msg, user_message=msg, agent_message=msg)
+
+
 class NoCredentialsFoundError(ActionError):
     def __init__(self, url: str) -> None:
         msg = (
