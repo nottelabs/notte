@@ -14,10 +14,7 @@ from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import InputActionShouldHaveOneParameterError, InvalidActionError
 from pydantic import BaseModel
 
-ActionStatus = Literal["valid", "failed", "excluded"]
-AllActionStatus = ActionStatus | Literal["all"]
 ActionRole = Literal["link", "button", "input", "special", "image", "option", "misc", "other"]
-AllActionRole = ActionRole | Literal["all"]
 
 
 class NotteActionProxy:

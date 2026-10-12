@@ -77,7 +77,7 @@ def test_unknown_error_type_falls_back_to_base_class() -> None:
 
 def test_first_party_error_outside_core_rehydrates_concrete_type() -> None:
     """Errors defined in notte-browser/notte-agent resolve without the caller importing them."""
-    for error_type in ("InvalidLocatorRuntimeError", "MaxStepsReachedError", "PageLoadingError"):
+    for error_type in ("InvalidLocatorRuntimeError", "NoSnapshotObservedError", "PageLoadingError"):
         detail = SerializedError(
             error_type=error_type,
             dev_message="dev",

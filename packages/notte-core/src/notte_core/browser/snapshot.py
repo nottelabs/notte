@@ -2,10 +2,8 @@ import datetime as dt
 from base64 import b64encode
 from collections.abc import Sequence
 
-from PIL import Image
 from pydantic import BaseModel, Field
 
-from notte_core.actions import InteractionAction
 from notte_core.browser.dom_tree import A11yTree, DomNode, InteractionDomNode
 from notte_core.common.logging import logger
 from notte_core.utils.url import clean_url
@@ -24,14 +22,6 @@ class ViewportData(BaseModel):
     viewport_height: int
     total_width: int
     total_height: int
-
-    @property
-    def pixels_above(self) -> int:
-        return self.scroll_y
-
-    @property
-    def pixels_below(self) -> int:
-        return self.total_height - self.scroll_y - self.viewport_height
 
 
 class SnapshotMetadata(BaseModel):
@@ -57,11 +47,6 @@ class BrowserSnapshot(BaseModel):
         }
     }
 
-    def display_screenshot(self) -> "Image.Image | None":
-        from notte_core.utils.image import image_from_bytes
-
-        return image_from_bytes(self.screenshot)
-
     @property
     def clean_url(self) -> str:
         return clean_url(self.metadata.url)
@@ -76,30 +61,3 @@ class BrowserSnapshot(BaseModel):
 
     def interaction_nodes(self) -> Sequence[InteractionDomNode]:
         return self.dom_node.interaction_nodes()
-
-    def with_dom_node(self, dom_node: DomNode) -> "BrowserSnapshot":
-        return BrowserSnapshot(
-            metadata=self.metadata,
-            html_content=self.html_content,
-            a11y_tree=self.a11y_tree,
-            dom_node=dom_node,
-            screenshot=self.screenshot,
-        )
-
-    def subgraph_without(
-        self, actions: Sequence[InteractionAction], roles: set[str] | None = None
-    ) -> "BrowserSnapshot | None":
-        if len(actions) == 0 and roles is not None:
-            subgraph = self.dom_node.subtree_without(roles)
-            return self.with_dom_node(subgraph)
-        id_existing_actions = set([action.id for action in actions])
-        failed_actions = {node.id for node in self.interaction_nodes() if node.id not in id_existing_actions}
-
-        def only_failed_actions(node: DomNode) -> bool:
-            return len(set(node.subtree_ids).intersection(failed_actions)) > 0
-
-        filtered_graph = self.dom_node.subtree_filter(only_failed_actions)
-        if filtered_graph is None:
-            return None
-
-        return self.with_dom_node(filtered_graph)

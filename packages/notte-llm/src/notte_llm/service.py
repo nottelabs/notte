@@ -2,11 +2,9 @@ from pathlib import Path
 from typing import Any
 
 import tiktoken
-from litellm import ModelResponse  # type: ignore[import]
 from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.common.types import TResponseFormat
-from notte_core.errors.llm import InvalidPromptTemplateError
 
 from notte_llm.config import LlmSettings
 from notte_llm.engine import LLMEngine
@@ -40,19 +38,6 @@ class LLMService:
             return self.tokenizer.decode(tokens[:max_tokens])
         return document
 
-    def estimate_tokens(
-        self, text: str | None = None, prompt_id: str | None = None, variables: dict[str, Any] | None = None
-    ) -> int:
-        if text is None:
-            if prompt_id is None or variables is None:
-                raise InvalidPromptTemplateError(
-                    prompt_id=prompt_id or "unknown",
-                    message="for token estimation, prompt_id and variables must be provided if text is not provided",
-                )
-            messages = self.lib.materialize(prompt_id, variables)
-            text = "\n".join([m["content"] for m in messages])
-        return len(self.tokenizer.encode(text))
-
     async def structured_completion(
         self,
         prompt_id: str,
@@ -68,15 +53,4 @@ class LLMService:
             response_format=response_format,
             model=self.base_model,
             use_strict_response_format=use_strict_response_format,
-        )
-
-    async def completion(
-        self,
-        prompt_id: str,
-        variables: dict[str, Any] | None = None,
-    ) -> ModelResponse:
-        messages = self.lib.materialize(prompt_id, variables)
-        return await LLMEngine(verbose=self.verbose).completion(
-            messages=messages,  # type: ignore[arg-type]
-            model=self.base_model,
         )

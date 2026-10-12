@@ -1,4 +1,3 @@
-import time
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from typing import Callable, ClassVar, Required, TypeAlias, TypeVar
@@ -9,10 +8,7 @@ from typing_extensions import TypedDict, override
 from notte_core.browser.highlighter import BoundingBox
 from notte_core.browser.node_type import NodeCategory, NodeRole, NodeType
 from notte_core.common.logging import logger
-from notte_core.errors.processing import (
-    InvalidInternalCheckError,
-    NodeFilteringResultsInEmptyGraph,
-)
+from notte_core.errors.processing import InvalidInternalCheckError
 
 T = TypeVar("T", bound="DomNode")  # T must be a subclass of DomNode
 
@@ -239,21 +235,6 @@ class DomAttributes:
     hidden: bool | None
     expanded: bool | None
 
-    def get_resource_url(self) -> str | None:
-        if self.src is not None and len(self.src) > 0:
-            return self.src
-        if self.srcset is not None and len(self.srcset) > 0:
-            return self.srcset
-        if self.data_src is not None and len(self.data_src) > 0:
-            return self.data_src
-        if self.data_srcset is not None and len(self.data_srcset) > 0:
-            return self.data_srcset
-        if self.target is not None and len(self.target) > 0:
-            return self.target
-        if self.href is not None and len(self.href) > 0:
-            return self.href
-        return None
-
     @staticmethod
     def safe_init(**kwargs: AttributeValue) -> "DomAttributes":
         # compute additional attributes
@@ -364,9 +345,6 @@ class ComputedDomAttributes:
     _frame_selector: str = ""
     _element_handle: str = ""
 
-    def set_selectors(self, selectors: NodeSelectors) -> None:
-        object.__setattr__(self, "selectors", selectors)
-
 
 @dataclass(frozen=True)
 class DomNode:
@@ -462,11 +440,6 @@ class DomNode:
             return True
         return self.role.category().value in [NodeCategory.INTERACTION.value]
 
-    def is_image(self) -> bool:
-        if isinstance(self.role, str):
-            return False
-        return self.role.category().value == NodeCategory.IMAGE.value
-
     @classmethod
     def empty_root(cls) -> "DomNode":
         """Create an empty root DomNode for scraping (skips DOM tree computation)."""
@@ -531,56 +504,6 @@ class DomNode:
         inodes = self.flatten(keep_filter=lambda node: node.is_interaction())
         return [inode.to_interaction_node() for inode in inodes]
 
-    def image_nodes(self) -> list["DomNode"]:
-        return self.flatten(keep_filter=lambda node: node.is_image())
-
-    def subtree_filter(self, ft: Callable[["DomNode"], bool], verbose: bool = False) -> "DomNode | None":
-        def inner(node: DomNode) -> DomNode | None:
-            children = node.children
-            if not ft(node):
-                return None
-
-            filtered_children: list[DomNode] = []
-            for child in children:
-                filtered_child = inner(child)
-                if filtered_child is not None:
-                    filtered_children.append(filtered_child)
-                    # need copy the parent
-            if node.id is None and len(filtered_children) == 0 and node.text.strip() == "":
-                return None
-            return DomNode(
-                id=node.id,
-                type=node.type,
-                role=node.role,
-                text=node.text,
-                children=filtered_children,
-                attributes=node.attributes,
-                computed_attributes=node.computed_attributes,
-                parent=node.parent,
-                bbox=node.bbox,
-            )
-
-        start = time.time()
-        snode = inner(self)
-        end = time.time()
-        if verbose:
-            logger.trace(f"🔍 Filtering subtree of full graph done in {end - start:.2f} seconds")
-        return snode
-
-    def subtree_without(self, roles: set[str]) -> "DomNode":
-        def only_roles(node: DomNode) -> bool:
-            if isinstance(node.role, str):
-                return True
-            return node.role.value not in roles
-
-        filtered = self.subtree_filter(only_roles)
-        if filtered is None:
-            raise NodeFilteringResultsInEmptyGraph(
-                url=self.get_url(),
-                operation=f"subtree_without(roles={roles})",
-            )
-        return filtered
-
     def to_interaction_node(self) -> "InteractionDomNode":
         if self.type.value != NodeType.INTERACTION.value:
             raise InvalidInternalCheckError(
@@ -603,182 +526,6 @@ class DomNode:
             parent=self.parent,
             bbox=self.bbox,
         )
-
-    def to_markdown_tree(
-        self, prefix: str = "", is_last: bool = True, max_depth: int | None = None, current_depth: int = 0
-    ) -> str:
-        """
-        Render the DOM node as a markdown folder structure.
-
-        Args:
-            prefix: The prefix for the current line (used for indentation)
-            is_last: Whether this is the last child of its parent
-            max_depth: Maximum depth to render (None for unlimited)
-            current_depth: Current depth in the tree
-
-        Returns:
-            Markdown string representing the tree structure
-        """
-        if max_depth is not None and current_depth >= max_depth:
-            return ""
-
-        # Determine the node name/display
-        node_name = self._get_node_display_name()
-
-        # Build the current line
-        if current_depth == 0:
-            # Root node
-            result = f"{node_name}\n"
-        else:
-            # Child node
-            connector = "└── " if is_last else "├── "
-            result = f"{prefix}{connector}{node_name}\n"
-
-        # Process children
-        if self.children and (max_depth is None or current_depth < max_depth - 1):
-            child_prefix = prefix + ("    " if is_last else "│   ")
-            for i, child in enumerate(self.children):
-                is_last_child = i == len(self.children) - 1
-                result += child.to_markdown_tree(
-                    prefix=child_prefix, is_last=is_last_child, max_depth=max_depth, current_depth=current_depth + 1
-                )
-
-        return result
-
-    def _get_node_display_name(self) -> str:
-        """Get a display name for the node in the tree structure."""
-        role = self.get_role_str()
-
-        # Build the display name with role and id
-        if self.id:
-            base_name = f"{role} id={self.id}"
-        else:
-            base_name = role
-
-        # Add important attributes
-        attributes_info = self._get_attributes_info()
-        if attributes_info:
-            base_name += f" [{attributes_info}]"
-
-        # Add text content if available and not too long
-        if self.text and len(self.text.strip()) > 0:
-            text = self.text.strip()
-            if len(text) > 50:
-                text = text[:47] + "..."
-            display_name = f"{base_name}: {text}"
-        else:
-            display_name = base_name
-
-        # Add emojis for special contexts
-        context_emojis = self._get_context_emojis()
-        if context_emojis:
-            display_name = f"{context_emojis} {display_name}"
-
-        return display_name
-
-    def _get_attributes_info(self) -> str:
-        """Get important attributes as a string."""
-        if self.attributes is None:
-            return ""
-
-        attrs: list[str] = []
-
-        # Add href for links
-        if hasattr(self.attributes, "href") and self.attributes.href:
-            href = self.attributes.href
-            if len(href) > 30:
-                href = href[:27] + "..."
-            attrs.append(f"href={href}")
-
-        # Add src for images, iframes, etc.
-        if hasattr(self.attributes, "src") and self.attributes.src:
-            src = self.attributes.src
-            if len(src) > 30:
-                src = src[:27] + "..."
-            attrs.append(f"src={src}")
-
-        # Add type for inputs
-        if hasattr(self.attributes, "type") and self.attributes.type:
-            attrs.append(f"type={self.attributes.type}")
-
-        # Add placeholder for inputs
-        if hasattr(self.attributes, "placeholder") and self.attributes.placeholder:
-            placeholder = self.attributes.placeholder
-            if len(placeholder) > 20:
-                placeholder = placeholder[:17] + "..."
-            attrs.append(f"placeholder={placeholder}")
-
-        # Add value for inputs
-        if hasattr(self.attributes, "value") and self.attributes.value:
-            value = self.attributes.value
-            if len(value) > 20:
-                value = value[:17] + "..."
-            attrs.append(f"value={value}")
-
-        # Add disabled reason if available
-        if self.computed_attributes and self.computed_attributes.disabled_reason:
-            disabled_reason = self.computed_attributes.disabled_reason
-            # Convert DISABLED_PROPERTY to more readable format
-            if disabled_reason.startswith("DISABLED_"):
-                reason = disabled_reason.replace("DISABLED_", "").lower()
-                attrs.append(f"disabled={reason}")
-
-        return ", ".join(attrs)
-
-    def _get_context_emojis(self) -> str:
-        """Get emojis for all computed attributes and special contexts."""
-        emojis: list[str] = []
-
-        if self.is_interaction():
-            emojis.append("🟢")
-
-        # Check if node is in an iframe
-        if self.computed_attributes.selectors and self.computed_attributes.selectors.in_iframe:
-            emojis.append("🖼️")
-
-        # Check if node is in a shadow root
-        if self.computed_attributes.selectors and self.computed_attributes.selectors.in_shadow_root:
-            emojis.append("🌑")
-
-        # Check if element has pointer cursor
-        if self._has_pointer_cursor():
-            emojis.append("👆")
-
-        # Check if element is disabled
-        if self.computed_attributes and self.computed_attributes.disabled_reason is not None:
-            emojis.append("🚫")
-
-        # Check if element is NOT in viewport (show emoji when not visible)
-        if not self.computed_attributes.in_viewport:
-            emojis.append("👁️‍🗨️")
-
-        # Check if element is NOT top element (show emoji when not top level)
-        if not self.computed_attributes.is_top_element:
-            emojis.append("🔝")
-
-        # Check if element is editable
-        if self.computed_attributes.is_editable:
-            emojis.append("✏️")
-
-        # Check if element has shadow root
-        if self.computed_attributes.shadow_root:
-            emojis.append("🌑")
-
-        return "".join(emojis)
-
-    def _has_pointer_cursor(self) -> bool:
-        """Check if this element has a pointer cursor (clickable)."""
-        # Use the computed attribute from JavaScript
-        if self.computed_attributes and hasattr(self.computed_attributes, "pointer_element"):
-            return self.computed_attributes.pointer_element
-
-        # Fallback to role-based check if computed attribute is not available
-        if isinstance(self.role, str):
-            return False
-
-        # Check if role indicates clickable element
-        clickable_roles = ["button", "link", "menuitem", "tab", "option", "checkbox", "radio", "slider", "spinbutton"]
-        return self.role.value.lower() in clickable_roles
 
 
 class InteractionDomNode(DomNode):
@@ -805,11 +552,3 @@ class InteractionDomNode(DomNode):
                 ),
             )
         super().__post_init__()
-
-
-@dataclass(frozen=True)
-class ResolvedLocator:
-    role: NodeRole | str
-    is_editable: bool
-    input_type: str | None
-    selector: NodeSelectors

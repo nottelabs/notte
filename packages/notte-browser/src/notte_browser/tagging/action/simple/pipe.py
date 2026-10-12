@@ -3,16 +3,13 @@ from collections.abc import Sequence
 from notte_core.actions import ActionParameter, InteractionAction
 from notte_core.browser.dom_tree import DomNode, InteractionDomNode
 from notte_core.browser.snapshot import BrowserSnapshot
+from notte_core.common.config import config
 from notte_core.errors.processing import InvalidInternalCheckError
 from notte_core.space import ActionSpace
 from notte_core.types import PaginationParams
 from typing_extensions import override
 
 from notte_browser.rendering.interaction_only import InteractionOnlyDomNodeRenderingPipe
-from notte_browser.rendering.pipe import (
-    DomNodeRenderingPipe,
-    DomNodeRenderingType,
-)
 from notte_browser.tagging.action.base import BaseActionSpacePipe
 from notte_browser.tagging.type import PossibleAction
 
@@ -45,7 +42,11 @@ class SimpleActionSpacePipe(BaseActionSpacePipe):
         previous_action_list: Sequence[InteractionAction] | None,
         pagination: PaginationParams,
     ) -> ActionSpace:
-        page_content = DomNodeRenderingPipe.forward(snapshot.dom_node, type=DomNodeRenderingType.INTERACTION_ONLY)
+        page_content = InteractionOnlyDomNodeRenderingPipe.forward(
+            snapshot.dom_node,
+            max_len_per_attribute=60,
+            verbose=config.verbose,
+        )
         return ActionSpace(
             description=page_content,
             interaction_actions=self.actions(snapshot.dom_node),

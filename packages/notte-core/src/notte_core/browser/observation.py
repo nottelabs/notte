@@ -235,11 +235,6 @@ class Screenshot(BaseModel):
         return image_from_bytes(data)
 
 
-class TrajectoryProgress(BaseModel):
-    current_step: int
-    max_steps: int
-
-
 class Observation(FilledTimedSpan):
     metadata: Annotated[
         SnapshotMetadata, Field(description="Metadata of the current page, i.e url, page title, snapshot timestamp.")

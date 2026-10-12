@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import os
 import re
-from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 import litellm
 from json_repair import repair_json
@@ -40,7 +39,7 @@ from notte_core.errors.provider import (
 )
 from notte_core.errors.provider import RateLimitError as NotteRateLimitError
 from notte_core.profiling import profiler
-from pydantic import BaseModel, ValidationError, create_model
+from pydantic import BaseModel, ValidationError
 
 from notte_llm.config import LlmSettings
 from notte_llm.models import LlmModel, enable_openrouter
@@ -359,9 +358,6 @@ class LLMEngine:
         self.nb_retries_structured_output: int = nb_retries_structured_output
         self.verbose: bool = verbose
 
-    def context_length(self) -> int:
-        return LlmModel.get_provider(self.model).context_length
-
     @profiler.profiled(service_name="llm")
     async def structured_completion(
         self,
@@ -653,56 +649,6 @@ class LLMEngine:
                 should_retry_later=True,
                 agent_message=None,
             ) from e
-
-    async def choice(self, query: str, choices: list[str] | set[str]) -> str:
-        """
-        Use LLM to choose the most appropriate answer from the given list of choices.
-
-        Example:
-            >>> llm = LLMEngine(model="gpt-4o-mini")
-            >>> llm.choice("What is the capital of France?", ["Paris", "London", "Berlin"])
-            "Paris"
-
-        Args:
-            query: The user query to choose the most appropriate answer from the given list of choices.
-            choices: The list of choices to choose the most appropriate answer from.
-
-        Returns:
-            The most appropriate answer from the given list of choices.
-        """
-        if query in choices:
-            logger.info(f"User query {query} is already in choices")
-            return query
-        if len(choices) == 1:
-            choice = choices[0] if isinstance(choices, list) else next(iter(choices))
-            logger.info(f"Only one choice available: {choice}")
-            return choice
-        logger.info(f"User query '{query}' is not in choices. Using LLM to choose from: '{choices}'")
-
-        def create_choice_model(types: Iterable[str]) -> type[BaseModel]:
-            # Create a Literal type with all possible vehicle models
-            ModelType = Literal[tuple(types)]
-
-            # Create the dynamic Choice model
-            Choice = create_model(
-                "Choice",
-                choice=(ModelType, ...),  # Required field with type annotation
-                __base__=BaseModel,
-            )
-            return Choice
-
-        messages: list[AllMessageValues] = [
-            {
-                "role": "user",
-                "content": f"""
-                Based on the following user query: {query}, I need you to select the most appropriate answer from the following list:
-                {choices}
-                If you don't know the answer, make a educated guess.
-                """,
-            }
-        ]
-        choice = await self.structured_completion(messages=messages, response_format=create_choice_model(choices))
-        return choice.choice  # type: ignore
 
 
 @dataclass
