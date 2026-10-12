@@ -479,7 +479,7 @@ class BrowserWindow(BaseModel):
     @profiler.profiled(service_name="observation")
     async def snapshot(
         self,
-        screenshot: bool | None = None,
+        screenshot: bool = True,
         retries: int = config.empty_page_max_retry,
         selector: str | None = None,
         skip_dom: bool = False,
@@ -497,7 +497,8 @@ class BrowserWindow(BaseModel):
                 html_content_await = profiler.profiled(service_name="observation")(self.page.content)()
 
             html_content = await html_content_await
-            snapshot_screenshot = await self.screenshot()
+            if screenshot:
+                snapshot_screenshot = await self.screenshot()
             if skip_dom:
                 dom_node = DomNode.empty_root()
             else:
@@ -529,7 +530,7 @@ class BrowserWindow(BaseModel):
             else:
                 raise UnexpectedBrowserError(url=self.page.url) from e
 
-        if dom_node is None or snapshot_screenshot is None:
+        if dom_node is None or (screenshot and snapshot_screenshot is None):
             if config.verbose:
                 logger.warning(f"Empty page content for {self.page.url}. Retry in {config.wait_retry_snapshot_ms}ms")
             await self.page.wait_for_timeout(config.wait_retry_snapshot_ms)
