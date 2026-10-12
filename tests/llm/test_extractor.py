@@ -1,5 +1,4 @@
 from notte_browser.scraping.pipe import DataScrapingPipe
-from notte_core.common.config import ScrapingType
 from notte_core.data.extraction import StructuredExtractor
 from notte_llm import LlmExtractor
 
@@ -19,6 +18,6 @@ def test_chosen_model_uses_a_cached_per_call_service() -> None:
 
 
 def test_sessions_default_to_the_llm_extractor_when_installed() -> None:
-    data_pipe = DataScrapingPipe(type=ScrapingType.MARKDOWNIFY)
+    data_pipe = DataScrapingPipe()
     assert data_pipe._extractor is None  # pyright: ignore[reportPrivateUsage]
     assert isinstance(data_pipe.extractor, LlmExtractor)

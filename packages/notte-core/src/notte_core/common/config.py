@@ -52,11 +52,6 @@ class BrowserBackend(StrEnum):
     PATCHRIGHT = "patchright"
 
 
-class ScrapingType(StrEnum):
-    MARKDOWNIFY = "markdownify"
-    MAIN_CONTENT = "main_content"
-
-
 PerceptionType = Literal["fast", "deep"]
 
 
@@ -93,9 +88,6 @@ class NotteConfigDict(TypedDict, total=False):
     raise_on_session_execution_failure: bool
     evaluate_js_max_result_bytes: int
     evaluate_js_max_result_values: int
-
-    # [scraping]
-    scraping_type: ScrapingType
 
     # [error]
     max_error_length: int
@@ -187,9 +179,6 @@ class NotteConfig(TomlConfig):
     raise_on_session_execution_failure: bool
     evaluate_js_max_result_bytes: int = Field(default=16 * 1024 * 1024, gt=0)
     evaluate_js_max_result_values: int = Field(default=50_000, gt=0)
-
-    # [scraping]
-    scraping_type: ScrapingType
 
     # [error]
     max_error_length: int

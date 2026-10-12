@@ -2,7 +2,7 @@ import re
 from typing import final
 
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import ScrapingType, config
+from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.data.extraction import StructuredExtractor
 from notte_core.data.pruning import MarkdownPruningPipe
@@ -10,10 +10,7 @@ from notte_core.data.space import DataSpace
 from notte_core.types import ScrapeParams
 
 from notte_browser.errors import StructuredExtractorNotAvailableError
-from notte_browser.scraping.markdown import (
-    MainContentScrapingPipe,
-    MarkdownifyScrapingPipe,
-)
+from notte_browser.scraping.markdown import page_markdown
 from notte_browser.window import BrowserWindow
 
 
@@ -70,13 +67,11 @@ def _calculate_url_percentage(text: str) -> float:
 
 @final
 class DataScrapingPipe:
-    """
-    Data scraping pipe that scrapes data from the page
-    """
+    """Scrape the page as markdown (`page_markdown`), then extract structured data from it when
+    `params` asks for it (`instructions` / `response_format`)."""
 
-    def __init__(self, type: ScrapingType, extractor: StructuredExtractor | None = None) -> None:
+    def __init__(self, extractor: StructuredExtractor | None = None) -> None:
         self._extractor: StructuredExtractor | None = extractor
-        self.scraping_type = type
 
     @property
     def extractor(self) -> StructuredExtractor:
@@ -85,34 +80,13 @@ class DataScrapingPipe:
             self._extractor = default_extractor()
         return self._extractor
 
-    def get_markdown_scraping_type(self, params: ScrapeParams) -> ScrapingType:
-        # otherwise, use config.type
-        if params.requires_schema():
-            return ScrapingType.MARKDOWNIFY
-        return self.scraping_type
-
-    async def scrape_markdown(self, window: BrowserWindow, snapshot: BrowserSnapshot, params: ScrapeParams) -> str:
-        match self.get_markdown_scraping_type(params):
-            case ScrapingType.MARKDOWNIFY:
-                if config.verbose:
-                    logger.trace("📀 Scraping page with simple scraping pipe")
-
-                return await MarkdownifyScrapingPipe.forward(window, snapshot, params)
-
-            case ScrapingType.MAIN_CONTENT:
-                if config.verbose:
-                    logger.trace("📀 Scraping page with main content scraping pipe")
-                if not params.only_main_content:
-                    raise ValueError("Main content scraping pipe only supports only_main_content=True")
-                return MainContentScrapingPipe.forward(snapshot, params, images_to_alt=True)
-
     async def forward(
         self,
         window: BrowserWindow,
         snapshot: BrowserSnapshot,
         params: ScrapeParams,
     ) -> DataSpace:
-        markdown = await self.scrape_markdown(window, snapshot, params)
+        markdown = await page_markdown(window, snapshot, params)
         if config.verbose:
             logger.trace(f"📀 Extracted page as markdown\n: {markdown}\n")
         structured = None

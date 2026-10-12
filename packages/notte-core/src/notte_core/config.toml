@@ -33,10 +33,6 @@ raise_on_session_execution_failure = true
 # proxy_username = null
 # proxy_password = null # pragma: allowlist secret
 
-# [scraping]
-scraping_type = "markdownify"
-
-
 # [dom_parsing]
 # Viewport expansion in pixels.
 #    This amount will increase the number of elements which are included in the state what the LLM will see.

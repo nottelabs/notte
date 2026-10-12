@@ -61,10 +61,15 @@ def _unwrap_element(element: etree._Element) -> None:
     parent.remove(element)
 
 
+def _hides(style: str) -> bool:
+    """Whether an inline `style` hides its element."""
+    style = style.replace(" ", "")
+    return "display:none" in style or "visibility:hidden" in style
+
+
 def _remove_hidden_elements(root: etree._Element) -> None:
     for element in list(root.iter()):
-        style = str(element.get("style", "")).replace(" ", "").lower()
-        if "display:none" in style or "visibility:hidden" in style:
+        if _hides(str(element.get("style", "")).lower()):
             _remove_subtree(element)
 
 
@@ -139,52 +144,46 @@ def _trafilatura_fallback(html: str) -> list[etree._Element]:
     return content or [root]
 
 
-def _html_to_markdown(element: etree._Element, params: ScrapeParams, *, images_to_alt: bool) -> str:
+def _html_to_markdown(element: etree._Element, params: ScrapeParams) -> str:
     converter = html2text.HTML2Text()
+    # `_strip_configured_tags` already drops these tags below each content root, but not a root that is one.
     converter.ignore_links = not params.scrape_links
     converter.ignore_images = not params.scrape_images
-    converter.images_to_alt = images_to_alt
     serialized = cast(str, lxml_html.tostring(element, encoding="unicode", method="html"))
     return converter.handle(serialized)
 
 
-class MainContentScrapingPipe:
-    """Extract main content with a single low-memory lxml DOM."""
+def _main_content_markdown(snapshot: BrowserSnapshot, params: ScrapeParams) -> str:
+    """The page's main content (its `<main>`, articles, or a conventional content id; trafilatura otherwise)
+    as markdown, read with a single low-memory lxml DOM."""
+    try:
+        root = lxml_html.document_fromstring(snapshot.html_content)
+    except (etree.ParserError, ValueError) as error:
+        raise EmptyPageContentError(url=snapshot.metadata.url, nb_retries=1) from error
 
-    @staticmethod
-    def forward(snapshot: BrowserSnapshot, params: ScrapeParams, *, images_to_alt: bool = False) -> str:
-        try:
-            root = lxml_html.document_fromstring(snapshot.html_content)
-        except (etree.ParserError, ValueError) as error:
-            raise EmptyPageContentError(url=snapshot.metadata.url, nb_retries=1) from error
+    for tag in _MAIN_CONTENT_REMOVED_TAGS:
+        for element in list(root.iter(tag)):
+            _remove_subtree(element)
+    _remove_hidden_elements(root)
 
-        for tag in _MAIN_CONTENT_REMOVED_TAGS:
-            for element in list(root.iter(tag)):
-                _remove_subtree(element)
-        _remove_hidden_elements(root)
+    main = next(root.iter("main"), None)
+    if main is not None:
+        articles = list(main.iter("article"))
+        content = articles or [main]
+    else:
+        articles = list(root.iter("article"))
+        content = articles or ([] if (deepest := _deepest_content_id(root)) is None else [deepest])
 
-        main = next(root.iter("main"), None)
-        if main is not None:
-            articles = list(main.iter("article"))
-            content = articles or [main]
-        else:
-            articles = list(root.iter("article"))
-            content = articles or ([] if (deepest := _deepest_content_id(root)) is None else [deepest])
+    if not content:
+        content = _trafilatura_fallback(snapshot.html_content)
+    if not content:
+        raise EmptyPageContentError(url=snapshot.metadata.url, nb_retries=1)
 
-        if not content:
-            content = _trafilatura_fallback(snapshot.html_content)
-        if not content:
-            raise EmptyPageContentError(url=snapshot.metadata.url, nb_retries=1)
-
-        _strip_configured_tags(content, params.removed_tags())
-        data = "\n\n".join(
-            filter(
-                None, (_html_to_markdown(element, params, images_to_alt=images_to_alt).strip() for element in content)
-            )
-        )
-        if not data:
-            raise EmptyPageContentError(url=snapshot.metadata.url, nb_retries=1)
-        return data
+    _strip_configured_tags(content, params.removed_tags())
+    data = "\n\n".join(filter(None, (_html_to_markdown(element, params).strip() for element in content)))
+    if not data:
+        raise EmptyPageContentError(url=snapshot.metadata.url, nb_retries=1)
+    return data
 
 
 class VisibleMarkdownConverter(MarkdownConverter):
@@ -196,8 +195,8 @@ class VisibleMarkdownConverter(MarkdownConverter):
             if not hasattr(element, "attrs") or element.attrs is None:  # pyright: ignore [reportUnnecessaryComparison]
                 continue
 
-            style = element.get("style", "")
-            if "display:none" in style.replace(" ", "") or "visibility:hidden" in style.replace(" ", ""):  # pyright: ignore [reportOptionalMemberAccess, reportAttributeAccessIssue]
+            # case-sensitive, unlike the main-content path: kept so that full-page output does not change
+            if _hides(element.get("style", "")):  # pyright: ignore [reportArgumentType]
                 element.decompose()
 
         return super().convert_soup(soup)  # pyright: ignore [reportUnknownVariableType]
@@ -229,35 +228,27 @@ async def _frames_in_document_order(frame: Frame) -> list[Frame]:
     return frames
 
 
-class MarkdownifyScrapingPipe:
-    """Convert page content to Markdown and append readable iframe content."""
+async def page_markdown(window: BrowserWindow, snapshot: BrowserSnapshot, params: ScrapeParams) -> str:
+    """The page as markdown: the whole page (markdownify), or only its main content (html2text) with
+    `params.only_main_content`, followed by each iframe's content in document order unless `params.selector`
+    scopes the scrape.
 
-    @staticmethod
-    async def forward(
-        window: BrowserWindow,
-        snapshot: BrowserSnapshot,
-        params: ScrapeParams,
-        include_iframes: bool | None = None,
-    ) -> str:
-        converter = VisibleMarkdownConverter(strip=params.removed_tags())
-        if params.only_main_content:
-            content = MainContentScrapingPipe.forward(snapshot, params)
-        else:
-            content = converter.convert(snapshot.html_content)  # type: ignore[attr-defined]
+    Iframes are read from the live frames rather than the snapshot so that cross-origin frames remain readable.
+    """
+    converter = VisibleMarkdownConverter(strip=params.removed_tags())
+    if params.only_main_content:
+        content = _main_content_markdown(snapshot, params)
+    else:
+        content = cast(str, converter.convert(snapshot.html_content))
 
-        # Manually append iframe text so cross-origin frames remain readable.
-        # Do not include iframes by default when a selector scopes the scrape.
-        if include_iframes is None:
-            include_iframes = params.selector is None
+    if params.selector is None:
+        for iframe in await _frames_in_document_order(window.page.main_frame):
+            if iframe.url != window.page.url and not iframe.url.startswith("data:"):
+                try:
+                    iframe_content = await iframe.content()
+                    content += f"\n\nIFRAME {iframe.url}:\n"
+                    content += cast(str, converter.convert(iframe_content))
+                except PlaywrightError as error:
+                    logger.warning(f"Failed to get iframe content for {iframe.url}: {error}")
 
-        if include_iframes:
-            for iframe in await _frames_in_document_order(window.page.main_frame):
-                if iframe.url != window.page.url and not iframe.url.startswith("data:"):
-                    try:
-                        iframe_content = await iframe.content()
-                        content += f"\n\nIFRAME {iframe.url}:\n"  # type: ignore[attr-defined]
-                        content += converter.convert(iframe_content)  # type: ignore[attr-defined]
-                    except PlaywrightError as error:
-                        logger.warning(f"Failed to get iframe content for {iframe.url}: {error}")
-
-        return content  # type: ignore[return-value]
+    return content

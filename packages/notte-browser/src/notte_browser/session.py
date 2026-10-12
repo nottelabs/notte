@@ -153,7 +153,7 @@ class NotteSession(AsyncResource, SyncResource):
         self.storage: BaseStorage | None = storage
         self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe()
         # Structured scraping hands the page markdown to `extractor` (by default `notte_llm.LlmExtractor`, if installed).
-        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(type=config.scraping_type, extractor=extractor)
+        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(extractor=extractor)
         self._vault: BaseVault | None = None
         # Assigning through the `vault` property also masks the vault's secrets in screenshots.
         self.vault = vault

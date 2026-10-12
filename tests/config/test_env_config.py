@@ -1,3 +1,6 @@
+from types import SimpleNamespace
+
+import notte_core.common.config as config_module
 import pytest
 from notte_core.common.config import NotteConfig, config
 from notte_core.errors.base import ErrorConfig
@@ -66,6 +69,18 @@ def test_config_file_with_removed_keys_still_loads(tmp_path, monkeypatch):
     assert local_config.verbose is True
     assert not hasattr(local_config, "max_steps")
     assert not hasattr(local_config, "screenshot_type")
+
+
+def test_config_file_with_removed_scraping_type_still_loads(tmp_path, monkeypatch):
+    config_file = tmp_path / "notte.toml"
+    _ = config_file.write_text('headless = false\nscraping_type = "main_content"\n')
+    monkeypatch.setenv("NOTTE_CONFIG_PATH", str(config_file))
+    warnings: list[str] = []
+    monkeypatch.setattr(config_module, "logger", SimpleNamespace(warning=warnings.append))
+    local_config = NotteConfig.from_toml()
+    assert local_config.headless is False
+    assert not hasattr(local_config, "scraping_type")
+    assert warnings == [f"Ignoring unknown keys in config file {config_file}: scraping_type"]
 
 
 def test_unknown_keyword_argument_is_still_rejected():

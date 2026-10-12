@@ -4,10 +4,10 @@ import sys
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
+import notte_browser.scraping.pipe
 import pytest
 from notte_browser.errors import StructuredExtractorNotAvailableError
 from notte_browser.scraping.pipe import DataScrapingPipe
-from notte_core.common.config import ScrapingType
 from notte_core.data.extraction import StructuredExtractor
 from notte_core.data.space import DictBaseModel, StructuredData
 from notte_sdk.types import ScrapeParams
@@ -38,10 +38,15 @@ def _snapshot() -> Any:
     return snapshot
 
 
+@pytest.fixture(autouse=True)
+def page_markdown(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
+    mock = AsyncMock(return_value="# page")
+    monkeypatch.setattr(notte_browser.scraping.pipe, "page_markdown", mock)
+    return mock
+
+
 def _pipe(extractor: StructuredExtractor | None = None) -> DataScrapingPipe:
-    data_pipe = DataScrapingPipe(type=ScrapingType.MARKDOWNIFY, extractor=extractor)
-    data_pipe.scrape_markdown = AsyncMock(return_value="# page")  # type: ignore[method-assign]
-    return data_pipe
+    return DataScrapingPipe(extractor=extractor)
 
 
 def test_recording_extractor_satisfies_protocol() -> None:
@@ -79,3 +84,11 @@ async def test_structured_scrape_without_extractor_or_notte_llm_raises(monkeypat
     monkeypatch.setitem(sys.modules, "notte_llm", None)
     with pytest.raises(StructuredExtractorNotAvailableError, match=r"notte\[llm\]"):
         _ = await _pipe().forward(MagicMock(), _snapshot(), ScrapeParams(instructions="extract"))
+
+
+@pytest.mark.asyncio
+async def test_structured_scrape_reads_the_same_markdown_as_a_plain_scrape(page_markdown: AsyncMock) -> None:
+    window, snapshot = MagicMock(), _snapshot()
+    params = ScrapeParams(instructions="extract", only_main_content=True)
+    _ = await _pipe(RecordingExtractor()).forward(window, snapshot, params)
+    page_markdown.assert_awaited_once_with(window, snapshot, params)
