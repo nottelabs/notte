@@ -3228,6 +3228,7 @@ dev = [
     { name = "pytest-rerunfailures" },
     { name = "pytest-timeout" },
     { name = "pytest-xdist", extra = ["psutil"] },
+    { name = "python-dotenv" },
     { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "sphinx-mintlify" },
@@ -3272,6 +3273,7 @@ dev = [
     { name = "pytest-rerunfailures", specifier = ">=15.0" },
     { name = "pytest-timeout", specifier = ">=2.4.0" },
     { name = "pytest-xdist", extras = ["psutil"], specifier = ">=3.8.0" },
+    { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "sphinx", specifier = ">=8.2.3" },
     { name = "sphinx-mintlify", specifier = ">=0.1.0" },
     { name = "twine", specifier = ">=6.1.0" },
@@ -3343,13 +3345,10 @@ dependencies = [
     { name = "pillow" },
     { name = "posthog" },
     { name = "pydantic" },
-    { name = "pydantic-settings" },
     { name = "pyotp" },
-    { name = "python-dotenv" },
     { name = "requests" },
     { name = "scarf-sdk" },
     { name = "tldextract" },
-    { name = "toml" },
 ]
 
 [package.optional-dependencies]
@@ -3378,17 +3377,14 @@ requires-dist = [
     { name = "pillow", specifier = ">=11.1.0" },
     { name = "posthog", specifier = ">=3.0.1,<=7.62.0" },
     { name = "pydantic", specifier = ">=2.10.6" },
-    { name = "pydantic-settings", specifier = ">=2.8.1" },
     { name = "pyotp", specifier = ">=2.9.0" },
     { name = "pyroscope-io", marker = "extra == 'observability'", specifier = ">=0.8.0" },
     { name = "pyroscope-io", marker = "extra == 'pyroscope'", specifier = ">=0.8.0" },
     { name = "pyroscope-otel", marker = "extra == 'observability'", specifier = ">=0.1.0" },
     { name = "pyroscope-otel", marker = "extra == 'pyroscope'", specifier = ">=0.1.0" },
-    { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "scarf-sdk", specifier = ">=0.1.2" },
     { name = "tldextract", specifier = ">=5.3.0" },
-    { name = "toml", specifier = ">=0.10.2" },
 ]
 provides-extras = ["tempo", "pyroscope", "observability"]
 
@@ -3431,7 +3427,6 @@ version = "2.0.0.dev0"
 source = { editable = "packages/notte-sdk" }
 dependencies = [
     { name = "cryptography" },
-    { name = "halo" },
     { name = "notte-core" },
     { name = "requests" },
     { name = "urllib3" },
@@ -3446,7 +3441,6 @@ playwright = [
 [package.metadata]
 requires-dist = [
     { name = "cryptography", specifier = ">=43.0.3" },
-    { name = "halo", specifier = ">=0.0.28" },
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "playwright", marker = "extra == 'playwright'", specifier = "~=1.55" },
     { name = "requests", specifier = ">=2.32.3,<3" },
@@ -4446,20 +4440,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/c2/d7/ad493864a7fb21c0c4df98f965e2db430cb25a9d7369b5778d5016c09fd9/pydantic_core-2.46.5-pp311-pypy311_pp73-musllinux_1_1_armv7l.whl", hash = "sha256:2d330aaba8621b1edcec8ae2c4050f63b84ccf6d98723a8f212e9684713abf0e", size = 2294560, upload-time = "2026-08-28T10:01:23.495Z" },
     { url = "https://files.pythonhosted.org/packages/02/8e/b41c84c913f29973a268e6c2b5bbf13c95adb9956c126d10da11ba3b2bef/pydantic_core-2.46.5-pp311-pypy311_pp73-musllinux_1_1_x86_64.whl", hash = "sha256:b6acfb46a814762367fb7ba0828b0a17d441b92ce249a0e007474c9072662dda", size = 2317531, upload-time = "2026-08-28T10:01:26.334Z" },
     { url = "https://files.pythonhosted.org/packages/db/1d/068464f23075f66a8f1b806935e9cd9363ee446636ea70d2c22ee8659dbf/pydantic_core-2.46.5-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:d0a24b40877af2de4950252be9d21eaf7fb07660f3c2cae1f56c6b599ada5266", size = 2140686, upload-time = "2026-08-28T10:01:28.947Z" },
-]
-
-[[package]]
-name = "pydantic-settings"
-version = "2.15.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pydantic" },
-    { name = "python-dotenv" },
-    { name = "typing-inspection" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/68/ca/31c57507b13119d7d3cfa1576dad2911a4861e3be07b579395f4e9d393f9/pydantic_settings-2.15.0.tar.gz", hash = "sha256:694b793e84f766ba76a90ebdefc01d0a9a045dab0382bee70393da93712ad117", size = 261253, upload-time = "2026-08-07T09:24:57.419Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/30/a4/2bffa9f8e804325a09867f0e9d30795c80ea9f8d62560bd1b6ad6220eb2f/pydantic_settings-2.15.0-py3-none-any.whl", hash = "sha256:0ba092c291c94baceb5eff768aa0d56400a457585bc0175925a5a5510303da42", size = 69413, upload-time = "2026-08-07T09:24:55.839Z" },
 ]
 
 [[package]]
@@ -8486,15 +8466,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/36/65/7e75caea90bc73c1dd8d40438adf1a7bc26af3b8d0a6705ea190462506e1/tokenizers-0.22.1-cp39-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:a0f307d490295717726598ef6fa4f24af9d484809223bbc253b201c740a06390", size = 9681250, upload-time = "2025-09-19T09:49:21.501Z" },
     { url = "https://files.pythonhosted.org/packages/30/2c/959dddef581b46e6209da82df3b78471e96260e2bc463f89d23b1bf0e52a/tokenizers-0.22.1-cp39-abi3-win32.whl", hash = "sha256:b5120eed1442765cd90b903bb6cfef781fd8fe64e34ccaecbae4c619b7b12a82", size = 2472003, upload-time = "2025-09-19T09:49:27.089Z" },
     { url = "https://files.pythonhosted.org/packages/b3/46/e33a8c93907b631a99377ef4c5f817ab453d0b34f93529421f42ff559671/tokenizers-0.22.1-cp39-abi3-win_amd64.whl", hash = "sha256:65fd6e3fb11ca1e78a6a93602490f134d1fdeb13bcef99389d5102ea318ed138", size = 2674684, upload-time = "2025-09-19T09:49:24.953Z" },
-]
-
-[[package]]
-name = "toml"
-version = "0.10.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/be/ba/1f744cdc819428fc6b5084ec34d9b30660f6f9daaf70eead706e3203ec3c/toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f", size = 22253, upload-time = "2020-11-01T01:40:22.204Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b", size = 16588, upload-time = "2020-11-01T01:40:20.672Z" },
 ]
 
 [[package]]

@@ -28,7 +28,6 @@ from notte_core.actions.typedicts import (
     CheckActionDict,
     ClickActionDict,
     CloseTabActionDict,
-    CompletionActionDict,
     DownloadFileActionDict,
     EmailReadActionDict,
     EmailVerificationReadActionDict,
@@ -40,7 +39,6 @@ from notte_core.actions.typedicts import (
     GoForwardActionDict,
     GotoActionDict,
     GotoNewTabActionDict,
-    HelpActionDict,
     MultiFactorFillActionDict,
     PressKeyActionDict,
     ReloadActionDict,
@@ -587,14 +585,6 @@ class NotteSession(AsyncResource, SyncResource):
     ) -> ExecutionResult: ...
     @overload
     async def aexecute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[HelpActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    async def aexecute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CompletionActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    async def aexecute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrapeActionDict]
     ) -> ExecutionResult: ...
     @overload
@@ -970,12 +960,6 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CaptchaSolveActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[HelpActionDict]) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CompletionActionDict]
     ) -> ExecutionResult: ...
     @overload
     def execute(

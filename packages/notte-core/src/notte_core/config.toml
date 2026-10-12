@@ -34,20 +34,8 @@ raise_on_session_execution_failure = true
 # proxy_username = null
 # proxy_password = null # pragma: allowlist secret
 
-# [llm]
-nb_retries_structured_output = 2
-nb_retries = 2
-clip_tokens=5000
-use_llamux = false
-temperature = 0.0
-
 # [scraping]
-# scraping_model = "gpt-4o-mini"
 scraping_type = "markdownify"
-
-# [perception]
-perception_type = "fast" # one of ["fast", "deep"] deep is slower because it uses a LLM to parse the page
-# perception_model = "cerebras/llama-3.3-70b"
 
 
 # [dom_parsing]

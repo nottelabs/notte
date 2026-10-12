@@ -1,5 +1,5 @@
 import pytest
-from notte_core.common.config import LlmModel, LlmProvider
+from notte_browser.llm.models import LlmModel, LlmProvider
 
 # OpenRouter models the LLM extra is expected to support.
 OPENROUTER_MODELS = [

@@ -1,13 +1,14 @@
 import os
+import tomllib
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal, Required, Self, Unpack
 
-import toml
 from pydantic import BaseModel, Field, computed_field
 from typing_extensions import TypedDict, override
 
 from notte_core import LoggingSetup
+from notte_core.common.logging import logger
 from notte_core.errors.base import ErrorMode
 
 DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config.toml"
@@ -16,15 +17,6 @@ if not DEFAULT_CONFIG_PATH.exists():
     raise FileNotFoundError(f"Config file not found: {DEFAULT_CONFIG_PATH}")
 
 ScreenshotType = Literal["raw", "full", "last_action"]
-_enable_openrouter: bool | None = None
-
-
-def enable_openrouter() -> bool:
-    global _enable_openrouter
-    if _enable_openrouter is not None:
-        return _enable_openrouter
-    _enable_openrouter = os.environ.get("ENABLE_OPENROUTER", "false").lower() in ("true", "1", "yes")
-    return _enable_openrouter
 
 
 class CookieDict(TypedDict, total=False):
@@ -52,203 +44,6 @@ class PlaywrightProxySettings(TypedDict, total=False):
     bypass: str | None
     username: str | None
     password: str | None
-
-
-class LlmProvider(StrEnum):
-    openai = "openai"
-    gemini = "gemini"
-    vertex_ai = "vertex_ai"
-    openrouter = "openrouter"
-    cerebras = "cerebras"
-    groq = "groq"
-    perplexity = "perplexity"
-    deepseek = "deepseek"
-    ollama = "ollama"
-    together = "together_ai"
-    anthropic = "anthropic"
-    moonshot = "moonshot"
-    xai = "xai"
-    zai = "zai"
-    qwen = "qwen"
-    minimax = "minimax"
-
-    @property
-    def context_length(self) -> int:
-        match self:
-            case LlmProvider.cerebras:
-                return 16_000
-            case LlmProvider.groq:
-                return 8_000
-            case LlmProvider.perplexity:
-                return 64_000
-            case _:
-                return 128_000
-
-    @property
-    def apikey_name(self) -> str:
-        if enable_openrouter():
-            return "OPENROUTER_API_KEY"
-        match self:
-            case LlmProvider.gemini:
-                return "GEMINI_API_KEY"
-            case LlmProvider.vertex_ai:
-                return "GOOGLE_APPLICATION_CREDENTIALS"
-            case LlmProvider.openai:
-                return "OPENAI_API_KEY"
-            case LlmProvider.groq:
-                return "GROQ_API_KEY"
-            case LlmProvider.perplexity:
-                return "PERPLEXITY_API_KEY"
-            case LlmProvider.cerebras:
-                return "CEREBRAS_API_KEY"
-            case LlmProvider.openrouter:
-                return "OPENROUTER_API_KEY"
-            case LlmProvider.deepseek:
-                return "DEEPSEEK_API_KEY"
-            case LlmProvider.ollama:
-                return "OLLAMA_API_KEY"
-            case LlmProvider.anthropic:
-                return "ANTHROPIC_API_KEY"
-            case LlmProvider.together:
-                return "TOGETHERAI_API_KEY"
-            case LlmProvider.moonshot:
-                return "MOONSHOT_API_KEY"
-            case LlmProvider.xai:
-                return "XAI_API_KEY"
-            case LlmProvider.zai:
-                return "ZAI_API_KEY"
-            case LlmProvider.qwen:
-                return "QWEN_API_KEY"
-            case LlmProvider.minimax:
-                return "MINIMAX_API_KEY"
-            case _:  # pyright: ignore[reportUnnecessaryComparison]
-                raise ValueError(f"No API key name found for provider: {self}")  # pyright: ignore[reportUnreachable]
-
-    def has_apikey_in_env(self) -> bool:
-        if self == LlmProvider.ollama:
-            return True
-        return os.getenv(self.apikey_name) is not None
-
-
-class LlmModel(StrEnum):
-    openai = "openai/gpt-4o"
-    gemini = "gemini/gemini-3.5-flash"
-    gemini_vertex = "vertex_ai/gemini-3.5-flash"
-    gemma = "openrouter/google/gemma-3-27b-it"
-    cerebras = "cerebras/gpt-oss-120b"
-    groq = "groq/gpt-oss-120b"
-    perplexity = "perplexity/sonar-pro"
-    deepseek = "deepseek/deepseek-r1"
-    together = "together_ai/meta-llama/llama-3.3-70b-instruct"
-    anthropic = "anthropic/claude-sonnet-4-5-20250929"
-    kimi2_5 = "moonshot/kimi-k2.5"
-    grok = "xai/grok-4.3"
-    minimax = "minimax/minimax-m2.5"
-
-    @property
-    def provider(self) -> LlmProvider:
-        return self.get_provider(self.value)
-
-    @staticmethod
-    def get_provider(model: str) -> LlmProvider:
-        provider_str = model.split("/")[0]
-
-        if provider_str not in list(LlmProvider):
-            raise ValueError(f"Invalid provider: {provider_str}")
-        return LlmProvider(provider_str)
-
-    @staticmethod
-    def get_openrouter_provider(model: str) -> str | None:
-        if "cerebras/" in model:
-            return "Cerebras"
-        if "groq/" in model:
-            return "Groq"
-        if "together_ai/" in model:
-            return "Together"
-        return None
-
-    @staticmethod
-    def get_openrouter_model(model: str) -> str:
-        if model.startswith("openrouter/"):
-            return model
-
-        _model = model
-        if "/gpt-oss-120b" in _model:
-            _model = "openai/gpt-oss-120b"
-
-        if "/gemma-3-27b-it" in _model:
-            _model = "google/gemma-3-27b-it"
-
-        if "/deepseek-r1" in _model:
-            _model = "deepseek/deepseek-r1"
-
-        if "/claude-sonnet-4-5" in _model:
-            _model = "anthropic/claude-sonnet-4-5"
-
-        if "vertex_ai/" in _model:
-            _model = _model.replace("vertex_ai", "google")
-
-        if "gemini/" in _model:
-            _model = _model.replace("gemini/", "google/")
-
-        if "/kimi-k2.5" in _model:
-            _model = "moonshotai/kimi-k2.5"
-
-        if "/llama-3.3-70b-instruct" in _model:
-            _model = "meta-llama/llama-3.3-70b-instruct"
-
-        if "/grok-4-1-fast-non-reasoning" in _model:
-            # Legacy public value: xAI retired grok-4.1-fast and recommends 4.3
-            _model = "x-ai/grok-4.3"
-        elif "xai/" in _model:
-            _model = _model.replace("xai/", "x-ai/")
-
-        if "zai/" in _model:
-            _model = _model.replace("zai/", "z-ai/")
-
-        return f"openrouter/{_model}"
-
-    @property
-    def context_length(self) -> int:
-        return self.provider.context_length
-
-    @staticmethod
-    def use_strict_response_format(val: "str | LlmModel") -> bool:
-        val_str = str(val)
-        # Providers that don't support strict response format or have schema size limits
-        unsupported_providers = [
-            str(LlmProvider.cerebras),
-            str(LlmProvider.moonshot),
-        ]
-        unsupported_models = [
-            "gemini-2.0-flash",
-        ]
-        return not any(val_str.startswith(p) for p in unsupported_providers) and not any(
-            m in val_str for m in unsupported_models
-        )
-
-    @staticmethod
-    def get_temperature(val: "str | LlmModel", default: float) -> float:
-        """Get the temperature for a model, with model-specific overrides."""
-        val_str = str(val)
-        # Model-specific temperature overrides
-        temperature_overrides: dict[str, float] = {
-            "kimi-k2.5": 1.0,
-        }
-        for model_pattern, temp in temperature_overrides.items():
-            if model_pattern in val_str:
-                return temp
-        return default
-
-    @staticmethod
-    def default() -> "LlmModel":
-        if os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
-            return LlmModel.gemini_vertex
-        return LlmModel.gemini
-
-    @staticmethod
-    def valid() -> set[str]:
-        return {model.value for model in LlmModel if model.provider.has_apikey_in_env()}
 
 
 BrowserType = Literal["chromium", "chrome", "firefox", "chrome-nightly", "chrome-turbo"]
@@ -284,15 +79,6 @@ class NotteConfigDict(TypedDict, total=False):
     verbose: bool
     logging_mode: ErrorMode
 
-    # [llm]
-    reasoning_model: str
-    max_history_tokens: int | None
-    nb_retries_structured_output: int
-    nb_retries: int
-    clip_tokens: int
-    use_llamux: bool
-    temperature: float
-
     # [browser]
     headless: bool
     user_agent: str | None
@@ -310,10 +96,6 @@ class NotteConfigDict(TypedDict, total=False):
     raise_on_session_execution_failure: bool
     evaluate_js_max_result_bytes: int
     evaluate_js_max_result_values: int
-
-    # [perception]
-    perception_type: PerceptionType
-    perception_model: str | None
 
     # [scraping]
     scraping_type: ScrapingType
@@ -353,8 +135,8 @@ class TomlConfig(BaseModel):
         """Load settings from a TOML file."""
 
         # load default config
-        with DEFAULT_CONFIG_PATH.open("r") as f:
-            toml_data = toml.load(f)
+        with DEFAULT_CONFIG_PATH.open("rb") as f:
+            toml_data = tomllib.load(f)
 
         path = os.getenv("NOTTE_CONFIG_PATH")
 
@@ -364,8 +146,15 @@ class TomlConfig(BaseModel):
                 raise FileNotFoundError(f"Config file not found: {path}")
 
             # load external config
-            with path.open("r") as f:
-                external_toml_data = toml.load(f)
+            with path.open("rb") as f:
+                external_toml_data = tomllib.load(f)
+
+            # Config files written for older versions may still set keys that were removed (e.g. the
+            # agent and LLM settings of notte 1.x): warn and skip them instead of failing.
+            unknown = sorted(set(external_toml_data) - set(cls.model_fields))
+            if unknown:
+                logger.warning(f"Ignoring unknown keys in config file {path}: {', '.join(unknown)}")
+                external_toml_data = {k: v for k, v in external_toml_data.items() if k not in unknown}
 
             # merge configs
             toml_data = {**toml_data, **external_toml_data}
@@ -385,15 +174,6 @@ class NotteConfig(TomlConfig):
     verbose: bool
     logging_mode: ErrorMode
 
-    # [llm]
-    reasoning_model: str = LlmModel.default().value
-    max_history_tokens: int | None = None
-    nb_retries_structured_output: int
-    nb_retries: int
-    clip_tokens: int
-    use_llamux: bool
-    temperature: float
-
     # [browser]
     headless: bool
     solve_captchas: bool
@@ -411,10 +191,6 @@ class NotteConfig(TomlConfig):
     raise_on_session_execution_failure: bool
     evaluate_js_max_result_bytes: int = Field(default=16 * 1024 * 1024, gt=0)
     evaluate_js_max_result_values: int = Field(default=50_000, gt=0)
-
-    # [perception]
-    perception_type: PerceptionType
-    perception_model: str | None = None  # if none use reasoning_model
 
     # [scraping]
     scraping_type: ScrapingType
@@ -467,11 +243,10 @@ class NotteConfig(TomlConfig):
 
 # DESIGN CHOICES after discussion with the leo
 # 1. flat config structure with comments like # [browser] to structure the file
-# 2. Root config structure should be global for all packages (notte-core, notte-agent, notte-browser) and should therefore be put in notte-core
+# 2. Root config structure should be global for all packages (notte-core, notte-sdk, notte-browser) and should therefore be put in notte-core
 # 3. Users that want extra config options can create their own config file and pass it to the from_toml method. The rule is that the new params override the defaul one
 #### -> This is very good because we can enforce headless=True on the CICD and docker images with this without breaking the config for the users
-# 4. If some agents required a parameter to be set to a certain value, we can add a model_validator to the config class that will check that the parameter is set to the correct value.
-# 5. For computed fields such as `max_history_token` if the user does not set it, we use our computed value otherwise we default to the user value.
+# 4. If some components require a parameter to be set to a certain value, we can add a model_validator to the config class that will check that the parameter is set to the correct value.
 
 
 config = NotteConfig.from_toml()

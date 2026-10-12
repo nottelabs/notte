@@ -11,9 +11,6 @@ from notte_core.actions import (
     CloseTabAction as CloseTab,
 )
 from notte_core.actions import (
-    CompletionAction as Completion,
-)
-from notte_core.actions import (
     DownloadFileAction as DownloadFile,
 )
 from notte_core.actions import (
@@ -45,9 +42,6 @@ from notte_core.actions import (
 )
 from notte_core.actions import (
     GotoNewTabAction as GotoNewTab,
-)
-from notte_core.actions import (
-    HelpAction as Help,
 )
 from notte_core.actions import (
     InteractionActionUnion as InteractionActionUnion,
@@ -102,8 +96,6 @@ __all__ = [
     "ScrollUp",
     "ScrollDown",
     "CaptchaSolve",
-    "Help",
-    "Completion",
     "Scrape",
     "EmailRead",
     "EmailVerificationRead",

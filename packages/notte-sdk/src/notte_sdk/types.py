@@ -15,13 +15,11 @@ from notte_core.actions import (
     BrowserAction,
     InteractionAction,
 )
-from notte_core.agent_types import AgentCompletion
 from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.browser.observation import ExecutionResult, Observation
 from notte_core.browser.snapshot import TabsData
 from notte_core.common.config import (
     BrowserType,
-    LlmModel,
     PerceptionType,
     PlaywrightProxySettings,
     ScreenshotType,
@@ -32,7 +30,6 @@ from notte_core.data.space import DataSpace
 
 # Re-export FileInfo from notte_core for use in SDK
 from notte_core.storage import FileInfo as FileInfo  # noqa: E402
-from notte_core.trajectory import ElementLiteral
 from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
 from notte_core.utils.url import get_root_domain
 from pydantic import (
@@ -1383,8 +1380,10 @@ class SessionDebugResponse(SdkResponse):
 class SessionDebugRecordingEvent(SdkResponse):
     """Model for events that can be sent over the recording WebSocket"""
 
-    type: ElementLiteral | Literal["error"]
-    data: AgentCompletion | Observation | ExecutionResult | str
+    # "observation", "execution_result", "screenshot" or "error". Kept as a plain string (and `data` falls
+    # back to a dict) so that events from older servers, such as agent steps, still parse.
+    type: str
+    data: Observation | ExecutionResult | dict[str, Any] | str
     timestamp: dt.datetime = Field(default_factory=lambda: dt.datetime.now(dt.timezone.utc))
 
     @staticmethod
@@ -1845,7 +1844,7 @@ class ScrapeMarkdownParamsDict(TypedDict, total=False):
     scrape_images: bool
     only_main_content: bool
     use_link_placeholders: bool
-    model: LlmModel | str | None
+    model: str | None
 
 
 class ScrapeStructuredParamsDict(TypedDict, total=False):
@@ -1919,7 +1918,7 @@ class ScrapeParams(SdkRequest):
     ] = None
 
     model: Annotated[
-        LlmModel | str | None,
+        str | None,
         Field(
             description="The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model."
         ),

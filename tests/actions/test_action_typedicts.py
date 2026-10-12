@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import get_args, get_origin, get_type_hints
 
 from notte_core.actions import typedicts as typedicts_module
-from notte_core.actions.actions import BaseAction
+from notte_core.actions.actions import BaseAction, BrowserAction
 from notte_core.actions.typedicts import ActionType
 
 
@@ -27,6 +27,15 @@ def _get_action_to_typeddict_mapping() -> dict[str, tuple[type[BaseAction], type
             mapping[action_type] = (action_cls, typeddict_cls)
 
     return mapping
+
+
+def _public_action_typedicts() -> set[str]:
+    """TypedDicts of the actions that sessions expose (legacy agent actions only stay parseable)."""
+    return {
+        f"{action_cls.__name__}Dict"
+        for action_type, action_cls in BaseAction.ACTION_REGISTRY.items()
+        if action_type not in BrowserAction.LEGACY_AGENT_ACTION_TYPES
+    }
 
 
 def test_all_actions_have_typeddict() -> None:
@@ -179,7 +188,7 @@ def test_browser_session_execute_overloads_present() -> None:
     overloaded_typedicts = _extract_overload_typedicts_from_file(session_file, "execute")
 
     # Get all expected TypedDicts
-    expected_typedicts = {f"{action_cls.__name__}Dict" for action_cls in BaseAction.ACTION_REGISTRY.values()}
+    expected_typedicts = _public_action_typedicts()
 
     missing = expected_typedicts - overloaded_typedicts
     if missing:
@@ -199,7 +208,7 @@ def test_browser_session_aexecute_overloads_present() -> None:
     overloaded_typedicts = _extract_overload_typedicts_from_file(session_file, "aexecute")
 
     # Get all expected TypedDicts
-    expected_typedicts = {f"{action_cls.__name__}Dict" for action_cls in BaseAction.ACTION_REGISTRY.values()}
+    expected_typedicts = _public_action_typedicts()
 
     missing = expected_typedicts - overloaded_typedicts
     if missing:
@@ -225,7 +234,7 @@ def test_sdk_session_execute_overloads_present() -> None:
     overloaded_typedicts = _extract_overload_typedicts_from_file(sessions_file, "execute")
 
     # Get all expected TypedDicts
-    expected_typedicts = {f"{action_cls.__name__}Dict" for action_cls in BaseAction.ACTION_REGISTRY.values()}
+    expected_typedicts = _public_action_typedicts()
 
     missing = expected_typedicts - overloaded_typedicts
     if missing:

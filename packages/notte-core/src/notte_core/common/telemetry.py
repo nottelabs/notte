@@ -4,13 +4,11 @@ import logging
 import os
 import platform
 import uuid
-from functools import wraps
+from functools import cache, wraps
 from pathlib import Path
 from typing import Any, Callable, TypeVar
 
-import posthog
 from packaging import version
-from scarf.event_logger import ScarfEventLogger  # pyright: ignore[reportMissingTypeStubs]
 
 from notte_core.common.cache import CacheDirectory, ensure_cache_directory
 
@@ -37,9 +35,29 @@ def _get_telemetry_dir() -> Path:
 
 
 DISABLE_TELEMETRY: bool = os.environ.get("DISABLE_TELEMETRY", "false").lower() == "true"
-TELEMETRY_DIR = _get_telemetry_dir()
-USER_ID_PATH = TELEMETRY_DIR / "telemetry_user_id"
-VERSION_DOWNLOAD_PATH = TELEMETRY_DIR / "download_version"
+
+
+# Telemetry does no file or network I/O at import time: the cache directory, the clients and the
+# installation id are created on the first captured event.
+@cache
+def _telemetry_paths() -> tuple[Path, Path, Path]:
+    telemetry_dir = _get_telemetry_dir()
+    return telemetry_dir, telemetry_dir / "telemetry_user_id", telemetry_dir / "download_version"
+
+
+def __getattr__(name: str) -> Path:
+    # Lazy module attributes kept for backwards compatibility.
+    match name:
+        case "TELEMETRY_DIR":
+            return _telemetry_paths()[0]
+        case "USER_ID_PATH":
+            return _telemetry_paths()[1]
+        case "VERSION_DOWNLOAD_PATH":
+            return _telemetry_paths()[2]
+        case _:
+            raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
 POSTHOG_API_KEY: str = "phc_6U4lU1RMI2hyj9DREkuyPFFDg95b0LYkoeaZ0LfaeVb"  # pragma: allowlist secret
 POSTHOG_HOST: str = "https://us.i.posthog.com"
 SCARF_GATEWAY_URL = "https://scarf.notte.cc/events"
@@ -70,6 +88,8 @@ def setup_posthog() -> Any | None:
         return None
 
     try:
+        import posthog
+
         client: Any = posthog.Posthog(
             project_api_key=POSTHOG_API_KEY,
             host=POSTHOG_HOST,
@@ -93,6 +113,8 @@ def setup_scarf() -> Any | None:
 
     # Initialize Scarf
     try:
+        from scarf.event_logger import ScarfEventLogger  # pyright: ignore[reportMissingTypeStubs]
+
         client: Any = ScarfEventLogger(
             endpoint_url=SCARF_GATEWAY_URL,
             timeout=3.0,
@@ -111,10 +133,13 @@ def setup_scarf() -> Any | None:
         return None
 
 
-def track_package_download(installation_id: str, properties: dict[str, Any] | None = None) -> None:
+def track_package_download(
+    scarf_client: Any | None, installation_id: str, properties: dict[str, Any] | None = None
+) -> None:
     """Track package download event specifically for Scarf analytics"""
     if DISABLE_TELEMETRY:
         return None
+    _, _, version_download_path = _telemetry_paths()
 
     if scarf_client is not None:
         try:
@@ -123,17 +148,17 @@ def track_package_download(installation_id: str, properties: dict[str, Any] | No
             first_download = False
 
             # Check if version file exists
-            if not os.path.exists(VERSION_DOWNLOAD_PATH):
+            if not os.path.exists(version_download_path):
                 # First download
                 should_track = True
                 first_download = True
 
                 # Save version (directory already created by ensure_cache_directory)
-                with open(VERSION_DOWNLOAD_PATH, "w") as f:
+                with open(version_download_path, "w") as f:
                     _ = f.write(current_version)
             else:
                 # Read saved version
-                with open(VERSION_DOWNLOAD_PATH) as f:
+                with open(version_download_path) as f:
                     saved_version = f.read().strip()
 
                 # Compare versions (simple string comparison for now)
@@ -142,7 +167,7 @@ def track_package_download(installation_id: str, properties: dict[str, Any] | No
                     first_download = False
 
                     # Update saved version
-                    with open(VERSION_DOWNLOAD_PATH, "w") as f:
+                    with open(version_download_path, "w") as f:
                         _ = f.write(current_version)
 
             if should_track:
@@ -160,20 +185,22 @@ def track_package_download(installation_id: str, properties: dict[str, Any] | No
             logger.debug(f"Failed to track Scarf package_download event: {e}")
 
 
-def get_or_create_installation_id() -> str:
+def get_or_create_installation_id(scarf_client: Any | None = None) -> str:
     """Get existing installation ID or create and save a new one."""
     if DISABLE_TELEMETRY:
         return ""
 
-    if USER_ID_PATH.exists():
-        return USER_ID_PATH.read_text().strip()
+    _, user_id_path, _ = _telemetry_paths()
+    if user_id_path.exists():
+        return user_id_path.read_text().strip()
 
     installation_id = str(uuid.uuid4())
-    # TELEMETRY_DIR is already created by ensure_cache_directory
-    _ = USER_ID_PATH.write_text(installation_id)  # Assign to _ to acknowledge unused result
+    # The telemetry directory is already created by ensure_cache_directory
+    _ = user_id_path.write_text(installation_id)  # Assign to _ to acknowledge unused result
 
     # Always check for version-based download tracking
     track_package_download(
+        scarf_client,
         installation_id,
         {
             "triggered_by": "user_id_property",
@@ -182,9 +209,12 @@ def get_or_create_installation_id() -> str:
     return installation_id
 
 
-posthog_client = setup_posthog()
-scarf_client = setup_scarf()
-INSTALLATION_ID: str = get_or_create_installation_id()
+@cache
+def _clients() -> tuple[Any | None, Any | None, str]:
+    """PostHog client, Scarf client and installation id, created on first use."""
+    posthog_client = setup_posthog()
+    scarf_client = setup_scarf()
+    return posthog_client, scarf_client, get_or_create_installation_id(scarf_client)
 
 
 def get_system_info() -> dict[str, Any]:
@@ -203,6 +233,11 @@ def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> 
     """Capture an event if telemetry is enabled."""
     if DISABLE_TELEMETRY:
         return None
+    try:
+        posthog_client, scarf_client, installation_id = _clients()
+    except Exception as e:
+        logger.debug(f"Failed to initialize telemetry: {e}")
+        return None
     # send to posthog
     if posthog_client is not None:
         try:
@@ -213,7 +248,7 @@ def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> 
             if DEBUG_LOGGING:
                 logger.debug(f"Telemetry event: {event_name} {event_properties}")
 
-            posthog_client.capture(distinct_id=INSTALLATION_ID, event=event_name, properties=event_properties)
+            posthog_client.capture(distinct_id=installation_id, event=event_name, properties=event_properties)
         except Exception as e:
             logger.debug(f"Failed to send telemetry event {event_name}: {e}")
     # send to scarf
@@ -223,7 +258,7 @@ def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> 
             properties = properties or {}
             properties.update(get_system_info())
             properties["event"] = event_name
-            properties["installation_id"] = INSTALLATION_ID
+            properties["installation_id"] = installation_id
             scarf_client.log_event(properties=properties)
         except Exception as e:
             logger.debug(f"Failed to send telemetry event {event_name}: {e}")

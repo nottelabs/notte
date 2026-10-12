@@ -9,7 +9,9 @@ from notte_browser.llm.engine import (
     fix_schema_for_openai,
     get_vertex_location,
 )
+from notte_core.actions import ActionUnion
 from notte_core.errors.base import ErrorConfig
+from pydantic import BaseModel
 
 
 @pytest.fixture
@@ -136,6 +138,12 @@ class TestStructuredContent:
         assert "No content found within ```python``` blocks" in str(exc_info.value)
 
 
+class _ActionHolder(BaseModel):
+    """Structured output holding any action, as LLM callers ask for."""
+
+    action: ActionUnion
+
+
 class TestFixSchemaForGemini:
     """Tests for fix_schema_for_gemini to prevent regressions in schema transformation."""
 
@@ -214,11 +222,9 @@ class TestFixSchemaForGemini:
         for prop_name, prop_schema in value_schema["properties"].items():
             assert prop_schema.get("nullable") is True, f"Property '{prop_name}' should be nullable"
 
-    def test_inner_llm_completion_schema_roundtrip(self):
-        """The full InnerLlmCompletion schema must have form_fill value properties after Gemini transform."""
-        from notte_core.agent_types import AgentCompletion
-
-        schema = AgentCompletion.InnerLlmCompletion.model_json_schema()
+    def test_action_union_schema_roundtrip(self):
+        """A schema holding the full action union must keep form_fill value properties after Gemini transform."""
+        schema = _ActionHolder.model_json_schema()
         result = fix_schema_for_gemini(schema)
         # Find form_fill in oneOf
         form_fill = None
@@ -259,10 +265,8 @@ class TestFixSchemaForOpenai:
         assert value_schema["properties"]["email"]["anyOf"][1] == {"type": "null"}
 
     def test_form_fill_action_schema_roundtrip(self):
-        """The full InnerLlmCompletion schema must have form_fill value properties after OpenAI transform."""
-        from notte_core.agent_types import AgentCompletion
-
-        schema = AgentCompletion.InnerLlmCompletion.model_json_schema()
+        """A schema holding the full action union must keep form_fill value properties after OpenAI transform."""
+        schema = _ActionHolder.model_json_schema()
         result = fix_schema_for_openai(schema)
         inner = result["json_schema"]["schema"]
         # Find form_fill in anyOf (oneOf is converted to anyOf)

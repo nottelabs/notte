@@ -2,104 +2,74 @@ from collections import defaultdict
 
 import pytest
 from notte_core.actions import ClickAction
-from notte_core.agent_types import AgentCompletion
 from notte_core.browser.observation import ExecutionResult, Observation, Screenshot, TimedSpan
-from notte_core.trajectory import AgentStepStart, AgentStepStop, StepBundle, TrajectoryHoldee
+from notte_core.trajectory import TrajectoryHoldee
 
 import notte
+
+
+def _click_result() -> ExecutionResult:
+    span = TimedSpan.empty()
+    return ExecutionResult(
+        action=ClickAction(id="B1"),
+        success=True,
+        message="clicked",
+        started_at=span.started_at,
+        ended_at=span.ended_at,
+    )
 
 
 @pytest.mark.asyncio
 async def test_trajectory_and_view():
     with notte.Session(headless=True) as session:
-        # first agent
-
         original_view = session.trajectory.view()
-
-        # step 1
-        _ = await original_view.start_step()
         await original_view.append(Observation.empty(), force=True)
-        await original_view.append(AgentCompletion.initial(url="https://www.google.com"), force=True)
-        _ = await original_view.stop_step()
 
-        # second view
+        # second view only sees what is appended after its creation
         second_view = session.trajectory.view()
-        span = TimedSpan.empty()
-        # step 2
-        _ = await original_view.start_step()
-        await original_view.append(
-            ExecutionResult(
-                action=ClickAction(id="B1"),
-                success=True,
-                message="clicked",
-                started_at=span.started_at,
-                ended_at=span.ended_at,
-            ),
-            force=True,
-        )
+        await original_view.append(_click_result(), force=True)
         await original_view.append(Observation.empty(), force=True)
         await original_view.append(Observation.empty(), force=True)
-        _ = await original_view.stop_step()
-
-        # step 3
-        _ = await original_view.start_step()
         await original_view.append(Observation.empty(), force=True)
-        _ = await original_view.stop_step()
 
         original_view.stop()
 
-        # only 2 steps
-        late_view = session.trajectory._view(stop=len(original_view._elements) - 3)  # pyright: ignore [reportPrivateUsage]
+        # view without the last observation
+        late_view = session.trajectory._view(stop=len(original_view.elements) - 1)  # pyright: ignore [reportPrivateUsage]
 
-        # agent steps
-        assert session.trajectory.num_steps == 3
-        assert original_view.num_steps == 3
-        assert second_view.num_steps == 2
-        assert late_view.num_steps == 2
-
-        # elements in traj
         session.trajectory.debug_log()
-        assert len(session.trajectory) == 6
-        assert len(original_view) == 6
+        assert len(session.trajectory) == 5
+        assert len(original_view) == 5
         assert len(second_view) == 4
-        assert len(late_view) == 5
+        assert len(late_view) == 4
 
-        # number of observations
         assert len(list(session.trajectory.observations())) == 4
         assert len(list(original_view.observations())) == 4
         assert len(list(second_view.observations())) == 3
         assert len(list(late_view.observations())) == 3
 
-        # number of action exec
         assert len(list(session.trajectory.execution_results())) == 1
         assert len(list(original_view.execution_results())) == 1
         assert len(list(second_view.execution_results())) == 1
         assert len(list(late_view.execution_results())) == 1
 
-        # number of completions
-        assert len(list(session.trajectory.agent_completions())) == 1
-        assert len(list(original_view.agent_completions())) == 1
-        assert len(list(second_view.agent_completions())) == 0
-        assert len(list(late_view.agent_completions())) == 1
+        # a stopped view does not grow anymore
+        await session.trajectory.append(Observation.empty())
+        assert len(session.trajectory) == 6
+        assert len(original_view) == 5
+        assert len(second_view) == 5
+
+        with pytest.raises(ValueError, match="Cannot append to a trajectory view"):
+            await second_view.append(Observation.empty())
 
 
 @pytest.mark.asyncio
 async def test_trajectory_callbacks():
     with notte.Session(headless=True) as session:
-        # first agent
-
         view = session.trajectory.view()
 
         callback_calls: dict[str, int] = defaultdict(lambda: 0)
-        span = TimedSpan.empty()
-        init_comp = AgentCompletion.initial(url="https://www.google.com")
-        init_exec = ExecutionResult(
-            action=ClickAction(id="B1"),
-            success=True,
-            message="clicked",
-            started_at=span.started_at,
-            ended_at=span.ended_at,
-        )
+        init_exec = _click_result()
         init_obs = Observation.empty()
 
         async def observe_call(obs: Observation):
@@ -110,69 +80,25 @@ async def test_trajectory_callbacks():
             callback_calls["exec"] += 1
             assert res is init_exec
 
-        async def comp_call(comp: AgentCompletion):
-            callback_calls["comp"] += 1
-            assert comp is init_comp
-
-        async def start_call(_: AgentStepStart):
-            callback_calls["start"] += 1
-
-        async def stop_call(_: AgentStepStop):
-            callback_calls["stop"] += 1
-
         async def any_call(_: TrajectoryHoldee):
-            # ignore agent start / stops
             callback_calls["any"] += 1
-
-        async def step_call_1(step: StepBundle):
-            callback_calls["step"] += 1
-            assert step.observation is init_obs
-            assert step.agent_completion is None
-            assert step.execution_result is None
-
-        async def step_call_2(step: StepBundle):
-            callback_calls["step"] += 1
-            assert step.observation is init_obs
-            assert step.agent_completion is init_comp
-            assert step.execution_result is init_exec
 
         view.set_callback("observation", observe_call)
         view.set_callback("execution_result", exec_call)
-        view.set_callback("agent_completion", comp_call)
-        view.set_callback("agent_step_start", start_call)
-        view.set_callback("agent_step_stop", stop_call)
         view.set_callback("any", any_call)
-        view.set_callback("step", step_call_1)
 
-        # step 1
-        _ = await view.start_step()
         await view.append(init_obs, force=True)
-        _ = await view.stop_step()
-
-        view.set_callback("step", step_call_2)
-
-        # step 2
-        _ = await view.start_step()
-        await view.append(init_comp, force=True)
         await view.append(init_exec, force=True)
         await view.append(init_obs, force=True)
-        _ = await view.stop_step()
 
         assert callback_calls["obs"] == 2
-        assert callback_calls["comp"] == 1
         assert callback_calls["exec"] == 1
-        assert callback_calls["any"] == 8
-
-        assert callback_calls["start"] == 2
-        assert callback_calls["stop"] == 2
-        assert callback_calls["step"] == 2
+        assert callback_calls["any"] == 3
 
 
 @pytest.mark.asyncio
 async def test_trajectory_callback_from_session():
     with notte.Session(headless=True) as session:
-        # first agent
-
         view = session.trajectory.view()
 
         callback_calls: dict[str, int] = defaultdict(lambda: 0)
@@ -183,9 +109,6 @@ async def test_trajectory_callback_from_session():
         async def exec_call(res: ExecutionResult):
             callback_calls["exec"] += 1
 
-        async def comp_call(comp: AgentCompletion):
-            callback_calls["comp"] += 1
-
         async def screenshot_call(screen: Screenshot):
             callback_calls["screen"] += 1
 
@@ -194,7 +117,6 @@ async def test_trajectory_callback_from_session():
 
         view.set_callback("observation", observe_call)
         view.set_callback("execution_result", exec_call)
-        view.set_callback("agent_completion", comp_call)
         view.set_callback("screenshot", screenshot_call)
         view.set_callback("any", any_call)
 

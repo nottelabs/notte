@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 
 import pytest
-from notte_core.common.config import LlmModel
+from notte_browser.llm.models import LlmModel
 
 
 def find_python_files(directory: Path) -> list[Path]:

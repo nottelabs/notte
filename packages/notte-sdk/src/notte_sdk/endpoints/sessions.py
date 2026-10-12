@@ -17,7 +17,6 @@ from notte_core.actions.typedicts import (
     CheckActionDict,
     ClickActionDict,
     CloseTabActionDict,
-    CompletionActionDict,
     DownloadFileActionDict,
     EmailReadActionDict,
     EmailVerificationReadActionDict,
@@ -29,7 +28,6 @@ from notte_core.actions.typedicts import (
     GoForwardActionDict,
     GotoActionDict,
     GotoNewTabActionDict,
-    HelpActionDict,
     MultiFactorFillActionDict,
     PressKeyActionDict,
     ReloadActionDict,
@@ -627,7 +625,7 @@ class RemoteSession(SyncResource):
         self,
         *,
         storage: RemoteFileStorage | None = None,
-        perception_type: PerceptionType = config.perception_type,
+        perception_type: PerceptionType = "fast",
         raise_on_failure: bool = config.raise_on_session_execution_failure,
         cookie_file: str | Path | None = None,
         open_viewer: bool = False,
@@ -643,7 +641,7 @@ class RemoteSession(SyncResource):
         session_id: str | None = None,
         *,
         storage: RemoteFileStorage | None = None,
-        perception_type: PerceptionType = config.perception_type,
+        perception_type: PerceptionType = "fast",
         cookie_file: str | Path | None = None,
         raise_on_failure: bool = config.raise_on_session_execution_failure,
         open_viewer: bool = False,
@@ -1555,12 +1553,6 @@ class RemoteSession(SyncResource):
     @overload
     def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CaptchaSolveActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[HelpActionDict]) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CompletionActionDict]
     ) -> ExecutionResult: ...
     @overload
     def execute(

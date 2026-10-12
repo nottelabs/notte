@@ -5,10 +5,10 @@ from typing import Any
 
 import pytest
 from dotenv import load_dotenv
+from notte_browser.llm.models import LlmModel
 from notte_browser.llm.service import LLMService
 from notte_browser.scraping.pruning import MarkdownPruningPipe
 from notte_browser.scraping.schema import SchemaScrapingPipe
-from notte_core.common.config import LlmModel
 from notte_core.data.space import DictBaseModel, StructuredData
 from pydantic import BaseModel, RootModel
 from typing_extensions import override

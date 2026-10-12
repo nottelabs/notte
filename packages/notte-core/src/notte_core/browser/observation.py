@@ -381,7 +381,6 @@ class SerializedError(BaseModel):
             "notte_core.errors.provider",
             "notte_core.errors.validation",
             "notte_browser.errors",
-            "notte_agent.errors",
             "notte_sdk.errors",
         ):
             try:

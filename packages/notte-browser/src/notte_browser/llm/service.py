@@ -3,12 +3,14 @@ from typing import Any
 
 import tiktoken
 from litellm import ModelResponse  # type: ignore[import]
-from notte_core.common.config import LlmModel, config
+from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.common.types import TResponseFormat
 from notte_core.errors.llm import InvalidPromptTemplateError
 
+from notte_browser.llm.config import LlmSettings
 from notte_browser.llm.engine import LLMEngine
+from notte_browser.llm.models import LlmModel
 from notte_browser.llm.prompt import PromptLibrary
 
 PROMPT_DIR = Path(__file__).parent / "prompts"
@@ -21,10 +23,11 @@ class LLMService:
 
     def __init__(self, base_model: str | None = None) -> None:
         self.lib: PromptLibrary = PromptLibrary(str(PROMPT_DIR))
-        self.base_model: str = base_model or config.perception_model or config.reasoning_model or LlmModel.default()
+        settings = LlmSettings.from_env()
+        self.base_model: str = base_model or settings.model
         self.tokenizer: tiktoken.Encoding = tiktoken.get_encoding("cl100k_base")
         self.verbose: bool = config.verbose
-        self.nb_retries_structured_output: int = config.nb_retries_structured_output
+        self.nb_retries_structured_output: int = settings.nb_retries_structured_output
 
     def context_length(self) -> int:
         return LlmModel.get_provider(self.base_model).context_length

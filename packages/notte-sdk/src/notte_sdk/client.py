@@ -5,7 +5,6 @@ from typing import Any, Literal, Unpack, cast, overload
 
 from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
-from notte_core.common.config import LlmModel
 from notte_core.common.logging import logger
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from pydantic import BaseModel
@@ -77,10 +76,6 @@ class NotteClient:
 
         if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
             logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
-
-    @property
-    def models(self) -> type[LlmModel]:
-        return LlmModel
 
     @property
     def Session(self) -> type[RemoteSession]:
