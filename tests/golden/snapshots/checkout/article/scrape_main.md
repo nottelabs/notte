@@ -100,11 +100,3 @@ center)[+1.888.746.3455](tel:1-888-746-3455)
 LiveChat
 
 [Email us](https://www.article.com/contact/message)
-
-IFRAME about:blank:
-
-
-IFRAME about:srcdoc:
-
-
-IFRAME about:blank:

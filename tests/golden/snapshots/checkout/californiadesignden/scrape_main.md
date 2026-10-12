@@ -55,23 +55,3 @@ Continue to shipping
 [Return to cart](https://www.californiadesignden.com/cart)
 
 Continue to shipping
-
-IFRAME about:srcdoc:
-Checkout One Wallets Sandbox
-
-IFRAME about:srcdoc:
-Checkout One Wallets Sandbox
-
-IFRAME about:srcdoc:
-Shopify UI Extensions Internal
-
-IFRAME about:blank:
-
-
-IFRAME about:blank:
-
-
-IFRAME about:blank:
-
-
-IFRAME about:srcdoc:

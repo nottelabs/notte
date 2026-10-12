@@ -10,36 +10,27 @@ _[:]$269.10
 _[:]Society6 Checkout
 _[:]Express checkout
 L2[:]<a href="https://society6.com/checkouts/cn/Z2NwLXVzLWVhc3QxOjAxSzA4Mz..." aria_label="Shop Pay"></a>
-_[:]Checkout One Wallets Sandbox
-_[:]PayPal Messaging Pixel
-_[:]Checkout One Wallets Sandbox
-B1[:]<div title="" role="button" aria_label="Amazon Pay - Use your Amazon account"></div>
-_[:]Checkout One Wallets Sandbox
-B2[:]<button type="button"></button>
-M1[:]<div></div>
-_[:]Checkout One Wallets Sandbox
-_[:]PayPal Messaging Pixel
-B3[:]<button type="button">Show more options</button>
+B1[:]<button type="button">Show more options</button>
 _[:]OR
 _[:]Contact
 L3[:]<a href="https://account.society6.com/authentication/oauth/authorize?...">Log in</a>
 _[:]Email
-M2[:]<div></div>
+M1[:]<div></div>
 I1[:]<input type="email" value="" placeholder="Email" name="email"></input>
-B4[:]<input type="checkbox" name="marketing_opt_in"></input>
-M3[:]<label>Email me with news and offers</label>
+B2[:]<input type="checkbox" name="marketing_opt_in"></input>
+M2[:]<label>Email me with news and offers</label>
 _[:]Delivery
 _[:]Country/Region
 I2[:]<select name="countryCode">Canada
 United States</select>
 _[:]First name
-M4[:]<div></div>
+M3[:]<div></div>
 I3[:]<input type="text" value="" placeholder="First name" name="firstName"></input>
 _[:]Last name
-M5[:]<div></div>
+M4[:]<div></div>
 I4[:]<input type="text" value="" placeholder="Last name" name="lastName"></input>
 _[:]Company (optional)
-M6[:]<div></div>
+M5[:]<div></div>
 I5[:]<input type="text" value="" placeholder="Company (optional)" name="company"></input>
 _[:]Address
 _[:]Apartment, suite, etc. (optional)
@@ -119,96 +110,11 @@ _[:]+4
 _[:]+5
 _[:]Additional payment methods
 _[:]Card number
-_[:]Card number
-I6[:]<input type="text" value="" placeholder="Card number" name="number"></input>
-_[:]Network Selector
-_[:]Name on card
-I7[:]<input type="text" value="" tabindex="-1" name="name"></input>
-_[:]Expiry month
-I8[:]<input type="text" value="" tabindex="-1" name="expiry_month"></input>
-_[:]Expiry year
-I9[:]<input type="text" value="" tabindex="-1" name="expiry_year"></input>
-_[:]Expiry date (MM / YY)
-I10[:]<input type="text" value="" tabindex="-1" name="expiry"></input>
-_[:]Security code
-I11[:]<input type="text" value="" tabindex="-1" name="verification_value"></input>
-_[:]Issue date (MM / YY)
-I12[:]<input type="text" value="" tabindex="-1" name="issue_date"></input>
-_[:]Issue number
-I13[:]<input type="text" value="" tabindex="-1" name="issue_number"></input>
-B5[:]<button type="submit" tabindex="-1"></button>
 _[:]Expiration date (MM / YY)
-_[:]Credit Card Number
-I14[:]<input type="text" value="" tabindex="-1" name="number"></input>
-_[:]Name on card
-I15[:]<input type="text" value="" tabindex="-1" name="name"></input>
-_[:]Expiry month
-I16[:]<input type="text" value="" tabindex="-1" name="expiry_month"></input>
-_[:]Expiry year
-I17[:]<input type="text" value="" tabindex="-1" name="expiry_year"></input>
-_[:]Expiration date (MM / YY)
-I18[:]<input type="text" value="" placeholder="Expiration date (MM / YY)" name="expiry"></input>
-_[:]Security code
-I19[:]<input type="text" value="" tabindex="-1" name="verification_value"></input>
-_[:]Issue date (MM / YY)
-I20[:]<input type="text" value="" tabindex="-1" name="issue_date"></input>
-_[:]Issue number
-I21[:]<input type="text" value="" tabindex="-1" name="issue_number"></input>
-B6[:]<button type="submit" tabindex="-1"></button>
-_[:]Security code
-_[:]Credit Card Number
-I22[:]<input type="text" value="" tabindex="-1" name="number"></input>
-_[:]Name on card
-I23[:]<input type="text" value="" tabindex="-1" name="name"></input>
-_[:]Expiry month
-I24[:]<input type="text" value="" tabindex="-1" name="expiry_month"></input>
-_[:]Expiry year
-I25[:]<input type="text" value="" tabindex="-1" name="expiry_year"></input>
-_[:]Expiry date (MM / YY)
-I26[:]<input type="text" value="" tabindex="-1" name="expiry"></input>
-_[:]Security code
-I27[:]<input type="text" value="" placeholder="Security code" name="verification_value"></input>
-_[:]Issue date (MM / YY)
-I28[:]<input type="text" value="" tabindex="-1" name="issue_date"></input>
-_[:]Issue number
-I29[:]<input type="text" value="" tabindex="-1" name="issue_number"></input>
-B7[:]<button type="submit" tabindex="-1"></button>
-_[:]Issue date (MM / YY)
-_[:]Credit Card Number
-_[:]Name on card
-_[:]Expiry month
-_[:]Expiry year
-_[:]Expiry date (MM / YY)
-_[:]Security code
-_[:]Issue date (MM / YY)
-_[:]Issue number
-_[:]Issue number
-_[:]Credit Card Number
-_[:]Name on card
-_[:]Expiry month
-_[:]Expiry year
-_[:]Expiry date (MM / YY)
 _[:]Security code
 _[:]Issue date (MM / YY)
 _[:]Issue number
 _[:]Name on card
-_[:]Credit Card Number
-I30[:]<input type="text" value="" tabindex="-1" name="number"></input>
-_[:]Name on card
-I31[:]<input type="text" value="" placeholder="Name on card" name="name"></input>
-_[:]Expiry month
-I32[:]<input type="text" value="" tabindex="-1" name="expiry_month"></input>
-_[:]Expiry year
-I33[:]<input type="text" value="" tabindex="-1" name="expiry_year"></input>
-_[:]Expiry date (MM / YY)
-I34[:]<input type="text" value="" tabindex="-1" name="expiry"></input>
-_[:]Security code
-I35[:]<input type="text" value="" tabindex="-1" name="verification_value"></input>
-_[:]Issue date (MM / YY)
-I36[:]<input type="text" value="" tabindex="-1" name="issue_date"></input>
-_[:]Issue number
-I37[:]<input type="text" value="" tabindex="-1" name="issue_number"></input>
-B8[:]<button type="submit" tabindex="-1"></button>
 _[:]Use shipping address as billing address
 _[:]PayPal
 _[:]Pay in full or in installments
@@ -251,8 +157,8 @@ _[:]$269.10
 _[:]Scroll for more items
 _[:]Discount code or gift card
 _[:]Discount code or gift card
-M7[:]<div></div>
-I38[:]<input type="text" value="" placeholder="Discount code or gift card" name="reductions"></input>
+M6[:]<div></div>
+I6[:]<input type="text" value="" placeholder="Discount code or gift card" name="reductions"></input>
 _[:]Apply
 _[:]Submit
 _[:]Cost summary
@@ -261,7 +167,7 @@ _[:]Value
 _[:]Subtotal
 _[:]$269.10
 _[:]Shipping
-B9[:]<button type="button" aria_label="Shipping policy"></button>
+B3[:]<button type="button" aria_label="Shipping policy"></button>
 _[:]Enter shipping address
 _[:]Total
 _[:]USD
@@ -273,63 +179,23 @@ _[:]Opens in a new window.
 _[:]Opens external website.
 _[:]Updated total price: $269.10 USD
 _[:]Your order’s being processed.
-_[:]Shopify UI Extensions Internal
 
 # interaction actions
 L1	click	''	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > header > div > div > div > div > div > div > div > span > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi3.s2kwpi6.s2kwpi9.s2kwpi7._1fragem32._1fragempn[href="https://society6.com/"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/header/div/div/div/div/div/div/div/span/a	in_iframe=False	in_shadow_root=False
 L2	click	''	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(1) > div > div > section > div > div:nth-of-type(2) > div:nth-of-type(1) > div > a.Xicuw.vowWK.pFvjc[id="shop-pay-button"][href="https://society6.com/checkouts/cn/Z2NwLXVzLWVhc3QxOjAxSzA4MzAwM1BNVjlIUVpIMUNDMUcxUUg4?payment=shop_pay&checkout_queue_token=A_pZ0R4kxe1xnbCjQRDs2G7pM6js2kVxYgbhFhrPA6sy-vk7tevyU5d6QBhV2VeWV1tJezxbyj8tYyMEuTZeJ4lXqtoYetnRtS28MOo2gV37WPs70pE6EA%3D%3D&redirect_source=direct_checkout_checkout"][aria-label="Shop Pay"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[1]/div/div/section/div/div[2]/div[1]/div/a	in_iframe=False	in_shadow_root=False
-B1	click	''	html > body > div.amazonpay-merchant-shadow-root-parent-element-for-executing-modal-script.amazonpay-button-parent-container-checkout-ALUQO7PHM1PX7[id="AmazonPayButtonContainer"][role="button"][aria-label="Amazon Pay - Use your Amazon account"][title]	html/body/div	in_iframe=True	in_shadow_root=False
-B2	click	''	html > body > button.dark[type="button"][id="google-pay-button"]	html/body/button	in_iframe=True	in_shadow_root=False
-M1	click	''	html > body > button > div	html/body/button/div	in_iframe=True	in_shadow_root=False
-B3	click	'Show more options'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(1) > div > div > section > div > div:nth-of-type(2) > div:nth-of-type(2) > button._1m2hr9ge._1m2hr9gd._1fragemu6._1fragemms._1fragemor._1fragemtk._1fragemtz._1fragemu1._1fragemtq._1m2hr9g1h._1m2hr9g1e._1fragemu1._1fragemtz._1fragemtp._1fragemte._1m2hr9gi._1m2hr9gg._1fragem3m._1m2hr9g1w._1m2hr9g1a._1m2hr9g18._1fragempn._1m2hr9g1k[type="button"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[1]/div/div/section/div/div[2]/div[2]/button	in_iframe=False	in_shadow_root=False
+B1	click	'Show more options'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(1) > div > div > section > div > div:nth-of-type(2) > div:nth-of-type(2) > button._1m2hr9ge._1m2hr9gd._1fragemu6._1fragemms._1fragemor._1fragemtk._1fragemtz._1fragemu1._1fragemtq._1m2hr9g1h._1m2hr9g1e._1fragemu1._1fragemtz._1fragemtp._1fragemte._1m2hr9gi._1m2hr9gg._1fragem3m._1m2hr9g1w._1m2hr9g1a._1m2hr9g18._1fragempn._1m2hr9g1k[type="button"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[1]/div/div/section/div/div[2]/div[2]/button	in_iframe=False	in_shadow_root=False
 L3	click	'Log in'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi2.s2kwpi5.s2kwpi4._1fragemtm.s2kwpi8[href="https://account.society6.com/authentication/oauth/authorize?client_id=83aa640d-9b1a-4f5d-b332-2be0ee054e6b&consent_id=d76ebd5b-733b-42f0-b4ba-dcbc1d4f9a04&locale=en-US&nonce=1bc58375-a9dc-45e3-8683-5e2059650945&redirect_uri=https%3A%2F%2Fsociety6.com%2Fcustomer_authentication%2Fcallback%3Fsource%3Dcore&response_type=code&scope=openid+email+customer-account-api%3Afull&state=01K08302Q2HF9MPRZ1W2R740VX"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[1]/a	in_iframe=False	in_shadow_root=False
-M2	click	'email'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[1]/div/div/div/div	in_iframe=False	in_shadow_root=False
+M1	click	'email'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[1]/div/div/div/div	in_iframe=False	in_shadow_root=False
 I1	fill	'email'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u12._7ozb2u1j._7ozb2ur[id="email"][name="email"][placeholder="Email"][required][type="email"][aria-labelledby="email-label"][autocomplete="shipping email"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[1]/div/div/div/div/input	in_iframe=False	in_shadow_root=False
-B4	click	'marketing_opt_in'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > div > div > input._1mmswk96._1mmswk95._1fragemq1._1fragempz._1fragemq3._1fragempx._1fragemr1._1fragemqx._1fragemr5._1fragemqt._1fragemci._1fragemby._1fragemd2._1fragembe._1fragemor._1fragem32._1fragempm._1fragem2x._1fragemtv._1fragemtp._1fragemu2._1mmswk97._1fragemoi._1mmswk9a._1mmswk98._1fragemue[type="checkbox"][id="marketing_opt_in"][name="marketing_opt_in"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[2]/div/div/div/input	in_iframe=False	in_shadow_root=False
-M3	click	'Email me with news and offers'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > div > label._1mmswk9g._1mmswk9f._1fragem32._1fragemlo._1fragemor._1fragemjl[for="marketing_opt_in"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[2]/div/div/label	in_iframe=False	in_shadow_root=False
+B2	click	'marketing_opt_in'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > div > div > input._1mmswk96._1mmswk95._1fragemq1._1fragempz._1fragemq3._1fragempx._1fragemr1._1fragemqx._1fragemr5._1fragemqt._1fragemci._1fragemby._1fragemd2._1fragembe._1fragemor._1fragem32._1fragempm._1fragem2x._1fragemtv._1fragemtp._1fragemu2._1mmswk97._1fragemoi._1mmswk9a._1mmswk98._1fragemue[type="checkbox"][id="marketing_opt_in"][name="marketing_opt_in"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[2]/div/div/div/input	in_iframe=False	in_shadow_root=False
+M2	click	'Email me with news and offers'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > div > label._1mmswk9g._1mmswk9f._1fragem32._1fragemlo._1fragemor._1fragemjl[for="marketing_opt_in"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[2]/div/div/label	in_iframe=False	in_shadow_root=False
 I2	select_dropdown_option	'Canada United States'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > select.ZHJU6._1k3449n5._1k3449n3._1fragemue.oAlPg.IWR5K.tu1VS[name="countryCode"][id="Select182"][required][autocomplete="shipping country"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[1]/div/div/div/select	in_iframe=False	in_shadow_root=False
-M4	click	'firstName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[1]/div/div	in_iframe=False	in_shadow_root=False
+M3	click	'firstName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[1]/div/div	in_iframe=False	in_shadow_root=False
 I3	fill	'firstName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="TextField594"][name="firstName"][placeholder="First name"][required][type="text"][aria-labelledby="TextField594-label"][autocomplete="shipping given-name"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[1]/div/div/input	in_iframe=False	in_shadow_root=False
-M5	click	'lastName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[2]/div/div	in_iframe=False	in_shadow_root=False
+M4	click	'lastName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[2]/div/div	in_iframe=False	in_shadow_root=False
 I4	fill	'lastName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="TextField595"][name="lastName"][placeholder="Last name"][required][type="text"][aria-labelledby="TextField595-label"][autocomplete="shipping family-name"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[2]/div/div/input	in_iframe=False	in_shadow_root=False
-M6	click	'company'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[3]/div/div/div	in_iframe=False	in_shadow_root=False
+M5	click	'company'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[3]/div/div/div	in_iframe=False	in_shadow_root=False
 I5	fill	'company'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="TextField596"][name="company"][placeholder="Company (optional)"][type="text"][aria-labelledby="TextField596-label"][autocomplete="shipping organization"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[3]/div/div/div/input	in_iframe=False	in_shadow_root=False
-I6	fill	'number'	html > body > form > div > input.input-placeholder-color--lvl-22[required][autocomplete="cc-number"][id="number"][name="number"][type="text"][aria-describedby="error-for-number tooltip-for-number"][placeholder="Card number"]	html/body/form/div/input	in_iframe=True	in_shadow_root=False
-I7	fill	'name'	html > body > form > input:nth-of-type(1).visually-hidden[autocomplete="cc-name"][id="name"][name="name"][type="text"]	html/body/form/input[1]	in_iframe=True	in_shadow_root=False
-I8	fill	'expiry_month'	html > body > form > input:nth-of-type(2).visually-hidden[autocomplete="cc-exp-month"][id="expiry_month"][name="expiry_month"][type="text"]	html/body/form/input[2]	in_iframe=True	in_shadow_root=False
-I9	fill	'expiry_year'	html > body > form > input:nth-of-type(3).visually-hidden[autocomplete="cc-exp-year"][id="expiry_year"][name="expiry_year"][type="text"]	html/body/form/input[3]	in_iframe=True	in_shadow_root=False
-I10	fill	'expiry'	html > body > form > input:nth-of-type(4).visually-hidden[autocomplete="cc-exp"][id="expiry"][name="expiry"][type="text"]	html/body/form/input[4]	in_iframe=True	in_shadow_root=False
-I11	fill	'verification_value'	html > body > form > input:nth-of-type(5).visually-hidden[autocomplete="cc-csc"][id="verification_value"][name="verification_value"][type="text"]	html/body/form/input[5]	in_iframe=True	in_shadow_root=False
-I12	fill	'issue_date'	html > body > form > input:nth-of-type(6).visually-hidden[autocomplete="off"][id="issue_date"][name="issue_date"][type="text"]	html/body/form/input[6]	in_iframe=True	in_shadow_root=False
-I13	fill	'issue_number'	html > body > form > input:nth-of-type(7).visually-hidden[autocomplete="off"][id="issue_number"][name="issue_number"][type="text"]	html/body/form/input[7]	in_iframe=True	in_shadow_root=False
-B5	click	''	html > body > form > button.visually-hidden[type="submit"]	html/body/form/button	in_iframe=True	in_shadow_root=False
-I14	fill	'number'	html > body > form > input:nth-of-type(1).visually-hidden[autocomplete="cc-number"][id="number"][name="number"][type="text"]	html/body/form/input[1]	in_iframe=True	in_shadow_root=False
-I15	fill	'name'	html > body > form > input:nth-of-type(2).visually-hidden[autocomplete="cc-name"][id="name"][name="name"][type="text"]	html/body/form/input[2]	in_iframe=True	in_shadow_root=False
-I16	fill	'expiry_month'	html > body > form > input:nth-of-type(3).visually-hidden[autocomplete="cc-exp-month"][id="expiry_month"][name="expiry_month"][type="text"]	html/body/form/input[3]	in_iframe=True	in_shadow_root=False
-I17	fill	'expiry_year'	html > body > form > input:nth-of-type(4).visually-hidden[autocomplete="cc-exp-year"][id="expiry_year"][name="expiry_year"][type="text"]	html/body/form/input[4]	in_iframe=True	in_shadow_root=False
-I18	fill	'expiry'	html > body > form > div > input.input-placeholder-color--lvl-22[required][autocomplete="cc-exp"][id="expiry"][name="expiry"][type="text"][aria-describedby="error-for-expiry tooltip-for-expiry"][placeholder="Expiration date (MM / YY)"]	html/body/form/div/input	in_iframe=True	in_shadow_root=False
-I19	fill	'verification_value'	html > body > form > input:nth-of-type(5).visually-hidden[autocomplete="cc-csc"][id="verification_value"][name="verification_value"][type="text"]	html/body/form/input[5]	in_iframe=True	in_shadow_root=False
-I20	fill	'issue_date'	html > body > form > input:nth-of-type(6).visually-hidden[autocomplete="off"][id="issue_date"][name="issue_date"][type="text"]	html/body/form/input[6]	in_iframe=True	in_shadow_root=False
-I21	fill	'issue_number'	html > body > form > input:nth-of-type(7).visually-hidden[autocomplete="off"][id="issue_number"][name="issue_number"][type="text"]	html/body/form/input[7]	in_iframe=True	in_shadow_root=False
-B6	click	''	html > body > form > button.visually-hidden[type="submit"]	html/body/form/button	in_iframe=True	in_shadow_root=False
-I22	fill	'number'	html > body > form > input:nth-of-type(1).visually-hidden[autocomplete="cc-number"][id="number"][name="number"][type="text"]	html/body/form/input[1]	in_iframe=True	in_shadow_root=False
-I23	fill	'name'	html > body > form > input:nth-of-type(2).visually-hidden[autocomplete="cc-name"][id="name"][name="name"][type="text"]	html/body/form/input[2]	in_iframe=True	in_shadow_root=False
-I24	fill	'expiry_month'	html > body > form > input:nth-of-type(3).visually-hidden[autocomplete="cc-exp-month"][id="expiry_month"][name="expiry_month"][type="text"]	html/body/form/input[3]	in_iframe=True	in_shadow_root=False
-I25	fill	'expiry_year'	html > body > form > input:nth-of-type(4).visually-hidden[autocomplete="cc-exp-year"][id="expiry_year"][name="expiry_year"][type="text"]	html/body/form/input[4]	in_iframe=True	in_shadow_root=False
-I26	fill	'expiry'	html > body > form > input:nth-of-type(5).visually-hidden[autocomplete="cc-exp"][id="expiry"][name="expiry"][type="text"]	html/body/form/input[5]	in_iframe=True	in_shadow_root=False
-I27	fill	'verification_value'	html > body > form > div > input.input-placeholder-color--lvl-22[autocomplete="cc-csc"][id="verification_value"][name="verification_value"][type="text"][aria-describedby="error-for-verification_value tooltip-for-verification_value"][placeholder="Security code"]	html/body/form/div/input	in_iframe=True	in_shadow_root=False
-I28	fill	'issue_date'	html > body > form > input:nth-of-type(6).visually-hidden[autocomplete="off"][id="issue_date"][name="issue_date"][type="text"]	html/body/form/input[6]	in_iframe=True	in_shadow_root=False
-I29	fill	'issue_number'	html > body > form > input:nth-of-type(7).visually-hidden[autocomplete="off"][id="issue_number"][name="issue_number"][type="text"]	html/body/form/input[7]	in_iframe=True	in_shadow_root=False
-B7	click	''	html > body > form > button.visually-hidden[type="submit"]	html/body/form/button	in_iframe=True	in_shadow_root=False
-I30	fill	'number'	html > body > form > input:nth-of-type(1).visually-hidden[autocomplete="cc-number"][id="number"][name="number"][type="text"]	html/body/form/input[1]	in_iframe=True	in_shadow_root=False
-I31	fill	'name'	html > body > form > div > input.input-placeholder-color--lvl-22[required][autocomplete="cc-name"][id="name"][name="name"][type="text"][aria-describedby="error-for-name tooltip-for-name"][placeholder="Name on card"]	html/body/form/div/input	in_iframe=True	in_shadow_root=False
-I32	fill	'expiry_month'	html > body > form > input:nth-of-type(2).visually-hidden[autocomplete="cc-exp-month"][id="expiry_month"][name="expiry_month"][type="text"]	html/body/form/input[2]	in_iframe=True	in_shadow_root=False
-I33	fill	'expiry_year'	html > body > form > input:nth-of-type(3).visually-hidden[autocomplete="cc-exp-year"][id="expiry_year"][name="expiry_year"][type="text"]	html/body/form/input[3]	in_iframe=True	in_shadow_root=False
-I34	fill	'expiry'	html > body > form > input:nth-of-type(4).visually-hidden[autocomplete="cc-exp"][id="expiry"][name="expiry"][type="text"]	html/body/form/input[4]	in_iframe=True	in_shadow_root=False
-I35	fill	'verification_value'	html > body > form > input:nth-of-type(5).visually-hidden[autocomplete="cc-csc"][id="verification_value"][name="verification_value"][type="text"]	html/body/form/input[5]	in_iframe=True	in_shadow_root=False
-I36	fill	'issue_date'	html > body > form > input:nth-of-type(6).visually-hidden[autocomplete="off"][id="issue_date"][name="issue_date"][type="text"]	html/body/form/input[6]	in_iframe=True	in_shadow_root=False
-I37	fill	'issue_number'	html > body > form > input:nth-of-type(7).visually-hidden[autocomplete="off"][id="issue_number"][name="issue_number"][type="text"]	html/body/form/input[7]	in_iframe=True	in_shadow_root=False
-B8	click	''	html > body > form > button.visually-hidden[type="submit"]	html/body/form/button	in_iframe=True	in_shadow_root=False
-M7	click	'reductions'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div	in_iframe=False	in_shadow_root=False
-I38	fill	'reductions'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="ReductionsInput102"][name="reductions"][placeholder="Discount code or gift card"][type="text"][aria-labelledby="ReductionsInput102-label"][autocomplete="on"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div/input	in_iframe=False	in_shadow_root=False
-B9	click	''	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > section > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > button._1s82kpb1._1s82kpb0._1fragemor._1fragemms._1fragemtk._1fragemtv._1fragemtq._1fragemu5._1fragemte._1fragem32[type="button"][aria-label="Shipping policy"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/section/div[2]/div[2]/div[2]/div[1]/div/div/button	in_iframe=False	in_shadow_root=False
+M6	click	'reductions'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div	in_iframe=False	in_shadow_root=False
+I6	fill	'reductions'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="ReductionsInput102"][name="reductions"][placeholder="Discount code or gift card"][type="text"][aria-labelledby="ReductionsInput102-label"][autocomplete="on"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div/input	in_iframe=False	in_shadow_root=False
+B3	click	''	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > section > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > button._1s82kpb1._1s82kpb0._1fragemor._1fragemms._1fragemtk._1fragemtv._1fragemtq._1fragemu5._1fragemte._1fragem32[type="button"][aria-label="Shipping policy"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/section/div[2]/div[2]/div[2]/div[1]/div/div/button	in_iframe=False	in_shadow_root=False

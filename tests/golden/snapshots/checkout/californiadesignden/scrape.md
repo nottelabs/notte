@@ -131,23 +131,3 @@ Updated total price: $59.99 USD
 Your order’s being processed.
 
 Shop
-
-IFRAME about:srcdoc:
-Checkout One Wallets Sandbox
-
-IFRAME about:srcdoc:
-Checkout One Wallets Sandbox
-
-IFRAME about:srcdoc:
-Shopify UI Extensions Internal
-
-IFRAME about:blank:
-
-
-IFRAME about:blank:
-
-
-IFRAME about:blank:
-
-
-IFRAME about:srcdoc:

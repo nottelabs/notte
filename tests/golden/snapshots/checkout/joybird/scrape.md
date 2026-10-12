@@ -112,11 +112,4 @@ If you need to cancel your order, you must cancel within 24 hours in order to re
 
 © 2025 Joybird, All rights reserved.
 
-insert" srcdoc="
-
-" data-savepage-key="0-1">
-
-IFRAME about:blank:
-
-
-IFRAME about:blank:
+insert

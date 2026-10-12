@@ -1,9 +1,12 @@
 """Golden tests: pin what observe and scrape return on saved pages, offline.
 
-Each page in `tests/data` is served from disk at `http://golden.test/<page>` with its `<script>`
-tags stripped and every other request blocked, so the output only depends on our code: the saved pages' own
-scripts would otherwise rebuild parts of the DOM (iframes in particular) in a different order on
-each run. The expected output lives next to this file in `snapshots/<page>/`:
+Each page in `tests/data` is served from disk at `http://golden.test/<page>` without its `<script>`
+and `<iframe>` elements, and every other request is blocked, so the output only depends on our code.
+The saved pages' own scripts would otherwise rebuild parts of the DOM on each run, and iframes are
+listed in a different order between runs (and serialised differently across platforms when their
+`srcdoc` is malformed), so iframe handling is not covered here.
+
+The expected output lives next to this file in `snapshots/<page>/`:
 
 - `observe.txt`: the action space description, then one line per interaction action
   (id, type, text label, CSS and XPath selectors, iframe / shadow-root flags)
@@ -20,10 +23,10 @@ intended, regenerate them and review the diff:
 import difflib
 import hashlib
 import os
-import re
 from pathlib import Path
 
 import pytest
+from lxml import html as lxml_html
 from notte_core.browser.observation import Observation
 from patchright.async_api import Route
 
@@ -37,7 +40,11 @@ BASE_URL = "http://golden.test/"
 PAGES = sorted(path.relative_to(DATA_DIR) for path in DATA_DIR.rglob("*.html"))
 
 
-_SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.IGNORECASE | re.DOTALL)
+def _static_html(path: Path) -> str:
+    document = lxml_html.document_fromstring(path.read_text())
+    for element in document.xpath("//script | //iframe"):
+        element.drop_tree()
+    return lxml_html.tostring(document, encoding="unicode", doctype="<!DOCTYPE html>")
 
 
 async def _serve(route: Route) -> None:
@@ -49,7 +56,7 @@ async def _serve(route: Route) -> None:
     if not path.is_file():
         await route.abort()
         return
-    await route.fulfill(body=_SCRIPT.sub("", path.read_text()), content_type="text/html; charset=utf-8")
+    await route.fulfill(body=_static_html(path), content_type="text/html; charset=utf-8")
 
 
 def _render_observation(obs: Observation) -> str:

@@ -215,5 +215,3 @@ At DuckDuckGo, we believe the best way to protect your personal information from
 Protection. Privacy. Peace of mind.
 
 normal
-
-IFRAME about:blank:

@@ -90,7 +90,7 @@ safe and secure
 
 
 
-[(800) 967-6696](tel:+1.(800) 967-6696)
+[(800) 967-6696](tel:+1.(800)%20967-6696)
 
 * Stay in Touch
 * [Terms of Use](https://www.crateandbarrel.com/customer-service/terms-of-use)
@@ -108,14 +108,3 @@ Close Popup
 Modal Popup
 
 normal
-
-IFRAME about:blank:
-
-
-IFRAME about:srcdoc:
-
-
-IFRAME about:srcdoc:
-PayPal
-
-IFRAME about:srcdoc:

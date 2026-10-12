@@ -51,14 +51,3 @@ Next
   * Shipping: $6.00
   * Tax: $1.81
   * Order Total: $22.76
-
-IFRAME about:blank:
-
-
-IFRAME about:srcdoc:
-
-
-IFRAME about:srcdoc:
-PayPal
-
-IFRAME about:srcdoc:

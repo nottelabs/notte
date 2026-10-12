@@ -171,14 +171,3 @@ checkbox label label
 checkbox label label
 
 Confirm My Choices
-
-IFRAME about:blank:
-
-
-IFRAME about:srcdoc:
-
-
-IFRAME about:srcdoc:
-
-
-IFRAME about:srcdoc:

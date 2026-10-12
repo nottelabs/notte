@@ -195,5 +195,3 @@ pages/company/)
 ### How do DuckDuckGo Search results compare to Google's?
 
 ### Is DuckDuckGo owned by Google or any other entity?
-
-IFRAME about:blank:
