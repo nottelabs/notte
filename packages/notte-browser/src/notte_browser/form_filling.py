@@ -453,10 +453,16 @@ class FormFiller:
                             label.locator("input, select"),  # Child elements
                             label.locator("+ input, + select"),  # Next siblings
                             label.locator("~ input, ~ select"),  # Any following siblings
-                            self.page.locator(
-                                f'input[aria-labelledby="{label.get_attribute("id")}"], select[aria-labelledby="{label.get_attribute("id")}"]'
-                            ),  # ARIA relationship
                         ]
+                        label_id = await label.get_attribute("id")
+                        if label_id:
+                            # ARIA relationship (aria-labelledby holds a space-separated list of ids)
+                            escaped_label_id = label_id.replace("\\", "\\\\").replace('"', '\\"')
+                            related_fields.append(
+                                self.page.locator(
+                                    f'input[aria-labelledby~="{escaped_label_id}"], select[aria-labelledby~="{escaped_label_id}"]'
+                                )
+                            )
 
                         for field in related_fields:
                             if await field.count() > 0:

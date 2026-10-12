@@ -294,7 +294,12 @@ class BrowserController:
             case FormFillAction(value=value):
                 form_filler = FormFiller(window.page)
                 unpacked_values = {k: get_str_value(v) for k, v in value.items()}
-                _ = await form_filler.fill_form(unpacked_values)
+                fill_results = await form_filler.fill_form(unpacked_values)
+                if not any(isinstance(field, Locator) for field in fill_results.values()):
+                    statuses = ", ".join(f"{key}: {status}" for key, status in fill_results.items())
+                    raise ActionExecutionError(
+                        action.type, window.page.url, reason=f"no form field could be filled ({statuses})"
+                    )
 
             case CaptchaSolveAction(captcha_type=_):
                 _ = await CaptchaHandler.handle_captchas(window, action)
