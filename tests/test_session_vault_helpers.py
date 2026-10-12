@@ -226,3 +226,16 @@ def test_session_vault_rejects_credential_missing_from_vault() -> None:
 
     with pytest.raises(VaultCredentialError, match="No credential of type password"):
         _ = asyncio.run(session._action_with_vault(FillAction(selector="#pw", value=PASSWORD)))
+
+
+def test_session_vault_form_fill_keeps_plain_values_next_to_credentials() -> None:
+    vault = MockVault({"https://example.com": {"email": "real@example.com"}})
+    session = NotteSession(vault=vault)
+    session.snapshot = make_snapshot("https://example.com")
+
+    action = FormFillAction(value={"email": EMAIL, "city": "Paris"})
+    updated = asyncio.run(session._action_with_vault(action))
+
+    assert isinstance(updated.value["email"], ValueWithPlaceholder)
+    assert updated.value["email"].get_secret_value() == "real@example.com"
+    assert updated.value["city"] == "Paris"

@@ -659,6 +659,9 @@ class BaseVault(ABC):
             cred_class = CredentialField.placeholder_map.get(placeholder_value)
 
             if cred_class is None:
+                if isinstance(action, FormFillAction):
+                    # plain (non-credential) form values are filled as given
+                    continue
                 raise InvalidPlaceholderError(placeholder_value)
 
             cred_key = cred_class.alias
