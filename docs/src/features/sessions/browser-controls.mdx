@@ -332,35 +332,29 @@ See [Fetch](/concepts/scraping) for detailed documentation.
 
 ---
 
-## Communication Actions
+## Reading Emails and SMS
 
-### SmsRead
+Reading a persona inbox doesn't act on the browser, so it isn't a session action: call the persona directly while the session drives the page.
 
-Read SMS messages from a persona's phone number.
+### SMS
 
 <SmsReadExample />
 
-**Parameters:**
-- `persona_id` (str): Persona ID with phone number
+- `persona.sms(limit=..., timedelta=..., only_unread=...)`: list recent SMS
+- `persona.wait_for_sms(timeout=120, only_unread=True)`: poll until an SMS arrives
 
 **Use for:** Reading 2FA codes, SMS verification, phone-based authentication
 
-See [Personas](/concepts/personas) for details.
-
----
-
-### EmailRead
-
-Read emails from a persona's email address.
+### Emails
 
 <EmailReadExample />
 
-**Parameters:**
-- `persona_id` (str): Persona ID with email address
+- `persona.emails(limit=..., timedelta=..., only_unread=...)`: list recent emails
+- `persona.wait_for_emails(timeout=120, only_unread=True)`: poll until an email arrives
 
 **Use for:** Reading verification emails, email-based authentication
 
-See [Personas](/concepts/personas) for details.
+Listed messages are marked as read. See [Personas](/concepts/personas) for details.
 
 ---
 
