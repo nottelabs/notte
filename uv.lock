@@ -2739,7 +2739,6 @@ source = { editable = "packages/notte-browser" }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "html2text" },
-    { name = "httpx" },
     { name = "lxml" },
     { name = "markdownify" },
     { name = "notte-core" },
@@ -2754,7 +2753,6 @@ dependencies = [
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.12.0" },
     { name = "html2text", specifier = ">=2025.4.15" },
-    { name = "httpx", specifier = ">=0.27.0" },
     { name = "lxml", specifier = ">=5.3.1" },
     { name = "markdownify", specifier = ">=0.14.1" },
     { name = "notte-core", editable = "packages/notte-core" },

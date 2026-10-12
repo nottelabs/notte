@@ -9,7 +9,6 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import Any, Callable, ClassVar, Literal, Self
 
-import httpx
 from notte_core.browser.dom_tree import DomNode
 from notte_core.browser.snapshot import (
     BrowserSnapshot,
@@ -43,7 +42,6 @@ from notte_browser.errors import (
     PageLoadingError,
     PlaywrightError,
     PlaywrightTimeoutError,
-    RemoteDebuggingNotAvailableError,
     UnexpectedBrowserError,
 )
 from notte_browser.playwright_async_api import CDPSession, Locator, Page, Response
@@ -289,18 +287,6 @@ class BrowserWindow(BaseModel):
         return await resp.body(), filename
 
     @property
-    def port(self) -> int:
-        if self.resource.options.debug_port is None:
-            raise RemoteDebuggingNotAvailableError()
-        return self.resource.options.debug_port
-
-    async def get_ws_url(self) -> str:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(f"http://localhost:{self.port}/json/version")
-            data = response.json()
-            return data["webSocketDebuggerUrl"]
-
-    @property
     def is_chromium_based(self) -> bool:
         """Check if the browser is Chromium-based (supports CDP)."""
         return self.resource.options.browser_type != "firefox"
@@ -334,15 +320,6 @@ class BrowserWindow(BaseModel):
                 _ = await asyncio.wait_for(session.detach(), timeout=2.0)
             except Exception as e:  # noqa: BLE001 - best-effort cleanup on shutdown
                 logger.debug(f"CDP session detach failed during close: {type(e).__name__}: {e}")
-
-    async def page_id(self, tab_idx: int | None = None) -> str:
-        session = await self.get_cdp_session(tab_idx)
-        target_id: Any = await session.send("Target.getTargetInfo")  # pyright: ignore [reportUnknownMemberType]
-        return target_id["targetInfo"]["targetId"]
-
-    async def ws_page_url(self, tab_idx: int | None = None) -> str:
-        page_id = await self.page_id(tab_idx)
-        return f"ws://localhost:{self.port}/devtools/page/{page_id}"
 
     @profiler.profiled()
     async def long_wait(self) -> None:

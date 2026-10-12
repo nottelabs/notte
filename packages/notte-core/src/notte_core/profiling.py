@@ -1,8 +1,6 @@
 import contextlib
-import csv
 import functools
 import inspect
-import json
 import os
 import time
 from collections import defaultdict
@@ -460,52 +458,6 @@ class NotteProfiler:
 
         traverse_spans(hierarchy)
         return flamegraph_data
-
-    def save_results(self, output_file: str | None = None) -> None:
-        """Save profiling results to CSV.
-
-        Args:
-            output_file: Path to output CSV file. If None, uses cache directory.
-                        If relative path, uses it relative to cwd.
-                        If absolute path, uses it as-is.
-        """
-        if not self.enable:
-            raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
-
-        # Use cache directory if no output file specified
-        if output_file is None:
-            profiling_dir = ensure_cache_directory(CacheDirectory.PROFILING)
-            output_file = str(profiling_dir / "otel_profile_results.csv")
-
-        span_data = self.get_span_data()
-        flamegraph_data = self.generate_stack_paths(span_data)
-
-        try:
-            with open(output_file, "w", newline="") as csvfile:
-                fieldnames = ["name", "stack_path", "start_time", "end_time", "duration", "depth"]
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                writer.writeheader()
-                writer.writerows(flamegraph_data)
-        except Exception as e:
-            logger.error(f"Error saving results: {e}")
-
-    def print_results(self) -> None:
-        """Print hierarchical profiling results."""
-        if not self.enable:
-            raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
-
-        span_data = self.get_span_data()
-        flamegraph_data = self.generate_stack_paths(span_data)
-
-        print("OpenTelemetry Profiling Results:")
-        print("-" * 80)
-        print(f"{'Operation':<40} {'Start':<10} {'End':<10} {'Duration':<12}")
-        print("-" * 80)
-
-        for item in flamegraph_data:
-            indent = "  " * item["depth"]
-            name = f"{indent}{item['name']}"
-            print(f"{name:<40} {item['start_time']:<10.6f} {item['end_time']:<10.6f} {item['duration']:<12.6f}")
 
     def generate_flamegraph_svg(self, output_file: str | None = None, width: int = 1200, height: int = 600) -> None:
         """Generate a traditional dark flamegraph with compact layout.
@@ -1102,30 +1054,6 @@ class NotteProfiler:
                 _ = f.write("\n".join(svg_lines))
         except Exception as e:
             logger.error(f"Error generating flamegraph: {e}")
-
-    def save_trace_json(self, output_file: str | None = None) -> None:
-        """Save trace data in JSON format for external tools.
-
-        Args:
-            output_file: Path to output JSON file. If None, uses cache directory.
-                        If relative path, uses it relative to cwd.
-                        If absolute path, uses it as-is.
-        """
-        if not self.enable:
-            raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
-
-        # Use cache directory if no output file specified
-        if output_file is None:
-            profiling_dir = ensure_cache_directory(CacheDirectory.PROFILING)
-            output_file = str(profiling_dir / "trace.json")
-
-        span_data = self.get_span_data()
-
-        try:
-            with open(output_file, "w") as f:
-                json.dump(span_data, f, indent=2)
-        except Exception as e:
-            logger.error(f"Error saving trace data: {e}")
 
     def reset(self) -> None:
         """
