@@ -617,9 +617,9 @@ class NotteSession(AsyncResource, SyncResource):
                 NoStorageObjectProvidedError,
                 InboxActionNotSupportedLocallyError,
                 ScrapeIsNotAnActionError,
-            ) as e:
+            ):
                 # this should be handled by the caller
-                raise e
+                raise
             except InvalidActionError as e:
                 success = False
                 message = e.dev_message
@@ -666,12 +666,8 @@ class NotteSession(AsyncResource, SyncResource):
             raise exception
 
         if resolved_action is None:
-            # keep the initial action in the trajectory
-            if step_action is None:
-                # this shouldnt happen
-                raise InvalidActionError(reason="Could not resolve action", action_id="")
-            else:
-                resolved_action = step_action
+            # resolution failed: keep the initial action in the trajectory
+            resolved_action = step_action
 
         if not success and exception is None:
             # Actions that signal failure by returning (a tool returning `success=False`,
@@ -1042,8 +1038,6 @@ class NotteSession(AsyncResource, SyncResource):
             logger.warning(f"Scrape failed after empty page content, retrying in {wait_time / 1000} seconds...")
             await asyncio.sleep(wait_time / 1000)
             return await self._ascrape(retries=retries - 1, wait_time=wait_time, **params)
-        except Exception as e:
-            raise e
 
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
