@@ -29,8 +29,9 @@ async def test_vault_secret_typed_into_page_is_masked_in_screenshots() -> None:
         assert len(masked) == 1
         assert await masked[0].get_attribute("id") == "email"
 
-        # Post-action screenshots (also used by `replay()`) go through the masked Playwright path.
-        assert len(list(session.trajectory.all_screenshots())) >= 1
+        # Explicit screenshots go through the masked Playwright path and are recorded in the trajectory.
+        screenshot = await session.ascreenshot()
+        assert session.trajectory.last_screenshot is screenshot
 
 
 @pytest.mark.asyncio

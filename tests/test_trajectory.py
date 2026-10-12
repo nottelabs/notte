@@ -126,8 +126,10 @@ async def test_trajectory_callback_from_session():
         _ = session.execute(type="reload")
         _ = session.observe()
         _ = session.execute(type="click", id="B1")
+        # actions no longer append a screenshot; only explicit ones are recorded
+        _ = session.screenshot()
 
         assert callback_calls["obs"] == 3
         assert callback_calls["exec"] == 3
-        assert callback_calls["screen"] == 3
-        assert callback_calls["any"] == 9
+        assert callback_calls["screen"] == 1
+        assert callback_calls["any"] == 7
