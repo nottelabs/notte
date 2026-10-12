@@ -14,6 +14,7 @@ from notte_core.types import ScrapeParams
 from typing_extensions import override
 
 from notte_browser.errors import EmptyPageContentError, PlaywrightError
+from notte_browser.playwright_async_api import Frame
 from notte_browser.window import BrowserWindow
 
 _MAIN_CONTENT_REMOVED_TAGS = ("script", "style", "aside", "footer", "header", "hgroup", "nav", "search")
@@ -202,6 +203,32 @@ class VisibleMarkdownConverter(MarkdownConverter):
         return super().convert_soup(soup)  # pyright: ignore [reportUnknownVariableType]
 
 
+# position of an iframe element among its document's elements (iframes in a shadow root take their host's position)
+_FRAME_ELEMENT_POSITION = """el => {
+    let node = el;
+    while (node.getRootNode() instanceof ShadowRoot) node = node.getRootNode().host;
+    return Array.prototype.indexOf.call(node.ownerDocument.getElementsByTagName("*"), node);
+}"""
+
+
+async def _frames_in_document_order(frame: Frame) -> list[Frame]:
+    """`frame` and its descendants, each followed by its children in the order of their elements in its document.
+
+    `page.frames` lists frames in the order they attached, which varies between runs (e.g. cross-origin frames).
+    """
+    positions: list[tuple[float, Frame]] = []
+    for child in frame.child_frames:
+        try:
+            position = float(await (await child.frame_element()).evaluate(_FRAME_ELEMENT_POSITION))
+        except PlaywrightError:
+            position = float("inf")  # detached while we were looking: keep it last
+        positions.append((position, child))
+    frames = [frame]
+    for _, child in sorted(positions, key=lambda item: item[0]):
+        frames.extend(await _frames_in_document_order(child))
+    return frames
+
+
 class MarkdownifyScrapingPipe:
     """Convert page content to Markdown and append readable iframe content."""
 
@@ -224,7 +251,7 @@ class MarkdownifyScrapingPipe:
             include_iframes = params.selector is None
 
         if include_iframes:
-            for iframe in window.page.frames:
+            for iframe in await _frames_in_document_order(window.page.main_frame):
                 if iframe.url != window.page.url and not iframe.url.startswith("data:"):
                     try:
                         iframe_content = await iframe.content()
