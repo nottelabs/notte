@@ -39,6 +39,7 @@ RunFunctionRequest: api-only field workflow_id (required)
 RunFunctionRequest: api-only field callback_url
 RunFunctionRequest: sdk-only field function_id
 RunFunctionRequest: variables required api=False sdk=True
+ScrapeRequest: api-only field only_images
 SessionResponse: api-only field timeout_minutes (required)
 SessionStartRequest: api-only field demonstrate
 UpdateFunctionRunResponse: api-only field workflow_id (required)

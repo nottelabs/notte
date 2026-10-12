@@ -203,7 +203,6 @@ class ScrapeActionDict(TypedDict, total=False):
     instructions: NotRequired[str | None]
     only_main_content: NotRequired[bool]
     selector: NotRequired[str | None]
-    only_images: NotRequired[bool]
     scrape_links: NotRequired[bool]
     scrape_images: NotRequired[bool]
     ignored_tags: NotRequired[list[str] | None]

@@ -12,7 +12,6 @@ The expected output lives next to this file in `snapshots/<page>/`:
   (id, type, text label, CSS and XPath selectors, iframe / shadow-root flags)
 - `scrape.md`: `session.scrape()` markdown (full page)
 - `scrape_main.md`: `session.scrape(only_main_content=True)` markdown
-- `images.txt`: `session.scrape(only_images=True)` (one line per image; inline `data:` URLs as a hash)
 
 A refactor of the observe / scrape pipelines must keep these files unchanged. When a change is
 intended, regenerate them and review the diff:
@@ -21,7 +20,6 @@ intended, regenerate them and review the diff:
 """
 
 import difflib
-import hashlib
 import os
 from pathlib import Path
 
@@ -79,13 +77,6 @@ def _render_observation(obs: Observation) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _image_url(url: str | None) -> str:
-    if url is None or not url.startswith("data:"):
-        return str(url)
-    media_type = url.split(",", 1)[0]
-    return f"{media_type},sha256:{hashlib.sha256(url.encode()).hexdigest()[:16]}"
-
-
 def _check(page: Path, name: str, actual: str) -> None:
     path = SNAPSHOTS_DIR / page.with_suffix("") / name
     if UPDATE:
@@ -113,5 +104,3 @@ async def test_observe_and_scrape(page: Path) -> None:
         _check(page, "observe.txt", _render_observation(await session.aobserve()))
         _check(page, "scrape.md", await session.ascrape())
         _check(page, "scrape_main.md", await session.ascrape(only_main_content=True))
-        images = await session.ascrape(only_images=True)
-        _check(page, "images.txt", "".join(f"{image.category}\t{_image_url(image.url)}\n" for image in images))

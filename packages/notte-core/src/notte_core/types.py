@@ -1863,7 +1863,6 @@ class ScrapeStructuredParamsDict(TypedDict, total=False):
 
 class ScrapeParamsDict(ScrapeMarkdownParamsDict, ScrapeStructuredParamsDict, total=False):
     ignored_tags: list[str] | None
-    only_images: bool
     response_format: type[BaseModel] | None
     instructions: str | None
 
@@ -1901,11 +1900,6 @@ class ScrapeParams(SdkRequest):
                 "Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded."
             ),
         ),
-    ] = False
-
-    only_images: Annotated[
-        bool,
-        Field(description="Whether to only scrape images from the page. If True, the page content is excluded."),
     ] = False
 
     response_format: Annotated[
