@@ -6,7 +6,7 @@ from notte_core.actions import ClickAction, FillAction
 @pytest.mark.asyncio
 async def test_google_flights() -> None:
     async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080) as page:
-        _ = await page.aexecute(type="goto", value="https://www.google.com/travel/flights")
+        _ = await page.aexecute(type="goto", url="https://www.google.com/travel/flights")
         _ = await page.aobserve()
         cookie_node = page.snapshot.dom_node.find("B2")
         if cookie_node is not None and "reject" in cookie_node.text.lower():
@@ -27,7 +27,7 @@ async def test_google_flights_with_agent() -> None:
         viewport_height=1080,
     ) as page:
         # observe a webpage, and take a random action
-        _ = await page.aexecute(type="goto", value="https://www.google.com/travel/flights")
+        _ = await page.aexecute(type="goto", url="https://www.google.com/travel/flights")
         _ = await page.aobserve()
         cookie_node = page.snapshot.dom_node.find("B2")
         if cookie_node is not None:

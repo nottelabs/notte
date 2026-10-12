@@ -90,8 +90,8 @@ async def test_clipboard_isolation():
 
     async with page1 as p1, page2 as p2:
         # Set up test pages
-        _ = await p1.aexecute(type="goto", value=url)
-        _ = await p2.aexecute(type="goto", value=url)
+        _ = await p1.aexecute(type="goto", url=url)
+        _ = await p2.aexecute(type="goto", url=url)
 
         _ = await p1.aobserve()
         _ = await p2.aobserve()
@@ -115,7 +115,7 @@ async def test_clipboard_isolation():
         # Try to access clipboard in second context multiple times
         for attempt in range(5):
             # Navigate to fresh page each time to ensure clean state
-            _ = await p2.aexecute(type="goto", value=url)
+            _ = await p2.aexecute(type="goto", url=url)
             _ = await p2.window.page.wait_for_selector(selector)
             _ = await p2.window.page.click(selector)
 
