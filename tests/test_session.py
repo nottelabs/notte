@@ -319,12 +319,11 @@ async def test_click_empty_selector_returns_failed_result() -> None:
 
 @pytest.mark.asyncio
 async def test_interaction_execution_timeout_returns_failed_result() -> None:
-    async def slow_execute(*_args, **_kwargs) -> bool:
+    async def slow_interaction(*_args, **_kwargs) -> None:
         await asyncio.sleep(0.05)
-        return True
 
     async with NotteSession(headless=True) as session:
-        session.controller.execute = slow_execute  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
+        session.controller._interact = slow_interaction  # pyright: ignore[reportAttributeAccessIssue, reportPrivateUsage]
 
         result = await session.aexecute(
             ClickAction(selector="#target", timeout=1),

@@ -606,13 +606,8 @@ class NotteSession(AsyncResource, SyncResource):
                         raise InboxActionNotSupportedLocallyError(resolved_action)
                     case _:
                         resolved_action = await self._action_with_vault(resolved_action)
-                        if isinstance(resolved_action, InteractionAction):
-                            success = await asyncio.wait_for(
-                                self.controller.execute(self.window, resolved_action, self._snapshot),
-                                timeout=resolved_action.timeout / 1000.0,
-                            )
-                        else:
-                            success = await self.controller.execute(self.window, resolved_action, self._snapshot)
+                        # interactions bound themselves by `action.timeout` (see BrowserController)
+                        success = await self.controller.execute(self.window, resolved_action, self._snapshot)
                         if not success:
                             # `message` still holds the success-phrased execution_message.
                             message = f"Action '{resolved_action.type}' failed during browser execution"
@@ -635,11 +630,7 @@ class NotteSession(AsyncResource, SyncResource):
                 exception = e
             except asyncio.TimeoutError as e:
                 success = False
-                message = (
-                    f"Action timed out after {resolved_action.timeout}ms"
-                    if isinstance(resolved_action, InteractionAction)
-                    else "Action timed out."
-                )
+                message = "Action timed out."
                 exception = e
             except NotteBaseError as e:
                 if isinstance(e, EvaluateJsResultLimitError):
