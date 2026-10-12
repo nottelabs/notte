@@ -162,3 +162,19 @@ release:
 	fi
 	@echo "\033[0;35mBuilding version: $(filter-out $@,$(MAKECMDGOALS))\033[0m"
 	python3 scripts/build_release.py $(filter-out $@,$(MAKECMDGOALS))
+
+# Python SDK wire types, generated from packages/notte-sdk/openapi/openapi.json.
+# See docs/design/openapi-generated-sdk-types.md.
+.PHONY: sdk-types
+sdk-types:
+	uv run --no-sync python scripts/generate_sdk_types.py
+
+.PHONY: sdk-types-check
+sdk-types-check:
+	uv run --no-sync python scripts/generate_sdk_types.py --check
+
+# Refresh the snapshot from staging (override with SDK_TYPES_URL=https://api.notte.cc).
+SDK_TYPES_URL ?= https://us-staging.notte.cc
+.PHONY: sdk-types-fetch
+sdk-types-fetch:
+	uv run --no-sync python scripts/generate_sdk_types.py --fetch --url $(SDK_TYPES_URL)
