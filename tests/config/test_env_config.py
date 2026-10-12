@@ -1,12 +1,10 @@
 from notte_core.common.config import LlmModel, NotteConfig, config
 from notte_core.errors.base import ErrorConfig
-from notte_sdk.types import DEFAULT_MAX_NB_STEPS
 
 
 def test_notte_session_config_initialization():
     config = NotteConfig.from_toml()
     assert config.verbose is False
-    assert config.max_steps == DEFAULT_MAX_NB_STEPS
 
 
 def test_dev_mode():
@@ -30,12 +28,6 @@ def test_cerebras():
     assert config.perception_model is None
     local_config = NotteConfig.from_toml(perception_model=LlmModel.cerebras)
     assert local_config.perception_model == LlmModel.cerebras
-
-
-def test_steps():
-    assert config.max_steps == DEFAULT_MAX_NB_STEPS
-    local_config = NotteConfig.from_toml(max_steps=100)
-    assert local_config.max_steps == 100
 
 
 def test_headless():

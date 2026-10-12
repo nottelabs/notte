@@ -23,12 +23,8 @@ classmd_output_dir = "src/sdk-reference"
 classmd_classes = [
     # Example: Document a single class
     "notte_sdk.client.NotteClient",
-    "notte_sdk.endpoints.agents.AgentsClient",
-    "notte_sdk.endpoints.agents.RemoteAgent",
     "notte_sdk.endpoints.sessions.RemoteSession",
     "notte_sdk.endpoints.functions.NotteFunction",
-    # agent fallback
-    "notte_sdk.agent_fallback.RemoteAgentFallback",
     # tooling
     "notte_sdk.endpoints.vaults.NotteVault",
     "notte_sdk.endpoints.personas.NottePersona",

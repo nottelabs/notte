@@ -11,8 +11,6 @@ from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from pydantic import BaseModel
 from typing_extensions import final
 
-from notte_sdk.agent_fallback import RemoteAgentFallback
-from notte_sdk.endpoints.agents import AgentsClient, RemoteAgent
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
 from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.managed_auth import ManagedAuthClient
@@ -46,7 +44,7 @@ class NotteClient:
         """Initialize a NotteClient instance.
 
         Initializes the NotteClient with the specified API key and server URL, creating instances
-        of SessionsClient, AgentsClient, VaultsClient, and PersonasClient.
+        of SessionsClient, FunctionsClient, VaultsClient, and PersonasClient.
 
         Args:
             api_key: Optional API key for authentication.
@@ -58,9 +56,6 @@ class NotteClient:
         self.captcha_timeout_seconds: float = captcha_timeout_seconds
         self.sessions: SessionsClient = SessionsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose, viewer_type=viewer_type
-        )
-        self.agents: AgentsClient = AgentsClient(
-            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
         self.personas: PersonasClient = PersonasClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
@@ -95,10 +90,6 @@ class NotteClient:
         return cast(type[RemoteSession], partial(RemoteSession, _client=self.sessions))
 
     @property
-    def Agent(self) -> type[RemoteAgent]:
-        return cast(type[RemoteAgent], partial(RemoteAgent, _client=self.agents))
-
-    @property
     def Vault(self) -> type[NotteVault]:
         return cast(type[NotteVault], partial(NotteVault, _client=self.vaults))
 
@@ -117,10 +108,6 @@ class NotteClient:
     @property
     def Function(self) -> type[NotteFunction]:
         return cast(type[NotteFunction], partial(NotteFunction, _client=self))
-
-    @property
-    def AgentFallback(self) -> type[RemoteAgentFallback]:
-        return cast(type[RemoteAgentFallback], partial(RemoteAgentFallback, _client=self))
 
     def health_check(self) -> None:
         """

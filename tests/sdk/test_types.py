@@ -9,8 +9,6 @@ from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
 from notte_core.common.config import PlaywrightProxySettings
 from notte_core.space import ActionSpace, SpaceCategory
 from notte_sdk.types import (
-    AgentStatus,
-    AgentStatusResponse,
     ObserveResponse,
     ReplayResponse,
     SessionResponse,
@@ -136,24 +134,6 @@ def test_observe_response_from_observation():
     assert response.space.interaction_actions == obs.space.interaction_actions
 
 
-def test_agent_status_response():
-    # Test basic AgentStatusResponse without replay fields
-    response = AgentStatusResponse.model_validate(
-        {
-            "agent_id": "test_agent",
-            "created_at": "2024-03-20",
-            "session_id": "test_session",
-            "status": AgentStatus.active,
-            "task": "test_task",
-            "url": "https://www.google.com",
-        }
-    )
-    assert response.task == "test_task"
-    assert response.url == "https://www.google.com"
-    assert response.success is None
-    assert response.answer is None
-
-
 def test_replay_response():
     replay = ReplayResponse(
         mp4_url="https://example.com/replay.mp4",
@@ -275,7 +255,7 @@ RFC_3339_DURATION = re.compile(r"^P(?!$)((\d+Y)?(\d+M)?(\d+D)?(T(?=\d)(\d+H)?(\d
 
 
 def _session_response(duration: dt.timedelta) -> SessionResponse:
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     return SessionResponse(
         session_id="0d5b2f2f-0f6e-4c1e-9d4b-3a1f1f0b2c3d",
         idle_timeout_minutes=3,

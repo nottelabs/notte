@@ -95,7 +95,6 @@ jobs:
           uv pip show notte-core
           uv pip show notte-sdk
           uv pip show notte-browser
-          uv pip show notte-agent
 
   deploy-docs:
     needs: build

@@ -19,7 +19,6 @@ resolution-markers = [
 [manifest]
 members = [
     "notte",
-    "notte-agent",
     "notte-browser",
     "notte-core",
     "notte-integrations",
@@ -3207,12 +3206,9 @@ name = "notte"
 version = "2.0.0.dev0"
 source = { editable = "." }
 dependencies = [
-    { name = "google-auth" },
-    { name = "notte-agent" },
     { name = "notte-browser" },
     { name = "notte-core" },
     { name = "notte-sdk" },
-    { name = "toml" },
 ]
 
 [package.optional-dependencies]
@@ -3256,13 +3252,10 @@ lint = [
 
 [package.metadata]
 requires-dist = [
-    { name = "google-auth", specifier = ">=2.39.0" },
-    { name = "notte-agent", editable = "packages/notte-agent" },
     { name = "notte-browser", editable = "packages/notte-browser" },
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "notte-integrations", marker = "extra == 'integrations'", editable = "packages/notte-integrations" },
     { name = "notte-sdk", editable = "packages/notte-sdk" },
-    { name = "toml", specifier = ">=0.10.2" },
 ]
 provides-extras = ["integrations"]
 
@@ -3296,23 +3289,6 @@ dev = [
     { name = "typer", specifier = ">=0.19.2" },
 ]
 lint = [{ name = "ruff", specifier = ">=0.9.7" }]
-
-[[package]]
-name = "notte-agent"
-version = "2.0.0.dev0"
-source = { editable = "packages/notte-agent" }
-dependencies = [
-    { name = "notte-browser" },
-    { name = "notte-core" },
-    { name = "notte-llm" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "notte-browser", editable = "packages/notte-browser" },
-    { name = "notte-core", editable = "packages/notte-core" },
-    { name = "notte-llm", editable = "packages/notte-llm" },
-]
 
 [[package]]
 name = "notte-browser"
@@ -3421,7 +3397,6 @@ dependencies = [
     { name = "hvac" },
     { name = "hyperbrowser" },
     { name = "langchain-google-genai" },
-    { name = "notte-agent" },
     { name = "notte-browser" },
     { name = "notte-core" },
     { name = "slack-sdk" },
@@ -3437,7 +3412,6 @@ requires-dist = [
     { name = "hvac", specifier = ">=2.3.0" },
     { name = "hyperbrowser", specifier = ">=0.45.1" },
     { name = "langchain-google-genai", specifier = ">=2.1.1" },
-    { name = "notte-agent", editable = "packages/notte-agent" },
     { name = "notte-browser", editable = "packages/notte-browser" },
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "slack-sdk", specifier = ">=3.34.0" },

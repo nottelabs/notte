@@ -15,7 +15,6 @@ requires-python = ">=3.11"
 dependencies = [
     "notte_core==2.0.0.dev0",
     "notte_browser==2.0.0.dev0",
-    "notte_agent==2.0.0.dev0",
     "discord-py>=2.3.0,<2.8.0",
     "fastapi>=0.115.8",
     "uvicorn>=0.29.0",

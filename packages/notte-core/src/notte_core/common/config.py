@@ -321,19 +321,12 @@ class NotteConfigDict(TypedDict, total=False):
     # [error]
     max_error_length: int
     raise_condition: RaiseCondition
-    max_consecutive_failures: int
 
     # [proxy]
     proxy_host: str | None
     proxy_username: str | None
     proxy_password: str | None
     proxy_bypass: str | None
-
-    # [agent]
-    max_steps: int
-    use_vision: bool
-    agent_logs_inactivity_timeout_seconds: float
-    agent_status_poll_timeout_seconds: float
 
     # [dom_parsing]
     highlight_elements: bool
@@ -429,19 +422,12 @@ class NotteConfig(TomlConfig):
     # [error]
     max_error_length: int
     raise_condition: RaiseCondition
-    max_consecutive_failures: int
 
     # [proxy]
     proxy_host: str | None = None
     proxy_username: str | None = None
     proxy_password: str | None = None
     proxy_bypass: str | None = None
-
-    # [agent]
-    max_steps: int
-    use_vision: bool
-    agent_logs_inactivity_timeout_seconds: float = Field(gt=0)
-    agent_status_poll_timeout_seconds: float = Field(gt=0)
 
     # [dom_parsing]
     highlight_elements: bool

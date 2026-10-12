@@ -12,9 +12,6 @@ dependencies = [
     "notte-core==2.0.0.dev0",
     "notte-sdk==2.0.0.dev0",
     "notte-browser==2.0.0.dev0",
-    "notte-agent==2.0.0.dev0",
-    "google-auth>=2.39.0",
-    "toml>=0.10.2",
 ]
 
 [project.optional-dependencies]
@@ -24,7 +21,6 @@ integrations = ["notte-integrations==2.0.0.dev0"]
 notte-core = { workspace = true }
 notte-sdk = { workspace = true }
 notte-browser = { workspace = true }
-notte-agent = { workspace = true }
 notte-llm = { workspace = true }
 notte-integrations = { workspace = true }
 

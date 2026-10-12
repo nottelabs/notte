@@ -20,11 +20,6 @@ test-sdk:
 test-docs:
 	uv run pytest -n logical tests/docs
 
-.PHONY: test-agent
-test-agent:
-	uv run pytest -n logical tests/agent
-	uv run pytest -n logical tests/integration/sdk/test_vault.py
-
 .PHONY: test-sdk-staging
 test-sdk-staging:
 	@echo "Testing SDK with staging API..."
