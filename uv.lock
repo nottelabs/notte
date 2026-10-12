@@ -2651,6 +2651,9 @@ dependencies = [
 llm = [
     { name = "notte-llm" },
 ]
+playwright = [
+    { name = "notte-sdk", extra = ["playwright"] },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -2693,8 +2696,9 @@ requires-dist = [
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "notte-llm", marker = "extra == 'llm'", editable = "packages/notte-llm" },
     { name = "notte-sdk", editable = "packages/notte-sdk" },
+    { name = "notte-sdk", extras = ["playwright"], marker = "extra == 'playwright'", editable = "packages/notte-sdk" },
 ]
-provides-extras = ["llm"]
+provides-extras = ["llm", "playwright"]
 
 [package.metadata.requires-dev]
 dev = [

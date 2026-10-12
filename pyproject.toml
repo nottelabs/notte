@@ -16,6 +16,8 @@ dependencies = [
 
 [project.optional-dependencies]
 llm = ["notte-llm==2.0.0.dev0"]
+# Drive cloud sessions with Playwright over CDP (session.page / session.cdp_url()).
+playwright = ["notte-sdk[playwright]==2.0.0.dev0"]
 
 [tool.uv.sources]
 notte-core = { workspace = true }
