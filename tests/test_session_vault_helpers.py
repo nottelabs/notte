@@ -1,12 +1,16 @@
 import asyncio
+from typing import Any
 
 from notte_browser.session import NotteSession
+from notte_browser.vault import VaultSecretsScreenshotMask
+from notte_browser.window import ScreenshotMask
 from notte_core.actions import FillAction, FormFillAction, MultiFactorFillAction
 from notte_core.credentials import EMAIL, MFA, PASSWORD, USERNAME
 from notte_core.credentials.types import ValueWithPlaceholder
 
 from tests.mock.mock_vault import MockVault
 from tests.mock.snapshot_factory import make_snapshot
+from tests.test_session_persona_helpers import StubPersona
 
 
 class FakeWindow:
@@ -135,3 +139,69 @@ def test_session_vault_preserves_selector_when_fill_mfa_becomes_multi_factor_fil
     assert isinstance(updated.value, ValueWithPlaceholder)
     assert len(updated.value.get_secret_value()) == 6
     assert updated.value.get_secret_value().isdigit()
+
+
+class MaskableWindow(FakeWindow):
+    def __init__(self, url: str, screenshot_mask: ScreenshotMask | None = None) -> None:
+        super().__init__(url)
+        self.screenshot_mask: ScreenshotMask | None = screenshot_mask
+
+
+def _session_with_window(window: MaskableWindow, **kwargs: Any) -> NotteSession:
+    return NotteSession(window=window, **kwargs)  # pyright: ignore[reportArgumentType]
+
+
+def test_session_without_vault_installs_no_screenshot_mask() -> None:
+    window = MaskableWindow("https://example.com")
+    _ = _session_with_window(window)
+    assert window.screenshot_mask is None
+
+
+def test_session_vault_masks_screenshots() -> None:
+    vault = MockVault({"https://example.com": {"email": "real@example.com"}})
+    window = MaskableWindow("https://example.com")
+    _ = _session_with_window(window, vault=vault)
+
+    assert isinstance(window.screenshot_mask, VaultSecretsScreenshotMask)
+    assert window.screenshot_mask.vault is vault
+
+
+def test_session_set_vault_toggles_screenshot_mask() -> None:
+    vault = MockVault({"https://example.com": {"email": "real@example.com"}})
+    window = MaskableWindow("https://example.com")
+    session = _session_with_window(window)
+    assert window.screenshot_mask is None
+
+    session.set_vault(vault)
+    assert isinstance(window.screenshot_mask, VaultSecretsScreenshotMask)
+    assert window.screenshot_mask.vault is vault
+
+    session.set_vault(None)
+    assert window.screenshot_mask is None
+
+
+def test_session_persona_vault_masks_screenshots() -> None:
+    vault = MockVault({"https://example.com": {"email": "real@example.com"}})
+    window = MaskableWindow("https://example.com")
+    session = _session_with_window(window)
+
+    session.attach_persona(StubPersona(emails=[], sms=[], vault=vault))
+
+    assert isinstance(window.screenshot_mask, VaultSecretsScreenshotMask)
+    assert window.screenshot_mask.vault is vault
+
+
+def test_session_persona_without_vault_installs_no_screenshot_mask() -> None:
+    window = MaskableWindow("https://example.com")
+    _ = _session_with_window(window, persona=StubPersona(emails=[], sms=[]))
+    assert window.screenshot_mask is None
+
+
+def test_session_vault_keeps_custom_screenshot_mask() -> None:
+    custom_mask = ScreenshotMask()
+    window = MaskableWindow("https://example.com", screenshot_mask=custom_mask)
+    session = _session_with_window(window, vault=MockVault())
+    assert window.screenshot_mask is custom_mask
+
+    session.set_vault(None)
+    assert window.screenshot_mask is custom_mask
