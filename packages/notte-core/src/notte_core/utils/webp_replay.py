@@ -56,26 +56,6 @@ def extract_frame_from_webp(
 
 
 @final
-class MP4Replay:
-    def __init__(self, replay: bytes):
-        self.replay = replay
-
-    def save(self, output_file: str) -> None:
-        """Save the mp4 replay to a file.
-
-        Args:
-            output_file: Path where to save the mp4 file. Must end with .mp4 extension.
-
-        Raises:
-            ValueError: If the output file doesn't have a .mp4 extension.
-        """
-        if not output_file.endswith(".mp4"):
-            raise ValueError("Output file must have a .mp4 extension.")
-        with open(output_file, "wb") as f:
-            _ = f.write(self.replay)
-
-
-@final
 class WebpReplay:
     """A class for handling WebP replay animations.
 

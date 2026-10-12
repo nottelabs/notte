@@ -6,7 +6,6 @@ from notte_core.common.logging import logger
 class NodeType(Enum):
     TEXT = "text"
     INTERACTION = "interaction"
-    IMAGE = "image"
     OTHER = "other"
 
 
@@ -21,126 +20,6 @@ class NodeCategory(Enum):
     CODE = "code"
     TREE = "tree"
     IMAGE = "image"
-
-    def roles(self, add_group_role: bool = False) -> set[str]:
-        roles: set[str] = set()
-        match self.value:
-            case NodeCategory.INTERACTION.value:
-                roles = {
-                    "button",
-                    "link",
-                    "combobox",
-                    "listbox",
-                    "textbox",
-                    "checkbox",
-                    "searchbox",
-                    "radio",
-                    "tab",
-                    "menuitem",
-                    "slider",
-                    "switch",
-                    "menuitem",
-                    "menuitemcheckbox",
-                    "menuitemradio",
-                    "option",
-                }
-            case NodeCategory.TEXT.value:
-                roles = {
-                    "text",
-                    "heading",
-                    "paragraph",
-                    "blockquote",
-                    "caption",
-                    "contentinfo",
-                    "definition",
-                    "emphasis",
-                    "log",
-                    "note",
-                    "status",
-                    "strong",
-                    "subscript",
-                    "superscript",
-                    "term",
-                    "time",
-                    "LineBreak",
-                    "DescriptionList",
-                    "LabelText",
-                }
-            case NodeCategory.LIST.value:
-                roles = {
-                    "list",
-                    "listitem",
-                    "listmarker",
-                }
-            case NodeCategory.TABLE.value:
-                roles = {
-                    "table",
-                    "row",
-                    "column",
-                    "cell",
-                    "columnheader",
-                    "grid",
-                    "gridcell",
-                    "rowgroup",
-                    "rowheader",
-                }
-            case NodeCategory.OTHER.value:
-                roles = {
-                    "complementary",
-                    "deletion",
-                    "insertion",
-                    "marquee",
-                    "meter",
-                    "presentation",
-                    "progressbar",
-                    "scrollbar",
-                    "separator",
-                    "spinbutton",
-                    "timer",
-                    "Iframe",
-                }
-            case NodeCategory.IMAGE.value:
-                roles = {"image", "img", "figure"}
-            case NodeCategory.STRUCTURAL.value:
-                roles = {
-                    "group",
-                    "generic",
-                    "none",
-                    "application",
-                    "main",
-                    "WebArea",
-                }
-            case NodeCategory.DATA_DISPLAY.value:
-                roles = {
-                    "alert",
-                    "alertdialog",
-                    "article",
-                    "banner",
-                    "directory",
-                    "document",
-                    "dialog",
-                    "feed",
-                    "navigation",
-                    "menubar",
-                    "radiogroup",
-                    "region",
-                    "search",
-                    "tablist",
-                    "tabpanel",
-                    "toolbar",
-                    "tooltip",
-                    "form",
-                    "menu",
-                    "MenuListPopup",
-                    "modal",
-                }
-            case NodeCategory.CODE.value:
-                roles = {"code", "math"}
-            case NodeCategory.TREE.value:
-                roles = {"tree", "treegrid", "treeitem"}
-        if add_group_role:
-            roles.update(["group", "generic", "none"])
-        return roles
 
 
 class NodeRole(Enum):
