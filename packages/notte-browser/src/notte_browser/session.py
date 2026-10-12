@@ -40,7 +40,6 @@ from notte_core.actions.typedicts import (
     MultiFactorFillActionDict,
     PressKeyActionDict,
     ReloadActionDict,
-    ScrapeActionDict,
     ScrollDownActionDict,
     ScrollUpActionDict,
     SelectDropdownOptionActionDict,
@@ -98,6 +97,7 @@ from notte_browser.errors import (
     NoStorageObjectProvidedError,
     PlaywrightError,
     ScrapeFailedError,
+    ScrapeIsNotAnActionError,
 )
 from notte_browser.evaluation_result import (
     PAGE_RESULT_GUARD,
@@ -498,10 +498,6 @@ class NotteSession(AsyncResource, SyncResource):
     ) -> ExecutionResult: ...
     @overload
     async def aexecute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrapeActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    async def aexecute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EvaluateJsActionDict]
     ) -> ExecutionResult: ...
     @overload
@@ -591,19 +587,7 @@ class NotteSession(AsyncResource, SyncResource):
 
                 match resolved_action:
                     case ScrapeAction():
-                        # Note: response_format in ScrapeAction is a JSON schema dict for logging/trajectory.
-                        # Actual structured output with Pydantic classes requires calling scrape() directly.
-                        # Agents use instructions-based scraping for structured data extraction.
-                        scraped_data = await self._ascrape(
-                            instructions=resolved_action.instructions,
-                            only_main_content=resolved_action.only_main_content,
-                            selector=resolved_action.selector,
-                            only_images=resolved_action.only_images,
-                            scrape_links=resolved_action.scrape_links,
-                            scrape_images=resolved_action.scrape_images,
-                            ignored_tags=resolved_action.ignored_tags,
-                        )
-                        success = True
+                        raise ScrapeIsNotAnActionError()
                     case EvaluateJsAction(code=code):
                         # Evaluate JavaScript code on the page and return the result.
                         # If the code contains bare `return` statements (invalid outside
@@ -689,7 +673,12 @@ class NotteSession(AsyncResource, SyncResource):
                             # `message` still holds the success-phrased execution_message.
                             message = f"Action '{resolved_action.type}' failed during browser execution"
 
-            except (NoSnapshotObservedError, NoStorageObjectProvidedError, InboxActionNotSupportedLocallyError) as e:
+            except (
+                NoSnapshotObservedError,
+                NoStorageObjectProvidedError,
+                InboxActionNotSupportedLocallyError,
+                ScrapeIsNotAnActionError,
+            ) as e:
                 # this should be handled by the caller
                 raise e
             except InvalidActionError as e:
@@ -849,10 +838,6 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CaptchaSolveActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrapeActionDict]
     ) -> ExecutionResult: ...
     @overload
     def execute(

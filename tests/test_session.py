@@ -5,7 +5,12 @@ from typing import Any
 import notte_core
 import pytest
 from notte_browser.captcha import CaptchaHandler
-from notte_browser.errors import CaptchaSolverNotAvailableError, NoSnapshotObservedError, ScrollActionFailedError
+from notte_browser.errors import (
+    CaptchaSolverNotAvailableError,
+    NoSnapshotObservedError,
+    ScrapeIsNotAnActionError,
+    ScrollActionFailedError,
+)
 from notte_browser.session import NotteSession
 from notte_core.actions import (
     ActionList,
@@ -125,7 +130,9 @@ async def test_step_should_return_valid_timed_span() -> None:
         assert res.started_at is not None
         assert res.ended_at is not None
         assert res.ended_at > res.started_at
-        data = await page.aexecute(ScrapeAction(instructions="Extract the title of the page"))
+        _ = await page.ascrape()
+        data = page.trajectory.last_result
+        assert data is not None and isinstance(data.action, ScrapeAction)
         assert data.started_at is not None
         assert data.ended_at is not None
         assert data.ended_at > data.started_at
@@ -483,3 +490,11 @@ def test_execute_saved_actions_stops_gracefully_on_failed_step(tmp_path: Path) -
         session.controller.execute = _controller_execute_returning_false  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
 
         session.execute_saved_actions(str(actions_file))  # must not raise
+
+
+@pytest.mark.parametrize("action", [{"type": "scrape"}, {"type": "scrape", "only_main_content": True}])
+def test_scrape_is_not_an_executable_action(action: dict[str, Any]) -> None:
+    """`scrape` only records `session.scrape()` calls in the trajectory; executing it points to the method."""
+    session = NotteSession()
+    with pytest.raises(ScrapeIsNotAnActionError, match=r"session\.scrape"):
+        _ = asyncio.run(session.aexecute(action=action))

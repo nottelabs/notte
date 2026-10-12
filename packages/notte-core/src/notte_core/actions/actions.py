@@ -162,6 +162,8 @@ class BrowserAction(BaseAction, metaclass=ABCMeta):
     PERSONA_INBOX_ACTION_TYPES: ClassVar[frozenset[str]] = frozenset({"email_read", "sms_read"})
     # Executed by the Notte API only: cloud sessions accept them, local sessions cannot run them.
     REMOTE_ONLY_ACTION_TYPES: ClassVar[frozenset[str]] = frozenset({"email_verification_read"})
+    # Recorded in the trajectory when `session.scrape()` runs, but not executable: call the method instead.
+    RECORD_ONLY_ACTION_TYPES: ClassVar[frozenset[str]] = frozenset({"scrape"})
 
     def __init_subclass__(cls, **kwargs: dict[Any, Any]):
         super().__init_subclass__(**kwargs)
@@ -196,6 +198,7 @@ class BrowserAction(BaseAction, metaclass=ABCMeta):
             BrowserAction.LEGACY_AGENT_ACTION_TYPES
             | BrowserAction.PERSONA_INBOX_ACTION_TYPES
             | BrowserAction.REMOTE_ONLY_ACTION_TYPES
+            | BrowserAction.RECORD_ONLY_ACTION_TYPES
         )
 
     @property
@@ -800,15 +803,14 @@ class ToolAction(BrowserAction, metaclass=ABCMeta):
 
 class ScrapeAction(BrowserAction):
     """
-    Scrape the current page data in text format. If `instructions` is null then the whole page will be scraped. Otherwise, only the data that matches the instructions will be scraped. Instructions should be given as natural language, e.g. 'Extract the title and the price of the product'.
+    Record of a `session.scrape()` call in the session trajectory. Not executable: scrape with the method.
 
     **Example:**
     ```python
-    session.execute(type="scrape", instructions="Extract product title and price")
-    session.execute(type="scrape", only_main_content=True)
-    session.execute(type="scrape")  # Scrape entire page
-    session.execute(type="scrape", only_images=True)  # Scrape only images
-    session.execute(type="scrape", response_format={"type": "object", "properties": {...}})  # With JSON schema
+    markdown = session.scrape()
+    markdown = session.scrape(only_main_content=True)
+    images = session.scrape(only_images=True)
+    data = session.scrape(instructions="Extract product title and price")
     ```
     """
 
@@ -825,7 +827,7 @@ class ScrapeAction(BrowserAction):
         Field(
             description="Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded."
         ),
-    ] = True
+    ] = False
     selector: Annotated[
         str | None,
         Field(

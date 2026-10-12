@@ -30,7 +30,6 @@ from notte_core.actions.typedicts import (
     MultiFactorFillActionDict,
     PressKeyActionDict,
     ReloadActionDict,
-    ScrapeActionDict,
     ScrollDownActionDict,
     ScrollUpActionDict,
     SelectDropdownOptionActionDict,
@@ -1551,10 +1550,6 @@ class RemoteSession(SyncResource):
     @overload
     def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CaptchaSolveActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrapeActionDict]
     ) -> ExecutionResult: ...
     @overload
     def execute(
