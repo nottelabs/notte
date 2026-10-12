@@ -376,9 +376,15 @@ class StructuredExtractorNotAvailableError(NotteBaseError):
         )
 
 
-class NoToolProvidedError(NotteBaseError):
+class InboxActionNotSupportedLocallyError(NotteBaseError):
     def __init__(self, action: ToolAction) -> None:
-        msg = f"No provided tool is able to execute the action: {action.name()}. You should use `notte.Session(tools=[...])` to add tools to the session."
+        if action.name() in ("email_read", "sms_read"):
+            msg = (
+                f"`{action.name()}` is not a browser action: read the persona inbox with `persona.emails()` / "
+                + "`persona.sms()` (or `persona.wait_for_emails()` / `persona.wait_for_sms()` to poll)."
+            )
+        else:
+            msg = f"`{action.name()}` is only available on cloud sessions (`client.Session()`)."
         super().__init__(
             dev_message=msg,
             user_message=msg,

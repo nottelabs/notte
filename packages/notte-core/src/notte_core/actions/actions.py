@@ -157,6 +157,11 @@ class BrowserAction(BaseAction, metaclass=ABCMeta):
     # Actions of the legacy agent loop. They stay registered so that steps recorded by agents still
     # parse, but they are not offered as available actions anymore.
     LEGACY_AGENT_ACTION_TYPES: ClassVar[frozenset[str]] = frozenset({"help", "completion"})
+    # Persona inbox reads don't act on the browser: use `persona.emails()` / `persona.sms()` instead.
+    # They stay registered so that recorded steps still parse.
+    PERSONA_INBOX_ACTION_TYPES: ClassVar[frozenset[str]] = frozenset({"email_read", "sms_read"})
+    # Executed by the Notte API only: cloud sessions accept them, local sessions cannot run them.
+    REMOTE_ONLY_ACTION_TYPES: ClassVar[frozenset[str]] = frozenset({"email_verification_read"})
 
     def __init_subclass__(cls, **kwargs: dict[Any, Any]):
         super().__init_subclass__(**kwargs)
@@ -181,8 +186,17 @@ class BrowserAction(BaseAction, metaclass=ABCMeta):
         return [
             action.example()
             for name, action in BrowserAction.BROWSER_ACTION_REGISTRY.items()
-            if name not in BrowserAction.LEGACY_AGENT_ACTION_TYPES
+            if name not in BrowserAction.unlisted_action_types()
         ]
+
+    @staticmethod
+    def unlisted_action_types() -> frozenset[str]:
+        """Registered action types that are not offered as available browser actions."""
+        return (
+            BrowserAction.LEGACY_AGENT_ACTION_TYPES
+            | BrowserAction.PERSONA_INBOX_ACTION_TYPES
+            | BrowserAction.REMOTE_ONLY_ACTION_TYPES
+        )
 
     @property
     @abstractmethod
@@ -779,10 +793,12 @@ class CompletionAction(BrowserAction):
 
 
 class ToolAction(BrowserAction, metaclass=ABCMeta):
+    """Inbox reads (persona emails / SMS, workspace mailboxes): they don't act on the browser itself."""
+
     type: Literal["data"] = "data"  # pyright: ignore [reportIncompatibleVariableOverride]
 
 
-class ScrapeAction(ToolAction):
+class ScrapeAction(BrowserAction):
     """
     Scrape the current page data in text format. If `instructions` is null then the whole page will be scraped. Otherwise, only the data that matches the instructions will be scraped. Instructions should be given as natural language, e.g. 'Extract the title and the price of the product'.
 
@@ -880,12 +896,14 @@ class EmailReadAction(ToolAction):
     """
     Read recent emails from the mailbox.
 
+    Not a browser action: read the persona inbox directly instead.
+
     **Example:**
     ```python
     import datetime as dt
 
-    session.execute(type="email_read", limit=5, only_unread=True)
-    session.execute(type="email_read", timedelta=dt.timedelta(minutes=5))
+    emails = persona.emails(limit=5, only_unread=True)
+    emails = persona.wait_for_emails(timedelta=dt.timedelta(minutes=5), timeout=120)
     ```
     """
 
@@ -957,12 +975,14 @@ class SmsReadAction(ToolAction):
     """
     Read sms messages received recently.
 
+    Not a browser action: read the persona inbox directly instead.
+
     **Example:**
     ```python
     import datetime as dt
 
-    session.execute(type="sms_read", limit=10, only_unread=True)
-    session.execute(type="sms_read", timedelta=dt.timedelta(minutes=5))
+    sms = persona.sms(limit=10, only_unread=True)
+    sms = persona.wait_for_sms(timedelta=dt.timedelta(minutes=5), timeout=120)
     ```
     """
 
@@ -995,7 +1015,7 @@ class SmsReadAction(ToolAction):
         return ActionParameter(name="timedelta", type="datetime")
 
 
-class EvaluateJsAction(ToolAction):
+class EvaluateJsAction(BrowserAction):
     """
     Evaluate JavaScript code on the current page and return the result.
     Useful for extracting structured data from a page without LLM processing.
