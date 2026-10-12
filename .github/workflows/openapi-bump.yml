@@ -1,0 +1,127 @@
+name: bump-openapi
+
+# Refresh openapi/openapi.json from staging. The wire models in notte_core.types are the
+# source of truth and the API renders them into this schema, so the refresh PR is the
+# contract check: it merges itself once checks pass (like bump-node-sdk), and stays open
+# when the API drifted from the models (the `openapi-contract` pre-commit hook fails).
+# See docs/design/openapi-contract.md.
+
+on:
+  schedule:
+    # Same cadence as bump-node-sdk. GitHub cron is UTC.
+    - cron: '0 5 * * *'
+    - cron: '30 10 * * *'
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: bump-openapi
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  bump:
+    if: github.repository == 'nottelabs/notte'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      BRANCH: chore/bump-openapi
+      NOTTE_API_URL: https://us-staging.notte.cc
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SUBMODULE_BUMP_PAT }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Install dependencies
+        run: uv sync --all-packages --all-extras
+
+      - name: Wait for the API to be reachable
+        # The staging API scales to zero when idle and wakes on the first request.
+        run: |
+          deadline=$((SECONDS + 900))
+          until [ "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' "$NOTTE_API_URL/health")" = "200" ]; do
+            [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
+            sleep 10
+          done
+
+      - name: Refresh the snapshot
+        run: make openapi-fetch OPENAPI_URL="$NOTTE_API_URL"
+
+      - name: Detect drift
+        id: drift
+        run: |
+          set -euo pipefail
+          git add -A -- openapi
+          if git diff --cached --quiet; then
+            echo "openapi/openapi.json is up to date with staging."
+            echo "changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "changes=true" >> "$GITHUB_OUTPUT"
+          git diff --cached --stat
+
+      - name: Check the contract
+        # Reported in the PR body; the PR's own pre-commit run is what blocks the merge.
+        if: steps.drift.outputs.changes == 'true'
+        id: contract
+        run: |
+          set -o pipefail
+          {
+            echo "report<<EOF"
+            uv run --no-sync python scripts/openapi_contract.py --check 2>&1 || true
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the pull request
+        if: steps.drift.outputs.changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
+          REPORT: ${{ steps.contract.outputs.report }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          TITLE="chore: refresh the OpenAPI snapshot from staging"
+          BODY=$(printf '%s\n\n%s\n\n%s\n\n```\n%s\n```\n' \
+            "Automated refresh of \`openapi/openapi.json\` from $NOTTE_API_URL ($(date -u '+%Y-%m-%d %H:%M UTC'))." \
+            "Opened by \`.github/workflows/openapi-bump.yml\`. Merges automatically once the required checks pass." \
+            "Contract check (\`scripts/openapi_contract.py\`). If it reports new drift, change \`notte_core.types\` instead of merging:" \
+            "$REPORT")
+
+          git checkout -B "$BRANCH"
+          git commit -m "$TITLE"
+          git push --force origin "$BRANCH"
+
+          PR_NUMBER=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
+          if [ -n "$PR_NUMBER" ]; then
+            echo "Updating existing PR #$PR_NUMBER"
+            gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY"
+          else
+            PR_NUMBER=$(gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY" \
+              | sed -n 's|.*pull/\([0-9]*\).*|\1|p' | head -1)
+            echo "Created PR #$PR_NUMBER"
+          fi
+
+          for _ in $(seq 1 10); do
+            if gh pr checks "$PR_NUMBER" >/dev/null 2>&1; then
+              break
+            fi
+            echo "Waiting for checks to be reported on PR #$PR_NUMBER."
+            sleep 30
+          done
+
+          if gh pr checks "$PR_NUMBER" --watch --fail-fast --interval 30; then
+            gh pr merge "$PR_NUMBER" --squash --delete-branch --admin
+            echo "Merged PR #$PR_NUMBER."
+          else
+            echo "::error::Checks did not pass on PR #$PR_NUMBER, so it was left open. The next scheduled run rebuilds the branch from main and retries."
+            exit 1
+          fi

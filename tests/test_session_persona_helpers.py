@@ -42,6 +42,7 @@ class StubPersona(BasePersona):
             internal_email=f"{persona_id}@example.com",
             vault_id="vault_123" if vault else None,
             phone_number=None,
+            created_at=dt.datetime(2026, 1, 1, tzinfo=dt.UTC),
         )
 
     def _read(self, messages: list[T]) -> list[T]:

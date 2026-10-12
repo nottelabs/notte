@@ -1,0 +1,2426 @@
+import datetime as dt
+import json
+import os
+import re
+import warnings
+from enum import StrEnum
+from pathlib import Path
+from types import NoneType
+from typing import Annotated, Any, ClassVar, Literal, Required, cast, get_args
+
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    computed_field,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
+from pyotp import TOTP
+from typing_extensions import NotRequired, TypedDict, deprecated, override
+
+from notte_core.actions import (
+    ActionUnion,
+    ActionValidation,
+    BaseAction,
+    BrowserAction,
+    InteractionAction,
+)
+from notte_core.browser.dom_tree import NodeSelectors
+from notte_core.browser.observation import ExecutionResult, Observation
+from notte_core.browser.snapshot import TabsData
+from notte_core.common.config import (
+    BrowserType,
+    PerceptionType,
+    PlaywrightProxySettings,
+    ScreenshotType,
+    config,
+)
+from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict
+from notte_core.data.space import DataSpace
+
+# Re-export FileInfo from notte_core for use in SDK
+from notte_core.storage import FileInfo as FileInfo  # noqa: E402
+from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
+from notte_core.utils.url import get_root_domain
+
+# ############################################################
+# Session Management
+# ############################################################
+
+
+DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES = 3
+DEFAULT_SESSION_MAX_DURATION_IN_MINUTES = 15
+DEFAULT_MAX_NB_ACTIONS = 100
+DEFAULT_LIMIT_LIST_ITEMS = 10
+
+DEFAULT_HEADLESS_VIEWPORT_WIDTH = 1280
+DEFAULT_HEADLESS_VIEWPORT_HEIGHT = 1080
+
+DEFAULT_VIEWPORT_WIDTH = config.viewport_width
+DEFAULT_VIEWPORT_HEIGHT = config.viewport_height
+
+AspectRatio = Literal["5:4", "16:9"]
+
+DEFAULT_BROWSER_TYPE = config.browser_type
+DEFAULT_USER_AGENT = config.user_agent
+DEFAULT_CHROME_ARGS = config.chrome_args
+
+
+class SdkRequest(BaseModel):
+    # forbid extra fields in request
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid")
+
+
+class SdkResponse(BaseModel):
+    # allow extra fields in response
+    pass
+
+
+class ExecutionResponse(SdkResponse):
+    """Used for page operation like setting cookies"""
+
+    success: Annotated[bool, Field(description="Whether the operation was successful")]
+    message: Annotated[str, Field(description="A message describing the operation")]
+
+
+ProxyGeolocationCountryCode = Literal[
+    "ad",
+    "ae",
+    "af",
+    "ag",
+    "ai",
+    "al",
+    "am",
+    "ao",
+    "ar",
+    "at",
+    "au",
+    "aw",
+    "az",
+    "ba",
+    "bb",
+    "bd",
+    "be",
+    "bf",
+    "bg",
+    "bh",
+    "bi",
+    "bj",
+    "bm",
+    "bn",
+    "bo",
+    "bq",
+    "br",
+    "bs",
+    "bt",
+    "bw",
+    "by",
+    "bz",
+    "ca",
+    "cd",
+    "cg",
+    "ch",
+    "ci",
+    "cl",
+    "cm",
+    "cn",
+    "co",
+    "cr",
+    "cu",
+    "cv",
+    "cw",
+    "cy",
+    "cz",
+    "de",
+    "dj",
+    "dk",
+    "dm",
+    "do",
+    "dz",
+    "ec",
+    "ee",
+    "eg",
+    "es",
+    "et",
+    "fi",
+    "fj",
+    "fr",
+    "ga",
+    "gb",
+    "gd",
+    "ge",
+    "gf",
+    "gg",
+    "gh",
+    "gi",
+    "gm",
+    "gn",
+    "gp",
+    "gq",
+    "gr",
+    "gt",
+    "gu",
+    "gw",
+    "gy",
+    "hk",
+    "hn",
+    "hr",
+    "ht",
+    "hu",
+    "id",
+    "ie",
+    "il",
+    "im",
+    "in",
+    "iq",
+    "ir",
+    "is",
+    "it",
+    "je",
+    "jm",
+    "jo",
+    "jp",
+    "ke",
+    "kg",
+    "kh",
+    "kn",
+    "kr",
+    "kw",
+    "ky",
+    "kz",
+    "la",
+    "lb",
+    "lc",
+    "lk",
+    "lr",
+    "ls",
+    "lt",
+    "lu",
+    "lv",
+    "ly",
+    "ma",
+    "md",
+    "me",
+    "mf",
+    "mg",
+    "mk",
+    "ml",
+    "mm",
+    "mn",
+    "mo",
+    "mq",
+    "mr",
+    "mt",
+    "mu",
+    "mv",
+    "mw",
+    "mx",
+    "my",
+    "mz",
+    "na",
+    "nc",
+    "ne",
+    "ng",
+    "ni",
+    "nl",
+    "no",
+    "np",
+    "nz",
+    "om",
+    "pa",
+    "pe",
+    "pf",
+    "pg",
+    "ph",
+    "pk",
+    "pl",
+    "pr",
+    "ps",
+    "pt",
+    "py",
+    "qa",
+    "re",
+    "ro",
+    "rs",
+    "ru",
+    "rw",
+    "sa",
+    "sc",
+    "sd",
+    "se",
+    "sg",
+    "si",
+    "sk",
+    "sl",
+    "sm",
+    "sn",
+    "so",
+    "sr",
+    "ss",
+    "st",
+    "sv",
+    "sx",
+    "sy",
+    "sz",
+    "tc",
+    "tg",
+    "th",
+    "tj",
+    "tm",
+    "tn",
+    "tr",
+    "tt",
+    "tw",
+    "tz",
+    "ua",
+    "ug",
+    "us",
+    "uy",
+    "uz",
+    "vc",
+    "ve",
+    "vg",
+    "vi",
+    "vn",
+    "ye",
+    "za",
+    "zm",
+    "zw",
+]
+"""Literal type alias for all valid proxy geolocation country codes.
+Must be kept in sync with ProxyGeolocationCountry enum values.
+"""
+
+
+class ProxyGeolocationCountry(StrEnum):
+    ANDORRA = "ad"
+    UNITED_ARAB_EMIRATES = "ae"
+    AFGHANISTAN = "af"
+    ANTIGUA_AND_BARBUDA = "ag"
+    ANGUILLA = "ai"
+    ALBANIA = "al"
+    ARMENIA = "am"
+    ANGOLA = "ao"
+    ARGENTINA = "ar"
+    AUSTRIA = "at"
+    AUSTRALIA = "au"
+    ARUBA = "aw"
+    AZERBAIJAN = "az"
+    BOSNIA_AND_HERZEGOVINA = "ba"
+    BARBADOS = "bb"
+    BANGLADESH = "bd"
+    BELGIUM = "be"
+    BURKINA_FASO = "bf"
+    BULGARIA = "bg"
+    BAHRAIN = "bh"
+    BURUNDI = "bi"
+    BENIN = "bj"
+    BERMUDA = "bm"
+    BRUNEI = "bn"
+    BOLIVIA = "bo"
+    CARIBBEAN_NETHERLANDS = "bq"
+    BRAZIL = "br"
+    BAHAMAS = "bs"
+    BHUTAN = "bt"
+    BOTSWANA = "bw"
+    BELARUS = "by"
+    BELIZE = "bz"
+    CANADA = "ca"
+    DEMOCRATIC_REPUBLIC_OF_THE_CONGO = "cd"
+    REPUBLIC_OF_THE_CONGO = "cg"
+    SWITZERLAND = "ch"
+    COTE_D_IVOIRE = "ci"
+    CHILE = "cl"
+    CAMEROON = "cm"
+    CHINA = "cn"
+    COLOMBIA = "co"
+    COSTA_RICA = "cr"
+    CUBA = "cu"
+    CAPE_VERDE = "cv"
+    CURACAO = "cw"
+    CYPRUS = "cy"
+    CZECH_REPUBLIC = "cz"
+    GERMANY = "de"
+    DJIBOUTI = "dj"
+    DENMARK = "dk"
+    DOMINICA = "dm"
+    DOMINICAN_REPUBLIC = "do"
+    ALGERIA = "dz"
+    ECUADOR = "ec"
+    ESTONIA = "ee"
+    EGYPT = "eg"
+    SPAIN = "es"
+    ETHIOPIA = "et"
+    FINLAND = "fi"
+    FIJI = "fj"
+    FRANCE = "fr"
+    GABON = "ga"
+    UNITED_KINGDOM = "gb"
+    GRENADA = "gd"
+    GEORGIA = "ge"
+    FRENCH_GUIANA = "gf"
+    GUERNSEY = "gg"
+    GHANA = "gh"
+    GIBRALTAR = "gi"
+    GAMBIA = "gm"
+    GUINEA = "gn"
+    GUADELOUPE = "gp"
+    EQUATORIAL_GUINEA = "gq"
+    GREECE = "gr"
+    GUATEMALA = "gt"
+    GUAM = "gu"
+    GUINEA_BISSAU = "gw"
+    GUYANA = "gy"
+    HONG_KONG = "hk"
+    HONDURAS = "hn"
+    CROATIA = "hr"
+    HAITI = "ht"
+    HUNGARY = "hu"
+    INDONESIA = "id"
+    IRELAND = "ie"
+    ISRAEL = "il"
+    ISLE_OF_MAN = "im"
+    INDIA = "in"
+    IRAQ = "iq"
+    IRAN = "ir"
+    ICELAND = "is"
+    ITALY = "it"
+    JERSEY = "je"
+    JAMAICA = "jm"
+    JORDAN = "jo"
+    JAPAN = "jp"
+    KENYA = "ke"
+    KYRGYZSTAN = "kg"
+    CAMBODIA = "kh"
+    SAINT_KITTS_AND_NEVIS = "kn"
+    SOUTH_KOREA = "kr"
+    KUWAIT = "kw"
+    CAYMAN_ISLANDS = "ky"
+    KAZAKHSTAN = "kz"
+    LAOS = "la"
+    LEBANON = "lb"
+    SAINT_LUCIA = "lc"
+    SRI_LANKA = "lk"
+    LIBERIA = "lr"
+    LESOTHO = "ls"
+    LITHUANIA = "lt"
+    LUXEMBOURG = "lu"
+    LATVIA = "lv"
+    LIBYA = "ly"
+    MOROCCO = "ma"
+    MOLDOVA = "md"
+    MONTENEGRO = "me"
+    SAINT_MARTIN = "mf"
+    MADAGASCAR = "mg"
+    NORTH_MACEDONIA = "mk"
+    MALI = "ml"
+    MYANMAR = "mm"
+    MONGOLIA = "mn"
+    MACAO = "mo"
+    MARTINIQUE = "mq"
+    MAURITANIA = "mr"
+    MALTA = "mt"
+    MAURITIUS = "mu"
+    MALDIVES = "mv"
+    MALAWI = "mw"
+    MEXICO = "mx"
+    MALAYSIA = "my"
+    MOZAMBIQUE = "mz"
+    NAMIBIA = "na"
+    NEW_CALEDONIA = "nc"
+    NIGER = "ne"
+    NIGERIA = "ng"
+    NICARAGUA = "ni"
+    NETHERLANDS = "nl"
+    NORWAY = "no"
+    NEPAL = "np"
+    NEW_ZEALAND = "nz"
+    OMAN = "om"
+    PANAMA = "pa"
+    PERU = "pe"
+    FRENCH_POLYNESIA = "pf"
+    PAPUA_NEW_GUINEA = "pg"
+    PHILIPPINES = "ph"
+    PAKISTAN = "pk"
+    POLAND = "pl"
+    PUERTO_RICO = "pr"
+    STATE_OF_PALESTINE = "ps"
+    PORTUGAL = "pt"
+    PARAGUAY = "py"
+    QATAR = "qa"
+    REUNION = "re"
+    ROMANIA = "ro"
+    SERBIA = "rs"
+    RUSSIA = "ru"
+    RWANDA = "rw"
+    SAUDI_ARABIA = "sa"
+    SEYCHELLES = "sc"
+    SUDAN = "sd"
+    SWEDEN = "se"
+    SINGAPORE = "sg"
+    SLOVENIA = "si"
+    SLOVAKIA = "sk"
+    SIERRA_LEONE = "sl"
+    SAN_MARINO = "sm"
+    SENEGAL = "sn"
+    SOMALIA = "so"
+    SURINAME = "sr"
+    SOUTH_SUDAN = "ss"
+    SAO_TOME_AND_PRINCIPE = "st"
+    EL_SALVADOR = "sv"
+    SINT_MAARTEN = "sx"
+    SYRIA = "sy"
+    SWAZILAND = "sz"
+    TURKS_AND_CAICOS_ISLANDS = "tc"
+    TOGO = "tg"
+    THAILAND = "th"
+    TAJIKISTAN = "tj"
+    TURKMENISTAN = "tm"
+    TUNISIA = "tn"
+    TURKEY = "tr"
+    TRINIDAD_AND_TOBAGO = "tt"
+    TAIWAN_PROVINCE = "tw"
+    TANZANIA = "tz"
+    UKRAINE = "ua"
+    UGANDA = "ug"
+    UNITED_STATES = "us"
+    URUGUAY = "uy"
+    UZBEKISTAN = "uz"
+    SAINT_VINCENT_AND_THE_GRENADINES = "vc"
+    VENEZUELA = "ve"
+    BRITISH_VIRGIN_ISLANDS = "vg"
+    UNITED_STATES_VIRGIN_ISLANDS = "vi"
+    VIETNAM = "vn"
+    YEMEN = "ye"
+    SOUTH_AFRICA = "za"
+    ZAMBIA = "zm"
+    ZIMBABWE = "zw"
+
+
+class NotteProxy(SdkRequest):
+    type: Literal["notte"] = "notte"
+    id: str | None = None
+    country: ProxyGeolocationCountry | None = None
+    city: str | None = None
+    # TODO: enable domainPattern later on
+    # domainPattern: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def handle_legacy_geolocation(cls, values: Any) -> dict[str, Any]:
+        """Handle backward compatibility with old geolocation syntax."""
+        if isinstance(values, dict) and "geolocation" in values:
+            geolocation: Any = values.pop("geolocation")  # type: ignore[reportUnknownMemberType]
+            if isinstance(geolocation, dict):
+                # Only set fields if they're not already provided.
+                if "country" not in values and "country" in geolocation:
+                    values["country"] = geolocation["country"]
+                if "city" not in values and "city" in geolocation:
+                    values["city"] = geolocation["city"]
+        return values  # type: ignore[return-value]
+
+    @field_validator("city")
+    @classmethod
+    def validate_city(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        city = value.strip()
+        if not city:
+            raise ValueError("city must be a non-empty string")
+        return city
+
+    @staticmethod
+    def _resolve_proxy_id(proxy_id: str | None, kwargs: dict[str, Any]) -> str | None:
+        legacy_id = kwargs.pop("id", None)
+        if kwargs:
+            unexpected = next(iter(kwargs))
+            raise TypeError(f"Unexpected keyword argument: {unexpected}")
+        if proxy_id is not None and legacy_id is not None:
+            raise ValueError("Cannot provide both proxy_id and id")
+        return proxy_id if proxy_id is not None else legacy_id
+
+    @staticmethod
+    def from_country(country: str, proxy_id: str | None = None, **kwargs: Any) -> "NotteProxy":
+        return NotteProxy(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), country=ProxyGeolocationCountry(country))
+
+    @staticmethod
+    def from_city(city: str, proxy_id: str | None = None, **kwargs: Any) -> "NotteProxy":
+        return NotteProxy(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), city=city)
+
+
+class ExternalProxy(SdkRequest):
+    type: Literal["external"] = "external"
+    server: str
+    username: str | None = None
+    password: str | None = None
+    bypass: str | None = None
+
+    @staticmethod
+    def from_env(suffix: str | None = None) -> "ExternalProxy":
+        str_suffix = f"_{suffix}" if suffix is not None else ""
+        server = os.getenv(f"PROXY_URL{str_suffix}")
+        username = os.getenv(f"PROXY_USERNAME{str_suffix}")
+        password = os.getenv(f"PROXY_PASSWORD{str_suffix}")
+        bypass = os.getenv(f"PROXY_BYPASS{str_suffix}")
+        if server is None:
+            raise ValueError(f"PROXY_URL{str_suffix} must be set")
+        return ExternalProxy(
+            server=server,
+            username=username,
+            password=password,
+            bypass=bypass,
+        )
+
+
+class TailnetProxy(SdkRequest):
+    type: Literal["tailnet"] = "tailnet"
+    # Leave both unset to use the Tailscale OAuth client connected to your
+    # workspace in the Notte console (Settings > Integrations).
+    oauth_client_id: str | None = None
+    oauth_client_secret: str | None = None
+    # Tailnet device to use as an exit node for public traffic, by hostname,
+    # MagicDNS name, or Tailscale IP. When unset, only tailnet addresses are
+    # routed through the tailnet.
+    exit_node: str | None = None
+
+
+class ExternalProxyDict(TypedDict, total=False):
+    type: Literal["external"]
+    server: Required[str]
+    username: str | None
+    password: str | None
+    bypass: str | None
+
+
+class NotteProxyDict(TypedDict, total=False):
+    type: Literal["notte"]
+    id: str | None
+    country: ProxyGeolocationCountry | None
+    city: str | None
+
+
+class TailnetProxyDict(TypedDict, total=False):
+    type: Literal["tailnet"]
+    oauth_client_id: str | None
+    oauth_client_secret: str | None
+    exit_node: str | None
+
+
+ProxySettings = Annotated[NotteProxy | ExternalProxy | TailnetProxy, Field(discriminator="type")]
+ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict | TailnetProxyDict, Field(discriminator="type")]
+
+
+class Cookie(BaseModel):
+    # Allow extra fields to be present in the cookie dict
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
+
+    name: str
+    value: str
+    domain: str
+    path: str
+    httpOnly: bool
+    expirationDate: float | None = None
+    hostOnly: bool | None = None
+    sameSite: Literal["Lax", "None", "Strict"] | None = None
+    secure: bool | None = None
+    session: bool | None = None
+    storeId: str | None = None
+    expires: float | None = Field(default=None)
+    partitionKey: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_expiration(cls, data: dict[str, Any]) -> dict[str, Any]:
+        # Handle either expirationDate or expires being provided
+        if data.get("expirationDate") is None and data.get("expires") is not None:
+            data["expirationDate"] = float(data["expires"])
+        elif data.get("expires") is None and data.get("expirationDate") is not None:
+            data["expires"] = float(data["expirationDate"])
+        return data
+
+    @override
+    def model_post_init(self, __context: Any) -> None:
+        # Set expires if expirationDate is provided but expires is not
+        if self.expirationDate is not None and self.expires is None:
+            self.expires = float(self.expirationDate)
+        # Set expirationDate if expires is provided but expirationDate is not
+        elif self.expires is not None and self.expirationDate is None:
+            self.expirationDate = float(self.expires)
+
+        if self.sameSite is not None:
+            self.sameSite = self.sameSite.lower()  # type: ignore
+            self.sameSite = self.sameSite[0].upper() + self.sameSite[1:]  # type: ignore
+
+    @staticmethod
+    def from_json(path: str | Path) -> list["Cookie"]:
+        path = Path(path)
+        if not path.exists():
+            raise FileNotFoundError(f"Cookies file not found at {path}")
+        with open(path, "r") as f:
+            cookies_json = json.load(f)
+        cookies = [Cookie.model_validate(cookie) for cookie in cookies_json]
+        return cookies
+
+    @staticmethod
+    def dump_json(cookies: list["Cookie"], path: str | Path) -> int:
+        warnings.warn(
+            "Cookie.dump_json is deprecated and will be removed in the next few weeks. Use json.dump(session.get_cookies(), f) instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        path = Path(path)
+        cookies_dump = [cookie.model_dump() for cookie in cookies]
+        return path.write_text(json.dumps(cookies_dump))
+
+
+class SetCookiesRequest(SdkRequest):
+    cookies: list[Cookie]
+
+    @staticmethod
+    def from_json(path: str | Path) -> "SetCookiesRequest":
+        cookies = Cookie.from_json(path)
+        return SetCookiesRequest(cookies=cookies)
+
+
+class SetCookiesResponse(SdkResponse):
+    success: bool
+    message: str
+
+
+class GetCookiesResponse(SdkResponse):
+    cookies: list[Cookie]
+
+
+class SessionOffsetResponse(SdkResponse):
+    offset: Annotated[int, Field(description="Current state of the session trajectory")]
+
+
+class ReplayResponse(SdkResponse):
+    """Response containing presigned URLs for session replay."""
+
+    playlist_content: Annotated[
+        str | None, Field(description="HLS playlist content with presigned segment URLs", repr=False)
+    ] = None
+    mp4_url: Annotated[str | None, Field(description="Presigned URL for MP4 download", repr=False)] = None
+    expires_at: Annotated[str | None, Field(description="Expiration time of the presigned URLs")] = None
+    video_start_ms: Annotated[int | None, Field(description="Video start offset in milliseconds")] = None
+    video_duration_ms: Annotated[int | None, Field(description="Video duration in milliseconds")] = None
+
+    def download(self, path: str | Path = "replay.mp4") -> Path:
+        """Download the MP4 replay to a local file.
+
+        Args:
+            path: Destination file path. Defaults to ``replay.mp4`` in the current directory.
+
+        Returns:
+            The resolved path to the downloaded file.
+
+        Raises:
+            ValueError: If no ``mp4_url`` is available.
+        """
+        if self.mp4_url is None:
+            raise ValueError("No mp4_url available for download")
+
+        import requests
+
+        response = requests.get(self.mp4_url)
+        response.raise_for_status()
+        dest = Path(path)
+        _ = dest.write_bytes(response.content)
+        return dest
+
+
+# Profile configuration for sessions (defined before SessionStartRequest)
+
+
+class SessionProfileDict(TypedDict, total=False):
+    id: Required[str]
+    persist: bool
+
+
+class SessionProfile(SdkRequest):
+    id: Annotated[str, Field(description="Profile ID to use for this session")]
+    persist: Annotated[bool, Field(description="Whether to save browser state to profile on session close")] = False
+
+
+class _SessionStartRequestDict(TypedDict, total=False):
+    """Request dictionary for starting a session.
+
+    Args:
+        solve_captchas: Whether to try to automatically solve captchas
+        max_duration_minutes: Maximum session lifetime in minutes (absolute maximum).
+        idle_timeout_minutes: Idle timeout in minutes. Session closes after this period of inactivity.
+        proxies: List of custom proxies to use for the session. If True, the default proxies will be used.
+        browser_type: The browser type to use. Can be chromium or chrome.
+        user_agent: The user agent to use for the session
+        chrome_args: Overwrite the chrome instance arguments
+        viewport_width: The width of the viewport
+        viewport_height: The height of the viewport
+        aspect_ratio: Viewport shape preset ("5:4" or "16:9"). Cannot be combined with viewport_width/viewport_height.
+        cdp_url: The CDP URL of another remote session provider.
+        screenshot_type: The type of screenshot to use for the session.
+        profile: Browser profile configuration for state persistence.
+        auth_ids: Up to 10 unique Managed Auth connection IDs. The API verifies them inline and can return an authenticating session while login continues.
+        wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.
+        auth_retry: Number of additional retries for transient managed-auth login failures, from 0 to 2. Each retry verifies the session again before submitting credentials. A blocked connection permits one explicit login attempt.
+    """
+
+    solve_captchas: bool
+    max_duration_minutes: int
+    idle_timeout_minutes: int
+    proxies: (
+        list[ProxySettings] | list[ProxySettingsDict] | bool | ProxyGeolocationCountry | ProxyGeolocationCountryCode
+    )
+    browser_type: BrowserType
+    user_agent: str | None
+    chrome_args: list[str] | None
+    viewport_width: int | None
+    viewport_height: int | None
+    aspect_ratio: AspectRatio | None
+    cdp_url: str | None
+    screenshot_type: ScreenshotType
+    profile: SessionProfileDict | SessionProfile | None
+    web_bot_auth: bool
+    extra_http_headers: dict[str, str] | None
+    vault_id: str | None
+    auth_ids: list[str]
+    wait_for_authentication: bool
+
+
+class SessionStartRequestDict(_SessionStartRequestDict, total=False):
+    auth_retry: int
+    """Public request dictionary for starting a remote session."""
+
+    advanced_stealth: bool
+    block_ads: bool
+    """Block ads and trackers in managed browsers with Basic filtering. Defaults to True."""
+
+
+class LocalSessionStartRequestDict(_SessionStartRequestDict, total=False):
+    """Request dictionary for starting a browser session on the local machine."""
+
+    headless: bool
+
+
+class _SessionStartRequest(SdkRequest):
+    solve_captchas: Annotated[bool, Field(description="Whether to try to automatically solve captchas")] = True
+
+    max_duration_minutes: Annotated[
+        int,
+        Field(
+            description="Maximum session lifetime in minutes (absolute maximum, not affected by activity).",
+            gt=0,
+            le=24 * 60,
+        ),
+    ] = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
+
+    idle_timeout_minutes: Annotated[
+        int,
+        Field(
+            description="Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).",
+            gt=0,
+            le=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES * 2,
+            validation_alias=AliasChoices(
+                "idle_timeout_minutes", "timeout_minutes"
+            ),  # Accept both names for backward compatibility
+        ),
+    ] = DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES
+
+    proxies: Annotated[
+        list[ProxySettings] | bool,
+        Field(
+            description="List of custom proxies to use for the session. If True, the default proxies will be used.",
+        ),
+    ] = False
+    browser_type: Annotated[
+        BrowserType, Field(description="The browser type to use. Can be chromium, chrome or firefox.")
+    ] = DEFAULT_BROWSER_TYPE
+    user_agent: Annotated[str | None, Field(description="The user agent to use for the session")] = DEFAULT_USER_AGENT
+    chrome_args: Annotated[list[str] | None, Field(description="Overwrite the chrome instance arguments")] = Field(
+        default_factory=lambda: DEFAULT_CHROME_ARGS
+    )
+    viewport_width: Annotated[int | None, Field(description="The width of the viewport")] = DEFAULT_VIEWPORT_WIDTH
+    viewport_height: Annotated[int | None, Field(description="The height of the viewport")] = DEFAULT_VIEWPORT_HEIGHT
+    aspect_ratio: Annotated[
+        AspectRatio | None,
+        Field(
+            description="Viewport shape preset. When set, the backend fits the largest rectangle of this aspect ratio inside the sampled available screen area. Cannot be combined with explicit viewport_width/viewport_height.",
+        ),
+    ] = None
+
+    cdp_url: Annotated[str | None, Field(description="The CDP URL of another remote session provider.")] = (
+        config.cdp_url
+    )
+
+    screenshot_type: Annotated[ScreenshotType, Field(description="The type of screenshot to use for the session.")] = (
+        config.screenshot_type
+    )
+
+    profile: Annotated[
+        SessionProfile | None, Field(description="Browser profile configuration for state persistence")
+    ] = None
+
+    web_bot_auth: Annotated[bool, Field(description="Whether to use web bot authentication.")] = False
+
+    extra_http_headers: Annotated[
+        dict[str, str] | None,
+        Field(description="Extra HTTP headers to be sent with every request."),
+    ] = None
+
+    vault_id: Annotated[str | None, Field(description="The vault to use for the session")] = None
+    auth_ids: Annotated[
+        list[str],
+        Field(
+            max_length=10,
+            description=(
+                "Managed Auth connection IDs to verify and, when necessary, authenticate "
+                "inside this session before it is returned."
+            ),
+        ),
+    ] = Field(default_factory=list)
+    wait_for_authentication: Annotated[
+        bool,
+        Field(
+            description=(
+                "Whether to wait for Managed Auth before returning the session. Defaults to true. "
+                "When true, authentication failure or timeout fails session creation; when false, "
+                "authentication continues in the background after the browser is ready."
+            )
+        ),
+    ] = True
+
+    @model_validator(mode="before")
+    @classmethod
+    def add_timeout_defaults(cls, values: Any) -> Any:
+        if isinstance(values, dict):
+            if "max_duration_minutes" not in values:
+                values["max_duration_minutes"] = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
+        return values  # pyright: ignore[reportUnknownVariableType]
+
+    @model_validator(mode="after")
+    def validate_unique_auth_ids(self) -> "_SessionStartRequest":
+        if len(self.auth_ids) != len(set(self.auth_ids)):
+            raise ValueError("auth_ids must not contain duplicates")
+        return self
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_aspect_ratio(cls, values: Any) -> Any:
+        if not isinstance(values, dict):
+            return values
+        data = cast(dict[str, Any], values)
+        aspect = data.get("aspect_ratio")
+        if aspect is None:
+            return data
+        if data.get("viewport_width") is not None or data.get("viewport_height") is not None:
+            raise ValueError("aspect_ratio cannot be set together with viewport_width or viewport_height")
+        data["viewport_width"] = None
+        data["viewport_height"] = None
+        allowed = get_args(AspectRatio)
+        if aspect not in allowed:
+            raise ValueError(f"Unsupported aspect_ratio {aspect!r}; expected one of {list(allowed)}")
+        return data
+
+    @model_validator(mode="after")
+    def check_viewport(self) -> "_SessionStartRequest":
+        if self.cdp_url is not None:
+            if "proxies" not in self.model_fields_set:
+                self.proxies = False
+            # Configured viewport defaults belong to browsers we create, not an
+            # external browser. Keep explicit values for CDP validation below.
+            if "viewport_width" not in self.model_fields_set:
+                self.viewport_width = None
+            if "viewport_height" not in self.model_fields_set:
+                self.viewport_height = None
+        if (self.viewport_width is None) != (self.viewport_height is None):
+            raise ValueError("Both viewport_width and viewport_height must be set together or both must be None")
+        return self
+
+    @model_validator(mode="after")
+    def check_solve_captchas(self) -> "_SessionStartRequest":
+        if self.browser_type in ("chrome-nightly", "chrome-turbo") and self.solve_captchas and not self.proxies:
+            raise ValueError(
+                f"`proxies` parameter cannot be falsy when setting `solve_captchas=True` with `browser_type` '{self.browser_type}'."
+            )
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_cdp_url_constraints(self) -> "_SessionStartRequest":
+        """
+        Validate that browser settings are left to the external CDP provider.
+
+        Raises:
+            ValueError: If cdp_url is provided with browser settings that must be configured by the provider.
+        """
+        if self.cdp_url is not None:
+            if self.proxies:
+                raise ValueError("Proxies must be configured by the external CDP provider, not by Notte")
+            if self.user_agent is not None:
+                raise ValueError(
+                    "When cdp_url is provided, user_agent must be None. Set the user agent with your external session CDP provider."
+                )
+            if self.chrome_args is not None:
+                raise ValueError(
+                    "When cdp_url is provided, chrome_args must be None. Set the chrome arguments with your external session CDP provider."
+                )
+            if self.viewport_width is not None:
+                raise ValueError(
+                    "When cdp_url is provided, viewport_width must be None. Set the viewport width with your external session CDP provider."
+                )
+            if self.viewport_height is not None:
+                raise ValueError(
+                    "When cdp_url is provided, viewport_height must be None. Set the viewport height with your external session CDP provider."
+                )
+        return self
+
+    @model_validator(mode="after")
+    def validate_timeout_relationship(self) -> "_SessionStartRequest":
+        """
+        Validate that idle_timeout_minutes does not exceed max_duration_minutes.
+
+        Raises:
+            ValueError: If idle_timeout_minutes > max_duration_minutes.
+        """
+        if self.idle_timeout_minutes > self.max_duration_minutes:
+            raise ValueError(
+                f"idle_timeout_minutes ({self.idle_timeout_minutes}) cannot exceed max_duration_minutes ({self.max_duration_minutes})"
+            )
+        return self
+
+    @field_validator("proxies", mode="before")
+    @classmethod
+    def validate_str_proxy_settings(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            return [NotteProxy.from_country(value)]
+        return value
+
+    @property
+    def playwright_proxy(self) -> PlaywrightProxySettings | None:
+        if self.proxies is True:
+            if config.playwright_proxy is not None:
+                return config.playwright_proxy
+            # proxy=true => use notte proxy
+            base_proxy = NotteProxy()
+        elif self.proxies is False or len(self.proxies) == 0:
+            return None
+        elif len(self.proxies) > 1:
+            raise ValueError(f"Multiple proxies are not supported yet. Got {len(self.proxies)} proxies.")
+        else:
+            base_proxy = self.proxies[0]
+
+        match base_proxy.type:
+            case "notte":
+                raise NotImplementedError(
+                    "Notte proxy only supported in cloud browser sessions. Please use our API to create a session with a proxy or provide an external proxy."
+                )
+            case "external":
+                return PlaywrightProxySettings(
+                    server=base_proxy.server,
+                    bypass=base_proxy.bypass,
+                    username=base_proxy.username,
+                    password=base_proxy.password,
+                )
+            case "tailnet":
+                raise NotImplementedError(
+                    "Tailnet proxy only supported in cloud browser sessions. Please use our API to create a session with a tailnet proxy."
+                )
+        raise ValueError(f"Unsupported proxy type: {base_proxy.type}")  # pyright: ignore[reportUnreachable]
+
+
+class SessionStartRequest(_SessionStartRequest):
+    """Public request for starting a remote Notte browser session."""
+
+    auth_retry: int = Field(default=0, ge=0, le=2)
+    block_ads: Annotated[
+        bool,
+        Field(
+            description=(
+                "Block ads and trackers in managed browsers using Basic filtering. Set false to disable. "
+                "Does not configure externally supplied CDP browsers."
+            ),
+        ),
+    ] = True
+
+    proxies: Annotated[
+        list[ProxySettings] | bool,
+        Field(
+            description="List of custom proxies to use for the session. If True, the default proxies will be used.",
+        ),
+    ] = True
+
+    advanced_stealth: Annotated[
+        bool,
+        Field(
+            description=(
+                "Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. "
+                "Available to approved workspaces."
+            )
+        ),
+    ] = False
+
+    @model_serializer(mode="wrap")
+    def omit_disabled_advanced_stealth(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        data = cast(dict[str, Any], handler(self))
+        if not self.advanced_stealth:
+            data.pop("advanced_stealth", None)
+        if not self.auth_ids:
+            data.pop("auth_retry", None)
+        # Let the API apply its default so ordinary starts also work with older APIs.
+        if "block_ads" not in self.model_fields_set:
+            data.pop("block_ads", None)
+        return data
+
+    @model_validator(mode="before")
+    @classmethod
+    def handle_legacy_headless(cls, values: Any) -> Any:
+        """Keep old SDKs working without exposing remote browser launch mode."""
+        if not isinstance(values, dict):
+            return values
+        data = dict(cast(dict[str, Any], values))
+        if "headless" not in data:
+            return data
+        headless = data.pop("headless")
+        if headless is not True:
+            raise ValueError(
+                "Remote `headless=False` is no longer supported. "
+                + "`headless=True` sessions still include session replays and access to the live viewer."
+            )
+        return data
+
+    @model_validator(mode="after")
+    def validate_advanced_stealth_cdp_url(self) -> "SessionStartRequest":
+        if self.advanced_stealth and self.cdp_url is not None:
+            raise ValueError("advanced_stealth cannot be used with an external cdp_url")
+        return self
+
+
+class LocalSessionStartRequest(_SessionStartRequest):
+    """Request for starting a browser session on the local machine."""
+
+    headless: Annotated[bool, Field(description="Whether to run the local browser in headless mode.")] = config.headless
+
+    @model_validator(mode="after")
+    def validate_local_cdp_headless(self) -> "LocalSessionStartRequest":
+        if self.cdp_url is not None and not self.headless:
+            raise ValueError(
+                "When cdp_url is provided, headless must be True. "
+                + "Headed mode (headless=False) only works with a locally launched browser."
+            )
+        return self
+
+
+class ListRequestDict(TypedDict, total=False):
+    only_active: bool
+    page_size: int
+    page: int
+
+
+class ListRequest(SdkRequest):
+    only_active: bool = True
+    page_size: int = DEFAULT_LIMIT_LIST_ITEMS
+    page: int = 1
+
+
+class SessionListRequestDict(ListRequestDict, total=False):
+    """Session list filters.
+
+    Args:
+        include_system: Include internal sessions whose response has ``system_hidden=True``.
+    """
+
+    include_system: bool | None
+
+
+class SessionListRequest(ListRequest):
+    include_system: Annotated[
+        bool | None,
+        Field(description="Include internal sessions whose response has system_hidden=True."),
+    ] = None
+
+
+class ManagedAuthOperation(SdkResponse):
+    id: str
+    connection_id: str
+    session_id: str | None = None
+    source: str
+    status: Literal["pending", "running", "succeeded", "failed", "cancelled"]
+    phase: str
+    attempt: int = 0
+    auth_retry: int = 0
+    authenticated: bool | None = None
+    failure_code: str | None = None
+    error: str | None = None
+    deadline: dt.datetime
+
+
+class SessionAuthResponse(SdkResponse):
+    session_id: str
+    status: Literal["authenticating", "active", "failed", "closed"]
+    operations: list[ManagedAuthOperation] = Field(default_factory=list)
+    error: str | None = None
+
+
+class ManagedAuthRunResponse(SdkResponse):
+    operation_id: str | None = None
+    authenticated: bool | None = None
+    connection_id: str
+    status: str
+    message: str
+
+
+def _drop_duration_format(schema: dict[str, Any]) -> None:
+    """Strip the `duration` format assertion from a `timedelta` field's JSON schema.
+
+    Pydantic annotates `timedelta` as `{"type": "string", "format": "duration"}`.
+    JSON Schema defines that format as the ABNF in RFC 3339 Appendix A, whose
+    `dur-second = 1*DIGIT "S"` rule allows integer components only. We serialize
+    with sub-second precision (`PT41.286072S`), which is valid ISO 8601 but not
+    valid per that grammar, so validators that assert formats reject an otherwise
+    correct payload. The wire value is unchanged; only the format claim is dropped.
+    """
+    _ = schema.pop("format", None)
+
+
+class SessionResponse(SdkResponse):
+    # Preserve unknown response fields so legacy wire metadata such as
+    # ``headless`` remains available without becoming part of current schemas.
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")
+    session_id: Annotated[
+        str,
+        Field(
+            description=(
+                "The ID of the session (created or existing). "
+                "Use this ID to interact with the session for the next operation."
+            )
+        ),
+    ]
+    idle_timeout_minutes: Annotated[
+        int,
+        Field(
+            description="Session idle timeout in minutes. Will timeout if now() > last access time + idle_timeout_minutes",
+            validation_alias=AliasChoices("idle_timeout_minutes", "timeout_minutes"),
+        ),
+    ]
+    max_duration_minutes: Annotated[
+        int,
+        Field(
+            description="Session max duration in minutes. Will timeout if now() > creation time + max_duration_minutes",
+            default=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
+        ),
+    ]
+    created_at: Annotated[dt.datetime, Field(description="Session creation time")]
+    closed_at: Annotated[dt.datetime | None, Field(description="Session closing time")] = None
+    last_accessed_at: Annotated[dt.datetime, Field(description="Last access time")]
+    duration: Annotated[
+        dt.timedelta,
+        Field(description="Session duration", json_schema_extra=_drop_duration_format),
+    ] = Field(default_factory=lambda: dt.timedelta(0))
+    status: Annotated[
+        Literal["active", "authenticating", "closed", "error", "timed_out"],
+        Field(description="Session status"),
+    ]
+    close_reason: Annotated[
+        Literal["manual", "idle_timeout", "max_duration", "error", "unknown"] | None,
+        Field(description="Reason the session closed, if it is no longer active"),
+    ] = None
+    steps: Annotated[list[dict[str, Any]], Field(description="Steps of the session", repr=False)] = Field(
+        default_factory=lambda: []
+    )
+
+    # TODO: discuss if this is the best way to handle errors
+    error: Annotated[str | None, Field(description="Error message if the operation failed to complete")] = None
+    proxies: Annotated[
+        bool,
+        Field(
+            description="Whether proxies were used for the session. True if any proxy was applied during session creation."
+        ),
+    ] = False
+    # remaining args
+    browser_type: BrowserType = "chromium"
+    network_request_bytes: Annotated[int, Field(description="Total byte usage for network requests.")] = 0
+    network_response_bytes: Annotated[int, Field(description="Total byte usage for network responses.")] = 0
+    user_agent: Annotated[str | None, Field(description="The user agent to use for the session")] = None
+    viewport_width: Annotated[int | None, Field(description="The width of the viewport")] = None
+    viewport_height: Annotated[int | None, Field(description="The height of the viewport")] = None
+
+    @property
+    def headless(self) -> bool:
+        """Legacy launch metadata retained for old session-status consumers."""
+        extra = self.__pydantic_extra__
+        return True if extra is None else bool(extra.get("headless", True))
+
+    solve_captchas: Annotated[bool | NoneType, Field(description="Whether to solve captchas.")] = None
+    cdp_url: Annotated[str | None, Field(description="The URL to connect to the CDP server.")] = None
+    viewer_url: Annotated[str | None, Field(description="The remote session viewer URL.")] = None
+    web_bot_auth: Annotated[bool, Field(description="Whether to use web bot authentication.")] = False
+    auth_ids: Annotated[
+        list[str],
+        Field(description="Managed Auth connection IDs attached to this session."),
+    ] = []
+    system_hidden: Annotated[
+        bool,
+        Field(
+            description=(
+                "Whether this session is an internal system run. Internal system runs are omitted "
+                "from session.list() unless include_system=True is requested."
+            )
+        ),
+    ] = False
+
+    @field_validator("closed_at", mode="before")
+    @classmethod
+    def validate_closed_at(cls, value: dt.datetime | None, info: Any) -> dt.datetime | None:
+        data = info.data
+        if data.get("status") == "closed" and value is None:
+            raise ValueError("closed_at must be provided if status is closed")
+        return value
+
+    @field_validator("duration", mode="before")
+    @classmethod
+    def compute_duration(cls, value: dt.timedelta | None, info: Any) -> dt.timedelta:
+        data = info.data
+        if value is not None:
+            return value
+        if data.get("status") == "closed" and data.get("closed_at") is not None:
+            return data["closed_at"] - data["created_at"]
+        return dt.datetime.now(dt.timezone.utc) - data["created_at"]
+
+    @computed_field
+    @property
+    @deprecated("Use idle_timeout_minutes instead. Kept for backward compatibility.")
+    def timeout_minutes(self) -> int:
+        """Deprecated: Use idle_timeout_minutes instead. Kept for backward compatibility."""
+        return self.idle_timeout_minutes
+
+
+class SessionStopRequestDict(TypedDict, total=False):
+    close_reason: Literal["manual", "error"]
+
+
+class SessionStopRequest(BaseModel):
+    close_reason: Annotated[
+        Literal["manual", "error"],
+        Field(description="Reason supplied by the client when stopping the session"),
+    ] = "manual"
+
+
+class FileSource(StrEnum):
+    USER_UPLOAD = "user_upload"
+    SESSION_DOWNLOAD = "session_download"
+
+
+class SessionFile(BaseModel):
+    id: str
+    session_id: str
+    filename: str
+    mime_type: str
+    size: int
+    checksum: str
+    created_at: dt.datetime
+    expires_at: dt.datetime
+    source: FileSource
+
+
+class ListFilesResponse(SdkResponse):
+    """Legacy file-list response retained for import compatibility."""
+
+    files: Annotated[list[FileInfo], Field(description="List of files with metadata")]
+
+
+class SessionFilesPage(SdkResponse):
+    files: Annotated[list[SessionFile], Field(description="List of non-expired session files")]
+    total: int
+    limit: int
+    offset: int
+
+
+class FileUploadResponse(SdkResponse):
+    success: Annotated[bool, Field(description="Whether the upload was successful")]
+
+
+class FileLinkResponse(SdkResponse):
+    url: Annotated[str, Field(description="URL to download file from")]
+
+
+class DownloadFileRequest(SdkRequest):
+    filename: Annotated[str, Field(description="Name of file to download")]
+
+
+# ############################################################
+# Session debug endpoints
+# ############################################################
+
+
+class TabSessionDebugRequest(SdkRequest):
+    tab_idx: int
+
+
+class TabSessionDebugResponse(SdkResponse):
+    metadata: TabsData
+    debug_url: str
+    ws_url: str
+
+
+class WebSocketUrls(SdkRequest):
+    cdp: Annotated[str, Field(description="WebSocket URL to connect using CDP protocol")]
+    recording: Annotated[str, Field(description="WebSocket URL for live session recording (screenshot stream)")]
+    logs: Annotated[str, Field(description="WebSocket URL for live logs (obsveration / actions events)")]
+
+
+class SessionDebugResponse(SdkResponse):
+    debug_url: str
+    ws: WebSocketUrls
+    tabs: list[TabSessionDebugResponse]
+
+
+class SessionDebugRecordingEvent(SdkResponse):
+    """Model for events that can be sent over the recording WebSocket"""
+
+    # "observation", "execution_result", "screenshot" or "error". Kept as a plain string (and `data` falls
+    # back to a dict) so that events from older servers, such as agent steps, still parse.
+    type: str
+    data: Observation | ExecutionResult | dict[str, Any] | str
+    timestamp: dt.datetime = Field(default_factory=lambda: dt.datetime.now(dt.timezone.utc))
+
+    @staticmethod
+    def session_closed() -> "SessionDebugRecordingEvent":
+        return SessionDebugRecordingEvent(
+            type="error",
+            data="Session closed by user. No more actions will be recorded.",
+        )
+
+
+# ############################################################
+# Vaults
+# ############################################################
+
+
+class VaultCreateRequestDict(TypedDict, total=False):
+    """Request dictionary for creating a new vault."""
+
+    name: str
+
+
+class VaultCreateRequest(SdkRequest):
+    name: Annotated[str, Field(description="Name of the vault")] = "default"
+
+
+class ListCredentialsRequestDict(TypedDict, total=False):
+    """Request dictionary for listing credentials."""
+
+    pass
+
+
+class ListCredentialsRequest(SdkRequest):
+    pass
+
+
+class ListCredentialsResponse(SdkResponse):
+    credentials: Annotated[list[Credential], Field(description="URLs for which we hold credentials")]
+
+
+class VaultListRequestDict(ListRequestDict, total=False):
+    """Request dictionary for listing vaults."""
+
+    pass
+
+
+class VaultListRequest(ListRequest):
+    pass
+
+
+class AddCredentialsRequestDict(CredentialsDict, total=True):
+    """Request dictionary for adding credentials.
+
+    Args:
+        url: The URL to add credentials for
+    """
+
+    url: str
+
+
+def validate_url(value: str | None) -> str | None:
+    if value is None:
+        return None
+    domain_url = get_root_domain(value)
+    if len(domain_url) == 0:
+        raise ValueError(f"Invalid URL: {value}. Please provide a valid URL with a domain name.")
+    return domain_url
+
+
+class AddCredentialsRequest(SdkRequest):
+    url: str
+    credentials: Annotated[CredentialsDict, Field(description="Credentials to add")]
+
+    @field_validator("url", mode="before")
+    @classmethod
+    def validate_url(cls, value: str | None) -> str | None:
+        return validate_url(value)
+
+    @field_validator("credentials", mode="after")
+    @classmethod
+    def check_email_and_username(cls, value: CredentialsDict) -> CredentialsDict:
+        username = value.get("username")
+        email = value.get("email")
+
+        if username is not None and email is not None:
+            raise ValueError("Can only set either username or email")
+
+        if username is None and email is None:
+            raise ValueError("Need to have either username or email set")
+
+        secret = value.get("mfa_secret")
+        if secret is not None:
+            try:
+                _ = TOTP(secret).now()
+            except Exception:
+                raise ValueError("Invalid MFA secret code: did you try to store an OTP instead of a secret?")
+
+        return value
+
+    @classmethod
+    def from_dict(cls, dic: AddCredentialsRequestDict) -> "AddCredentialsRequest":
+        return AddCredentialsRequest(
+            url=dic["url"],
+            credentials={key: value for key, value in dic.items() if key != "url"},  # pyright: ignore[reportArgumentType]
+        )
+
+
+class AddCredentialsResponse(SdkResponse):
+    status: Annotated[str, Field(description="Status of the created credentials")]
+
+
+class GetCredentialsRequestDict(TypedDict, total=False):
+    """Request dictionary for getting credentials.
+
+    Args:
+        url: The URL to get credentials for
+    """
+
+    url: str
+
+
+class GetCredentialsRequest(SdkRequest):
+    url: str
+
+    @field_validator("url", mode="before")
+    @classmethod
+    def validate_url(cls, value: str | None) -> str | None:
+        return validate_url(value)
+
+
+class GetCredentialsResponse(SdkResponse):
+    credentials: Annotated[CredentialsDict, Field(description="Retrieved credentials")]
+
+    @field_validator("credentials", mode="after")
+    @classmethod
+    def check_email_and_username(cls, value: CredentialsDict) -> CredentialsDict:
+        username = value.get("username")
+        email = value.get("email")
+
+        if username is not None and email is not None:
+            raise ValueError("Can only set either username or email")
+
+        if username is None and email is None:
+            raise ValueError("Need to have either username or email set")
+
+        return value
+
+
+class DeleteCredentialsRequestDict(TypedDict, total=False):
+    """Request dictionary for deleting credentials.
+
+    Args:
+        url: The URL to delete credentials for
+    """
+
+    url: str
+
+
+class DeleteCredentialsRequest(SdkRequest):
+    url: str
+
+    @field_validator("url", mode="before")
+    @classmethod
+    def validate_url(cls, value: str | None) -> str | None:
+        return validate_url(value)
+
+
+class DeleteCredentialsResponse(SdkResponse):
+    status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
+    message: Annotated[str, Field(description="Message of the deletion")] = "Credentials deleted successfully"
+
+
+class DeleteVaultRequestDict(TypedDict, total=False):
+    """Request dictionary for deleting a vault."""
+
+    pass
+
+
+class DeleteVaultRequest(SdkRequest):
+    pass
+
+
+class DeleteVaultResponse(SdkResponse):
+    status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
+    message: Annotated[str, Field(description="Message of the deletion")] = "Vault deleted successfully"
+
+
+class AddCreditCardRequestDict(CreditCardDict, total=True):
+    """Request dictionary for adding a credit card."""
+
+    pass
+
+
+class AddCreditCardRequest(SdkRequest):
+    credit_card: Annotated[CreditCardDict, Field(description="Credit card to add")]
+
+    @classmethod
+    def from_dict(cls, dic: AddCreditCardRequestDict) -> "AddCreditCardRequest":
+        return AddCreditCardRequest(credit_card=dic)
+
+
+class AddCreditCardResponse(SdkResponse):
+    status: Annotated[str, Field(description="Status of the created credit card")]
+
+
+class GetCreditCardRequestDict(TypedDict, total=False):
+    """Request dictionary for getting a credit card."""
+
+    pass
+
+
+class GetCreditCardRequest(SdkRequest):
+    pass
+
+
+class GetCreditCardResponse(SdkResponse):
+    credit_card: Annotated[CreditCardDict, Field(description="Retrieved credit card")]
+
+
+class DeleteCreditCardRequestDict(TypedDict, total=False):
+    """Request dictionary for deleting a credit card."""
+
+    pass
+
+
+class DeleteCreditCardRequest(SdkRequest):
+    pass
+
+
+class DeleteCreditCardResponse(SdkResponse):
+    status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
+    message: Annotated[str, Field(description="Message of the deletion")] = "Credit card deleted successfully"
+
+
+# ############################################################
+# Browser Profiles
+# ############################################################
+
+
+class ProfileCreateRequestDict(TypedDict, total=False):
+    """Request dictionary for creating a new profile."""
+
+    name: str
+
+
+class ProfileCreateRequest(SdkRequest):
+    name: Annotated[str | None, Field(description="Name of the profile")] = None
+
+
+class ProfileResponse(SdkResponse):
+    profile_id: Annotated[str, Field(description="Profile ID (format: notte-profile-{16 hex chars})")]
+    name: Annotated[str | None, Field(description="Profile name")]
+    created_at: Annotated[dt.datetime, Field(description="Profile creation timestamp")]
+    updated_at: Annotated[dt.datetime, Field(description="Profile last update timestamp")]
+    persisted_domains: Annotated[
+        list[str],
+        Field(description="List of domains with persisted browser state (cookies, localStorage, sessionStorage)"),
+    ] = Field(default_factory=list)
+
+
+class ProfileListRequestDict(TypedDict, total=False):
+    """Request dictionary for listing profiles."""
+
+    page: int
+    page_size: int
+    name: str
+
+
+class ProfileListRequest(SdkRequest):
+    page: Annotated[int, Field(description="Page number")] = 1
+    page_size: Annotated[int, Field(description="Number of items per page")] = 20
+    name: Annotated[str | None, Field(description="Filter profiles by name")] = None
+
+
+# ############################################################
+# Persona
+# ############################################################
+
+
+class PersonaCreateRequestDict(TypedDict, total=False):
+    """Request dictionary for creating a new persona."""
+
+    create_vault: bool
+    create_phone_number: bool
+    name: str | None
+
+
+class PersonaCreateRequest(SdkRequest):
+    create_vault: Annotated[bool, Field(description="Whether to create a vault for the persona")] = False
+    create_phone_number: Annotated[bool, Field(description="Whether to create a phone number for the persona")] = False
+    name: Annotated[str | None, Field(description="Display name of the persona")] = None
+
+
+class PersonaResponse(SdkResponse):
+    persona_id: Annotated[str, Field(description="ID of the created persona")]
+    status: Annotated[str, Field(description="Status of the persona (active, closed)")]
+    first_name: Annotated[str, Field(description="First name of the persona")]
+    last_name: Annotated[str, Field(description="Last name of the persona")]
+    email: Annotated[str, Field(description="Readable email alias of the persona")]
+    internal_email: Annotated[str, Field(description="Internal UUID-backed email address of the persona")]
+    vault_id: Annotated[str | None, Field(description="ID of the vault")]
+    phone_number: Annotated[str | None, Field(description="Phone number of the persona (optional)")]
+    name: Annotated[str | None, Field(description="Display name of the persona")] = None
+    created_at: Annotated[dt.datetime, Field(description="Creation date")]
+
+
+class DeletePersonaResponse(SdkResponse):
+    status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
+    message: Annotated[str, Field(description="Message of the deletion")] = "Persona deleted successfully"
+
+
+class MessageReadRequestDict(TypedDict, total=False):
+    """Request dictionary for reading emails.
+
+    Args:
+        limit: Max number of emails to return
+        timedelta: Return only emails that are not older than `timedelta`
+        unread_only: Return only previously unread emails
+    """
+
+    limit: int
+    timedelta: dt.timedelta | None
+    only_unread: bool
+
+
+class MessageReadRequest(SdkRequest):
+    limit: Annotated[int, Field(description="Max number of emails to return")] = DEFAULT_LIMIT_LIST_ITEMS
+    timedelta: Annotated[
+        dt.timedelta | None, Field(description="Return only emails that are not older than `timedelta`")
+    ] = None
+    only_unread: Annotated[bool, Field(description="Return only previously unread emails")] = False
+
+
+class EmailResponse(SdkResponse):
+    subject: Annotated[str, Field(description="Subject of the email")]
+    email_id: Annotated[str, Field(description="Email UUID")]
+    created_at: Annotated[dt.datetime, Field(description="Creation date")]
+    sender_email: Annotated[str | None, Field(description="Email address of the sender")]
+    sender_name: Annotated[str | None, Field(description="Name (if available) of the sender")]
+    text_content: Annotated[
+        str | None, Field(description="Raw textual body, can be uncorrelated with html content")
+    ] = None
+    html_content: Annotated[str | None, Field(description="HTML body, can be uncorrelated with raw content")] = None
+
+    def links(self) -> list[str]:
+        if self.text_content is None:
+            return []
+        # Match all URLs in the text, including those in markdown links and plain text
+        url_pattern = r"https?://[^\s\]\)]+"
+        return re.findall(url_pattern, self.text_content)
+
+
+class SMSResponse(SdkResponse):
+    body: Annotated[str, Field(description="SMS message body")]
+    sms_id: Annotated[str, Field(description="SMS UUID")]
+    created_at: Annotated[dt.datetime, Field(description="Creation date")]
+    sender: Annotated[str | None, Field(description="SMS sender phone number")]
+
+
+class CreatePhoneNumberRequestDict(TypedDict, total=False):
+    """Request dictionary for virtual number operations."""
+
+    pass
+
+
+class CreatePhoneNumberRequest(SdkRequest):
+    pass
+
+
+class CreatePhoneNumberResponse(SdkResponse):
+    phone_number: Annotated[str, Field(description="The phone number that was created")]
+    status: Annotated[str, Field(description="Status of the created virtual number")]
+
+
+class DeletePhoneNumberResponse(SdkResponse):
+    status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
+    message: Annotated[str, Field(description="Message of the deletion")] = "Phone number deleted successfully"
+
+
+class PersonaListRequestDict(ListRequestDict, total=False):
+    """Request dictionary for listing personas."""
+
+    pass
+
+
+class PersonaListRequest(ListRequest):
+    pass
+
+
+# ############################################################
+# Environment endpoints
+# ############################################################
+
+
+class PaginationParamsDict(TypedDict, total=False):
+    """Request dictionary for pagination parameters.
+
+    Args:
+        min_nb_actions: The minimum number of actions to list before stopping. If not provided, the listing will continue until the maximum number of actions is reached.
+        max_nb_actions: The maximum number of actions to list after which the listing will stop. Used when min_nb_actions is not provided.
+    """
+
+    min_nb_actions: int | None
+    max_nb_actions: int
+
+
+class PaginationParams(SdkRequest):
+    min_nb_actions: Annotated[
+        int | None,
+        Field(
+            description=(
+                "The minimum number of actions to list before stopping. "
+                "If not provided, the listing will continue until the maximum number of actions is reached."
+            ),
+        ),
+    ] = None
+    max_nb_actions: Annotated[
+        int,
+        Field(
+            description=(
+                "The maximum number of actions to list after which the listing will stop. "
+                "Used when min_nb_actions is not provided."
+            ),
+        ),
+    ] = DEFAULT_MAX_NB_ACTIONS
+
+
+class ObserveRequest(PaginationParams):
+    instructions: Annotated[
+        str | None,
+        Field(description="Additional instructions to use for the observation."),
+    ] = None
+    perception_type: Annotated[
+        PerceptionType | None, Field(description="Whether to run with fast or deep perception")
+    ] = None
+
+
+class ObserveRequestDict(PaginationParamsDict, total=False):
+    """Request dictionary for observation operations.
+
+    Args:
+        url: The URL to observe. If not provided, uses the current page URL.
+        instructions: Additional instructions to use for the observation.
+    """
+
+    instructions: str | None
+    perception_type: PerceptionType | None
+
+
+class ScrapeMarkdownParamsDict(TypedDict, total=False):
+    """Request dictionary for scraping parameters.
+
+    Args:
+        scrape_links: Whether to scrape links from the page. Links are scraped by default.
+        scrape_images: Whether to scrape images from the page. Images are not scraped by default.
+        only_main_content: Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
+        use_link_placeholders: Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations.
+        model: The LLM used to extract structured data when `instructions` or `response_format` is set. Defaults to the platform model.
+    """
+
+    selector: str | None
+    scrape_links: bool
+    scrape_images: bool
+    only_main_content: bool
+    use_link_placeholders: bool
+    model: str | None
+
+
+class ScrapeStructuredParamsDict(TypedDict, total=False):
+    """Request dictionary for scraping parameters.
+
+    Args:
+        response_format: The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict.
+        instructions: Additional instructions to use for the scrape.
+    """
+
+
+class ScrapeParamsDict(ScrapeMarkdownParamsDict, ScrapeStructuredParamsDict, total=False):
+    ignored_tags: list[str] | None
+    only_images: bool
+    response_format: type[BaseModel] | None
+    instructions: str | None
+
+
+class ScrapeRequestDict(ScrapeParamsDict, total=False):
+    """Request dictionary for scraping operations."""
+
+    pass
+
+
+class ScrapeParams(SdkRequest):
+    selector: Annotated[
+        str | None,
+        Field(
+            description="Playwright selector to scope the scrape to. Only content inside this selector will be scraped."
+        ),
+    ] = None
+
+    scrape_links: Annotated[
+        bool,
+        Field(description="Whether to scrape links from the page. Links are scraped by default."),
+    ] = True
+
+    scrape_images: Annotated[
+        bool,
+        Field(description="Whether to scrape images from the page. Images are scraped by default."),
+    ] = False
+
+    ignored_tags: Annotated[list[str] | None, Field(description="HTML tags to ignore from the page")] = None
+
+    only_main_content: Annotated[
+        bool,
+        Field(
+            description=(
+                "Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded."
+            ),
+        ),
+    ] = False
+
+    only_images: Annotated[
+        bool,
+        Field(description="Whether to only scrape images from the page. If True, the page content is excluded."),
+    ] = False
+
+    response_format: Annotated[
+        type[BaseModel] | None,
+        Field(
+            description="The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)"
+        ),
+    ] = None
+
+    instructions: Annotated[
+        str | None,
+        Field(
+            description="Additional instructions to use for the scrape. E.g. 'Extract only the title, date and content of the articles.'"
+        ),
+    ] = None
+
+    model: Annotated[
+        str | None,
+        Field(
+            description="The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model."
+        ),
+    ] = None
+
+    use_link_placeholders: Annotated[
+        bool,
+        Field(
+            description="Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected."
+        ),
+    ] = False
+
+    def requires_schema(self) -> bool:
+        return self.response_format is not None or self.instructions is not None
+
+    def removed_tags(self) -> list[str]:
+        tags = self.ignored_tags.copy() if self.ignored_tags is not None else []
+        if not self.scrape_links:
+            tags.append("a")
+        if not self.scrape_images:
+            tags.append("img")
+        return tags
+
+    @field_validator("response_format", mode="before")
+    @classmethod
+    def convert_response_format(cls, value: dict[str, Any] | type[BaseModel] | None) -> type[BaseModel] | None:
+        """
+        Creates a Pydantic model from a given JSON Schema.
+
+        Args:
+            schema_name: The name of the model to be created.
+            schema_json: The JSON Schema definition.
+
+        Returns:
+            The dynamically created Pydantic model class.
+        """
+        return convert_response_format_to_pydantic_model(value)
+
+    @override
+    def model_dump_json(self, *args: Any, **kwargs: Any) -> str:
+        dump = self.model_dump(*args, **kwargs)
+        if (
+            "response_format" in dump
+            and isinstance(self.response_format, type)
+            and issubclass(self.response_format, BaseModel)  # pyright: ignore[reportUnnecessaryIsInstance]
+        ):
+            dump["response_format"] = self.response_format.model_json_schema()
+        return json.dumps(dump)
+
+
+class ScrapeRequest(ScrapeParams):
+    pass
+
+
+class ExecutionRequestDict(TypedDict, total=False):
+    """Request dictionary for step operations.
+
+    Args:
+        type: The type of action to execute (e.e "click", "fill", etc.)
+        id: The ID of the action to execute. Required for step type actions.
+        value: The value to input for form actions.
+        enter: Whether to press enter after inputting the value.
+        action: The action to execute. Cannot be used together with action_id, value, or enter.
+    """
+
+    type: str
+    id: str | None
+    value: str | int | None
+    enter: bool | None
+    selector: str | NodeSelectors | None
+
+
+class ExecutionRequest(SdkRequest):
+    type: Annotated[str, Field(description="The type of action to execute")]
+    id: Annotated[str | None, Field(description="The ID of the action to execute")] = None
+
+    value: Annotated[str | int | None, Field(description="The value to input for form actions")] = None
+
+    enter: Annotated[
+        bool | None,
+        Field(description="Whether to press enter after inputting the value"),
+    ] = None
+
+    selector: Annotated[
+        NodeSelectors | None, Field(description="The dom selector to use to find the element to interact with")
+    ] = None
+
+    @field_validator("selector", mode="before")
+    @classmethod
+    def convert_selector(cls, value: str | NodeSelectors | None) -> NodeSelectors | None:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return NodeSelectors.from_unique_selector(value)
+        return value
+
+    @field_validator("type", mode="after")
+    @classmethod
+    def verify_type(cls, value: Any) -> Any:
+        valid_keys = BaseAction.ACTION_REGISTRY.keys()
+        if value not in valid_keys:
+            raise ValueError(f"Invalid action type '{value}'. Valid types are: {valid_keys}")
+        return value
+
+    @staticmethod
+    def get_action(
+        action: ActionUnion | dict[str, Any] | None, data: ExecutionRequestDict | None = None
+    ) -> ActionUnion:
+        # if provided, return the action
+        if isinstance(action, BaseAction):
+            # already a valid action
+            return action
+        if isinstance(action, dict):
+            if "selector" in action and "id" not in action:
+                action["id"] = ""  # TODO: find a better way to handle this
+            return ActionValidation.model_validate({"action": action}).action
+        if data is None and action is None:
+            raise ValueError("No action provided")
+
+        # otherwise, convert data to action
+        action = ExecutionRequest.model_validate(data)
+        # otherwise, convert current object to action
+        if action.type in BrowserAction.BROWSER_ACTION_REGISTRY:
+            return BrowserAction.from_param(action.type, action.value)
+
+        if (action.id is None or action.id == "") and action.selector is None:
+            raise ValueError(f"Action '{action.type}' need to provided an action_id or a selector")
+        return InteractionAction.from_param(
+            action_type=action.type, value=action.value, id=action.id, selector=action.selector
+        )
+
+
+ObserveResponse = Observation
+ScrapeResponse = DataSpace
+
+
+class CaptchaStatus(BaseModel):
+    """One page-scoped CAPTCHA solve; polling never starts another attempt."""
+
+    captcha_id: str
+    page_id: str
+    generation: int
+    state: Literal["solving", "solved", "failed", "cancelled"]
+    retry_after_ms: int = 1000
+    message: str = ""
+    cancel_reason: str | None = None
+
+
+class ExecutionResultResponse(ExecutionResult):
+    captcha: CaptchaStatus | None = None
+    action_executed: bool | None = None
+    code: str | None = None
+
+
+class CaptchaExecuteParams(BaseModel):
+    captcha_id: str | None = None
+    captcha_timeout_seconds: float = Field(default=180, gt=0, allow_inf_nan=False)
+    target_page_id: str | None = None
+    target_generation: int | None = None
+
+
+class ParameterInfo(BaseModel):
+    """Information about a parameter of a function's `run` entrypoint."""
+
+    name: str
+    type: str | None = None
+    default: str | None = None
+
+
+# ############################################################
+# Function endpoints
+# ############################################################
+
+
+# Function request dictionaries
+class CreateFunctionRequestDict(TypedDict, total=True):
+    """Request dictionary for creating a function.
+
+    Args:
+        path: The path to the function to upload.
+    """
+
+    path: Required[str]
+    name: NotRequired[str | None]
+    description: NotRequired[str | None]
+    shared: NotRequired[bool]
+
+
+class UpdateFunctionRequestDict(TypedDict):
+    """Request dictionary for updating a function.
+
+    Args:
+        path: The path to the function to upload.
+        function_id: The ID of the function to update.
+        version: The version of the function to update.
+    """
+
+    path: str
+    version: NotRequired[str | None]
+
+
+class GetFunctionRequestDict(TypedDict, total=False):
+    """Request dictionary for getting a function.
+
+    Args:
+        function_id: The ID of the function to get.
+        version: The version of the function to get.
+    """
+
+    version: str | None
+
+
+class ListFunctionsRequestDict(ListRequestDict, total=False):
+    """Request dictionary for listing functions.
+
+    Args:
+        only_active: Whether to only list active functions.
+        page: The page number to list functions for.
+        page_size: The number of functions to list per page.
+    """
+
+    pass
+
+
+FunctionRuntime = Literal["standard", "extended"]
+
+
+class RunFunctionRequestDict(TypedDict, total=False):
+    """Request dictionary for running a function.
+
+    Args:
+        version: The version of the function to run.
+        local: Whether to run the function locally.
+    """
+
+    function_id: str
+    variables: dict[str, Any]
+    stream: bool
+    runtime: FunctionRuntime | None
+
+
+class RunFunctionRequest(SdkRequest):
+    function_id: Annotated[
+        str,
+        Field(description="The ID of the function to run", validation_alias=AliasChoices("workflow_id", "function_id")),
+    ]
+    variables: Annotated[dict[str, Any], Field(description="The variables to run the function with")]
+    runtime: Annotated[
+        FunctionRuntime | None, Field(description="Override the saved function runtime; omit to inherit its default")
+    ] = None
+    stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = True
+
+
+# Function request models
+class CreateFunctionRequest(SdkRequest):
+    path: Annotated[
+        str,
+        Field(description="The path to the function code to upload"),
+    ]
+    name: Annotated[str | None, Field(description="The name of the function")] = None
+    description: Annotated[str | None, Field(description="The description of the function")] = None
+    shared: Annotated[bool, Field(description="Whether the function is public and shared with other users")] = False
+
+
+class ForkFunctionRequest(SdkRequest):
+    function_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function to fork", validation_alias=AliasChoices("workflow_id", "function_id")
+        ),
+    ]
+
+
+class GetFunctionResponse(SdkResponse):
+    default_runtime: FunctionRuntime = "standard"
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    variables: Annotated[list[ParameterInfo] | None, Field(description="The variables to run the function with")] = None
+    created_at: Annotated[dt.datetime, Field(description="The creation time of the function")]
+    updated_at: Annotated[dt.datetime, Field(description="The last update time of the function")]
+    latest_version: Annotated[str, Field(description="The version of the function")]
+    versions: Annotated[list[str], Field(description="The versions of the function")]
+    status: Annotated[str, Field(description="The status of the function")]
+    name: Annotated[str | None, Field(description="The name of the function")] = None
+    description: Annotated[str | None, Field(description="The description of the function")] = None
+    shared: Annotated[bool, Field(description="Whether the function is public and can beshared with other users")] = (
+        False
+    )
+    reference_workflow_id: Annotated[
+        str | None,
+        Field(
+            description="The ID of the reference function (i.e whether the function was forked from another function or not)"
+        ),
+    ] = None
+
+
+class GetFunctionWithLinkResponse(GetFunctionResponse, FileLinkResponse):
+    pass
+
+
+class UpdateFunctionRequest(SdkRequest):
+    path: Annotated[
+        str,
+        Field(description="The path to the function code to upload"),
+    ]
+    version: Annotated[str | None, Field(description="The version of the function to update")] = None
+
+
+class GetFunctionRequest(SdkRequest):
+    version: Annotated[str | None, Field(description="The version of the function to get")] = None
+
+
+class DeleteFunctionResponse(SdkResponse):
+    status: Annotated[Literal["success", "failure"], Field(description="The status of the deletion")]
+    message: Annotated[str, Field(description="The message of the deletion")]
+
+
+class ListFunctionsRequest(ListRequest):
+    pass
+
+
+class ListFunctionsResponse(SdkResponse):
+    items: Annotated[list[GetFunctionResponse], Field(description="The functions")]
+    page: Annotated[int, Field(description="Current page number")]
+    page_size: Annotated[int, Field(description="Number of items per page")]
+    has_next: Annotated[bool, Field(description="Whether there are more pages")]
+    has_previous: Annotated[bool, Field(description="Whether there are previous pages")]
+
+
+# ############################################################
+# Function run endpoints
+# ############################################################
+
+
+class CreateFunctionRunRequestDict(TypedDict, total=False):
+    pass
+
+
+class CreateFunctionRunRequest(SdkRequest):
+    pass
+
+
+class StartFunctionRunRequest(SdkRequest):
+    function_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function",
+            validation_alias=AliasChoices("workflow_id", "function_id"),
+            exclude=True,
+        ),
+    ]
+    function_run_id: Annotated[
+        str | None,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+            exclude=True,
+        ),
+    ] = None
+    variables: Annotated[dict[str, Any] | None, Field(description="The variables to run the function with")] = None
+    runtime: Annotated[
+        FunctionRuntime | None, Field(description="Override the saved function runtime; omit to inherit its default")
+    ] = None
+    stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = False
+
+    # The IDs above are excluded from the body: the API reads them from these keys.
+    @computed_field
+    @property
+    def workflow_id(self) -> str:
+        return self.function_id
+
+    @computed_field
+    @property
+    def workflow_run_id(self) -> str | None:
+        return self.function_run_id
+
+
+FunctionRunStatus = Literal["closed", "active", "failed"]
+
+
+class FunctionRunResponse(SdkResponse):
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ]
+    session_id: Annotated[str | None, Field(description="The ID of the session")]
+    result: Annotated[Any, Field(description="The result of the function run")]
+    status: Annotated[FunctionRunStatus, Field(description="The status of the function run (closed, active, failed)")]
+
+
+class GetFunctionRunResponse(SdkResponse):
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ]
+    created_at: dt.datetime
+    updated_at: dt.datetime
+    status: FunctionRunStatus
+    session_id: Annotated[str | None, Field(description="The ID of the session")] = None
+    logs: Annotated[list[str], Field(description="The logs of the function run")] = Field(default_factory=list)
+    variables: Annotated[dict[str, Any] | None, Field(description="The variables of the function run")] = Field(
+        default_factory=dict
+    )
+    result: Annotated[str | None, Field(description="The result of the function run (if any)")] = None
+    local: Annotated[bool, Field(description="Whether the function has been run locally or on the cloud")] = False
+
+
+class FunctionRunListItemResponse(SdkResponse):
+    """Lightweight function run metadata returned by list endpoints."""
+
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ]
+    created_at: dt.datetime
+    updated_at: dt.datetime
+    status: FunctionRunStatus
+    session_id: Annotated[str | None, Field(description="The ID of the session")] = None
+    local: Annotated[bool, Field(description="Whether the function has been run locally or on the cloud")] = False
+
+
+class FunctionRunUpdateRequestDict(TypedDict, total=False):
+    session_id: str | None
+    logs: list[str]
+    variables: dict[str, Any] | None
+    result: Any | None
+    status: FunctionRunStatus
+
+
+class FunctionRunUpdateRequest(SdkRequest):
+    session_id: Annotated[str | None, Field(description="The ID of the session")] = None
+    logs: Annotated[list[str], Field(description="The logs of the function run")] = Field(default_factory=list)
+    variables: Annotated[dict[str, Any] | None, Field(description="The variables of the function run")] = None
+    result: Annotated[Any | None, Field(description="The result of the function run")] = None
+    status: Annotated[FunctionRunStatus, Field(description="The status of the function run")]
+
+
+class CreateFunctionRunResponse(SdkResponse):
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ]
+    created_at: dt.datetime
+    status: Literal["created"] = "created"
+
+
+class UpdateFunctionRunResponse(SdkResponse):
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ]
+    updated_at: dt.datetime
+    status: Literal["updated", "stopped"] = "updated"
+
+
+class ListFunctionRunsRequestDict(ListRequestDict, total=False):
+    pass
+
+
+class ListFunctionRunsRequest(ListRequest):
+    pass
+
+
+class ListFunctionRunsResponse(SdkResponse):
+    items: Annotated[list[FunctionRunListItemResponse], Field(description="The function runs")]
+    page: Annotated[int, Field(description="Current page number")]
+    page_size: Annotated[int, Field(description="Number of items per page")]
+    has_next: Annotated[bool, Field(description="Whether there are more pages")]
+    has_previous: Annotated[bool, Field(description="Whether there are previous pages")]

@@ -7,6 +7,7 @@ from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
 from notte_core.common.logging import logger
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
+from notte_core.types import ScrapeMarkdownParamsDict, ScrapeRequestDict
 from pydantic import BaseModel
 from typing_extensions import final
 
@@ -17,7 +18,6 @@ from notte_sdk.endpoints.personas import NottePersona, PersonasClient
 from notte_sdk.endpoints.profiles import ProfilesClient
 from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
-from notte_sdk.types import ScrapeMarkdownParamsDict, ScrapeRequestDict
 
 enable_nest_asyncio()
 

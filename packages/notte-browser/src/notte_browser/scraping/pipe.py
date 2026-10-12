@@ -7,7 +7,7 @@ from notte_core.common.logging import logger
 from notte_core.data.extraction import StructuredExtractor
 from notte_core.data.pruning import MarkdownPruningPipe
 from notte_core.data.space import DataSpace
-from notte_sdk.types import ScrapeParams
+from notte_core.types import ScrapeParams
 
 from notte_browser.errors import StructuredExtractorNotAvailableError
 from notte_browser.scraping.images import ImageScrapingPipe

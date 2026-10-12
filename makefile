@@ -162,3 +162,20 @@ release:
 	fi
 	@echo "\033[0;35mBuilding version: $(filter-out $@,$(MAKECMDGOALS))\033[0m"
 	python3 scripts/build_release.py $(filter-out $@,$(MAKECMDGOALS))
+
+# The wire models in notte_core.types are the source of truth; openapi/openapi.json is the API's
+# rendering of them. See docs/design/openapi-contract.md.
+.PHONY: openapi-check
+openapi-check:
+	uv run --no-sync python scripts/openapi_contract.py --check
+
+# Refresh the snapshot from staging (override with OPENAPI_URL=https://api.notte.cc).
+OPENAPI_URL ?= https://us-staging.notte.cc
+.PHONY: openapi-fetch
+openapi-fetch:
+	uv run --no-sync python scripts/openapi_contract.py --fetch --url $(OPENAPI_URL)
+
+# Release gate: production must serve the wire models we are about to publish.
+.PHONY: openapi-check-prod
+openapi-check-prod:
+	uv run --no-sync python scripts/openapi_contract.py --check --against https://api.notte.cc

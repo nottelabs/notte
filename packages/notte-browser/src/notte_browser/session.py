@@ -71,10 +71,7 @@ from notte_core.profiling import profiler
 from notte_core.space import ActionSpace
 from notte_core.storage import BaseStorage
 from notte_core.trajectory import Trajectory
-from notte_core.utils.files import create_or_append_cookies_to_file
-from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
-from notte_sdk.endpoints.personas import BasePersona
-from notte_sdk.types import (
+from notte_core.types import (
     LocalSessionStartRequest,
     LocalSessionStartRequestDict,
     PaginationParams,
@@ -83,6 +80,9 @@ from notte_sdk.types import (
     ScrapeParams,
     ScrapeParamsDict,
 )
+from notte_core.utils.files import create_or_append_cookies_to_file
+from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
+from notte_sdk.endpoints.personas import BasePersona
 from pydantic import BaseModel, RootModel, ValidationError
 from typing_extensions import override
 

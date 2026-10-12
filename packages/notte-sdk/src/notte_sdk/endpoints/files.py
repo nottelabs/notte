@@ -9,11 +9,11 @@ import requests
 from notte_core.common.cache import CacheDirectory, ensure_cache_directory
 from notte_core.common.telemetry import track_usage
 from notte_core.storage import BaseStorage, FileInfo
+from notte_core.types import FileSource, SessionFile, SessionFilesPage
 from typing_extensions import override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.errors import NotteAPIError
-from notte_sdk.types import FileSource, SessionFile, SessionFilesPage
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient

@@ -92,13 +92,19 @@ repos:
         name: Check documented session-config defaults against the SDK
         entry: bash -c "uv run python docs/src/scripts/check_config_docs_defaults.py"
         language: system
-        files: ^(docs/src/features/sessions/configuration\.mdx|docs/src/scripts/check_config_docs_defaults\.py|packages/notte-sdk/src/notte_sdk/types\.py|packages/notte-core/src/notte_core/config\.toml)$
+        files: ^(docs/src/features/sessions/configuration\.mdx|docs/src/scripts/check_config_docs_defaults\.py|packages/notte-core/src/notte_core/types\.py|packages/notte-core/src/notte_core/config\.toml)$
         pass_filenames: false
       - id: docs-quickstart-setup-prompt
         name: Check shared Quickstart setup link
         entry: bash -c "cd docs/src && uv run python scripts/sync_quickstart_setup_prompt.py --check"
         language: system
         files: ^docs/src/
+        pass_filenames: false
+      - id: openapi-contract
+        name: Check the wire models match the OpenAPI snapshot
+        entry: bash -c "uv run --no-sync python scripts/openapi_contract.py --check"
+        language: system
+        files: ^(openapi/.*|packages/notte-sdk/src/notte_sdk/types\.py|scripts/openapi_contract\.py|\.pre-commit-config\.yaml)$
         pass_filenames: false
       - id: no-loguru-logger-import
         name: Check for loguru logger imports

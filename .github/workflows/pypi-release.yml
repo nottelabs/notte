@@ -35,6 +35,12 @@ jobs:
         with:
             python-version-file: ".python-version"
 
+      - name: Check the wire models against production
+        # Don't publish models production doesn't serve yet.
+        run: |
+          uv sync --all-packages
+          make openapi-check-prod
+
       - name: Build Python distributions
         env:
           RELEASE_TAG: ${{ github.ref_name }}

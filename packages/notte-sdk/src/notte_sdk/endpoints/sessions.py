@@ -48,15 +48,7 @@ from notte_core.data.fetch import FetchData, build_fetch_script, response_from_e
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from notte_core.errors.actions import EvaluateJsNoDataError
 from notte_core.errors.base import NotteBaseError
-from notte_core.utils.files import create_or_append_cookies_to_file
-from pydantic import BaseModel
-from typing_extensions import final, override
-
-from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.endpoints.files import RemoteFileStorage
-from notte_sdk.endpoints.page import PageClient
-from notte_sdk.errors import NotteAPIError
-from notte_sdk.types import (
+from notte_core.types import (
     ExecutionRequest,
     GetCookiesResponse,
     ObserveRequestDict,
@@ -79,6 +71,14 @@ from notte_sdk.types import (
     TabSessionDebugRequest,
     TabSessionDebugResponse,
 )
+from notte_core.utils.files import create_or_append_cookies_to_file
+from pydantic import BaseModel
+from typing_extensions import final, override
+
+from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.endpoints.files import RemoteFileStorage
+from notte_sdk.endpoints.page import PageClient
+from notte_sdk.errors import NotteAPIError
 from notte_sdk.websockets.base import WebsocketService
 from notte_sdk.websockets.jupyter import display_image_in_notebook
 

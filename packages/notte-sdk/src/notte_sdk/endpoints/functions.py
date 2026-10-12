@@ -8,12 +8,7 @@ import requests
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.errors.base import NotteBaseError
-from pydantic import TypeAdapter
-
-from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.endpoints.run_payloads import PayloadMode, RunUpdateBody, offload_run_fields, resolve_run_fields
-from notte_sdk.endpoints.sessions import SessionsClient
-from notte_sdk.types import (
+from notte_core.types import (
     CreateFunctionRequest,
     CreateFunctionRequestDict,
     CreateFunctionRunRequest,
@@ -43,6 +38,11 @@ from notte_sdk.types import (
     UpdateFunctionRequestDict,
     UpdateFunctionRunResponse,
 )
+from pydantic import TypeAdapter
+
+from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.endpoints.run_payloads import PayloadMode, RunUpdateBody, offload_run_fields, resolve_run_fields
+from notte_sdk.endpoints.sessions import SessionsClient
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient

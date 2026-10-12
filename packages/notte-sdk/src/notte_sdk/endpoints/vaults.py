@@ -14,10 +14,7 @@ from notte_core.credentials.base import (
     CreditCardDict,
     Vault,
 )
-from typing_extensions import override
-
-from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.types import (
+from notte_core.types import (
     AddCredentialsRequest,
     AddCredentialsRequestDict,
     AddCredentialsResponse,
@@ -47,6 +44,9 @@ from notte_sdk.types import (
     VaultListRequest,
     VaultListRequestDict,
 )
+from typing_extensions import override
+
+from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
