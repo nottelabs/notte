@@ -171,20 +171,25 @@ def test_cdp_capability_is_header_only_and_not_sent_to_external_provider(monkeyp
 @pytest.mark.parametrize(
     ("api_url", "cdp_url", "expected"),
     [
-        ("https://api.notte.cc", "wss://api.notte.cc:443/cdp", True),
-        ("https://api.notte.cc:443", "wss://api.notte.cc/cdp", True),
-        ("http://localhost", "ws://localhost:80/cdp", False),
-        ("http://localhost:80", "ws://localhost/cdp", False),
-        ("https://api.notte.cc:8443", "wss://api.notte.cc:8443/cdp", True),
-        ("https://api.notte.cc", "wss://api.notte.cc:8443/cdp", False),
-        ("https://api.notte.cc", "ws://api.notte.cc:443/cdp", False),
-        ("https://api.notte.cc", "wss://external.invalid:443/cdp", False),
+        ("https://api.notte.cc", "wss://api.notte.cc:443/cdp", "capability"),
+        ("https://api.notte.cc:443", "wss://api.notte.cc/cdp", "capability"),
+        ("http://localhost", "ws://localhost:80/cdp", "identity"),
+        ("http://localhost:80", "ws://localhost/cdp", "identity"),
+        ("http://localhost:8000", "ws://localhost:8000/cdp", "identity"),
+        ("http://localhost:8000", "ws://localhost:9000/cdp", None),
+        ("https://api.notte.cc:8443", "wss://api.notte.cc:8443/cdp", "capability"),
+        ("https://api.notte.cc", "wss://api.notte.cc:8443/cdp", None),
+        ("https://api.notte.cc", "ws://api.notte.cc:443/cdp", None),
+        ("https://api.notte.cc", "wss://external.invalid:443/cdp", None),
     ],
 )
 def test_cdp_capability_matches_effective_origin(monkeypatch, api_url, cdp_url, expected):
     monkeypatch.setenv("NOTTE_AUTH_CAPABILITY", "runner-capability")
     session = bare_session()
     session.client.server_url = api_url
-    assert session._cdp_headers(cdp_url) == (
-        {**SDK_HEADERS, "x-notte-auth-capability": "runner-capability"} if expected else None
-    )
+    headers = {
+        "capability": {**SDK_HEADERS, "x-notte-auth-capability": "runner-capability"},
+        "identity": SDK_HEADERS,
+        None: None,
+    }[expected]
+    assert session._cdp_headers(cdp_url) == headers

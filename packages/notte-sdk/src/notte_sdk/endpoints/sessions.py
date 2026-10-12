@@ -1218,17 +1218,16 @@ class RemoteSession(SyncResource):
             return None
         target = urlsplit(cdp_url)
         api = urlsplit(self.client.server_url)
-        target_port = target.port if target.port is not None else 443
-        api_port = api.port if api.port is not None else 443
-        if not (
-            target.scheme == "wss"
-            and api.scheme == "https"
-            and target.hostname == api.hostname
-            and target_port == api_port
-        ):
+        secure = target.scheme == "wss" and api.scheme == "https"
+        plain = target.scheme == "ws" and api.scheme == "http"
+        default_port = 443 if secure else 80
+        target_port = target.port if target.port is not None else default_port
+        api_port = api.port if api.port is not None else default_port
+        if not ((secure or plain) and target.hostname == api.hostname and target_port == api_port):
             return None
         headers = {"x-notte-request-origin": self.client.REQUEST_ORIGIN, "x-notte-sdk-version": notte_core_version}
-        if capability := os.getenv("NOTTE_AUTH_CAPABILITY"):
+        # The capability is a credential: only ever sent over TLS.
+        if secure and (capability := os.getenv("NOTTE_AUTH_CAPABILITY")):
             headers["x-notte-auth-capability"] = capability
         return headers
 
