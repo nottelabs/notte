@@ -1,3 +1,5 @@
+import re
+
 from notte_core.errors.base import NotteBaseError
 
 
@@ -103,14 +105,13 @@ class CredentialFieldValidationError(NotteBaseError):
     credential (e.g. a password placeholder targeted at a <label> instead of the password input).
     Without this error the literal placeholder string would be typed into the page."""
 
-    MAX_OUTER_HTML_CHARS: int = 300
-
     def __init__(self, placeholder: str, cred_key: str, element_type: str | None, outer_html: str | None) -> None:
-        if outer_html is not None and len(outer_html) > self.MAX_OUTER_HTML_CHARS:
-            outer_html = outer_html[: self.MAX_OUTER_HTML_CHARS] + "..."
+        # Only report the tag name: the element's HTML can carry sensitive attribute values
+        tag_match = re.match(r"\s*<\s*([a-zA-Z][a-zA-Z0-9-]*)", outer_html or "")
+        tag_name = tag_match.group(1).lower() if tag_match else None
         dev_message = (
             f"Credential placeholder {placeholder!r} for field {cred_key!r} targeted an element that is not a "
-            f"valid {cred_key!r} input (type={element_type!r}, outerHTML={outer_html!r}). "
+            f"valid {cred_key!r} input (tag={tag_name!r}, type={element_type!r}). "
             "Common cause: the action targeted a wrapper (e.g. <label>) instead of the actual <input>. "
             "Target the input element directly."
         )

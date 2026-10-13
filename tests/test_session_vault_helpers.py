@@ -157,7 +157,7 @@ def test_password_placeholder_on_invalid_element_raises() -> None:
     # Error message should name the credential and hint at the wrong-element cause, without the secret
     assert "password" in exc_info.value.dev_message
     assert PASSWORD in exc_info.value.dev_message
-    assert "<label>Password</label>" in exc_info.value.dev_message
+    assert "tag='label'" in exc_info.value.dev_message
     for message in (exc_info.value.dev_message, exc_info.value.agent_message, exc_info.value.user_message):
         assert "s3cr3t" not in message
 
@@ -210,13 +210,15 @@ def test_session_action_with_vault_propagates_validation_error() -> None:
         asyncio.run(session._action_with_vault(action))
 
 
-def test_credential_validation_error_truncates_outer_html() -> None:
-    outer_html = "<div>" + "x" * 5000 + "</div>"
-    error = CredentialFieldValidationError(PASSWORD, "password", None, outer_html)
+def test_credential_validation_error_omits_element_html() -> None:
+    outer_html = '<input type="text" name="pw" value="prefilled-secret" data-token="abc123">'
+    error = CredentialFieldValidationError(PASSWORD, "password", "text", outer_html)
 
-    assert len(error.dev_message) < 1000
-    assert outer_html not in error.dev_message
-    assert "..." in error.dev_message
+    for message in (error.dev_message, error.agent_message, error.user_message):
+        assert "prefilled-secret" not in message
+        assert "abc123" not in message
+    assert "tag='input'" in error.dev_message
+    assert "type='text'" in error.dev_message
 
 
 LOGIN_PAGE = """
