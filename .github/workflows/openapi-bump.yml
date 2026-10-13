@@ -4,7 +4,10 @@ name: bump-openapi
 # source of truth and the API renders them into this schema, so the refresh PR is the
 # contract check: it merges itself once checks pass (like bump-node-sdk), and stays open
 # when the API drifted from the models (the `openapi-contract` pre-commit hook fails).
-# See docs/design/openapi-contract.md.
+# The Python SDK's endpoint layer is regenerated from the refreshed snapshot in the same PR,
+# so an endpoint change shows up as a diff of notte_sdk/_generated/endpoints.py (and fails
+# the `sdk-endpoints` hook when a bound model no longer fits).
+# See docs/design/openapi-contract.md and docs/design/sdk-generated-endpoints.md.
 
 on:
   schedule:
@@ -54,11 +57,22 @@ jobs:
       - name: Refresh the snapshot
         run: make openapi-fetch OPENAPI_URL="$NOTTE_API_URL"
 
+      - name: Regenerate the SDK endpoints
+        id: endpoints
+        # A spec the bindings no longer fit leaves the module as it was; the PR's
+        # `sdk-endpoints` hook then fails and the report below says why.
+        run: |
+          {
+            echo "report<<EOF"
+            make --no-print-directory sdk-endpoints 2>&1 || true
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Detect drift
         id: drift
         run: |
           set -euo pipefail
-          git add -A -- openapi
+          git add -A -- openapi packages/notte-sdk/src/notte_sdk/_generated
           if git diff --cached --quiet; then
             echo "openapi/openapi.json is up to date with staging."
             echo "changes=false" >> "$GITHUB_OUTPUT"
@@ -84,17 +98,20 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
           REPORT: ${{ steps.contract.outputs.report }}
+          ENDPOINTS: ${{ steps.endpoints.outputs.report }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           TITLE="chore: refresh the OpenAPI snapshot from staging"
-          BODY=$(printf '%s\n\n%s\n\n%s\n\n```\n%s\n```\n' \
+          BODY=$(printf '%s\n\n%s\n\n%s\n\n```\n%s\n```\n\n%s\n\n```\n%s\n```\n' \
             "Automated refresh of \`openapi/openapi.json\` from $NOTTE_API_URL ($(date -u '+%Y-%m-%d %H:%M UTC'))." \
             "Opened by \`.github/workflows/openapi-bump.yml\`. Merges automatically once the required checks pass." \
             "Contract check (\`scripts/openapi_contract.py\`). If it reports new drift, change \`notte_core.types\` instead of merging:" \
-            "$REPORT")
+            "$REPORT" \
+            "SDK endpoints (\`scripts/generate_sdk_endpoints.py\`, regenerated in this PR):" \
+            "$ENDPOINTS")
 
           git checkout -B "$BRANCH"
           git commit -m "$TITLE"
