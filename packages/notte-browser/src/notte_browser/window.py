@@ -355,18 +355,33 @@ class BrowserWindow(BaseModel):
 
     @profiler.profiled(service_name="observation")
     async def snapshot_metadata(self) -> SnapshotMetadata:
+        page = self.page
+        # Read the active document in one browser call. Keep int() on the Python
+        # side so fractional scroll offsets retain the existing truncation.
+        metadata = await page.evaluate("""() => ({
+            title: document.title,
+            scroll_x: window.scrollX,
+            scroll_y: window.scrollY,
+            viewport_width: window.innerWidth,
+            viewport_height: window.innerHeight,
+            total_width: document.documentElement.scrollWidth,
+            total_height: document.documentElement.scrollHeight,
+        })""")
         return SnapshotMetadata(
-            title=await self.page.title(),
-            url=self.page.url,
+            title=metadata["title"],
+            url=page.url,
             viewport=ViewportData(
-                scroll_x=int(await self.page.evaluate("window.scrollX")),
-                scroll_y=int(await self.page.evaluate("window.scrollY")),
-                viewport_width=int(await self.page.evaluate("window.innerWidth")),
-                viewport_height=int(await self.page.evaluate("window.innerHeight")),
-                total_width=int(await self.page.evaluate("document.documentElement.scrollWidth")),
-                total_height=int(await self.page.evaluate("document.documentElement.scrollHeight")),
+                scroll_x=int(metadata["scroll_x"]),
+                scroll_y=int(metadata["scroll_y"]),
+                viewport_width=int(metadata["viewport_width"]),
+                viewport_height=int(metadata["viewport_height"]),
+                total_width=int(metadata["total_width"]),
+                total_height=int(metadata["total_height"]),
             ),
-            tabs=[await self.tab_metadata(i) for i, _ in enumerate(self.tabs)],
+            tabs=[
+                TabsData(tab_id=i, title=metadata["title"], url=page.url) if tab is page else await self.tab_metadata(i)
+                for i, tab in enumerate(self.tabs)
+            ],
         )
 
     # Per-attempt timeout for a single CDP screenshot (attach + capture + detach).
