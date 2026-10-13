@@ -41,9 +41,58 @@ permissions:
   pull-requests: write
 
 jobs:
-  tests:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
-    timeout-minutes: 20
+  # Decides which suites this change needs. Push and manual runs always run everything.
+  changes:
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 5
+    outputs:
+      unit: ${{ steps.scope.outputs.unit }}
+      live: ${{ steps.scope.outputs.live }}
+    steps:
+      - name: Checkout code
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Which suites does this change need?
+        id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT" != "pull_request" ]; then
+            echo "unit=true" >> "$GITHUB_OUTPUT"
+            echo "live=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          unit=false
+          live=false
+          while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            case "$file" in
+              # This workflow and its setup action: run everything.
+              .github/workflows/test-cicd.yml|.github/actions/python-setup/*) unit=true; live=true ;;
+              # Package code, including Markdown prompt templates: run everything.
+              packages/*|src/*|tests/*) unit=true; live=true ;;
+              # Some unit tests read the docs; the live suite does not.
+              docs/*) unit=true ;;
+              # Covered by their own workflows (Node SDK, README check) or not code.
+              node-sdk/*|.github/*|*.md|LICENSE) ;;
+              browserarena|notte-cli|notte-skills|templates|integrations/*|example-apps/*) ;;
+              *) unit=true; live=true ;;
+            esac
+          done < <(git diff --name-only "$BASE_SHA"..."$HEAD_SHA")
+          echo "unit=$unit" >> "$GITHUB_OUTPUT"
+          echo "live=$live" >> "$GITHUB_OUTPUT"
+          echo "unit=$unit live=$live"
+
+  lint:
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 15
     steps:
       - name: Checkout PR code (manual trigger)
         if: github.event_name == 'workflow_dispatch'
@@ -52,72 +101,18 @@ jobs:
           # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
           # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
           ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+          persist-credentials: false
 
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
             ref: ${{ github.event.pull_request.head.sha }}
+            persist-credentials: false
 
-      - id: 'auth'
-        if: ${{ env.IS_TRUSTED == 'true' }}
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+      - uses: ./.github/actions/python-setup
         with:
-          credentials_json: ${{ secrets.VERTEX_AI }}
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
-        with:
-            enable-cache: true
-            cache-dependency-glob: "uv.lock"
-
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        with:
-          python-version-file: ".python-version"
-          cache: ${{ env.CACHE_TYPE }}
-
-      - name: Cache patchright
-        id: cache-patchright
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ github.workspace }}/.playwright-browsers
-          key: ${{ runner.os }}-patchright-${{ hashFiles('**/uv.lock') }}-v2
-          restore-keys: |
-            ${{ runner.os }}-patchright-${{ hashFiles('**/uv.lock') }}-
-            ${{ runner.os }}-patchright-
-
-      - name: Verify browser cache
-        run: |
-          echo "Browser cache path: $PLAYWRIGHT_BROWSERS_PATH"
-          if [ -d "$PLAYWRIGHT_BROWSERS_PATH" ]; then
-            echo "Cache directory exists"
-            ls -la "$PLAYWRIGHT_BROWSERS_PATH"
-          else
-            echo "Cache directory doesn't exist yet (will be created during install)"
-          fi
-
-      - name: Cache pre-commit
-        id: cache-pre-commit
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/pre-commit
-          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml', '**/pyproject.toml') }}-v1
-          restore-keys: |
-            ${{ runner.os }}-pre-commit-
-
-      - name: Install dependencies
-        run: uv sync --dev --all-extras
-
-      - name: Install patchright
-        if: steps.cache-patchright.outputs.cache-hit != 'true'
-        run: |
-          echo "Cache miss - installing patchright"
-          uv run patchright install --with-deps chromium --no-shell
-
-      - name: Install pre-commit
-        if: steps.cache-pre-commit.outputs.cache-hit != 'true'
-        run: uv run pre-commit install --install-hooks
+          pre-commit: "true"
 
       - name: Run pre-commit
         run: uv run --active pre-commit run --all-files
@@ -131,38 +126,60 @@ jobs:
           echo "A maintainer can run the full secret-backed suite after reviewing the diff via"
           echo "'Run workflow' (workflow_dispatch) with this PR number."
 
+  # Fast tests: everything outside tests/integration, on a larger runner.
+  unit:
+    needs: changes
+    if: >-
+      needs.changes.outputs.unit == 'true' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-8vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 20
+    env:
+      SUITE: unit
+      PYTEST_ARGS: -n logical tests --ignore=tests/integration --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py
+      COVERAGE_FILE: .coverage.unit
+    steps: &test-steps
+      - name: Checkout PR code (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
+          # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+          persist-credentials: false
+
+      - name: Checkout code (PR or push)
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+            ref: ${{ github.event.pull_request.head.sha }}
+            persist-credentials: false
+
+      - id: 'auth'
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          credentials_json: ${{ secrets.VERTEX_AI }}
+
+      - uses: ./.github/actions/python-setup
+        with:
+          browsers: "true"
+
       - name: Verify environment variables
-        if: ${{ env.IS_TRUSTED == 'true' }}
         env:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: |
-          if [ -z "$NOTTE_API_KEY" ]; then
-            echo "NOTTE_API_KEY is not set. For an external/fork PR, a maintainer should review the diff and run this workflow via 'Run workflow' (workflow_dispatch) with the PR number."
-            exit 1
-          fi
-          if [ -z "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
-            echo "GOOGLE_APPLICATION_CREDENTIALS is not set"
-            exit 1
-          fi
-          if [ -z "$SMTP_SERVER" ]; then
-            echo "SMTP_SERVER is not set"
-            exit 1
-          fi
-          if [ -z "$EMAIL_SENDER" ]; then
-            echo "EMAIL_SENDER is not set"
-            exit 1
-          fi
-          if [ -z "$EMAIL_PASSWORD" ]; then
-            echo "EMAIL_PASSWORD is not set"
-            exit 1
-          fi
+          for name in NOTTE_API_KEY GOOGLE_APPLICATION_CREDENTIALS SMTP_SERVER EMAIL_SENDER EMAIL_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "$name is not set. For an external/fork PR, a maintainer should review the diff and run this workflow via 'Run workflow' (workflow_dispatch) with the PR number."
+              exit 1
+            fi
+          done
           echo "Environment variables are set"
 
       - name: Wait for the API to be reachable
-        if: ${{ env.IS_TRUSTED == 'true' }}
         # The staging API scales to zero when idle and wakes on the first
         # request; poll until it answers before running anything against it.
         run: |
@@ -171,8 +188,8 @@ jobs:
             [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
             sleep 10
           done
-      - name: Run unit tests
-        if: ${{ env.IS_TRUSTED == 'true' }}
+
+      - name: Run tests
         env:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
           NOTTE_VAULT_TEST_EMAIL: ${{ secrets.NOTTE_VAULT_TEST_EMAIL }}
@@ -181,17 +198,121 @@ jobs:
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: |
-          set -o pipefail
-          uv run pytest -n logical tests --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages | tee pytest-coverage.txt
+          # PYTEST_ARGS holds several arguments; split it on purpose.
+          # shellcheck disable=SC2086
+          uv run pytest $PYTEST_ARGS --durations=10 --junitxml="pytest-$SUITE.xml" --cov=packages --cov-report=
 
       - name: Cleanup vaults created by this run
-        if: ${{ always() && env.IS_TRUSTED == 'true' }}
+        if: always()
         env:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
         run: uv run python scripts/cleanup_ci_vaults.py
 
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: pytest-${{ env.SUITE }}
+          path: |
+            .coverage.*
+            pytest-*.xml
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 3
+
+  # Live tests against the staging API, split into shards that run in parallel.
+  live:
+    needs: changes
+    if: >-
+      needs.changes.outputs.live == 'true' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      SUITE: live-${{ matrix.shard }}
+      NOTTE_TEST_SHARD: ${{ matrix.shard }}/4
+      PYTEST_ARGS: -n 4 tests/integration
+      COVERAGE_FILE: .coverage.live-${{ matrix.shard }}
+      # Shards share a job name; give each its own vault prefix so cleanups stay separate.
+      NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}-${{ matrix.shard }}
+    steps: *test-steps
+
+  # The required check. Passes when every suite this change needs passed (skipped suites are fine).
+  tests:
+    needs: [changes, lint, unit, live]
+    if: always()
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 10
+    steps:
+      - name: Check suite results
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | python3 -c '
+          import json, sys
+          results = {name: job["result"] for name, job in json.load(sys.stdin).items()}
+          print(results)
+          sys.exit(any(result in ("failure", "cancelled") for result in results.values()))
+          '
+
+      - name: Checkout code
+        id: checkout
+        if: >-
+          always() && github.event_name == 'pull_request' && env.IS_TRUSTED == 'true' &&
+          (needs.unit.result != 'skipped' || needs.live.result != 'skipped')
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Install uv
+        if: always() && steps.checkout.outcome == 'success'
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Download test results
+        if: always() && steps.checkout.outcome == 'success'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: pytest-*
+          path: results
+          merge-multiple: true
+
+      - name: Combine coverage and test results
+        if: always() && steps.checkout.outcome == 'success'
+        run: |
+          uvx coverage==7.10.7 combine results/.coverage.*
+          {
+            echo "---------- coverage: platform linux, combined unit and live suites ----------"
+            uvx coverage==7.10.7 report -m --skip-covered
+          } > pytest-coverage.txt
+          python3 - <<'PY'
+          import glob
+          import xml.etree.ElementTree as ET
+
+          merged = ET.Element("testsuite", name="pytest")
+          totals = dict.fromkeys(("tests", "errors", "failures", "skipped"), 0)
+          duration = 0.0
+          for path in sorted(glob.glob("results/pytest-*.xml")):
+              root = ET.parse(path).getroot()
+              for suite in root.iter("testsuite"):
+                  for key in totals:
+                      totals[key] += int(suite.get(key, 0))
+                  duration += float(suite.get("time", 0))
+                  merged.extend(suite.findall("testcase"))
+          for key, value in totals.items():
+              merged.set(key, str(value))
+          merged.set("time", f"{duration:.3f}")
+          tree = ET.ElementTree(ET.Element("testsuites"))
+          tree.getroot().append(merged)
+          tree.write("pytest.xml", encoding="utf-8", xml_declaration=True)
+          PY
+
       - name: Pytest coverage comment
-        if: ${{ always() && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}
+        if: always() && steps.checkout.outcome == 'success'
         uses: MishaKav/pytest-coverage-comment@9ee59af31bd7bcada1cc496f086b407122602dbd # v1.12.3
         with:
           pytest-coverage-path: ./pytest-coverage.txt

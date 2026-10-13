@@ -23,7 +23,7 @@ defaults:
 
 jobs:
   tests:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 15
     strategy:
       matrix:
@@ -60,8 +60,13 @@ jobs:
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
       (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
     needs: tests
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 45
+    # Live files run serially within a shard; shards run in parallel.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -87,10 +92,10 @@ jobs:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
         run: |
           test -n "$NOTTE_API_KEY" || { echo 'NOTTE_API_KEY is required'; exit 1; }
-          npm run test:integration
+          npm run test:integration -- --shard=${{ matrix.shard }}/3
 
   generated:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
