@@ -73,17 +73,14 @@ def pytest_generate_tests(metafunc):
 
 
 def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
-    # CI shards the live suite across runners: NOTTE_TEST_SHARD="<index>/<total>" (1-based)
-    # keeps every <total>-th test by sorted node id, so each shard gets a similar mix.
+    # CI shards the live suite across runners with NOTTE_TEST_SHARD="<index>/<total>".
     shard = os.environ.get("NOTTE_TEST_SHARD")
     if not shard:
         return
-    index, total = (int(part) for part in shard.split("/"))
-    if not 1 <= index <= total:
-        raise ValueError(f"Invalid NOTTE_TEST_SHARD={shard!r}")
-    order = {nodeid: i for i, nodeid in enumerate(sorted(item.nodeid for item in items))}
-    selected = [item for item in items if order[item.nodeid] % total == index - 1]
-    deselected = [item for item in items if order[item.nodeid] % total != index - 1]
+    from tests.ci_shard import shard_nodeids
+
+    keep = shard_nodeids([item.nodeid for item in items], shard)
+    deselected = [item for item in items if item.nodeid not in keep]
     if deselected:
         config.hook.pytest_deselected(items=deselected)
-    items[:] = selected
+    items[:] = [item for item in items if item.nodeid in keep]

@@ -74,11 +74,13 @@ jobs:
             case "$file" in
               # This workflow and its setup action: run everything.
               .github/workflows/test-cicd.yml|.github/actions/python-setup/*) unit=true; live=true ;;
+              # Package code, including Markdown prompt templates: run everything.
+              packages/*|src/*|tests/*) unit=true; live=true ;;
+              # Some unit tests read the docs; the live suite does not.
+              docs/*) unit=true ;;
               # Covered by their own workflows (Node SDK, README check) or not code.
               node-sdk/*|.github/*|*.md|LICENSE) ;;
               browserarena|notte-cli|notte-skills|templates|claude-managed-agents|notte-jevmaxxing) ;;
-              # Some unit tests read the docs; the live suite does not.
-              docs/*) unit=true ;;
               *) unit=true; live=true ;;
             esac
           done < <(git diff --name-only "$BASE_SHA"..."$HEAD_SHA")
@@ -97,12 +99,14 @@ jobs:
           # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
           # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
           ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+          persist-credentials: false
 
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
             ref: ${{ github.event.pull_request.head.sha }}
+            persist-credentials: false
 
       - uses: ./.github/actions/python-setup
         with:
@@ -140,12 +144,14 @@ jobs:
           # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
           # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
           ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+          persist-credentials: false
 
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
             ref: ${{ github.event.pull_request.head.sha }}
+            persist-credentials: false
 
       - id: 'auth'
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
