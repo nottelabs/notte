@@ -172,12 +172,14 @@ def test_get_keyring_api_key_supports_legacy_prod_key(cli_config_dir: Path) -> N
     assert get_keyring_api_key("https://us-dev.notte.cc") is None
 
 
-def test_get_keyring_api_key_prefers_secret_service(cli_config_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    _write_cli_store(cli_config_dir, "api_key:prod")
+def test_get_keyring_api_key_prefers_file_entry(cli_config_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Like notte-cli: a file entry is current whenever it exists.
     monkeypatch.setattr(sys, "platform", "linux")
     monkeypatch.setattr(auth, "_get_from_secret_service", lambda key: f"secret-service-{key}")
-
     assert get_keyring_api_key("https://api.notte.cc") == "secret-service-api_key:prod"
+
+    _write_cli_store(cli_config_dir, "api_key:prod")
+    assert get_keyring_api_key("https://api.notte.cc") == "cli-prod-key"
 
 
 def test_resolve_api_key_precedence(cli_config_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -339,7 +341,7 @@ def test_client_without_any_key_raises_after_one_lookup(cli_config_dir: Path) ->
 @pytest.mark.parametrize(
     ("platform", "order"),
     [
-        ("linux", ["secret_service", "file"]),
+        ("linux", ["file", "secret_service"]),
         ("darwin", ["file", "keychain"]),
         ("win32", ["file", "wincred"]),
     ],
@@ -368,8 +370,7 @@ def test_cli_stores_lookup_order(monkeypatch: pytest.MonkeyPatch, platform: str,
     # The first store that has the key wins and the others are not read.
     calls.clear()
     first, second = order
-    first_reader = "_get_from_secret_service" if first == "secret_service" else "_get_from_file_backend"
-    monkeypatch.setattr(auth, first_reader, reader(first, f"{first}-key"))
+    monkeypatch.setattr(auth, "_get_from_file_backend", reader(first, f"{first}-key"))
     assert auth._get_from_cli_stores("api_key:prod") == f"{first}-key"
     assert calls == [first]
 

@@ -270,21 +270,22 @@ def _get_from_windows_credential_manager(key: str) -> str | None:
 
 
 def _get_from_cli_stores(key: str) -> str | None:
-    """Read `key` from the stores notte-cli may have used on this platform.
+    """Read `key` the way notte-cli does: the file store first, then the system store.
 
-    On Linux, notte-cli only falls back to the file when no Secret Service is
-    available, so the Secret Service comes first. On macOS and Windows, older
-    CLI versions wrote to the file; newer ones copy that entry into the system
-    store and keep the file as an identical copy until the next login or
-    logout removes it. Reading the file first returns the same key without a
-    Keychain access prompt.
+    notte-cli only keeps a file entry when no system store was usable, when an
+    older version saved it, or as an identical copy while migrating it into
+    the system store. In each case it is the current key, so the CLI uses it
+    first, and reading it first also avoids a Keychain access prompt.
     """
+    value = _get_from_file_backend(key)
+    if value:
+        return value
     platform = _platform()
     if platform == "darwin":
-        return _get_from_file_backend(key) or _get_from_macos_keychain(key)
+        return _get_from_macos_keychain(key)
     if platform == "win32":
-        return _get_from_file_backend(key) or _get_from_windows_credential_manager(key)
-    return _get_from_secret_service(key) or _get_from_file_backend(key)
+        return _get_from_windows_credential_manager(key)
+    return _get_from_secret_service(key)
 
 
 def _is_secure_api_url(api_url: str) -> bool:
