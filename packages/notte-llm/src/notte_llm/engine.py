@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import os
@@ -15,11 +16,14 @@ from litellm import (
     ChatCompletionUserMessage,
 )
 from litellm.exceptions import (
+    APIConnectionError,
     APIError,
     AuthenticationError,
     BadRequestError,
+    InternalServerError,
     NotFoundError,
     RateLimitError,
+    ServiceUnavailableError,
     Timeout,
 )
 from litellm.exceptions import (
@@ -359,6 +363,12 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+# Provider errors that usually clear on their own (overloaded model, rate limit, dropped
+# connection, timeout). completion() retries them after these delays before giving up.
+_TRANSIENT_LLM_ERRORS = (ServiceUnavailableError, InternalServerError, APIConnectionError, RateLimitError, Timeout)
+_TRANSIENT_RETRY_DELAYS_SECONDS = (2.0, 5.0)
+
+
 class LLMEngine:
     PREFIXES: list[str] = ['{"json":', '{"additionalProperties":']  # LLM Response Prefixes
 
@@ -570,6 +580,10 @@ class LLMEngine:
             n=1,
             response_format=response_format,
         )
+        if not response.choices:
+            # The provider returned no candidates (e.g. an overloaded or filtered Gemini response).
+            # Report it as empty content so structured_completion retries like any unusable reply.
+            return None
         return response.choices[0].message.content  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
 
     def _get_model(self, model: str | None) -> str:
@@ -610,23 +624,33 @@ class LLMEngine:
         # Only send extra_body when set: recent litellm forwards an empty one to Anthropic, which rejects it.
         extra_kwargs: dict[str, Any] = {"extra_body": extra_body} if extra_body else {}
         try:
-            response = await litellm.acompletion(  # pyright: ignore [reportUnknownMemberType]
-                model,
-                messages,
-                temperature=temperature,
-                n=n,
-                response_format=response_format,
-                max_completion_tokens=8192,
-                drop_params=True,
-                # Bound the HTTP call so a stalled upstream stream cannot park the event loop
-                # indefinitely. Without this, httpx has no read timeout and silent server
-                # stalls hang the whole agent run.
-                timeout=60,
-                **vertex_kwargs,
-                **extra_kwargs,
-            )
-            # Cast to ModelResponse since we know it's not streaming in this case
-            return cast(ModelResponse, response)
+            for attempt, retry_delay in enumerate((*_TRANSIENT_RETRY_DELAYS_SECONDS, None), start=1):
+                try:
+                    response = await litellm.acompletion(  # pyright: ignore [reportUnknownMemberType]
+                        model,
+                        messages,
+                        temperature=temperature,
+                        n=n,
+                        response_format=response_format,
+                        max_completion_tokens=8192,
+                        drop_params=True,
+                        # Bound the HTTP call so a stalled upstream stream cannot park the event loop
+                        # indefinitely. Without this, httpx has no read timeout and silent server
+                        # stalls hang the whole agent run.
+                        timeout=60,
+                        **vertex_kwargs,
+                        **extra_kwargs,
+                    )
+                    # Cast to ModelResponse since we know it's not streaming in this case
+                    return cast(ModelResponse, response)
+                except _TRANSIENT_LLM_ERRORS as e:
+                    if retry_delay is None:
+                        raise
+                    logger.warning(
+                        f"Transient error from {model} (attempt {attempt}): {type(e).__name__}. Retrying in {retry_delay}s"
+                    )
+                    await asyncio.sleep(retry_delay)
+            raise AssertionError("unreachable: the last attempt returns or raises")
 
         except NotFoundError as e:
             raise ModelNotFoundError(model) from e

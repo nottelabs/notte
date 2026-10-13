@@ -13,7 +13,8 @@ permissions:
 
 concurrency:
   group: node-sdk-${{ github.ref }}
-  cancel-in-progress: true
+  # Superseded PR runs are cancelled; every main commit keeps its own run.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 defaults:
   run:

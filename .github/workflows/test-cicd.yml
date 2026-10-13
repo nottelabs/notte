@@ -22,7 +22,8 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Superseded PR runs are cancelled; every main commit keeps its own run.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   CACHE_TYPE: "pip"
