@@ -142,9 +142,8 @@ hides them from its schema; they stay hand-written until it publishes them:
 | `prepare_run_payload_upload` | local `RunUpdateBody` / `UploadResponse` | `RunPayloadUploadRequest` / `RunPayloadUploadResponse` (no model) |
 | list operations | `ListRequest` models | also `only_current_token`, `include_system` |
 
-Models bound through an override are not in the contract check yet (it matches models to
-schemas by name); moving the overrides next to `SCHEMA_NAMES` once the alias-aware contract
-check lands (#22) closes that gap.
+Models bound through an override are only checked for their required fields (by name or
+alias); the contract check matches models to schemas by name and does not see them yet.
 
 **In the spec, not exposed by the Python SDK** (in Node: ✓): agents ×5 (✓), `anything_start`
 (✓), `scrape_webpage` (✓; Python's `client.scrape` starts a session instead), `search_web`
@@ -165,8 +164,9 @@ reference must not change) and pinning the wire with a request-capturing test li
 1. **This PR.** Generator, checks, refresh and release gate; `profiles.py`, `personas.py`,
    `vaults.py` migrated (1255 → 945 lines; the only hand-written endpoints left there are
    the two off-spec phone-number routes).
-2. **Contract for overrides**, after #22: move `RESPONSE_MODELS` / `REQUEST_MODELS` into
-   `openapi_contract.py` so overridden models are drift-checked too.
+2. **Contract for overrides**: move `RESPONSE_MODELS` / `REQUEST_MODELS` into
+   `openapi_contract.py` (next to `SCHEMA_NAMES`) so overridden models get the full drift
+   check, with the generator importing them.
 3. **`files.py`**: multipart upload via `api.upload_session_file(...).with_file`, list,
    download (`request_path` on the generated endpoint), delete. Add a `SessionFileListRequest`
    model for `limit` / `offset` / `source`.

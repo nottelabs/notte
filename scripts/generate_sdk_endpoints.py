@@ -40,7 +40,8 @@ from typing import Any, cast
 
 from notte_core import types as wire_types
 from notte_core.credentials import base as credentials_base
-from pydantic import BaseModel
+from pydantic import AliasChoices, BaseModel
+from pydantic.fields import FieldInfo
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
@@ -226,12 +227,21 @@ def _namesake(models: dict[str, Binding], schema: str) -> Binding | None:
     return None
 
 
+def _wire_names(name: str, info: FieldInfo) -> set[str]:
+    """The keys a field reads: its name, alias and validation aliases (as openapi_contract matches them)."""
+    alias = info.validation_alias
+    choices = alias.choices if isinstance(alias, AliasChoices) else [alias] if alias is not None else []
+    return {name, *([info.alias] if info.alias else []), *(c for c in choices if isinstance(c, str))}
+
+
 def _check_fields(what: str, binding: Binding, schema: JsonObject | None) -> None:
     if schema is None:
         return
     props = cast(JsonObject, schema.get("properties", {}))
     fields = binding.model.model_fields
-    if missing := [name for name, info in fields.items() if info.is_required() and name not in props]:
+    if missing := [
+        name for name, info in fields.items() if info.is_required() and not _wire_names(name, info) & props.keys()
+    ]:
         raise GenerationError(f"{what}: {binding.name} requires fields the schema lacks: {missing}")
 
 
