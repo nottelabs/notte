@@ -13,7 +13,7 @@ from notte_llm.engine import (
     get_vertex_location,
     is_schema_rejection,
 )
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
 
 
 @pytest.fixture
@@ -401,3 +401,25 @@ class TestSchemaRejectionFallback:
         # One rejected strict attempt, then json_object; the second call skips the strict attempt.
         assert formats[1:] == [{"type": "json_object"}, {"type": "json_object"}]
         assert formats[0] != {"type": "json_object"}
+
+    @pytest.mark.asyncio
+    async def test_rejection_does_not_leak_to_other_schemas_with_same_name(self, llm_engine: LLMEngine) -> None:
+        first = create_model("Choice", text=(str, ...))
+        second = create_model("Choice", text=(str, ...), score=(int, ...))
+        formats: list[Any] = []
+
+        def fake_acompletion(*_args: Any, **kwargs: Any) -> Mock:
+            formats.append(kwargs.get("response_format"))
+            is_strict = kwargs.get("response_format") != {"type": "json_object"}
+            if is_strict and len(formats) == 1:
+                raise self._bad_request(self.GROQ_DUPLICATES)
+            return Mock(choices=[Mock(message=Mock(content='{"text": "done", "score": 1}'))])
+
+        messages: list[Any] = [{"role": "user", "content": "Answer"}]
+        with patch("litellm.acompletion", side_effect=fake_acompletion):
+            _ = await llm_engine.structured_completion(messages, first, model="groq/some-model")
+            _ = await llm_engine.structured_completion(messages, second, model="groq/some-model")
+
+        # first: rejected strict + json_object fallback; second: still tries strict first.
+        assert formats[1] == {"type": "json_object"}
+        assert formats[2] != {"type": "json_object"}

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import re
 from collections.abc import Iterable
@@ -394,11 +396,12 @@ class LLMEngine:
         effective_model = model or self.model
 
         litellm_response_format: dict[str, Any] | type[BaseModel] = dict(type="json_object")
-        schema_key = (effective_model, f"{response_format.__module__}.{response_format.__qualname__}")
+        raw_schema = response_format.model_json_schema()
+        # Keyed by schema content: different schemas can share a class name (e.g. `choice`, `create_model_from_schema`)
+        schema_key = (effective_model, hashlib.sha256(json.dumps(raw_schema, sort_keys=True).encode()).hexdigest())
         if schema_key in _strict_schema_rejected:
             use_strict_response_format = False
         if use_strict_response_format:
-            raw_schema = response_format.model_json_schema()
             # For Anthropic models via OpenRouter, use non-strict json_object format
             # OpenRouter routes to various backends with incompatible schema support:
             # - Bedrock doesn't support oneOf at all
