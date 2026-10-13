@@ -70,3 +70,17 @@ def pytest_generate_tests(metafunc):
         # Apply parameterization only if any matching arguments exist
         if params:
             metafunc.parametrize(",".join(params.keys()), [next(iter(params.values()))])
+
+
+def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
+    # CI shards the live suite across runners with NOTTE_TEST_SHARD="<index>/<total>".
+    shard = os.environ.get("NOTTE_TEST_SHARD")
+    if not shard:
+        return
+    from tests.ci_shard import shard_nodeids
+
+    keep = shard_nodeids([item.nodeid for item in items], shard)
+    deselected = [item for item in items if item.nodeid not in keep]
+    if deselected:
+        config.hook.pytest_deselected(items=deselected)
+    items[:] = [item for item in items if item.nodeid in keep]
