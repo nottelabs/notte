@@ -4,6 +4,14 @@ import chevron
 from litellm import Message
 from notte_core.errors.llm import InvalidPromptTemplateError
 
+_ROLE_ORDER = ("system", "user", "assistant", "tool", "function")
+
+
+def _role_rank(prompt_file: Path) -> tuple[int, str]:
+    role = prompt_file.name.split(".")[0]
+    # Unknown roles sort last; get() rejects them.
+    return (_ROLE_ORDER.index(role) if role in _ROLE_ORDER else len(_ROLE_ORDER), prompt_file.name)
+
 
 class PromptLibrary:
     def __init__(self, prompts_dir: str | Path) -> None:
@@ -13,7 +21,9 @@ class PromptLibrary:
 
     def get(self, prompt_id: str) -> list[Message]:
         prompt_path: Path = self.prompts_dir / prompt_id
-        prompt_files: list[Path] = list(prompt_path.glob("*.md"))
+        # The directory listing order depends on the filesystem: order by role so the
+        # system message always comes first and the conversation reads as written.
+        prompt_files: list[Path] = sorted(prompt_path.glob("*.md"), key=_role_rank)
         if len(prompt_files) == 0:
             raise FileNotFoundError(f"Prompt template not found: {prompt_id}")
         messages: list[Message] = []
@@ -21,7 +31,7 @@ class PromptLibrary:
             with open(prompt_file, "r") as file:
                 content: str = file.read()
                 role: str = prompt_file.name.split(".")[0]
-                if role not in ["assistant", "user", "system", "tool", "function"]:
+                if role not in _ROLE_ORDER:
                     raise InvalidPromptTemplateError(
                         prompt_id=prompt_id,
                         message=(
@@ -29,7 +39,7 @@ class PromptLibrary:
                             "Valid roles are: assistant, user, system, tool, function"
                         ),
                     )
-                messages.append(Message(role=role, content=content))  # type: ignore
+                messages.append(Message(role=role, content=content))
         return messages
 
     def materialize(self, prompt_id: str, variables: dict[str, str] | None = None) -> list[dict[str, str]]:

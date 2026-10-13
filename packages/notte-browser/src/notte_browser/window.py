@@ -702,6 +702,7 @@ class BrowserWindow(BaseModel):
                 storeId=cookie.storeId,
                 value=cookie.value,
                 expires=cookie.expires,
+                partitionKey=cookie.partitionKey,
             )
 
         return [format_cookie(cookie) for cookie in await self.page.context.cookies()]  # type: ignore

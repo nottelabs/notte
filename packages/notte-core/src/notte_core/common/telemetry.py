@@ -241,7 +241,8 @@ def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> 
     # send to posthog
     if posthog_client is not None:
         try:
-            event_properties = properties or {}
+            # Each destination gets its own copy: never mutate the caller's dict or leak keys across.
+            event_properties = dict(properties or {})
             event_properties.update(get_system_info())
             event_properties.update(POSTHOG_EVENT_SETTINGS)
 
@@ -255,11 +256,11 @@ def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> 
     if scarf_client is not None:
         try:
             # Add package version and user_id to all events
-            properties = properties or {}
-            properties.update(get_system_info())
-            properties["event"] = event_name
-            properties["installation_id"] = installation_id
-            scarf_client.log_event(properties=properties)
+            scarf_properties = dict(properties or {})
+            scarf_properties.update(get_system_info())
+            scarf_properties["event"] = event_name
+            scarf_properties["installation_id"] = installation_id
+            scarf_client.log_event(properties=scarf_properties)
         except Exception as e:
             logger.debug(f"Failed to send telemetry event {event_name}: {e}")
 

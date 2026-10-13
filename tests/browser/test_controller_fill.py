@@ -3,6 +3,7 @@ from collections.abc import AsyncIterator
 import pytest
 import pytest_asyncio
 from notte_browser.session import NotteSession
+from notte_browser.window import BrowserWindow
 from notte_core.actions import FallbackFillAction, FillAction, MultiFactorFillAction
 from notte_core.credentials.types import ValueWithPlaceholder
 
@@ -97,3 +98,31 @@ async def test_multi_factor_fill_clear_vs_append(session: NotteSession) -> None:
         MultiFactorFillAction(selector="#otp", value="7", clear_before_fill=False), raise_on_failure=True
     )
     assert (await value_of(session, "#otp")).count("7") == 1
+
+
+@pytest.mark.asyncio
+async def test_press_enter_waits_before_pressing_outside_verbose_mode(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    session.controller.verbose = False
+    events: list[str] = []
+    window = session.window
+    short_wait = type(window).short_wait
+    press = window.page.keyboard.press
+
+    async def recording_short_wait(self: BrowserWindow) -> None:
+        events.append("wait")
+        await short_wait(self)
+
+    async def recording_press(key: str, **kwargs: object) -> None:
+        events.append(key)
+        await press(key, **kwargs)  # pyright: ignore[reportArgumentType]
+
+    monkeypatch.setattr(type(window), "short_wait", recording_short_wait)
+    monkeypatch.setattr(window.page.keyboard, "press", recording_press)
+
+    res = await session.aexecute(FillAction(selector="#input", value="query", press_enter=True), raise_on_failure=True)
+
+    assert res.success
+    assert "Enter" in events
+    assert events[events.index("Enter") - 1] == "wait"

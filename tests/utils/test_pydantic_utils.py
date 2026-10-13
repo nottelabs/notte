@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Any
 
 import pytest
+from notte_core.data.pruning import MarkdownPruningPipe, MaskedDocument
 from notte_core.utils.pydantic_schema import JsonResponseFormat, convert_response_format_to_pydantic_model
 from pydantic import BaseModel, Field, ValidationError
 from typing_extensions import override
@@ -146,3 +147,66 @@ def test_response_format_with_open_ended_dict_values():
             "labels": ["B2B", "AI"],
         }
     }
+
+
+def test_properties_outside_required_are_optional():
+    schema: dict[str, Any] = {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "nickname": {"type": "string"},
+            "address": {
+                "type": "object",
+                "properties": {"city": {"type": "string"}, "zip": {"type": "string"}},
+                "required": ["city"],
+            },
+            "owner": {"$ref": "#/$defs/Owner"},
+        },
+        "required": ["name"],
+        "$defs": {
+            "Owner": {
+                "type": "object",
+                "properties": {"email": {"type": "string"}, "phone": {"type": "string"}},
+                "required": ["email"],
+            }
+        },
+    }
+    model = convert_response_format_to_pydantic_model(schema)
+    assert model is not None
+
+    parsed = model.model_validate({"name": "Ada", "address": {"city": "Paris"}, "owner": {"email": "a@b.c"}})
+    assert parsed.model_dump() == {
+        "name": "Ada",
+        "nickname": None,
+        "address": {"city": "Paris", "zip": None},
+        "owner": {"email": "a@b.c", "phone": None},
+    }
+    for missing_required in ({}, {"name": "Ada", "address": {}}, {"name": "Ada", "owner": {}}):
+        with pytest.raises(ValidationError):
+            _ = model.model_validate(missing_required)
+
+
+def test_omitted_optional_properties_survive_a_dump_and_validate_round_trip():
+    schema: dict[str, Any] = {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "nickname": {"type": "string"},
+            "address": {
+                "type": "object",
+                "properties": {"city": {"type": "string"}, "zip": {"type": "string"}},
+                "required": ["city"],
+            },
+        },
+        "required": ["name", "address"],
+    }
+    model = convert_response_format_to_pydantic_model(schema)
+    assert model is not None
+    parsed = model.model_validate({"name": "Ada", "address": {"city": "Paris"}})
+
+    # Omitted values dump as null; the model must accept its own output (extraction unmasking,
+    # the SDK reading a cloud scrape).
+    assert model.model_validate(parsed.model_dump()) == parsed
+    assert model.model_validate_json(parsed.model_dump_json()) == parsed
+    document = MaskedDocument(content="", links={}, images={})
+    assert MarkdownPruningPipe.unmask_pydantic(document, parsed) == parsed

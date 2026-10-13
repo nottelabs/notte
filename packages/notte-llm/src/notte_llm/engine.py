@@ -366,6 +366,8 @@ class LLMEngine:
         model: str | None = None,
         use_strict_response_format: bool = True,
     ) -> TResponseFormat:
+        # Retries add feedback messages: keep them out of the caller's list.
+        messages = list(messages)
         tries = self.nb_retries_structured_output + 1
         content = None
         effective_model = model or self.model

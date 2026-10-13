@@ -53,3 +53,27 @@ async def test_unvalidated_vault_credential_fails_without_typing_the_placeholder
         value = await session.window.page.locator("#other").input_value()
         assert value == "public"
         assert PASSWORD not in value and SECRET_PASSWORD not in value
+
+
+@pytest.mark.asyncio
+async def test_plain_text_that_looks_like_a_placeholder_is_typed_as_given() -> None:
+    vault = MockVault({"about:blank": {"email": SECRET_EMAIL, "password": SECRET_PASSWORD}})
+    async with NotteSession(headless=True, vault=vault) as session:
+        await session.window.page.set_content(PAGE)
+        other = session.window.page.locator("#other")
+
+        # "John Doe" is the cardholder placeholder, but `#other` is no payment field.
+        result = await session.aexecute(FillAction(selector="#other", value="John Doe"), raise_on_failure=True)
+        assert result.success
+        assert await other.input_value() == "John Doe"
+
+        # Text merely containing placeholders is never a credential request.
+        text = f"Hi John Doe, your code is 999779, reply to {EMAIL}"
+        result = await session.aexecute(FillAction(selector="#other", value=text), raise_on_failure=True)
+        assert result.success
+        assert await other.input_value() == text
+
+        # A value that is exactly a placeholder still resolves from the vault.
+        result = await session.aexecute(FillAction(selector="#email", value=EMAIL), raise_on_failure=True)
+        assert result.success
+        assert await session.window.page.locator("#email").input_value() == SECRET_EMAIL

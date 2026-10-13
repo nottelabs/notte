@@ -319,3 +319,28 @@ Step 4: Process relevant elements.
         )
         text = sc.extract(response_text)
         assert text == "# Before you continue to Google"
+
+
+@pytest.mark.asyncio
+async def test_structured_completion_keeps_the_callers_messages(
+    llm_engine: LLMEngine, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Answer(BaseModel):
+        value: int
+
+    replies = iter(["not json", '{"value": "nan"}', '{"value": 3}'])
+    seen: list[int] = []
+
+    async def single_completion(messages: list[object], *args: object, **kwargs: object) -> str:
+        seen.append(len(messages))
+        return next(replies)
+
+    monkeypatch.setattr(llm_engine, "nb_retries_structured_output", 3)
+    monkeypatch.setattr(llm_engine, "single_completion", single_completion)
+    messages = [{"role": "user", "content": "How much?"}]
+
+    answer = await llm_engine.structured_completion(messages, Answer, model="openai/gpt-4o")  # pyright: ignore[reportArgumentType]
+
+    assert answer == Answer(value=3)
+    assert seen == [1, 2, 3]  # each retry adds its feedback to the conversation it sends
+    assert messages == [{"role": "user", "content": "How much?"}]

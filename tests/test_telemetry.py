@@ -87,3 +87,42 @@ def test_importing_the_sdk_does_not_start_telemetry() -> None:
         "assert t._clients.cache_info().currsize == 0\n"
     )
     _ = subprocess.run([sys.executable, "-c", code], check=True, capture_output=True)
+
+
+@pytest.mark.asyncio
+async def test_reading_the_session_snapshot_is_not_a_usage_event(monkeypatch: pytest.MonkeyPatch) -> None:
+    from notte_browser.session import NotteSession
+
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto("data:text/html,<button>Go</button>")
+        events = capture_usage_events(monkeypatch)
+        _ = await session.aobserve()
+        _ = session.snapshot
+
+    names = [name for name, _ in events]
+    assert "local.session.snapshot" not in names
+    assert names.count("local.session.observe") == 1
+
+
+def test_capture_event_copies_properties_per_destination(monkeypatch: pytest.MonkeyPatch) -> None:
+    sent: dict[str, dict[str, Any]] = {}
+
+    class PostHog:
+        def capture(self, *, distinct_id: str, event: str, properties: dict[str, Any]) -> None:
+            sent["posthog"] = properties
+
+    class Scarf:
+        def log_event(self, *, properties: dict[str, Any]) -> None:
+            sent["scarf"] = properties
+
+    monkeypatch.setattr(telemetry, "DISABLE_TELEMETRY", False)
+    monkeypatch.setattr(telemetry, "_clients", lambda: (PostHog(), Scarf(), "installation"))
+    properties: dict[str, Any] = {"status": "success"}
+
+    telemetry.capture_event("test.event", properties=properties)
+
+    assert properties == {"status": "success"}
+    assert set(telemetry.POSTHOG_EVENT_SETTINGS) <= set(sent["posthog"])
+    assert not set(telemetry.POSTHOG_EVENT_SETTINGS) & set(sent["scarf"])
+    assert sent["scarf"]["event"] == "test.event"
+    assert "event" not in sent["posthog"]

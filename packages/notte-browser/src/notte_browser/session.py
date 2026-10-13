@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import re
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Literal, Unpack, overload
@@ -260,7 +259,6 @@ class NotteSession(AsyncResource, SyncResource):
         return self._window
 
     @property
-    @track_usage("local.session.snapshot")
     def snapshot(self) -> BrowserSnapshot:
         if self._snapshot is None:
             raise NoSnapshotObservedError()
@@ -537,17 +535,7 @@ class NotteSession(AsyncResource, SyncResource):
                         raise ScrapeIsNotAnActionError()
                     case EvaluateJsAction(code=code):
                         # Evaluate JavaScript code on the page and return the result.
-                        # If the code contains bare `return` statements (invalid outside
-                        # a function), wrap it in an IIFE so Playwright can evaluate it.
-                        # Skip wrapping if the code is already a function/IIFE.
-                        stripped = code.strip()
-                        # Detect code that is already a function expression or IIFE:
-                        #   "("            -> grouped expression / IIFE
-                        #   "function ..." -> function declaration/expression (word boundary avoids "functionName()")
-                        #   "async function" / "async (" -> async variants (avoids "asyncio.run()", "async_helper()")
-                        is_already_function = bool(re.match(r"^(?:\(|function\b|async\s+(?:function\b|\())", stripped))
-                        needs_wrap = bool(re.search(r"\breturn\b", stripped)) and not is_already_function
-                        js_code = f"(() => {{\n{code}\n}})()" if needs_wrap else code
+                        # The guard runs code with a top-level `return` as a function body.
                         guard_token = new_guard_token()
                         try:
                             evaluate_kwargs: dict[str, bool] = {}
@@ -561,7 +549,7 @@ class NotteSession(AsyncResource, SyncResource):
                                 self.window.page.evaluate(
                                     PAGE_RESULT_GUARD,
                                     [
-                                        page_expression(js_code),
+                                        page_expression(code),
                                         config.evaluate_js_max_result_bytes,
                                         config.evaluate_js_max_result_values,
                                         guard_token,

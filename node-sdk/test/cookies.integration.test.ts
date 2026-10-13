@@ -74,15 +74,19 @@ describe('Cookies Integration Tests', () => {
     const cookieFile = join(tempDir, 'cookies.json');
     await writeFile(cookieFile, JSON.stringify(cookies));
 
+    const added: Cookie = { ...cookies[0], name: 'notte-cookie-file-saved', value: 'from-session' };
     await client.Session({ proxies: false, idle_timeout_minutes: 1, cookie_file: cookieFile }).use(async session => {
       const retrieved = await session.getCookies();
       expect(retrieved.some(cookie => cookie.name === cookies[0].name)).toBe(true);
+      await session.setCookies([added]);
     });
 
+    // stop() merges the session's cookies into the file: the loaded cookie stays once (not duplicated)
+    // and the cookie set during the session is saved.
     const saved = JSON.parse(await readFile(cookieFile, 'utf-8')) as Cookie[];
-    // the original entry plus the cookies read back from the session
-    expect(saved.length).toBeGreaterThan(cookies.length);
-    expect(saved[0]).toEqual(cookies[0]);
-    expect(saved.slice(1).some(cookie => cookie.name === cookies[0].name)).toBe(true);
+    const loaded = saved.filter(cookie => cookie.name === cookies[0].name);
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0].value).toBe(cookies[0].value);
+    expect(saved.find(cookie => cookie.name === added.name)?.value).toBe(added.value);
   });
 });

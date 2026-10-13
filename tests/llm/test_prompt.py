@@ -66,3 +66,19 @@ def test_materialize_prompt(temp_prompts_dir: Path) -> None:
     # TODO: Andrea check this
     # with pytest.raises(ValueError, match="Missing required variable"):
     #     prompt_lib.materialize("test-prompt", {"wrong_var": "value"})
+
+
+def test_get_prompt_orders_messages_by_role_not_by_listing(
+    temp_prompts_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    glob = Path.glob
+
+    def reversed_glob(self: Path, pattern: str):  # pyright: ignore[reportMissingParameterType, reportUnknownParameterType]
+        # Simulate a filesystem that lists the files in another order.
+        return iter(sorted(glob(self, pattern), reverse=True))
+
+    monkeypatch.setattr(Path, "glob", reversed_glob)
+
+    messages = PromptLibrary(temp_prompts_dir).get("test-prompt")
+
+    assert [msg.role for msg in messages] == ["system", "user", "assistant"]

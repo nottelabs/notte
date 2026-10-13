@@ -41,11 +41,11 @@ def test_track_usage_delivers_metadata_only_to_telemetry_clients(monkeypatch: py
             },
         )
     ]
+    # PostHog-only settings such as `process_person_profile` stay out of the Scarf payload.
     assert scarf_events == [
         {
             "status": "error",
             "error_type": "RuntimeError",
-            "process_person_profile": True,
             "event": "test.delivery_boundary",
             "installation_id": "test-installation",
         }

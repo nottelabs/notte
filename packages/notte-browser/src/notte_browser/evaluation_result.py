@@ -113,7 +113,24 @@ PAGE_RESULT_GUARD = """async ([code, maxBytes, maxValues, token]) => {
     }
   };
 
-  let value = (0, eval)(code);
+  // A top-level `return` (outside any nested function) is illegal in a
+  // script, so such code runs as a function body: it compiles as a function
+  // body but not as statements in a never-taken block of eval code, where
+  // `return` is illegal. Neither check runs the user code.
+  const hasTopLevelReturn = (source) => {
+    try {
+      new Function(source);
+    } catch (error) {
+      return false;
+    }
+    try {
+      new Function("source", "eval(source)")("if (false) {\\n" + source + "\\n}");
+    } catch (error) {
+      return true;
+    }
+    return false;
+  };
+  let value = (0, eval)(hasTopLevelReturn(code) ? "(() => {\\n" + code + "\\n})()" : code);
   if (typeof value === "function") {
     value = value();
   }

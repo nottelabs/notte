@@ -143,6 +143,51 @@ _MOVE_CARET_TO_END = """
 
 _IS_TEXT_FORM_CONTROL = "(el) => el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement"
 
+# Finds the option of an opened custom dropdown whose visible text, `data-value`
+# or `value` is the requested value. When the dropdown names its list with
+# aria-controls/aria-owns, only that list is searched, so a missing option is an
+# error rather than a click on an unrelated item elsewhere on the page. Otherwise
+# options inside the dropdown and its closest ancestors come first, then any in
+# the document (popups are often portaled to <body>). ARIA options win over plain
+# list items at every distance.
+_FIND_DROPDOWN_OPTION = """
+(el, value) => {
+    const norm = (text) => (text || "").replace(/\\s+/g, " ").trim();
+    const wanted = norm(value);
+    const root = el.getRootNode();
+    const scopes = [];
+    for (const attr of ["aria-controls", "aria-owns"]) {
+        for (const id of (el.getAttribute(attr) || "").split(/\\s+/).filter(Boolean)) {
+            const owned = root.getElementById ? root.getElementById(id) : document.getElementById(id);
+            if (owned) scopes.push(owned);
+        }
+    }
+    if (scopes.length === 0) {
+        for (let node = el; node; node = node.parentElement) scopes.push(node);
+        scopes.push(root);
+    }
+    const visible = (node) => {
+        const rect = node.getBoundingClientRect();
+        const style = getComputedStyle(node);
+        return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none";
+    };
+    const matches = (node) =>
+        node !== el &&
+        visible(node) &&
+        (norm(node.innerText) === wanted ||
+            node.getAttribute("data-value") === value ||
+            node.getAttribute("value") === value);
+    for (const selector of ['[role="option"], [role="menuitemradio"], [role="menuitem"]', "li"]) {
+        for (const scope of scopes) {
+            for (const node of scope.querySelectorAll(selector)) {
+                if (matches(node)) return node;
+            }
+        }
+    }
+    return null;
+}
+"""
+
 
 # Installed once per download action. Wraps URL.createObjectURL so we retain a
 # strong JS reference to each Blob under its URL key, which lets us read the
@@ -276,6 +321,32 @@ class BrowserController:
         await window.short_wait()
         await window.page.keyboard.press(key="Backspace")
         await window.short_wait()
+
+    async def _select_custom_dropdown_option(
+        self, window: BrowserWindow, locator: Locator, value: str, budget: _ActionBudget
+    ) -> None:
+        """Open a non-`<select>` dropdown and click the option matching `value`."""
+        try:
+            _ = await locator.click(timeout=budget.remaining_ms())
+        except Exception as e:
+            raise ActionExecutionError("select_dropdown", window.page.url, reason="Invalid selector") from e
+        # The options may render a little after the click (animation, lazy list).
+        deadline = asyncio.get_running_loop().time() + min(budget.remaining_ms(), 2000) / 1000
+        while True:
+            handle = await locator.evaluate_handle(_FIND_DROPDOWN_OPTION, value, timeout=budget.remaining_ms())
+            try:
+                option = handle.as_element()
+                if option is not None:
+                    await option.click(timeout=budget.remaining_ms())
+                    return
+            finally:
+                with suppress(Error):  # the click may have navigated away
+                    await handle.dispose()
+            if asyncio.get_running_loop().time() >= deadline:
+                raise ActionExecutionError(
+                    "select_dropdown", window.page.url, reason=f"No dropdown option matches {value!r}"
+                )
+            await window.page.wait_for_timeout(100)
 
     async def _append_text(self, window: BrowserWindow, locator: Locator, text: str, timeout: float) -> None:
         """Type `text` after the element's current content instead of replacing it."""
@@ -577,10 +648,7 @@ class BrowserController:
                     # Handle standard HTML select
                     _ = await locator.select_option(get_str_value(value), timeout=budget.remaining_ms())
                 else:
-                    try:
-                        _ = await locator.click(timeout=budget.remaining_ms())
-                    except Exception as e:
-                        raise ActionExecutionError("select_dropdown", "", reason="Invalid selector") from e
+                    await self._select_custom_dropdown_option(window, locator, get_str_value(value), budget)
             case UploadFileAction(file_path=file_path):
                 if self.storage is None or self.storage.upload_dir is None:
                     raise NoStorageObjectProvidedError(action.name())
@@ -771,7 +839,7 @@ class BrowserController:
         if action.press_enter:
             if self.verbose:
                 logger.info(f"🪦 Pressing enter for action {action.id}")
-                await window.short_wait()
+            await window.short_wait()
             await window.page.keyboard.press("Enter")
 
     @profiler.profiled(service_name="execution")

@@ -88,7 +88,7 @@ class CredentialField(BaseModel, ABC, frozen=True):  # pyright: ignore[reportUns
 
     @model_serializer
     def to_dict(self):
-        dic = self.__dict__
+        dic = dict(self.__dict__)
         dic["field_name"] = self.alias
         return dic
 
@@ -225,6 +225,11 @@ class CardFullExpirationField(RegexCredentialField, frozen=True):
     instruction_name: ClassVar[str] = "a payment form expiration date with month and year"
 
 
+# Placeholders that are also ordinary text: filled as typed into an element that
+# does not look like their payment field, instead of failing the action.
+PLAIN_TEXT_PLACEHOLDER_FIELDS: tuple[type[CredentialField], ...] = (CardHolderField, CardNumberField)
+
+
 recursive_data = list["recursive_data"] | dict[str, "recursive_data"] | str | Any
 
 
@@ -315,7 +320,7 @@ class BaseVault(ABC):
                 raise ValueError(f"Invalid credential type {key}. Valid types are: {CredentialField.registry.keys()}")
 
             if not isinstance(value, str):
-                raise ValueError("Invalid credential type {type(value)}, should be str")
+                raise ValueError(f"Invalid credential type {type(value)}, should be str")
 
             creds.append(cred_class(value=value))
         return creds
@@ -617,15 +622,18 @@ class BaseVault(ABC):
             action: The action to check for credentials
 
         Returns:
-            True if the action contains credential placeholders, False otherwise
+            True if one of the action's fill values is exactly a credential placeholder, False otherwise
         """
-        json_action = action.model_dump_json()
-        initial = False
-
-        for placeholder_val in CredentialField.all_placeholders():
-            initial |= placeholder_val in json_action
-
-        return initial
+        # Placeholders are realistic values ("John Doe", "999779", ...): only a value
+        # that is a placeholder as a whole asks for a credential, never one containing it.
+        if isinstance(action, FormFillAction):
+            values = list(action.value.values())
+        elif isinstance(action, (MultiFactorFillAction, FillAction, FallbackFillAction, SelectDropdownOptionAction)):
+            values = [action.value]
+        else:
+            return False
+        placeholders = CredentialField.all_placeholders()
+        return any(get_str_value(value) in placeholders for value in values)
 
     async def replace_credentials(
         self, action: BaseAction, attrs: LocatorAttributes, snapshot: BrowserSnapshot
@@ -665,6 +673,14 @@ class BaseVault(ABC):
                 raise InvalidPlaceholderError(placeholder_value)
 
             cred_key = cred_class.alias
+
+            if (
+                not isinstance(action, FormFillAction)
+                and cred_class in PLAIN_TEXT_PLACEHOLDER_FIELDS
+                and not cred_class(value=placeholder_value).validate_element(attrs)
+            ):
+                # Outside a payment field this placeholder is ordinary text the caller meant to type.
+                continue
 
             if cred_class in (CardHolderField, CardNumberField, CardCVVField, CardFullExpirationField):
                 creds_dict = await self.get_credit_card_async()

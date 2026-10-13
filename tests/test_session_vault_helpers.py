@@ -239,3 +239,28 @@ def test_session_vault_form_fill_keeps_plain_values_next_to_credentials() -> Non
     assert isinstance(updated.value["email"], ValueWithPlaceholder)
     assert updated.value["email"].get_secret_value() == "real@example.com"
     assert updated.value["city"] == "Paris"
+
+
+def test_session_vault_only_matches_whole_placeholder_values() -> None:
+    vault = MockVault({"https://example.com": {"email": "real@example.com", "password": "pw"}})
+    session = NoopLocateSession(vault=vault)
+    session.snapshot = make_snapshot("https://example.com")
+
+    # Placeholders inside other text, or in fields other than the value, are not credentials.
+    for action in (
+        FillAction(selector="#msg", value=f"Hi John Doe, use {PASSWORD} or 999779"),
+        FillAction(id="I999779", value="hello"),
+        FormFillAction(value={"full_name": "John Doe Jr", "city": "user@example.org street"}),
+    ):
+        assert not vault.contains_credentials(action)
+        assert asyncio.run(session._action_with_vault(action)) is action
+
+    # A plain-text placeholder is typed as given outside a payment field.
+    plain = FillAction(selector="#name", value="John Doe")
+    assert asyncio.run(session._action_with_vault(plain)) is plain
+    assert plain.value == "John Doe"
+
+    # Whole-value placeholders still resolve.
+    email = asyncio.run(session._action_with_vault(FillAction(selector="#email", value=EMAIL)))
+    assert isinstance(email.value, ValueWithPlaceholder)
+    assert email.value.get_secret_value() == "real@example.com"

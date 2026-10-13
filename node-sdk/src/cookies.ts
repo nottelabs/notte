@@ -17,8 +17,14 @@ export async function readCookiesFile(cookieFile: string): Promise<Cookie[]> {
 }
 
 /**
- * Append `cookies` to the JSON list stored in `cookieFile`, creating the file
- * when it does not exist yet.
+ * Merge `cookies` into the JSON list stored in `cookieFile`, one entry per
+ * cookie, creating the file when it does not exist yet.
+ *
+ * Sessions load the file when they start, so the browser's jar on stop repeats
+ * the cookies it loaded: appending them blindly duplicated the whole file on
+ * every stop. Merging (rather than overwriting) keeps cookies another session
+ * saved to the same file. A cookie is identified by name, domain, path and
+ * partition key; the newest value wins.
  */
 export async function createOrAppendCookiesToFile(cookieFile: string, cookies: Cookie[]): Promise<void> {
   console.info(`🍪 Automatically saving cookies to ${cookieFile}`);
@@ -35,9 +41,16 @@ export async function createOrAppendCookiesToFile(cookieFile: string, cookies: C
         throw error;
       }
     }
-    existing.push(...cookies);
-    await writeFile(cookieFile, JSON.stringify(existing), 'utf-8');
+    const merged = new Map<string, Cookie>();
+    for (const cookie of [...existing, ...cookies]) {
+      merged.set(cookieIdentity(cookie), cookie);
+    }
+    await writeFile(cookieFile, JSON.stringify([...merged.values()]), 'utf-8');
   });
+}
+
+function cookieIdentity(cookie: Cookie): string {
+  return JSON.stringify([cookie.name, cookie.domain ?? null, cookie.path ?? null, cookie.partitionKey ?? null]);
 }
 
 const fileLocks = new Map<string, Promise<void>>();

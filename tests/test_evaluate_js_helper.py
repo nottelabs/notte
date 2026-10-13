@@ -121,6 +121,26 @@ async def test_expression_forms_keep_their_meaning_behind_the_guard() -> None:
 
 
 @pytest.mark.asyncio
+async def test_only_a_top_level_return_runs_the_code_as_a_function_body() -> None:
+    async with NotteSession(headless=True) as session:
+        # A `return` inside a nested function leaves the code an expression.
+        assert await session.aevaluate_js("[1, 2].map(n => { return n * 2 })") == "[\n  2,\n  4\n]"
+        assert await session.aevaluate_js("[1, 2].filter(function (n) { return n > 1 }).length") == "1"
+        assert await session.aevaluate_js("const f = () => { return 3 }; f()") == "3"
+        assert await session.aevaluate_js("'return'") == "return"
+        # A `return` outside any function, even inside a block, is a function body.
+        assert await session.aevaluate_js("if (true) { return 8 } else { return 9 }") == "8"
+        assert await session.aevaluate_js("const xs = [1].map(n => { return n }); return xs.length") == "1"
+        # The checks compile the code without running it: side effects happen once.
+        code = "window.__runs = (window.__runs || 0) + 1; [0].map(n => { return n }); window.__runs"
+        assert await session.aevaluate_js(code) == "1"
+        assert await session.aevaluate_js("window.__probe = (window.__probe || 0) + 1; return window.__probe") == "1"
+        assert await session.aevaluate_js("typeof __probeVar") == "undefined"
+        assert await session.aevaluate_js("var __probeVar = 1; return 2") == "2"
+        assert await session.aevaluate_js("typeof __probeVar") == "undefined"
+
+
+@pytest.mark.asyncio
 async def test_oversized_result_is_rejected_inside_the_page(monkeypatch) -> None:
     # A single large string is cheap for the page to build but, without the
     # guard, every byte would be serialized by the browser, decoded by the
