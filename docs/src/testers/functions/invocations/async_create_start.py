@@ -1,12 +1,18 @@
 # @sniptest filename=async_create_start.py
+import os
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
-# Create a run (returns immediately)
-run_response = client.functions.create_run("function_abc123", local=False)
+function = client.Function(os.environ["NOTTE_FUNCTION_ID"])
+# Optional: create a run record when you need its ID before execution.
+created = function.create_run()
 
-run_id = run_response.workflow_run_id
+run_id = created.function_run_id
 print(f"Run created: {run_id}")
 
-# Start the run
-client.functions.run(run_id, function_id="function_abc123", variables={"url": "https://example.com"})
+# Execute that run and wait for its result.
+result = function.run(function_run_id=run_id, url="https://example.com")
+print(result.result)
+run = function.get_run(run_id)
+print(run.status)

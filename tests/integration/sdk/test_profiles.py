@@ -125,6 +125,7 @@ def test_session_with_profile_read_only(client: NotteClient) -> None:
     try:
         # Create session with profile in read-only mode
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": False},
             open_viewer=False,
         ) as session:
@@ -147,6 +148,7 @@ def test_session_with_profile_persist(client: NotteClient) -> None:
     try:
         # First session: persist changes
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
@@ -172,6 +174,7 @@ def test_profile_state_persists_across_sessions(client: NotteClient) -> None:
     try:
         # First session: visit a page and persist
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
@@ -182,6 +185,7 @@ def test_profile_state_persists_across_sessions(client: NotteClient) -> None:
 
         # Second session: use same profile in read-only mode
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": False},
             open_viewer=False,
         ) as session:
@@ -199,6 +203,7 @@ def test_profile_cookies_persist(client: NotteClient) -> None:
     try:
         # First session: set cookies and persist
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
@@ -209,6 +214,7 @@ def test_profile_cookies_persist(client: NotteClient) -> None:
 
         # Second session: cookies should be loaded
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": False},
             open_viewer=False,
         ) as session:
@@ -227,6 +233,7 @@ def test_profile_localstorage_persist(client: NotteClient) -> None:
     try:
         # First session: set localStorage and persist
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
@@ -239,6 +246,7 @@ def test_profile_localstorage_persist(client: NotteClient) -> None:
 
         # Second session: localStorage should be restored
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": False},
             open_viewer=False,
         ) as session:
@@ -255,6 +263,7 @@ def test_profile_sessionstorage_persist(client: NotteClient) -> None:
     try:
         # First session: set sessionStorage and persist
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
@@ -266,6 +275,7 @@ def test_profile_sessionstorage_persist(client: NotteClient) -> None:
 
         # Second session: sessionStorage should be restored
         with client.Session(
+            proxies=False,
             profile={"id": profile.profile_id, "persist": False},
             open_viewer=False,
         ) as session:
@@ -273,3 +283,33 @@ def test_profile_sessionstorage_persist(client: NotteClient) -> None:
             pass
     finally:
         _ = client.profiles.delete(profile.profile_id)
+
+
+def test_save_running_session_into_new_profile(client: NotteClient) -> None:
+    """A session started without a profile can be saved into one while it runs."""
+    cookie_value = f"saved-{int(time.time())}"
+    profile_id: str | None = None
+    try:
+        with client.Session(proxies=False, open_viewer=False) as session:
+            _ = session.execute(type="goto", url="https://example.com")
+            _ = session.execute(
+                type="evaluate_js",
+                code=f"(() => {{ document.cookie = 'notte_saved={cookie_value}; path=/; max-age=3600'; return true; }})()",
+            )
+            profile = session.save_profile(name="save-on-demand-test")
+            profile_id = profile.profile_id
+            assert profile.persisted_domains.count("example.com") == 1
+
+            # The session keeps running after the save.
+            _ = session.execute(type="goto", url="https://example.com")
+
+        with client.Session(
+            proxies=False,
+            profile={"id": profile_id, "persist": False},
+            open_viewer=False,
+        ) as session:
+            cookies = session.get_cookies()
+            assert any(cookie["name"] == "notte_saved" and cookie["value"] == cookie_value for cookie in cookies)
+    finally:
+        if profile_id is not None:
+            _ = client.profiles.delete(profile_id)

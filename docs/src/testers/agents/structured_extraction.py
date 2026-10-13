@@ -13,7 +13,7 @@ class CompanyInfo(BaseModel):
 client = NotteClient()
 
 with client.Session() as session:
-    agent = client.Agent(session=session, reasoning_model="gemini/gemini-2.0-flash", max_steps=10)
+    agent = client.Agent(session=session, reasoning_model="gemini/gemini-3.5-flash", max_steps=10)
 
     result = agent.run(
         task="Extract company contact information", url="https://example.com/contact", response_format=CompanyInfo

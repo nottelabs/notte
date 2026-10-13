@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/sessions/cdp/playwright_cdp_error_handling.py */}
 
+<CodeGroup>
+
 ```python playwright_cdp_error_handling.py
 from notte_sdk import NotteClient
 from playwright.sync_api import sync_playwright  # type: ignore[import-not-found]
@@ -16,3 +18,28 @@ with client.Session() as session:
         except Exception as e:
             print(f"CDP connection failed: {e}")
 ```
+
+```typescript playwright_cdp_error_handling.ts
+import { NotteClient } from 'notte-sdk';
+import { chromium } from 'playwright-core';
+
+const client = new NotteClient();
+
+const status = await client.Session().use(async session => {
+  const status = await session.status();
+  const cdpUrl = status.cdp_url!;
+  try {
+    const browser = await chromium.connectOverCDP(cdpUrl);
+    try {
+      // ... operations
+      return status;
+    } finally {
+      await browser.close();
+    }
+  } catch (error) {
+    console.log(`CDP connection failed: ${error}`);
+  }
+});
+```
+
+</CodeGroup>

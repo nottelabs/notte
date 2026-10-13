@@ -36,7 +36,7 @@ def test_set_cookies(cookies: list[CookieDict]):
             json.dump(cookies, f)
 
         # create a new session
-        with notte.Session(timeout_minutes=1) as session:
+        with notte.Session(proxies=False, timeout_minutes=1) as session:
             _ = session.set_cookies(cookie_file=str(cookie_path))
 
 
@@ -45,7 +45,7 @@ def test_get_cookies():
     notte = NotteClient()
 
     # create a new session
-    with notte.Session(timeout_minutes=1) as session:
+    with notte.Session(proxies=False, timeout_minutes=1) as session:
         _ = session.execute(type="goto", value="https://www.ecosia.org")
         _ = session.observe()
         resp = session.get_cookies()
@@ -63,7 +63,7 @@ def test_get_set_cookies(cookies: list[CookieDict]):
             json.dump(cookies, f)
 
         # create a new session
-        with notte.Session(timeout_minutes=1) as session:
+        with notte.Session(proxies=False, timeout_minutes=1) as session:
             _ = session.set_cookies(cookie_file=str(cookie_path))
 
             resp = session.get_cookies()

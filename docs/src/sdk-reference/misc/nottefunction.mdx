@@ -10,6 +10,20 @@ This is a wrapper around RemoteWorkflow that uses function_id terminology
 
 ## Methods
 
+### create_run
+
+```python
+create_run(local: bool = False) -> CreateFunctionRunResponse
+```
+
+Create a run record without starting execution
+
+**Returns:**
+
+<Visibility for="humans">[`CreateFunctionRunResponse`](/sdk-reference/misc/createfunctionrunresponse)</Visibility><Visibility for="agents">[`CreateFunctionRunResponse`](/sdk-reference/misc/createfunctionrunresponse.md)</Visibility>
+
+---
+
 ### delete
 
 ```python
@@ -111,7 +125,7 @@ Get presigned URLs for the workflow run replay
 ### run
 
 ```python
-run(version: str | None = None, local: bool = False, restricted: bool = True, timeout: int | None = None, stream: bool = True, raise_on_failure: bool = True, function_run_id: str | None = None, workflow_run_id: str | None = None, log_callback: Callable[[str], None] | None = None, variables: Any) -> FunctionRunResponse
+run(version: str | None = None, local: bool = False, restricted: bool = True, timeout: int | None = None, stream: bool = True, raise_on_failure: bool = True, function_run_id: str | None = None, workflow_run_id: str | None = None, log_callback: Callable[[str], None] | None = None, runtime: FunctionRuntime | None = None, input_variables: dict[str, Any] | None = None, variables: Any) -> FunctionRunResponse
 ```
 
 Run the function code using the specified version and variables

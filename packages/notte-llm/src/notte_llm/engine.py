@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import hashlib
+import json
+import os
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -36,6 +39,7 @@ from notte_core.errors.provider import (
     MissingAPIKeyForModel,
     ModelDoesNotSupportImageError,
     ModelNotFoundError,
+    UnsupportedResponseSchemaError,
 )
 from notte_core.errors.provider import RateLimitError as NotteRateLimitError
 from notte_core.profiling import profiler
@@ -166,6 +170,18 @@ def is_gemini_model(model: str) -> bool:
     return "gemini" in model_lower or "vertex_ai" in model_lower
 
 
+def get_vertex_location(model: str) -> str | None:
+    """Vertex AI location to use for a Gemini model, or None for other models.
+
+    litellm defaults to us-central1, but recent Gemini models (e.g. gemini-3.5-flash) are only
+    served from the global endpoint and a few regions. Default to global unless a location is
+    already configured.
+    """
+    if not model.lower().startswith("vertex_ai/gemini"):
+        return None
+    return litellm.vertex_location or os.getenv("VERTEXAI_LOCATION") or os.getenv("VERTEX_LOCATION") or "global"
+
+
 def is_anthropic_model(model: str) -> bool:
     """Check if the model is an Anthropic model."""
     model_lower = model.lower()
@@ -175,6 +191,19 @@ def is_anthropic_model(model: str) -> bool:
         or "/anthropic/" in model_lower
         or "/claude-" in model_lower
     )
+
+
+# Provider messages for a request whose structured output schema was rejected, e.g. Anthropic
+# ("output_format.schema: ... 'discriminator' is not supported", "too many parameters with union types")
+# and Groq ("invalid JSON schema for response_format").
+_SCHEMA_REJECTION = re.compile(r"output_format\.schema|invalid json schema|union types", re.IGNORECASE)
+
+# (model, response format) pairs whose strict schema a provider rejected; later calls go straight to json_object.
+_strict_schema_rejected: set[tuple[str, str]] = set()
+
+
+def is_schema_rejection(message: str) -> bool:
+    return _SCHEMA_REJECTION.search(message) is not None
 
 
 def is_openrouter_model(model: str) -> bool:
@@ -367,8 +396,12 @@ class LLMEngine:
         effective_model = model or self.model
 
         litellm_response_format: dict[str, Any] | type[BaseModel] = dict(type="json_object")
+        raw_schema = response_format.model_json_schema()
+        # Keyed by schema content: different schemas can share a class name (e.g. `choice`, `create_model_from_schema`)
+        schema_key = (effective_model, hashlib.sha256(json.dumps(raw_schema, sort_keys=True).encode()).hexdigest())
+        if schema_key in _strict_schema_rejected:
+            use_strict_response_format = False
         if use_strict_response_format:
-            raw_schema = response_format.model_json_schema()
             # For Anthropic models via OpenRouter, use non-strict json_object format
             # OpenRouter routes to various backends with incompatible schema support:
             # - Bedrock doesn't support oneOf at all
@@ -405,6 +438,20 @@ class LLMEngine:
             except InvalidJsonResponseForStructuredOutput as e:
                 if use_strict_response_format:
                     # fallback to non-strict response format
+                    litellm_response_format = dict(type="json_object")
+                    use_strict_response_format = False
+                    tries += 1  # Don't consume a retry slot for the format fallback
+                    continue
+                raised_exc = e
+                raise e
+            except UnsupportedResponseSchemaError as e:
+                # Some providers reject parts of the strict schema (e.g. Anthropic and Groq on the agent's
+                # action union). Retry with json_object and skip the strict attempt on later calls.
+                if use_strict_response_format:
+                    logger.warning(
+                        f"Model {effective_model} rejected the strict response_format schema, retrying with json_object format"
+                    )
+                    _strict_schema_rejected.add(schema_key)
                     litellm_response_format = dict(type="json_object")
                     use_strict_response_format = False
                     tries += 1  # Don't consume a retry slot for the format fallback
@@ -529,7 +576,7 @@ class LLMEngine:
         model = model or self.model
         if enable_openrouter():
             return LlmModel.get_openrouter_model(model)
-        return model
+        return LlmModel.get_direct_model(model)
 
     def _get_extra_body(self, model: str | None) -> dict[str, Any]:
         model = model or self.model
@@ -558,6 +605,10 @@ class LLMEngine:
         model = self._get_model(model)
         # Apply model-specific temperature overrides
         temperature = LlmModel.get_temperature(model, temperature)
+        vertex_location = get_vertex_location(model)
+        vertex_kwargs: dict[str, Any] = {"vertex_location": vertex_location} if vertex_location is not None else {}
+        # Only send extra_body when set: recent litellm forwards an empty one to Anthropic, which rejects it.
+        extra_kwargs: dict[str, Any] = {"extra_body": extra_body} if extra_body else {}
         try:
             response = await litellm.acompletion(  # pyright: ignore [reportUnknownMemberType]
                 model,
@@ -567,11 +618,12 @@ class LLMEngine:
                 response_format=response_format,
                 max_completion_tokens=8192,
                 drop_params=True,
-                extra_body=extra_body,
                 # Bound the HTTP call so a stalled upstream stream cannot park the event loop
                 # indefinitely. Without this, httpx has no read timeout and silent server
                 # stalls hang the whole agent run.
                 timeout=60,
+                **vertex_kwargs,
+                **extra_kwargs,
             )
             # Cast to ModelResponse since we know it's not streaming in this case
             return cast(ModelResponse, response)
@@ -610,6 +662,8 @@ class LLMEngine:
         except BadRequestError as e:
             if "Missing API Key" in str(e):
                 raise MissingAPIKeyForModel(model) from e
+            if response_format is not None and is_schema_rejection(str(e)):
+                raise UnsupportedResponseSchemaError(model, error_msg=e.message) from e
             if "Input should be a valid string" in str(e):
                 raise ModelDoesNotSupportImageError(model) from e
             if "Invalid JSON" in str(e):

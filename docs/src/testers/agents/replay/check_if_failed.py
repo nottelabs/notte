@@ -1,5 +1,5 @@
 # @sniptest filename=check_if_failed.py
-# @sniptest show=6-11
+# @sniptest show=6-12
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -10,4 +10,5 @@ with client.Session() as session:
 
     if not result.success:
         print(f"Agent failed: {result.answer}")
-    print(f"Completed {len(result.steps)} steps")
+    nb_steps = sum(1 for s in result.steps if s["type"] == "agent_step_start")
+    print(f"Completed {nb_steps} steps")

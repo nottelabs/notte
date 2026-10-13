@@ -1,5 +1,5 @@
 import pytest
-from notte_core.common.config import NotteConfig, config
+from notte_core.common.config import LlmModel, NotteConfig, config
 from pydantic import ValidationError
 
 
@@ -22,6 +22,18 @@ def test_default_config():
     assert config.wait_short_ms == 500
     assert config.empty_page_max_retry == 5
     assert config.viewport_expansion == 0
+    assert config.evaluate_js_max_result_bytes == 16 * 1024 * 1024
+    assert config.evaluate_js_max_result_values == 50_000
+
+
+def test_default_llm_model_uses_vertex_with_google_credentials(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("GOOGLE_APPLICATION_CREDENTIALS", "credentials.json")
+    assert LlmModel.default() == "vertex_ai/gemini-3.5-flash"
+
+
+def test_default_llm_model_uses_gemini_without_google_credentials(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.delenv("GOOGLE_APPLICATION_CREDENTIALS", raising=False)
+    assert LlmModel.default() == "gemini/gemini-3.5-flash"
 
 
 def test_default_is_headless():
@@ -38,3 +50,15 @@ def test_default_is_headless():
 def test_agent_timeout_config_values_must_be_positive(field: str, value: float):
     with pytest.raises(ValidationError, match=field):
         _ = NotteConfig.from_toml(**{field: value})
+
+
+@pytest.mark.parametrize("limit", [0, -1])
+def test_evaluate_js_limit_must_be_positive(limit: int):
+    with pytest.raises(ValidationError, match="evaluate_js_max_result_bytes"):
+        _ = NotteConfig.from_toml(evaluate_js_max_result_bytes=limit)
+
+
+@pytest.mark.parametrize("limit", [0, -1])
+def test_evaluate_js_value_limit_must_be_positive(limit: int):
+    with pytest.raises(ValidationError, match="evaluate_js_max_result_values"):
+        _ = NotteConfig.from_toml(evaluate_js_max_result_values=limit)

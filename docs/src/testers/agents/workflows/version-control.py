@@ -1,5 +1,5 @@
 # @sniptest filename=version-control.py
-# @sniptest show=7-14
+# @sniptest show=1-19
 from pathlib import Path
 
 from notte_sdk import NotteClient

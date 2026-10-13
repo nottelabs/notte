@@ -1,0 +1,21 @@
+// @sniptest filename=disable_raise.ts
+// @sniptest show=8-17
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+const fn = client.NotteFunction({
+  function_id: process.env.NOTTE_FUNCTION_ID!,
+});
+
+// Inspect a failed run without throwing an exception.
+const result = await fn.run(
+  { url: 'https://example.com', fail: true },
+  { raiseOnFailure: false },
+);
+if (result.status === 'failed') {
+  console.log(`Function failed: ${result.result}`);
+} else {
+  console.log(`Success: ${result.result}`);
+}
+
+export { result };

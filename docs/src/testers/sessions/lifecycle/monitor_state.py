@@ -1,4 +1,5 @@
 # @sniptest filename=monitor_state.py
+# @sniptest show=5-11
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -10,3 +11,6 @@ with client.Session() as session:
 
     # Continue with operations
     pass
+
+    # Values retained for the external test runner, outside the displayed range.
+    status = session.status()

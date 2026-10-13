@@ -1,9 +1,12 @@
 # @sniptest filename=handling_results.py
+# @sniptest show=8-21
+import os
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
+function = client.Function(os.environ["NOTTE_FUNCTION_ID"])
 
-function = client.Function(function_id="workflow_abc123")
 result = function.run(url="https://example.com")
 
 # Check status
@@ -15,6 +18,6 @@ elif result.status == "failed":
     print(result.result)  # Error message
 
 # Access metadata
-print(f"Workflow ID: {result.workflow_id}")
-print(f"Run ID: {result.workflow_run_id}")
+print(f"Function ID: {result.function_id}")
+print(f"Run ID: {result.function_run_id}")
 print(f"Session ID: {result.session_id}")

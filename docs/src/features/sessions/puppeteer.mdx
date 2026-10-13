@@ -15,31 +15,31 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Notte sessions expose a Chrome DevTools Protocol (CDP) endpoint that you can connect to with Puppeteer. Since Puppeteer is a Node.js library and Notte SDK is Python-based, this guide shows how to connect them together.
+Notte sessions expose a Chrome DevTools Protocol (CDP) endpoint that you can connect to with Puppeteer. You can start the session with the Notte Node.js SDK, the Python SDK, or the REST API, then hand its CDP URL to Puppeteer.
 
 ## Prerequisites
 
-Install Puppeteer in your Node.js project:
+Install Puppeteer and the Notte SDK in your Node.js project:
 
 ```bash
-npm install puppeteer-core
+npm install puppeteer-core notte-sdk
 ```
 
 <Note>
   Use `puppeteer-core` instead of `puppeteer` since you're connecting to a remote browser rather than launching a local one.
 </Note>
 
-## Approach 1: Start Session from Python
+## Approach 1: Start Session with the Node.js SDK
 
-Start a Notte session in Python and connect Puppeteer to it:
-
-<PuppeteerPythonStart />
-
-## Approach 2: Use Notte REST API
-
-Call the Notte API directly from Node.js to create sessions:
+Start a Notte session with the Node.js SDK, get its CDP URL with `session.cdpUrl()`, and connect Puppeteer. `session.use()` stops the session when the callback finishes:
 
 <PuppeteerRestApi />
+
+## Approach 2: Start Session from Python
+
+Start a Notte session in Python and pass its CDP URL to a Node.js Puppeteer script:
+
+<PuppeteerPythonStart />
 
 ## Network Interception
 
@@ -124,7 +124,7 @@ const API_KEY = process.env.NOTTE_API_KEY;
 
 ## Complete Example: Web Scraping
 
-Here's a complete example combining Notte and Puppeteer for web scraping:
+Here's a complete example that drives the REST API directly, without an SDK. Sessions are started with `POST /sessions/start` and stopped with `DELETE /sessions/{session_id}/stop`:
 
 <PuppeteerComplete />
 
@@ -147,8 +147,8 @@ For Python-based automation, consider using Playwright with Notte instead, as it
     Use Playwright with Notte sessions
   </Card>
 
-  <Card title="Connect with Selenium" icon="globe" href="/features/sessions/selenium">
-    Use Selenium with Notte sessions
+  <Card title="Migrating from Selenium" icon="globe" href="/features/sessions/playwright#migrating-from-selenium">
+    Port Selenium scripts to Playwright
   </Card>
 
   <Card title="External Browser Providers" icon="cloud" href="/features/sessions/external-providers">

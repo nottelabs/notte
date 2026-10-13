@@ -1,0 +1,8 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Advanced Stealth requires approval for your workspace.
+with client.Session(advanced_stealth=True, open_viewer=True) as session:
+    page = session.page
+    page.goto("https://example.com")

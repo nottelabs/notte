@@ -25,26 +25,23 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 45
     env:
-      # A single token is used for the checkout, the push, and the pull request,
-      # so that the PR is opened by a real account and therefore runs CI.
-      GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
       BRANCH: chore/refresh-llms
       TARGET: docs/src/llms.txt
     steps:
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           token: ${{ secrets.SUBMODULE_BUMP_PAT }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version-file: ".python-version"
 
@@ -63,12 +60,12 @@ jobs:
           # The generator reports a failed spec fetch on stderr and still exits 0,
           # so stderr is captured to a file and inspected after the run.
           status=0
-          make docs-llms >/tmp/generate-llms.out 2>/tmp/generate-llms.err || status=$?
+          make docs-llms-refresh >/tmp/generate-llms.out 2>/tmp/generate-llms.err || status=$?
           cat /tmp/generate-llms.out
           cat /tmp/generate-llms.err >&2
 
           if [ "$status" -ne 0 ]; then
-            echo "::error::make docs-llms failed with exit code $status."
+            echo "::error::make docs-llms-refresh failed with exit code $status."
             exit "$status"
           fi
 
@@ -99,6 +96,9 @@ jobs:
       - name: Open or update the refresh pull request
         if: steps.generate.outputs.changes == 'true'
         env:
+          # The same token as the checkout, so the push and the pull request come
+          # from a real account and the PR therefore runs CI.
+          GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
           STAT: ${{ steps.generate.outputs.stat }}
         run: |
           set -euo pipefail
@@ -106,7 +106,7 @@ jobs:
           DATE=$(date -u +%Y-%m-%d)
           TITLE="docs: refresh generated llms.txt"
           BODY=$(printf '%s\n\n%s\n\n%s\n\n%s\n' \
-            "Automated daily regeneration of \`$TARGET\` via \`make docs-llms\`, which builds the API section from the live OpenAPI spec." \
+            "Automated daily regeneration of \`$TARGET\` via \`make docs-llms-refresh\`, which builds the API section from the live OpenAPI spec." \
             "Updated $DATE (UTC): $STAT" \
             "No hand edits. The run fails instead of committing if the spec cannot be fetched or comes back incomplete." \
             "Opened by .github/workflows/refresh-llms.yml. Merges automatically once the required checks pass.")

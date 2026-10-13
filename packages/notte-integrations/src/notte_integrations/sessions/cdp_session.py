@@ -46,8 +46,12 @@ class CDPSessionManager(PlaywrightManager, ABC):
             logger.info("Creating new Notte client")
             self.client = NotteClient()
         self.session = self.create_session_cdp(BrowserWindowOptions.from_request(LocalSessionStartRequest()))
-        self.notte_session = self.client.Session(cdp_url=self.session.cdp_url)
-        return self.notte_session.__enter__()
+        try:
+            self.notte_session = self.client.Session(cdp_url=self.session.cdp_url, proxies=False)
+            return self.notte_session.__enter__()
+        except BaseException:
+            _ = self.close_session_cdp(self.session.session_id)
+            raise
 
     def __exit__(
         self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None
@@ -55,8 +59,10 @@ class CDPSessionManager(PlaywrightManager, ABC):
         if self.notte_session is None or self.session is None:
             raise ValueError("Session not created")
         # close notte session first
-        _ = self.notte_session.__exit__(exc_type, exc_value, traceback)
-        _ = self.close_session_cdp(self.session.session_id)
+        try:
+            _ = self.notte_session.__exit__(exc_type, exc_value, traceback)
+        finally:
+            _ = self.close_session_cdp(self.session.session_id)
 
     @override
     async def astop(self) -> None:

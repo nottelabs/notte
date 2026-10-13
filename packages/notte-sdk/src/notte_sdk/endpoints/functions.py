@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Unpack, overload
 from typing_extensions import override
 
 from notte_sdk.endpoints.workflows import RemoteWorkflow
-from notte_sdk.types import CreateFunctionRequestDict
+from notte_sdk.types import CreateFunctionRequestDict, CreateFunctionRunResponse
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
@@ -42,6 +42,25 @@ class NotteFunction(RemoteWorkflow):
         else:
             # Call with keyword arguments to match second overload
             super().__init__(_client=_client, **data)  # pyright: ignore[reportDeprecated]
+
+    def create_run(self, local: bool = False) -> CreateFunctionRunResponse:
+        """
+        Create a run record without starting execution.
+
+        Returns the run ID before execution begins. Pass it explicitly to
+        `run(function_run_id=...)` to execute this run; `run()` without an ID
+        creates a new run. Use the same `local` value when creating and running.
+
+        ```python
+        function = notte.Function("<your-function-id>")
+        created = function.create_run()
+        result = function.run(function_run_id=created.function_run_id, url="https://example.com")
+        ```
+
+        `run()` still waits for completion. Creating a run does not launch a
+        background job or change which run `run()` uses by default.
+        """
+        return self.client.create_run(self._function_id, local=local)
 
     @override
     def fork(self) -> "NotteFunction":

@@ -582,8 +582,14 @@ class ExternalProxy(SdkRequest):
 
 class TailnetProxy(SdkRequest):
     type: Literal["tailnet"] = "tailnet"
-    oauth_client_id: str
+    # Leave both unset to use the Tailscale OAuth client connected to your
+    # workspace in the Notte console (Settings > Integrations).
+    oauth_client_id: str | None = None
     oauth_client_secret: str | None = None
+    # Tailnet device to use as an exit node for public traffic, by hostname,
+    # MagicDNS name, or Tailscale IP. When unset, only tailnet addresses are
+    # routed through the tailnet.
+    exit_node: str | None = None
 
 
 class ExternalProxyDict(TypedDict, total=False):
@@ -603,8 +609,9 @@ class NotteProxyDict(TypedDict, total=False):
 
 class TailnetProxyDict(TypedDict, total=False):
     type: Literal["tailnet"]
-    oauth_client_id: Required[str]
+    oauth_client_id: str | None
     oauth_client_secret: str | None
+    exit_node: str | None
 
 
 ProxySettings = Annotated[NotteProxy | ExternalProxy | TailnetProxy, Field(discriminator="type")]
@@ -761,10 +768,9 @@ class _SessionStartRequestDict(TypedDict, total=False):
         cdp_url: The CDP URL of another remote session provider.
         screenshot_type: The type of screenshot to use for the session.
         profile: Browser profile configuration for state persistence.
-        auth_ids: Up to 10 unique Managed Auth connection IDs to authenticate before the session is returned.
-        wait_for_authentication: Defaults to True. Wait for Managed Auth before returning the session;
-            authentication failure or timeout fails session creation. When False, return after the browser is
-            ready while authentication continues in the background.
+        auth_ids: Up to 10 unique Managed Auth connection IDs. The API verifies them inline and can return an authenticating session while login continues.
+        wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.
+        auth_retry: Number of additional retries for transient managed-auth login failures, from 0 to 2. Each retry verifies the session again before submitting credentials. A blocked connection permits one explicit login attempt.
     """
 
     solve_captchas: bool
@@ -790,9 +796,12 @@ class _SessionStartRequestDict(TypedDict, total=False):
 
 
 class SessionStartRequestDict(_SessionStartRequestDict, total=False):
+    auth_retry: int
     """Public request dictionary for starting a remote session."""
 
     advanced_stealth: bool
+    block_ads: bool
+    """Block ads and trackers in managed browsers with Basic filtering. Defaults to True."""
 
 
 class LocalSessionStartRequestDict(_SessionStartRequestDict, total=False):
@@ -922,6 +931,15 @@ class _SessionStartRequest(SdkRequest):
 
     @model_validator(mode="after")
     def check_viewport(self) -> "_SessionStartRequest":
+        if self.cdp_url is not None:
+            if "proxies" not in self.model_fields_set:
+                self.proxies = False
+            # Configured viewport defaults belong to browsers we create, not an
+            # external browser. Keep explicit values for CDP validation below.
+            if "viewport_width" not in self.model_fields_set:
+                self.viewport_width = None
+            if "viewport_height" not in self.model_fields_set:
+                self.viewport_height = None
         if (self.viewport_width is None) != (self.viewport_height is None):
             raise ValueError("Both viewport_width and viewport_height must be set together or both must be None")
         return self
@@ -938,12 +956,14 @@ class _SessionStartRequest(SdkRequest):
     @model_validator(mode="after")
     def validate_cdp_url_constraints(self) -> "_SessionStartRequest":
         """
-        Validate that when cdp_url is provided, certain fields are set to their default values.
+        Validate that browser settings are left to the external CDP provider.
 
         Raises:
-            ValueError: If cdp_url is provided but other fields are not set to defaults.
+            ValueError: If cdp_url is provided with browser settings that must be configured by the provider.
         """
         if self.cdp_url is not None:
+            if self.proxies:
+                raise ValueError("Proxies must be configured by the external CDP provider, not by Notte")
             if self.user_agent is not None:
                 raise ValueError(
                     "When cdp_url is provided, user_agent must be None. Set the user agent with your external session CDP provider."
@@ -952,11 +972,11 @@ class _SessionStartRequest(SdkRequest):
                 raise ValueError(
                     "When cdp_url is provided, chrome_args must be None. Set the chrome arguments with your external session CDP provider."
                 )
-            if self.viewport_width is not None and self.viewport_width != DEFAULT_VIEWPORT_WIDTH:
+            if self.viewport_width is not None:
                 raise ValueError(
                     "When cdp_url is provided, viewport_width must be None. Set the viewport width with your external session CDP provider."
                 )
-            if self.viewport_height is not None and self.viewport_height != DEFAULT_VIEWPORT_HEIGHT:
+            if self.viewport_height is not None:
                 raise ValueError(
                     "When cdp_url is provided, viewport_height must be None. Set the viewport height with your external session CDP provider."
                 )
@@ -1019,6 +1039,17 @@ class _SessionStartRequest(SdkRequest):
 class SessionStartRequest(_SessionStartRequest):
     """Public request for starting a remote Notte browser session."""
 
+    auth_retry: int = Field(default=0, ge=0, le=2)
+    block_ads: Annotated[
+        bool,
+        Field(
+            description=(
+                "Block ads and trackers in managed browsers using Basic filtering. Set false to disable. "
+                "Does not configure externally supplied CDP browsers."
+            ),
+        ),
+    ] = True
+
     proxies: Annotated[
         list[ProxySettings] | bool,
         Field(
@@ -1041,6 +1072,11 @@ class SessionStartRequest(_SessionStartRequest):
         data = cast(dict[str, Any], handler(self))
         if not self.advanced_stealth:
             data.pop("advanced_stealth", None)
+        if not self.auth_ids:
+            data.pop("auth_retry", None)
+        # Let the API apply its default so ordinary starts also work with older APIs.
+        if "block_ads" not in self.model_fields_set:
+            data.pop("block_ads", None)
         return data
 
     @model_validator(mode="before")
@@ -1111,7 +1147,31 @@ class SessionListRequest(ListRequest):
     ] = None
 
 
+class ManagedAuthOperation(SdkResponse):
+    id: str
+    connection_id: str
+    session_id: str | None = None
+    source: str
+    status: Literal["pending", "running", "succeeded", "failed", "cancelled"]
+    phase: str
+    attempt: int = 0
+    auth_retry: int = 0
+    authenticated: bool | None = None
+    failure_code: str | None = None
+    error: str | None = None
+    deadline: dt.datetime
+
+
+class SessionAuthResponse(SdkResponse):
+    session_id: str
+    status: Literal["authenticating", "active", "failed", "closed"]
+    operations: list[ManagedAuthOperation] = Field(default_factory=list)
+    error: str | None = None
+
+
 class ManagedAuthRunResponse(SdkResponse):
+    operation_id: str | None = None
+    authenticated: bool | None = None
     connection_id: str
     status: str
     message: str
@@ -1165,7 +1225,7 @@ class SessionResponse(SdkResponse):
         Field(description="Session duration", json_schema_extra=_drop_duration_format),
     ] = Field(default_factory=lambda: dt.timedelta(0))
     status: Annotated[
-        Literal["active", "closed", "error", "timed_out"],
+        Literal["active", "authenticating", "closed", "error", "timed_out"],
         Field(description="Session status"),
     ]
     close_reason: Annotated[
@@ -1586,6 +1646,45 @@ class ProfileResponse(SdkResponse):
     ] = Field(default_factory=list)
 
 
+class SessionProfileSaveRequestDict(TypedDict, total=False):
+    """Request dictionary for saving a running session into a profile."""
+
+    profile_id: str
+    name: str
+
+
+class SessionProfileSaveRequest(SdkRequest):
+    """Which profile receives a snapshot of a running session's browser state."""
+
+    profile_id: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Existing profile to overwrite with the session's current browser state. "
+                "Omit it together with name to save into the profile the session was started with."
+            ),
+            min_length=1,
+        ),
+    ] = None
+    name: Annotated[
+        str | None,
+        Field(
+            description="Create a new profile with this name and save into it. Mutually exclusive with profile_id.",
+            min_length=1,
+        ),
+    ] = None
+
+    @model_validator(mode="after")
+    def _single_target(self) -> "SessionProfileSaveRequest":
+        if self.profile_id is not None and self.name is not None:
+            raise ValueError("profile_id and name are mutually exclusive")
+        if self.profile_id is not None and not self.profile_id.strip():
+            raise ValueError("profile_id must not be empty")
+        if self.name is not None and not self.name.strip():
+            raise ValueError("name must not be empty")
+        return self
+
+
 class ProfileListRequestDict(TypedDict, total=False):
     """Request dictionary for listing profiles."""
 
@@ -1622,7 +1721,8 @@ class PersonaResponse(SdkResponse):
     status: Annotated[str, Field(description="Status of the persona (active, closed)")]
     first_name: Annotated[str, Field(description="First name of the persona")]
     last_name: Annotated[str, Field(description="Last name of the persona")]
-    email: Annotated[str, Field(description="Email of the persona")]
+    email: Annotated[str, Field(description="Readable email alias of the persona")]
+    internal_email: Annotated[str, Field(description="Internal UUID-backed email address of the persona")]
     vault_id: Annotated[str | None, Field(description="ID of the vault")]
     phone_number: Annotated[str | None, Field(description="Phone number of the persona (optional)")]
 
@@ -1778,6 +1878,7 @@ class ScrapeMarkdownParamsDict(TypedDict, total=False):
         scrape_images: Whether to scrape images from the page. Images are not scraped by default.
         only_main_content: Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
         use_link_placeholders: Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations.
+        model: The LLM used to extract structured data when `instructions` or `response_format` is set. Defaults to the platform model.
     """
 
     selector: str | None
@@ -1785,6 +1886,7 @@ class ScrapeMarkdownParamsDict(TypedDict, total=False):
     scrape_images: bool
     only_main_content: bool
     use_link_placeholders: bool
+    model: LlmModel | str | None
 
 
 class ScrapeStructuredParamsDict(TypedDict, total=False):
@@ -1854,6 +1956,13 @@ class ScrapeParams(SdkRequest):
         str | None,
         Field(
             description="Additional instructions to use for the scrape. E.g. 'Extract only the title, date and content of the articles.'"
+        ),
+    ] = None
+
+    model: Annotated[
+        LlmModel | str | None,
+        Field(
+            description="The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model."
         ),
     ] = None
 
@@ -1986,7 +2095,33 @@ class ExecutionRequest(SdkRequest):
 
 ObserveResponse = Observation
 ScrapeResponse = DataSpace
-ExecutionResultResponse = ExecutionResult
+
+
+class CaptchaStatus(BaseModel):
+    """One page-scoped CAPTCHA solve; polling never starts another attempt."""
+
+    captcha_id: str
+    page_id: str
+    generation: int
+    state: Literal["solving", "solved", "failed", "cancelled"]
+    retry_after_ms: int = 1000
+    message: str = ""
+    cancel_reason: str | None = None
+
+
+class ExecutionResultResponse(ExecutionResult):
+    captcha: CaptchaStatus | None = None
+    action_executed: bool | None = None
+    code: str | None = None
+
+
+class CaptchaExecuteParams(BaseModel):
+    captcha_id: str | None = None
+    captcha_timeout_seconds: float = Field(default=180, gt=0, allow_inf_nan=False)
+    target_page_id: str | None = None
+    target_generation: int | None = None
+
+
 # ############################################################
 # Agent endpoints
 # ############################################################
@@ -2282,6 +2417,9 @@ class ListFunctionsRequestDict(ListRequestDict, total=False):
     pass
 
 
+FunctionRuntime = Literal["standard", "extended"]
+
+
 class RunFunctionRequestDict(TypedDict, total=False):
     """Request dictionary for running a function.
 
@@ -2293,6 +2431,7 @@ class RunFunctionRequestDict(TypedDict, total=False):
     function_id: str
     variables: dict[str, Any]
     stream: bool
+    runtime: FunctionRuntime | None
 
 
 class RunFunctionRequest(SdkRequest):
@@ -2301,6 +2440,9 @@ class RunFunctionRequest(SdkRequest):
         Field(description="The ID of the function to run", validation_alias=AliasChoices("workflow_id", "function_id")),
     ]
     variables: Annotated[dict[str, Any], Field(description="The variables to run the workflow with")]
+    runtime: Annotated[
+        FunctionRuntime | None, Field(description="Override the saved function runtime; omit to inherit its default")
+    ] = None
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = True
 
 
@@ -2328,6 +2470,7 @@ class ForkFunctionRequest(SdkRequest):
 
 
 class GetFunctionResponse(SdkResponse):
+    default_runtime: FunctionRuntime = "standard"
     function_id: Annotated[
         str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
     ]
@@ -2425,6 +2568,9 @@ class StartFunctionRunRequest(SdkRequest):
         ),
     ] = None
     variables: Annotated[dict[str, Any] | None, Field(description="The variables to run the function with")] = None
+    runtime: Annotated[
+        FunctionRuntime | None, Field(description="Override the saved function runtime; omit to inherit its default")
+    ] = None
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = False
 
     @computed_field

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
-import json
 import re
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, ClassVar, Literal, Unpack, overload
 
+import requests
 from litellm import BaseModel
 from notte_core import enable_nest_asyncio
 from notte_core.actions import (
@@ -63,8 +63,14 @@ from notte_core.common.logging import logger, timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault, LocatorAttributes
+from notte_core.data.fetch import FetchData, build_fetch_script, response_from_evaluated
 from notte_core.data.space import DataSpace, ImageData, StructuredData, TBaseModel
-from notte_core.errors.actions import ActionExecutionError, EvaluateJsNoDataError, InvalidActionError
+from notte_core.errors.actions import (
+    ActionExecutionError,
+    EvaluateJsNoDataError,
+    EvaluateJsResultLimitError,
+    InvalidActionError,
+)
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
 from notte_core.profiling import profiler
@@ -101,6 +107,15 @@ from notte_browser.errors import (
     PlaywrightError,
     ScrapeFailedError,
 )
+from notte_browser.evaluation_result import (
+    PAGE_RESULT_GUARD,
+    InvalidPagePayloadError,
+    decode_page_result,
+    format_evaluation_result,
+    new_guard_token,
+    page_expression,
+    page_limit_reason,
+)
 from notte_browser.playwright import PlaywrightManager
 from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import NodeResolutionPipe
@@ -114,6 +129,10 @@ enable_nest_asyncio()
 
 # TODO: ACT callback
 class NotteSession(AsyncResource, SyncResource):
+    # Screenshots appended to the trajectory are best-effort and must not keep a
+    # completed action request open when Chromium's compositor stops responding.
+    POST_ACTION_SCREENSHOT_TIMEOUT_SECONDS: ClassVar[float] = 5.0
+
     observe_max_retry_after_snapshot_update: ClassVar[int] = 2
     nb_seconds_between_snapshots_check: ClassVar[int] = 10
 
@@ -337,6 +356,20 @@ class NotteSession(AsyncResource, SyncResource):
         screenshot = Screenshot(raw=screenshot_bytes, bboxes=[], last_action_id=None)
         await self.trajectory.append(screenshot)
         return screenshot
+
+    async def _capture_post_action_screenshot(self) -> None:
+        try:
+            _ = await asyncio.wait_for(
+                self.ascreenshot(),
+                timeout=self.POST_ACTION_SCREENSHOT_TIMEOUT_SECONDS,
+            )
+        except TimeoutError:
+            logger.warning(
+                "Post-action screenshot timed out after "
+                + f"{self.POST_ACTION_SCREENSHOT_TIMEOUT_SECONDS:.1f}s; returning the action result without it"
+            )
+        except Exception as e:
+            logger.warning(f"Failed to capture post-action screenshot: {e}")
 
     def screenshot(
         self,
@@ -764,30 +797,63 @@ class NotteSession(AsyncResource, SyncResource):
                         is_already_function = bool(re.match(r"^(?:\(|function\b|async\s+(?:function\b|\())", stripped))
                         needs_wrap = bool(re.search(r"\breturn\b", stripped)) and not is_already_function
                         js_code = f"(() => {{\n{code}\n}})()" if needs_wrap else code
+                        guard_token = new_guard_token()
                         try:
                             evaluate_kwargs: dict[str, bool] = {}
                             if config.browser_backend == BrowserBackend.PATCHRIGHT:
                                 evaluate_kwargs["isolated_context"] = False
+                            # The guard measures the value inside the page and
+                            # throws past the budget, so an oversized result is
+                            # never serialized by the browser, decoded by the
+                            # driver, or rebuilt as Python objects.
                             result = await asyncio.wait_for(
-                                self.window.page.evaluate(js_code, **evaluate_kwargs),
+                                self.window.page.evaluate(
+                                    PAGE_RESULT_GUARD,
+                                    [
+                                        page_expression(js_code),
+                                        config.evaluate_js_max_result_bytes,
+                                        config.evaluate_js_max_result_values,
+                                        guard_token,
+                                    ],
+                                    **evaluate_kwargs,
+                                ),
                                 timeout=config.timeout_evaluate_js_ms / 1000.0,
                             )
                         except asyncio.TimeoutError:
                             success = False
                             message = f"JavaScript evaluation timed out after {config.timeout_evaluate_js_ms}ms"
                         except PlaywrightError as js_err:
+                            limit_reason = page_limit_reason(str(js_err), guard_token)
+                            if limit_reason is not None:
+                                raise EvaluateJsResultLimitError(
+                                    config.evaluate_js_max_result_bytes, limit_reason
+                                ) from None
                             success = False
                             message = f"JavaScript evaluation failed: {js_err}"
                         else:
-                            # Convert result to string representation for markdown
-                            if result is None:
-                                result_str = "null"
-                            elif isinstance(result, (dict, list)):
-                                result_str = json.dumps(result, indent=2, default=str)
-                            else:
-                                result_str = str(result)
-                            scraped_data = DataSpace(markdown=result_str)
-                            success = True
+                            result_str: str | None = None
+                            try:
+                                # The guard returns the result as one JSON string,
+                                # decoded once here instead of value by value by
+                                # Playwright, which cost several times the memory.
+                                result = decode_page_result(
+                                    result,
+                                    guard_token,
+                                    max_bytes=config.evaluate_js_max_result_bytes,
+                                    max_values=config.evaluate_js_max_result_values,
+                                )
+                                result_str = format_evaluation_result(
+                                    result, max_bytes=config.evaluate_js_max_result_bytes
+                                )
+                            except InvalidPagePayloadError as payload_err:
+                                message = f"JavaScript evaluation failed: {payload_err}"
+                            finally:
+                                # The action's frame can itself be retained when a
+                                # failure is raised later or saved in the trajectory.
+                                result = None
+                            success = result_str is not None
+                            if result_str is not None:
+                                scraped_data = DataSpace(markdown=result_str)
                     case ToolAction():
                         tool_found = False
                         success = False
@@ -835,6 +901,10 @@ class NotteSession(AsyncResource, SyncResource):
                 )
                 exception = e
             except NotteBaseError as e:
+                if isinstance(e, EvaluateJsResultLimitError):
+                    # Saved failures must not own the formatter's recursive frames
+                    # and their references to the rejected browser result.
+                    e.__traceback__ = None
                 # When raise_on_failure is True, we use the dev message to give more details to the user
                 success = False
                 message = e.dev_message
@@ -895,10 +965,7 @@ class NotteSession(AsyncResource, SyncResource):
 
         # add screenshot to trajectory (after the execution)
         if self._window is not None:
-            try:
-                _ = await self.ascreenshot()
-            except Exception as e:
-                logger.warning(f"Failed to capture post-action screenshot: {e}")
+            await self._capture_post_action_screenshot()
 
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
         # Gate on "did the action fail", not "did something throw": after the synthesis
@@ -1084,6 +1151,56 @@ class NotteSession(AsyncResource, SyncResource):
         Synchronous version of aevaluate_js.
         """
         return asyncio.run(self.aevaluate_js(code, raise_on_failure=raise_on_failure))
+
+    async def afetch(
+        self,
+        url: str,
+        *,
+        method: str = "GET",
+        headers: Mapping[str, str] | None = None,
+        params: Mapping[str, Any] | None = None,
+        json: Any = None,
+        data: FetchData | None = None,
+        timeout: float | None = None,
+    ) -> requests.Response:
+        """
+        Issue an HTTP request from the page the session is on and return the response.
+
+        The request runs inside the browser through `fetch()`, so it carries the
+        page's cookies, the session's proxy and the browser's own network
+        fingerprint. A relative `url` resolves against the current page, which
+        also makes it same-origin; a cross-origin URL is subject to CORS exactly
+        as in a browser tab, so `goto` the target origin first. Redirects are
+        followed and the final URL is on `response.url`. The result is a standard
+        `requests.Response`: a non-2xx status is returned, not raised, and
+        `response.raise_for_status()` raises `requests.HTTPError`. A network
+        failure surfaces as the JavaScript error.
+
+        `json` is serialised as the body with an `application/json` content type,
+        `data` as a form body when it is a mapping or verbatim when it is a string.
+        """
+        script = build_fetch_script(
+            url, method=method, headers=headers, params=params, json_body=json, data=data, timeout=timeout
+        )
+        return response_from_evaluated(await self.aevaluate_js(script))
+
+    def fetch(
+        self,
+        url: str,
+        *,
+        method: str = "GET",
+        headers: Mapping[str, str] | None = None,
+        params: Mapping[str, Any] | None = None,
+        json: Any = None,
+        data: FetchData | None = None,
+        timeout: float | None = None,
+    ) -> requests.Response:
+        """
+        Synchronous version of afetch.
+        """
+        return asyncio.run(
+            self.afetch(url, method=method, headers=headers, params=params, json=json, data=data, timeout=timeout)
+        )
 
     @overload
     async def ascrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...

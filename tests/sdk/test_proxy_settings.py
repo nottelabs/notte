@@ -6,6 +6,7 @@ from notte_sdk.types import (
     NotteProxy,
     ProxyGeolocationCountry,
     SessionStartRequest,
+    TailnetProxy,
 )
 from pydantic import ValidationError
 
@@ -216,6 +217,39 @@ class TestSessionStartRequestWithDictConfigs:
         assert request.proxies[0].server == "http://proxy.example.com:8080"
         assert request.proxies[0].username == "user"
         assert request.proxies[0].password == "pass"  # pragma: allowlist secret
+
+
+class TestTailnetProxyCredentials:
+    """Credentials are optional: without them the workspace's Tailscale connection is used."""
+
+    @staticmethod
+    def _sent_proxy(proxy: TailnetProxy) -> dict[str, object]:
+        # Mirrors how the client serializes request bodies (exclude_none).
+        return SessionStartRequest(proxies=[proxy]).model_dump(exclude_none=True)["proxies"][0]
+
+    def test_without_credentials_sends_only_the_type(self):
+        assert self._sent_proxy(TailnetProxy()) == {"type": "tailnet"}
+
+    def test_without_credentials_keeps_the_exit_node(self):
+        assert self._sent_proxy(TailnetProxy(exit_node="my-laptop")) == {"type": "tailnet", "exit_node": "my-laptop"}
+
+    def test_explicit_credentials_are_sent(self):
+        proxy = TailnetProxy(
+            oauth_client_id="client-id", oauth_client_secret="client-secret"
+        )  # pragma: allowlist secret
+        assert self._sent_proxy(proxy) == {
+            "type": "tailnet",
+            "oauth_client_id": "client-id",
+            "oauth_client_secret": "client-secret",  # pragma: allowlist secret
+        }
+
+    def test_dict_without_credentials_validates(self):
+        request = SessionStartRequest.model_validate({"proxies": [{"type": "tailnet", "exit_node": "my-laptop"}]})
+        assert isinstance(request.proxies, list)
+        proxy = request.proxies[0]
+        assert isinstance(proxy, TailnetProxy)
+        assert proxy.oauth_client_id is None
+        assert proxy.exit_node == "my-laptop"
 
 
 class TestSessionStartRequestWithBooleanValues:

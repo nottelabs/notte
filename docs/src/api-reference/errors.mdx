@@ -13,52 +13,67 @@ The API uses standard HTTP status codes and returns structured error responses.
 | Status | Description |
 |--------|-------------|
 | `200` | Success |
-| `401` | Authentication failed — invalid or missing API key |
-| `422` | Validation error — malformed request or invalid parameters |
-| `429` | Rate limit exceeded |
+| `401` | Authentication failed (invalid or missing API key), or your plan's credits are exhausted |
+| `422` | Validation error - malformed request or invalid parameters |
+| `429` | Rate limit exceeded, or too many active sessions, agents, vaults, or personas for your plan |
 | `500` | Internal server error |
-| `529` | Cluster overloaded - Too many sessions|
+| `529` | Cluster overloaded - no browser capacity available. Includes a `Retry-After` header |
 
 ## Error response format
 
+Most errors raised by the API share this envelope. `detail`, `error`, and `message` carry the same text:
+
 ```json
 {
-  "message": "Description of what went wrong",
-  "detail": "Additional context about the error"
+  "detail": "Description of what went wrong",
+  "session_id": "the session involved, or null",
+  "status": 401,
+  "error": "Description of what went wrong",
+  "message": "Description of what went wrong"
 }
 ```
+
+These responses also include an `X-Error-Class` header naming the error type, for example `NotteApiInvalidApiKeyError` or `NotteApiRateLimitExceededError`. Use the status code and this header rather than parsing the message text.
 
 ## Common errors
 
 ### Authentication (401)
 
+Header `X-Error-Class: NotteApiInvalidApiKeyError`:
+
 ```json
 {
-  "message": "Authentication failed. Please check your credentials."
+  "detail": "Unauthorized. Invalid API key.",
+  "session_id": null,
+  "status": 401,
+  "error": "Unauthorized. Invalid API key.",
+  "message": "Unauthorized. Invalid API key."
 }
 ```
 
 ### Validation (422)
 
+Request validation errors use a different envelope, with the individual errors summarized in `message`:
+
 ```json
 {
-  "message": "Validation error",
-  "detail": [
-    {
-      "loc": ["body", "url"],
-      "msg": "field required",
-      "type": "value_error.missing"
-    }
-  ]
+  "status_code": 10422,
+  "message": "1 validation error: {'type': 'missing', 'loc': ('body', 'url'), 'msg': 'Field required'}",
+  "data": null
+}
+```
+
+### Cluster overloaded (529)
+
+Returned when no browser is available to start a session. Wait for the number of seconds in the `Retry-After` header, then retry.
+
+```json
+{
+  "error": "Cluster is under heavy load. Please try again in a few minutes.",
+  "detail": "Cluster is under heavy load. Please try again in a few minutes."
 }
 ```
 
 ### Execution errors
 
-Returned when an operation fails. Includes the `x-error-class: NotteApiExecutionError` header.
-
-```json
-{
-  "message": "Error executing the requested operation"
-}
-```
+Returned with status `500` when an operation fails. Includes the `X-Error-Class: NotteApiExecutionError` header and the standard envelope.

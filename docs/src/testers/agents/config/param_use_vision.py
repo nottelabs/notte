@@ -8,3 +8,6 @@ with client.Session() as session:
         session=session,
         use_vision=True,  # Agent can understand images
     )
+    status = session.status()
+    assert agent.request.use_vision is True
+    assert agent.request.session_id == status.session_id

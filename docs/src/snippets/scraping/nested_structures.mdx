@@ -1,7 +1,12 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/scraping/nested_structures.py, testers/scraping/nested_structures.ts */}
+
 <CodeGroup>
+
 ```python Python
 from notte_sdk import NotteClient
 from pydantic import BaseModel
+
 
 class Address(BaseModel):
     street: str
@@ -23,7 +28,8 @@ company = client.scrape(
 
 print(company.address.city)
 ```
-```javascript JavaScript
+
+```typescript TypeScript
 import { z } from 'zod';
 import { NotteClient } from 'notte-sdk';
 
@@ -51,4 +57,5 @@ const company = await client.scrape('https://example.com/about', {
 
 console.log(company.address.city);
 ```
+
 </CodeGroup>

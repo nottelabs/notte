@@ -1,4 +1,3 @@
-import asyncio
 import builtins
 import contextlib
 import os
@@ -12,8 +11,19 @@ import pytest
 os.environ["DISABLE_TELEMETRY"] = "true"
 
 from notte_sdk import NotteClient
+from notte_sdk.endpoints.files import RemoteFileStorage
 from notte_sdk.errors import NotteAPIError
-from notte_sdk.types import FileSource
+from notte_sdk.types import FileSource, SessionFile
+
+
+def _wait_for_download(storage: RemoteFileStorage, timeout: float = 10) -> SessionFile:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        files = storage.list(FileSource.SESSION_DOWNLOAD, limit=1000).files
+        if files:
+            return files[0]
+        time.sleep(0.25)
+    pytest.fail("session download did not appear before timeout")
 
 
 @contextlib.contextmanager
@@ -104,8 +114,8 @@ def test_download_file_action_is_strictly_readonly():
             # 2. Run the actual User Scenario
             # ----------------------------------------------------------------
 
-            # Mock the session start and execute methods to avoid network calls
-            with client.Session(storage=storage, open_viewer=False) as session:
+            # Run the remote download without writing to the local filesystem.
+            with client.Session(proxies=False, storage=storage, open_viewer=False) as session:
                 _ = session.execute(type="goto", url="https://arxiv.org/abs/1706.03762")
                 _ = session.execute(type="click", selector='internal:role=link[name="View PDF"i]')
                 time.sleep(5)  # reduced sleep for test speed
@@ -116,14 +126,14 @@ def test_download_file_action_is_strictly_readonly():
 
             # Verify that accessing the file locally triggers a permission error
             # This can trigger either "Filesystem modification denied" (mkdir) or "Write access denied" (open)
+            try:
+                file = _wait_for_download(storage)
+            except NotteAPIError as exc:
+                if exc.status_code == 404:
+                    pytest.skip("Session-file API is not deployed to the integration environment yet")
+                raise
             with pytest.raises(PermissionError, match="Filesystem modification denied|Write access denied"):
-                try:
-                    files = storage.list(FileSource.SESSION_DOWNLOAD, limit=1000).files
-                except NotteAPIError as exc:
-                    if exc.status_code == 404:
-                        pytest.skip("Session-file API is not deployed to the integration environment yet")
-                    raise
-                _ = asyncio.run(storage.get_file(files[0].filename))
+                _ = storage.download(file_id=file.id)
 
         except PermissionError as e:
             pytest.fail(f"Read-only violation detected: {e}")

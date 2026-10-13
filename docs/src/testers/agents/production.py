@@ -9,7 +9,7 @@ persona = client.Persona(persona_id="prod_persona")
 with client.Session(proxies=True) as session:
     agent = client.Agent(
         session=session,
-        reasoning_model="anthropic/claude-3.5-sonnet",
+        reasoning_model="anthropic/claude-sonnet-4-5-20250929",
         use_vision=True,
         max_steps=30,
         vault=vault,

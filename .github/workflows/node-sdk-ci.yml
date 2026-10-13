@@ -1,0 +1,112 @@
+name: node sdk cicd
+
+on:
+  pull_request:
+    paths: ['node-sdk/**', '.github/workflows/node-sdk-*.yml']
+  push:
+    branches: [main]
+    paths: ['node-sdk/**', '.github/workflows/node-sdk-*.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: node-sdk-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: node-sdk
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: node-sdk/package-lock.json
+      - run: npm ci
+      - run: npm run resources:check
+      - run: npm run resources:test
+      - run: npm run typecheck
+      - run: npm run test:coverage
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: node-sdk-coverage-${{ matrix.node }}
+          path: node-sdk/coverage/
+          if-no-files-found: ignore
+      - run: npm run build
+      - run: npm pack --dry-run
+      - name: Smoke-test built package exports
+        run: node scripts/check-package.js
+
+  integration-tests:
+    # Same-repository PRs run against staging; fork PRs never receive API credentials.
+    if: >-
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
+    needs: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Wait for the API to be reachable
+        # The staging API scales to zero when idle and wakes on the first
+        # request; poll until it answers before running anything against it.
+        env:
+          NOTTE_API_URL: https://us-staging.notte.cc
+        run: |
+          deadline=$((SECONDS + 900))
+          until [ "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' "$NOTTE_API_URL/health")" = "200" ]; do
+            [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
+            sleep 10
+          done
+      - name: Run complete live integration suite
+        env:
+          NOTTE_API_URL: https://us-staging.notte.cc
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+        run: |
+          test -n "$NOTTE_API_KEY" || { echo 'NOTTE_API_KEY is required'; exit 1; }
+          npm run test:integration
+
+  generated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: node-sdk/package-lock.json
+      - run: npm ci
+      - name: Wait for the API to be reachable
+        # The staging API scales to zero when idle and wakes on the first
+        # request; poll until it answers before running anything against it.
+        env:
+          NOTTE_API_URL: https://us-staging.notte.cc
+        run: |
+          deadline=$((SECONDS + 900))
+          until [ "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' "$NOTTE_API_URL/health")" = "200" ]; do
+            [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
+            sleep 10
+          done
+      - run: npm run check:staging

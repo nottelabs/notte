@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/sessions/configuration/cookie_file.py */}
 
+<CodeGroup>
+
 ```python cookie_file.py
 from notte_sdk import NotteClient
 
@@ -11,3 +13,18 @@ with client.Session(cookie_file="cookies.json") as session:
     page.goto("https://example.com")
     # Cookies auto-loaded at start, auto-saved when session ends
 ```
+
+```typescript cookie_file.ts
+import { NotteClient } from "notte-sdk";
+
+const client = new NotteClient();
+
+const session = client.Session({ cookie_file: "cookies.json" });
+await session.use(async (session) => {
+  const page = await session.page();
+  await page.goto("https://example.com");
+  // Cookies auto-loaded at start, auto-saved when session ends
+});
+```
+
+</CodeGroup>

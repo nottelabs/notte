@@ -1,0 +1,10 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session(
+    solve_captchas=True,
+) as session:
+    page = session.page
+    page.goto("https://www.google.com/recaptcha/api2/demo")
+    # Captchas are automatically solved

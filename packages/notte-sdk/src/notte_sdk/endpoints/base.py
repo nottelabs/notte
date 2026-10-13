@@ -13,6 +13,7 @@ from notte_core.common.logging import logger
 from pydantic import BaseModel, ValidationError
 from requests.exceptions import ConnectionError
 
+from notte_sdk._transport import request_session
 from notte_sdk.errors import AuthenticationError, NotteAPIError, NotteAPIExecutionError
 
 if TYPE_CHECKING:
@@ -326,6 +327,11 @@ class BaseClient(ABC):
             "x-notte-sdk-version": notte_core_version,
             "x-notte-request-origin": self.REQUEST_ORIGIN,
             **preview,
+            **(
+                {"x-notte-auth-capability": os.environ["NOTTE_AUTH_CAPABILITY"]}
+                if os.getenv("NOTTE_AUTH_CAPABILITY")
+                else {}
+            ),
             **(headers or {}),
         }
 
@@ -340,10 +346,10 @@ class BaseClient(ABC):
         third-party browser provider, and handing that provider an internal
         branch name is both meaningless to it and more than it needs to know.
         """
-        if not self.db_preview:
-            return url
-        separator = "&" if "?" in url else "?"
-        return f"{url}{separator}db_preview={quote(self.db_preview, safe='')}"
+        if self.db_preview:
+            separator = "&" if "?" in url else "?"
+            url = f"{url}{separator}db_preview={quote(self.db_preview, safe='')}"
+        return url
 
     def request_path(self, endpoint: NotteEndpoint[TResponse]) -> str:
         """
@@ -372,7 +378,7 @@ class BaseClient(ABC):
         return path
 
     def _request(
-        self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: int | None = None
+        self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: float | None = None
     ) -> dict[str, Any]:
         """
         Executes an HTTP request for the given API endpoint.
@@ -400,42 +406,43 @@ class BaseClient(ABC):
         json = None
         if self.verbose:
             logger.info(f"Making `{endpoint.method}` request to `{endpoint.path} (i.e `{url}`) with params `{params}`.")
-        match endpoint.method:
-            case "GET":
-                response = requests.get(
-                    url=url,
-                    headers=headers,
-                    params=params,
-                    timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-                )
-            case "POST" | "PATCH":
-                if endpoint.request is None and endpoint.files is None:
-                    raise ValueError("Request model or file is required for POST requests")
-                if endpoint.request is None:
-                    data = None
-                elif files is None:
-                    data = endpoint.request.model_dump_json(exclude_none=True)
-                    headers["Content-Type"] = "application/json"
-                else:
-                    # if files is not None, data must not be a string
-                    data = endpoint.request.model_dump(exclude_none=True)
-                method = requests.post if endpoint.method == "POST" else requests.patch
-                response = method(
-                    url=url,
-                    headers=headers,
-                    data=data,
-                    params=params,
-                    timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-                    files=files,
-                    json=json,
-                )
-            case "DELETE":
-                response = requests.delete(
-                    url=url,
-                    headers=headers,
-                    params=params,
-                    timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-                )
+        with request_session() as session:
+            match endpoint.method:
+                case "GET":
+                    response = session.get(
+                        url=url,
+                        headers=headers,
+                        params=params,
+                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                    )
+                case "POST" | "PATCH":
+                    if endpoint.request is None and endpoint.files is None:
+                        raise ValueError("Request model or file is required for POST requests")
+                    if endpoint.request is None:
+                        data = None
+                    elif files is None:
+                        data = endpoint.request.model_dump_json(exclude_none=True)
+                        headers["Content-Type"] = "application/json"
+                    else:
+                        # if files is not None, data must not be a string
+                        data = endpoint.request.model_dump(exclude_none=True)
+                    method = session.post if endpoint.method == "POST" else session.patch
+                    response = method(
+                        url=url,
+                        headers=headers,
+                        data=data,
+                        params=params,
+                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                        files=files,
+                        json=json,
+                    )
+                case "DELETE":
+                    response = session.delete(
+                        url=url,
+                        headers=headers,
+                        params=params,
+                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                    )
         if not 200 <= response.status_code < 300:
             # Check for 422 status code with Pydantic validation errors first
             if response.status_code == 422:
@@ -472,7 +479,7 @@ class BaseClient(ABC):
         return response_dict
 
     def request(
-        self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: int | None = None
+        self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: float | None = None
     ) -> TResponse:
         """
         Requests the specified API endpoint and returns the validated response.

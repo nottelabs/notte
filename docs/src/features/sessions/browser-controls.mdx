@@ -22,6 +22,7 @@ import Click from "/snippets/browser-controls/click.mdx";
 import Fill from "/snippets/browser-controls/fill.mdx";
 import Check from "/snippets/browser-controls/check.mdx";
 import EvaluateJs from "/snippets/browser-controls/eval_js.mdx";
+import Fetch from "/snippets/browser-controls/fetch.mdx";
 import SelectDropdownOption from "/snippets/browser-controls/select_dropdown_option.mdx";
 import PressKey from "/snippets/browser-controls/press_key.mdx";
 import ScrollUp from "/snippets/browser-controls/scroll_up.mdx";
@@ -49,6 +50,7 @@ Navigate to a URL.
 
 **Parameters:**
 - `url` (str): The URL to navigate to
+- `wait_until` (str, optional): Navigation event to wait for: `load` (default), `domcontentloaded`, `commit` or `networkidle`. `commit` and `domcontentloaded` skip the post-load settle wait, which makes them the cheap choice when the page is only needed as an origin for `session.fetch()`
 
 **Use for:** Opening pages, navigating between pages
 
@@ -119,12 +121,9 @@ Click on an element.
 <Click />
 
 **Parameters:**
-- `selector` (str): CSS selector for the element
-- `id` (str): Element ID
-- `text` (str): Exact text content
-- `aria_label` (str): ARIA label attribute
-- `placeholder` (str): Placeholder text
-- `title` (str): Title attribute
+- `selector` (str): Selector for the element (CSS, XPath, or Playwright selector such as `button:has-text('Submit')`)
+- `id` (str): Element ID from the latest `observe()` output (for example `B1`)
+- `timeout` (int, optional): Action timeout in milliseconds
 
 **Use for:** Clicking buttons, links, checkboxes, any clickable element
 
@@ -137,11 +136,11 @@ Fill a text input or textarea.
 <Fill />
 
 **Parameters:**
-- `selector` (str): CSS selector for the input
-- `id` (str): Element ID
-- `placeholder` (str): Placeholder text
-- `aria_label` (str): ARIA label
+- `selector` (str): Selector for the input
+- `id` (str): Element ID from the latest `observe()` output (for example `I1`)
 - `value` (str): The text to fill
+- `clear_before_fill` (bool, optional): Clear the field first (default: True)
+- `press_enter` (bool, optional): Press Enter after filling
 
 **Use for:** Filling forms, search boxes, text inputs
 
@@ -154,9 +153,9 @@ Check or uncheck a checkbox.
 <Check />
 
 **Parameters:**
-- `selector` (str): CSS selector for the checkbox
-- `id` (str): Element ID
-- `checked` (bool): True to check, False to uncheck
+- `selector` (str): Selector for the checkbox
+- `id` (str): Element ID from the latest `observe()` output
+- `value` (bool): True to check, False to uncheck
 
 **Use for:** Toggling checkboxes, accepting terms, selecting options
 
@@ -169,9 +168,9 @@ Select an option from a dropdown.
 <SelectDropdownOption />
 
 **Parameters:**
-- `selector` (str): CSS selector for the select element
-- `option_text` (str): Visible text of the option
-- `option_value` (str): Value attribute of the option
+- `selector` (str): Selector for the select element
+- `id` (str): Element ID from the latest `observe()` output
+- `value` (str): Visible text or value attribute of the option to select
 
 **Use for:** Selecting from dropdowns, choosing options
 
@@ -205,7 +204,35 @@ Evaluate JavaScript code on the current page and return the result. `session.eva
 
 ---
 
+### Fetch
+
+Issue an HTTP request from the page the session is on. `session.fetch(url)` runs the browser's own `fetch()` inside the current page, so the request carries the page's cookies, the session's proxy and the browser's network fingerprint. A relative URL resolves against the current page, which also keeps it same-origin; a cross-origin URL is subject to CORS as in any browser tab, so `goto` the target origin first. The result is a standard `requests.Response`: `status_code`, `ok`, `headers`, `text`, `url`, `json()` and `raise_for_status()` work as usual.
+
+<Fetch />
+
+**Parameters:**
+- `url` (str): The URL to request, absolute or relative to the current page
+- `method` (str): HTTP method, `GET` by default
+- `headers` (dict): Extra request headers
+- `params` (dict): Query parameters appended to the URL
+- `json` (Any): Body serialised as JSON with an `application/json` content type
+- `data` (str | dict): Body sent verbatim, or form-encoded when a dict
+- `timeout` (float): Seconds before the request is aborted
+
+**Use for:** Calling a site's own JSON endpoints with the session's cookies and IP, without leaving the browser
+
+---
+
 ## Scrolling Actions
+
+Both scroll actions accept an optional `selector` for a scroll container, including iframe selectors.
+For example, pass `selector="#results"` to scroll a results panel. The action calls `scrollBy`
+on that container directly, emitting scroll events without sending a wheel event or moving the
+pointer. If `amount` is omitted, the action scrolls by 70% of the container's height. Reaching the requested boundary succeeds without moving or scrolling the parent page.
+A missing target or a blocked scroll before the boundary still fails.
+
+Without a selector, the action sends a wheel event at the current pointer position and fails
+if neither the page nor a container moves.
 
 ### ScrollUp
 
@@ -236,9 +263,15 @@ Upload a file to a file input.
 <UploadFile />
 
 **Parameters:**
-- `selector` (str): CSS selector for the file input
-- `id` (str): Element ID
-- `file_path` (str): Path to the file to upload
+- `selector` (str): Selector for the file input
+- `id` (str): Element ID from the latest `observe()` output
+- `file_path` (str): In cloud sessions, a stored filename or a public HTTP(S) file URL, including signed URLs.
+
+URL files download on the API server without navigating away from the form. They do
+not use browser cookies, browser proxy settings, or custom authentication headers,
+and are not added to the persistent session file catalog. The cloud backend must
+support URL uploads; no SDK update is required. Standalone local sessions keep
+their existing storage/path behavior.
 
 **Use for:** Uploading documents, images, any file input
 
@@ -251,8 +284,8 @@ Download a file from a link.
 <DownloadFile />
 
 **Parameters:**
-- `selector` (str): CSS selector for the download link
-- `id` (str): Element ID
+- `selector` (str): Selector for the download link
+- `id` (str): Element ID from the latest `observe()` output
 
 **Use for:** Downloading files, reports, documents
 
@@ -267,7 +300,7 @@ Pause execution for a specified duration.
 <Wait />
 
 **Parameters:**
-- `duration` (int): Time to wait in milliseconds
+- `time_ms` (int): Time to wait in milliseconds
 
 **Use for:** Waiting for page loads, animations, dynamic content
 
@@ -292,7 +325,7 @@ Extract data from the current page.
 
 **Use for:** Data extraction, web scraping, content analysis
 
-See [Fetch](/concepts/scraping) for detailed documentation.
+See [Scraping](/concepts/scraping) for detailed documentation.
 
 ---
 
@@ -300,12 +333,14 @@ See [Fetch](/concepts/scraping) for detailed documentation.
 
 ### SmsRead
 
-Read SMS messages from a persona's phone number.
+Read SMS messages from a persona's phone number. In scripts, call `persona.sms()` as shown below. The `sms_read` action takes the same parameters.
 
 <SmsReadExample />
 
 **Parameters:**
-- `persona_id` (str): Persona ID with phone number
+- `limit` (int, optional): Maximum number of messages to return
+- `timedelta` (optional): Only return messages received within this window
+- `only_unread` (bool, optional): Only return unread messages
 
 **Use for:** Reading 2FA codes, SMS verification, phone-based authentication
 
@@ -315,12 +350,14 @@ See [Personas](/concepts/personas) for details.
 
 ### EmailRead
 
-Read emails from a persona's email address.
+Read emails from a persona's email address. In scripts, call `persona.emails()` as shown below. The `email_read` action takes the same parameters.
 
 <EmailReadExample />
 
 **Parameters:**
-- `persona_id` (str): Persona ID with email address
+- `limit` (int, optional): Maximum number of emails to return
+- `timedelta` (optional): Only return emails received within this window
+- `only_unread` (bool, optional): Only return unread emails
 
 **Use for:** Reading verification emails, email-based authentication
 

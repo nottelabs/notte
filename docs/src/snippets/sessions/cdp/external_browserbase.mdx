@@ -1,39 +1,44 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/cdp/external_browserbase.py */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  import requests
 
-  client = NotteClient()
+```python Python
+import os
 
-  # Create session on BrowserBase (using their API)
-  browserbase_response = requests.post(
-      "https://api.browserbase.com/v1/sessions",
-      headers={"Authorization": f"Bearer {BROWSERBASE_API_KEY}"},
-      json={"projectId": "your-project-id"}
-  )
+import requests
+from notte_sdk import NotteClient
+from pydantic import BaseModel
 
-  session_data = browserbase_response.json()
-  cdp_url = session_data["cdpUrl"]
 
-  try:
-      # Connect Notte to BrowserBase
-      with client.Session(cdp_url=cdp_url) as session:
-          page = session.page
-          page.goto("https://example.com")
+class Articles(BaseModel):
+    titles: list[str]
 
-          # Use Notte's scraping
-          result = session.scrape(
-              instruction="Get all article titles",
-              schema={"titles": ["string"]}
-          )
 
-          print(result)
+client = NotteClient()
+BROWSERBASE_API_KEY = os.environ["BROWSERBASE_API_KEY"]
 
-  finally:
-      # Clean up BrowserBase session
-      requests.delete(
-          f"https://api.browserbase.com/v1/sessions/{session_data['id']}",
-          headers={"Authorization": f"Bearer {BROWSERBASE_API_KEY}"}
-      )
-  ```
+# Create session on BrowserBase (using their API)
+browserbase_response = requests.post(
+    "https://api.browserbase.com/v1/sessions",
+    headers={"X-BB-API-Key": BROWSERBASE_API_KEY},
+    json={"projectId": "your-project-id"},
+)
+
+session_data = browserbase_response.json()
+cdp_url = session_data["connectUrl"]
+
+# Connect Notte to BrowserBase
+with client.Session(cdp_url=cdp_url) as session:
+    page = session.page
+    page.goto("https://example.com")
+
+    # Use Notte's scraping
+    result = session.scrape(instructions="Get all article titles", response_format=Articles)
+
+    print(result)
+
+# Without keepAlive, BrowserBase releases its session once the CDP connection closes
+```
+
 </CodeGroup>

@@ -5,10 +5,10 @@
 agent = client.Agent(session=session)
 result = agent.run(task="Complex data extraction")
 
-# Recurring: Use function ($0.05 per run)
+# Recurring: replay the steps as a function (no LLM reasoning)
 function = agent.workflow.create_function()
 
-# Run 100 times - save $15 vs running agent each time
+# Run it as often as you need
 for i in range(100):
     function.run()
 ```

@@ -104,6 +104,12 @@ docs-sdk: docs-llms
 docs-llms:
 	cd docs/src && uv run python scripts/generate_llms.py
 
+# Rebuild the API section of llms.txt from the live OpenAPI spec. Only the
+# refresh-llms workflow should need this; docs-llms reuses the committed section.
+.PHONY: docs-llms-refresh
+docs-llms-refresh:
+	cd docs/src && uv run python scripts/generate_llms.py --refresh-openapi
+
 
 .PHONY: docs-agent-notice
 docs-agent-notice:
@@ -160,5 +166,4 @@ release:
 			exit 1; \
 	fi
 	@echo "\033[0;35mBuilding version: $(filter-out $@,$(MAKECMDGOALS))\033[0m"
-	sh build.sh $(filter-out $@,$(MAKECMDGOALS))
-	@git checkout pyproject.toml uv.lock packages/*/pyproject.toml
+	python3 scripts/build_release.py $(filter-out $@,$(MAKECMDGOALS))

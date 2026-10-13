@@ -6,41 +6,37 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-The API implements rate limiting to ensure fair usage and platform stability.
+The API rate limits a few endpoints to ensure fair usage and platform stability.
 
-## Rate limit headers
+## Limited endpoints
 
-Every response includes headers with your current rate limit status:
+Limits are counted per API key, with a separate budget for each endpoint:
 
-| Header | Description |
-|--------|-------------|
-| `X-RateLimit-Limit` | Maximum requests allowed per window |
-| `X-RateLimit-Remaining` | Requests remaining in current window |
-| `X-RateLimit-Reset` | Unix timestamp when the window resets |
+| Endpoint | Description |
+|----------|-------------|
+| `POST /sessions/start` | Start a browser session |
+| `POST /agents/start` | Start an agent |
+| `POST /prompts/improve`, `POST /prompts/nudge` | Prompt helpers |
+
+Each endpoint has a per-minute, per-hour, and per-day window. The window sizes depend on your plan; see [Rate Limits](/rate-limits) for the numbers.
 
 ## Rate limit exceeded (429)
 
+When a window is exhausted, the API returns `429` with an `X-Error-Class: NotteApiRateLimitExceededError` header:
+
 ```json
 {
-  "message": "Rate limit exceeded",
-  "detail": "Please wait before making more requests"
+  "detail": "Rate limit exceeded: 50 per 1 minute",
+  "session_id": null,
+  "status": 429,
+  "error": "Rate limit exceeded: 50 per 1 minute",
+  "message": "Rate limit exceeded: 50 per 1 minute"
 }
 ```
 
-## Checking your limits
+A `429` is also returned when you already have the maximum number of active sessions, agents, vaults, or personas for your plan. That response has `X-Error-Class: NotteApiMaxActiveResourcesError` and a message such as `Max active sessions limit exceeded (limit: 5, current: 5)`. Close some of those resources, or upgrade your plan.
 
-```bash
-curl -I https://api.notte.cc/health \
-  -H "Authorization: Bearer $NOTTE_API_KEY"
-```
-
-Response headers:
-
-```
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1704067200
-```
+Rate-limit responses do not include `X-RateLimit-*` or `Retry-After` headers. Retry with exponential backoff. `Retry-After` is only sent on `529` responses, when no browser capacity is available (see [API Error Codes](/api-reference/errors)).
 
 ## Increasing limits
 

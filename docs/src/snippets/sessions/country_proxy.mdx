@@ -1,8 +1,30 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/sessions/country_proxy.py */}
 
-```python country_proxy.py
-from notte_sdk.types import NotteProxy
+<CodeGroup>
 
-proxies = NotteProxy.from_country("fr")
+```python country_proxy.py
+from notte_sdk import NotteClient
+from notte_sdk.types import NotteProxy, ProxySettings
+
+client = NotteClient()
+
+# Shorthand: pass a country code
+session = client.Session(proxies="fr")
+
+# Equivalent explicit form
+proxies: list[ProxySettings] = [NotteProxy.from_country("fr")]
+session = client.Session(proxies=proxies)
 ```
+
+```typescript country_proxy.ts
+import { NotteClient, type NotteProxy } from 'notte-sdk';
+
+const client = new NotteClient();
+
+// Route the session through a French residential proxy
+const proxies: NotteProxy[] = [{ type: 'notte', country: 'fr' }];
+const session = client.Session({ proxies });
+```
+
+</CodeGroup>

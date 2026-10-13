@@ -57,7 +57,7 @@ def test_upload_against_local_fixture(case: FixtureUploadCase):
     notte = NotteClient()
     storage = notte.FileStorage()
 
-    with notte.Session(storage=storage) as session:
+    with notte.Session(proxies=False, storage=storage) as session:
         try:
             uploaded = storage.upload(str(DATA_DIR / case.file_name))
         except NotteAPIError as exc:

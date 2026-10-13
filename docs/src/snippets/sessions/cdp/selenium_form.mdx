@@ -1,39 +1,46 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/cdp/selenium_form.py */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
 
-  client = NotteClient()
+```python Python
+from notte_sdk import NotteClient
 
-  def automate_form():
-      with client.Session(open_viewer=True) as session:
-          page = session.page
+client = NotteClient()
 
-          # Navigate to form
-          page.goto("https://example.com/contact")
 
-          # Fill form fields
-          page.fill('input[name="name"]', "John Doe")
-          page.fill('input[name="email"]', "john@example.com")
-          page.fill('textarea[name="message"]', "Hello, this is a test message")
+def automate_form():
+    with client.Session(open_viewer=True) as session:
+        page = session.page
 
-          # Select from dropdown
-          page.select_option('select[name="topic"]', "support")
+        # Navigate to form
+        page.goto("https://example.com/contact")
 
-          # Check checkbox
-          page.check('input[name="subscribe"]')
+        # Fill form fields
+        page.fill('input[name="name"]', "John Doe")
+        page.fill('input[name="email"]', "john@example.com")
+        page.fill('textarea[name="message"]', "Hello, this is a test message")
 
-          # Submit form
-          page.click('button[type="submit"]')
+        # Select from dropdown
+        page.select_option('select[name="topic"]', "support")
 
-          # Wait for success message
-          page.wait_for_selector("div.success")
+        # Check checkbox
+        page.check('input[name="subscribe"]')
 
-          success_message = page.locator("div.success").inner_text()
-          print(f"Success: {success_message}")
+        # Submit form
+        page.click('button[type="submit"]')
 
-          # Take screenshot
-          page.screenshot(path="success.png")
+        # Wait for success message
+        page.wait_for_selector("div.success")
 
-  automate_form()
-  ```
+        success_message = page.locator("div.success").inner_text()
+        print(f"Success: {success_message}")
+
+        # Take screenshot
+        page.screenshot(path="success.png")
+
+
+automate_form()
+```
+
 </CodeGroup>

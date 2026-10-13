@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/browser-controls/eval_js.py */}
 
+<CodeGroup>
+
 ```python eval_js.py
 import json
 
@@ -15,3 +17,20 @@ with client.Session() as session:
     # objects and arrays come back as JSON
     links = json.loads(session.evaluate_js("Array.from(document.querySelectorAll('a')).map(a => a.href)"))
 ```
+
+```typescript eval_js.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const session = client.Session();
+await session.use(async () => {
+  await session.execute({ type: 'goto', url: 'https://notte.cc/' });
+  // evaluateJs returns the evaluated string; failures raise with the JS error
+  const title = await session.evaluateJs('document.title');
+  // objects and arrays come back as JSON
+  const links = JSON.parse(await session.evaluateJs("Array.from(document.querySelectorAll('a')).map(a => a.href)"));
+});
+```
+
+</CodeGroup>

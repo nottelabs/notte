@@ -1,0 +1,94 @@
+name: paired-sdk-examples
+
+on:
+  pull_request:
+    paths: ['docs/**', 'node-sdk/**', 'packages/**', 'uv.lock', '.github/workflows/paired-sdk-examples.yml']
+  push:
+    branches: [main]
+    paths: ['docs/**', 'node-sdk/**', 'packages/**', 'uv.lock', '.github/workflows/paired-sdk-examples.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: node-sdk/package-lock.json
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+      - run: npm ci --prefix node-sdk
+      - run: npm run build --prefix node-sdk
+      - run: npm run typecheck --prefix node-sdk
+      - run: node docs/src/sniptest/check_typescript.mjs
+      - run: python docs/src/sniptest/live.py
+      - run: python -m unittest discover -s docs/src/sniptest -p 'test_*.py'
+      - run: python docs/src/sniptest/generate.py --check
+      - name: Enforce example parity and shrinking backlog
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != '0000000000000000000000000000000000000000' ]; then
+            python docs/src/sniptest/parity.py --base-ref "$BASE_SHA"
+          else
+            python docs/src/sniptest/parity.py
+          fi
+
+  live:
+    needs: checks
+    # Test same-repository PRs before merging; forks must not receive staging credentials.
+    if: >-
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NOTTE_API_URL: https://us-staging.notte.cc
+      NOTTE_DOCS_LIVE: '1'
+      VITEST_INTEGRATION: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Do not restore dependency caches into the credentialed job.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+      - run: uv sync --locked --package notte-sdk --no-dev
+      - run: uv pip install playwright==1.62.0 patchright==1.55.1
+      - name: Verify Python browser dependencies before live execution
+        run: .venv/bin/python -c "import playwright.sync_api; import patchright.sync_api"
+      - run: npm ci --prefix node-sdk
+      - run: npm run build --prefix node-sdk
+      - name: Wait for the API to be reachable
+        # The staging API scales to zero when idle and wakes on the first
+        # request; poll until it answers before running anything against it.
+        run: |
+          deadline=$((SECONDS + 900))
+          until [ "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' "$NOTTE_API_URL/health")" = "200" ]; do
+            [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
+            sleep 10
+          done
+      - name: Execute both languages against the local SDK packages
+        working-directory: node-sdk
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+        run: |
+          export NOTTE_DOCS_PYTHON="$GITHUB_WORKSPACE/.venv/bin/python"
+          # Retry a failed live example once, without rerunning the whole suite.
+          # A second failure still fails this job; other jobs keep their retry policy.
+          npx vitest run test/docs-snippets.integration.test.ts --retry 1

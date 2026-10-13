@@ -1,0 +1,59 @@
+import puppeteer from 'puppeteer-core';
+
+const API = 'https://api.notte.cc';
+const headers = {
+  'Authorization': `Bearer ${process.env.NOTTE_API_KEY}`,
+  'Content-Type': 'application/json'
+};
+
+async function scrapeWithNotte() {
+  // Create Notte session with the REST API
+  const sessionResponse = await fetch(`${API}/sessions/start`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      proxies: true,  // Use residential proxies
+      solve_captchas: false,
+      idle_timeout_minutes: 10
+    })
+  });
+
+  const { cdp_url, session_id } = await sessionResponse.json();
+
+  try {
+    // Connect Puppeteer
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: cdp_url
+    });
+
+    const pages = await browser.pages();
+    const page = pages[0];
+
+    // Navigate and scrape
+    await page.goto('https://example.com/products', {
+      waitUntil: 'networkidle2'
+    });
+
+    // Extract data
+    const products = await page.evaluate(() => {
+      const items = document.querySelectorAll('.product');
+      return Array.from(items).map(item => ({
+        title: item.querySelector('.title')?.textContent,
+        price: item.querySelector('.price')?.textContent,
+        url: item.querySelector('a')?.href
+      }));
+    });
+
+    console.log('Scraped products:', products);
+
+    await browser.disconnect();
+  } finally {
+    // Stop session
+    await fetch(`${API}/sessions/${session_id}/stop`, {
+      method: 'DELETE',
+      headers
+    });
+  }
+}
+
+scrapeWithNotte().catch(console.error);

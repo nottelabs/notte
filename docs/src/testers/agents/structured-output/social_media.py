@@ -1,5 +1,5 @@
 # @sniptest filename=social_media.py
-# @sniptest show=6-20
+# @sniptest show=5-21
 from notte_sdk import NotteClient
 from pydantic import BaseModel
 

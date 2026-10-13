@@ -1,29 +1,34 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/cdp/playwright_network.py */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-  from playwright.sync_api import sync_playwright
 
-  client = NotteClient()
+```python Python
+from notte_sdk import NotteClient
+from playwright.sync_api import sync_playwright
 
-  with client.Session() as session:
-      cdp_url = session.cdp_url()
+client = NotteClient()
 
-      with sync_playwright() as p:
-          browser = p.chromium.connect_over_cdp(cdp_url)
-          page = browser.contexts[0].pages[0]
+with client.Session() as session:
+    cdp_url = session.cdp_url()
 
-          # Block images and stylesheets for faster loading
-          page.route("**/*.{png,jpg,jpeg,css}", lambda route: route.abort())
+    with sync_playwright() as p:
+        browser = p.chromium.connect_over_cdp(cdp_url)
+        page = browser.contexts[0].pages[0]
 
-          # Modify API responses
-          def handle_route(route):
-              if "api/config" in route.request.url:
-                  route.fulfill(json={"feature_enabled": True})
-              else:
-                  route.continue_()
+        # Block images and stylesheets for faster loading
+        page.route("**/*.{png,jpg,jpeg,css}", lambda route: route.abort())
 
-          page.route("**/api/**", handle_route)
+        # Modify API responses
+        def handle_route(route):
+            if "api/config" in route.request.url:
+                route.fulfill(json={"feature_enabled": True})
+            else:
+                route.continue_()
 
-          page.goto("https://example.com")
-  ```
+        page.route("**/api/**", handle_route)
+
+        page.goto("https://example.com")
+```
+
 </CodeGroup>

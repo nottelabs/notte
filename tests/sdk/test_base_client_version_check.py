@@ -317,16 +317,16 @@ class TestBaseClientVersionCheck:
 
                     client = BaseClient(MockNotteClient(), None, api_key=api_key)
 
-                with pytest.raises(RuntimeError) as exc_info:
-                    client.request(mock_endpoint)
+                    with pytest.raises(RuntimeError) as exc_info:
+                        client.request(mock_endpoint)
 
-                # Check that the error message contains upgrade suggestion
-                error_message = str(exc_info.value)
-                assert "Pydantic validation failed" in error_message
-                assert "API schema changes" in error_message
-                assert "Current SDK version: 1.7.0" in error_message
-                assert "Latest available: 1.8.0" in error_message
-                assert "pip install notte-sdk==1.8.0" in error_message
+                    # Check that the error message contains upgrade suggestion
+                    error_message = str(exc_info.value)
+                    assert "Pydantic validation failed" in error_message
+                    assert "API schema changes" in error_message
+                    assert "Current SDK version: 1.7.0" in error_message
+                    assert "Latest available: 1.8.0" in error_message
+                    assert "pip install notte-sdk==1.8.0" in error_message
 
     def test_pydantic_validation_error_without_upgrade_suggestion(self, api_key: str, reset_global_state):
         """Test that ValidationError is not enhanced when no upgrade needed."""

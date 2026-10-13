@@ -8,6 +8,6 @@ result = agent.run(task="Extract daily price changes")
 # Convert to function
 function = agent.workflow.create_function()
 
-# Schedule to run daily (via API or console)
-# function.schedule(cron="0 9 * * *")
+# Schedule it to run daily: see Function Schedules
+print(f"Function ID to schedule: {function.function_id}")
 ```

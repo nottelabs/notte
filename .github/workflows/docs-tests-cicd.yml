@@ -27,13 +27,13 @@ jobs:
       DOCS_TEST_FAST_MODE: "true"
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version-file: ".python-version"
 
@@ -48,6 +48,12 @@ jobs:
       - name: Run syntax checks
         run: cd docs/src && uv run pytest -v --tb=no
 
+      - name: Test shared setup synchronization
+        run: python docs/src/scripts/test_sync_quickstart_setup_prompt.py
+
+      - name: Test CLI reference sync
+        run: python docs/src/scripts/test_generate_cli_reference.py
+
   type-check:
     needs: syntax-check
     runs-on: blacksmith-4vcpu-ubuntu-2404
@@ -56,13 +62,13 @@ jobs:
       DOCS_TEST_TYPE_CHECK: "true"
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version-file: ".python-version"
 
@@ -72,31 +78,36 @@ jobs:
           source .venv/bin/activate
 
       - name: Install dependencies
-        run: uv pip install notte-sdk pytest-examples mypy
+        # Sync the workspace explicitly (what `uv run` would otherwise do on first
+        # use), then install mypy into that same environment. Installing mypy first
+        # and letting `uv run` sync afterwards is how this job used to lose mypy:
+        # the sync downgraded mypy's requirements under it, mypy crashed on import,
+        # and every snippet "passed" without being checked.
+        run: |
+          uv sync --locked
+          uv pip install pytest-examples mypy
 
       - name: Run type checks
-        run: cd docs/src && uv run pytest -v --tb=no
+        # --no-sync: pytest and the mypy it spawns must see exactly the environment
+        # prepared above; nothing may re-sync and alter it.
+        run: cd docs/src && uv run --no-sync pytest -v --tb=no
 
   execution:
     needs: type-check
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     env:
-      NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
-      NOTTE_GITHUB_COM_EMAIL: ${{ secrets.NOTTE_GITHUB_COM_EMAIL }}
-      NOTTE_GITHUB_COM_PASSWORD: ${{ secrets.NOTTE_GITHUB_COM_PASSWORD }}
-      NOTTE_GITHUB_COM_MFA_SECRET: ${{ secrets.NOTTE_GITHUB_COM_MFA_SECRET }}
       # Scope vault creates to this job only; cleanup deletes only this prefix.
       NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version-file: ".python-version"
 
@@ -112,6 +123,8 @@ jobs:
         run: uv run patchright install --no-shell
 
       - name: Verify environment variables
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
         run: |
           if [ -z "$NOTTE_API_KEY" ]; then
             echo "NOTTE_API_KEY is not set"
@@ -119,11 +132,27 @@ jobs:
           fi
           echo "Environment variables are set"
 
+      - name: Wait for the API to be reachable
+        # The staging API scales to zero when idle and wakes on the first
+        # request; poll until it answers before running anything against it.
+        run: |
+          deadline=$((SECONDS + 900))
+          until [ "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' "$NOTTE_API_URL/health")" = "200" ]; do
+            [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
+            sleep 10
+          done
       - name: Run execution tests
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_GITHUB_COM_EMAIL: ${{ secrets.NOTTE_GITHUB_COM_EMAIL }}
+          NOTTE_GITHUB_COM_PASSWORD: ${{ secrets.NOTTE_GITHUB_COM_PASSWORD }}
+          NOTTE_GITHUB_COM_MFA_SECRET: ${{ secrets.NOTTE_GITHUB_COM_MFA_SECRET }}
         run: cd docs/src && uv run pytest -v --tb=no
 
       - name: Cleanup vaults created by this run
         if: always()
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
         run: |
           source .venv/bin/activate
           python scripts/cleanup_ci_vaults.py

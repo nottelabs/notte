@@ -5,12 +5,19 @@ Tabs become H1, top-level groups become H2, nested groups become H3.
 Each page is emitted as a bullet with title + description pulled from
 the page's YAML frontmatter.
 
+The API section is rendered from the OpenAPI spec and kept between marker
+comments. By default it is reused verbatim from the existing llms.txt so the
+generator is deterministic and offline, which is what the pre-commit hook
+needs; pass --refresh-openapi to fetch the live spec and rebuild it, which is
+what the daily refresh workflow does.
+
 Run from anywhere:
-    python3 src/scripts/generate_llms.py
+    python3 src/scripts/generate_llms.py [--refresh-openapi]
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -28,102 +35,19 @@ OUTPUT = SRC_DIR / "llms.txt"
 HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options"}
 
 AGENT_READING_GUIDANCE = [
-    "## Critical Instructions For AI Agents",
+    "## Setup For AI Agents",
     "",
-    "STOP. Read and follow https://docs.notte.cc/quickstart.md before using SDK docs or writing SDK code.",
+    "Read https://notte.cc/skill.md and follow its setup instructions.",
     "",
-    "Goal: generate a reliable SDK automation script, then edit it. Do not hand-author the first pass from SDK "
-    "reference pages.",
-    "",
-    "The Notte CLI is the source of truth for real browser state. You MUST use the Notte skill and CLI to inspect "
-    "the live site, validate actions/selectors, handle auth/session state, and export workflow code with "
-    "`notte sessions workflow-code`.",
-    "",
-    "Use SDK docs only to understand, run, or edit exported workflow code. SDK-first automation is guesswork on "
-    "real pages with dynamic selectors, auth state, CAPTCHAs, and anti-bot behavior.",
-    "",
-    "## Agent Rule: Do Not Guess Selectors",
-    "",
-    "Do not hand-write SDK code with element IDs, selectors, or form fields from memory. Browser targets must come "
-    "from a live `observe()` call, CLI `notte page observe` output, or generated workflow code. Guessed targets "
-    "fail on real pages.",
-    "",
-    "## Agent Rule: Authentication Is Interactive",
-    "",
-    "Before writing scripts, scaffolding fallback code, or switching approaches, check Notte authentication:",
-    "",
-    "```bash",
-    "notte auth status",
-    "```",
-    "",
-    "If authentication is missing, do not stop, create fallback code, or ask for an API key first. The CLI works in "
-    "non-interactive terminals; the human may just need to complete browser login. Run:",
-    "",
-    "```bash",
-    "notte auth login",
-    "```",
-    "",
-    'Tell the user: "Please complete the Notte login flow that just opened." Then poll every 5 seconds for up to 5 '
-    "minutes:",
-    "",
-    "```bash",
-    "notte auth status",
-    "```",
-    "",
-    "Only continue after `notte auth status` succeeds. If login does not complete after 5 minutes, ask whether to "
-    "retry login or set `NOTTE_API_KEY`.",
-    "",
-    "Do not generate placeholder automation, SDK scripts, or README-only instructions because Notte is "
-    "unauthenticated. Authentication is part of the setup workflow.",
-    "",
-    "## CLI-First Workflow",
-    "",
-    "Complete this loop to generate valid SDK code before using SDK documentation or writing SDK code:",
-    "",
-    "```bash",
-    "# 1. Install the CLI if needed",
-    "brew tap nottelabs/notte-cli https://github.com/nottelabs/notte-cli.git",
-    "brew install notte",
-    "# or: go install github.com/nottelabs/notte-cli/cmd/notte@latest",
-    "",
-    "# 2. Authenticate. If this opens a browser login, wait for the user to finish.",
-    "notte auth status || notte auth login",
-    "# If login opens an interactive flow, wait for the user to complete it.",
-    "# Then poll `notte auth status` until it succeeds before continuing.",
-    "notte auth status",
-    "",
-    "# 3. Start a session, open the viewer, and navigate to the target page",
-    "notte sessions start",
-    "notte sessions viewer",
-    "notte page goto https://target-site.com/",
-    "",
-    "# 4. Observe the live page and execute actions from real browser state",
-    "notte page observe",
-    "# Use element IDs only after they appear in the observe output. Do not guess IDs.",
-    'notte page click "B3"',
-    'notte page fill "I1" "example value"',
-    'notte page scrape --instructions "Extract the relevant data"',
-    "",
-    "# 5. Export workflow code only after CLI exploration",
-    "notte sessions workflow-code",
-    "```",
-    "",
-    "Full Quickstart: https://docs.notte.cc/quickstart.md",
+    (
+        "The shared skill covers CLI installation, authentication, live browser exploration, and Python or TypeScript "
+        "integrations. Setup instructions are maintained in nottelabs/notte-skills."
+    ),
     "",
 ]
 
 SDK_READING_GATE = [
-    "## SDK Prerequisite Gate",
-    "",
-    "STOP. Do not use this SDK section yet unless you have already generated workflow code from the Quickstart-led "
-    "CLI workflow.",
-    "",
-    "Before using any SDK link below, you must have a running CLI browser session, have explored the target page "
-    "interactively, and have `notte sessions workflow-code` output to run, inspect, or refine. If you have not run "
-    "`notte sessions workflow-code`, go back to https://docs.notte.cc/quickstart.md now.",
-    "",
-    "The SDK docs below are for generated-code editing and reference. They are not the starting point for manually "
-    "authoring browser automation from scratch.",
+    "For agent-driven browser automation, follow https://notte.cc/skill.md before implementing an SDK integration.",
     "",
 ]
 
@@ -166,6 +90,41 @@ def render_openapi(spec: dict) -> list[str]:
             lines.append(line)
         lines.append("")
     return lines
+
+
+OPENAPI_END_MARKER = "<!-- openapi:end -->"
+
+
+def openapi_begin_marker(url: str) -> str:
+    return f"<!-- openapi:begin {url} -->"
+
+
+def cached_openapi_section(existing: str, url: str) -> list[str] | None:
+    """Return the marker-delimited API block for `url` from a previous llms.txt, or None."""
+    begin = openapi_begin_marker(url)
+    start = existing.find(begin)
+    if start == -1:
+        return None
+    end = existing.find(OPENAPI_END_MARKER, start)
+    if end == -1:
+        return None
+    block = existing[start : end + len(OPENAPI_END_MARKER)]
+    return block.split("\n")
+
+
+def openapi_section(url: str, *, refresh: bool, existing: str) -> list[str]:
+    """The API block for `url`: reused from `existing` unless refreshing or absent."""
+    if not refresh:
+        cached = cached_openapi_section(existing, url)
+        if cached is not None:
+            return cached + [""]
+        print(f"  warning: no cached openapi section for {url}, fetching live", file=sys.stderr)
+    try:
+        spec = fetch_openapi(url)
+    except Exception as e:
+        print(f"  warning: failed to fetch openapi {url}: {e}", file=sys.stderr)
+        return [f"- OpenAPI spec: {url}", ""]
+    return [openapi_begin_marker(url), ""] + render_openapi(spec) + [OPENAPI_END_MARKER, ""]
 
 
 def read_frontmatter(page_path: str) -> dict:
@@ -226,7 +185,16 @@ def render_pages(pages: list, depth: int) -> list[str]:
     return lines
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(
+        "--refresh-openapi",
+        action="store_true",
+        help="fetch the live OpenAPI spec and rebuild the API section instead of reusing the committed one",
+    )
+    args = parser.parse_args(argv)
+    existing = OUTPUT.read_text(encoding="utf-8") if OUTPUT.exists() else ""
+
     config = json.loads(DOCS_JSON.read_text())
     site_name = config.get("name", "Docs")
 
@@ -253,21 +221,11 @@ def main() -> int:
         for group in tab.get("groups", []):
             out += [f"## {group['group']}", ""]
             if "openapi" in group:
-                try:
-                    spec = fetch_openapi(group["openapi"])
-                    out += render_openapi(spec)
-                except Exception as e:
-                    print(f"  warning: failed to fetch openapi {group['openapi']}: {e}", file=sys.stderr)
-                    out += [f"- OpenAPI spec: {group['openapi']}", ""]
+                out += openapi_section(group["openapi"], refresh=args.refresh_openapi, existing=existing)
             out += render_pages(group.get("pages", []), depth=3)
             out += [""]
         if "openapi" in tab:
-            try:
-                spec = fetch_openapi(tab["openapi"])
-                out += render_openapi(spec)
-            except Exception as e:
-                print(f"  warning: failed to fetch openapi {tab['openapi']}: {e}", file=sys.stderr)
-                out += [f"- OpenAPI spec: {tab['openapi']}", ""]
+            out += openapi_section(tab["openapi"], refresh=args.refresh_openapi, existing=existing)
 
     OUTPUT.write_text("\n".join(out).rstrip() + "\n")
     print(f"wrote {OUTPUT.relative_to(SRC_DIR.parent)} ({OUTPUT.stat().st_size} bytes)")

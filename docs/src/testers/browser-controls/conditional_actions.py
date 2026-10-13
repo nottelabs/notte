@@ -1,4 +1,5 @@
 # @sniptest filename=conditional_actions.py
+# @sniptest show=1-16
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -15,3 +16,6 @@ with client.Session() as session:
     else:
         # Element wasn't there, skip
         print("Optional button not found, continuing...")
+
+assert result.success is False
+status = session.status()

@@ -2,6 +2,11 @@
 {/* @sniptest testers/agents/lifecycle/graceful_degradation.py */}
 
 ```python graceful_degradation.py
+from loguru import logger
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
 with client.Session() as session:
     agent = client.Agent(session=session)
     result = agent.run(task="Complete task")
@@ -14,4 +19,5 @@ with client.Session() as session:
         logger.error(f"Agent failed: {result.answer}")
 
         # Fallback strategy
+        print("Executing fallback approach...")
 ```

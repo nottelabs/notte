@@ -2,6 +2,7 @@ import pytest
 from dotenv import load_dotenv
 from notte_core.common.config import BrowserType
 from notte_sdk import NotteClient
+from notte_sdk.errors import NotteAPIError
 
 _ = load_dotenv()
 
@@ -9,7 +10,7 @@ _ = load_dotenv()
 def test_start_close_session():
     client = NotteClient()
 
-    response = client.sessions.start()
+    response = client.sessions.start(proxies=False)
     assert response.status == "active"
     response = client.sessions.stop(session_id=response.session_id)
     assert response.status == "closed"
@@ -34,23 +35,29 @@ def test_start_close_session_with_proxy():
     assert session.response is not None
 
 
+def test_start_session_with_too_small_viewport_is_rejected():
+    client = NotteClient()
+    with pytest.raises(NotteAPIError) as exc_info:
+        with client.Session(proxies=False, viewport_height=100, viewport_width=100):
+            pass
+    assert 400 <= exc_info.value.status_code < 500
+
+
 def test_start_close_session_with_viewport():
     client = NotteClient()
-    with client.Session(viewport_height=100, viewport_width=100) as session:
+    with client.Session(proxies=False, viewport_height=768, viewport_width=1024) as session:
         assert session.session_id is not None
         status = session.status()
         assert status.status == "active"
     assert session.response is not None
 
 
-@pytest.fixture
-def session_id() -> str:
-    return "7ba14107-0c0e-4a26-bd7c-57f49503e409"
-
-
-def test_replay_session(session_id: str):
+def test_replay_session():
     client = NotteClient()
-    response = client.sessions.replay(session_id=session_id)
+    with client.Session(proxies=False, open_viewer=False) as session:
+        _ = session.execute(type="goto", url="https://www.google.com")
+        _ = session.execute(type="wait", time_ms=3_000)
+    response = client.sessions.replay(session_id=session.session_id)
     assert response.expires_at
     assert response.mp4_url or response.playlist_content
 
@@ -58,7 +65,7 @@ def test_replay_session(session_id: str):
 @pytest.mark.parametrize("browser_type", ["chrome", "chromium"])
 def test_start_close_session_with_browser_type(browser_type: BrowserType):
     client = NotteClient()
-    with client.Session(open_viewer=False, browser_type=browser_type) as session:
+    with client.Session(proxies=False, open_viewer=False, browser_type=browser_type) as session:
         assert session.session_id is not None
         status = session.status()
         assert status.status == "active"

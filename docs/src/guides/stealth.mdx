@@ -6,7 +6,6 @@ import DefaultProxy from '/snippets/sessions/default_proxy.mdx';
 import CountryProxy from '/snippets/sessions/country_proxy.mdx';
 import CaptchaSolving from '/snippets/sessions/solve_captchas.mdx';
 import StealthConfiguration from '/snippets/sessions/stealth_configuration.mdx';
-import BrowserTypeSelection from '/snippets/guides/browser_type_selection.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -28,7 +27,7 @@ Common Bot Detection Challenges:
 Proxies are one of the most effective ways to bypass bot detection. Different proxy configurations can help you appear as legitimate traffic from various locations.
 
 #### Using Default Proxies
-Enable Notte's built-in residential proxies for better anonymity:
+Notte's built-in residential proxies are enabled by default (`proxies=True`), so every session already routes through them unless you set `proxies=False`:
 
 <DefaultProxy/>
 
@@ -37,25 +36,19 @@ For sites with geographic restrictions, use proxies from specific countries:
 
 <CountryProxy/>
 
-### 2. Browser Type Selection
+### 2. CAPTCHA Solving
 
-Different browsers have varying levels of detection resistance. Experiment with different browser types for your specific use case:
-
-<BrowserTypeSelection />
-
-<Tip>
-  `chromium` is the default browser type but is the most easily detected.
-</Tip>
-
-### 3. CAPTCHA Solving
-
-Enable automatic CAPTCHA solving for sites that use these challenges:
+Automatic CAPTCHA solving is enabled by default (`solve_captchas=True`) for sites that use these challenges:
 
 <CaptchaSolving />
 
 <Warning>
   Not all CAPTCHA types are supported. Some complex CAPTCHAs may still require manual intervention.
 </Warning>
+
+### 3. Advanced Stealth
+
+For sites with sophisticated bot detection, start the session with `advanced_stealth=True` to use Notte's highest-fidelity browser environment. Advanced stealth is available to approved workspaces; [contact us](https://cal.com/team/notte/demo) to request access.
 
 ## Complete Stealth Configuration Example
 
@@ -65,10 +58,10 @@ Here's a comprehensive example combining all stealth techniques:
 
 ## Troubleshooting Tips
 1. **Start Simple**. Begin with basic configurations and gradually add complexity:
-    - Try `proxies=True` first
-    - Add `solve_captchas=True` if needed
-    - Experiment with different `browser_type` values
+    - Keep the defaults first (`proxies=True`, `solve_captchas=True`)
+    - Pick a proxy country that matches the target site
     - Add custom `user_agent` if still detected
+    - Try `advanced_stealth=True` if your workspace has access
 2. **Test Incrementally**. Test each configuration change individually to identify what works:
 3. **Monitor for Patterns**. Keep track of which configurations work for different types of sites:
 	- E-commerce sites often respond well to residential proxies

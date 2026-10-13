@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/browser-controls/conditional_actions.py */}
 
+<CodeGroup>
+
 ```python conditional_actions.py
 from notte_sdk import NotteClient
 
@@ -19,3 +21,27 @@ with client.Session() as session:
         # Element wasn't there, skip
         print("Optional button not found, continuing...")
 ```
+
+```typescript conditional_actions.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const session = client.Session();
+await session.use(async () => {
+  await session.execute({ type: 'goto', url: 'https://example.com' });
+
+  // Check if element exists
+  const result = await session.execute({ type: 'click', selector: 'button.optional' }, { raiseOnFailure: false });
+
+  if (result.success) {
+    // Element was there and clicked
+    await session.execute({ type: 'click', selector: 'button.next' });
+  } else {
+    // Element wasn't there, skip
+    console.log('Optional button not found, continuing...');
+  }
+});
+```
+
+</CodeGroup>

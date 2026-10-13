@@ -21,6 +21,8 @@ Follow the setup instructions in the [README](../README.md).
 python agent.py
 ```
 
+For a shorter run that scrapes one category, use `python agent.py --max-categories 1`.
+
 ## Output
 
 The output will be saved in the `nike_results` directory.
