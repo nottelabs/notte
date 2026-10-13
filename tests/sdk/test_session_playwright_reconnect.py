@@ -12,6 +12,9 @@ def playwright_available(monkeypatch):
     monkeypatch.setattr(sessions, "_async_playwright_available", True)
 
 
+HEADERS = {"x-notte-request-origin": "sdk"}
+
+
 def binding():
     page = MagicMock()
     browser = MagicMock()
@@ -30,6 +33,7 @@ def session_with_disconnected_client():
     session._async_playwright_browser, session._async_playwright_page = binding()
     session._async_playwright_browser.is_connected.return_value = False
     session.cdp_url = MagicMock(return_value="ws://existing-session/debug")
+    session._cdp_headers = MagicMock(return_value=HEADERS)
     session.start = MagicMock()
     session.stop = MagicMock()
     return session
@@ -45,8 +49,9 @@ def test_reconnect_replaces_binding_without_replaying_or_stopping():
     assert session._playwright_page is page
     assert session._playwright_browser is fresh
     session._playwright_context.chromium.connect_over_cdp.assert_called_once_with(
-        "ws://existing-session/debug", timeout=1500
+        "ws://existing-session/debug", headers=HEADERS, timeout=1500
     )
+    session._cdp_headers.assert_called_once_with("ws://existing-session/debug")
     old_browser.close.assert_not_called()
     assert not old_page.mock_calls
     assert not page.mock_calls
@@ -113,7 +118,8 @@ async def test_async_concurrent_reconnects_make_one_connection_without_replay():
     connector = AsyncMock(side_effect=connect)
     session._async_playwright_context.chromium.connect_over_cdp = connector
     assert await asyncio.gather(session.areconnect(), session.areconnect()) == [page, page]
-    connector.assert_awaited_once_with("ws://existing-session/debug", timeout=10_000)
+    connector.assert_awaited_once_with("ws://existing-session/debug", headers=HEADERS, timeout=10_000)
+    session._cdp_headers.assert_called_once_with("ws://existing-session/debug")
     assert session._async_playwright_browser is fresh
     assert session._async_playwright_page is page
     old_browser.close.assert_not_called()
