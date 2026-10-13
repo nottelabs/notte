@@ -298,7 +298,7 @@ def test_save_running_session_into_new_profile(client: NotteClient) -> None:
             )
             profile = session.save_profile(name="save-on-demand-test")
             profile_id = profile.profile_id
-            assert "example.com" in profile.persisted_domains
+            assert profile.persisted_domains.count("example.com") == 1
 
             # The session keeps running after the save.
             _ = session.execute(type="goto", url="https://example.com")

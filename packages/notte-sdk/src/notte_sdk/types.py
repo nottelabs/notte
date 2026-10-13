@@ -1678,6 +1678,10 @@ class SessionProfileSaveRequest(SdkRequest):
     def _single_target(self) -> "SessionProfileSaveRequest":
         if self.profile_id is not None and self.name is not None:
             raise ValueError("profile_id and name are mutually exclusive")
+        if self.profile_id is not None and not self.profile_id.strip():
+            raise ValueError("profile_id must not be empty")
+        if self.name is not None and not self.name.strip():
+            raise ValueError("name must not be empty")
         return self
 
 

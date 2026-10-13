@@ -54,6 +54,8 @@ def test_client_save_profile_sends_the_target(data: dict[str, str], expected: di
         {"profile_id": "notte-profile-0123456789abcdef", "name": "github"},
         {"profile_id": ""},
         {"name": ""},
+        {"profile_id": "  "},
+        {"name": " "},
     ],
 )
 def test_save_profile_request_rejects_invalid_targets(data: dict[str, str]) -> None:
