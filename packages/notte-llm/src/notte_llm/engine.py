@@ -527,7 +527,7 @@ class LLMEngine:
             n=1,
             response_format=response_format,
         )
-        return response.choices[0].message.content  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
+        return response.choices[0].message.content
 
     def _get_model(self, model: str | None) -> str:
         model = model or self.model
@@ -567,7 +567,7 @@ class LLMEngine:
         vertex_location = get_vertex_location(model)
         vertex_kwargs: dict[str, Any] = {"vertex_location": vertex_location} if vertex_location is not None else {}
         try:
-            response = await litellm.acompletion(  # pyright: ignore [reportUnknownMemberType]
+            response = await litellm.acompletion(
                 model,
                 messages,
                 temperature=temperature,

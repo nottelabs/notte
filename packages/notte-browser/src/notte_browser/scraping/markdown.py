@@ -7,7 +7,7 @@ import trafilatura
 from bs4 import BeautifulSoup
 from lxml import etree
 from lxml import html as lxml_html
-from markdownify import MarkdownConverter  # pyright: ignore [reportMissingTypeStubs]
+from markdownify import MarkdownConverter
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.logging import logger
 from notte_core.types import ScrapeParams
@@ -199,7 +199,7 @@ class VisibleMarkdownConverter(MarkdownConverter):
             if _hides(element.get("style", "")):  # pyright: ignore [reportArgumentType]
                 element.decompose()
 
-        return super().convert_soup(soup)  # pyright: ignore [reportUnknownVariableType]
+        return super().convert_soup(soup)
 
 
 # position of an iframe element among its document's elements (iframes in a shadow root take their host's position)
@@ -239,7 +239,7 @@ async def page_markdown(window: BrowserWindow, snapshot: BrowserSnapshot, params
     if params.only_main_content:
         content = _main_content_markdown(snapshot, params)
     else:
-        content = cast(str, converter.convert(snapshot.html_content))
+        content = converter.convert(snapshot.html_content)
 
     if params.selector is None:
         for iframe in await _frames_in_document_order(window.page.main_frame):
@@ -247,7 +247,7 @@ async def page_markdown(window: BrowserWindow, snapshot: BrowserSnapshot, params
                 try:
                     iframe_content = await iframe.content()
                     content += f"\n\nIFRAME {iframe.url}:\n"
-                    content += cast(str, converter.convert(iframe_content))
+                    content += converter.convert(iframe_content)
                 except PlaywrightError as error:
                     logger.warning(f"Failed to get iframe content for {iframe.url}: {error}")
 
