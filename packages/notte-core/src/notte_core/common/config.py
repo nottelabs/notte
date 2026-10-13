@@ -208,6 +208,14 @@ class LlmModel(StrEnum):
 
         return f"openrouter/{_model}"
 
+    @staticmethod
+    def get_direct_model(model: str) -> str:
+        """Model id for direct (non-OpenRouter) provider calls."""
+        # Groq serves gpt-oss under the openai/ namespace; the public value omits it.
+        if model == "groq/gpt-oss-120b":
+            return "groq/openai/gpt-oss-120b"
+        return model
+
     @property
     def context_length(self) -> int:
         return self.provider.context_length
