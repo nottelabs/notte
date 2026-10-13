@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from types import SimpleNamespace
 from unittest.mock import ANY, AsyncMock, MagicMock
 
@@ -162,3 +163,82 @@ def test_new_page_callback_is_instrumented(monkeypatch: pytest.MonkeyPatch) -> N
     new_page.on.assert_any_call("close", ANY)
     new_page.on.assert_any_call("crash", ANY)
     assert log_event.call_args_list[-1].args[0] == "sdk_playwright_page_created"
+
+
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("https://user@example.com:8443/cb?code=secret#token=secret", "https://example.com:8443/cb"),
+        ("http://example.com/path", "http://example.com/path"),
+        ("about:blank", "about:blank"),
+        ("data:text/html,<p>secret</p>", "data:"),
+        ("", "<redacted>"),
+    ],
+)
+def test_redact_playwright_url(url: str, expected: str) -> None:
+    assert sessions._redact_playwright_url(url) == expected
+
+
+@pytest.fixture
+def captured_logs() -> Iterator[list[tuple[str, str]]]:
+    records: list[tuple[str, str]] = []
+    handler_id = sessions.logger.add(
+        lambda message: records.append((message.record["level"].name, message.record["message"])),
+        level="DEBUG",
+    )
+    try:
+        yield records
+    finally:
+        sessions.logger.remove(handler_id)
+
+
+def test_lifecycle_log_does_not_contain_url_secrets(captured_logs: list[tuple[str, str]]) -> None:
+    session = _bare_session()
+    browser, _context, page = _browser_with_page()
+    page.url = "https://example.com/callback?code=secret-code#access_token=secret-token"
+    page.is_closed.return_value = False
+    browser.is_connected.return_value = False
+
+    session._log_playwright_event("sdk_playwright_browser_disconnected", browser=browser, cached_page=page)
+
+    [(level, message)] = captured_logs
+    assert level == "WARNING"
+    assert "https://example.com/callback" in message
+    assert "secret" not in message
+
+
+def test_lifecycle_warnings_are_debug_during_sdk_cleanup(captured_logs: list[tuple[str, str]]) -> None:
+    session = _bare_session()
+    browser, _context, page = _browser_with_page()
+    session._playwright_cleanup_in_progress = True
+
+    session._log_playwright_event("sdk_playwright_browser_disconnected", browser=browser, cached_page=page)
+    session._log_playwright_event(
+        "sdk_playwright_session_stop_requested", browser=browser, cached_page=page, level="info"
+    )
+
+    assert [level for level, _ in captured_logs] == ["DEBUG", "INFO"]
+
+
+def test_only_cached_page_close_is_a_warning(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _bare_session()
+    browser, context, page = _browser_with_page()
+    playwright = MagicMock()
+    playwright.chromium.connect_over_cdp.return_value = browser
+    starter = MagicMock()
+    starter.start.return_value = playwright
+    monkeypatch.setattr(sessions, "_playwright_available", True)
+    monkeypatch.setattr(sessions, "_sync_playwright", MagicMock(return_value=starter))
+    log_event = MagicMock()
+    session._log_playwright_event = log_event
+
+    assert session.page is page
+    other_page = MagicMock()
+    page_callback = next(call.args[1] for call in context.on.call_args_list if call.args[0] == "page")
+    page_callback(other_page)
+    next(call.args[1] for call in other_page.on.call_args_list if call.args[0] == "close")(other_page)
+    next(call.args[1] for call in page.on.call_args_list if call.args[0] == "close")(page)
+
+    closes = [call for call in log_event.call_args_list if call.args[0] == "sdk_playwright_page_closed"]
+    assert [call.kwargs["observed_page"] for call in closes] == [other_page, page]
+    assert [call.kwargs["level"] for call in closes] == ["info", "warning"]
