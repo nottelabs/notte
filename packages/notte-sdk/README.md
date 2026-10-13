@@ -34,6 +34,9 @@ with notte.Session(open_viewer=True) as session:
     )
 ```
 
+When `api_key` and `NOTTE_API_KEY` are both unset, the client falls back to the
+API key saved by `notte auth login` for the API environment in use.
+
 ## Core Components
 
 ### Session Management

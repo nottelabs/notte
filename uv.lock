@@ -3639,6 +3639,7 @@ dependencies = [
     { name = "halo" },
     { name = "notte-core" },
     { name = "requests" },
+    { name = "secretstorage", marker = "sys_platform == 'linux'" },
     { name = "urllib3" },
     { name = "websockets" },
 ]
@@ -3654,6 +3655,7 @@ requires-dist = [
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "playwright", marker = "extra == 'playwright'", specifier = "~=1.55" },
     { name = "requests", specifier = ">=2.32.3,<3" },
+    { name = "secretstorage", marker = "sys_platform == 'linux'", specifier = ">=3.3" },
     { name = "urllib3", specifier = ">=2.2.3,<3" },
     { name = "websockets", specifier = ">=13.1" },
 ]
