@@ -75,6 +75,6 @@ def test_truncated_jpeg_logs_traceback_before_using_empty_screenshot() -> None:
 
 
 def test_unexpected_screenshot_error_is_not_swallowed() -> None:
-    with patch("notte_core.browser.observation.Image.open", side_effect=RuntimeError("unexpected")):
+    with patch("PIL.Image.open", side_effect=RuntimeError("unexpected")):
         with pytest.raises(RuntimeError, match="unexpected"):
             Screenshot(raw=b"not an image")

@@ -41,6 +41,8 @@ packages = ["src/notte"]
 [dependency-groups]
 
 dev = [
+    # Local HTTP servers in the browser tests (aiohttp.web).
+    "aiohttp>=3.11.13",
     "aiomultiprocess>=0.9.1",
     "basedpyright>=1.40.2",
     "cloudpickle>=3.1.1",
@@ -48,6 +50,8 @@ dev = [
     "halo>=0.0.28",
     "joblib>=1.4.2",
     "jupyter>=1.1.1",
+    # Exercises notte_core.profiling with profiling enabled (the `notte-core[profiling]` extra).
+    "opentelemetry-sdk>=1.34.1",
     "lxml-stubs>=0.5.1",
     "pandas",
     "pandas-stubs>=2.2.3.250308",

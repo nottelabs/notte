@@ -4,24 +4,25 @@ import inspect
 import os
 import time
 from collections import defaultdict
-from typing import Any, Callable, ParamSpec, TypeVar, cast
-
-# OpenTelemetry imports
-from opentelemetry import trace
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import SpanProcessor
-from opentelemetry.sdk.trace import TracerProvider as SDKTracerProvider
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-from opentelemetry.trace import Status, StatusCode, Tracer
+from typing import TYPE_CHECKING, Any, Callable, ParamSpec, TypeVar, cast
 
 from notte_core.common.cache import CacheDirectory, ensure_cache_directory
 from notte_core.common.config import config
 from notte_core.common.logging import logger
 
+if TYPE_CHECKING:
+    # OpenTelemetry is imported once profiling is used: importing notte with profiling
+    # disabled (the default) does not need it, and it is an optional dependency (`notte-core[profiling]`).
+    from opentelemetry.sdk.trace import SpanProcessor
+    from opentelemetry.sdk.trace import TracerProvider as SDKTracerProvider
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+    from opentelemetry.trace import Tracer
+
 P = ParamSpec("P")
 R = TypeVar("R")
-TP = TypeVar("TP", bound=SDKTracerProvider)
+TP = TypeVar("TP", bound="SDKTracerProvider")
+
+_MISSING_OPENTELEMETRY = "Profiling needs OpenTelemetry: install it with `pip install 'notte-core[profiling]'`."
 
 
 class NotteProfiler:
@@ -48,12 +49,12 @@ class NotteProfiler:
         self.default_service_name: str = default_service_name
 
         # Multiple tracer providers for different services
-        self._tracer_providers: dict[str, SDKTracerProvider] = {}
-        self._tracers: dict[str, Tracer] = {}
+        self._tracer_providers: dict[str, "SDKTracerProvider"] = {}
+        self._tracers: dict[str, "Tracer"] = {}
 
-        # Shared memory exporter for all services
-        self.memory_exporter: InMemorySpanExporter = InMemorySpanExporter()
-        self.additional_processors: list[SpanProcessor] = []
+        # Shared memory exporter for all services, created on first use (see `memory_exporter`)
+        self._memory_exporter: "InMemorySpanExporter | None" = None
+        self.additional_processors: list["SpanProcessor"] = []
         self.enable_memory_exporter: bool = True
         self._tracer_setup_done: bool = False
 
@@ -63,6 +64,22 @@ class NotteProfiler:
             self.setup_tracer(default_service_name)
 
         self.start_time: float | None = None
+
+    @property
+    def memory_exporter(self) -> "InMemorySpanExporter":
+        """The in-memory span exporter shared by all services (used for flamegraph generation)."""
+        if self._memory_exporter is None:
+            try:
+                from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+            except ImportError as e:
+                raise ImportError(_MISSING_OPENTELEMETRY) from e
+
+            self._memory_exporter = InMemorySpanExporter()
+        return self._memory_exporter
+
+    @memory_exporter.setter
+    def memory_exporter(self, exporter: "InMemorySpanExporter") -> None:
+        self._memory_exporter = exporter
 
     def disable_memory_exporter(self) -> None:
         """
@@ -97,6 +114,8 @@ class NotteProfiler:
         if was_enabled and self._tracer_setup_done:
             if self._tracer_providers:
                 try:
+                    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
                     # Shutdown forces the processor to stop accepting new spans
                     memory_processor = SimpleSpanProcessor(self.memory_exporter)
                     memory_processor.shutdown()
@@ -108,7 +127,7 @@ class NotteProfiler:
         else:
             logger.info("In-memory span exporter disabled to prevent memory growth")
 
-    def add_span_processor(self, processor: SpanProcessor, service_name: str | None = None) -> None:
+    def add_span_processor(self, processor: "SpanProcessor", service_name: str | None = None) -> None:
         """
         Add an additional span processor to export traces to external systems.
 
@@ -162,6 +181,14 @@ class NotteProfiler:
         if service_name in self._tracer_providers:
             return
 
+        try:
+            from opentelemetry import trace
+            from opentelemetry.sdk.resources import Resource
+            from opentelemetry.sdk.trace import TracerProvider as SDKTracerProvider
+            from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+        except ImportError as e:
+            raise ImportError(_MISSING_OPENTELEMETRY) from e
+
         resource = Resource.create({"service.name": service_name})
 
         # Create tracer provider for this service
@@ -192,7 +219,7 @@ class NotteProfiler:
 
         logger.info(f"Tracer setup complete for service: {service_name}")
 
-    def get_tracer(self, service_name: str | None = None) -> Tracer:
+    def get_tracer(self, service_name: str | None = None) -> "Tracer":
         """
         Get a tracer for a specific service, creating it if necessary.
 
@@ -210,6 +237,11 @@ class NotteProfiler:
             if self.enable:
                 self.setup_tracer(service_name)
             else:
+                try:
+                    from opentelemetry import trace
+                except ImportError as e:
+                    raise ImportError(_MISSING_OPENTELEMETRY) from e
+
                 # Return no-op tracer if profiling is disabled
                 return trace.get_tracer(__name__)
 
@@ -235,6 +267,8 @@ class NotteProfiler:
             self.start_time = time.perf_counter()
 
         tracer = self.get_tracer(service_name)
+        from opentelemetry.trace import Status, StatusCode
+
         with tracer.start_as_current_span(operation_name) as span:
             # Add custom attributes
             if attributes:
@@ -272,6 +306,8 @@ class NotteProfiler:
             self.start_time = time.perf_counter()
 
         tracer = self.get_tracer(service_name)
+        from opentelemetry.trace import Status, StatusCode
+
         with tracer.start_as_current_span(operation_name) as span:
             # Add custom attributes
             if attributes:
@@ -372,6 +408,8 @@ class NotteProfiler:
         if not self.enable_memory_exporter:
             logger.warning("Memory exporter is disabled. No span data available for flamegraph generation.")
             return []
+
+        from opentelemetry.trace import StatusCode
 
         spans = self.memory_exporter.get_finished_spans()
         span_data: list[dict[str, Any]] = []

@@ -3,7 +3,6 @@
 from typing import Any, cast
 
 import html2text
-import trafilatura
 from bs4 import BeautifulSoup
 from lxml import etree
 from lxml import html as lxml_html
@@ -97,6 +96,9 @@ def _deepest_content_id(root: etree._Element) -> etree._Element | None:
 
 
 def _trafilatura_fallback(html: str) -> list[etree._Element]:
+    # Imported here: trafilatura is slow to import and only needed when a page has no recognisable main content.
+    import trafilatura
+
     extracted = trafilatura.extract(
         html,
         output_format="xml",
