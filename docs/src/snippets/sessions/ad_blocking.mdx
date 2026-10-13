@@ -1,0 +1,39 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/ad_blocking.py */}
+
+<CodeGroup>
+
+```python ad_blocking.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Ad blocking is on by default
+with client.Session() as default_session:
+    default_session.execute(type="goto", url="https://example.com")
+
+# Turn it off when a site needs its ads or trackers to load
+with client.Session(block_ads=False) as session:
+    session.execute(type="goto", url="https://example.com")
+
+```
+
+```typescript ad_blocking.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+// Ad blocking is on by default
+const defaultSession = client.Session();
+await defaultSession.use(async (s) => {
+  await s.execute({ type: 'goto', url: 'https://example.com' });
+});
+
+// Turn it off when a site needs its ads or trackers to load
+const session = client.Session({ block_ads: false });
+await session.use(async (s) => {
+  await s.execute({ type: 'goto', url: 'https://example.com' });
+});
+```
+
+</CodeGroup>

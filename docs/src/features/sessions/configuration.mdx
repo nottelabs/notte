@@ -46,25 +46,36 @@ Customize your session with these options:
   Automatically detect and solve captchas (reCAPTCHA, hCaptcha, etc.)
 </ParamField>
 
+<ParamField path="block_ads" type="boolean" default={true}>
+  Block ads and trackers in managed browsers using Basic filtering, without cosmetic filtering or injected scriptlets.
+  To opt out, use `client.Session(block_ads=False)` in Python or `client.Session({ block_ads: false })` in TypeScript.
+  When omitted, the SDK leaves the setting to the API default. Explicit values require an API that supports `block_ads`.
+  This setting does not configure local browsers or externally connected CDP browsers.
+</ParamField>
+
 <ParamField path="proxies" type="boolean | list[ProxySettings]" default={true}>
   Residential proxies are enabled by default. Set to `false` to disable them or provide custom proxy configuration.
   See [Proxy Configuration](#proxies) for details.
 </ParamField>
 
-<ParamField path="timeout_minutes" type="integer" default={3}>
-  Session timeout in minutes. Sessions automatically close after this duration (min: 1, max: 30).
+<ParamField path="idle_timeout_minutes" type="integer" default={3}>
+  Idle timeout in minutes (max: 30). The session closes after this long without any operation; each operation resets it. Cannot exceed `max_duration_minutes`. `timeout_minutes` is accepted as a legacy alias.
 </ParamField>
 
-<ParamField path="viewport_width" type="integer" default={1280}>
-  Browser viewport width in pixels.
+<ParamField path="max_duration_minutes" type="integer" default={15}>
+  Maximum session lifetime in minutes (max: 1440), regardless of activity.
 </ParamField>
 
-<ParamField path="viewport_height" type="integer" default={1080}>
-  Browser viewport height in pixels.
+<ParamField path="viewport_width" type="integer">
+  Browser viewport width in pixels (minimum 500). Set together with `viewport_height`. When neither is set, Notte picks a viewport around 1280x1080.
 </ParamField>
 
-<ParamField path="browser_type" type="string" default={"chromium"}>
-  Browser engine to use: `"chromium"`, or `"chrome"`.
+<ParamField path="viewport_height" type="integer">
+  Browser viewport height in pixels (minimum 500). Set together with `viewport_width`.
+</ParamField>
+
+<ParamField path="aspect_ratio" type="string">
+  Viewport shape preset: `"5:4"` or `"16:9"`. Notte fits the largest viewport of this shape in the available screen area. Cannot be combined with `viewport_width`/`viewport_height`.
 </ParamField>
 
 ### Advanced Parameters
@@ -78,7 +89,27 @@ Customize your session with these options:
 </ParamField>
 
 <ParamField path="cdp_url" type="string">
-  Connect to an external browser session via Chrome DevTools Protocol URL (e.g., from Kernel.sh or other providers).
+  Connect to an external browser session via Chrome DevTools Protocol URL (e.g., from Kernel.sh or other providers). Proxies, `user_agent`, `chrome_args`, and the viewport must be configured with the external provider, so leave them unset (proxies default to off when `cdp_url` is set).
+</ParamField>
+
+<ParamField path="extra_http_headers" type="dict[str, str]">
+  Extra HTTP headers sent with every request.
+</ParamField>
+
+<ParamField path="screenshot_type" type="string" default="last_action">
+  Screenshot mode for observations: `"raw"`, `"full"`, or `"last_action"`.
+</ParamField>
+
+<ParamField path="profile" type="SessionProfile">
+  Browser profile to load, with `persist=True` to save state back on close. See [Browser Profiles](/features/sessions/browser-profiles).
+</ParamField>
+
+<ParamField path="vault_id" type="string">
+  Vault whose credentials the session can use. See [Vaults](/concepts/vaults).
+</ParamField>
+
+<ParamField path="web_bot_auth" type="boolean" default={false}>
+  Sign requests with Web Bot Auth. See [Cloudflare Web Bot Auth](/features/sessions/cloudflare-web-bot-auth).
 </ParamField>
 
 <ParamField path="cookie_file" type="string | Path">
@@ -95,6 +126,20 @@ Customize your session with these options:
 
 <ParamField path="raise_on_failure" type="boolean" default={true}>
   Raise exceptions when action execution fails instead of returning error results.
+</ParamField>
+
+## Managed Auth
+
+<ParamField path="auth_ids" type="list[str]">
+  Up to 10 Managed Auth connection IDs to verify and, when needed, log in inside the session. While login runs, the session status is `authenticating`.
+</ParamField>
+
+<ParamField path="wait_for_authentication" type="boolean" default={true}>
+  SDK option. When true, starting the session waits until authentication is ready. When false, call `session.wait_for_auth()` before browser actions.
+</ParamField>
+
+<ParamField path="auth_retry" type="integer" default={0}>
+  Additional retries (0 to 2) for transient Managed Auth login failures.
 </ParamField>
 
 ## Session Response
@@ -139,7 +184,7 @@ Configure how long sessions stay active:
 
 <Timeout />
 
-The timeout range is 1-30 minutes. Sessions automatically close when the timeout is reached.
+The idle timeout ranges from 1 to 30 minutes and cannot exceed `max_duration_minutes` (default 15, max 1440). Sessions close when either limit is reached.
 
 ## Custom Viewport Size
 

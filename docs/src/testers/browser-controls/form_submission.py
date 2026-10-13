@@ -5,7 +5,7 @@ client = NotteClient()
 
 with client.Session() as session:
     session.execute(type="goto", url="https://example.com/contact")
-    session.execute(type="fill", id="name", value="John Doe")
-    session.execute(type="fill", id="email", value="john@example.com")
-    session.execute(type="fill", id="message", value="Hello!")
+    session.execute(type="fill", selector="#name", value="John Doe")
+    session.execute(type="fill", selector="#email", value="john@example.com")
+    session.execute(type="fill", selector="#message", value="Hello!")
     session.execute(type="click", selector="button[type='submit']")

@@ -10,7 +10,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CACHE_TYPE: "pip"
   DISABLE_TELEMETRY: "true"
 
 jobs:
@@ -20,33 +19,39 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
             enable-cache: true
             cache-dependency-glob: "uv.lock"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
             python-version-file: ".python-version"
-            cache: ${{ env.CACHE_TYPE }}
+
+      - name: Build Python distributions
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: bash build.sh "$RELEASE_TAG"
 
       - name: Store the distribution packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: python-package-distributions
           path: dist/
 
-      - name: Build and Publish to PyPI
+      - name: Publish to PyPI
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: bash build.sh "$RELEASE_TAG" publish
+        run: >-
+          uv publish
+          --check-url https://pypi.org/simple
+          dist/*
 
       - name: Wait for PyPI indexing
         run: |
@@ -60,14 +65,16 @@ jobs:
           uv venv pypi
           source pypi/bin/activate
 
-          # Retry installation with exponential backoff
+          # Retry installation with exponential backoff. --refresh bypasses
+          # uv's cached copy of the PyPI index (served with max-age=600),
+          # which the publish step's --check-url primed before the upload.
           max_attempts=3
           attempt=1
           wait_time=60
 
           while [ $attempt -le $max_attempts ]; do
             echo "Attempt $attempt of $max_attempts: Installing notte==${RELEASE_TAG}..."
-            if uv pip install "notte==${RELEASE_TAG}"; then
+            if uv pip install --refresh "notte==${RELEASE_TAG}"; then
               echo "Installation successful!"
               break
             fi
@@ -116,3 +123,71 @@ jobs:
           fi
 
           echo "Mintlify docs deployment queued successfully"
+
+  next-development-version:
+    needs: build
+    name: Open next Python development version PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: next-python-development-version
+      cancel-in-progress: false
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+      BASE_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version-file: .python-version
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Advance workspace version and lockfile
+        run: |
+          python3 scripts/release_version.py next "$RELEASE_TAG"
+          if ! git diff --quiet -- pyproject.toml packages/; then
+            uv lock
+          fi
+
+      - name: Open version bump pull request
+        env:
+          # Scope the existing automation PAT to repository writes so PR checks run.
+          GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- pyproject.toml packages/ uv.lock; then
+            echo "The development version is already ahead of this release."
+            exit 0
+          fi
+
+          NEXT_VERSION=$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
+          BRANCH="chore/python-version-after-${RELEASE_TAG}"
+          TITLE="chore: advance Python packages to ${NEXT_VERSION}"
+          PR=$(gh pr list --head "$BRANCH" --base "$BASE_BRANCH" --state all --json url --jq '.[0].url // empty')
+          if [ -n "$PR" ]; then
+            echo "A bump PR already exists for this release: $PR"
+            exit 0
+          fi
+
+          gh auth setup-git
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # Recover a push that succeeded before PR creation failed on an earlier run.
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null; then
+            echo "Reusing the existing branch $BRANCH"
+          else
+            git checkout -b "$BRANCH"
+            git add pyproject.toml packages/*/pyproject.toml uv.lock
+            git commit -m "$TITLE"
+            git push origin "$BRANCH"
+          fi
+          BODY_FILE="$RUNNER_TEMP/python-version-pr.md"
+          printf 'After publishing %s, advance all Python workspace packages and internal pins to %s.\n\nThe lockfile is refreshed with uv lock. This PR is left open for review and CI.\n' \
+            "$RELEASE_TAG" "$NEXT_VERSION" > "$BODY_FILE"
+          gh pr create --base "$BASE_BRANCH" --head "$BRANCH" --title "$TITLE" --body-file "$BODY_FILE"

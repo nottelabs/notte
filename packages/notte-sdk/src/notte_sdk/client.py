@@ -1,4 +1,5 @@
 # pyright: reportImportCycles=false
+import math
 from functools import partial
 from typing import Any, Literal, Unpack, cast, overload
 
@@ -40,6 +41,7 @@ class NotteClient:
         server_url: str | None = None,
         verbose: bool = False,
         viewer_type: SessionViewerType = SessionViewerType.BROWSER,
+        captcha_timeout_seconds: float = 180,
     ):
         """Initialize a NotteClient instance.
 
@@ -48,8 +50,12 @@ class NotteClient:
 
         Args:
             api_key: Optional API key for authentication.
+            captcha_timeout_seconds: Total CAPTCHA wait budget, separate from action and HTTP timeouts.
         """
 
+        if not math.isfinite(captcha_timeout_seconds) or captcha_timeout_seconds <= 0:
+            raise ValueError("captcha_timeout_seconds must be finite and greater than zero")
+        self.captcha_timeout_seconds: float = captcha_timeout_seconds
         self.sessions: SessionsClient = SessionsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose, viewer_type=viewer_type
         )

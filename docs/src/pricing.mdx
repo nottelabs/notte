@@ -1,15 +1,22 @@
 ---
 title: Pricing
-description: Simple usage-based pricing with included hours on every plan
+description: Simple usage-based pricing paid from credits on every plan
 url: https://www.notte.cc/pricing
 ---
 ## Usage Costs
 
-<CardGroup cols={3}>
+Usage is paid from dollar-based credits. Credits cover browser sessions, functions, proxies, and LLM tokens.
+
+<CardGroup cols={2}>
   <Card title="Browser Usage" icon="tv">
-    **$0.00 / hour**
+    **$0.01 / hour**
 
     Charged per minute, rounded up.
+  </Card>
+  <Card title="Function Runtime" icon="code">
+    **$0.05 / hour**
+
+    Runtime of deployed Functions.
   </Card>
   <Card title="Proxy Usage" icon="globe">
     **$10 / GB**
@@ -17,9 +24,9 @@ url: https://www.notte.cc/pricing
     Premium residential proxies.
   </Card>
   <Card title="LLM Usage" icon="microchip-ai">
-    **Pay token price**
+    **Token price + plan markup**
 
-    No markup — pay exactly what you use.
+    No markup on Free. +50% on Developer, +40% on Startup when using Notte-managed keys.
   </Card>
 </CardGroup>
 
@@ -33,30 +40,31 @@ url: https://www.notte.cc/pricing
 
     | Included | Value |
     |----------|-------|
-    | Browser hours | 100 forever |
+    | Credits | $10, granted once, no expiry (1,000 browser hours) |
     | Concurrency | 5 browsers |
+    | LLM markup | None |
   </Tab>
   <Tab title="Developer">
-    ### Developer - $20/mo + usage
+    ### Developer - $20/mo
 
-    Affordable entry with included hours and proxy.
+    Affordable entry with monthly credits.
 
     | Included | Value |
     |----------|-------|
-    | Browser hours | 100/mo |
+    | Credits | $20/mo (2,000 browser hours) |
     | Concurrency | 25 browsers |
-    | Stealth | Basic |
+    | LLM markup | +50% on Notte-managed keys |
   </Tab>
   <Tab title="Startup">
-    ### Startup - $100/mo + usage
+    ### Startup - $100/mo
 
     Scale your agents with higher limits and features.
 
     | Included | Value |
     |----------|-------|
-    | Browser hours | 500/mo |
+    | Credits | $100/mo (10,000 browser hours) |
     | Concurrency | 100 browsers |
-    | Stealth | Advanced |
+    | LLM markup | +40% on Notte-managed keys, 20% of token cost with your own keys |
     | BYO | Keys & Proxies |
   </Tab>
   <Tab title="Enterprise">
@@ -66,19 +74,22 @@ url: https://www.notte.cc/pricing
 
     | Included | Value |
     |----------|-------|
-    | Browser hours | Usage-based |
+    | Credits | Usage-based |
     | Concurrency | 250+ browsers |
-    | Stealth | Advanced+ |
     | BYO | Keys, Proxies, Cloud |
     | Compliance | SSO, SLAs, HIPAA |
   </Tab>
 </Tabs>
 
+Monthly plan credits refresh each billing cycle and expire at the end of it. Free credits and purchased top-ups do not expire.
+
+Advanced stealth, Notte's highest-fidelity browser environment, is available to approved workspaces on request.
+
 ## Add-ons
 
 | Add-on | Price |
 |--------|-------|
-| Credit Packs | $100 / $200 / $500 - lifetime credits that don't expire |
+| Credit top-ups | Purchase extra credits from the [billing page](https://console.notte.cc/billing). Top-ups do not expire. |
 | Fixed IPs | [Contact us](https://cal.com/team/notte/demo) |
 
 <Card title="See all limits and features by plan" icon="list-check" href="/rate-limits">

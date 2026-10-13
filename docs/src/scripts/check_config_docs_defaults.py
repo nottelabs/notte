@@ -45,9 +45,14 @@ def code_defaults() -> dict[str, Any]:
     return {
         "advanced_stealth": field_default("advanced_stealth"),
         "solve_captchas": field_default("solve_captchas"),
+        "block_ads": field_default("block_ads"),
         "proxies": field_default("proxies"),
-        # the docs param is the SDK's idle timeout
-        "timeout_minutes": field_default("idle_timeout_minutes"),
+        "idle_timeout_minutes": field_default("idle_timeout_minutes"),
+        "max_duration_minutes": field_default("max_duration_minutes"),
+        "screenshot_type": field_default("screenshot_type"),
+        "web_bot_auth": field_default("web_bot_auth"),
+        "wait_for_authentication": field_default("wait_for_authentication"),
+        "auth_retry": field_default("auth_retry"),
         # the request fields default to None ("server decides"); the effective
         # server defaults are these shared constants
         "viewport_width": DEFAULT_HEADLESS_VIEWPORT_WIDTH,

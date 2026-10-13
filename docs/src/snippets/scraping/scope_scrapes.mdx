@@ -1,4 +1,8 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/scraping/scope_scrapes.py, testers/scraping/scope_scrapes.ts */}
+
 <CodeGroup>
+
 ```python Python
 from notte_sdk import NotteClient
 
@@ -8,7 +12,8 @@ with client.Session() as session:
     # Scrape only the main article, not comments or sidebar
     content = session.scrape(selector="article.main")
 ```
-```javascript JavaScript
+
+```typescript TypeScript
 import { NotteClient } from 'notte-sdk';
 
 const client = new NotteClient({
@@ -22,4 +27,5 @@ await client.Session().use(async (session) => {
   });
 });
 ```
+
 </CodeGroup>

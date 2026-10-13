@@ -18,7 +18,7 @@ import notte
 # Update this list as new models become available
 OPENROUTER_MODELS = [
     "google/gemini-3-flash-preview",
-    "google/gemini-2.5-flash",
+    "google/gemini-3.5-flash",
     "anthropic/claude-opus-4.6",
     "anthropic/claude-sonnet-4.6",
     "anthropic/claude-haiku-4.5",
@@ -28,7 +28,7 @@ OPENROUTER_MODELS = [
     "minimax/minimax-m2.5",
     "moonshotai/kimi-k2.5",
     "deepseek/deepseek-v3.2",
-    "x-ai/grok-4.1-fast",
+    "x-ai/grok-4.3",
     "z-ai/glm-5",
     "qwen/qwen3.5-flash-02-23",
 ]

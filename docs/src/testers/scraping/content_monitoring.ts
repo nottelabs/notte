@@ -1,0 +1,13 @@
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient({
+  apiKey: process.env.NOTTE_API_KEY,
+});
+
+// Get current content
+const content = await client.scrape('https://example.com/pricing', {
+  instructions: 'Extract all pricing tiers and their features',
+});
+
+// Compare with previous version
+// ...

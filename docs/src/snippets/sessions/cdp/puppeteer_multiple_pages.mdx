@@ -1,30 +1,35 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/cdp/puppeteer_multiple_pages.ts */}
+
 <CodeGroup>
-  ```javascript Node.js
-  const puppeteer = require('puppeteer-core');
 
-  async function main() {
-    const cdpUrl = process.argv[2];
+```typescript Node.js
+const puppeteer = require('puppeteer-core');
 
-    const browser = await puppeteer.connect({
-      browserWSEndpoint: cdpUrl
-    });
+async function main() {
+  const cdpUrl = process.argv[2];
 
-    // Create new pages
-    const page1 = await browser.newPage();
-    const page2 = await browser.newPage();
+  const browser = await puppeteer.connect({
+    browserWSEndpoint: cdpUrl
+  });
 
-    await page1.goto('https://example.com');
-    await page2.goto('https://google.com');
+  // Create new pages
+  const page1 = await browser.newPage();
+  const page2 = await browser.newPage();
 
-    console.log('Page 1:', await page1.title());
-    console.log('Page 2:', await page2.title());
+  await page1.goto('https://example.com');
+  await page2.goto('https://google.com');
 
-    // Close specific pages
-    await page2.close();
+  console.log('Page 1:', await page1.title());
+  console.log('Page 2:', await page2.title());
 
-    await browser.disconnect();
-  }
+  // Close specific pages
+  await page2.close();
 
-  main().catch(console.error);
-  ```
+  await browser.disconnect();
+}
+
+main().catch(console.error);
+```
+
 </CodeGroup>

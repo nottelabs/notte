@@ -1,10 +1,25 @@
 import time
+from typing import Any
 
 import pytest
 from dotenv import load_dotenv
 from notte_sdk import NotteClient
 
 _ = load_dotenv()
+
+
+AGENT_STEP_LAYOUT = ["agent_step_start", "observation", "agent_completion", "execution_result", "agent_step_stop"]
+
+
+def agent_step_blocks(steps: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
+    """Split a flat step list into one block per agent step (each opened by an agent_step_start)."""
+    blocks: list[list[dict[str, Any]]] = []
+    for step in steps:
+        if step["type"] == "agent_step_start":
+            blocks.append([])
+        assert blocks, f"step {step['type']} recorded before any agent_step_start"
+        blocks[-1].append(step)
+    return blocks
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
@@ -14,35 +29,52 @@ def test_new_steps():
         _ = session.execute(type="goto", url="https://phantombuster.com/login")
         _ = session.observe()
 
-        # max_steps=2 to handle cookie consent banner before filling email
+        # Two steps: the fill, then the agent's completion. If a cookie-consent banner
+        # shows up the agent spends the first step dismissing it and the second on the
+        # fill, and the run ends on max_steps without a completion.
         agent = client.Agent(session=session, max_steps=2)
-        _ = agent.run(task="fill this email address: hello@notte.cc")
+        response = agent.run(task="fill this email address: hello@notte.cc")
 
     session_steps = session.status().steps
     agent_steps = agent.status().steps
 
-    # First two session steps are from manual execute(goto) and observe()
+    # First two session steps are from the manual execute(goto) and observe()
     assert session_steps[0]["type"] == "execution_result"
+    assert session_steps[0]["value"]["action"]["type"] == "goto", "First action should be goto"
     assert session_steps[1]["type"] == "observation"
-    # Agent steps should be a suffix of session steps (after the initial goto + observe)
+    # Agent steps are the suffix of the session steps after the initial goto + observe
     assert session_steps[2:] == agent_steps
 
-    # Check first action is goto
-    first_action = session_steps[0]["value"].get("action")
-    assert first_action is not None, f"{session_steps[0]} should have an action"
-    assert first_action["type"] == "goto", "First action should be goto"
+    # Every agent step is recorded as start / observation / agent_completion / execution_result / stop,
+    # and the executed action is the one the agent proposed in its completion.
+    blocks = agent_step_blocks(agent_steps)
+    assert 1 <= len(blocks) <= 2, f"Expected 1 or 2 agent steps, got {len(blocks)}"
+    for block in blocks:
+        assert [s["type"] for s in block] == AGENT_STEP_LAYOUT, [s["type"] for s in block]
+        proposed = block[2]["value"]["action"]
+        executed = block[3]["value"]["action"]
+        assert executed["type"] == proposed["type"], (
+            f"executed {executed['type']} but agent proposed {proposed['type']}"
+        )
 
-    # Find the last execution_result with an action (skip agent_step_stop)
-    execution_results = [s for s in session_steps if s["type"] == "execution_result" and s["value"].get("action")]
-    assert len(execution_results) >= 2, "Should have at least 2 execution results (goto + fill)"
+    results = [block[3]["value"] for block in blocks]
+    executed_types = [r["action"]["type"] for r in results]
 
-    last_action = execution_results[-1]["value"]["action"]
-    assert last_action["type"] == "fill", f"Last action should be fill, got {last_action['type']}"
+    # The task itself: exactly one successful fill of the requested email
+    fills = [r for r in results if r["action"]["type"] == "fill"]
+    assert len(fills) == 1, f"Expected exactly one fill, got {executed_types}"
+    assert fills[0]["success"] is True
+    assert fills[0]["action"]["value"] == "hello@notte.cc"
 
-    # Verify the last agent execution_result matches
-    agent_execution_results = [s for s in agent_steps if s["type"] == "execution_result" and s["value"].get("action")]
-    assert len(agent_execution_results) >= 1, "Agent should have at least 1 execution result"
-    assert agent_execution_results[-1]["value"]["action"] == last_action
+    if response.success:
+        # The agent finished: its validated completion is recorded as the last execution_result,
+        # right after the fill.
+        assert executed_types[-2:] == ["fill", "completion"], executed_types
+        assert results[-1]["success"] is True
+        assert results[-1]["action"]["success"] is True
+    else:
+        # Ran out of steps (e.g. a cookie banner took the first one): the fill is the last action
+        assert executed_types[-1] == "fill", executed_types
 
 
 @pytest.mark.skip(reason="no old session format after migration")

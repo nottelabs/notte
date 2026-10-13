@@ -1,10 +1,19 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/file-storage/force_overwrite.py */}
 
+<CodeGroup>
+
 ```python force_overwrite.py
 from notte_sdk import NotteClient
 
 client = NotteClient()
-storage = client.FileStorage("session-id")
-storage.download("file-id", local_dir="./downloads", force=True)
+storage = client.FileStorage(session_id)
+storage.download(file_id, local_dir="./downloads", force=True)
 ```
+
+```typescript force_overwrite.ts
+const storage = client.FileStorage(sessionId);
+await storage.download(fileId, './downloads', { force: true });
+```
+
+</CodeGroup>

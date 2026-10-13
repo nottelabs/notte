@@ -1,26 +1,31 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/monitor_runs.py */}
 
+<CodeGroup>
+
 ```python monitor_runs.py
+import threading
 import time
 
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
-function = client.Function(function_id="func_abc123")
+function = client.Function(function_id=function_id)
 
-# Start run
-result = function.run(
-    url="https://example.com",
-    stream=False,  # Don't stream logs
+# Create the run first so you know its ID
+run_id = function.create_run().function_run_id
+
+# run() blocks until the run finishes, so execute it in a background thread
+worker = threading.Thread(
+    target=function.run,
+    kwargs={"function_run_id": run_id, "url": "https://example.com", "stream": False},
 )
+worker.start()
 
-run_id = result.workflow_run_id
-
-# Poll status
+# Poll status while it runs
 while True:
-    status = client.functions.get_run("func_abc123", run_id)
+    status = client.functions.get_run(function_id, run_id)
 
     print(f"Status: {status.status}")
 
@@ -29,4 +34,49 @@ while True:
         break
 
     time.sleep(5)  # Check every 5 seconds
+
+worker.join()
 ```
+
+```typescript monitor_runs.ts
+import { setTimeout as sleep } from 'node:timers/promises';
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const fn = client.NotteFunction({ function_id: functionId });
+
+// Create the run first so you know its ID
+const { function_run_id: runId } = await fn.createRun();
+
+// Start it without awaiting: run() resolves only when the run finishes
+let callError: unknown;
+const execution = fn
+  .run({ url: 'https://example.com' }, { functionRunId: runId, stream: false })
+  .catch((error: unknown) => {
+    callError = error;
+  });
+
+// Poll status while it runs
+while (true) {
+  if (callError) {
+    console.log('Run failed:', callError);
+    break;
+  }
+
+  const status = await fn.getRun(runId);
+
+  console.log(`Status: ${status.status}`);
+
+  if (status.status === 'closed' || status.status === 'failed') {
+    console.log('Final result:', status.result);
+    break;
+  }
+
+  await sleep(5000); // Check every 5 seconds
+}
+
+await execution;
+```
+
+</CodeGroup>

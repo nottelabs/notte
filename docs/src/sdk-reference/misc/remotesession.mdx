@@ -30,6 +30,16 @@ Async version of ``reconnect``; no interrupted actions are retried
 
 ---
 
+### await_for_auth
+
+```python
+await_for_auth(timeout: <class 'float'> = 615)
+```
+
+Async readiness wait; blocking HTTP calls run outside the event loop
+
+---
+
 ### cdp_url
 
 ```python
@@ -223,6 +233,30 @@ Resets the resource to its initial state
 
 ---
 
+### save_profile
+
+```python
+save_profile(profile_id: str | None = None, name: str | None = None) -> <class 'notte_sdk.types.ProfileResponse'>
+```
+
+Saves the session's current browser state into a profile, without stopping the session
+
+**Parameters:**
+
+- `profile_id`: Existing profile to overwrite with the current browser state.
+- `name`: Create a new profile with this name and save into it. Mutually exclusive with ``profile_id``.
+
+**Returns:**
+
+The profile, with ``persisted_domains`` computed from the saved state.
+
+**Raises:**
+
+- `ValueError`: If both ``profile_id`` and ``name`` are provided, or if either is empty.
+- `ValueError`: If the session hasn't been started yet (no session_id available).
+
+---
+
 ### scrape
 
 ```python
@@ -268,7 +302,7 @@ The response from the upload cookies request.
 ### start
 
 ```python
-start(tries: <class 'int'> = 3)
+start(tries: <class 'int'> = 3, *, wait_for_authentication: bool | None = None)
 ```
 
 Start the session using the configured request
@@ -357,6 +391,16 @@ Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter 
 **Returns:**
 
 <Visibility for="humans">[`WebsocketService`](/sdk-reference/misc/websocketservice)</Visibility><Visibility for="agents">[`WebsocketService`](/sdk-reference/misc/websocketservice.md)</Visibility>
+
+---
+
+### wait_for_auth
+
+```python
+wait_for_auth(timeout: <class 'float'> = 615)
+```
+
+Wait for this browser to be ready without restarting or relogging it
 
 ---
 

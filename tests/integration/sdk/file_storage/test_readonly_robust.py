@@ -114,7 +114,7 @@ def test_download_file_action_is_strictly_readonly():
             # 2. Run the actual User Scenario
             # ----------------------------------------------------------------
 
-            # Mock the session start and execute methods to avoid network calls
+            # Run the remote download without writing to the local filesystem.
             with client.Session(proxies=False, storage=storage, open_viewer=False) as session:
                 _ = session.execute(type="goto", url="https://arxiv.org/abs/1706.03762")
                 _ = session.execute(type="click", selector='internal:role=link[name="View PDF"i]')
@@ -126,14 +126,14 @@ def test_download_file_action_is_strictly_readonly():
 
             # Verify that accessing the file locally triggers a permission error
             # This can trigger either "Filesystem modification denied" (mkdir) or "Write access denied" (open)
+            try:
+                file = _wait_for_download(storage)
+            except NotteAPIError as exc:
+                if exc.status_code == 404:
+                    pytest.skip("Session-file API is not deployed to the integration environment yet")
+                raise
             with pytest.raises(PermissionError, match="Filesystem modification denied|Write access denied"):
-                try:
-                    file = _wait_for_download(storage)
-                except NotteAPIError as exc:
-                    if exc.status_code == 404:
-                        pytest.skip("Session-file API is not deployed to the integration environment yet")
-                    raise
-                _ = storage.download(file.id)
+                _ = storage.download(file_id=file.id)
 
         except PermissionError as e:
             pytest.fail(f"Read-only violation detected: {e}")

@@ -23,10 +23,11 @@ Every Notte session follows a predictable lifecycle from creation to termination
 
 Sessions transition through these states:
 
+* **`authenticating`** - Session was started with [Managed Auth](/features/sessions/configuration#managed-auth) connections and login is still in progress
 * **`active`** - Session is running and ready to accept operations
 * **`closed`** - Session has been terminated normally
 * **`error`** - Session encountered an error and terminated unexpectedly
-* **`timed_out`** - Session exceeded its timeout duration
+* **`timed_out`** - Session hit its idle timeout or maximum duration
 
 ## Creating a Session
 
@@ -35,7 +36,7 @@ Create a new session using the context manager pattern (recommended):
 <CreateSession />
 
 <Tip>
-  Always use the context manager (`with` statement) to ensure sessions are properly stopped, even if errors occur.
+  Use Python's `with` statement or TypeScript's `session.use()` to stop sessions even if errors occur.
 </Tip>
 
 ## Getting Session Details
@@ -49,7 +50,7 @@ Retrieve current information about your session:
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Current status: `active`, `closed`, `error`, or `timed_out`
+  Current status: `authenticating`, `active`, `closed`, `error`, or `timed_out`
 </ResponseField>
 
 <ResponseField name="created_at" type="datetime">
@@ -64,8 +65,16 @@ Retrieve current information about your session:
   Last operation timestamp
 </ResponseField>
 
-<ResponseField name="timeout_minutes" type="integer">
-  Session timeout in minutes
+<ResponseField name="idle_timeout_minutes" type="integer">
+  Idle timeout in minutes. The session closes after this long without any operation.
+</ResponseField>
+
+<ResponseField name="max_duration_minutes" type="integer">
+  Maximum session lifetime in minutes, regardless of activity
+</ResponseField>
+
+<ResponseField name="close_reason" type="string | None">
+  Why the session closed: `manual`, `idle_timeout`, `max_duration`, `error`, or `unknown` (None while active)
 </ResponseField>
 
 <ResponseField name="duration" type="timedelta">
@@ -112,17 +121,18 @@ Follow these patterns to build reliable, cost-effective automation:
 
 ### 1. Always Use Context Managers
 
-The `with` statement guarantees cleanup:
+Python's `with` statement and TypeScript's `use()` callback guarantee cleanup:
 
 <ContextManager />
 
 ### 2. Set Appropriate Timeouts
 
-Match timeout to task duration with a buffer for delays:
+Sessions have two limits:
 
-* **Quick tasks**: 3-5 minutes (default is 3)
-* **Data scraping**: 10-15 minutes
-* **Long workflows**: 20-30 minutes
+* **`idle_timeout_minutes`** (default 3, max 30) - closes the session after this long without any operation. Each operation resets it.
+* **`max_duration_minutes`** (default 15, max 1440) - closes the session after this long, regardless of activity.
+
+The idle timeout cannot exceed the maximum duration, so raise `max_duration_minutes` first for long workflows. Set the idle timeout to cover the longest pause between operations, for example while an agent thinks or a page loads.
 
 <TimeoutExample />
 
@@ -143,7 +153,7 @@ Even with context managers, handle interrupts:
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ 1. CREATE                                               │
-│    session = client.Session(timeout_minutes=10)         │
+│    session = client.Session(idle_timeout_minutes=5)     │
 │    Status: Not started (response = None)                │
 └────────────────────┬────────────────────────────────────┘
                      │
@@ -171,7 +181,7 @@ Even with context managers, handle interrupts:
             ▼                 ▼
 ┌──────────────────┐  ┌──────────────────┐
 │ 4a. TIMEOUT      │  │ 4b. STOP         │
-│ (after N mins)   │  │ session.stop()   │
+│ idle or max dur. │  │ session.stop()   │
 │ Status: timed_out│  │ Status: closed   │
 └──────────────────┘  └──────────────────┘
                      │

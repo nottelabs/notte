@@ -18,17 +18,54 @@ permissions:
   contents: read
 
 jobs:
+  # The CLI reference is generated from notte-cli, so it rides along with every
+  # bump instead of drifting behind it. Generating runs notte-cli's code, so it
+  # happens here, in a job that holds no write token; the bump job pins
+  # notte-cli to the commit generated from and commits the result.
+  cli-reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      sha: ${{ steps.cli.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check out the latest notte-cli
+        id: cli
+        run: |
+          git submodule update --init --remote notte-cli
+          echo "sha=$(git -C notte-cli rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: notte-cli/go.mod
+          cache-dependency-path: notte-cli/go.sum
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Generate the CLI reference
+        run: python3 docs/src/scripts/generate_cli_reference.py
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: cli-reference
+          path: |
+            docs/src/cli-reference/
+            docs/src/docs.json
+            docs/src/llms.txt
+          if-no-files-found: error
+
   bump:
+    needs: cli-reference
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 45
     env:
-      # A single token is used for the checkout, the push, and the pull request,
-      # so that the PR is opened by a real account and therefore runs CI.
-      GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
       BRANCH: chore/bump-submodules
     steps:
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           submodules: recursive
@@ -41,6 +78,8 @@ jobs:
 
       - name: Fast-forward submodules
         id: bump
+        env:
+          CLI_SHA: ${{ needs.cli-reference.outputs.sha }}
         run: |
           set -euo pipefail
 
@@ -59,6 +98,10 @@ jobs:
               target=origin/main
             else
               target=$(git -C "$sub" symbolic-ref --quiet --short refs/remotes/origin/HEAD || echo origin/main)
+            fi
+            # notte-cli stays at the commit the CLI reference was generated from.
+            if [ "$sub" = notte-cli ]; then
+              target=$CLI_SHA
             fi
             git -C "$sub" checkout --quiet --detach "$target"
             echo "  $sub -> $(git -C "$sub" rev-parse --short HEAD) ($target)"
@@ -81,9 +124,28 @@ jobs:
             echo SUMMARY_EOF
           } >> "$GITHUB_OUTPUT"
 
+      # Cleared first, so a page for a removed command group does not survive.
+      - name: Clear the CLI reference
+        if: steps.bump.outputs.changes == 'true'
+        run: rm -rf docs/src/cli-reference
+
+      - name: Download the CLI reference
+        if: steps.bump.outputs.changes == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: cli-reference
+          path: docs/src
+
+      - name: Stage the CLI reference
+        if: steps.bump.outputs.changes == 'true'
+        run: git add -A -- docs/src/cli-reference docs/src/docs.json docs/src/llms.txt
+
       - name: Open or update the bump pull request
         if: steps.bump.outputs.changes == 'true'
         env:
+          # The same token as the checkout, so the push and the pull request come
+          # from a real account and the PR therefore runs CI.
+          GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
           SUMMARY: ${{ steps.bump.outputs.summary }}
         run: |
           set -euo pipefail

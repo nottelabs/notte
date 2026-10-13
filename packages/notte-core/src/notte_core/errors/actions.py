@@ -7,6 +7,15 @@ class ActionError(NotteBaseError):
     pass
 
 
+class EvaluateJsResultLimitError(ActionError):
+    def __init__(self, max_bytes: int, reason: str) -> None:
+        message = (
+            f"JavaScript result exceeds conversion limits ({reason}; output limit {max_bytes} bytes). "
+            "Return fewer fields, a summary, or retrieve the result in smaller batches."
+        )
+        super().__init__(dev_message=message, user_message=message, agent_message=message)
+
+
 class ActionExecutionError(ActionError):
     def __init__(self, action_id: str, url: str, reason: str | None = None) -> None:
         super().__init__(

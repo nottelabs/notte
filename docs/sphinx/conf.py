@@ -1,6 +1,7 @@
 # Configuration file for the Sphinx documentation builder.
 import os
 import sys
+from pathlib import Path
 from types import ModuleType
 from typing import Any
 
@@ -51,7 +52,31 @@ autodoc_typehints = "description"
 autodoc_class_signature = "mixed"
 
 
+# sphinx-mintlify renders defaults of string type aliases without their quotes.
+# Keep the public function signature valid Python after each regeneration.
+def preserve_function_runtime_default(app: Sphinx, exception: Exception | None) -> None:
+    if exception is not None:
+        return
+    reference = Path(app.confdir).parent / "src/sdk-reference/misc/nottefunction.mdx"
+    if reference.exists():
+        content = reference.read_text()
+        _ = reference.write_text(
+            content.replace("runtime: FunctionRuntime = standard", 'runtime: FunctionRuntime = "standard"')
+        )
+
+    session_reference = Path(app.confdir).parent / "src/sdk-reference/misc/remotesession.mdx"
+    if session_reference.exists():
+        content = session_reference.read_text()
+        _ = session_reference.write_text(
+            content.replace(
+                "start(tries: <class 'int'> = 3, wait_for_authentication:",
+                "start(tries: <class 'int'> = 3, *, wait_for_authentication:",
+            )
+        )
+
+
 def setup(app: Sphinx) -> None:
+    _ = app.connect("build-finished", preserve_function_runtime_default)
     # sphinx-mintlify keys generated type pages by bare class name. Following
     # Playwright's Page graph would overwrite requests.Response with its own
     # unrelated Response type, so link Page to its upstream reference instead.

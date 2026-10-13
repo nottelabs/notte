@@ -229,6 +229,32 @@ def test_cdp_url_with_headless_false_should_raise_error():
         _ = SessionStartRequest.model_validate({"cdp_url": "ws://localhost:9222", "headless": False})
 
 
+def test_cdp_url_does_not_send_configured_viewport_defaults():
+    request = SessionStartRequest(cdp_url="ws://localhost:9222")
+    payload = request.model_dump(exclude_none=True)
+
+    assert "viewport_width" not in payload
+    assert "viewport_height" not in payload
+    assert payload["proxies"] is False
+
+
+def test_cdp_url_rejects_notte_proxies():
+    with pytest.raises(ValidationError, match="Proxies must be configured by the external CDP provider"):
+        _ = SessionStartRequest(cdp_url="ws://localhost:9222", proxies=True)
+
+
+@pytest.mark.parametrize("width,height", [(1920, 1080), (1280, 720)])
+def test_cdp_url_rejects_explicit_viewport(width: int, height: int):
+    with pytest.raises(ValidationError, match="viewport_width must be None"):
+        _ = SessionStartRequest(cdp_url="ws://localhost:9222", viewport_width=width, viewport_height=height)
+
+
+def test_cdp_url_accepts_explicit_none_viewport():
+    request = SessionStartRequest(cdp_url="ws://localhost:9222", viewport_width=None, viewport_height=None)
+    assert request.viewport_width is None
+    assert request.viewport_height is None
+
+
 def test_remote_headless_true_is_accepted_for_legacy_sdks_but_not_serialized():
     request = SessionStartRequest.model_validate({"headless": True})
     assert "headless" not in request.model_dump()

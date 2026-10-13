@@ -563,6 +563,7 @@ class ScrollUpAction(BrowserAction):
     ```python
     session.execute(type="scroll_up", amount=500)  # Scroll up 500 pixels
     session.execute(type="scroll_up")  # Scroll up one page
+    session.execute(type="scroll_up", selector="#results", amount=500)  # Scroll a container
     ```
     """
 
@@ -570,6 +571,9 @@ class ScrollUpAction(BrowserAction):
     description: str = "Scroll up by a given amount of pixels. Use `null` for scrolling up one page"
     # amount of pixels to scroll. None for scrolling up one page
     amount: int | None = None
+    selector: str | None = Field(
+        default=None, min_length=1, description="Optional selector for the scroll container, including iframe paths."
+    )
 
     @override
     def execution_message(self) -> str:
@@ -594,6 +598,7 @@ class ScrollDownAction(BrowserAction):
     ```python
     session.execute(type="scroll_down", amount=500)  # Scroll down 500 pixels
     session.execute(type="scroll_down")  # Scroll down one page
+    session.execute(type="scroll_down", selector="#results", amount=500)  # Scroll a container
     ```
     """
 
@@ -601,6 +606,9 @@ class ScrollDownAction(BrowserAction):
     description: str = "Scroll down by a given amount of pixels. Use `null` for scrolling down one page"
     # amount of pixels to scroll. None for scrolling down one page
     amount: int | None = None
+    selector: str | None = Field(
+        default=None, min_length=1, description="Optional selector for the scroll container, including iframe paths."
+    )
 
     @override
     def execution_message(self) -> str:
@@ -1327,10 +1335,27 @@ class UploadFileAction(InteractionAction):
     """
     Upload file to interactive element with file path. Use with any upload file element, including button, input, a, span, div. CRITICAL: Use only this for file upload, do not use click.
 
+    In cloud sessions, `file_path` accepts a session file's filename or a public HTTP(S)
+    file URL, including signed URLs. URL files are downloaded on the API server and
+    attached without navigating away from the form. Downloads do not use browser
+    cookies, browser proxy settings, or custom authentication headers. They are
+    temporary and are not added to the session's persistent file catalog.
+
+    URL support requires the cloud backend feature; it does not require an SDK update.
+    Standalone local sessions retain their existing storage/path behavior and do not
+    gain URL downloading. To use a local file with a cloud session, first upload it
+    with `session.storage.upload()` and pass the returned filename.
+
     **Example:**
     ```python
-    session.execute(type="upload_file", id="file-input", file_path="/path/to/document.pdf")
-    session.execute(type="upload_file", id="image-upload", file_path="./image.jpg")
+    # Cloud session: attach an existing session file by filename.
+    session.execute(type="upload_file", selector='input[type="file"]', file_path="document.pdf")
+    # Cloud session: download and attach a public or signed HTTP(S) URL.
+    session.execute(
+        type="upload_file",
+        selector='input[type="file"]',
+        file_path="https://example.com/document.pdf",
+    )
     ```
     """
 

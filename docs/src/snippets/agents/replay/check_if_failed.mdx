@@ -7,5 +7,6 @@ result = agent.run(task="Complete task")
 
 if not result.success:
     print(f"Agent failed: {result.answer}")
-print(f"Completed {len(result.steps)} steps")
+nb_steps = sum(1 for s in result.steps if s["type"] == "agent_step_start")
+print(f"Completed {nb_steps} steps")
 ```

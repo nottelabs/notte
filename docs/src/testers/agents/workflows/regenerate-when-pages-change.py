@@ -1,5 +1,5 @@
 # @sniptest filename=regenerate-when-pages-change.py
-# @sniptest show=7-19
+# @sniptest show=7-21
 from notte_sdk import NotteClient
 
 client = NotteClient()

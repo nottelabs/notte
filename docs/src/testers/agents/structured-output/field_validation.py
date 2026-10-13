@@ -1,7 +1,6 @@
 # @sniptest filename=field_validation.py
-# @sniptest show=5-23
 from notte_sdk import NotteClient
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 
 class Product(BaseModel):
@@ -24,3 +23,10 @@ with client.Session() as session:
         task="Extract product",
         response_format=Product,
     )
+
+    # Validators run when you parse the answer, not inside the agent
+    if result.success and result.answer:
+        try:
+            product = Product.model_validate_json(result.answer)
+        except ValidationError as e:
+            print(f"Data failed validation: {e}")

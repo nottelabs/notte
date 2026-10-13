@@ -8,3 +8,4 @@ with client.Session() as session:
 
     # Or disable vision if causing confusion
     agent = client.Agent(session=session, use_vision=False)
+    result = agent.run(task=task)

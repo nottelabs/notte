@@ -1,0 +1,19 @@
+import os
+
+from notte_sdk import NotteClient
+
+client = NotteClient()
+token = os.environ["API_TOKEN"]
+
+with client.Session() as session:
+    # Use Notte for high-level navigation
+    session.execute(type="goto", url="https://example.com")
+
+    # Switch to Playwright for network control
+    page = session.page
+    page.route(
+        "**/api/*", lambda route: route.continue_(headers={**route.request.headers, "Authorization": f"Bearer {token}"})
+    )
+
+    # Back to Notte for AI-powered scraping
+    data = session.scrape(instructions="Extract all article titles")

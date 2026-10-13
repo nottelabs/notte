@@ -9,7 +9,7 @@ client = NotteClient()
 function = client.Function(function_id="func_abc123")
 
 # Before major update, download current version
-current_code = function.download(decryption_key="key")
+current_code = function.download()
 
 # Save backup
 with open(f"backups/function_v{function.response.latest_version}.py", "w") as f:

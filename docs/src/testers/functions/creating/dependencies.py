@@ -1,9 +1,17 @@
 # @sniptest filename=dependencies.py
-# Built-in imports
+# @sniptest show=2-17
+# ruff: noqa: F401, I001 -- the imports are the lesson
+# Standard library
+import json
+import re
+from datetime import datetime
+
+# Common third-party libraries
+import requests
+from pydantic import BaseModel
 
 # Notte SDK
-
-# Third-party (common libraries available)
+from notte_sdk import NotteClient
 
 
 def run():

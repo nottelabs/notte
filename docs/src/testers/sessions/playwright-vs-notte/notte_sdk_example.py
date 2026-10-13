@@ -1,0 +1,28 @@
+from notte_sdk import NotteClient
+from pydantic import BaseModel
+
+client = NotteClient()
+
+
+class Product(BaseModel):
+    name: str
+    price: float
+
+
+class Products(BaseModel):
+    products: list[Product]
+
+
+with client.Session() as session:
+    session.execute(type="goto", url="https://example.com/products")
+
+    # AI understands the page and returns matching actions
+    actions = session.observe(instructions="Find the search box")
+    session.execute(type="fill", id=actions[0].id, value="laptops")
+
+    # Structured extraction with LLM
+    products = session.scrape(response_format=Products, instructions="Extract all products with names and prices")
+
+# Every session is recorded
+replay = session.replay()
+replay.download("automation.mp4")

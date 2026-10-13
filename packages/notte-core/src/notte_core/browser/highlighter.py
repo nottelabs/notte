@@ -142,7 +142,9 @@ class ColorAnalyzer:
             region = region.convert("RGB")
 
         # Get pixel data
-        pixels: list[list[int]] = list(region.getdata())  # pyright: ignore [reportUnknownArgumentType, reportUnknownMemberType]
+        # Pillow 12 types getdata() as a non-iterable ImagingCore; read the raw RGB bytes instead
+        raw = region.tobytes()
+        pixels: list[tuple[int, int, int]] = [(raw[i], raw[i + 1], raw[i + 2]) for i in range(0, len(raw), 3)]
         if not pixels:
             return True
 

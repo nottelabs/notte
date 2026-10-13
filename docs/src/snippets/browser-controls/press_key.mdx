@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/browser-controls/press_key.py */}
 
+<CodeGroup>
+
 ```python press_key.py
 from notte_sdk import NotteClient
 
@@ -18,3 +20,25 @@ with client.Session() as session:
     # Press Tab
     session.execute(type="press_key", key="Tab")
 ```
+
+```typescript press_key.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const session = client.Session();
+await session.use(async () => {
+  await session.execute({ type: "goto", url: "https://example.com" });
+
+  // Press Enter
+  await session.execute({ type: "press_key", key: "Enter" });
+
+  // Press Escape
+  await session.execute({ type: "press_key", key: "Escape" });
+
+  // Press Tab
+  await session.execute({ type: "press_key", key: "Tab" });
+});
+```
+
+</CodeGroup>

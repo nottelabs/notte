@@ -145,7 +145,7 @@ Stop a running agent:
 
 <ManualStop />
 
-**Note:** You cannot stop agents once they complete a step - they must finish the current action.
+**Note:** `stop()` does not interrupt an action that is already executing - the agent stops once the current action finishes.
 
 ### Timeout Pattern
 

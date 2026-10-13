@@ -47,9 +47,7 @@ async def test_goto_and_scrape():
         obs = await page.aobserve(perception_type="fast")
         assert obs.clean_url == "example.com"
 
-        example_com_str = (
-            "This domain is for use in documentation examples without needing permission. Avoid use in operations."
-        )
+        example_com_str = "This domain is for use in documentation examples without needing permission."
 
         # Test S2: Scrape data
         markdown = await page.ascrape()

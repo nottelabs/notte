@@ -13,3 +13,9 @@
 [submodule "claude-managed-agents"]
 	path = claude-managed-agents
 	url = https://github.com/nottelabs/claude-managed-agents.git
+[submodule "notte-jevmaxxing"]
+	path = notte-jevmaxxing
+	url = https://github.com/nottelabs/notte-jevmaxxing.git
+[submodule "live-view-embedding"]
+	path = live-view-embedding
+	url = https://github.com/nottelabs/live-view-embedding.git

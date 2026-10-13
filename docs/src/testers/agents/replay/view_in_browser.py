@@ -1,5 +1,6 @@
 # @sniptest filename=view_in_browser.py
-# @sniptest show=6-9
+import webbrowser
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -7,5 +8,7 @@ with client.Session() as session:
     agent = client.Agent(session=session)
     result = agent.run(task="Complete task")
 
-    # Get replay URL
-    print(f"View replay: https://console.notte.cc/sessions/{session.session_id}")
+# Open the replay (presigned MP4 URL) in your browser
+replay = session.replay()
+if replay.mp4_url is not None:
+    webbrowser.open(replay.mp4_url)

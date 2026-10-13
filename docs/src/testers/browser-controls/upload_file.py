@@ -6,8 +6,13 @@ client = NotteClient()
 with client.Session() as session:
     session.execute(type="goto", url="https://example.com/upload")
 
-    # Upload from local file
-    session.execute(type="upload_file", selector="input[type='file']", file_path="/path/to/document.pdf")
+    # Upload a local file to the cloud session, then attach it by filename.
+    uploaded = session.storage.upload("/path/to/document.pdf")
+    session.execute(type="upload_file", selector="input[type='file']", file_path=uploaded.filename)
 
-    # Upload with ID
-    session.execute(type="upload_file", id="file-upload", file_path="/path/to/image.jpg")
+    # Or attach a public HTTP(S) file URL directly. Signed URLs also work.
+    session.execute(
+        type="upload_file",
+        selector="input[type='file']",
+        file_path="https://example.com/document.pdf",
+    )

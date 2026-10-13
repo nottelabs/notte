@@ -15,7 +15,8 @@ with client.Session() as session:
         if status.status == "closed":
             break
 
-        print(f"Progress: {len(status.steps)} steps completed")
+        nb_steps = sum(1 for s in status.steps if s["type"] == "agent_step_stop")
+        print(f"Progress: {nb_steps} steps completed")
         time.sleep(5)  # Check every 5 seconds
 
     print(f"Final result: {status.answer}")

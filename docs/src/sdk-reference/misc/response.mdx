@@ -11,7 +11,7 @@ server's response to an HTTP request
 ### close
 
 ```python
-close()
+close() -> None
 ```
 
 Releases the connection back to the pool
@@ -21,37 +21,49 @@ Releases the connection back to the pool
 ### iter_content
 
 ```python
-iter_content(chunk_size = 1, decode_unicode = False)
+iter_content(chunk_size: int | None = 1, decode_unicode: bool = False) -> Iterator[str | bytes]
 ```
 
 Iterates over the response data
+
+**Returns:**
+
+`Iterator[str | bytes]`
 
 ---
 
 ### iter_lines
 
 ```python
-iter_lines(chunk_size = 512, decode_unicode = False, delimiter = None)
+iter_lines(chunk_size: int = 512, decode_unicode: bool = False, delimiter: str | bytes | None = None) -> Iterator[str | bytes]
 ```
 
 Iterates over the response data, one line at a time
+
+**Returns:**
+
+`Iterator[str | bytes]`
 
 ---
 
 ### json
 
 ```python
-json(kwargs)
+json(kwargs: Any) -> Any
 ```
 
 Decodes the JSON response body (if any) as a Python object
+
+**Returns:**
+
+`Any`
 
 ---
 
 ### raise_for_status
 
 ```python
-raise_for_status()
+raise_for_status() -> None
 ```
 
 Raises :class:`HTTPError`, if one occurred

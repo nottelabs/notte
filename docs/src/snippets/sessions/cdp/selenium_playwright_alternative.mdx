@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/sessions/cdp/selenium_playwright_alternative.py */}
 
+<CodeGroup>
+
 ```python selenium_playwright_alternative.py
 from notte_sdk import NotteClient
 
@@ -14,3 +16,20 @@ with client.Session() as session:
     page.goto("https://example.com")
     print(f"Title: {page.title()}")
 ```
+
+```typescript selenium_playwright_alternative.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const status = await client.Session().use(async session => {
+  const status = await session.status();
+  const page = await session.page();
+  // Use Playwright for automation
+  await page.goto('https://example.com');
+  console.log(`Title: ${await page.title()}`);
+  return status;
+});
+```
+
+</CodeGroup>

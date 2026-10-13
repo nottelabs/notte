@@ -1,0 +1,22 @@
+const axios = require('axios');
+
+const result = await axios.post(
+  'https://api.notte.cc/functions/function_abc123/runs/start',
+  {
+    function_id: 'function_abc123',
+    variables: {
+      url: 'https://example.com',
+      search_query: 'laptop'
+    },
+    stream: false
+  },
+  {
+    headers: {
+      'Authorization': 'Bearer YOUR_API_KEY',
+      'x-notte-api-key': 'YOUR_API_KEY',
+      'Content-Type': 'application/json'
+    }
+  }
+);
+
+console.log(result.data);

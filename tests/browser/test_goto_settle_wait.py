@@ -11,6 +11,7 @@ class FakePage:
     def __init__(self) -> None:
         self.url = "about:blank"
         self.goto_calls: list[dict[str, Any]] = []
+        self.load_states: list[str] = []
 
     def once(self, event: str, handler: Any) -> None:
         pass
@@ -24,6 +25,9 @@ class FakePage:
     async def goto(self, url: str, **kwargs: Any) -> None:
         self.goto_calls.append({"url": url, **kwargs})
         self.url = url
+
+    async def wait_for_load_state(self, state: str, **kwargs: Any) -> None:
+        self.load_states.append(state)
 
 
 def window_with(page: FakePage, monkeypatch: pytest.MonkeyPatch) -> tuple[BrowserWindow, list[str]]:
@@ -51,7 +55,8 @@ async def test_full_loads_keep_the_settle_wait(monkeypatch: pytest.MonkeyPatch, 
 
     await window.goto_and_wait(url="https://example.com/", wait_until=wait_until)  # type: ignore[arg-type]
 
-    assert page.goto_calls[0]["wait_until"] == wait_until
+    assert page.goto_calls[0]["wait_until"] == "commit"
+    assert page.load_states == ([] if wait_until == "commit" else [wait_until or "load"])
     assert waits == ["short"]
 
 
@@ -63,5 +68,6 @@ async def test_cheap_loads_skip_the_settle_wait(monkeypatch: pytest.MonkeyPatch,
 
     await window.goto_and_wait(url="https://example.com/", wait_until=wait_until)  # type: ignore[arg-type]
 
-    assert page.goto_calls[0]["wait_until"] == wait_until
+    assert page.goto_calls[0]["wait_until"] == "commit"
+    assert page.load_states == ([] if wait_until == "commit" else [wait_until or "load"])
     assert waits == []

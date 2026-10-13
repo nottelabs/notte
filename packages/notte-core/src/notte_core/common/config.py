@@ -132,8 +132,8 @@ class LlmProvider(StrEnum):
 
 class LlmModel(StrEnum):
     openai = "openai/gpt-4o"
-    gemini = "gemini/gemini-2.5-flash"
-    gemini_vertex = "vertex_ai/gemini-2.5-flash"
+    gemini = "gemini/gemini-3.5-flash"
+    gemini_vertex = "vertex_ai/gemini-3.5-flash"
     gemma = "openrouter/google/gemma-3-27b-it"
     cerebras = "cerebras/gpt-oss-120b"
     groq = "groq/gpt-oss-120b"
@@ -142,7 +142,7 @@ class LlmModel(StrEnum):
     together = "together_ai/meta-llama/llama-3.3-70b-instruct"
     anthropic = "anthropic/claude-sonnet-4-5-20250929"
     kimi2_5 = "moonshot/kimi-k2.5"
-    grok = "xai/grok-4-1-fast-non-reasoning"
+    grok = "xai/grok-4.3"
     minimax = "minimax/minimax-m2.5"
 
     @property
@@ -198,7 +198,8 @@ class LlmModel(StrEnum):
             _model = "meta-llama/llama-3.3-70b-instruct"
 
         if "/grok-4-1-fast-non-reasoning" in _model:
-            _model = "x-ai/grok-4.1-fast"
+            # Legacy public value: xAI retired grok-4.1-fast and recommends 4.3
+            _model = "x-ai/grok-4.3"
         elif "xai/" in _model:
             _model = _model.replace("xai/", "x-ai/")
 
@@ -206,6 +207,14 @@ class LlmModel(StrEnum):
             _model = _model.replace("zai/", "z-ai/")
 
         return f"openrouter/{_model}"
+
+    @staticmethod
+    def get_direct_model(model: str) -> str:
+        """Model id for direct (non-OpenRouter) provider calls."""
+        # Groq serves gpt-oss under the openai/ namespace; the public value omits it.
+        if model == "groq/gpt-oss-120b":
+            return "groq/openai/gpt-oss-120b"
+        return model
 
     @property
     def context_length(self) -> int:
@@ -307,6 +316,8 @@ class NotteConfigDict(TypedDict, total=False):
     debug_port: int | None
     chrome_args: list[str] | None
     raise_on_session_execution_failure: bool
+    evaluate_js_max_result_bytes: int
+    evaluate_js_max_result_values: int
 
     # [perception]
     perception_type: PerceptionType
@@ -413,6 +424,8 @@ class NotteConfig(TomlConfig):
     debug_port: int | None = None
     chrome_args: list[str] | None = None
     raise_on_session_execution_failure: bool
+    evaluate_js_max_result_bytes: int = Field(default=16 * 1024 * 1024, gt=0)
+    evaluate_js_max_result_values: int = Field(default=50_000, gt=0)
 
     # [perception]
     perception_type: PerceptionType

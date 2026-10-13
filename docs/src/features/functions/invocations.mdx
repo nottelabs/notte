@@ -17,6 +17,7 @@ import StreamSdk from "/snippets/functions/invocations/stream_sdk.mdx";
 import StreamHttp from "/snippets/functions/invocations/stream_http.mdx";
 import StreamResponse from "/snippets/functions/invocations/stream_response.mdx";
 import AsyncCreateStart from "/snippets/functions/invocations/async_create_start.mdx";
+import AsyncRun from "/snippets/functions/invocations/async_run.mdx";
 import CheckRunStatus from "/snippets/functions/invocations/check_run_status.mdx";
 import StopRunning from "/snippets/functions/invocations/stop_running.mdx";
 import WebhookHandler from "/snippets/functions/invocations/webhook_handler.mdx";
@@ -36,7 +37,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Functions can be invoked in multiple ways - through the Python SDK, HTTP API, cURL commands, or as webhook endpoints.
+Functions can be invoked through the Python or TypeScript SDK, HTTP API, cURL commands, or as webhook endpoints.
 
 ## Via Python SDK
 
@@ -54,7 +55,7 @@ The simplest way to call a Function:
 
 ## Via HTTP API
 
-Call Functions as HTTP endpoints:
+Call Functions as HTTP endpoints. Send your API key both as `Authorization: Bearer` and in the `x-notte-api-key` header. Set `"stream": false` to get a single JSON response instead of a log stream:
 
 ### POST Request
 
@@ -110,11 +111,37 @@ Response streams:
 
 ### Create and Start Separately
 
-For long-running functions:
+Use Python's `function.create_run()` or TypeScript's `fn.createRun()` only when you need a run ID before execution begins.
+It creates the run record only. Pass that ID to `function.run(function_run_id=...)`
+or `fn.run(variables, { functionRunId })` to execute it. Omitting the ID automatically creates a new run.
+For Python local execution, pass `local=True` to both calls.
+
+Set `NOTTE_FUNCTION_ID` to your deployed function's ID before running these examples:
+
+```bash
+export NOTTE_FUNCTION_ID=your_function_id
+```
 
 <AsyncCreateStart />
 
+### Run Without Blocking the Event Loop
+
+`function.run()` is synchronous and waits for completion. `stream=True` (the default)
+prints live logs; `stream=False` receives the final JSON response without live logs.
+Disabling streaming does not make standard-runtime execution non-blocking.
+
+Use `asyncio.to_thread()` to keep your application's event loop available:
+
+<AsyncRun />
+
+Keep the application running until the task finishes. This runs the synchronous
+SDK call in a local thread; it does not create a detached server-side job.
+
 ### Check Run Status
+
+`function.get_run(run_id)` fetches the current status and result without waiting
+for execution to finish. From async code, use `await asyncio.to_thread(function.get_run, run_id)`.
+In TypeScript, use `await fn.getRun(runId)`; `fn.retrieve(runId)` remains a compatible alias.
 
 <CheckRunStatus />
 
@@ -135,7 +162,9 @@ Configure webhook in external service:
 ```
 Webhook URL: https://api.notte.cc/functions/function_abc123/runs/start
 Method: POST
-Headers: Authorization: Bearer YOUR_API_KEY
+Headers:
+  Authorization: Bearer YOUR_API_KEY
+  x-notte-api-key: YOUR_API_KEY
 ```
 
 ### Testing Webhooks
@@ -190,26 +219,26 @@ Test webhook locally:
 - No cloud execution costs
 
 **Requirements:**
-- Decryption key (from Console) - passed when creating Function instance
-- Function code accessible locally
+- Access to the function's code (you own it or it is shared with you)
+- Notte-managed functions also need their decryption key, passed as `decryption_key` when creating the Function instance
 
 ## Rate Limits
 
-### Account Limits
+### Rate-Limited Runs
 
-Functions have rate limits based on your plan:
-
-- **Free**: 10 concurrent runs
-- **Pro**: 50 concurrent runs
-- **Enterprise**: Custom limits
+Running a published function that you do not own is rate limited per caller. When you exceed the limit, the API answers with HTTP `429`.
 
 ### Handling Rate Limits
+
+Retry with backoff when a run is rejected with `429`:
 
 <RateLimitHandling />
 
 ## Best Practices
 
 ### 1. Use Appropriate Timeout
+
+In Python, `timeout` is how many seconds the SDK waits for data from the server before giving up (default 300); a long run that keeps streaming logs is not cut off. In TypeScript, `timeoutMs` is a deadline for the whole call (default 5 minutes) and throws `NotteTimeoutError` when it elapses. Both only control how long your code waits for the result.
 
 <TimeoutExamples />
 
