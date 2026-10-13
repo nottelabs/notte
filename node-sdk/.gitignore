@@ -149,6 +149,3 @@ playwright/.cache/
 
 # Local development
 .local
-
-# README code blocks extracted by scripts/readme_blocks.py
-.readme-check/
