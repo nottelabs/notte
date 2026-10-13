@@ -16,6 +16,7 @@ import type {
   Observation,
   PageExecuteData,
   ObserveRequest,
+  ProfileResponse,
   ReplayResponse,
   ScrapeRequest,
   SessionDebugResponse,
@@ -29,6 +30,7 @@ import {
   sessionCookiesGet,
   sessionCookiesSet,
   sessionDebugInfo,
+  sessionProfileSave,
   sessionReplay,
   sessionStart,
   sessionAuthReadiness,
@@ -73,6 +75,14 @@ export interface ReplayOptions {
   timeoutMs?: number;
   /** Delay between polling attempts, in milliseconds. Defaults to 5 000. */
   pollIntervalMs?: number;
+}
+
+/** Target for `session.saveProfile()`. Pass at most one of the two fields. */
+export interface SaveProfileOptions {
+  /** Existing profile to overwrite with the session's current browser state. */
+  profile_id?: string;
+  /** Create a new profile with this name and save into it. */
+  name?: string;
 }
 
 export interface SessionScriptOptions {
@@ -604,6 +614,46 @@ export class Session {
       throwOnError: true,
     });
     return response.data.cookies;
+  }
+
+  // #######################################################################
+  // ############################# Profiles ################################
+  // #######################################################################
+
+  /**
+   * Save the session's current browser state (cookies, localStorage, sessionStorage) into a
+   * profile, without stopping the session.
+   *
+   * Pass `profile_id` to overwrite an existing profile or `name` to create a new one. With
+   * neither, the state is saved into the profile the session was started with. The session's
+   * start-time profile settings are not changed, so a session started with `persist: true`
+   * still saves again when it stops.
+   *
+   * @example
+   * const profile = await session.saveProfile({ name: 'github' });
+   * // later: client.Session({ profile: { id: profile.profile_id } })
+   */
+  async saveProfile(options: SaveProfileOptions = {}): Promise<ProfileResponse> {
+    const { profile_id, name } = options;
+    if (profile_id !== undefined && name !== undefined) {
+      throw new Error('profile_id and name are mutually exclusive');
+    }
+    if (profile_id !== undefined && profile_id.trim() === '') {
+      throw new Error('profile_id must not be empty');
+    }
+    if (name !== undefined && name.trim() === '') {
+      throw new Error('name must not be empty');
+    }
+    const body: { profile_id?: string; name?: string } = {};
+    if (profile_id !== undefined) body.profile_id = profile_id;
+    if (name !== undefined) body.name = name;
+    const response = await sessionProfileSave({
+      client: this.client.getClient(),
+      path: { session_id: this.requireSessionId() },
+      body,
+      throwOnError: true,
+    });
+    return response.data;
   }
 
   // #######################################################################

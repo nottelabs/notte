@@ -208,6 +208,7 @@ def main():
         "cdp_url",
         "set_cookies",
         "get_cookies",
+        "save_profile",
         "viewer_browser",
         "viewer_cdp",
         "viewer",

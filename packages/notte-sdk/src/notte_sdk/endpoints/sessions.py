@@ -67,6 +67,7 @@ from notte_sdk.types import (
     ObserveRequestDict,
     ObserveResponse,
     PaginationParamsDict,
+    ProfileResponse,
     ReplayResponse,
     ScrapeMarkdownParamsDict,
     ScrapeRequestDict,
@@ -75,6 +76,8 @@ from notte_sdk.types import (
     SessionListRequest,
     SessionListRequestDict,
     SessionOffsetResponse,
+    SessionProfileSaveRequest,
+    SessionProfileSaveRequestDict,
     SessionResponse,
     SessionStartRequest,
     SessionStartRequestDict,
@@ -161,6 +164,8 @@ class SessionsClient(BaseClient):
     # upload cookies
     SESSION_SET_COOKIES = "{session_id}/cookies"
     SESSION_GET_COOKIES = "{session_id}/cookies"
+    # save the running browser state into a profile
+    SESSION_SAVE_PROFILE = "{session_id}/profile/save"
     # Session Debug
     SESSION_DEBUG = "{session_id}/debug"
     SESSION_DEBUG_TAB = "{session_id}/debug/tab"
@@ -331,6 +336,16 @@ class SessionsClient(BaseClient):
             path = path.format(session_id=session_id)
         return NotteEndpoint(path=path, response=GetCookiesResponse, method="GET")
 
+    @staticmethod
+    def _session_save_profile_endpoint(session_id: str | None = None) -> NotteEndpoint[ProfileResponse]:
+        """
+        Returns a NotteEndpoint for saving a running session's browser state into a profile.
+        """
+        path = SessionsClient.SESSION_SAVE_PROFILE
+        if session_id is not None:
+            path = path.format(session_id=session_id)
+        return NotteEndpoint(path=path, response=ProfileResponse, method="POST")
+
     @track_usage("cloud.session.start")
     def start(self, **data: Unpack[SessionStartRequestDict]) -> SessionResponse:
         """
@@ -438,6 +453,23 @@ class SessionsClient(BaseClient):
         """
         endpoint = SessionsClient._session_get_cookies_endpoint(session_id=session_id)
         return self.request(endpoint)
+
+    @track_usage("cloud.session.profile.save")
+    def save_profile(self, session_id: str, **data: Unpack[SessionProfileSaveRequestDict]) -> ProfileResponse:
+        """
+        Saves a running session's browser state into a profile.
+
+        The snapshot (cookies, localStorage, sessionStorage) is written immediately and the
+        session keeps running. Pass ``profile_id`` to overwrite an existing profile or ``name``
+        to create a new one; with neither, the state is saved into the profile the session was
+        started with.
+
+        Returns:
+            ProfileResponse: The profile, with ``persisted_domains`` computed from the saved state.
+        """
+        request = SessionProfileSaveRequest.model_validate(data)
+        endpoint = SessionsClient._session_save_profile_endpoint(session_id=session_id)
+        return self.request(endpoint.with_request(request))
 
     @track_usage("cloud.session.list")
     def list(self, **data: Unpack[SessionListRequestDict]) -> Sequence[SessionResponse]:
@@ -1163,6 +1195,41 @@ class RemoteSession(SyncResource):
         """
         cookies = self.client.get_cookies(session_id=self.session_id).cookies
         return [cookie.model_dump() for cookie in cookies]  # type: ignore
+
+    def save_profile(self, profile_id: str | None = None, name: str | None = None) -> ProfileResponse:
+        """
+        Saves the session's current browser state into a profile, without stopping the session.
+
+        ```python
+        with client.Session() as session:
+            session.execute(type="goto", url="https://github.com/login")
+            # ... log in ...
+            profile = session.save_profile(name="github")
+        # later: client.Session(profile={"id": profile.profile_id})
+        ```
+
+        Use it to keep a login from a session that was started without ``persist=True``.
+        It does not change the session's start-time profile settings, so a session started
+        with ``persist=True`` still saves again when it stops.
+
+        Args:
+            profile_id: Existing profile to overwrite with the current browser state.
+            name: Create a new profile with this name and save into it. Mutually exclusive with ``profile_id``.
+                With neither, the state is saved into the profile the session was started with.
+
+        Returns:
+            ProfileResponse: The profile, with ``persisted_domains`` computed from the saved state.
+
+        Raises:
+            ValueError: If both ``profile_id`` and ``name`` are provided, or if either is empty.
+            ValueError: If the session hasn't been started yet (no session_id available).
+        """
+        data: SessionProfileSaveRequestDict = {}
+        if profile_id is not None:
+            data["profile_id"] = profile_id
+        if name is not None:
+            data["name"] = name
+        return self.client.save_profile(session_id=self.session_id, **data)
 
     def debug_info(self) -> SessionDebugResponse:
         """
