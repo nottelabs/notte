@@ -12,8 +12,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: node-sdk-${{ github.ref }}
-  cancel-in-progress: true
+  # PR runs share a group so a new push cancels the superseded run. Every other run (main
+  # pushes, manual runs) gets its own group so none is cancelled or replaced while queued.
+  group: node-sdk-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 defaults:
   run:
