@@ -1,4 +1,5 @@
 import asyncio
+import json
 from collections.abc import Collection, Iterable
 from dataclasses import dataclass
 from pathlib import Path
@@ -154,23 +155,27 @@ async def _evaluate(
     while True:
         try:
             if not args["collect_elements"]:
-                result: _Payload | None = await frame.evaluate(js_code, args)
-                return result, {}
+                payload: str | None = await frame.evaluate(js_code, args)
+                return _load_payload(payload), {}
             result_handle = await frame.evaluate_handle(js_code, args)
             try:
-                result = await result_handle.evaluate("r => ({ rootId: r.rootId, map: r.map })")
+                payload = await result_handle.evaluate("r => r.payload")
                 elements_handle = await result_handle.get_property("elements")
                 properties = await elements_handle.get_properties()
                 await elements_handle.dispose()
             finally:
                 await result_handle.dispose()
             elements = {key: element for key, value in properties.items() if (element := value.as_element())}
-            return result, elements
+            return _load_payload(payload), elements
         except PlaywrightError as e:
             if attempt >= FRAME_EVALUATION_ATTEMPTS:
                 raise
             logger.debug(f"DOM evaluation failed in frame {frame.url} (attempt {attempt}), retrying: {e}")
             attempt += 1
+
+
+def _load_payload(payload: str | None) -> _Payload | None:
+    return None if payload is None else json.loads(payload)
 
 
 def max_highlight_index(nodes: Iterable[RawNode]) -> int:
