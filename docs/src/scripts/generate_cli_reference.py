@@ -127,7 +127,17 @@ def main() -> int:
         shutil.copytree(fresh, OUT_DIR)
         if updated != current:
             DOCS_JSON.write_text(updated)
-            subprocess.run(["uv", "run", "python", "scripts/generate_llms.py"], cwd=SRC_DIR, check=True)
+    # llms.txt lists every page's title and description, so it is rebuilt even
+    # when the navigation is unchanged.
+    try:
+        subprocess.run(
+            ["uv", "run", "python", "scripts/generate_llms.py"],
+            cwd=SRC_DIR,
+            check=True,
+            timeout=GENERATE_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        sys.exit(f"generate_llms.py did not finish within {GENERATE_TIMEOUT_SECONDS}s")
     print(f"Wrote {len(pages)} pages to docs/src/cli-reference/.")
     return 0
 
