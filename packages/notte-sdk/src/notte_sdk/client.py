@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from typing_extensions import final
 
 from notte_sdk.agent_fallback import RemoteAgentFallback
-from notte_sdk.auth import resolve_api_key
+from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
 from notte_sdk.endpoints.agents import AgentsClient, RemoteAgent
 from notte_sdk.endpoints.base import BaseClient
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
@@ -24,6 +24,7 @@ from notte_sdk.endpoints.profiles import ProfilesClient
 from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
 from notte_sdk.endpoints.workflows import RemoteWorkflow, WorkflowsClient
+from notte_sdk.errors import AuthenticationError
 from notte_sdk.types import ScrapeMarkdownParamsDict, ScrapeRequestDict
 
 enable_nest_asyncio()
@@ -61,6 +62,8 @@ class NotteClient:
         self.captcha_timeout_seconds: float = captcha_timeout_seconds
         # Resolve once so the keyring is read at most once per client.
         api_key = resolve_api_key(api_key, server_url or os.getenv("NOTTE_API_URL") or BaseClient.DEFAULT_NOTTE_API_URL)
+        if api_key is None:
+            raise AuthenticationError(MISSING_API_KEY_MESSAGE)
         self.sessions: SessionsClient = SessionsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose, viewer_type=viewer_type
         )

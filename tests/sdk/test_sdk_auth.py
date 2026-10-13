@@ -142,6 +142,25 @@ def test_get_keyring_api_key_uses_environment_key(cli_config_dir: Path) -> None:
     assert get_keyring_api_key("https://us-staging.notte.cc") is None
 
 
+@pytest.mark.parametrize(
+    "api_url", ["http://api.notte.cc", "http://us-staging.notte.cc", "http://example.com:8000", "ftp://api.notte.cc"]
+)
+def test_get_keyring_api_key_requires_https(cli_config_dir: Path, api_url: str) -> None:
+    _write_cli_store(cli_config_dir, "api_key:prod", "api_key")
+
+    assert get_keyring_api_key(api_url) is None
+
+
+@pytest.mark.parametrize("api_url", ["http://localhost:8000", "http://127.0.0.1:8000", "http://[::1]:8000"])
+def test_get_keyring_api_key_allows_plain_http_on_loopback(cli_config_dir: Path, api_url: str) -> None:
+    store = cli_config_dir / ".notte" / "cli"
+    store.mkdir(parents=True)
+    label = resolve_env_label(api_url)
+    (store / f"api_key:{label}").write_text(CLI_FILE_BACKEND_ITEMS["api_key:localhost"])
+
+    assert get_keyring_api_key(api_url) == "cli-local-key"
+
+
 def test_get_keyring_api_key_supports_legacy_prod_key(cli_config_dir: Path) -> None:
     _write_cli_store(cli_config_dir, "api_key")
 
@@ -280,6 +299,11 @@ def test_client_reads_keyring_once(cli_config_dir: Path) -> None:
     assert client.agents.token == "cli-prod-key"
 
 
-def test_client_without_any_key_raises(cli_config_dir: Path) -> None:
-    with pytest.raises(AuthenticationError, match="notte auth login"):
+def test_client_without_any_key_raises_after_one_lookup(cli_config_dir: Path) -> None:
+    with (
+        patch.object(auth, "get_keyring_api_key", wraps=auth.get_keyring_api_key) as get_keyring,
+        pytest.raises(AuthenticationError, match="notte auth login"),
+    ):
         _ = NotteClient()
+
+    assert get_keyring.call_count == 1

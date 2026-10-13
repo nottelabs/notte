@@ -19,6 +19,7 @@ from notte_core.common.logging import logger
 
 KEYRING_SERVICE = "notte-cli"
 KEYRING_KEY = "api_key"
+MISSING_API_KEY_MESSAGE = "No API key found. Provide api_key, set NOTTE_API_KEY, or run 'notte auth login'."
 
 # Fixed password notte-cli uses for its encrypted file backend.
 _FILE_BACKEND_PASSWORD = b"notte-cli-keyring"  # pragma: allowlist secret
@@ -26,6 +27,8 @@ _CONFIG_DIR_ENV = "NOTTE_CONFIG_DIR"
 _CONFIG_DIR_NAME = Path(".notte") / "cli"
 # Upper bound on PBKDF2 iterations accepted from a file header.
 _MAX_PBES2_ITERATIONS = 10_000_000
+
+_LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
 _HOST_TO_ENV_LABEL = {
     "api.notte.cc": "prod",
@@ -145,8 +148,17 @@ def _get_from_secret_service(key: str) -> str | None:
     return None
 
 
+def _is_secure_api_url(api_url: str) -> bool:
+    """Only send saved keys over HTTPS, or to a server on this machine."""
+    parsed = urlparse(api_url)
+    return parsed.scheme == "https" or parsed.hostname in _LOOPBACK_HOSTS
+
+
 def get_keyring_api_key(api_url: str) -> str | None:
     """Load the API key stored by notte-cli for the API environment of `api_url`."""
+    if not _is_secure_api_url(api_url):
+        logger.debug("Not using the notte-cli keyring for a non-HTTPS API URL")
+        return None
     env_label = resolve_env_label(api_url)
     keys = [f"{KEYRING_KEY}:{env_label}"]
     if env_label == "prod":
