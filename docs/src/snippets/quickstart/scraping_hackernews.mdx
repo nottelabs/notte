@@ -27,7 +27,7 @@ result = client.scrape(
     instructions="Extract the top 5 posts from the front page",
 )
 
-for i, post in enumerate(result.data.posts, 1):
+for i, post in enumerate(result.posts, 1):
     print(f"{i}. {post.points} - {post.title}")
 ```
 

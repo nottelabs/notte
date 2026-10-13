@@ -40,7 +40,7 @@ These methods use Notte's backend to execute actions, with built-in AI capabilit
 | **Data Extraction** | Manual parsing | Structured LLM-powered `scrape()` |
 | **Observability** | Manual logging | Session replay, action recording, live viewer |
 | **Error Handling** | Manual try/except | Automatic retries and validation |
-| **Network Control** | ✅ Intercept, modify requests | ❌ Not available |
+| **Network Control** | ✅ Intercept, modify requests | Send requests from the page with `session.fetch()` (no interception) |
 | **Latency** | Lower (WebSocket) | Higher (HTTP API) |
 | **Action Coverage** | Everything | Everything via extensive action library |
 

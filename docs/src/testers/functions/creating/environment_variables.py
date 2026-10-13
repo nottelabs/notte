@@ -1,16 +1,13 @@
-# @sniptest filename=environment_variables.py
+# @sniptest filename=read_secrets.py
 import os
 
-from notte_sdk import NotteClient
 
-
-def run():
-    # Access environment variables
-    api_key = os.getenv("MY_API_KEY")
-    webhook_url = os.getenv("WEBHOOK_URL")
+def run(url: str):
+    # Function secrets are available as environment variables during the run
+    api_key = os.environ.get("MY_API_KEY")
+    webhook_url = os.environ.get("WEBHOOK_URL")
 
     if not api_key:
-        return {"error": "API key not configured"}
+        return {"error": "MY_API_KEY is not configured"}
 
-    # Use in automation
-    client = NotteClient(api_key=api_key)
+    return {"url": url, "webhook_configured": webhook_url is not None}

@@ -9,7 +9,6 @@ import DownloadingFiles from '/snippets/file-storage/downloading_files.mdx';
 import ForceOverwrite from '/snippets/file-storage/force_overwrite.mdx';
 import UsingWithAgents from '/snippets/file-storage/using_with_agents.mdx';
 import UsingWithSessions from '/snippets/file-storage/using_with_sessions.mdx';
-import AttachBeforeStarting from '/snippets/file-storage/attach_before_starting.mdx';
 import DescriptiveFilenames from '/snippets/file-storage/descriptive_filenames.mdx';
 import CheckDownloads from '/snippets/file-storage/check_downloads.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
@@ -28,8 +27,10 @@ File Storage has two buckets:
 
 | Bucket | Purpose | API |
 |--------|---------|-----|
-| **Uploads** | Files you upload for agents to use | `storage.upload()` |
-| **Downloads** | Files agents download from websites | `storage.download()` |
+| **Uploads** (`user_upload`) | Files you upload for agents to use | `storage.upload()` |
+| **Downloads** (`session_download`) | Files the browser downloads from websites | `storage.list("session_download")` + `storage.download()` |
+
+Every session has its own storage, available as `session.storage`. There is nothing to create or attach first.
 
 ```
 ┌─────────────┐                    ┌──────────────┐
@@ -55,7 +56,7 @@ Upload files from your local machine to make them available in sessions:
 <UploadingFiles />
 
 <Note>
-  Each uploaded file must be under **100 MB**. For larger files, contact the
+  Each file can be up to **1 GiB**, with up to **10 GiB** stored per session. For larger files, contact the
   team at [support@notte.cc](mailto:support@notte.cc).
 </Note>
 
@@ -68,17 +69,13 @@ away from the form or requiring a separate `session.storage.upload()` call.
 
 <UrlUpload />
 
-The download runs on the API server and does not use browser cookies, browser proxy
-settings, or custom authentication headers. URLs must resolve to public addresses;
-redirects are checked too. Downloads have a 120-second overall limit, up to five
-redirects, and the server's configured per-file and aggregate temporary-upload size
-limits. Temporary files are
-removed when the session is cleaned up and are not added to its persistent file
-catalog.
+The download runs on Notte's servers and does not use browser cookies, browser proxy
+settings, or custom authentication headers. URLs must resolve to public addresses,
+including after redirects. Files fetched this way are temporary: they are removed
+when the session is cleaned up and are not added to the session's file list.
 
-This requires cloud backend support, with no SDK update. Standalone local sessions
-retain their existing storage/path behavior. `storage.upload()` still accepts local
-files; URL support belongs to the browser's `upload_file` action.
+`storage.upload()` only accepts local files; URL support belongs to the browser's
+`upload_file` action.
 
 ## Downloading Files
 
@@ -114,10 +111,10 @@ Use file storage with scripted automation:
 
 | Method | Description |
 |--------|-------------|
-| `upload(file_path, upload_file_name=None)` | Upload a local file to storage |
-| `download(file_name, local_dir, force=False)` | Download a file to local directory |
-| `list_uploaded_files()` | List files you've uploaded |
-| `list_downloaded_files()` | List files downloaded by agents |
+| `upload(file_path, upload_file_name=None)` | Upload a local file to the session's storage. Returns a `SessionFile` |
+| `list(source=None, *, limit=100, offset=0)` | List files. `source` is `"user_upload"`, `"session_download"`, or `None` for both. Returns a page whose `.files` holds `SessionFile` objects |
+| `download(file_id, local_dir=".", *, force=False)` | Save a file to a local directory and return its path |
+| `delete(file_id)` | Delete a file from storage |
 
 ### Parameters
 
@@ -126,9 +123,9 @@ Use file storage with scripted automation:
 - `upload_file_name` - Optional custom name for the uploaded file
 
 **download()**
-- `file_name` - Name of the file in storage
-- `local_dir` - Local directory to save the file
-- `force` - Overwrite existing file (default: False)
+- `file_id` - ID of the file, from `upload()` or `list()` (`SessionFile.id`)
+- `local_dir` - Local directory to save the file (default: current directory)
+- `force` - Overwrite an existing local file (default: False)
 
 ## Supported File Types
 
@@ -142,17 +139,11 @@ File storage supports all common file types:
 
 ## Best Practices
 
-### 1. Attach Storage Before Starting
-
-Always create and attach storage before starting the session:
-
-<AttachBeforeStarting />
-
-### 2. Use Descriptive Filenames
+### 1. Use Descriptive Filenames
 
 <DescriptiveFilenames />
 
-### 3. Check Downloads After Session
+### 2. Check Downloads After Session
 
 Always check for downloaded files after the session ends:
 

@@ -8,11 +8,11 @@ const client = new NotteClient();
 const status = await client.Session().use(async session => {
   const agent = client.Agent({
     session,
-    max_steps: 20, // Allow up to 20 actions
+    max_steps: 40, // Allow up to 40 steps (default: 20)
   });
   const status = await session.status();
   assert.equal(agent['request']?.session_id, status.session_id);
-  assert.equal(agent['request']?.max_steps, 20);
+  assert.equal(agent['request']?.max_steps, 40);
   return status;
 });
 

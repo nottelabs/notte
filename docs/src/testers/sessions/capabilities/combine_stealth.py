@@ -1,11 +1,10 @@
 # @sniptest filename=combine_stealth.py
-# @sniptest show=1-13
+# @sniptest show=1-12
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
 with client.Session(
-    browser_type="chrome",
     proxies=True,
     viewport_width=1920,
     viewport_height=1080,
@@ -15,7 +14,6 @@ with client.Session(
     pass
 
 status = session.status()
-assert status.browser_type == "chrome"
 assert status.proxies is True
 assert status.viewport_width == 1920
 assert status.viewport_height == 1080

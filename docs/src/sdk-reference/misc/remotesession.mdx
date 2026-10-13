@@ -205,6 +205,30 @@ Resets the resource to its initial state
 
 ---
 
+### save_profile
+
+```python
+save_profile(profile_id: str | None = None, name: str | None = None) -> <class 'notte_sdk.types.ProfileResponse'>
+```
+
+Saves the session's current browser state into a profile, without stopping the session
+
+**Parameters:**
+
+- `profile_id`: Existing profile to overwrite with the current browser state.
+- `name`: Create a new profile with this name and save into it. Mutually exclusive with ``profile_id``.
+
+**Returns:**
+
+The profile, with ``persisted_domains`` computed from the saved state.
+
+**Raises:**
+
+- `ValueError`: If both ``profile_id`` and ``name`` are provided, or if either is empty.
+- `ValueError`: If the session hasn't been started yet (no session_id available).
+
+---
+
 ### scrape
 
 ```python

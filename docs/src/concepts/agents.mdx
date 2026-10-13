@@ -70,16 +70,18 @@ This cycle repeats until:
 
 ## Agents vs Scripted Automation
 
-Both agents and scripted automation run on [browser sessions](/concepts/sessions)—the cloud browser infrastructure. The difference is how you control what happens in that session.
+Both agents and scripted automation run on [browser sessions](/concepts/sessions), the cloud browser infrastructure. The difference is how you control what happens in that session.
 
 | Aspect | Scripted Automation | Agent |
 |--------|---------------------|-------|
 | **Control** | You write the code | AI decides each step |
 | **Flexibility** | Fixed workflow | Adapts to changes |
 | **Speed** | Fast (direct execution) | Slower (LLM reasoning per step) |
-| **Cost** | Browser minutes only | Browser minutes + LLM calls |
+| **Cost** | Browser time only | Browser time + LLM calls |
 | **Reliability** | Deterministic | Can vary based on page state |
 | **Use Case** | Known, stable workflows | Unknown or dynamic workflows |
+
+Browser sessions are billed per browser hour. See [Pricing](/pricing) for current rates.
 
 **Use scripted automation when:**
 - You know the exact steps to take

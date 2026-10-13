@@ -13,10 +13,16 @@
     "closedSession": true
   },
   "agents/config/bp_model_selection.ts": {
-    "expected": { "results": ["anthropic/claude-3.5-sonnet"] }
+    "expected": { "results": ["anthropic/claude-sonnet-4-5-20250929"] }
   },
   "agents/config/bp_step_limits.ts": {
     "expected": { "results": [30] }
+  },
+  "sessions/profiles/save_profile.ts": {
+    "expected": { "results": ["example-login", true] }
+  },
+  "sessions/ad_blocking.ts": {
+    "expected": { "results": ["closed", "closed"] }
   },
   "sessions/country_proxy.ts": {
     "expected": { "results": ["notte", "fr"] }

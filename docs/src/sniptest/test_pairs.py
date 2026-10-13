@@ -19,7 +19,7 @@ class RepositoryExamplesTest(unittest.TestCase):
             "param_max_steps": "max_steps",
             "param_use_vision": "use_vision",
             "param_session": "open_viewer",
-            "param_notifier": "Notifications can be configured in the Notte console",
+            "param_notifier": "Sends an email with the result when the agent finishes",
         }
         for name, teaching_text in cases.items():
             for suffix in (".py", ".ts"):

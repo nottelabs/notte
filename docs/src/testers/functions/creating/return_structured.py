@@ -1,5 +1,5 @@
 # @sniptest filename=return_structured.py
-# @sniptest show=7-18
+# @sniptest show=1-16
 from datetime import datetime
 
 

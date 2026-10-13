@@ -14,4 +14,4 @@ with client.Session() as session:
     # Or use session actions first
     session.execute(type="goto", url="https://example.com")
     time.sleep(2)  # Wait for load
-    result = agent.run(task="Click submit button")
+    result = agent.run(task=task)

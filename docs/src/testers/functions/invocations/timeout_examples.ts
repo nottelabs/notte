@@ -9,10 +9,10 @@ import { NotteClient } from 'notte-sdk';
 const client = new NotteClient();
 const fn = client.NotteFunction({ function_id: functionId });
 
-// Short task
+// Stop waiting after 60 seconds in total (throws NotteTimeoutError)
 let result = await fn.run({ url: 'https://example.com' }, { timeoutMs: 60_000 });
 
-// Long task
+// Allow up to 10 minutes for a long task
 result = await fn.run({ url: 'https://example.com' }, { timeoutMs: 600_000 });
 
 assert.equal(result.status, 'closed');

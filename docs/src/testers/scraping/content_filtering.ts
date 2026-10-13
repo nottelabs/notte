@@ -6,9 +6,9 @@ const client = new NotteClient();
 const url = 'https://example.com';
 
 // Only main content (excludes navbars, footers, sidebars)
-let markdown = await client.scrape(url, { only_main_content: true }); // Default
+let markdown = await client.scrape(url, { only_main_content: true });
 
-// Include all page content
+// Include all page content (default)
 markdown = await client.scrape(url, { only_main_content: false });
 
 export const results = [typeof markdown === 'string', markdown.includes('Example Domain')];

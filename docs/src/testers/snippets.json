@@ -308,7 +308,7 @@
       {
         "source": "quickstart/install_sdk_2.sh",
         "language": "bash",
-        "title": "TypeScript (Node.js 18+)"
+        "title": "TypeScript (Node.js 20+)"
       }
     ]
   },

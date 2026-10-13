@@ -1646,6 +1646,45 @@ class ProfileResponse(SdkResponse):
     ] = Field(default_factory=list)
 
 
+class SessionProfileSaveRequestDict(TypedDict, total=False):
+    """Request dictionary for saving a running session into a profile."""
+
+    profile_id: str
+    name: str
+
+
+class SessionProfileSaveRequest(SdkRequest):
+    """Which profile receives a snapshot of a running session's browser state."""
+
+    profile_id: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Existing profile to overwrite with the session's current browser state. "
+                "Omit it together with name to save into the profile the session was started with."
+            ),
+            min_length=1,
+        ),
+    ] = None
+    name: Annotated[
+        str | None,
+        Field(
+            description="Create a new profile with this name and save into it. Mutually exclusive with profile_id.",
+            min_length=1,
+        ),
+    ] = None
+
+    @model_validator(mode="after")
+    def _single_target(self) -> "SessionProfileSaveRequest":
+        if self.profile_id is not None and self.name is not None:
+            raise ValueError("profile_id and name are mutually exclusive")
+        if self.profile_id is not None and not self.profile_id.strip():
+            raise ValueError("profile_id must not be empty")
+        if self.name is not None and not self.name.strip():
+            raise ValueError("name must not be empty")
+        return self
+
+
 class ProfileListRequestDict(TypedDict, total=False):
     """Request dictionary for listing profiles."""
 

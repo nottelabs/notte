@@ -9,7 +9,6 @@ from notte_sdk import NotteClient
 client = NotteClient()
 
 with client.Session(
-    browser_type="chrome",
     proxies=True,
     viewport_width=1920,
     viewport_height=1080,
@@ -25,7 +24,6 @@ import { NotteClient } from 'notte-sdk';
 const client = new NotteClient();
 
 const session = client.Session({
-  browser_type: "chrome",
   proxies: true,
   viewport_width: 1920,
   viewport_height: 1080,

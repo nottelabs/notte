@@ -70,10 +70,6 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^profiles\/[^\/]+\/duplicate$/, // /profiles/{profile_id}/duplicate
   /^profiles\/create$/, // /profiles/create
 
-  // Prompts endpoints
-  /^prompts\/improve$/, // /prompts/improve
-  /^prompts\/nudge$/, // /prompts/nudge
-
   // Ready endpoints
   /^ready$/, // /ready
 
@@ -106,6 +102,7 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^sessions\/[^\/]+\/page\/screenshot$/, // /sessions/{session_id}/page/screenshot
   /^sessions\/[^\/]+\/payments$/, // /sessions/{session_id}/payments
   /^sessions\/[^\/]+\/profile-preview$/, // /sessions/{session_id}/profile-preview
+  /^sessions\/[^\/]+\/profile\/save$/, // /sessions/{session_id}/profile/save
   /^sessions\/[^\/]+\/replay$/, // /sessions/{session_id}/replay
   /^sessions\/[^\/]+\/stop$/, // /sessions/{session_id}/stop
   /^sessions\/[^\/]+\/workflow\/code$/, // /sessions/{session_id}/workflow/code

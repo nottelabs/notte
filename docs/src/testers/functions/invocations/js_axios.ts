@@ -7,11 +7,13 @@ const result = await axios.post(
     variables: {
       url: 'https://example.com',
       search_query: 'laptop'
-    }
+    },
+    stream: false
   },
   {
     headers: {
       'Authorization': 'Bearer YOUR_API_KEY',
+      'x-notte-api-key': 'YOUR_API_KEY',
       'Content-Type': 'application/json'
     }
   }

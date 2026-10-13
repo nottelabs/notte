@@ -10,17 +10,18 @@ import ListProfiles from '/snippets/sessions/profiles/list_profiles.mdx';
 import GetProfile from '/snippets/sessions/profiles/get_profile.mdx';
 import DeleteProfile from '/snippets/sessions/profiles/delete_profile.mdx';
 import ProfileWithAgent from '/snippets/sessions/profiles/profile_with_agent.mdx';
+import SaveProfile from '/snippets/sessions/profiles/save_profile.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Profiles let you save and reuse browser state—including cookies, local storage, session storage, and cache—across multiple sessions. This is useful for maintaining login states, preserving user preferences, or building realistic multi-session workflows.
+Profiles let you save and reuse browser state (cookies, local storage, and session storage) across multiple sessions. This is useful for maintaining login states, preserving user preferences, or building realistic multi-session workflows.
 
 ## How Profiles Work
 
-A profile is a saved snapshot of a browser's user data directory. By default, each Notte session uses a fresh browser state to ensure isolation.
+A profile is a saved snapshot of a browser's cookies, local storage, and session storage. Other browser data, such as the HTTP cache, history, and extensions, is not saved. By default, each Notte session uses a fresh browser state to ensure isolation.
 
-When you create a profile and use it in a session with `persist=True`, Notte saves that session's browser state. You can then attach the profile to future sessions to restore the saved state.
+When you create a profile and use it in a session with `persist=True`, Notte saves that session's browser state when the session ends. You can also save any running session into a profile at any time with `save_profile()`. You can then attach the profile to future sessions to restore the saved state.
 
 ## Create a Profile
 
@@ -52,6 +53,16 @@ The `persist` parameter controls whether session changes are saved back to the p
 First, create a profile and perform a login. When the session ends with `persist=True`, all cookies and browser state are saved to the profile:
 
 <PersistProfile />
+
+### Save a Running Session
+
+If you only decide to keep the browser state after the session has started, save it directly. `save_profile()` snapshots the running session into a new profile (`name`) or an existing one (`profile_id`) and the session keeps running. It works on any session, including one started without a profile or with `persist=False`. With neither argument, it saves into the profile the session was started with.
+
+<SaveProfile />
+
+<Note>
+  `save_profile()` does not change the session's `persist` setting. A session started with `persist=True` still saves again when it ends.
+</Note>
 
 ### Step 2: Reuse the Saved Profile
 
@@ -131,21 +142,16 @@ Load a profile without saving changes by setting `persist=False`:
 - Delete profiles for accounts that are no longer needed
 - Use separate profiles for production and development environments
 
-### Performance
-
-- Profiles with large caches may take longer to load
-- Consider creating fresh profiles periodically if performance degrades
-
 ## Comparison: Profiles vs Cookies
 
 | Feature | Profiles | Cookies |
 |---------|----------|---------|
-| **Scope** | Full browser state (cookies, storage, cache) | Cookies only |
+| **Scope** | Cookies, local storage, and session storage | Cookies only |
 | **Storage** | Managed by Notte | JSON file you manage |
 | **Persistence** | Automatic on session end | Manual export/import |
 | **Use case** | Long-term state preservation | Quick cookie injection |
 
-Use profiles when you need complete browser state preservation. Use cookies when you only need to inject specific authentication tokens.
+Use profiles when you need to preserve cookies and web storage together. Use cookies when you only need to inject specific authentication tokens.
 
 ## Next Steps
 

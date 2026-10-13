@@ -19,7 +19,7 @@ runs = client.functions.list_runs(
 )
 
 for run in runs.items:
-    print(f"Run ID: {run.workflow_run_id}")
+    print(f"Run ID: {run.function_run_id}")
     print(f"Status: {run.status}")
     print(f"Created: {run.created_at}")
     print(f"Updated: {run.updated_at}")

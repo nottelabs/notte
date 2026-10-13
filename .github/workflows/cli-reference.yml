@@ -1,0 +1,31 @@
+name: cli-reference
+
+# docs/src/cli-reference is generated from the pinned notte-cli submodule. Fail
+# when it no longer matches, so a hand edit or a submodule bump without a
+# regeneration cannot land. bump-submodules.yml regenerates it on every bump.
+
+on:
+  pull_request:
+    paths: ['notte-cli', 'docs/src/cli-reference/**', 'docs/src/docs.json', 'docs/src/scripts/generate_cli_reference.py', '.github/workflows/cli-reference.yml']
+  push:
+    branches: [main]
+    paths: ['notte-cli', 'docs/src/cli-reference/**', 'docs/src/docs.json', 'docs/src/scripts/generate_cli_reference.py', '.github/workflows/cli-reference.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - run: git submodule update --init notte-cli
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: notte-cli/go.mod
+          cache-dependency-path: notte-cli/go.sum
+      - run: python3 docs/src/scripts/generate_cli_reference.py --check

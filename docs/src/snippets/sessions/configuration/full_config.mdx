@@ -11,7 +11,6 @@ with client.Session(
     viewport_width=1920,
     viewport_height=1080,
     idle_timeout_minutes=10,
-    browser_type="chromium",
 ) as session:
     page = session.page
     page.goto("https://example.com")
@@ -25,7 +24,6 @@ const session = client.Session({
   proxies: true,
   viewport_width: 1920,
   viewport_height: 1080,
-  browser_type: 'chromium',
 });
 await session.use(async () => {
   status = await session.status();

@@ -24,9 +24,9 @@ failures = [r for r in runs.items if r.status == "failed"]
 print(f"Failed runs: {len(failures)}/{len(runs.items)}")
 
 # Analyze failure reasons
-for run in failures[:5]:  # Last 5 failures
+for run in failures[:5]:  # First 5 failures on this page
     run_detail = client.functions.get_run(function_id, run.function_run_id)
-    print(f"Run {run.workflow_run_id}:")
+    print(f"Run {run.function_run_id}:")
     print(f"  Error: {run_detail.result}")
     print(f"  Time: {run.created_at}")
 

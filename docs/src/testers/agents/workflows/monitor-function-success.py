@@ -1,17 +1,20 @@
+# @sniptest filename=monitor-function-success.py
 from datetime import datetime
+
+from loguru import logger
+from notte_sdk import NotteClient
+
+client = NotteClient()
 
 
 def run_monitored_function():
-    try:
-        function = client.Function(function_id="func_abc123")
-        result = function.run()
+    function = client.Function(function_id="func_abc123")
+    # raise_on_failure=False returns failed runs instead of raising
+    result = function.run(raise_on_failure=False)
 
-        if result.status == "closed":
-            log_success(datetime.now())
-        else:
-            alert_failure(result.result)
-
-    except Exception as e:
-        # Function broken - maybe page changed?
-        # Time to re-run agent and regenerate
-        alert_function_broken(e)
+    if result.status == "closed":
+        logger.info(f"Function succeeded at {datetime.now()}")
+    else:
+        # Function broken - maybe the page changed?
+        # Time to re-run the agent and regenerate
+        logger.error(f"Function failed: {result.result}")

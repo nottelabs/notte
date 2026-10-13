@@ -2,6 +2,7 @@
 title: Ad Blocking
 description: Built-in ad and tracker blocking for browser sessions
 ---
+import AdBlocking from '/snippets/sessions/ad_blocking.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -15,8 +16,24 @@ Ad Blocking provides built-in filtering of advertisements, trackers, and unwante
 - **Cleaner content** - Easier extraction without ad clutter
 - **Better reliability** - Avoid ad-related JavaScript errors
 
-<Info>
-  **Enterprise Feature**
+## Usage
 
-  Built-in Ad Blocking is available exclusively for enterprise customers. Contact [andrea@notte.cc](mailto:andrea@notte.cc) to learn more about enterprise plans and advanced session features.
-</Info>
+Ad blocking is enabled by default on every Notte-hosted session, controlled by the `block_ads` session parameter (default `true`). Set `block_ads=False` to turn it off, for example when a site breaks without its ad or tracking scripts:
+
+<AdBlocking />
+
+<Note>
+  `block_ads` only applies to browsers Notte launches. It has no effect when you connect an [external browser](/features/sessions/external-providers) with `cdp_url`; use your provider's own ad blocking settings instead.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Explore all session options
+  </Card>
+
+  <Card title="Proxies" icon="network-wired" href="/features/sessions/proxies">
+    Route traffic through residential proxies
+  </Card>
+</CardGroup>

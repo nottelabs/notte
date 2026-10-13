@@ -4,7 +4,7 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-with client.Session(timeout_minutes=10) as session:
+with client.Session(idle_timeout_minutes=10) as session:
     cdp_url = session.cdp_url()
 
     # Pass CDP URL to Node.js script

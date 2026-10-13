@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- `session.saveProfile({ name })` / `session.saveProfile({ profile_id })` saves the
+  running session's browser state into a new or existing profile without stopping
+  the session. With neither option it saves into the session's start profile.
 - `session.page()` sends the SDK's `x-notte-request-origin` and `x-notte-sdk-version`
   headers on its CDP connection to Notte, as API calls already do.
 - `session.fetch()` refuses plaintext `http:` targets and redirects by default

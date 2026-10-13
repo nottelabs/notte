@@ -102,3 +102,12 @@ class InvalidJsonResponseForStructuredOutput(LLMProviderError):
             user_message=f"The model returned an invalid JSON response for structured output. Error message: {error_msg}",
             agent_message=None,
         )
+
+
+class UnsupportedResponseSchemaError(LLMProviderError):
+    def __init__(self, model: str, error_msg: str) -> None:
+        super().__init__(
+            dev_message=f"Provider for model {model} rejected the structured output schema. Error message: {error_msg}",
+            user_message="The model provider does not support this structured output schema.",
+            agent_message=None,
+        )

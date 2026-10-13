@@ -6,6 +6,7 @@
 ```http HTTP
 POST https://api.notte.cc/functions/{function_id}/runs/start
 Authorization: Bearer YOUR_API_KEY
+x-notte-api-key: YOUR_API_KEY
 Content-Type: application/json
 
 {
@@ -14,7 +15,7 @@ Content-Type: application/json
     "url": "https://example.com",
     "query": "laptop"
   },
-  "stream": true
+  "stream": false
 }
 ```
 

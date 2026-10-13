@@ -51,6 +51,9 @@ jobs:
       - name: Test shared setup synchronization
         run: python docs/src/scripts/test_sync_quickstart_setup_prompt.py
 
+      - name: Test CLI reference sync
+        run: python docs/src/scripts/test_generate_cli_reference.py
+
   type-check:
     needs: syntax-check
     runs-on: blacksmith-4vcpu-ubuntu-2404
