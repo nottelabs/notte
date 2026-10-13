@@ -1,5 +1,6 @@
 # pyright: reportImportCycles=false
 import math
+import os
 from functools import partial
 from typing import Any, Literal, Unpack, cast, overload
 
@@ -12,7 +13,9 @@ from pydantic import BaseModel
 from typing_extensions import final
 
 from notte_sdk.agent_fallback import RemoteAgentFallback
+from notte_sdk.auth import resolve_api_key
 from notte_sdk.endpoints.agents import AgentsClient, RemoteAgent
+from notte_sdk.endpoints.base import BaseClient
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
 from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.managed_auth import ManagedAuthClient
@@ -56,6 +59,8 @@ class NotteClient:
         if not math.isfinite(captcha_timeout_seconds) or captcha_timeout_seconds <= 0:
             raise ValueError("captcha_timeout_seconds must be finite and greater than zero")
         self.captcha_timeout_seconds: float = captcha_timeout_seconds
+        # Resolve once so the keyring is read at most once per client.
+        api_key = resolve_api_key(api_key, server_url or os.getenv("NOTTE_API_URL") or BaseClient.DEFAULT_NOTTE_API_URL)
         self.sessions: SessionsClient = SessionsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose, viewer_type=viewer_type
         )

@@ -118,14 +118,11 @@ class BaseClient(ABC):
         """
         self.root_client = root_client  # pyright: ignore [reportUnannotatedClassAttribute]
         self.server_url: str = server_url or os.getenv("NOTTE_API_URL") or self.DEFAULT_NOTTE_API_URL
-        token = api_key or os.getenv("NOTTE_API_KEY") or getattr(root_client, "_resolved_api_key", None)
-        if token is None:
-            token = resolve_api_key(api_key, self.server_url)
+        token = resolve_api_key(api_key, self.server_url)
         if token is None:
             raise AuthenticationError(
                 "No API key found. Provide api_key, set NOTTE_API_KEY, or run 'notte auth login'."
             )
-        setattr(root_client, "_resolved_api_key", token)
         self.token: str = token
         self.base_endpoint_path: str | None = base_endpoint_path
         self.verbose: bool = verbose

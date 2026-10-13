@@ -3481,9 +3481,9 @@ version = "1.9.7.dev0"
 source = { editable = "packages/notte-sdk" }
 dependencies = [
     { name = "halo" },
-    { name = "keyring" },
     { name = "notte-core" },
     { name = "requests" },
+    { name = "secretstorage", marker = "sys_platform == 'linux'" },
     { name = "urllib3" },
     { name = "websockets" },
 ]
@@ -3496,10 +3496,10 @@ playwright = [
 [package.metadata]
 requires-dist = [
     { name = "halo", specifier = ">=0.0.28" },
-    { name = "keyring", specifier = ">=25.6.0" },
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "playwright", marker = "extra == 'playwright'", specifier = "~=1.55" },
     { name = "requests", specifier = ">=2.32.3,<3" },
+    { name = "secretstorage", marker = "sys_platform == 'linux'", specifier = ">=3.3" },
     { name = "urllib3", specifier = ">=2.2.3,<3" },
     { name = "websockets", specifier = ">=13.1" },
 ]
