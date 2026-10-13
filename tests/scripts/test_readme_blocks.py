@@ -15,7 +15,7 @@ FENCE = "```"
 
 def write_readme(tmp_path: Path, body: str) -> Path:
     readme = tmp_path / "README.md"
-    _ = readme.write_text(body.replace("%%%", FENCE))
+    _ = readme.write_text(body.replace("%%%", FENCE), encoding="utf-8")
     return readme
 
 
@@ -80,3 +80,10 @@ def test_blocks_supports_tilde_and_longer_fences(tmp_path: Path):
     readme = write_readme(tmp_path, body)
     assert readme_blocks.blocks(readme, {"bash"}) == [(1, "echo tilde\n")]
     assert readme_blocks.blocks(readme, {"python"}) == [(4, "x = '''\n```\n'''\n")]
+
+
+def test_non_ascii_blocks_round_trip_as_utf8(tmp_path: Path):
+    readme = write_readme(tmp_path, "🔥 Notte\n%%%typescript\nconsole.log('café 🔑');\n%%%\n")
+    out = tmp_path / "out"
+    assert readme_blocks.extract(readme, out) == ["readme_L2.mts"]
+    assert (out / "readme_L2.mts").read_bytes() == "console.log('café 🔑');\n".encode()
