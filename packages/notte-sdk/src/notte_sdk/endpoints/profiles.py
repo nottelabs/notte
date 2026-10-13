@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Unpack
 
 from notte_core.common.telemetry import track_usage
 from notte_core.types import (
-    ExecutionResponse,
     ProfileCreateRequest,
     ProfileCreateRequestDict,
     ProfileListRequest,
@@ -14,7 +13,8 @@ from notte_core.types import (
 )
 from typing_extensions import final
 
-from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk._generated import endpoints as api
+from notte_sdk.endpoints.base import BaseClient
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
@@ -23,12 +23,6 @@ if TYPE_CHECKING:
 @final
 class ProfilesClient(BaseClient):
     """Client for managing browser profiles."""
-
-    # Profile endpoints
-    CREATE_PROFILE = "create"
-    GET_PROFILE = "{profile_id}"
-    DELETE_PROFILE = "{profile_id}"
-    LIST_PROFILES = ""
 
     def __init__(
         self,
@@ -53,42 +47,6 @@ class ProfilesClient(BaseClient):
             verbose=verbose,
         )
 
-    @staticmethod
-    def _create_profile_endpoint() -> NotteEndpoint[ProfileResponse]:
-        """Returns a NotteEndpoint configured for creating a profile."""
-        return NotteEndpoint(
-            path=ProfilesClient.CREATE_PROFILE,
-            response=ProfileResponse,
-            method="POST",
-        )
-
-    @staticmethod
-    def _get_profile_endpoint(profile_id: str) -> NotteEndpoint[ProfileResponse]:
-        """Returns a NotteEndpoint configured for getting a profile."""
-        return NotteEndpoint(
-            path=ProfilesClient.GET_PROFILE.format(profile_id=profile_id),
-            response=ProfileResponse,
-            method="GET",
-        )
-
-    @staticmethod
-    def _delete_profile_endpoint(profile_id: str) -> NotteEndpoint[ExecutionResponse]:
-        """Returns a NotteEndpoint configured for deleting a profile."""
-        return NotteEndpoint(
-            path=ProfilesClient.DELETE_PROFILE.format(profile_id=profile_id),
-            response=ExecutionResponse,
-            method="DELETE",
-        )
-
-    @staticmethod
-    def _list_profiles_endpoint() -> NotteEndpoint[ProfileResponse]:
-        """Returns a NotteEndpoint configured for listing profiles."""
-        return NotteEndpoint(
-            path=ProfilesClient.LIST_PROFILES,
-            response=ProfileResponse,
-            method="GET",
-        )
-
     @track_usage("cloud.profile.create")
     def create(self, **data: Unpack[ProfileCreateRequestDict]) -> ProfileResponse:
         """Create a new browser profile.
@@ -106,7 +64,7 @@ class ProfilesClient(BaseClient):
             ```
         """
         request = ProfileCreateRequest.model_validate(data)
-        return self.request(ProfilesClient._create_profile_endpoint().with_request(request))
+        return self.request(api.profile_create(request))
 
     @track_usage("cloud.profile.get")
     def get(self, profile_id: str) -> ProfileResponse:
@@ -121,7 +79,7 @@ class ProfilesClient(BaseClient):
         Raises:
             NotteAPIError: If profile not found (404) or access denied
         """
-        return self.request(ProfilesClient._get_profile_endpoint(profile_id))
+        return self.request(api.profile_get(profile_id))
 
     @track_usage("cloud.profile.delete")
     def delete(self, profile_id: str) -> bool:
@@ -136,7 +94,7 @@ class ProfilesClient(BaseClient):
         Raises:
             NotteAPIError: If profile not found (404) or access denied
         """
-        result = self.request(ProfilesClient._delete_profile_endpoint(profile_id))
+        result = self.request(api.profile_delete(profile_id))
         return result.success
 
     @track_usage("cloud.profile.list")
@@ -157,5 +115,4 @@ class ProfilesClient(BaseClient):
             ```
         """
         params = ProfileListRequest.model_validate(data)
-        endpoint = ProfilesClient._list_profiles_endpoint().with_params(params)
-        return self.request_list(endpoint)
+        return self.request_list(api.profile_list(params=params))
