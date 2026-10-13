@@ -21,6 +21,12 @@ max_consecutive_failures = 3
 headless = false
 browser_type = "chromium"
 browser_backend = "patchright"
+# Maximum UTF-8 text returned by evaluate_js (16 MiB). Checked during conversion.
+evaluate_js_max_result_bytes = 16777216
+# Maximum number of values (every primitive, array and object) in an
+# evaluate_js result. Bounds memory: the transfer costs about 0.5 to 2.5 KB of
+# process memory per value, independent of the formatted size.
+evaluate_js_max_result_values = 50000
 screenshot_type = "last_action"  # one of ["raw", "full", "last_action"]
 web_security = true
 solve_captchas = false
@@ -66,7 +72,7 @@ enable_pointer_elements = true
 # [playwright wait/timeout]
 timeout_goto_ms        = 10000
 timeout_default_ms     =  8000
-timeout_action_ms      =  5000
+timeout_action_ms      = 15000
 timeout_evaluate_js_ms = 45000
 wait_retry_snapshot_ms =  1000
 wait_short_ms          =   500

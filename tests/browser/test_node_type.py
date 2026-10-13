@@ -177,6 +177,16 @@ def test_html_selector():
     assert selector.xpath_selector == "//form/button[@name='Submit']"
 
 
+def test_from_unique_selector_strips_only_prefix():
+    css_selector = NodeSelectors.from_unique_selector('css=a[href*="css=foo"]')
+    xpath_selector = NodeSelectors.from_unique_selector('xpath=//a[contains(text(), "xpath=foo")]')
+
+    assert css_selector.css_selector == 'a[href*="css=foo"]'
+    assert css_selector.playwright_selector is None
+    assert xpath_selector.xpath_selector == '//a[contains(text(), "xpath=foo")]'
+    assert xpath_selector.playwright_selector is None
+
+
 def test_node_attributes():
     pre_attrs = DomAttributes.safe_init(
         modal=True,

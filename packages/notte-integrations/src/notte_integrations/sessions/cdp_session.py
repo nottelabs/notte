@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from types import TracebackType
 
 from notte_browser.playwright import PlaywrightManager
 from notte_browser.playwright_async_api import Browser
@@ -7,7 +8,7 @@ from notte_core.common.config import BrowserType
 from notte_core.common.logging import logger
 from notte_sdk.client import NotteClient
 from notte_sdk.endpoints.sessions import RemoteSession
-from notte_sdk.types import SessionStartRequest
+from notte_sdk.types import LocalSessionStartRequest
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
@@ -44,18 +45,24 @@ class CDPSessionManager(PlaywrightManager, ABC):
         if self.client is None:
             logger.info("Creating new Notte client")
             self.client = NotteClient()
-        self.session = self.create_session_cdp(BrowserWindowOptions.from_request(SessionStartRequest()))
-        self.notte_session = self.client.Session(cdp_url=self.session.cdp_url)
-        return self.notte_session.__enter__()
+        self.session = self.create_session_cdp(BrowserWindowOptions.from_request(LocalSessionStartRequest()))
+        try:
+            self.notte_session = self.client.Session(cdp_url=self.session.cdp_url, proxies=False)
+            return self.notte_session.__enter__()
+        except BaseException:
+            _ = self.close_session_cdp(self.session.session_id)
+            raise
 
     def __exit__(
-        self, exc_type: type[BaseException], exc_value: BaseException, traceback: type[BaseException] | None
+        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None
     ) -> None:
         if self.notte_session is None or self.session is None:
             raise ValueError("Session not created")
         # close notte session first
-        _ = self.notte_session.__exit__(exc_type, exc_value, traceback)
-        _ = self.close_session_cdp(self.session.session_id)
+        try:
+            _ = self.notte_session.__exit__(exc_type, exc_value, traceback)
+        finally:
+            _ = self.close_session_cdp(self.session.session_id)
 
     @override
     async def astop(self) -> None:

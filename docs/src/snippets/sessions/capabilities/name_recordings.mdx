@@ -10,7 +10,9 @@ client = NotteClient()
 
 with client.Session() as session:
     session.execute(type="goto", url="https://example.com")
-    replay = session.replay()
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    replay.download(f"login_test_{session.session_id}_{timestamp}.mp4")
+
+# The replay is generated once the session is closed
+replay = session.replay()
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+replay.download(f"login_test_{session.session_id}_{timestamp}.mp4")
 ```

@@ -33,7 +33,8 @@ Debug agent executions with MP4 replays that show exactly what the agent saw and
 ## Agent Replay
 
 Get a visual replay of the agent's execution. The `session.replay()` method returns a
-`ReplayResponse` with a presigned URL you can use to download the MP4 file:
+`ReplayResponse` with **`mp4_url`** (a presigned URL for the MP4), which you can
+pass around or download with `replay.download()`:
 
 <BasicReplay />
 
@@ -63,7 +64,7 @@ Save for later viewing or sharing:
 
 ### In Browser
 
-Use the Notte Console to view replays:
+Open the replay URL in your browser:
 
 <ViewInBrowser />
 
@@ -133,7 +134,7 @@ Adjust based on findings:
 
 **Symptoms:**
 - Agent stops before completing task
-- `len(result.steps) == max_steps`
+- `result.success` is `False` and the number of `agent_step_start` entries in `result.steps` equals `max_steps`
 
 **Debug:**
 
@@ -208,10 +209,6 @@ Replays are currently:
 
   <Card title="Configuration" icon="sliders" href="/features/agents/configuration">
     Optimize agent settings
-  </Card>
-
-  <Card title="Best Practices" icon="lightbulb" href="/guides/reliability">
-    Build reliable agents
   </Card>
 
   <Card title="Live View" icon="eye" href="/features/sessions/live-view">

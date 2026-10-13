@@ -1,0 +1,25 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/integrations/mcp/crewai.py */}
+
+```python notte_crewai.py
+import os
+
+from crewai import Agent
+from crewai_tools import MCPServerAdapter
+
+server_params = {
+    "url": "https://api.notte.cc/mcp/",
+    "transport": "streamable-http",
+    "headers": {"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"},
+}
+
+with MCPServerAdapter(server_params) as tools:
+    print(f"Loaded {len(tools)} Notte tools")
+
+    researcher = Agent(
+        role="Web researcher",
+        goal="Answer questions using a real browser",
+        backstory="You use Notte cloud browsers to read the live web.",
+        tools=tools,
+    )
+```

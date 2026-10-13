@@ -1,13 +1,15 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/invoke_function.py */}
 
+<CodeGroup>
+
 ```python invoke_function.py
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
 # Get function by ID
-function = client.Function(function_id="func_abc123")
+function = client.Function(function_id=function_id)
 
 # Run function with parameters
 result = function.run(url="https://example.com", search_query="laptop")
@@ -16,3 +18,21 @@ print(result.result)  # Access the return value
 print(result.status)  # "closed" or "failed"
 print(result.session_id)  # Session ID if created
 ```
+
+```typescript invoke_function.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+// Get function by ID
+const fn = client.NotteFunction({ function_id: functionId });
+
+// Run function with parameters
+const result = await fn.run({ url: 'https://example.com', search_query: 'laptop' });
+
+console.log(result.result); // Access the return value
+console.log(result.status); // "closed" or "failed"
+console.log(result.session_id); // Session ID if created
+```
+
+</CodeGroup>

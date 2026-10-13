@@ -20,6 +20,9 @@ from notte_core.actions import (
     EmailReadAction as EmailRead,
 )
 from notte_core.actions import (
+    EmailVerificationReadAction as EmailVerificationRead,
+)
+from notte_core.actions import (
     EvaluateJsAction as EvaluateJs,
 )
 from notte_core.actions import (
@@ -103,6 +106,7 @@ __all__ = [
     "Completion",
     "Scrape",
     "EmailRead",
+    "EmailVerificationRead",
     "SmsRead",
     "EvaluateJs",
     "Click",

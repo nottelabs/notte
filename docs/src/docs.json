@@ -1,176 +1,325 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "palm",
+  "theme": "maple",
+  "appearance": {
+    "default": "light",
+    "strict": false
+  },
   "name": "Notte",
   "colors": {
     "primary": "#00b85c",
     "light": "#00e673",
-    "dark": "#00e673"
+    "dark": "#e8f6ee"
   },
   "logo": {
-    "dark": "/logo/logo-dark.png",
-    "light": "/logo/logo-white.png"
+    "dark": "/logo/notte-mark-white.svg",
+    "light": "/logo/notte-mark.svg"
   },
   "favicon": "/favicon.ico",
   "banner": {
-    "content": "Get started: use the [Notte CLI skill](https://github.com/nottelabs/notte-skills/) to generate your first SDK script | [Setup guide](/quickstart)",
-    "dismissible": false
+    "content": "Supercharge your AI agents with the Notte CLI and MCP. [Use this quickstart prompt for AI.](/quickstart)",
+    "dismissible": false,
+    "color": {
+      "light": "#e8f6ee",
+      "dark": "#163528"
+    }
   },
   "seo.indexing": "all",
+  "redirects": [
+    {
+      "source": "/features/sessions/browser-types",
+      "destination": "/features/sessions/configuration"
+    },
+    {
+      "source": "/features/sessions/browser-pools",
+      "destination": "/features/sessions/configuration"
+    },
+    {
+      "source": "/features/sessions/multi-region",
+      "destination": "/features/sessions/proxies"
+    },
+    {
+      "source": "/features/sessions/static-ips",
+      "destination": "/features/sessions/proxies"
+    },
+    {
+      "source": "/features/sessions/browser-extensions",
+      "destination": "/features/sessions/external-providers"
+    },
+    {
+      "source": "/features/sessions/selenium",
+      "destination": "/features/sessions/playwright"
+    },
+    {
+      "source": "/features/agents/hello",
+      "destination": "/features/sessions/external-providers"
+    },
+    {
+      "source": "/concepts/bua",
+      "destination": "/concepts/agents"
+    },
+    {
+      "source": "/zin",
+      "destination": "/"
+    },
+    {
+      "source": "/cli",
+      "destination": "/cli-reference/index"
+    },
+    {
+      "source": "/intro/pricing",
+      "destination": "/pricing"
+    },
+    {
+      "source": "/releases/github",
+      "destination": "/resources"
+    },
+    {
+      "source": "/releases/pypi",
+      "destination": "/resources"
+    },
+    {
+      "source": "/integrations/openai-cua",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/openai-computer-use",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/claude-agent-sdk",
+      "destination": "/mcp-server"
+    },
+    {
+      "source": "/integrations/claude-computer-use",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/computer-use-openagi",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/gemini-computer-use",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/laminar",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/magnitude",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/val-town",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/typescript-sdk-reference/manual/nottesearch",
+      "destination": "/typescript-sdk-reference/client/search"
+    },
+    {
+      "source": "/typescript-sdk-reference/nottesearch/search",
+      "destination": "/typescript-sdk-reference/client/search"
+    },
+    {
+      "source": "/integrations/mcp",
+      "destination": "/mcp-server"
+    },
+    {
+      "source": "/guides/vibe-coding",
+      "destination": "/mcp-server"
+    },
+    {
+      "source": "/guides/reliability",
+      "destination": "/concepts/sessions"
+    },
+    {
+      "source": "/products",
+      "destination": "/"
+    },
+    {
+      "source": "/product/anything-api",
+      "destination": "/concepts/anything"
+    }
+  ],
+  "errors": {
+    "404": {
+      "redirect": true
+    }
+  },
   "navigation": {
-    "languages": [
+    "tabs": [
       {
-        "language": "en",
-        "tabs": [
+        "tab": "Documentation",
+        "groups": [
           {
-            "tab": "Documentation",
-            "groups": [
+            "group": "Getting Started",
+            "pages": [
+              "index",
+              "quickstart",
+              "templates",
+              "mcp-server",
+              "migrate-to-notte"
+            ]
+          },
+          {
+            "group": "Sessions",
+            "icon": "tv",
+            "pages": [
+              "concepts/sessions",
+              "features/sessions/lifecycle",
+              "features/sessions/configuration",
+              "features/sessions/browser-controls",
+              "features/sessions/playwright-vs-notte",
+              "concepts/file-storage",
               {
-                "group": "Getting Started",
+                "group": "Session Capabilities",
+                "collapsed": true,
                 "pages": [
-                  "index",
-                  "quickstart",
-                  "concepts"
-                ]
-              },
-              {
-                "group": "Sessions",
-                "icon": "tv",
-                "pages": [
-                  "concepts/sessions",
-                  "features/sessions/lifecycle",
-                  "features/sessions/configuration",
-                  "features/sessions/browser-controls",
-                  "features/sessions/playwright-vs-notte",
-                  {
-                    "group": "Session Capabilities",
-                    "collapsed": true,
-                    "pages": [
-                      "features/sessions/browser-types",
-                      "features/sessions/browser-pools",
-                      "features/sessions/stealth-mode",
-                      "features/sessions/proxies",
-                      "features/sessions/multi-region",
-                      "features/sessions/captcha-solving",
-                      "features/sessions/ad-blocking",
-                      "features/sessions/browser-profiles",
-                      "features/sessions/static-ips",
-                      "features/sessions/recordings",
-                      "features/sessions/live-view",
-                      "features/sessions/embed-iframe",
-                      "features/sessions/browser-extensions",
-                      "features/sessions/cookies",
-                      "features/sessions/cloudflare-web-bot-auth"
-                    ]
-                  },
-                  {
-                    "group": "Connect over CDP",
-                    "collapsed": true,
-                    "pages": [
-                      "features/sessions/playwright",
-                      "features/sessions/puppeteer",
-                      "features/sessions/selenium",
-                      "features/sessions/external-providers"
-                    ]
-                  }
-                ]
-              },
-              {
-                "group": "Agents",
-                "icon": "sparkles",
-                "pages": [
-                  "concepts/agents",
-                  "features/agents/configuration",
-                  "features/agents/lifecycle",
-                  {
-                    "group": "Advanced",
-                    "collapsed": true,
-                    "pages": [
-                      "features/agents/structured-output",
-                      "features/agents/replay",
-                      "features/agents/workflows",
-                      "features/agents/fallback"
-                    ]
-                  }
-                ]
-              },
-              {
-                "group": "Functions",
-                "icon": "flower",
-                "pages": [
-                  "concepts/functions",
-                  "features/functions/creating",
-                  "features/functions/invocations",
-                  "features/functions/schedules",
-                  "features/functions/management"
-                ]
-              },
-              {
-                "group": "Agent Tools",
-                "icon": "link",
-                "pages": [
-                  "concepts/file-storage",
-                  "concepts/vaults",
-                  "concepts/personas"
-                ]
-              },
-              {
-                "group": "Scraping",
-                "icon": "database",
-                "pages": [
-                  "concepts/scraping"
-                ]
-              },
-              {
-                "group": "Guides",
-                "icon": "book-open",
-                "pages": [
-                  "guides/reliability",
-                  "guides/scraping",
-                  "guides/stealth",
-                  "guides/account_creation"
-                ]
-              },
-              {
-                "group": "Integrations",
-                "icon": "plug",
-                "pages": [
-                  "integrations/claude-code-ai-agents",
-                  {
-                    "group": "MCP",
-                    "collapsed": true,
-                    "pages": [
-                      "integrations/mcp",
-                      "guides/vibe-coding"
-                    ]
-                  },
-                  "integrations/kernel",
-                  "integrations/steel",
-                  "integrations/massive",
-                  "integrations/openai-cua",
-                  "integrations/stagehand",
+                  "features/sessions/stealth-mode",
+                  "features/sessions/proxies",
+                  "features/sessions/captcha-solving",
+                  "features/sessions/ad-blocking",
+                  "features/sessions/recordings",
+                  "features/sessions/live-view",
+                  "features/sessions/embed-iframe",
+                  "features/sessions/cookies",
                   "features/sessions/cloudflare-web-bot-auth"
+                ]
+              },
+              {
+                "group": "Connect over CDP",
+                "collapsed": true,
+                "pages": [
+                  "features/sessions/playwright",
+                  "features/sessions/puppeteer",
+                  "features/sessions/external-providers"
                 ]
               }
             ]
           },
           {
-            "tab": "API",
-            "groups": [
-              {
-                "group": "Getting Started",
-                "pages": [
-                  "api-reference/authentication",
-                  "api-reference/errors",
-                  "api-reference/rate-limits"
-                ]
-              }
-            ],
+            "group": "Authentication",
+            "icon": "key",
+            "pages": [
+              "concepts/vaults",
+              "features/sessions/browser-profiles",
+              "concepts/personas"
+            ]
+          },
+          {
+            "group": "Functions",
+            "icon": "/logo/square-function.svg",
+            "pages": [
+              "concepts/functions",
+              "features/functions/creating",
+              "features/functions/invocations",
+              "features/functions/schedules",
+              "features/functions/management"
+            ]
+          },
+          {
+            "group": "Web API",
+            "icon": "download",
+            "pages": [
+              "concepts/scraping",
+              "concepts/search",
+              "concepts/anything"
+            ]
+          },
+          {
+            "group": "Guides",
+            "icon": "book-open",
+            "pages": [
+              "guides/scraping",
+              "guides/stealth",
+              "guides/account_creation",
+              "guides/web_automation_tips"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Integrations",
+        "groups": [
+          {
+            "group": "Integrations",
+            "icon": "plug",
+            "pages": [
+              "integrations/index",
+              "mcp-server"
+            ]
+          },
+          {
+            "group": "Coding Agents",
+            "icon": "code",
+            "pages": [
+              "integrations/claude-code-ai-agents",
+              "integrations/claude-managed-agents"
+            ]
+          },
+          {
+            "group": "Agent Frameworks",
+            "icon": "robot",
+            "pages": [
+              "integrations/browser-use",
+              "integrations/langchain",
+              "integrations/crewai",
+              "integrations/agno",
+              "integrations/google-adk",
+              "integrations/vercel-ai-sdk",
+              "integrations/mastra",
+              "integrations/openclaw",
+              "integrations/hermes",
+              "integrations/stagehand"
+            ]
+          },
+          {
+            "group": "Workflow Automation",
+            "icon": "diagram-project",
+            "pages": [
+              "integrations/n8n"
+            ]
+          },
+          {
+            "group": "Browser Drivers",
+            "icon": "gamepad",
+            "pages": [
+              "features/sessions/playwright",
+              "features/sessions/puppeteer"
+            ]
+          },
+          {
+            "group": "Browser Infrastructure",
+            "icon": "server",
+            "pages": [
+              "integrations/kernel",
+              "integrations/steel",
+              "integrations/massive",
+              "features/sessions/cloudflare-web-bot-auth"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "APIs and SDKs",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "api-reference/authentication",
+              "api-reference/errors",
+              "api-reference/rate-limits"
+            ]
+          },
+          {
+            "group": "APIs",
             "openapi": "https://api.notte.cc/openapi.json"
           },
           {
-            "tab": "SDK",
-            "groups": [
+            "group": "Python SDK",
+            "pages": [
               {
                 "group": "Getting Started",
                 "pages": [
@@ -194,6 +343,7 @@
                       "sdk-reference/remotesession/observe",
                       "sdk-reference/remotesession/execute",
                       "sdk-reference/remotesession/scrape",
+                      "sdk-reference/remotesession/fetch",
                       "sdk-reference/remotesession/replay",
                       "sdk-reference/remotesession/cdp_url",
                       "sdk-reference/remotesession/set_cookies",
@@ -201,7 +351,9 @@
                       "sdk-reference/remotesession/viewer_browser",
                       "sdk-reference/remotesession/viewer_cdp",
                       "sdk-reference/remotesession/viewer",
-                      "sdk-reference/remotesession/status"
+                      "sdk-reference/remotesession/status",
+                      "sdk-reference/remotesession/evaluate_js",
+                      "sdk-reference/remotesession/wait_for_auth"
                     ]
                   },
                   {
@@ -229,7 +381,8 @@
                       "sdk-reference/misc/scrapeaction",
                       "sdk-reference/misc/captchasolveaction",
                       "sdk-reference/misc/smsreadaction",
-                      "sdk-reference/misc/emailreadaction"
+                      "sdk-reference/misc/emailreadaction",
+                      "sdk-reference/misc/emailverificationreadaction"
                     ]
                   },
                   {
@@ -238,10 +391,11 @@
                     "pages": [
                       "sdk-reference/manual/agent",
                       "sdk-reference/remoteagent/run",
-                      "sdk-reference/remoteagent/replay",
                       "sdk-reference/remoteagent/start",
                       "sdk-reference/remoteagent/stop",
                       "sdk-reference/remoteagent/status",
+                      "sdk-reference/remoteagent/wait",
+                      "sdk-reference/remoteagent/watch_logs_and_wait",
                       "sdk-reference/manual/agent_fallback"
                     ]
                   },
@@ -249,13 +403,17 @@
                     "group": "Function",
                     "collapsed": true,
                     "pages": [
-                      "sdk-reference/manual/workflow",
+                      "sdk-reference/manual/function",
+                      "sdk-reference/nottefunction/create_run",
                       "sdk-reference/nottefunction/run",
                       "sdk-reference/nottefunction/update",
                       "sdk-reference/nottefunction/delete",
                       "sdk-reference/nottefunction/download",
                       "sdk-reference/nottefunction/fork",
-                      "sdk-reference/nottefunction/get_curl"
+                      "sdk-reference/nottefunction/get_curl",
+                      "sdk-reference/nottefunction/get_run",
+                      "sdk-reference/nottefunction/get_url",
+                      "sdk-reference/nottefunction/stop_run"
                     ]
                   }
                 ]
@@ -272,9 +430,6 @@
                       "sdk-reference/nottevault/get_credentials",
                       "sdk-reference/nottevault/delete_credentials",
                       "sdk-reference/nottevault/list_credentials",
-                      "sdk-reference/nottevault/set_credit_card",
-                      "sdk-reference/nottevault/get_credit_card",
-                      "sdk-reference/nottevault/delete_credit_card",
                       "sdk-reference/nottevault/generate_password"
                     ]
                   },
@@ -298,8 +453,8 @@
                       "sdk-reference/manual/file_storage",
                       "sdk-reference/remotefilestorage/download",
                       "sdk-reference/remotefilestorage/upload",
-                      "sdk-reference/remotefilestorage/list_downloaded_files",
-                      "sdk-reference/remotefilestorage/list_uploaded_files"
+                      "sdk-reference/remotefilestorage/list",
+                      "sdk-reference/remotefilestorage/delete"
                     ]
                   }
                 ]
@@ -321,88 +476,279 @@
             ]
           },
           {
-            "tab": "Products",
-            "groups": [
+            "group": "Node SDK",
+            "pages": [
               {
-                "group": "Products",
+                "group": "Getting Started",
                 "pages": [
-                  "product/agent-mode",
-                  "product/demonstrate-mode",
-                  "product/studio",
-                  "product/anything-api"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "Resources",
-            "groups": [
-              {
-                "group": "Resources",
-                "pages": [
-                  "pricing",
-                  "rate-limits",
-                  "guides/vibe-coding"
+                  "typescript-sdk-reference/manual/client",
+                  "typescript-sdk-reference/authentication",
+                  "typescript-sdk-reference/errors",
+                  "typescript-sdk-reference/rate-limits"
                 ]
               },
               {
-                "group": "Legal",
+                "group": "Core Features",
                 "pages": [
-                  "trust-center",
-                  "legal/terms",
-                  "legal/privacy",
-                  "legal/bug-bounty"
+                  "typescript-sdk-reference/client/scrape",
+                  "typescript-sdk-reference/client/search",
+                  {
+                    "group": "Session",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/session",
+                      "typescript-sdk-reference/session/start",
+                      "typescript-sdk-reference/session/stop",
+                      "typescript-sdk-reference/session/observe",
+                      "typescript-sdk-reference/session/execute",
+                      "typescript-sdk-reference/session/scrape",
+                      "typescript-sdk-reference/session/replay",
+                      "typescript-sdk-reference/session/setcookies",
+                      "typescript-sdk-reference/session/getcookies",
+                      "typescript-sdk-reference/session/viewer",
+                      "typescript-sdk-reference/session/status",
+                      "typescript-sdk-reference/session/waitforauth",
+                      "typescript-sdk-reference/session/downloadreplay",
+                      "typescript-sdk-reference/session/saveprofile",
+                      "typescript-sdk-reference/session/debuginfo",
+                      "typescript-sdk-reference/session/debugtabinfo",
+                      "typescript-sdk-reference/session/cdpurl",
+                      "typescript-sdk-reference/session/page",
+                      "typescript-sdk-reference/session/getscript",
+                      "typescript-sdk-reference/session/evaluatejs",
+                      "typescript-sdk-reference/session/fetch"
+                    ]
+                  },
+                  {
+                    "group": "Actions",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/types/gotoaction",
+                      "typescript-sdk-reference/types/gotonewtabaction",
+                      "typescript-sdk-reference/types/switchtabaction",
+                      "typescript-sdk-reference/types/gobackaction",
+                      "typescript-sdk-reference/types/goforwardaction",
+                      "typescript-sdk-reference/types/reloadaction",
+                      "typescript-sdk-reference/types/waitaction",
+                      "typescript-sdk-reference/types/presskeyaction",
+                      "typescript-sdk-reference/types/scrollupaction",
+                      "typescript-sdk-reference/types/scrolldownaction",
+                      "typescript-sdk-reference/types/clickactionoutput",
+                      "typescript-sdk-reference/types/fillactionoutput",
+                      "typescript-sdk-reference/types/checkactionoutput",
+                      "typescript-sdk-reference/types/formfillaction",
+                      "typescript-sdk-reference/types/evaluatejsaction",
+                      "typescript-sdk-reference/types/selectdropdownoptionactionoutput",
+                      "typescript-sdk-reference/types/uploadfileactionoutput",
+                      "typescript-sdk-reference/types/downloadfileactionoutput",
+                      "typescript-sdk-reference/types/scrapeaction",
+                      "typescript-sdk-reference/types/captchasolveaction",
+                      "typescript-sdk-reference/types/smsreadaction",
+                      "typescript-sdk-reference/types/emailreadaction",
+                      "typescript-sdk-reference/types/emailverificationreadaction"
+                    ]
+                  },
+                  {
+                    "group": "Agent",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/agent",
+                      "typescript-sdk-reference/agent/run",
+                      "typescript-sdk-reference/agent/start",
+                      "typescript-sdk-reference/agent/stop",
+                      "typescript-sdk-reference/agent/status",
+                      "typescript-sdk-reference/agent/hasstarted",
+                      "typescript-sdk-reference/agent/isactive"
+                    ]
+                  },
+                  {
+                    "group": "Function",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/function",
+                      "typescript-sdk-reference/function/createrun",
+                      "typescript-sdk-reference/function/run",
+                      "typescript-sdk-reference/function/getrun",
+                      "typescript-sdk-reference/function/download",
+                      "typescript-sdk-reference/function/geturl",
+                      "typescript-sdk-reference/function/get",
+                      "typescript-sdk-reference/function/update",
+                      "typescript-sdk-reference/function/updatemetadata",
+                      "typescript-sdk-reference/function/delete",
+                      "typescript-sdk-reference/function/setschedule",
+                      "typescript-sdk-reference/function/deleteschedule",
+                      "typescript-sdk-reference/function/rollback",
+                      "typescript-sdk-reference/function/updaterun",
+                      "typescript-sdk-reference/function/runs"
+                    ]
+                  },
+                  {
+                    "group": "Anything",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/notteanything",
+                      "typescript-sdk-reference/notteanything/start"
+                    ]
+                  },
+                  {
+                    "group": "Managed Auth",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/nottemanagedauth",
+                      "typescript-sdk-reference/nottemanagedauth/checkconnection",
+                      "typescript-sdk-reference/nottemanagedauth/getoperation",
+                      "typescript-sdk-reference/nottemanagedauth/waitforauth",
+                      "typescript-sdk-reference/nottemanagedauth/refreshconnection",
+                      "typescript-sdk-reference/nottemanagedauth/reauthenticateconnection"
+                    ]
+                  }
                 ]
               },
               {
-                "group": "Community",
+                "group": "Tooling",
                 "pages": [
-                  "community/github",
-                  "community/slack",
-                  "community/x",
-                  "community/linkedin",
-                  "community/yc",
-                  "community/featurebase",
-                  "community/trustpilot",
-                  "community/producthunt",
-                  "community/youtube"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "Updates",
-            "groups": [
-              {
-                "group": "Updates",
-                "pages": [
-                  "changelog"
+                  {
+                    "group": "Vault",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/vault",
+                      "typescript-sdk-reference/vault/addcredentials",
+                      "typescript-sdk-reference/vault/getcredentials",
+                      "typescript-sdk-reference/vault/deletecredentials",
+                      "typescript-sdk-reference/vault/listcredentials",
+                      "typescript-sdk-reference/vault/generatepassword",
+                      "typescript-sdk-reference/vault/hascredential"
+                    ]
+                  },
+                  {
+                    "group": "Persona",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/persona",
+                      "typescript-sdk-reference/persona/delete",
+                      "typescript-sdk-reference/persona/addcredentials",
+                      "typescript-sdk-reference/persona/emails",
+                      "typescript-sdk-reference/persona/sms"
+                    ]
+                  },
+                  {
+                    "group": "File Storage",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/remotefilestorage",
+                      "typescript-sdk-reference/remotefilestorage/download",
+                      "typescript-sdk-reference/remotefilestorage/downloadblob",
+                      "typescript-sdk-reference/remotefilestorage/upload",
+                      "typescript-sdk-reference/remotefilestorage/list",
+                      "typescript-sdk-reference/remotefilestorage/metadata",
+                      "typescript-sdk-reference/remotefilestorage/stream",
+                      "typescript-sdk-reference/remotefilestorage/delete"
+                    ]
+                  },
+                  {
+                    "group": "Secrets",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/nottesecrets",
+                      "typescript-sdk-reference/nottesecrets/list",
+                      "typescript-sdk-reference/nottesecrets/store",
+                      "typescript-sdk-reference/nottesecrets/get",
+                      "typescript-sdk-reference/nottesecrets/delete"
+                    ]
+                  },
+                  {
+                    "group": "Usage",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/manual/notteusage",
+                      "typescript-sdk-reference/notteusage/get",
+                      "typescript-sdk-reference/notteusage/logs"
+                    ]
+                  }
                 ]
               },
               {
-                "group": "Releases",
+                "group": "Debug",
                 "pages": [
-                  "releases/github",
-                  "releases/pypi"
+                  {
+                    "group": "Debug Methods",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/client/getconfig",
+                      "typescript-sdk-reference/client/getclient",
+                      "typescript-sdk-reference/session/getresponse",
+                      "typescript-sdk-reference/session/issessionactive"
+                    ]
+                  }
                 ]
               }
             ]
           }
-        ],
-        "global": {
-          "anchors": [
-            {
-              "anchor": "Slack Support",
-              "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA",
-              "icon": "heart"
-            },
-            {
-              "anchor": "Submit Feedback",
-              "href": "https://notte.featurebase.app/",
-              "icon": "message"
-            }
-          ]
-        }
+        ]
+      },
+      {
+        "tab": "CLI",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "cli-reference/index"
+            ]
+          },
+          {
+            "group": "Commands",
+            "pages": [
+              "cli-reference/auth",
+              "cli-reference/files",
+              "cli-reference/functions",
+              "cli-reference/page",
+              "cli-reference/payment",
+              "cli-reference/personas",
+              "cli-reference/profiles",
+              "cli-reference/sessions",
+              "cli-reference/skill",
+              "cli-reference/tunnel",
+              "cli-reference/usage",
+              "cli-reference/vaults",
+              "cli-reference/other"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Resources",
+        "groups": [
+          {
+            "group": "Resources",
+            "pages": [
+              "resources",
+              "pricing",
+              "rate-limits"
+            ]
+          },
+          {
+            "group": "Legal",
+            "pages": [
+              "trust-center",
+              "legal/terms",
+              "legal/privacy",
+              "legal/bug-bounty"
+            ]
+          },
+          {
+            "group": "Community",
+            "pages": [
+              "community/github",
+              "community/slack",
+              "community/x",
+              "community/linkedin",
+              "community/yc",
+              "community/trustpilot",
+              "community/producthunt",
+              "community/youtube"
+            ]
+          }
+        ]
       }
     ]
   },
@@ -412,6 +758,11 @@
   },
   "navbar": {
     "links": [
+      {
+        "label": "Support",
+        "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA",
+        "icon": "arrow-up-right-from-square"
+      },
       {
         "label": "Book Demo",
         "href": "https://cal.com/team/notte/demo",

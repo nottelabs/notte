@@ -1,0 +1,39 @@
+---
+title: "save_profile"
+description: "Saves the session's current browser state into a profile, without stopping the session"
+---
+
+
+
+```python
+with client.Session() as session:
+    session.execute(type="goto", url="https://github.com/login")
+    # ... log in ...
+    profile = session.save_profile(name="github")
+# later: client.Session(profile={"id": profile.profile_id})
+```
+
+Use it to keep a login from a session that was started without ``persist=True``.
+It does not change the session's start-time profile settings, so a session started
+with ``persist=True`` still saves again when it stops.
+
+
+
+## Parameters
+
+<ParamField path="profile_id" type="UnionType[str, None]" default="None">
+  Existing profile to overwrite with the current browser state.
+</ParamField>
+
+<ParamField path="name" type="UnionType[str, None]" default="None">
+  Create a new profile with this name and save into it. Mutually exclusive with ``profile_id``.         With neither, the state is saved into the profile the session was started with.
+</ParamField>
+
+## Returns
+
+<Visibility for="humans">[`ProfileResponse`](/sdk-reference/misc/profileresponse)</Visibility><Visibility for="agents">[`ProfileResponse`](/sdk-reference/misc/profileresponse.md)</Visibility>: The profile, with ``persisted_domains`` computed from the saved state.
+
+## Raises
+
+- `ValueError`: If both ``profile_id`` and ``name`` are provided, or if either is empty.
+- `ValueError`: If the session hasn't been started yet (no session_id available).

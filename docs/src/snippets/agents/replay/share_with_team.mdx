@@ -9,7 +9,7 @@ with client.Session() as session:
 replay = session.replay()
 replay.download(f"feature_test_{agent.agent_id}.mp4")
 
-# Share file with team
-# Or share console link
-print(f"Console replay: https://console.notte.cc/sessions/{session.session_id}")
+# Share the file with your team
+# Or share the presigned URL (valid until replay.expires_at)
+print(f"Replay: {replay.mp4_url} (expires {replay.expires_at})")
 ```

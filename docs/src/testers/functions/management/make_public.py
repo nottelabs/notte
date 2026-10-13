@@ -7,5 +7,5 @@ client = NotteClient()
 function = client.Function(
     path="my_function.py",
     name="Public Scraper",
-    shared=True,  # Make publicly accessible
+    shared=True,  # Other users can view and fork it
 )

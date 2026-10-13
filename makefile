@@ -9,7 +9,7 @@ test:
 
 .PHONY: test-cicd
 test-cicd:
-	uv run pytest -n 3 tests --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/integration/test_e2e.py --ignore=tests/integration/test_webvoyager_scripts.py --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10
+	uv run pytest -n 3 tests --ignore=tests/integration/test_webvoyager_scripts.py --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10
 
 .PHONY: test-sdk
 test-sdk:
@@ -58,10 +58,6 @@ test-release:
 test-examples:
 	uv run pytest tests/examples/test_examples.py
 
-.PHONY: benchmark
-benchmark:
-	cat benchmarks/benchmark_config.toml | uv run python -m notte_eval.run
-
 .PHONY: pre-commit-run
 pre-commit-run:
 	uv run --active pre-commit run --all-files
@@ -92,14 +88,6 @@ release-clean:
 	@rm -rf .pytest_cache
 	@git checkout pyproject.toml uv.lock packages/*/pyproject.toml
 
-.PHONY: mcp
-mcp:
-	uv run python -m notte_mcp.server
-
-.PHONY: mcp-install-claude
-mcp-install-claude:
-	uv run fastmcp install packages/notte-mcp/src/notte_mcp/server.py -f .env
-
 .PHONY: profile-imports
 profile-imports:
 	uv run python profiling/profile_imports.py
@@ -115,6 +103,12 @@ docs-sdk: docs-llms
 .PHONY: docs-llms
 docs-llms:
 	cd docs/src && uv run python scripts/generate_llms.py
+
+# Rebuild the API section of llms.txt from the live OpenAPI spec. Only the
+# refresh-llms workflow should need this; docs-llms reuses the committed section.
+.PHONY: docs-llms-refresh
+docs-llms-refresh:
+	cd docs/src && uv run python scripts/generate_llms.py --refresh-openapi
 
 
 .PHONY: docs-agent-notice
@@ -172,5 +166,4 @@ release:
 			exit 1; \
 	fi
 	@echo "\033[0;35mBuilding version: $(filter-out $@,$(MAKECMDGOALS))\033[0m"
-	sh build.sh $(filter-out $@,$(MAKECMDGOALS))
-	@git checkout pyproject.toml uv.lock packages/*/pyproject.toml
+	python3 scripts/build_release.py $(filter-out $@,$(MAKECMDGOALS))

@@ -1,5 +1,5 @@
 # @sniptest filename=use-function-api.py
-# @sniptest show=6-12
+# @sniptest show=6-14
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -10,7 +10,7 @@ with client.Session() as session:
     # Create function from successful agent
     function = agent.workflow.create_function()
 
-    # Run multiple times
-    for query in ["laptop", "phone", "tablet"]:
-        result = function.run(query=query)
-        print(result)
+    # Run it again whenever you need (it replays the agent's steps)
+    for _ in range(3):
+        result = function.run()
+        print(result.result)

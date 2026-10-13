@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/sessions/cdp/selenium_builtin_page.py */}
 
+<CodeGroup>
+
 ```python selenium_builtin_page.py
 from notte_sdk import NotteClient
 
@@ -9,3 +11,16 @@ client = NotteClient()
 with client.Session() as session:
     page = session.page  # Built-in Playwright page
 ```
+
+```typescript selenium_builtin_page.ts
+import { NotteClient } from "notte-sdk";
+
+const client = new NotteClient();
+
+const session = client.Session();
+await session.use(async (session) => {
+  const page = await session.page(); // Built-in Playwright page
+});
+```
+
+</CodeGroup>

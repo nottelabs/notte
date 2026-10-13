@@ -60,6 +60,7 @@ ActionType = Literal[
     "completion",
     "scrape",
     "email_read",
+    "email_verification_read",
     "sms_read",
     "evaluate_js",
     "click",
@@ -115,6 +116,7 @@ class FormFillActionDict(TypedDict, total=False):
 class GotoActionDict(TypedDict):
     type: Literal["goto"]
     url: str
+    wait_until: NotRequired[Literal["commit", "domcontentloaded", "load", "networkidle"]]
 
 
 class GotoNewTabActionDict(TypedDict):
@@ -156,11 +158,13 @@ class PressKeyActionDict(TypedDict):
 class ScrollUpActionDict(TypedDict, total=False):
     type: Required[Literal["scroll_up"]]
     amount: NotRequired[int | None]
+    selector: NotRequired[str | None]
 
 
 class ScrollDownActionDict(TypedDict, total=False):
     type: Required[Literal["scroll_down"]]
     amount: NotRequired[int | None]
+    selector: NotRequired[str | None]
 
 
 class CaptchaSolveActionDict(TypedDict, total=False):
@@ -211,6 +215,13 @@ class EmailReadActionDict(TypedDict, total=False):
     limit: NotRequired[int]
     timedelta: NotRequired[dt.timedelta | None]
     only_unread: NotRequired[bool]
+
+
+class EmailVerificationReadActionDict(TypedDict, total=False):
+    type: Required[Literal["email_verification_read"]]
+    mailbox_id: Required[str]
+    sender_domain: Required[str]
+    max_age_seconds: NotRequired[int]
 
 
 class SmsReadActionDict(TypedDict, total=False):
@@ -279,6 +290,8 @@ class SelectDropdownOptionActionDict(TypedDict, total=False):
 
 
 class UploadFileActionDict(TypedDict, total=False):
+    """Attach a storage file; cloud sessions also accept HTTP(S) URLs in file_path."""
+
     type: Required[Literal["upload_file"]]
     id: NotRequired[str]
     selector: NotRequired[NodeSelector]
@@ -312,6 +325,7 @@ ActionDict = (
     | CompletionActionDict
     | ScrapeActionDict
     | EmailReadActionDict
+    | EmailVerificationReadActionDict
     | SmsReadActionDict
     | EvaluateJsActionDict
     | ClickActionDict

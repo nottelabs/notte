@@ -1,6 +1,9 @@
 import base64
+import json
 import traceback
+from contextlib import suppress
 from pathlib import Path
+from typing import Any, cast
 
 from notte_core.actions import (
     BaseAction,
@@ -35,6 +38,7 @@ from notte_core.actions import (
     # WriteFileAction,
 )
 from notte_core.browser.snapshot import BrowserSnapshot
+from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import ActionExecutionError
@@ -57,31 +61,100 @@ from notte_browser.errors import (
     capture_playwright_errors,
 )
 from notte_browser.form_filling import FormFiller
-from notte_browser.playwright_async_api import Locator
+from notte_browser.playwright_async_api import CDPSession, Error, Frame, JSHandle, Locator, evaluate_in_main_world
 from notte_browser.window import BrowserWindow
+
+# Capture the wheel target's ancestors before the browser performs its default
+# scroll. Keeping element references avoids mistaking DOM replacement for motion,
+# and composedPath includes scroll containers inside open shadow roots.
+_SCROLL_TRACKER = """
+() => {
+    const initialY = window.scrollY;
+    const positions = new Map();
+    const onWheel = (event) => {
+        for (const node of event.composedPath()) {
+            if (node instanceof Element && !positions.has(node)) {
+                positions.set(node, node.scrollTop);
+            }
+        }
+    };
+    // A passive listener can run after compositor scrolling has already happened.
+    // This listener never cancels the event, but must snapshot before its default action.
+    window.addEventListener('wheel', onWheel, {capture: true, passive: false});
+    return {
+        hasScrolled: () => window.scrollY !== initialY ||
+            Array.from(positions).some(([node, top]) => node.isConnected && node.scrollTop !== top),
+        dispose: () => {
+            window.removeEventListener('wheel', onWheel, true);
+            positions.clear();
+        },
+    };
+}
+"""
+
+_SCROLL_BOUNDARY = """
+(element, delta) => {
+    const max = Math.max(0, element.scrollHeight - element.clientHeight);
+    const style = getComputedStyle(element);
+    const isContainer = element === document.scrollingElement ||
+        /^(auto|scroll|overlay)$/.test(style.overflowY) ||
+        (max > 0 && style.overflowY === 'hidden');
+    const reversed = /^(flex|inline-flex)$/.test(style.display) && style.flexDirection === 'column-reverse';
+    const lower = reversed ? -max : 0;
+    const upper = reversed ? 0 : max;
+    return isContainer && (delta > 0 ? element.scrollTop >= upper - 1 : element.scrollTop <= lower + 1);
+}
+"""
+
+
+def _scroll_context_disappeared(frame: Frame, error: Error) -> bool:
+    return frame.is_detached() or any(
+        message in str(error).lower()
+        for message in (
+            "execution context was destroyed",
+            "cannot find context with specified id",
+            "frame was detached",
+        )
+    )
+
 
 # Installed once per download action. Wraps URL.createObjectURL so we retain a
 # strong JS reference to each Blob under its URL key, which lets us read the
 # bytes even after the page's URL.revokeObjectURL runs (file-saver.js pattern).
 # Revocation only removes the URL->Blob mapping in the browser's registry;
 # our Map keeps the Blob object alive.
+#
+# Both snippets must run in the page's main world, where the Blob is created.
+# Chromium's top frame uses CDP; iframe and Firefox evaluation explicitly uses
+# the owning frame's page world rather than Patchright's default isolated world.
 _BLOB_CAPTURE_HOOK = """
 (() => {
   if (window.__notte_blob_capture) return;
-  const origCreate = URL.createObjectURL.bind(URL);
+  const origCreate = URL.createObjectURL;
   const blobs = new Map();
-  URL.createObjectURL = function (obj) {
-    const url = origCreate(obj);
+  const createObjectURL = function (obj) {
+    const url = origCreate.call(URL, obj);
     try { blobs.set(url, obj); } catch (e) {}
     return url;
   };
-  window.__notte_blob_capture = { get: (url) => blobs.get(url) || null };
+  URL.createObjectURL = createObjectURL;
+  window.__notte_blob_capture = {
+    get: (url) => blobs.get(url) || null,
+    clear: () => blobs.clear(),
+    dispose: () => {
+      blobs.clear();
+      if (URL.createObjectURL === createObjectURL) URL.createObjectURL = origCreate;
+      delete window.__notte_blob_capture;
+    },
+  };
 })();
 """
 
+_BLOB_CAPTURE_DISPOSE = "window.__notte_blob_capture?.dispose?.()"
+
 # Returns base64 so we can ferry bytes safely across CDP.
 _BLOB_READ_SCRIPT = """
-async (url) => {
+(async (url) => {
   const blob = window.__notte_blob_capture && window.__notte_blob_capture.get(url);
   if (!blob) return null;
   const buf = await blob.arrayBuffer();
@@ -92,8 +165,62 @@ async (url) => {
     binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
   }
   return btoa(binary);
-}
+})(__NOTTE_BLOB_URL__)
 """
+
+
+async def _main_world_evaluate(cdp: CDPSession, expression: str, await_promise: bool = False) -> Any:
+    """Evaluate an expression in the page's main world and return its value."""
+    raw_response = cast(
+        "object",
+        await cdp.send(  # pyright: ignore [reportUnknownMemberType]
+            "Runtime.evaluate",
+            {"expression": expression, "awaitPromise": await_promise, "returnByValue": True},
+        ),
+    )
+    response = cast("dict[str, Any]", raw_response) if isinstance(raw_response, dict) else {}
+    raw_exception_details: Any = response.get("exceptionDetails")
+    if isinstance(raw_exception_details, dict):
+        exception_details = cast("dict[str, Any]", raw_exception_details)
+        raw_exception: Any = exception_details.get("exception")
+        exception = cast("dict[str, Any]", raw_exception) if isinstance(raw_exception, dict) else None
+        description = exception.get("description") if exception is not None else None
+        message = description if isinstance(description, str) else exception_details.get("text", "unknown error")
+        raise RuntimeError(f"CDP Runtime.evaluate failed: {message}")
+    result: Any = response.get("result")
+    if not isinstance(result, dict):
+        return None
+    return cast("dict[str, Any]", result).get("value")
+
+
+async def _resolve_locator_frame(locator: Locator) -> Frame:
+    """Return the frame containing a locator without retaining its element handle."""
+    handle = await locator.element_handle()
+    try:
+        frame = await handle.owner_frame()
+    finally:
+        await handle.dispose()
+    if frame is None:
+        raise FailedToDownloadFileError()
+    return frame
+
+
+def _should_persist_download(*, manually_fetched: bool, captures_browser_downloads: bool) -> bool:
+    """Return whether the controller owns persistence for a downloaded file."""
+    return manually_fetched or not captures_browser_downloads
+
+
+async def _evaluate_blob_expression(
+    frame: Frame,
+    expression: str,
+    *,
+    cdp: CDPSession | None = None,
+    await_promise: bool = False,
+) -> Any:
+    """Evaluate Blob capture code in the frame that owns the clicked locator."""
+    if cdp is not None:
+        return await _main_world_evaluate(cdp, expression, await_promise=await_promise)
+    return await evaluate_in_main_world(frame, expression)
 
 
 @final
@@ -105,6 +232,33 @@ class BrowserController:
     ) -> None:
         self.verbose: bool = verbose
         self.storage: BaseStorage | None = storage
+
+    async def _scroll_target(self, window: BrowserWindow, action: ScrollUpAction | ScrollDownAction) -> None:
+        assert action.selector is not None
+        locator = window.page.locator(action.selector)
+        target = await locator.evaluate_handle(
+            "element => element === document.documentElement ? document.scrollingElement : element",
+            timeout=config.timeout_action_ms,
+        )
+        try:
+            amount = action.amount
+            if amount is None:
+                amount = int(await target.evaluate("element => element.clientHeight") * 0.7)
+            delta = -amount if isinstance(action, ScrollUpAction) else amount
+            if delta == 0 or await target.evaluate(_SCROLL_BOUNDARY, delta):
+                logger.info("Scroll target is already at its boundary; no movement needed.")
+                return
+            before = await target.evaluate("element => element.scrollTop")
+            # Address the container directly: a wheel at its center can hit a nested
+            # scroller, and hovering an offscreen target can move its parents.
+            await target.evaluate("(element, delta) => element.scrollBy({top: delta, behavior: 'instant'})", delta)
+            await window.page.wait_for_timeout(200)
+            after = await target.evaluate("element => element.scrollTop")
+            if before == after and not await target.evaluate(_SCROLL_BOUNDARY, delta):
+                raise ScrollActionFailedError()
+        finally:
+            with suppress(Error):
+                await target.dispose()
 
     def _can_create_tab(self, action: BaseAction) -> bool:
         """
@@ -145,8 +299,8 @@ class BrowserController:
 
             case CaptchaSolveAction(captcha_type=_):
                 _ = await CaptchaHandler.handle_captchas(window, action)
-            case GotoAction(url=url):
-                await window.goto(url)
+            case GotoAction(url=url, wait_until=wait_until):
+                await window.goto(url, wait_until=wait_until)
             case GotoNewTabAction(url=url):
                 new_page = await window.page.context.new_page()
                 window.page = new_page
@@ -174,26 +328,44 @@ class BrowserController:
                     }
                 """)
                 await window.page.wait_for_timeout(200)
-                # compute current scroll position for comparison after execution
-                scroll_position = await window.page.evaluate("window.scrollY")
-                if amount is not None:
+                if action.selector is not None:
+                    await self._scroll_target(window, action)
+                    return True
+                trackers: list[tuple[Frame, JSHandle]] = []
+                try:
+                    # Wheel events stay in their frame, so observe each document.
+                    for frame in window.page.frames:
+                        try:
+                            trackers.append((frame, await frame.evaluate_handle(_SCROLL_TRACKER)))
+                        except Error as error:
+                            if not _scroll_context_disappeared(frame, error):
+                                raise
+                    if amount is None:
+                        viewport_height = await window.page.evaluate("window.innerHeight")
+                        amount = int(viewport_height * 0.7)
                     await window.page.mouse.wheel(
                         delta_x=0, delta_y=(-amount if isinstance(action, ScrollUpAction) else amount)
                     )
-                else:
-                    # Calculate 70% of viewport height for scroll amount
-                    viewport_height = await window.page.evaluate("window.innerHeight")
-                    scroll_amount = int(viewport_height * 0.7)
-                    await window.page.mouse.wheel(
-                        delta_x=0, delta_y=(-scroll_amount if isinstance(action, ScrollUpAction) else scroll_amount)
-                    )
-                await window.page.wait_for_timeout(200)
-                new_scroll_position = await window.page.evaluate("window.scrollY")
-                if new_scroll_position == scroll_position:
-                    logger.info(
-                        f"🪦 Scroll action did not change scroll position (i.e before={scroll_position}, after={new_scroll_position}). Failing action..."
-                    )
-                    raise ScrollActionFailedError()
+                    await window.page.wait_for_timeout(200)
+                    scrolled = False
+                    for frame, tracker in trackers:
+                        try:
+                            if await tracker.evaluate("tracker => tracker.hasScrolled()"):
+                                scrolled = True
+                                break
+                        except Error as error:
+                            if not _scroll_context_disappeared(frame, error):
+                                raise
+                    if not scrolled:
+                        logger.info("🪦 Scroll action did not move the page or a scroll container. Failing action...")
+                        raise ScrollActionFailedError()
+                finally:
+                    for _, tracker in trackers:
+                        # Navigation or frame removal can destroy the JS context.
+                        with suppress(Error):
+                            await tracker.evaluate("tracker => tracker.dispose()")
+                        with suppress(Error):
+                            await tracker.dispose()
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         return True
@@ -410,7 +582,8 @@ class BrowserController:
                 if self.storage is None or self.storage.download_dir is None:
                     raise NoStorageObjectProvidedError(action.name())
 
-                if window.is_file():
+                manually_fetched = window.is_file()
+                if manually_fetched:
                     file_content, filename = await window.download_file()
                     logger.info(f"Saving raw file with this filename: {filename}")
                     file_path = Path(self.storage.download_dir) / filename
@@ -425,25 +598,52 @@ class BrowserController:
                     # Install the blob-capture hook before the click so any
                     # URL.createObjectURL call inside the click handler has
                     # its Blob retained in our side map.
-                    _ = await window.page.evaluate(_BLOB_CAPTURE_HOOK)
+                    blob_frame = await _resolve_locator_frame(locator)
+                    is_main_frame = blob_frame == window.page.main_frame
+                    cdp = (
+                        await window.page.context.new_cdp_session(window.page)
+                        if window.is_chromium_based and is_main_frame
+                        else None
+                    )
+                    try:
+                        # CDP's default Runtime.evaluate context is the main
+                        # frame. For iframe locators (including cross-origin
+                        # frames), Frame.evaluate targets the owning frame's
+                        # main world directly. Firefox also uses this path.
+                        _ = await _evaluate_blob_expression(blob_frame, _BLOB_CAPTURE_HOOK, cdp=cdp)
 
-                    async with window.page.expect_download() as dw:
-                        await locator.click()
-                    download = await dw.value
+                        async with window.page.expect_download() as dw:
+                            await locator.click()
+                        download = await dw.value
 
-                    dl_url = download.url
-                    if dl_url.startswith("blob:"):
-                        b64 = await window.page.evaluate(_BLOB_READ_SCRIPT, dl_url)
-                        if b64 is None:
-                            raise FailedToDownloadFileError()
-                        file_bytes = base64.b64decode(b64)
-                    else:
-                        # page.request shares cookies/auth with the page, so
-                        # same-origin protected downloads work.
-                        resp = await window.page.request.get(dl_url)
-                        if resp.status >= 400:
-                            raise FailedToDownloadFileError()
-                        file_bytes = await resp.body()
+                        dl_url = download.url
+                        if dl_url.startswith("blob:"):
+                            expression = _BLOB_READ_SCRIPT.replace("__NOTTE_BLOB_URL__", json.dumps(dl_url))
+                            value = await _evaluate_blob_expression(
+                                blob_frame,
+                                expression,
+                                cdp=cdp,
+                                await_promise=True,
+                            )
+                            b64 = value if isinstance(value, str) else None
+                            if b64 is None:
+                                raise FailedToDownloadFileError()
+                            file_bytes = base64.b64decode(b64)
+                        else:
+                            # page.request shares cookies/auth with the page, so
+                            # same-origin protected downloads work.
+                            resp = await window.page.request.get(dl_url)
+                            if resp.status >= 400:
+                                raise FailedToDownloadFileError()
+                            file_bytes = await resp.body()
+                    finally:
+                        try:
+                            _ = await _evaluate_blob_expression(blob_frame, _BLOB_CAPTURE_DISPOSE, cdp=cdp)
+                        except Exception as e:
+                            logger.warning(f"Failed to dispose the Blob capture hook: {e}")
+                        finally:
+                            if cdp is not None:
+                                await cdp.detach()
 
                     if not file_bytes:
                         raise FailedToDownloadFileError()
@@ -458,10 +658,18 @@ class BrowserController:
                     with open(file_path, "wb") as f:
                         _ = f.write(file_bytes)
 
-                res = await self.storage.set_file(str(file_path))
-
-                if not res:
-                    raise FailedToDownloadFileError()
+                # Raw URLs are fetched and written by the controller itself; no
+                # browser download event is emitted for an out-of-band collector
+                # to capture. Native click downloads do emit such an event, so a
+                # collector-backed storage must remain the sole ingester there to
+                # avoid creating duplicate catalog entries.
+                if _should_persist_download(
+                    manually_fetched=manually_fetched,
+                    captures_browser_downloads=self.storage.captures_browser_downloads,
+                ):
+                    res = await self.storage.set_file(str(file_path))
+                    if not res:
+                        raise FailedToDownloadFileError()
 
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")

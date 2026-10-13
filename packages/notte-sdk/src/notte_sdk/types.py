@@ -2,6 +2,7 @@ import datetime as dt
 import json
 import os
 import re
+import warnings
 from enum import StrEnum
 from pathlib import Path
 from types import NoneType
@@ -35,7 +36,17 @@ from notte_core.storage import FileInfo as FileInfo  # noqa: E402
 from notte_core.trajectory import ElementLiteral
 from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
 from notte_core.utils.url import get_root_domain
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    computed_field,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
 from pyotp import TOTP
 from typing_extensions import NotRequired, TypedDict, deprecated, override
 
@@ -498,23 +509,51 @@ class NotteProxy(SdkRequest):
     type: Literal["notte"] = "notte"
     id: str | None = None
     country: ProxyGeolocationCountry | None = None
+    city: str | None = None
     # TODO: enable domainPattern later on
     # domainPattern: str | None = None
 
     @model_validator(mode="before")
     @classmethod
     def handle_legacy_geolocation(cls, values: Any) -> dict[str, Any]:
-        """Handle backward compatibility with old geolocation.country syntax."""
+        """Handle backward compatibility with old geolocation syntax."""
         if isinstance(values, dict) and "geolocation" in values:
             geolocation: Any = values.pop("geolocation")  # type: ignore[reportUnknownMemberType]
-            # Only set country if it's not already provided
-            if "country" not in values and isinstance(geolocation, dict) and "country" in geolocation:
-                values["country"] = geolocation["country"]
+            if isinstance(geolocation, dict):
+                # Only set fields if they're not already provided.
+                if "country" not in values and "country" in geolocation:
+                    values["country"] = geolocation["country"]
+                if "city" not in values and "city" in geolocation:
+                    values["city"] = geolocation["city"]
         return values  # type: ignore[return-value]
 
+    @field_validator("city")
+    @classmethod
+    def validate_city(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        city = value.strip()
+        if not city:
+            raise ValueError("city must be a non-empty string")
+        return city
+
     @staticmethod
-    def from_country(country: str, id: str | None = None) -> "NotteProxy":
-        return NotteProxy(id=id, country=ProxyGeolocationCountry(country))
+    def _resolve_proxy_id(proxy_id: str | None, kwargs: dict[str, Any]) -> str | None:
+        legacy_id = kwargs.pop("id", None)
+        if kwargs:
+            unexpected = next(iter(kwargs))
+            raise TypeError(f"Unexpected keyword argument: {unexpected}")
+        if proxy_id is not None and legacy_id is not None:
+            raise ValueError("Cannot provide both proxy_id and id")
+        return proxy_id if proxy_id is not None else legacy_id
+
+    @staticmethod
+    def from_country(country: str, proxy_id: str | None = None, **kwargs: Any) -> "NotteProxy":
+        return NotteProxy(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), country=ProxyGeolocationCountry(country))
+
+    @staticmethod
+    def from_city(city: str, proxy_id: str | None = None, **kwargs: Any) -> "NotteProxy":
+        return NotteProxy(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), city=city)
 
 
 class ExternalProxy(SdkRequest):
@@ -543,8 +582,14 @@ class ExternalProxy(SdkRequest):
 
 class TailnetProxy(SdkRequest):
     type: Literal["tailnet"] = "tailnet"
-    oauth_client_id: str
+    # Leave both unset to use the Tailscale OAuth client connected to your
+    # workspace in the Notte console (Settings > Integrations).
+    oauth_client_id: str | None = None
     oauth_client_secret: str | None = None
+    # Tailnet device to use as an exit node for public traffic, by hostname,
+    # MagicDNS name, or Tailscale IP. When unset, only tailnet addresses are
+    # routed through the tailnet.
+    exit_node: str | None = None
 
 
 class ExternalProxyDict(TypedDict, total=False):
@@ -559,12 +604,14 @@ class NotteProxyDict(TypedDict, total=False):
     type: Literal["notte"]
     id: str | None
     country: ProxyGeolocationCountry | None
+    city: str | None
 
 
 class TailnetProxyDict(TypedDict, total=False):
     type: Literal["tailnet"]
-    oauth_client_id: Required[str]
+    oauth_client_id: str | None
     oauth_client_secret: str | None
+    exit_node: str | None
 
 
 ProxySettings = Annotated[NotteProxy | ExternalProxy | TailnetProxy, Field(discriminator="type")]
@@ -624,6 +671,11 @@ class Cookie(BaseModel):
 
     @staticmethod
     def dump_json(cookies: list["Cookie"], path: str | Path) -> int:
+        warnings.warn(
+            "Cookie.dump_json is deprecated and will be removed in the next few weeks. Use json.dump(session.get_cookies(), f) instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         path = Path(path)
         cookies_dump = [cookie.model_dump() for cookie in cookies]
         return path.write_text(json.dumps(cookies_dump))
@@ -699,11 +751,10 @@ class SessionProfile(SdkRequest):
     persist: Annotated[bool, Field(description="Whether to save browser state to profile on session close")] = False
 
 
-class SessionStartRequestDict(TypedDict, total=False):
+class _SessionStartRequestDict(TypedDict, total=False):
     """Request dictionary for starting a session.
 
     Args:
-        headless: Whether to run the session in headless mode.
         solve_captchas: Whether to try to automatically solve captchas
         max_duration_minutes: Maximum session lifetime in minutes (absolute maximum).
         idle_timeout_minutes: Idle timeout in minutes. Session closes after this period of inactivity.
@@ -715,12 +766,13 @@ class SessionStartRequestDict(TypedDict, total=False):
         viewport_height: The height of the viewport
         aspect_ratio: Viewport shape preset ("5:4" or "16:9"). Cannot be combined with viewport_width/viewport_height.
         cdp_url: The CDP URL of another remote session provider.
-        use_file_storage: Whether FileStorage should be attached to the session.
         screenshot_type: The type of screenshot to use for the session.
         profile: Browser profile configuration for state persistence.
+        auth_ids: Up to 10 unique Managed Auth connection IDs. The API verifies them inline and can return an authenticating session while login continues.
+        wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.
+        auth_retry: Number of additional retries for transient managed-auth login failures, from 0 to 2. Each retry verifies the session again before submitting credentials. A blocked connection permits one explicit login attempt.
     """
 
-    headless: bool
     solve_captchas: bool
     max_duration_minutes: int
     idle_timeout_minutes: int
@@ -734,19 +786,32 @@ class SessionStartRequestDict(TypedDict, total=False):
     viewport_height: int | None
     aspect_ratio: AspectRatio | None
     cdp_url: str | None
-    use_file_storage: bool
     screenshot_type: ScreenshotType
     profile: SessionProfileDict | SessionProfile | None
     web_bot_auth: bool
     extra_http_headers: dict[str, str] | None
     vault_id: str | None
+    auth_ids: list[str]
+    wait_for_authentication: bool
 
 
-class SessionStartRequest(SdkRequest):
-    headless: Annotated[bool, Field(description="Whether to run the session in headless mode.")] = config.headless
-    solve_captchas: Annotated[bool, Field(description="Whether to try to automatically solve captchas")] = (
-        config.solve_captchas
-    )
+class SessionStartRequestDict(_SessionStartRequestDict, total=False):
+    auth_retry: int
+    """Public request dictionary for starting a remote session."""
+
+    advanced_stealth: bool
+    block_ads: bool
+    """Block ads and trackers in managed browsers with Basic filtering. Defaults to True."""
+
+
+class LocalSessionStartRequestDict(_SessionStartRequestDict, total=False):
+    """Request dictionary for starting a browser session on the local machine."""
+
+    headless: bool
+
+
+class _SessionStartRequest(SdkRequest):
+    solve_captchas: Annotated[bool, Field(description="Whether to try to automatically solve captchas")] = True
 
     max_duration_minutes: Annotated[
         int,
@@ -762,7 +827,7 @@ class SessionStartRequest(SdkRequest):
         Field(
             description="Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).",
             gt=0,
-            le=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
+            le=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES * 2,
             validation_alias=AliasChoices(
                 "idle_timeout_minutes", "timeout_minutes"
             ),  # Accept both names for backward compatibility
@@ -795,10 +860,6 @@ class SessionStartRequest(SdkRequest):
         config.cdp_url
     )
 
-    use_file_storage: Annotated[bool, Field(description="Whether FileStorage should be attached to the session.")] = (
-        True
-    )
-
     screenshot_type: Annotated[ScreenshotType, Field(description="The type of screenshot to use for the session.")] = (
         config.screenshot_type
     )
@@ -815,6 +876,26 @@ class SessionStartRequest(SdkRequest):
     ] = None
 
     vault_id: Annotated[str | None, Field(description="The vault to use for the session")] = None
+    auth_ids: Annotated[
+        list[str],
+        Field(
+            max_length=10,
+            description=(
+                "Managed Auth connection IDs to verify and, when necessary, authenticate "
+                "inside this session before it is returned."
+            ),
+        ),
+    ] = Field(default_factory=list)
+    wait_for_authentication: Annotated[
+        bool,
+        Field(
+            description=(
+                "Whether to wait for Managed Auth before returning the session. Defaults to true. "
+                "When true, authentication failure or timeout fails session creation; when false, "
+                "authentication continues in the background after the browser is ready."
+            )
+        ),
+    ] = True
 
     @model_validator(mode="before")
     @classmethod
@@ -823,6 +904,12 @@ class SessionStartRequest(SdkRequest):
             if "max_duration_minutes" not in values:
                 values["max_duration_minutes"] = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
         return values  # pyright: ignore[reportUnknownVariableType]
+
+    @model_validator(mode="after")
+    def validate_unique_auth_ids(self) -> "_SessionStartRequest":
+        if len(self.auth_ids) != len(set(self.auth_ids)):
+            raise ValueError("auth_ids must not contain duplicates")
+        return self
 
     @model_validator(mode="before")
     @classmethod
@@ -843,13 +930,22 @@ class SessionStartRequest(SdkRequest):
         return data
 
     @model_validator(mode="after")
-    def check_viewport(self) -> "SessionStartRequest":
+    def check_viewport(self) -> "_SessionStartRequest":
+        if self.cdp_url is not None:
+            if "proxies" not in self.model_fields_set:
+                self.proxies = False
+            # Configured viewport defaults belong to browsers we create, not an
+            # external browser. Keep explicit values for CDP validation below.
+            if "viewport_width" not in self.model_fields_set:
+                self.viewport_width = None
+            if "viewport_height" not in self.model_fields_set:
+                self.viewport_height = None
         if (self.viewport_width is None) != (self.viewport_height is None):
             raise ValueError("Both viewport_width and viewport_height must be set together or both must be None")
         return self
 
     @model_validator(mode="after")
-    def check_solve_captchas(self) -> "SessionStartRequest":
+    def check_solve_captchas(self) -> "_SessionStartRequest":
         if self.browser_type in ("chrome-nightly", "chrome-turbo") and self.solve_captchas and not self.proxies:
             raise ValueError(
                 f"`proxies` parameter cannot be falsy when setting `solve_captchas=True` with `browser_type` '{self.browser_type}'."
@@ -858,19 +954,16 @@ class SessionStartRequest(SdkRequest):
         return self
 
     @model_validator(mode="after")
-    def validate_cdp_url_constraints(self) -> "SessionStartRequest":
+    def validate_cdp_url_constraints(self) -> "_SessionStartRequest":
         """
-        Validate that when cdp_url is provided, certain fields are set to their default values.
+        Validate that browser settings are left to the external CDP provider.
 
         Raises:
-            ValueError: If cdp_url is provided but other fields are not set to defaults.
+            ValueError: If cdp_url is provided with browser settings that must be configured by the provider.
         """
         if self.cdp_url is not None:
-            if not self.headless:
-                raise ValueError(
-                    "When cdp_url is provided, headless must be True. "
-                    + "Headed mode (headless=False) only works with a local browser."
-                )
+            if self.proxies:
+                raise ValueError("Proxies must be configured by the external CDP provider, not by Notte")
             if self.user_agent is not None:
                 raise ValueError(
                     "When cdp_url is provided, user_agent must be None. Set the user agent with your external session CDP provider."
@@ -879,18 +972,18 @@ class SessionStartRequest(SdkRequest):
                 raise ValueError(
                     "When cdp_url is provided, chrome_args must be None. Set the chrome arguments with your external session CDP provider."
                 )
-            if self.viewport_width is not None and self.viewport_width != DEFAULT_VIEWPORT_WIDTH:
+            if self.viewport_width is not None:
                 raise ValueError(
                     "When cdp_url is provided, viewport_width must be None. Set the viewport width with your external session CDP provider."
                 )
-            if self.viewport_height is not None and self.viewport_height != DEFAULT_VIEWPORT_HEIGHT:
+            if self.viewport_height is not None:
                 raise ValueError(
                     "When cdp_url is provided, viewport_height must be None. Set the viewport height with your external session CDP provider."
                 )
         return self
 
     @model_validator(mode="after")
-    def validate_timeout_relationship(self) -> "SessionStartRequest":
+    def validate_timeout_relationship(self) -> "_SessionStartRequest":
         """
         Validate that idle_timeout_minutes does not exceed max_duration_minutes.
 
@@ -943,31 +1036,164 @@ class SessionStartRequest(SdkRequest):
         raise ValueError(f"Unsupported proxy type: {base_proxy.type}")  # pyright: ignore[reportUnreachable]
 
 
-class SessionStatusRequest(SdkRequest):
-    session_id: Annotated[
-        str | None,
-        Field(description="The ID of the session. A new session is created when not provided."),
-    ] = None
+class SessionStartRequest(_SessionStartRequest):
+    """Public request for starting a remote Notte browser session."""
 
-    replay: Annotated[
+    auth_retry: int = Field(default=0, ge=0, le=2)
+    block_ads: Annotated[
         bool,
-        Field(description="Whether to include the video replay in the response (`.webp` format)."),
+        Field(
+            description=(
+                "Block ads and trackers in managed browsers using Basic filtering. Set false to disable. "
+                "Does not configure externally supplied CDP browsers."
+            ),
+        ),
+    ] = True
+
+    proxies: Annotated[
+        list[ProxySettings] | bool,
+        Field(
+            description="List of custom proxies to use for the session. If True, the default proxies will be used.",
+        ),
+    ] = True
+
+    advanced_stealth: Annotated[
+        bool,
+        Field(
+            description=(
+                "Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. "
+                "Available to approved workspaces."
+            )
+        ),
     ] = False
 
+    @model_serializer(mode="wrap")
+    def omit_disabled_advanced_stealth(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        data = cast(dict[str, Any], handler(self))
+        if not self.advanced_stealth:
+            data.pop("advanced_stealth", None)
+        if not self.auth_ids:
+            data.pop("auth_retry", None)
+        # Let the API apply its default so ordinary starts also work with older APIs.
+        if "block_ads" not in self.model_fields_set:
+            data.pop("block_ads", None)
+        return data
 
-class SessionListRequestDict(TypedDict, total=False):
+    @model_validator(mode="before")
+    @classmethod
+    def handle_legacy_headless(cls, values: Any) -> Any:
+        """Keep old SDKs working without exposing remote browser launch mode."""
+        if not isinstance(values, dict):
+            return values
+        data = dict(cast(dict[str, Any], values))
+        if "headless" not in data:
+            return data
+        headless = data.pop("headless")
+        if headless is not True:
+            raise ValueError(
+                "Remote `headless=False` is no longer supported. "
+                + "`headless=True` sessions still include session replays and access to the live viewer."
+            )
+        return data
+
+    @model_validator(mode="after")
+    def validate_advanced_stealth_cdp_url(self) -> "SessionStartRequest":
+        if self.advanced_stealth and self.cdp_url is not None:
+            raise ValueError("advanced_stealth cannot be used with an external cdp_url")
+        return self
+
+
+class LocalSessionStartRequest(_SessionStartRequest):
+    """Request for starting a browser session on the local machine."""
+
+    headless: Annotated[bool, Field(description="Whether to run the local browser in headless mode.")] = config.headless
+
+    @model_validator(mode="after")
+    def validate_local_cdp_headless(self) -> "LocalSessionStartRequest":
+        if self.cdp_url is not None and not self.headless:
+            raise ValueError(
+                "When cdp_url is provided, headless must be True. "
+                + "Headed mode (headless=False) only works with a locally launched browser."
+            )
+        return self
+
+
+class ListRequestDict(TypedDict, total=False):
     only_active: bool
     page_size: int
     page: int
 
 
-class SessionListRequest(SdkRequest):
+class ListRequest(SdkRequest):
     only_active: bool = True
     page_size: int = DEFAULT_LIMIT_LIST_ITEMS
     page: int = 1
 
 
+class SessionListRequestDict(ListRequestDict, total=False):
+    """Session list filters.
+
+    Args:
+        include_system: Include internal sessions whose response has ``system_hidden=True``.
+    """
+
+    include_system: bool | None
+
+
+class SessionListRequest(ListRequest):
+    include_system: Annotated[
+        bool | None,
+        Field(description="Include internal sessions whose response has system_hidden=True."),
+    ] = None
+
+
+class ManagedAuthOperation(SdkResponse):
+    id: str
+    connection_id: str
+    session_id: str | None = None
+    source: str
+    status: Literal["pending", "running", "succeeded", "failed", "cancelled"]
+    phase: str
+    attempt: int = 0
+    auth_retry: int = 0
+    authenticated: bool | None = None
+    failure_code: str | None = None
+    error: str | None = None
+    deadline: dt.datetime
+
+
+class SessionAuthResponse(SdkResponse):
+    session_id: str
+    status: Literal["authenticating", "active", "failed", "closed"]
+    operations: list[ManagedAuthOperation] = Field(default_factory=list)
+    error: str | None = None
+
+
+class ManagedAuthRunResponse(SdkResponse):
+    operation_id: str | None = None
+    authenticated: bool | None = None
+    connection_id: str
+    status: str
+    message: str
+
+
+def _drop_duration_format(schema: dict[str, Any]) -> None:
+    """Strip the `duration` format assertion from a `timedelta` field's JSON schema.
+
+    Pydantic annotates `timedelta` as `{"type": "string", "format": "duration"}`.
+    JSON Schema defines that format as the ABNF in RFC 3339 Appendix A, whose
+    `dur-second = 1*DIGIT "S"` rule allows integer components only. We serialize
+    with sub-second precision (`PT41.286072S`), which is valid ISO 8601 but not
+    valid per that grammar, so validators that assert formats reject an otherwise
+    correct payload. The wire value is unchanged; only the format claim is dropped.
+    """
+    _ = schema.pop("format", None)
+
+
 class SessionResponse(SdkResponse):
+    # Preserve unknown response fields so legacy wire metadata such as
+    # ``headless`` remains available without becoming part of current schemas.
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")
     session_id: Annotated[
         str,
         Field(
@@ -994,13 +1220,18 @@ class SessionResponse(SdkResponse):
     created_at: Annotated[dt.datetime, Field(description="Session creation time")]
     closed_at: Annotated[dt.datetime | None, Field(description="Session closing time")] = None
     last_accessed_at: Annotated[dt.datetime, Field(description="Last access time")]
-    duration: Annotated[dt.timedelta, Field(description="Session duration")] = Field(
-        default_factory=lambda: dt.timedelta(0)
-    )
+    duration: Annotated[
+        dt.timedelta,
+        Field(description="Session duration", json_schema_extra=_drop_duration_format),
+    ] = Field(default_factory=lambda: dt.timedelta(0))
     status: Annotated[
-        Literal["active", "closed", "error", "timed_out"],
+        Literal["active", "authenticating", "closed", "error", "timed_out"],
         Field(description="Session status"),
     ]
+    close_reason: Annotated[
+        Literal["manual", "idle_timeout", "max_duration", "error", "unknown"] | None,
+        Field(description="Reason the session closed, if it is no longer active"),
+    ] = None
     steps: Annotated[list[dict[str, Any]], Field(description="Steps of the session", repr=False)] = Field(
         default_factory=lambda: []
     )
@@ -1015,17 +1246,35 @@ class SessionResponse(SdkResponse):
     ] = False
     # remaining args
     browser_type: BrowserType = "chromium"
-    use_file_storage: Annotated[bool, Field(description="Whether FileStorage was attached to the session.")] = False
     network_request_bytes: Annotated[int, Field(description="Total byte usage for network requests.")] = 0
     network_response_bytes: Annotated[int, Field(description="Total byte usage for network responses.")] = 0
     user_agent: Annotated[str | None, Field(description="The user agent to use for the session")] = None
     viewport_width: Annotated[int | None, Field(description="The width of the viewport")] = None
     viewport_height: Annotated[int | None, Field(description="The height of the viewport")] = None
-    headless: Annotated[bool, Field(description="Whether to run the session in headless mode.")] = True
+
+    @property
+    def headless(self) -> bool:
+        """Legacy launch metadata retained for old session-status consumers."""
+        extra = self.__pydantic_extra__
+        return True if extra is None else bool(extra.get("headless", True))
+
     solve_captchas: Annotated[bool | NoneType, Field(description="Whether to solve captchas.")] = None
     cdp_url: Annotated[str | None, Field(description="The URL to connect to the CDP server.")] = None
     viewer_url: Annotated[str | None, Field(description="The remote session viewer URL.")] = None
     web_bot_auth: Annotated[bool, Field(description="Whether to use web bot authentication.")] = False
+    auth_ids: Annotated[
+        list[str],
+        Field(description="Managed Auth connection IDs attached to this session."),
+    ] = []
+    system_hidden: Annotated[
+        bool,
+        Field(
+            description=(
+                "Whether this session is an internal system run. Internal system runs are omitted "
+                "from session.list() unless include_system=True is requested."
+            )
+        ),
+    ] = False
 
     @field_validator("closed_at", mode="before")
     @classmethod
@@ -1053,8 +1302,45 @@ class SessionResponse(SdkResponse):
         return self.idle_timeout_minutes
 
 
+class SessionStopRequestDict(TypedDict, total=False):
+    close_reason: Literal["manual", "error"]
+
+
+class SessionStopRequest(BaseModel):
+    close_reason: Annotated[
+        Literal["manual", "error"],
+        Field(description="Reason supplied by the client when stopping the session"),
+    ] = "manual"
+
+
+class FileSource(StrEnum):
+    USER_UPLOAD = "user_upload"
+    SESSION_DOWNLOAD = "session_download"
+
+
+class SessionFile(BaseModel):
+    id: str
+    session_id: str
+    filename: str
+    mime_type: str
+    size: int
+    checksum: str
+    created_at: dt.datetime
+    expires_at: dt.datetime
+    source: FileSource
+
+
 class ListFilesResponse(SdkResponse):
+    """Legacy file-list response retained for import compatibility."""
+
     files: Annotated[list[FileInfo], Field(description="List of files with metadata")]
+
+
+class SessionFilesPage(SdkResponse):
+    files: Annotated[list[SessionFile], Field(description="List of non-expired session files")]
+    total: int
+    limit: int
+    offset: int
 
 
 class FileUploadResponse(SdkResponse):
@@ -1067,10 +1353,6 @@ class FileLinkResponse(SdkResponse):
 
 class DownloadFileRequest(SdkRequest):
     filename: Annotated[str, Field(description="Name of file to download")]
-
-
-class DownloadsListRequest(SdkRequest):
-    session_id: Annotated[str, Field(description="Session ID")]
 
 
 # ############################################################
@@ -1144,13 +1426,13 @@ class ListCredentialsResponse(SdkResponse):
     credentials: Annotated[list[Credential], Field(description="URLs for which we hold credentials")]
 
 
-class VaultListRequestDict(SessionListRequestDict, total=False):
+class VaultListRequestDict(ListRequestDict, total=False):
     """Request dictionary for listing vaults."""
 
     pass
 
 
-class VaultListRequest(SessionListRequest):
+class VaultListRequest(ListRequest):
     pass
 
 
@@ -1364,6 +1646,45 @@ class ProfileResponse(SdkResponse):
     ] = Field(default_factory=list)
 
 
+class SessionProfileSaveRequestDict(TypedDict, total=False):
+    """Request dictionary for saving a running session into a profile."""
+
+    profile_id: str
+    name: str
+
+
+class SessionProfileSaveRequest(SdkRequest):
+    """Which profile receives a snapshot of a running session's browser state."""
+
+    profile_id: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Existing profile to overwrite with the session's current browser state. "
+                "Omit it together with name to save into the profile the session was started with."
+            ),
+            min_length=1,
+        ),
+    ] = None
+    name: Annotated[
+        str | None,
+        Field(
+            description="Create a new profile with this name and save into it. Mutually exclusive with profile_id.",
+            min_length=1,
+        ),
+    ] = None
+
+    @model_validator(mode="after")
+    def _single_target(self) -> "SessionProfileSaveRequest":
+        if self.profile_id is not None and self.name is not None:
+            raise ValueError("profile_id and name are mutually exclusive")
+        if self.profile_id is not None and not self.profile_id.strip():
+            raise ValueError("profile_id must not be empty")
+        if self.name is not None and not self.name.strip():
+            raise ValueError("name must not be empty")
+        return self
+
+
 class ProfileListRequestDict(TypedDict, total=False):
     """Request dictionary for listing profiles."""
 
@@ -1400,7 +1721,8 @@ class PersonaResponse(SdkResponse):
     status: Annotated[str, Field(description="Status of the persona (active, closed)")]
     first_name: Annotated[str, Field(description="First name of the persona")]
     last_name: Annotated[str, Field(description="Last name of the persona")]
-    email: Annotated[str, Field(description="Email of the persona")]
+    email: Annotated[str, Field(description="Readable email alias of the persona")]
+    internal_email: Annotated[str, Field(description="Internal UUID-backed email address of the persona")]
     vault_id: Annotated[str | None, Field(description="ID of the vault")]
     phone_number: Annotated[str | None, Field(description="Phone number of the persona (optional)")]
 
@@ -1478,13 +1800,13 @@ class DeletePhoneNumberResponse(SdkResponse):
     message: Annotated[str, Field(description="Message of the deletion")] = "Phone number deleted successfully"
 
 
-class PersonaListRequestDict(SessionListRequestDict, total=False):
+class PersonaListRequestDict(ListRequestDict, total=False):
     """Request dictionary for listing personas."""
 
     pass
 
 
-class PersonaListRequest(SessionListRequest):
+class PersonaListRequest(ListRequest):
     pass
 
 
@@ -1556,6 +1878,7 @@ class ScrapeMarkdownParamsDict(TypedDict, total=False):
         scrape_images: Whether to scrape images from the page. Images are not scraped by default.
         only_main_content: Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
         use_link_placeholders: Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations.
+        model: The LLM used to extract structured data when `instructions` or `response_format` is set. Defaults to the platform model.
     """
 
     selector: str | None
@@ -1563,6 +1886,7 @@ class ScrapeMarkdownParamsDict(TypedDict, total=False):
     scrape_images: bool
     only_main_content: bool
     use_link_placeholders: bool
+    model: LlmModel | str | None
 
 
 class ScrapeStructuredParamsDict(TypedDict, total=False):
@@ -1632,6 +1956,13 @@ class ScrapeParams(SdkRequest):
         str | None,
         Field(
             description="Additional instructions to use for the scrape. E.g. 'Extract only the title, date and content of the articles.'"
+        ),
+    ] = None
+
+    model: Annotated[
+        LlmModel | str | None,
+        Field(
+            description="The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model."
         ),
     ] = None
 
@@ -1764,7 +2095,33 @@ class ExecutionRequest(SdkRequest):
 
 ObserveResponse = Observation
 ScrapeResponse = DataSpace
-ExecutionResultResponse = ExecutionResult
+
+
+class CaptchaStatus(BaseModel):
+    """One page-scoped CAPTCHA solve; polling never starts another attempt."""
+
+    captcha_id: str
+    page_id: str
+    generation: int
+    state: Literal["solving", "solved", "failed", "cancelled"]
+    retry_after_ms: int = 1000
+    message: str = ""
+    cancel_reason: str | None = None
+
+
+class ExecutionResultResponse(ExecutionResult):
+    captcha: CaptchaStatus | None = None
+    action_executed: bool | None = None
+    code: str | None = None
+
+
+class CaptchaExecuteParams(BaseModel):
+    captcha_id: str | None = None
+    captcha_timeout_seconds: float = Field(default=180, gt=0, allow_inf_nan=False)
+    target_page_id: str | None = None
+    target_generation: int | None = None
+
+
 # ############################################################
 # Agent endpoints
 # ############################################################
@@ -1937,7 +2294,7 @@ class AgentStatusRequest(AgentSessionRequest):
     pass
 
 
-class AgentListRequestDict(SessionListRequestDict, total=False):
+class AgentListRequestDict(ListRequestDict, total=False):
     """Request dictionary for listing agents.
 
     Args:
@@ -1950,7 +2307,7 @@ class AgentListRequestDict(SessionListRequestDict, total=False):
     only_saved: bool
 
 
-class AgentListRequest(SessionListRequest):
+class AgentListRequest(ListRequest):
     only_saved: bool = False
 
 
@@ -2048,7 +2405,7 @@ class GetFunctionRequestDict(TypedDict, total=False):
     version: str | None
 
 
-class ListFunctionsRequestDict(SessionListRequestDict, total=False):
+class ListFunctionsRequestDict(ListRequestDict, total=False):
     """Request dictionary for listing workflows.
 
     Args:
@@ -2058,6 +2415,9 @@ class ListFunctionsRequestDict(SessionListRequestDict, total=False):
     """
 
     pass
+
+
+FunctionRuntime = Literal["standard", "extended"]
 
 
 class RunFunctionRequestDict(TypedDict, total=False):
@@ -2071,6 +2431,7 @@ class RunFunctionRequestDict(TypedDict, total=False):
     function_id: str
     variables: dict[str, Any]
     stream: bool
+    runtime: FunctionRuntime | None
 
 
 class RunFunctionRequest(SdkRequest):
@@ -2079,6 +2440,9 @@ class RunFunctionRequest(SdkRequest):
         Field(description="The ID of the function to run", validation_alias=AliasChoices("workflow_id", "function_id")),
     ]
     variables: Annotated[dict[str, Any], Field(description="The variables to run the workflow with")]
+    runtime: Annotated[
+        FunctionRuntime | None, Field(description="Override the saved function runtime; omit to inherit its default")
+    ] = None
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = True
 
 
@@ -2106,6 +2470,7 @@ class ForkFunctionRequest(SdkRequest):
 
 
 class GetFunctionResponse(SdkResponse):
+    default_runtime: FunctionRuntime = "standard"
     function_id: Annotated[
         str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
     ]
@@ -2160,7 +2525,7 @@ class DeleteFunctionResponse(SdkResponse):
     message: Annotated[str, Field(description="The message of the deletion")]
 
 
-class ListFunctionsRequest(SessionListRequest):
+class ListFunctionsRequest(ListRequest):
     pass
 
 
@@ -2203,6 +2568,9 @@ class StartFunctionRunRequest(SdkRequest):
         ),
     ] = None
     variables: Annotated[dict[str, Any] | None, Field(description="The variables to run the function with")] = None
+    runtime: Annotated[
+        FunctionRuntime | None, Field(description="Override the saved function runtime; omit to inherit its default")
+    ] = None
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = False
 
     @computed_field
@@ -2270,6 +2638,38 @@ class GetFunctionRunResponse(SdkResponse):
     )
     result: Annotated[str | None, Field(description="The result of the workflow run (if any)")] = None
     local: Annotated[bool, Field(description="Whether the workflow has been run locally or on the cloud")] = False
+
+    @computed_field
+    @property
+    def workflow_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_id
+
+    @computed_field
+    @property
+    def workflow_run_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_run_id
+
+
+class FunctionRunListItemResponse(SdkResponse):
+    """Lightweight function run metadata returned by list endpoints."""
+
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ]
+    created_at: dt.datetime
+    updated_at: dt.datetime
+    status: FunctionRunStatus
+    session_id: Annotated[str | None, Field(description="The ID of the session")] = None
+    local: Annotated[bool, Field(description="Whether the function has been run locally or on the cloud")] = False
 
     @computed_field
     @property
@@ -2354,16 +2754,16 @@ class UpdateFunctionRunResponse(SdkResponse):
         return self.function_run_id
 
 
-class ListFunctionRunsRequestDict(SessionListRequestDict, total=False):
+class ListFunctionRunsRequestDict(ListRequestDict, total=False):
     pass
 
 
-class ListFunctionRunsRequest(SessionListRequest):
+class ListFunctionRunsRequest(ListRequest):
     pass
 
 
 class ListFunctionRunsResponse(SdkResponse):
-    items: Annotated[list[GetFunctionRunResponse], Field(description="The function runs")]
+    items: Annotated[list[FunctionRunListItemResponse], Field(description="The function runs")]
     page: Annotated[int, Field(description="Current page number")]
     page_size: Annotated[int, Field(description="Number of items per page")]
     has_next: Annotated[bool, Field(description="Whether there are more pages")]

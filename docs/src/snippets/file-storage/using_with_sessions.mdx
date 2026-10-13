@@ -5,12 +5,8 @@
 from notte_sdk import NotteClient
 
 client = NotteClient()
-storage = client.FileStorage()
-
-# Upload file
-storage.upload("data.csv")
-
-with client.Session(storage=storage) as session:
+with client.Session() as session:
+    session.storage.upload("data.csv")
     session.execute(type="goto", url="https://example.com/import")
 
     # Upload using the upload_file action
@@ -19,6 +15,6 @@ with client.Session(storage=storage) as session:
     session.execute(type="click", selector="button.submit")
 
 # Download any files
-for file in storage.list_downloaded_files():
-    storage.download(file_name=file.name, local_dir="./results")
+for file in session.storage.list(source="session_download").files:
+    session.storage.download(file.id, local_dir="./results")
 ```

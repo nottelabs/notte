@@ -1,5 +1,5 @@
 # @sniptest filename=graceful_errors.py
-# @sniptest show=13-19
+# @sniptest show=19-24
 from notte_sdk import NotteClient
 
 client = NotteClient()

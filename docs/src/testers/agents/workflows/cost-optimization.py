@@ -4,13 +4,13 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 with client.Session() as session:
-    # One-time: Use agent to solve the task ($0.20)
+    # One-time: use an agent to solve the task (LLM reasoning on every step)
     agent = client.Agent(session=session)
     result = agent.run(task="Complex data extraction")
 
-    # Recurring: Use function ($0.05 per run)
+    # Recurring: replay the steps as a function (no LLM reasoning)
     function = agent.workflow.create_function()
 
-    # Run 100 times - save $15 vs running agent each time
+    # Run it as often as you need
     for i in range(100):
         function.run()

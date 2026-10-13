@@ -45,10 +45,6 @@ The following snippet shows how to manage your vault using the Notte Python SDK.
 
 - 🔒 Credentials are never stored in plain text
 - 🔒 No credential data is sent to LLM providers
-- 🔒 All credential operations are performed locally
+- 🔒 Credentials are substituted into the page by the vault, outside the LLM context
 - 🔒 Access to credentials is strictly controlled and logged
 - 🔒 Open-source implementation for transparency
-
-<Tip>
-The Notte Vault system is built on top of [Infisical](https://github.com/Infisical/infisical), an open-source secrets management platform. You can verify our security implementation by checking our open-source repository.
-</Tip>

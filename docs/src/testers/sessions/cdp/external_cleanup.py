@@ -1,5 +1,5 @@
 # @sniptest filename=external_cleanup.py
-# @sniptest show=14-26
+# @sniptest show=17-31
 from notte_sdk import NotteClient
 
 

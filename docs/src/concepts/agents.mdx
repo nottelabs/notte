@@ -70,16 +70,18 @@ This cycle repeats until:
 
 ## Agents vs Scripted Automation
 
-Both agents and scripted automation run on [browser sessions](/concepts/sessions)—the cloud browser infrastructure. The difference is how you control what happens in that session.
+Both agents and scripted automation run on [browser sessions](/concepts/sessions), the cloud browser infrastructure. The difference is how you control what happens in that session.
 
 | Aspect | Scripted Automation | Agent |
 |--------|---------------------|-------|
 | **Control** | You write the code | AI decides each step |
 | **Flexibility** | Fixed workflow | Adapts to changes |
 | **Speed** | Fast (direct execution) | Slower (LLM reasoning per step) |
-| **Cost** | Browser minutes only | Browser minutes + LLM calls |
+| **Cost** | Browser time only | Browser time + LLM calls |
 | **Reliability** | Deterministic | Can vary based on page state |
 | **Use Case** | Known, stable workflows | Unknown or dynamic workflows |
+
+Browser sessions are billed per browser hour. See [Pricing](/pricing) for current rates.
 
 **Use scripted automation when:**
 - You know the exact steps to take
@@ -161,7 +163,7 @@ Agents can fail for various reasons. Always check the result:
   <Card title="Structured Output" icon="brackets-curly" href="/features/agents/structured-output">
     Get typed responses from agents
   </Card>
-  <Card title="Convert to Functions" icon="flower" href="/features/agents/workflows">
+  <Card title="Convert to Functions" icon="/logo/square-function.svg" href="/features/agents/workflows">
     Turn agent runs into reusable code
   </Card>
 </CardGroup>

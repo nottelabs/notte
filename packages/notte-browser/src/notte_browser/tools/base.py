@@ -2,7 +2,7 @@ import asyncio
 import datetime as dt
 from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Mapping, Sequence
-from typing import Annotated, Any, Callable, TypeVar, Unpack, final
+from typing import Annotated, Any, Callable, ClassVar, TypeVar, Unpack, final
 
 import markdownify  # type: ignore[import]
 from notte_core.actions import EmailReadAction, SmsReadAction, ToolAction
@@ -24,7 +24,7 @@ ToolExecutionFuncSelf = Callable[[Unpack[ToolInputs[TToolAction]]], Awaitable[Ex
 
 
 class BaseTool(ABC):
-    _tools: Mapping[type[ToolAction], ToolExecutionFunc[ToolAction]] = {}  # type: ignore
+    _tools: ClassVar[Mapping[type[ToolAction], ToolExecutionFunc[ToolAction]]] = {}  # type: ignore
 
     @abstractmethod
     def instructions(self) -> str:

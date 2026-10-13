@@ -1,0 +1,53 @@
+---
+title: Google ADK
+description: Give Google ADK agents a browser with the Notte MCP server
+---
+import GoogleAdk from '/snippets/integrations/mcp/google_adk.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[Google ADK](https://google.github.io/adk-docs/) loads external tools through `McpToolset`. Point it at the [Notte MCP server](/mcp-server) and your agent gets the full Notte toolset - sessions, browser agents, scraping, functions, vaults and personas - with no wrapper code to maintain.
+
+## Prerequisites
+
+- A Notte API key ([get one here](https://console.notte.cc))
+- Credentials for the model your ADK agent uses
+
+## 1. Install the SDKs
+
+```bash
+pip install google-adk
+```
+
+## 2. Attach the Notte MCP server
+
+Notte's MCP server speaks streamable HTTP and authenticates with a bearer token:
+
+<GoogleAdk />
+
+Set the following environment variable in your `.env` file:
+
+```bash
+NOTTE_API_KEY=your-notte-api-key
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="MCP Server" icon="plug" href="/mcp-server">
+    Every tool the Notte MCP server exposes
+  </Card>
+
+  <Card title="Browser Agents" icon="robot" href="/concepts/agents">
+    Hand a whole task to a Notte agent
+  </Card>
+
+  <Card title="Vaults" icon="key" href="/concepts/vaults">
+    Let agents log in without seeing credentials
+  </Card>
+
+  <Card title="Functions" icon="/logo/square-function.svg" href="/concepts/functions">
+    Turn a working run into a callable function
+  </Card>
+</CardGroup>

@@ -25,13 +25,13 @@ async def locale_element_in_iframes(page: Page, selectors: NodeSelectors) -> Fra
 async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
     frame: Page | FrameLocator = page
 
-    if selectors.playwright_selector is not None:
+    if selectors.playwright_selector:
         return page.locator(selectors.playwright_selector)
 
     if selectors.in_iframe:
         frame = await locale_element_in_iframes(page, selectors)
     # regular case, locate element + scroll into view if needed
-    if selectors.playwright_selector is not None:
+    if selectors.playwright_selector:
         # for playwright we wait for the element to be visible
         locator = frame.locator(selectors.playwright_selector)
         if selectors.playwright_selector in DEFAULT_RAW_FILE_SELECTORS:
@@ -41,14 +41,18 @@ async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
         except PlaywrightTimeoutError as e:
             raise InvalidLocatorRuntimeError("Element is not visible", selector=selectors.playwright_selector) from e
 
-    for selector in selectors.selectors():
+    candidate_selectors = selectors.selectors()
+    if len(candidate_selectors) == 0:
+        raise InvalidLocatorRuntimeError("No valid selector available", selector="")
+
+    for selector in candidate_selectors:
         locator = frame.locator(selector)
         count = await locator.count()
         if count > 1:
             logger.debug(f"Found {count} elements for '{selector}'. Check out the dom tree for more details.")
         elif count == 1:
             return locator
-    raise InvalidLocatorRuntimeError("count=0 for selector", selector=selectors.selectors()[0])
+    raise InvalidLocatorRuntimeError("count=0 for selector", selector=candidate_selectors[0])
 
 
 def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:

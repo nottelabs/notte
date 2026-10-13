@@ -6,10 +6,8 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-function = client.Function(
-    function_id="func_abc123",
-    decryption_key="your-decryption-key",  # Required for downloading
-)
+# Notte-managed functions also need decryption_key="..."
+function = client.Function(function_id="func_abc123")
 
 # Download function code
 code = function.download()

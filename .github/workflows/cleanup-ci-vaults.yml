@@ -1,0 +1,75 @@
+name: cleanup-ci-vaults
+
+# Manual only. Prefer deleting a single run prefix; optional orphan-defaults for backlog.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "prefix = one workflow run; orphan-defaults = drain leaked name=default vaults"
+        required: true
+        default: "prefix"
+        type: choice
+        options:
+          - "prefix"
+          - "orphan-defaults"
+      prefix:
+        description: "Required for mode=prefix (e.g. ci-32862931541-execution)"
+        required: false
+        type: string
+      min_age_hours:
+        description: "For orphan-defaults: only delete default vaults older than this many hours"
+        required: false
+        default: "2"
+        type: string
+      dry_run:
+        description: "List vaults without deleting"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  cleanup:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 30
+    env:
+      DISABLE_TELEMETRY: "true"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version-file: ".python-version"
+
+      - name: Install notte-sdk
+        run: uv pip install --system notte-sdk
+
+      - name: Cleanup vaults
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          MODE: ${{ inputs.mode }}
+          PREFIX: ${{ inputs.prefix }}
+          MIN_AGE_HOURS: ${{ inputs.min_age_hours }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          ARGS=()
+          if [ "$DRY_RUN" = "true" ]; then
+            ARGS+=(--dry-run)
+          fi
+          if [ "$MODE" = "orphan-defaults" ]; then
+            ARGS+=(--orphan-defaults --min-age-hours "$MIN_AGE_HOURS")
+          else
+            if [ -z "$PREFIX" ]; then
+              echo "prefix is required when mode=prefix"
+              exit 1
+            fi
+            ARGS+=(--prefix "$PREFIX")
+          fi
+          python scripts/cleanup_ci_vaults.py "${ARGS[@]}"

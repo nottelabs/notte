@@ -1,5 +1,4 @@
 # @sniptest filename=nested_structures.py
-# @sniptest show=4-26
 
 from notte_sdk import NotteClient
 from pydantic import BaseModel

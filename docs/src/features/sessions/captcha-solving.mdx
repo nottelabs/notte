@@ -8,16 +8,18 @@ import HeadlessDebug from "/snippets/sessions/captcha/headless_debug.mdx";
 import CombineStealth from "/snippets/sessions/captcha/combine_stealth.mdx";
 import EnsureRequirements from "/snippets/sessions/captcha/ensure_requirements.mdx";
 import TimeoutHandling from "/snippets/sessions/captcha/timeout_handling.mdx";
+import RecaptchaSolveAction from "/snippets/sessions/captcha/recaptcha_solve_action.mdx";
+import TextCaptchaSolveAction from "/snippets/sessions/captcha/text_captcha_solve_action.mdx";
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Notte can automatically detect and solve captchas including reCAPTCHA v2, reCAPTCHA v3, and hCaptcha during your browser automation.
+Notte can automatically detect and solve captchas including reCAPTCHA v2, hCaptcha, Cloudflare Turnstile, press-and-hold challenges, and simple text challenges during your browser automation. Captcha solving is on by default (`solve_captchas=True`).
 
 
 ## Quick Start
 
-Enable captcha solving when creating a session:
+Captcha solving is enabled by default. You can set it explicitly when creating a session:
 
 <CodeGroup>
   ```python Python
@@ -37,8 +39,10 @@ Enable captcha solving when creating a session:
 Notte automatically detects and solves:
 
 - ✅ **reCAPTCHA v2** - Checkbox and image challenges
-- ✅ **reCAPTCHA v3** - Invisible captchas
 - ✅ **hCaptcha** - Checkbox and image challenges
+- ✅ **Cloudflare Turnstile**
+- ✅ **Press-and-hold challenges**
+- ✅ **Text CAPTCHAs** - Simple "read the characters and type them" challenges
 
 ## How It Works
 
@@ -49,36 +53,6 @@ When captcha solving is enabled:
 3. **Continuation** - Your automation continues seamlessly
 
 No additional code is needed - captchas are solved automatically when encountered.
-
-## Complete Example
-
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  with client.Session(
-      solve_captchas=True,
-      headless=False  # Watch it solve captchas
-  ) as session:
-      page = session.page
-
-      # Navigate to a site with captcha
-      page.goto("https://example.com/login")
-
-      # Fill login form
-      page.fill('input[name="email"]', "user@example.com")
-      page.fill('input[name="password"]', "password")
-
-      # Click submit - captcha will be solved automatically
-      page.click('button[type="submit"]')
-
-      # Wait for successful login
-      page.wait_for_url("**/dashboard")
-      print("Logged in successfully!")
-  ```
-</CodeGroup>
 
 ## Captcha + Proxies
 
@@ -114,7 +88,7 @@ Check if captcha solving failed:
 
 <MonitorFailures />
 
-### 3. Use Headless=False for Debugging
+### 3. Use the Live Viewer for Debugging
 
 Watch captcha solving in action:
 
@@ -126,17 +100,55 @@ Use stealth features for better success rates:
 
 <CombineStealth />
 
+## Examples
+
+### reCAPTCHA
+
+For reCAPTCHA challenges, use the `captcha_solve` action with `captcha_type="recaptcha"`. This example comes from the [reCAPTCHA template](https://www.notte.cc/templates/captcha-bot-handling/basic-recaptcha).
+
+<RecaptchaSolveAction />
+
+### Waiting for a solve in Python
+
+The Python SDK polls one ongoing solve through short HTTP requests. Repeated
+`captcha_solve` calls join that solve or return its completed result. Configure the
+total wait separately from ordinary action timeouts:
+
+```python
+client = notte.NotteClient(captcha_timeout_seconds=180)
+with client.Session(solve_captchas=True) as session:
+    session.execute(type="goto", url="https://www.google.com/recaptcha/api2/demo")
+    session.execute(type="captcha_solve", captcha_type="recaptcha")
+```
+
+The default CAPTCHA wait is three minutes. A terminal solver failure, page change,
+or expired wait budget follows the usual `raise_on_failure` behavior. Polling does
+not restart the solve or extend the session's maximum lifetime.
+
+SDK actions blocked before execution wait for the CAPTCHA and then retry. If an
+action already executed and triggered a CAPTCHA, the SDK waits without replaying
+it. This coordination applies to Python SDK actions; direct Playwright/CDP calls
+do not participate. It requires a backend version that supports CAPTCHA polling.
+
+### Text CAPTCHAs
+
+Text CAPTCHAs are the old-school challenges that show distorted letters, numbers, or a short phrase and ask the user to type the answer into a field. For these challenges, use `captcha_type="text"`. This example comes from the [text CAPTCHA template](https://www.notte.cc/templates/captcha-bot-handling/basic-text-captcha).
+
+<TextCaptchaSolveAction />
+
 ## Limitations
 
 ### What CAPTCHA Solving Can Do:
 - ✅ Solve most reCAPTCHA v2 challenges
-- ✅ Solve reCAPTCHA v3 automatically
 - ✅ Solve most hCaptcha challenges
+- ✅ Solve Cloudflare Turnstile and press-and-hold challenges
+- ✅ Solve simple text CAPTCHA challenges
 - ✅ Work with residential proxies
-- ✅ Work in headless and non-headless mode
+- ✅ Work in remote browser sessions
 
 ### What It Cannot Do:
 - ❌ Solve 100% of captchas (some are unsolvable)
+- ❌ Reliably solve heavily distorted or ambiguous text challenges
 - ❌ Solve custom/proprietary captcha systems
 - ❌ Bypass all bot detection (combine with stealth)
 
@@ -145,7 +157,7 @@ Use stealth features for better success rates:
 ### Issue: Captchas Not Being Solved
 
 **Possible causes:**
-- `solve_captchas=True` not set
+- `solve_captchas` was set to `False`
 - Captcha type not supported
 - Site has additional bot detection
 
@@ -177,7 +189,7 @@ Test captcha solving on demo sites:
 
   with client.Session(
       solve_captchas=True,
-      headless=False
+      open_viewer=True
   ) as session:
       page = session.page
 
@@ -188,15 +200,11 @@ Test captcha solving on demo sites:
   ```
 </CodeGroup>
 
-## Pricing
-
-CAPTCHA solving incurs additional costs based on the number of captchas solved. Check your plan for details.
-
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Browser Types" icon="browser" href="/features/sessions/browser-types">
-    Learn about Chrome and other browsers
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    All session configuration options
   </Card>
 
   <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">

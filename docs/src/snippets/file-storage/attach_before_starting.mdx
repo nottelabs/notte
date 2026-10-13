@@ -1,16 +1,25 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/file-storage/attach_before_starting.py */}
 
+<CodeGroup>
+
 ```python attach_before_starting.py
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
-# Correct
-storage = client.FileStorage()
-storage.upload("file.pdf")
-
-with client.Session(storage=storage) as session:
-    # Storage is available
-    pass
+with client.Session() as session:
+    # Storage is always available and scoped to the session.
+    session.storage.upload("file.pdf")
 ```
+
+```typescript attach_before_starting.ts
+const client = new NotteClient();
+const storage = client.FileStorage();
+await client.Session({ storage }).use(async session => {
+  // Storage is always available and scoped to the session.
+  await storage.upload('file.pdf');
+});
+```
+
+</CodeGroup>

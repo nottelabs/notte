@@ -47,11 +47,15 @@ Notte works with both sync and async Playwright:
 
 <PlaywrightAsync />
 
-## Advanced: Multiple Pages and Contexts
+## Advanced: Multiple Pages
 
-Create additional pages or contexts using Playwright:
+Open additional pages in the session's existing browser context:
 
 <PlaywrightMultiplePages />
+
+<Note>
+  Each Notte session runs a single browser context. Creating new contexts with `browser.new_context()` is not supported over the CDP connection; use `browser.contexts[0]` and open pages in it. To run with different settings (viewport, user agent), start a separate session with those options.
+</Note>
 
 ## Network Interception
 
@@ -75,7 +79,7 @@ Always use context managers for both Notte and Playwright to ensure proper clean
 
 ### 2. Prefer Notte's Built-in Page
 
-For simple automation, use `session.page` directly. Only connect Playwright when you need advanced features like network interception or custom contexts.
+For simple automation, use `session.page` directly. Only connect Playwright when you need advanced features like network interception or event monitoring.
 
 ### 3. Session Timeout
 
@@ -95,11 +99,24 @@ Use Playwright directly when you need:
 
 - **Network interception**: Block resources, modify requests/responses
 - **Advanced event monitoring**: Console logs, network events, page errors
-- **Multiple contexts**: Separate browser contexts with different settings
-- **Custom browser settings**: Specific viewport, user agent, or permissions per context
+- **Multiple pages**: Drive several tabs of the same session in parallel
 - **Playwright's testing utilities**: Screenshots with full-page scrolling, PDF generation, etc.
 
 For most automation tasks, `session.page` (which is already Playwright-compatible) is sufficient.
+
+## Migrating from Selenium
+
+Notte sessions are driven over CDP, so Playwright (or `session.page`, which is already a Playwright page) is the recommended way to port existing Selenium scripts. Here is a quick comparison:
+
+| Selenium | Playwright (Notte) |
+|----------|-------------------|
+| `driver.get(url)` | `page.goto(url)` |
+| `driver.find_element(By.CSS_SELECTOR, "button")` | `page.locator("button")` |
+| `element.click()` | `page.click("button")` |
+| `element.send_keys("text")` | `page.fill("input", "text")` |
+| `driver.execute_script("...")` | `page.evaluate("...")` |
+| `WebDriverWait(driver, 10).until(...)` | `page.wait_for_selector("...")` |
+| `driver.save_screenshot("path")` | `page.screenshot(path="path")` |
 
 ## Next Steps
 
@@ -114,9 +131,5 @@ For most automation tasks, `session.page` (which is already Playwright-compatibl
 
   <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
     Configure session settings and features
-  </Card>
-
-  <Card title="External Providers" icon="plug" href="/features/sessions/external-providers">
-    Connect to Kernel.sh and other providers
   </Card>
 </CardGroup>

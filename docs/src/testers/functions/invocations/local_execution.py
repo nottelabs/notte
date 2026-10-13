@@ -3,11 +3,8 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-# Load function with decryption key for local execution
-function = client.Function(
-    function_id="func_abc123",
-    decryption_key="your-key",  # Required for local execution
-)
+# Load the function (Notte-managed functions also need decryption_key="...")
+function = client.Function(function_id="func_abc123")
 
 # Runs on your machine
 result = function.run(url="https://example.com", local=True)

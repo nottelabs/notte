@@ -1,4 +1,9 @@
+from typing import TYPE_CHECKING, Any, cast
+
 from notte_core.common.config import BrowserBackend, config
+
+if TYPE_CHECKING:
+    from patchright.async_api import Frame as PatchrightFrame
 from notte_core.common.logging import logger
 
 match config.browser_backend:
@@ -9,7 +14,9 @@ match config.browser_backend:
             CDPSession,
             ConsoleMessage,
             Error,
+            Frame,
             FrameLocator,
+            JSHandle,
             Locator,
             Page,
             Playwright,
@@ -26,7 +33,9 @@ match config.browser_backend:
             CDPSession,
             ConsoleMessage,
             Error,
+            Frame,
             FrameLocator,
+            JSHandle,
             Locator,
             Page,
             Playwright,
@@ -84,6 +93,14 @@ def getPlaywrightOrPatchrightError() -> tuple[type[Exception], type[Exception]] 
         raise RuntimeError("Unexpected number of errors")
 
 
+async def evaluate_in_main_world(frame: Frame, expression: str) -> Any:
+    """Evaluate JavaScript in a frame's page world for either browser backend."""
+    if config.browser_backend == BrowserBackend.PATCHRIGHT:
+        patchright_frame = cast("PatchrightFrame", frame)
+        return await patchright_frame.evaluate(expression, isolated_context=False)
+    return await frame.evaluate(expression)
+
+
 __all__ = [
     "Browser",
     "BrowserContext",
@@ -91,10 +108,13 @@ __all__ = [
     "async_playwright",
     "TimeoutError",
     "Error",
+    "Frame",
     "Locator",
     "Response",
     "Page",
     "CDPSession",
     "FrameLocator",
+    "JSHandle",
     "ConsoleMessage",
+    "evaluate_in_main_world",
 ]

@@ -1,0 +1,12 @@
+[environment]
+python-version = "3.11"
+extra-paths = [
+  "packages/notte-sdk/src",
+  "packages/notte-core/src",
+  "packages/notte-browser/src",
+  "packages/notte-agent/src",
+  "packages/notte-llm/src",
+]
+
+[terminal]
+# reveal_type is the assertion mechanism for these cases

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
-import json
 import re
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, ClassVar, Literal, Unpack, overload
 
+import requests
 from litellm import BaseModel
 from notte_core import enable_nest_asyncio
 from notte_core.actions import (
@@ -33,6 +33,7 @@ from notte_core.actions.typedicts import (
     CompletionActionDict,
     DownloadFileActionDict,
     EmailReadActionDict,
+    EmailVerificationReadActionDict,
     EvaluateJsActionDict,
     FallbackFillActionDict,
     FillActionDict,
@@ -62,8 +63,14 @@ from notte_core.common.logging import logger, timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault, LocatorAttributes
+from notte_core.data.fetch import FetchData, build_fetch_script, response_from_evaluated
 from notte_core.data.space import DataSpace, ImageData, StructuredData, TBaseModel
-from notte_core.errors.actions import InvalidActionError
+from notte_core.errors.actions import (
+    ActionExecutionError,
+    EvaluateJsNoDataError,
+    EvaluateJsResultLimitError,
+    InvalidActionError,
+)
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.processing import CredentialFieldValidationError
 from notte_core.errors.provider import RateLimitError
@@ -76,13 +83,13 @@ from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_llm.service import LLMService
 from notte_sdk.endpoints.personas import BasePersona
 from notte_sdk.types import (
+    LocalSessionStartRequest,
+    LocalSessionStartRequestDict,
     PaginationParams,
     PaginationParamsDict,
     ScrapeMarkdownParamsDict,
     ScrapeParams,
     ScrapeParamsDict,
-    SessionStartRequest,
-    SessionStartRequestDict,
 )
 from pydantic import RootModel, ValidationError
 from typing_extensions import override
@@ -101,6 +108,15 @@ from notte_browser.errors import (
     PlaywrightError,
     ScrapeFailedError,
 )
+from notte_browser.evaluation_result import (
+    PAGE_RESULT_GUARD,
+    InvalidPagePayloadError,
+    decode_page_result,
+    format_evaluation_result,
+    new_guard_token,
+    page_expression,
+    page_limit_reason,
+)
 from notte_browser.playwright import PlaywrightManager
 from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import NodeResolutionPipe
@@ -114,6 +130,10 @@ enable_nest_asyncio()
 
 # TODO: ACT callback
 class NotteSession(AsyncResource, SyncResource):
+    # Screenshots appended to the trajectory are best-effort and must not keep a
+    # completed action request open when Chromium's compositor stops responding.
+    POST_ACTION_SCREENSHOT_TIMEOUT_SECONDS: ClassVar[float] = 5.0
+
     observe_max_retry_after_snapshot_update: ClassVar[int] = 2
     nb_seconds_between_snapshots_check: ClassVar[int] = 10
 
@@ -130,13 +150,16 @@ class NotteSession(AsyncResource, SyncResource):
         persona: BasePersona | None = None,
         window: BrowserWindow | None = None,
         keep_alive: bool = False,
-        **data: Unpack[SessionStartRequestDict],
+        **data: Unpack[LocalSessionStartRequestDict],
     ) -> None:
         if storage is not None and storage.is_remote:
             raise ValueError(
                 "RemoteFileStorage is not supported for local sessions. Use a local storage implementation instead."
             )
-        self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
+        # CAPTCHA solving is a cloud SDK capability. Keep local sessions
+        # runnable by default while preserving an explicit opt-in error.
+        _ = data.setdefault("solve_captchas", False)
+        self._request: LocalSessionStartRequest = LocalSessionStartRequest.model_validate(data)
         if self._request.solve_captchas and not CaptchaHandler.is_available:
             raise CaptchaSolverNotAvailableError()
         self.screenshot_type: ScreenshotType = self._request.screenshot_type
@@ -186,7 +209,7 @@ class NotteSession(AsyncResource, SyncResource):
         await self.window.set_cookies(cookies=cookies, cookie_path=cookie_file)
 
     @staticmethod
-    def script(storage: BaseStorage | None = None, **data: Unpack[SessionStartRequestDict]) -> NotteSession:
+    def script(storage: BaseStorage | None = None, **data: Unpack[LocalSessionStartRequestDict]) -> NotteSession:
         return NotteSession(storage=storage, raise_on_failure=True, perception_type="fast", **data)
 
     @track_usage("local.session.cookies.get")
@@ -335,6 +358,20 @@ class NotteSession(AsyncResource, SyncResource):
         await self.trajectory.append(screenshot)
         return screenshot
 
+    async def _capture_post_action_screenshot(self) -> None:
+        try:
+            _ = await asyncio.wait_for(
+                self.ascreenshot(),
+                timeout=self.POST_ACTION_SCREENSHOT_TIMEOUT_SECONDS,
+            )
+        except TimeoutError:
+            logger.warning(
+                "Post-action screenshot timed out after "
+                + f"{self.POST_ACTION_SCREENSHOT_TIMEOUT_SECONDS:.1f}s; returning the action result without it"
+            )
+        except Exception as e:
+            logger.warning(f"Failed to capture post-action screenshot: {e}")
+
     def screenshot(
         self,
     ) -> Screenshot:
@@ -463,6 +500,7 @@ class NotteSession(AsyncResource, SyncResource):
         only_unread: bool | None = None,
         time_window: dt.timedelta | None = None,
         limit: int | None = None,
+        raise_on_failure: bool = False,
     ) -> ExecutionResult:
         if not self._has_any_persona_tool():
             raise ValueError(
@@ -475,7 +513,9 @@ class NotteSession(AsyncResource, SyncResource):
             payload["timedelta"] = time_window
         if limit is not None:
             payload["limit"] = limit
-        return await self.aexecute(**payload)
+        # reads are queries: a tool reporting "nothing yet" is data, not an error,
+        # so polling `while not session.read_emails().success` keeps working
+        return await self.aexecute(raise_on_failure=raise_on_failure, **payload)
 
     def read_emails(
         self,
@@ -483,8 +523,13 @@ class NotteSession(AsyncResource, SyncResource):
         only_unread: bool | None = None,
         time_window: dt.timedelta | None = None,
         limit: int | None = None,
+        raise_on_failure: bool = False,
     ) -> ExecutionResult:
-        return asyncio.run(self.aread_emails(only_unread=only_unread, time_window=time_window, limit=limit))
+        return asyncio.run(
+            self.aread_emails(
+                only_unread=only_unread, time_window=time_window, limit=limit, raise_on_failure=raise_on_failure
+            )
+        )
 
     async def aread_sms(
         self,
@@ -492,6 +537,7 @@ class NotteSession(AsyncResource, SyncResource):
         only_unread: bool | None = None,
         time_window: dt.timedelta | None = None,
         limit: int | None = None,
+        raise_on_failure: bool = False,
     ) -> ExecutionResult:
         if not self._has_any_persona_tool():
             raise ValueError(
@@ -504,7 +550,7 @@ class NotteSession(AsyncResource, SyncResource):
             payload["timedelta"] = time_window
         if limit is not None:
             payload["limit"] = limit
-        return await self.aexecute(**payload)
+        return await self.aexecute(raise_on_failure=raise_on_failure, **payload)
 
     def read_sms(
         self,
@@ -512,8 +558,13 @@ class NotteSession(AsyncResource, SyncResource):
         only_unread: bool | None = None,
         time_window: dt.timedelta | None = None,
         limit: int | None = None,
+        raise_on_failure: bool = False,
     ) -> ExecutionResult:
-        return asyncio.run(self.aread_sms(only_unread=only_unread, time_window=time_window, limit=limit))
+        return asyncio.run(
+            self.aread_sms(
+                only_unread=only_unread, time_window=time_window, limit=limit, raise_on_failure=raise_on_failure
+            )
+        )
 
     async def locate(self, action: BaseAction) -> Locator | None:
         action_with_selector = await NodeResolutionPipe.forward(action, self._snapshot)
@@ -625,6 +676,10 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     async def aexecute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailReadActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def aexecute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailVerificationReadActionDict]
     ) -> ExecutionResult: ...
     @overload
     async def aexecute(
@@ -747,30 +802,63 @@ class NotteSession(AsyncResource, SyncResource):
                         is_already_function = bool(re.match(r"^(?:\(|function\b|async\s+(?:function\b|\())", stripped))
                         needs_wrap = bool(re.search(r"\breturn\b", stripped)) and not is_already_function
                         js_code = f"(() => {{\n{code}\n}})()" if needs_wrap else code
+                        guard_token = new_guard_token()
                         try:
                             evaluate_kwargs: dict[str, bool] = {}
                             if config.browser_backend == BrowserBackend.PATCHRIGHT:
                                 evaluate_kwargs["isolated_context"] = False
+                            # The guard measures the value inside the page and
+                            # throws past the budget, so an oversized result is
+                            # never serialized by the browser, decoded by the
+                            # driver, or rebuilt as Python objects.
                             result = await asyncio.wait_for(
-                                self.window.page.evaluate(js_code, **evaluate_kwargs),
+                                self.window.page.evaluate(
+                                    PAGE_RESULT_GUARD,
+                                    [
+                                        page_expression(js_code),
+                                        config.evaluate_js_max_result_bytes,
+                                        config.evaluate_js_max_result_values,
+                                        guard_token,
+                                    ],
+                                    **evaluate_kwargs,
+                                ),
                                 timeout=config.timeout_evaluate_js_ms / 1000.0,
                             )
                         except asyncio.TimeoutError:
                             success = False
                             message = f"JavaScript evaluation timed out after {config.timeout_evaluate_js_ms}ms"
                         except PlaywrightError as js_err:
+                            limit_reason = page_limit_reason(str(js_err), guard_token)
+                            if limit_reason is not None:
+                                raise EvaluateJsResultLimitError(
+                                    config.evaluate_js_max_result_bytes, limit_reason
+                                ) from None
                             success = False
                             message = f"JavaScript evaluation failed: {js_err}"
                         else:
-                            # Convert result to string representation for markdown
-                            if result is None:
-                                result_str = "null"
-                            elif isinstance(result, (dict, list)):
-                                result_str = json.dumps(result, indent=2, default=str)
-                            else:
-                                result_str = str(result)
-                            scraped_data = DataSpace(markdown=result_str)
-                            success = True
+                            result_str: str | None = None
+                            try:
+                                # The guard returns the result as one JSON string,
+                                # decoded once here instead of value by value by
+                                # Playwright, which cost several times the memory.
+                                result = decode_page_result(
+                                    result,
+                                    guard_token,
+                                    max_bytes=config.evaluate_js_max_result_bytes,
+                                    max_values=config.evaluate_js_max_result_values,
+                                )
+                                result_str = format_evaluation_result(
+                                    result, max_bytes=config.evaluate_js_max_result_bytes
+                                )
+                            except InvalidPagePayloadError as payload_err:
+                                message = f"JavaScript evaluation failed: {payload_err}"
+                            finally:
+                                # The action's frame can itself be retained when a
+                                # failure is raised later or saved in the trajectory.
+                                result = None
+                            success = result_str is not None
+                            if result_str is not None:
+                                scraped_data = DataSpace(markdown=result_str)
                     case ToolAction():
                         tool_found = False
                         success = False
@@ -794,6 +882,9 @@ class NotteSession(AsyncResource, SyncResource):
                             )
                         else:
                             success = await self.controller.execute(self.window, resolved_action, self._snapshot)
+                        if not success:
+                            # `message` still holds the success-phrased execution_message.
+                            message = f"Action '{resolved_action.type}' failed during browser execution"
 
             except (NoSnapshotObservedError, NoStorageObjectProvidedError, NoToolProvidedError) as e:
                 # this should be handled by the caller
@@ -815,6 +906,10 @@ class NotteSession(AsyncResource, SyncResource):
                 )
                 exception = e
             except NotteBaseError as e:
+                if isinstance(e, EvaluateJsResultLimitError):
+                    # Saved failures must not own the formatter's recursive frames
+                    # and their references to the rejected browser result.
+                    e.__traceback__ = None
                 # When raise_on_failure is True, we use the dev message to give more details to the user
                 success = False
                 message = e.dev_message
@@ -851,6 +946,17 @@ class NotteSession(AsyncResource, SyncResource):
             else:
                 resolved_action = step_action
 
+        if not success and exception is None:
+            # Actions that signal failure by returning (a tool returning `success=False`,
+            # a controller action returning `False`) carry no exception. Synthesize one
+            # before the result is built so the returned result, the trajectory and the
+            # raise below all agree on what failed.
+            exception = ActionExecutionError(
+                action_id=resolved_action.type,
+                url=self._window.page.url if self._window is not None else "",
+                reason=message or "unknown",
+            )
+
         execution_result = ExecutionResult(
             action=resolved_action,
             success=success,
@@ -864,12 +970,12 @@ class NotteSession(AsyncResource, SyncResource):
 
         # add screenshot to trajectory (after the execution)
         if self._window is not None:
-            try:
-                _ = await self.ascreenshot()
-            except Exception as e:
-                logger.warning(f"Failed to capture post-action screenshot: {e}")
+            await self._capture_post_action_screenshot()
 
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
+        # Gate on "did the action fail", not "did something throw": after the synthesis
+        # above, every failure carries an exception, including the return-style ones
+        # that were previously silently swallowed, the way evaluate_js was.
         if _raise_on_failure and exception is not None:
             raise exception
         return execution_result
@@ -878,8 +984,11 @@ class NotteSession(AsyncResource, SyncResource):
         with open(actions_file, "r") as f:
             action_list = ActionList.model_validate_json(f.read())
         for i, action in enumerate(action_list.actions):
-            logger.info(f"💡 Step {i + 1}/{len(action_list.actions)}: executing action '{action.type}' {action.id}")
-            res = self.execute(action)
+            # browser-level actions (wait, goto, ...) have no `id` attribute
+            action_id = getattr(action, "id", "")
+            logger.info(f"💡 Step {i + 1}/{len(action_list.actions)}: executing action '{action.type}' {action_id}")
+            # replay stops gracefully on the first failed step instead of raising
+            res = self.execute(action, raise_on_failure=False)
             logger.info(f"{'✅' if res.success else '❌'} - {res.message}")
             if not res.success:
                 logger.error("🚨 Stopping execution of saved actions since last action failed...")
@@ -954,6 +1063,10 @@ class NotteSession(AsyncResource, SyncResource):
     ) -> ExecutionResult: ...
     @overload
     def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailVerificationReadActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SmsReadActionDict]
     ) -> ExecutionResult: ...
     @overload
@@ -1006,20 +1119,96 @@ class NotteSession(AsyncResource, SyncResource):
             self.aexecute(action=action, raise_on_failure=raise_on_failure, **kwargs)  # pyright: ignore [reportArgumentType]
         )
 
+    # raise_on_failure=True (default) -> the evaluated string; failures raise
     @overload
-    async def ascrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+    async def aevaluate_js(self, code: str, *, raise_on_failure: Literal[True] = ...) -> str: ...
 
-    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
+    # raise_on_failure=False -> the ExecutionResult envelope, like execute()
     @overload
-    async def ascrape(
-        self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> BaseModel: ...
+    async def aevaluate_js(self, code: str, *, raise_on_failure: Literal[False]) -> ExecutionResult: ...
 
-    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    async def aevaluate_js(self, code: str, *, raise_on_failure: bool = True) -> str | ExecutionResult:
+        """
+        Evaluate JavaScript on the current page and return its result as a string.
+
+        The result is stringified the way `evaluate_js` records it: objects and
+        arrays as JSON, a JS `null` as the string `"null"`. On failure the typed
+        exception is raised with the actual JavaScript error; pass
+        `raise_on_failure=False` to get the `ExecutionResult` envelope instead.
+        """
+        result = await self.aexecute(type="evaluate_js", code=code, raise_on_failure=raise_on_failure)
+        if not raise_on_failure:
+            return result
+        if result.data is None:
+            # cannot happen with this package's execute path, which always sets
+            # data on a successful eval; a typed error beats a stripped assert
+            raise EvaluateJsNoDataError()
+        return result.data.markdown
+
     @overload
-    async def ascrape(
-        self, *, instructions: str, raise_on_failure: Literal[False], **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> StructuredData[BaseModel]: ...
+    def evaluate_js(self, code: str, *, raise_on_failure: Literal[True] = ...) -> str: ...
+
+    @overload
+    def evaluate_js(self, code: str, *, raise_on_failure: Literal[False]) -> ExecutionResult: ...
+
+    def evaluate_js(self, code: str, *, raise_on_failure: bool = True) -> str | ExecutionResult:
+        """
+        Synchronous version of aevaluate_js.
+        """
+        return asyncio.run(self.aevaluate_js(code, raise_on_failure=raise_on_failure))
+
+    async def afetch(
+        self,
+        url: str,
+        *,
+        method: str = "GET",
+        headers: Mapping[str, str] | None = None,
+        params: Mapping[str, Any] | None = None,
+        json: Any = None,
+        data: FetchData | None = None,
+        timeout: float | None = None,
+    ) -> requests.Response:
+        """
+        Issue an HTTP request from the page the session is on and return the response.
+
+        The request runs inside the browser through `fetch()`, so it carries the
+        page's cookies, the session's proxy and the browser's own network
+        fingerprint. A relative `url` resolves against the current page, which
+        also makes it same-origin; a cross-origin URL is subject to CORS exactly
+        as in a browser tab, so `goto` the target origin first. Redirects are
+        followed and the final URL is on `response.url`. The result is a standard
+        `requests.Response`: a non-2xx status is returned, not raised, and
+        `response.raise_for_status()` raises `requests.HTTPError`. A network
+        failure surfaces as the JavaScript error.
+
+        `json` is serialised as the body with an `application/json` content type,
+        `data` as a form body when it is a mapping or verbatim when it is a string.
+        """
+        script = build_fetch_script(
+            url, method=method, headers=headers, params=params, json_body=json, data=data, timeout=timeout
+        )
+        return response_from_evaluated(await self.aevaluate_js(script))
+
+    def fetch(
+        self,
+        url: str,
+        *,
+        method: str = "GET",
+        headers: Mapping[str, str] | None = None,
+        params: Mapping[str, Any] | None = None,
+        json: Any = None,
+        data: FetchData | None = None,
+        timeout: float | None = None,
+    ) -> requests.Response:
+        """
+        Synchronous version of afetch.
+        """
+        return asyncio.run(
+            self.afetch(url, method=method, headers=headers, params=params, json=json, data=data, timeout=timeout)
+        )
+
+    @overload
+    async def ascrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...
 
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
@@ -1043,8 +1232,21 @@ class NotteSession(AsyncResource, SyncResource):
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
     @overload
-    async def ascrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...
+    async def ascrape(
+        self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> BaseModel: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    async def ascrape(
+        self, *, instructions: str, raise_on_failure: Literal[False], **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> StructuredData[BaseModel]: ...
+
+    # markdown catch-all LAST: open Unpack[TypedDict] otherwise swallows every kwargs call under ty
+    @overload
+    async def ascrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
 
     @timeit("scrape")
     @track_usage("local.session.scrape")
@@ -1148,22 +1350,7 @@ class NotteSession(AsyncResource, SyncResource):
             raise e
 
     @overload
-    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
-
-    @overload
-    def scrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
-
-    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
-    @overload
-    def scrape(
-        self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> dict[str, Any]: ...
-
-    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
-    @overload
-    def scrape(
-        self, *, instructions: str, raise_on_failure: Literal[False], **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> StructuredData[BaseModel]: ...
+    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore[reportOverlappingOverload]
 
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
@@ -1186,6 +1373,22 @@ class NotteSession(AsyncResource, SyncResource):
         raise_on_failure: Literal[False],
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
+
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
+    @overload
+    def scrape(
+        self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> dict[str, Any]: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    def scrape(
+        self, *, instructions: str, raise_on_failure: Literal[False], **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> StructuredData[BaseModel]: ...
+
+    # markdown catch-all LAST: open Unpack[TypedDict] otherwise swallows every kwargs call under ty
+    @overload
+    def scrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
 
     def scrape(
         self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]

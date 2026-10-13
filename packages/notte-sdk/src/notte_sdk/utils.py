@@ -2,6 +2,7 @@ import getpass
 import json
 import re
 import sys
+import warnings
 from collections.abc import Callable
 from io import StringIO
 from pathlib import Path
@@ -9,8 +10,35 @@ from typing import Any, final
 
 from notte_core.actions import FormFillAction
 from notte_core.common.logging import logger
+from pydantic import BaseModel
 
 from notte_sdk.endpoints.sessions import RemoteSession
+
+
+def serialize_function_run_result(result: Any) -> str:
+    """Serialize a local function return value for `function_runs.result` (text).
+
+    Pydantic models (and containers that hold them) must be stored as JSON, not
+    Python ``str()`` / ``repr()``. Plain strings are kept as-is so error messages
+    and already-serialized payloads are unchanged.
+
+    Any serialization failure falls back to ``str(result)`` so local runs still
+    persist a closed status even when a model field is not JSON-encodable.
+    """
+    if isinstance(result, str):
+        return result
+
+    def _default(obj: Any) -> Any:
+        if isinstance(obj, BaseModel):
+            return obj.model_dump(mode="json")
+        raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
+    try:
+        if isinstance(result, BaseModel):
+            return result.model_dump_json()
+        return json.dumps(result, default=_default)
+    except (TypeError, ValueError):
+        return str(result)
 
 
 @final
@@ -104,6 +132,11 @@ class LogCapture:
 
 
 def generate_cookies(session: RemoteSession, url: str, output_path: str) -> None:
+    warnings.warn(
+        "generate_cookies is deprecated and will be removed in the next few weeks. Use browser profiles to persist login state instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     if not output_path.endswith(".json"):
         raise ValueError(f"Output path must end with .json: {output_path}")
 
@@ -114,14 +147,15 @@ def generate_cookies(session: RemoteSession, url: str, output_path: str) -> None
 
     form_fill_action = FormFillAction(value=dict(email=email, current_password=password))  # type: ignore
 
-    res = session.execute(form_fill_action)
+    # this helper has its own failure contract (ValueError / logged return)
+    res = session.execute(form_fill_action, raise_on_failure=False)
     if not res.success:
         logger.error(f"Failed to fill email & password: {res.message}")
         raise ValueError("Failed to fill email & password")
     logger.info("✅ Successfully filled email & password")
 
     actions = session.observe(instructions="Click on the 'Sign in' button", perception_type="deep")
-    res = session.execute(actions[0])
+    res = session.execute(actions[0], raise_on_failure=False)
     if not res.success:
         logger.error(f"Failed to click on the 'Sign in' button: {res.message}")
         return

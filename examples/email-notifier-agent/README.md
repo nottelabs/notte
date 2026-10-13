@@ -1,9 +1,9 @@
 # Email Notifier Agent
 <img src="https://github.com/user-attachments/assets/23c821a7-af61-4e7a-bbba-e26508f6a091" width=600>
 
-This examples shows how you can recieve emails containing the agent's task output once the agent is done running.
+This example shows how you can receive emails containing the agent's task output once the agent is done running.
 
-To run this example, you will need to setup a Email SMTP server. You can use your own email provider or a service like [Mailtrap](https://mailtrap.io/).
+To run this example, you will need to set up an email SMTP server. You can use your own email provider or a service like [Mailtrap](https://mailtrap.io/).
 
 References:
 * [GMAIL SMTP](https://support.google.com/a/answer/176600?hl=en)

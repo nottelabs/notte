@@ -41,6 +41,8 @@ See more operations on sessions:
 
 ## Parameters
 
+By default, sessions solve captchas, block ads and use Notte proxies. `max_duration_minutes` defaults to 15 (up to 1440) and `idle_timeout_minutes` defaults to 3, and the idle timeout cannot exceed the maximum duration. `block_ads` has no effect on browsers connected through `cdp_url`. `browser_type` is accepted for compatibility but has no effect on hosted sessions: every hosted session runs the same Notte-managed Chromium build.
+
 You can use the default parameters to create your session, or customize them:
 
 <ParamField path="session_id" type="UnionType[str, None]" default="None">
@@ -60,11 +62,13 @@ You can use the default parameters to create your session, or customize them:
 </ParamField>
 
 <ParamField path="open_viewer" type="bool" default="False">
-  Whether to open the live viewer when the session starts (default: False).         Browsers are always headless; this controls only the viewer popup.
+  Whether to open the live viewer when the session starts (default: False).         This controls only the viewer popup and is independent of the browser environment.
 </ParamField>
 
-<ParamField path="headless" type="bool">
-  Whether to run the session in headless mode.
+<ParamField path="advanced_stealth" type="bool">
+</ParamField>
+
+<ParamField path="block_ads" type="bool">
 </ParamField>
 
 <ParamField path="solve_captchas" type="bool">
@@ -111,10 +115,6 @@ You can use the default parameters to create your session, or customize them:
   The CDP URL of another remote session provider.
 </ParamField>
 
-<ParamField path="use_file_storage" type="bool">
-  Whether FileStorage should be attached to the session.
-</ParamField>
-
 <ParamField path="screenshot_type" type="typing.Literal['raw', 'full', 'last_action']">
   The type of screenshot to use for the session.
 </ParamField>
@@ -130,4 +130,17 @@ You can use the default parameters to create your session, or customize them:
 </ParamField>
 
 <ParamField path="vault_id" type="str | None">
+</ParamField>
+
+<ParamField path="auth_ids" type="list">
+  Up to 10 unique Managed Auth connection IDs. The API verifies them inline and can return an authenticating session while login continues.
+</ParamField>
+
+<ParamField path="wait_for_authentication" type="bool">
+  Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.
+</ParamField>
+
+
+<ParamField path="auth_retry" type="int">
+  Number of additional retries for transient managed-auth login failures, from 0 to 2. Each retry verifies the session again before submitting credentials. A blocked connection permits one explicit login attempt.
 </ParamField>

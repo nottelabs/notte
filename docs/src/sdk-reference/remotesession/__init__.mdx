@@ -29,11 +29,7 @@ RemoteSession instance configured with the specified parameters.
 </ParamField>
 
 <ParamField path="open_viewer" type="bool" default="False">
-  Whether to open the live viewer when the session starts (default: False).         Browsers are always headless; this controls only the viewer popup.
-</ParamField>
-
-<ParamField path="headless" type="bool">
-  Whether to run the session in headless mode.
+  Whether to open the live viewer when the session starts (default: False).         This controls only the viewer popup and is independent of the browser environment.
 </ParamField>
 
 <ParamField path="solve_captchas" type="bool">
@@ -80,10 +76,6 @@ RemoteSession instance configured with the specified parameters.
   The CDP URL of another remote session provider.
 </ParamField>
 
-<ParamField path="use_file_storage" type="bool">
-  Whether FileStorage should be attached to the session.
-</ParamField>
-
 <ParamField path="screenshot_type" type="typing.Literal['raw', 'full', 'last_action']">
   The type of screenshot to use for the session.
 </ParamField>
@@ -99,6 +91,24 @@ RemoteSession instance configured with the specified parameters.
 </ParamField>
 
 <ParamField path="vault_id" type="str | None">
+</ParamField>
+
+<ParamField path="auth_ids" type="list">
+  Up to 10 unique Managed Auth connection IDs. The API verifies them inline and can return an authenticating session while login continues.
+</ParamField>
+
+<ParamField path="wait_for_authentication" type="bool">
+  Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.
+</ParamField>
+
+<ParamField path="auth_retry" type="int">
+  Number of additional retries for transient managed-auth login failures, from 0 to 2. Each retry verifies the session again before submitting credentials. A blocked connection permits one explicit login attempt.
+</ParamField>
+
+<ParamField path="advanced_stealth" type="bool">
+</ParamField>
+
+<ParamField path="block_ads" type="bool">
 </ParamField>
 
 ## Returns

@@ -47,8 +47,8 @@ Parameters set when creating the agent instance.
 
 ### reasoning_model
 
-<ParamField path="reasoning_model" type="str" default="gemini/gemini-2.0-flash">
-  The large language model used for agent reasoning and decision-making. Supported models include `gemini/gemini-2.0-flash`, `anthropic/claude-3.5-sonnet`, `anthropic/claude-3.5-haiku`, `openai/gpt-4o`, and `openai/gpt-4o-mini`.
+<ParamField path="reasoning_model" type="str" default="gemini/gemini-3.5-flash">
+  The large language model used for agent reasoning and decision-making. Supported models: `gemini/gemini-3.5-flash`, `vertex_ai/gemini-3.5-flash`, `openai/gpt-4o`, `anthropic/claude-sonnet-4-5-20250929`, `openrouter/google/gemma-3-27b-it`, `cerebras/gpt-oss-120b`, `groq/gpt-oss-120b`, `perplexity/sonar-pro`, `deepseek/deepseek-r1`, `together_ai/meta-llama/llama-3.3-70b-instruct`, `moonshot/kimi-k2.5`, `xai/grok-4.3`, and `minimax/minimax-m2.5`.
 </ParamField>
 
 <ParamReasoningModel />
@@ -63,8 +63,8 @@ Parameters set when creating the agent instance.
 
 ### max_steps
 
-<ParamField path="max_steps" type="int" default="varies">
-  Maximum number of actions the agent can take before stopping. Must be between 1 and 50. Higher values allow more complex tasks but increase cost and execution time.
+<ParamField path="max_steps" type="int" default="20">
+  Maximum number of steps the agent can take before stopping. Must be between 1 and 150. Higher values allow more complex tasks but increase cost and execution time.
 </ParamField>
 
 <ParamMaxSteps />
@@ -88,7 +88,7 @@ Parameters set when creating the agent instance.
 ### notifier
 
 <ParamField path="notifier" type="BaseNotifier">
-  Optional notifier that sends notifications when the agent completes or fails. Useful for long-running tasks.
+  Optional notifier that sends a message with the agent's result when it completes or fails. Useful for long-running tasks. Email, Slack, and Discord notifiers are available in the `notte-integrations` package (`EmailNotifier`, `SlackNotifier`, `DiscordNotifier` in `notte_integrations.notifiers`). The notifier configuration, including any credentials it contains, is sent to Notte so the notification can be delivered when the agent finishes. You can also pass the configuration as a plain dict with `notifier_config`, as in the example below.
 </ParamField>
 
 <ParamNotifier />

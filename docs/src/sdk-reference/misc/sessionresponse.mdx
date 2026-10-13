@@ -35,8 +35,12 @@ description: ""
   Session duration
 </ParamField>
 
-<ParamField path="status" type="Literal['active', 'closed', 'error', 'timed_out']" required>
+<ParamField path="status" type="Literal['active', 'authenticating', 'closed', 'error', 'timed_out']" required>
   Session status
+</ParamField>
+
+<ParamField path="close_reason" type="Literal['manual', 'idle_timeout', 'max_duration', 'error', 'unknown'] | None">
+  Reason the session closed, if it is no longer active
 </ParamField>
 
 <ParamField path="steps" type="list[Dict[str, Any]]" required>
@@ -52,10 +56,6 @@ description: ""
 </ParamField>
 
 <ParamField path="browser_type" type="Literal['chromium', 'chrome', 'firefox', 'chrome-nightly', 'chrome-turbo']" default="chromium">
-</ParamField>
-
-<ParamField path="use_file_storage" type="bool" default="False">
-  Whether FileStorage was attached to the session.
 </ParamField>
 
 <ParamField path="network_request_bytes" type="int" default="0">
@@ -78,10 +78,6 @@ description: ""
   The height of the viewport
 </ParamField>
 
-<ParamField path="headless" type="bool" default="True">
-  Whether to run the session in headless mode.
-</ParamField>
-
 <ParamField path="solve_captchas" type="UnionType[bool, None]">
   Whether to solve captchas.
 </ParamField>
@@ -96,6 +92,14 @@ description: ""
 
 <ParamField path="web_bot_auth" type="bool" default="False">
   Whether to use web bot authentication.
+</ParamField>
+
+<ParamField path="auth_ids" type="list[str]" default="[]">
+  Managed Auth connection IDs attached to this session.
+</ParamField>
+
+<ParamField path="system_hidden" type="bool" default="False">
+  Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
 </ParamField>
 
 

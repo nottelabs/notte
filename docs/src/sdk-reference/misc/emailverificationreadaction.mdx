@@ -1,0 +1,40 @@
+---
+title: "EmailVerificationReadAction"
+description: "Read a recent verification code or link from a workspace mailbox"
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+**Example:**
+```python
+session.execute(type="email_verification_read", mailbox_id="mbx_123", sender_domain="example.com")
+```
+
+## Fields
+
+<ParamField path="type" type="Literal['email_verification_read']" default="email_verification_read">
+</ParamField>
+
+<ParamField path="category" type="str" default="Special Browser Actions">
+</ParamField>
+
+<ParamField path="description" type="str" default="Read a recent verification code or link from an approved sender domain.">
+</ParamField>
+
+<ParamField path="mailbox_id" type="str" required>
+  Workspace mailbox connection to read the verification email from
+</ParamField>
+
+<ParamField path="sender_domain" type="str" required>
+  Sender domain to search, such as example.com
+</ParamField>
+
+<ParamField path="max_age_seconds" type="int" default="300">
+  Maximum age of the verification email in seconds
+</ParamField>
+
+
+## Module
+
+`notte_core.actions.actions`

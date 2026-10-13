@@ -2,16 +2,14 @@
 from notte_sdk import NotteClient
 
 client = NotteClient()
-storage = client.FileStorage()
-
-with client.Session(storage=storage) as session:
+with client.Session() as session:
     agent = client.Agent(session=session)
     agent.run(task="Download all invoices")
 
 # Check what was downloaded
-files = storage.list_downloaded_files()
+files = session.storage.list("session_download").files
 if not files:
     print("No files were downloaded")
 else:
     for f in files:
-        _ = storage.download(file_name=f.name, local_dir="./invoices")
+        _ = session.storage.download(f.id, local_dir="./invoices")

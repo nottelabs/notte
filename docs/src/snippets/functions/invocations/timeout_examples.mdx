@@ -1,15 +1,32 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/invocations/timeout_examples.py */}
 
+<CodeGroup>
+
 ```python timeout_examples.py
 from notte_sdk import NotteClient
 
 client = NotteClient()
-function = client.Function(function_id="function_abc123")
+function = client.Function(function_id=function_id)
 
-# Short task
+# Stop waiting if the server sends nothing for 60 seconds (default: 300)
 result = function.run(url="https://example.com", timeout=60)
 
-# Long task
+# Tolerate longer quiet periods, e.g. long steps that log nothing
 result = function.run(url="https://example.com", timeout=600)
 ```
+
+```typescript timeout_examples.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+const fn = client.NotteFunction({ function_id: functionId });
+
+// Stop waiting after 60 seconds in total (throws NotteTimeoutError)
+let result = await fn.run({ url: 'https://example.com' }, { timeoutMs: 60_000 });
+
+// Allow up to 10 minutes for a long task
+result = await fn.run({ url: 'https://example.com' }, { timeoutMs: 600_000 });
+```
+
+</CodeGroup>

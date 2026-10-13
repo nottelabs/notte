@@ -1,0 +1,50 @@
+---
+title: Migrate to Notte
+description: Safely migrate browser automation from another provider to Notte with an AI coding agent.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Use the Notte migration skills to move an existing browser-automation codebase
+to Notte with a visible plan, measured baseline, safe proof, tests, and a
+reversible rollout.
+
+## Install the skills
+
+```bash
+npx skills add nottelabs/notte-skills -y -g
+```
+
+The skills support migrations from Browserbase + Stagehand, Kernel, Anchor
+Browser, Browser Use Cloud, Steel, Hyperbrowser, and Skyvern.
+
+## Give this prompt to your AI coding agent
+
+Copy the prompt below into Codex, Claude Code, Cursor, or another supported
+coding agent from the root of the repository you want to migrate.
+
+```text
+Use $migrate-to-notte to assess and migrate this codebase to Notte.
+
+Start by publishing a clear, user-visible phase plan. Complete the Notte
+Quickstart before inspecting the repository. Detect the current browser
+provider, inventory every workflow and dependency, measure the current cost and
+latency where data is available, and run a safe read-only Notte proof.
+
+Build the replacement progressively in an isolated area, add tests, run static
+analysis and the full relevant test suite, and preserve public contracts. Keep
+every change reversible. Do not touch production resources, credentials,
+billing, or deploy to production without my explicit approval.
+```
+
+The skill routes the agent to the right provider-specific migration reference
+and keeps progress visible throughout the work. It also compares your current
+provider's cost with an equivalent Notte workload, so you can ask for that
+comparison before starting the migration.
+
+## Skill source
+
+- [Migration skill](https://github.com/nottelabs/notte-skills/tree/main/plugins/notte-migrate/skills/migrate-to-notte)
+
+Need help with a migration? Join the [Notte community Slack](https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA).

@@ -1,19 +1,25 @@
 """Tests for schema scraping pipe."""
 
+import os
 from typing import Any
 
 import pytest
+from dotenv import load_dotenv
 from notte_browser.scraping.pruning import MarkdownPruningPipe
 from notte_browser.scraping.schema import SchemaScrapingPipe
+from notte_core.common.config import LlmModel
 from notte_core.data.space import DictBaseModel, StructuredData
 from notte_llm.service import LLMService
+from pydantic import BaseModel, RootModel
 from typing_extensions import override
+
+_ = load_dotenv()
 
 
 class MockLLMServiceForSchema(LLMService):
     """Mock LLM service that returns structured data with placeholders."""
 
-    def __init__(self, mock_data: dict[str, Any]) -> None:
+    def __init__(self, mock_data: Any) -> None:
         """Initialize with mock data that contains placeholders."""
         self.mock_data = mock_data
         self.tokenizer = None  # type: ignore[assignment]
@@ -38,6 +44,146 @@ class MockLLMServiceForSchema(LLMService):
             error=None,
             data=DictBaseModel(self.mock_data),
         )
+
+
+class ScrapedItem(BaseModel):
+    rank: int | None = None
+    title: str | None = None
+    url: str | None = None
+
+
+class RootItemList(RootModel[list[ScrapedItem]]):
+    root: list[ScrapedItem]
+
+
+class RootStringList(RootModel[list[str]]):
+    root: list[str]
+
+
+class RootString(RootModel[str]):
+    root: str
+
+
+class RootDict(RootModel[dict[str, int]]):
+    root: dict[str, int]
+
+
+class WrappedItemList(BaseModel):
+    items: list[ScrapedItem]
+
+
+class PlainItem(BaseModel):
+    rank: int | None = None
+    title: str | None = None
+
+
+class LinkList(RootModel[list[str]]):
+    root: list[str]
+
+
+class WeirdWrappedRoots(BaseModel):
+    primary: ScrapedItem
+    links: LinkList
+
+
+@pytest.mark.parametrize(
+    ("response_format", "mock_data", "expected_success"),
+    [
+        (RootItemList, [{"rank": 1, "title": "A"}, {"rank": 2, "title": "B"}], True),
+        (RootItemList, {"items": [{"rank": 1, "title": "A"}]}, False),
+        (RootStringList, ["alpha", "beta"], True),
+        (RootString, "alpha", True),
+        (RootDict, {"a": 1, "b": 2}, True),
+        (RootDict, [{"a": 1}], False),
+        (WrappedItemList, {"items": [{"rank": 1, "title": "A"}]}, True),
+        (WrappedItemList, [{"rank": 1, "title": "A"}], False),
+        (PlainItem, {"rank": 1, "title": "A"}, True),
+        (PlainItem, [{"rank": 1, "title": "A"}], False),
+        (
+            WeirdWrappedRoots,
+            {"primary": {"rank": 1, "title": "A", "url": "link1"}, "links": ["link1", "link2"]},
+            True,
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_schema_scraping_validates_root_model_and_base_model_shapes(
+    response_format: type[BaseModel], mock_data: Any, expected_success: bool
+) -> None:
+    schema_pipe = SchemaScrapingPipe(llmserve=MockLLMServiceForSchema(mock_data))
+
+    result = await schema_pipe.forward(
+        url="https://example.com",
+        document="[A](https://example.com/a) [B](https://example.com/b)",
+        response_format=response_format,
+        instructions="Extract test data",
+        verbose=False,
+        use_link_placeholders=True,
+    )
+
+    assert result.success is expected_success
+    if expected_success:
+        assert result.data is not None
+        assert isinstance(result.data, response_format)
+    else:
+        assert result.data is None
+        assert result.error is not None
+        assert "Cannot validate response into the provided schema" in result.error
+
+
+@pytest.mark.asyncio
+async def test_schema_scraping_unmasks_root_model_list() -> None:
+    schema_pipe = SchemaScrapingPipe(
+        llmserve=MockLLMServiceForSchema(
+            [
+                {"rank": 1, "title": "A", "url": "link1"},
+                {"rank": 2, "title": "B", "url": "link2"},
+            ]
+        )
+    )
+
+    result = await schema_pipe.forward(
+        url="https://example.com",
+        document="[A](https://example.com/a) [B](https://example.com/b)",
+        response_format=RootItemList,
+        instructions="Extract items",
+        verbose=False,
+        use_link_placeholders=True,
+    )
+
+    assert result.success is True
+    assert isinstance(result.data, RootItemList)
+    assert [item.url for item in result.data.root] == ["https://example.com/a", "https://example.com/b"]
+
+
+@pytest.mark.skipif("OPENAI_API_KEY" not in os.environ, reason="requires OPENAI_API_KEY")
+@pytest.mark.asyncio
+async def test_schema_scraping_root_model_list_with_real_llm_round_trip() -> None:
+    schema_pipe = SchemaScrapingPipe(llmserve=LLMService(base_model=LlmModel.openai))
+
+    result = await schema_pipe.forward(
+        url="https://example.com/products",
+        document="""
+        # Product ranking
+
+        1. Atlas Notebook - https://example.com/atlas
+        2. Beacon Pen - https://example.com/beacon
+        """,
+        response_format=RootItemList,
+        instructions=(
+            "Extract the two product ranking entries. Return only the ranked items from the document with rank, "
+            "title, and url populated."
+        ),
+        verbose=False,
+        use_link_placeholders=False,
+    )
+
+    assert result.success is True, result.error
+    assert isinstance(result.data, RootItemList)
+    assert result.data.root == [
+        ScrapedItem(rank=1, title="Atlas Notebook", url="https://example.com/atlas"),
+        ScrapedItem(rank=2, title="Beacon Pen", url="https://example.com/beacon"),
+    ]
 
 
 @pytest.mark.asyncio

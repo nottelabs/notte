@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/guides/wait_time.py */}
 
+<CodeGroup>
+
 ```python wait_time.py
 from notte_sdk import NotteClient
 
@@ -10,3 +12,18 @@ with client.Session() as session:
     # Wait 2 seconds before continuing
     session.execute(type="wait", time_ms=2000)
 ```
+
+```typescript wait_time.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const session = client.Session();
+await session.use(async () => {
+
+  // Wait 2 seconds
+  await session.execute({ type: "wait", time_ms: 2000 });
+});
+```
+
+</CodeGroup>

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 import traceback
 import warnings
 from collections.abc import Callable
@@ -13,10 +14,13 @@ from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.errors.base import NotteBaseError
 from notte_core.utils.encryption import Encryption
+from pydantic import TypeAdapter
 from typing_extensions import deprecated
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.endpoints.sessions import CONSOLE_VIEWER_URL
+from notte_sdk.endpoints.run_payloads import PayloadMode, RunUpdateBody, offload_run_fields, resolve_run_fields
+from notte_sdk.endpoints.sessions import SessionsClient
+from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
     CreateFunctionRequest,
     CreateFunctionRequestDict,
@@ -25,6 +29,7 @@ from notte_sdk.types import (
     DeleteFunctionResponse,
     ForkFunctionRequest,
     FunctionRunResponse,
+    FunctionRuntime,
     FunctionRunUpdateRequest,
     FunctionRunUpdateRequestDict,
     GetFunctionRequest,
@@ -46,10 +51,56 @@ from notte_sdk.types import (
     UpdateFunctionRequestDict,
     UpdateFunctionRunResponse,
 )
-from notte_sdk.utils import LogCapture
+from notte_sdk.utils import LogCapture, serialize_function_run_result
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
+
+
+# Seconds to wait before each retry of a local run's final status update.
+LOCAL_RUN_CLOSE_RETRY_DELAYS: tuple[float, ...] = (2.0, 5.0, 10.0)
+
+
+def _is_transient(error: Exception) -> bool:
+    if isinstance(error, NotteAPIError):
+        return error.status_code >= 500
+    return isinstance(error, (requests.ConnectionError, requests.Timeout))
+
+
+def _close_local_run(
+    client: WorkflowsClient, function_id: str, run_id: str, **data: Unpack[FunctionRunUpdateRequestDict]
+) -> None:
+    """Persist a local run's outcome, retrying 5xx responses and network errors.
+
+    The script has already finished, so a transient gateway error here must not turn
+    its result into a failure. An attempt that failed at the gateway may still have
+    reached the API: if a retry is rejected because the run is no longer active, the
+    stored run is read back and accepted only if it holds this exact outcome.
+    """
+    delays = (*LOCAL_RUN_CLOSE_RETRY_DELAYS, None)
+    for attempt, delay in enumerate(delays, start=1):
+        try:
+            _ = client.update_run(function_id=function_id, run_id=run_id, **data)
+            return
+        except Exception as e:
+            error = e
+            if attempt > 1 and isinstance(e, NotteAPIError) and e.status_code == 400:
+                try:
+                    run = client.get_run(function_id=function_id, run_id=run_id)
+                except Exception as read_error:
+                    if not _is_transient(read_error) or delay is None:
+                        raise
+                    error = read_error
+                else:
+                    if run.status == data.get("status") and run.result == data.get("result"):
+                        return
+                    raise
+            elif not _is_transient(e) or delay is None:
+                raise
+        logger.warning(
+            f"[Function Run] {run_id} failed to persist its result ({attempt}/{len(delays)}), retrying in {delay}s: {error}"
+        )
+        time.sleep(delay)
 
 
 @final
@@ -113,7 +164,7 @@ class WorkflowsClient(BaseClient):
         """
         super().__init__(
             root_client=root_client,
-            base_endpoint_path="workflows",
+            base_endpoint_path="functions",
             server_url=server_url,
             api_key=api_key,
             verbose=verbose,
@@ -382,13 +433,17 @@ class WorkflowsClient(BaseClient):
         return self.request(self._stop_workflow_run_endpoint(function_id, run_id))
 
     def get_run(self, function_id: str, run_id: str) -> GetFunctionRunResponse:
-        return self.request(self._get_workflow_run_endpoint(function_id, run_id))
+        endpoint = self._get_workflow_run_endpoint(function_id, run_id).with_params(PayloadMode())
+        return GetFunctionRunResponse.model_validate(resolve_run_fields(self._request(endpoint)))
 
     def update_run(
         self, function_id: str, run_id: str, **data: Unpack[FunctionRunUpdateRequestDict]
     ) -> UpdateFunctionRunResponse:
         request = FunctionRunUpdateRequest.model_validate(data)
-        return self.request(self._update_workflow_run_endpoint(function_id, run_id).with_request(request))
+        endpoint = self._update_workflow_run_endpoint(function_id, run_id)
+        fields = request.model_dump(mode="json", exclude_unset=True)
+        body = offload_run_fields(self, endpoint.path, fields)
+        return self.request(endpoint.with_request(RunUpdateBody(body)))
 
     def list_runs(self, function_id: str, **data: Unpack[ListFunctionRunsRequestDict]) -> ListFunctionRunsResponse:
         """
@@ -479,6 +534,7 @@ class WorkflowsClient(BaseClient):
             function_run_id=function_run_id,
             variables=_request.variables,
             stream=_request.stream,
+            runtime=_request.runtime,
         )
         endpoint = self._start_workflow_run_endpoint(
             function_id=request.function_id, run_id=function_run_id
@@ -522,9 +578,21 @@ class WorkflowsClient(BaseClient):
                             result = log_msg
                         elif message["type"] == "session_start":
                             session_id = log_msg
-                            logger.info(
-                                f"Live viewer for session available at: {CONSOLE_VIEWER_URL.format(session_id=session_id, token=self.token)}"
-                            )
+                            try:
+                                # Keep this optional lookup from using the normal 60-second request timeout.
+                                status_endpoint = SessionsClient._session_status_endpoint(  # pyright: ignore[reportPrivateUsage]
+                                    session_id=session_id
+                                )
+                                viewer_url = self.root_client.sessions.request(status_endpoint, timeout=2).viewer_url
+                            except Exception:
+                                # Viewer discovery is optional; errors may also contain credentials.
+                                viewer_url = None
+                            if viewer_url and self.token not in viewer_url:
+                                logger.info(f"Live viewer for session available at: {viewer_url}")
+                            else:
+                                logger.info(
+                                    f"Session {session_id} started. View it with client.sessions.viewer({session_id!r})."
+                                )
 
                 except json.JSONDecodeError:
                     continue
@@ -787,12 +855,22 @@ class RemoteWorkflow:
         function_run_id: str | None = None,
         workflow_run_id: str | None = None,
         log_callback: Callable[[str], None] | None = None,
+        runtime: FunctionRuntime | None = None,
+        input_variables: dict[str, Any] | None = None,
         **variables: Any,
     ) -> FunctionRunResponse:
         """
         Run the function code using the specified version and variables.
 
         If no version is provided, the latest version is used.
+        This call waits for completion; streaming controls live log delivery.
+        For a Function, optionally call `create_run()` only if you need the run ID
+        before execution, then pass it as `function_run_id`. When `function_run_id`
+        is omitted, `run()` automatically creates a new run.
+        Omit runtime to use the saved function default. Pass runtime="extended"
+        for longer cloud execution, or runtime="standard" to override that default.
+        Use `input_variables={"runtime": value}` for script inputs whose names match
+        SDK options; these are merged with keyword inputs, rejecting duplicates.
 
         ```python
         function = notte.Function("<your-function-id>")
@@ -801,6 +879,13 @@ class RemoteWorkflow:
 
         > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
         """
+        runtime = TypeAdapter[FunctionRuntime | None](FunctionRuntime | None).validate_python(runtime)
+        if input_variables is not None:
+            if duplicates := input_variables.keys() & variables.keys():
+                raise ValueError(f"Duplicate input variables: {sorted(duplicates)}")
+            variables = {**input_variables, **variables}
+        if local and runtime == "extended":
+            raise ValueError("extended runtime is only available for cloud runs")
         if workflow_run_id is not None:
             warnings.warn(
                 "'workflow_run_id' is deprecated, use 'function_run_id' instead",
@@ -835,14 +920,15 @@ class RemoteWorkflow:
             except Exception as e:
                 logger.error(f"[Function] {self.function_id} run failed with error: {traceback.format_exc()}")
                 result = str(e)
-                status = "failed"
+                status = "closed"
                 exception = e
             # update the run with the result
             self._session_id = log_capture.session_id
-            _ = self.client.update_run(
+            _close_local_run(
+                self.client,
                 function_id=self.function_id,
                 run_id=function_run_id,
-                result=str(result),
+                result=serialize_function_run_result(result),
                 variables=variables,
                 status=status,
                 session_id=log_capture.session_id,
@@ -855,13 +941,16 @@ class RemoteWorkflow:
                 function_run_id=function_run_id,
                 session_id=log_capture.session_id,
                 result=result,
-                status=status,
+                # Persistence uses closed for both outcomes; the execution
+                # response must retain the verdict for cloud callers.
+                status="failed" if exception is not None else status,
             )
         # run on cloud
         res = self.client.run(
             function_id=self.response.function_id,
             function_run_id=function_run_id,
             stream=stream,
+            runtime=runtime,
             timeout=timeout,
             variables=variables,
         )

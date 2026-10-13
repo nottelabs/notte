@@ -1,12 +1,22 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/sessions/lifecycle/timeout_example.py */}
 
+<CodeGroup>
+
 ```python timeout_example.py
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
 with client.Session(idle_timeout_minutes=15) as session:
     # Complex automation
     pass
 ```
+
+```typescript timeout_example.ts
+const session = client.Session({ idle_timeout_minutes: 15 });
+await session.use(async () => {
+  status = await session.status();
+  if (status.status !== 'active') throw new Error('Session is not active');
+  console.log(`Status: ${status.status}`);
+});
+// Automatically stopped here.
+```
+
+</CodeGroup>

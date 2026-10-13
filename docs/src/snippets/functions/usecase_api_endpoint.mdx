@@ -18,5 +18,6 @@ def run(company_url: str):
 
 
 # Now callable from any service
-# GET /functions/{id}/runs/start?variables={"company_url": "..."}
+# POST /functions/{id}/runs/start
+# body: {"function_id": "...", "variables": {"company_url": "..."}}
 ```

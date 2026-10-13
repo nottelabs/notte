@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from types import TracebackType
 from typing import Self
 
 
@@ -19,9 +20,9 @@ class AsyncResource(ABC):
 
     async def __aexit__(
         self,
-        exc_type: type[BaseException],
-        exc_val: BaseException,
-        exc_tb: type[BaseException] | None,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         await self.astop()
 
@@ -45,6 +46,6 @@ class SyncResource(ABC):
         return self
 
     def __exit__(
-        self, exc_type: type[BaseException], exc_val: BaseException, exc_tb: type[BaseException] | None
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> None:
         self.stop()

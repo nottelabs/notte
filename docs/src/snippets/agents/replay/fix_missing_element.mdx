@@ -9,5 +9,5 @@ task = "Wait for the page to load, then click the blue 'Submit' button at the bo
 # Or use session actions first
 session.execute(type="goto", url="https://example.com")
 time.sleep(2)  # Wait for load
-result = agent.run(task="Click submit button")
+result = agent.run(task=task)
 ```

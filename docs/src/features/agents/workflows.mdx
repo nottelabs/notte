@@ -70,9 +70,23 @@ Create a reusable function:
 
 ### Execute Generated Code
 
-Copy and run the generated Python:
+Review the generated Python before running it:
+
+<Warning>
+  Generated workflows contain LLM-produced code and should be treated as untrusted. Inspect the entire file, then run
+  it only in an isolated environment with the minimum required permissions.
+</Warning>
+
+{/* Unsafe generated-code execution was reported in #794 by @sebastiondev. */}
 
 <ExecuteGeneratedCode />
+
+Before testing the saved file:
+
+1. Use a disposable container or virtual machine with no host or home-directory mounts.
+2. Provide only short-lived, minimum-scope credentials; generated code can read and transmit every value you expose.
+3. Restrict network access to the destinations the workflow requires, when possible.
+4. Destroy the environment and revoke its credentials after the test.
 
 ### Use Function API
 
@@ -93,6 +107,8 @@ Use agents to figure out the automation, then convert:
 Convert one-time agent runs to scheduled functions:
 
 <ScheduledTasks />
+
+Then schedule the function by its ID, as described in [Function Schedules](/features/functions/schedules).
 
 ### 3. Cost Optimization
 
@@ -175,7 +191,7 @@ When pages change or tasks become complex, revert to agents.
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Functions" icon="function" href="/concepts/functions">
+  <Card title="Functions" icon="/logo/square-function.svg" href="/concepts/functions">
     Deploy automations as serverless APIs
   </Card>
 
@@ -187,7 +203,7 @@ When pages change or tasks become complex, revert to agents.
     Optimize agent runs
   </Card>
 
-  <Card title="Functions" icon="flower" href="/concepts/functions">
+  <Card title="Functions" icon="/logo/square-function.svg" href="/concepts/functions">
     Deploy and manage serverless functions
   </Card>
 </CardGroup>

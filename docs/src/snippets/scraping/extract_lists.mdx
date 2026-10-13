@@ -1,7 +1,12 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/scraping/extract_lists.py, testers/scraping/extract_lists.ts */}
+
 <CodeGroup>
+
 ```python Python
 from notte_sdk import NotteClient
 from pydantic import BaseModel
+
 
 class Article(BaseModel):
     title: str
@@ -21,7 +26,8 @@ articles = client.scrape(
 for article in articles.articles:
     print(f"{article.title}: {article.url}")
 ```
-```javascript JavaScript
+
+```typescript TypeScript
 import { z } from 'zod';
 import { NotteClient } from 'notte-sdk';
 
@@ -48,4 +54,5 @@ for (const article of articles.articles) {
   console.log(`${article.title}: ${article.url}`);
 }
 ```
+
 </CodeGroup>

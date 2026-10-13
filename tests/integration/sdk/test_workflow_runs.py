@@ -2,7 +2,7 @@ import json
 import os
 import tempfile
 from collections.abc import Generator
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from dotenv import load_dotenv
@@ -11,9 +11,9 @@ from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.workflows import RemoteWorkflow
 from notte_sdk.types import (
     CreateFunctionRunResponse,
+    FunctionRunListItemResponse,
     FunctionRunResponse,
     GetFunctionResponse,
-    GetFunctionRunResponse,
     ListFunctionRunsResponse,
     UpdateFunctionRunResponse,
 )
@@ -30,13 +30,14 @@ def client():
 @pytest.fixture
 def sample_workflow_content():
     """Sample valid script content for testing."""
-    return '''import notte
+    return '''from notte_sdk import NotteClient
 
 
 def run(test_var: str = "default"):
     """Sample script that navigates to a URL and scrapes content."""
     url = f"https://httpbin.org/get?test={test_var}"
-    with notte.Session(open_viewer=False, perception_type="fast") as session:
+    client = NotteClient()
+    with client.Session(open_viewer=False, perception_type="fast") as session:
         session.execute({"type": "goto", "url": url})
         session.observe()
         result = session.scrape()
@@ -154,11 +155,10 @@ class TestFunctionRunsClient:
 
         # Verify the structure of a workflow run response
         found_run = next(run for run in list_response.items if run.function_run_id == create_response.function_run_id)
-        assert isinstance(found_run, GetFunctionRunResponse)
+        assert isinstance(found_run, FunctionRunListItemResponse)
         assert found_run.function_id == test_workflow.function_id
         assert found_run.function_run_id == create_response.function_run_id
         assert found_run.created_at is not None
-        assert isinstance(found_run.logs, list)
 
     def test_update_workflow_run(self, client: NotteClient, test_workflow: GetFunctionResponse, session_id: str):
         """Test updating a workflow run."""
@@ -257,7 +257,8 @@ class TestFunctionRunExecution:
         mock_post.side_effect = [create_run_mock_response, run_workflow_mock_response]
 
         # Create a run first
-        create_response = client.functions.create_run(function_id=test_workflow.workflow_id)
+        with patch("notte_sdk._transport._RequestSession.post", side_effect=mock_post):
+            create_response = client.functions.create_run(function_id=test_workflow.workflow_id)
 
         # Run the workflow
         response = client.functions.run(
@@ -272,7 +273,7 @@ class TestFunctionRunExecution:
         assert response.function_run_id == create_response.function_run_id
         assert response.session_id is not None
         assert response.result is not None
-        assert response.status in ["closed", "active", "failed"]
+        assert response.status == "closed"
 
         # Verify both requests were made correctly
         assert mock_post.call_count == 2
@@ -305,14 +306,39 @@ class TestFunctionRunExecution:
 class TestRemoteFunctionRuns:
     """Test cases for RemoteWorkflow run functionality."""
 
-    @patch("notte_core.ast.SecureScriptRunner")
-    @patch("notte_sdk.utils.LogCapture")
+    @patch("notte_sdk.endpoints.workflows.SecureScriptRunner")
+    @patch("notte_sdk.endpoints.workflows.LogCapture")
+    def test_remote_workflow_run_local_failure_closes_run(self, mock_log_capture, mock_script_runner):
+        """Return a failed response while persisting the closed billing state."""
+        workflows_client = MagicMock()
+        workflows_client.get.return_value.function_id = "test-function-id"
+        root_client = MagicMock()
+        root_client.workflows = workflows_client
+
+        workflow = RemoteWorkflow(workflow_id="test-function-id", _client=root_client)
+        log_capture = mock_log_capture.return_value
+        log_capture.__enter__.return_value = log_capture
+        log_capture.session_id = "test-session-id"
+        log_capture.get_logs.return_value = ["Log 1"]
+
+        mock_script_runner.return_value.run_script.side_effect = RuntimeError("boom")
+
+        with patch.object(workflow, "download", return_value="def run():\n    raise RuntimeError('boom')"):
+            result = workflow.run(local=True, function_run_id="test-run-id", raise_on_failure=False)
+
+        assert result.status == "failed"
+        assert result.result == "boom"
+        workflows_client.update_run.assert_called_once()
+        assert workflows_client.update_run.call_args.kwargs["status"] == "closed"
+
+    @patch("notte_sdk.endpoints.workflows.SecureScriptRunner")
+    @patch("notte_sdk.endpoints.workflows.LogCapture")
     def test_remote_workflow_run_local(
         self, mock_log_capture, mock_script_runner, test_remote_workflow: RemoteWorkflow
     ):
         """Test running a RemoteWorkflow locally."""
         # Mock log capture
-        mock_log_instance = mock_log_capture.return_value.__enter__.return_value
+        mock_log_instance = mock_log_capture.return_value
         mock_log_instance.session_id = "test-session-id"
         mock_log_instance.get_logs.return_value = ["Log 1", "Log 2"]
 
@@ -321,7 +347,10 @@ class TestRemoteFunctionRuns:
         mock_runner_instance.run_script.return_value = {"test_var": "local_test", "result": "local_execution_result"}
 
         # Mock the download method to return script content with run function
-        with patch.object(test_remote_workflow, "download") as mock_download:
+        with (
+            patch.object(test_remote_workflow, "download") as mock_download,
+            patch.object(test_remote_workflow.client, "update_run") as mock_update_run,
+        ):
             mock_download.return_value = """import notte
 
 def run(test_var: str = "default"):
@@ -329,7 +358,7 @@ def run(test_var: str = "default"):
         return {"test_var": test_var, "result": "local_execution_result"}"""
 
             # Run locally
-            result = test_remote_workflow.run(local=True, test_var="local_test")
+            result = test_remote_workflow.run(local=True, function_run_id="test-run-id", test_var="local_test")
 
             assert result is not None
             assert isinstance(result, FunctionRunResponse)
@@ -337,8 +366,10 @@ def run(test_var: str = "default"):
             # Verify download was called
             mock_download.assert_called_once_with(workflow_path=None, version=None)
 
-            # The actual script execution happens, so just verify we got a response
-            # No need to verify mock calls since the real execution takes place
+            mock_runner_instance.run_script.assert_called_once()
+            mock_update_run.assert_called_once()
+            assert mock_update_run.call_args.kwargs["run_id"] == "test-run-id"
+            assert mock_update_run.call_args.kwargs["status"] == "closed"
 
     @patch("requests.post")
     def test_remote_workflow_run_cloud(self, mock_post, test_remote_workflow: RemoteWorkflow):
@@ -501,11 +532,12 @@ class TestFunctionRunsIntegration:
         run_ids = [run.workflow_run_id for run in list_response.items]
         assert run_id in run_ids
 
-        # 4. Find our specific run and verify its data
-        our_run = next(run for run in list_response.items if run.workflow_run_id == run_id)
-        assert our_run.function_id == test_workflow.function_id
-        assert our_run.session_id == session_id
-        assert our_run.logs == test_logs
+        # 4. Fetch our specific run to verify detail-only data
+        run_summary = next(run for run in list_response.items if run.workflow_run_id == run_id)
+        assert run_summary.function_id == test_workflow.function_id
+        assert run_summary.session_id == session_id
+        run_detail = client.functions.get_run(function_id=test_workflow.function_id, run_id=run_id)
+        assert run_detail.logs == test_logs
 
         # 5. Update the run to closed status
         final_update = client.functions.update_run(
@@ -554,12 +586,13 @@ class TestFunctionRunsIntegration:
         for created_run_id in created_runs:
             assert created_run_id in listed_run_ids, f"Run {created_run_id} not found in list response"
 
-        # Verify each run has the correct data
+        # Verify each run has the correct detail data
         for i, run_id in enumerate(created_runs):
-            run_data = next(run for run in list_response.items if run.workflow_run_id == run_id)
+            run_summary = next(run for run in list_response.items if run.workflow_run_id == run_id)
             # Session ID will be a UUID, so just check it exists
-            assert run_data.session_id is not None
-            assert run_data.logs == [f"Log entry {i}"]
+            assert run_summary.session_id is not None
+            run_detail = client.functions.get_run(function_id=workflow_id, run_id=run_id)
+            assert run_detail.logs == [f"Log entry {i}"]
 
     def test_remote_function_complete_flow(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test complete RemoteWorkflow execution flow."""

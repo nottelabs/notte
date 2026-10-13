@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/functions/management/version_history.py */}
 
+<CodeGroup>
+
 ```python version_history.py
 from notte_sdk import NotteClient
 
@@ -13,3 +15,19 @@ for func in functions.items:
     print(f"Versions: {', '.join(func.versions)}")
     print(f"Latest: {func.latest_version}")
 ```
+
+```typescript version_history.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const functions = await client.functions.list();
+
+for (const fn of functions) {
+  console.log(`Function: ${fn.name}`);
+  console.log(`Versions: ${fn.versions.join(', ')}`);
+  console.log(`Latest: ${fn.latest_version}`);
+}
+```
+
+</CodeGroup>

@@ -27,7 +27,7 @@ done
 echo "Checking that playwright/patchright imports are only in playwright_async_api.py or sessions.py files..."
 
 # Search for playwright/patchright imports in all notte packages
-all_packages=("notte-core" "notte-sdk" "notte-browser" "notte-agent" "notte-integrations" "notte-eval" "notte-mcp")
+all_packages=("notte-core" "notte-sdk" "notte-browser" "notte-agent" "notte-integrations")
 
 for package_dir in "${all_packages[@]}"; do
     for forbidden_pattern in "${forbidden_patterns[@]}"; do

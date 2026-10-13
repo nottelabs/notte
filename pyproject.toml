@@ -1,6 +1,6 @@
 [project]
 name = "notte"
-version = "1.4.4.dev"
+version = "1.9.7.dev0"
 description = "Notte, the full-stack web AI agent framework"
 readme = "README.md"
 license = "SSPL-1.0"
@@ -9,18 +9,16 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "notte-core==1.4.4.dev",
-    "notte-sdk==1.4.4.dev",
-    "notte-browser==1.4.4.dev",
-    "notte-agent==1.4.4.dev",
+    "notte-core==1.9.7.dev0",
+    "notte-sdk==1.9.7.dev0",
+    "notte-browser==1.9.7.dev0",
+    "notte-agent==1.9.7.dev0",
     "google-auth>=2.39.0",
     "toml>=0.10.2",
 ]
 
 [project.optional-dependencies]
-integrations = ["notte-integrations==1.4.4.dev"]
-eval = ["notte-eval==1.4.4.dev"]
-mcp = ["notte-mcp==1.4.4.dev"]
+integrations = ["notte-integrations==1.9.7.dev0"]
 
 [tool.uv.sources]
 notte-core = { workspace = true }
@@ -29,13 +27,10 @@ notte-browser = { workspace = true }
 notte-agent = { workspace = true }
 notte-llm = { workspace = true }
 notte-integrations = { workspace = true }
-notte-eval = { workspace = true }
-notte-mcp = { workspace = true }
 
 
 [tool.uv.workspace]
 members = ["packages/*", "."]
-exclude = ["packages/notte-bua"]
 
 [build-system]
 requires = ["hatchling"]
@@ -56,6 +51,7 @@ dev = [
     "halo>=0.0.28",
     "joblib>=1.4.2",
     "jupyter>=1.1.1",
+    "lxml-stubs>=0.5.1",
     "pandas",
     "pandas-stubs>=2.2.3.250308",
     "pebble>=5.1.1",
@@ -72,6 +68,8 @@ dev = [
     "sphinx>=8.2.3",
     "sphinx-mintlify>=0.1.0",
     "twine>=6.1.0",
+    "ty>=0.0.69",
+    "typer>=0.19.2",
 ]
 lint = [
     "ruff>=0.9.7",
@@ -112,7 +110,7 @@ extend-select = ["I"]
 "docs/src/testers/**/*.py" = ["F821", "F841"]
 
 [tool.basedpyright]
-exclude = [".venv", "uv-cache", "**/site-packages/**", "**/dist-packages/**", "tests", "old", "notebook", "dist", ".github"]
+exclude = [".venv", "uv-cache", "**/site-packages/**", "**/dist-packages/**", "tests", "typing_cases", "old", "notebook", "dist", ".github"]
 enableTypeIgnoreComments = true
 reportIgnoreCommentWithoutRule = false
 failOnWarnings = true

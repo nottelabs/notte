@@ -1,12 +1,28 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/browser-controls/scroll_down.py */}
 
+<CodeGroup>
+
 ```python scroll_down.py
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
 with client.Session() as session:
-    session.execute(type="goto", url="https://example.com")
+    session.execute(type="goto", url="https://en.wikipedia.org/wiki/Web_browser")
     session.execute(type="scroll_down")
 ```
+
+```typescript scroll_down.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const session = client.Session();
+await session.use(async () => {
+  await session.execute({ type: "goto", url: "https://en.wikipedia.org/wiki/Web_browser" });
+  await session.execute({ type: "scroll_down" });
+});
+```
+
+</CodeGroup>

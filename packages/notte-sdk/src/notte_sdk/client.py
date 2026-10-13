@@ -1,4 +1,5 @@
 # pyright: reportImportCycles=false
+import math
 from functools import partial
 from typing import Any, Literal, Unpack, cast, overload
 
@@ -14,6 +15,7 @@ from notte_sdk.agent_fallback import RemoteAgentFallback
 from notte_sdk.endpoints.agents import AgentsClient, RemoteAgent
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
 from notte_sdk.endpoints.functions import NotteFunction
+from notte_sdk.endpoints.managed_auth import ManagedAuthClient
 from notte_sdk.endpoints.personas import NottePersona, PersonasClient
 from notte_sdk.endpoints.profiles import ProfilesClient
 from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient, SessionViewerType
@@ -39,6 +41,7 @@ class NotteClient:
         server_url: str | None = None,
         verbose: bool = False,
         viewer_type: SessionViewerType = SessionViewerType.BROWSER,
+        captcha_timeout_seconds: float = 180,
     ):
         """Initialize a NotteClient instance.
 
@@ -47,8 +50,12 @@ class NotteClient:
 
         Args:
             api_key: Optional API key for authentication.
+            captcha_timeout_seconds: Total CAPTCHA wait budget, separate from action and HTTP timeouts.
         """
 
+        if not math.isfinite(captcha_timeout_seconds) or captcha_timeout_seconds <= 0:
+            raise ValueError("captcha_timeout_seconds must be finite and greater than zero")
+        self.captcha_timeout_seconds: float = captcha_timeout_seconds
         self.sessions: SessionsClient = SessionsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose, viewer_type=viewer_type
         )
@@ -62,6 +69,9 @@ class NotteClient:
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
         self.profiles: ProfilesClient = ProfilesClient(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
+        self.managed_auth: ManagedAuthClient = ManagedAuthClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
         self.files: FileStorageClient = FileStorageClient(
@@ -82,7 +92,7 @@ class NotteClient:
 
     @property
     def Session(self) -> type[RemoteSession]:
-        return cast(type[RemoteSession], partial(RemoteSession, _client=self.sessions, headless=True))
+        return cast(type[RemoteSession], partial(RemoteSession, _client=self.sessions))
 
     @property
     def Agent(self) -> type[RemoteAgent]:
@@ -119,37 +129,11 @@ class NotteClient:
         return self.sessions.health_check()
 
     @overload
-    def scrape(
-        self, /, url: str, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
-    ) -> str: ...
-
-    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
-    @overload
-    def scrape(  # pyright: ignore [reportOverlappingOverload]
-        self,
-        /,
-        url: str,
-        *,
-        instructions: str,
-        raise_on_failure: Literal[True] = ...,
-        **params: Unpack[ScrapeMarkdownParamsDict],
-    ) -> dict[str, Any]: ...
-
-    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
-    @overload
-    def scrape(  # pyright: ignore [reportOverlappingOverload]
-        self,
-        /,
-        url: str,
-        *,
-        instructions: str,
-        raise_on_failure: Literal[False],
-        **params: Unpack[ScrapeMarkdownParamsDict],
-    ) -> StructuredData[BaseModel]: ...
+    def scrape(self, /, url: str, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
 
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
-    def scrape(  # pyright: ignore [reportOverlappingOverload]
+    def scrape(
         self,
         /,
         url: str,
@@ -162,7 +146,7 @@ class NotteClient:
 
     # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
     @overload
-    def scrape(  # pyright: ignore [reportOverlappingOverload]
+    def scrape(
         self,
         /,
         url: str,
@@ -173,8 +157,35 @@ class NotteClient:
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
     @overload
-    def scrape(self, /, url: str, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
+    def scrape(
+        self,
+        /,
+        url: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> dict[str, Any]: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    def scrape(
+        self,
+        /,
+        url: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[BaseModel]: ...
+
+    # markdown catch-all LAST: open Unpack[TypedDict] otherwise swallows every kwargs call under ty
+    @overload
+    def scrape(
+        self, /, url: str, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> str: ...
 
     def scrape(
         self, /, url: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
@@ -222,7 +233,9 @@ class NotteClient:
             For image scraping: returns list[ImageData].
         """
         with self.Session(open_viewer=False, perception_type="fast") as session:
-            result = session.execute(GotoAction(url=url))
+            # best-effort navigation: scrape whatever loaded unless the goto
+            # actually threw server side
+            result = session.execute(GotoAction(url=url), raise_on_failure=False)
             if not result.success and result.exception is not None:
                 raise result.exception
             return session.scrape(raise_on_failure=raise_on_failure, **data)

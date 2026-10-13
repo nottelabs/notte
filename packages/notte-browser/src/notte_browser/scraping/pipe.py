@@ -1,7 +1,6 @@
 import re
 from typing import final
 
-from html2text import config as html2text_config
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import ScrapingType, config
 from notte_core.common.logging import logger
@@ -95,13 +94,7 @@ class DataScrapingPipe:
                     logger.trace("📀 Scraping page with main content scraping pipe")
                 if not params.only_main_content:
                     raise ValueError("Main content scraping pipe only supports only_main_content=True")
-                # band-aid fix for now: html2text only takes this global config, no args
-                # want to keep image, but can't handle nicer conversion when src is base64
-                tmp_images_to_alt = html2text_config.IMAGES_TO_ALT
-                html2text_config.IMAGES_TO_ALT = True
-                data = MainContentScrapingPipe.forward(snapshot, params.scrape_links)
-                html2text_config.IMAGES_TO_ALT = tmp_images_to_alt
-                return data
+                return MainContentScrapingPipe.forward(snapshot, params, images_to_alt=True)
 
     async def forward(
         self,
@@ -164,7 +157,13 @@ class DataScrapingPipe:
         if params.requires_schema():
             if config.verbose:
                 logger.trace("🎞️ Structuring data with schema pipe")
-            structured = await self.schema_pipe.forward(
+            # A per-call model gets its own pipe; the shared one is used by concurrent calls.
+            schema_pipe = (
+                SchemaScrapingPipe(llmserve=LLMService(base_model=str(params.model), use_router=False))
+                if params.model is not None
+                else self.schema_pipe
+            )
+            structured = await schema_pipe.forward(
                 url=snapshot.metadata.url,
                 document=markdown,
                 response_format=params.response_format,

@@ -1,12 +1,26 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/configuration/timeout.py, testers/sessions/configuration/timeout.ts */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
 
-  client = NotteClient()
+```python Python
+# Session closes after 10 minutes of inactivity
+with client.Session(idle_timeout_minutes=10) as session:
+    page = session.page
+    page.goto("https://example.com")
+```
 
-  # Session closes after 10 minutes of inactivity
-  with client.Session(timeout_minutes=10) as session:
-      page = session.page
-      page.goto("https://example.com")
-  ```
+```typescript TypeScript
+const session = client.Session({ idle_timeout_minutes: 10 });
+await session.use(async () => {
+  status = await session.status();
+  if (status.status !== 'active') throw new Error('Session is not active');
+  const page = await session.page();
+  await page.goto('https://example.com');
+  title = await page.title();
+  console.log(`Page title: ${title}`);
+});
+// Automatically stopped here.
+```
+
 </CodeGroup>
