@@ -1,0 +1,60 @@
+name: Python setup
+description: Install uv, Python and the workspace dependencies, with optional browser and pre-commit caches.
+
+inputs:
+  browsers:
+    description: Restore or install the patchright Chromium build.
+    default: "false"
+  pre-commit:
+    description: Restore or install the pre-commit hook environments.
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      with:
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+
+    - name: Set up Python
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      with:
+        python-version-file: ".python-version"
+        cache: pip
+
+    - name: Cache patchright
+      if: inputs.browsers == 'true'
+      id: cache-patchright
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ github.workspace }}/.playwright-browsers
+        key: ${{ runner.os }}-patchright-${{ hashFiles('**/uv.lock') }}-v2
+        restore-keys: |
+          ${{ runner.os }}-patchright-${{ hashFiles('**/uv.lock') }}-
+          ${{ runner.os }}-patchright-
+
+    - name: Cache pre-commit
+      if: inputs.pre-commit == 'true'
+      id: cache-pre-commit
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cache/pre-commit
+        key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml', '**/pyproject.toml') }}-v1
+        restore-keys: |
+          ${{ runner.os }}-pre-commit-
+
+    - name: Install dependencies
+      shell: bash
+      run: uv sync --dev --all-extras
+
+    - name: Install patchright
+      if: inputs.browsers == 'true' && steps.cache-patchright.outputs.cache-hit != 'true'
+      shell: bash
+      run: uv run patchright install --with-deps chromium --no-shell
+
+    - name: Install pre-commit
+      if: inputs.pre-commit == 'true' && steps.cache-pre-commit.outputs.cache-hit != 'true'
+      shell: bash
+      run: uv run pre-commit install --install-hooks

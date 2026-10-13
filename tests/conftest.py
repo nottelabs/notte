@@ -70,3 +70,20 @@ def pytest_generate_tests(metafunc):
         # Apply parameterization only if any matching arguments exist
         if params:
             metafunc.parametrize(",".join(params.keys()), [next(iter(params.values()))])
+
+
+def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
+    # CI shards the live suite across runners: NOTTE_TEST_SHARD="<index>/<total>" (1-based)
+    # keeps every <total>-th test by sorted node id, so each shard gets a similar mix.
+    shard = os.environ.get("NOTTE_TEST_SHARD")
+    if not shard:
+        return
+    index, total = (int(part) for part in shard.split("/"))
+    if not 1 <= index <= total:
+        raise ValueError(f"Invalid NOTTE_TEST_SHARD={shard!r}")
+    order = {nodeid: i for i, nodeid in enumerate(sorted(item.nodeid for item in items))}
+    selected = [item for item in items if order[item.nodeid] % total == index - 1]
+    deselected = [item for item in items if order[item.nodeid] % total != index - 1]
+    if deselected:
+        config.hook.pytest_deselected(items=deselected)
+    items[:] = selected
