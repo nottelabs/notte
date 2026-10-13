@@ -368,6 +368,10 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
 _TRANSIENT_LLM_ERRORS = (ServiceUnavailableError, InternalServerError, APIConnectionError, RateLimitError, Timeout)
 _TRANSIENT_RETRY_DELAYS_SECONDS = (2.0, 5.0)
 
+# OpenRouter tries these, in order, when the requested model errors (for example a 503 while it
+# is overloaded). Both support the structured outputs the agent relies on.
+OPENROUTER_FALLBACK_MODELS = ("google/gemini-2.5-flash", "openai/gpt-4.1-mini")
+
 
 class LLMEngine:
     PREFIXES: list[str] = ['{"json":', '{"additionalProperties":']  # LLM Response Prefixes
@@ -595,15 +599,17 @@ class LLMEngine:
     def _get_extra_body(self, model: str | None) -> dict[str, Any]:
         model = model or self.model
         if enable_openrouter():
+            requested = LlmModel.get_openrouter_model(model).removeprefix("openrouter/")
+            body: dict[str, Any] = {
+                "models": [requested, *(fallback for fallback in OPENROUTER_FALLBACK_MODELS if fallback != requested)]
+            }
             provider = LlmModel.get_openrouter_provider(model)
-            if provider is None:
-                return {}
-            return {
-                "provider": {
+            if provider is not None:
+                body["provider"] = {
                     "order": [provider],
                     "allow_fallbacks": True,
                 }
-            }
+            return body
         return {}
 
     @profiler.profiled(service_name="llm")

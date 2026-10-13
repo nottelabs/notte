@@ -6,6 +6,7 @@ from litellm import BadRequestError, Message, ServiceUnavailableError
 from notte_core.errors.base import ErrorConfig
 from notte_core.errors.provider import LLMProviderError, UnsupportedResponseSchemaError
 from notte_llm.engine import (
+    OPENROUTER_FALLBACK_MODELS,
     LLMEngine,
     StructuredContent,
     fix_schema_for_gemini,
@@ -483,3 +484,26 @@ class TestTransientProviderErrors:
         with patch("litellm.acompletion", side_effect=[empty, ok]):
             result = await llm_engine.structured_completion(messages, self.Answer, model="gemini/x")
         assert result.text == "done"
+
+
+class TestOpenRouterFallbacks:
+    @pytest.fixture(autouse=True)
+    def _openrouter_enabled(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr("notte_llm.engine.enable_openrouter", lambda: True)
+
+    def test_requested_model_comes_first_then_fallbacks(self, llm_engine: LLMEngine) -> None:
+        body = llm_engine._get_extra_body("vertex_ai/gemini-3.5-flash")  # pyright: ignore[reportPrivateUsage]
+        assert body == {"models": ["google/gemini-3.5-flash", *OPENROUTER_FALLBACK_MODELS]}
+
+    def test_fallback_list_does_not_repeat_the_requested_model(self, llm_engine: LLMEngine) -> None:
+        body = llm_engine._get_extra_body(f"openrouter/{OPENROUTER_FALLBACK_MODELS[0]}")  # pyright: ignore[reportPrivateUsage]
+        assert body["models"] == [OPENROUTER_FALLBACK_MODELS[0], *OPENROUTER_FALLBACK_MODELS[1:]]
+
+    def test_provider_routing_is_kept_alongside_fallbacks(self, llm_engine: LLMEngine) -> None:
+        body = llm_engine._get_extra_body("groq/gpt-oss-120b")  # pyright: ignore[reportPrivateUsage]
+        assert body["provider"] == {"order": ["Groq"], "allow_fallbacks": True}
+        assert body["models"][0] == "openai/gpt-oss-120b"
+
+    def test_no_fallbacks_without_openrouter(self, llm_engine: LLMEngine, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr("notte_llm.engine.enable_openrouter", lambda: False)
+        assert llm_engine._get_extra_body("gemini/gemini-3.5-flash") == {}  # pyright: ignore[reportPrivateUsage]
