@@ -1,6 +1,7 @@
 import re
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, fields
+from functools import cached_property
 from typing import Annotated, Any, Callable, ClassVar, TypeAlias
 
 from pydantic import BaseModel, Field
@@ -414,46 +415,45 @@ class DomNode:
 
         return inner(self, [])
 
-    @staticmethod
-    def find_all_matching_subtrees_with_parents(
-        node: "DomNode", predicate: Callable[["DomNode"], bool]
-    ) -> Sequence["DomNode"]:
-        """Return the topmost subtrees whose root matches `predicate`."""
+    @cached_property
+    def _index(self) -> tuple[dict[str, "DomNode"], tuple["DomNode", ...]]:
+        """Index a completed snapshot tree once; its children must not be mutated afterwards.
 
-        if predicate(node):
-            return [node]
+        Build lazily so BrowserWindow's synthetic download node is already inserted. The cache
+        belongs to this root, so replacing a snapshot's root cannot reuse another tree's index.
+        It contains references only and is not a dataclass field (or part of serialization).
+        """
+        interactions: dict[str, DomNode] = {}
+        dialogs: list[DomNode] = []
 
-        matches: list[DomNode] = []
-        for child in node.children:
-            matching_subtrees = DomNode.find_all_matching_subtrees_with_parents(child, predicate)
-            matches.extend(matching_subtrees)
+        def visit(node: DomNode) -> bool:
+            has_interaction = node.is_interaction()
+            if has_interaction:
+                assert node.id is not None
+                interactions[node.id] = node
+            dialog_start = len(dialogs)
+            for child in node.children:
+                has_interaction = visit(child) or has_interaction
+            if node.role == NodeRole.DIALOG and node.computed_attributes.in_viewport and has_interaction:
+                # An eligible outer dialog replaces its nested dialogs, retaining document order.
+                dialogs[dialog_start:] = [node]
+            return has_interaction
 
-        return matches
+        _ = visit(self)
+        return interactions, tuple(dialogs) if dialogs else (self,)
+
+    @property
+    def interaction_nodes_by_id(self) -> Mapping[str, "DomNode"]:
+        """The completed tree's interaction nodes in document order, indexed by action id."""
+        return self._index[0]
 
     def prune_non_dialogs_if_present(self) -> Sequence["DomNode"]:
-        """Return the visible dialogs that contain interaction nodes, or `[self]` if there are none."""
-
-        def is_dialog(node: DomNode) -> bool:
-            if node.role != NodeRole.DIALOG:
-                return False
-            if node.computed_attributes.in_viewport is False:
-                return False
-            if len(node.interaction_nodes()) == 0:
-                # skip dialogs with no interaction nodes
-                return False
-            return True
-
-        dialogs = DomNode.find_all_matching_subtrees_with_parents(self, is_dialog)
-
-        if len(dialogs) == 0:
-            # no dialogs found, return node
-            return [self]
-
-        return dialogs
+        """Return topmost visible dialogs with interactions, or the root, from the shared index."""
+        return self._index[1]
 
     def interaction_nodes(self) -> Sequence["DomNode"]:
         """Return the original interaction nodes in document order, retaining children and ancestry.
 
         Use `inner_text()` for action labels; `text` is the element's accessible-name-like value.
         """
-        return self.flatten(keep_filter=lambda node: node.is_interaction())
+        return tuple(self.interaction_nodes_by_id.values())

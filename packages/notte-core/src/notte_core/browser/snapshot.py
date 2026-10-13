@@ -52,8 +52,8 @@ class BrowserSnapshot(BaseModel):
         return clean_url(self.metadata.url)
 
     def compare_with(self, other: "BrowserSnapshot") -> bool:
-        inodes = {node.id for node in self.dom_node.interaction_nodes()}
-        new_inodes = {node.id for node in other.dom_node.interaction_nodes()}
+        inodes = set(self.dom_node.interaction_nodes_by_id)
+        new_inodes = set(other.dom_node.interaction_nodes_by_id)
         identical = inodes == new_inodes
         if not identical:
             logger.trace(f"Interactive nodes changed: {new_inodes.difference(inodes)}")

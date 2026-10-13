@@ -94,14 +94,9 @@ class NodeResolutionPipe:
         if snapshot is None:
             raise NoSnapshotObservedError()
 
-        # resolve selector
-        selector_map: dict[str, DomNode] = {
-            inode.id: inode for inode in snapshot.interaction_nodes() if inode.id is not None
-        }
-        is_id_resolved = action.id in selector_map
-        if not is_id_resolved:
+        node = snapshot.dom_node.interaction_nodes_by_id.get(action.id)
+        if node is None:
             raise InvalidActionError(action_id=action.id, reason=f"action '{action.id}' not found in page context.")
-        node = selector_map[action.id]
         action.selector = await NodeResolutionPipe.resolve_selectors(node, verbose)
         action.text_label = node.inner_text()
         return action

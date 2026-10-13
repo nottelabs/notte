@@ -113,8 +113,6 @@ class InteractionOnlyDomNodeRenderingPipe:
         verbose: bool = False,
     ) -> str:
         """Convert the processed DOM content to HTML."""
-        # inodes = "\n".join([str(inode) for inode in node.interaction_nodes()])
-        # logger.info(f"📄 Rendering interaction only node: \n{inodes}")
         component_node_strs: list[str] = []
         components = node.prune_non_dialogs_if_present()
         for component_node in components:

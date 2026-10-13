@@ -33,20 +33,6 @@ find(id: <class 'str'>) -> DomNode | None
 
 ---
 
-### find_all_matching_subtrees_with_parents
-
-```python
-find_all_matching_subtrees_with_parents(node: DomNode, predicate: typing.Callable[[ForwardRef('DomNode')], bool]) -> collections.abc.Sequence['DomNode']
-```
-
-Return the topmost subtrees whose root matches `predicate`
-
-**Returns:**
-
-`Sequence`[<Visibility for="humans">[`DomNode`](/sdk-reference/misc/domnode)</Visibility><Visibility for="agents">[`DomNode`](/sdk-reference/misc/domnode.md)</Visibility>]
-
----
-
 ### flatten
 
 ```python
@@ -127,7 +113,7 @@ is_interaction() -> <class 'bool'>
 prune_non_dialogs_if_present() -> collections.abc.Sequence['DomNode']
 ```
 
-Return the visible dialogs that contain interaction nodes, or `[self]` if there are none
+Return topmost visible dialogs with interactions, or the root, from the shared index
 
 **Returns:**
 

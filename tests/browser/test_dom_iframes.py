@@ -321,3 +321,26 @@ async def test_selector_generator_falls_back_to_css_and_xpath(
     _ = await session.aexecute(FillAction(id=_node(session, "Your name").id, value="Alan"), raise_on_failure=True)
     _ = await session.aexecute(ClickAction(id=submit.id), raise_on_failure=True)
     assert await _frame(session, CROSS).locator("#out").inner_text() == "clicked:Alan"
+
+
+@pytest.mark.asyncio
+async def test_canonical_shadow_node_resolves_and_executes(session: NotteSession) -> None:
+    await session.window.page.set_content('<div id="host"></div>')
+    _ = await session.window.page.evaluate(
+        """() => {
+            const host = document.querySelector('#host');
+            const shadow = host.attachShadow({mode: 'open'});
+            shadow.innerHTML = '<button aria-label="Accessible name"><span>Visible label</span></button>';
+            shadow.querySelector('button').onclick = () => { host.dataset.clicked = 'yes'; };
+        }"""
+    )
+    _ = await session.aobserve()
+    node = _node(session, "Visible label")
+    assert node.id is not None and node.parent is not None and node.children
+    assert node.text == "Accessible name"
+    assert session.snapshot.dom_node.find(node.id) is node
+    assert _selectors(node).in_shadow_root
+    resolved = await NodeResolutionPipe.forward(ClickAction(id=node.id), session.snapshot)
+    assert resolved.text_label == "Visible label"
+    _ = await session.aexecute(resolved, raise_on_failure=True)
+    assert await session.window.page.locator("#host").get_attribute("data-clicked") == "yes"
