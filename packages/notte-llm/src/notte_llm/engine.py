@@ -576,7 +576,7 @@ class LLMEngine:
         model = model or self.model
         if enable_openrouter():
             return LlmModel.get_openrouter_model(model)
-        return model
+        return LlmModel.get_direct_model(model)
 
     def _get_extra_body(self, model: str | None) -> dict[str, Any]:
         model = model or self.model

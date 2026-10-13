@@ -131,3 +131,14 @@ class TestLlmModelOpenrouterIntegration:
         """All LlmModel values should be convertible to OpenRouter format."""
         result = LlmModel.get_openrouter_model(model.value)
         assert result.startswith("openrouter/")
+
+
+class TestGetDirectModel:
+    """Tests for LlmModel.get_direct_model() method."""
+
+    def test_groq_gpt_oss_uses_groq_model_id(self) -> None:
+        assert LlmModel.get_direct_model(LlmModel.groq) == "groq/openai/gpt-oss-120b"
+
+    @pytest.mark.parametrize("model", [m for m in LlmModel if m != LlmModel.groq])
+    def test_other_models_unchanged(self, model: LlmModel) -> None:
+        assert LlmModel.get_direct_model(model) == model.value
