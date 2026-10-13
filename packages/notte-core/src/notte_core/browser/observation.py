@@ -6,9 +6,8 @@ from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from io import BytesIO
 from textwrap import dedent
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
-from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing_extensions import override
 
@@ -20,6 +19,10 @@ from notte_core.data.space import DataSpace
 from notte_core.errors.base import NotteBaseError
 from notte_core.space import ActionSpace
 from notte_core.utils.url import clean_url
+
+if TYPE_CHECKING:
+    # Pillow is imported where an image is decoded or drawn, so importing this module stays cheap.
+    from PIL import Image
 
 _empty_observation_instance = None
 
@@ -135,6 +138,8 @@ class Screenshot(BaseModel):
                 pos += 2 + length
 
         # Slow path: use PIL for non-JPEG or images that need padding
+        from PIL import Image
+
         try:
             img = Image.open(io.BytesIO(v))
             # Image.open is lazy. Force decoding here so a truncated image
@@ -235,6 +240,8 @@ class Observation(FilledTimedSpan):
     @staticmethod
     def empty() -> "Observation":
         def generate_empty_picture(width: int = 1280, height: int = 1080) -> bytes:
+            from PIL import Image, ImageDraw, ImageFont
+
             # Create a small image with "Empty Observation" text
             img = Image.new("RGB", (width, height), color="white")
             draw = ImageDraw.Draw(img)

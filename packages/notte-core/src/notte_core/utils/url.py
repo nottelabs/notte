@@ -1,8 +1,21 @@
+import functools
 import socket
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 import requests
-import tldextract
+
+if TYPE_CHECKING:
+    import tldextract
+
+
+@functools.cache
+def _domain_extractor() -> "tldextract.TLDExtract":
+    # Imported on first use: tldextract (and its filelock/requests-file deps) is not needed to import notte.
+    import tldextract
+
+    # The public suffix list snapshot bundled with tldextract: no download on first use and no cache directory.
+    return tldextract.TLDExtract(cache_dir=None, suffix_list_urls=())
 
 
 def clean_url(url: str) -> str:
@@ -71,7 +84,7 @@ def get_root_domain(url: str) -> str:
     Returns:
         the root domain of the URL
     """
-    extracted = tldextract.extract(url)
+    extracted = _domain_extractor()(url)
     if len(extracted.domain) == 0:
         return ""
     extracted = ".".join((extracted.domain, extracted.suffix))

@@ -2,40 +2,15 @@ import io
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from PIL import Image, ImageDraw, ImageFont
-from pydantic import BaseModel
-
+# Re-exported (redundant alias): `notte_core.browser.highlighter.BoundingBox` stays a public import path.
+from notte_core.browser.geometry import BoundingBox as BoundingBox
 from notte_core.profiling import profiler
 
-
-class BoundingBox(BaseModel):
-    """Represents element bounding box coordinates"""
-
-    x: float
-    y: float
-    width: float
-    height: float
-    scroll_x: float
-    scroll_y: float
-    iframe_offset_x: float = 0
-    iframe_offset_y: float = 0
-    viewport_width: float
-    viewport_height: float
-    notte_id: str | None = None
-
-    @property
-    def absolute_x(self) -> float:
-        return self.x + self.iframe_offset_x
-
-    @property
-    def absolute_y(self) -> float:
-        return self.y + self.iframe_offset_y
-
-    def with_id(self, id: str) -> "BoundingBox":
-        self.notte_id = id
-        return self
+if TYPE_CHECKING:
+    # Pillow is imported where a screenshot is drawn, so importing this module stays cheap.
+    from PIL import Image, ImageDraw
 
 
 class LabelPosition(Enum):
@@ -114,7 +89,7 @@ class ColorAnalyzer:
     """Handles color analysis for label placement optimization"""
 
     @staticmethod
-    def is_area_uniform_color(image: Image.Image, rect: Rectangle, config: LabelConfig) -> bool:
+    def is_area_uniform_color(image: "Image.Image", rect: Rectangle, config: LabelConfig) -> bool:
         """
         Check if an area is mostly uniform color (indicating no content).
 
@@ -207,7 +182,7 @@ class LabelPlacementOptimizer:
         self.color_analyzer: ColorAnalyzer = ColorAnalyzer()
 
     def find_best_position(
-        self, element_rect: Rectangle, label_rect: Rectangle, placed_labels: list[Rectangle], image: Image.Image
+        self, element_rect: Rectangle, label_rect: Rectangle, placed_labels: list[Rectangle], image: "Image.Image"
     ) -> tuple[Rectangle, LabelPosition]:
         """Find the best position for a label"""
         candidates = self._generate_candidates(element_rect, label_rect)
@@ -345,7 +320,7 @@ class LabelPlacementOptimizer:
         """Check if rectangle is within image bounds"""
         return rect.x1 >= 0 and rect.y1 >= 0 and rect.x2 <= self.img_width and rect.y2 <= self.img_height
 
-    def _calculate_position_score(self, label_rect: Rectangle, element_rect: Rectangle, image: Image.Image) -> int:
+    def _calculate_position_score(self, label_rect: Rectangle, element_rect: Rectangle, image: "Image.Image") -> int:
         """Calculate score for a label position"""
         score = 0
 
@@ -389,7 +364,7 @@ class ArrowLabelRenderer:
 
     def draw_arrow_label(
         self,
-        draw: ImageDraw.ImageDraw,
+        draw: "ImageDraw.ImageDraw",
         label_rect: Rectangle,
         color: tuple[int, int, int, int],
         position: LabelPosition,
@@ -413,7 +388,7 @@ class ArrowLabelRenderer:
 
     def _draw_tail_down(
         self,
-        draw: ImageDraw.ImageDraw,
+        draw: "ImageDraw.ImageDraw",
         label_rect: Rectangle,
         color: tuple[int, int, int, int],
         element_rect: Rectangle,
@@ -441,7 +416,7 @@ class ArrowLabelRenderer:
 
     def _draw_tail_left(
         self,
-        draw: ImageDraw.ImageDraw,
+        draw: "ImageDraw.ImageDraw",
         label_rect: Rectangle,
         color: tuple[int, int, int, int],
         element_rect: Rectangle,
@@ -467,7 +442,7 @@ class ArrowLabelRenderer:
 
     def _draw_tail_up(
         self,
-        draw: ImageDraw.ImageDraw,
+        draw: "ImageDraw.ImageDraw",
         label_rect: Rectangle,
         color: tuple[int, int, int, int],
         element_rect: Rectangle,
@@ -493,7 +468,7 @@ class ArrowLabelRenderer:
 
     def _draw_tail_right(
         self,
-        draw: ImageDraw.ImageDraw,
+        draw: "ImageDraw.ImageDraw",
         label_rect: Rectangle,
         color: tuple[int, int, int, int],
         element_rect: Rectangle,
@@ -519,7 +494,7 @@ class ArrowLabelRenderer:
 
     def _draw_inside_tail(
         self,
-        draw: ImageDraw.ImageDraw,
+        draw: "ImageDraw.ImageDraw",
         label_rect: Rectangle,
         color: tuple[int, int, int, int],
         element_rect: Rectangle,
@@ -572,7 +547,7 @@ class ArrowLabelRenderer:
         self._draw_tail_with_outline(draw, tail_points, color)
 
     def _draw_tail_with_outline(
-        self, draw: ImageDraw.ImageDraw, tail_points: list[tuple[float, float]], color: tuple[int, int, int, int]
+        self, draw: "ImageDraw.ImageDraw", tail_points: list[tuple[float, float]], color: tuple[int, int, int, int]
     ):
         """Draw tail with white outline"""
         white_outline = (255, 255, 255, self.config.outline_opacity)
@@ -596,6 +571,8 @@ class ScreenshotHighlighter:
     @staticmethod
     def forward(screenshot: bytes, bounding_boxes: Sequence[BoundingBox]) -> bytes:
         """Add highlights to screenshot based on bounding boxes"""
+        from PIL import Image, ImageDraw
+
         image = Image.open(io.BytesIO(screenshot)).convert("RGB")
         draw = ImageDraw.Draw(image, "RGBA")  # Enable alpha channel for transparency
         img_width, img_height = image.size
@@ -639,12 +616,12 @@ class ScreenshotHighlighter:
 
     @staticmethod
     def _draw_highlight(
-        draw: ImageDraw.ImageDraw,
+        draw: "ImageDraw.ImageDraw",
         bbox: BoundingBox,
         color: str,
         label: str,
         placed_labels: list[Rectangle],
-        image: Image.Image,
+        image: "Image.Image",
         transformer: CoordinateTransformer,
         placement_optimizer: LabelPlacementOptimizer,
         arrow_renderer: ArrowLabelRenderer,
@@ -683,17 +660,19 @@ class ScreenshotHighlighter:
 
     @staticmethod
     def _create_and_place_label(
-        draw: ImageDraw.ImageDraw,
+        draw: "ImageDraw.ImageDraw",
         element_rect: Rectangle,
         color: str,
         label: str,
         placed_labels: list[Rectangle],
-        image: Image.Image,
+        image: "Image.Image",
         placement_optimizer: LabelPlacementOptimizer,
         arrow_renderer: ArrowLabelRenderer,
         config: LabelConfig,
     ):
         """Create and place a label with optimal positioning"""
+        from PIL import ImageFont
+
         # Create font and calculate label dimensions
         try:
             font = ImageFont.load_default(size=config.font_size)
