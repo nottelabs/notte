@@ -14,6 +14,7 @@ from pydantic import BaseModel, ValidationError
 from requests.exceptions import ConnectionError
 
 from notte_sdk._transport import request_session
+from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
 from notte_sdk.errors import AuthenticationError, NotteAPIError, NotteAPIExecutionError
 
 if TYPE_CHECKING:
@@ -101,26 +102,26 @@ class BaseClient(ABC):
         """
         Initialize a new API client instance.
 
-        Sets up the client by resolving an API key from the provided parameter or the
-        NOTTE_API_KEY environment variable. Selects the server URL (defaulting to a
-        preconfigured server if none is provided), initializes a mapping of endpoints
-        using the implemented 'endpoints' method, and stores an optional base endpoint
-        path for constructing request URLs.
+        Sets up the client by resolving an API key from the provided parameter, the
+        NOTTE_API_KEY environment variable, or the notte-cli keyring. Selects the server
+        URL (defaulting to a preconfigured server if none is provided), initializes a
+        mapping of endpoints using the implemented 'endpoints' method, and stores an
+        optional base endpoint path for constructing request URLs.
 
         Args:
             base_endpoint_path: Optional base path to be prefixed to endpoint URLs.
             api_key: Optional API key for authentication; if not supplied, retrieved from
-                the NOTTE_API_KEY environment variable.
+                the NOTTE_API_KEY environment variable or the notte-cli keyring.
 
         Raises:
-            AuthenticationError: If an API key is neither provided nor available in the environment.
+            AuthenticationError: If an API key cannot be resolved.
         """
         self.root_client = root_client  # pyright: ignore [reportUnannotatedClassAttribute]
-        token = api_key or os.getenv("NOTTE_API_KEY")
-        if token is None:
-            raise AuthenticationError("NOTTE_API_KEY needs to be provided")
-        self.token: str = token
         self.server_url: str = server_url or os.getenv("NOTTE_API_URL") or self.DEFAULT_NOTTE_API_URL
+        token = resolve_api_key(api_key, self.server_url)
+        if token is None:
+            raise AuthenticationError(MISSING_API_KEY_MESSAGE)
+        self.token: str = token
         self.base_endpoint_path: str | None = base_endpoint_path
         self.verbose: bool = verbose
         self.db_preview = (os.getenv("NOTTE_DB_PREVIEW_BRANCH") or "").strip() or None

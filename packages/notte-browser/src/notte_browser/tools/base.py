@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Mapping, Sequence
 from typing import Annotated, Any, Callable, ClassVar, TypeVar, Unpack, final
 
-import markdownify  # type: ignore[import]
+import markdownify
 from notte_core.actions import EmailReadAction, SmsReadAction, ToolAction
 from notte_core.browser.observation import ExecutionResult, TimedSpan
 from notte_core.common.logging import logger
@@ -80,7 +80,7 @@ class SimpleEmailResponse(BaseModel):
             content = markdownify.markdownify(email.html_content)  # type: ignore[attr-defined]
         return SimpleEmailResponse(
             subject=email.subject,
-            content=content or "no content",  # type: ignore[attr-defined]
+            content=content or "no content",
             created_at=email.created_at,
             sender_email=email.sender_email or "unknown",
         )

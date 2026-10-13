@@ -52,6 +52,7 @@ dev = [
     "joblib>=1.4.2",
     "jupyter>=1.1.1",
     "lxml-stubs>=0.5.1",
+    "notte-sdk[playwright]",
     "pandas",
     "pandas-stubs>=2.2.3.250308",
     "pebble>=5.1.1",

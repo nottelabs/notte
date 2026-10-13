@@ -1273,6 +1273,26 @@ export type ConnectLinkStatusResponse = {
      * Error Redirect Uri
      */
     error_redirect_uri?: string | null;
+    /**
+     * Step
+     */
+    step?: 'starting' | 'signing_in' | 'retrying' | 'confirming' | 'saving' | null;
+    /**
+     * Login Attempt
+     */
+    login_attempt?: number | null;
+    /**
+     * Max Login Attempts
+     */
+    max_login_attempts?: number | null;
+    /**
+     * Started At
+     */
+    started_at?: string | null;
+    /**
+     * Expected Seconds
+     */
+    expected_seconds?: number | null;
 };
 
 /**
