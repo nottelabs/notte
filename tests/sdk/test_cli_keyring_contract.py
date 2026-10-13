@@ -112,18 +112,31 @@ def _clear_placeholders() -> None:
             _keychain("delete-generic-password", "-s", auth.KEYRING_SERVICE, "-a", key)
 
 
+def _read_system_store(key: str) -> str | None:
+    if sys.platform == "darwin":
+        return auth._get_from_macos_keychain(key)
+    if sys.platform == "win32":
+        return auth._get_from_windows_credential_manager(key)
+    return auth._get_from_secret_service(key)
+
+
 def _check_store(values: dict[str, str]) -> None:
-    """When CI names the store the CLI is expected to pick, check the keys landed there."""
-    store = os.getenv("NOTTE_CLI_CONTRACT_STORE")
+    """Check each key with the reader of the store the CLI put it in.
+
+    A full lookup could succeed through another store, so this reads the one
+    the CLI used directly. When CI names the store it expects, check that too.
+    """
+    expected = os.getenv("NOTTE_CLI_CONTRACT_STORE") or None
+    assert expected in (None, "file", "secret-service"), f"unknown NOTTE_CLI_CONTRACT_STORE {expected!r}"
     files = Path(os.environ["NOTTE_CONFIG_DIR"]) / ".notte" / "cli"
     for key, value in values.items():
-        if store == "file":
-            assert (files / key).is_file(), key
-        elif store == "secret-service":
-            assert not (files / key).exists(), key
-            assert auth._get_from_secret_service(key) == value, key
+        in_file = (files / key).is_file()
+        if expected is not None:
+            assert in_file == (expected == "file"), key
+        if in_file:
+            assert auth._get_from_file_backend(key) == value, key
         else:
-            assert store is None, f"unknown NOTTE_CLI_CONTRACT_STORE {store!r}"
+            assert _read_system_store(key) == value, key
 
 
 def test_sdk_reads_legacy_key_written_by_cli(run_cli: RunCli) -> None:
