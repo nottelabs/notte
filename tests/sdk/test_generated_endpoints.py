@@ -4,6 +4,7 @@ The one wire change: list calls use the spec's path (`GET /personas`), not `GET 
 """
 
 import json
+import sys
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -160,6 +161,11 @@ def test_profile_requests(client: NotteClient, monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_vault_requests(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    # In CI, tests/conftest.py wraps `VaultsClient.create` to record created vault ids for the end-of-run
+    # cleanup. These vaults are fake, so keep their ids out of that list.
+    scope = sys.modules.get("ci_vault_scope")
+    if scope is not None:
+        monkeypatch.setattr(scope, "record_vault_id", lambda _prefix, _vault_id: None)
     session = fake(monkeypatch, VAULT)
     url = GetCredentialsRequest(url="https://www.notte.cc/login").url
     assert client.vaults.create(name="v").vault_id == "vault-1"

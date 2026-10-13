@@ -191,7 +191,13 @@ def cleanup_this_run(*, dry_run: bool = False, prefix: str | None = None, allow_
 
 def _is_already_deleted_error(exc: BaseException) -> bool:
     text = str(exc).lower()
-    return "not active" in text or "not found" in text or ("already" in text and "deleted" in text)
+    # The API answers 404 "does not exist or the user does not have access" for an unknown id.
+    return (
+        "not active" in text
+        or "not found" in text
+        or "does not exist" in text
+        or ("already" in text and "deleted" in text)
+    )
 
 
 def cleanup_orphan_defaults(*, dry_run: bool, min_age_hours: float, allow_production: bool = False) -> int:
