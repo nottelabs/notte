@@ -11,7 +11,10 @@ from pydantic import BaseModel
 
 # Real LiteLLM Gemini calls against a local server that speaks the Gemini API, so the
 # provider's actual error mapping reaches the engine without a live outage.
-OVERLOADED = (503, {"error": {"code": 503, "message": "This model is currently experiencing high demand.", "status": "UNAVAILABLE"}})
+OVERLOADED = (
+    503,
+    {"error": {"code": 503, "message": "This model is currently experiencing high demand.", "status": "UNAVAILABLE"}},
+)
 NO_CANDIDATES = (200, {"candidates": [], "usageMetadata": {"promptTokenCount": 1, "totalTokenCount": 1}})
 ANSWER = (
     200,
