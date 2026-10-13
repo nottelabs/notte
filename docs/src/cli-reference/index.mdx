@@ -13,23 +13,33 @@ The [Notte CLI](https://github.com/nottelabs/notte-cli) gives you every Notte re
 
 ## Installation
 
-```bash
-# Install script (macOS and Linux)
-curl -fsSL https://notte.cc/install-cli.sh | sh
+Install with one of:
 
-# Homebrew
+<CodeGroup>
+
+```bash Install script
+# macOS and Linux
+curl -fsSL https://notte.cc/install-cli.sh | sh
+```
+
+```bash Homebrew
 brew tap nottelabs/notte-cli https://github.com/nottelabs/notte-cli.git
 brew install notte
+```
 
-# Go
+```bash Go
 go install github.com/nottelabs/notte-cli/cmd/notte@latest
 ```
+
+</CodeGroup>
 
 Verify the installation:
 
 ```bash
 notte version
 ```
+
+Upgrade to the latest release with `notte upgrade`. It uses Homebrew when notte was installed with it, and otherwise re-runs the install script.
 
 ## Authentication
 
@@ -81,7 +91,7 @@ notte auth login
     Manage vaults
   </Card>
   <Card icon="terminal" title="Other commands" href="/cli-reference/other">
-    `clear`, `health`, `search`, `version`
+    `clear`, `health`, `search`, `upgrade`, `version`
   </Card>
 </Columns>
 
