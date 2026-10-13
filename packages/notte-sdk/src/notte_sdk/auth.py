@@ -1,9 +1,9 @@
 """Read the API key saved by `notte auth login`.
 
-notte-cli stores its key with github.com/99designs/keyring, which picks the
-first available backend among Secret Service, KWallet, pass and an encrypted
-file under the CLI config directory. This module reads the Secret Service and
-file backends, which cover Linux desktops, macOS, Windows and headless hosts.
+notte-cli stores its key with github.com/99designs/keyring: in the macOS
+Keychain, the Windows Credential Manager, a Linux Secret Service, or an
+encrypted file under the CLI config directory when no system store is
+available. This module reads all four. KWallet and pass are not read.
 Every lookup is best effort: any failure means "no key found".
 """
 
@@ -11,9 +11,10 @@ import base64
 import importlib
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, cast, final
 from urllib.parse import urlparse
 
 from notte_core.common.logging import logger
@@ -28,6 +29,13 @@ _CONFIG_DIR_ENV = "NOTTE_CONFIG_DIR"
 _CONFIG_DIR_NAME = Path(".notte") / "cli"
 # A Secret Service that accepts a call but never replies must not hang the client.
 _SECRET_SERVICE_TIMEOUT_SECONDS = 2.0
+# Checking that a Keychain item exists never prompts, so it gets a short bound.
+_KEYCHAIN_PROBE_TIMEOUT_SECONDS = 5.0
+# Reading the secret can show a Keychain access prompt, which needs time to answer.
+_KEYCHAIN_READ_TIMEOUT_SECONDS = 30.0
+_SECURITY_TOOL = "/usr/bin/security"
+# Prefix 99designs/keyring adds to Windows Credential Manager target names.
+_WINCRED_PREFIX = "keyring"
 # Upper bound on PBKDF2 iterations accepted from a file header.
 _MAX_PBES2_ITERATIONS = 10_000_000
 
@@ -168,6 +176,117 @@ def _get_from_secret_service(key: str) -> str | None:
     return None
 
 
+def _platform() -> str:
+    """Return `sys.platform` as a plain string, so type checkers check every platform branch on any OS."""
+    return sys.platform
+
+
+def _get_from_macos_keychain(key: str) -> str | None:
+    """Read the generic password notte-cli stores in the macOS Keychain.
+
+    Items are stored with service `notte-cli`, the key as account, and the raw
+    API key as data. Only the CLI is trusted to read them without asking, so
+    the read can show an access prompt; it is bounded and skipped when no item
+    exists.
+    """
+    if _platform() != "darwin":
+        return None
+
+    query = [_SECURITY_TOOL, "find-generic-password", "-s", KEYRING_SERVICE, "-a", key]
+    try:
+        # Looking up attributes never prompts: only ask for the secret when the item exists.
+        probe = subprocess.run(query, capture_output=True, timeout=_KEYCHAIN_PROBE_TIMEOUT_SECONDS, check=False)
+        if probe.returncode != 0:
+            return None
+        result = subprocess.run(
+            [*query, "-w"], capture_output=True, timeout=_KEYCHAIN_READ_TIMEOUT_SECONDS, check=False
+        )
+        if result.returncode != 0:
+            return None
+        value = result.stdout.decode()
+        return value.removesuffix("\n") or None
+    except Exception as exc:
+        logger.debug(f"Could not read notte-cli Keychain item: {type(exc).__name__}")
+        return None
+
+
+def _get_from_windows_credential_manager(key: str) -> str | None:
+    """Read the generic credential notte-cli stores in the Windows Credential Manager.
+
+    99designs/keyring names it `keyring:notte-cli:<key>` and stores the raw API key as its blob.
+    """
+    if _platform() != "win32":
+        return None
+
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        @final
+        class _Credential(ctypes.Structure):
+            _fields_ = [
+                ("Flags", wintypes.DWORD),
+                ("Type", wintypes.DWORD),
+                ("TargetName", wintypes.LPWSTR),
+                ("Comment", wintypes.LPWSTR),
+                ("LastWritten", wintypes.FILETIME),
+                ("CredentialBlobSize", wintypes.DWORD),
+                ("CredentialBlob", ctypes.POINTER(ctypes.c_char)),
+                ("Persist", wintypes.DWORD),
+                ("AttributeCount", wintypes.DWORD),
+                ("Attributes", ctypes.c_void_p),
+                ("TargetAlias", wintypes.LPWSTR),
+                ("UserName", wintypes.LPWSTR),
+            ]
+
+        cred_type_generic = 1
+        # WinDLL only exists on Windows: look it up dynamically so type checking passes on every OS.
+        win_dll: Any = vars(ctypes)["WinDLL"]
+        advapi32: Any = win_dll("advapi32")
+        cred_read: Any = advapi32.CredReadW
+        cred_read.argtypes = [
+            wintypes.LPCWSTR,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            ctypes.POINTER(ctypes.POINTER(_Credential)),
+        ]
+        cred_read.restype = wintypes.BOOL
+        cred_free: Any = advapi32.CredFree
+        cred_free.argtypes = [ctypes.c_void_p]
+        cred_free.restype = None
+
+        credential = ctypes.POINTER(_Credential)()
+        target = f"{_WINCRED_PREFIX}:{KEYRING_SERVICE}:{key}"
+        if not cred_read(target, cred_type_generic, 0, ctypes.byref(credential)):
+            return None
+        try:
+            blob = ctypes.string_at(credential.contents.CredentialBlob, credential.contents.CredentialBlobSize)
+        finally:
+            cred_free(credential)
+        return blob.decode() or None
+    except Exception as exc:
+        logger.debug(f"Could not read notte-cli Credential Manager entry: {type(exc).__name__}")
+        return None
+
+
+def _get_from_cli_stores(key: str) -> str | None:
+    """Read `key` from the stores notte-cli may have used on this platform.
+
+    On Linux, notte-cli only falls back to the file when no Secret Service is
+    available, so the Secret Service comes first. On macOS and Windows, older
+    CLI versions wrote to the file; newer ones copy that entry into the system
+    store and keep the file as an identical copy until the next login or
+    logout removes it. Reading the file first returns the same key without a
+    Keychain access prompt.
+    """
+    platform = _platform()
+    if platform == "darwin":
+        return _get_from_file_backend(key) or _get_from_macos_keychain(key)
+    if platform == "win32":
+        return _get_from_file_backend(key) or _get_from_windows_credential_manager(key)
+    return _get_from_secret_service(key) or _get_from_file_backend(key)
+
+
 def _is_secure_api_url(api_url: str) -> bool:
     """Only send saved keys over HTTPS, or to a server on this machine."""
     parsed = urlparse(api_url)
@@ -185,7 +304,7 @@ def get_keyring_api_key(api_url: str) -> str | None:
         # Entry written by notte-cli versions that predate per-environment keys.
         keys.append(KEYRING_KEY)
     for key in keys:
-        value = _get_from_secret_service(key) or _get_from_file_backend(key)
+        value = _get_from_cli_stores(key)
         if value:
             return value
     return None

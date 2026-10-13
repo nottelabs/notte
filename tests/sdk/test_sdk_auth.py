@@ -1,5 +1,6 @@
 import base64
 import json
+import subprocess
 import sys
 import types
 from pathlib import Path
@@ -56,11 +57,13 @@ def _write_cli_store(config_dir: Path, *keys: str) -> None:
 
 @pytest.fixture
 def cli_config_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """An isolated notte-cli config dir, with no Secret Service and no env overrides."""
+    """An isolated notte-cli config dir, with no system credential store and no env overrides."""
     monkeypatch.setenv("NOTTE_CONFIG_DIR", str(tmp_path))
     monkeypatch.delenv("NOTTE_API_KEY", raising=False)
     monkeypatch.delenv("NOTTE_API_URL", raising=False)
     monkeypatch.setattr(auth, "_get_from_secret_service", lambda key: None)
+    monkeypatch.setattr(auth, "_get_from_macos_keychain", lambda key: None)
+    monkeypatch.setattr(auth, "_get_from_windows_credential_manager", lambda key: None)
     return tmp_path
 
 
@@ -171,6 +174,7 @@ def test_get_keyring_api_key_supports_legacy_prod_key(cli_config_dir: Path) -> N
 
 def test_get_keyring_api_key_prefers_secret_service(cli_config_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _write_cli_store(cli_config_dir, "api_key:prod")
+    monkeypatch.setattr(sys, "platform", "linux")
     monkeypatch.setattr(auth, "_get_from_secret_service", lambda key: f"secret-service-{key}")
 
     assert get_keyring_api_key("https://api.notte.cc") == "secret-service-api_key:prod"
@@ -330,3 +334,163 @@ def test_client_without_any_key_raises_after_one_lookup(cli_config_dir: Path) ->
         _ = NotteClient()
 
     assert get_keyring.call_count == 1
+
+
+@pytest.mark.parametrize(
+    ("platform", "order"),
+    [
+        ("linux", ["secret_service", "file"]),
+        ("darwin", ["file", "keychain"]),
+        ("win32", ["file", "wincred"]),
+    ],
+)
+def test_cli_stores_lookup_order(monkeypatch: pytest.MonkeyPatch, platform: str, order: list[str]) -> None:
+    calls: list[str] = []
+
+    def reader(name: str, value: str | None) -> Any:
+        def read(key: str) -> str | None:
+            calls.append(name)
+            return value
+
+        return read
+
+    monkeypatch.setattr(sys, "platform", platform)
+    for name, attr in [
+        ("secret_service", "_get_from_secret_service"),
+        ("file", "_get_from_file_backend"),
+        ("keychain", "_get_from_macos_keychain"),
+        ("wincred", "_get_from_windows_credential_manager"),
+    ]:
+        monkeypatch.setattr(auth, attr, reader(name, None))
+    assert auth._get_from_cli_stores("api_key:prod") is None
+    assert calls == order
+
+    # The first store that has the key wins and the others are not read.
+    calls.clear()
+    first, second = order
+    first_reader = "_get_from_secret_service" if first == "secret_service" else "_get_from_file_backend"
+    monkeypatch.setattr(auth, first_reader, reader(first, f"{first}-key"))
+    assert auth._get_from_cli_stores("api_key:prod") == f"{first}-key"
+    assert calls == [first]
+
+
+class _FakeSecurity:
+    """Stands in for subprocess.run calls to the macOS `security` tool."""
+
+    def __init__(self, items: dict[str, bytes], read_error: BaseException | None = None) -> None:
+        self.items = items
+        self.read_error = read_error
+        self.calls: list[tuple[list[str], float | None]] = []
+
+    def __call__(self, args: list[str], *, capture_output: bool, timeout: float | None, check: bool) -> Any:
+        assert capture_output and not check
+        self.calls.append((args, timeout))
+        account = args[args.index("-a") + 1]
+        if args[:4] != ["/usr/bin/security", "find-generic-password", "-s", "notte-cli"] or account not in self.items:
+            return subprocess.CompletedProcess(args, 44, b"", b"The specified item could not be found in the keychain.")
+        if "-w" not in args:
+            return subprocess.CompletedProcess(args, 0, b'keychain: "login.keychain-db"', b"")
+        if self.read_error is not None:
+            raise self.read_error
+        return subprocess.CompletedProcess(args, 0, self.items[account] + b"\n", b"")
+
+
+def test_macos_keychain_reads_cli_item(monkeypatch: pytest.MonkeyPatch) -> None:
+    security = _FakeSecurity({"api_key:prod": b"keychain-key"})
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setattr(auth.subprocess, "run", security)
+
+    assert auth._get_from_macos_keychain("api_key:prod") == "keychain-key"
+    query = ["/usr/bin/security", "find-generic-password", "-s", "notte-cli", "-a", "api_key:prod"]
+    assert security.calls == [
+        (query, auth._KEYCHAIN_PROBE_TIMEOUT_SECONDS),
+        ([*query, "-w"], auth._KEYCHAIN_READ_TIMEOUT_SECONDS),
+    ]
+
+
+def test_macos_keychain_skips_secret_read_when_item_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    security = _FakeSecurity({})
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setattr(auth.subprocess, "run", security)
+
+    assert auth._get_from_macos_keychain("api_key:prod") is None
+    # Only the attribute lookup ran: asking for the secret could show a prompt.
+    assert [args[-1] for args, _ in security.calls] == ["api_key:prod"]
+
+
+@pytest.mark.parametrize(
+    "error", [subprocess.TimeoutExpired("security", 30), FileNotFoundError("/usr/bin/security"), OSError("boom")]
+)
+def test_macos_keychain_failures_are_not_fatal(monkeypatch: pytest.MonkeyPatch, error: BaseException) -> None:
+    messages: list[str] = []
+    sink = logger.add(lambda message: messages.append(str(message)), level="DEBUG")
+    try:
+        monkeypatch.setattr(sys, "platform", "darwin")
+        monkeypatch.setattr(auth.subprocess, "run", _FakeSecurity({"api_key:prod": b"keychain-key"}, read_error=error))
+        assert auth._get_from_macos_keychain("api_key:prod") is None
+    finally:
+        logger.remove(sink)
+    assert not any("keychain-key" in message for message in messages)
+
+
+def test_macos_keychain_denied_or_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, "platform", "darwin")
+
+    def denied(args: list[str], **_: Any) -> Any:
+        code = 51 if "-w" in args else 0  # User canceled the access prompt.
+        return subprocess.CompletedProcess(args, code, b"", b"")
+
+    monkeypatch.setattr(auth.subprocess, "run", denied)
+    assert auth._get_from_macos_keychain("api_key:prod") is None
+
+    monkeypatch.setattr(auth.subprocess, "run", _FakeSecurity({"api_key:prod": b""}))
+    assert auth._get_from_macos_keychain("api_key:prod") is None
+
+
+@pytest.mark.parametrize("platform", ["linux", "win32"])
+def test_macos_keychain_only_on_macos(monkeypatch: pytest.MonkeyPatch, platform: str) -> None:
+    security = _FakeSecurity({"api_key:prod": b"keychain-key"})
+    monkeypatch.setattr(sys, "platform", platform)
+    monkeypatch.setattr(auth.subprocess, "run", security)
+
+    assert auth._get_from_macos_keychain("api_key:prod") is None
+    assert security.calls == []
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="checks the behavior without the Windows API")
+def test_windows_credential_manager_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert auth._get_from_windows_credential_manager("api_key:prod") is None
+    # Even when the platform claims to be Windows, a missing API means "no key".
+    monkeypatch.setattr(sys, "platform", "win32")
+    assert auth._get_from_windows_credential_manager("api_key:prod") is None
+
+
+def test_get_keyring_api_key_reads_macos_keychain(cli_config_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setattr(auth, "_get_from_macos_keychain", lambda key: {"api_key:prod": "keychain-key"}.get(key))
+
+    assert get_keyring_api_key("https://api.notte.cc") == "keychain-key"
+    assert get_keyring_api_key("https://us-staging.notte.cc") is None
+    # A saved key is never sent over plain HTTP, whichever store holds it.
+    assert get_keyring_api_key("http://api.notte.cc") is None
+
+
+def test_get_keyring_api_key_reads_windows_credential_manager(
+    cli_config_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(
+        auth,
+        "_get_from_windows_credential_manager",
+        lambda key: {"api_key": "wincred-legacy-key"}.get(key),  # pragma: allowlist secret
+    )
+
+    assert get_keyring_api_key("https://api.notte.cc") == "wincred-legacy-key"
+    assert get_keyring_api_key("http://api.notte.cc") is None
+
+
+def test_client_uses_macos_keychain(cli_config_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setattr(auth, "_get_from_macos_keychain", lambda key: {"api_key:prod": "keychain-key"}.get(key))
+
+    assert NotteClient().sessions.token == "keychain-key"
