@@ -137,6 +137,28 @@ describe('session.reconnect()', () => {
     expect(fresh.browser.close).toHaveBeenCalledTimes(1);
   });
 
+  it('does not share a stopped attempt with a restarted session', async () => {
+    const { session } = await sessionWithDisconnectedPage();
+    const stale = binding();
+    let finish: (browser: unknown) => void = () => {};
+    vi.mocked(chromium.connectOverCDP).mockReturnValueOnce(new Promise(resolve => { finish = resolve; }) as never);
+
+    const pending = session.reconnect();
+    await vi.waitFor(() => expect(chromium.connectOverCDP).toHaveBeenCalled());
+    await session.stop();
+
+    const restarted = binding();
+    vi.mocked(chromium.connectOverCDP).mockResolvedValueOnce(restarted.browser as never);
+    await session.start();
+    expect(await session.page()).toBe(restarted.page);
+    expect(await session.reconnect()).toBe(restarted.page);
+
+    finish(stale.browser);
+    await expect(pending).rejects.toThrow('the session was stopped while reconnecting');
+    expect(stale.browser.close).toHaveBeenCalledTimes(1);
+    expect(await session.page()).toBe(restarted.page);
+  });
+
   it.each([0, -1, Infinity, Number.NaN])('rejects timeout_ms=%s without connecting', async timeout => {
     const { session } = await sessionWithDisconnectedPage();
     await expect(session.reconnect({ timeout_ms: timeout })).rejects.toThrow(RangeError);

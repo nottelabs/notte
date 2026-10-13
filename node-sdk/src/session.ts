@@ -425,6 +425,8 @@ export class Session {
     const browser = this.playwrightBrowser;
     this.playwrightBrowser = null;
     this.playwrightPage = null;
+    // A pending reconnect belongs to this connection; never share it with a restarted session.
+    this.playwrightReconnect = null;
     if (browser) {
       try {
         await browser.close();
