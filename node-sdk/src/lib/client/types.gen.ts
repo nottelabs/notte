@@ -3171,30 +3171,6 @@ export type ImageData = {
 };
 
 /**
- * ImprovePromptRequest
- */
-export type ImprovePromptRequest = {
-    /**
-     * Prompt
-     */
-    prompt: string;
-};
-
-/**
- * ImprovePromptResponse
- */
-export type ImprovePromptResponse = {
-    /**
-     * Prompt
-     */
-    prompt: string;
-    /**
-     * Variables
-     */
-    variables?: Array<string> | null;
-};
-
-/**
  * LegacyAgentStatusResponse
  */
 export type LegacyAgentStatusResponse = {
@@ -3703,32 +3679,6 @@ export type NotteProxy = {
      * City
      */
     city?: string | null;
-};
-
-/**
- * NudgePromptRequest
- */
-export type NudgePromptRequest = {
-    /**
-     * Task
-     */
-    task: string;
-    /**
-     * Agent Messages
-     */
-    agent_messages: Array<{
-        [key: string]: unknown;
-    }>;
-};
-
-/**
- * NudgePromptResponse
- */
-export type NudgePromptResponse = {
-    /**
-     * Prompt
-     */
-    prompt: string;
 };
 
 /**
@@ -11390,76 +11340,6 @@ export type ConnectLinkStatusResponses = {
 };
 
 export type ConnectLinkStatusResponse2 = ConnectLinkStatusResponses[keyof ConnectLinkStatusResponses];
-
-export type ImprovePromptData = {
-    body: ImprovePromptRequest;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: never;
-    url: '/prompts/improve';
-};
-
-export type ImprovePromptErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ImprovePromptError = ImprovePromptErrors[keyof ImprovePromptErrors];
-
-export type ImprovePromptResponses = {
-    /**
-     * Successful Response
-     */
-    200: ImprovePromptResponse;
-};
-
-export type ImprovePromptResponse2 = ImprovePromptResponses[keyof ImprovePromptResponses];
-
-export type NudgePromptData = {
-    body: NudgePromptRequest;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: never;
-    url: '/prompts/nudge';
-};
-
-export type NudgePromptErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type NudgePromptError = NudgePromptErrors[keyof NudgePromptErrors];
-
-export type NudgePromptResponses = {
-    /**
-     * Successful Response
-     */
-    200: NudgePromptResponse;
-};
-
-export type NudgePromptResponse2 = NudgePromptResponses[keyof NudgePromptResponses];
 
 export type GetUsageData = {
     body?: never;
