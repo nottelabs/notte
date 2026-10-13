@@ -125,7 +125,6 @@ async def test_completion_passes_non_empty_extra_body(llm_engine: LLMEngine) -> 
     assert acompletion.call_args.kwargs["extra_body"] == extra_body
 
 
-
 @pytest.mark.asyncio
 async def test_completion_maps_groq_gpt_oss_to_groq_model_id(llm_engine: LLMEngine) -> None:
     with (
@@ -134,6 +133,7 @@ async def test_completion_maps_groq_gpt_oss_to_groq_model_id(llm_engine: LLMEngi
     ):
         await llm_engine.completion(messages=[Message(role="user", content="Hello")], model="groq/gpt-oss-120b")
     assert acompletion.call_args.args[0] == "groq/openai/gpt-oss-120b"
+
 
 class TestStructuredContent:
     def test_extract_with_outer_tag(self):
