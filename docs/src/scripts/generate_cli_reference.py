@@ -4,7 +4,7 @@
 The pages under `cli-reference/` are written by notte-cli's own generator
 (`scripts/gendocs`), which walks the CLI's command tree, so they cannot drift
 from the pinned CLI. This script runs it, replaces `cli-reference/`, and keeps
-the "CLI" sidebar group in `docs.json` listing exactly the generated pages.
+the "CLI" tab in `docs.json` listing exactly the generated pages.
 Since `llms.txt` is built from the sidebar, a regeneration rebuilds it too.
 
     python docs/src/scripts/generate_cli_reference.py          # regenerate
@@ -32,10 +32,9 @@ REPO_ROOT = SRC_DIR.parent.parent
 CLI_DIR = REPO_ROOT / "notte-cli"
 OUT_DIR = SRC_DIR / "cli-reference"
 DOCS_JSON = SRC_DIR / "docs.json"
-TAB = "APIs and SDKs"
-GROUP = "CLI"
-# The CLI group sits right after this one in the tab.
-AFTER_GROUP = "Getting Started"
+TAB = "CLI"
+# The CLI tab sits right after this one.
+AFTER_TAB = "APIs and SDKs"
 GENERATE_TIMEOUT_SECONDS = 600
 
 
@@ -65,15 +64,21 @@ def nav_pages(out: Path) -> list[str]:
 
 
 def sync_nav(docs: dict[str, Any], pages: list[str]) -> None:
-    tab = next(t for t in docs["navigation"]["tabs"] if t.get("tab") == TAB)
-    groups: list[dict[str, Any]] = tab["groups"]
-    entry = {"group": GROUP, "pages": pages}
-    for i, g in enumerate(groups):
-        if g.get("group") == GROUP:
-            groups[i] = entry
+    overview, commands = pages[:1], pages[1:]
+    entry = {
+        "tab": TAB,
+        "groups": [
+            {"group": "Getting Started", "pages": overview},
+            {"group": "Commands", "pages": commands},
+        ],
+    }
+    tabs: list[dict[str, Any]] = docs["navigation"]["tabs"]
+    for i, t in enumerate(tabs):
+        if t.get("tab") == TAB:
+            tabs[i] = entry
             return
-    after = next(i for i, g in enumerate(groups) if g.get("group") == AFTER_GROUP)
-    groups.insert(after + 1, entry)
+    after = next(i for i, t in enumerate(tabs) if t.get("tab") == AFTER_TAB)
+    tabs.insert(after + 1, entry)
 
 
 def same_tree(a: Path, b: Path) -> bool:
@@ -105,7 +110,7 @@ def main() -> int:
             if not same_tree(OUT_DIR, fresh):
                 stale.append("docs/src/cli-reference/")
             if json.loads(current) != docs:
-                stale.append("docs/src/docs.json (CLI group)")
+                stale.append("docs/src/docs.json (CLI tab)")
             if stale:
                 print(
                     "CLI reference is out of date with the notte-cli submodule: "
