@@ -111,6 +111,11 @@ repos:
         entry: bash -c "uv run --no-sync python scripts/generate_action_overloads.py --check"
         language: system
         files: ^(packages/notte-core/src/notte_core/actions/.*|packages/notte-browser/src/notte_browser/session\.py|packages/notte-sdk/src/notte_sdk/endpoints/sessions\.py|scripts/generate_action_overloads\.py|\.pre-commit-config\.yaml)$
+      - id: sdk-endpoints
+        name: Check the generated SDK endpoints match the OpenAPI snapshot
+        entry: bash -c "uv run --no-sync python scripts/generate_sdk_endpoints.py --check"
+        language: system
+        files: ^(openapi/.*|packages/notte-sdk/src/notte_sdk/.*\.py|packages/notte-core/src/notte_core/(types|credentials/base)\.py|scripts/(generate_sdk_endpoints|openapi_contract)\.py|\.pre-commit-config\.yaml)$
         pass_filenames: false
       - id: no-loguru-logger-import
         name: Check for loguru logger imports

@@ -175,7 +175,19 @@ OPENAPI_URL ?= https://us-staging.notte.cc
 openapi-fetch:
 	uv run --no-sync python scripts/openapi_contract.py --fetch --url $(OPENAPI_URL)
 
-# Release gate: production must serve the wire models we are about to publish.
+# Release gate: production must serve the wire models we are about to publish, and every
+# operation the Python SDK calls (method, path, parameters, models) as the snapshot describes it.
 .PHONY: openapi-check-prod
 openapi-check-prod:
 	uv run --no-sync python scripts/openapi_contract.py --check --against https://api.notte.cc
+	uv run --no-sync python scripts/generate_sdk_endpoints.py --check --against https://api.notte.cc
+
+# The Python SDK's endpoint layer (notte_sdk/_generated/endpoints.py) is generated from the
+# snapshot. See docs/design/sdk-generated-endpoints.md.
+.PHONY: sdk-endpoints
+sdk-endpoints:
+	uv run --no-sync python scripts/generate_sdk_endpoints.py
+
+.PHONY: sdk-endpoints-check
+sdk-endpoints-check:
+	uv run --no-sync python scripts/generate_sdk_endpoints.py --check
