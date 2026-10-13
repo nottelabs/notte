@@ -2,10 +2,10 @@ name: readme-check
 
 on:
   pull_request:
-    paths: ['README.md', 'node-sdk/**', 'packages/**', 'uv.lock', 'scripts/readme_blocks.py', '.github/workflows/readme-check.yml']
+    paths: ['README.md', 'node-sdk/**', 'packages/**', 'uv.lock', 'pyproject.toml', 'scripts/readme_blocks.py', 'tests/examples/test_readme.py', 'tests/scripts/test_readme_blocks.py', '.github/workflows/readme-check.yml']
   push:
     branches: [main]
-    paths: ['README.md', 'node-sdk/**', 'packages/**', 'uv.lock', 'scripts/readme_blocks.py', '.github/workflows/readme-check.yml']
+    paths: ['README.md', 'node-sdk/**', 'packages/**', 'uv.lock', 'pyproject.toml', 'scripts/readme_blocks.py', 'tests/examples/test_readme.py', 'tests/scripts/test_readme_blocks.py', '.github/workflows/readme-check.yml']
   workflow_dispatch:
 
 permissions:

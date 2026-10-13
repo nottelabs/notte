@@ -18,7 +18,8 @@ ROOT = Path(__file__).resolve().parent.parent
 README = ROOT / "README.md"
 TS_OUT = ROOT / "node-sdk" / ".readme-check"
 
-FENCE = re.compile(r"^```([\w-]*)[^\n]*\n(.*?)^```[ \t]*$", re.MULTILINE | re.DOTALL)
+# Backtick or tilde fences of 3+ characters; the closing fence must repeat the opening one.
+FENCE = re.compile(r"^(`{3,}|~{3,})([\w-]*)[^\n]*\n(.*?)^\1[ \t]*$", re.MULTILINE | re.DOTALL)
 SHELL_LANGS = {"bash", "sh", "shell", "console"}
 TS_LANGS = {"typescript", "ts"}
 PY_LANGS = {"python", "py"}
@@ -33,9 +34,9 @@ def blocks(readme: Path, langs: set[str]) -> list[tuple[int, str]]:
     text = readme.read_text()
     found: list[tuple[int, str]] = []
     for match in FENCE.finditer(text):
-        if match.group(1).lower() in langs:
+        if match.group(2).lower() in langs:
             line = text.count("\n", 0, match.start()) + 1
-            found.append((line, match.group(2)))
+            found.append((line, match.group(3)))
     return found
 
 
