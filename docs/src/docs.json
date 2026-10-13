@@ -509,6 +509,7 @@
                       "typescript-sdk-reference/session/status",
                       "typescript-sdk-reference/session/waitforauth",
                       "typescript-sdk-reference/session/downloadreplay",
+                      "typescript-sdk-reference/session/saveprofile",
                       "typescript-sdk-reference/session/debuginfo",
                       "typescript-sdk-reference/session/debugtabinfo",
                       "typescript-sdk-reference/session/cdpurl",
