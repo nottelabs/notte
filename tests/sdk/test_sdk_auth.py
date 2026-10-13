@@ -249,6 +249,29 @@ def test_secret_service_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
     assert auth._get_from_secret_service("api_key:prod") is None
 
 
+def test_secret_service_calls_are_bounded(monkeypatch: pytest.MonkeyPatch) -> None:
+    secretstorage = pytest.importorskip("secretstorage")
+    timeouts: list[float | None] = []
+
+    class UnresponsiveConnection:
+        """A D-Bus connection whose Secret Service never answers."""
+
+        def send_and_get_reply(self, message: Any, *, timeout: float | None = None) -> Any:
+            timeouts.append(timeout)
+            if timeout is None:
+                raise AssertionError("D-Bus call made without a timeout")
+            raise TimeoutError
+
+        def close(self) -> None:
+            pass
+
+    monkeypatch.setattr(secretstorage, "dbus_init", UnresponsiveConnection)
+    monkeypatch.setattr(sys, "platform", "linux")
+
+    assert auth._get_from_secret_service("api_key:prod") is None
+    assert timeouts == [auth._SECRET_SERVICE_TIMEOUT_SECONDS]
+
+
 def test_keyring_failures_do_not_log_secrets(cli_config_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     messages: list[str] = []
     sink = logger.add(lambda message: messages.append(str(message)), level="DEBUG")

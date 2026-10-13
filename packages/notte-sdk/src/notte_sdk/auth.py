@@ -26,6 +26,8 @@ MISSING_API_KEY_MESSAGE = "No API key found. Provide api_key, set NOTTE_API_KEY,
 _FILE_BACKEND_PASSWORD = b"notte-cli-keyring"  # pragma: allowlist secret
 _CONFIG_DIR_ENV = "NOTTE_CONFIG_DIR"
 _CONFIG_DIR_NAME = Path(".notte") / "cli"
+# A Secret Service that accepts a call but never replies must not hang the client.
+_SECRET_SERVICE_TIMEOUT_SECONDS = 2.0
 # Upper bound on PBKDF2 iterations accepted from a file header.
 _MAX_PBES2_ITERATIONS = 10_000_000
 
@@ -124,6 +126,21 @@ def _get_from_file_backend(key: str) -> str | None:
         return None
 
 
+class _BoundedDBusConnection:
+    """Wrap a jeepney connection so every D-Bus call waits a bounded time for its reply."""
+
+    def __init__(self, connection: Any) -> None:
+        self._connection: Any = connection
+
+    def send_and_get_reply(self, message: Any, *, timeout: float | None = None) -> Any:
+        return self._connection.send_and_get_reply(
+            message, timeout=_SECRET_SERVICE_TIMEOUT_SECONDS if timeout is None else timeout
+        )
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._connection, name)
+
+
 def _get_from_secret_service(key: str) -> str | None:
     """Read the Secret Service collection notte-cli uses on Linux."""
     if not sys.platform.startswith("linux"):
@@ -135,7 +152,7 @@ def _get_from_secret_service(key: str) -> str | None:
         bus: Any = secretstorage.dbus_init()
         try:
             collection: Any
-            for collection in secretstorage.get_all_collections(bus):
+            for collection in secretstorage.get_all_collections(_BoundedDBusConnection(bus)):
                 if collection.get_label() != KEYRING_SERVICE:
                     continue
                 item: Any
