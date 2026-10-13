@@ -1,15 +1,14 @@
 import re
 from collections.abc import Sequence
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import Annotated, Any, Callable, ClassVar, TypeAlias
 
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from notte_core.browser.highlighter import BoundingBox
-from notte_core.browser.node_type import NodeCategory, NodeRole, NodeType
+from notte_core.browser.node_type import NodeRole, NodeType
 from notte_core.common.logging import logger
-from notte_core.errors.processing import InvalidInternalCheckError
 
 
 class NodeSelectors(BaseModel):
@@ -274,9 +273,10 @@ class DomAttributes:
                 "name",
             ]
         ).difference(include_attributes or frozenset())
-        dict_attrs = asdict(self)
         attrs: dict[str, str | bool | int] = {}
-        for key, value in dict_attrs.items():
+        for attribute in fields(self):
+            key = attribute.name
+            value: AttributeValue = getattr(self, key)
             if (
                 key not in disabled_attrs
                 and (include_attributes is None or key in include_attributes)
@@ -373,11 +373,9 @@ class DomNode:
             return None
         return self._NOTTE_SELECTOR_HASHES.sub("", attr.notte_selector, count=1)
 
-    def find(self, id: str) -> "InteractionDomNode | None":
+    def find(self, id: str) -> "DomNode | None":
         if self.id == id:
-            if self.is_interaction():
-                return self.to_interaction_node()
-            return self  # pyright: ignore[reportReturnType]
+            return self
         for child in self.children:
             found = child.find(id)
             if found:
@@ -391,7 +389,7 @@ class DomNode:
             return False
         if self.type.value == NodeType.INTERACTION.value:
             return True
-        return self.role.category().value in [NodeCategory.INTERACTION.value]
+        return self.role.is_interactive()
 
     @classmethod
     def empty_root(cls) -> "DomNode":
@@ -453,55 +451,9 @@ class DomNode:
 
         return dialogs
 
-    def interaction_nodes(self) -> Sequence["InteractionDomNode"]:
-        inodes = self.flatten(keep_filter=lambda node: node.is_interaction())
-        return [inode.to_interaction_node() for inode in inodes]
+    def interaction_nodes(self) -> Sequence["DomNode"]:
+        """Return the original interaction nodes in document order, retaining children and ancestry.
 
-    def to_interaction_node(self) -> "InteractionDomNode":
-        if self.type.value != NodeType.INTERACTION.value:
-            raise InvalidInternalCheckError(
-                check=(
-                    "DomNode must be an interaction node to be converted to an interaction node. "
-                    f"But is: {self.type} with id: {self.id}, role: {self.role}, text: {self.text}"
-                ),
-                url=self.get_url(),
-                dev_advice="This should never happen.",
-            )
-        return InteractionDomNode(
-            id=self.id,
-            type=NodeType.INTERACTION,
-            role=self.role,
-            text=self.inner_text(),
-            attributes=self.attributes,
-            computed_attributes=self.computed_attributes,
-            # children are not allowed in interaction nodes
-            children=[],
-            parent=self.parent,
-            bbox=self.bbox,
-        )
-
-
-class InteractionDomNode(DomNode):
-    id: str
-    type: NodeType = NodeType.INTERACTION
-
-    def __post_init__(self) -> None:
-        if self.id is None:  # type: ignore[type-check]
-            raise InvalidInternalCheckError(
-                check="InteractionNode must have a valid non-None id",
-                url=self.get_url(),
-                dev_advice=(
-                    "This should technically never happen since the id should always be set "
-                    "when creating an interaction node."
-                ),
-            )
-        if len(self.children) > 0:
-            raise InvalidInternalCheckError(
-                check="InteractionNode must have no children",
-                url=self.get_url(),
-                dev_advice=(
-                    "This should technically never happen but you should check the `pruning.py` file "
-                    "to diagnose this issue."
-                ),
-            )
-        super().__post_init__()
+        Use `inner_text()` for action labels; `text` is the element's accessible-name-like value.
+        """
+        return self.flatten(keep_filter=lambda node: node.is_interaction())

@@ -28,6 +28,8 @@ class InteractionOnlyDomNodeRenderingPipe:
     def render_node(
         node: DomNode,
         max_len_per_attribute: int | None = None,
+        *,
+        include_children: bool = True,
     ) -> str:
         if node.id is None:
             raise InvalidInternalCheckError(
@@ -45,8 +47,11 @@ class InteractionOnlyDomNodeRenderingPipe:
         )
         if len(attrs_relevant) > 0:
             attrs_str = " " + " ".join([f'{key}="{value}"' for key, value in attrs_relevant.items()])
-        children_texts = InteractionOnlyDomNodeRenderingPipe.children_texts(node)
-        children_str = "\n".join(children_texts).strip()
+        if include_children:
+            children_str = "\n".join(InteractionOnlyDomNodeRenderingPipe.children_texts(node)).strip()
+        else:
+            # Action descriptions used childless copies with text=inner_text(), without attribute truncation.
+            children_str = node.inner_text().strip() if node.get_role_str() == "text" else ""
         return f"<{attrs.tag_name}{attrs_str}>{children_str}</{attrs.tag_name}>"
 
     @staticmethod

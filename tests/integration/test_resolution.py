@@ -3,7 +3,7 @@ from loguru import logger
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.session import NotteSession
 from notte_core.actions import GotoAction
-from notte_core.browser.dom_tree import InteractionDomNode
+from notte_core.browser.dom_tree import DomNode
 from notte_sdk.types import ExecutionRequest
 from patchright.async_api import Page
 
@@ -48,9 +48,9 @@ async def test_action_node_resolution_pipe(url: str) -> None:
 
         for node in page.snapshot.interaction_nodes():
             total_count += 1
+            assert node.id is not None and len(node.id) > 0, "Node id is required"
             type = "fill" if node.id.startswith("I") else "click"
             param = None if not node.id.startswith("I") else "some_value"
-            assert node.id is not None and len(node.id) > 0, "Node id is required"
             try:
                 action = ExecutionRequest.get_action(dict(type=type, id=node.id, value=param))
                 assert action is not None
@@ -66,7 +66,7 @@ async def test_action_node_resolution_pipe(url: str) -> None:
     assert len(error_text) == 0, f"Percentage of errors: {len(errors) / total_count * 100:.2f}%\n Errors:\n{error_text}"
 
 
-async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]) -> tuple[list[str], int]:
+async def check_xpath_resolution_v2(page: Page, inodes: list[DomNode]) -> tuple[list[str], int]:
     from notte_browser.dom.locate import locale_element_in_iframes, selectors_through_shadow_dom
 
     smap = {inode.id: inode for inode in inodes}
@@ -74,6 +74,7 @@ async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]
     resolution_errors: list[str] = []
     total_count = 0
     for id, node in smap.items():
+        assert id is not None
         selectors = node.computed_attributes.selectors
         if selectors is None:
             raise ValueError(f"Selectors for node {id} are None")

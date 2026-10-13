@@ -1,5 +1,5 @@
 from notte_core.actions import ActionParameter, ClickAction, FillAction, InteractionAction, SelectDropdownOptionAction
-from notte_core.browser.dom_tree import DomNode, InteractionDomNode
+from notte_core.browser.dom_tree import DomNode
 from notte_core.common.config import config
 from notte_core.errors.processing import InvalidInternalCheckError
 from notte_core.space import ActionSpace
@@ -24,34 +24,40 @@ def build_action_space(dom_node: DomNode) -> ActionSpace:
     )
 
 
-def _interaction_action(node: InteractionDomNode) -> InteractionAction:
+def _interaction_action(node: DomNode) -> InteractionAction:
+    assert node.id is not None, "Interaction nodes must have an id"
     if node.computed_attributes.selectors is None:
         raise InvalidInternalCheckError(
             check="Node should have an xpath selector",
             url=node.get_url(),
             dev_advice="This should never happen.",
         )
-    # rendered again rather than reused from the description: here attributes are not cut, and a
-    # node outside the open dialogs is not in the description at all
+    label = node.inner_text()
     if node.id.startswith("I"):
         param = ActionParameter(name="value", type="string")
         if node.get_role_str() == "combobox" and not node.computed_attributes.is_editable:
             action = SelectDropdownOptionAction(
                 id=node.id,
                 value="<sample_value>",
-                text_label=node.text,
+                text_label=label,
                 press_enter=False,
             )
         else:
-            action = FillAction(id=node.id, value="<sample_value>", text_label=node.inner_text(), press_enter=False)
+            # Historically fill labels were read from a childless copy: only inputs retained a label.
+            action = FillAction(
+                id=node.id,
+                value="<sample_value>",
+                text_label=label if node.attributes is not None and node.attributes.tag_name.lower() == "input" else "",
+                press_enter=False,
+            )
     elif node.id.startswith("O"):
         param = None
-        action = SelectDropdownOptionAction(id=node.id, value=node.id, text_label=node.text)
+        action = SelectDropdownOptionAction(id=node.id, value=node.id, text_label=label)
     else:
         param = None
-        action = ClickAction(id=node.id, text_label=node.text)
+        action = ClickAction(id=node.id, text_label=label)
     action.selector = node.computed_attributes.selectors
-    action.description = InteractionOnlyDomNodeRenderingPipe.render_node(node)
+    action.description = InteractionOnlyDomNodeRenderingPipe.render_node(node, include_children=False)
     action.category = "Interaction action"
     action.param = param
     return action

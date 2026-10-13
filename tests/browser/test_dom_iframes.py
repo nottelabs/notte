@@ -15,7 +15,7 @@ from notte_browser.playwright_async_api import ElementHandle, Error, Frame
 from notte_browser.resolution import NodeResolutionPipe, SelectorGenerator, set_selector_generator
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction
-from notte_core.browser.dom_tree import DomNode, InteractionDomNode, NodeSelectors
+from notte_core.browser.dom_tree import DomNode, NodeSelectors
 from notte_core.browser.observation import Observation
 from patchright.async_api import Route
 
@@ -89,9 +89,9 @@ def _frame(session: NotteSession, url: str) -> Frame:
     return next(frame for frame in session.window.page.frames if frame.url.startswith(url))
 
 
-def _node(session: NotteSession, label: str) -> InteractionDomNode:
+def _node(session: NotteSession, label: str) -> DomNode:
     assert session.snapshot is not None
-    return next(node for node in session.snapshot.interaction_nodes() if node.text == label)
+    return next(node for node in session.snapshot.interaction_nodes() if node.inner_text() == label)
 
 
 def _iframe_element(session: NotteSession, element_id: str) -> DomNode:

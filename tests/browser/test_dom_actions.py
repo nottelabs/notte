@@ -107,3 +107,30 @@ def test_dialogs_nested_actions_and_attribute_truncation() -> None:
     outside = root.children[0]
     assert outside.type is NodeType.INTERACTION
     assert f'title="{"x" * 60}..."' in build_action_space(outside).description
+
+
+def test_canonical_nodes_keep_names_children_and_selector_identity() -> None:
+    root = dialog_tree()
+    outside, dialog = root.children
+    outer = dialog.children[0]
+    inner = outer.children[1]
+    assert root.find("B2") is outer
+    assert root.interaction_nodes()[1] is outer
+    assert outer.children[1] is inner and inner.parent is outer
+    # Accessible names stay on the canonical nodes; action labels are explicitly inner_text().
+    assert outside.text == "x" * 80 and outside.inner_text() == "Outside"
+    selectors = outside.computed_attributes.selectors
+    assert selectors is not None
+    assert selectors is root.interaction_nodes()[0].computed_attributes.selectors
+    assert root.find("B1") is outside and outside.get_url() == "https://example.com"
+    assert build_action_space(root).interaction_actions[0].selectors is selectors
+
+
+def test_highlighted_text_role_keeps_its_action_description() -> None:
+    root = build_dom_tree(
+        _frame({"0": _element("div", "/body/div", ["1"], highlight=0, role="text"), "1": _text(" Visible ")}, "0"),
+        url="https://example.com",
+    )
+    assert root is not None
+    action = build_action_space(root).interaction_actions[0]
+    assert (action.id, action.text_label, action.description) == ("M1", " Visible ", '<div role="text">Visible</div>')

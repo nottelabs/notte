@@ -6,7 +6,7 @@ from notte_core.actions import (
     BrowserAction,
     InteractionAction,
 )
-from notte_core.browser.dom_tree import InteractionDomNode, NodeSelectors
+from notte_core.browser.dom_tree import DomNode, NodeSelectors
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.logging import logger
 from notte_core.errors.actions import InvalidActionError
@@ -55,7 +55,7 @@ def frame_prefix(selectors: NodeSelectors) -> str:
     return "".join(f"css={path} >> internal:control=enter-frame >> " for path in selectors.iframe_parent_css_selectors)
 
 
-async def generate_playwright_selector(node: InteractionDomNode, selectors: NodeSelectors) -> str | None:
+async def generate_playwright_selector(node: DomNode, selectors: NodeSelectors) -> str | None:
     generator = _selector_generator
     handle = node.computed_attributes.handle
     if generator is None or handle is None:
@@ -95,17 +95,20 @@ class NodeResolutionPipe:
             raise NoSnapshotObservedError()
 
         # resolve selector
-        selector_map: dict[str, InteractionDomNode] = {inode.id: inode for inode in snapshot.interaction_nodes()}
+        selector_map: dict[str, DomNode] = {
+            inode.id: inode for inode in snapshot.interaction_nodes() if inode.id is not None
+        }
         is_id_resolved = action.id in selector_map
         if not is_id_resolved:
             raise InvalidActionError(action_id=action.id, reason=f"action '{action.id}' not found in page context.")
         node = selector_map[action.id]
         action.selector = await NodeResolutionPipe.resolve_selectors(node, verbose)
-        action.text_label = node.text
+        action.text_label = node.inner_text()
         return action
 
     @staticmethod
-    async def resolve_selectors(node: InteractionDomNode, verbose: bool = False) -> NodeSelectors:
+    async def resolve_selectors(node: DomNode, verbose: bool = False) -> NodeSelectors:
+        assert node.id is not None, "Interaction nodes must have an id"
         if node.computed_attributes.selectors is None:
             raise FailedNodeResolutionError(node.id)
         selectors = node.computed_attributes.selectors

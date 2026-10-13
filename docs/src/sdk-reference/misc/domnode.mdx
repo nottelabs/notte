@@ -24,12 +24,12 @@ Create an empty root DomNode for scraping (skips DOM tree computation)
 ### find
 
 ```python
-find(id: <class 'str'>) -> InteractionDomNode | None
+find(id: <class 'str'>) -> DomNode | None
 ```
 
 **Returns:**
 
-`InteractionDomNode | None`
+`DomNode | None`
 
 ---
 
@@ -98,12 +98,14 @@ inner_text(depth: <class 'int'> = 3) -> <class 'str'>
 ### interaction_nodes
 
 ```python
-interaction_nodes() -> collections.abc.Sequence['InteractionDomNode']
+interaction_nodes() -> collections.abc.Sequence['DomNode']
 ```
+
+Return the original interaction nodes in document order, retaining children and ancestry
 
 **Returns:**
 
-`Sequence`[<Visibility for="humans">[`InteractionDomNode`](/sdk-reference/misc/interactiondomnode)</Visibility><Visibility for="agents">[`InteractionDomNode`](/sdk-reference/misc/interactiondomnode.md)</Visibility>]
+`Sequence`[<Visibility for="humans">[`DomNode`](/sdk-reference/misc/domnode)</Visibility><Visibility for="agents">[`DomNode`](/sdk-reference/misc/domnode.md)</Visibility>]
 
 ---
 
@@ -138,18 +140,6 @@ Return the visible dialogs that contain interaction nodes, or `[self]` if there 
 ```python
 set_parent(parent: DomNode | None)
 ```
-
----
-
-### to_interaction_node
-
-```python
-to_interaction_node() -> InteractionDomNode
-```
-
-**Returns:**
-
-<Visibility for="humans">[`InteractionDomNode`](/sdk-reference/misc/interactiondomnode)</Visibility><Visibility for="agents">[`InteractionDomNode`](/sdk-reference/misc/interactiondomnode.md)</Visibility>
 
 ---
 

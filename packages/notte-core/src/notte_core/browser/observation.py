@@ -219,7 +219,11 @@ class Observation(FilledTimedSpan):
     def from_snapshot(snapshot: BrowserSnapshot, space: ActionSpace, span: FilledTimedSpan) -> "Observation":
         if snapshot.screenshot is None:
             raise ValueError("Cannot build an Observation from a snapshot taken with screenshot=False")
-        bboxes = [node.bbox.with_id(node.id) for node in snapshot.interaction_nodes() if node.bbox is not None]
+        bboxes = [
+            node.bbox.with_id(node.id)
+            for node in snapshot.interaction_nodes()
+            if node.bbox is not None and node.id is not None
+        ]
         return Observation(
             metadata=snapshot.metadata,
             screenshot=Screenshot(raw=snapshot.screenshot, bboxes=bboxes),
