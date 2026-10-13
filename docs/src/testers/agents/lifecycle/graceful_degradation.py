@@ -1,5 +1,4 @@
 # @sniptest filename=graceful_degradation.py
-# @sniptest show=6-17
 from loguru import logger
 from notte_sdk import NotteClient
 

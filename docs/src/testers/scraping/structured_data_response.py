@@ -1,5 +1,4 @@
 # @sniptest filename=structured_data_response.py
-# @sniptest show=3-17
 
 from notte_sdk import NotteClient
 from pydantic import BaseModel

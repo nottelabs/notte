@@ -16,6 +16,16 @@ Attributes:
 
 ## Methods
 
+### await_for_auth
+
+```python
+await_for_auth(timeout: <class 'float'> = 615)
+```
+
+Async readiness wait; blocking HTTP calls run outside the event loop
+
+---
+
 ### cdp_url
 
 ```python
@@ -52,6 +62,20 @@ Debug information for the session.
 
 ---
 
+### evaluate_js
+
+```python
+evaluate_js(code: <class 'str'>, raise_on_failure: <class 'bool'> = True) -> str | notte_core.browser.observation.ExecutionResult
+```
+
+Evaluate JavaScript on the current page and return its result as a string
+
+**Returns:**
+
+`UnionType`[`str`, <Visibility for="humans">[`ExecutionResult`](/sdk-reference/misc/executionresult)</Visibility><Visibility for="agents">[`ExecutionResult`](/sdk-reference/misc/executionresult.md)</Visibility>]
+
+---
+
 ### execute
 
 ```python
@@ -72,6 +96,20 @@ Result containing execution details, any errors, and the updated session state.
 **Raises:**
 
 - `Exception`: If raise_on_failure is True and the action execution fails.
+
+---
+
+### fetch
+
+```python
+fetch(url: <class 'str'>, method: <class 'str'> = GET, headers: collections.abc.Mapping[str, str] | None = None, params: collections.abc.Mapping[str, typing.Any] | None = None, json: typing.Any = None, data: str | collections.abc.Mapping[str, typing.Any] | None = None, timeout: float | None = None) -> <class 'requests.models.Response'>
+```
+
+Issue an HTTP request from the page the session is on and return the response
+
+**Returns:**
+
+<Visibility for="humans">[`Response`](/sdk-reference/misc/response)</Visibility><Visibility for="agents">[`Response`](/sdk-reference/misc/response.md)</Visibility>
 
 ---
 
@@ -167,6 +205,30 @@ Resets the resource to its initial state
 
 ---
 
+### save_profile
+
+```python
+save_profile(profile_id: str | None = None, name: str | None = None) -> <class 'notte_sdk.types.ProfileResponse'>
+```
+
+Saves the session's current browser state into a profile, without stopping the session
+
+**Parameters:**
+
+- `profile_id`: Existing profile to overwrite with the current browser state.
+- `name`: Create a new profile with this name and save into it. Mutually exclusive with ``profile_id``.
+
+**Returns:**
+
+The profile, with ``persisted_domains`` computed from the saved state.
+
+**Raises:**
+
+- `ValueError`: If both ``profile_id`` and ``name`` are provided, or if either is empty.
+- `ValueError`: If the session hasn't been started yet (no session_id available).
+
+---
+
 ### scrape
 
 ```python
@@ -212,7 +274,7 @@ The response from the upload cookies request.
 ### start
 
 ```python
-start(tries: <class 'int'> = 3)
+start(tries: <class 'int'> = 3, *, wait_for_authentication: bool | None = None)
 ```
 
 Start the session using the configured request
@@ -244,7 +306,7 @@ The current status information of the session.
 ### stop
 
 ```python
-stop()
+stop(close_reason: typing.Literal['manual', 'error'] = manual)
 ```
 
 Stop the session and clean up resources
@@ -301,6 +363,16 @@ Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter 
 **Returns:**
 
 <Visibility for="humans">[`WebsocketService`](/sdk-reference/misc/websocketservice)</Visibility><Visibility for="agents">[`WebsocketService`](/sdk-reference/misc/websocketservice.md)</Visibility>
+
+---
+
+### wait_for_auth
+
+```python
+wait_for_auth(timeout: <class 'float'> = 615)
+```
+
+Wait for this browser to be ready without restarting or relogging it
 
 ---
 

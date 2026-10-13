@@ -1,25 +1,17 @@
 ---
 title: "download"
-description: "Stores a file that has been downloaded from a website in the current session"
+description: "No description available"
 ---
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-```python
-file_storage = notte.FileStorage("<session_id>")
-# file.pdf has been downloaded by an agent in the session
-# you can download it to your local machine using:
-file_storage.download(file_name="file.pdf", local_dir="<local_download_dir>")
-```
-
-
 ## Parameters
 
-<ParamField path="file_name" type="str" required>
+<ParamField path="file_id" type="str" required>
 </ParamField>
 
-<ParamField path="local_dir" type="str" required>
+<ParamField path="local_dir" type="str" default=".">
 </ParamField>
 
 <ParamField path="force" type="bool" default="False">
@@ -27,4 +19,4 @@ file_storage.download(file_name="file.pdf", local_dir="<local_download_dir>")
 
 ## Returns
 
-`bool`
+`str`

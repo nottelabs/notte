@@ -212,6 +212,7 @@ docs/src/openapi.json
 
 # Observability / Profiling outputs
 *.svg
+!docs/src/**/*.svg
 flamegraph*.html
 **/otel_profile_results.csv
 **/trace.json
@@ -219,3 +220,6 @@ flamegraph*.html
 # npm pack / inspect artifacts
 .npm-inspect/
 *.tgz
+
+# README code blocks extracted by scripts/readme_blocks.py
+node-sdk/.readme-check/

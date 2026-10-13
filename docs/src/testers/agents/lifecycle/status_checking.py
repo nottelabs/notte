@@ -13,5 +13,5 @@ with client.Session() as session:
 
     print(f"Agent ID: {status.agent_id}")
     print(f"Current state: {status.status}")
-    print(f"Steps completed: {len(status.steps)}")
+    print(f"Steps completed: {sum(1 for s in status.steps if s['type'] == 'agent_step_stop')}")
     print(f"Success: {status.success}")

@@ -13,7 +13,19 @@ Agent Fallback are mechanisms that allow you to gracefully handle script executi
 
 <AgentFallback />
 
-They ensure your scripts always terminate successfully even if the website changes or something unexpected happens.
+Inside the `with` block, every `session.execute()` call runs with `raise_on_failure=False`. When an action fails, an agent is spawned on the same session to complete `task`, and any remaining `execute()` calls in the block are skipped. After the block, check the result on the context manager:
+
+- `agent.success` - `True` if every action succeeded, or if the spawned agent completed the task
+- `agent.agent_invoked` - whether an agent was spawned
+- `agent.agent_response` - the agent's response, if one was spawned
+- `agent.steps` - the execution results recorded inside the block
+
+The fallback does not guarantee success: if the agent cannot complete the task, `success` is `False`. Exceptions raised inside the block before any agent was spawned are re-raised.
+
+Two restrictions apply inside the block:
+
+- `session.scrape()` raises a `ValueError`. Scrape after the block instead.
+- `session.execute(..., raise_on_failure=True)` raises a `ValueError`. Omit the argument or pass `False`.
 
 ## Parameters
 

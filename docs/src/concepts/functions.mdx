@@ -62,7 +62,11 @@ Upload your script to create a Function:
 
 ### 3. Invoke the Function
 
-Call your Function as an API:
+Call your Function using either SDK. Set `NOTTE_FUNCTION_ID` to the deployed function's ID first:
+
+```bash
+export NOTTE_FUNCTION_ID=your_function_id
+```
 
 <InvokeSdk />
 
@@ -70,6 +74,7 @@ Call your Function as an API:
 # Via cURL
 curl -X POST https://api.notte.cc/functions/{function_id}/runs/start \
   -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "x-notte-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "function_id": "workflow_123",
@@ -79,6 +84,25 @@ curl -X POST https://api.notte.cc/functions/{function_id}/runs/start \
     }
   }'
 ```
+
+Raw HTTP calls to `runs/start` must send your API key twice: as `Authorization: Bearer` and as the `x-notte-api-key` header. The SDKs do this for you.
+
+## Large run outputs
+
+The Python and TypeScript SDKs upload individual run results, logs, and variables
+larger than 1 MiB to private storage. Python `functions.update_run()` and TypeScript
+`fn.updateRun(runId, fields)` save a small reference. Python `functions.get_run()`
+and TypeScript `fn.getRun()` download and verify the full value automatically.
+Each stored field can be up to 256 MiB. Small fields continue to use inline updates.
+
+Upgrade your SDK to use this behavior. An inline run update above 8 MiB is
+rejected. Reading a run with externally stored fields through an older client
+returns an explicit error rather than a partial result.
+
+For HTTP integrations, request a run with `?payload_mode=references`. The response
+includes `payloads` descriptors and short-lived `payload_urls` for the external
+fields. Download these URLs without your API authorization header, verify each
+field's `size_bytes` and base64 SHA-256 checksum, and decode its JSON value.
 
 ## Function Structure
 
@@ -119,7 +143,7 @@ Extract data on a schedule:
 
 <UsecaseScheduledScraping />
 
-**Schedule:** `0 9 * * *` (Every day at 9 AM)
+**Schedule:** `0 9 ? * * *` (every day at 9:00 UTC, see [Schedules](/features/functions/schedules))
 
 ---
 

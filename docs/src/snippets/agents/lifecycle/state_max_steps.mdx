@@ -10,7 +10,9 @@ with client.Session() as session:
     agent = client.Agent(session=session, max_steps=5)
     result = agent.run(task="Very complex task")
 
-    if len(result.steps) >= 5:
+    # Count agent steps (one "agent_step_start" element per step)
+    nb_steps = sum(1 for s in result.steps if s["type"] == "agent_step_start")
+    if not result.success and nb_steps >= 5:
         # Agent hit max_steps limit
         print("Agent stopped: maximum steps reached")
 ```

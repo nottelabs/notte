@@ -1,0 +1,107 @@
+{
+  "name": "notte-sdk",
+  "version": "0.0.0-dev",
+  "description": "TypeScript SDK for Notte - Cloud-hosted browser sessions with LLM-powered web agents",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./next": {
+      "types": "./dist/proxy/next.d.ts",
+      "import": "./dist/proxy/next.mjs",
+      "require": "./dist/proxy/next.js"
+    },
+    "./proxy": {
+      "types": "./dist/proxy/core.d.ts",
+      "import": "./dist/proxy/core.mjs",
+      "require": "./dist/proxy/core.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "docs:generate": "node scripts/generate-reference.mjs",
+    "docs:check": "node scripts/generate-reference.mjs --check",
+    "docs:test": "node --test scripts/generate-reference.test.mjs",
+    "generate": "openapi-ts && node scripts/normalize-generated.js && node scripts/generate-proxy-patterns.js && npm run resources:generate",
+    "resources:generate": "node scripts/generate-resources.mjs",
+    "resources:check": "node scripts/generate-resources.mjs --check",
+    "resources:test": "node --test scripts/generate-resources.test.mjs",
+    "generate:staging": "NOTTE_API_URL=https://us-staging.notte.cc npm run generate",
+    "check:staging": "node scripts/check-generated-drift.js",
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "prepublishOnly": "npm run build",
+    "test": "vitest",
+    "test:unit": "vitest --exclude='**/*integration.test.ts'",
+    "test:integration": "VITEST_INTEGRATION=1 vitest --run",
+    "typecheck": "tsc --noEmit",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "notte",
+    "api",
+    "sdk",
+    "typescript"
+  ],
+  "author": "Notte",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nottelabs/notte.git",
+    "directory": "node-sdk"
+  },
+  "bugs": "https://github.com/nottelabs/notte/issues",
+  "homepage": "https://github.com/nottelabs/notte/tree/main/node-sdk",
+  "engines": {
+    "node": ">=20"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=22.12.0",
+      "onFail": "warn"
+    }
+  },
+  "dependencies": {
+    "tldts": "^7.4.12",
+    "ws": "^8.18.0",
+    "zod": "^4.1.9"
+  },
+  "peerDependencies": {
+    "playwright-core": ">=1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright-core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.99.0",
+    "@mdx-js/mdx": "^3.1.1",
+    "@types/node": "^26.6.3",
+    "@types/ws": "^8.5.10",
+    "@vitest/coverage-v8": "^5.0.2",
+    "dotenv": "^18.0.4",
+    "playwright-core": "1.63.0",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "overrides": {
+    "brace-expansion": "^5.0.8",
+    "glob": "^11.1.0",
+    "js-yaml": "^4.3.0",
+    "postcss": "^8.5.25",
+    "tar": "^7.5.8"
+  }
+}

@@ -55,7 +55,7 @@ class TestGetOpenrouterProvider:
         assert LlmModel.get_openrouter_provider("anthropic/claude-sonnet-4-5-20250929") is None
 
     def test_gemini_model_returns_none(self) -> None:
-        assert LlmModel.get_openrouter_provider("gemini/gemini-2.5-flash") is None
+        assert LlmModel.get_openrouter_provider("gemini/gemini-3.5-flash") is None
 
 
 class TestGetOpenrouterModel:
@@ -82,12 +82,12 @@ class TestGetOpenrouterModel:
         assert result == "openrouter/anthropic/claude-sonnet-4-5"
 
     def test_vertex_ai_conversion(self) -> None:
-        result = LlmModel.get_openrouter_model("vertex_ai/gemini-2.5-flash")
-        assert result == "openrouter/google/gemini-2.5-flash"
+        result = LlmModel.get_openrouter_model("vertex_ai/gemini-3.5-flash")
+        assert result == "openrouter/google/gemini-3.5-flash"
 
     def test_gemini_prefix_conversion(self) -> None:
-        result = LlmModel.get_openrouter_model("gemini/gemini-2.5-flash")
-        assert result == "openrouter/google/gemini-2.5-flash"
+        result = LlmModel.get_openrouter_model("gemini/gemini-3.5-flash")
+        assert result == "openrouter/google/gemini-3.5-flash"
 
     def test_kimi_conversion(self) -> None:
         result = LlmModel.get_openrouter_model("moonshot/kimi-k2.5")
@@ -100,6 +100,15 @@ class TestGetOpenrouterModel:
     def test_openai_model_adds_prefix(self) -> None:
         result = LlmModel.get_openrouter_model("openai/gpt-4o")
         assert result == "openrouter/openai/gpt-4o"
+
+    def test_grok_conversion(self) -> None:
+        result = LlmModel.get_openrouter_model("xai/grok-4.3")
+        assert result == "openrouter/x-ai/grok-4.3"
+
+    def test_legacy_grok_value_maps_to_grok_4_3(self) -> None:
+        """The retired public value must not be forwarded to OpenRouter verbatim."""
+        result = LlmModel.get_openrouter_model("xai/grok-4-1-fast-non-reasoning")
+        assert result == "openrouter/x-ai/grok-4.3"
 
 
 class TestLlmModelOpenrouterIntegration:
@@ -122,3 +131,14 @@ class TestLlmModelOpenrouterIntegration:
         """All LlmModel values should be convertible to OpenRouter format."""
         result = LlmModel.get_openrouter_model(model.value)
         assert result.startswith("openrouter/")
+
+
+class TestGetDirectModel:
+    """Tests for LlmModel.get_direct_model() method."""
+
+    def test_groq_gpt_oss_uses_groq_model_id(self) -> None:
+        assert LlmModel.get_direct_model(LlmModel.groq) == "groq/openai/gpt-oss-120b"
+
+    @pytest.mark.parametrize("model", [m for m in LlmModel if m != LlmModel.groq])
+    def test_other_models_unchanged(self, model: LlmModel) -> None:
+        assert LlmModel.get_direct_model(model) == model.value

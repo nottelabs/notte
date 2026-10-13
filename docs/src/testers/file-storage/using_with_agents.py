@@ -2,13 +2,9 @@
 from notte_sdk import NotteClient
 
 client = NotteClient()
-storage = client.FileStorage()
-
-# Upload files for the agent to use
-storage.upload("contract.pdf")
-storage.upload("signature.png")
-
-with client.Session(storage=storage) as session:
+with client.Session() as session:
+    session.storage.upload("contract.pdf")
+    session.storage.upload("signature.png")
     agent = client.Agent(session=session, max_steps=15)
 
     result = agent.run(
@@ -22,5 +18,5 @@ with client.Session(storage=storage) as session:
     )
 
 # Get the confirmation the agent downloaded
-for file in storage.list_downloaded_files():
-    storage.download(file_name=file.name, local_dir="./signed")
+for file in session.storage.list(source="session_download").files:
+    session.storage.download(file.id, local_dir="./signed")

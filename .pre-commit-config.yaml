@@ -32,10 +32,10 @@ repos:
     hooks:
       - id: trailing-whitespace
         types: [file]
-        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250307_README\.md|README\.md|.*\.(gif|png|ico|otf|jpg|jpeg))$
+        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250307_README\.md|README\.md|.*\.(gif|png|ico|otf|woff|woff2|ttf|eot|jpg|jpeg))$
       - id: end-of-file-fixer
         types: [file]
-        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250307_README\.md|README\.md|.*\.(gif|png|ico|otf|jpg|jpeg))$
+        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250307_README\.md|README\.md|.*\.(gif|png|ico|otf|woff|woff2|ttf|eot|jpg|jpeg))$
       - id: check-yaml
         types: [file]
         files: \.(yaml|yml)$
@@ -88,9 +88,15 @@ repos:
         language: system
         files: ^docs/src/(docs\.json|scripts/check_docs_nav\.py)$
         pass_filenames: false
+      - id: docs-config-defaults
+        name: Check documented session-config defaults against the SDK
+        entry: bash -c "uv run python docs/src/scripts/check_config_docs_defaults.py"
+        language: system
+        files: ^(docs/src/features/sessions/configuration\.mdx|docs/src/scripts/check_config_docs_defaults\.py|packages/notte-sdk/src/notte_sdk/types\.py|packages/notte-core/src/notte_core/config\.toml)$
+        pass_filenames: false
       - id: docs-quickstart-setup-prompt
-        name: Inline Quickstart setup prompt
-        entry: bash -c "cd docs/src && uv run python scripts/inline_quickstart_setup_prompt.py --check"
+        name: Check shared Quickstart setup link
+        entry: bash -c "cd docs/src && uv run python scripts/sync_quickstart_setup_prompt.py --check"
         language: system
         files: ^docs/src/
         pass_filenames: false
@@ -105,11 +111,17 @@ repos:
         name: Generate snippets from testers
         entry: bash -c "make sniptest"
         language: system
-        files: ^docs/src/testers/.*\.py$
+        files: ^docs/src/(testers/|sniptest/)
         pass_filenames: false
       - id: sniptest-verify
         name: Verify snippet show= ranges are complete
         entry: bash -c "cd docs/src && uv run python sniptest/verify_snippets.py"
         language: system
         files: ^docs/src/testers/.*\.py$
+        pass_filenames: false
+      - id: sniptest-parity
+        name: Verify paired SDK examples
+        entry: python3 docs/src/sniptest/parity.py
+        language: system
+        files: ^docs/src/(testers/|sniptest/)
         pass_filenames: false

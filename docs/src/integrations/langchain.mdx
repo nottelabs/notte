@@ -1,10 +1,51 @@
 ---
-title: 'Langchain'
-description: 'Use Notte with Langchain'
+title: LangChain
+description: Give LangChain and LangGraph agents a browser with the Notte MCP server
 ---
+import Langchain from '/snippets/integrations/mcp/langchain.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
-## Overview
+<AgentMdNotice />
 
-Notte can be used with Langchain to record and replay agent interactions.
+[LangChain](https://python.langchain.com/) loads MCP servers through `langchain-mcp-adapters`, which converts every tool on the server into a LangChain tool. Point it at the [Notte MCP server](/mcp-server) and any LangChain or LangGraph agent can drive a browser.
 
-## Setup
+## Prerequisites
+
+- A Notte API key ([get one here](https://console.notte.cc))
+- Credentials for the model your agent uses
+
+## 1. Install the SDKs
+
+```bash
+pip install langchain-mcp-adapters langgraph
+```
+
+## 2. Attach the Notte MCP server
+
+<Langchain />
+
+Set the following environment variable in your `.env` file:
+
+```bash
+NOTTE_API_KEY=your-notte-api-key
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="MCP Server" icon="plug" href="/mcp-server">
+    Every tool the Notte MCP server exposes
+  </Card>
+
+  <Card title="Browser Agents" icon="robot" href="/concepts/agents">
+    Hand a whole task to a Notte agent
+  </Card>
+
+  <Card title="Fetch" icon="download" href="/concepts/scraping">
+    Pull structured data out of a page
+  </Card>
+
+  <Card title="Vaults" icon="key" href="/concepts/vaults">
+    Let agents log in without seeing credentials
+  </Card>
+</CardGroup>

@@ -1,76 +1,10 @@
 # Notte
 
-## Critical Instructions For AI Agents
+## Setup For AI Agents
 
-STOP. Read and follow https://docs.notte.cc/quickstart.md before using SDK docs or writing SDK code.
+Read https://notte.cc/skill.md and follow its setup instructions.
 
-Goal: generate a reliable SDK automation script, then edit it. Do not hand-author the first pass from SDK reference pages.
-
-The Notte CLI is the source of truth for real browser state. You MUST use the Notte skill and CLI to inspect the live site, validate actions/selectors, handle auth/session state, and export workflow code with `notte sessions workflow-code`.
-
-Use SDK docs only to understand, run, or edit exported workflow code. SDK-first automation is guesswork on real pages with dynamic selectors, auth state, CAPTCHAs, and anti-bot behavior.
-
-## Agent Rule: Do Not Guess Selectors
-
-Do not hand-write SDK code with element IDs, selectors, or form fields from memory. Browser targets must come from a live `observe()` call, CLI `notte page observe` output, or generated workflow code. Guessed targets fail on real pages.
-
-## Agent Rule: Authentication Is Interactive
-
-Before writing scripts, scaffolding fallback code, or switching approaches, check Notte authentication:
-
-```bash
-notte auth status
-```
-
-If authentication is missing, do not stop, create fallback code, or ask for an API key first. The CLI works in non-interactive terminals; the human may just need to complete browser login. Run:
-
-```bash
-notte auth login
-```
-
-Tell the user: "Please complete the Notte login flow that just opened." Then poll every 5 seconds for up to 5 minutes:
-
-```bash
-notte auth status
-```
-
-Only continue after `notte auth status` succeeds. If login does not complete after 5 minutes, ask whether to retry login or set `NOTTE_API_KEY`.
-
-Do not generate placeholder automation, SDK scripts, or README-only instructions because Notte is unauthenticated. Authentication is part of the setup workflow.
-
-## CLI-First Workflow
-
-Complete this loop to generate valid SDK code before using SDK documentation or writing SDK code:
-
-```bash
-# 1. Install the CLI if needed
-brew tap nottelabs/notte-cli https://github.com/nottelabs/notte-cli.git
-brew install notte
-# or: go install github.com/nottelabs/notte-cli/cmd/notte@latest
-
-# 2. Authenticate. If this opens a browser login, wait for the user to finish.
-notte auth status || notte auth login
-# If login opens an interactive flow, wait for the user to complete it.
-# Then poll `notte auth status` until it succeeds before continuing.
-notte auth status
-
-# 3. Start a session, open the viewer, and navigate to the target page
-notte sessions start
-notte sessions viewer
-notte page goto https://target-site.com/
-
-# 4. Observe the live page and execute actions from real browser state
-notte page observe
-# Use element IDs only after they appear in the observe output. Do not guess IDs.
-notte page click "B3"
-notte page fill "I1" "example value"
-notte page scrape --instructions "Extract the relevant data"
-
-# 5. Export workflow code only after CLI exploration
-notte sessions workflow-code
-```
-
-Full Quickstart: https://docs.notte.cc/quickstart.md
+The shared skill covers CLI installation, authentication, live browser exploration, and Python or TypeScript integrations. Setup instructions are maintained in nottelabs/notte-skills.
 
 
 # Documentation
@@ -79,7 +13,7 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 
 - [Introduction](https://docs.notte.cc/index.md)
 - [Quickstart](https://docs.notte.cc/quickstart.md): Get started in a few seconds
-- [MCP Server](https://docs.notte.cc/mcp-server.md): Give your AI agents access to the Notte MCP server
+- [Notte Browser MCP](https://docs.notte.cc/mcp-server.md): Connect your AI assistant to cloud browsers with Notte Browser MCP
 - [Migrate to Notte](https://docs.notte.cc/migrate-to-notte.md): Safely migrate browser automation from another provider to Notte with an AI coding agent.
 
 ## Sessions
@@ -89,22 +23,17 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [Session Configurations](https://docs.notte.cc/features/sessions/configuration.md): Learn how to create and configure Notte browser sessions
 - [Browser Controls](https://docs.notte.cc/features/sessions/browser-controls.md): Complete reference of all browser actions available in sessions
 - [Playwright vs Notte Controls](https://docs.notte.cc/features/sessions/playwright-vs-notte.md): Understanding the difference between direct Playwright control and Notte's AI-enabled SDK
+- [File Storage](https://docs.notte.cc/concepts/file-storage.md): Upload and download files for your automations
 
 ### Session Capabilities
 
-- [Browser Types](https://docs.notte.cc/features/sessions/browser-types.md): Choose between Chromium or Chrome for your sessions
-- [Browser Pools](https://docs.notte.cc/features/sessions/browser-pools.md): Managed pools of browser instances for high-throughput automation
 - [Stealth Mode](https://docs.notte.cc/features/sessions/stealth-mode.md): Configure anti-detection features for your browser sessions
 - [Proxies](https://docs.notte.cc/features/sessions/proxies.md): Route your automation traffic with precision & control
-- [Multi-Region Support](https://docs.notte.cc/features/sessions/multi-region.md): Run browser sessions across multiple geographic regions
 - [CAPTCHA Solving](https://docs.notte.cc/features/sessions/captcha-solving.md): Automatically detect and solve captchas during browser automation
 - [Ad Blocking](https://docs.notte.cc/features/sessions/ad-blocking.md): Built-in ad and tracker blocking for browser sessions
-- [Browser Profiles](https://docs.notte.cc/features/sessions/browser-profiles.md): Persist browser state across sessions
-- [Static IPs](https://docs.notte.cc/features/sessions/static-ips.md): Use dedicated static IP addresses for your browser sessions
 - [Recordings](https://docs.notte.cc/features/sessions/recordings.md): Record and replay your browser sessions for debugging and analysis
 - [Live View](https://docs.notte.cc/features/sessions/live-view.md): Watch your browser sessions in real-time as they execute
 - [Embed in your app](https://docs.notte.cc/features/sessions/embed-iframe.md): Drop the live browser viewer into your own web app via iframe
-- [Browser Extensions](https://docs.notte.cc/features/sessions/browser-extensions.md): Load custom browser extensions in your sessions
 - [Cookies](https://docs.notte.cc/features/sessions/cookies.md): Persist authentication and manage cookies across sessions
 - [Cloudflare Web Bot Auth](https://docs.notte.cc/features/sessions/cloudflare-web-bot-auth.md): Access Cloudflare-protected websites by cryptographically signing browser requests
 
@@ -112,46 +41,34 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 
 - [Connect with Playwright](https://docs.notte.cc/features/sessions/playwright.md): Use Playwright directly with Notte sessions via Chrome DevTools Protocol
 - [Connect with Puppeteer](https://docs.notte.cc/features/sessions/puppeteer.md): Use Puppeteer with Notte sessions via Chrome DevTools Protocol
-- [Connect with Selenium](https://docs.notte.cc/features/sessions/selenium.md): Use Selenium with Notte sessions via Chrome DevTools Protocol
 - [External Providers](https://docs.notte.cc/features/sessions/external-providers.md): Connect Notte to external browser infrastructure via Chrome DevTools Protocol
 
-## Agents
+## Authentication
 
-- [Browser Agents](https://docs.notte.cc/concepts/agents.md): AI-powered agents that autonomously complete browser tasks
-- [Agent Configuration](https://docs.notte.cc/features/agents/configuration.md): Configure agent behavior with creation and runtime parameters
-- [Agent Lifecycle](https://docs.notte.cc/features/agents/lifecycle.md): Understand agent execution modes, states, and control flow
-
-### Advanced
-
-- [Structured Output](https://docs.notte.cc/features/agents/structured-output.md): Get type-safe, structured responses from agents using Pydantic models
-- [Replay & Debugging](https://docs.notte.cc/features/agents/replay.md): Debug agents with visual replays and step-by-step inspection
-- [Agent to Function Conversion](https://docs.notte.cc/features/agents/workflows.md): Convert agent executions into reusable function code
-- [Agent Fallback](https://docs.notte.cc/features/agents/fallback.md): Automatically recover from script failures with AI agents
+- [Secret Vaults](https://docs.notte.cc/concepts/vaults.md): Enterprise-grade credential management for your Sessions & Agents
+- [Browser Profiles](https://docs.notte.cc/features/sessions/browser-profiles.md): Persist browser state across sessions
+- [Persona Identities](https://docs.notte.cc/concepts/personas.md): Self-service identities for web automation (account creation, 2FA,etc.)
 
 ## Functions
 
 - [Functions](https://docs.notte.cc/concepts/functions.md): Deploy browser automations as serverless API endpoints
 - [Creating Functions](https://docs.notte.cc/features/functions/creating.md): Write and deploy browser automation Functions
 - [Function Invocations](https://docs.notte.cc/features/functions/invocations.md): Call Functions via API, SDK, cURL, or webhooks
-- [Function Schedules](https://docs.notte.cc/features/functions/schedules.md): Schedule Functions to run automatically with cron expressions
+- [Function Schedules](https://docs.notte.cc/features/functions/schedules.md): Run Functions automatically on a cron schedule
 - [Function Management](https://docs.notte.cc/features/functions/management.md): Update, version, monitor, and manage your deployed Functions
 
-## Agent Tools
+## Web API
 
-- [File Storage](https://docs.notte.cc/concepts/file-storage.md): Upload and download files for your automations
-- [Secret Vaults](https://docs.notte.cc/concepts/vaults.md): Enterprise-grade credential management for your Sessions & Agents
-- [Persona Identities](https://docs.notte.cc/concepts/personas.md): Self-service identities for web automation (account creation, 2FA,etc.)
-
-## Scraping
-
-- [Scraping](https://docs.notte.cc/concepts/scraping.md): Extract content and structured data from web pages
+- [Fetch](https://docs.notte.cc/concepts/scraping.md): Extract content and structured data from web pages
+- [Search](https://docs.notte.cc/concepts/search.md): Search the web and get URLs, snippets, or a sourced answer
+- [Anything API](https://docs.notte.cc/concepts/anything.md): Build and run web automations from a single API call
 
 ## Guides
 
-- [Towards Reliable Agents](https://docs.notte.cc/guides/reliability.md): How to build reliable web agents
 - [Advanced Scraping](https://docs.notte.cc/guides/scraping.md): How to build reliable web scrapers with Notte
 - [Anti-Detection Playbook](https://docs.notte.cc/guides/stealth.md): How to avoid CAPTCHAs and bot detection in Notte Sessions
 - [Create accounts with Personas](https://docs.notte.cc/guides/account_creation.md): How to use notte personas for account creation
+- [Web Automation Best Practices](https://docs.notte.cc/guides/web_automation_tips.md): Playwright guidelines and common pitfalls for reliable web automation
 
 
 # Integrations
@@ -159,26 +76,56 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 ## Integrations
 
 - [Integrations](https://docs.notte.cc/integrations/index.md): Connect Notte to the tools your team already uses.
-- [MCP Server](https://docs.notte.cc/mcp-server.md): Give your AI agents access to the Notte MCP server
+- [Notte Browser MCP](https://docs.notte.cc/mcp-server.md): Connect your AI assistant to cloud browsers with Notte Browser MCP
+
+## Coding Agents
+
 - [Claude Code & AI Agents](https://docs.notte.cc/integrations/claude-code-ai-agents.md): Use Notte with AI coding assistants like Claude Code, Cursor, and Windsurf
+- [Claude Managed Agents](https://docs.notte.cc/integrations/claude-managed-agents.md): Give Anthropic's hosted agents a Notte browser, with your key held in a vault
+
+## Agent Frameworks
+
+- [Browser Use](https://docs.notte.cc/integrations/browser-use.md): Run Browser Use agents on Notte cloud browsers over CDP
+- [LangChain](https://docs.notte.cc/integrations/langchain.md): Give LangChain and LangGraph agents a browser with the Notte MCP server
+- [crewAI](https://docs.notte.cc/integrations/crewai.md): Give crewAI agents a browser with the Notte MCP server
+- [Agno](https://docs.notte.cc/integrations/agno.md): Give Agno agents a browser with the Notte MCP server
+- [Google ADK](https://docs.notte.cc/integrations/google-adk.md): Give Google ADK agents a browser with the Notte MCP server
+- [Vercel AI SDK](https://docs.notte.cc/integrations/vercel-ai-sdk.md): Give AI SDK agents a browser with the Notte MCP server
+- [Mastra](https://docs.notte.cc/integrations/mastra.md): Give Mastra agents a browser with the Notte MCP server
+- [OpenClaw](https://docs.notte.cc/integrations/openclaw.md): Use Notte cloud browsers with OpenClaw
+- [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
+- [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Connecting Stagehand to Notte cloud browsers
+
+## Workflow Automation
+
+- [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte browser agents inside n8n workflows
+
+## Browser Drivers
+
+- [Connect with Playwright](https://docs.notte.cc/features/sessions/playwright.md): Use Playwright directly with Notte sessions via Chrome DevTools Protocol
+- [Connect with Puppeteer](https://docs.notte.cc/features/sessions/puppeteer.md): Use Puppeteer with Notte sessions via Chrome DevTools Protocol
+
+## Browser Infrastructure
+
 - [Kernel.sh](https://docs.notte.cc/integrations/kernel.md): Integrate with Kernel browsers
 - [Steel](https://docs.notte.cc/integrations/steel.md): Run Notte with Steel cloud browsers (CDP)
 - [Massive](https://docs.notte.cc/integrations/massive.md): Use Massive residential proxies with Notte sessions
-- [OpenAI CUA](https://docs.notte.cc/integrations/openai-cua.md): Integrate OpenAI CUA with Notte Browser Sessions
-- [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Use Notte cloud browsers with Stagehand browser automation
-- [OpenClaw](https://docs.notte.cc/integrations/openclaw.md): Use Notte cloud browsers with OpenClaw
-- [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
 - [Cloudflare Web Bot Auth](https://docs.notte.cc/features/sessions/cloudflare-web-bot-auth.md): Access Cloudflare-protected websites by cryptographically signing browser requests
 
 
-# API
+# APIs and SDKs
+
+For agent-driven browser automation, follow https://notte.cc/skill.md before implementing an SDK integration.
 
 ## Getting Started
 
 - [Authentication](https://docs.notte.cc/api-reference/authentication.md): Authenticate with the Notte API
 - [API Error Codes](https://docs.notte.cc/api-reference/errors.md): API error responses and status codes
 - [Rate Limits](https://docs.notte.cc/api-reference/rate-limits.md): API rate limiting and response headers
-- [Session Replay](https://docs.notte.cc/api-reference/using-session-replay.md): Use mp4_url from GET /sessions/{session_id}/replay to download recordings
+
+## APIs
+
+<!-- openapi:begin https://api.notte.cc/openapi.json -->
 
 ## Agents
 
@@ -192,21 +139,30 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 
 - [POST Anything Start](https://docs.notte.cc/api-reference/anything/anything-start.md)
 
+## Audit
+
+- [GET List Audit Events](https://docs.notte.cc/api-reference/audit/list-audit-events.md)
+
 ## Functions
 
+- [GET Download Run Payload](https://docs.notte.cc/api-reference/functions/download-run-payload.md)
 - [POST Function Create](https://docs.notte.cc/api-reference/functions/function-create.md)
 - [DELETE Function Delete](https://docs.notte.cc/api-reference/functions/function-delete.md)
 - [GET Function Download Url](https://docs.notte.cc/api-reference/functions/function-download-url.md)
 - [POST Function Fork](https://docs.notte.cc/api-reference/functions/function-fork.md)
+- [PATCH Function Metadata Update](https://docs.notte.cc/api-reference/functions/function-metadata-update.md)
+- [POST Function Rollback](https://docs.notte.cc/api-reference/functions/function-rollback.md)
 - [GET Function Run Get Metadata](https://docs.notte.cc/api-reference/functions/function-run-get-metadata.md)
 - [POST Function Run Start](https://docs.notte.cc/api-reference/functions/function-run-start.md)
 - [DELETE Function Run Stop](https://docs.notte.cc/api-reference/functions/function-run-stop.md)
 - [PATCH Function Run Update Metadata](https://docs.notte.cc/api-reference/functions/function-run-update-metadata.md)
+- [GET Function Runtime Health](https://docs.notte.cc/api-reference/functions/function-runtime-health.md)
 - [DELETE Function Schedule Delete](https://docs.notte.cc/api-reference/functions/function-schedule-delete.md)
 - [POST Function Schedule Set](https://docs.notte.cc/api-reference/functions/function-schedule-set.md)
 - [POST Function Update](https://docs.notte.cc/api-reference/functions/function-update.md)
 - [GET List Function Runs By Function Id](https://docs.notte.cc/api-reference/functions/list-function-runs-by-function-id.md)
 - [GET List Functions](https://docs.notte.cc/api-reference/functions/list-functions.md)
+- [POST Prepare Run Payload Upload](https://docs.notte.cc/api-reference/functions/prepare-run-payload-upload.md)
 
 ## Health
 
@@ -221,6 +177,23 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [GET Mailbox List](https://docs.notte.cc/api-reference/mailboxes/mailbox-list.md)
 - [POST Mailbox Sync](https://docs.notte.cc/api-reference/mailboxes/mailbox-sync.md)
 - [PATCH Mailbox Update](https://docs.notte.cc/api-reference/mailboxes/mailbox-update.md)
+
+## Managed-Auth
+
+- [POST  Connect Link Context](https://docs.notte.cc/api-reference/managed-auth/connect-link-context.md)
+- [POST  Connect Link Mailbox Connect](https://docs.notte.cc/api-reference/managed-auth/connect-link-mailbox-connect.md)
+- [POST  Connect Link Mailbox Sync](https://docs.notte.cc/api-reference/managed-auth/connect-link-mailbox-sync.md)
+- [POST  Connect Link Mailboxes](https://docs.notte.cc/api-reference/managed-auth/connect-link-mailboxes.md)
+- [GET  Connect Link Status](https://docs.notte.cc/api-reference/managed-auth/connect-link-status.md)
+- [POST  Connect Link Submit](https://docs.notte.cc/api-reference/managed-auth/connect-link-submit.md)
+- [POST Managed Auth Connect Link Create](https://docs.notte.cc/api-reference/managed-auth/managed-auth-connect-link-create.md)
+
+## Payments
+
+- [POST Connect Payment Wallet](https://docs.notte.cc/api-reference/payments/connect-payment-wallet.md)
+- [POST Create Payment](https://docs.notte.cc/api-reference/payments/create-payment.md)
+- [POST Disconnect Payment Wallet](https://docs.notte.cc/api-reference/payments/disconnect-payment-wallet.md)
+- [GET Get Payment](https://docs.notte.cc/api-reference/payments/get-payment.md)
 
 ## Personas
 
@@ -265,30 +238,27 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 
 ## Sessions
 
+- [DELETE Delete Session File](https://docs.notte.cc/api-reference/sessions/delete-session-file.md)
+- [GET Download Session File](https://docs.notte.cc/api-reference/sessions/download-session-file.md)
 - [GET Get Session Script](https://docs.notte.cc/api-reference/sessions/get-session-script.md)
+- [GET List Session Files](https://docs.notte.cc/api-reference/sessions/list-session-files.md)
 - [GET List Sessions](https://docs.notte.cc/api-reference/sessions/list-sessions.md)
 - [POST Page Execute](https://docs.notte.cc/api-reference/sessions/page-execute.md)
 - [POST Page Observe](https://docs.notte.cc/api-reference/sessions/page-observe.md)
 - [POST Page Scrape](https://docs.notte.cc/api-reference/sessions/page-scrape.md)
 - [POST Page Screenshot](https://docs.notte.cc/api-reference/sessions/page-screenshot.md)
+- [GET Session Auth Readiness](https://docs.notte.cc/api-reference/sessions/session-auth-readiness.md)
 - [GET Session Cookies Get](https://docs.notte.cc/api-reference/sessions/session-cookies-get.md)
 - [POST Session Cookies Set](https://docs.notte.cc/api-reference/sessions/session-cookies-set.md)
 - [GET Session Debug Info](https://docs.notte.cc/api-reference/sessions/session-debug-info.md)
 - [GET Session Network Logs](https://docs.notte.cc/api-reference/sessions/session-network-logs.md)
 - [GET Session Offset](https://docs.notte.cc/api-reference/sessions/session-offset.md)
+- [GET Session Profile Preview](https://docs.notte.cc/api-reference/sessions/session-profile-preview.md)
 - [GET Session Replay](https://docs.notte.cc/api-reference/sessions/session-replay.md)
 - [POST Session Start](https://docs.notte.cc/api-reference/sessions/session-start.md)
 - [GET Session Status](https://docs.notte.cc/api-reference/sessions/session-status.md)
 - [DELETE Session Stop](https://docs.notte.cc/api-reference/sessions/session-stop.md)
-
-## Storage
-
-- [GET File Download](https://docs.notte.cc/api-reference/storage/file-download.md)
-- [GET File Download Uploaded File](https://docs.notte.cc/api-reference/storage/file-download-uploaded-file.md)
-- [GET File List Downloads](https://docs.notte.cc/api-reference/storage/file-list-downloads.md)
-- [GET File List Uploads](https://docs.notte.cc/api-reference/storage/file-list-uploads.md)
-- [POST File Upload](https://docs.notte.cc/api-reference/storage/file-upload.md)
-- [POST File Upload Downloaded File](https://docs.notte.cc/api-reference/storage/file-upload-downloaded-file.md)
+- [POST Upload Session File](https://docs.notte.cc/api-reference/sessions/upload-session-file.md)
 
 ## Usage
 
@@ -309,29 +279,24 @@ Full Quickstart: https://docs.notte.cc/quickstart.md
 - [DELETE Vault Delete](https://docs.notte.cc/api-reference/vaults/vault-delete.md)
 - [PATCH Vault Update](https://docs.notte.cc/api-reference/vaults/vault-update.md)
 
+<!-- openapi:end -->
 
-# SDK
 
-## SDK Prerequisite Gate
+## Python SDK
 
-STOP. Do not use this SDK section yet unless you have already generated workflow code from the Quickstart-led CLI workflow.
 
-Before using any SDK link below, you must have a running CLI browser session, have explored the target page interactively, and have `notte sessions workflow-code` output to run, inspect, or refine. If you have not run `notte sessions workflow-code`, go back to https://docs.notte.cc/quickstart.md now.
-
-The SDK docs below are for generated-code editing and reference. They are not the starting point for manually authoring browser automation from scratch.
-
-## Getting Started
+### Getting Started
 
 - [NotteClient](https://docs.notte.cc/sdk-reference/manual/index.md): The starting point for all operations
 - [Authentication](https://docs.notte.cc/sdk-reference/authentication.md): Authenticate with the Notte SDK
 - [Error Handling](https://docs.notte.cc/sdk-reference/errors.md): Handle errors in the Notte SDK
 - [Rate Limits](https://docs.notte.cc/sdk-reference/rate-limits.md): Handle rate limits in the Notte SDK
 
-## Core Features
+### Core Features
 
 - [scrape](https://docs.notte.cc/sdk-reference/notteclient/scrape.md): Scrape the current page data
 
-### Session
+#### Session
 
 - [Get started](https://docs.notte.cc/sdk-reference/manual/session.md): Creating and using a browsing session
 - [start](https://docs.notte.cc/sdk-reference/remotesession/start.md): Start the session using the configured request
@@ -339,6 +304,7 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [observe](https://docs.notte.cc/sdk-reference/remotesession/observe.md): Observes the current session page
 - [execute](https://docs.notte.cc/sdk-reference/remotesession/execute.md): Executes an action on the current session page
 - [scrape](https://docs.notte.cc/sdk-reference/remotesession/scrape.md): Scrape the current page data
+- [fetch](https://docs.notte.cc/sdk-reference/remotesession/fetch.md): Issue an HTTP request from the page the session is on and return the response
 - [replay](https://docs.notte.cc/sdk-reference/remotesession/replay.md): Get presigned URLs for the session replay
 - [cdp_url](https://docs.notte.cc/sdk-reference/remotesession/cdp_url.md): Get the Chrome DevTools Protocol WebSocket URL for the session
 - [set_cookies](https://docs.notte.cc/sdk-reference/remotesession/set_cookies.md): Uploads cookies to the session
@@ -347,8 +313,10 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [viewer_cdp](https://docs.notte.cc/sdk-reference/remotesession/viewer_cdp.md): Open a browser tab with the debug URL for visualizing the session
 - [viewer](https://docs.notte.cc/sdk-reference/remotesession/viewer.md): Open the viewer for the session based on the viewer_type
 - [status](https://docs.notte.cc/sdk-reference/remotesession/status.md): Get the current status of the session
+- [evaluate_js](https://docs.notte.cc/sdk-reference/remotesession/evaluate_js.md): Evaluate JavaScript on the current page and return its result as a string
+- [wait_for_auth](https://docs.notte.cc/sdk-reference/remotesession/wait_for_auth.md): Wait for this browser to be ready without restarting or relogging it
 
-### Actions
+#### Actions
 
 - [GotoAction](https://docs.notte.cc/sdk-reference/misc/gotoaction.md): Goto to a URL (in current tab)
 - [GotoNewTabAction](https://docs.notte.cc/sdk-reference/misc/gotonewtabaction.md): Goto to a URL (in new tab)
@@ -374,42 +342,44 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [EmailReadAction](https://docs.notte.cc/sdk-reference/misc/emailreadaction.md): Read recent emails from the mailbox
 - [EmailVerificationReadAction](https://docs.notte.cc/sdk-reference/misc/emailverificationreadaction.md): Read a recent verification code or link from a workspace mailbox
 
-### Agent
+#### Agent
 
 - [Get started](https://docs.notte.cc/sdk-reference/manual/agent.md): Running agents is a breeze
 - [run](https://docs.notte.cc/sdk-reference/remoteagent/run.md): Run an agent with the specified request parameters and wait for completion
-- [replay](https://docs.notte.cc/sdk-reference/remoteagent/replay.md): Get the replay for the agent's session
 - [start](https://docs.notte.cc/sdk-reference/remoteagent/start.md): Start the agent with the specified request parameters
 - [stop](https://docs.notte.cc/sdk-reference/remoteagent/stop.md): Stop the currently running agent
 - [status](https://docs.notte.cc/sdk-reference/remoteagent/status.md): Get the current status of the agent
+- [wait](https://docs.notte.cc/sdk-reference/remoteagent/wait.md): Wait for the agent to complete its current task
+- [watch_logs_and_wait](https://docs.notte.cc/sdk-reference/remoteagent/watch_logs_and_wait.md): Watch the logs of the agent and wait for completion
 - [Agent Fallback](https://docs.notte.cc/sdk-reference/manual/agent_fallback.md): Gracefully handle script execution failures with Web Agents
 
-### Function
+#### Function
 
-- [Get started](https://docs.notte.cc/sdk-reference/manual/workflow.md): Create, manage, and execute automated web functions
+- [Get started](https://docs.notte.cc/sdk-reference/manual/function.md): Create, manage, and execute Notte functions
+- [create_run](https://docs.notte.cc/sdk-reference/nottefunction/create_run.md): Create a run record without starting execution
 - [run](https://docs.notte.cc/sdk-reference/nottefunction/run.md): Run the function code using the specified version and variables
 - [update](https://docs.notte.cc/sdk-reference/nottefunction/update.md): Update the workflow with a new code version
 - [delete](https://docs.notte.cc/sdk-reference/nottefunction/delete.md): Delete the workflow from the notte console
 - [download](https://docs.notte.cc/sdk-reference/nottefunction/download.md): Download the function code from the notte console as a python file
 - [fork](https://docs.notte.cc/sdk-reference/nottefunction/fork.md): Fork a shared function into your own private function
 - [get_curl](https://docs.notte.cc/sdk-reference/nottefunction/get_curl.md): Convert the workflow/run to a curl request
+- [get_run](https://docs.notte.cc/sdk-reference/nottefunction/get_run.md): Get a function run by its ID
+- [get_url](https://docs.notte.cc/sdk-reference/nottefunction/get_url.md): No description available
+- [stop_run](https://docs.notte.cc/sdk-reference/nottefunction/stop_run.md): Manually stop a function run by its ID
 
-## Tooling
+### Tooling
 
 
-### Vault
+#### Vault
 
 - [Get started](https://docs.notte.cc/sdk-reference/manual/vault.md): Secure credential management made easy
 - [add_credentials](https://docs.notte.cc/sdk-reference/nottevault/add_credentials.md): No description available
 - [get_credentials](https://docs.notte.cc/sdk-reference/nottevault/get_credentials.md): No description available
 - [delete_credentials](https://docs.notte.cc/sdk-reference/nottevault/delete_credentials.md): No description available
 - [list_credentials](https://docs.notte.cc/sdk-reference/nottevault/list_credentials.md): No description available
-- [set_credit_card](https://docs.notte.cc/sdk-reference/nottevault/set_credit_card.md): No description available
-- [get_credit_card](https://docs.notte.cc/sdk-reference/nottevault/get_credit_card.md): No description available
-- [delete_credit_card](https://docs.notte.cc/sdk-reference/nottevault/delete_credit_card.md): No description available
 - [generate_password](https://docs.notte.cc/sdk-reference/nottevault/generate_password.md): Generate a secure random password
 
-### Persona
+#### Persona
 
 - [Get started](https://docs.notte.cc/sdk-reference/manual/persona.md): Self-service identities for web automation (account creation, 2FA,etc.)
 - [delete](https://docs.notte.cc/sdk-reference/nottepersona/delete.md): Delete the persona from the notte console
@@ -419,32 +389,208 @@ The SDK docs below are for generated-code editing and reference. They are not th
 - [emails](https://docs.notte.cc/sdk-reference/nottepersona/emails.md): Read recent emails sent to the persona
 - [sms](https://docs.notte.cc/sdk-reference/nottepersona/sms.md): Read recent sms messages sent to the persona
 
-### File Storage
+#### File Storage
 
 - [FileStorage](https://docs.notte.cc/sdk-reference/manual/file_storage.md): Upload and download files for your automations
-- [download](https://docs.notte.cc/sdk-reference/remotefilestorage/download.md): Stores a file that has been downloaded from a website in the current session
-- [upload](https://docs.notte.cc/sdk-reference/remotefilestorage/upload.md): Upload a file from your local machine to storage
-- [list_downloaded_files](https://docs.notte.cc/sdk-reference/remotefilestorage/list_downloaded_files.md): List all files in the download_dir
-- [list_uploaded_files](https://docs.notte.cc/sdk-reference/remotefilestorage/list_uploaded_files.md): List all files from the upload_dir
+- [download](https://docs.notte.cc/sdk-reference/remotefilestorage/download.md): No description available
+- [upload](https://docs.notte.cc/sdk-reference/remotefilestorage/upload.md): No description available
+- [list](https://docs.notte.cc/sdk-reference/remotefilestorage/list.md): No description available
+- [delete](https://docs.notte.cc/sdk-reference/remotefilestorage/delete.md): No description available
 
-## Debug
+### Debug
 
 
-### Debug Methods
+#### Debug Methods
 
 - [health_check](https://docs.notte.cc/sdk-reference/notteclient/health_check.md): Health check the Notte API
 - [debug_info](https://docs.notte.cc/sdk-reference/remotesession/debug_info.md): Get detailed debug information for the session
 - [offset](https://docs.notte.cc/sdk-reference/remotesession/offset.md): Get the trajectory offset of the session
 
+## Node SDK
 
-# Products
 
-## Products
+### Getting Started
 
-- [Agent Mode](https://docs.notte.cc/product/agent-mode.md): Bootstrap automations from natural language prompts
-- [Demonstrate Mode](https://docs.notte.cc/product/demonstrate-mode.md): Record browser actions and generate automation code instantly
-- [Automation Studio](https://docs.notte.cc/product/studio.md): A dedicated IDE for browser agents and automations
-- [Anything API](https://docs.notte.cc/product/anything-api.md): Build and run web automations from a single API call
+- [NotteClient](https://docs.notte.cc/typescript-sdk-reference/manual/client.md)
+- [Authentication](https://docs.notte.cc/typescript-sdk-reference/authentication.md)
+- [Error Handling](https://docs.notte.cc/typescript-sdk-reference/errors.md)
+- [Rate Limits](https://docs.notte.cc/typescript-sdk-reference/rate-limits.md)
+
+### Core Features
+
+- [scrape](https://docs.notte.cc/typescript-sdk-reference/client/scrape.md)
+- [search](https://docs.notte.cc/typescript-sdk-reference/client/search.md)
+
+#### Session
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/session.md)
+- [start](https://docs.notte.cc/typescript-sdk-reference/session/start.md)
+- [stop](https://docs.notte.cc/typescript-sdk-reference/session/stop.md)
+- [observe](https://docs.notte.cc/typescript-sdk-reference/session/observe.md)
+- [execute](https://docs.notte.cc/typescript-sdk-reference/session/execute.md)
+- [scrape](https://docs.notte.cc/typescript-sdk-reference/session/scrape.md)
+- [replay](https://docs.notte.cc/typescript-sdk-reference/session/replay.md)
+- [setCookies](https://docs.notte.cc/typescript-sdk-reference/session/setcookies.md)
+- [getCookies](https://docs.notte.cc/typescript-sdk-reference/session/getcookies.md)
+- [viewer](https://docs.notte.cc/typescript-sdk-reference/session/viewer.md)
+- [status](https://docs.notte.cc/typescript-sdk-reference/session/status.md)
+- [waitForAuth](https://docs.notte.cc/typescript-sdk-reference/session/waitforauth.md)
+- [downloadReplay](https://docs.notte.cc/typescript-sdk-reference/session/downloadreplay.md)
+- [saveProfile](https://docs.notte.cc/typescript-sdk-reference/session/saveprofile.md)
+- [debugInfo](https://docs.notte.cc/typescript-sdk-reference/session/debuginfo.md)
+- [debugTabInfo](https://docs.notte.cc/typescript-sdk-reference/session/debugtabinfo.md)
+- [cdpUrl](https://docs.notte.cc/typescript-sdk-reference/session/cdpurl.md)
+- [page](https://docs.notte.cc/typescript-sdk-reference/session/page.md)
+- [getScript](https://docs.notte.cc/typescript-sdk-reference/session/getscript.md)
+- [evaluateJs](https://docs.notte.cc/typescript-sdk-reference/session/evaluatejs.md)
+- [fetch](https://docs.notte.cc/typescript-sdk-reference/session/fetch.md)
+
+#### Actions
+
+- [GotoAction](https://docs.notte.cc/typescript-sdk-reference/types/gotoaction.md)
+- [GotoNewTabAction](https://docs.notte.cc/typescript-sdk-reference/types/gotonewtabaction.md)
+- [SwitchTabAction](https://docs.notte.cc/typescript-sdk-reference/types/switchtabaction.md)
+- [GoBackAction](https://docs.notte.cc/typescript-sdk-reference/types/gobackaction.md)
+- [GoForwardAction](https://docs.notte.cc/typescript-sdk-reference/types/goforwardaction.md)
+- [ReloadAction](https://docs.notte.cc/typescript-sdk-reference/types/reloadaction.md)
+- [WaitAction](https://docs.notte.cc/typescript-sdk-reference/types/waitaction.md)
+- [PressKeyAction](https://docs.notte.cc/typescript-sdk-reference/types/presskeyaction.md)
+- [ScrollUpAction](https://docs.notte.cc/typescript-sdk-reference/types/scrollupaction.md)
+- [ScrollDownAction](https://docs.notte.cc/typescript-sdk-reference/types/scrolldownaction.md)
+- [ClickActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/clickactionoutput.md)
+- [FillActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/fillactionoutput.md)
+- [CheckActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/checkactionoutput.md)
+- [FormFillAction](https://docs.notte.cc/typescript-sdk-reference/types/formfillaction.md)
+- [EvaluateJsAction](https://docs.notte.cc/typescript-sdk-reference/types/evaluatejsaction.md)
+- [SelectDropdownOptionActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/selectdropdownoptionactionoutput.md)
+- [UploadFileActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/uploadfileactionoutput.md)
+- [DownloadFileActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/downloadfileactionoutput.md)
+- [ScrapeAction](https://docs.notte.cc/typescript-sdk-reference/types/scrapeaction.md)
+- [CaptchaSolveAction](https://docs.notte.cc/typescript-sdk-reference/types/captchasolveaction.md)
+- [SmsReadAction](https://docs.notte.cc/typescript-sdk-reference/types/smsreadaction.md)
+- [EmailReadAction](https://docs.notte.cc/typescript-sdk-reference/types/emailreadaction.md)
+- [EmailVerificationReadAction](https://docs.notte.cc/typescript-sdk-reference/types/emailverificationreadaction.md)
+
+#### Agent
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/agent.md)
+- [run](https://docs.notte.cc/typescript-sdk-reference/agent/run.md)
+- [start](https://docs.notte.cc/typescript-sdk-reference/agent/start.md)
+- [stop](https://docs.notte.cc/typescript-sdk-reference/agent/stop.md)
+- [status](https://docs.notte.cc/typescript-sdk-reference/agent/status.md)
+- [hasStarted](https://docs.notte.cc/typescript-sdk-reference/agent/hasstarted.md)
+- [isActive](https://docs.notte.cc/typescript-sdk-reference/agent/isactive.md)
+
+#### Function
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/function.md)
+- [createRun](https://docs.notte.cc/typescript-sdk-reference/function/createrun.md)
+- [run](https://docs.notte.cc/typescript-sdk-reference/function/run.md)
+- [getRun](https://docs.notte.cc/typescript-sdk-reference/function/getrun.md)
+- [download](https://docs.notte.cc/typescript-sdk-reference/function/download.md)
+- [getUrl](https://docs.notte.cc/typescript-sdk-reference/function/geturl.md)
+- [get](https://docs.notte.cc/typescript-sdk-reference/function/get.md)
+- [update](https://docs.notte.cc/typescript-sdk-reference/function/update.md)
+- [updateMetadata](https://docs.notte.cc/typescript-sdk-reference/function/updatemetadata.md)
+- [delete](https://docs.notte.cc/typescript-sdk-reference/function/delete.md)
+- [setSchedule](https://docs.notte.cc/typescript-sdk-reference/function/setschedule.md)
+- [deleteSchedule](https://docs.notte.cc/typescript-sdk-reference/function/deleteschedule.md)
+- [rollback](https://docs.notte.cc/typescript-sdk-reference/function/rollback.md)
+- [updateRun](https://docs.notte.cc/typescript-sdk-reference/function/updaterun.md)
+- [runs](https://docs.notte.cc/typescript-sdk-reference/function/runs.md)
+
+#### Anything
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/notteanything.md)
+- [start](https://docs.notte.cc/typescript-sdk-reference/notteanything/start.md)
+
+#### Managed Auth
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/nottemanagedauth.md)
+- [checkConnection](https://docs.notte.cc/typescript-sdk-reference/nottemanagedauth/checkconnection.md)
+- [getOperation](https://docs.notte.cc/typescript-sdk-reference/nottemanagedauth/getoperation.md)
+- [waitForAuth](https://docs.notte.cc/typescript-sdk-reference/nottemanagedauth/waitforauth.md)
+- [refreshConnection](https://docs.notte.cc/typescript-sdk-reference/nottemanagedauth/refreshconnection.md)
+- [reauthenticateConnection](https://docs.notte.cc/typescript-sdk-reference/nottemanagedauth/reauthenticateconnection.md)
+
+### Tooling
+
+
+#### Vault
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/vault.md)
+- [addCredentials](https://docs.notte.cc/typescript-sdk-reference/vault/addcredentials.md)
+- [getCredentials](https://docs.notte.cc/typescript-sdk-reference/vault/getcredentials.md)
+- [deleteCredentials](https://docs.notte.cc/typescript-sdk-reference/vault/deletecredentials.md)
+- [listCredentials](https://docs.notte.cc/typescript-sdk-reference/vault/listcredentials.md)
+- [generatePassword](https://docs.notte.cc/typescript-sdk-reference/vault/generatepassword.md)
+- [hasCredential](https://docs.notte.cc/typescript-sdk-reference/vault/hascredential.md)
+
+#### Persona
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/persona.md)
+- [delete](https://docs.notte.cc/typescript-sdk-reference/persona/delete.md)
+- [addCredentials](https://docs.notte.cc/typescript-sdk-reference/persona/addcredentials.md)
+- [emails](https://docs.notte.cc/typescript-sdk-reference/persona/emails.md)
+- [sms](https://docs.notte.cc/typescript-sdk-reference/persona/sms.md)
+
+#### File Storage
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/remotefilestorage.md)
+- [download](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/download.md)
+- [downloadBlob](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/downloadblob.md)
+- [upload](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/upload.md)
+- [list](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/list.md)
+- [metadata](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/metadata.md)
+- [stream](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/stream.md)
+- [delete](https://docs.notte.cc/typescript-sdk-reference/remotefilestorage/delete.md)
+
+#### Secrets
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/nottesecrets.md)
+- [list](https://docs.notte.cc/typescript-sdk-reference/nottesecrets/list.md)
+- [store](https://docs.notte.cc/typescript-sdk-reference/nottesecrets/store.md)
+- [get](https://docs.notte.cc/typescript-sdk-reference/nottesecrets/get.md)
+- [delete](https://docs.notte.cc/typescript-sdk-reference/nottesecrets/delete.md)
+
+#### Usage
+
+- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/notteusage.md)
+- [get](https://docs.notte.cc/typescript-sdk-reference/notteusage/get.md)
+- [logs](https://docs.notte.cc/typescript-sdk-reference/notteusage/logs.md)
+
+### Debug
+
+
+#### Debug Methods
+
+- [getConfig](https://docs.notte.cc/typescript-sdk-reference/client/getconfig.md)
+- [getClient](https://docs.notte.cc/typescript-sdk-reference/client/getclient.md)
+- [getResponse](https://docs.notte.cc/typescript-sdk-reference/session/getresponse.md)
+- [isSessionActive](https://docs.notte.cc/typescript-sdk-reference/session/issessionactive.md)
+
+
+# CLI
+
+## Getting Started
+
+- [CLI](https://docs.notte.cc/cli-reference/index.md): Drive Notte browser sessions, functions, and vaults from your terminal
+
+## Commands
+
+- [Auth](https://docs.notte.cc/cli-reference/auth.md): Manage authentication
+- [Files](https://docs.notte.cc/cli-reference/files.md): Manage stored files
+- [Functions](https://docs.notte.cc/cli-reference/functions.md): Manage functions
+- [Page](https://docs.notte.cc/cli-reference/page.md): Execute page actions (syntactic sugar for sessions execute)
+- [Payment](https://docs.notte.cc/cli-reference/payment.md): Request a temporary card for a browser session
+- [Personas](https://docs.notte.cc/cli-reference/personas.md): Manage personas
+- [Profiles](https://docs.notte.cc/cli-reference/profiles.md): Manage browser profiles
+- [Sessions](https://docs.notte.cc/cli-reference/sessions.md): Manage browser sessions
+- [Skill](https://docs.notte.cc/cli-reference/skill.md): Manage Notte skills for AI coding assistants
+- [Tunnel](https://docs.notte.cc/cli-reference/tunnel.md): Route sessions through this machine's internet connection
+- [Usage](https://docs.notte.cc/cli-reference/usage.md): Show API usage statistics
+- [Vaults](https://docs.notte.cc/cli-reference/vaults.md): Manage vaults
+- [Other commands](https://docs.notte.cc/cli-reference/other.md): Standalone Notte CLI commands
 
 
 # Resources

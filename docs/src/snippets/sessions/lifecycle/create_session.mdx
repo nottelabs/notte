@@ -1,41 +1,66 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/lifecycle/create_session.py, testers/sessions/lifecycle/create_session.ts, testers/sessions/lifecycle/create_session_2.py, testers/sessions/lifecycle/create_session_2.ts */}
+
 <CodeGroup>
-  ```python Python - Context Manager
-  from notte_sdk import NotteClient
 
-  client = NotteClient()
+```python Python - Context Manager
+# Recommended: Use context manager for automatic cleanup
+with client.Session(viewport_width=1920, viewport_height=1080) as session:
+    print(f"Session {session.session_id} is active")
 
-  # Recommended: Use context manager for automatic cleanup
-  with client.Session(
-      headless=True,
-      timeout_minutes=10,
-      viewport_width=1920,
-      viewport_height=1080
-  ) as session:
-      print(f"Session {session.session_id} is active")
+    # Access Playwright page
+    page = session.page
+    page.goto("https://example.com")
+    print(f"Page title: {page.title()}")
+```
 
-      # Access Playwright page
-      page = session.page
-      page.goto("https://example.com")
-      print(f"Page title: {page.title()}")
+```typescript TypeScript - Context Manager
+// Recommended: Use .use() for automatic cleanup.
+await client
+  .Session({ viewport_width: 1920, viewport_height: 1080 })
+  .use(async (session) => {
+    console.log(`Session ${session.getId()} is active`);
 
-  # Session automatically stopped here
-  ```
+    // Access the session’s Playwright page.
+    status = await session.status();
+    const page = await session.page();
+    await page.goto('https://example.com');
+    title = await page.title();
+    console.log(`Page title: ${title}`);
+  });
+// Automatically stopped here.
+```
 
-  ```python Python - Manual Management
-  from notte_sdk import NotteClient
+```python Python - Manual Management
+session = client.Session()
+session.start()
+try:
+    print(f"Session {session.session_id} is active")
+    status = session.status()
+    if status.status != "active":
+        raise RuntimeError("Session is not active")
+    page = session.page
+    page.goto("https://example.com")
+    title = page.title()
+finally:
+    # Always stop the session
+    session.stop()
+```
 
-  client = NotteClient()
+```typescript TypeScript - Manual Management
+const session = client.Session();
+await session.start();
+try {
+  console.log(`Session ${session.getId()} is active`);
+  status = await session.status();
+  if (status.status !== 'active') throw new Error('Session is not active');
+  const page = await session.page();
+  await page.goto('https://example.com');
+  title = await page.title();
+} finally {
+  // Always stop the session
+  await session.stop();
+}
+```
 
-  # Manual management (not recommended)
-  session = client.Session(timeout_minutes=10)
-  session.start()
-
-  try:
-      print(f"Session {session.session_id} is active")
-      page = session.page
-      page.goto("https://example.com")
-  finally:
-      # Always stop the session
-      session.stop()
-  ```
 </CodeGroup>

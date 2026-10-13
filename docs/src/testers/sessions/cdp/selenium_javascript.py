@@ -1,4 +1,5 @@
 # @sniptest filename=selenium_javascript.py
+# @sniptest show=1-24
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -23,3 +24,4 @@ with client.Session() as session:
     # Pass arguments to JavaScript
     result = page.evaluate("x => x * 2", 5)
     print(f"Result: {result}")  # 10
+    status = session.status()

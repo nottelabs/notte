@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/sessions/capabilities/captcha_combine_stealth.py */}
 
+<CodeGroup>
+
 ```python captcha_combine_stealth.py
 from notte_sdk import NotteClient
 
@@ -10,3 +12,21 @@ with client.Session(solve_captchas=True, proxies=True, viewport_width=1920, view
     # Maximum captcha success rate
     pass
 ```
+
+```typescript captcha_combine_stealth.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const session = client.Session({
+  solve_captchas: true,
+  proxies: true,
+  viewport_width: 1920,
+  viewport_height: 1080,
+});
+await session.use(async () => {
+  // Maximum captcha success rate
+});
+```
+
+</CodeGroup>

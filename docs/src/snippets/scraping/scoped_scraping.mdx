@@ -1,4 +1,8 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/scraping/scoped_scraping.py, testers/scraping/scoped_scraping.ts */}
+
 <CodeGroup>
+
 ```python Python
 from notte_sdk import NotteClient
 
@@ -11,7 +15,8 @@ with client.Session() as session:
     # Scrape a specific container
     content = session.scrape(selector="#product-details")
 ```
-```javascript JavaScript
+
+```typescript TypeScript
 import { NotteClient } from 'notte-sdk';
 
 const client = new NotteClient({
@@ -30,4 +35,5 @@ await client.Session().use(async (session) => {
   });
 });
 ```
+
 </CodeGroup>

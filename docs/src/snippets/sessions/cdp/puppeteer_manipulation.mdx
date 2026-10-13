@@ -1,41 +1,46 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/cdp/puppeteer_manipulation.ts */}
+
 <CodeGroup>
-  ```javascript Node.js
-  const puppeteer = require('puppeteer-core');
 
-  async function main() {
-    const cdpUrl = process.argv[2];
+```typescript Node.js
+const puppeteer = require('puppeteer-core');
 
-    const browser = await puppeteer.connect({
-      browserWSEndpoint: cdpUrl
-    });
+async function main() {
+  const cdpUrl = process.argv[2];
 
-    const pages = await browser.pages();
-    const page = pages[0];
+  const browser = await puppeteer.connect({
+    browserWSEndpoint: cdpUrl
+  });
 
-    await page.goto('https://example.com/login');
+  const pages = await browser.pages();
+  const page = pages[0];
 
-    // Type into inputs
-    await page.type('input[name="email"]', 'user@example.com');
-    await page.type('input[name="password"]', 'password123');
+  await page.goto('https://example.com/login');
 
-    // Click button
-    await page.click('button[type="submit"]');
+  // Type into inputs
+  await page.type('input[name="email"]', 'user@example.com');
+  await page.type('input[name="password"]', 'password123');
 
-    // Wait for navigation
-    await page.waitForNavigation();
+  // Click button
+  await page.click('button[type="submit"]');
 
-    // Extract data
-    const title = await page.title();
-    const content = await page.evaluate(() => {
-      return document.querySelector('h1')?.textContent;
-    });
+  // Wait for navigation
+  await page.waitForNavigation();
 
-    console.log('Title:', title);
-    console.log('Content:', content);
+  // Extract data
+  const title = await page.title();
+  const content = await page.evaluate(() => {
+    return document.querySelector('h1')?.textContent;
+  });
 
-    await browser.disconnect();
-  }
+  console.log('Title:', title);
+  console.log('Content:', content);
 
-  main().catch(console.error);
-  ```
+  await browser.disconnect();
+}
+
+main().catch(console.error);
+```
+
 </CodeGroup>

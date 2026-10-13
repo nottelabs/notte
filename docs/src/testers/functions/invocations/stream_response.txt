@@ -1,0 +1,4 @@
+data: {"type": "log", "message": "Starting function..."}
+data: {"type": "session_start", "message": "session_456"}
+data: {"type": "log", "message": "Navigation complete"}
+data: {"type": "result", "message": "{\"function_id\": \"...\", ...}"}

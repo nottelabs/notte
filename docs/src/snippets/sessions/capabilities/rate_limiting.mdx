@@ -5,18 +5,18 @@
 import time
 
 from notte_sdk import NotteClient
-from notte_sdk.types import ExternalProxy, NotteProxy
+from notte_sdk.types import ExternalProxy, ProxySettings
 
 client = NotteClient()
 
-ip_pool: list[NotteProxy | ExternalProxy] = [
+ip_pool: list[ProxySettings] = [
     ExternalProxy(server="http://ip1.example.com:8080", username="user", password="pass"),
     ExternalProxy(server="http://ip2.example.com:8080", username="user", password="pass"),
     ExternalProxy(server="http://ip3.example.com:8080", username="user", password="pass"),
 ]
 
 for ip_proxy in ip_pool:
-    proxies: list[NotteProxy | ExternalProxy] = [ip_proxy]
+    proxies: list[ProxySettings] = [ip_proxy]
     with client.Session(proxies=proxies) as session:
         page = session.page
         page.goto("https://api.example.com/data")

@@ -1,15 +1,44 @@
 # @sniptest filename=uploading_files.py
-from notte_sdk import NotteClient
+# @sniptest show=18-24
+from pathlib import Path
 
-client = NotteClient()
-storage = client.FileStorage()
+from notte_sdk.endpoints.files import RemoteFileStorage
 
-# Upload a file (uses the original filename)
-storage.upload("report.pdf")
+# Record each successful upload before any subsequent request can fail.
+owned_uploads: list[tuple[RemoteFileStorage, str]] = []
+original_upload = RemoteFileStorage.upload
 
-# Upload with a custom name
-storage.upload("report.pdf", upload_file_name="quarterly_report.pdf")
 
-# List uploaded files
-files = storage.list_uploaded_files()
-print(f"Uploaded: {files}")
+def tracked_upload(self, *args, **kwargs):
+    uploaded = original_upload(self, *args, **kwargs)
+    owned_uploads.append((self, uploaded.id))
+    return uploaded
+
+
+RemoteFileStorage.upload = tracked_upload  # type: ignore[method-assign]
+try:
+    from notte_sdk import NotteClient
+
+    client = NotteClient()
+    with client.Session() as session:
+        session.storage.upload("report.pdf")
+        session.storage.upload("report.pdf", upload_file_name="quarterly_report.pdf")
+        print(session.storage.list(source="user_upload").files)
+        assert session.status().status == "active"
+
+    status = client.sessions.status(session.session_id)
+    files = session.storage.list(source="user_upload").files
+    assert sorted(file.filename for file in files) == ["quarterly_report.pdf", "report.pdf"]
+    for file in files:
+        downloaded = session.storage.download(file.id, local_dir="./verified")
+        assert Path(downloaded).read_bytes() == Path("report.pdf").read_bytes()
+finally:
+    RemoteFileStorage.upload = original_upload  # type: ignore[method-assign]
+    cleanup_errors = []
+    for storage, file_id in owned_uploads:
+        try:
+            storage.delete(file_id)
+        except Exception as error:
+            cleanup_errors.append(error)
+    if cleanup_errors:
+        raise ExceptionGroup("Failed to delete uploaded example files", cleanup_errors)

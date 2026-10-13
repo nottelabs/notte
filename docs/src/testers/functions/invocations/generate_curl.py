@@ -1,0 +1,9 @@
+from notte_sdk import NotteClient
+
+client = NotteClient()
+function = client.Function(function_id="func_abc123")
+
+# Generate cURL command
+curl_command = function.get_curl(url="https://example.com", search_query="laptop")
+
+print(curl_command)

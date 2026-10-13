@@ -1,8 +1,14 @@
 import logging
+import os
+import signal
 import subprocess
+import sys
+import tempfile
+import time
 from pathlib import Path
 
 import pytest
+from notte_core.common.config import LlmModel
 
 
 def find_python_files(directory: Path) -> list[Path]:
@@ -18,7 +24,30 @@ def find_python_files(directory: Path) -> list[Path]:
     return [file for file in directory.glob("*.py") if file.name != "__init__.py" and not file.name.startswith("test_")]
 
 
-def run_python_file(file_path: Path, args: list[str]) -> tuple[int, list[str]]:
+def _terminate_process_group(process: subprocess.Popen[str], grace_seconds: float = 5) -> None:
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return
+
+    deadline = time.monotonic() + grace_seconds
+    while time.monotonic() < deadline:
+        try:
+            os.killpg(process.pid, 0)
+        except ProcessLookupError:
+            break
+        time.sleep(0.05)
+    else:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+
+    if process.poll() is None:
+        process.wait(timeout=1)
+
+
+def run_python_file(file_path: Path, args: list[str], timeout_seconds: float = 280) -> tuple[int, list[str]]:
     """
     Run a Python file and return its output (both stdout and stderr).
 
@@ -29,25 +58,71 @@ def run_python_file(file_path: Path, args: list[str]) -> tuple[int, list[str]]:
     Returns:
         The error code
     """
-    logged: list[str] = []
-    try:
-        # Merge stderr into stdout and capture the combined output
-        # result = subprocess.run( + args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=True)
+    with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as output:
         process = subprocess.Popen(
-            ["python", str(file_path)] + args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+            [sys.executable, str(file_path)] + args,
+            stdout=output,
+            stderr=subprocess.STDOUT,
+            text=True,
+            start_new_session=True,
+            # Examples should exercise open_viewer=True, but CI must not launch
+            # a local browser whose lifecycle can keep the example alive.
+            env={**os.environ, "BROWSER": "/bin/true"},
         )
 
-        # Read and log stdout in real-time
-        for line in process.stdout:
+        try:
+            exit_code = process.wait(timeout=timeout_seconds)
+        except subprocess.TimeoutExpired:
+            exit_code = -1
+            logging.error("Timed out running %s after %s seconds", file_path, timeout_seconds)
+        finally:
+            # Viewer/browser processes may outlive the example. Stop the whole
+            # process group so they cannot leak into later parametrized tests.
+            _terminate_process_group(process)
+
+        output.seek(0)
+        logged: list[str] = []
+        for line in output:
             line = line.strip()
             if line:
                 logged.append(line)
                 logging.info(line)
 
-        return process.wait(), logged
-    except subprocess.CalledProcessError as e:
-        print(f"Error running {file_path}: {e}")
-        return -1, logged
+        return exit_code, logged
+
+
+def test_run_python_file_does_not_wait_for_descendant_stdout(tmp_path: Path) -> None:
+    script = tmp_path / "spawns_descendant.py"
+    script.write_text(
+        "import os, subprocess, sys\n"
+        "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)'])\n"
+        "print('parent finished')\n"
+        "print(os.environ['BROWSER'])\n"
+    )
+
+    exit_code, logs = run_python_file(script, [], timeout_seconds=5)
+
+    assert exit_code == 0
+    assert logs == ["parent finished", "/bin/true"]
+
+
+def test_run_python_file_kills_and_reaps_process_after_timeout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    script = tmp_path / "ignores_sigterm.py"
+    script.write_text(
+        "import signal, time\n"
+        "signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+        "print('ready', flush=True)\n"
+        "time.sleep(30)\n"
+    )
+    original_terminate = _terminate_process_group
+    monkeypatch.setattr(
+        f"{__name__}._terminate_process_group", lambda process: original_terminate(process, grace_seconds=0.1)
+    )
+
+    exit_code, logs = run_python_file(script, [], timeout_seconds=0.1)
+
+    assert exit_code == -1
+    assert logs == ["ready"]
 
 
 def get_python_files() -> list[Path]:
@@ -82,14 +157,20 @@ def test_root_level_scripts(python_file: Path) -> None:
     Args:
         python_file: Path to the Python file to test
     """
-    OVERRIDE_ARGS: dict[str, list[str]] = {"cli_agent.py": ["--task", "go to duckduckgo"]}
+    OVERRIDE_ARGS: dict[str, list[str]] = {
+        "cli_agent.py": ["--task", "go to duckduckgo"],
+        "quickstart.py": ["go to duckduckgo", "3", str(LlmModel.default())],
+    }
     print(f"Running {python_file.name}...")
     exit_code, logs = run_python_file(python_file, OVERRIDE_ARGS.get(python_file.name, []))
 
     assert exit_code == 0, f"Failed to run {python_file.name} {logs[-1] if len(logs) > 0 else ''}"
 
 
-@pytest.mark.parametrize("use_case_dir", get_use_cases_dirs(), ids=lambda p: p.name)
+@pytest.mark.parametrize(
+    "use_case_dir", get_use_cases_dirs(ignore_list=("__pycache__", "landing-examples")), ids=lambda p: p.name
+)
+@pytest.mark.flaky(reruns=2, reruns_delay=5, only_rerun=["Failed to solve captcha! Please try again"])
 def test_use_case_script(use_case_dir: Path) -> None:
     """
     Test that a Python file runs without errors.
@@ -98,13 +179,28 @@ def test_use_case_script(use_case_dir: Path) -> None:
         use_case_dir: Path to the use case directory to test
     """
     OVERRIDE_ARGS: dict[str, list[str]] = {"human-in-the-loop": ["--task", "go to duckduckgo"]}
+    OVERRIDE_ARGS["scrape-nike-products"] = ["--max-categories", "1"]
+    entrypoints = {
+        "landing-examples": "landing_examples.py",
+        "session-solve-captcha": "main.py",
+    }
 
-    agent_file = use_case_dir / "agent.py"
-    assert agent_file.exists(), f"No agent.py file found in {use_case_dir}"
+    agent_file = use_case_dir / entrypoints.get(use_case_dir.name, "agent.py")
+    assert agent_file.exists(), f"No example script found at {agent_file}"
     exit_code, logged = run_python_file(agent_file, OVERRIDE_ARGS.get(use_case_dir.name, []))
 
     if use_case_dir.name == "github-auto-issues-trending-repos":
         assert exit_code != 0
         assert logged[-1] == "KeyError: 'AUTO_ISSUES_GITHUB_EMAIL'"
     else:
-        assert exit_code == 0, f"Failed to run {use_case_dir.name}"
+        assert exit_code == 0, f"Failed to run {use_case_dir.name} (exit code {exit_code}):\n" + "\n".join(logged[-30:])
+
+
+@pytest.mark.parametrize(
+    "index", [3, 4, 5], ids=["landing-examples-blog", "landing-examples-bbc", "landing-examples-weather"]
+)
+@pytest.mark.flaky(reruns=2, reruns_delay=5, only_rerun=["Task failed due to session expiration"])
+def test_landing_example(index: int) -> None:
+    script = Path(__file__).resolve().parents[2] / "examples" / "landing-examples" / "landing_examples.py"
+    exit_code, logged = run_python_file(script, ["--example-index", str(index)])
+    assert exit_code == 0, f"Landing example {index} failed (exit code {exit_code}):\n" + "\n".join(logged[-30:])

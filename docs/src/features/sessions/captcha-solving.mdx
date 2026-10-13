@@ -14,12 +14,12 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Notte can automatically detect and solve captchas including reCAPTCHA v2, reCAPTCHA v3, hCaptcha, and simple text challenges during your browser automation.
+Notte can automatically detect and solve captchas including reCAPTCHA v2, hCaptcha, Cloudflare Turnstile, press-and-hold challenges, and simple text challenges during your browser automation. Captcha solving is on by default (`solve_captchas=True`).
 
 
 ## Quick Start
 
-Enable captcha solving when creating a session:
+Captcha solving is enabled by default. You can set it explicitly when creating a session:
 
 <CodeGroup>
   ```python Python
@@ -39,10 +39,10 @@ Enable captcha solving when creating a session:
 Notte automatically detects and solves:
 
 - ✅ **reCAPTCHA v2** - Checkbox and image challenges
-- ✅ **reCAPTCHA v3** - Invisible captchas
 - ✅ **hCaptcha** - Checkbox and image challenges
+- ✅ **Cloudflare Turnstile**
+- ✅ **Press-and-hold challenges**
 - ✅ **Text CAPTCHAs** - Simple "read the characters and type them" challenges
-- ✅ **Image CAPTCHAs** - Visual verification challenges
 
 ## How It Works
 
@@ -88,7 +88,7 @@ Check if captcha solving failed:
 
 <MonitorFailures />
 
-### 3. Use Headless=False for Debugging
+### 3. Use the Live Viewer for Debugging
 
 Watch captcha solving in action:
 
@@ -108,6 +108,28 @@ For reCAPTCHA challenges, use the `captcha_solve` action with `captcha_type="rec
 
 <RecaptchaSolveAction />
 
+### Waiting for a solve in Python
+
+The Python SDK polls one ongoing solve through short HTTP requests. Repeated
+`captcha_solve` calls join that solve or return its completed result. Configure the
+total wait separately from ordinary action timeouts:
+
+```python
+client = notte.NotteClient(captcha_timeout_seconds=180)
+with client.Session(solve_captchas=True) as session:
+    session.execute(type="goto", url="https://www.google.com/recaptcha/api2/demo")
+    session.execute(type="captcha_solve", captcha_type="recaptcha")
+```
+
+The default CAPTCHA wait is three minutes. A terminal solver failure, page change,
+or expired wait budget follows the usual `raise_on_failure` behavior. Polling does
+not restart the solve or extend the session's maximum lifetime.
+
+SDK actions blocked before execution wait for the CAPTCHA and then retry. If an
+action already executed and triggered a CAPTCHA, the SDK waits without replaying
+it. This coordination applies to Python SDK actions; direct Playwright/CDP calls
+do not participate. It requires a backend version that supports CAPTCHA polling.
+
 ### Text CAPTCHAs
 
 Text CAPTCHAs are the old-school challenges that show distorted letters, numbers, or a short phrase and ask the user to type the answer into a field. For these challenges, use `captcha_type="text"`. This example comes from the [text CAPTCHA template](https://www.notte.cc/templates/captcha-bot-handling/basic-text-captcha).
@@ -118,11 +140,11 @@ Text CAPTCHAs are the old-school challenges that show distorted letters, numbers
 
 ### What CAPTCHA Solving Can Do:
 - ✅ Solve most reCAPTCHA v2 challenges
-- ✅ Solve reCAPTCHA v3 automatically
 - ✅ Solve most hCaptcha challenges
-- ✅ Solve simple text and image CAPTCHA challenges
+- ✅ Solve Cloudflare Turnstile and press-and-hold challenges
+- ✅ Solve simple text CAPTCHA challenges
 - ✅ Work with residential proxies
-- ✅ Work in headless and non-headless mode
+- ✅ Work in remote browser sessions
 
 ### What It Cannot Do:
 - ❌ Solve 100% of captchas (some are unsolvable)
@@ -135,7 +157,7 @@ Text CAPTCHAs are the old-school challenges that show distorted letters, numbers
 ### Issue: Captchas Not Being Solved
 
 **Possible causes:**
-- `solve_captchas=True` not set
+- `solve_captchas` was set to `False`
 - Captcha type not supported
 - Site has additional bot detection
 
@@ -167,7 +189,7 @@ Test captcha solving on demo sites:
 
   with client.Session(
       solve_captchas=True,
-      headless=False
+      open_viewer=True
   ) as session:
       page = session.page
 
@@ -178,15 +200,11 @@ Test captcha solving on demo sites:
   ```
 </CodeGroup>
 
-## Pricing
-
-CAPTCHA solving incurs additional costs based on the number of captchas solved. Check your plan for details.
-
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Browser Types" icon="browser" href="/features/sessions/browser-types">
-    Learn about Chrome and other browsers
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    All session configuration options
   </Card>
 
   <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">

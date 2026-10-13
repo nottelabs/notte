@@ -4,4 +4,7 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 with client.Session() as session:
-    agent = client.Agent(session=session, reasoning_model="anthropic/claude-3.5-sonnet")
+    agent = client.Agent(session=session, reasoning_model="anthropic/claude-sonnet-4-5-20250929")
+    status = session.status()
+    assert agent.request.reasoning_model == "anthropic/claude-sonnet-4-5-20250929"
+    assert agent.request.session_id == status.session_id

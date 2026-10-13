@@ -1,16 +1,22 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/scraping/content_filtering.py, testers/scraping/content_filtering.ts */}
+
 <CodeGroup>
+
 ```python Python
 # Only main content (excludes navbars, footers, sidebars)
-markdown = client.scrape(url, only_main_content=True)  # Default
+markdown = client.scrape(url, only_main_content=True)
 
-# Include all page content
+# Include all page content (default)
 markdown = client.scrape(url, only_main_content=False)
 ```
-```javascript JavaScript
-// Only main content (excludes navbars, footers, sidebars)
-const markdown = await client.scrape(url, { only_main_content: true }); // Default
 
-// Include all page content
-const fullMarkdown = await client.scrape(url, { only_main_content: false });
+```typescript TypeScript
+// Only main content (excludes navbars, footers, sidebars)
+let markdown = await client.scrape(url, { only_main_content: true });
+
+// Include all page content (default)
+markdown = await client.scrape(url, { only_main_content: false });
 ```
+
 </CodeGroup>

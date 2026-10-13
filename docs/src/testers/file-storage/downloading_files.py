@@ -2,16 +2,14 @@
 from notte_sdk import NotteClient
 
 client = NotteClient()
-storage = client.FileStorage()
-
-with client.Session(storage=storage) as session:
+with client.Session() as session:
     agent = client.Agent(session=session)
     agent.run(task="Download the invoice from the account page")
 
 # List downloaded files
-downloaded = storage.list_downloaded_files()
+downloaded = session.storage.list("session_download").files
 print(f"Downloaded: {downloaded}")
 
 # Download to local directory
 for file in downloaded:
-    storage.download(file_name=file.name, local_dir="./invoices")
+    session.storage.download(file.id, local_dir="./invoices")

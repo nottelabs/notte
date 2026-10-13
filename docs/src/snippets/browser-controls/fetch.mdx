@@ -1,0 +1,15 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/browser-controls/fetch.py */}
+
+```python fetch.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    session.execute(type="goto", url="https://en.wikipedia.org/wiki/Main_Page")
+    # fetch runs inside the page: same cookies, proxy and fingerprint as the browser
+    response = session.fetch("/api/rest_v1/page/summary/Main_Page")
+    response.raise_for_status()
+    summary = response.json()
+```

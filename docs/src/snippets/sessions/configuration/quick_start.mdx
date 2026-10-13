@@ -1,12 +1,26 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/configuration/quick_start.py, testers/sessions/configuration/quick_start.ts */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
 
-  client = NotteClient()
+```python Python
+with client.Session() as session:
+    print(f"Session ID: {session.session_id}")
+    page = session.page  # Playwright-compatible page
+    page.goto("https://example.com")
+```
 
-  with client.Session() as session:
-      print(f"Session ID: {session.session_id}")
-      page = session.page  # Playwright-compatible page
-      page.goto("https://example.com")
-  ```
+```typescript TypeScript
+const session = client.Session();
+await session.use(async () => {
+  status = await session.status();
+  if (status.status !== 'active') throw new Error('Session is not active');
+  const page = await session.page();
+  await page.goto('https://example.com');
+  title = await page.title();
+  console.log(`Page title: ${title}`);
+});
+// Automatically stopped here.
+```
+
 </CodeGroup>

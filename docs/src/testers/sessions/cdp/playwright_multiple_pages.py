@@ -1,0 +1,23 @@
+from notte_sdk import NotteClient
+from playwright.sync_api import sync_playwright
+
+client = NotteClient()
+
+with client.Session() as session:
+    cdp_url = session.cdp_url()
+
+    with sync_playwright() as p:
+        browser = p.chromium.connect_over_cdp(cdp_url)
+
+        # Reuse the session's existing browser context
+        context = browser.contexts[0]
+
+        # Open additional pages (tabs) in that context
+        page1 = context.new_page()
+        page2 = context.new_page()
+
+        page1.goto("https://example.com")
+        page2.goto("https://google.com")
+
+        print(f"Page 1: {page1.title()}")
+        print(f"Page 2: {page2.title()}")

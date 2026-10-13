@@ -299,7 +299,7 @@ def test_agent_create_request_with_valid_model():
 
 
 def test_should_be_able_to_start_cdp_session_with_default_session_parameters():
-    _ = SessionStartRequest(cdp_url="test", headless=True)
+    _ = SessionStartRequest(cdp_url="test")
 
 
 def test_execution_request_dict_alignment():
@@ -425,6 +425,7 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
         "SetCookiesRequest",  # Uses existing Cookie structures
         "StartFunctionRunRequest",  # Complex composition, may not need Dict
         "TabSessionDebugRequest",  # Simple debug request with single field
+        "_SessionStartRequest",  # Shared implementation for local and remote session requests
     }
 
     # Create mapping of expected Dict names, excluding exceptions
@@ -446,6 +447,7 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
         "PersonaListRequestDict",  # For PersonaListRequest (inherits from SessionListRequest)
         "ListFunctionsRequestDict",  # For ListFunctionsRequest (inherits from SessionListRequest)
         "ListFunctionRunsRequestDict",  # For ListFunctionRunsRequest (inherits from SessionListRequest)
+        "_SessionStartRequestDict",  # Shared implementation for local and remote session request dicts
     }
 
     # Remove mappings that have special dict types
@@ -460,7 +462,13 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
     # Valid inheritance patterns - build hierarchy aware validation
     def is_valid_inheritance(class_name: str, inheritance_chain: str) -> bool:
         valid_direct_bases = ["SdkRequest", "BaseModel"]
-        valid_request_bases = ["ListRequest", "SessionListRequest", "PaginationParams", "ScrapeParams"]
+        valid_request_bases = [
+            "ListRequest",
+            "SessionListRequest",
+            "PaginationParams",
+            "ScrapeParams",
+            "_SessionStartRequest",
+        ]
         valid_composite_bases = [
             "SdkAgentCreateRequest",
             "AgentRunRequest",

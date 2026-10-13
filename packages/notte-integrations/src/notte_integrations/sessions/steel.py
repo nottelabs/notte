@@ -19,7 +19,7 @@ def get_steel_api_key() -> str:
 class SteelSessionsManager(CDPSessionManager):
     steel_base_url: str = "api.steel.dev"  # localhost:3000"
     steel_api_key: str = Field(default_factory=get_steel_api_key)
-    region: str = "fra"
+    region: str | None = None
 
     @override
     def create_session_cdp(self, options: BrowserWindowOptions) -> CDPSession:
@@ -29,7 +29,8 @@ class SteelSessionsManager(CDPSessionManager):
 
         headers = {"Steel-Api-Key": self.steel_api_key}
 
-        response = requests.post(url, headers=headers, json={"region": self.region})
+        payload = {"region": self.region} if self.region is not None else {}
+        response = requests.post(url, headers=headers, json=payload, timeout=60)
         response.raise_for_status()
         data: dict[str, str] = response.json()
         if "localhost" in self.steel_base_url:
@@ -47,7 +48,7 @@ class SteelSessionsManager(CDPSessionManager):
 
         headers = {"Steel-Api-Key": self.steel_api_key}
 
-        response = requests.post(url, headers=headers)
+        response = requests.post(url, headers=headers, timeout=30)
         if response.status_code != 200:
             if self.verbose:
                 logger.error(f"Failed to release Steel session {session_id}: {response.json()}")

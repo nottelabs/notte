@@ -7,6 +7,14 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 <AgentMdNotice />
 
 If no version is provided, the latest version is used.
+This call waits for completion; streaming controls live log delivery.
+For a Function, optionally call `create_run()` only if you need the run ID
+before execution, then pass it as `function_run_id`. When `function_run_id`
+is omitted, `run()` automatically creates a new run.
+Omit runtime to use the saved function default. Pass runtime="extended"
+for longer cloud execution, or runtime="standard" to override that default.
+Use `input_variables={"runtime": value}` for script inputs whose names match
+SDK options; these are merged with keyword inputs, rejecting duplicates.
 
 ```python
 function = notte.Function("<your-function-id>")
@@ -43,6 +51,12 @@ function.run(variable1="value1", variable2="value2")
 </ParamField>
 
 <ParamField path="log_callback" type="UnionType[Callable[[str], None], None]" default="None">
+</ParamField>
+
+<ParamField path="runtime" type="Literal['standard', 'extended'] | None" default="None">
+</ParamField>
+
+<ParamField path="input_variables" type="UnionType[Dict[str, Any], None]" default="None">
 </ParamField>
 
 <ParamField path="variables" type="Any" required>

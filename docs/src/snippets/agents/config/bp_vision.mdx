@@ -1,10 +1,22 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/agents/config/bp_vision.py */}
 
+<CodeGroup>
+
 ```python bp_vision.py
 # Text-only site
-agent = client.Agent(session=session, use_vision=False)
+text_agent = client.Agent(session=session, use_vision=False)
 
 # Image-heavy site
 agent = client.Agent(session=session, use_vision=True)
 ```
+
+```typescript bp_vision.ts
+// Text-only site
+const textAgent = client.Agent({ session, use_vision: false });
+
+// Image-heavy site
+const agent = client.Agent({ session, use_vision: true });
+```
+
+</CodeGroup>

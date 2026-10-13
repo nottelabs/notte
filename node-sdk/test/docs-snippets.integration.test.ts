@@ -1,0 +1,327 @@
+import { execFile } from 'node:child_process';
+import { readdir, readFile, mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { NotteClient, functionCreate, functionDelete, listFunctionRunsByFunctionId, functionRunStop } from '@/index';
+import { withPythonPageRetry } from './helpers/python-page-retry';
+import { expectSessionClosed } from './helpers/session-closure';
+import { collectExampleResult, verifyExampleOutput, type ExampleContract } from './helpers/docs-examples';
+import { withUsableBuiltinPage } from './helpers/builtin-page-check';
+import { deploymentExamples, trackDeployments, cleanupDeployments, DEPLOYMENT_CHILD_TIMEOUT_MS, DEPLOYMENT_PAIR_TIMEOUT_MS, DEPLOYMENT_DRAIN_TIMEOUT_MS, DEPLOYMENT_CLEANUP_TIMEOUT_MS } from './helpers/deployment-tracker';
+
+const execute = promisify(execFile);
+const testers = fileURLToPath(new URL('../../docs/src/testers/', import.meta.url));
+const contracts = JSON.parse(await readFile(new URL('../../docs/src/sniptest/live-examples.json', import.meta.url), 'utf8')) as Record<string, ExampleContract>;
+const catalog = JSON.parse(await readFile(`${testers}snippets.json`, 'utf8')) as Record<string, {
+  blocks: Array<{ source: string; execution_pending?: string }>;
+}>;
+const pending = new Set(Object.values(catalog).flatMap(spec => spec.blocks)
+  .filter(block => block.execution_pending).map(block => block.source));
+const snippets = (await readdir(testers, { recursive: true }))
+  .filter(name => name.endsWith('.ts') && !pending.has(name)).sort();
+
+// Opt in explicitly: this suite provisions live resources and requires a built SDK.
+describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examples', () => {
+  let client: NotteClient;
+  let functionId: string | undefined;
+  const originalFunctionId = process.env.NOTTE_FUNCTION_ID;
+
+  beforeAll(async () => {
+    if (!process.env.NOTTE_API_KEY || !process.env.NOTTE_API_URL) {
+      throw new Error('Set NOTTE_API_KEY and NOTTE_API_URL explicitly for live docs tests');
+    }
+    client = new NotteClient();
+    const created = await functionCreate({
+      client: client.getClient(),
+      body: { file: new File([
+        'def run(url: str, search_query: str = "", fail: bool = False) -> dict:\n    print("Running docs echo")\n    if fail:\n        raise ValueError("Example function failure")\n    return {"url": url, "search_query": search_query}\n',
+      ], 'docs_echo.py', { type: 'text/x-python' }) },
+      throwOnError: true,
+    });
+    functionId = created.data.function_id;
+    process.env.NOTTE_FUNCTION_ID = functionId;
+  }, 60_000);
+
+  afterAll(async () => {
+    if (originalFunctionId === undefined) delete process.env.NOTTE_FUNCTION_ID;
+    else process.env.NOTTE_FUNCTION_ID = originalFunctionId;
+    if (!functionId) return;
+    try {
+      let hasNext = true;
+      for (let page = 1; hasNext; page++) {
+        const runs = await listFunctionRunsByFunctionId({
+          client: client.getClient(), path: { function_id: functionId }, query: { page }, throwOnError: true,
+        });
+        hasNext = runs.data.has_next;
+        for (const run of runs.data.items) {
+          if (run.status === 'active') {
+            await functionRunStop({ client: client.getClient(), path: { function_id: functionId, run_id: run.function_run_id }, throwOnError: true });
+          }
+        }
+      }
+    } finally {
+      await functionDelete({ client: client.getClient(), path: { function_id: functionId }, throwOnError: true });
+    }
+  }, 60_000);
+
+  async function runExample(name: string) {
+    // Examples execute at import time. A retry must rerun TypeScript too,
+    // rather than reuse its cached exports while only rerunning Python.
+    vi.resetModules();
+    if (deploymentExamples.has(name)) {
+      const directory = await mkdtemp(join(tmpdir(), 'notte-docs-deploy-'));
+      let tracker: Awaited<ReturnType<typeof trackDeployments>> | undefined;
+      const failures: unknown[] = [];
+      try {
+        tracker = await trackDeployments(process.env.NOTTE_API_URL!);
+        for (const language of ['typescript', 'python']) {
+          const cwd = join(directory, language);
+          await mkdir(cwd);
+          // Each example uploads only owned, harmless Python runtime code.
+          for (const filename of ['my_automation.py', 'scraper_function.py', 'my_function.py']) {
+            await writeFile(join(cwd, filename), 'def run(url: str) -> str:\n    return "paired deployment"\n');
+          }
+          const source = `${testers}${name.replace(/\.ts$/, language === 'python' ? '.py' : '.ts')}`;
+          const runner = fileURLToPath(new URL(`../../docs/src/sniptest/run_${language}.` + (language === 'python' ? 'py' : 'mjs'), import.meta.url));
+          const { stdout, stderr } = await execute(
+            language === 'python' ? process.env.NOTTE_DOCS_PYTHON || 'python' : process.execPath,
+            language === 'python' ? [runner, source] : ['--experimental-strip-types', runner, source],
+            { cwd, env: { ...process.env, NOTTE_API_URL: tracker.url }, timeout: DEPLOYMENT_CHILD_TIMEOUT_MS, maxBuffer: 2 * 1024 * 1024 },
+          );
+          const values = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!);
+          const contract = contracts[name];
+          verifyExampleOutput(JSON.stringify(collectExampleResult(values, contract)), contract, `${stdout}\n${stderr}`);
+        }
+      } catch (error) {
+        failures.push(error);
+      } finally {
+        if (tracker) {
+          try { await tracker.close(); } catch (error) { failures.push(error); }
+          try { await cleanupDeployments(client, tracker.ids); } catch (error) { failures.push(error); }
+        }
+        try { await rm(directory, { recursive: true, force: true }); } catch (error) { failures.push(error); }
+      }
+      if (failures.length === 1) throw failures[0];
+      if (failures.length) throw new AggregateError(failures, 'Deployment execution and cleanup failed');
+      return;
+    }
+    if (name.startsWith('file-storage/') || name === 'sessions/cdp.ts' || name === 'sessions/configuration/cookie_file.ts') {
+      const directory = await mkdtemp(join(tmpdir(), 'notte-docs-files-'));
+      const contract = contracts[name];
+      try {
+        const ids: string[] = [];
+        for (const language of ['typescript', 'python']) {
+          const cwd = join(directory, language);
+          await mkdir(cwd);
+          // Owned fixture files; never depend on or overwrite a developer's files.
+          if (name.startsWith('file-storage/')) {
+            for (const filename of ['report.pdf', 'file.pdf']) {
+              await writeFile(join(cwd, filename), '%PDF-1.4\nNotte paired upload fixture\n%%EOF\n');
+            }
+          }
+          if (name === 'sessions/configuration/cookie_file.ts') {
+            await writeFile(join(cwd, 'cookies.json'), JSON.stringify([
+              { name: 'sniptest_cookie', value: 'paired', domain: 'example.com', path: '/', httpOnly: false },
+            ]));
+          }
+          const source = `${testers}${name.replace(/\.ts$/, language === 'python' ? '.py' : '.ts')}`;
+          const runner = fileURLToPath(new URL(`../../docs/src/sniptest/run_${language}.` + (language === 'python' ? 'py' : 'mjs'), import.meta.url));
+          const { stdout, stderr } = await execute(
+            language === 'python' ? process.env.NOTTE_DOCS_PYTHON || 'python' : process.execPath,
+            language === 'python' ? [runner, source] : ['--experimental-strip-types', runner, source],
+            { cwd, env: process.env, timeout: 120_000, maxBuffer: 2 * 1024 * 1024 },
+          );
+          const values = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!);
+          if (contract.closedSession && contract.expected.status === 'closed') {
+            expect(values.status?.session_id).toBeTruthy();
+            values.status = await expectSessionClosed(client, values.status.session_id, `${name} (${language})`);
+          }
+          const id = verifyExampleOutput(JSON.stringify(collectExampleResult(values, contract)), contract, `${stdout}\n${stderr}`);
+          expect(id).toBeTruthy();
+          ids.push(id!);
+          await expectSessionClosed(client, id!, `${name} (${language})`);
+          if (name === 'sessions/cdp.ts') {
+            const png = await readFile(join(cwd, 'screenshot.png'));
+            expect(png.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+            expect(png.length).toBeGreaterThan(1000);
+          }
+          if (name === 'sessions/configuration/cookie_file.ts') {
+            const cookies = JSON.parse(await readFile(join(cwd, 'cookies.json'), 'utf8'));
+            // stop() appends browser cookies to the fixture, proving load + save.
+            expect(cookies.filter((cookie: { name: string; value: string }) =>
+              cookie.name === 'sniptest_cookie' && cookie.value === 'paired')).toHaveLength(2);
+          }
+        }
+        expect(ids[0]).not.toBe(ids[1]);
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+      return;
+    }
+    if (name === 'quickstart/cdp_session.ts') {
+      const directory = await mkdtemp(join(tmpdir(), 'notte-docs-screenshots-'));
+      const original = process.env.NOTTE_SCREENSHOT_PATH;
+      try {
+        const typescriptPath = join(directory, 'typescript.png');
+        const pythonPath = join(directory, 'python.png');
+        process.env.NOTTE_SCREENSHOT_PATH = typescriptPath;
+        await import(/* @vite-ignore */ `${testers}${name}`);
+        await execute(process.env.NOTTE_DOCS_PYTHON || 'python', [`${testers}${name.replace(/\.ts$/, '.py')}`], {
+          env: { ...process.env, NOTTE_SCREENSHOT_PATH: pythonPath }, timeout: 120_000,
+        });
+        for (const path of [typescriptPath, pythonPath]) {
+          const png = await readFile(path);
+          expect(png.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+          expect(png.length).toBeGreaterThan(1000);
+        }
+      } finally {
+        if (original === undefined) delete process.env.NOTTE_SCREENSHOT_PATH;
+        else process.env.NOTTE_SCREENSHOT_PATH = original;
+        await rm(directory, { recursive: true, force: true });
+      }
+      return;
+    }
+    const logged: unknown[][] = [];
+    const contract = contracts[name];
+    let exported: Record<string, unknown>;
+    const log = vi.spyOn(console, 'log').mockImplementation((...args) => { logged.push(args); });
+    try {
+      // Module namespace exports are read-only; normalize captured snapshots
+      // on a copy, never by assigning back into the imported example.
+      const load = () => import(/* @vite-ignore */ `${testers}${name}`);
+      if (name === 'sessions/cdp/selenium_builtin_page.ts') {
+        // Use the same built SDK as the unchanged example, not the source alias.
+        // Unit CI typechecks before dist exists; resolve the live package at runtime.
+        const sdkPackage: string = 'notte-sdk';
+        const { Session } = await import(/* @vite-ignore */ sdkPackage);
+        exported = { ...await withUsableBuiltinPage(Session.prototype, load) };
+      } else {
+        exported = { ...await load() };
+      }
+    } finally {
+      log.mockRestore();
+    }
+    const pythonPath = `${testers}${name.replace(/\.ts$/, '.py')}`;
+    const pythonArgs = contract
+      ? [fileURLToPath(new URL('../../docs/src/sniptest/run_python.py', import.meta.url)), pythonPath]
+      : [pythonPath];
+    const { stdout, stderr } = await withPythonPageRetry(name, () => execute(
+      process.env.NOTTE_DOCS_PYTHON || 'python', pythonArgs, {
+        env: process.env,
+        timeout: 120_000,
+        maxBuffer: 2 * 1024 * 1024,
+      },
+    ));
+    if (contract) {
+      // This getting-started example intentionally just prints the SDK response.
+      // Capture that existing output instead of adding test exports to the example.
+      if (name === 'sessions/index.ts') {
+        expect(logged).toHaveLength(1);
+        exported = { status: logged[0][0] };
+      }
+      const pythonValues = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!);
+      if (name === 'sessions/capabilities/match_viewport.ts' || name === 'sessions/stealth/match_viewport.ts') {
+        const ids = [];
+        for (const [language, values] of [['typescript', exported!], ['python', pythonValues]] as const) {
+          expect(values.results).toHaveLength(2);
+          for (const id of values.results as string[]) {
+            expect(id).toEqual(expect.any(String));
+            ids.push(id);
+            await expectSessionClosed(client, id, `${name} (${language})`);
+          }
+        }
+        expect(new Set(ids).size).toBe(4);
+      }
+      // Post-stop snapshots can precede asynchronous cleanup. For contracts
+      // teaching completed lifecycle, verify the actual persisted response.
+      if (contract.closedSession && contract.expected.status === 'closed') {
+        for (const [language, values] of [['typescript', exported!], ['python', pythonValues]] as const) {
+          const snapshot = values.status as { session_id?: string };
+          expect(snapshot?.session_id).toBeTruthy();
+          values.status = await expectSessionClosed(client, snapshot.session_id!, name + ' (' + language + ')');
+        }
+      }
+      const ids = [
+        verifyExampleOutput(JSON.stringify(collectExampleResult(exported!, contract)), contract, logged.map(args => args.join(' ')).join('\n')),
+        verifyExampleOutput(JSON.stringify(collectExampleResult(pythonValues, contract)), contract, `${stdout}\n${stderr}`),
+      ];
+      if (contract.closedSession) {
+        expect(ids[0]).not.toBe(ids[1]);
+        for (const [index, id] of ids.entries()) {
+          await expectSessionClosed(client, id!, `${name} (${index === 0 ? 'typescript' : 'python'})`);
+        }
+      }
+      return;
+    }
+    if (name.startsWith('functions/')) {
+      const query = name.endsWith('invoke_sdk.ts') ? 'laptop' : '';
+      expect(logged).toContainEqual([{ url: 'https://example.com', search_query: query }]);
+      expect(stdout).toContain(`{'url': 'https://example.com', 'search_query': '${query}'}`);
+      if (name.endsWith('async_create_start.ts')) {
+        expect(logged.flat()).toContain('closed');
+        expect(stdout).toContain('closed');
+      }
+    }
+    if (name === 'sessions/lifecycle/context_manager.ts') {
+      const ids = [logged[0][0], stdout.trim()];
+      for (const [index, id] of ids.entries()) {
+        expect(typeof id).toBe('string');
+        await expectSessionClosed(client, id as string, `${name} (${index === 0 ? 'typescript' : 'python'})`);
+      }
+    }
+  }
+
+  it('cleans deployments when either language is killed while starting a blocking cloud run', async () => {
+    for (const language of ['typescript', 'python']) {
+      const directory = await mkdtemp(join(tmpdir(), 'notte-deploy-kill-'));
+      const tracker = await trackDeployments(process.env.NOTTE_API_URL!);
+      try {
+        await writeFile(join(directory, 'blocking.py'), 'import time\ndef run():\n    time.sleep(30)\n    return "done"\n');
+        const source = join(directory, language === 'python' ? 'example.py' : 'example.ts');
+        await writeFile(source, language === 'python'
+          ? 'from notte_sdk import NotteClient\nfn = NotteClient().Function(path="blocking.py")\nfn.run(stream=False)\n'
+          : 'import { NotteClient } from "notte-sdk";\nconst fn = new NotteClient().NotteFunction({path:"blocking.py"});\nawait fn.run({}, {stream:false});\n');
+        const runner = fileURLToPath(new URL(`../../docs/src/sniptest/run_${language}.` + (language === 'python' ? 'py' : 'mjs'), import.meta.url));
+        const child = execute(language === 'python' ? process.env.NOTTE_DOCS_PYTHON || 'python' : process.execPath,
+          language === 'python' ? [runner, source] : ['--experimental-strip-types', runner, source],
+          { cwd: directory, env: { ...process.env, NOTTE_API_URL: tracker.url }, timeout: DEPLOYMENT_CHILD_TIMEOUT_MS });
+        // Install rejection handling before waiting on the relay.
+        const outcome = child.then(() => ({ failed: false }), error => ({ failed: true, error }));
+        try {
+          await Promise.race([tracker.runStarted, outcome.then(() => { throw new Error('Child exited before starting its cloud run'); })]);
+          child.child.kill('SIGTERM');
+          expect((await outcome).failed).toBe(true);
+        } finally {
+          child.child.kill('SIGTERM');
+          await outcome;
+        }
+      } finally {
+        try { await tracker.close(); }
+        finally {
+          try { await cleanupDeployments(client, tracker.ids); }
+          finally { await rm(directory, { recursive: true, force: true }); }
+        }
+      }
+      expect(tracker.ids.size).toBe(1);
+      for (const id of tracker.ids) {
+        // Deletion is a soft delete: the API retains the ID but refuses use.
+        await expect(client.NotteFunction({ function_id: id }).get()).rejects.toMatchObject({
+          statusCode: 400,
+          error: { message: `The function '${id}' is not active. Please provide a different function_id` },
+        });
+      }
+    }
+  // This regression drains and cleans up separately for each language.
+  }, DEPLOYMENT_PAIR_TIMEOUT_MS + DEPLOYMENT_DRAIN_TIMEOUT_MS + DEPLOYMENT_CLEANUP_TIMEOUT_MS);
+
+  for (const name of snippets) {
+    it(`${name} and its Python counterpart execute unchanged`, {
+      // The timeout example may run Python twice, each with a 120s deadline.
+      timeout: deploymentExamples.has(name) ? DEPLOYMENT_PAIR_TIMEOUT_MS
+        : name === 'sessions/configuration/timeout.ts' ? 300_000 : 180_000,
+    }, () => runExample(name));
+  }
+});

@@ -12,7 +12,7 @@ Kernel.sh is a developer platform that provides browser infrastructure for web a
 
 ### 1. Install Notte and Kernel SDK
 
-```bash  theme={null}
+```bash
 uv pip install notte-sdk
 uv pip install kernel
 ```
@@ -21,7 +21,7 @@ uv pip install kernel
 
 Import the libraries and create a cloud browser session:
 
-```python  theme={null}
+```python
 from kernel import Kernel
 from notte_sdk import NotteClient
 
@@ -37,7 +37,7 @@ kernel_browser = kernel.browsers.create()
 
 Use Kernel's CDP URL to create a Notte session:
 
-```python  theme={null}
+```python
 # Connect Notte to Kernel's browser via CDP
 with notte_client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
     # Create an agent with a task
@@ -53,7 +53,7 @@ with notte_client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
 
 Here's a complete, runnable script that demonstrates the full integration:
 
-```python  theme={null}
+```python
 from kernel import Kernel
 from notte_sdk import NotteClient
 import os
@@ -108,5 +108,4 @@ if __name__ == "__main__":
 * **No local browser management**: Run agents without installing or maintaining browsers locally
 * **Scalability**: Launch multiple browser sessions in parallel for concurrent tasks
 * **Cloud infrastructure**: Leverage Kernel's optimized browser infrastructure
-* **Stealth mode**: Built-in anti-detection features for web scraping
 * **Session control**: Programmatic control over browser lifecycle

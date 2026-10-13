@@ -1,0 +1,12 @@
+# Add timeouts and error handling
+try:
+    with client.Session(
+        cdp_url=cdp_url,
+        idle_timeout_minutes=10,  # Longer idle timeout
+        max_duration_minutes=30,  # Longer maximum lifetime
+    ) as session:
+        page = session.page
+        page.goto("https://example.com")
+except Exception as e:
+    print(f"CDP connection failed: {e}")
+    # Handle error or retry

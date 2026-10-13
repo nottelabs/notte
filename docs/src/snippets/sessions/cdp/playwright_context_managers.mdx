@@ -1,6 +1,8 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/sessions/cdp/playwright_context_managers.py */}
 
+<CodeGroup>
+
 ```python playwright_context_managers.py
 from notte_sdk import NotteClient
 from playwright.sync_api import sync_playwright  # type: ignore[import-not-found]
@@ -12,3 +14,17 @@ with client.Session() as session:
         # Your code here
         pass
 ```
+
+```typescript playwright_context_managers.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+const status = await client.Session().use(async session => {
+  // Your code here
+
+  return await session.status();
+});
+```
+
+</CodeGroup>

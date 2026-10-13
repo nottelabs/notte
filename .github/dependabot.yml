@@ -1,0 +1,88 @@
+# Dependabot configuration.
+#
+# Without this file GitHub only runs *security* updates, and it stops touching a
+# security PR once a human pushes to its branch. This file turns on regular
+# version updates as well, so dependency PRs actually get opened on a schedule.
+#
+# Docs: https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# Every ecosystem waits 7 days (`cooldown`) before proposing a newly published
+# version, so a malicious or broken release has time to be caught and yanked.
+# Cooldown only delays version updates; security updates are never held back.
+version: 2
+
+updates:
+  # Python: the uv workspace (root uv.lock covers every packages/* member).
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - "dependencies"
+      - "python:uv"
+    cooldown:
+      default-days: 7
+    groups:
+      # One PR per week for every Python bump, majors included.
+      python:
+        applies-to: version-updates
+        patterns: ["*"]
+      # All security fixes in a single PR.
+      python-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  # Node SDK.
+  - package-ecosystem: "npm"
+    directory: "/node-sdk"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - "dependencies"
+    cooldown:
+      default-days: 7
+    groups:
+      # One PR per week for every Node SDK bump, majors included.
+      node-sdk:
+        applies-to: version-updates
+        patterns: ["*"]
+      node-sdk-security:
+        applies-to: security-updates
+        patterns: ["*"]
+    ignore:
+      # TypeScript 7 is the native compiler and no longer ships the JS compiler
+      # API, which @hey-api/openapi-ts and scripts/generate-*.mjs import. Lift
+      # this once openapi-ts supports TypeScript 7.
+      - dependency-name: "typescript"
+        versions: [">=7.0.0"]
+
+  # GitHub Actions used by the workflows.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(ci)"
+    labels:
+      - "dependencies"
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ["*"]

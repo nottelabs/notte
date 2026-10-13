@@ -1,4 +1,8 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/agents/structured_output_example.py, testers/agents/structured_output_example.ts */}
+
 <CodeGroup>
+
 ```python Python
 from notte_sdk import NotteClient
 from pydantic import BaseModel
@@ -15,7 +19,8 @@ with client.Session() as session:
     agent = client.Agent(session=session)
     result = agent.run(task="Extract contact information", response_format=ContactInfo)
 ```
-```javascript JavaScript
+
+```typescript TypeScript
 import { z } from 'zod';
 import { NotteClient } from 'notte-sdk';
 
@@ -36,4 +41,5 @@ await client.Session().use(async (session) => {
   });
 });
 ```
+
 </CodeGroup>

@@ -7,6 +7,15 @@ class ActionError(NotteBaseError):
     pass
 
 
+class EvaluateJsResultLimitError(ActionError):
+    def __init__(self, max_bytes: int, reason: str) -> None:
+        message = (
+            f"JavaScript result exceeds conversion limits ({reason}; output limit {max_bytes} bytes). "
+            "Return fewer fields, a summary, or retrieve the result in smaller batches."
+        )
+        super().__init__(dev_message=message, user_message=message, agent_message=message)
+
+
 class ActionExecutionError(ActionError):
     def __init__(self, action_id: str, url: str, reason: str | None = None) -> None:
         super().__init__(
@@ -17,6 +26,28 @@ class ActionExecutionError(ActionError):
                 "Hint: check if the action is valid and try again. Otherwise, try another action."
             ),
             should_retry_later=True,
+            should_notify_team=True,
+        )
+
+
+class EvaluateJsNoDataError(ActionError):
+    def __init__(self) -> None:
+        message = "evaluate_js reported success but returned no data"
+        super().__init__(
+            dev_message=message,
+            user_message=f"{message}.",
+            agent_message=message,
+            should_notify_team=True,
+        )
+
+
+class FetchResponseDecodeError(ActionError):
+    def __init__(self, reason: str) -> None:
+        message = f"fetch script returned an unreadable response envelope: {reason}"
+        super().__init__(
+            dev_message=message,
+            user_message=f"{message}.",
+            agent_message=message,
             should_notify_team=True,
         )
 

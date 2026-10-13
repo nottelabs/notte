@@ -1,5 +1,5 @@
 # @sniptest filename=steel_init.py
-# @sniptest show=19-26
+# @sniptest show=20-27
 # @sniptest typecheck_only=true
 import os
 

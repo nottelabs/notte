@@ -10,7 +10,8 @@ with client.Session() as session:
     agent = client.Agent(session=session)
     result = agent.run(task="Complete task")
 
-    print(f"Steps taken: {len(result.steps)}")
+    nb_steps = sum(1 for s in result.steps if s["type"] == "agent_step_start")
+    print(f"Steps taken: {nb_steps}")
     print(f"Max steps: {agent.request.max_steps}")
 
 replay = session.replay()

@@ -34,17 +34,15 @@ async def load_github_signin_fixture(session: notte.Session) -> None:
 def test_vault_in_local_agent():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    vault = client.Vault()
-    _ = vault.add_credentials(
-        url="https://github.com/",
-        email="xyz@notte.cc",
-        password="xyz",
-    )
-    with notte.Session() as session:
-        agent = notte.Agent(session=session, vault=vault, max_steps=5)
-        _ = agent.run(task="Go to the github.com and try to login with the credentials")
-
-    _ = client.vaults.delete(vault.vault_id)
+    with client.Vault() as vault:
+        _ = vault.add_credentials(
+            url="https://github.com/",
+            email="xyz@notte.cc",
+            password="xyz",
+        )
+        with notte.Session() as session:
+            agent = notte.Agent(session=session, vault=vault, max_steps=5)
+            _ = agent.run(task="Go to the github.com and try to login with the credentials")
 
 
 @pytest.mark.asyncio
@@ -140,7 +138,7 @@ def test_vault_in_remote_agent():
 
     client = NotteClient()
     # Create a new secure vault
-    with client.Vault() as vault, client.Session(open_viewer=False) as session:
+    with client.Vault() as vault, client.Session(proxies=False, open_viewer=False) as session:
         # Add your credentials securely
         _ = vault.add_credentials(
             url="https://github.com/",
@@ -224,7 +222,12 @@ def test_invalid_credentials_in_local_agent():
     with client.Vault() as vault, notte.Session() as session:
         agent = notte.Agent(session=session, vault=vault)
         with pytest.raises(NoCredentialsFoundError):
-            _ = agent.run(task="go to console.notte.cc and login then retrieve the current active usage.")
+            _ = agent.run(
+                task=(
+                    "go to https://apartment-board-demo-nine.vercel.app/auth/signin and login with the credentials "
+                    "stored in your vault, not credentials shown on the page, then list the apartments."
+                )
+            )
 
 
 # ============================================

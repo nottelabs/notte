@@ -17,3 +17,17 @@ def test_cdp_connection():
             with tempfile.TemporaryDirectory() as tmp_dir:
                 screenshot = page.screenshot(path=f"{tmp_dir}/screenshot.png")
             assert screenshot is not None
+
+
+def test_session_page_leaves_native_dialogs_to_backend():
+    client = NotteClient()
+    with client.Session(proxies=False) as session:
+        page = session.page
+        _ = page.goto("https://example.com")
+        _ = page.evaluate("window.onbeforeunload = () => 'leave?'")
+
+        result = session.execute(type="goto", url="https://example.org", raise_on_failure=True)
+
+        page.wait_for_url("https://example.org/**")
+        assert result.success
+        assert page.title() == "Example Domain"

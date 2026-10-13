@@ -34,7 +34,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/alist_downloaded_files"
     >
-      List files that have been downloaded into storage by the agents
+      List all files in the download_dir
     </Card>
   </Visibility>
   <Visibility for="agents">
@@ -43,7 +43,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/alist_downloaded_files.md"
     >
-      List files that have been downloaded into storage by the agents
+      List all files in the download_dir
     </Card>
   </Visibility>
   <Visibility for="humans">
@@ -52,7 +52,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/alist_uploaded_files"
     >
-      List files that have been uploaded to storage
+      List all files from the upload_dir
     </Card>
   </Visibility>
   <Visibility for="agents">
@@ -61,7 +61,25 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/alist_uploaded_files.md"
     >
-      List files that have been uploaded to storage
+      List all files from the upload_dir
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="delete"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/delete"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="delete"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/delete.md"
+    >
+      No description available
     </Card>
   </Visibility>
   <Visibility for="humans">
@@ -70,7 +88,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/download"
     >
-      Stores a file that has been downloaded from a website in the current session
+      No description available
     </Card>
   </Visibility>
   <Visibility for="agents">
@@ -79,25 +97,25 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/download.md"
     >
-      Stores a file that has been downloaded from a website in the current session
+      No description available
     </Card>
   </Visibility>
   <Visibility for="humans">
     <Card
-      title="download_uploaded_file"
+      title="for_session"
       icon="function"
-      href="/sdk-reference/remotefilestorage/download_uploaded_file"
+      href="/sdk-reference/remotefilestorage/for_session"
     >
-      Downloads a user-uploaded file to the local filesystem without requiring a session attachment
+      Bind this storage once, cloning it when another session already owns it
     </Card>
   </Visibility>
   <Visibility for="agents">
     <Card
-      title="download_uploaded_file"
+      title="for_session"
       icon="function"
-      href="/sdk-reference/remotefilestorage/download_uploaded_file.md"
+      href="/sdk-reference/remotefilestorage/for_session.md"
     >
-      Downloads a user-uploaded file to the local filesystem without requiring a session attachment
+      Bind this storage once, cloning it when another session already owns it
     </Card>
   </Visibility>
   <Visibility for="humans">
@@ -134,6 +152,24 @@ Base class for storage implementations that handle upload and download file stor
       href="/sdk-reference/remotefilestorage/instructions.md"
     >
       Return LLM instructions to append to the prompt
+    </Card>
+  </Visibility>
+  <Visibility for="humans">
+    <Card
+      title="list"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/list"
+    >
+      No description available
+    </Card>
+  </Visibility>
+  <Visibility for="agents">
+    <Card
+      title="list"
+      icon="function"
+      href="/sdk-reference/remotefilestorage/list.md"
+    >
+      No description available
     </Card>
   </Visibility>
   <Visibility for="humans">
@@ -214,7 +250,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/upload"
     >
-      Upload a file from your local machine to storage
+      No description available
     </Card>
   </Visibility>
   <Visibility for="agents">
@@ -223,7 +259,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/upload.md"
     >
-      Upload a file from your local machine to storage
+      No description available
     </Card>
   </Visibility>
 </CardGroup>

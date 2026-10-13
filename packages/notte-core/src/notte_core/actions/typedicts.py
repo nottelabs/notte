@@ -116,6 +116,7 @@ class FormFillActionDict(TypedDict, total=False):
 class GotoActionDict(TypedDict):
     type: Literal["goto"]
     url: str
+    wait_until: NotRequired[Literal["commit", "domcontentloaded", "load", "networkidle"]]
 
 
 class GotoNewTabActionDict(TypedDict):
@@ -157,11 +158,13 @@ class PressKeyActionDict(TypedDict):
 class ScrollUpActionDict(TypedDict, total=False):
     type: Required[Literal["scroll_up"]]
     amount: NotRequired[int | None]
+    selector: NotRequired[str | None]
 
 
 class ScrollDownActionDict(TypedDict, total=False):
     type: Required[Literal["scroll_down"]]
     amount: NotRequired[int | None]
+    selector: NotRequired[str | None]
 
 
 class CaptchaSolveActionDict(TypedDict, total=False):
@@ -287,6 +290,8 @@ class SelectDropdownOptionActionDict(TypedDict, total=False):
 
 
 class UploadFileActionDict(TypedDict, total=False):
+    """Attach a storage file; cloud sessions also accept HTTP(S) URLs in file_path."""
+
     type: Required[Literal["upload_file"]]
     id: NotRequired[str]
     selector: NotRequired[NodeSelector]

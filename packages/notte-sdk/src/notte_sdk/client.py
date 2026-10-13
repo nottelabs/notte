@@ -1,4 +1,5 @@
 # pyright: reportImportCycles=false
+import math
 from functools import partial
 from typing import Any, Literal, Unpack, cast, overload
 
@@ -40,6 +41,7 @@ class NotteClient:
         server_url: str | None = None,
         verbose: bool = False,
         viewer_type: SessionViewerType = SessionViewerType.BROWSER,
+        captcha_timeout_seconds: float = 180,
     ):
         """Initialize a NotteClient instance.
 
@@ -48,8 +50,12 @@ class NotteClient:
 
         Args:
             api_key: Optional API key for authentication.
+            captcha_timeout_seconds: Total CAPTCHA wait budget, separate from action and HTTP timeouts.
         """
 
+        if not math.isfinite(captcha_timeout_seconds) or captcha_timeout_seconds <= 0:
+            raise ValueError("captcha_timeout_seconds must be finite and greater than zero")
+        self.captcha_timeout_seconds: float = captcha_timeout_seconds
         self.sessions: SessionsClient = SessionsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose, viewer_type=viewer_type
         )
@@ -86,7 +92,7 @@ class NotteClient:
 
     @property
     def Session(self) -> type[RemoteSession]:
-        return cast(type[RemoteSession], partial(RemoteSession, _client=self.sessions, headless=True))
+        return cast(type[RemoteSession], partial(RemoteSession, _client=self.sessions))
 
     @property
     def Agent(self) -> type[RemoteAgent]:
@@ -227,7 +233,9 @@ class NotteClient:
             For image scraping: returns list[ImageData].
         """
         with self.Session(open_viewer=False, perception_type="fast") as session:
-            result = session.execute(GotoAction(url=url))
+            # best-effort navigation: scrape whatever loaded unless the goto
+            # actually threw server side
+            result = session.execute(GotoAction(url=url), raise_on_failure=False)
             if not result.success and result.exception is not None:
                 raise result.exception
             return session.scrape(raise_on_failure=raise_on_failure, **data)

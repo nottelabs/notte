@@ -8,9 +8,12 @@ from notte_sdk.types import SdkRequest, SdkResponse
 
 SDK_SRC = Path(inspect.getfile(notte_sdk)).parent
 
-# Models intentionally defined but referenced nowhere else in the SDK.
-# Every entry needs a non-empty reason. This dict should stay empty.
-ALLOWED_UNREFERENCED: dict[str, str] = {}
+# Models intentionally retained as import-compatible legacy API types.
+ALLOWED_UNREFERENCED: dict[str, str] = {
+    "DownloadFileRequest": "Deprecated global-storage request retained for import compatibility",
+    "FileUploadResponse": "Deprecated global-storage response retained for import compatibility",
+    "ListFilesResponse": "Deprecated global-storage response retained for import compatibility",
+}
 
 
 def _models() -> set[str]:

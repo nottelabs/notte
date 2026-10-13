@@ -1,4 +1,8 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/pages/linkedin_step.py, testers/pages/linkedin_step.ts */}
+
 <CodeGroup>
+
 ```python Python
 from notte_sdk import NotteClient
 
@@ -18,7 +22,8 @@ with client.Session() as page:
     res = page.execute(actions[0])
     print(res.message)
 ```
-```javascript JavaScript
+
+```typescript TypeScript
 import { NotteClient } from 'notte-sdk';
 
 const client = new NotteClient({
@@ -40,4 +45,5 @@ await client.Session().use(async (page) => {
   console.log(result.message);
 });
 ```
+
 </CodeGroup>

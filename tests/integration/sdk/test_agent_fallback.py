@@ -9,7 +9,7 @@ _ = load_dotenv()
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_agent_fallback():
     client = NotteClient()
-    with client.Session(open_viewer=False) as session:
+    with client.Session(proxies=False, open_viewer=False) as session:
         _ = session.execute({"type": "goto", "url": "https://shop.notte.cc/"})
         _ = session.observe()
         # close modal if it appears
@@ -52,7 +52,7 @@ def test_agent_fallback():
 
 def test_agent_fallback_scrape_should_raise_error():
     client = NotteClient()
-    with client.Session(open_viewer=False) as session:
+    with client.Session(proxies=False, open_viewer=False) as session:
         _ = session.execute({"type": "goto", "url": "https://shop.notte.cc/"})
 
         with pytest.raises(ValueError):

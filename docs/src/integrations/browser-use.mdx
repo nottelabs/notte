@@ -1,6 +1,58 @@
 ---
-title: Browser-Use
-description: Integration with Browser-Use
+title: Browser Use
+description: Run Browser Use agents on Notte cloud browsers over CDP
 ---
+import BrowserUse from '/snippets/integrations/browser_use.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
-Todo
+<AgentMdNotice />
+
+[Browser Use](https://github.com/browser-use/browser-use) is an open source library that lets an LLM drive a browser. It talks to whatever browser you hand it over the Chrome DevTools Protocol, so pointing it at a Notte session is a one-line change: pass `session.cdp_url()` as the profile's `cdp_url`.
+
+## Prerequisites
+
+- A Notte API key ([get one here](https://console.notte.cc))
+- An LLM API key for the model Browser Use should drive
+
+## 1. Install the SDKs
+
+```bash
+pip install notte-sdk browser-use
+```
+
+## 2. Point Browser Use at a Notte session
+
+<BrowserUse />
+
+Set the following environment variables in your `.env` file:
+
+```bash
+NOTTE_API_KEY=your-notte-api-key
+ANTHROPIC_API_KEY=your-anthropic-api-key
+```
+
+The agent now runs on a Notte cloud browser instead of a local Chrome, so you inherit [stealth mode](/features/sessions/stealth-mode), [captcha solving](/features/sessions/captcha-solving), [residential proxies](/features/sessions/proxies), and [session replay](/features/sessions/recordings) without changing your agent code.
+
+<Note>
+  Browser Use owns the page once it connects. Use `session.cdp_url()` for the handoff and let Browser Use drive from there, rather than mixing Notte page controls into the same run.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Customize browser settings, proxies, and more
+  </Card>
+
+  <Card title="Stealth Mode" icon="user-secret" href="/features/sessions/stealth-mode">
+    Configure anti-detection for your automations
+  </Card>
+
+  <Card title="Connect with Playwright" icon="p" href="/features/sessions/playwright">
+    Drive a Notte session with Playwright
+  </Card>
+
+  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+    Watch your automations in real time
+  </Card>
+</CardGroup>

@@ -2,7 +2,6 @@
 title: 'Web Automation Best Practices'
 description: 'Playwright guidelines and common pitfalls for reliable web automation'
 ---
-
 import WaitTime from "/snippets/guides/wait_time.mdx";
 import ClosePopup from "/snippets/guides/close_popup.mdx";
 import HandleOptionalPopup from "/snippets/guides/handle_optional_popup.mdx";
@@ -10,6 +9,9 @@ import SelectElement from "/snippets/guides/select_element.mdx";
 import CombineSelectors from "/snippets/guides/combine_selectors.mdx";
 import PartialText from "/snippets/guides/partial_text.mdx";
 import PlaywrightAccess from "/snippets/guides/playwright_access.mdx";
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
 
 ## Web Automation Best Practices
 
@@ -79,11 +81,11 @@ Most web automation issues can be prevented by understanding timing, element sel
     **Prefer stable selectors:**
 
     Use selectors that are less likely to change:
-    - ✅ `data-testid` attributes
-    - ✅ Semantic roles and labels
-    - ✅ Unique IDs
-    - ⚠️ CSS classes (can change frequently)
-    - ❌ XPath with positional indices
+    - Good: `data-testid` attributes
+    - Good: semantic roles and labels
+    - Good: unique IDs
+    - Use with care: CSS classes (can change frequently)
+    - Avoid: XPath with positional indices
 
     **Combine selectors for specificity:**
 
@@ -148,6 +150,6 @@ This means you can:
 
 ## Additional Resources
 
-<Card title="Need help optimizing your automation?" href="https://cal.com/pintoa">
+<Card title="Need help optimizing your automation?" href="https://cal.com/team/notte/demo">
 Our team has extensive experience debugging and optimizing complex web automation workflows. Book a call to discuss your specific challenges.
 </Card>

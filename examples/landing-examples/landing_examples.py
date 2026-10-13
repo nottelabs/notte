@@ -1,10 +1,11 @@
+import argparse
 import os
 
 from dotenv import load_dotenv
 from notte_sdk import NotteClient
 
 # Load environment variables
-_ = load_dotenv(".env.example")
+_ = load_dotenv()
 
 landing_examples = [
     # task str, URL str | None, use vault bool
@@ -18,43 +19,53 @@ landing_examples = [
     ["Visit github.com/trending and return the top 3 repositories shown.", None, False],
     ["Check if there are any new blog posts on notte.cc/blog", None, False],
     ["Go to bbc.com and click on the first headline in the 'Sport' section. Return its title.", None, False],
-    ["Go to weather.com and tell me the current temperature in New York City.", None, False],
+    [
+        "Read the current temperature in New York City. Include the observation station and last update time.",
+        "https://forecast.weather.gov/MapClick.php?lat=40.7146&lon=-74.0071",
+        False,
+    ],
 ]
 
 
 # run landing page examples
-def main():
+def main(example_index: int | None = None):
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
-    for task, url, vault in landing_examples[3:]:
+    selected = landing_examples[3:] if example_index is None else [landing_examples[example_index]]
+    for task, url, use_vault in selected:
         with client.Session() as session:
-            if vault:
-                vault = client.Vault()
-                email = os.getenv("NOTTE_VAULT_TEST_EMAIL")
-                assert email is not None
-                pwd = os.getenv("NOTTE_VAULT_TEST_PASSWORD")
-                assert pwd is not None
-                _ = vault.add_credentials(
-                    url="https://google.com",
-                    email=email,
-                    password=pwd,
-                )
+            if use_vault:
+                with client.Vault() as vault:
+                    email = os.getenv("NOTTE_VAULT_TEST_EMAIL")
+                    assert email is not None
+                    pwd = os.getenv("NOTTE_VAULT_TEST_PASSWORD")
+                    assert pwd is not None
+                    _ = vault.add_credentials(
+                        url="https://google.com",
+                        email=email,
+                        password=pwd,
+                    )
+                    agent = client.Agent(
+                        session=session,
+                        max_steps=15,
+                        vault=vault,
+                    )
+                    run_kwargs = {"task": task, **({"url": url} if url is not None else {})}
+                    response = agent.run(**run_kwargs)
             else:
-                vault = None
-
-            agent_kwargs = {
-                "session": session,
-                "reasoning_model": "vertex_ai/gemini-2.0-flash",
-                "max_steps": 15,
-                **({"vault": vault} if vault is not None else {}),
-            }
-            agent = client.Agent(**agent_kwargs)
-            run_kwargs = {"task": task, **({"url": url} if url is not None else {})}
-            response = agent.run(**run_kwargs)
+                agent = client.Agent(
+                    session=session,
+                    max_steps=15,
+                )
+                run_kwargs = {"task": task, **({"url": url} if url is not None else {})}
+                response = agent.run(**run_kwargs)
 
             if not response.success:
                 exit(-1)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Run the landing-page agent examples")
+    parser.add_argument("--example-index", type=int, choices=range(len(landing_examples)))
+    args = parser.parse_args()
+    main(example_index=args.example_index)

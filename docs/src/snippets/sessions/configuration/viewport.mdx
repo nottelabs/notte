@@ -1,15 +1,34 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/configuration/viewport.py, testers/sessions/configuration/viewport.ts */}
+
 <CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
 
-  client = NotteClient()
+```python Python
+# 4K resolution
+with client.Session(viewport_width=3840, viewport_height=2160) as session:
+    page = session.page
+    page.goto("https://example.com")
+```
 
-  # 4K resolution
-  with client.Session(
-      viewport_width=3840,
-      viewport_height=2160
-  ) as session:
-      page = session.page
-      page.goto("https://example.com")
-  ```
+```typescript TypeScript
+const session = client.Session({
+  viewport_width: 3840,
+  viewport_height: 2160,
+});
+await session.use(async () => {
+  status = await session.status();
+  if (status.status !== 'active') throw new Error('Session is not active');
+  const page = await session.page();
+  await page.goto('https://example.com');
+  title = await page.title();
+  console.log(`Page title: ${title}`);
+  viewport = await page.evaluate(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
+  console.log(viewport);
+});
+// Automatically stopped here.
+```
+
 </CodeGroup>

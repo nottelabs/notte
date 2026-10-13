@@ -1,11 +1,13 @@
 # @sniptest filename=sequential.py
-# @sniptest show=7-14
+# @sniptest show=9-14
+import os
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
-function = client.Function(function_id="func_abc123")
-urls = ["https://example1.com", "https://example2.com"]
+function = client.Function(os.environ["NOTTE_FUNCTION_ID"])
 
+urls = ["https://example.com", "https://example.org"]
 results = []
 for url in urls:
     result = function.run(url=url)

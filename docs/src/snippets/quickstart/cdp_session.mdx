@@ -1,28 +1,36 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/quickstart/cdp_session.py, testers/quickstart/cdp_session.ts */}
+
 <CodeGroup>
+
 ```python Python
-from playwright.sync_api import sync_playwright
+import os
+
 from notte_sdk import NotteClient
+from playwright.sync_api import sync_playwright
 
 client = NotteClient()
 
-with client.Session(open_viewer=True) as session:
+with client.Session(idle_timeout_minutes=2) as session:
     cdp_url = session.cdp_url()
 
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(cdp_url)
-        page = browser.contexts[0].pages[0]
-        page.goto("https://www.google.com")
-        page.screenshot(path="screenshot.png")
+        try:
+            page = browser.contexts[0].pages[0]
+            page.goto("https://www.google.com")
+            page.screenshot(path=os.environ.get("NOTTE_SCREENSHOT_PATH", "screenshot.png"))
+        finally:
+            browser.close()
 ```
-```javascript JavaScript
+
+```typescript TypeScript
 import { chromium } from 'playwright-core';
 import { NotteClient } from 'notte-sdk';
 
-const notte = new NotteClient({
-  apiKey: process.env.NOTTE_API_KEY,
-});
+const notte = new NotteClient();
 
-await notte.Session({ open_viewer: true }).use(async (session) => {
+await notte.Session({ idle_timeout_minutes: 2 }).use(async (session) => {
   const status = await session.status();
   const cdpUrl = status.cdp_url;
 
@@ -34,17 +42,12 @@ await notte.Session({ open_viewer: true }).use(async (session) => {
 
   try {
     const page = browser.contexts()[0].pages()[0];
-    await page.goto('https://news.ycombinator.com');
-
-    const topStories = await page.locator('.titleline > a').allInnerTexts();
-
-    console.log('Top 5 Hacker News stories:');
-    topStories.slice(0, 5).forEach((title, index) => {
-      console.log(`${index + 1}. ${title}`);
-    });
+    await page.goto('https://www.google.com');
+    await page.screenshot({ path: process.env.NOTTE_SCREENSHOT_PATH || 'screenshot.png' });
   } finally {
     await browser.close();
   }
 });
 ```
+
 </CodeGroup>
