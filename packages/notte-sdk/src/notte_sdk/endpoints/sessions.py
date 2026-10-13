@@ -118,6 +118,26 @@ def _install_server_owned_dialog_policy(browser: Any) -> None:
         context.on("dialog", _observe_server_owned_dialog)
 
 
+def _redact_playwright_url(url: str) -> str:
+    """Strip credentials, query strings and fragments from a URL before it is logged."""
+    try:
+        parts = urlsplit(url)
+    except ValueError:
+        return "<unparseable>"
+    if parts.scheme == "about":
+        return url
+    if parts.scheme not in ("http", "https", "ws", "wss", "file"):
+        return f"{parts.scheme}:" if parts.scheme else "<redacted>"
+    host = parts.hostname or ""
+    try:
+        port = parts.port
+    except ValueError:
+        port = None
+    if port is not None:
+        host = f"{host}:{port}"
+    return f"{parts.scheme}://{host}{parts.path}"
+
+
 def _playwright_object_id(value: Any) -> str:
     """Return a useful, best-effort identity for a Playwright object."""
     try:
@@ -742,10 +762,10 @@ class RemoteSession(SyncResource):
         self._async_playwright_context: "PlaywrightAsync | None" = None
         self._async_playwright_browser: "BrowserAsync | None" = None
         self._async_playwright_page: "PageAsync | None" = None
-        self._playwright_connection_generation = 0
+        self._playwright_connection_generation: int = 0
         self._playwright_observed_pages: set[int] = set()
         self._playwright_observed_contexts: set[int] = set()
-        self._playwright_cleanup_in_progress = False
+        self._playwright_cleanup_in_progress: bool = False
 
     def _playwright_session_id(self) -> str:
         try:
@@ -757,7 +777,7 @@ class RemoteSession(SyncResource):
     def _playwright_page_state(page: Any) -> dict[str, Any]:
         state: dict[str, Any] = {"page_id": _playwright_object_id(page)}
         try:
-            state["url"] = page.url
+            state["url"] = _redact_playwright_url(page.url)
         except Exception as exc:
             state["url_error"] = f"{type(exc).__name__}: {exc}"
         try:
@@ -801,8 +821,11 @@ class RemoteSession(SyncResource):
         cached_page: Any | None,
         observed_page: Any | None = None,
         observed_context: Any | None = None,
-        level: Literal["info", "warning"] = "warning",
+        level: Literal["debug", "info", "warning"] = "warning",
     ) -> None:
+        if level == "warning" and self._playwright_cleanup_in_progress:
+            # Closes and disconnects caused by the SDK's own cleanup are expected, not failures.
+            level = "debug"
         details = self._playwright_state(browser, cached_page)
         if observed_page is not None:
             details["observed_page"] = self._playwright_page_state(observed_page)
@@ -842,6 +865,7 @@ class RemoteSession(SyncResource):
                 browser=browser,
                 cached_page=cached_page,
                 observed_page=page,
+                level="warning" if page is cached_page else "info",
             )
 
         def on_crash(*_args: Any) -> None:
