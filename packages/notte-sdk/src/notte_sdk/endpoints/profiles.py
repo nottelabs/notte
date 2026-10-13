@@ -4,24 +4,17 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, Unpack
 
 from notte_core.common.telemetry import track_usage
-from notte_core.types import (
-    ProfileCreateRequest,
-    ProfileCreateRequestDict,
-    ProfileListRequest,
-    ProfileListRequestDict,
-    ProfileResponse,
-)
 from typing_extensions import final
 
-from notte_sdk._generated import endpoints as api
-from notte_sdk.endpoints.base import BaseClient
+from notte_sdk._generated.resources import ProfilesOperations
+from notte_sdk.types import ProfileCreateRequestDict, ProfileListRequestDict, ProfileResponse
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
 
 
 @final
-class ProfilesClient(BaseClient):
+class ProfilesClient(ProfilesOperations):
     """Client for managing browser profiles."""
 
     def __init__(
@@ -63,8 +56,7 @@ class ProfilesClient(BaseClient):
             print(profile.profile_id)  # notte-profile-a1b2c3d4e5f6g7h8
             ```
         """
-        request = ProfileCreateRequest.model_validate(data)
-        return self.request(api.profile_create(request))
+        return self._profile_create(**data)
 
     @track_usage("cloud.profile.get")
     def get(self, profile_id: str) -> ProfileResponse:
@@ -79,7 +71,7 @@ class ProfilesClient(BaseClient):
         Raises:
             NotteAPIError: If profile not found (404) or access denied
         """
-        return self.request(api.profile_get(profile_id))
+        return self._profile_get(profile_id)
 
     @track_usage("cloud.profile.delete")
     def delete(self, profile_id: str) -> bool:
@@ -94,8 +86,7 @@ class ProfilesClient(BaseClient):
         Raises:
             NotteAPIError: If profile not found (404) or access denied
         """
-        result = self.request(api.profile_delete(profile_id))
-        return result.success
+        return self._profile_delete(profile_id)
 
     @track_usage("cloud.profile.list")
     def list(self, **data: Unpack[ProfileListRequestDict]) -> Sequence[ProfileResponse]:
@@ -114,5 +105,4 @@ class ProfilesClient(BaseClient):
                 print(profile.name)
             ```
         """
-        params = ProfileListRequest.model_validate(data)
-        return self.request_list(api.profile_list(params=params))
+        return self._profile_list(**data)

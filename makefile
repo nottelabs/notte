@@ -211,9 +211,11 @@ sdk-endpoints-check:
 .PHONY: sdk-codegen sdk-codegen-check
 sdk-codegen:
 	uv run --no-sync python scripts/generate_sdk_models.py
+	uv run --no-sync python scripts/generate_sdk_endpoints.py
 
 sdk-codegen-check:
 	uv run --no-sync python scripts/generate_sdk_models.py --check
+	uv run --no-sync python scripts/generate_sdk_endpoints.py --check
 
 # One reviewed contract update for both SDKs. Install uv and npm dependencies first.
 .PHONY: openapi-refresh sdk-generate-all node-sdk-codegen

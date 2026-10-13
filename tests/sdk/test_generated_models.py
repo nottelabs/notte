@@ -1,4 +1,4 @@
-"""The side-by-side models are complete/importable; public model identity is unchanged."""
+"""The side-by-side models are complete/importable; shared domain identity is preserved."""
 
 import inspect
 import json
@@ -24,11 +24,20 @@ def test_every_component_has_an_importable_generated_type() -> None:
             assert cls.model_json_schema()  # resolve every forward ref and discriminated union
 
 
-def test_public_types_still_reexport_core() -> None:
+def test_unmigrated_and_page_operation_types_still_reexport_core() -> None:
     for name, cls in vars(core).items():
-        if not name.startswith("_"):
+        if not name.startswith("_") and name not in {
+            "ProfileCreateRequest",
+            "ProfileCreateRequestDict",
+            "ProfileListRequest",
+            "ProfileListRequestDict",
+            "ProfileResponse",
+        }:
             assert getattr(public, name) is cls
-    assert models.ProfileResponse is not public.ProfileResponse
+    assert issubclass(public.ProfileResponse, models.ProfileResponse)
+    assert public.ProfileResponse is not core.ProfileResponse
+    assert public.ProfileCreateRequest is models.ProfileCreateRequest
+    assert issubclass(public.ProfileListRequest, models.ProfileListParametersQuery)
 
 
 def test_generated_requests_forbid_extra_fields_and_preserve_constraints() -> None:

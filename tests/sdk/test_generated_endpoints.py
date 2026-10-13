@@ -42,6 +42,7 @@ class Call:
     url: str
     params: dict[str, Any] | None
     data: Any
+    headers: dict[str, str]
 
 
 class FakeSession:
@@ -56,8 +57,16 @@ class FakeSession:
     def __exit__(self, *_: object) -> None:
         return None
 
-    def _call(self, method: str, url: str, params: dict[str, Any] | None = None, data: Any = None, **_: Any):
-        self.calls.append(Call(method, url, params, data))
+    def _call(
+        self,
+        method: str,
+        url: str,
+        headers: dict[str, str],
+        params: dict[str, Any] | None = None,
+        data: Any = None,
+        **_: Any,
+    ):
+        self.calls.append(Call(method, url, params, data, headers))
         return FakeResponse(self.payload, self.status_code)
 
     def get(self, **kwargs: Any) -> FakeResponse:

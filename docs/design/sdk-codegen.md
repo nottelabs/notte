@@ -1,36 +1,42 @@
 # Generate the Python SDK from the committed OpenAPI contract
 
-Status: design proposal plus a non-breaking infrastructure draft. The first PR changes no
-public imports, resource methods, transport, or return types. Review the ownership and
-compatibility decisions below before migrating resources.
+Status: accepted hybrid ownership and compatibility wrappers; profiles pilot implemented on
+PR #42's committed-production-spec branch. Alias and unpublished-route decisions remain open.
 
 ## Ownership and recommendation
 
-The direction is **hand-written `notte_core` types → backend FastAPI → committed
-`openapi/openapi.json` → SDK-owned generated models and operations → ergonomic SDK facade**.
-Core stays the backend/local browser's source. Do not generate back into core: that would
-create a circular maintenance process. The SDK consumes a versioned API contract like Node.
-There is no backend change in this PR.
+**Hybrid ownership (approved by Lucas).** Resource types and clients come from
+`openapi/openapi.json`: profiles, personas, vaults, files, functions, usage, and session
+management (start/stop/status/list/cookies/replay/debug). Backend/local models remain
+hand-written in core; never generate back into core. The Node SDK is cloud-only and can
+generate everything.
 
-Generate every schema in the snapshot, including types that have no core counterpart, both
-FastAPI input/output variants, and operation query/body models. Generate every documented
-operation in the eventual endpoint/client layer. Never substitute `BaseModel`/`RawResponse`
-merely because a schema is absent from core. Genuinely free-form JSON, binary responses,
-streaming, and empty responses must be represented explicitly.
+Python's **page-operation domain types stay owned by `notte_core`** and are shared by local
+and cloud sessions: action classes in `notte_core.actions` (both `execute()` inputs and
+observations), `Observation`/`ObserveResponse`, `ExecutionResult`, and
+`StructuredData`/`DataSpace` scrape results. The wire-model contract check
+(`scripts/openapi_contract.py`, `openapi/known_drift.txt`) keeps them aligned with the spec.
+Generate every schema as private data for coverage, but do not move public page-operation
+names or runtime parsing to those generated copies.
 
-**Local and cloud wire classes will have different identities.** Keep the familiar import
-names in `notte_sdk.types`, but migrate those names to SDK-owned generated types or small
-compatibility wrappers resource by resource. `notte_core.types.ProfileResponse is
-notte_sdk.types.ProfileResponse` will eventually be false. Pydantic validation of another
-model instance does not automatically bridge that difference. This is a compatibility
-change, even when every field and method signature looks identical; schedule it within v2
-and document it. PR 1 preserves identity for every current public export.
+Measured on the act branch, the hand-written SDK uses 104 core wire models: 61 plain data
+and 43 with behavior. The page-operation group (~30 action classes plus Observation,
+ExecutionResult and StructuredData) is shared with local `NotteSession` and `act()` in
+PR #34 (`ObservedPage.from_observation`, `RemoteActDriver`). Generating that group would
+require four converters plus an action mapping. Keeping shared core domain types needs none.
 
-Keep a dependency on core for shared *behavior*: logging/telemetry, configuration, resource
-lifecycle, errors, credentials/encryption helpers, browser-independent algorithms, and
-explicit domain adapters. Removing that dependency is a separate project. Generated files
-must never import core. Once a resource migrates, its HTTP body/response validation must
-use generated SDK models, not core's wire declarations.
+`notte_sdk.types` keeps re-exporting core page-operation types. Resource names move one
+resource at a time to generated classes or thin wrapper subclasses. For profiles,
+`notte_core.types.ProfileResponse is notte_sdk.types.ProfileResponse` is deliberately false
+inside v2, while the public import name, fields and behavior are preserved. Arbitrary core
+model instances do not automatically validate as generated resource instances.
+
+**Thin per-resource wrappers are accepted** to restore defaults/behavior OpenAPI loses.
+They inherit generated models and override only reviewed differences, without duplicating
+the resource's field inventory. Generated code never imports core wire declarations; it may
+bind a reviewed generated-model subclass from `_compat`. Keep shared transport, auth,
+errors, logging/telemetry, configuration, encryption, and lifecycle policy in the existing
+runtime/facade. Removing the core dependency is a separate project.
 
 ## Generator choice and evidence
 
@@ -80,107 +86,89 @@ Sources: [model generator release](https://pypi.org/project/datamodel-code-gener
 
 ## File ownership
 
-Current PR:
+- `scripts/generate_sdk_models.py` uses pinned datamodel-code-generator, formats deterministically,
+  checks complete schema coverage, and writes `_generated/models.py` and `schema_index.json`.
+  The model/index artifacts from #42 are unchanged by this pilot.
+- `scripts/generate_sdk_endpoints.py` still emits the transitional core-bound `endpoints.py`.
+  Its resource backend resolves migrated operation models through the
+  upstream schema index and emits `_generated/operations.py`, `resources.py`, and `typing.py`.
+  Factories derive methods, encoded paths, body/query bindings and response shapes from the
+  snapshot. Typed invocation methods validate requests and call `BaseClient.request` or
+  `request_list`; keyword annotations come from upstream-generated Python annotations.
+  Unsupported response/body/header/keyword shapes fail generation explicitly. The resource
+  registry lists the four pilot operations; other documented profiles operations are not
+  new public methods in this compatibility pilot.
+- `_compat/profiles.py` contains only reviewed subclass overrides (manifest below).
+- `types.py` overlays migrated public names on the transitional core re-exports. Page-domain
+  exports retain core identity. After all resources migrate, replace the wildcard with an
+  explicit public export inventory; do not remove existing names opportunistically here.
+- `endpoints/profiles.py` retains initialization, public signatures, docstrings and telemetry
+  decorators; its four method bodies forward to generated invocation methods. There are no
+  profiles overloads. `client.profiles`, shared transport/auth/errors and `endpoints/base.py`
+  are unchanged.
+- `tests/sdk/test_profiles_codegen.py` captures compatibility. The captures were written and
+  run on #42's old, main-derived profiles facade before migration (17 passing tests together
+  with `test_generated_endpoints.py`), then run unchanged after migration.
 
-- `scripts/generate_sdk_models.py`: small driver for the pinned upstream generator, stable
-  formatting, schema coverage, and a non-mutating freshness check. No schema rewrites.
-- `packages/notte-sdk/src/notte_sdk/_generated/models.py`: every generated wire model,
-  including inline operation models (244 Pydantic models, 45 enums; 4,563 lines). Private and side by side; not yet used by facades.
-- `packages/notte-sdk/src/notte_sdk/_generated/schema_index.json`: generator source-reference
-  identifiers to Python names, including input/output variants and synthesized nested types.
-  Nested identifiers are generator metadata, not necessarily resolvable JSON pointers.
-- `pyproject.toml` / `uv.lock`: pin datamodel-code-generator and Ruff, including transitive
-  dependencies in the lock. Neither becomes an SDK runtime dependency.
-- `tests/sdk/test_generated_models.py`, `tests/scripts/test_generate_sdk_models.py`:
-  coverage/import/schema tests, constraints and discriminator checks, public identity
-  protection, known semantic differences, deterministic output and stale-output failure.
+### Profiles compatibility manifest
 
-Next PRs, after design review:
+Every exception is local, accepted as preservation of today's public API, and tested:
 
-- `_generated/operations.py`: generated operation factories bound exclusively to generated
-  models; keep `_generated/endpoints.py` as the transitional core-bound layer until its last
-  consumer migrates. Both use `NotteEndpoint` and the existing transport initially.
-- `_generated/resources.py`: generated typed invocation methods, no auth/retry/business
-  policy. Start with all four public profiles methods; retain complete operation metadata
-  and fail generation for unsupported response/body shapes rather than silently omit them.
-- `_generated/typing.py`: schema-derived public keyword TypedDicts and action overload inputs.
-  Generate from the same schema/metadata, not a second hand-written field inventory.
-- `_compat/`: reviewed aliases, old defaults and conversions into domain behavior. One small
-  manifest should identify each override, reason, operation and required regression test.
-- `types.py`: explicit stable exports, not a wildcard core re-export after migration. Preserve
-  names such as `ProfileResponse`, `ObserveResponse`, `ScrapeResponse` and request `*Dict`s;
-  distinguish generated input/output classes internally. Behavior-bearing names may wrap or
-  subclass generated models, but must not redeclare the wire field inventory.
-- `client.py`, `endpoints/*.py`, `_transport.py`, websocket modules: hand-written ergonomic
-  facade/policy. Keep session/context managers, persona inbox polling, uploads and ownership
-  of file handles, presigned downloads, SSE/WebSocket handling and encryption here.
+- `ProfileResponse.persisted_domains`: generated optional `None` → independently allocated
+  `[]` when absent, reject explicit null, as core does. Applies to create/get/list.
+- `ProfileListRequest`: subclass of `ProfileListParametersQuery`; keep page 1, page size 20
+  (spec default 10), leave page bounds to the server as before, omit API-only `only_active`
+  and `only_current_token` fields from serialization, reject explicit use of these flags and
+  unknown keywords. Public keyword dictionaries retain the existing fields/types.
+- `ProfileDeleteResponse`: require `success` and `message` as today's `ExecutionResponse`
+  does, rather than interpreting an incomplete response using the schema's success default.
+  Delete still returns the validated bool, including false.
+- Keyword nullability: preserve existing static `name: str` keyword annotations, while
+  request models continue accepting nullable names. This is an explicit compatibility
+  exception applied to schema-derived annotations, not another field inventory.
 
-The existing generated endpoint layer and all public imports remain untouched in PR 1.
+The regression captures cover method, encoded path, auth/version/origin/content-type headers,
+body omission, query defaults, pagination envelope and bare-array unwrapping, 404 error class,
+telemetry event names, response defaults, independent lists, and delete success/failure.
 
 ## Bridging local and cloud behavior
 
-Prefer narrow structural protocols for new shared algorithms (read-only properties, not
-mutable concrete Pydantic fields). For existing algorithms with behavior-rich core models,
-use explicit adapters at the SDK boundary. Avoid core depending on SDK, broad `Any`, or
-making generated SDK classes inherit core wire classes to pretend identity is unchanged.
+**No page-operation adapters are needed: shared core domain types.** Resource class identity
+changes do not cross the local page-operation boundary. Prefer narrow structural protocols
+for new shared algorithms; core must never depend on the SDK.
 
 ### `act()` and PR #34 (`v2-act`)
 
-The reviewed branch's `ActDriver.observe` takes core `Observation`, and `execute` returns
-core `ExecutionResult`; `ActResult` embeds core `BaseAction`/`ExecutionResult`. Its
-`ObservedPage.from_observation` consumes behavior that generated data classes do not provide.
-Preserve these as domain interfaces initially. `RemoteActDriver` must convert the generated
-cloud observation and execution result into the core domain objects at that boundary.
-Keep `ActResult` shared because it is a local orchestration result, not an HTTP response.
-
-Adapters should use explicit field conversions or `model_dump(mode="json", by_alias=True)`
-followed by domain validation, with separate handling for selectors, action unions, secrets
-and structured data. Do not blindly cast or round-trip secrets through masked JSON. Test
-local and cloud drivers with the same captured observation, dry-run proposed action,
-execution result, freshness behavior and `execute(result.action)` flow. Until this exists,
-do not migrate session responses or change PR #34's contracts. The profile pilot is independent.
+`ActDriver.observe`, `RemoteActDriver`, `ObservedPage.from_observation`, and `ActResult`
+continue using core Observation, BaseAction and ExecutionResult. Their behavior and identity
+remain shared by local and cloud sessions. The former observation/execution conversion plan
+is not needed. Keep PR #34's contracts and tests intact.
 
 ### Actions and `execute(type=..., ...)`
 
-Keep call signatures and overload behavior, including the `evaluate_js` special return type.
-Generate the cloud action keyword shapes/discriminator union from the snapshot; the local
-session retains registry-derived overloads. Compare their shared action subset in CI rather
-than making cloud code import the local registry as its wire contract.
-
-At the remote facade accept core action objects for existing code as well as generated SDK
-input actions. Serialize supported core actions into a dict, validate against the generated
-request union, and send only fields accepted by that input schema. Generated output action
-objects need an explicit output-to-input conversion; they cannot simply stand in for inputs.
-Core actions retain local execution helpers. A local session may accept generated actions
-through the inverse adapter for the supported common subset; until added, shared code should
-use keyword calls or core action objects. Test all shared discriminators and reject unsupported
-ones before HTTP. Keep overload typecheck fixtures for both session classes.
+Keep core action objects, the shared action registry, public overloads and `evaluate_js`'s
+special result. Observations contain the same core actions accepted by `execute()` and
+`act()`. The former cloud input/output action union mapping and inverse local adapter are
+not needed. Continue the existing registry-derived overload checks and wire contract gate.
 
 ### `scrape(response_format=...)`
 
-The caller's `type[T]` is not a wire type. The facade converts it to JSON Schema for the
-request, retains the class locally, validates response data with `T.model_validate`, and
-preserves the existing overload results: markdown `str`; typed `T` on success;
-`StructuredData[T]` when `raise_on_failure=False`; instruction-only `dict` or its wrapper.
-Keep `StructuredData` as a shared domain convenience (and its failure/unwrapping behavior),
-while the HTTP response itself is validated with generated `DataSpace`. Generated models
-cannot recreate `.get()`, errors or a user-defined generic from OpenAPI. Test this conversion
-and inference with both basedpyright and ty before migrating page/session facades.
+Keep `StructuredData` and `DataSpace` in core, including `.get()`, failures and generic
+behavior. The facade still converts caller `type[T]` to JSON Schema and validates returned
+data with that type, preserving markdown `str`, typed `T`, `StructuredData[T]`, and
+instruction-only results. A generated DataSpace-to-core adapter is not needed; keep existing
+local/cloud overload and behavior tests. Session management can migrate independently of
+these shared page-operation methods.
 
 ## Spec gaps and compatibility decisions
 
 Do not silently correct the snapshot during generation. Tests intentionally expose these gaps:
 
-- Some function responses declare both `workflow_id` and `function_id` required (and both
-  run-id spellings). They are separate generated fields. Core currently uses
-  `AliasChoices("workflow_id", "function_id")`, preferring the legacy name. Before migrating
-  functions, capture real responses and either correct the backend schema or add a reviewed
-  compatibility normalization that accepts either, preserves that precedence on conflict,
-  and fills the generated required counterparts internally. Public exports keep the current
-  `function_id` name. Request serialization must match each route's captured contract;
-  do not blindly send both keys to an `extra="forbid"` request or rename legacy routes.
-- `idle_timeout_minutes`/`timeout_minutes` have the same problem: retain the existing
-  precedence/defaults in a facade adapter, not a global generated field rename.
+- **Open question, not decided:** alias duplicates `workflow_id`/`function_id` (including
+  run-id spellings) and `idle_timeout_minutes`/`timeout_minutes`. Recommendation: fix aliases
+  in the backend schema so it describes accepted wire forms correctly, then refresh the
+  snapshot. Do not choose alias precedence, normalization, or field removal in this pilot.
+  Existing core aliases remain in use until those resources migrate.
 - OpenAPI omits Python default factories and behavioral validators. For example generated
   `ProfileResponse.persisted_domains` is optional `None`, whereas core supplies `[]`.
   A profile compatibility wrapper over the generated model should restore `[]` when absent
@@ -191,8 +179,9 @@ Do not silently correct the snapshot during generation. Tests intentionally expo
   credential/action adapters must preserve the existing explicit secret-unwrapping policy
   at the transport boundary, while keeping repr/logs masked. Do not send masked values.
 
-Nine used routes are absent from this snapshot. They stay in an explicit hand-written legacy
-boundary until the backend publishes them or Lucas chooses removal in a breaking release:
+Nine used routes are absent from this snapshot. Their disposition is an open question, not
+an approved removal plan. Recommendation: publish routes still in use and drop the rest in
+v2, with backend coordination. Until decided they stay in the existing legacy boundary:
 
 - `POST`/`DELETE /personas/{id}/sms/number` (two phone-number operations).
 - `GET /sessions/{id}/debug/tab`.
@@ -207,15 +196,17 @@ is complete only after these routes enter the backend-owned spec or leave the su
 
 ## CI and regeneration
 
-Run `uvx uv@latest sync --all-packages --all-extras`, then `make sdk-codegen` and commit both
+Run `uvx uv@latest sync --all-packages --all-extras`, then `make sdk-codegen` and commit all
 artifacts. `make sdk-codegen-check` generates into a fresh temporary directory and compares
-bytes, including a spec SHA256. Missing output fails too; the check does not overwrite files
+bytes, including the models' spec SHA256. It also runs the operation/resource freshness check.
+Missing output fails too; the check does not overwrite files
 or rely solely on `git diff`. Generation uses no API key, backend checkout or network schema
 fetch. Versions are checked before running; Ruff matches pre-commit 0.11.10 and operates with
 isolated configuration. The lock fixes transitive generator dependencies.
 
-The `sdk-codegen` pre-commit hook covers schema, driver, artifacts, lock and configuration
-changes. An explicit offline CI step runs the same check. Only the upstream-generated
+The `sdk-codegen` pre-commit hook covers model generation; `sdk-endpoints` checks all
+operation/resource/typing outputs, the resource generator, compatibility and SDK source changes.
+An explicit offline CI step runs the same check. Only the upstream-generated
 `models.py` is ignored by basedpyright diagnostic reporting and its filename hook; generated
 code still goes through Ruff, import checks and every-model JSON Schema construction.
 Hand-written facade/generator code stays under the existing strict warning policy.
@@ -225,8 +216,12 @@ checks unchanged during the parallel phase. Generated SDK models eventually need
 and semantic/request-capture tests, not a second comparison against core's declarations.
 Retire the SDK portion of that hand-written contract baseline as its consumers migrate;
 keep a separate backend/core-to-published-spec release gate. Do not erase the baseline now
-or grow it to excuse new generated drift. Update the production endpoint check to validate
-migrated operations too. Node now regenerates from this same committed snapshot (`cd node-sdk && npm run generate`).
+or grow it to excuse new generated drift. The production endpoint check now compares migrated
+operations and their recursively referenced schemas too, including query defaults/constraints
+and response changes, while ignoring documentation metadata (including examples). Schema
+properties named `description`/`title` and literal defaults remain part of the contract.
+Node now regenerates from this same committed snapshot
+(`cd node-sdk && npm run generate`).
 Its `npm run check:generated` compares fresh temporary output and checks the TypeScript
 reference without a network spec fetch. After installing both toolchains, root
 `make openapi-refresh` fetches staging and regenerates Python models/endpoints, Node
@@ -237,32 +232,26 @@ The existing `nottelabs/notte` workflow guard and production release gate are un
 
 ## Migration order and size
 
-1. **This PR:** design, pinned generation, all models alongside current ones, coverage tests
-   and freshness gates. Zero hand-written runtime lines removed; generated output increases
-   the repository. No promise of binary/source compatibility from private models.
-2. **Profiles pilot, stacked only after design acceptance:** generated operation/client layer,
-   generated keyword types and a public compatibility wrapper/default adapter for one
-   resource. Keep `create(**data)`, `get(profile_id)`, `delete(profile_id) -> bool`,
-   `list(**data) -> Sequence[ProfileResponse]`; preserve telemetry/errors/auth and list
-   unwrapping. Capture method, encoded path, headers, omitted body fields, query defaults,
-   page envelope, 404, delete and missing defaults. The `ProfileResponse` import name stays;
-   core class identity changes deliberately. Expect ~20–40 repeated resource lines replaced;
-   generator/runtime support initially adds more than this removes.
-3. **Review checkpoint:** stop resource migration until Lucas reviews ownership, aliases and
-   profile behavior. Sessions, functions and credentials are not part of the pilot.
-4. **Later:** simple resources, then page/session adapters and overloads, then functions and
-   off-spec endpoints with backend coordination; finally remove the old core-bound generator
-   and endpoint layer. Add genuine async separately if selected.
+1. **Merged #37:** design, pinned model generation, coverage and freshness gates. No public
+   migration; no hand-written runtime savings.
+2. **#42 base:** production snapshot refresh and both SDKs regenerated, plus `openapi-refresh`.
+3. **This profiles pilot:** approved hybrid ownership, generated operation/invocation/keyword
+   layers, reviewed wrappers and unchanged public create/get/delete/list behavior. The four
+   facade methods still own docs and telemetry. This establishes infrastructure; it is not
+   a net line-count reduction. Report additions/deletions separately for handwritten runtime,
+   generated output, generator, tests, docs and configuration in the draft PR.
+4. **Next:** migrate one simple resource using the same registry/index/generator, adding
+   wrappers only for measured compatibility differences and writing request captures first.
+   Vault metadata or usage can follow; credentials need secret/encryption review, personas
+   have unpublished phone routes, and files have upload/download behavior.
+5. **Then:** session management; functions and off-spec operations after backend schema/route
+   decisions. Actions/observe/execute/scrape adapters are **not needed: shared core domain
+   types**. Retire transitional core-bound resource factories as their last consumers migrate;
+   retain core bindings for shared page operations. Async remains a separate additive project.
 
-Audit-based estimates, not PR 1 savings: 450–700 hand-written SDK endpoint/factory lines can
-move into generated code; budget ~150–250 added generator lines. Another 60–110 transport
-lines might be simplified later. Core's 2,413-line types module remains necessary for backend
-and local sessions: SDK-only generation does **not** remove it. The audit's potential
-600–1,000 core declaration savings are out of scope for this ownership choice. Count generated
-code separately and measure actual removals per resource; never count whole ergonomic wrappers
-as deletable.
-
-Decisions requested from Lucas before the pilot: accept SDK/core class-identity divergence
-inside v2; accept compatibility wrappers for public defaults and behavior; confirm ownership
-of backend alias/schema and off-spec-route corrections. This draft stops at PR 1 because
-those decisions affect the pilot's public return type contract.
+Earlier audit estimates (450–700 endpoint/factory lines movable and ~150–250 generator lines)
+were planning estimates, not savings delivered by this pilot. Resource wrappers and retained
+facade docs/telemetry reduce actual removals. Core's types module remains necessary for backend
+and local sessions; none of its declarations count as SDK generation savings. Shared page-domain
+ownership is approved; only the alias corrections and disposition of nine unpublished routes
+remain open decisions.
