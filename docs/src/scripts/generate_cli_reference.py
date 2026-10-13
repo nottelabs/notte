@@ -5,11 +5,12 @@ The pages under `cli-reference/` are written by notte-cli's own generator
 (`scripts/gendocs`), which walks the CLI's command tree, so they cannot drift
 from the pinned CLI. This script runs it, replaces `cli-reference/`, and keeps
 the "CLI" sidebar group in `docs.json` listing exactly the generated pages.
+Since `llms.txt` is built from the sidebar, a regeneration rebuilds it too.
 
     python docs/src/scripts/generate_cli_reference.py          # regenerate
     python docs/src/scripts/generate_cli_reference.py --check  # fail if stale
 
-Requires Go and an initialized notte-cli submodule.
+Requires Go, uv, and an initialized notte-cli submodule.
 """
 
 from __future__ import annotations
@@ -24,6 +25,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from apply_agent_md_notice import ensure_notice
+
 SRC_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = SRC_DIR.parent.parent
 CLI_DIR = REPO_ROOT / "notte-cli"
@@ -33,12 +36,25 @@ TAB = "APIs and SDKs"
 GROUP = "CLI"
 # The CLI group sits right after this one in the tab.
 AFTER_GROUP = "Getting Started"
+GENERATE_TIMEOUT_SECONDS = 600
 
 
 def generate(out: Path) -> None:
     if not (CLI_DIR / "go.mod").exists():
         sys.exit("notte-cli submodule is not initialized: run `git submodule update --init notte-cli`")
-    subprocess.run(["go", "run", "./scripts/gendocs", "-out", str(out)], cwd=CLI_DIR, check=True)
+    try:
+        subprocess.run(
+            ["go", "run", "./scripts/gendocs", "-out", str(out)],
+            cwd=CLI_DIR,
+            check=True,
+            timeout=GENERATE_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        sys.exit(f"notte-cli's generator did not finish within {GENERATE_TIMEOUT_SECONDS}s")
+    # Match what the repository's hooks would do to the pages: add the agent
+    # notice every sidebar page carries, and end with one newline.
+    for page in out.glob("*.mdx"):
+        page.write_text(ensure_notice(page.read_text().rstrip("\n") + "\n"))
 
 
 def nav_pages(out: Path) -> list[str]:
@@ -106,6 +122,7 @@ def main() -> int:
         shutil.copytree(fresh, OUT_DIR)
         if updated != current:
             DOCS_JSON.write_text(updated)
+            subprocess.run(["uv", "run", "python", "scripts/generate_llms.py"], cwd=SRC_DIR, check=True)
     print(f"Wrote {len(pages)} pages to docs/src/cli-reference/.")
     return 0
 
