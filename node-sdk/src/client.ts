@@ -148,7 +148,7 @@ export class NotteClient {
       throwOnError: true,
     });
 
-    this.client.interceptors.request.use((request: Request) => {
+    this.client.interceptors.request.use((request: Request, opts) => {
       const headers = new Headers(request.headers);
       if (this.config.apiKey) headers.set('Authorization', `Bearer ${this.config.apiKey}`);
       headers.set('x-notte-request-origin', REQUEST_ORIGIN);
@@ -162,14 +162,22 @@ export class NotteClient {
       if (this.config.verbose) {
         console.info(`Making \`${request.method}\` request to \`${request.url}\``);
       }
-      if (!(timeoutMs > 0)) {
-        return new Request(request, { headers });
-      }
-      const deadline = withTimeout(request.signal, timeoutMs);
-      const timed = new Request(request, { headers, signal: deadline.signal });
-      // Released by the response/error interceptors below so a completed
-      // request does not keep its timer alive until the deadline.
-      pendingDeadlines.set(timed, deadline.release);
+      // Use the original signal: even request.signal follows opts.signal via
+      // an undici WeakRef and can stop receiving aborts after garbage collection.
+      const callerSignal = opts.signal ?? request.signal;
+      const deadline = timeoutMs > 0 ? withTimeout(callerSignal, timeoutMs) : undefined;
+      const signal = deadline?.signal ?? callerSignal;
+      const timed = new Request(request, { headers, signal });
+      pendingRequests.set(timed, { signal, release: deadline?.release ?? (() => undefined) });
+
+      // Pass the strongly held signal in fetch's init, bypassing Request's weak
+      // signal-following link. Keeping the Request preserves all fetch options
+      // (including streamed uploads), without reconstructing them field by field.
+      // Wrap the resolved fetch per call so custom transports and redirects use it too.
+      // SSE reconnects reuse opts; never wrap a previous attempt's signal.
+      const transport = originalTransports.get(opts) ?? opts.fetch ?? globalThis.fetch;
+      originalTransports.set(opts, transport);
+      opts.fetch = (input, init) => transport(input, { ...init, signal });
       return timed;
     });
 
@@ -217,7 +225,7 @@ export class NotteClient {
           method: request.method,
           headers: headerRecord,
           body: opts.serializedBody ?? undefined,
-          signal: request.signal,
+          signal: requestSignal(request),
           redirect: 'manual',
         });
         currentUrl = location;
@@ -280,14 +288,15 @@ export class NotteClient {
     // Fetch body reads may throw AbortError even when the signal's reason is
     // TimeoutError. Preserve caller cancellation and report SDK deadlines as
     // timeouts rather than HTTP errors with a misleading status of 200.
-    if (request?.signal.aborted) {
-      error = request.signal.reason ?? error;
+    const signal = request && requestSignal(request);
+    if (signal?.aborted) {
+      error = signal.reason ?? error;
     }
     if (isTimeoutAbort(error)) {
       const target = request ? ` to \`${requestPath(request)}\`` : '';
       return new NotteTimeoutError(`Request${target} ${(error as Error).message}`, { cause: error });
     }
-    if (request?.signal.aborted) return error;
+    if (signal?.aborted) return error;
     if (response) {
       const path = requestPath(request, response);
       const body = normalizeErrorBody(error);
@@ -548,15 +557,17 @@ function timeoutReason(timeoutMs: number): DOMException {
   return new DOMException(`timed out after ${timeoutMs}ms`, 'TimeoutError');
 }
 
-const pendingDeadlines = new WeakMap<Request, () => void>();
+// Keep the signal available for typed error mapping even after releasing the
+// timer. Weak keys let completed requests (and their signals) be collected.
+const pendingRequests = new WeakMap<Request, Deadline>();
+const originalTransports = new WeakMap<object, typeof fetch>();
+
+function requestSignal(request: Request): AbortSignal {
+  return pendingRequests.get(request)?.signal ?? request.signal;
+}
 
 function releaseDeadline(request: Request | undefined): void {
-  if (!request) return;
-  const release = pendingDeadlines.get(request);
-  if (release) {
-    pendingDeadlines.delete(request);
-    release();
-  }
+  if (request) pendingRequests.get(request)?.release();
 }
 
 interface Deadline {

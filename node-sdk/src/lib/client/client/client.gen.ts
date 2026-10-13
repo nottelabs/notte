@@ -229,6 +229,11 @@ export const createClient = (config: Config = {}): Client => {
     const { opts, url } = await beforeRequest(options);
     return createSseClient({
       ...opts,
+      // Request interceptors can replace fetch when the stream starts.
+      fetch: (input, init) => {
+        const transport = opts.fetch!;
+        return transport(input, init);
+      },
       body: opts.body as BodyInit | null | undefined,
       method,
       onRequest: async (url, init) => {
