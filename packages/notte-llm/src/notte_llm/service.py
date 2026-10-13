@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any
 
 import tiktoken
-from litellm import ModelResponse  # type: ignore[import]
+from litellm import ModelResponse
 from llamux import Router  # type: ignore[import]
 from notte_core.common.config import LlmModel, PerceptionType, config
 from notte_core.common.logging import logger

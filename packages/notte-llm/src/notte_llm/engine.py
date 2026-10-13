@@ -570,7 +570,7 @@ class LLMEngine:
             n=1,
             response_format=response_format,
         )
-        return response.choices[0].message.content  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
+        return response.choices[0].message.content
 
     def _get_model(self, model: str | None) -> str:
         model = model or self.model
@@ -610,7 +610,7 @@ class LLMEngine:
         # Only send extra_body when set: recent litellm forwards an empty one to Anthropic, which rejects it.
         extra_kwargs: dict[str, Any] = {"extra_body": extra_body} if extra_body else {}
         try:
-            response = await litellm.acompletion(  # pyright: ignore [reportUnknownMemberType]
+            response = await litellm.acompletion(
                 model,
                 messages,
                 temperature=temperature,
