@@ -14,7 +14,7 @@ requires-python = ">=3.11"
 dependencies = [
     "notte_core==2.0.0.dev0",
     "chevron>=0.14.0",
-    "google-auth>=2.39.0",
+    "google-auth>=2.60.0",
     "json-repair>=0.57.1",
     "litellm>=1.74.12",
     "openai<3.24.0",

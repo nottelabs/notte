@@ -42,7 +42,7 @@ packages = ["src/notte"]
 
 dev = [
     "aiomultiprocess>=0.9.1",
-    "basedpyright>=1.27.1",
+    "basedpyright>=1.40.2",
     "cloudpickle>=3.1.1",
     "freezegun>=1.5.2",
     "halo>=0.0.28",
@@ -51,7 +51,7 @@ dev = [
     "lxml-stubs>=0.5.1",
     "pandas",
     "pandas-stubs>=2.2.3.250308",
-    "pebble>=5.1.1",
+    "pebble>=5.2.3",
     "pre-commit>=4.1.0",
     "pytest>=8.3.4",
     "pytest-asyncio>=0.25.3",
