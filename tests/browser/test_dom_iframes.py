@@ -9,7 +9,8 @@ from collections.abc import AsyncIterator, Callable, Iterator
 
 import pytest
 import pytest_asyncio
-from notte_browser.dom.parsing import FRAME_EVALUATION_ATTEMPTS, ParseDomTreePipe
+from notte_browser.dom import parsing
+from notte_browser.dom.parsing import FRAME_EVALUATION_ATTEMPTS
 from notte_browser.playwright_async_api import ElementHandle, Error, Frame
 from notte_browser.resolution import NodeResolutionPipe, SelectorGenerator, set_selector_generator
 from notte_browser.session import NotteSession
@@ -188,16 +189,16 @@ async def test_hidden_and_body_less_iframes_are_skipped(session: NotteSession) -
 async def test_a_frame_that_fails_to_evaluate_is_skipped(
     session: NotteSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    evaluate = ParseDomTreePipe._evaluate  # pyright: ignore[reportPrivateUsage]
+    evaluate = parsing._evaluate  # pyright: ignore[reportPrivateUsage]
     attempts: list[str] = []
 
-    async def failing_evaluate(self: ParseDomTreePipe, frame: Frame, js_code: str, args: dict[str, object]):
+    async def failing_evaluate(frame: Frame, js_code: str, args: dict[str, object]):
         if frame.url == BROKEN:
             attempts.append(frame.url)
             raise Error("Execution context was destroyed")
-        return await evaluate(self, frame, js_code, args)  # pyright: ignore[reportArgumentType]
+        return await evaluate(frame, js_code, args)  # pyright: ignore[reportArgumentType]
 
-    monkeypatch.setattr(ParseDomTreePipe, "_evaluate", failing_evaluate)
+    monkeypatch.setattr(parsing, "_evaluate", failing_evaluate)
     obs = await session.aobserve()
 
     labels = _labels(obs)

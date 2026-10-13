@@ -32,7 +32,7 @@ from notte_core.utils.url import is_valid_url
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from typing_extensions import override
 
-from notte_browser.dom.parsing import dom_tree_parsers
+from notte_browser.dom.parsing import parse_dom
 from notte_browser.errors import (
     BrowserExpiredError,
     EmptyPageContentError,
@@ -502,8 +502,7 @@ class BrowserWindow(BaseModel):
             if skip_dom:
                 dom_node = DomNode.empty_root()
             else:
-                dom_tree_pipe = dom_tree_parsers["default"]
-                dom_node = await dom_tree_pipe.forward(self.page)
+                dom_node = await parse_dom(self.page)
 
         except SnapshotProcessingError:
             await self.long_wait()
