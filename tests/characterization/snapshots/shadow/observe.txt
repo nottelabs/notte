@@ -1,0 +1,8 @@
+### Content of 'WebArea' component with text 'body content'
+B1[:]<button>Light button</button>
+B2[:]<button>Shadow button</button>
+I1[:]<input aria_label="Shadow input"></input>
+B3[:]<button>Nested shadow button</button>
+I2[:]<input aria_label="Nested shadow input"></input>
+B4[:]<input type="checkbox"></input>
+_[:]Nested shadow checkbox

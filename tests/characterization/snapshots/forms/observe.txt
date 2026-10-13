@@ -1,0 +1,23 @@
+### Content of 'WebArea' component with text 'body content'
+_[:]Account form
+_[:]Full name
+I1[:]<input type="text"></input>
+I2[:]<input type="email" placeholder="email@example.test" aria_label="Email address"></input>
+I3[:]<input type="password" aria_label="Account password"></input>
+I4[:]<textarea placeholder="Notes for delivery"></textarea>
+_[:]Country
+I5[:]<select>Alpha
+Beta</select>
+B1[:]<input type="checkbox"></input>
+_[:]Accept terms
+B2[:]<input type="radio" value="basic" name="plan"></input>
+_[:]Basic plan
+B3[:]<input type="radio" value="pro" name="plan"></input>
+_[:]Pro plan
+I6[:]<div role="textbox" aria_label="Rich notes">Initial notes</div>
+_[:]Disabled submit
+B4[:]<button type="button" title="Save the complete account form including delivery preference...">Save
+account</button>
+B5[:]<button type="button" aria_label="Help">?</button>
+L1[:]<a href="#details">Read
+details</a>

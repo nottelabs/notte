@@ -1,0 +1,307 @@
+[
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.crateandbarrel.com/\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.crateandbarrel.com/\"></a>",
+      "id": "L1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(1) > div > a[href=\"https://www.crateandbarrel.com/\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/crate_and_barrel.html:4527775504046182633:3609651542926669075:-1206399714643329741:-7785470383901919982:5529474873383931644:-7682068369985133280:1108398224465509891:1782099824378294590:-7045602460388330057:1825176392495610603:-8932617201097065611:4428677674568622727:-1760296792674588552:-1041257323732670575:3326913987254299392:-7302084205361106917:7911029094901501141:-1518217014747751327:-280879351965153325:-3397857911702943464:5857878101177549376:5491022990179728749:-1933179072448364519:-7123500462659356426:1146914315287719567:6173214226496005596:-1152305347253115480:8173779323703651896",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[1]/div/a"
+      },
+      "text_label": "Crate and Barrel",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<span>1</span>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<span>1</span>",
+      "id": "M1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(2) > nav > ul > li:nth-of-type(1) > a > span:nth-of-type(1)",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/crate_and_barrel.html:4527775504046182633:3609651542926669075:-1206399714643329741:-7785470383901919982:5529474873383931644:-7682068369985133280:1108398224465509891:1782099824378294590:-7045602460388330057:1825176392495610603:-8932617201097065611:4428677674568622727:-1760296792674588552:-1041257323732670575:3326913987254299392:-7302084205361106917:7911029094901501141:-1518217014747751327:-280879351965153325:-3397857911702943464:5857878101177549376:5491022990179728749:3254167668933799077:-8622756958812167887:6984271032795734894:-8875880477738613767:945846309203794278:-3836179675727368489:3811179111755487403:-4980005866680930164:-8063876935846448406:3700855810869850060:7902113899426631386:-7320437561289451972",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[2]/nav/ul/li[1]/a/span[1]"
+      },
+      "text_label": "1",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<span>Shipping and Gift Options</span>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<span>Shipping and Gift Options</span>",
+      "id": "M2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(2) > nav > ul > li:nth-of-type(1) > a > span:nth-of-type(2)",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/crate_and_barrel.html:4527775504046182633:3609651542926669075:-1206399714643329741:-7785470383901919982:5529474873383931644:-7682068369985133280:1108398224465509891:1782099824378294590:-7045602460388330057:1825176392495610603:-8932617201097065611:4428677674568622727:-1760296792674588552:-1041257323732670575:3326913987254299392:-7302084205361106917:7911029094901501141:-1518217014747751327:-280879351965153325:-3397857911702943464:5857878101177549376:5491022990179728749:3254167668933799077:-8622756958812167887:6984271032795734894:-8875880477738613767:945846309203794278:-3836179675727368489:3811179111755487403:-4980005866680930164:-8063876935846448406:3700855810869850060:-7153954189998056629:-3236197085009489481",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[2]/nav/ul/li[1]/a/span[2]"
+      },
+      "text_label": "Shipping and Gift Options",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" name=\"FirstName\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" name=\"FirstName\"></input>",
+      "id": "I1",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div:nth-of-type(1) > fieldset > div:nth-of-type(1) > input.input-md.input-validation-valid[aria-describedby=\"FirstNameError\"][autocomplete=\"shipping given-name\"][id=\"FirstName\"][name=\"FirstName\"][type=\"text\"][data-testid=\"input-shipping-first-name\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/crate_and_barrel.html:4527775504046182633:3609651542926669075:-1206399714643329741:-7785470383901919982:5529474873383931644:-7682068369985133280:1108398224465509891:1782099824378294590:-7045602460388330057:1825176392495610603:-8932617201097065611:4428677674568622727:-1760296792674588552:-1041257323732670575:3326913987254299392:-7302084205361106917:7911029094901501141:-1518217014747751327:-280879351965153325:-3397857911702943464:5857878101177549376:5491022990179728749:6344566528334754341:-8509659547790589264:-7553923453352046752:3640197764251390994:-7371985938610676012:-1480025880386635659:751045723360224879:4580740543551738914:-6947927035961592509:4726053549673241272:-3583608382265751855:9125404295402231800:982613248827503024:5440602547309744917",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[3]/div/div/div[1]/fieldset/div[1]/input"
+      },
+      "text_label": "FirstName",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" name=\"LastName\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" name=\"LastName\"></input>",
+      "id": "I2",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div:nth-of-type(1) > fieldset > div:nth-of-type(2) > input.input-md.input-validation-valid[aria-describedby=\"LastNameError\"][autocomplete=\"shipping family-name\"][id=\"LastName\"][name=\"LastName\"][type=\"text\"][data-testid=\"input-shipping-last-name\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/crate_and_barrel.html:4527775504046182633:3609651542926669075:-1206399714643329741:-7785470383901919982:5529474873383931644:-7682068369985133280:1108398224465509891:1782099824378294590:-7045602460388330057:1825176392495610603:-8932617201097065611:4428677674568622727:-1760296792674588552:-1041257323732670575:3326913987254299392:-7302084205361106917:7911029094901501141:-1518217014747751327:-280879351965153325:-3397857911702943464:5857878101177549376:5491022990179728749:6344566528334754341:-8509659547790589264:-7553923453352046752:3640197764251390994:-7371985938610676012:-1480025880386635659:751045723360224879:4580740543551738914:-6947927035961592509:4726053549673241272:-7949712784216175160:-5495082423685734638:-5127452817438586988:6110548355578311921",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[3]/div/div/div[1]/fieldset/div[2]/input"
+      },
+      "text_label": "LastName",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"Address1\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"Address1\"></input>",
+      "id": "I3",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div:nth-of-type(1) > fieldset > div:nth-of-type(3) > input.input-md.input-validation-valid.pac-target-input[aria-describedby=\"Address1Error\"][autocomplete=\"shipping address-line1\"][id=\"Address1\"][name=\"Address1\"][type=\"text\"][placeholder][data-testid=\"input-shipping-address1\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/crate_and_barrel.html:4527775504046182633:3609651542926669075:-1206399714643329741:-7785470383901919982:5529474873383931644:-7682068369985133280:1108398224465509891:1782099824378294590:-7045602460388330057:1825176392495610603:-8932617201097065611:4428677674568622727:-1760296792674588552:-1041257323732670575:3326913987254299392:-7302084205361106917:7911029094901501141:-1518217014747751327:-280879351965153325:-3397857911702943464:5857878101177549376:5491022990179728749:6344566528334754341:-8509659547790589264:-7553923453352046752:3640197764251390994:-7371985938610676012:-1480025880386635659:751045723360224879:4580740543551738914:-6947927035961592509:4726053549673241272:2998974098950637501:-4798374977023508089:9165744979628682482:1106443523567081295",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[3]/div/div/div[1]/fieldset/div[3]/input"
+      },
+      "text_label": "Address1",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\"></button>",
+      "id": "B1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div:nth-of-type(1) > fieldset > div:nth-of-type(4) > button.extended-address-toggle-button.button-transparent[type=\"button\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/crate_and_barrel.html:4527775504046182633:3609651542926669075:-1206399714643329741:-7785470383901919982:5529474873383931644:-7682068369985133280:1108398224465509891:1782099824378294590:-7045602460388330057:1825176392495610603:-8932617201097065611:4428677674568622727:-1760296792674588552:-1041257323732670575:3326913987254299392:-7302084205361106917:7911029094901501141:-1518217014747751327:-280879351965153325:-3397857911702943464:5857878101177549376:5491022990179728749:6344566528334754341:-8509659547790589264:-7553923453352046752:3640197764251390994:-7371985938610676012:-1480025880386635659:751045723360224879:4580740543551738914:-6947927035961592509:4726053549673241272:-4982317504433235775:3139227427463573723:6128595379956344326:3075012409510588265",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[3]/div/div/div[1]/fieldset/div[4]/button"
+      },
+      "text_label": "Add apt, suite or other optional",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" name=\"zipCode\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" name=\"zipCode\"></input>",
+      "id": "I4",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div:nth-of-type(1) > fieldset > div:nth-of-type(5) > input.input-md.jsZip.input-validation-valid[aria-describedby=\"ZipCodeError\"][autocomplete=\"shipping postal-code\"][id=\"ZipCode\"][name=\"zipCode\"][type=\"text\"][data-testid=\"input-shipping-zip-code\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/crate_and_barrel.html:4527775504046182633:3609651542926669075:-1206399714643329741:-7785470383901919982:5529474873383931644:-7682068369985133280:1108398224465509891:1782099824378294590:-7045602460388330057:1825176392495610603:-8932617201097065611:4428677674568622727:-1760296792674588552:-1041257323732670575:3326913987254299392:-7302084205361106917:7911029094901501141:-1518217014747751327:-280879351965153325:-3397857911702943464:5857878101177549376:5491022990179728749:6344566528334754341:-8509659547790589264:-7553923453352046752:3640197764251390994:-7371985938610676012:-1480025880386635659:751045723360224879:4580740543551738914:-6947927035961592509:4726053549673241272:-1938612370423953132:5130782357886004648:-4923472397717626758:6798369012946880848",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[3]/div/div/div[1]/fieldset/div[5]/input"
+      },
+      "text_label": "zipCode",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" name=\"City\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" name=\"City\"></input>",
+      "id": "I5",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div:nth-of-type(1) > fieldset > div:nth-of-type(6) > div:nth-of-type(1) > input.input-md.input-validation-valid[aria-describedby=\"CityError\"][autocomplete=\"shipping address-city\"][id=\"City\"][name=\"City\"][type=\"text\"][data-testid=\"input-shipping-city\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/crate_and_barrel.html:4527775504046182633:3609651542926669075:-1206399714643329741:-7785470383901919982:5529474873383931644:-7682068369985133280:1108398224465509891:1782099824378294590:-7045602460388330057:1825176392495610603:-8932617201097065611:4428677674568622727:-1760296792674588552:-1041257323732670575:3326913987254299392:-7302084205361106917:7911029094901501141:-1518217014747751327:-280879351965153325:-3397857911702943464:5857878101177549376:5491022990179728749:6344566528334754341:-8509659547790589264:-7553923453352046752:3640197764251390994:-7371985938610676012:-1480025880386635659:751045723360224879:4580740543551738914:-6947927035961592509:4726053549673241272:8624161263135851234:7097663857892409558:8260809555624533162:305920937965844510:2010867914492462772:4498879986345278283",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[3]/div/div/div[1]/fieldset/div[6]/div[1]/input"
+      },
+      "text_label": "City",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<select name=\"State\"></select>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<select name=\"State\"></select>",
+      "id": "I6",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div:nth-of-type(1) > fieldset > div:nth-of-type(6) > div:nth-of-type(2) > select.select-md.width200.jsState.input-validation-valid[aria-describedby=\"StateError\"][id=\"State\"][name=\"State\"][data-testid=\"input-shipping-state\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/crate_and_barrel.html:4527775504046182633:3609651542926669075:-1206399714643329741:-7785470383901919982:5529474873383931644:-7682068369985133280:1108398224465509891:1782099824378294590:-7045602460388330057:1825176392495610603:-8932617201097065611:4428677674568622727:-1760296792674588552:-1041257323732670575:3326913987254299392:-7302084205361106917:7911029094901501141:-1518217014747751327:-280879351965153325:-3397857911702943464:5857878101177549376:5491022990179728749:6344566528334754341:-8509659547790589264:-7553923453352046752:3640197764251390994:-7371985938610676012:-1480025880386635659:751045723360224879:4580740543551738914:-6947927035961592509:4726053549673241272:8624161263135851234:7097663857892409558:7007567488789534424:-9108219939630077573:-4668698432756941912:847369321836424990",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[3]/div/div/div[1]/fieldset/div[6]/div[2]/select"
+      },
+      "text_label": "Please Select Alabama Alaska Arizona Arkansas California Colorado Connecticut Delaware District of Columbia Florida Georgia Hawaii Idaho Illinois Indiana Iowa Kansas Kentucky Louisiana Maine Maryland Massachusetts Michigan Minnesota Mississippi Missouri Montana Nebraska Nevada New Hampshire New Jersey New Mexico New York North Carolina North Dakota Ohio Oklahoma Oregon Pennsylvania Rhode Island South Carolina South Dakota Tennessee Texas Utah Vermont Virginia Washington West Virginia Wisconsin Wyoming American Samoa Federal States of Micronesia Guam Marshall Islands Northern Mariana Islands Palau Puerto Rico Virgin Islands AA (Military) AE (Military) AP (Military)",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.crateandbarrel.com/checkout/cart\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.crateandbarrel.com/checkout/cart\"></a>",
+      "id": "L2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > a.button-edit-cart[href=\"https://www.crateandbarrel.com/checkout/cart\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/crate_and_barrel.html:4527775504046182633:3609651542926669075:-1206399714643329741:-7785470383901919982:5529474873383931644:-7682068369985133280:1108398224465509891:1782099824378294590:-7045602460388330057:1825176392495610603:-8932617201097065611:4428677674568622727:-1760296792674588552:-1041257323732670575:3326913987254299392:-7302084205361106917:7911029094901501141:-1518217014747751327:4128771259487926917:-7386155705321279396:8227300945535761680:-8328881641428181034:-7129511972416436345:-7271577358185318627:7838324231783143582:839544238706021012:-9013893528207955355:2799060049612598469",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[2]/div/div/div[1]/a"
+      },
+      "text_label": "Edit cart",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  }
+]

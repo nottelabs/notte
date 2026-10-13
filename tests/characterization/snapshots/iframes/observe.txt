@@ -1,0 +1,6 @@
+### Content of 'WebArea' component with text 'body content'
+B1[:]<button>Main button</button>
+B2[:]<button>Frame button</button>
+I1[:]<input aria_label="Frame input"></input>
+B3[:]<button>Nested frame button</button>
+I2[:]<input aria_label="Nested frame input"></input>
