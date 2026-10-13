@@ -441,6 +441,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [debugTabInfo](https://docs.notte.cc/typescript-sdk-reference/session/debugtabinfo.md)
 - [cdpUrl](https://docs.notte.cc/typescript-sdk-reference/session/cdpurl.md)
 - [page](https://docs.notte.cc/typescript-sdk-reference/session/page.md)
+- [reconnect](https://docs.notte.cc/typescript-sdk-reference/session/reconnect.md)
 - [getScript](https://docs.notte.cc/typescript-sdk-reference/session/getscript.md)
 - [evaluateJs](https://docs.notte.cc/typescript-sdk-reference/session/evaluatejs.md)
 - [fetch](https://docs.notte.cc/typescript-sdk-reference/session/fetch.md)
