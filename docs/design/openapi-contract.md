@@ -16,8 +16,8 @@ notte_core.types ──► notte-api (FastAPI) ──► openapi.json ──► 
 - **notte-api** imports these models for its endpoints, and FastAPI renders them into
   `openapi.json`. The API changes a model by changing it in notte (the backend's daily
   dependency bump picks it up), never by subclassing or redeclaring it locally.
-- **The Python SDK** uses the same classes, so it can't drift from the API. Nothing is
-  generated for Python. `notte_sdk.types` stays a public re-export, so imports keep working.
+- **The Python SDK** uses the same classes, so it can't drift from the API. No models are
+  generated for Python; its endpoint layer is (see [sdk-generated-endpoints.md](sdk-generated-endpoints.md)). `notte_sdk.types` stays a public re-export, so imports keep working.
 - **The Node SDK** is generated from `openapi.json`, as today.
 - **A contract check** catches the remaining drift: the API extending or redeclaring a
   model instead of changing it here.
@@ -51,6 +51,7 @@ spec) would mean rewriting those backend modules and maintaining a Python code g
 | Staging refresh | `.github/workflows/openapi-bump.yml`, 3x/day like bump-node-sdk: fetch the staging spec, open or refresh `chore/bump-openapi`, and auto-merge once checks pass. When the API drifted, the PR's contract check fails and the PR stays open |
 | Release gate | `make openapi-check-prod` in `pypi-release.yml`: run the contract check against `https://api.notte.cc` before publishing |
 | Make targets | `make openapi-check`, `make openapi-fetch [OPENAPI_URL=...]`, `make openapi-check-prod`; `--update-baseline` records drift on purpose |
+| Python SDK endpoints | `scripts/generate_sdk_endpoints.py` generates `notte_sdk/_generated/endpoints.py` (endpoints only, bound to these models by schema name) from the same snapshot; see [sdk-generated-endpoints.md](sdk-generated-endpoints.md) |
 
 ## Developer loop
 
