@@ -11,23 +11,23 @@
 	path = templates
 	url = https://github.com/nottelabs/templates.git
 [submodule "claude-managed-agents"]
-	path = claude-managed-agents
+	path = integrations/claude-managed-agents
 	url = https://github.com/nottelabs/claude-managed-agents.git
 [submodule "notte-jevmaxxing"]
-	path = notte-jevmaxxing
+	path = integrations/notte-jevmaxxing
 	url = https://github.com/nottelabs/notte-jevmaxxing.git
 [submodule "live-view-embedding"]
-	path = live-view-embedding
+	path = example-apps/live-view-embedding
 	url = https://github.com/nottelabs/live-view-embedding.git
 [submodule "notte-research-agent"]
-	path = notte-research-agent
+	path = example-apps/notte-research-agent
 	url = https://github.com/nottelabs/notte-research-agent.git
 [submodule "n8n-nodes-notte"]
-	path = n8n-nodes-notte
+	path = integrations/n8n-nodes-notte
 	url = https://github.com/nottelabs/n8n-nodes-notte.git
 [submodule "notte-iframe-demo"]
-	path = notte-iframe-demo
+	path = example-apps/notte-iframe-demo
 	url = https://github.com/nottelabs/notte-iframe-demo.git
 [submodule "notte-langchain"]
-	path = notte-langchain
+	path = integrations/notte-langchain
 	url = https://github.com/nottelabs/notte-langchain.git
