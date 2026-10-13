@@ -242,3 +242,52 @@ def test_only_cached_page_close_is_a_warning(monkeypatch: pytest.MonkeyPatch) ->
     closes = [call for call in log_event.call_args_list if call.args[0] == "sdk_playwright_page_closed"]
     assert [call.kwargs["observed_page"] for call in closes] == [other_page, page]
     assert [call.kwargs["level"] for call in closes] == ["info", "warning"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("use_async", [False, True])
+async def test_context_exit_snapshots_state_before_closing_browser(use_async: bool) -> None:
+    session = _bare_session()
+    browser, _context, page = _browser_with_page()
+    if use_async:
+        browser.close = AsyncMock()
+        session._async_playwright_browser = browser
+        session._async_playwright_page = page
+    else:
+        session._playwright_browser = browser
+        session._playwright_page = page
+    session.stop = MagicMock()
+    order: list[str] = []
+    session._log_playwright_event = MagicMock(side_effect=lambda event, **_: order.append(event))
+    browser.close.side_effect = lambda: order.append("browser_closed")
+
+    if use_async:
+        await session.__aexit__(None, None, None)
+    else:
+        session.__exit__(None, None, None)
+
+    assert order == ["sdk_playwright_session_stop_requested", "browser_closed"]
+    assert session._playwright_cleanup_in_progress is True
+
+
+def test_failed_stop_keeps_reporting_failures_as_warnings() -> None:
+    session = _bare_session()
+    session._cookie_file = None
+    session.client = MagicMock()
+    session.client.stop.side_effect = RuntimeError("network down")
+
+    with pytest.raises(RuntimeError, match="network down"):
+        session.stop()
+
+    assert session._playwright_cleanup_in_progress is False
+
+
+def test_already_stopped_session_counts_as_cleanup() -> None:
+    session = _bare_session()
+    session._cookie_file = None
+    session.client = MagicMock()
+    session.client.stop.side_effect = RuntimeError("Session already stopped")
+
+    session.stop()
+
+    assert session._playwright_cleanup_in_progress is True

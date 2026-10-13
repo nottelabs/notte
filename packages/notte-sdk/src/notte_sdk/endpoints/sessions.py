@@ -963,6 +963,19 @@ class RemoteSession(SyncResource):
             f"[Session Playwright] {event}: session={self._playwright_session_id()} state={details}"
         )
 
+    def _log_playwright_stop_requested(self) -> None:
+        """Snapshot Playwright state before the SDK starts its own cleanup."""
+        browser = self._playwright_browser or self._async_playwright_browser
+        cached_page = self._playwright_page or self._async_playwright_page
+        if browser is not None:
+            self._log_playwright_event(
+                "sdk_playwright_session_stop_requested",
+                browser=browser,
+                cached_page=cached_page,
+                level="info",
+            )
+        self._playwright_cleanup_in_progress = True
+
     def _log_unhealthy_cached_playwright_page(self, browser: Any, page: Any) -> None:
         state = self._playwright_state(browser, page)
         page_state = self._playwright_page_state(page)
@@ -1088,7 +1101,7 @@ class RemoteSession(SyncResource):
         if exc_val is not None:
             logger.warning(f"Session exiting because of exception: {exc_val}")
 
-        self._playwright_cleanup_in_progress = True
+        self._log_playwright_stop_requested()
         # Clean up sync playwright resources. A dead local driver must not keep the remote browser
         # running, nor replace the block's own exception: log it and stop the session anyway.
         # The browser and the driver are closed separately: a failed close must not leak the driver.
@@ -1257,16 +1270,8 @@ class RemoteSession(SyncResource):
             ValueError: If the session hasn't been started (no session_id available).
             RuntimeError: If the session fails to close properly.
         """
-        self._playwright_cleanup_in_progress = True
-        browser = self._playwright_browser or self._async_playwright_browser
-        cached_page = self._playwright_page or self._async_playwright_page
-        if browser is not None:
-            self._log_playwright_event(
-                "sdk_playwright_session_stop_requested",
-                browser=browser,
-                cached_page=cached_page,
-                level="info",
-            )
+        cleanup_was_in_progress = self._playwright_cleanup_in_progress
+        self._log_playwright_stop_requested()
         if self._cookie_file is not None:
             try:
                 cookies = self.get_cookies()
@@ -1279,6 +1284,8 @@ class RemoteSession(SyncResource):
             if _already_stopped(e):
                 logger.warning(f"Session {self.session_id} was already stopped")
             else:
+                # The session may still be alive: keep reporting its failures as warnings.
+                self._playwright_cleanup_in_progress = cleanup_was_in_progress
                 raise
 
     @override

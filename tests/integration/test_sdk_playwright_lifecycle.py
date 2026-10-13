@@ -81,8 +81,9 @@ def test_playwright_lifecycle_is_logged_against_real_browser(
     before_exit = len(lifecycle_logs)
     session.__exit__(None, None, None)
     events = _events(lifecycle_logs[before_exit:])
-    assert ("DEBUG", "sdk_playwright_browser_disconnected") in events
-    assert all(level == "DEBUG" for level, _ in events)
+    assert events[0] == ("INFO", "sdk_playwright_session_stop_requested")
+    assert ("DEBUG", "sdk_playwright_browser_disconnected") in events[1:]
+    assert all(level == "DEBUG" for level, _ in events[1:])
     session.stop.assert_called_once_with(close_reason="manual")
 
     assert any(html.as_uri() in message for _, message in lifecycle_logs)

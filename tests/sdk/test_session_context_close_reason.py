@@ -14,6 +14,9 @@ def _bare_session() -> RemoteSession:
     session._async_playwright_browser = None
     session._async_playwright_context = None
     session._async_playwright_page = None
+    session._playwright_connection_generation = 0
+    session._playwright_cleanup_in_progress = False
+    session.response = MagicMock(session_id="session-id")
     session.stop = MagicMock()
     return session
 
@@ -39,7 +42,8 @@ def test_sync_context_exception_stops_session_as_error() -> None:
 @pytest.mark.asyncio
 async def test_async_context_exception_stops_session_as_error() -> None:
     session = _bare_session()
-    browser = AsyncMock()
+    browser = MagicMock(contexts=[])
+    browser.close = AsyncMock()
     session._async_playwright_browser = browser
 
     await session.__aexit__(RuntimeError, RuntimeError("callback failed"), None)
