@@ -1345,5 +1345,8 @@
 	// Clear the cache before starting
 	DOM_CACHE.clearCache();
 
-	return ELEMENTS ? { rootId, map: DOM_HASH_MAP, elements: ELEMENTS } : { rootId, map: DOM_HASH_MAP };
+	// The payload is returned as a JSON string: transferring one string is much faster than letting
+	// Playwright serialise the node map value by value.
+	const payload = JSON.stringify({ rootId, map: DOM_HASH_MAP });
+	return ELEMENTS ? { payload, elements: ELEMENTS } : payload;
 };
