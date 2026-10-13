@@ -29,8 +29,8 @@ SETUP_COMMAND = re.compile(
 )
 
 
-def blocks(langs: set[str]) -> list[tuple[int, str]]:
-    text = README.read_text()
+def blocks(readme: Path, langs: set[str]) -> list[tuple[int, str]]:
+    text = readme.read_text()
     found: list[tuple[int, str]] = []
     for match in FENCE.finditer(text):
         if match.group(1).lower() in langs:
@@ -39,14 +39,14 @@ def blocks(langs: set[str]) -> list[tuple[int, str]]:
     return found
 
 
-def extract() -> None:
-    TS_OUT.mkdir(parents=True, exist_ok=True)
-    for old in TS_OUT.glob("*.mts"):
+def extract(readme: Path, out: Path) -> list[str]:
+    out.mkdir(parents=True, exist_ok=True)
+    for old in out.glob("*.mts"):
         old.unlink()
     files: list[str] = []
-    for line, code in blocks(TS_LANGS):
+    for line, code in blocks(readme, TS_LANGS):
         name = f"readme_L{line}.mts"
-        _ = (TS_OUT / name).write_text(code)
+        _ = (out / name).write_text(code)
         files.append(name)
     tsconfig = {
         "compilerOptions": {
@@ -62,47 +62,74 @@ def extract() -> None:
         },
         "files": files,
     }
-    _ = (TS_OUT / "tsconfig.json").write_text(json.dumps(tsconfig, indent=2) + "\n")
-    print(f"Extracted {len(files)} TypeScript block(s) to {TS_OUT.relative_to(ROOT)}")
+    _ = (out / "tsconfig.json").write_text(json.dumps(tsconfig, indent=2) + "\n")
+    return files
 
 
-def check() -> None:
-    failures = 0
-    python_blocks = blocks(PY_LANGS)
-    for line, code in python_blocks:
+def syntax_errors(readme: Path) -> list[str]:
+    errors: list[str] = []
+    for line, code in blocks(readme, PY_LANGS):
         try:
-            _ = compile(code, f"README.md:{line}", "exec")
+            _ = compile(code, f"{readme.name}:{line}", "exec")
         except SyntaxError as e:
-            failures += 1
-            print(f"README.md:{line}: Python syntax error: {e}", file=sys.stderr)
-    shell_blocks = blocks(SHELL_LANGS)
-    for line, code in shell_blocks:
+            errors.append(f"{readme.name}:{line}: Python syntax error: {e}")
+    for line, code in blocks(readme, SHELL_LANGS):
         with tempfile.NamedTemporaryFile("w", suffix=".sh") as f:
             _ = f.write(code)
             f.flush()
             result = subprocess.run(["bash", "-n", f.name], check=False, capture_output=True, text=True)
         if result.returncode != 0:
-            failures += 1
-            print(f"README.md:{line}: shell syntax error: {result.stderr.strip()}", file=sys.stderr)
-    if failures:
-        sys.exit(1)
-    print(f"Syntax-checked {len(python_blocks)} Python and {len(shell_blocks)} shell block(s)")
+            errors.append(f"{readme.name}:{line}: shell syntax error: {result.stderr.strip()}")
+    return errors
 
 
-def setup_commands() -> None:
+def shell_commands(code: str) -> list[str]:
+    """Split a shell block into commands, joining backslash-continued lines and dropping comments."""
+    commands: list[str] = []
+    current = ""
+    for raw in code.splitlines():
+        line = raw.split(" #", 1)[0].rstrip() if not raw.lstrip().startswith("#") else ""
+        if line.endswith("\\"):
+            current += line[:-1].strip() + " "
+            continue
+        command = (current + line.strip()).strip()
+        current = ""
+        if command:
+            commands.append(command)
+    if current.strip():
+        commands.append(current.strip())
+    return commands
+
+
+def setup_commands(readme: Path) -> list[str]:
     # Unlabeled fences are included: install snippets are often written without a language.
-    for _, code in blocks(SHELL_LANGS | {""}):
-        for raw in code.splitlines():
-            command = raw.split(" #", 1)[0].strip()
-            if SETUP_COMMAND.match(command):
-                print(command)
+    return [
+        command
+        for _, code in blocks(readme, SHELL_LANGS | {""})
+        for command in shell_commands(code)
+        if SETUP_COMMAND.match(command)
+    ]
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     _ = parser.add_argument("command", choices=["extract", "check", "setup-commands"])
+    _ = parser.add_argument("--readme", type=Path, default=README)
     args = parser.parse_args()
-    {"extract": extract, "check": check, "setup-commands": setup_commands}[args.command]()
+    readme: Path = args.readme
+    if args.command == "extract":
+        files = extract(readme, TS_OUT)
+        print(f"Extracted {len(files)} TypeScript block(s) to {TS_OUT.relative_to(ROOT)}")
+    elif args.command == "check":
+        errors = syntax_errors(readme)
+        for error in errors:
+            print(error, file=sys.stderr)
+        if errors:
+            sys.exit(1)
+        print(f"Syntax-checked Python and shell blocks in {readme.name}")
+    else:
+        for command in setup_commands(readme):
+            print(command)
 
 
 if __name__ == "__main__":
