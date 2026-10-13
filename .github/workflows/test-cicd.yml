@@ -82,7 +82,7 @@ jobs:
               docs/*) unit=true ;;
               # Covered by their own workflows (Node SDK, README check) or not code.
               node-sdk/*|.github/*|*.md|LICENSE) ;;
-              browserarena|notte-cli|notte-skills|templates|claude-managed-agents|notte-jevmaxxing) ;;
+              browserarena|notte-cli|notte-skills|templates|integrations/*|example-apps/*) ;;
               *) unit=true; live=true ;;
             esac
           done < <(git diff --name-only "$BASE_SHA"..."$HEAD_SHA")
