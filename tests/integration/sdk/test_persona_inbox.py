@@ -12,8 +12,6 @@ from notte_sdk.endpoints.personas import NottePersona
 
 import notte
 
-client = NotteClient()
-
 SMTP_SERVER_ENV = "SMTP_SERVER"
 SMTP_PORT_ENV = "SMTP_PORT"
 SMTP_USERNAME_ENV = "EMAIL_SENDER"
@@ -22,11 +20,19 @@ SMTP_STARTTLS_ENV = "SMTP_STARTTLS"
 EMAIL_READ_WINDOW = dt.timedelta(minutes=10)
 EMAIL_READ_TIMEOUT_S = 40.0
 EMAIL_READ_POLL_INTERVAL_S = 10.0
+# A long-lived persona on the staging test account.
+PERSONA_ID = "131a21e1-8c8e-4016-80b9-765c0ce4fb5c"
 
 
 @pytest.fixture
-def persona():
-    return client.Persona("131a21e1-8c8e-4016-80b9-765c0ce4fb5c")
+def client() -> NotteClient:
+    # Built per test, not at import, so collecting this module never calls the API.
+    return NotteClient()
+
+
+@pytest.fixture
+def persona(client: NotteClient) -> NottePersona:
+    return client.Persona(PERSONA_ID)
 
 
 def test_persona_emails(persona: NottePersona):
@@ -75,7 +81,7 @@ def _send_test_email(recipient: str, subject: str) -> str:
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=5)
-def test_signup_email_extraction():
+def test_signup_email_extraction(client: NotteClient):
     missing_env = [name for name in [SMTP_SERVER_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV] if not os.getenv(name)]
     if missing_env:
         pytest.skip(f"{', '.join(missing_env)} required")

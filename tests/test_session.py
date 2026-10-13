@@ -107,6 +107,7 @@ async def test_step_should_fail_without_observation() -> None:
             _ = await page.aexecute(ClickAction(id="L1"))
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_step_should_succeed_after_observation() -> None:
     """Test that step should fail without observation"""
@@ -116,6 +117,7 @@ async def test_step_should_succeed_after_observation() -> None:
         _ = await page.aexecute(ClickAction(id="L1"))
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_step_should_return_valid_timed_span() -> None:
     """Test that step should fail without observation"""
@@ -137,6 +139,7 @@ async def test_step_should_return_valid_timed_span() -> None:
         assert data.ended_at > data.started_at
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_browser_action_step_should_succeed_without_observation() -> None:
     """Test that step should fail without observation"""
@@ -150,6 +153,7 @@ async def test_browser_action_step_should_succeed_without_observation() -> None:
             _ = await page.aexecute(ScrollDownAction())
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action_id", ["INVALID_ACTION_ID", "B999", "X999"])
 async def test_step_with_invalid_action_id_returns_failed_result(action_id: str):
@@ -168,6 +172,7 @@ async def test_step_with_invalid_action_id_returns_failed_result(action_id: str)
         assert step_response.exception is not None
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_step_with_empty_action_id_should_fail_validation_pydantic():
     """Test that stepping with an invalid action ID returns a failed StepResult."""
@@ -228,6 +233,7 @@ def test_captcha_solver_not_available_error():
 # ============================================
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_execute_with_default_timeout() -> None:
     """Test that execute works with default timeout from config."""
@@ -243,6 +249,7 @@ async def test_execute_with_default_timeout() -> None:
         assert config.timeout_action_ms == 15000  # Verify default
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_execute_with_custom_timeout() -> None:
     """Test that execute accepts custom timeout parameter."""

@@ -71,6 +71,7 @@ def test_wait_until_stays_out_of_the_agent_schema() -> None:
     assert "wait_until" not in GotoAction(url="https://example.com", wait_until="commit").model_dump_agent()
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_goto_with_commit_is_enough_for_a_same_origin_fetch() -> None:
     async with NotteSession(headless=True) as session:

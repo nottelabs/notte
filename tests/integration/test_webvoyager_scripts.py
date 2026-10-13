@@ -4,6 +4,7 @@ from notte_core.actions import (
     ClickAction,
     FillAction,
     GotoAction,
+    PressKeyAction,
     ScrollDownAction,
     WaitAction,
 )
@@ -39,8 +40,11 @@ async def test_google_search():
             _ = await page.aexecute(ClickAction(id="B3"))
             _ = await page.aobserve()
         _ = await page.aexecute(FillAction(id="I1", value="test_query"))
-        _ = await page.aobserve()
-        _ = await page.aexecute(ClickAction(id="O2"))
+        # Submit with Enter rather than clicking an autocomplete suggestion: which suggestions
+        # Google shows, and so their ids, vary by region, experiment and timing.
+        _ = await page.aexecute(PressKeyAction(key="Enter"))
+        # A results page, or the bot check Google sometimes puts in front of it, both carry the query.
+        await page.window.page.wait_for_url(lambda url: "search" in url)
         _ = await page.aobserve()
 
 

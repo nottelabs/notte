@@ -44,5 +44,6 @@ async def _test_execution(test: ExecutionTest, headless: bool) -> None:
             _ = await page.aobserve()
 
 
+@pytest.mark.live
 def test_execution(phantombuster_login: ExecutionTest, headless: bool) -> None:
     asyncio.run(_test_execution(phantombuster_login, headless))

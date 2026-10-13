@@ -76,6 +76,13 @@ lint = [
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "session"
 testpaths = ["tests"]
+# A misspelt `live`/`staging` mark would silently put a network test back in the offline gate.
+addopts = ["--strict-markers"]
+markers = [
+    "staging: talks to the Notte API (needs NOTTE_API_KEY); runs in `make test-live`, not the offline unit gate",
+    "live: reaches third-party websites or LLM providers; runs in `make test-live`, not the offline unit gate",
+    "use_cli_args: parametrize the test from the pytest command line options (see tests/conftest.py)",
+]
 timeout = 300
 timeout_method = "thread"
 asyncio_mode = "strict"

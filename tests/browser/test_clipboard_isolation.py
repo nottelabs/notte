@@ -72,6 +72,7 @@ async def try_access_clipboard(page: NotteSession) -> str:
     return await page.window.page.evaluate("() => document.querySelector(\"textarea[name='q']\").value")
 
 
+@pytest.mark.live
 @pytest.mark.skip(reason="Skip on CICD because it's failing to often")
 @pytest.mark.asyncio
 async def test_clipboard_isolation():
