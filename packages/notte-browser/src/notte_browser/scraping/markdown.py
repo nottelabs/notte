@@ -7,7 +7,7 @@ import trafilatura
 from bs4 import BeautifulSoup
 from lxml import etree
 from lxml import html as lxml_html
-from markdownify import MarkdownConverter  # pyright: ignore [reportMissingTypeStubs]
+from markdownify import MarkdownConverter
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.logging import logger
 from notte_sdk.types import ScrapeParams
@@ -199,7 +199,7 @@ class VisibleMarkdownConverter(MarkdownConverter):
             if "display:none" in style.replace(" ", "") or "visibility:hidden" in style.replace(" ", ""):  # pyright: ignore [reportOptionalMemberAccess, reportAttributeAccessIssue]
                 element.decompose()
 
-        return super().convert_soup(soup)  # pyright: ignore [reportUnknownVariableType]
+        return super().convert_soup(soup)
 
 
 class MarkdownifyScrapingPipe:
@@ -216,7 +216,7 @@ class MarkdownifyScrapingPipe:
         if params.only_main_content:
             content = MainContentScrapingPipe.forward(snapshot, params)
         else:
-            content = converter.convert(snapshot.html_content)  # type: ignore[attr-defined]
+            content = converter.convert(snapshot.html_content)
 
         # Manually append iframe text so cross-origin frames remain readable.
         # Do not include iframes by default when a selector scopes the scrape.
@@ -228,9 +228,9 @@ class MarkdownifyScrapingPipe:
                 if iframe.url != window.page.url and not iframe.url.startswith("data:"):
                     try:
                         iframe_content = await iframe.content()
-                        content += f"\n\nIFRAME {iframe.url}:\n"  # type: ignore[attr-defined]
-                        content += converter.convert(iframe_content)  # type: ignore[attr-defined]
+                        content += f"\n\nIFRAME {iframe.url}:\n"
+                        content += converter.convert(iframe_content)
                     except PlaywrightError as error:
                         logger.warning(f"Failed to get iframe content for {iframe.url}: {error}")
 
-        return content  # type: ignore[return-value]
+        return content

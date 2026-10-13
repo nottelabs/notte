@@ -588,7 +588,7 @@ class LLMEngine:
             # The provider returned no candidates (e.g. an overloaded or filtered Gemini response).
             # Report it as empty content so structured_completion retries like any unusable reply.
             return None
-        return response.choices[0].message.content  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
+        return response.choices[0].message.content
 
     def _get_model(self, model: str | None) -> str:
         model = model or self.model
@@ -632,7 +632,7 @@ class LLMEngine:
         try:
             for attempt, retry_delay in enumerate((*_TRANSIENT_RETRY_DELAYS_SECONDS, None), start=1):
                 try:
-                    response = await litellm.acompletion(  # pyright: ignore [reportUnknownMemberType]
+                    response = await litellm.acompletion(
                         model,
                         messages,
                         temperature=temperature,

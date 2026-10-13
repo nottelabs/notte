@@ -47,9 +47,9 @@ class BaseActionListingPipe(ABC):
 
     async def llm_completion(self, prompt_id: str, variables: dict[str, Any]) -> str:
         response = await self.llmserve.completion(prompt_id, variables)
-        if response.choices[0].message.content is None:  # type: ignore
+        if response.choices[0].message.content is None:
             raise LLMnoOutputCompletionError()
-        return response.choices[0].message.content  # type: ignore
+        return response.choices[0].message.content
 
     @abstractmethod
     async def forward_incremental(

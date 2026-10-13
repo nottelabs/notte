@@ -1,6 +1,7 @@
 from typing import Any
 from unittest.mock import Mock, patch
 
+import litellm
 import pytest
 from litellm import BadRequestError, Message, ServiceUnavailableError
 from notte_core.errors.base import ErrorConfig
@@ -134,6 +135,32 @@ async def test_completion_maps_groq_gpt_oss_to_groq_model_id(llm_engine: LLMEngi
     ):
         await llm_engine.completion(messages=[Message(role="user", content="Hello")], model="groq/gpt-oss-120b")
     assert acompletion.call_args.args[0] == "groq/openai/gpt-oss-120b"
+
+
+class _Answer(BaseModel):
+    answer: str
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("model", ["openai/gpt-4o-mini", "anthropic/claude-sonnet-4-5-20250929"])
+async def test_structured_completion_parses_a_real_litellm_response(llm_engine: LLMEngine, model: str) -> None:
+    """Run the real litellm.acompletion (with a canned reply) so the engine's kwargs and response parsing
+    are checked against the installed litellm, not a Mock."""
+    real_acompletion = litellm.acompletion
+
+    async def canned(*args: Any, **kwargs: Any) -> Any:
+        return await real_acompletion(*args, mock_response='{"answer": "42"}', **kwargs)
+
+    with (
+        patch("notte_llm.engine.enable_openrouter", return_value=False),
+        patch("litellm.acompletion", side_effect=canned) as acompletion,
+    ):
+        result = await llm_engine.structured_completion(
+            messages=[Message(role="user", content="What is the answer?")], response_format=_Answer, model=model
+        )
+
+    assert result == _Answer(answer="42")
+    assert acompletion.await_count == 1
 
 
 class TestStructuredContent:
