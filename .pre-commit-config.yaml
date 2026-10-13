@@ -19,13 +19,14 @@ repos:
       - id: basedpyright
         args: ["--project", "."]
         verbose: true
-        exclude: ^(docs/src/|examples/|typing_cases/)
+        exclude: ^(docs/src/|examples/|typing_cases/|packages/notte-sdk/src/notte_sdk/_generated/models\.py$)
 
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250306_README\.md|README\.md||tests/data/.*|tests/golden/snapshots/.*|docs/src/.*)$
+        # Schema-name mappings such as SecretValueResponse are not credentials.
+        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250306_README\.md|README\.md|packages/notte-sdk/src/notte_sdk/_generated/schema_index\.json||tests/data/.*|tests/golden/snapshots/.*|docs/src/.*)$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -111,6 +112,12 @@ repos:
         entry: bash -c "uv run --no-sync python scripts/generate_action_overloads.py --check"
         language: system
         files: ^(packages/notte-core/src/notte_core/actions/.*|packages/notte-browser/src/notte_browser/session\.py|packages/notte-sdk/src/notte_sdk/endpoints/sessions\.py|scripts/generate_action_overloads\.py|\.pre-commit-config\.yaml)$
+      - id: sdk-codegen
+        name: Check SDK-owned models match the OpenAPI snapshot
+        entry: bash -c "uv run --no-sync python scripts/generate_sdk_models.py --check"
+        language: system
+        files: ^(openapi/.*|packages/notte-sdk/src/notte_sdk/_generated/(models\.py|schema_index\.json)|scripts/generate_sdk_models\.py|pyproject\.toml|uv\.lock|\.pre-commit-config\.yaml)$
+        pass_filenames: false
       - id: sdk-endpoints
         name: Check the generated SDK endpoints match the OpenAPI snapshot
         entry: bash -c "uv run --no-sync python scripts/generate_sdk_endpoints.py --check"

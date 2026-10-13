@@ -41,11 +41,15 @@ packages = ["src/notte"]
 [dependency-groups]
 
 dev = [
+    # SDK regeneration invokes the same pinned formatter as pre-commit.
+    { include-group = "lint" },
     # Local HTTP servers in the browser tests (aiohttp.web).
     "aiohttp>=3.11.13",
     "aiomultiprocess>=0.9.1",
     "basedpyright>=1.40.2",
     "cloudpickle>=3.1.1",
+    # Generates SDK-owned wire models from the committed OpenAPI snapshot.
+    "datamodel-code-generator==0.83.0",
     "freezegun>=1.5.2",
     "halo>=0.0.28",
     "joblib>=1.4.2",
@@ -74,7 +78,7 @@ dev = [
     "typer>=0.19.2",
 ]
 lint = [
-    "ruff>=0.9.7",
+    "ruff==0.11.10",
 ]
 
 [tool.pytest.ini_options]
@@ -120,6 +124,8 @@ extend-select = ["I"]
 
 [tool.basedpyright]
 exclude = [".venv", "uv-cache", "**/site-packages/**", "**/dist-packages/**", "tests", "typing_cases", "old", "notebook", "dist", ".github"]
+# Upstream-generated annotations are checked by import/schema tests; keep facade typing strict.
+ignore = ["packages/notte-sdk/src/notte_sdk/_generated/models.py"]
 enableTypeIgnoreComments = true
 reportIgnoreCommentWithoutRule = false
 failOnWarnings = true

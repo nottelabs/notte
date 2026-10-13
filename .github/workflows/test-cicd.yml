@@ -108,6 +108,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --dev --all-extras
 
+      - name: Check generated SDK models
+        run: make sdk-codegen-check
+
       - name: Install patchright
         if: steps.cache-patchright.outputs.cache-hit != 'true'
         run: |

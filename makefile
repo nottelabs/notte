@@ -206,3 +206,11 @@ sdk-endpoints:
 .PHONY: sdk-endpoints-check
 sdk-endpoints-check:
 	uv run --no-sync python scripts/generate_sdk_endpoints.py --check
+
+# SDK-owned models, side by side with the existing public API during migration.
+.PHONY: sdk-codegen sdk-codegen-check
+sdk-codegen:
+	uv run --no-sync python scripts/generate_sdk_models.py
+
+sdk-codegen-check:
+	uv run --no-sync python scripts/generate_sdk_models.py --check
