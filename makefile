@@ -3,13 +3,28 @@ ifneq ("$(wildcard .env)","")
   export $(shell sed 's/=.*//' .env)
 endif
 
+# The test selections below are the single source of truth: .github/workflows/test-cicd.yml runs
+# `make test-cicd` (the offline unit gate) and `make test-live` (Notte API + third-party sites).
+# Markers are declared in pyproject.toml; tests/integration/conftest.py marks that directory by path.
+# The README and examples suites run nightly (nightly-examples.yml), never in these targets.
+PYTEST_IGNORE := --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py
+PYTEST_UNIT := uv run pytest -n logical tests -m "not staging and not live" $(PYTEST_IGNORE)
+PYTEST_LIVE := uv run pytest -n logical tests -m "staging or live" $(PYTEST_IGNORE)
+
+# Offline: needs a local browser, no secrets and no network beyond localhost.
 .PHONY: test
 test:
-	@uv run pytest -n 3 tests
+	$(PYTEST_UNIT)
 
 .PHONY: test-cicd
 test-cicd:
-	uv run pytest -n 3 tests --ignore=tests/integration/test_webvoyager_scripts.py --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10
+	$(PYTEST_UNIT) --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages
+
+# Needs NOTTE_API_KEY (and NOTTE_API_URL for staging) plus internet access. Live sites are flaky by
+# nature, so failures are retried; tests with their own @pytest.mark.flaky keep their own count.
+.PHONY: test-live
+test-live:
+	$(PYTEST_LIVE) --reruns 2 --reruns-delay 5 --durations=10
 
 .PHONY: test-sdk
 test-sdk:

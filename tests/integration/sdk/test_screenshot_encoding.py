@@ -1,6 +1,10 @@
+import pytest
 from notte_sdk import NotteClient
 
 import notte
+
+# The local half drives a local browser to linkedin.com; the remote half (staging) does the same.
+pytestmark = pytest.mark.live
 
 
 def test_sdk_screenshots():

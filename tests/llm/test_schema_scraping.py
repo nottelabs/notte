@@ -155,6 +155,7 @@ async def test_schema_scraping_unmasks_root_model_list() -> None:
     assert [item.url for item in result.data.root] == ["https://example.com/a", "https://example.com/b"]
 
 
+@pytest.mark.live
 @pytest.mark.skipif("OPENAI_API_KEY" not in os.environ, reason="requires OPENAI_API_KEY")
 @pytest.mark.asyncio
 async def test_schema_scraping_root_model_list_with_real_llm_round_trip() -> None:

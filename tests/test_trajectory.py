@@ -82,6 +82,7 @@ async def test_trajectory_callbacks():
     assert callback_calls["any"] == 3
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_trajectory_callback_from_session():
     with notte.Session(headless=True) as session:

@@ -39,6 +39,7 @@ def get_models() -> list[LlmModel]:
     return models
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 @pytest.mark.parametrize("use_strict_response_format", [True, False])
 @pytest.mark.parametrize("model", get_models())

@@ -8,9 +8,10 @@ on:
   # runs in the base-repo context with full secret access; combined with checking out
   # the PR head, it lets any fork PR run arbitrary code with our secrets and exfiltrate
   # them. With `pull_request`, fork PRs run in an isolated context with no secret access.
-  # Fork PRs run only the non-secret steps (install + pre-commit). To run the full
-  # secret-backed suite on an external PR, a maintainer uses the `workflow_dispatch`
-  # trigger below AFTER reviewing the diff (dispatch runs the PR's code WITH secrets).
+  # Fork PRs run the `tests` job (pre-commit + the offline unit suite, which needs no
+  # secrets) and skip `staging-and-live`. To run that job on an external PR, a maintainer
+  # uses the `workflow_dispatch` trigger below AFTER reviewing the diff (dispatch runs the
+  # PR's code WITH secrets).
   pull_request:
     branches:
       - main
@@ -31,6 +32,7 @@ env:
   PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright-browsers
   # True for push, manual dispatch, and same-repo PRs; false for fork PRs. Steps that
   # need secrets are gated on this so fork PRs skip them cleanly instead of failing.
+  # (Job-level `if:` cannot read `env`, so staging-and-live repeats the expression.)
   IS_TRUSTED: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
   # Scope vault creates to this workflow job; cleanup deletes only this prefix.
   NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}
@@ -41,6 +43,9 @@ permissions:
   pull-requests: write
 
 jobs:
+  # The PR gate: pre-commit plus every test not marked `staging` or `live` (see the markers in
+  # pyproject.toml). Offline - a local browser and localhost only, no secrets - so it runs on
+  # fork PRs too and cannot be failed by a third-party website or a staging deploy.
   tests:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
@@ -58,13 +63,6 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
             ref: ${{ github.event.pull_request.head.sha }}
-
-      # Vertex credentials are only used by the notte-llm tests (tests/llm).
-      - id: 'auth'
-        if: ${{ env.IS_TRUSTED == 'true' }}
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
-        with:
-          credentials_json: ${{ secrets.VERTEX_AI }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
@@ -123,17 +121,89 @@ jobs:
       - name: Run pre-commit
         run: uv run --active pre-commit run --all-files
 
-      - name: Note - secret-backed tests skipped (fork PR)
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          make test-cicd | tee pytest-coverage.txt
+
+      - name: Note - staging-and-live skipped (fork PR)
         if: ${{ env.IS_TRUSTED != 'true' }}
         run: |
-          echo "This is a fork PR. Steps that require secrets (Vertex auth + the pytest suite)"
-          echo "were skipped - fork PRs intentionally have no access to repository secrets."
-          echo "Build, install, and pre-commit (lint + type checks) ran above and reflect your change."
-          echo "A maintainer can run the full secret-backed suite after reviewing the diff via"
+          echo "This is a fork PR. The staging-and-live job (Notte API + third-party websites)"
+          echo "was skipped - fork PRs intentionally have no access to repository secrets."
+          echo "Pre-commit and the offline unit suite ran above and reflect your change."
+          echo "A maintainer can run staging-and-live after reviewing the diff via"
           echo "'Run workflow' (workflow_dispatch) with this PR number."
 
+      - name: Pytest coverage comment
+        # Fork PRs get a read-only token, so they cannot post the comment.
+        if: ${{ always() && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}
+        uses: MishaKav/pytest-coverage-comment@9ee59af31bd7bcada1cc496f086b407122602dbd # v1.12.3
+        with:
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./pytest.xml
+
+  # Everything marked `staging` (Notte API, us-staging) or `live` (third-party websites, LLM
+  # providers): all of tests/integration plus a few marked tests elsewhere. These depend on
+  # services outside this repo, so failures are retried (`make test-live`) and the job is kept
+  # separate from the `tests` gate - do not make it a required check.
+  staging-and-live:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 30
+    steps:
+      - name: Checkout PR code (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
+          # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+
+      - name: Checkout code (PR or push)
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+            ref: ${{ github.event.pull_request.head.sha }}
+
+      # Vertex credentials are only used by the notte-llm structured output tests (tests/llm).
+      - id: 'auth'
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          credentials_json: ${{ secrets.VERTEX_AI }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+            enable-cache: true
+            cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version-file: ".python-version"
+          cache: ${{ env.CACHE_TYPE }}
+
+      - name: Cache patchright
+        id: cache-patchright
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ github.workspace }}/.playwright-browsers
+          key: ${{ runner.os }}-patchright-${{ hashFiles('**/uv.lock') }}-v2
+          restore-keys: |
+            ${{ runner.os }}-patchright-${{ hashFiles('**/uv.lock') }}-
+            ${{ runner.os }}-patchright-
+
+      - name: Install dependencies
+        run: uv sync --dev --all-extras
+
+      - name: Install patchright
+        if: steps.cache-patchright.outputs.cache-hit != 'true'
+        run: |
+          echo "Cache miss - installing patchright"
+          uv run patchright install --with-deps chromium --no-shell
+
       - name: Verify environment variables
-        if: ${{ env.IS_TRUSTED == 'true' }}
         env:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
@@ -148,16 +218,15 @@ jobs:
             echo "GOOGLE_APPLICATION_CREDENTIALS is not set"
             exit 1
           fi
-          # The SMTP tests (tests/browser/test_tools.py) skip themselves without these, so only warn.
+          # The SMTP test (tests/integration/sdk/test_persona_inbox.py) skips itself without these, so only warn.
           for name in SMTP_SERVER EMAIL_SENDER EMAIL_PASSWORD; do
             if [ -z "${!name}" ]; then
-              echo "::warning::$name is not set, the SMTP tests will be skipped"
+              echo "::warning::$name is not set, the SMTP test will be skipped"
             fi
           done
           echo "Environment variables are set"
 
       - name: Wait for the API to be reachable
-        if: ${{ env.IS_TRUSTED == 'true' }}
         # The staging API scales to zero when idle and wakes on the first
         # request; poll until it answers before running anything against it.
         run: |
@@ -166,8 +235,8 @@ jobs:
             [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
             sleep 10
           done
-      - name: Run unit tests
-        if: ${{ env.IS_TRUSTED == 'true' }}
+
+      - name: Run staging and live tests
         env:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
           NOTTE_VAULT_TEST_EMAIL: ${{ secrets.NOTTE_VAULT_TEST_EMAIL }}
@@ -175,19 +244,10 @@ jobs:
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        run: |
-          set -o pipefail
-          uv run pytest -n logical tests --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages | tee pytest-coverage.txt
+        run: make test-live
 
       - name: Cleanup vaults created by this run
-        if: ${{ always() && env.IS_TRUSTED == 'true' }}
+        if: ${{ always() }}
         env:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
         run: uv run python scripts/cleanup_ci_vaults.py
-
-      - name: Pytest coverage comment
-        if: ${{ always() && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}
-        uses: MishaKav/pytest-coverage-comment@9ee59af31bd7bcada1cc496f086b407122602dbd # v1.12.3
-        with:
-          pytest-coverage-path: ./pytest-coverage.txt
-          junitxml-path: ./pytest.xml
