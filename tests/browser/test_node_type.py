@@ -1,3 +1,4 @@
+import pytest
 from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
 from notte_core.browser.node_type import NodeCategory, NodeRole, NodeType
 
@@ -234,3 +235,31 @@ def test_all_interaction_roles_have_short_id():
     for role in NodeRole:
         if role.category() == NodeCategory.INTERACTION:
             assert role.short_id() is not None, f"Role {role.value} has no short id"
+
+
+@pytest.mark.parametrize(
+    ("tag", "attributes", "role"),
+    [
+        ("a", {}, NodeRole.LINK),
+        ("BUTTON", {}, NodeRole.BUTTON),
+        ("input", {}, NodeRole.TEXTBOX),
+        ("input", {"type": "Checkbox"}, NodeRole.CHECKBOX),
+        ("input", {"type": "submit"}, NodeRole.BUTTON),
+        ("input", {"type": "search"}, NodeRole.SEARCHBOX),
+        ("h3", {}, NodeRole.HEADING),
+        ("body", {}, NodeRole.WEBAREA),
+        ("iframe", {}, NodeRole.IFRAME),
+        ("my-menu-item", {}, NodeRole.MENUITEM),
+        ("x-menuitem-checkbox", {}, NodeRole.MENUITEMCHECKBOX),
+        ("foo-popup", {}, NodeRole.MENULISTPOPUP),
+        ("custom-element", {}, NodeRole.GENERIC),
+        ("", {}, NodeRole.NONE),
+        # the role attribute wins over the tag
+        ("div", {"role": "button"}, NodeRole.BUTTON),
+        ("a", {"role": "presentation"}, NodeRole.PRESENTATION),
+        ("div", {"role": ""}, NodeRole.GROUP),
+        ("div", {"role": "doc-chapter"}, "doc-chapter"),
+    ],
+)
+def test_node_role_from_element(tag: str, attributes: dict[str, str], role: NodeRole | str) -> None:
+    assert NodeRole.from_element(tag, attributes) == role

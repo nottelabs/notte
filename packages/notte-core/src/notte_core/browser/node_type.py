@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from enum import Enum
 
 from notte_core.common.logging import logger
@@ -142,6 +143,32 @@ class NodeRole(Enum):
             return NodeRole[value.upper()]
         return value
 
+    @staticmethod
+    def from_element(tag_name: str, attributes: Mapping[str, str]) -> "NodeRole | str":
+        """The role of an HTML element: its `role` attribute if set, else the implicit role of its tag.
+
+        A `role` attribute that is not a `NodeRole` is returned as is (a string).
+        """
+        explicit_role = attributes.get("role")
+        if explicit_role:
+            return NodeRole.from_value(explicit_role)
+        if len(tag_name) == 0:
+            return NodeRole.NONE
+        tag = tag_name.lower()
+        if tag == "input":
+            return _INPUT_TYPE_ROLES.get(attributes.get("type", "text").lower(), NodeRole.TEXTBOX)
+        role = _TAG_ROLES.get(tag)
+        if role is not None:
+            return role
+        # custom elements, e.g. <my-menu-item>
+        clean_tag = tag.replace("-", "").replace("_", "")
+        for role in _CUSTOM_ELEMENT_ROLES:
+            if role.value in clean_tag:
+                return role
+        if "popup" in clean_tag:
+            return NodeRole.MENULISTPOPUP
+        return NodeRole.GENERIC
+
     def short_id(self, force_id: bool = False) -> str | None:
         match self.value:
             case NodeRole.LINK.value:
@@ -274,3 +301,83 @@ class NodeRole(Enum):
                 return NodeCategory.IMAGE
             case _:
                 return NodeCategory.OTHER
+
+
+# implicit role of an <input>, by its `type` (default: textbox)
+_INPUT_TYPE_ROLES: dict[str, NodeRole] = {
+    # TODO: could create a special type for submit/reset
+    "button": NodeRole.BUTTON,
+    "submit": NodeRole.BUTTON,
+    "reset": NodeRole.BUTTON,
+    "radio": NodeRole.RADIO,
+    "checkbox": NodeRole.CHECKBOX,
+    "search": NodeRole.SEARCHBOX,
+}
+
+# implicit role of an element, by its (lowercase) tag name
+_TAG_ROLES: dict[str, NodeRole] = {
+    # structural elements
+    "body": NodeRole.WEBAREA,
+    "nav": NodeRole.NAVIGATION,
+    "main": NodeRole.MAIN,
+    "header": NodeRole.BANNER,
+    "footer": NodeRole.CONTENTINFO,
+    "aside": NodeRole.COMPLEMENTARY,
+    "section": NodeRole.ARTICLE,
+    "article": NodeRole.ARTICLE,
+    "div": NodeRole.GROUP,
+    # interactive elements (<input> is handled separately)
+    "a": NodeRole.LINK,
+    "button": NodeRole.BUTTON,
+    "select": NodeRole.COMBOBOX,
+    "textarea": NodeRole.TEXTBOX,
+    "option": NodeRole.OPTION,
+    # text elements
+    **{f"h{level}": NodeRole.HEADING for level in range(1, 7)},
+    "p": NodeRole.PARAGRAPH,
+    **{tag: NodeRole.TEXT for tag in ("span", "strong", "em", "small", "bdi", "i")},
+    "label": NodeRole.LABELTEXT,
+    "blockquote": NodeRole.BLOCKQUOTE,
+    "code": NodeRole.CODE,
+    "pre": NodeRole.CODE,
+    "time": NodeRole.TIME,
+    "br": NodeRole.LINEBREAK,
+    # list elements
+    "ul": NodeRole.LIST,
+    "ol": NodeRole.LIST,
+    "dl": NodeRole.LIST,
+    "li": NodeRole.LISTITEM,
+    "dt": NodeRole.LISTITEM,
+    "dd": NodeRole.LISTITEM,
+    # table elements
+    "table": NodeRole.TABLE,
+    "tr": NodeRole.ROW,
+    "td": NodeRole.CELL,
+    "th": NodeRole.COLUMNHEADER,
+    "thead": NodeRole.ROWGROUP,
+    "tbody": NodeRole.ROWGROUP,
+    "tfoot": NodeRole.ROWGROUP,
+    # media elements
+    "img": NodeRole.IMG,
+    "figure": NodeRole.FIGURE,
+    "iframe": NodeRole.IFRAME,
+    # form elements
+    "form": NodeRole.FORM,
+    "fieldset": NodeRole.GROUP,
+    "dialog": NodeRole.DIALOG,
+    "progress": NodeRole.PROGRESSBAR,
+    "meter": NodeRole.METER,
+    # menu elements
+    "menu": NodeRole.MENU,
+    "menuitem": NodeRole.MENUITEM,
+    "hr": NodeRole.SEPARATOR,
+}
+
+# roles looked for (in this order) in the tag name of the other elements, without '-' and '_'
+_CUSTOM_ELEMENT_ROLES: tuple[NodeRole, ...] = (
+    NodeRole.MENUITEMCHECKBOX,
+    NodeRole.MENUITEMRADIO,
+    NodeRole.MENUITEM,
+    NodeRole.MENU,
+    NodeRole.DIALOG,
+)
