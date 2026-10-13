@@ -78,6 +78,21 @@ jobs:
             echo SUMMARY_EOF
           } >> "$GITHUB_OUTPUT"
 
+      - name: Set up Go
+        if: steps.bump.outputs.changes == 'true'
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: notte-cli/go.mod
+          cache-dependency-path: notte-cli/go.sum
+
+      # The CLI reference is generated from the notte-cli submodule, so it rides
+      # along with every bump instead of drifting behind it.
+      - name: Regenerate the CLI reference
+        if: steps.bump.outputs.changes == 'true'
+        run: |
+          python3 docs/src/scripts/generate_cli_reference.py
+          git add -A -- docs/src/cli-reference docs/src/docs.json
+
       - name: Open or update the bump pull request
         if: steps.bump.outputs.changes == 'true'
         env:
