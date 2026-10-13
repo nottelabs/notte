@@ -96,7 +96,7 @@ These flags work with every command.
 
 ## JSON output
 
-Every command accepts `--output json` (or `-o json`) for machine-readable output:
+Commands that return data accept `--output json` (or `-o json`) for machine-readable output. Commands that wrap another tool, such as `skill add`, print that tool's output as is:
 
 ```bash
 notte sessions start -o json
