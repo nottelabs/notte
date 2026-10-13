@@ -638,6 +638,8 @@ class LLMEngine:
                         # indefinitely. Without this, httpx has no read timeout and silent server
                         # stalls hang the whole agent run.
                         timeout=60,
+                        # This loop is the only retry policy; stop provider clients from retrying too.
+                        max_retries=0,
                         **vertex_kwargs,
                         **extra_kwargs,
                     )

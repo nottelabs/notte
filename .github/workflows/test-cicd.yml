@@ -21,8 +21,9 @@ on:
         required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  # Superseded PR runs are cancelled; every main commit keeps its own run.
+  # PR runs share a group so a new push cancels the superseded run. Every other run (main
+  # pushes, manual runs) gets its own group so none is cancelled or replaced while queued.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
