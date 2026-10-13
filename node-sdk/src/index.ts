@@ -11,7 +11,6 @@ export { client } from '@/lib/client/client.gen';
 export { NotteClient, DEFAULT_NOTTE_API_URL, DEFAULT_REQUEST_TIMEOUT_MS, TIMEOUT_HEADER } from '@/client';
 export { Session } from '@/session';
 export type { ResourceRequestOptions } from '@/resources.gen';
-export { Agent } from '@/agent';
 export { NotteVault } from '@/vaults';
 export { NottePersona } from '@/personas';
 export { NotteFunction } from '@/functions';
@@ -45,7 +44,6 @@ export type {
   NotteClientConfig,
   GlobalScrapeOptions,
   SessionListOptions,
-  AgentListOptions,
   VaultListOptions,
   FunctionListOptions,
 } from '@/client';
@@ -75,8 +73,6 @@ export type { PageFetchOptions, FetchData } from '@/page-fetch';
 
 // Cookie file helpers
 export { readCookiesFile, createOrAppendCookiesToFile } from '@/cookies';
-export type { AgentConstructor, AgentRunRequest, AgentUpdateHandler } from '@/agent';
-export { prepareAgentRequest, parseAgentStatusMessage } from '@/agent';
 export type { VaultConstructor, VaultConstructorWithId, VaultConstructorCreate, CredentialField } from '@/vaults';
 export { getRootDomain, validateUrl, validateMfaSecret, isValidMfaSecret, validateCredentials, CREDENTIAL_FIELDS } from '@/vaults';
 export type { PersonaConstructor, MessageReadOptions, PersonaListOptions, PersonaResponseWithInternalEmail } from '@/personas';

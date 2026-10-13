@@ -511,19 +511,6 @@
                     ]
                   },
                   {
-                    "group": "Agent",
-                    "collapsed": true,
-                    "pages": [
-                      "typescript-sdk-reference/manual/agent",
-                      "typescript-sdk-reference/agent/run",
-                      "typescript-sdk-reference/agent/start",
-                      "typescript-sdk-reference/agent/stop",
-                      "typescript-sdk-reference/agent/status",
-                      "typescript-sdk-reference/agent/hasstarted",
-                      "typescript-sdk-reference/agent/isactive"
-                    ]
-                  },
-                  {
                     "group": "Function",
                     "collapsed": true,
                     "pages": [

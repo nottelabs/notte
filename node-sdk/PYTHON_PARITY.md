@@ -64,19 +64,8 @@ Legend for Priority: **P0** correctness or security, **P1** commonly used Python
 
 ## 4. Agents
 
-| Port | # | Item | Details | Python reference | Priority | Decision |
-|---|---|------|---------|------------------|----------|----------|
-| ❌  | 4.1 | AgentFallback | No equivalent. Context manager that wraps `execute` calls and spawns an agent with the original task when a step fails. | `RemoteAgentFallback` in `agent_fallback.py` | P1 | |
-| ❌  | 4.2 | Public `watchLogs()` / `watchLogsAndWait()` | Log streaming is private and only reachable through `run()` with `updateHandler`. | `RemoteAgent.watch_logs(log)`, `watch_logs_and_wait(log)`, `async_watch_logs_and_wait` | P1 | |
-| ❌  | 4.3 | `wait()` | Not present. Polling with spinner until completion. | `RemoteAgent.wait()` (`polling_interval_seconds=10`, `max_attempts=30`) | P2 | |
-| ❌  | 4.4 | Agent function code export | `getScript` (`/agents/{id}/workflow/code`) unwrapped. | `agent.workflow.code(as_workflow)` and `agent.workflow.create_function()` | P2 | |
-| ❌  | 4.5 | `listAgents` | Unwrapped. | `client.agents.list(only_active, only_saved, page, page_size)` | P2 | |
-| ❌  | 4.6 | `agent.replay()` | Not present. Deprecated in Python in favor of `session.replay()`. | `RemoteAgent.replay()` | P3 | |
-| ❌  | 4.7 | Context manager `use()` on Agent | Session and Persona have `use()`, Agent does not. | n/a (Python agents are not context managers) | P3 | |
-| ❌  | 4.8 | Proxy-mode agents cannot stream logs | Relative-URL proxy clients fall back to 1 s status polling. Documented limitation. `node-sdk/src/agent.ts:399` | n/a | P3 | |
-
-
----------> GLOBAL SUMMARY: buttom line lets not do any work on this, let's just remove all notteAgent from the node-sdk because they are deprecated in python and we don't need them in node-sdk
+Removed from the v2 Node SDK to match Python. Generated API endpoints and schemas
+remain spec-owned; high-level agent APIs and their tests are no longer included.
 
 ---
 

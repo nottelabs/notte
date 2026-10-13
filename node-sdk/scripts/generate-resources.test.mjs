@@ -83,6 +83,25 @@ test('checked-in output is reproducible from the checked-in OpenAPI-derived SDK'
 });
 
 
+test('spec-owned agent operations stay outside client resources while sessions remain callable', async () => {
+  const read = file => fs.readFileSync(new URL(`../src/lib/client/${file}`, import.meta.url), 'utf8');
+  const source = read('sdk.gen.ts');
+  assert.match(source, /export const agentStart\b/);
+  const generated = generateResources(source, read('types.gen.ts'));
+  const js = ts.transpile(generated, { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 });
+  const requests = [];
+  const exports = {};
+  const client = {};
+  new Function('require', 'exports', js)(() => ({ sessionStatus: async options => {
+    requests.push(options);
+    return { data: { session_id: options.path.session_id } };
+  } }), exports);
+  const resources = exports.createResources(client, () => 'bound-key');
+  assert.equal('agents' in resources, false);
+  assert.deepEqual(await resources.sessions.status('session'), { session_id: 'session' });
+  assert.equal(requests[0].client, client);
+});
+
 test('preserves run metadata request options before its new payload query', async () => {
   const generated = generateResources(sdk('functionRunGetMetadata'), data(`
     path: { function_id: string; run_id: string };

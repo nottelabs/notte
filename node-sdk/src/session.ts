@@ -113,7 +113,7 @@ export interface SessionOptions extends ApiSessionStartRequest {
    * appended with the session cookies on `stop()`.
    */
   cookie_file?: string;
-  /** File storage to attach to the session so agents can consume uploaded files. */
+  /** File storage to attach to the session for uploads and downloads. */
   storage?: RemoteFileStorage;
 }
 

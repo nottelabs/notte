@@ -4,23 +4,19 @@ import { createResources } from '@/resources.gen';
 import { getParseAs } from '@/lib/client/client/utils.gen';
 import { Session, type SessionOptions } from '@/session';
 import type {
-  AgentResponse,
   FunctionListItemResponse,
   GlobalScrapeRequest,
-  ListAgentsData,
   ListFunctionsData,
   ListSessionsData,
   ListVaultsData,
   PersonaResponse,
   Vault,
 } from '@/lib/client/types.gen';
-import { Agent, type AgentConstructor } from '@/agent';
 import { NotteVault, type VaultConstructor } from '@/vaults';
 import { NottePersona, type PersonaConstructor, type PersonaListOptions } from '@/personas';
 import { NotteFunction, type FunctionConstructor } from '@/functions';
 import {
   healthCheck,
-  listAgents,
   listFunctions,
   listPersonas,
   listSessions,
@@ -82,7 +78,6 @@ export interface NotteClientConfig {
 }
 
 export type SessionListOptions = NonNullable<ListSessionsData['query']>;
-export type AgentListOptions = NonNullable<ListAgentsData['query']>;
 export type VaultListOptions = NonNullable<ListVaultsData['query']>;
 export type FunctionListOptions = NonNullable<ListFunctionsData['query']>;
 /** Options of `client.scrape()`: the global scrape request minus `url`, plus the SDK-only scrape options. */
@@ -99,7 +94,7 @@ function isRelativeProxyUrl(baseUrl: string): boolean {
   return /^\/(?!\/)/.test(baseUrl);
 }
 
-/** Entry point for sessions, agents, functions, vaults, personas, and session files. */
+/** Entry point for sessions, functions, vaults, personas, and session files. */
 export class NotteClient {
   private readonly config: ResolvedConfig;
   private readonly client = createClient();
@@ -368,13 +363,6 @@ export class NotteClient {
   }
 
   /**
-   * Create a new agent
-   */
-  Agent(options: AgentConstructor): Agent {
-    return new Agent(this, options);
-  }
-
-  /**
    * Create or access a vault
    */
   Vault(options?: VaultConstructor): NotteVault {
@@ -406,17 +394,6 @@ export class NotteClient {
       ...this.resources.sessions,
       list: async (options: SessionListOptions = {}): Promise<SessionResponse[]> => {
         const response = await listSessions({ client: this.getClient(), query: options });
-        return response.data?.items ?? [];
-      },
-    };
-  }
-
-  /** Client-bound agent API operations. `list()` retains its array return value. */
-  get agents() {
-    return {
-      ...this.resources.agents,
-      list: async (options: AgentListOptions = {}): Promise<AgentResponse[]> => {
-        const response = await listAgents({ client: this.getClient(), query: options });
         return response.data?.items ?? [];
       },
     };

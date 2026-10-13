@@ -460,16 +460,6 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [EmailReadAction](https://docs.notte.cc/typescript-sdk-reference/types/emailreadaction.md)
 - [EmailVerificationReadAction](https://docs.notte.cc/typescript-sdk-reference/types/emailverificationreadaction.md)
 
-#### Agent
-
-- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/agent.md)
-- [run](https://docs.notte.cc/typescript-sdk-reference/agent/run.md)
-- [start](https://docs.notte.cc/typescript-sdk-reference/agent/start.md)
-- [stop](https://docs.notte.cc/typescript-sdk-reference/agent/stop.md)
-- [status](https://docs.notte.cc/typescript-sdk-reference/agent/status.md)
-- [hasStarted](https://docs.notte.cc/typescript-sdk-reference/agent/hasstarted.md)
-- [isActive](https://docs.notte.cc/typescript-sdk-reference/agent/isactive.md)
-
 #### Function
 
 - [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/function.md)

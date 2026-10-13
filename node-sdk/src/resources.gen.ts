@@ -6,7 +6,7 @@ import * as operations from './lib/client/sdk.gen';
 /** Per-request cancellation; authentication and transport stay bound to NotteClient. */
 export interface ResourceRequestOptions { signal?: AbortSignal }
 
-/** Low-level API resources. Lifecycle helpers remain on Session/Agent/Function. */
+/** Low-level API resources. Lifecycle helpers remain on Session/Function. */
 export function createResources(client: Client, getApiKey: () => string) {
   return {
   sessions: {
@@ -123,33 +123,6 @@ export function createResources(client: Client, getApiKey: () => string) {
     /** uploadSessionFile: /sessions/{session_id}/files. Returns the API response body. */
     uploadSessionFile: async (sessionId: Types.UploadSessionFileData['path']["session_id"], body: Types.UploadSessionFileData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.UploadSessionFileData['headers']>, 'x-notte-api-key'> } = {}) => {
       const response = await operations.uploadSessionFile({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, body });
-      return response.data;
-    },
-  },
-  agents: {
-    /** getScript: /agents/{agent_id}/workflow/code. Returns the API response body. */
-    getScript: async (agentId: Types.GetScriptData['path']["agent_id"], query: Types.GetScriptData['query'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.GetScriptData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.getScript({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "agent_id": agentId }, query });
-      return response.data;
-    },
-    /** listAgents: /agents. Returns the API response body. */
-    list: async (query: Types.ListAgentsData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ListAgentsData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.listAgents({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, query });
-      return response.data;
-    },
-    /** agentStart: /agents/start. Returns the API response body. */
-    start: async (body: Types.AgentStartData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.AgentStartData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.agentStart({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, body });
-      return response.data;
-    },
-    /** agentStatus: /agents/{agent_id}. Returns the API response body. */
-    status: async (agentId: Types.AgentStatusData['path']["agent_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.AgentStatusData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.agentStatus({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "agent_id": agentId } });
-      return response.data;
-    },
-    /** agentStop: /agents/{agent_id}/stop. Returns the API response body. */
-    stop: async (agentId: Types.AgentStopData['path']["agent_id"], query: Types.AgentStopData['query'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.AgentStopData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.agentStop({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "agent_id": agentId }, query });
       return response.data;
     },
   },

@@ -104,7 +104,7 @@ test('navigation and generated reference links resolve; supporting APIs can rema
   walk(actual.navigation);
   for (const name of listed) assert.ok(actual.pages.has(name), `Missing navigation page: ${name}`);
   for (const name of actual.pages.keys()) {
-    if (!listed.has(name) && !actual.pages.get(name).includes('**deprecated:**') && !/\/(?:manual\/)?(?:[a-z]+error|pagefetchresponse|files)(?:\/|\.mdx$)/.test(name)) assert.match(name, /\/types\/|\/encryption\/|\/manual\/(?:encryption|index)\.mdx$|\/client\/(?:session|files|agent|vault|persona|nottefunction|function|filestorage|withdbpreview|healthcheck|search)\.mdx$|\/symbol-asynciterator\.mdx$|\/function\/getfunctionid\.mdx$|\/session\/(?:getid|use|setcookiesfromfile)\.mdx$|\/vault\/(?:start|stop|delete|addcredentialsfromenv|setcreditcard|getcreditcard|deletecreditcard)\.mdx$|\/persona\/(?:start|stop|create|get|use)\.mdx$|\/remotefilestorage\/(?:setsessionid|forsession)\.mdx$/);
+    if (!listed.has(name) && !actual.pages.get(name).includes('**deprecated:**') && !/\/(?:manual\/)?(?:[a-z]+error|pagefetchresponse|files)(?:\/|\.mdx$)/.test(name)) assert.match(name, /\/types\/|\/encryption\/|\/manual\/(?:encryption|index)\.mdx$|\/client\/(?:session|files|vault|persona|nottefunction|function|filestorage|withdbpreview|healthcheck|search)\.mdx$|\/symbol-asynciterator\.mdx$|\/function\/getfunctionid\.mdx$|\/session\/(?:getid|use|setcookiesfromfile)\.mdx$|\/vault\/(?:start|stop|delete|addcredentialsfromenv|setcreditcard|getcreditcard|deletecreditcard)\.mdx$|\/persona\/(?:start|stop|create|get|use)\.mdx$|\/remotefilestorage\/(?:setsessionid|forsession)\.mdx$/);
   }
   for (const [name, content] of actual.pages) {
     for (const [, link] of content.matchAll(/\]\(\/(typescript-sdk-reference\/[^)#]+)(?:#[^)]*)?\)/g)) {
@@ -126,7 +126,7 @@ test('feature landing pages use factories and method navigation follows user tas
   for (const name of ['notteusage', 'nottesecrets', 'notteanything']) {
     assert.match(actual.pages.get(`typescript-sdk-reference/manual/${name}.mdx`), /^---\ntitle: "Get started"/);
   }
-  for (const [name, factory] of Object.entries({ session: 'Session', agent: 'Agent', function: 'NotteFunction', vault: 'Vault', persona: 'Persona', files: 'Files' })) {
+  for (const [name, factory] of Object.entries({ session: 'Session', function: 'NotteFunction', vault: 'Vault', persona: 'Persona', files: 'Files' })) {
     const content = actual.pages.get(`typescript-sdk-reference/manual/${name}.mdx`);
     assert.match(content, /^---\ntitle: "Get started"/);
     assert.ok(content.includes(`client.${factory}(`));
@@ -151,7 +151,7 @@ test('feature landing pages use factories and method navigation follows user tas
   assert.ok(!JSON.stringify(actual.navigation).includes('/getid'));
   assert.ok(JSON.stringify(actual.navigation).includes('/getrun'));
   assert.ok(!actual.pages.get('typescript-sdk-reference/manual/function.mdx').includes('[getFunctionId]'));
-  for (const path of ['session/start', 'agent/run', 'function/createrun', 'vault/addcredentials', 'persona/emails', 'files/upload']) {
+  for (const path of ['session/start', 'function/createrun', 'vault/addcredentials', 'persona/emails', 'files/upload']) {
     const title = actual.pages.get(`typescript-sdk-reference/${path}.mdx`).match(/^title: "(.*)"/m)[1];
     assert.ok(!title.includes('.'), `Method title must be unqualified: ${title}`);
   }
@@ -191,7 +191,7 @@ test('Node SDK mirrors Python categories and appears below Python in the sidebar
   assert.match(actual.pages.get('typescript-sdk-reference/errors.mdx'), /NotteAPIError/);
   assert.match(actual.pages.get('typescript-sdk-reference/authentication.mdx'), /NOTTE_API_KEY/);
   assert.match(actual.pages.get('typescript-sdk-reference/rate-limits.mdx'), /error.statusCode === 429/);
-  assert.deepEqual(categoryNames('Core Features'), ['Session', 'Actions', 'Agent', 'Function', 'Anything', 'Managed Auth']);
+  assert.deepEqual(categoryNames('Core Features'), ['Session', 'Actions', 'Function', 'Anything', 'Managed Auth']);
   assert.deepEqual(categoryNames('Tooling'), ['Vault', 'Persona', 'File Storage', 'Secrets', 'Usage']);
   const actions = actual.navigation.pages.find(group => group.group === 'Core Features').pages.find(group => group.group === 'Actions');
   assert.ok(actions.pages.includes('typescript-sdk-reference/types/gotoaction'));
@@ -248,7 +248,7 @@ test('review regressions preserve complete summaries and accurate Node descripti
   assert.match(page('persona/get'), /## Returns\s+```typescript\nPromise<PersonaResponseWithInternalEmail>/);
   assert.match(page('persona/use'), /existing ID are retained/);
   assert.match(page('session/viewer'), /## Raises[\s\S]*no viewer URL/);
-  for (const name of ['apiagentstartrequest', 'scraperequest']) {
+  for (const name of ['scraperequest']) {
     assert.doesNotMatch(page(`types/${name}`), /Pydantic/);
     assert.match(page(`types/${name}`), /JSON Schema object/);
   }

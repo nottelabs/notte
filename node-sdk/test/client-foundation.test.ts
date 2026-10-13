@@ -259,7 +259,6 @@ describe('NotteClient transport', () => {
   describe('list namespaces', () => {
     it.each([
       ['sessions', '/sessions', { only_active: true, page_size: 5 }],
-      ['agents', '/agents', { only_saved: true }],
       ['vaults', '/vaults', { page: 2 }],
       ['functions', '/functions', { include_system: true }],
     ] as const)('client.%s.list unwraps items and forwards the query', async (namespace, path, query) => {

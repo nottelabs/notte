@@ -210,38 +210,6 @@ describe('Vault Integration Tests', () => {
 		});
 	});
 
-	describe('Vault with Agent', () => {
-		it('should use vault with Session and Agent', { timeout: 180000 }, async () => {
-			const newVault = client.Vault({ name: 'Test Vault' });
-
-			await newVault.addCredentials('https://github.com/', {
-				email: 'user@example.com',
-				password: 'secure-password-123' // pragma: allowlist secret
-			});
-
-			createdVaultIds.push(newVault.vaultId);
-
-			await client.Session({ proxies: false, headless: true }).use(async (session) => {
-				const agent = client.Agent({
-					session,
-					max_steps: 3,
-					vault_id: newVault.vaultId
-				});
-
-				const result = await agent.run({
-					task: "Go to GitHub login page and describe what you see",
-					url: "https://github.com/login"
-				});
-
-				expect(result).toBeDefined();
-				expect(result.agent_id).toBeDefined();
-				expect(result.status).toBe('closed');
-				expect(result.success).toBeDefined();
-				expect(result.answer).toBeDefined();
-			});
-		});
-	});
-
 	describe('Vault Deletion', () => {
 		it('should delete entire vault', { timeout: 30000 }, async () => {
 			const newVault = client.Vault({ name: 'Test Vault' });

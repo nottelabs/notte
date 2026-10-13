@@ -50,7 +50,7 @@ export type ScrapeRequest = {
     /**
      * Response Format
      *
-     * The response format to use for the scrape. Use a JSON Schema object; high-level Node agent and scrape methods also accept a Zod schema
+     * The response format to use for the scrape. Use a JSON Schema object; high-level Node scrape methods also accept a Zod schema
      */
     response_format?: unknown | null;
     /**
@@ -101,7 +101,7 @@ Whether to only scrape images from the page. If True, the page content is exclud
 </ParamField>
 
 <ParamField body="response_format" type={"unknown"}>
-The response format to use for the scrape. Use a JSON Schema object; high-level Node agent and scrape methods also accept a Zod schema
+The response format to use for the scrape. Use a JSON Schema object; high-level Node scrape methods also accept a Zod schema
 </ParamField>
 
 <ParamField body="instructions" type={"string | null | undefined"}>
