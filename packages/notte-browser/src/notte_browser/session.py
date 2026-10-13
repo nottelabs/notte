@@ -72,6 +72,7 @@ from notte_core.errors.actions import (
     InvalidActionError,
 )
 from notte_core.errors.base import NotteBaseError
+from notte_core.errors.processing import CredentialFieldValidationError
 from notte_core.errors.provider import RateLimitError
 from notte_core.profiling import profiler
 from notte_core.space import ActionSpace
@@ -596,6 +597,10 @@ class NotteSession(AsyncResource, SyncResource):
                     outerHTML=await locator.evaluate("el => el.outerHTML"),
                 )
             return await self.vault.replace_credentials(action, attrs, snapshot)
+        except CredentialFieldValidationError:
+            # Placeholder used on an invalid target element: fail the action instead of typing
+            # the literal placeholder string into the page.
+            raise
         except ValueError as e:
             # Credential field not found in vault (e.g., vault has email but action needs username)
             # Return original action - it will fail at execution with a clearer error

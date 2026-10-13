@@ -26,7 +26,7 @@ from notte_core.common.logging import logger
 from notte_core.common.types import TResponseFormat
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
 from notte_core.errors.actions import NoCredentialsFoundError
-from notte_core.errors.processing import InvalidPlaceholderError
+from notte_core.errors.processing import CredentialFieldValidationError, InvalidPlaceholderError
 from notte_core.profiling import profiler
 from notte_core.utils.url import get_root_domain
 
@@ -700,7 +700,10 @@ class BaseVault(ABC):
                             timeout=action.timeout,
                         )
                 else:
-                    logger.trace(f"Could not validate element with attrs {attrs} for {cred_key}")
+                    # A known placeholder targets an element that fails the field's validation
+                    # (e.g. a password placeholder on a <label> instead of the password input).
+                    # Raise so the literal placeholder is never typed into the page.
+                    raise CredentialFieldValidationError(placeholder_value, cred_key, attrs.type, attrs.outerHTML)
             else:
                 # dont validate because element chosen by regex
                 assert isinstance(action.value, dict)
