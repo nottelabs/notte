@@ -31,7 +31,7 @@ SETUP_COMMAND = re.compile(
 
 
 def blocks(readme: Path, langs: set[str]) -> list[tuple[int, str]]:
-    text = readme.read_text()
+    text = readme.read_text(encoding="utf-8")
     found: list[tuple[int, str]] = []
     for match in FENCE.finditer(text):
         if match.group(2).lower() in langs:
@@ -47,7 +47,7 @@ def extract(readme: Path, out: Path) -> list[str]:
     files: list[str] = []
     for line, code in blocks(readme, TS_LANGS):
         name = f"readme_L{line}.mts"
-        _ = (out / name).write_text(code)
+        _ = (out / name).write_text(code, encoding="utf-8")
         files.append(name)
     tsconfig = {
         "compilerOptions": {
@@ -63,7 +63,7 @@ def extract(readme: Path, out: Path) -> list[str]:
         },
         "files": files,
     }
-    _ = (out / "tsconfig.json").write_text(json.dumps(tsconfig, indent=2) + "\n")
+    _ = (out / "tsconfig.json").write_text(json.dumps(tsconfig, indent=2) + "\n", encoding="utf-8")
     return files
 
 
@@ -75,7 +75,7 @@ def syntax_errors(readme: Path) -> list[str]:
         except SyntaxError as e:
             errors.append(f"{readme.name}:{line}: Python syntax error: {e}")
     for line, code in blocks(readme, SHELL_LANGS):
-        with tempfile.NamedTemporaryFile("w", suffix=".sh") as f:
+        with tempfile.NamedTemporaryFile("w", suffix=".sh", encoding="utf-8") as f:
             _ = f.write(code)
             f.flush()
             result = subprocess.run(["bash", "-n", f.name], check=False, capture_output=True, text=True)
