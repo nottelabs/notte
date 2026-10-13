@@ -52,14 +52,12 @@ def test_start_close_session_with_viewport():
     assert session.response is not None
 
 
-@pytest.fixture
-def session_id() -> str:
-    return "7ba14107-0c0e-4a26-bd7c-57f49503e409"
-
-
-def test_replay_session(session_id: str):
+def test_replay_session():
     client = NotteClient()
-    response = client.sessions.replay(session_id=session_id)
+    with client.Session(proxies=False, open_viewer=False) as session:
+        _ = session.execute(type="goto", url="https://www.google.com")
+        _ = session.execute(type="wait", time_ms=3_000)
+    response = client.sessions.replay(session_id=session.session_id)
     assert response.expires_at
     assert response.mp4_url or response.playlist_content
 
