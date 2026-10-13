@@ -386,6 +386,7 @@ class NotteSession(AsyncResource, SyncResource):
             # Fail the action: executing it as is would type the raw placeholder into the page.
             raise VaultCredentialError(str(e)) from e
 
+    # BEGIN GENERATED OVERLOADS: aexecute (scripts/generate_action_overloads.py)
     @overload
     async def aexecute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
     @overload
@@ -476,6 +477,8 @@ class NotteSession(AsyncResource, SyncResource):
     async def aexecute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[DownloadFileActionDict]
     ) -> ExecutionResult: ...
+
+    # END GENERATED OVERLOADS: aexecute
 
     @timeit("aexecute")
     @track_usage("local.session.execute")
@@ -716,6 +719,7 @@ class NotteSession(AsyncResource, SyncResource):
             logger.info(f"🌌 Observation. Current URL: {obs.clean_url}")
         logger.info("🎉 All actions executed successfully")
 
+    # BEGIN GENERATED OVERLOADS: execute (scripts/generate_action_overloads.py)
     @overload
     def execute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
     @overload
@@ -800,6 +804,8 @@ class NotteSession(AsyncResource, SyncResource):
     def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[DownloadFileActionDict]
     ) -> ExecutionResult: ...
+
+    # END GENERATED OVERLOADS: execute
 
     def execute(
         self,

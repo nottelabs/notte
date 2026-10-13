@@ -1502,6 +1502,7 @@ class RemoteSession(SyncResource):
             data["perception_type"] = self.default_perception_type
         return self.client.page.observe(session_id=self.session_id, **data)  # pyright: ignore[reportUnknownVariableType, reportArgumentType, reportCallIssue]
 
+    # BEGIN GENERATED OVERLOADS: execute (scripts/generate_action_overloads.py)
     @overload
     def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FormFillActionDict]
@@ -1590,6 +1591,8 @@ class RemoteSession(SyncResource):
     ) -> ExecutionResult: ...
     @overload
     def execute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
+
+    # END GENERATED OVERLOADS: execute
 
     def execute(
         self,

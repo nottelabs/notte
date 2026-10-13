@@ -106,6 +106,12 @@ repos:
         language: system
         files: ^(openapi/.*|packages/notte-sdk/src/notte_sdk/types\.py|scripts/openapi_contract\.py|\.pre-commit-config\.yaml)$
         pass_filenames: false
+      - id: action-overloads
+        name: Check the execute() overloads match the action registry
+        entry: bash -c "uv run --no-sync python scripts/generate_action_overloads.py --check"
+        language: system
+        files: ^(packages/notte-core/src/notte_core/actions/.*|packages/notte-browser/src/notte_browser/session\.py|packages/notte-sdk/src/notte_sdk/endpoints/sessions\.py|scripts/generate_action_overloads\.py|\.pre-commit-config\.yaml)$
+        pass_filenames: false
       - id: no-loguru-logger-import
         name: Check for loguru logger imports
         entry: 'from loguru import logger'
