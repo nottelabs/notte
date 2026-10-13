@@ -18,58 +18,34 @@
 
 ---
 
-Notte gives AI agents and automation scripts a browser. Script the deterministic parts, use AI only where you need it, and run it all on stealth cloud browsers with a single API.
+Notte gives AI agents and developers cloud browsers. Drive them from your terminal, your coding agent or your code, deploy browser automations as APIs, and fetch structured data from any page.
+
+Create a free API key in the [Console](https://console.notte.cc) 🔑, then pick where to start:
+
+| You want to... | Use |
+|---|---|
+| Drive browsers from the terminal, scripts or CI | [Notte CLI](#notte-cli) |
+| Give Claude Code, Codex or Cursor a browser | [Notte MCP](#notte-mcp) |
+| Run your own Playwright / Puppeteer code on stealth cloud browsers | [Browser Sessions](#browser-sessions) |
+| Ship a browser script as an API endpoint or a cron job | [Browser Functions](#browser-functions) |
+| Describe a task in English and get a deployed API back | [Anything API](#anything-api) |
+| Turn a URL into clean, structured data | [Fetch](#fetch) |
+
+## Notte CLI
+
+Drive cloud browsers from your terminal, shell scripts or CI.
 
 ```bash
-pip install notte-sdk        # or: npm install notte-sdk
+brew tap nottelabs/notte-cli https://github.com/nottelabs/notte-cli.git
+brew install notte
+notte auth login
+notte sessions start
+notte page goto "https://news.ycombinator.com"
+notte page scrape --instructions "Top 3 posts with their points"
+notte sessions stop
 ```
 
-## Quickstart
-
-Create a free API key in the [Console](https://console.notte.cc) 🔑, then:
-
-```python
-from notte_sdk import NotteClient
-from pydantic import BaseModel
-
-
-class Post(BaseModel):
-    title: str
-    points: int
-
-
-class TopPosts(BaseModel):
-    posts: list[Post]
-
-
-client = NotteClient()  # reads NOTTE_API_KEY
-
-with client.Session(open_viewer=True) as session:  # stealth cloud browser + live view
-    agent = client.Agent(session=session, max_steps=10)
-    response = agent.run(
-        task="Go to news.ycombinator.com and return the top 3 posts",
-        response_format=TopPosts,
-    )
-
-print(response.answer)
-```
-
-<details>
-<summary><b>TypeScript</b></summary>
-
-```typescript
-import { NotteClient } from 'notte-sdk';
-
-const client = new NotteClient(); // reads NOTTE_API_KEY
-
-await client.Session({ open_viewer: true }).use(async (session) => {
-  const agent = client.Agent({ session, max_steps: 10 });
-  const response = await agent.run({ task: 'Go to news.ycombinator.com and return the top 3 posts' });
-  console.log(response.answer);
-});
-```
-
-</details>
+See the [CLI repo](https://github.com/nottelabs/notte-cli) for every command.
 
 <details>
 <summary><b>Let your coding agent set it up</b></summary>
@@ -82,20 +58,9 @@ Read https://notte.cc/skill.md and follow its setup instructions.
 
 </details>
 
-## Which Notte do I need?
+## Notte MCP
 
-| You want to... | Use |
-|---|---|
-| Give Claude, Codex or Cursor a browser | [Browser MCP](#give-your-coding-agent-a-browser) |
-| Describe a task in English and get the result | [Agents](#quickstart) |
-| Run your own Playwright / Puppeteer code on stealth cloud browsers | [Sessions](#sessions-bring-your-own-playwright) |
-| Mix scripted steps with agents | [Hybrid workflows](#hybrid-workflows) |
-| Ship a browser script as an API endpoint or a cron job | [Functions](#functions) |
-| Describe a task in English and get a deployed API back | [Anything API](#anything-api) |
-| Turn a URL into structured data | [Scraping](#scraping) |
-| Drive browsers from the terminal or CI | [notte-cli](https://github.com/nottelabs/notte-cli) |
-
-## Give your coding agent a browser
+Give your coding agent a cloud browser it can open, drive, observe and scrape, with saved logins.
 
 ```bash
 claude mcp add --transport http notte https://api.notte.cc/mcp
@@ -104,15 +69,19 @@ npx skills add nottelabs/notte-skills -y    # optional: Notte agent skills
 
 Run `/mcp` in Claude Code to sign in. Setup for Codex, Cursor and other clients is in the [MCP docs](https://docs.notte.cc/mcp-server).
 
-## Sessions: bring your own Playwright
+## Browser Sessions
 
 Every session is a cloud Chrome with proxies, CAPTCHA solving, anti-detection, live view and recordings. Connect anything that speaks CDP: Playwright, Puppeteer, Stagehand, Browser Use.
+
+```bash
+pip install notte-sdk        # or: npm install notte-sdk playwright-core
+```
 
 ```python
 from notte_sdk import NotteClient
 from playwright.sync_api import sync_playwright
 
-client = NotteClient()
+client = NotteClient()  # reads NOTTE_API_KEY
 
 with client.Session(proxies=True, solve_captchas=True) as session:
     with sync_playwright() as p:
@@ -122,40 +91,36 @@ with client.Session(proxies=True, solve_captchas=True) as session:
         print(page.title())
 ```
 
+<details>
+<summary><b>TypeScript</b></summary>
+
+```typescript
+import { chromium } from 'playwright-core';
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient(); // reads NOTTE_API_KEY
+
+await client.Session({ proxies: true, solve_captchas: true }).use(async (session) => {
+  const { cdp_url } = await session.status();
+  if (!cdp_url) throw new Error('Session did not return a cdp_url');
+  const browser = await chromium.connectOverCDP(cdp_url);
+  try {
+    const page = browser.contexts()[0].pages()[0];
+    await page.goto('https://example.com');
+    console.log(await page.title());
+  } finally {
+    await browser.close();
+  }
+});
+```
+
+</details>
+
 For logged-in workflows, attach a [Vault](https://docs.notte.cc/concepts/vaults) (credentials and MFA the LLM never sees), a [Browser Profile](https://docs.notte.cc/features/sessions/browser-profiles) or a [Persona](https://docs.notte.cc/concepts/personas).
 
-## Hybrid workflows
+## Browser Functions
 
-Script the deterministic steps, hand the rest to an agent. Faster, cheaper and more reliable than running an agent end to end.
-
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session(open_viewer=True) as session:
-    session.execute(type="goto", url="https://github.com/nottelabs")  # scripted
-    agent = client.Agent(session=session, max_steps=10)  # reasoning
-    response = agent.run(task="Open the notte repository owned by nottelabs. Finish on its repository home page.")
-    data = session.scrape(instructions="Extract number of stars")  # extraction
-```
-
-**Agent fallback.** Scripts break when sites change. Wrap scripted steps in an `AgentFallback` and an agent takes over when a step fails:
-
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
-    session.execute(type="goto", url="https://shop.notte.cc/")
-    with client.AgentFallback(session=session, task="Go to the cart page") as agent:
-        session.execute(type="click", selector="#this-button-does-not-exist")  # fails -> agent recovers
-```
-
-## Functions
-
-Deploy a script as a serverless endpoint. Call it over HTTP, schedule it with cron, or trigger it from your app.
+Deploy a browser script as a serverless endpoint. Call it over HTTP, schedule it with cron, or trigger it from your app.
 
 ```python requires-env="NOTTE_FUNCTION_ID"
 import os
@@ -183,7 +148,7 @@ curl -N -X POST https://anything.notte.cc/api/anything/start \
 
 Or browse ready-made functions in the [marketplace](https://anything.notte.cc/marketplace).
 
-## Scraping
+## Fetch
 
 One call, no session to manage. Get markdown, or data in your schema.
 
