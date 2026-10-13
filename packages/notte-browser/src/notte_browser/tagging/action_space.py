@@ -1,11 +1,10 @@
-from notte_core.actions import ActionParameter, InteractionAction
+from notte_core.actions import ActionParameter, ClickAction, FillAction, InteractionAction, SelectDropdownOptionAction
 from notte_core.browser.dom_tree import DomNode, InteractionDomNode
 from notte_core.common.config import config
 from notte_core.errors.processing import InvalidInternalCheckError
 from notte_core.space import ActionSpace
 
 from notte_browser.rendering.interaction_only import InteractionOnlyDomNodeRenderingPipe
-from notte_browser.tagging.type import PossibleAction
 
 
 def build_action_space(dom_node: DomNode) -> ActionSpace:
@@ -34,10 +33,25 @@ def _interaction_action(node: InteractionDomNode) -> InteractionAction:
         )
     # rendered again rather than reused from the description: here attributes are not cut, and a
     # node outside the open dialogs is not in the description at all
-    action = PossibleAction(
-        id=node.id,
-        category="Interaction action",
-        description=InteractionOnlyDomNodeRenderingPipe.render_node(node),
-        param=ActionParameter(name="value", type="string") if node.id.startswith("I") else None,
-    )
-    return action.to_interaction(node)
+    if node.id.startswith("I"):
+        param = ActionParameter(name="value", type="string")
+        if node.get_role_str() == "combobox" and not node.computed_attributes.is_editable:
+            action = SelectDropdownOptionAction(
+                id=node.id,
+                value="<sample_value>",
+                text_label=node.text,
+                press_enter=False,
+            )
+        else:
+            action = FillAction(id=node.id, value="<sample_value>", text_label=node.inner_text(), press_enter=False)
+    elif node.id.startswith("O"):
+        param = None
+        action = SelectDropdownOptionAction(id=node.id, value=node.id, text_label=node.text)
+    else:
+        param = None
+        action = ClickAction(id=node.id, text_label=node.text)
+    action.selector = node.computed_attributes.selectors
+    action.description = InteractionOnlyDomNodeRenderingPipe.render_node(node)
+    action.category = "Interaction action"
+    action.param = param
+    return action
