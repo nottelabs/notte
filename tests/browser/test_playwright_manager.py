@@ -66,3 +66,24 @@ async def test_new_window_does_not_launch_browser_when_cdp_connection_fails(brow
     assert exc_info.value.__cause__ is connection_error
     playwright.chromium.launch.assert_not_awaited()
     browser.new_context.assert_not_awaited()
+    # Playwright was already running before new_window(), so its owner stops it.
+    playwright.stop.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_new_window_stops_playwright_it_started_when_cdp_connection_fails(monkeypatch):
+    playwright = MagicMock(spec=Playwright)
+    playwright.chromium.connect_over_cdp = AsyncMock(side_effect=RuntimeError("Connection refused"))
+    starter = MagicMock()
+    starter.start = AsyncMock(return_value=playwright)
+    monkeypatch.setattr("notte_browser.playwright.async_playwright", lambda: starter)
+    manager = PlaywrightManager()
+    options = BrowserWindowOptions.from_request(
+        LocalSessionStartRequest(headless=True, cdp_url="http://127.0.0.1:9222")
+    )
+
+    with pytest.raises(CdpConnectionError):
+        await manager.new_window(options)
+
+    playwright.stop.assert_awaited_once()
+    assert not manager.is_started()
