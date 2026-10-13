@@ -95,7 +95,8 @@ CDP connections can be interrupted. Wrap operations in try-except blocks:
 
 When using the SDK-managed `session.page`, call `session.reconnect()` after
 its browser connection drops. For `await session.apage`, use
-`await session.areconnect()` instead:
+`await session.areconnect()` instead. In the TypeScript SDK, call
+`await session.reconnect()` after `await session.page()`:
 
 ```python
 # After detecting a disconnected SDK-managed Playwright connection:

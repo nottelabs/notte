@@ -85,6 +85,11 @@ export interface SaveProfileOptions {
   name?: string;
 }
 
+export interface ReconnectOptions {
+  /** Bound on the CDP handshake, in milliseconds. Must be finite and positive. Defaults to 10000. */
+  timeout_ms?: number;
+}
+
 export interface SessionScriptOptions {
   /** Return a standalone workflow script rather than only the relevant steps. Defaults to true. */
   as_workflow?: boolean;
@@ -129,6 +134,18 @@ export interface SessionOptions extends ApiSessionStartRequest {
   storage?: RemoteFileStorage;
 }
 
+type PlaywrightModule = typeof import('playwright-core');
+
+async function loadPlaywright(): Promise<PlaywrightModule> {
+  try {
+    return await import('playwright-core');
+  } catch (error) {
+    throw new Error('Playwright not installed. Run `npm install playwright-core` to use `session.page()`.', {
+      cause: error,
+    });
+  }
+}
+
 /**
  * Keep the external CDP client from competing with Notte for native dialogs.
  *
@@ -168,6 +185,7 @@ export class Session {
   private response: SessionResponse | null = null;
   private playwrightBrowser: Browser | null = null;
   private playwrightPage: Page | null = null;
+  private playwrightReconnect: Promise<Page> | null = null;
 
   constructor(client: NotteClient, options: SessionOptions = {}) {
     this.client = client;
@@ -731,24 +749,10 @@ export class Session {
     if (this.playwrightPage) {
       return this.playwrightPage;
     }
-    let playwright: typeof import('playwright-core');
-    try {
-      playwright = await import('playwright-core');
-    } catch (error) {
-      throw new Error('Playwright not installed. Run `npm install playwright-core` to use `session.page()`.', {
-        cause: error,
-      });
-    }
+    const playwright = await loadPlaywright();
     try {
       if (!this.playwrightBrowser) {
-        const cdpUrl = await this.cdpUrl();
-        // Identify the SDK to Notte's CDP endpoint, as every API call does; a caller's
-        // own browser (`cdp_url` option) gets nothing extra.
-        this.playwrightBrowser = this.options.cdp_url
-          ? await playwright.chromium.connectOverCDP(cdpUrl)
-          : await playwright.chromium.connectOverCDP(cdpUrl, {
-              headers: { 'x-notte-request-origin': REQUEST_ORIGIN, 'x-notte-sdk-version': SDK_VERSION },
-            });
+        this.playwrightBrowser = await this.connectPlaywright(playwright);
         installServerOwnedDialogPolicy(this.playwrightBrowser);
       }
       const page = this.playwrightBrowser.contexts()[0]?.pages()[0];
@@ -762,6 +766,85 @@ export class Session {
         cause: error,
       });
     }
+  }
+
+  /**
+   * Reconnect a disconnected `session.page()` connection to this session.
+   *
+   * Makes one connection attempt; it never retries an interrupted action,
+   * starts a new session, or stops the remote browser. Call it before
+   * `stop()`, and rebuild any retained Page, Locator, or CDPSession objects
+   * afterward. A healthy connection is returned unchanged, and concurrent
+   * calls share one attempt. Initialize `session.page()` first.
+   *
+   * Returns the first page of the default browser context, like `page()`;
+   * this is not a guarantee of selecting a previously used tab.
+   *
+   * @example
+   * const page = await session.reconnect({ timeout_ms: 10_000 });
+   */
+  async reconnect(options: ReconnectOptions = {}): Promise<Page> {
+    const { timeout_ms = 10_000 } = options;
+    if (!Number.isFinite(timeout_ms) || timeout_ms <= 0) {
+      throw new RangeError('timeout_ms must be finite and positive');
+    }
+    if (this.playwrightReconnect) {
+      return this.playwrightReconnect;
+    }
+    const previous = this.playwrightBrowser;
+    if (!previous) {
+      throw new Error('Initialize session.page() before calling reconnect()');
+    }
+    if (previous.isConnected() && this.playwrightPage) {
+      return this.playwrightPage;
+    }
+    const attempt = this.replacePlaywrightConnection(previous, timeout_ms);
+    this.playwrightReconnect = attempt;
+    try {
+      return await attempt;
+    } finally {
+      if (this.playwrightReconnect === attempt) {
+        this.playwrightReconnect = null;
+      }
+    }
+  }
+
+  private async replacePlaywrightConnection(previous: Browser, timeoutMs: number): Promise<Page> {
+    const playwright = await loadPlaywright();
+    // Keep the disconnected binding until a complete replacement is ready.
+    const browser = await this.connectPlaywright(playwright, timeoutMs);
+    try {
+      const page = browser.contexts()[0]?.pages()[0];
+      if (!page) {
+        throw new Error('the browser has no open page');
+      }
+      installServerOwnedDialogPolicy(browser);
+      if (this.playwrightBrowser !== previous) {
+        throw new Error('the session was stopped while reconnecting');
+      }
+      this.playwrightBrowser = browser;
+      this.playwrightPage = page;
+      return page;
+    } catch (error) {
+      await browser.close().catch(() => {});
+      throw error;
+    }
+  }
+
+  private async connectPlaywright(playwright: PlaywrightModule, timeoutMs?: number): Promise<Browser> {
+    const cdpUrl = await this.cdpUrl();
+    const timeout = timeoutMs === undefined ? {} : { timeout: timeoutMs };
+    // Identify the SDK to Notte's CDP endpoint, as every API call does; a caller's
+    // own browser (`cdp_url` option) gets nothing extra.
+    if (this.options.cdp_url) {
+      return timeoutMs === undefined
+        ? playwright.chromium.connectOverCDP(cdpUrl)
+        : playwright.chromium.connectOverCDP(cdpUrl, timeout);
+    }
+    return playwright.chromium.connectOverCDP(cdpUrl, {
+      headers: { 'x-notte-request-origin': REQUEST_ORIGIN, 'x-notte-sdk-version': SDK_VERSION },
+      ...timeout,
+    });
   }
 
   /**

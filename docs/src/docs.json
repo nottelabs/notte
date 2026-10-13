@@ -514,6 +514,7 @@
                       "typescript-sdk-reference/session/debugtabinfo",
                       "typescript-sdk-reference/session/cdpurl",
                       "typescript-sdk-reference/session/page",
+                      "typescript-sdk-reference/session/reconnect",
                       "typescript-sdk-reference/session/getscript",
                       "typescript-sdk-reference/session/evaluatejs",
                       "typescript-sdk-reference/session/fetch"

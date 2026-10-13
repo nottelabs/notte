@@ -54,6 +54,7 @@ export type {
   ExecuteOptions,
   ReplayOptions,
   SaveProfileOptions,
+  ReconnectOptions,
   SessionScriptOptions,
   PerceptionType,
   SessionCloseReason,
