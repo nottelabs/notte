@@ -125,3 +125,21 @@ async def test_agent_action_structured_output(model: LlmModel):
     )
     assert isinstance(result.action, CompletionAction)
     assert result.action.success
+
+
+@pytest.mark.asyncio
+@pytest.mark.skipif("GROQ_API_KEY" not in os.environ, reason="GROQ_API_KEY not set")
+async def test_groq_public_model_name_on_direct_calls(monkeypatch: pytest.MonkeyPatch):
+    # The public `groq/gpt-oss-120b` value must reach Groq directly, without OpenRouter remapping it.
+    monkeypatch.setattr("notte_llm.engine.enable_openrouter", lambda: False)
+    engine = LLMEngine(model=LlmModel.groq)
+    result = await engine.structured_completion(
+        messages=[
+            {
+                "role": "user",
+                "content": f"What is the capital of France? You should respond with a JSON object with format ```json\n{Country(name='my_country', capital='my_capital')}\n```\n",
+            }
+        ],
+        response_format=Country,
+    )
+    assert result.capital == "Paris"
