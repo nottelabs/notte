@@ -314,25 +314,6 @@
             ]
           },
           {
-            "group": "CLI",
-            "pages": [
-              "cli-reference/index",
-              "cli-reference/auth",
-              "cli-reference/files",
-              "cli-reference/functions",
-              "cli-reference/page",
-              "cli-reference/payment",
-              "cli-reference/personas",
-              "cli-reference/profiles",
-              "cli-reference/sessions",
-              "cli-reference/skill",
-              "cli-reference/tunnel",
-              "cli-reference/usage",
-              "cli-reference/vaults",
-              "cli-reference/other"
-            ]
-          },
-          {
             "group": "APIs",
             "openapi": "https://api.notte.cc/openapi.json"
           },
@@ -701,6 +682,35 @@
                   }
                 ]
               }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "CLI",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "cli-reference/index"
+            ]
+          },
+          {
+            "group": "Commands",
+            "pages": [
+              "cli-reference/auth",
+              "cli-reference/files",
+              "cli-reference/functions",
+              "cli-reference/page",
+              "cli-reference/payment",
+              "cli-reference/personas",
+              "cli-reference/profiles",
+              "cli-reference/sessions",
+              "cli-reference/skill",
+              "cli-reference/tunnel",
+              "cli-reference/usage",
+              "cli-reference/vaults",
+              "cli-reference/other"
             ]
           }
         ]
