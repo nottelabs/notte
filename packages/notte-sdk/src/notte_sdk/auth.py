@@ -8,6 +8,7 @@ Every lookup is best effort: any failure means "no key found".
 """
 
 import base64
+import importlib
 import json
 import os
 import sys
@@ -129,19 +130,21 @@ def _get_from_secret_service(key: str) -> str | None:
         return None
 
     try:
-        import secretstorage  # pyright: ignore[reportMissingImports]
-
-        bus = secretstorage.dbus_init()  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        # Imported dynamically: secretstorage is only installed on Linux.
+        secretstorage: Any = importlib.import_module("secretstorage")
+        bus: Any = secretstorage.dbus_init()
         try:
-            for collection in secretstorage.get_all_collections(bus):  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-                if collection.get_label() != KEYRING_SERVICE:  # pyright: ignore[reportUnknownMemberType]
+            collection: Any
+            for collection in secretstorage.get_all_collections(bus):
+                if collection.get_label() != KEYRING_SERVICE:
                     continue
-                for item in collection.search_items({"profile": key}):  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-                    value = _decode_cli_secret(item.get_secret())  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+                item: Any
+                for item in collection.search_items({"profile": key}):
+                    value = _decode_cli_secret(item.get_secret())
                     if value:
                         return value
         finally:
-            bus.close()  # pyright: ignore[reportUnknownMemberType]
+            bus.close()
     except Exception as exc:
         # Headless Linux hosts and containers usually have no Secret Service.
         logger.debug(f"Could not read notte-cli Secret Service keyring: {type(exc).__name__}")
