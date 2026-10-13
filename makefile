@@ -214,3 +214,15 @@ sdk-codegen:
 
 sdk-codegen-check:
 	uv run --no-sync python scripts/generate_sdk_models.py --check
+
+# One reviewed contract update for both SDKs. Install uv and npm dependencies first.
+.PHONY: openapi-refresh sdk-generate-all node-sdk-codegen
+openapi-refresh:
+	$(MAKE) openapi-fetch
+	$(MAKE) -k sdk-generate-all
+
+# Keep independent generators running even if one reports an incompatible contract.
+sdk-generate-all: sdk-codegen sdk-endpoints node-sdk-codegen
+
+node-sdk-codegen:
+	cd node-sdk && npm run generate && npm run docs:generate

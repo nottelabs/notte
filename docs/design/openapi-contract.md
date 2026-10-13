@@ -48,9 +48,9 @@ spec) would mean rewriting those backend modules and maintaining a Python code g
 | Wire models | `packages/notte-core/src/notte_core/types.py` (moved from `notte_sdk/types.py`; `notte_sdk.types` re-exports it) |
 | Spec snapshot | `openapi/openapi.json` at the repo root, so node-sdk can use the same file |
 | Contract check | `scripts/openapi_contract.py --check`: diffs every model against the schema of the same name (fields, required, nullable). Known drift is listed in `openapi/known_drift.txt`; anything new fails. Runs as the `openapi-contract` pre-commit hook, so CI enforces it offline |
-| Staging refresh | `.github/workflows/openapi-bump.yml`, 3x/day like bump-node-sdk: fetch the staging spec, open or refresh `chore/bump-openapi`, and auto-merge once checks pass. When the API drifted, the PR's contract check fails and the PR stays open |
+| Staging refresh | `.github/workflows/openapi-bump.yml`, 3x/day: fetch staging, regenerate both SDKs and TypeScript docs, and open or refresh `chore/bump-openapi` for manual review (no auto-merge). Guarded to `nottelabs/notte`; use `make openapi-refresh` locally in v2 |
 | Release gate | `make openapi-check-prod` in `pypi-release.yml`: run the contract check against `https://api.notte.cc` before publishing |
-| Make targets | `make openapi-check`, `make openapi-fetch [OPENAPI_URL=...]`, `make openapi-check-prod`; `--update-baseline` records drift on purpose |
+| Make targets | `make openapi-check`, `make openapi-refresh [OPENAPI_URL=...]` (fetch + both SDKs), `make openapi-fetch [OPENAPI_URL=...]` (snapshot only), `make openapi-check-prod`; `--update-baseline` records drift on purpose |
 | Python SDK endpoints | `scripts/generate_sdk_endpoints.py` generates `notte_sdk/_generated/endpoints.py` (endpoints only, bound to these models by schema name) from the same snapshot; see [sdk-generated-endpoints.md](sdk-generated-endpoints.md) |
 
 ## Developer loop
@@ -59,7 +59,8 @@ spec) would mean rewriting those backend modules and maintaining a Python code g
 2. notte-api picks it up (daily dependency bump, or bump it in the same change) and uses
    the model in its endpoint.
 3. Deploy to staging. The next `openapi-bump` run refreshes the snapshot; the contract
-   holds, so the PR merges itself and the Node SDK regenerates from the same schema.
+   and both SDKs are regenerated together. Review the contract report and generated diffs
+   before merging the refresh PR.
 
 If the API ships a field without step 1, the refresh PR fails the contract check and
 shows exactly which model drifted.
@@ -93,8 +94,8 @@ Fixed while building this: `PersonaCreateRequest.name` (the SDK rejected
    return both names and requests accept either (dropped with monorepo#3307 on 2026-10-13).
 3. Shrink the baseline: add the missing fields to the models here, then delete the
    backend's local subclasses (`PersonaResponse`, ...) so it imports `notte_core.types` directly.
-4. node-sdk: generate from `openapi/openapi.json` instead of live staging, so both SDKs and
-   their CI pin the same spec; merge the two refresh workflows.
+4. node-sdk now generates from `openapi/openapi.json` instead of live staging, so both SDKs and
+   their CI pin the same spec; the two refresh workflows are consolidated into `openapi-bump`.
 5. Split `notte_core.types` by resource (sessions, personas, vaults, functions, files,
    profiles, scrape) once the move has settled.
 

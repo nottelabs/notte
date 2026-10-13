@@ -226,8 +226,14 @@ and semantic/request-capture tests, not a second comparison against core's decla
 Retire the SDK portion of that hand-written contract baseline as its consumers migrate;
 keep a separate backend/core-to-published-spec release gate. Do not erase the baseline now
 or grow it to excuse new generated drift. Update the production endpoint check to validate
-migrated operations too. Node should ultimately regenerate from this same committed snapshot;
-changing its live staging input is a separate small PR.
+migrated operations too. Node now regenerates from this same committed snapshot (`cd node-sdk && npm run generate`).
+Its `npm run check:generated` compares fresh temporary output and checks the TypeScript
+reference without a network spec fetch. After installing both toolchains, root
+`make openapi-refresh` fetches staging and regenerates Python models/endpoints, Node
+client/resources/proxy patterns and TypeScript docs; set `OPENAPI_URL=https://api.notte.cc`
+for production. Commit all diffs together. The scheduled `openapi-bump.yml` proposes
+one combined refresh PR for manual review; the former independent Node bump is removed.
+The existing `nottelabs/notte` workflow guard and production release gate are unchanged.
 
 ## Migration order and size
 

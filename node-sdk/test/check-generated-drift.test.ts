@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -88,4 +90,62 @@ describe('check-generated-drift', () => {
       );
     });
   });
+});
+
+// Exercise the real CLI in an isolated Git repo: the snapshot is outside node-sdk,
+// runtime API overrides must not affect generation, and checks must not repair files.
+describe('committed-snapshot generation', () => {
+  it('checks offline and detects missing, stale and extra output without writing', () => {
+    const sdkRoot = fileURLToPath(new URL('..', import.meta.url));
+    const repoRoot = path.resolve(sdkRoot, '..');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'snapshot-check-'));
+    try {
+      const files = execFileSync('git', ['ls-files', '-z', '--', 'node-sdk', 'openapi/openapi.json'], { cwd: repoRoot, encoding: 'utf8' }).split('\0').filter(Boolean);
+      for (const file of files) {
+        const source = path.join(repoRoot, file);
+        if (!fs.existsSync(source)) continue;
+        const destination = path.join(root, file);
+        fs.mkdirSync(path.dirname(destination), { recursive: true });
+        fs.copyFileSync(source, destination);
+      }
+      execFileSync('git', ['init', '--quiet'], { cwd: root });
+      execFileSync('git', ['add', '.'], { cwd: root });
+      fs.symlinkSync(path.join(sdkRoot, 'node_modules'), path.join(root, 'node-sdk/node_modules'), 'dir');
+      const check = () => spawnSync(process.execPath, ['scripts/check-generated-drift.js'], {
+        cwd: path.join(root, 'node-sdk'), encoding: 'utf8',
+        env: { ...process.env, NOTTE_API_URL: 'http://127.0.0.1:1' },
+      });
+      const clean = check();
+      expect(clean.stdout + clean.stderr).toContain('up to date with the committed OpenAPI snapshot');
+      expect(clean.status).toBe(0);
+
+      const snapshot = path.join(root, 'openapi/openapi.json');
+      const originalSpec = fs.readFileSync(snapshot, 'utf8');
+      const modifiedSpec = JSON.parse(originalSpec);
+      modifiedSpec.components.schemas.ProfileResponse.description = 'Changed snapshot description';
+      fs.writeFileSync(snapshot, JSON.stringify(modifiedSpec));
+      const changedSpec = check();
+      expect(changedSpec.status).toBe(1);
+      expect(changedSpec.stderr).toContain('src/lib/client/types.gen.ts');
+      fs.writeFileSync(snapshot, originalSpec);
+
+      const missing = path.join(root, 'node-sdk/src/proxy/patterns.ts');
+      const stale = path.join(root, 'node-sdk/src/resources.gen.ts');
+      const extra = path.join(root, 'node-sdk/src/lib/client/obsolete.gen.ts');
+      fs.unlinkSync(missing);
+      fs.writeFileSync(stale, '// stale output\n');
+      fs.writeFileSync(extra, '// obsolete output\n');
+      execFileSync('git', ['add', '.'], { cwd: path.join(root, 'node-sdk/src') });
+      const dirty = check();
+      expect(dirty.status).toBe(1);
+      for (const file of ['src/proxy/patterns.ts', 'src/resources.gen.ts', 'src/lib/client/obsolete.gen.ts']) {
+        expect(dirty.stderr).toContain(file);
+      }
+      expect(fs.existsSync(missing)).toBe(false);
+      expect(fs.readFileSync(stale, 'utf8')).toBe('// stale output\n');
+      expect(fs.readFileSync(extra, 'utf8')).toBe('// obsolete output\n');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
 });

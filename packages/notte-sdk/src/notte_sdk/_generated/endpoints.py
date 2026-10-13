@@ -1391,6 +1391,22 @@ def session_profile_preview(
     )
 
 
+def session_profile_save(
+    session_id: str,
+    body: BaseModel,
+) -> NotteEndpoint[wire.ProfileResponse]:
+    """Session Profile Save (`POST /sessions/{session_id}/profile/save`).
+
+    Body: `SessionProfileSaveRequest` (application/json) has no model in notte_core.
+    """
+    return NotteEndpoint(
+        method="POST",
+        path=f"/sessions/{_segment(session_id)}/profile/save",
+        response=wire.ProfileResponse,
+        request=body,
+    )
+
+
 def session_replay(
     session_id: str,
 ) -> NotteEndpoint[wire.ReplayResponse]:

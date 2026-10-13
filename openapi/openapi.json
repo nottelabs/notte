@@ -490,6 +490,96 @@
         "x-hidden": true
       }
     },
+    "/sessions/{session_id}/profile/save": {
+      "post": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "Session Profile Save",
+        "operationId": "session_profile_save",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionProfileSaveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": []
+      }
+    },
     "/sessions/{session_id}/workflow/code": {
       "get": {
         "tags": [
@@ -8777,7 +8867,6 @@
                     "agents.save",
                     "agents.repeat",
                     "agents.script",
-                    "bua",
                     "scrape",
                     "scrape_from_html",
                     "search",
@@ -19158,6 +19247,39 @@
         },
         "type": "object",
         "title": "SessionProfilePreviewResponse"
+      },
+      "SessionProfileSaveRequest": {
+        "properties": {
+          "profile_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Id",
+            "description": "Existing profile to overwrite with the session's current browser state. Omit it together with name to save into the profile the session was started with."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Create a new profile with this name and save into it. Mutually exclusive with profile_id."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SessionProfileSaveRequest"
       },
       "SessionResponse": {
         "properties": {

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Checks whether the checked-in SDK output matches the staging OpenAPI spec.
+ * Checks whether the checked-in SDK output matches the committed OpenAPI snapshot.
  *
  * The check regenerates the SDK in a temporary directory and compares the
  * generated files, instead of comparing an OpenAPI hash. This avoids release
@@ -160,23 +160,31 @@ function main() {
 
   try {
     copyTrackedSdkFiles(tempSdkDir);
+    copyFile(
+      path.resolve(SDK_DIR, '../openapi/openapi.json'),
+      path.join(tempRoot, 'openapi/openapi.json'),
+    );
+    // Generate into empty output paths so removed/stale files cannot survive the check.
+    for (const generatedPath of GENERATED_PATHS) {
+      fs.rmSync(resolveInside(tempSdkDir, generatedPath), { recursive: true, force: true });
+    }
     fs.symlinkSync(sourceNodeModules, path.join(tempSdkDir, 'node_modules'), 'dir');
 
-    console.log('Regenerating SDK from https://us-staging.notte.cc/openapi.json in a temporary directory...');
-    runIn(tempSdkDir, 'npm', ['run', 'generate:staging'], { stdio: 'inherit' });
+    console.log('Regenerating SDK from openapi/openapi.json in a temporary directory...');
+    runIn(tempSdkDir, 'npm', ['run', 'generate'], { stdio: 'inherit' });
 
     const changedFiles = collectGeneratedDiffs(SDK_DIR, tempSdkDir);
     if (changedFiles.length === 0) {
-      console.log('\nGenerated SDK output is up to date with staging');
+      console.log('\nGenerated SDK output is up to date with the committed OpenAPI snapshot');
       return;
     }
 
-    console.error('\nSDK is OUTDATED - generated output differs from staging.');
+    console.error('\nSDK is OUTDATED - generated output differs from the committed OpenAPI snapshot.');
     console.error('   Changed generated files:');
     for (const file of changedFiles) {
       console.error(`   - ${file}`);
     }
-    console.error('\n   Run `npm run generate:staging` and commit the generated changes.');
+    console.error('\n   Run `npm run generate` and commit the generated changes.');
 
     process.exitCode = 1;
   } finally {

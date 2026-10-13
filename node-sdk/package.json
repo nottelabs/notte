@@ -33,8 +33,6 @@
     "resources:generate": "node scripts/generate-resources.mjs",
     "resources:check": "node scripts/generate-resources.mjs --check",
     "resources:test": "node --test scripts/generate-resources.test.mjs",
-    "generate:staging": "NOTTE_API_URL=https://us-staging.notte.cc npm run generate",
-    "check:staging": "node scripts/check-generated-drift.js",
     "build": "tsup",
     "dev": "tsup --watch",
     "prepublishOnly": "npm run build",
@@ -42,7 +40,8 @@
     "test:unit": "vitest --exclude='**/*integration.test.ts'",
     "test:integration": "VITEST_INTEGRATION=1 vitest --run",
     "typecheck": "tsc --noEmit",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "check:generated": "node scripts/check-generated-drift.js && npm run docs:check"
   },
   "keywords": [
     "notte",

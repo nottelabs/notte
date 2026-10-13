@@ -23,8 +23,26 @@ npm pack --dry-run
 ```
 
 `npm run build` compiles the checked-in client without contacting the API.
-To update the generated client, run `npm run generate:staging`, review the diff,
-and commit it. `npm run check:staging` checks for drift without editing your files.
+`npm run generate` uses `../openapi/openapi.json`, the committed snapshot shared
+with Python, and ignores `NOTTE_API_URL` (which configures runtime API calls).
+Run `npm run docs:generate` afterward and commit the generated changes.
+`npm run check:generated` regenerates in a temporary directory and checks the
+TypeScript reference without editing your files or contacting staging.
+
+To deliberately refresh the snapshot and regenerate **both SDKs** and the TypeScript
+reference, install dependencies with `uvx uv@latest sync --all-packages --all-extras`
+at the repo root and `npm ci` here, then run from the repo root:
+
+```bash
+make openapi-refresh                                    # staging
+make openapi-refresh OPENAPI_URL=https://api.notte.cc     # production
+```
+
+Review and commit the snapshot and all generated diffs together. If a generator
+rejects the new contract, resolve the reported incompatibility before committing.
+The scheduled `openapi-bump.yml` workflow proposes this same combined refresh as
+one PR for manual review in `nottelabs/notte`; it is repository-guarded and does not
+run in `nottelabs/notte-v2`. There is no separate live Node generation check.
 
 ### Generated resource methods
 
@@ -69,15 +87,20 @@ npx vitest run test/function-create-run.integration.test.ts
 
 This test creates its own function and deletes it afterward. Other live suites
 may require pre-existing fixtures; see [test documentation](test/README.md).
-The `node sdk cicd` workflow runs on every PR touching `node-sdk/`:
+The `node sdk cicd` workflow runs on PRs touching `node-sdk/`, the OpenAPI snapshot,
+or the generated TypeScript reference:
 
 - `tests` runs unit tests, local HTTP integration tests, type checks, and package
   checks on Node.js 22 and 24, including for fork PRs.
 - `integration-tests` runs the complete live integration suite against
   staging on same-repository PRs. Fork PRs skip this credentialed job.
 
-Both jobs also run on main pushes and manual workflow runs on main. API drift
-checks remain limited to main pushes and manual workflow runs on main.
+- `generated` checks the client, proxy patterns, resources and TypeScript reference
+  against the committed snapshot, including on fork PRs.
+
+These jobs also run on main pushes and manual workflow runs (live integration
+requires main for manual runs). Staging contract drift is handled only by the
+scheduled snapshot refresh PR, so it cannot break unrelated PR generation checks.
 
 ### Releases
 
