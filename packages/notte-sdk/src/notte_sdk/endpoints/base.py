@@ -10,7 +10,7 @@ from urllib.parse import quote, urljoin
 import requests
 from notte_core import __version__ as notte_core_version
 from notte_core.common.logging import logger
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError
 from requests.exceptions import ConnectionError
 
 from notte_sdk._transport import request_session
@@ -26,7 +26,19 @@ _cached_pypi_version: str | None = None
 _version_check_performed: bool = False
 
 
+class RawResponse(BaseModel):
+    """A JSON object response whose schema has no model in `notte_core.types` yet.
+
+    The generated endpoints (`notte_sdk._generated.endpoints`) parse such responses with this
+    class; every field lands in `model_extra` (or `model_dump()`).
+    """
+
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")
+
+
 class NotteEndpoint(BaseModel, Generic[TResponse]):
+    # Relative to the client's `base_endpoint_path`, or absolute (from the server root) when it
+    # starts with "/", as the generated endpoints are.
     path: str
     response: type[TResponse]
     request: BaseModel | None = None
@@ -365,8 +377,8 @@ class BaseClient(ABC):
             raise ValueError(f"Endpoint path cannot contain '{unformated_path.group(0)}' (path={endpoint.path})")
         path = self.server_url.rstrip("/") + "/"
 
-        # Add base endpoint path if it exists
-        if self.base_endpoint_path is not None:
+        # Add base endpoint path if it exists (absolute paths start at the server root)
+        if self.base_endpoint_path is not None and not endpoint.path.startswith("/"):
             # Remove any leading/trailing slashes and append with trailing slash
             base_path = self.base_endpoint_path.strip("/")
             if base_path:
@@ -376,6 +388,12 @@ class BaseClient(ABC):
         endpoint_path = endpoint.path.lstrip("/")
         path = urljoin(path, endpoint_path)
         return path
+
+    def _error_path(self, endpoint: NotteEndpoint[TResponse]) -> str:
+        """The endpoint's path for error messages, e.g. `personas/<id>`."""
+        if endpoint.path.startswith("/"):
+            return endpoint.path.lstrip("/")
+        return f"{self.base_endpoint_path}/{endpoint.path}"
 
     def _request(
         self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: float | None = None
@@ -416,8 +434,7 @@ class BaseClient(ABC):
                         timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                     )
                 case "POST" | "PATCH":
-                    if endpoint.request is None and endpoint.files is None:
-                        raise ValueError("Request model or file is required for POST requests")
+                    # Without a request model or file the request has no body (e.g. `function_fork`).
                     if endpoint.request is None:
                         data = None
                     elif files is None:
@@ -468,14 +485,14 @@ class BaseClient(ABC):
                         pass
 
             if response.headers.get("x-error-class") == "NotteApiExecutionError":
-                raise NotteAPIExecutionError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
+                raise NotteAPIExecutionError(path=self._error_path(endpoint), response=response)
 
-            raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
+            raise NotteAPIError(path=self._error_path(endpoint), response=response)
         if response.status_code == 204 or getattr(response, "content", None) == b"":
             return {}
         response_dict: Any = response.json()
         if "detail" in response_dict:
-            raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
+            raise NotteAPIError(path=self._error_path(endpoint), response=response)
         return response_dict
 
     def request(
@@ -501,7 +518,7 @@ class BaseClient(ABC):
         """
         response: Any = self._request(endpoint, headers=headers, timeout=timeout)
         if not isinstance(response, dict):
-            raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
+            raise NotteAPIError(path=self._error_path(endpoint), response=response)
 
         try:
             return endpoint.response.model_validate(response)
@@ -540,7 +557,7 @@ class BaseClient(ABC):
             if "items" in response_list:
                 response_list = response_list["items"]
             if not isinstance(response_list, list):
-                raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response_list)
+                raise NotteAPIError(path=self._error_path(endpoint), response=response_list)
 
         try:
             return [endpoint.response.model_validate(item) for item in response_list]  # pyright: ignore[reportUnknownVariableType]

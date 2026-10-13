@@ -46,7 +46,8 @@ from notte_core.types import (
 )
 from typing_extensions import override
 
-from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk._generated import endpoints as api
+from notte_sdk.endpoints.base import BaseClient
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
@@ -184,168 +185,6 @@ class VaultsClient(BaseClient):
     If you need to handle multiple sessions, you need to create a new client for each session.
     """
 
-    # Session
-    CREATE_VAULT = "create"
-    ADD_CREDENTIALS = "{vault_id}/credentials"
-    GET_CREDENTIALS = "{vault_id}/credentials"
-    DELETE_CREDENTIALS = "{vault_id}/credentials"
-    ADD_CREDIT_CARD = "{vault_id}/card"
-    GET_CREDIT_CARD = "{vault_id}/card"
-    DELETE_CREDIT_CARD = "{vault_id}/card"
-    LIST_VAULTS = ""
-    LIST_CREDENTIALS = "{vault_id}"
-    DELETE_VAULT = "{vault_id}"
-
-    @staticmethod
-    def _delete_vault_endpoint(vault_id: str) -> NotteEndpoint[DeleteVaultResponse]:
-        """
-        Returns a NotteEndpoint configured for deleting a vault.
-
-        Args:
-            vault_id: The ID of the vault to delete.
-
-        Returns:
-            A NotteEndpoint with the DELETE method that expects a DeleteVaultResponse.
-        """
-        return NotteEndpoint(
-            path=VaultsClient.DELETE_VAULT.format(vault_id=vault_id),
-            response=DeleteVaultResponse,
-            method="DELETE",
-        )
-
-    @staticmethod
-    def _list_credentials_endpoint(vault_id: str) -> NotteEndpoint[ListCredentialsResponse]:
-        """
-        Returns a NotteEndpoint configured for listing credentials in a vault.
-
-        Args:
-            vault_id: The ID of the vault to list credentials from.
-
-        Returns:
-            A NotteEndpoint with the GET method that expects a ListCredentialsResponse.
-        """
-        return NotteEndpoint(
-            path=VaultsClient.LIST_CREDENTIALS.format(vault_id=vault_id),
-            response=ListCredentialsResponse,
-            method="GET",
-        )
-
-    @staticmethod
-    def _list_endpoint() -> NotteEndpoint[Vault]:
-        """
-        Returns a NotteEndpoint configured for listing all vaults.
-
-        Returns:
-            A NotteEndpoint with the GET method that expects a ListVaultsResponse.
-        """
-        return NotteEndpoint(
-            path=VaultsClient.LIST_VAULTS,
-            response=Vault,
-            method="GET",
-        )
-
-    @staticmethod
-    def _delete_credit_card_endpoint(vault_id: str) -> NotteEndpoint[DeleteCreditCardResponse]:
-        """
-        Returns a NotteEndpoint configured for deleting a credit card from a vault.
-
-        Args:
-            vault_id: The ID of the vault containing the credit card to delete.
-
-        Returns:
-            A NotteEndpoint with the DELETE method that expects a DeleteCreditCardResponse.
-        """
-        return NotteEndpoint(
-            path=VaultsClient.DELETE_CREDIT_CARD.format(vault_id=vault_id),
-            response=DeleteCreditCardResponse,
-            method="DELETE",
-        )
-
-    @staticmethod
-    def _get_credit_card_endpoint(vault_id: str) -> NotteEndpoint[GetCreditCardResponse]:
-        """
-        Returns a NotteEndpoint configured for retrieving a credit card from a vault.
-
-        Args:
-            vault_id: The ID of the vault containing the credit card to retrieve.
-
-        Returns:
-            A NotteEndpoint with the GET method that expects a GetCreditCardResponse.
-        """
-        return NotteEndpoint(
-            path=VaultsClient.GET_CREDIT_CARD.format(vault_id=vault_id),
-            response=GetCreditCardResponse,
-            method="GET",
-        )
-
-    @staticmethod
-    def _set_credit_card_endpoint(vault_id: str) -> NotteEndpoint[AddCreditCardResponse]:
-        """
-        Returns a NotteEndpoint configured for setting a credit card in a vault.
-
-        Args:
-            vault_id: The ID of the vault to add the credit card to.
-
-        Returns:
-            A NotteEndpoint with the POST method that expects an AddCreditCardResponse.
-        """
-        return NotteEndpoint(
-            path=VaultsClient.ADD_CREDIT_CARD.format(vault_id=vault_id),
-            response=AddCreditCardResponse,
-            method="POST",
-        )
-
-    @staticmethod
-    def _delete_credentials_endpoint(vault_id: str) -> NotteEndpoint[DeleteCredentialsResponse]:
-        """
-        Returns a NotteEndpoint configured for deleting credentials from a vault.
-
-        Args:
-            vault_id: The ID of the vault containing the credentials to delete.
-
-        Returns:
-            A NotteEndpoint with the DELETE method that expects a DeleteCredentialsResponse.
-        """
-        return NotteEndpoint(
-            path=VaultsClient.DELETE_CREDENTIALS.format(vault_id=vault_id),
-            response=DeleteCredentialsResponse,
-            method="DELETE",
-        )
-
-    @staticmethod
-    def _get_credential_endpoint(vault_id: str) -> NotteEndpoint[GetCredentialsResponse]:
-        """
-        Returns a NotteEndpoint configured for retrieving credentials from a vault.
-
-        Args:
-            vault_id: The ID of the vault containing the credentials to retrieve.
-
-        Returns:
-            A NotteEndpoint with the GET method that expects a GetCredentialsResponse.
-        """
-        return NotteEndpoint(
-            path=VaultsClient.GET_CREDENTIALS.format(vault_id=vault_id),
-            response=GetCredentialsResponse,
-            method="GET",
-        )
-
-    @staticmethod
-    def _add_or_update_credentials_endpoint(vault_id: str) -> NotteEndpoint[AddCredentialsResponse]:
-        """
-        Returns a NotteEndpoint configured for adding or updating credentials in a vault.
-
-        Args:
-            vault_id: The ID of the vault to add or update credentials in.
-
-        Returns:
-            A NotteEndpoint with the POST method that expects an AddCredentialsResponse.
-        """
-        return NotteEndpoint(
-            path=VaultsClient.ADD_CREDENTIALS.format(vault_id=vault_id),
-            response=AddCredentialsResponse,
-            method="POST",
-        )
-
     def __init__(
         self,
         root_client: "NotteClient",
@@ -366,20 +205,6 @@ class VaultsClient(BaseClient):
             verbose=verbose,
         )
 
-    @staticmethod
-    def _create_vault_endpoint() -> NotteEndpoint[Vault]:
-        """
-        Returns a NotteEndpoint configured for creating a new vault.
-
-        Returns:
-            A NotteEndpoint with the POST method that expects a Vault response.
-        """
-        return NotteEndpoint(
-            path=VaultsClient.CREATE_VAULT,
-            response=Vault,
-            method="POST",
-        )
-
     @track_usage("cloud.vault.create")
     def create(self, **data: Unpack[VaultCreateRequestDict]) -> Vault:
         """
@@ -392,7 +217,7 @@ class VaultsClient(BaseClient):
             NotteVault: The created vault
         """
         params = VaultCreateRequest.model_validate(data)
-        return self.request(VaultsClient._create_vault_endpoint().with_request(params))
+        return self.request(api.vault_create(params))
 
     def get(self, vault_id: str) -> str:
         if len(vault_id) == 0:
@@ -415,7 +240,7 @@ class VaultsClient(BaseClient):
             AddCredentialsResponse: Response from the add credentials endpoint.
         """
         params = AddCredentialsRequest.from_dict(data)
-        response = self.request(self._add_or_update_credentials_endpoint(vault_id).with_request(params))
+        response = self.request(api.vault_credentials_add(vault_id, params))
         return response
 
     @track_usage("cloud.vault.credentials.get")
@@ -431,7 +256,7 @@ class VaultsClient(BaseClient):
             GetCredentialsResponse: Response containing the requested credentials.
         """
         params = GetCredentialsRequest.model_validate(data)
-        response = self.request(self._get_credential_endpoint(vault_id).with_params(params))
+        response = self.request(api.vault_credentials_get(vault_id, params=params))
         return response
 
     @track_usage("cloud.vault.credentials.delete")
@@ -449,7 +274,7 @@ class VaultsClient(BaseClient):
             DeleteCredentialsResponse: Response from the delete credentials endpoint.
         """
         params = DeleteCredentialsRequest.model_validate(data)
-        response = self.request(self._delete_credentials_endpoint(vault_id).with_params(params))
+        response = self.request(api.vault_credentials_delete(vault_id, params=params))
         return response
 
     @track_usage("cloud.vault.delete")
@@ -464,8 +289,8 @@ class VaultsClient(BaseClient):
         Returns:
             DeleteVaultResponse: Response from the delete vault endpoint.
         """
-        params = DeleteVaultRequest.model_validate(data)
-        response = self.request(self._delete_vault_endpoint(vault_id).with_params(params))
+        _ = DeleteVaultRequest.model_validate(data)  # no parameters: rejects unknown keywords
+        response = self.request(api.vault_delete(vault_id))
         return response
 
     @track_usage("cloud.vault.credentials.list")
@@ -480,8 +305,8 @@ class VaultsClient(BaseClient):
         Returns:
             ListCredentialsResponse: Response containing the list of credentials.
         """
-        params = ListCredentialsRequest.model_validate(data)
-        response = self.request(self._list_credentials_endpoint(vault_id).with_params(params))
+        _ = ListCredentialsRequest.model_validate(data)  # no parameters: rejects unknown keywords
+        response = self.request(api.vault_credentials_list(vault_id))
         return response
 
     @track_usage("cloud.vault.list")
@@ -496,8 +321,7 @@ class VaultsClient(BaseClient):
             ListVaultsResponse: Response containing the list of vaults.
         """
         params = VaultListRequest.model_validate(data)
-        endpoint = self._list_endpoint().with_params(params)
-        return self.request_list(endpoint)
+        return self.request_list(api.list_vaults(params=params))
 
     @track_usage("cloud.vault.credit_card.delete")
     def delete_credit_card(
@@ -513,8 +337,8 @@ class VaultsClient(BaseClient):
         Returns:
             DeleteCreditCardResponse: Response from the delete credit card endpoint.
         """
-        params = DeleteCreditCardRequest.model_validate(data)
-        response = self.request(self._delete_credit_card_endpoint(vault_id).with_params(params))
+        _ = DeleteCreditCardRequest.model_validate(data)  # no parameters: rejects unknown keywords
+        response = self.request(api.vault_credit_card_delete(vault_id))
         return response
 
     @track_usage("cloud.vault.credit_card.get")
@@ -529,8 +353,8 @@ class VaultsClient(BaseClient):
         Returns:
             GetCreditCardResponse: Response containing the requested credit card information.
         """
-        params = GetCreditCardRequest.model_validate(data)
-        response = self.request(self._get_credit_card_endpoint(vault_id).with_params(params))
+        _ = GetCreditCardRequest.model_validate(data)  # no parameters: rejects unknown keywords
+        response = self.request(api.vault_credit_card_get(vault_id))
         return response
 
     @track_usage("cloud.vault.credit_card.set")
@@ -546,5 +370,5 @@ class VaultsClient(BaseClient):
             AddCreditCardResponse: Response from the add credit card endpoint.
         """
         params = AddCreditCardRequest.from_dict(data)
-        response = self.request(self._set_credit_card_endpoint(vault_id).with_request(params))
+        response = self.request(api.vault_credit_card_set(vault_id, params))
         return response
