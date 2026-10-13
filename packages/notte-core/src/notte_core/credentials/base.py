@@ -700,12 +700,10 @@ class BaseVault(ABC):
                             timeout=action.timeout,
                         )
                 else:
-                    # The caller passed a known sentinel placeholder, so they clearly intended a
-                    # credential substitution — but the targeted element doesn't satisfy the field's
-                    # validation (e.g. a password placeholder pointed at a <label> instead of the
-                    # <input type="password">). Raising here prevents the literal sentinel string
-                    # from being silently typed into the field.
-                    raise CredentialFieldValidationError(placeholder_value, cred_key, attrs)
+                    # A known placeholder targets an element that fails the field's validation
+                    # (e.g. a password placeholder on a <label> instead of the password input).
+                    # Raise so the literal placeholder is never typed into the page.
+                    raise CredentialFieldValidationError(placeholder_value, cred_key, attrs.type, attrs.outerHTML)
             else:
                 # dont validate because element chosen by regex
                 assert isinstance(action.value, dict)

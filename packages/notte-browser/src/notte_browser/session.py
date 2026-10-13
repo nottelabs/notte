@@ -598,8 +598,8 @@ class NotteSession(AsyncResource, SyncResource):
                 )
             return await self.vault.replace_credentials(action, attrs, snapshot)
         except CredentialFieldValidationError:
-            # Sentinel placeholder used on an invalid target element — surface loudly instead of
-            # silently typing the literal placeholder string into the field.
+            # Placeholder used on an invalid target element: fail the action instead of typing
+            # the literal placeholder string into the page.
             raise
         except ValueError as e:
             # Credential field not found in vault (e.g., vault has email but action needs username)

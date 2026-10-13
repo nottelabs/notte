@@ -20,6 +20,7 @@ from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.errors.base import ErrorConfig, NotteBaseError
+from notte_core.errors.processing import CredentialFieldValidationError
 from notte_core.profiling import profiler
 from notte_core.trajectory import Trajectory
 from notte_llm.engine import LLMEngine
@@ -247,8 +248,22 @@ class NotteAgent(BaseAgent):
                 return None
             case _:
                 # The action is a regular action => execute it (default case)
-                action = await self.action_with_credentials(response.action)
-                result = await self.session.aexecute(action, raise_on_failure=False)
+                try:
+                    action = await self.action_with_credentials(response.action)
+                except CredentialFieldValidationError as e:
+                    # Report a mistargeted credential fill as a failed step so the agent can retry
+                    empty_span = TimedSpan.empty()
+                    result = ExecutionResult(
+                        action=response.action,
+                        success=False,
+                        message=e.dev_message,
+                        exception=e,
+                        started_at=empty_span.started_at,
+                        ended_at=empty_span.ended_at,
+                    )
+                    await self.trajectory.append(result, force=True)
+                else:
+                    result = await self.session.aexecute(action, raise_on_failure=False)
                 if result.success:
                     self.consecutive_failures = 0
                 else:

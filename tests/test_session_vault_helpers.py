@@ -154,12 +154,14 @@ def test_password_placeholder_on_invalid_element_raises() -> None:
     with pytest.raises(CredentialFieldValidationError) as exc_info:
         asyncio.run(vault.replace_credentials(action, label_attrs, snapshot))
 
-    # Error message should name the credential and hint at the wrong-element cause
+    # Error message should name the credential and hint at the wrong-element cause, without the secret
     assert "password" in exc_info.value.dev_message
     assert PASSWORD in exc_info.value.dev_message
+    assert "<label>Password</label>" in exc_info.value.dev_message
+    for message in (exc_info.value.dev_message, exc_info.value.agent_message, exc_info.value.user_message):
+        assert "s3cr3t" not in message
 
-    # And the action value must not have been mutated to a ValueWithPlaceholder — caller decides
-    # whether to recover, but the literal placeholder must not silently leak into typing.
+    # The action value must not have been replaced: the caller decides whether to recover.
     assert action.value == PASSWORD
 
 
@@ -194,20 +196,69 @@ def test_username_placeholder_unaffected_by_validation_change() -> None:
 
 
 def test_session_action_with_vault_propagates_validation_error() -> None:
-    """The session-level catch must not swallow CredentialFieldValidationError — otherwise the
-    placeholder leaks into the typed value despite the new raise."""
+    """The session-level catch must not swallow CredentialFieldValidationError, otherwise the
+    placeholder is typed into the page despite the raise."""
     vault = MockVault({"https://example.com": {"username": "u", "password": "p"}})
-    session = NotteSession(vault=vault)
+
+    # locate() returns None, so replace_credentials runs against empty LocatorAttributes
+    # (type=None), which fails the PasswordField check.
+    session = NoopLocateSession(vault=vault)
     session.snapshot = make_snapshot("https://example.com")
-
-    # Force the validation-failing path by stubbing locate() to return None: replace_credentials
-    # then runs against the default-empty LocatorAttributes (type=None), which fails the
-    # PasswordField check.
-    async def _no_locator(_action):
-        return None
-
-    session.locate = _no_locator  # type: ignore[method-assign]
 
     action = FillAction(id="M2", value=PASSWORD)
     with pytest.raises(CredentialFieldValidationError):
         asyncio.run(session._action_with_vault(action))
+
+
+def test_credential_validation_error_truncates_outer_html() -> None:
+    outer_html = "<div>" + "x" * 5000 + "</div>"
+    error = CredentialFieldValidationError(PASSWORD, "password", None, outer_html)
+
+    assert len(error.dev_message) < 1000
+    assert outer_html not in error.dev_message
+    assert "..." in error.dev_message
+
+
+LOGIN_PAGE = """
+<form>
+    <label for="user">Username</label>
+    <input id="user" type="text" />
+    <label id="pw-label" for="pw">Password</label>
+    <input id="pw" type="password" />
+</form>
+"""
+
+
+@pytest.mark.asyncio
+async def test_session_password_placeholder_on_label_is_not_typed_into_page() -> None:
+    """Filling a <label> retargets to its associated input in the browser, so without the
+    validation error the literal password placeholder would be typed into the password field."""
+    vault = MockVault({"about:blank": {"username": "real_user", "password": "s3cr3t"}})
+    async with NotteSession(headless=True, vault=vault) as session:
+        await session.window.page.set_content(LOGIN_PAGE)
+
+        result = await session.aexecute(type="fill", selector="#pw-label", value=PASSWORD, raise_on_failure=False)
+
+        assert result.success is False
+        assert isinstance(result.exception, CredentialFieldValidationError)
+        assert "s3cr3t" not in result.message
+        assert await session.window.page.input_value("#pw") == ""
+
+        with pytest.raises(CredentialFieldValidationError):
+            _ = await session.aexecute(type="fill", selector="#pw-label", value=PASSWORD, raise_on_failure=True)
+        assert await session.window.page.input_value("#pw") == ""
+
+
+@pytest.mark.asyncio
+async def test_session_password_placeholder_on_password_input_types_secret() -> None:
+    vault = MockVault({"about:blank": {"username": "real_user", "password": "s3cr3t"}})
+    async with NotteSession(headless=True, vault=vault) as session:
+        await session.window.page.set_content(LOGIN_PAGE)
+
+        username = await session.aexecute(type="fill", selector="#user", value=USERNAME, raise_on_failure=True)
+        password = await session.aexecute(type="fill", selector="#pw", value=PASSWORD, raise_on_failure=True)
+
+        assert username.success is True
+        assert password.success is True
+        assert await session.window.page.input_value("#user") == "real_user"
+        assert await session.window.page.input_value("#pw") == "s3cr3t"

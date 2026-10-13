@@ -99,21 +99,24 @@ class InvalidPlaceholderError(NotteBaseError):
 
 
 class CredentialFieldValidationError(NotteBaseError):
-    """Raised when a sentinel placeholder is used to fill an element that fails the credential
-    field's element-validation check (e.g. a password placeholder targeted at a non-password
-    element such as a <label>). Without this error the substitution would silently no-op and the
-    literal placeholder string would be typed into the field."""
+    """Raised when a credential placeholder targets an element that is not a valid input for that
+    credential (e.g. a password placeholder targeted at a <label> instead of the password input).
+    Without this error the literal placeholder string would be typed into the page."""
 
-    def __init__(self, placeholder: str, cred_key: str, attrs: object) -> None:
+    MAX_OUTER_HTML_CHARS: int = 300
+
+    def __init__(self, placeholder: str, cred_key: str, element_type: str | None, outer_html: str | None) -> None:
+        if outer_html is not None and len(outer_html) > self.MAX_OUTER_HTML_CHARS:
+            outer_html = outer_html[: self.MAX_OUTER_HTML_CHARS] + "..."
         dev_message = (
-            f"Sentinel placeholder {placeholder!r} for credential field {cred_key!r} was supplied, "
-            f"but the targeted element failed validate_element. Element attrs: {attrs!r}. "
-            f"Common cause: the action targeted a wrapper (e.g. <label>) instead of the actual "
-            f"<input>. Re-target the input element directly."
+            f"Credential placeholder {placeholder!r} for field {cred_key!r} targeted an element that is not a "
+            f"valid {cred_key!r} input (type={element_type!r}, outerHTML={outer_html!r}). "
+            "Common cause: the action targeted a wrapper (e.g. <label>) instead of the actual <input>. "
+            "Target the input element directly."
         )
         agent_message = (
-            f"Could not fill credential {cred_key!r}: targeted element is not a valid {cred_key!r} input. "
-            f"Re-locate the actual input field and retry."
+            f"Could not fill credential {cred_key!r}: the targeted element is not a valid {cred_key!r} input. "
+            "Target the actual input field and retry."
         )
         user_message = "Credential placeholder used on an element that is not a valid target for that field."
         super().__init__(
