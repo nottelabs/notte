@@ -284,7 +284,7 @@ jobs:
         run: |
           uvx coverage==7.10.7 combine results/.coverage.*
           {
-            echo "---------- coverage: combined unit and live suites ----------"
+            echo "---------- coverage: platform linux, combined unit and live suites ----------"
             uvx coverage==7.10.7 report -m --skip-covered
           } > pytest-coverage.txt
           python3 - <<'PY'
