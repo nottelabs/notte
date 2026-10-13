@@ -64,7 +64,7 @@
     },
     {
       "source": "/cli",
-      "destination": "/integrations/claude-code-ai-agents"
+      "destination": "/cli-reference/index"
     },
     {
       "source": "/intro/pricing",
@@ -314,6 +314,25 @@
             ]
           },
           {
+            "group": "CLI",
+            "pages": [
+              "cli-reference/index",
+              "cli-reference/auth",
+              "cli-reference/files",
+              "cli-reference/functions",
+              "cli-reference/page",
+              "cli-reference/payment",
+              "cli-reference/personas",
+              "cli-reference/profiles",
+              "cli-reference/sessions",
+              "cli-reference/skill",
+              "cli-reference/tunnel",
+              "cli-reference/usage",
+              "cli-reference/vaults",
+              "cli-reference/other"
+            ]
+          },
+          {
             "group": "APIs",
             "openapi": "https://api.notte.cc/openapi.json"
           },
@@ -343,7 +362,7 @@
                       "sdk-reference/remotesession/observe",
                       "sdk-reference/remotesession/execute",
                       "sdk-reference/remotesession/scrape",
-"sdk-reference/remotesession/fetch",
+                      "sdk-reference/remotesession/fetch",
                       "sdk-reference/remotesession/replay",
                       "sdk-reference/remotesession/cdp_url",
                       "sdk-reference/remotesession/set_cookies",

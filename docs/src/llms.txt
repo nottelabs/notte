@@ -123,6 +123,23 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [API Error Codes](https://docs.notte.cc/api-reference/errors.md): API error responses and status codes
 - [Rate Limits](https://docs.notte.cc/api-reference/rate-limits.md): API rate limiting and response headers
 
+## CLI
+
+- [CLI](https://docs.notte.cc/cli-reference/index.md): Drive Notte browser sessions, functions, and vaults from your terminal
+- [Auth](https://docs.notte.cc/cli-reference/auth.md): Manage authentication
+- [Files](https://docs.notte.cc/cli-reference/files.md): Manage stored files
+- [Functions](https://docs.notte.cc/cli-reference/functions.md): Manage functions
+- [Page](https://docs.notte.cc/cli-reference/page.md): Execute page actions (syntactic sugar for sessions execute)
+- [Payment](https://docs.notte.cc/cli-reference/payment.md): Request a temporary card for a browser session
+- [Personas](https://docs.notte.cc/cli-reference/personas.md): Manage personas
+- [Profiles](https://docs.notte.cc/cli-reference/profiles.md): Manage browser profiles
+- [Sessions](https://docs.notte.cc/cli-reference/sessions.md): Manage browser sessions
+- [Skill](https://docs.notte.cc/cli-reference/skill.md): Manage Notte skills for AI coding assistants
+- [Tunnel](https://docs.notte.cc/cli-reference/tunnel.md): Route sessions through this machine's internet connection
+- [Usage](https://docs.notte.cc/cli-reference/usage.md): Show API usage statistics
+- [Vaults](https://docs.notte.cc/cli-reference/vaults.md): Manage vaults
+- [Other commands](https://docs.notte.cc/cli-reference/other.md): Standalone Notte CLI commands
+
 ## APIs
 
 <!-- openapi:begin https://api.notte.cc/openapi.json -->
