@@ -1,10 +1,11 @@
 """`goto_and_wait` skips the post-load settle wait when the caller asked for `commit` or `domcontentloaded`."""
 
-from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
-from notte_browser.window import BrowserWindow
+from notte_browser.playwright_async_api import Page
+from notte_browser.window import BrowserWindow, BrowserWindowOptions
+from notte_core.types import LocalSessionStartRequest
 
 
 class FakePage:
@@ -42,8 +43,8 @@ def window_with(page: FakePage, monkeypatch: pytest.MonkeyPatch) -> tuple[Browse
     monkeypatch.setattr(BrowserWindow, "short_wait", short_wait)
     monkeypatch.setattr(BrowserWindow, "long_wait", long_wait)
     # the real property falls back to other tabs when the page is closed; only navigation is under test
-    monkeypatch.setattr(BrowserWindow, "page", property(lambda self: self.resource.page))
-    window = BrowserWindow.model_construct(resource=SimpleNamespace(page=page))
+    monkeypatch.setattr(BrowserWindow, "page", property(lambda self: self._page))
+    window = BrowserWindow(cast(Page, page), BrowserWindowOptions.from_request(LocalSessionStartRequest()))
     return window, waits
 
 

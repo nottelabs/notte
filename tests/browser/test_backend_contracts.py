@@ -7,17 +7,15 @@ import notte_core.common.logging as logging
 import pytest
 from notte_browser.captcha import CaptchaHandler
 from notte_browser.errors import CaptchaSolverNotAvailableError
-from notte_browser.playwright import PlaywrightManager
-from notte_browser.playwright_async_api import Browser, Locator, Page, Playwright
+from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.session import NotteSession
-from notte_browser.window import BrowserResource, BrowserWindow, BrowserWindowOptions, ScreenshotMask
+from notte_browser.window import BrowserWindow, BrowserWindowOptions, ScreenshotMask
 from notte_core.actions import CaptchaSolveAction, ClickAction
 from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.browser.node_type import NodeType
 from notte_core.data.space import DataSpace, DictBaseModel
 from notte_core.types import LocalSessionStartRequest
-from pydantic import Field
 from typing_extensions import override
 
 from tests.mock.mock_vault import MockVault
@@ -30,50 +28,6 @@ def _page() -> MagicMock:
     page.is_closed.return_value = False
     page.context.pages = [page]
     return page
-
-
-@pytest.mark.asyncio
-async def test_pydantic_manager_subclass_dispatches_launch_resource_and_stop() -> None:
-    events: list[str] = []
-    page, browser, driver = _page(), MagicMock(spec=Browser), MagicMock(spec=Playwright)
-    browser.close.side_effect = lambda: events.append("browser.close")
-    driver.stop.side_effect = lambda: events.append("driver.stop")
-    page.close.side_effect = lambda: events.append("page.close")
-
-    class CDPSessionManager(PlaywrightManager):
-        session_id: str = Field()
-        client: Browser = Field(exclude=True)
-        browser_type: str = Field(default="chromium")
-
-        @override
-        async def create_playwright_browser(self, options: BrowserWindowOptions) -> Browser:
-            assert options.cdp_url == "http://localhost:9222"
-            events.append("launch")
-            return self.client
-
-        @override
-        async def get_browser_resource(self, options: BrowserWindowOptions, browser: Browser) -> BrowserResource:
-            assert browser is self.client
-            events.append("resource")
-            return BrowserResource(page=page, options=options, browser_id=self.session_id, context_id="context")
-
-        @override
-        async def astop(self) -> None:
-            events.append("manager.stop")
-            await super().astop()
-
-    manager = CDPSessionManager(session_id="session", client=browser)
-    manager._playwright = driver
-    window = await manager.new_window(
-        BrowserWindowOptions.from_request(LocalSessionStartRequest()).set_cdp_url("http://localhost:9222")
-    )
-    assert manager.model_dump() == {"verbose": False, "session_id": "session", "browser_type": "chromium"}
-    assert window.resource.browser_id == "session"
-    assert window.resource.context_id == "context"
-    assert "page" not in window.resource.model_dump()
-    await window.close()
-    assert events == ["launch", "resource", "browser.close", "manager.stop", "driver.stop", "page.close"]
-    assert not manager.is_started()
 
 
 @pytest.mark.asyncio
@@ -93,16 +47,18 @@ async def test_borrowed_window_callbacks_page_assignment_and_custom_mask() -> No
 
     mask = CustomMask()
     window = BrowserWindow(
-        resource=BrowserResource(page=page, options=BrowserWindowOptions.from_request(LocalSessionStartRequest())),
+        page=page,
+        options=BrowserWindowOptions.from_request(LocalSessionStartRequest()),
         screenshot_mask=mask,
         on_close=close_borrowed,
-        page_callbacks={"load": callback},
     )
+    window.page_callbacks["load"] = callback
+    window.apply_page_callbacks()
     session = NotteSession(window=window, vault=MockVault({}))
     assert session.window is window
     page.on.assert_any_call("load", callback)
     window.page = replacement
-    assert window.resource.page is replacement
+    assert window.page is replacement
     replacement.on.assert_any_call("load", callback)
     session.vault = None
     assert window.screenshot_mask is mask
@@ -112,15 +68,14 @@ async def test_borrowed_window_callbacks_page_assignment_and_custom_mask() -> No
     replacement.screenshot.assert_awaited_once_with(mask=mask_call.return_value, type="jpeg", quality=85)
     replacement.close.side_effect = lambda: events.append("page.close")
     await window.close()
-    assert events == ["external.close", "page.close"]
+    assert events == ["external.close"]
+    replacement.close.assert_not_awaited()
 
 
 @pytest.mark.asyncio
 async def test_hooks_replaced_after_session_construction_are_used(monkeypatch: pytest.MonkeyPatch) -> None:
     page = _page()
-    window = BrowserWindow(
-        resource=BrowserResource(page=page, options=BrowserWindowOptions.from_request(LocalSessionStartRequest()))
-    )
+    window = BrowserWindow(page=page, options=BrowserWindowOptions.from_request(LocalSessionStartRequest()))
     session = NotteSession(window=window)
     snapshot = make_snapshot(page.url)
     snapshot.dom_node = replace(snapshot.dom_node, id="B1", type=NodeType.INTERACTION, text="Submit")

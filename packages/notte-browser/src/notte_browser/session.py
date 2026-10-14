@@ -103,7 +103,7 @@ from notte_browser.evaluation_result import (
     page_expression,
     page_limit_reason,
 )
-from notte_browser.playwright import PlaywrightManager
+from notte_browser.playwright import connect, launch
 from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import resolve_action
 from notte_browser.scrape import default_extractor, scrape_page
@@ -218,9 +218,8 @@ class NotteSession(AsyncResource, SyncResource):
     async def astart(self) -> None:
         if self._window is not None:
             return
-        manager = PlaywrightManager()
         options = BrowserWindowOptions.from_request(self._request)
-        self._window = await manager.new_window(options)
+        self._window = await connect(options.cdp_url, options) if options.cdp_url is not None else await launch(options)
         self._sync_screenshot_mask()
         if self._cookie_file is not None:
             if Path(self._cookie_file).exists():

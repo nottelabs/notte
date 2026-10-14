@@ -8,8 +8,8 @@ from notte_browser.window import ScreenshotMask
 
 
 class VaultSecretsScreenshotMask(ScreenshotMask):
-    vault: BaseVault
-    model_config = {"arbitrary_types_allowed": True}  # pyright: ignore[reportUnannotatedClassAttribute]
+    def __init__(self, vault: BaseVault) -> None:
+        self.vault: BaseVault = vault
 
     @override
     async def mask(self, page: Page) -> list[Locator]:

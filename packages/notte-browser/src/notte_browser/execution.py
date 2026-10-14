@@ -282,18 +282,6 @@ def _can_create_tab(action: BaseAction) -> bool:
             return False
 
 
-async def switch_tab(window: BrowserWindow, tab_index: int, *, verbose: bool = False) -> None:
-    context = window.page.context
-    if tab_index != -1 and (tab_index < 0 or tab_index >= len(context.pages)):
-        raise ValueError(f"Tab index '{tab_index}' is out of range for context with {len(context.pages)} pages")
-    tab_page = context.pages[tab_index]
-    await tab_page.bring_to_front()
-    window.page = tab_page
-    await window.long_wait()
-    if verbose:
-        logger.info(f"🪦 Switched to tab {tab_index} with url: {tab_page.url} ({len(context.pages)} tabs in context)")
-
-
 @profiler.profiled("BrowserController.execute_browser_action", service_name="execution")
 async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, verbose: bool = False) -> bool:
     match action:
@@ -316,7 +304,7 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
             window.page = new_page
             await window.goto(url=url)
         case SwitchTabAction(tab_index=tab_index):
-            await switch_tab(window, tab_index, verbose=verbose)
+            await window.switch_tab(tab_index, verbose=verbose)
         case CloseTabAction():
             await window.page.close()
         case WaitAction(time_ms=time_ms):
@@ -598,5 +586,5 @@ async def execute(
             if verbose:
                 id_str = f" id={action.id}" if isinstance(action, InteractionAction) else ""
                 logger.info(f"🪦 Action {action.type}{id_str} resulted in a new tab, switched to it...")
-            await switch_tab(window, -1, verbose=verbose)
+            await window.switch_tab(-1, verbose=verbose)
     return retval

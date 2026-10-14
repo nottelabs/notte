@@ -8,8 +8,9 @@ import pytest_asyncio
 from notte_browser.errors import ScrollActionFailedError
 from notte_browser.execution import execute_browser_action
 from notte_browser.playwright_async_api import Error, Page, async_playwright
-from notte_browser.window import BrowserResource, BrowserWindow
+from notte_browser.window import BrowserWindow, BrowserWindowOptions
 from notte_core.actions import ScrollDownAction, ScrollUpAction
+from notte_core.types import LocalSessionStartRequest
 
 PANEL_HTML = """
 <style>
@@ -32,8 +33,7 @@ async def page() -> AsyncIterator[Page]:
 
 
 async def scroll(page: Page, action: ScrollDownAction | ScrollUpAction) -> bool:
-    resource = BrowserResource.model_construct(page=page, options=None)
-    window = BrowserWindow(resource=resource)
+    window = BrowserWindow(page, BrowserWindowOptions.from_request(LocalSessionStartRequest()))
     return await execute_browser_action(window, action)
 
 

@@ -3,19 +3,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from notte_browser.errors import PageLoadingError
 from notte_browser.playwright_async_api import TimeoutError as PlaywrightTimeoutError
-from notte_browser.window import BrowserResource, BrowserWindow
+from notte_browser.window import BrowserWindow, BrowserWindowOptions
+from notte_core.types import LocalSessionStartRequest
 
 
 def make_window(page: MagicMock) -> BrowserWindow:
-    resource = MagicMock()
-    resource.page = page
-    return BrowserWindow.model_construct(
-        resource=resource,
-        screenshot_mask=None,
-        on_close=None,
-        page_callbacks={},
-        goto_response=None,
-    )
+    return BrowserWindow(page, BrowserWindowOptions.from_request(LocalSessionStartRequest()))
 
 
 def make_response(page: MagicMock, *, status: int = 200) -> MagicMock:
@@ -142,8 +135,7 @@ async def test_replacement_page_receives_persistent_and_attempt_response_callbac
     replacement_page.is_closed.return_value = False
     active_page.context.pages = [replacement_page]
 
-    resource = BrowserResource.model_construct(page=active_page, options=MagicMock())
-    window = BrowserWindow(resource=resource)
+    window = make_window(active_page)
     active_page.is_closed.return_value = True
 
     response = make_response(replacement_page)
@@ -156,7 +148,7 @@ async def test_replacement_page_receives_persistent_and_attempt_response_callbac
     ):
         await window.goto_and_wait("https://replacement.example.com")
 
-    assert resource.page is replacement_page
+    assert window.page is replacement_page
     replacement_page.on.assert_any_call("response", window._record_navigation_response)
     assert window.goto_response is response
     long_wait.assert_not_awaited()

@@ -29,7 +29,7 @@ from notte_core.types import (
 )
 from notte_core.utils.raw_file import get_empty_dom_node, get_file_ext
 from notte_core.utils.url import is_valid_url
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
+from pydantic import BaseModel
 from typing_extensions import override
 
 from notte_browser.dom.parsing import parse_dom
@@ -44,7 +44,7 @@ from notte_browser.errors import (
     PlaywrightTimeoutError,
     UnexpectedBrowserError,
 )
-from notte_browser.playwright_async_api import CDPSession, Locator, Page, Response
+from notte_browser.playwright_async_api import Browser, CDPSession, Locator, Page, Playwright, Response
 
 WaitUntil = Literal["commit", "domcontentloaded", "load", "networkidle"]
 
@@ -172,45 +172,54 @@ class BrowserWindowOptions(BaseModel):
         )
 
 
-class BrowserResource(BaseModel):
-    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
-
-    page: Page = Field(exclude=True)
-    options: BrowserWindowOptions
-    browser_id: str | None = None
-    context_id: str | None = None
-
-
-class ScreenshotMask(BaseModel):
+class ScreenshotMask:
     async def mask(self, page: Page) -> list[Locator]:  # pyright: ignore[reportUnusedParameter]
         return []
 
 
-class BrowserWindow(BaseModel):
-    resource: BrowserResource
-    screenshot_mask: ScreenshotMask | None = None
-    on_close: Callable[[], Awaitable[None]] | None = None
-    page_callbacks: dict[str, Callable[[Page], None]] = Field(default_factory=dict)
-    goto_response: Response | None = Field(exclude=True, default=None)
+class BrowserWindow:
+    """Active page and browser operations; caller-supplied pages are borrowed.
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
+    launch/connect attach their owned transport to this window's close boundary.
+    Options remain validated data, while live Playwright handles are ordinary state.
+    """
 
-    # Cache of CDP sessions keyed by id(page). CDP sessions survive navigations on
-    # the same Page target, so creating/detaching per call raced with Chromium's
-    # target lifecycle after navigation and could park subsequent operations on a
-    # dead socket.
-    _cdp_sessions: dict[int, CDPSession] = PrivateAttr(default_factory=dict)
-
-    @override
-    def model_post_init(self, __context: Any) -> None:
-        self.resource.page.set_default_timeout(config.timeout_default_ms)
-
-        # Keep the final main-document response for navigation error handling and
-        # raw-file detection. Iframe, subresource, and intermediate redirect
-        # responses do not prove that the requested document reached the browser.
-        self.page_callbacks["response"] = self._record_navigation_response  # pyright: ignore [reportArgumentType]
-
+    def __init__(
+        self,
+        page: Page,
+        options: BrowserWindowOptions,
+        *,
+        on_close: Callable[[], Awaitable[None]] | None = None,
+        screenshot_mask: ScreenshotMask | None = None,
+    ) -> None:
+        self._page: Page = page
+        self.options: BrowserWindowOptions = options
+        self.screenshot_mask: ScreenshotMask | None = screenshot_mask
+        self.on_close: Callable[[], Awaitable[None]] | None = on_close
+        self.page_callbacks: dict[str, Callable[[Page], None]] = {}
+        self.goto_response: Response | None = None
+        self._cdp_sessions: dict[int, CDPSession] = {}
+        self._owned_browser: Browser | None = None
+        self._owned_driver: Playwright | None = None
+        page.set_default_timeout(config.timeout_default_ms)
+        # Only final main-document responses establish navigation/raw-file state.
+        self.page_callbacks["response"] = self._record_navigation_response  # pyright: ignore[reportArgumentType]
         self.apply_page_callbacks()
+
+    async def _close_owned(self) -> None:
+        try:
+            async with asyncio.timeout(30):
+                try:
+                    if self._owned_browser is not None:
+                        await self._owned_browser.close()
+                finally:
+                    if self._owned_driver is not None:
+                        await self._owned_driver.stop()
+        except Exception as e:
+            logger.error(f"Failed to close window: {e}")
+        finally:
+            self._owned_browser = None
+            self._owned_driver = None
 
     def _is_final_main_document_response(self, response: Response) -> bool:
         request = response.request
@@ -233,26 +242,19 @@ class BrowserWindow(BaseModel):
 
     @property
     def page(self) -> Page:
-        if (
-            self.resource.page.url != "about:blank"
-            and self.resource.page.is_closed()
-            and len(self.resource.page.context.pages) > 0
-        ):
+        if self._page.url != "about:blank" and self._page.is_closed() and len(self._page.context.pages) > 0:
             # reset to the last created page
-            self.page = self.resource.page.context.pages[-1]
-        return self.resource.page
+            self.page = self._page.context.pages[-1]
+        return self._page
 
     @property
     def tabs(self) -> list[Page]:
-        return self.resource.page.context.pages
+        return self._page.context.pages
 
     async def close(self) -> None:
         if self.on_close is not None:
             await self.on_close()
         await self._close_all_cdp_sessions()
-        for page in self.resource.page.context.pages:
-            if not page.is_closed():
-                await page.close()
 
     @page.setter
     def page(self, page: Page) -> None:
@@ -260,14 +262,27 @@ class BrowserWindow(BaseModel):
         # window close. The on-close handler on the new page will handle eviction
         # when it closes; the previous page may still be alive but no longer
         # referenced by this window.
-        _ = self._cdp_sessions.pop(id(self.resource.page), None)
-        self.resource.page = page
+        _ = self._cdp_sessions.pop(id(self._page), None)
+        self._page = page
         self.apply_page_callbacks()
+
+    async def switch_tab(self, tab_index: int, *, verbose: bool = False) -> None:
+        context = self.page.context
+        if tab_index != -1 and (tab_index < 0 or tab_index >= len(context.pages)):
+            raise ValueError(f"Tab index '{tab_index}' is out of range for context with {len(context.pages)} pages")
+        tab_page = context.pages[tab_index]
+        await tab_page.bring_to_front()
+        self.page = tab_page
+        await self.long_wait()
+        if verbose:
+            logger.info(
+                f"🪦 Switched to tab {tab_index} with url: {tab_page.url} ({len(context.pages)} tabs in context)"
+            )
 
     @property
     def is_chromium_based(self) -> bool:
         """Check if the browser is Chromium-based (supports CDP)."""
-        return self.resource.options.browser_type != "firefox"
+        return self.options.browser_type != "firefox"
 
     async def get_cdp_session(self, tab_idx: int | None = None) -> CDPSession:
         cdp_page = self.tabs[tab_idx] if tab_idx is not None else self.page
