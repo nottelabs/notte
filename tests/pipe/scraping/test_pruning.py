@@ -1,14 +1,14 @@
 import difflib
 from pathlib import Path
 
-from notte_core.data.pruning import MarkdownPruningPipe, MaskedDocument
+from notte_core.data.pruning import MaskedDocument, mask_markdown, unmask_markdown, unmask_pydantic
 from pydantic import BaseModel
 
 
 def test_mask_single_link() -> None:
     """Test masking a single link in markdown content."""
     content = "Here is a [link](https://example.com)"
-    result = MarkdownPruningPipe.mask(content)
+    result = mask_markdown(content)
 
     assert result.content == "Here is a [link](link1)"
     assert result.links == {"link1": "https://example.com"}
@@ -18,7 +18,7 @@ def test_mask_single_link() -> None:
 def test_mask_single_image() -> None:
     """Test masking a single image in markdown content."""
     content = "Here is an ![image](https://example.com/img.jpg)"
-    result = MarkdownPruningPipe.mask(content)
+    result = mask_markdown(content)
 
     assert result.content == "Here is an ![image](img1.png)"
     assert result.images == {"img1.png": "https://example.com/img.jpg"}
@@ -34,7 +34,7 @@ def test_mask_multiple_mixed() -> None:
         "Another [link2](https://example2.com) and "
         "![image2](https://example.com/img2.jpg)"
     )
-    result = MarkdownPruningPipe.mask(content)
+    result = mask_markdown(content)
 
     assert "![image1](img1.png)" in result.content
     assert "![image2](img2.png)" in result.content
@@ -47,7 +47,7 @@ def test_mask_multiple_mixed() -> None:
 def test_unmask_single_link() -> None:
     """Test unmasking a single link reference."""
     doc = MaskedDocument(content="Here is a [text](link1)", links={"link1": "https://example.com"}, images={})
-    result = MarkdownPruningPipe.unmask(doc)
+    result = unmask_markdown(doc)
     assert result == "Here is a [text](https://example.com)"
 
 
@@ -56,7 +56,7 @@ def test_unmask_single_image() -> None:
     doc = MaskedDocument(
         content="Here is an ![alt](img1.png)", links={}, images={"img1.png": "https://example.com/img.jpg"}
     )
-    result = MarkdownPruningPipe.unmask(doc)
+    result = unmask_markdown(doc)
     assert result == "Here is an ![alt](https://example.com/img.jpg)"
 
 
@@ -69,7 +69,7 @@ def test_unmask_multiple_mixed() -> None:
         links={"link1": "https://example1.com", "link2": "https://example2.com"},
         images={"img1.png": "https://example.com/img1.jpg", "img2.png": "https://example.com/img2.jpg"},
     )
-    result = MarkdownPruningPipe.unmask(doc)
+    result = unmask_markdown(doc)
 
     assert "![image1](https://example.com/img1.jpg)" in result
     assert "![image2](https://example.com/img2.jpg)" in result
@@ -82,7 +82,7 @@ def test_mask_with_existing_reference_style() -> None:
     content = (
         "Here is a [link](https://example.com) and a reference [another](ref) and ![image](https://example.com/img.jpg)"
     )
-    result = MarkdownPruningPipe.mask(content)
+    result = mask_markdown(content)
 
     assert "[link](link1)" in result.content
     assert "[another](link2)" in result.content  # Should preserve existing references
@@ -96,7 +96,7 @@ def test_unmask_with_missing_references() -> None:
         links={"link1": "https://example.com"},
         images={"img1.png": "https://example.com/img.jpg"},
     )
-    result = MarkdownPruningPipe.unmask(doc)
+    result = unmask_markdown(doc)
 
     assert "[text](https://example.com)" in result
     assert "![image](https://example.com/img.jpg)" in result
@@ -112,8 +112,8 @@ def test_roundtrip() -> None:
         "Text with no links."
     )
 
-    masked = MarkdownPruningPipe.mask(original)
-    result = MarkdownPruningPipe.unmask(masked)
+    masked = mask_markdown(original)
+    result = unmask_markdown(masked)
 
     assert result == original
 
@@ -121,12 +121,12 @@ def test_roundtrip() -> None:
 def test_empty_image_placeholder_should_be_masked() -> None:
     """Test that empty image placeholders are masked."""
     content = "Here is an ![](image.png)"
-    result = MarkdownPruningPipe.mask(content)
+    result = mask_markdown(content)
     assert result.content == "Here is an ![](img1.png)"
     assert result.images == {"img1.png": "image.png"}
     assert result.links == {}
     # unmask the result
-    unmasked = MarkdownPruningPipe.unmask(result)
+    unmasked = unmask_markdown(result)
     assert unmasked == content
 
 
@@ -160,8 +160,8 @@ def test_roundtrip_real_data() -> None:
     """Test that masking and then unmasking returns the original content."""
     with open(Path(__file__).parent / "scraped_data.md", "r") as f:
         original = f.read()
-    masked = MarkdownPruningPipe.mask(original)
-    result = MarkdownPruningPipe.unmask(masked)
+    masked = mask_markdown(original)
+    result = unmask_markdown(masked)
     # use difflib to compare the two strings
     assert result == original, format_diff_message(original, result)
 
@@ -176,7 +176,6 @@ class _TestModel(BaseModel):
 
 def test_unmask_pydantic_simple() -> None:
     """Test unmasking a simple pydantic model with direct replacements."""
-    pipe = MarkdownPruningPipe()
 
     # Create a masked document
     masked_doc = MaskedDocument(
@@ -187,7 +186,7 @@ def test_unmask_pydantic_simple() -> None:
     model = _TestModel(title="Test", description="A test model", image_url="img1.png", link_url="link1", nested=None)
 
     # Unmask the model
-    result = pipe.unmask_pydantic(masked_doc, model)
+    result = unmask_pydantic(masked_doc, model)
 
     assert result.image_url == "https://example.com/image.jpg"
     assert result.link_url == "https://example.com"
@@ -197,7 +196,6 @@ def test_unmask_pydantic_simple() -> None:
 
 def test_unmask_pydantic_nested() -> None:
     """Test unmasking a pydantic model with nested values."""
-    pipe = MarkdownPruningPipe()
 
     # Create a masked document
     masked_doc = MaskedDocument(
@@ -218,7 +216,7 @@ def test_unmask_pydantic_nested() -> None:
     )
 
     # Unmask the model
-    result = pipe.unmask_pydantic(masked_doc, model)
+    result = unmask_pydantic(masked_doc, model)
 
     assert result.nested is not None
     assert result.nested["masked_image"] == "https://example.com/image.jpg"
@@ -234,7 +232,6 @@ class ListTestModel(BaseModel):
 
 def test_unmask_pydantic_list() -> None:
     """Test unmasking a pydantic model with a list."""
-    pipe = MarkdownPruningPipe()
 
     # Create a masked document
     masked_doc = MaskedDocument(
@@ -249,7 +246,7 @@ def test_unmask_pydantic_list() -> None:
     )
 
     # Unmask the model
-    result = pipe.unmask_pydantic(masked_doc, model)
+    result = unmask_pydantic(masked_doc, model)
     assert result.items[0].image_url == "https://example.com/image.jpg"
     assert result.items[0].link_url == "https://example.com"
     assert result.items[0].title == "Test"
@@ -266,7 +263,7 @@ def test_mask_same_link_twice() -> None:
 [Nike Air Max Dn8](link1)
 [Nike Air Max Dn8 Men's Shoes](link1)
 """
-    result = MarkdownPruningPipe.mask(content)
+    result = mask_markdown(content)
     assert result.links == {"link1": "https://www.nike.com/t/air-max-dn8-mens-shoes-YPsmAOxu/FQ7860-004"}
     assert result.images == {}
     assert result.content == masked_content
@@ -284,7 +281,7 @@ def test_mask_link_with_image_reference() -> None:
     ![Image Alt](img1.png) ![Empty Link]()
 ](link1)
 """
-    result = MarkdownPruningPipe.mask(content)
+    result = mask_markdown(content)
     assert result.images == {"img1.png": "https://image.png"}
     assert result.links == {"link1": "https://link.com"}
     assert result.content == masked_content
@@ -296,7 +293,7 @@ def test_complex_nested_links() -> None:
 [Complex ![First](https://first.png) with text and ![Second](https://second.png)](https://link.com)
 [Another ![Nested](https://deep.png)](https://another.com)
 """
-    result = MarkdownPruningPipe.mask(content)
+    result = mask_markdown(content)
 
     assert result.images == {
         "img1.png": "https://first.png",
@@ -314,7 +311,6 @@ def test_complex_nested_links() -> None:
 
 def test_unmask_pydantic_json_content() -> None:
     """Test unmasking a pydantic model with JSON content."""
-    pipe = MarkdownPruningPipe()
 
     # Create a model with markdown content that will be JSON serialized
     model = _TestModel(
@@ -326,8 +322,8 @@ def test_unmask_pydantic_json_content() -> None:
     )
 
     # First mask the content to get the masked document
-    masked_title = MarkdownPruningPipe.mask(model.title)
-    masked_desc = MarkdownPruningPipe.mask(model.description)
+    masked_title = mask_markdown(model.title)
+    masked_desc = mask_markdown(model.description)
 
     masked_doc = MaskedDocument(
         content="test",
@@ -336,7 +332,7 @@ def test_unmask_pydantic_json_content() -> None:
     )
 
     # Unmask the model
-    result = pipe.unmask_pydantic(masked_doc, model)
+    result = unmask_pydantic(masked_doc, model)
 
     assert result.title == "Test with [link](https://example.com)"
     assert result.description == "Image here: ![alt](https://example.com/image.jpg)"

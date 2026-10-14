@@ -5,7 +5,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Any
 
 import pytest
-from notte_core.data.pruning import MarkdownPruningPipe, MaskedDocument
+from notte_core.data.pruning import MaskedDocument, unmask_pydantic
 from notte_core.utils.pydantic_schema import JsonResponseFormat, convert_response_format_to_pydantic_model
 from pydantic import BaseModel, Field, ValidationError
 from typing_extensions import override
@@ -209,4 +209,4 @@ def test_omitted_optional_properties_survive_a_dump_and_validate_round_trip():
     assert model.model_validate(parsed.model_dump()) == parsed
     assert model.model_validate_json(parsed.model_dump_json()) == parsed
     document = MaskedDocument(content="", links={}, images={})
-    assert MarkdownPruningPipe.unmask_pydantic(document, parsed) == parsed
+    assert unmask_pydantic(document, parsed) == parsed

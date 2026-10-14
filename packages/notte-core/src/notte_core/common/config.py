@@ -7,7 +7,7 @@ from typing import Any, Literal, Required, Self, Unpack
 from pydantic import BaseModel, Field, computed_field
 from typing_extensions import TypedDict, override
 
-from notte_core import LoggingSetup
+from notte_core import set_logger_mode
 from notte_core.common.logging import logger
 from notte_core.errors.base import ErrorMode
 
@@ -204,7 +204,7 @@ class NotteConfig(TomlConfig):
 
     @override
     def model_post_init(self, context: Any, /) -> None:
-        LoggingSetup.set_logger_mode(self.logging_mode)
+        set_logger_mode(self.logging_mode)
 
     @computed_field
     @property

@@ -66,45 +66,39 @@ AttributeValue: TypeAlias = str | int | bool | None
 AttributeValues: TypeAlias = list[AttributeValue]
 
 
-class DomErrorBuffer:
-    """Buffer for DOM attribute errors to avoid spam logging."""
+_dom_errors: dict[str, AttributeValues] = {}
+_MAX_DOM_ERROR_SAMPLES = 5
 
-    _buffer: ClassVar[dict[str, AttributeValues]] = {}
-    _max_samples_per_key: ClassVar[int] = 5
 
-    @staticmethod
-    def add_error(extra_keys: set[str], values: dict[str, AttributeValue]) -> None:
-        """
-        Add an error to the buffer, consolidating the values.
-        Each attribute will store up to _max_samples_per_key unique values.
-        """
+def add_dom_errors(extra_keys: set[str], values: dict[str, AttributeValue]) -> None:
+    """
+    Add an error to the buffer, consolidating the values.
+    Each attribute will store up to _max_samples_per_key unique values.
+    """
 
-        for key in extra_keys:
-            if key not in DomErrorBuffer._buffer.keys():
-                DomErrorBuffer._buffer[key] = []
-            str_v = str(values[key])[:50]
-            if (
-                len(DomErrorBuffer._buffer[key]) < DomErrorBuffer._max_samples_per_key
-                and str_v not in DomErrorBuffer._buffer[key]
-            ):
-                DomErrorBuffer._buffer[key].append(str_v)
+    for key in extra_keys:
+        if key not in _dom_errors.keys():
+            _dom_errors[key] = []
+        str_v = str(values[key])[:50]
+        if len(_dom_errors[key]) < _MAX_DOM_ERROR_SAMPLES and str_v not in _dom_errors[key]:
+            _dom_errors[key].append(str_v)
 
-    @staticmethod
-    def flush() -> None:
-        """Flush all buffered error messages in a consolidated format."""
-        if len(DomErrorBuffer._buffer) == 0:
-            return
 
-        logger.debug(
-            f"""
-Extra DOM attributes found: {list(DomErrorBuffer._buffer.keys())}.
+def flush_dom_errors() -> None:
+    """Flush all buffered error messages in a consolidated format."""
+    if len(_dom_errors) == 0:
+        return
+
+    logger.debug(
+        f"""
+Extra DOM attributes found: {list(_dom_errors.keys())}.
 Sample values:
-{DomErrorBuffer._buffer}
+{_dom_errors}
 These attributes should be added to the DomAttributes class. Fix this ASAP.
 """
-        )
-        # Clear the buffer
-        DomErrorBuffer._buffer.clear()
+    )
+    # Clear the buffer
+    _dom_errors.clear()
 
 
 @dataclass
@@ -250,7 +244,7 @@ class DomAttributes:
 
         extra_keys = set(kwargs.keys()).difference(keys).difference(excluded_keys)
         if len(extra_keys) > 0:
-            DomErrorBuffer.add_error(extra_keys, kwargs)
+            add_dom_errors(extra_keys, kwargs)
 
         return DomAttributes(**{key: kwargs.get(key, None) for key in keys})  # type: ignore[arg-type]
 

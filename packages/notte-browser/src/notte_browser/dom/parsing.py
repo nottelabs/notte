@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from notte_core.browser.dom_tree import DomErrorBuffer, DomNode
+from notte_core.browser.dom_tree import DomNode, flush_dom_errors
 from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.errors.processing import SnapshotProcessingError
@@ -48,7 +48,7 @@ async def parse_dom(page: Page) -> DomNode:
     dom_tree = build_dom_tree(main, url=page.url)
     if dom_tree is None:
         raise SnapshotProcessingError(page.url, "Failed to parse DOM tree. Dom Tree is empty.")
-    DomErrorBuffer.flush()
+    flush_dom_errors()
     return dom_tree
 
 

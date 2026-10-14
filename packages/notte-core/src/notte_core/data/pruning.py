@@ -1,6 +1,6 @@
 import functools
 import re
-from typing import Any, Callable, ClassVar, TypeVar, cast
+from typing import Any, Callable, TypeVar, cast
 
 from pydantic import BaseModel
 
@@ -146,15 +146,3 @@ def unmask_pydantic(document: MaskedDocument, data: TBaseModel) -> TBaseModel:
 
     unmasked_data = recursive_unmask(data.model_dump())
     return data.__class__.model_validate(unmasked_data)
-
-
-class MarkdownPruningPipe:
-    """Legacy names for the markdown masking functions."""
-
-    image_pattern: ClassVar[str] = IMAGE_PATTERN
-    link_pattern: ClassVar[str] = LINK_PATTERN
-    image_mask = staticmethod(_mask_image)  # pyright: ignore[reportUnannotatedClassAttribute]
-    link_mask = staticmethod(_mask_link)  # pyright: ignore[reportUnannotatedClassAttribute]
-    mask = staticmethod(mask_markdown)  # pyright: ignore[reportUnannotatedClassAttribute]
-    unmask = staticmethod(unmask_markdown)  # pyright: ignore[reportUnannotatedClassAttribute]
-    unmask_pydantic = staticmethod(unmask_pydantic)  # pyright: ignore[reportUnannotatedClassAttribute]

@@ -17,16 +17,14 @@ def set_error_mode(mode: ErrorMode) -> None:
     ErrorConfig.set_message_mode(mode)
 
 
-class LoggingSetup:
-    @staticmethod
-    def set_logger_mode(mode: ErrorMode) -> None:
-        match ErrorMessageMode(mode):
-            case ErrorMessageMode.DEVELOPER:
-                format = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
-                _ = logger.configure(handlers=[dict(sink=sys.stderr, level="DEBUG", format=format)])  # pyright: ignore [reportArgumentType]
-            case ErrorMessageMode.AGENT | ErrorMessageMode.USER:
-                format = "<level>{level: <8}</level> - <level>{message}</level>"
-                logger.configure(handlers=[dict(sink=sys.stderr, level="INFO", format=format)])  # type: ignore
+def set_logger_mode(mode: ErrorMode) -> None:
+    match ErrorMessageMode(mode):
+        case ErrorMessageMode.DEVELOPER:
+            format = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+            _ = logger.configure(handlers=[dict(sink=sys.stderr, level="DEBUG", format=format)])  # pyright: ignore [reportArgumentType]
+        case ErrorMessageMode.AGENT | ErrorMessageMode.USER:
+            format = "<level>{level: <8}</level> - <level>{message}</level>"
+            logger.configure(handlers=[dict(sink=sys.stderr, level="INFO", format=format)])  # type: ignore
 
 
 def check_notte_version(package_name: str) -> str:
@@ -40,7 +38,7 @@ def check_notte_version(package_name: str) -> str:
 
 
 # Default to agent mode
-LoggingSetup.set_logger_mode("agent")
+set_logger_mode("agent")
 
 nest_asyncio_enabled: bool = False
 

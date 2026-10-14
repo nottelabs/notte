@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 from dotenv import load_dotenv
-from notte_core.data.pruning import MarkdownPruningPipe
+from notte_core.data.pruning import mask_markdown
 from notte_core.data.space import DictBaseModel, StructuredData
 from notte_llm.extractor import LlmExtractor
 from notte_llm.models import LlmModel
@@ -208,7 +208,7 @@ async def test_unmask_placeholders_with_instructions_only() -> None:
     """
 
     # Mask the markdown to get placeholders
-    masked_doc = MarkdownPruningPipe.mask(markdown)
+    masked_doc = mask_markdown(markdown)
 
     # Verify masking worked
     assert "link1" in masked_doc.content or "link2" in masked_doc.content
