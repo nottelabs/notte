@@ -71,8 +71,26 @@ def writer(tmp_path_factory: pytest.TempPathFactory) -> Path:
     return binary
 
 
-def _keychain(*args: str) -> None:
-    _ = subprocess.run(["/usr/bin/security", *args], capture_output=True, check=False)
+def _keychain(*args: str) -> subprocess.CompletedProcess[bytes]:
+    # Bounded: a read the Keychain wants to confirm would otherwise wait for a click.
+    return subprocess.run(["/usr/bin/security", *args], capture_output=True, check=False, timeout=10)
+
+
+def _allow_reads_by_security_tool() -> None:
+    """Let `security` read items the CLI wrote, as a user's "Always Allow" would.
+
+    When a program updates an item, macOS limits it to that program again, so
+    reading it from `security` would show an access prompt. CI knows the
+    password of its keychain and can grant Apple tools access without one.
+    """
+    password = os.getenv("NOTTE_CLI_CONTRACT_KEYCHAIN_PASSWORD")
+    if sys.platform != "darwin" or not password:
+        return
+    for key in STORE_KEYS:
+        _ = _keychain(
+            "set-generic-password-partition-list",
+            *("-S", "apple-tool:,apple:", "-s", auth.KEYRING_SERVICE, "-a", key, "-k", password),
+        )
 
 
 @pytest.fixture
@@ -89,7 +107,9 @@ def run_cli(writer: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> It
 
     if sys.platform == "darwin":
         for key in STORE_KEYS:
-            _keychain("add-generic-password", "-U", "-A", "-s", auth.KEYRING_SERVICE, "-a", key, "-w", "placeholder")
+            _ = _keychain(
+                "add-generic-password", "-U", "-A", "-s", auth.KEYRING_SERVICE, "-a", key, "-w", "placeholder"
+            )
     try:
         yield run
     finally:
@@ -100,21 +120,18 @@ def run_cli(writer: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> It
         )
         if sys.platform == "darwin":
             for key in STORE_KEYS:
-                _keychain("delete-generic-password", "-s", auth.KEYRING_SERVICE, "-a", key)
+                _ = _keychain("delete-generic-password", "-s", auth.KEYRING_SERVICE, "-a", key)
 
 
 def _clear_placeholders() -> None:
     """Drop the macOS placeholders the CLI did not overwrite, so they cannot be read as keys."""
     if sys.platform != "darwin":
         return
+    _allow_reads_by_security_tool()
     for key in STORE_KEYS:
-        result = subprocess.run(
-            ["/usr/bin/security", "find-generic-password", "-s", auth.KEYRING_SERVICE, "-a", key, "-w"],
-            capture_output=True,
-            check=False,
-        )
+        result = _keychain("find-generic-password", "-s", auth.KEYRING_SERVICE, "-a", key, "-w")
         if result.stdout.strip() == b"placeholder":
-            _keychain("delete-generic-password", "-s", auth.KEYRING_SERVICE, "-a", key)
+            _ = _keychain("delete-generic-password", "-s", auth.KEYRING_SERVICE, "-a", key)
 
 
 def _read_system_store(key: str) -> str | None:

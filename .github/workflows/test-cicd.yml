@@ -271,6 +271,8 @@ jobs:
     env:
       NOTTE_CLI_CONTRACT: "1"
       NOTTE_CLI_CONTRACT_STORE: ${{ matrix.store }}
+      # Password of the throwaway keychain the macOS job creates.
+      NOTTE_CLI_CONTRACT_KEYCHAIN_PASSWORD: ci # pragma: allowlist secret
     defaults:
       run:
         shell: bash
@@ -301,9 +303,9 @@ jobs:
       - name: Use a dedicated, unlocked default keychain
         if: runner.os == 'macOS'
         run: |
-          security create-keychain -p ci notte-ci.keychain
+          security create-keychain -p "$NOTTE_CLI_CONTRACT_KEYCHAIN_PASSWORD" notte-ci.keychain
           security set-keychain-settings notte-ci.keychain
-          security unlock-keychain -p ci notte-ci.keychain
+          security unlock-keychain -p "$NOTTE_CLI_CONTRACT_KEYCHAIN_PASSWORD" notte-ci.keychain
           security list-keychains -d user -s notte-ci.keychain
           security default-keychain -d user -s notte-ci.keychain
 
