@@ -42,8 +42,8 @@ class AgentFunctionCodeResponse(BaseModel):
 
 
 class AgentStatus(StrEnum):
-    active = "active"
-    closed = "closed"
+    ACTIVE = "active"
+    CLOSED = "closed"
 
 
 class AgentStatusResponse(BaseModel):
@@ -91,13 +91,6 @@ class AnythingStartRequest(BaseModel):
     task: Annotated[str, Field(title="Task")]
 
 
-class BrowserType(StrEnum):
-    chromium = "chromium"
-    chrome = "chrome"
-    chrome_nightly = "chrome-nightly"
-    chrome_turbo = "chrome-turbo"
-
-
 class ViewportWidth(RootModel[int]):
     root: Annotated[
         int,
@@ -118,17 +111,6 @@ class ViewportHeight(RootModel[int]):
             title="Viewport Height",
         ),
     ]
-
-
-class AspectRatio(StrEnum):
-    field_5_4 = "5:4"
-    field_16_9 = "16:9"
-
-
-class ScreenshotType(StrEnum):
-    raw = "raw"
-    full = "full"
-    last_action = "last_action"
 
 
 class AuditEvent(BaseModel):
@@ -237,52 +219,39 @@ class BoundingBox(BaseModel):
     notte_id: Annotated[str | None, Field(title="Notte Id")] = None
 
 
-class CaptchaType(StrEnum):
-    recaptcha = "recaptcha"
-    hcaptcha = "hcaptcha"
-    image = "image"
-    text = "text"
-    auth0 = "auth0"
-    cloudflare = "cloudflare"
-    datadome = "datadome"
-    arkose_labs = "arkose labs"
-    geetest = "geetest"
-    press_hold = "press&hold"
-    unknown = "unknown"
-
-
 class CaptchaSolveAction(BaseModel):
     type: Annotated[Literal["captcha_solve"], Field(title="Type")] = "captcha_solve"
     category: Annotated[str, Field(title="Category")] = "Special Browser Actions"
     description: Annotated[str, Field(title="Description")] = (
         "Solve a CAPTCHA challenge on the current page. CRITICAL: Use this action as soon as you notice a captcha"
     )
-    captcha_type: Annotated[CaptchaType | None, Field(title="Captcha Type")] = None
-
-
-class State(StrEnum):
-    solving = "solving"
-    solved = "solved"
-    failed = "failed"
-    cancelled = "cancelled"
-
-
-class CancelReasonEnum(StrEnum):
-    navigation = "navigation"
-
-
-class CancelReason(RootModel[CancelReasonEnum | None]):
-    root: Annotated[CancelReasonEnum | None, Field(title="Cancel Reason")] = None
+    captcha_type: Annotated[
+        Literal[
+            "recaptcha",
+            "hcaptcha",
+            "image",
+            "text",
+            "auth0",
+            "cloudflare",
+            "datadome",
+            "arkose labs",
+            "geetest",
+            "press&hold",
+            "unknown",
+        ]
+        | None,
+        Field(title="Captcha Type"),
+    ] = None
 
 
 class CaptchaStatus(BaseModel):
     captcha_id: Annotated[str, Field(title="Captcha Id")]
     page_id: Annotated[str, Field(title="Page Id")]
     generation: Annotated[int, Field(title="Generation")]
-    state: Annotated[State, Field(title="State")]
+    state: Annotated[Literal["solving", "solved", "failed", "cancelled"], Field(title="State")]
     retry_after_ms: Annotated[int, Field(title="Retry After Ms")] = 1000
     message: Annotated[str, Field(title="Message")] = ""
-    cancel_reason: Annotated[CancelReason | None, Field(title="Cancel Reason")] = None
+    cancel_reason: Annotated[Literal["navigation"] | None, Field(title="Cancel Reason")] = None
 
 
 class CloseTabAction(BaseModel):
@@ -301,19 +270,14 @@ class CompletionAction(BaseModel):
     answer: Annotated[str, Field(title="Answer")]
 
 
-class Status(StrEnum):
-    pending = "pending"
-    submitted = "submitted"
-    completed = "completed"
-    failed = "failed"
-    expired = "expired"
-
-
 class ConnectLinkContext(BaseModel):
     service_name: Annotated[str, Field(title="Service Name")]
     domain: Annotated[str, Field(title="Domain")]
     logo_color: Annotated[str, Field(title="Logo Color")]
-    status: Annotated[Status, Field(title="Status")]
+    status: Annotated[
+        Literal["pending", "submitted", "completed", "failed", "expired"],
+        Field(title="Status"),
+    ]
     requires_totp_secret: Annotated[
         bool,
         Field(
@@ -343,12 +307,6 @@ class ExternalUserId(RootModel[str]):
     ]
 
 
-class TwoFaMethod(StrEnum):
-    email = "email"
-    sms = "sms"
-    totp = "totp"
-
-
 class ConnectLinkCreateRequest(BaseModel):
     template_id: Annotated[
         str,
@@ -374,7 +332,7 @@ class ConnectLinkCreateRequest(BaseModel):
         ),
     ] = None
     two_fa_method: Annotated[
-        TwoFaMethod | None,
+        Literal["email", "sms", "totp"] | None,
         Field(
             description="Second factor this connection will use. Required when the connector supports more than one, because the choice decides whether a mailbox is needed.",
             title="Two Fa Method",
@@ -453,13 +411,8 @@ class ConnectLinkMailbox(BaseModel):
     healthy: Annotated[bool, Field(title="Healthy")]
 
 
-class Provider(StrEnum):
-    gmail = "gmail"
-    outlook = "outlook"
-
-
 class ConnectLinkMailboxConnectRequest(BaseModel):
-    provider: Annotated[Provider, Field(title="Provider")] = "gmail"
+    provider: Annotated[Literal["gmail", "outlook"], Field(title="Provider")] = "gmail"
 
 
 class ConnectLinkMailboxConnectResponse(BaseModel):
@@ -469,34 +422,33 @@ class ConnectLinkMailboxConnectResponse(BaseModel):
 
 class ConnectLinkMailboxSyncRequest(BaseModel):
     mailbox_id: Annotated[str, Field(title="Mailbox Id")]
-    provider: Annotated[Provider, Field(title="Provider")] = "gmail"
-
-
-class FailureCode(StrEnum):
-    invalid_credentials = "invalid_credentials"
-    mfa_required = "mfa_required"
-    mfa_invalid = "mfa_invalid"
-    account_locked = "account_locked"
-    captcha = "captcha"
-    site_changed = "site_changed"
-    transient = "transient"
-    unknown = "unknown"
+    provider: Annotated[Literal["gmail", "outlook"], Field(title="Provider")] = "gmail"
 
 
 class ConnectLinkStatusResponse(BaseModel):
-    status: Annotated[Status, Field(title="Status")]
+    status: Annotated[
+        Literal["pending", "submitted", "completed", "failed", "expired"],
+        Field(title="Status"),
+    ]
     connection_status: Annotated[str | None, Field(title="Connection Status")] = None
-    failure_code: Annotated[FailureCode | None, Field(title="Failure Code")] = None
+    failure_code: Annotated[
+        Literal[
+            "invalid_credentials",
+            "mfa_required",
+            "mfa_invalid",
+            "account_locked",
+            "captcha",
+            "site_changed",
+            "transient",
+            "unknown",
+        ]
+        | None,
+        Field(title="Failure Code"),
+    ] = None
     message: Annotated[str | None, Field(title="Message")] = None
     attempts_remaining: Annotated[int, Field(title="Attempts Remaining")]
     success_redirect_uri: Annotated[str | None, Field(title="Success Redirect Uri")] = None
     error_redirect_uri: Annotated[str | None, Field(title="Error Redirect Uri")] = None
-
-
-class SameSite(StrEnum):
-    Lax = "Lax"
-    None_ = "None"
-    Strict = "Strict"
 
 
 class Cookie(BaseModel):
@@ -507,7 +459,7 @@ class Cookie(BaseModel):
     httpOnly: Annotated[bool, Field(title="Httponly")]
     expirationDate: Annotated[float | None, Field(title="Expirationdate")] = None
     hostOnly: Annotated[bool | None, Field(title="Hostonly")] = None
-    sameSite: Annotated[SameSite | None, Field(title="Samesite")] = None
+    sameSite: Annotated[Literal["Lax", "None", "Strict"] | None, Field(title="Samesite")] = None
     secure: Annotated[bool | None, Field(title="Secure")] = None
     session: Annotated[bool | None, Field(title="Session")] = None
     storeId: Annotated[str | None, Field(title="Storeid")] = None
@@ -555,39 +507,49 @@ class CreditCardDictOutput(BaseModel):
     card_full_expiration: Annotated[str, Field(title="Card Full Expiration")]
 
 
-class Status2(StrEnum):
-    success = "success"
-    failure = "failure"
-
-
 class DeleteCredentialsResponse(BaseModel):
-    status: Annotated[Status2, Field(description="Status of the deletion", title="Status")]
+    status: Annotated[
+        Literal["success", "failure"],
+        Field(description="Status of the deletion", title="Status"),
+    ]
     message: Annotated[str, Field(description="Message of the deletion", title="Message")] = (
         "Credentials deleted successfully"
     )
 
 
 class DeleteCreditCardResponse(BaseModel):
-    status: Annotated[Status2, Field(description="Status of the deletion", title="Status")]
+    status: Annotated[
+        Literal["success", "failure"],
+        Field(description="Status of the deletion", title="Status"),
+    ]
     message: Annotated[str, Field(description="Message of the deletion", title="Message")] = (
         "Credit card deleted successfully"
     )
 
 
 class DeleteFunctionResponse(BaseModel):
-    status: Annotated[Status2, Field(description="The status of the deletion", title="Status")]
+    status: Annotated[
+        Literal["success", "failure"],
+        Field(description="The status of the deletion", title="Status"),
+    ]
     message: Annotated[str, Field(description="The message of the deletion", title="Message")]
 
 
 class DeletePersonaResponse(BaseModel):
-    status: Annotated[Status2, Field(description="Status of the deletion", title="Status")]
+    status: Annotated[
+        Literal["success", "failure"],
+        Field(description="Status of the deletion", title="Status"),
+    ]
     message: Annotated[str, Field(description="Message of the deletion", title="Message")] = (
         "Persona deleted successfully"
     )
 
 
 class DeleteVaultResponse(BaseModel):
-    status: Annotated[Status2, Field(description="Status of the deletion", title="Status")]
+    status: Annotated[
+        Literal["success", "failure"],
+        Field(description="Status of the deletion", title="Status"),
+    ]
     message: Annotated[str, Field(description="Message of the deletion", title="Message")] = (
         "Vault deleted successfully"
     )
@@ -704,8 +666,8 @@ class ExternalProxy(BaseModel):
 
 
 class FileSource(StrEnum):
-    user_upload = "user_upload"
-    session_download = "session_download"
+    USER_UPLOAD = "user_upload"
+    SESSION_DOWNLOAD = "session_download"
 
 
 class FormFillAction(BaseModel):
@@ -755,13 +717,8 @@ class FrameData(BaseModel):
     frameData: Annotated[str, Field(description="DOM Content of the frame", title="Framedata")]
 
 
-class DefaultRuntime(StrEnum):
-    standard = "standard"
-    extended = "extended"
-
-
 class FunctionMetadataUpdateRequest(BaseModel):
-    default_runtime: Annotated[DefaultRuntime | None, Field(title="Default Runtime")] = None
+    default_runtime: Annotated[Literal["standard", "extended"] | None, Field(title="Default Runtime")] = None
     name: Annotated[str | None, Field(title="Name")] = None
     description: Annotated[str | None, Field(title="Description")] = None
     domain: Annotated[str | None, Field(title="Domain")] = None
@@ -776,11 +733,6 @@ class FunctionMetadataUpdateRequest(BaseModel):
     ] = None
 
 
-class ScheduleState(StrEnum):
-    enabled = "enabled"
-    paused = "paused"
-
-
 class FunctionRollbackRequest(BaseModel):
     version: Annotated[
         str,
@@ -791,18 +743,12 @@ class FunctionRollbackRequest(BaseModel):
     ]
 
 
-class Status7(StrEnum):
-    closed = "closed"
-    active = "active"
-    failed = "failed"
-
-
 class FunctionRunListItemResponse(BaseModel):
     function_id: Annotated[str, Field(description="The ID of the function", title="Function Id")]
     function_run_id: Annotated[str, Field(description="The ID of the function run", title="Function Run Id")]
     created_at: Annotated[datetime, Field(title="Created At")]
     updated_at: Annotated[datetime, Field(title="Updated At")]
-    status: Annotated[Status7, Field(title="Status")]
+    status: Annotated[Literal["closed", "active", "failed"], Field(title="Status")]
     session_id: Annotated[str | None, Field(title="Session Id")] = None
     local: Annotated[bool, Field(title="Local")] = False
     workflow_id: Annotated[str, Field(title="Workflow Id")]
@@ -811,12 +757,6 @@ class FunctionRunListItemResponse(BaseModel):
 
 class ResultPreview(RootModel[str]):
     root: Annotated[str, Field(max_length=16000, title="Result Preview")]
-
-
-class Status9(StrEnum):
-    ok = "ok"
-    degraded = "degraded"
-    unreachable = "unreachable"
 
 
 class FunctionScheduleCreateRequest(BaseModel):
@@ -837,12 +777,12 @@ class FunctionScheduleCreateRequest(BaseModel):
 
 
 class FunctionSource(StrEnum):
-    console = "console"
-    anything = "anything"
-    cli = "cli"
-    node_sdk = "node-sdk"
-    python_sdk = "python-sdk"
-    rest_api = "rest-api"
+    CONSOLE = "console"
+    ANYTHING = "anything"
+    CLI = "cli"
+    NODE_SDK = "node-sdk"
+    PYTHON_SDK = "python-sdk"
+    REST_API = "rest-api"
 
 
 class GetCookiesResponse(BaseModel):
@@ -857,12 +797,6 @@ class GetCreditCardResponse(BaseModel):
     credit_card: Annotated[CreditCardDictOutput, Field(description="Retrieved credit card")]
 
 
-class Status10(StrEnum):
-    closed = "closed"
-    active = "active"
-    failed = "failed"
-
-
 class GoBackAction(BaseModel):
     type: Annotated[Literal["go_back"], Field(title="Type")] = "go_back"
     category: Annotated[str, Field(title="Category")] = "Special Browser Actions"
@@ -875,13 +809,6 @@ class GoForwardAction(BaseModel):
     description: Annotated[str, Field(title="Description")] = "Go forward to the next page (in current tab)"
 
 
-class WaitUntil(StrEnum):
-    commit = "commit"
-    domcontentloaded = "domcontentloaded"
-    load = "load"
-    networkidle = "networkidle"
-
-
 class GotoAction(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -890,7 +817,10 @@ class GotoAction(BaseModel):
     category: Annotated[str, Field(title="Category")] = "Special Browser Actions"
     description: Annotated[str, Field(title="Description")] = "Goto to a URL (in current tab)"
     url: Annotated[str, Field(title="Url")]
-    wait_until: Annotated[WaitUntil | None, Field(title="Wait Until")] = None
+    wait_until: Annotated[
+        Literal["commit", "domcontentloaded", "load", "networkidle"] | None,
+        Field(title="Wait Until"),
+    ] = None
 
 
 class GotoNewTabAction(BaseModel):
@@ -916,12 +846,12 @@ class HelpAction(BaseModel):
 
 
 class ImageCategory(StrEnum):
-    favicon = "favicon"
-    icon = "icon"
-    content_image = "content_image"
-    decorative = "decorative"
-    svg_icon = "svg_icon"
-    svg_content = "svg_content"
+    FAVICON = "favicon"
+    ICON = "icon"
+    CONTENT_IMAGE = "content_image"
+    DECORATIVE = "decorative"
+    SVG_ICON = "svg_icon"
+    SVG_CONTENT = "svg_content"
 
 
 class ImageData(BaseModel):
@@ -988,28 +918,23 @@ class ListCredentialsResponse(BaseModel):
 
 
 class LlmModel(StrEnum):
-    openai_gpt_4o = "openai/gpt-4o"
-    gemini_gemini_3_5_flash = "gemini/gemini-3.5-flash"
-    vertex_ai_gemini_3_5_flash = "vertex_ai/gemini-3.5-flash"
-    openrouter_google_gemma_3_27b_it = "openrouter/google/gemma-3-27b-it"
-    cerebras_gpt_oss_120b = "cerebras/gpt-oss-120b"
-    groq_gpt_oss_120b = "groq/gpt-oss-120b"
-    perplexity_sonar_pro = "perplexity/sonar-pro"
-    deepseek_deepseek_r1 = "deepseek/deepseek-r1"
-    together_ai_meta_llama_llama_3_3_70b_instruct = "together_ai/meta-llama/llama-3.3-70b-instruct"
-    anthropic_claude_sonnet_4_5_20250929 = "anthropic/claude-sonnet-4-5-20250929"
-    moonshot_kimi_k2_5 = "moonshot/kimi-k2.5"
-    xai_grok_4_3 = "xai/grok-4.3"
-    minimax_minimax_m2_5 = "minimax/minimax-m2.5"
-
-
-class Provider2(StrEnum):
-    gmail = "gmail"
-    microsoft_outlook = "microsoft_outlook"
+    OPENAI_GPT_4O = "openai/gpt-4o"
+    GEMINI_GEMINI_3_5_FLASH = "gemini/gemini-3.5-flash"
+    VERTEX_AI_GEMINI_3_5_FLASH = "vertex_ai/gemini-3.5-flash"
+    OPENROUTER_GOOGLE_GEMMA_3_27B_IT = "openrouter/google/gemma-3-27b-it"
+    CEREBRAS_GPT_OSS_120B = "cerebras/gpt-oss-120b"
+    GROQ_GPT_OSS_120B = "groq/gpt-oss-120b"
+    PERPLEXITY_SONAR_PRO = "perplexity/sonar-pro"
+    DEEPSEEK_DEEPSEEK_R1 = "deepseek/deepseek-r1"
+    TOGETHER_AI_META_LLAMA_LLAMA_3_3_70B_INSTRUCT = "together_ai/meta-llama/llama-3.3-70b-instruct"
+    ANTHROPIC_CLAUDE_SONNET_4_5_20250929 = "anthropic/claude-sonnet-4-5-20250929"
+    MOONSHOT_KIMI_K2_5 = "moonshot/kimi-k2.5"
+    XAI_GROK_4_3 = "xai/grok-4.3"
+    MINIMAX_MINIMAX_M2_5 = "minimax/minimax-m2.5"
 
 
 class MailboxConnectRequest(BaseModel):
-    provider: Annotated[Provider2, Field(title="Provider")] = "gmail"
+    provider: Annotated[Literal["gmail", "microsoft_outlook"], Field(title="Provider")] = "gmail"
     success_redirect_uri: Annotated[str, Field(title="Success Redirect Uri")]
     error_redirect_uri: Annotated[str, Field(title="Error Redirect Uri")]
     allowed_origin: Annotated[str, Field(title="Allowed Origin")]
@@ -1024,7 +949,7 @@ class MailboxConnectResponse(BaseModel):
 
 class MailboxConnection(BaseModel):
     id: Annotated[str, Field(title="Id")]
-    provider: Annotated[Provider2, Field(title="Provider")] = "gmail"
+    provider: Annotated[Literal["gmail", "microsoft_outlook"], Field(title="Provider")] = "gmail"
     email_address: Annotated[str, Field(title="Email Address")]
     healthy: Annotated[bool, Field(title="Healthy")] = True
     authorized_scopes: Annotated[list[str] | None, Field(title="Authorized Scopes")] = None
@@ -1040,7 +965,7 @@ class MailboxListResponse(BaseModel):
 
 class MailboxSyncRequest(BaseModel):
     mailbox_id: Annotated[str | None, Field(title="Mailbox Id")] = None
-    provider: Annotated[Provider2 | None, Field(title="Provider")] = None
+    provider: Annotated[Literal["gmail", "microsoft_outlook"] | None, Field(title="Provider")] = None
 
 
 class MailboxUpdateRequest(BaseModel):
@@ -1055,20 +980,15 @@ class ManagedAuthCredentials(BaseModel):
     mfa_secret: Annotated[SecretStr | None, Field(title="Mfa Secret")] = None
 
 
-class Status11(StrEnum):
-    pending = "pending"
-    running = "running"
-    succeeded = "succeeded"
-    failed = "failed"
-    cancelled = "cancelled"
-
-
 class ManagedAuthOperation(BaseModel):
     id: Annotated[str, Field(title="Id")]
     connection_id: Annotated[str, Field(title="Connection Id")]
     session_id: Annotated[str | None, Field(title="Session Id")] = None
     source: Annotated[str, Field(title="Source")]
-    status: Annotated[Status11, Field(title="Status")]
+    status: Annotated[
+        Literal["pending", "running", "succeeded", "failed", "cancelled"],
+        Field(title="Status"),
+    ]
     phase: Annotated[str, Field(title="Phase")]
     attempt: Annotated[int, Field(title="Attempt")] = 0
     auth_retry: Annotated[int, Field(title="Auth Retry")] = 0
@@ -1080,16 +1000,9 @@ class ManagedAuthOperation(BaseModel):
     updated_at: Annotated[datetime, Field(title="Updated At")]
 
 
-class Status12(StrEnum):
-    authenticating = "authenticating"
-    active = "active"
-    failed = "failed"
-    closed = "closed"
-
-
 class ManagedAuthReadiness(BaseModel):
     session_id: Annotated[str, Field(title="Session Id")]
-    status: Annotated[Status12, Field(title="Status")]
+    status: Annotated[Literal["authenticating", "active", "failed", "closed"], Field(title="Status")]
     operations: Annotated[list[ManagedAuthOperation] | None, Field(title="Operations")] = None
     error: Annotated[str | None, Field(title="Error")] = None
 
@@ -1128,11 +1041,6 @@ class NudgePromptResponse(BaseModel):
     prompt: Annotated[str, Field(title="Prompt")]
 
 
-class PerceptionType(StrEnum):
-    fast = "fast"
-    deep = "deep"
-
-
 class ObserveRequest(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -1159,7 +1067,7 @@ class ObserveRequest(BaseModel):
         ),
     ] = None
     perception_type: Annotated[
-        PerceptionType | None,
+        Literal["fast", "deep"] | None,
         Field(
             description="Whether to run with fast or deep perception",
             title="Perception Type",
@@ -1181,16 +1089,11 @@ class ParameterInfo(BaseModel):
     default: Annotated[str | None, Field(title="Default")] = None
 
 
-class Mode(StrEnum):
-    test = "test"
-    live = "live"
-
-
 class PaymentConnectRequest(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
     )
-    mode: Annotated[Mode, Field(title="Mode")] = "live"
+    mode: Annotated[Literal["test", "live"], Field(title="Mode")] = "live"
 
 
 class PaymentConnectionResponse(BaseModel):
@@ -1208,26 +1111,8 @@ class PaymentDisconnectError(BaseModel):
 
 
 class PaymentDisconnectResponse(BaseModel):
-    mode: Annotated[Mode, Field(title="Mode")]
+    mode: Annotated[Literal["test", "live"], Field(title="Mode")]
     status: Annotated[Literal["disconnected"], Field(title="Status")] = "disconnected"
-
-
-class Type(StrEnum):
-    ssn_verification = "ssn_verification"
-    identity_verification = "identity_verification"
-    contact_support = "contact_support"
-    select_payment_method = "select_payment_method"
-    add_payment_method = "add_payment_method"
-    update_payment_method = "update_payment_method"
-    re_authorize = "re_authorize"
-    three_d_secure = "three_d_secure"
-    three_d_secure_retry = "three_d_secure_retry"
-
-
-class Resolution(StrEnum):
-    auto_resume = "auto_resume"
-    create_new_spend_request = "create_new_spend_request"
-    create_new_spend_request_after_completion = "create_new_spend_request_after_completion"
 
 
 class ActionUrl(RootModel[str]):
@@ -1235,8 +1120,24 @@ class ActionUrl(RootModel[str]):
 
 
 class PaymentNextAction(BaseModel):
-    type: Annotated[Type, Field(title="Type")]
-    resolution: Annotated[Resolution, Field(title="Resolution")]
+    type: Annotated[
+        Literal[
+            "ssn_verification",
+            "identity_verification",
+            "contact_support",
+            "select_payment_method",
+            "add_payment_method",
+            "update_payment_method",
+            "re_authorize",
+            "three_d_secure",
+            "three_d_secure_retry",
+        ],
+        Field(title="Type"),
+    ]
+    resolution: Annotated[
+        Literal["auto_resume", "create_new_spend_request", "create_new_spend_request_after_completion"],
+        Field(title="Resolution"),
+    ]
     action_url: Annotated[ActionUrl | None, Field(title="Action Url")] = None
     expires_at: Annotated[datetime | None, Field(title="Expires At")] = None
 
@@ -1281,7 +1182,7 @@ class PaymentRequest(BaseModel):
     merchant_url: Annotated[str, Field(max_length=2048, title="Merchant Url")]
     merchant_name: Annotated[str, Field(max_length=200, min_length=1, title="Merchant Name")]
     description: Annotated[str, Field(max_length=4000, min_length=100, title="Description")]
-    mode: Annotated[Mode, Field(title="Mode")] = "live"
+    mode: Annotated[Literal["test", "live"], Field(title="Mode")] = "live"
 
 
 class PaymentResponse(BaseModel):
@@ -1375,30 +1276,20 @@ class PressKeyAction(BaseModel):
     key: Annotated[str, Field(title="Key")]
 
 
-class SourceFormat(StrEnum):
-    playwright = "playwright"
-    chrome = "chrome"
-
-
-class Mode3(StrEnum):
-    replace = "replace"
-    append = "append"
-
-
 class ProfileCookiesImportRequest(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
     )
     cookies: Annotated[list[Cookie], Field(min_length=1, title="Cookies")]
-    source_format: Annotated[SourceFormat, Field(title="Source Format")] = "playwright"
-    mode: Annotated[Mode3, Field(title="Mode")] = "replace"
+    source_format: Annotated[Literal["playwright", "chrome"], Field(title="Source Format")] = "playwright"
+    mode: Annotated[Literal["replace", "append"], Field(title="Mode")] = "replace"
 
 
 class ProfileCookiesImportResponse(BaseModel):
     success: Annotated[bool, Field(title="Success")]
     message: Annotated[str, Field(title="Message")]
     cookies_count: Annotated[int, Field(title="Cookies Count")]
-    mode: Annotated[Mode3, Field(title="Mode")]
+    mode: Annotated[Literal["replace", "append"], Field(title="Mode")]
 
 
 class ProfileCreateRequest(BaseModel):
@@ -1444,208 +1335,208 @@ class ProfileResponse(BaseModel):
 
 
 class ProxyGeolocationCountry(StrEnum):
-    ad = "ad"
-    ae = "ae"
-    af = "af"
-    ag = "ag"
-    ai = "ai"
-    al = "al"
-    am = "am"
-    ao = "ao"
-    ar = "ar"
-    at = "at"
-    au = "au"
-    aw = "aw"
-    az = "az"
-    ba = "ba"
-    bb = "bb"
-    bd = "bd"
-    be = "be"
-    bf = "bf"
-    bg = "bg"
-    bh = "bh"
-    bi = "bi"
-    bj = "bj"
-    bm = "bm"
-    bn = "bn"
-    bo = "bo"
-    bq = "bq"
-    br = "br"
-    bs = "bs"
-    bt = "bt"
-    bw = "bw"
-    by = "by"
-    bz = "bz"
-    ca = "ca"
-    cd = "cd"
-    cg = "cg"
-    ch = "ch"
-    ci = "ci"
-    cl = "cl"
-    cm = "cm"
-    cn = "cn"
-    co = "co"
-    cr = "cr"
-    cu = "cu"
-    cv = "cv"
-    cw = "cw"
-    cy = "cy"
-    cz = "cz"
-    de = "de"
-    dj = "dj"
-    dk = "dk"
-    dm = "dm"
-    do = "do"
-    dz = "dz"
-    ec = "ec"
-    ee = "ee"
-    eg = "eg"
-    es = "es"
-    et = "et"
-    fi = "fi"
-    fj = "fj"
-    fr = "fr"
-    ga = "ga"
-    gb = "gb"
-    gd = "gd"
-    ge = "ge"
-    gf = "gf"
-    gg = "gg"
-    gh = "gh"
-    gi = "gi"
-    gm = "gm"
-    gn = "gn"
-    gp = "gp"
-    gq = "gq"
-    gr = "gr"
-    gt = "gt"
-    gu = "gu"
-    gw = "gw"
-    gy = "gy"
-    hk = "hk"
-    hn = "hn"
-    hr = "hr"
-    ht = "ht"
-    hu = "hu"
-    id = "id"
-    ie = "ie"
-    il = "il"
-    im = "im"
-    in_ = "in"
-    iq = "iq"
-    ir = "ir"
-    is_ = "is"
-    it = "it"
-    je = "je"
-    jm = "jm"
-    jo = "jo"
-    jp = "jp"
-    ke = "ke"
-    kg = "kg"
-    kh = "kh"
-    kn = "kn"
-    kr = "kr"
-    kw = "kw"
-    ky = "ky"
-    kz = "kz"
-    la = "la"
-    lb = "lb"
-    lc = "lc"
-    lk = "lk"
-    lr = "lr"
-    ls = "ls"
-    lt = "lt"
-    lu = "lu"
-    lv = "lv"
-    ly = "ly"
-    ma = "ma"
-    md = "md"
-    me = "me"
-    mf = "mf"
-    mg = "mg"
-    mk = "mk"
-    ml = "ml"
-    mm = "mm"
-    mn = "mn"
-    mo = "mo"
-    mq = "mq"
-    mr = "mr"
-    mt = "mt"
-    mu = "mu"
-    mv = "mv"
-    mw = "mw"
-    mx = "mx"
-    my = "my"
-    mz = "mz"
-    na = "na"
-    nc = "nc"
-    ne = "ne"
-    ng = "ng"
-    ni = "ni"
-    nl = "nl"
-    no = "no"
-    np = "np"
-    nz = "nz"
-    om = "om"
-    pa = "pa"
-    pe = "pe"
-    pf = "pf"
-    pg = "pg"
-    ph = "ph"
-    pk = "pk"
-    pl = "pl"
-    pr = "pr"
-    ps = "ps"
-    pt = "pt"
-    py = "py"
-    qa = "qa"
-    re = "re"
-    ro = "ro"
-    rs = "rs"
-    ru = "ru"
-    rw = "rw"
-    sa = "sa"
-    sc = "sc"
-    sd = "sd"
-    se = "se"
-    sg = "sg"
-    si = "si"
-    sk = "sk"
-    sl = "sl"
-    sm = "sm"
-    sn = "sn"
-    so = "so"
-    sr = "sr"
-    ss = "ss"
-    st = "st"
-    sv = "sv"
-    sx = "sx"
-    sy = "sy"
-    sz = "sz"
-    tc = "tc"
-    tg = "tg"
-    th = "th"
-    tj = "tj"
-    tm = "tm"
-    tn = "tn"
-    tr = "tr"
-    tt = "tt"
-    tw = "tw"
-    tz = "tz"
-    ua = "ua"
-    ug = "ug"
-    us = "us"
-    uy = "uy"
-    uz = "uz"
-    vc = "vc"
-    ve = "ve"
-    vg = "vg"
-    vi = "vi"
-    vn = "vn"
-    ye = "ye"
-    za = "za"
-    zm = "zm"
-    zw = "zw"
+    AD = "ad"
+    AE = "ae"
+    AF = "af"
+    AG = "ag"
+    AI = "ai"
+    AL = "al"
+    AM = "am"
+    AO = "ao"
+    AR = "ar"
+    AT = "at"
+    AU = "au"
+    AW = "aw"
+    AZ = "az"
+    BA = "ba"
+    BB = "bb"
+    BD = "bd"
+    BE = "be"
+    BF = "bf"
+    BG = "bg"
+    BH = "bh"
+    BI = "bi"
+    BJ = "bj"
+    BM = "bm"
+    BN = "bn"
+    BO = "bo"
+    BQ = "bq"
+    BR = "br"
+    BS = "bs"
+    BT = "bt"
+    BW = "bw"
+    BY = "by"
+    BZ = "bz"
+    CA = "ca"
+    CD = "cd"
+    CG = "cg"
+    CH = "ch"
+    CI = "ci"
+    CL = "cl"
+    CM = "cm"
+    CN = "cn"
+    CO = "co"
+    CR = "cr"
+    CU = "cu"
+    CV = "cv"
+    CW = "cw"
+    CY = "cy"
+    CZ = "cz"
+    DE = "de"
+    DJ = "dj"
+    DK = "dk"
+    DM = "dm"
+    DO = "do"
+    DZ = "dz"
+    EC = "ec"
+    EE = "ee"
+    EG = "eg"
+    ES = "es"
+    ET = "et"
+    FI = "fi"
+    FJ = "fj"
+    FR = "fr"
+    GA = "ga"
+    GB = "gb"
+    GD = "gd"
+    GE = "ge"
+    GF = "gf"
+    GG = "gg"
+    GH = "gh"
+    GI = "gi"
+    GM = "gm"
+    GN = "gn"
+    GP = "gp"
+    GQ = "gq"
+    GR = "gr"
+    GT = "gt"
+    GU = "gu"
+    GW = "gw"
+    GY = "gy"
+    HK = "hk"
+    HN = "hn"
+    HR = "hr"
+    HT = "ht"
+    HU = "hu"
+    ID = "id"
+    IE = "ie"
+    IL = "il"
+    IM = "im"
+    IN = "in"
+    IQ = "iq"
+    IR = "ir"
+    IS = "is"
+    IT = "it"
+    JE = "je"
+    JM = "jm"
+    JO = "jo"
+    JP = "jp"
+    KE = "ke"
+    KG = "kg"
+    KH = "kh"
+    KN = "kn"
+    KR = "kr"
+    KW = "kw"
+    KY = "ky"
+    KZ = "kz"
+    LA = "la"
+    LB = "lb"
+    LC = "lc"
+    LK = "lk"
+    LR = "lr"
+    LS = "ls"
+    LT = "lt"
+    LU = "lu"
+    LV = "lv"
+    LY = "ly"
+    MA = "ma"
+    MD = "md"
+    ME = "me"
+    MF = "mf"
+    MG = "mg"
+    MK = "mk"
+    ML = "ml"
+    MM = "mm"
+    MN = "mn"
+    MO = "mo"
+    MQ = "mq"
+    MR = "mr"
+    MT = "mt"
+    MU = "mu"
+    MV = "mv"
+    MW = "mw"
+    MX = "mx"
+    MY = "my"
+    MZ = "mz"
+    NA = "na"
+    NC = "nc"
+    NE = "ne"
+    NG = "ng"
+    NI = "ni"
+    NL = "nl"
+    NO = "no"
+    NP = "np"
+    NZ = "nz"
+    OM = "om"
+    PA = "pa"
+    PE = "pe"
+    PF = "pf"
+    PG = "pg"
+    PH = "ph"
+    PK = "pk"
+    PL = "pl"
+    PR = "pr"
+    PS = "ps"
+    PT = "pt"
+    PY = "py"
+    QA = "qa"
+    RE = "re"
+    RO = "ro"
+    RS = "rs"
+    RU = "ru"
+    RW = "rw"
+    SA = "sa"
+    SC = "sc"
+    SD = "sd"
+    SE = "se"
+    SG = "sg"
+    SI = "si"
+    SK = "sk"
+    SL = "sl"
+    SM = "sm"
+    SN = "sn"
+    SO = "so"
+    SR = "sr"
+    SS = "ss"
+    ST = "st"
+    SV = "sv"
+    SX = "sx"
+    SY = "sy"
+    SZ = "sz"
+    TC = "tc"
+    TG = "tg"
+    TH = "th"
+    TJ = "tj"
+    TM = "tm"
+    TN = "tn"
+    TR = "tr"
+    TT = "tt"
+    TW = "tw"
+    TZ = "tz"
+    UA = "ua"
+    UG = "ug"
+    US = "us"
+    UY = "uy"
+    UZ = "uz"
+    VC = "vc"
+    VE = "ve"
+    VG = "vg"
+    VI = "vi"
+    VN = "vn"
+    YE = "ye"
+    ZA = "za"
+    ZM = "zm"
+    ZW = "zw"
 
 
 class ReloadAction(BaseModel):
@@ -1654,21 +1545,16 @@ class ReloadAction(BaseModel):
     description: Annotated[str, Field(title="Description")] = "Reload the current page"
 
 
-class ReplayStatus(StrEnum):
-    waiting_for_session = "waiting_for_session"
-    processing = "processing"
-    unavailable = "unavailable"
-    failed = "failed"
-    unknown = "unknown"
-
-
 class ReplayMissingResponse(BaseModel):
     detail: Annotated[str, Field(title="Detail")]
     session_id: Annotated[str | None, Field(title="Session Id")]
     status: Annotated[int, Field(title="Status")]
     error: Annotated[str, Field(title="Error")]
     message: Annotated[str, Field(title="Message")]
-    replay_status: Annotated[ReplayStatus, Field(title="Replay Status")]
+    replay_status: Annotated[
+        Literal["waiting_for_session", "processing", "unavailable", "failed", "unknown"],
+        Field(title="Replay Status"),
+    ]
     retryable: Annotated[bool, Field(title="Retryable")]
 
 
@@ -1684,11 +1570,6 @@ class RootModelAny(RootModel[Any]):
     root: Annotated[Any, Field(title="RootModel[Any]")]
 
 
-class Runtime(StrEnum):
-    standard = "standard"
-    extended = "extended"
-
-
 class RunFunctionRequest(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -1699,7 +1580,7 @@ class RunFunctionRequest(BaseModel):
         Field(description="The variables to run the function with", title="Variables"),
     ] = None
     runtime: Annotated[
-        Runtime | None,
+        Literal["standard", "extended"] | None,
         Field(
             description="Override the saved function runtime; omit to inherit its default",
             title="Runtime",
@@ -2070,9 +1951,9 @@ class SearchRequest(BaseModel):
 
 
 class SecretNamespace(StrEnum):
-    llm_provider = "llm_provider"
-    function_env = "function_env"
-    tailscale = "tailscale"
+    LLM_PROVIDER = "llm_provider"
+    FUNCTION_ENV = "function_env"
+    TAILSCALE = "tailscale"
 
 
 class SecretStoreRequest(BaseModel):
@@ -2214,30 +2095,6 @@ class SessionProfileSaveRequest(BaseModel):
     ] = None
 
 
-class Status13(StrEnum):
-    active = "active"
-    authenticating = "authenticating"
-    closed = "closed"
-    error = "error"
-    timed_out = "timed_out"
-
-
-class CloseReason(StrEnum):
-    manual = "manual"
-    idle_timeout = "idle_timeout"
-    max_duration = "max_duration"
-    error = "error"
-    unknown = "unknown"
-
-
-class BrowserType2(StrEnum):
-    chromium = "chromium"
-    chrome = "chrome"
-    firefox = "firefox"
-    chrome_nightly = "chrome-nightly"
-    chrome_turbo = "chrome-turbo"
-
-
 class SessionResponse(BaseModel):
     model_config = ConfigDict(
         extra="allow",
@@ -2267,9 +2124,12 @@ class SessionResponse(BaseModel):
     closed_at: Annotated[datetime | None, Field(description="Session closing time", title="Closed At")] = None
     last_accessed_at: Annotated[datetime, Field(description="Last access time", title="Last Accessed At")]
     duration: Annotated[str | None, Field(description="Session duration", title="Duration")] = None
-    status: Annotated[Status13, Field(title="Status")]
+    status: Annotated[
+        Literal["active", "authenticating", "closed", "error", "timed_out"],
+        Field(title="Status"),
+    ]
     close_reason: Annotated[
-        CloseReason | None,
+        Literal["manual", "idle_timeout", "max_duration", "error", "unknown"] | None,
         Field(
             description="Reason the session closed, if it is no longer active",
             title="Close Reason",
@@ -2293,7 +2153,10 @@ class SessionResponse(BaseModel):
             title="Proxies",
         ),
     ] = False
-    browser_type: Annotated[BrowserType2, Field(title="Browser Type")] = "chromium"
+    browser_type: Annotated[
+        Literal["chromium", "chrome", "firefox", "chrome-nightly", "chrome-turbo"],
+        Field(title="Browser Type"),
+    ] = "chromium"
     network_request_bytes: Annotated[
         int,
         Field(
@@ -2372,17 +2235,17 @@ class SmsReadAction(BaseModel):
 
 
 class SpaceCategory(StrEnum):
-    homepage = "homepage"
-    search_results = "search-results"
-    data_feed = "data-feed"
-    item = "item"
-    auth = "auth"
-    form = "form"
-    manage_cookies = "manage-cookies"
-    overlay = "overlay"
-    payment = "payment"
-    captcha = "captcha"
-    other = "other"
+    HOMEPAGE = "homepage"
+    SEARCH_RESULTS = "search-results"
+    DATA_FEED = "data-feed"
+    ITEM = "item"
+    AUTH = "auth"
+    FORM = "form"
+    MANAGE_COOKIES = "manage-cookies"
+    OVERLAY = "overlay"
+    PAYMENT = "payment"
+    CAPTCHA = "captcha"
+    OTHER = "other"
 
 
 class StructuredDataBaseModel(BaseModel):
@@ -2407,14 +2270,14 @@ class StructuredDataBaseModel(BaseModel):
 
 
 class SubscriptionType(StrEnum):
-    free = "free"
-    pro = "pro"
-    growth = "growth"
-    playground = "playground"
-    admin = "admin"
-    minoan = "minoan"
-    proofs = "proofs"
-    interview = "interview"
+    FREE = "free"
+    PRO = "pro"
+    GROWTH = "growth"
+    PLAYGROUND = "playground"
+    ADMIN = "admin"
+    MINOAN = "minoan"
+    PROOFS = "proofs"
+    INTERVIEW = "interview"
 
 
 class SwitchTabAction(BaseModel):
@@ -2440,16 +2303,11 @@ class TailnetProxy(BaseModel):
     exit_node: Annotated[str | None, Field(title="Exit Node")] = None
 
 
-class Status14(StrEnum):
-    updated = "updated"
-    stopped = "stopped"
-
-
 class UpdateFunctionRunResponse(BaseModel):
     function_id: Annotated[str, Field(description="The ID of the function", title="Function Id")]
     function_run_id: Annotated[str, Field(description="The ID of the function run", title="Function Run Id")]
     updated_at: Annotated[datetime, Field(title="Updated At")]
-    status: Annotated[Status14, Field(title="Status")] = "updated"
+    status: Annotated[Literal["updated", "stopped"], Field(title="Status")] = "updated"
     workflow_id: Annotated[str, Field(title="Workflow Id")]
     workflow_run_id: Annotated[str, Field(title="Workflow Run Id")]
 
@@ -2632,13 +2490,8 @@ class GetSessionScriptParametersQuery(BaseModel):
     ] = False
 
 
-class CloseReason1(StrEnum):
-    manual = "manual"
-    error = "error"
-
-
 class SessionStopParametersQuery(BaseModel):
-    close_reason: Annotated[CloseReason1, Field(title="Close Reason")] = "manual"
+    close_reason: Annotated[Literal["manual", "error"], Field(title="Close Reason")] = "manual"
 
 
 class SessionCookiesSetParametersQuery(BaseModel):
@@ -2800,13 +2653,8 @@ class FunctionRollbackParametersQuery(BaseModel):
     ] = True
 
 
-class PayloadMode(StrEnum):
-    inline = "inline"
-    references = "references"
-
-
 class FunctionRunGetMetadataParametersQuery(BaseModel):
-    payload_mode: Annotated[PayloadMode, Field(title="Payload Mode")] = "inline"
+    payload_mode: Annotated[Literal["inline", "references"], Field(title="Payload Mode")] = "inline"
 
 
 class ListFunctionRunsByFunctionIdParametersQuery(BaseModel):
@@ -2995,95 +2843,94 @@ class GetUsageParametersQuery(BaseModel):
     ] = None
 
 
-class Endpoint(StrEnum):
-    sessions_start = "sessions.start"
-    sessions_stop = "sessions.stop"
-    sessions_status = "sessions.status"
-    sessions_cookies_set = "sessions.cookies.set"
-    sessions_cookies_get = "sessions.cookies.get"
-    sessions_list = "sessions.list"
-    sessions_replay = "sessions.replay"
-    sessions_offset = "sessions.offset"
-    sessions_debug_info = "sessions.debug.info"
-    sessions_debug_info_tab = "sessions.debug.info.tab"
-    sessions_debug_recording_wss = "sessions.debug.recording.wss"
-    sessions_debug_log_wss = "sessions.debug.log.wss"
-    sessions_debug_tab_wss = "sessions.debug.tab.wss"
-    sessions_debug_browser_wss = "sessions.debug.browser.wss"
-    sessions_network_logs = "sessions.network.logs"
-    sessions_script = "sessions.script"
-    page_observe = "page.observe"
-    page_execute = "page.execute"
-    page_scrape = "page.scrape"
-    profiles_create = "profiles.create"
-    profiles_duplicate = "profiles.duplicate"
-    profiles_get = "profiles.get"
-    profiles_list = "profiles.list"
-    profiles_delete = "profiles.delete"
-    profiles_cookies_set = "profiles.cookies.set"
-    profiles_cookies_get = "profiles.cookies.get"
-    vaults_create = "vaults.create"
-    vaults_list = "vaults.list"
-    vaults_delete = "vaults.delete"
-    vaults_update = "vaults.update"
-    vaults_credentials_add = "vaults.credentials.add"
-    vaults_credentials_get = "vaults.credentials.get"
-    vaults_credentials_delete = "vaults.credentials.delete"
-    vaults_credentials_list = "vaults.credentials.list"
-    vaults_credit_card_set = "vaults.credit_card.set"
-    vaults_credit_card_get = "vaults.credit_card.get"
-    vaults_credit_card_delete = "vaults.credit_card.delete"
-    personas_create = "personas.create"
-    personas_list = "personas.list"
-    personas_delete = "personas.delete"
-    personas_emails = "personas.emails"
-    personas_sms = "personas.sms"
-    personas_number_create = "personas.number.create"
-    personas_get = "personas.get"
-    personas_update = "personas.update"
-    mailboxes_connect = "mailboxes.connect"
-    mailboxes_sync = "mailboxes.sync"
-    mailboxes_list = "mailboxes.list"
-    mailboxes_get = "mailboxes.get"
-    mailboxes_update = "mailboxes.update"
-    mailboxes_delete = "mailboxes.delete"
-    sessions_files_upload = "sessions.files.upload"
-    sessions_files_list = "sessions.files.list"
-    sessions_files_download = "sessions.files.download"
-    sessions_files_delete = "sessions.files.delete"
-    agents_start = "agents.start"
-    agents_stop = "agents.stop"
-    agents_status = "agents.status"
-    agents_list = "agents.list"
-    agents_replay = "agents.replay"
-    agents_debug_recording = "agents.debug.recording"
-    agents_save = "agents.save"
-    agents_repeat = "agents.repeat"
-    agents_script = "agents.script"
-    scrape = "scrape"
-    scrape_from_html = "scrape_from_html"
-    search = "search"
-    usage = "usage"
-    workflows_upload = "workflows.upload"
-    workflows_download = "workflows.download"
-    workflows_list = "workflows.list"
-    workflows_delete = "workflows.delete"
-    workflows_update = "workflows.update"
-    workflows_fork = "workflows.fork"
-    workflows_rollback = "workflows.rollback"
-    workflows_schedule_create = "workflows.schedule.create"
-    workflows_schedule_delete = "workflows.schedule.delete"
-    workflows_runs_create = "workflows.runs.create"
-    workflows_runs_start = "workflows.runs.start"
-    workflows_runs_get = "workflows.runs.get"
-    workflows_runs_list = "workflows.runs.list"
-    workflows_runs_update = "workflows.runs.update"
-    workflows_runs_stop = "workflows.runs.stop"
-
-
 class GetUsageLogsParametersQuery(BaseModel):
     endpoint: Annotated[
-        Endpoint | None,
+        Literal[
+            "sessions.start",
+            "sessions.stop",
+            "sessions.status",
+            "sessions.cookies.set",
+            "sessions.cookies.get",
+            "sessions.list",
+            "sessions.replay",
+            "sessions.offset",
+            "sessions.debug.info",
+            "sessions.debug.info.tab",
+            "sessions.debug.recording.wss",
+            "sessions.debug.log.wss",
+            "sessions.debug.tab.wss",
+            "sessions.debug.browser.wss",
+            "sessions.network.logs",
+            "sessions.script",
+            "page.observe",
+            "page.execute",
+            "page.scrape",
+            "profiles.create",
+            "profiles.duplicate",
+            "profiles.get",
+            "profiles.list",
+            "profiles.delete",
+            "profiles.cookies.set",
+            "profiles.cookies.get",
+            "vaults.create",
+            "vaults.list",
+            "vaults.delete",
+            "vaults.update",
+            "vaults.credentials.add",
+            "vaults.credentials.get",
+            "vaults.credentials.delete",
+            "vaults.credentials.list",
+            "vaults.credit_card.set",
+            "vaults.credit_card.get",
+            "vaults.credit_card.delete",
+            "personas.create",
+            "personas.list",
+            "personas.delete",
+            "personas.emails",
+            "personas.sms",
+            "personas.number.create",
+            "personas.get",
+            "personas.update",
+            "mailboxes.connect",
+            "mailboxes.sync",
+            "mailboxes.list",
+            "mailboxes.get",
+            "mailboxes.update",
+            "mailboxes.delete",
+            "sessions.files.upload",
+            "sessions.files.list",
+            "sessions.files.download",
+            "sessions.files.delete",
+            "agents.start",
+            "agents.stop",
+            "agents.status",
+            "agents.list",
+            "agents.replay",
+            "agents.debug.recording",
+            "agents.save",
+            "agents.repeat",
+            "agents.script",
+            "scrape",
+            "scrape_from_html",
+            "search",
+            "usage",
+            "workflows.upload",
+            "workflows.download",
+            "workflows.list",
+            "workflows.delete",
+            "workflows.update",
+            "workflows.fork",
+            "workflows.rollback",
+            "workflows.schedule.create",
+            "workflows.schedule.delete",
+            "workflows.runs.create",
+            "workflows.runs.start",
+            "workflows.runs.get",
+            "workflows.runs.list",
+            "workflows.runs.update",
+            "workflows.runs.stop",
+        ]
+        | None,
         Field(description="The endpoint to filter logs by", title="Endpoint"),
     ] = None
     page: Annotated[int, Field(description="Page number", ge=1, title="Page")] = 1
@@ -3479,7 +3326,7 @@ class FillActionOutput(BaseModel):
 
 
 class FunctionListItemResponse(BaseModel):
-    default_runtime: Annotated[DefaultRuntime, Field(title="Default Runtime")] = "standard"
+    default_runtime: Annotated[Literal["standard", "extended"], Field(title="Default Runtime")] = "standard"
     function_id: Annotated[str, Field(description="The ID of the function", title="Function Id")]
     variables: Annotated[
         list[ParameterInfo] | None,
@@ -3542,7 +3389,7 @@ class FunctionListItemResponse(BaseModel):
 
 
 class FunctionResponse(BaseModel):
-    default_runtime: Annotated[DefaultRuntime, Field(title="Default Runtime")] = "standard"
+    default_runtime: Annotated[Literal["standard", "extended"], Field(title="Default Runtime")] = "standard"
     function_id: Annotated[str, Field(description="The ID of the function", title="Function Id")]
     variables: Annotated[
         list[ParameterInfo] | None,
@@ -3630,7 +3477,7 @@ class FunctionResponse(BaseModel):
         ),
     ] = None
     schedule_state: Annotated[
-        ScheduleState | None,
+        Literal["enabled", "paused"] | None,
         Field(
             description="'enabled' while the schedule fires, 'paused' once the backend disabled it after a deterministic failure (exhausted credit, or an inactive function), null when there is no schedule.",
             title="Schedule State",
@@ -3653,7 +3500,10 @@ class FunctionRunUpdateRequest(BaseModel):
         Field(description="The variables of the workflow run", title="Variables"),
     ] = None
     result: Annotated[Any, Field(description="The result of the workflow run", title="Result")] = None
-    status: Annotated[Status7, Field(description="The status of the workflow run", title="Status")]
+    status: Annotated[
+        Literal["closed", "active", "failed"],
+        Field(description="The status of the workflow run", title="Status"),
+    ]
     payloads: Annotated[
         dict[Literal["result", "logs", "variables"], RunPayloadReference] | None,
         Field(title="Payloads"),
@@ -3663,7 +3513,7 @@ class FunctionRunUpdateRequest(BaseModel):
 
 class FunctionRuntimeHealthResponse(BaseModel):
     status: Annotated[
-        Status9,
+        Literal["ok", "degraded", "unreachable"],
         Field(
             description="'ok' when the runtime reported itself, 'degraded' when it is alive but too old to describe itself (its image predates this endpoint), 'unreachable' when it did not answer.",
             title="Status",
@@ -3726,7 +3576,7 @@ class FunctionRuntimeHealthResponse(BaseModel):
 
 class FunctionWithLinkResponse(BaseModel):
     url: Annotated[str, Field(description="URL to download file from", title="Url")]
-    default_runtime: Annotated[DefaultRuntime, Field(title="Default Runtime")] = "standard"
+    default_runtime: Annotated[Literal["standard", "extended"], Field(title="Default Runtime")] = "standard"
     function_id: Annotated[str, Field(description="The ID of the function", title="Function Id")]
     variables: Annotated[
         list[ParameterInfo] | None,
@@ -3814,7 +3664,7 @@ class FunctionWithLinkResponse(BaseModel):
         ),
     ] = None
     schedule_state: Annotated[
-        ScheduleState | None,
+        Literal["enabled", "paused"] | None,
         Field(
             description="'enabled' while the schedule fires, 'paused' once the backend disabled it after a deterministic failure (exhausted credit, or an inactive function), null when there is no schedule.",
             title="Schedule State",
@@ -3828,7 +3678,7 @@ class GetFunctionRunResponse(BaseModel):
     function_run_id: Annotated[str, Field(description="The ID of the function run", title="Function Run Id")]
     created_at: Annotated[datetime, Field(title="Created At")]
     updated_at: Annotated[datetime, Field(title="Updated At")]
-    status: Annotated[Status10, Field(title="Status")]
+    status: Annotated[Literal["closed", "active", "failed"], Field(title="Status")]
     session_id: Annotated[str | None, Field(description="The ID of the session", title="Session Id")] = None
     logs: Annotated[
         list[str] | None,
@@ -4270,7 +4120,7 @@ class ApiSessionStartRequest(BaseModel):
         ),
     ] = True
     browser_type: Annotated[
-        BrowserType,
+        Literal["chromium", "chrome", "chrome-nightly", "chrome-turbo"],
         Field(
             description="The browser type to use. Supported values are chromium and chrome. chrome-nightly and chrome-turbo are legacy aliases for chrome.",
             title="Browser Type",
@@ -4299,7 +4149,7 @@ class ApiSessionStartRequest(BaseModel):
         ),
     ] = None
     aspect_ratio: Annotated[
-        AspectRatio | None,
+        Literal["5:4", "16:9"] | None,
         Field(
             description="Viewport shape preset. When set, the backend fits the largest rectangle of this aspect ratio inside the sampled available screen area. Cannot be combined with explicit viewport_width/viewport_height.",
             title="Aspect Ratio",
@@ -4313,7 +4163,7 @@ class ApiSessionStartRequest(BaseModel):
         ),
     ] = None
     screenshot_type: Annotated[
-        ScreenshotType,
+        Literal["raw", "full", "last_action"],
         Field(
             description="The type of screenshot to use for the session.",
             title="Screenshot Type",
@@ -4415,7 +4265,7 @@ class GlobalScrapeRequest(BaseModel):
         ),
     ] = True
     browser_type: Annotated[
-        BrowserType,
+        Literal["chromium", "chrome", "chrome-nightly", "chrome-turbo"],
         Field(
             description="The browser type to use. Supported values are chromium and chrome. chrome-nightly and chrome-turbo are legacy aliases for chrome.",
             title="Browser Type",
@@ -4444,7 +4294,7 @@ class GlobalScrapeRequest(BaseModel):
         ),
     ] = None
     aspect_ratio: Annotated[
-        AspectRatio | None,
+        Literal["5:4", "16:9"] | None,
         Field(
             description="Viewport shape preset. When set, the backend fits the largest rectangle of this aspect ratio inside the sampled available screen area. Cannot be combined with explicit viewport_width/viewport_height.",
             title="Aspect Ratio",
@@ -4458,7 +4308,7 @@ class GlobalScrapeRequest(BaseModel):
         ),
     ] = None
     screenshot_type: Annotated[
-        ScreenshotType,
+        Literal["raw", "full", "last_action"],
         Field(
             description="The type of screenshot to use for the session.",
             title="Screenshot Type",

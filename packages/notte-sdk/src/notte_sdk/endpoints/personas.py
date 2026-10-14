@@ -10,27 +10,24 @@ from notte_core.common.logging import logger
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault
-from notte_core.types import (
+from typing_extensions import final, override
+
+from notte_sdk._generated.resources import PersonasOperations
+from notte_sdk._requests import wire_request
+from notte_sdk.endpoints.base import NotteEndpoint
+from notte_sdk.endpoints.vaults import NotteVault
+from notte_sdk.types import (
     CreatePhoneNumberRequest,
     CreatePhoneNumberRequestDict,
     CreatePhoneNumberResponse,
-    DeletePersonaResponse,
     DeletePhoneNumberResponse,
     EmailResponse,
-    MessageReadRequest,
     MessageReadRequestDict,
     PersonaCreateRequest,
     PersonaCreateRequestDict,
-    PersonaListRequest,
-    PersonaListRequestDict,
     PersonaResponse,
     SMSResponse,
 )
-from typing_extensions import final, override
-
-from notte_sdk._generated import endpoints as api
-from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.endpoints.vaults import NotteVault
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
@@ -42,7 +39,7 @@ def _phone_number_path(persona_id: str) -> str:
 
 
 @final
-class PersonasClient(BaseClient):
+class PersonasClient(PersonasOperations):
     """
     Client for the Notte API.
 
@@ -50,56 +47,7 @@ class PersonasClient(BaseClient):
     If you need to handle multiple sessions, you need to create a new client for each session.
     """
 
-    def __init__(
-        self,
-        root_client: "NotteClient",
-        api_key: str | None = None,
-        server_url: str | None = None,
-        verbose: bool = False,
-    ):
-        """
-        Initialize a PersonasClient instance.
-
-        Initializes the client with an optional API key for persona management.
-        """
-        super().__init__(
-            root_client=root_client,
-            base_endpoint_path="personas",
-            server_url=server_url,
-            api_key=api_key,
-            verbose=verbose,
-        )
-
-    @track_usage("cloud.personas.create")
-    def create(self, **data: Unpack[PersonaCreateRequestDict]) -> PersonaResponse:
-        """
-        Create persona
-
-        Args:
-
-        Returns:
-            PersonaCreateResponse: The persona created
-        """
-        params = PersonaCreateRequest.model_validate(data)
-        response = self.request(api.persona_create(params))
-        return response
-
-    @track_usage("cloud.personas.get")
-    def get(self, persona_id: str) -> PersonaResponse:
-        """
-        Get persona
-        """
-        response = self.request(api.persona_get(persona_id))
-        return response
-
-    @track_usage("cloud.personas.delete")
-    def delete(self, persona_id: str) -> DeletePersonaResponse:
-        """
-        Delete persona
-        """
-        response = self.request(api.persona_delete(persona_id))
-        return response
-
+    # Legacy: phone-number routes are absent from the committed OpenAPI schema.
     @track_usage("cloud.personas.create_number")
     def create_number(self, persona_id: str, **data: Unpack[CreatePhoneNumberRequestDict]) -> CreatePhoneNumberResponse:
         """
@@ -124,41 +72,6 @@ class PersonasClient(BaseClient):
             path=_phone_number_path(persona_id), response=DeletePhoneNumberResponse, method="DELETE"
         )
         return self.request(endpoint)
-
-    @track_usage("cloud.personas.emails.list")
-    def list_emails(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
-        """
-        Reads recent emails sent to the persona
-
-        Args:
-            **data: Keyword arguments representing details for querying emails.
-
-        Returns:
-            Sequence[EmailResponse]: The list of emails found
-        """
-        request = MessageReadRequest.model_validate(data)
-        return self.request_list(api.persona_emails_list(persona_id, params=request))
-
-    @track_usage("cloud.personas.sms.list")
-    def list_sms(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
-        """
-        Reads recent sms messages sent to the persona
-
-        Args:
-            **data: Keyword arguments representing details for querying sms messages.
-
-        Returns:
-            Sequence[SMSResponse]: The list of sms messages found
-        """
-        request = MessageReadRequest.model_validate(data)
-        return self.request_list(api.persona_sms_list(persona_id, params=request))
-
-    def list(self, **data: Unpack[PersonaListRequestDict]) -> Sequence[PersonaResponse]:
-        """
-        List personas
-        """
-        request = PersonaListRequest.model_validate(data)
-        return self.request_list(api.list_personas(params=request))
 
 
 class BasePersona(ABC):
@@ -303,7 +216,7 @@ class NottePersona(SyncResource, BasePersona):
     ) -> None:
         if _client is None:
             raise ValueError("NotteClient is required")
-        self._init_request = PersonaCreateRequest.model_validate(data)
+        self._init_request = wire_request(PersonaCreateRequest, data)
         self.response: PersonaResponse | None = None
         self.client = _client.personas
         self.vault_client = _client.vaults
@@ -402,7 +315,7 @@ class NottePersona(SyncResource, BasePersona):
 
         Use the `limit` and/or `timedelta` parameters to limit the number of emails returned.
         """
-        return self.client.list_emails(self.persona_id, **data)
+        return self.client.emails_list(self.persona_id, **data)
 
     @override
     async def asms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
@@ -428,7 +341,7 @@ class NottePersona(SyncResource, BasePersona):
 
         Use the `limit` and/or `timedelta` parameters to limit the number of sms returned.
         """
-        return self.client.list_sms(self.persona_id, **data)
+        return self.client.sms_list(self.persona_id, **data)
 
     def create_number(self, **data: Unpack[CreatePhoneNumberRequestDict]) -> CreatePhoneNumberResponse:
         """

@@ -4,7 +4,7 @@ import re
 from abc import ABC
 from collections.abc import Sequence
 from json import JSONDecodeError
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Self, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Self, TypeVar, cast
 from urllib.parse import quote, urljoin
 
 import requests
@@ -396,8 +396,13 @@ class BaseClient(ABC):
         return f"{self.base_endpoint_path}/{endpoint.path}"
 
     def _request(
-        self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: float | None = None
-    ) -> dict[str, Any]:
+        self,
+        endpoint: NotteEndpoint[TResponse],
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
+        *,
+        check_response_detail: bool = True,
+    ) -> Any:
         """
         Executes an HTTP request for the given API endpoint.
 
@@ -491,9 +496,9 @@ class BaseClient(ABC):
         if response.status_code == 204 or getattr(response, "content", None) == b"":
             return {}
         response_dict: Any = response.json()
-        if "detail" in response_dict:
+        if check_response_detail and isinstance(response_dict, dict) and "detail" in response_dict:
             raise NotteAPIError(path=self._error_path(endpoint), response=response)
-        return response_dict
+        return cast(Any, response_dict)
 
     def request(
         self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: float | None = None
@@ -521,7 +526,7 @@ class BaseClient(ABC):
             raise NotteAPIError(path=self._error_path(endpoint), response=response)
 
         try:
-            return endpoint.response.model_validate(response)
+            return endpoint.response.model_validate(response, context={"sdk_response": True})
         except ValidationError as e:
             # Check if we should suggest an upgrade
             should_upgrade, cached_version = self._should_suggest_upgrade()
@@ -560,7 +565,7 @@ class BaseClient(ABC):
                 raise NotteAPIError(path=self._error_path(endpoint), response=response_list)
 
         try:
-            return [endpoint.response.model_validate(item) for item in response_list]  # pyright: ignore[reportUnknownVariableType]
+            return [endpoint.response.model_validate(item, context={"sdk_response": True}) for item in response_list]  # pyright: ignore[reportUnknownVariableType]
         except ValidationError as e:
             # Check if we should suggest an upgrade
             should_upgrade, cached_version = self._should_suggest_upgrade()
@@ -588,8 +593,8 @@ class BaseClient(ABC):
 
         try:
             response_dict: Any = response.json()
-            if "detail" in response_dict:
-                raise ValueError(response_dict["detail"])
+            if isinstance(response_dict, dict) and "detail" in response_dict:
+                raise ValueError(cast(dict[str, Any], response_dict)["detail"])
             raise ValueError(f"Relpay content should not be a dict, got {response_dict}")
         except json.JSONDecodeError:
             pass

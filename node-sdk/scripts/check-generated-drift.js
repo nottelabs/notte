@@ -164,6 +164,7 @@ function main() {
       path.resolve(SDK_DIR, '../openapi/openapi.json'),
       path.join(tempRoot, 'openapi/openapi.json'),
     );
+    copyFile(path.resolve(SDK_DIR, '../openapi/resources.json'), path.join(tempRoot, 'openapi/resources.json'));
     // Generate into empty output paths so removed/stale files cannot survive the check.
     for (const generatedPath of GENERATED_PATHS) {
       fs.rmSync(resolveInside(tempSdkDir, generatedPath), { recursive: true, force: true });

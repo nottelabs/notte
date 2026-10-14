@@ -116,10 +116,12 @@ describe('Session Unit Tests', () => {
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('`headless: true` is deprecated'));
     });
 
-    it('should reject deprecated headless false when starting with a migration error', async () => {
+    it('sends deprecated headless false and surfaces the API 422', async () => {
+      const error = new NotteAPIError('/sessions/start', 422, { detail: 'unsupported headless' });
+      vi.mocked(sessionStart).mockRejectedValueOnce(error);
       const session = new Session(mockClient, { headless: false });
-      await expect(session.start()).rejects.toThrow('Remote `headless: false` is no longer supported.');
-      expect(sessionStart).not.toHaveBeenCalled();
+      await expect(session.start()).rejects.toBe(error);
+      expect(sessionStart).toHaveBeenCalledWith(expect.objectContaining({ body: expect.objectContaining({ headless: false }) }));
     });
 
     it('does not send local options to the API', async () => {

@@ -184,15 +184,7 @@ def _stop_session(mock_delete: MagicMock, client: NotteClient, session_id: str) 
 @patch("notte_sdk._transport._RequestSession.post")
 @pytest.mark.order(1)
 def test_start_session(mock_post: MagicMock, client: NotteClient, session_id: str, headers: dict[str, str]) -> None:
-    session_data: SessionStartRequestDict = {
-        "solve_captchas": True,
-        "idle_timeout_minutes": DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES,
-        "max_duration_minutes": DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
-        "proxies": True,
-        "browser_type": "chromium",
-        "viewport_width": 1920,
-        "viewport_height": 1080,
-    }
+    session_data: SessionStartRequestDict = {"viewport_width": 1920, "viewport_height": 1080}
     response = _start_session(mock_post=mock_post, client=client, session_id=session_id)
     assert response.session_id == session_id
     assert response.error is None
@@ -200,7 +192,7 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, session_id: st
     mock_post.assert_called_once_with(
         url=f"{client.sessions.server_url}/sessions/start",
         headers=headers,
-        data=SessionStartRequest.model_validate(session_data).model_dump_json(exclude_none=True),
+        data=SessionStartRequest.from_data(session_data).model_dump_json(exclude_none=True),
         params=None,
         timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS,
         files=None,
@@ -219,7 +211,7 @@ def test_close_session(mock_delete: MagicMock, client: NotteClient, session_id: 
     mock_delete.assert_called_once_with(
         url=f"{client.sessions.server_url}/sessions/{session_id}/stop",
         headers=headers_copy,
-        params={"close_reason": "manual"},
+        params={},
         timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS,
     )
 
@@ -489,9 +481,7 @@ def test_proxies_default_to_enabled_but_can_be_disabled() -> None:
     assert LocalSessionStartRequest().proxies is False
 
 
-def test_managed_auth_ids_are_serialized_and_must_be_unique() -> None:
-    from pydantic import ValidationError
-
+def test_managed_auth_ids_are_serialized_without_local_validation() -> None:
     assert SessionStartRequest().auth_ids == []
 
     auth_ids = [
@@ -506,11 +496,9 @@ def test_managed_auth_ids_are_serialized_and_must_be_unique() -> None:
     ten_auth_ids = [f"managed-auth-connection-{index}" for index in range(10)]
     assert SessionStartRequest(auth_ids=ten_auth_ids).auth_ids == ten_auth_ids
 
-    with pytest.raises(ValidationError):
-        SessionStartRequest(auth_ids=[*ten_auth_ids, "managed-auth-connection-10"])
-
-    with pytest.raises(ValidationError, match="auth_ids must not contain duplicates"):
-        SessionStartRequest(auth_ids=[auth_ids[0], auth_ids[0]])
+    # Duplicate/max-count validation now happens on the API request path.
+    for invalid in [auth_ids * 2, [*ten_auth_ids, "managed-auth-connection-10"]]:
+        assert SessionStartRequest.from_data({"auth_ids": invalid}).auth_ids == invalid
 
 
 @patch("notte_sdk._transport._RequestSession.post")
@@ -579,15 +567,11 @@ def test_max_duration_validation() -> None:
     assert request.max_duration_minutes == 24 * 60
 
 
-def test_idle_timeout_validation() -> None:
-    """Test idle_timeout_minutes validation (must be > 0)."""
-    from pydantic import ValidationError
+@pytest.mark.parametrize("value", [0, -5])
+def test_idle_timeout_validation(monkeypatch, value) -> None:
+    from tests.sdk.test_types import assert_start_api_validation
 
-    with pytest.raises(ValidationError):
-        _ = SessionStartRequest(idle_timeout_minutes=0)
-
-    with pytest.raises(ValidationError):
-        _ = SessionStartRequest(idle_timeout_minutes=-5)
+    assert_start_api_validation(monkeypatch, {"idle_timeout_minutes": value})
 
 
 def test_session_start_with_new_timeout_params(client: NotteClient, session_id: str) -> None:

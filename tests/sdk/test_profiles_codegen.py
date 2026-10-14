@@ -44,9 +44,9 @@ def test_profile_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyPa
         ("POST", "/profiles/create", None),
         ("POST", "/profiles/create", None),
         ("GET", "/profiles/a%2Fb%20%3F%23%25%C3%A9", None),
-        ("GET", "/profiles", {"page": 1, "page_size": 20}),
+        ("GET", "/profiles", {"page_size": 20}),
         ("GET", "/profiles", {"page": 2, "page_size": 3, "name": "p"}),
-        ("GET", "/profiles", {"page": 1, "page_size": 20}),
+        ("GET", "/profiles", {"page_size": 20}),
         ("DELETE", "/profiles/a%2Fb", None),
         ("DELETE", "/profiles/a%2Fb", None),
     ]
@@ -99,12 +99,6 @@ def test_request_compatibility(client: NotteClient, monkeypatch: pytest.MonkeyPa
     session = fake(monkeypatch, PROFILE)
     assert ProfileCreateRequest.model_validate({"name": None}).model_dump(exclude_none=True) == {}
     assert ProfileListRequest().model_dump(exclude_none=True) == {"page": 1, "page_size": 20}
-    for cls in (ProfileCreateRequest, ProfileListRequest):
-        with pytest.raises(ValidationError):
-            _ = cls.model_validate({"typo": True})
-    for field in ("only_active", "only_current_token"):
-        with pytest.raises(ValidationError):
-            _ = ProfileListRequest.model_validate({field: True})
     # The facade historically leaves pagination bounds to the server.
     session.payload = {"items": []}
     _ = client.profiles.list(page=0, page_size=101)
@@ -118,3 +112,27 @@ def test_incomplete_delete_response_is_not_success(
     _ = fake(monkeypatch, payload)
     with pytest.raises(ValidationError):
         _ = client.profiles.delete("profile-1")
+
+
+@pytest.mark.parametrize(
+    "method,data",
+    [
+        ("create", {"name": 42}),
+        ("create", {"typo": True}),
+        ("list", {"only_active": True}),
+        ("list", {"only_current_token": True}),
+        ("list", {"typo": True}),
+    ],
+)
+def test_profile_invalid_inputs_reach_api(
+    client: NotteClient, monkeypatch: pytest.MonkeyPatch, method: str, data: dict[str, Any]
+) -> None:
+    import json
+
+    capture = fake(monkeypatch, {"detail": "invalid profile input"}, status_code=422)
+    with pytest.raises(NotteAPIError) as error:
+        getattr(client.profiles, method)(**data)
+    assert error.value.status_code == 422
+    assert len(capture.calls) == 1
+    sent = json.loads(capture.calls[0].data) if method == "create" else capture.calls[0].params
+    assert all(sent[key] == value for key, value in data.items())

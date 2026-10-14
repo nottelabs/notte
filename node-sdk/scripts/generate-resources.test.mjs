@@ -2,7 +2,16 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
 import ts from 'typescript';
-import { generateResources } from './generate-resources.mjs';
+import { generateResources as generateMappedResources, checkCoverage } from './generate-resources.mjs';
+
+const naming = JSON.parse(fs.readFileSync(new URL('../../openapi/resources.json', import.meta.url), 'utf8'));
+const registry = new Map(Object.entries(naming).map(([id, entry]) => [id.replace(/^_+/, '').replace(/_([a-z])/g, (_, c) => c.toUpperCase()), entry]));
+registry.set('sessionExample', { resource: 'sessions', method: 'example' });
+registry.set('sessionList', { resource: 'sessions', method: 'list' });
+const generateResources = (sdk, types) => generateMappedResources(sdk, types, registry);
+test('rejects spec operations without an explicit mapping or exclusion', () => {
+  assert.throws(() => checkCoverage({ paths: { '/new': { get: { operationId: 'unknown' } } } }), /Unmapped operation: unknown/);
+});
 
 const sdk = name => `export const ${name} = (options: Options<ExampleData, true>) => client.get(options);`;
 const data = fields => `export type ExampleData = { ${fields} };`;
@@ -64,6 +73,20 @@ test('optional headers remain optional and authentication-only methods keep thei
 
 test('rejects method collisions', () => {
   assert.throws(() => generateResources(`${sdk('sessionList')}\n${sdk('listSessions')}`, data(`url: '/sessions';`)), /collision/);
+});
+
+test('rejects aliases that would replace another method', () => {
+  const generate = (entries, names) => generateMappedResources(names.map(sdk).join('\n'), data(`url: '/sessions';`), new Map(entries));
+  // An alias targeting a method another operation already emitted.
+  assert.throws(() => generate([
+    ['sessionList', { resource: 'sessions', method: 'list' }],
+    ['sessionExample', { resource: 'sessions', method: 'example', aliases: [{ resource: 'sessions', method: 'list' }] }],
+  ], ['sessionList', 'sessionExample']), /collision: sessions\.list/);
+  // Two aliases with the same target.
+  assert.throws(() => generate([
+    ['sessionList', { resource: 'sessions', method: 'list', aliases: [{ resource: 'sessions', method: 'all' }] }],
+    ['sessionExample', { resource: 'sessions', method: 'example', aliases: [{ resource: 'sessions', method: 'all' }] }],
+  ], ['sessionList', 'sessionExample']), /collision: sessions\.all/);
 });
 
 test('rejects path names that would shadow the bound client', () => {

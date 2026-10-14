@@ -1,6 +1,11 @@
 # Generated endpoints for the Python SDK
 
-Status: prototype (branch `v2-sdk-generated-endpoints`), 2026-10-13. Builds on
+Status: historical prototype, superseded by [sdk-codegen.md](sdk-codegen.md).
+The resource stack removed the transitional core-bound resource factories described below.
+Only shared page-operation bindings and health remain in `endpoints.py`; resource operations,
+clients and types are generated separately. The remainder records the original prototype.
+
+Originally implemented 2026-10-13. Builds on
 [openapi-contract.md](openapi-contract.md).
 
 ## Summary
@@ -32,7 +37,7 @@ The hand-written clients keep their public methods and call the factories:
 ```python
 from notte_sdk._generated import endpoints as api
 
-def list_emails(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
+def emails_list(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
     """Reads recent emails sent to the persona [...]"""
     request = MessageReadRequest.model_validate(data)
     return self.request_list(api.persona_emails_list(persona_id, params=request))

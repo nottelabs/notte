@@ -79,7 +79,7 @@ remain spec-owned; high-level agent APIs and their tests are no longer included.
 | ✅  | 5.4 | `list()` | `listFunctions` unwrapped. | `client.functions.list(...)` | P1 | |
 | ❌  | 5.5 | `stopRun()` | `functionRunStop` unwrapped. Runs cannot be cancelled through the wrapper. | `NotteFunction.stop_run(run_id)` | P1 | |
 | ❌  | 5.6 | `fork()` | `functionFork` unwrapped. | `NotteFunction.fork()` | P2 | |
-| ❌  | 5.7 | `updateRun()` | `functionRunUpdateMetadata` unwrapped. | `client.functions.update_run(function_id, run_id, ...)` | P2 | |
+| ❌  | 5.7 | `updateRun()` | `functionRunUpdateMetadata` unwrapped. | `client.functions.run_update_metadata(function_id, run_id, ...)` | P2 | |
 | ❌  | 5.8 | `getCurl()` | Not present. | `NotteFunction.get_curl(**variables)` | P2 | |
 | ❌  | 5.9 | `replay()` on function | Not present. | `RemoteWorkflow.replay()` | P3 | |
 | ❌  | 5.10 | Local execution | Not present. | `run(local=True)` via `SecureScriptRunner` + `LogCapture` | P3 | |

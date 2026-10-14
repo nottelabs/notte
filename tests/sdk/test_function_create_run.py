@@ -14,8 +14,8 @@ def test_create_run_does_not_execute_or_fetch_function() -> None:
     )
     with (
         patch.object(client.functions, "create_run", return_value=created) as create,
-        patch.object(client.functions, "get") as get,
-        patch.object(client.functions, "run") as run,
+        patch.object(client.functions, "download_url") as get,
+        patch.object(client.functions, "run_start") as run,
     ):
         response = function.create_run()
 
@@ -37,8 +37,8 @@ def test_created_run_can_be_executed_without_creating_another() -> None:
     )
     with (
         patch.object(client.functions, "create_run", return_value=created) as create,
-        patch.object(client.functions, "get") as get,
-        patch.object(client.functions, "run", return_value=completed) as run,
+        patch.object(client.functions, "download_url") as get,
+        patch.object(client.functions, "run_start", return_value=completed) as run,
     ):
         get.return_value.function_id = "function-123"
         response = function.create_run()

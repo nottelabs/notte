@@ -1,4 +1,4 @@
-import { pollAuth, validateAuthRetry, ManagedAuthError, type AuthWaitOptions, type AuthSessionResponse as SessionResponse } from '@/managed-auth';
+import { pollAuth, ManagedAuthError, type AuthWaitOptions, type AuthSessionResponse as SessionResponse } from '@/managed-auth';
 import { existsSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -199,11 +199,6 @@ export class Session {
    * await session.start();
    */
   async start(options: SessionStartOptions = {}): Promise<void> {
-    if (this.legacyHeadless === false) {
-      throw new Error(
-        'Remote `headless: false` is no longer supported. `headless: true` sessions still include session replays and access to the live viewer.'
-      );
-    }
     if (this.legacyHeadless === true) {
       console.warn('`headless: true` is deprecated and ignored; remote sessions always use the supported browser launch mode.');
       this.legacyHeadless = undefined;
@@ -213,11 +208,12 @@ export class Session {
     }
 
     options.signal?.throwIfAborted();
-    validateAuthRetry(this.options.auth_retry ?? 0);
     const { auth_retry, wait_for_authentication, ...request } = this.options;
     const body = {
       ...request,
-      ...(request.auth_ids?.length ? { auth_retry: auth_retry ?? 0, wait_for_authentication: false } : {}),
+      ...(this.legacyHeadless !== undefined ? { headless: this.legacyHeadless } : {}),
+      ...(auth_retry !== undefined ? { auth_retry } : {}),
+      ...(request.auth_ids?.length ? { wait_for_authentication: false } : {}),
     };
     const shouldWait = options.wait_for_authentication ?? wait_for_authentication ?? true;
     let tries = SESSION_START_TRIES;

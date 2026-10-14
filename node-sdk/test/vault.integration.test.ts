@@ -73,7 +73,7 @@ describe('Vault Integration Tests', () => {
 
 			createdVaultIds.push(newVault.vaultId);
 
-			// Verify credentials were added; the SDK and the API both normalise URLs to the root domain.
+			// Verify credentials were added; the API normalises the unchanged input URL to its root domain.
 			const credentials = await newVault.listCredentials();
 			expect(credentials.length).toBeGreaterThan(0);
 			expect(credentials.some(c => c.url === 'github.com')).toBe(true);

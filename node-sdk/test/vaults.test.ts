@@ -156,14 +156,14 @@ describe('NotteVault initialization', () => {
 });
 
 describe('NotteVault credentials', () => {
-  it('adds credentials with the root domain as URL', async () => {
+  it('sends the supplied credential URL verbatim', async () => {
     const vault = new NotteVault(client);
     await vault.addCredentials('https://github.com/login', { email: 'me@example.org', password: 'pw' }); // pragma: allowlist secret
 
     expect(mocks.vaultCredentialsAdd).toHaveBeenCalledWith(
       expect.objectContaining({
         path: { vault_id: 'owned-vault-id' },
-        body: { url: 'github.com', credentials: { email: 'me@example.org', password: 'pw' } }, // pragma: allowlist secret
+        body: { url: 'https://github.com/login', credentials: { email: 'me@example.org', password: 'pw' } }, // pragma: allowlist secret
       }),
     );
   });
@@ -173,14 +173,17 @@ describe('NotteVault credentials', () => {
     ['a one-time code as MFA secret', 'https://github.com/', { email: 'me@example.org', password: 'pw', mfa_secret: '999777' }], // pragma: allowlist secret
     ['both username and email', 'https://github.com/', { email: 'me@example.org', username: 'me', password: 'pw' }], // pragma: allowlist secret
     ['neither username nor email', 'https://github.com/', { password: 'pw' }], // pragma: allowlist secret
-  ])('rejects %s before touching the API', async (_label, url, credentials) => {
+  ])('sends %s to the API and surfaces its typed 422', async (_label, url, credentials) => {
     const vault = new NotteVault(client);
-    await expect(vault.addCredentials(url, credentials)).rejects.toBeInstanceOf(InvalidRequestError);
-    expect(mocks.vaultCreate).not.toHaveBeenCalled();
-    expect(mocks.vaultCredentialsAdd).not.toHaveBeenCalled();
+    const error = new NotteAPIError('/vaults/owned-vault-id/credentials', 422, { detail: 'invalid credentials' });
+    mocks.vaultCredentialsAdd.mockRejectedValue(error);
+    await expect(vault.addCredentials(url, credentials)).rejects.toBe(error);
+    expect(mocks.vaultCredentialsAdd).toHaveBeenCalledWith(expect.objectContaining({
+      body: { url, credentials }, throwOnError: true,
+    }));
   });
 
-  it('returns credentials and queries by root domain', async () => {
+  it('returns credentials and queries by the supplied URL', async () => {
     mocks.vaultCredentialsGet.mockResolvedValue({ data: { credentials: { email: 'me@example.org', password: 'pw' } } }); // pragma: allowlist secret
     const vault = new NotteVault(client, { vault_id: 'existing-vault' });
 
@@ -189,7 +192,7 @@ describe('NotteVault credentials', () => {
       password: 'pw', // pragma: allowlist secret
     });
     expect(mocks.vaultCredentialsGet).toHaveBeenCalledWith(
-      expect.objectContaining({ path: { vault_id: 'existing-vault' }, query: { url: 'github.com' } }),
+      expect.objectContaining({ path: { vault_id: 'existing-vault' }, query: { url: 'https://github.com/login' } }),
     );
   });
 
@@ -202,11 +205,11 @@ describe('NotteVault credentials', () => {
     await expect(failure).rejects.toMatchObject({ statusCode: 404 });
   });
 
-  it('deletes credentials by root domain', async () => {
+  it('deletes credentials using the supplied URL', async () => {
     const vault = new NotteVault(client);
     await vault.deleteCredentials('https://www.gmail.com/');
     expect(mocks.vaultCredentialsDelete).toHaveBeenCalledWith(
-      expect.objectContaining({ path: { vault_id: 'owned-vault-id' }, query: { url: 'gmail.com' } }),
+      expect.objectContaining({ path: { vault_id: 'owned-vault-id' }, query: { url: 'https://www.gmail.com/' } }),
     );
   });
 
@@ -259,7 +262,7 @@ describe('NotteVault addCredentialsFromEnv', () => {
     expect(mocks.vaultCredentialsAdd).toHaveBeenCalledWith(
       expect.objectContaining({
         body: {
-          url: 'peeple.com',
+          url: 'https://test.peeple.com/ok',
           credentials: { email: 'xyz@notte.cc', password: 'xyz', mfa_secret: 'JBSWY3DPEHPK3PXP' },
         },
       }),
@@ -274,7 +277,7 @@ describe('NotteVault addCredentialsFromEnv', () => {
     await vault.addCredentialsFromEnv('https://test.com');
 
     expect(mocks.vaultCredentialsAdd.mock.calls[0]![0].body).toEqual({
-      url: 'test.com',
+      url: 'https://test.com',
       credentials: { username: 'my_xyz_username', password: 'my_xyz_password' }, // pragma: allowlist secret
     });
   });
@@ -289,13 +292,17 @@ describe('NotteVault addCredentialsFromEnv', () => {
     expect(mocks.vaultCreate).not.toHaveBeenCalled();
   });
 
-  it('rejects an invalid MFA secret read from the environment', async () => {
+  it('sends invalid MFA from the environment to the API', async () => {
     vi.stubEnv('EXAMPLE_COM_EMAIL', 'me@example.org');
     vi.stubEnv('EXAMPLE_COM_PASSWORD', 'pw');
     vi.stubEnv('EXAMPLE_COM_MFA_SECRET', '999777');
     const vault = new NotteVault(client);
-    await expect(vault.addCredentialsFromEnv('https://example.com/')).rejects.toBeInstanceOf(InvalidRequestError);
-    expect(mocks.vaultCredentialsAdd).not.toHaveBeenCalled();
+    const error = new NotteAPIError('/vaults/owned-vault-id/credentials', 422, { detail: 'Invalid MFA secret code' });
+    mocks.vaultCredentialsAdd.mockRejectedValue(error);
+    await expect(vault.addCredentialsFromEnv('https://example.com/')).rejects.toBe(error);
+    expect(mocks.vaultCredentialsAdd).toHaveBeenCalledWith(expect.objectContaining({
+      body: { url: 'https://example.com/', credentials: { email: 'me@example.org', password: 'pw', mfa_secret: '999777' } }, // pragma: allowlist secret
+    }));
   });
 });
 

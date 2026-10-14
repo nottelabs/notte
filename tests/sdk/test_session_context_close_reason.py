@@ -1,7 +1,8 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient
+from notte_sdk._generated import operations as api
+from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.types import SessionStopRequest
 
 
@@ -18,7 +19,7 @@ def _bare_session() -> RemoteSession:
 
 
 def test_stop_endpoint_sends_error_close_reason() -> None:
-    endpoint = SessionsClient._session_stop_endpoint(
+    endpoint = api.session_stop(
         session_id="session-id",
         params=SessionStopRequest(close_reason="error"),
     )

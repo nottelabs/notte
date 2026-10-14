@@ -6,14 +6,18 @@ import warnings
 from enum import StrEnum
 from pathlib import Path
 from types import NoneType
-from typing import Annotated, Any, ClassVar, Literal, Required, cast, get_args
+from typing import Annotated, Any, ClassVar, Literal, Required, Self, cast, get_args
 
 from pydantic import (
     AliasChoices,
     BaseModel,
     ConfigDict,
     Field,
+    PrivateAttr,
+    RootModel,
+    SerializationInfo,
     SerializerFunctionWrapHandler,
+    ValidationInfo,
     computed_field,
     field_validator,
     model_serializer,
@@ -69,7 +73,48 @@ DEFAULT_USER_AGENT = config.user_agent
 DEFAULT_CHROME_ARGS = config.chrome_args
 
 
-class SdkRequest(BaseModel):
+class _RawRequestObject(BaseModel):
+    """Opt-in raw construction for remote requests; normal construction still validates."""
+
+    _raw_input: bool = PrivateAttr(default=False)
+
+    @classmethod
+    def from_raw(cls, data: dict[str, Any]) -> Self:
+        result = cls.model_construct(**data)
+        # model_construct can invoke model_post_init (e.g. cookie normalization).
+        # Restore caller values and unknown fields; the server owns validation.
+        result.__dict__.update(data)
+        result.__pydantic_fields_set__ = set(data)
+        result._raw_input = True
+        return result
+
+    @model_serializer(mode="wrap")
+    def serialize_raw(self, handler: SerializerFunctionWrapHandler, info: SerializationInfo) -> Any:
+        if not self._raw_input:
+            return handler(self)
+        data = {key: value for key, value in dict(self).items() if key in self.model_fields_set}
+        if info.exclude_defaults:
+            fields = type(self).model_fields
+            data = {
+                key: value
+                for key, value in data.items()
+                if key not in fields or value != fields[key].get_default(call_default_factory=True)
+            }
+        return RootModel[dict[str, Any]](data).model_dump(
+            mode=info.mode,
+            include=info.include,
+            exclude=info.exclude,
+            exclude_none=info.exclude_none,
+            exclude_unset=info.exclude_unset,
+            exclude_defaults=info.exclude_defaults,
+            by_alias=info.by_alias,
+            context=info.context,
+            serialize_as_any=info.serialize_as_any,
+            round_trip=info.round_trip,
+        )
+
+
+class SdkRequest(_RawRequestObject):
     # forbid extra fields in request
     model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid")
 
@@ -542,13 +587,25 @@ class NotteProxy(SdkRequest):
             raise ValueError("Cannot provide both proxy_id and id")
         return proxy_id if proxy_id is not None else legacy_id
 
+    @classmethod
+    @override
+    def from_raw(cls, data: dict[str, Any]) -> Self:
+        data = dict(data)
+        if "country" in data:
+            data["country"] = next(
+                (item for item in ProxyGeolocationCountry if item == data["country"]), data["country"]
+            )
+        return super().from_raw(data)
+
     @staticmethod
     def from_country(country: str, proxy_id: str | None = None, **kwargs: Any) -> "NotteProxy":
-        return NotteProxy(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), country=ProxyGeolocationCountry(country))
+        proxy = NotteProxy.from_raw(dict(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), country=country))
+        proxy._raw_input = False
+        return proxy
 
     @staticmethod
     def from_city(city: str, proxy_id: str | None = None, **kwargs: Any) -> "NotteProxy":
-        return NotteProxy(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), city=city)
+        return NotteProxy.model_construct(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), city=city)
 
 
 class ExternalProxy(SdkRequest):
@@ -613,7 +670,15 @@ ProxySettings = Annotated[NotteProxy | ExternalProxy | TailnetProxy, Field(discr
 ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict | TailnetProxyDict, Field(discriminator="type")]
 
 
-class Cookie(BaseModel):
+def _read_cookie_file(path: str | Path) -> list[dict[str, Any]]:
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"Cookies file not found at {path}")
+    with open(path, "r") as f:
+        return json.load(f)
+
+
+class Cookie(_RawRequestObject):
     # Allow extra fields to be present in the cookie dict
     model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
 
@@ -656,13 +721,8 @@ class Cookie(BaseModel):
 
     @staticmethod
     def from_json(path: str | Path) -> list["Cookie"]:
-        path = Path(path)
-        if not path.exists():
-            raise FileNotFoundError(f"Cookies file not found at {path}")
-        with open(path, "r") as f:
-            cookies_json = json.load(f)
-        cookies = [Cookie.model_validate(cookie) for cookie in cookies_json]
-        return cookies
+        # Validated: local browsers need the normalized `expires`/`sameSite` values.
+        return [Cookie.model_validate(cookie) for cookie in _read_cookie_file(path)]
 
     @staticmethod
     def dump_json(cookies: list["Cookie"], path: str | Path) -> int:
@@ -681,8 +741,9 @@ class SetCookiesRequest(SdkRequest):
 
     @staticmethod
     def from_json(path: str | Path) -> "SetCookiesRequest":
-        cookies = Cookie.from_json(path)
-        return SetCookiesRequest(cookies=cookies)
+        # Raw: the API validates and normalizes cookies sent to a remote session.
+        cookies = [Cookie.from_raw(cookie) for cookie in _read_cookie_file(path)]
+        return SetCookiesRequest.from_raw(dict(cookies=cookies))
 
 
 class SetCookiesResponse(SdkResponse):
@@ -989,7 +1050,7 @@ class _SessionStartRequest(SdkRequest):
     @classmethod
     def validate_str_proxy_settings(cls, value: Any) -> Any:
         if isinstance(value, str):
-            return [NotteProxy.from_country(value)]
+            return [NotteProxy(country=ProxyGeolocationCountry(value))]
         return value
 
     @property
@@ -1028,6 +1089,83 @@ class _SessionStartRequest(SdkRequest):
 class SessionStartRequest(_SessionStartRequest):
     """Public request for starting a remote Notte browser session."""
 
+    _proxy_shorthand: str | None = PrivateAttr(default=None)
+
+    @classmethod
+    def from_data(cls, values: dict[str, Any]) -> "SessionStartRequest":
+        data = dict(values)
+        if "timeout_minutes" in data:
+            _ = data.setdefault("idle_timeout_minutes", data.pop("timeout_minutes"))
+        if data.get("headless") is True:
+            del data["headless"]
+        if isinstance(data.get("profile"), dict):
+            data["profile"] = SessionProfile.from_raw(data["profile"])
+        proxies = data.get("proxies")
+        if isinstance(proxies, str) and proxies in ProxyGeolocationCountry._value2member_map_:
+            data["proxies"] = [NotteProxy.from_country(proxies)]
+        elif isinstance(proxies, list):
+            proxy_models = {"notte": NotteProxy, "external": ExternalProxy, "tailnet": TailnetProxy}
+            data["proxies"] = [
+                proxy_models[item["type"]].from_raw(cast(dict[str, Any], item))
+                if isinstance(item, dict)
+                and isinstance(cast(dict[str, Any], item).get("type"), str)
+                and item["type"] in proxy_models
+                else item
+                for item in cast(list[Any], proxies)
+            ]
+        supplied = set(data)
+        if data.get("cdp_url", config.cdp_url) or data.get("aspect_ratio"):
+            _ = data.setdefault("viewport_width", None)
+            _ = data.setdefault("viewport_height", None)
+        if data.get("cdp_url", config.cdp_url):
+            _ = data.setdefault("proxies", False)
+        result = cls.from_raw(data)
+        result.__pydantic_fields_set__ = supplied
+        if isinstance(proxies, str):
+            result._proxy_shorthand = proxies
+        return result
+
+    def _caller_fields(self, info: SerializationInfo) -> dict[str, Any]:
+        fields = type(self).model_fields
+        data = {key: value for key, value in dict(self).items() if key in self.model_fields_set or key not in fields}
+        if self._proxy_shorthand is not None and "proxies" in data:
+            data["proxies"] = self._proxy_shorthand
+        if not info.exclude_unset and not info.exclude_defaults:
+            for name in ("browser_type", "user_agent", "chrome_args", "viewport_width", "viewport_height", "cdp_url"):
+                value = getattr(self, name)
+                if value != ("chromium" if name == "browser_type" else None):
+                    if (
+                        name.startswith("viewport_")
+                        and (self.cdp_url or self.aspect_ratio)
+                        and name not in self.model_fields_set
+                    ):
+                        continue
+                    _ = data.setdefault(name, value)
+        if info.exclude_defaults:
+            data = {
+                key: value
+                for key, value in data.items()
+                if key not in fields or value != fields[key].get_default(call_default_factory=True)
+            }
+        if isinstance(info.context, dict) and cast(dict[str, Any], info.context).get("wire"):
+            data = {
+                key: value
+                for key, value in data.items()
+                if value is not None or key not in fields or type(None) not in get_args(fields[key].annotation)
+            }
+        return RootModel[dict[str, Any]](data).model_dump(
+            mode=info.mode,
+            include=info.include,
+            exclude=info.exclude,
+            exclude_none=info.exclude_none,
+            exclude_unset=info.exclude_unset,
+            exclude_defaults=info.exclude_defaults,
+            by_alias=info.by_alias,
+            context=cast(Any, info.context),
+            serialize_as_any=info.serialize_as_any,
+            round_trip=info.round_trip,
+        )
+
     auth_retry: int = Field(default=0, ge=0, le=2)
     block_ads: Annotated[
         bool,
@@ -1057,7 +1195,11 @@ class SessionStartRequest(_SessionStartRequest):
     ] = False
 
     @model_serializer(mode="wrap")
-    def omit_disabled_advanced_stealth(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+    def omit_disabled_advanced_stealth(
+        self, handler: SerializerFunctionWrapHandler, info: SerializationInfo
+    ) -> dict[str, Any]:
+        if self._raw_input:
+            return self._caller_fields(info)
         data = cast(dict[str, Any], handler(self))
         if not self.advanced_stealth:
             data.pop("advanced_stealth", None)
@@ -1512,7 +1654,9 @@ class GetCredentialsResponse(SdkResponse):
 
     @field_validator("credentials", mode="after")
     @classmethod
-    def check_email_and_username(cls, value: CredentialsDict) -> CredentialsDict:
+    def check_email_and_username(cls, value: CredentialsDict, info: ValidationInfo) -> CredentialsDict:
+        if isinstance(info.context, dict) and cast(dict[str, Any], info.context).get("sdk_response"):
+            return value
         username = value.get("username")
         email = value.get("email")
 

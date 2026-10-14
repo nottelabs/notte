@@ -87,8 +87,8 @@ curl -X POST https://api.notte.cc/functions/{function_id}/runs/start \
 ## Large run outputs
 
 The Python and TypeScript SDKs upload individual run results, logs, and variables
-larger than 1 MiB to private storage. Python `functions.update_run()` and TypeScript
-`fn.updateRun(runId, fields)` save a small reference. Python `functions.get_run()`
+larger than 1 MiB to private storage. Python `functions.run_update_metadata()` and TypeScript
+`fn.updateRun(runId, fields)` save a small reference. Python `functions.run_get_metadata()`
 and TypeScript `fn.getRun()` download and verify the full value automatically.
 Each stored field can be up to 256 MiB. Small fields continue to use inline updates.
 

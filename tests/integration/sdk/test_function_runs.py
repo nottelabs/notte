@@ -8,6 +8,7 @@ import pytest
 from dotenv import load_dotenv
 from notte_sdk import NotteClient
 from notte_sdk.endpoints.functions import NotteFunction
+from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
     CreateFunctionRunResponse,
     FunctionRunListItemResponse,
@@ -162,7 +163,7 @@ class TestFunctionRunsClient:
         test_logs = ["Starting workflow", "Processing data", "Workflow completed"]
         test_result = {"status": "success", "data": {"processed": True}}
 
-        update_response = client.functions.update_run(
+        update_response = client.functions.run_update_metadata(
             function_id=test_workflow.function_id,
             run_id=create_response.function_run_id,
             session_id=session_id,
@@ -183,7 +184,7 @@ class TestFunctionRunsClient:
         create_response = client.functions.create_run(function_id=test_workflow.function_id)
 
         # Update only the status
-        update_response = client.functions.update_run(
+        update_response = client.functions.run_update_metadata(
             function_id=test_workflow.function_id, run_id=create_response.function_run_id, status="active"
         )
 
@@ -197,12 +198,12 @@ class TestFunctionRunsClient:
 
         # Test each valid status
         for status in ["active", "failed"]:
-            update_response: UpdateFunctionRunResponse = client.functions.update_run(
+            update_response: UpdateFunctionRunResponse = client.functions.run_update_metadata(
                 function_id=test_workflow.function_id, run_id=create_response.function_run_id, status=status
             )
             assert update_response.status == "updated"
         with pytest.raises(Exception, match="is not active"):
-            _ = client.functions.update_run(
+            _ = client.functions.run_update_metadata(
                 function_id=test_workflow.function_id, run_id=create_response.function_run_id, status="closed"
             )
 
@@ -226,6 +227,7 @@ class TestFunctionRunExecution:
                 },
                 "raise_for_status": lambda self: None,
                 "status_code": 200,
+                "ok": True,
             },
         )()
 
@@ -243,6 +245,7 @@ class TestFunctionRunExecution:
                 },
                 "raise_for_status": lambda self: None,
                 "status_code": 200,
+                "ok": True,
             },
         )()
 
@@ -254,7 +257,7 @@ class TestFunctionRunExecution:
             create_response = client.functions.create_run(function_id=test_workflow.function_id)
 
         # Run the workflow
-        response = client.functions.run(
+        response = client.functions.run_start(
             function_run_id=create_response.function_run_id,
             function_id=test_workflow.function_id,
             variables={"test_var": "test_value"},
@@ -285,7 +288,9 @@ class TestFunctionRunExecution:
         from notte_sdk.errors import NotteAPIError
 
         with pytest.raises((NotteAPIError, requests.exceptions.HTTPError)):
-            client.functions.run(function_run_id="invalid-run-id", function_id=test_workflow.function_id, variables={})
+            client.functions.run_start(
+                function_run_id="invalid-run-id", function_id=test_workflow.function_id, variables={}
+            )
 
     def test_run_workflow_missing_workflow_id(self, client: NotteClient):
         """Test running a workflow with missing workflow ID."""
@@ -293,7 +298,7 @@ class TestFunctionRunExecution:
         from notte_sdk.errors import NotteAPIError
 
         with pytest.raises((NotteAPIError, requests.exceptions.HTTPError)):
-            client.functions.run(function_run_id="some-run-id", function_id="invalid-workflow-id", variables={})
+            client.functions.run_start(function_run_id="some-run-id", function_id="invalid-workflow-id", variables={})
 
 
 class TestRemoteFunctionRuns:
@@ -316,6 +321,7 @@ class TestRemoteFunctionRuns:
                 },
                 "raise_for_status": lambda self: None,
                 "status_code": 200,
+                "ok": True,
             },
         )()
         mock_post.return_value = mock_response
@@ -359,7 +365,9 @@ class TestFunctionRunsErrorHandling:
         from notte_sdk.errors import NotteAPIError
 
         with pytest.raises(NotteAPIError):
-            _ = client.functions.update_run(function_id="invalid-workflow-id", run_id="invalid-run-id", status="closed")
+            _ = client.functions.run_update_metadata(
+                function_id="invalid-workflow-id", run_id="invalid-run-id", status="closed"
+            )
 
     def test_list_runs_invalid_workflow_id(self, client: NotteClient):
         """Test listing runs with invalid workflow ID."""
@@ -378,13 +386,14 @@ class TestFunctionRunsErrorHandling:
         # Create a run first
         create_response = client.functions.create_run(function_id=test_workflow.function_id)
 
-        # This should raise a validation error due to invalid status
-        with pytest.raises(Exception):  # Pydantic validation error expected
-            _ = client.functions.update_run(
+        # Validation belongs to the API, not the SDK request model.
+        with pytest.raises(NotteAPIError) as error:
+            _ = client.functions.run_update_metadata(
                 function_id=test_workflow.function_id,
                 run_id=create_response.function_run_id,
                 status="invalid_status",  # This is not one of the allowed values
             )
+        assert error.value.status_code == 422
 
 
 class TestFunctionRunsIntegration:
@@ -402,7 +411,7 @@ class TestFunctionRunsIntegration:
         # 2. Update the run with some data
         test_logs = ["Starting workflow", "Processing data"]
 
-        update_response = client.functions.update_run(
+        update_response = client.functions.run_update_metadata(
             function_id=test_workflow.function_id, run_id=run_id, session_id=session_id, logs=test_logs, status="active"
         )
         assert update_response.status == "updated"
@@ -416,11 +425,11 @@ class TestFunctionRunsIntegration:
         run_summary = next(run for run in list_response.items if run.function_run_id == run_id)
         assert run_summary.function_id == test_workflow.function_id
         assert run_summary.session_id == session_id
-        run_detail = client.functions.get_run(function_id=test_workflow.function_id, run_id=run_id)
+        run_detail = client.functions.run_get_metadata(function_id=test_workflow.function_id, run_id=run_id)
         assert run_detail.logs == test_logs
 
         # 5. Update the run to closed status
-        final_update = client.functions.update_run(
+        final_update = client.functions.run_update_metadata(
             function_id=test_workflow.function_id,
             run_id=run_id,
             result="Integration test completed successfully",
@@ -444,7 +453,7 @@ class TestFunctionRunsIntegration:
 
             # Update each run with different data
             # Use UUID format for session_id since server expects valid UUID
-            _ = client.functions.update_run(
+            _ = client.functions.run_update_metadata(
                 function_id=workflow_id,
                 run_id=response.function_run_id,
                 session_id=session_id,
@@ -471,7 +480,7 @@ class TestFunctionRunsIntegration:
             run_summary = next(run for run in list_response.items if run.function_run_id == run_id)
             # Session ID will be a UUID, so just check it exists
             assert run_summary.session_id is not None
-            run_detail = client.functions.get_run(function_id=workflow_id, run_id=run_id)
+            run_detail = client.functions.run_get_metadata(function_id=workflow_id, run_id=run_id)
             assert run_detail.logs == [f"Log entry {i}"]
 
     def test_remote_function_complete_flow(self, client: NotteClient, test_workflow: GetFunctionResponse):
@@ -506,6 +515,7 @@ class TestFunctionRunsIntegration:
                         },
                         "raise_for_status": lambda self: None,
                         "status_code": 200,
+                        "ok": True,
                     },
                 )()
                 mock_post.return_value = mock_response
@@ -527,3 +537,28 @@ class TestFunctionRunsIntegration:
         assert "variables" in data
         assert data["variables"]["complete_flow_test"] is True
         assert data["variables"]["integration_test"] == "enabled"
+
+
+def test_run_payload_round_trip(client: NotteClient, temp_workflow_file: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Exercise presigned upload and hydration with small, test-owned payloads."""
+    function = client.functions.create(path=temp_workflow_file)
+    try:
+        run = client.functions.create_run(function.function_id)
+        monkeypatch.setattr("notte_sdk.endpoints.run_payloads.INLINE_FIELD_BYTES", 1)
+        logs = ["payload capture: café"]
+        variables = {"capture": "payload"}
+        result = "payload result"
+        _ = client.functions.run_update_metadata(
+            function.function_id,
+            run.function_run_id,
+            status="closed",
+            logs=logs,
+            variables=variables,
+            result=result,
+        )
+        hydrated = client.functions.run_get_metadata(function.function_id, run.function_run_id)
+        assert hydrated.logs == logs
+        assert hydrated.variables == variables
+        assert hydrated.result == result
+    finally:
+        _ = client.functions.delete(function.function_id)

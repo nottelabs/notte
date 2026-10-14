@@ -35,40 +35,40 @@ def test_the_committed_module_is_generated_from_the_snapshot(spec: dict[str, Any
 
 def test_every_operation_the_sdk_calls_is_generated(spec: dict[str, Any]) -> None:
     _, blocks = gen.render(spec)
-    assert gen.used_operations().keys() <= blocks.keys()
+    assert gen.used_operations().keys() <= blocks.keys() | gen.migrated_contracts(spec).keys()
 
 
-def test_a_query_model_with_a_parameter_the_api_lacks_fails(spec: dict[str, Any]) -> None:
-    params = spec["paths"]["/personas/{persona_id}/emails"]["get"]["parameters"]
-    spec["paths"]["/personas/{persona_id}/emails"]["get"]["parameters"] = [p for p in params if p["name"] != "limit"]
-    with pytest.raises(gen.GenerationError, match="persona_emails_list: MessageReadRequest sends .*limit"):
+def test_only_shared_domain_factories_remain(spec: dict[str, Any]) -> None:
+    text, blocks = gen.render(spec)
+    assert set(blocks) == set(gen.CORE_OPERATIONS)
+    assert "wire.ObserveResponse" in text
+    assert "wire.ExecutionResultResponse" in text
+    assert "wire.ScrapeResponse" in text
+    assert "persona_get" not in text
+    assert "wire.SessionResponse" not in text
+    assert "body: BaseModel" in blocks["scrape_webpage"]
+
+
+def test_a_shared_model_with_missing_schema_fields_fails(spec: dict[str, Any]) -> None:
+    required = next(name for name, field in gen.wire_types.ObserveResponse.model_fields.items() if field.is_required())
+    del spec["components"]["schemas"]["Observation"]["properties"][required]
+    with pytest.raises(gen.GenerationError, match="page_observe.*requires fields"):
         _ = gen.render(spec)
-
-
-def test_an_override_whose_model_needs_missing_fields_fails(spec: dict[str, Any]) -> None:
-    del spec["components"]["schemas"]["ProfileDeleteResponse"]["properties"]["success"]
-    with pytest.raises(gen.GenerationError, match="profile_delete response: ExecutionResponse requires"):
-        _ = gen.render(spec)
-
-
-def test_a_live_api_only_fails_on_the_operations_the_sdk_calls(spec: dict[str, Any]) -> None:
-    # An unused operation that no longer binds is left out instead of failing the release gate.
-    del spec["components"]["schemas"]["ProfileDeleteResponse"]["properties"]["success"]
     _, blocks = gen.render(spec, strict=False)
-    assert "profile_delete" not in blocks
-    assert "persona_get" in blocks
+    assert "page_observe" not in blocks
+    assert "page_execute" in blocks
 
 
-def test_a_moved_path_changes_the_operation(spec: dict[str, Any]) -> None:
+def test_a_moved_path_changes_the_shared_operation(spec: dict[str, Any]) -> None:
     _, before = gen.render(spec)
-    spec["paths"]["/personas/{id}"] = spec["paths"].pop("/personas/{persona_id}")
-    for operation in spec["paths"]["/personas/{id}"].values():
+    spec["paths"]["/sessions/{id}/page/observe"] = spec["paths"].pop("/sessions/{session_id}/page/observe")
+    for operation in spec["paths"]["/sessions/{id}/page/observe"].values():
         for param in operation.get("parameters", []):
-            if param["name"] == "persona_id":
+            if param["name"] == "session_id":
                 param["name"] = "id"
     _, after = gen.render(spec)
-    assert before["persona_get"] != after["persona_get"]
-    assert 'path=f"/personas/{_segment(id)}"' in after["persona_get"]
+    assert before["page_observe"] != after["page_observe"]
+    assert 'path=f"/sessions/{_segment(id)}/page/observe"' in after["page_observe"]
 
 
 def test_resource_outputs_are_deterministic_and_fresh(spec: dict[str, Any]) -> None:
@@ -76,7 +76,7 @@ def test_resource_outputs_are_deterministic_and_fresh(spec: dict[str, Any]) -> N
     assert outputs == gen.render_resources(spec)
     for name, text in outputs.items():
         assert (ROOT / "packages/notte-sdk/src/notte_sdk/_generated" / name).read_text() == text
-        assert "notte_core" not in text
+    assert "from notte_core.types import GetCredentialsResponse" in outputs["public.py"]
 
 
 @pytest.mark.parametrize("shape", ["binary", "inline", "optional_body", "header", "missing_operation"])
@@ -156,3 +156,36 @@ def test_migrated_contract_keeps_documentation_named_fields_and_literal_defaults
     before = gen.migrated_contracts(spec)
     schema["properties"]["description"]["type"] = "string"
     assert gen.migrated_contracts(spec) != before
+
+
+def test_new_operations_require_a_mapping_or_exclusion(spec: dict[str, Any]) -> None:
+    spec["paths"]["/new-resource"] = {"get": {"operationId": "new_resource"}}
+    with pytest.raises(gen.GenerationError, match="Unmapped operations.*new_resource"):
+        gen.check_naming(spec)
+
+
+def test_generated_methods_keep_public_names_and_telemetry(spec: dict[str, Any]) -> None:
+    source = gen.render_resources(spec)["resources.py"]
+    assert "def credentials_add(" in source
+    assert "def _vault_credentials_add(" not in source
+    assert '@track_usage("cloud.vault.credentials.add")' in source
+
+
+def test_shared_table_controls_all_resource_membership() -> None:
+    generated = {name for resource in gen.RESOURCES for name in resource.operations}
+    expected = {
+        name for name, entry in gen.NAMING.items() if not entry.get("exclude") and not entry.get("pythonImplementation")
+    }
+    assert generated == expected
+    from notte_sdk import NotteClient
+    from notte_sdk.endpoints.page import PageClient
+
+    client = NotteClient(api_key="test-api-key")  # pragma: allowlist secret
+    for name, entry in gen.NAMING.items():
+        if entry.get("exclude"):
+            continue
+        if entry.get("pythonImplementation", "").startswith("PageClient."):
+            method = entry["pythonImplementation"].split(":")[0].split(".")[1]
+            assert hasattr(PageClient, method)
+        else:
+            assert hasattr(getattr(client, entry["resource"]), gen.public_method(name))

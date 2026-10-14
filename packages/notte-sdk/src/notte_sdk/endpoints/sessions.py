@@ -2,7 +2,7 @@ import asyncio
 import os
 import random
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from enum import StrEnum
 from pathlib import Path
 from types import TracebackType
@@ -48,33 +48,33 @@ from notte_core.data.space import StructuredData, TBaseModel
 from notte_core.errors.actions import EvaluateJsNoDataError
 from notte_core.errors.base import NotteBaseError
 from notte_core.types import (
+    Cookie,
     ExecutionRequest,
-    GetCookiesResponse,
     ObserveRequestDict,
     ObserveResponse,
     PaginationParamsDict,
-    ReplayResponse,
     ScrapeMarkdownParamsDict,
     ScrapeRequestDict,
-    SessionAuthResponse,
-    SessionDebugResponse,
-    SessionListRequest,
-    SessionListRequestDict,
-    SessionOffsetResponse,
-    SessionResponse,
-    SessionStartRequest,
-    SessionStartRequestDict,
-    SessionStopRequest,
-    SetCookiesRequest,
-    SetCookiesResponse,
     TabSessionDebugRequest,
-    TabSessionDebugResponse,
 )
 from notte_core.utils.files import create_or_append_cookies_to_file
 from pydantic import BaseModel
 from typing_extensions import final, override
 
-from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk._generated import operations as api
+from notte_sdk._generated.public import (
+    ReplayResponse,
+    SessionDebugResponse,
+    SessionResponse,
+    SessionStartRequest,
+    SessionStartRequestDict,
+    SessionStopRequestDict,
+    SetCookiesRequest,
+    SetCookiesResponse,
+    TabSessionDebugResponse,
+)
+from notte_sdk._generated.resources import SessionsOperations
+from notte_sdk.endpoints.base import NotteEndpoint
 from notte_sdk.endpoints.files import RemoteFileStorage
 from notte_sdk.endpoints.page import PageClient
 from notte_sdk.errors import NotteAPIError
@@ -137,7 +137,7 @@ class SessionViewerType(StrEnum):
 
 
 @final
-class SessionsClient(BaseClient):
+class SessionsClient(SessionsOperations):
     """
     Client for the Notte API.
 
@@ -187,81 +187,7 @@ class SessionsClient(BaseClient):
         )
         self.viewer_type: SessionViewerType = viewer_type
 
-    @staticmethod
-    def _session_start_endpoint() -> NotteEndpoint[SessionResponse]:
-        """
-        Returns a NotteEndpoint configured for starting a session.
-
-        The returned endpoint uses the session start path from SessionsClient with the POST method and expects a SessionResponse.
-        """
-        return NotteEndpoint(path=SessionsClient.SESSION_START, response=SessionResponse, method="POST")
-
-    @staticmethod
-    def _session_stop_endpoint(
-        session_id: str | None = None, params: SessionStopRequest | None = None
-    ) -> NotteEndpoint[SessionResponse]:
-        """
-        Constructs a DELETE endpoint for closing a session.
-
-        If a session ID is provided, it is inserted into the endpoint path. Returns a NotteEndpoint configured
-        with the DELETE method and expecting a SessionResponse.
-
-        Args:
-            session_id: Optional session identifier; if provided, it is formatted into the endpoint path.
-
-        Returns:
-            A NotteEndpoint instance for closing a session.
-        """
-        path = SessionsClient.SESSION_STOP
-        if session_id is not None:
-            path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=SessionResponse, method="DELETE", params=params)
-
-    @staticmethod
-    def _session_status_endpoint(session_id: str | None = None) -> NotteEndpoint[SessionResponse]:
-        """
-        Returns a NotteEndpoint for retrieving the status of a session.
-
-        If a session_id is provided, it is interpolated into the endpoint path.
-        The endpoint uses the GET method and expects a SessionResponse.
-        """
-        path = SessionsClient.SESSION_STATUS
-        if session_id is not None:
-            path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=SessionResponse, method="GET")
-
-    @staticmethod
-    def _session_list_endpoint(params: SessionListRequest | None = None) -> NotteEndpoint[SessionResponse]:
-        """
-        Constructs a NotteEndpoint for listing sessions.
-
-        Args:
-            params (SessionListRequest, optional): Additional filter parameters for the session list request.
-
-        Returns:
-            NotteEndpoint[SessionResponse]: An endpoint configured with the session list path and a GET method.
-        """
-        return NotteEndpoint(
-            path=SessionsClient.SESSION_LIST,
-            response=SessionResponse,
-            method="GET",
-            request=None,
-            params=params,
-        )
-
-    @staticmethod
-    def _session_debug_endpoint(session_id: str | None = None) -> NotteEndpoint[SessionDebugResponse]:
-        """
-        Creates a NotteEndpoint for retrieving session debug information.
-
-        If a session ID is provided, it is interpolated into the endpoint path.
-        The returned endpoint uses the GET method and expects a SessionDebugResponse.
-        """
-        path = SessionsClient.SESSION_DEBUG
-        if session_id is not None:
-            path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=SessionDebugResponse, method="GET")
-
+    # Legacy: GET debug/tab is absent from the committed OpenAPI schema.
     @staticmethod
     def _session_debug_tab_endpoint(
         session_id: str | None = None, params: TabSessionDebugRequest | None = None
@@ -285,71 +211,8 @@ class SessionsClient(BaseClient):
             params=params,
         )
 
-    @staticmethod
-    def _session_debug_replay_endpoint(session_id: str | None = None) -> NotteEndpoint[ReplayResponse]:
-        """
-        Returns an endpoint for retrieving the replay for a session.
-        """
-        path = SessionsClient.SESSION_DEBUG_REPLAY
-        if session_id is not None:
-            path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=ReplayResponse, method="GET")
-
-    @staticmethod
-    def _session_debug_offset_endpoint(session_id: str | None = None) -> NotteEndpoint[SessionOffsetResponse]:
-        """
-        Returns an endpoint for retrieving the offset for a session.
-        """
-        path = SessionsClient.SESSION_DEBUG_OFFSET
-        if session_id is not None:
-            path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=SessionOffsetResponse, method="GET")
-
-    @staticmethod
-    def _session_set_cookies_endpoint(session_id: str | None = None) -> NotteEndpoint[SetCookiesResponse]:
-        """
-        Returns a NotteEndpoint for uploading cookies to a session.
-        """
-        path = SessionsClient.SESSION_SET_COOKIES
-        if session_id is not None:
-            path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=SetCookiesResponse, method="POST")
-
-    @staticmethod
-    def _session_get_cookies_endpoint(session_id: str | None = None) -> NotteEndpoint[GetCookiesResponse]:
-        """
-        Returns a NotteEndpoint for retrieving cookies from a session.
-        """
-        path = SessionsClient.SESSION_GET_COOKIES
-        if session_id is not None:
-            path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=GetCookiesResponse, method="GET")
-
-    @track_usage("cloud.session.start")
-    def start(self, **data: Unpack[SessionStartRequestDict]) -> SessionResponse:
-        """
-        Starts a new session using the provided keyword arguments.
-
-        Validates the input data against the session start model, sends a session start
-        request to the API, updates the last session response, and returns the response.
-
-        Args:
-            **data: Keyword arguments representing details for starting the session.
-
-        Returns:
-            SessionResponse: The response received from the session start endpoint.
-        """
-        request = SessionStartRequest.model_validate(data)
-        response = self.request(SessionsClient._session_start_endpoint().with_request(request))
-        return response
-
-    def auth_status(self, session_id: str) -> SessionAuthResponse:
-        return self.request(
-            NotteEndpoint(path=f"{session_id}/auth", response=SessionAuthResponse, method="GET"), timeout=10
-        )
-
-    @track_usage("cloud.session.stop")
-    def stop(self, session_id: str, close_reason: Literal["manual", "error"] = "manual") -> SessionResponse:
+    @override
+    def stop(self, session_id: str, **data: Unpack[SessionStopRequestDict]) -> SessionResponse:
         """
         Stops an active session.
 
@@ -366,35 +229,19 @@ class SessionsClient(BaseClient):
             SessionResponse: The validated response from the session stop request.
         """
         logger.info(f"[Session] {session_id} is stopping")
-        endpoint = SessionsClient._session_stop_endpoint(
-            session_id=session_id,
-            params=SessionStopRequest(close_reason=close_reason),
-        )
-        response = self.request(endpoint)
+        response = super().stop(session_id, **data)
         if response.status != "closed":
             raise RuntimeError(f"[Session] {session_id} failed to stop")
         logger.info(f"[Session] {session_id} stopped")
         return response
 
-    @track_usage("cloud.session.status")
-    def status(self, session_id: str) -> SessionResponse:
-        """
-        Retrieves the current status of a session.
-
-        If no session_id is provided, the session ID from the last response is used. This method constructs
-        the status endpoint, validates the response against the SessionResponse model, updates the stored
-        session response, and returns the validated status.
-        """
-        endpoint = SessionsClient._session_status_endpoint(session_id=session_id)
-        response = self.request(endpoint)
-        return response
-
-    @track_usage("cloud.session.cookies.set")
+    @override
     def set_cookies(
         self,
         session_id: str,
-        cookies: list[CookieDict] | None = None,
+        cookies: list[CookieDict] | list[Cookie] | None = None,
         cookie_file: str | Path | None = None,
+        **data: Any,
     ) -> SetCookiesResponse:
         """
         Uploads cookies to the session.
@@ -408,59 +255,13 @@ class SessionsClient(BaseClient):
         Returns:
             SetCookiesResponse: The response from the upload cookies request.
         """
-        endpoint = SessionsClient._session_set_cookies_endpoint(session_id=session_id)
-
         if cookies is not None and cookie_file is not None:
             raise ValueError("Cannot provide both cookies and cookie_file")
-
-        if cookies is not None:
-            request = SetCookiesRequest.model_validate(dict(cookies=cookies))
-        elif cookie_file is not None:
-            request = SetCookiesRequest.from_json(cookie_file)
-        else:
+        if cookie_file is not None:
+            cookies = SetCookiesRequest.from_json(cookie_file).cookies
+        if cookies is None:
             raise ValueError("Have to provide either cookies or cookie_file")
-
-        return self.request(endpoint.with_request(request))
-
-    @track_usage("cloud.session.cookies.get")
-    def get_cookies(self, session_id: str) -> GetCookiesResponse:
-        """
-        Gets cookies from the session.
-
-        Returns:
-            GetCookiesResponse: the response containing the list of cookies in the session
-        """
-        endpoint = SessionsClient._session_get_cookies_endpoint(session_id=session_id)
-        return self.request(endpoint)
-
-    @track_usage("cloud.session.list")
-    def list(self, **data: Unpack[SessionListRequestDict]) -> Sequence[SessionResponse]:
-        """
-        Retrieves a list of sessions from the API.
-
-        Validates keyword arguments as session listing criteria and requests the available
-        sessions. Returns a sequence of session response objects.
-        """
-        params = SessionListRequest.model_validate(data)
-        endpoint = SessionsClient._session_list_endpoint(params=params)
-        return self.request_list(endpoint)
-
-    @track_usage("cloud.session.debug")
-    def debug_info(self, session_id: str) -> SessionDebugResponse:
-        """
-        Retrieves debug information for a session.
-
-        If a session ID is provided, it is used; otherwise, the current session ID is retrieved.
-        Raises a ValueError if no valid session ID is available.
-
-        Args:
-            session_id (Optional[str]): An optional session identifier to use.
-
-        Returns:
-            SessionDebugResponse: The debug information response for the session.
-        """
-        endpoint = SessionsClient._session_debug_endpoint(session_id=session_id)
-        return self.request(endpoint)
+        return super().set_cookies(session_id, cookies=cookies, **data)
 
     @track_usage("cloud.session.debug.tab")
     def debug_tab_info(self, session_id: str, tab_idx: int | None = None) -> TabSessionDebugResponse:
@@ -481,21 +282,7 @@ class SessionsClient(BaseClient):
         endpoint = SessionsClient._session_debug_tab_endpoint(session_id=session_id, params=params)
         return self.request(endpoint)
 
-    @track_usage("cloud.session.offset")
-    def offset(self, session_id: str) -> SessionOffsetResponse:
-        """
-        Get the trajectory offset for the specified session.
-
-        Args:
-            session_id: The identifier of the session to fetch the offset for.
-
-        Returns:
-            int: The session offset
-        """
-        endpoint = SessionsClient._session_debug_offset_endpoint(session_id=session_id)
-        offset = self.request(endpoint)
-        return offset
-
+    @override
     @track_usage("cloud.session.replay")
     def replay(
         self,
@@ -524,7 +311,7 @@ class SessionsClient(BaseClient):
                 if the timeout is exceeded.
             TimeoutError: If the replay does not become available within ``timeout`` seconds.
         """
-        endpoint = SessionsClient._session_debug_replay_endpoint(session_id=session_id)
+        endpoint = api.session_replay(session_id)
         if not wait:
             return self.request(endpoint)
 
@@ -668,7 +455,7 @@ class RemoteSession(SyncResource):
         # Filter out open_viewer from data before validating with SessionStartRequest
         # (open_viewer is a RemoteSession parameter, not a SessionStartRequest field)
         request_data = {k: v for k, v in data.items() if k != "open_viewer"}
-        request = SessionStartRequest.model_validate(request_data)
+        request = SessionStartRequest.from_data(request_data)
 
         response: SessionResponse | None = None
         if session_id is not None:
@@ -873,7 +660,7 @@ class RemoteSession(SyncResource):
         errors = 0
         while time.monotonic() < deadline:
             try:
-                result = self.client.auth_status(self.response.session_id)
+                result = self.client.auth_readiness(self.response.session_id)
                 if result.status == "active":
                     result = self.client.status(self.response.session_id)
                     if result.status == "active":
@@ -903,7 +690,7 @@ class RemoteSession(SyncResource):
         errors = 0
         while time.monotonic() < deadline:
             try:
-                result = await asyncio.to_thread(self.client.auth_status, self.response.session_id)
+                result = await asyncio.to_thread(self.client.auth_readiness, self.response.session_id)
                 if result.status == "active":
                     result = await asyncio.to_thread(self.client.status, self.response.session_id)
                     if result.status == "active":

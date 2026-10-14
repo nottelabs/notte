@@ -11,8 +11,10 @@ def test_start_close_session():
     client = NotteClient()
 
     response = client.sessions.start(proxies=False)
-    assert response.status == "active"
-    response = client.sessions.stop(session_id=response.session_id)
+    try:
+        assert response.status == "active"
+    finally:
+        response = client.sessions.stop(session_id=response.session_id)
     assert response.status == "closed"
 
 
@@ -40,7 +42,7 @@ def test_start_session_with_too_small_viewport_is_rejected():
     with pytest.raises(NotteAPIError) as exc_info:
         with client.Session(proxies=False, viewport_height=100, viewport_width=100):
             pass
-    assert 400 <= exc_info.value.status_code < 500
+    assert exc_info.value.status_code == 422
 
 
 def test_start_close_session_with_viewport():

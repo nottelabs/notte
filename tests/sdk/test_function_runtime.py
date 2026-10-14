@@ -13,12 +13,12 @@ from notte_sdk.types import RunFunctionRequest, StartFunctionRunRequest
 @pytest.mark.parametrize("runtime", [None, "standard", "extended"])
 def test_high_level_run_forwards_runtime(runtime):
     response = SimpleNamespace(status="closed", session_id=None)
-    client = SimpleNamespace(run=Mock(return_value=response))
+    client = SimpleNamespace(run_start=Mock(return_value=response))
     function = SimpleNamespace(client=client, response=SimpleNamespace(function_id="function"))
     result = NotteFunction.run(function, function_run_id="run", runtime=runtime, wait_seconds=960)
     assert result is response
-    assert client.run.call_args.kwargs["runtime"] == runtime
-    assert client.run.call_args.kwargs["variables"] == {"wait_seconds": 960}
+    assert client.run_start.call_args.kwargs["runtime"] == runtime
+    assert client.run_start.call_args.kwargs["variables"] == {"wait_seconds": 960}
 
 
 @pytest.mark.parametrize("runtime", [None, "standard", "extended"])
@@ -49,7 +49,7 @@ def test_transport_preserves_selection(monkeypatch, runtime, stream):
         ("data: " + json.dumps({"type": "result", "message": json.dumps(post.return_value.json())})).encode()
     ]
     monkeypatch.setattr(functions.requests, "post", post)
-    FunctionsClient.run(
+    FunctionsClient.run_start(
         client, "run", function_id="function", variables={"wait_seconds": 960}, stream=stream, runtime=runtime
     )
     body = json.loads(post.call_args.kwargs["data"])
@@ -61,11 +61,23 @@ def test_transport_preserves_selection(monkeypatch, runtime, stream):
         assert body["runtime"] == runtime
 
 
-def test_invalid_runtime_rejected_before_creating_run():
-    function = SimpleNamespace(client=SimpleNamespace(create_run=Mock()))
-    with pytest.raises(ValueError, match="standard.*extended"):
-        NotteFunction.run(function, runtime="invalid")
-    function.client.create_run.assert_not_called()
+@pytest.mark.parametrize("stream", [True, False])
+def test_invalid_runtime_is_sent_and_api_422_is_typed(monkeypatch, stream):
+    import requests
+    from notte_sdk import NotteClient
+    from notte_sdk.errors import NotteAPIError
+
+    client = NotteClient(api_key="test-api-key", server_url="https://api.example.test")
+    response = requests.Response()
+    response.status_code = 422
+    response._content = b'{"detail": "invalid runtime"}'
+    post = MagicMock(return_value=response)
+    monkeypatch.setattr(functions.requests, "post", post)
+    function = SimpleNamespace(client=client.functions, response=SimpleNamespace(function_id="function"))
+    with pytest.raises(NotteAPIError) as error:
+        NotteFunction.run(function, function_run_id="run", runtime="invalid", stream=stream)
+    assert error.value.status_code == 422
+    assert json.loads(post.call_args.kwargs["data"])["runtime"] == "invalid"
 
 
 def test_models_leave_runtime_unset():
@@ -75,7 +87,7 @@ def test_models_leave_runtime_unset():
 
 def test_script_inputs_can_use_reserved_sdk_option_names():
     response = SimpleNamespace(status="closed", session_id=None)
-    client = SimpleNamespace(run=Mock(return_value=response))
+    client = SimpleNamespace(run_start=Mock(return_value=response))
     function = SimpleNamespace(client=client, response=SimpleNamespace(function_id="function"))
     NotteFunction.run(
         function,
@@ -84,8 +96,8 @@ def test_script_inputs_can_use_reserved_sdk_option_names():
         input_variables={"runtime": "python", "version": 3},
         wait_seconds=960,
     )
-    assert client.run.call_args.kwargs["variables"] == {"runtime": "python", "version": 3, "wait_seconds": 960}
-    assert client.run.call_args.kwargs["runtime"] == "extended"
+    assert client.run_start.call_args.kwargs["variables"] == {"runtime": "python", "version": 3, "wait_seconds": 960}
+    assert client.run_start.call_args.kwargs["runtime"] == "extended"
 
 
 def test_duplicate_inputs_rejected_before_creating_run():

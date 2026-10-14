@@ -270,8 +270,8 @@ def test_persona_error_handling():
 
     # Try to list emails for non-existent persona
     with pytest.raises(NotteAPIError):
-        _ = client.personas.list_emails("non-existent-persona-id")
+        _ = client.personas.emails_list("non-existent-persona-id")
 
     # Try to list SMS for non-existent persona
     with pytest.raises(NotteAPIError):
-        _ = client.personas.list_sms("non-existent-persona-id")
+        _ = client.personas.sms_list("non-existent-persona-id")

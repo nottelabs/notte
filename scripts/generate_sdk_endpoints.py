@@ -1,31 +1,13 @@
 #!/usr/bin/env python3
-"""Generate the Python SDK's HTTP endpoint layer from the OpenAPI snapshot.
+"""Generate SDK resource operations from the committed OpenAPI snapshot.
 
-``openapi/openapi.json`` describes every operation of the Notte API. This script turns each
-one into a factory in ``notte_sdk/_generated/endpoints.py`` that returns a ``NotteEndpoint``
-(method, path, path/query parameters, request and response model), so the hand-written
-clients in ``notte_sdk.endpoints`` stop spelling paths and methods by hand.
+Resource models resolve through the upstream-generated schema index. Only shared
+page-operation factories and health remain in `_generated/endpoints.py`; they retain
+core domain identity. See docs/design/sdk-codegen.md for ownership and compatibility.
 
-Migrated resources also get typed operations, invocation methods and keyword dictionaries,
-bound through the upstream-generated schema index (see RESOURCES below). The transitional
-endpoint layer still binds hand-written models in
-``notte_core.types`` (the source of truth, see docs/design/openapi-contract.md); operations
-are bound to them by schema name:
-
-- the schema's namesake in ``notte_core.types`` (or ``notte_core.credentials.base``), with
-  ``openapi_contract.SCHEMA_NAMES`` for models the API names differently and FastAPI's
-  ``-Input`` / ``-Output`` split;
-- ``RESPONSE_MODELS`` / ``REQUEST_MODELS`` below, where the SDK binds a model whose name is
-  neither (checked here for field compatibility);
-- ``QUERY_MODELS`` below for query parameters, which FastAPI flattens into the operation.
-
-A schema without a model is not generated: the body is typed ``BaseModel`` and the response
-``RawResponse`` (the JSON object, untyped), and the docstring says so.
-
-    uv run --no-sync python scripts/generate_sdk_endpoints.py                  # write the module
-    uv run --no-sync python scripts/generate_sdk_endpoints.py --check          # fail if it is stale
-    uv run --no-sync python scripts/generate_sdk_endpoints.py --check --against URL  # release gate
-    uv run --no-sync python scripts/generate_sdk_endpoints.py --report         # used / unused operations
+    uv run --no-sync python scripts/generate_sdk_endpoints.py
+    uv run --no-sync python scripts/generate_sdk_endpoints.py --check
+    uv run --no-sync python scripts/generate_sdk_endpoints.py --check --against URL
 """
 
 from __future__ import annotations
@@ -34,68 +16,64 @@ import argparse
 import ast
 import difflib
 import importlib.util
-import inspect
 import json
 import re
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import cache
 from pathlib import Path
 from types import ModuleType
 from typing import Any, cast
 
 from notte_core import types as wire_types
-from notte_core.credentials import base as credentials_base
 from pydantic import AliasChoices, BaseModel
 from pydantic.fields import FieldInfo
+from typing_extensions import override
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.openapi_contract import SCHEMA_NAMES, download  # noqa: E402
+from scripts.openapi_contract import download  # noqa: E402
 
 SNAPSHOT = REPO_ROOT / "openapi" / "openapi.json"
 SDK_SRC = REPO_ROOT / "packages" / "notte-sdk" / "src" / "notte_sdk"
 OUTPUT = SDK_SRC / "_generated" / "endpoints.py"
 
-# Modules whose models bind to schemas, with the alias the generated module imports them as.
-MODEL_MODULES = {"wire": wire_types, "credentials": credentials_base}
-
-# operationId -> model, where the SDK parses a response with a model that is not the schema's
-# namesake. Each entry is checked: the model's required fields must exist in the schema.
-RESPONSE_MODELS = {
-    "page_execute": "ExecutionResultResponse",  # schema ApiExecutionResponse
-    "page_observe": "ObserveResponse",  # alias of Observation
-    "page_scrape": "ScrapeResponse",  # alias of DataSpace
-    "scrape_webpage": "ScrapeResponse",  # alias of DataSpace
-    "profile_delete": "ExecutionResponse",  # schema ProfileDeleteResponse, same fields
-    "session_auth_readiness": "SessionAuthResponse",  # schema ManagedAuthReadiness
-    "session_cookies_set": "SetCookiesResponse",  # schema ExecutionResponse, same fields
+# Shared page factories; resource core ownership is declared separately below.
+# Values are (body model, response model); None means an untyped/no body or response.
+CORE_OPERATIONS = {
+    "health_check": (None, None),
+    "page_execute": (None, "ExecutionResultResponse"),
+    "page_observe": ("ObserveRequest", "ObserveResponse"),
+    "page_scrape": ("ScrapeRequest", "ScrapeResponse"),
+    "page_screenshot": (None, None),
+    "scrape_webpage": (None, "ScrapeResponse"),
 }
 
-# operationId -> model for request bodies FastAPI renders as an anonymous `Body_...` schema.
-REQUEST_MODELS = {
-    "session_cookies_set": "SetCookiesRequest",
-}
+NAMING = cast(dict[str, dict[str, Any]], json.loads((REPO_ROOT / "openapi/resources.json").read_text()))
 
-# operationId -> model holding the operation's query parameters. Its fields must be query
-# parameters of the operation, and it must cover the required ones.
-QUERY_MODELS = {
-    "function_download_url": "GetFunctionRequest",
-    "list_function_runs_by_function_id": "ListFunctionRunsRequest",
-    "list_functions": "ListFunctionsRequest",
-    "list_personas": "PersonaListRequest",
-    "list_sessions": "SessionListRequest",
-    "list_vaults": "VaultListRequest",
-    "persona_emails_list": "MessageReadRequest",
-    "persona_sms_list": "MessageReadRequest",
-    "profile_list": "ProfileListRequest",
-    "session_stop": "SessionStopRequest",
-    "vault_credentials_delete": "DeleteCredentialsRequest",
-    "vault_credentials_get": "GetCredentialsRequest",
-}
+
+def check_naming(spec: dict[str, Any]) -> None:
+    ids = {op.op_id for op in _parse(spec)}
+    if missing := ids - NAMING.keys():
+        raise GenerationError(f"Unmapped operations: {sorted(missing)}")
+    if stale := NAMING.keys() - ids:
+        raise GenerationError(f"Stale operation mappings: {sorted(stale)}")
+    names: set[tuple[str, str]] = set()
+    for entry in NAMING.values():
+        if entry.get("exclude"):
+            continue
+        key = (entry["resource"], entry["method"])
+        if key in names:
+            raise GenerationError(f"Duplicate resource method: {key}")
+        names.add(key)
+
+
+def public_method(operation: str) -> str:
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", NAMING[operation]["method"]).lower()
+
 
 # Headers the client sets on every request (BaseClient.headers), so they are not parameters.
 CLIENT_HEADERS = {"authorization", "x-notte-request-origin", "x-notte-sdk-version", "x-db-preview"}
@@ -132,6 +110,7 @@ class Operation:
     path: str
     tag: str
     summary: str
+    description: str
     path_params: list[str]
     query_params: dict[str, bool]  # name -> required
     header_params: dict[str, bool]
@@ -145,21 +124,6 @@ class Operation:
     @property
     def name(self) -> str:
         return self.op_id.lstrip("_")
-
-
-def _models() -> dict[str, Binding]:
-    index: dict[str, Binding] = {}
-    # wire_types last so it wins when both modules export a name.
-    for alias in ("credentials", "wire"):
-        module = MODEL_MODULES[alias]
-        for name, obj in vars(module).items():
-            if not (inspect.isclass(obj) and issubclass(obj, BaseModel) and name[0].isupper()):
-                continue
-            # Defined in the module, or an alias assigned there (`ObserveResponse = Observation`);
-            # plain imports are not part of its interface.
-            if obj.__module__ == module.__name__ or obj.__name__ != name:
-                index[name] = Binding(alias, name, obj)
-    return index
 
 
 def _ref_name(schema: JsonObject) -> str | None:
@@ -181,6 +145,7 @@ def _parse(spec: JsonObject) -> list[Operation]:
                 path=path,
                 tag=cast(list[str], op.get("tags", ["untagged"]))[0],
                 summary=cast(str, op.get("summary", "")).strip(),
+                description=cast(str, op.get("description", "")).strip(),
                 path_params=re.findall(r"\{(\w+)\}", path),
                 query_params={p["name"]: bool(p.get("required")) for p in params if p["in"] == "query"},
                 header_params={
@@ -227,14 +192,6 @@ def _parse_response(operation: Operation, responses: JsonObject) -> None:
         operation.response_shape = "untyped"
 
 
-def _namesake(models: dict[str, Binding], schema: str) -> Binding | None:
-    by_schema = {schema_name: model_name for model_name, schema_name in SCHEMA_NAMES.items()}
-    for candidate in (by_schema.get(schema), schema.removesuffix("-Input").removesuffix("-Output")):
-        if candidate is not None and candidate in models:
-            return models[candidate]
-    return None
-
-
 def _wire_names(name: str, info: FieldInfo) -> set[str]:
     """The keys a field reads: its name, alias and validation aliases (as openapi_contract matches them)."""
     alias = info.validation_alias
@@ -261,53 +218,29 @@ class Bound:
     query: Binding | None
 
 
-def _bind(spec: JsonObject, operations: list[Operation], models: dict[str, Binding], strict: bool) -> list[Bound]:
-    """Bind every operation to its models.
-
-    Not strict (a live API in the release gate): an operation that does not bind is left out,
-    so only the operations the SDK calls can fail the check.
-    """
-    by_id = {o.op_id: o for o in operations}
-    for table in (RESPONSE_MODELS, REQUEST_MODELS, QUERY_MODELS):
-        for op_id, model in table.items():
-            if model not in models:
-                raise GenerationError(f"{op_id} is bound to {model}, which is not a model in notte_core")
-            if strict and op_id not in by_id:
-                raise GenerationError(f"{op_id} is bound to {model} but is no longer in the spec")
+def _bind(spec: JsonObject, operations: list[Operation], strict: bool) -> list[Bound]:
+    """Retain core identity only for the explicitly shared page-operation group."""
+    by_name = {op.name: op for op in operations}
     result: list[Bound] = []
-    for op in operations:
+    for name, (body_name, response_name) in CORE_OPERATIONS.items():
+        if name not in by_name:
+            if strict:
+                raise GenerationError(f"Shared operation {name} is absent from the spec")
+            continue
+        op = by_name[name]
+        bindings: list[Binding | None] = []
         try:
-            result.append(_bind_operation(cast(JsonObject, spec["components"]["schemas"]), op, models))
+            for model_name, schema in ((body_name, op.body_schema), (response_name, op.response_schema)):
+                binding = Binding("wire", model_name, getattr(wire_types, model_name)) if model_name else None
+                if binding is not None and schema is not None:
+                    _check_fields(name, binding, spec["components"]["schemas"].get(schema))
+                bindings.append(binding)
         except GenerationError:
             if strict:
                 raise
+            continue
+        result.append(Bound(op, bindings[0], bindings[1], None))
     return result
-
-
-def _bind_operation(schemas: JsonObject, op: Operation, models: dict[str, Binding]) -> Bound:
-    body = response = query = None
-    if op.body_schema is not None:
-        if (name := REQUEST_MODELS.get(op.op_id)) is not None:
-            body = models[name]
-            _check_fields(f"{op.op_id} body", body, cast(JsonObject | None, schemas.get(op.body_schema)))
-        else:
-            body = _namesake(models, op.body_schema)
-    if op.response_schema is not None:
-        if (name := RESPONSE_MODELS.get(op.op_id)) is not None:
-            response = models[name]
-            schema = cast(JsonObject | None, schemas.get(op.response_schema))
-            _check_fields(f"{op.op_id} response", response, schema)
-        else:
-            response = _namesake(models, op.response_schema)
-    if (name := QUERY_MODELS.get(op.op_id)) is not None:
-        query = models[name]
-        fields = set(query.model.model_fields)
-        if extra := sorted(fields - op.query_params.keys()):
-            raise GenerationError(f"{op.op_id}: {name} sends query parameters the API lacks: {extra}")
-        required = {param for param, is_required in op.query_params.items() if is_required}
-        if missing := sorted(required - fields):
-            raise GenerationError(f"{op.op_id}: {name} lacks required query parameters: {missing}")
-    return Bound(op, body, response, query)
 
 
 def _docstring(bound: Bound) -> list[str]:
@@ -399,18 +332,10 @@ HEADER = '''\
 # Do not edit: run `make sdk-endpoints` after changing the snapshot, the bindings or the models.
 # The clients import this module and endpoints.base imports the client for typing (as in client.py):
 # pyright: reportImportCycles=false
-"""Notte API endpoints, one factory per OpenAPI operation.
+"""Shared page-operation factories and health; resource factories live in operations.py.
 
-Each factory returns the `NotteEndpoint` for its operation; the hand-written clients in
-`notte_sdk.endpoints` send it with `BaseClient.request` / `request_list`:
-
-    from notte_sdk._generated import endpoints as api
-
-    persona = self.request(api.persona_get(persona_id))
-
-Bodies and responses are the hand-written models of `notte_core.types` (bound by schema
-name). Operations whose schema has no model take a plain `BaseModel` body and parse the
-response as `RawResponse`; their docstrings say so. See docs/design/sdk-generated-endpoints.md.
+Page bodies/responses retain notte_core domain identity for local/cloud interoperability.
+Hand-written PageClient behavior is unchanged. Do not add core-bound resource factories here.
 """
 
 from __future__ import annotations
@@ -418,7 +343,6 @@ from __future__ import annotations
 from urllib.parse import quote
 
 from notte_core import types as wire
-from notte_core.credentials import base as credentials
 from pydantic import BaseModel
 
 from notte_sdk.endpoints.base import NotteEndpoint, RawResponse
@@ -432,8 +356,7 @@ def _segment(value: str) -> str:
 
 def render(spec: JsonObject, strict: bool = True) -> tuple[str, dict[str, str]]:
     """The generated module, and each operation's code by name."""
-    models = _models()
-    bound = _bind(spec, _parse(spec), models, strict)
+    bound = _bind(spec, _parse(spec), strict)
     info = cast(JsonObject, spec.get("info", {}))
     blocks: dict[str, str] = {}
     parts = [HEADER.format(title=info.get("title", "API"), version=info.get("version", "?"))]
@@ -446,11 +369,7 @@ def render(spec: JsonObject, strict: bool = True) -> tuple[str, dict[str, str]]:
         section = f"# {item.operation.tag}\n" if item.operation.tag != tag else ""
         tag = item.operation.tag
         parts.append(f"\n\n{section}{code}\n")
-    used_aliases = {alias for alias in MODEL_MODULES if f"{alias}." in "".join(blocks.values())}
     text = "".join(parts)
-    for alias in MODEL_MODULES:
-        if alias not in used_aliases:
-            text = re.sub(rf"^from .* import .* as {alias}\n", "", text, flags=re.M)
     if "BaseModel" not in "".join(blocks.values()):
         text = text.replace("from pydantic import BaseModel\n", "")
     return text, blocks
@@ -506,22 +425,189 @@ def _generated_models() -> ModuleType:
 class Resource:
     name: str
     operations: tuple[str, ...]
+    client_path: str = ""
 
 
-RESOURCES = (Resource("Profiles", ("profile_create", "profile_get", "profile_delete", "profile_list")),)
-# Explicit, reviewed exceptions to schema-derived binding. No core wire types.
+# Resource membership comes exclusively from the shared operation table. The one
+# payload mixin avoids a runtime import cycle in multipart/payload conveniences.
+RESOURCES = tuple(
+    Resource(
+        name,
+        tuple(
+            operation
+            for operation, entry in NAMING.items()
+            if not entry.get("exclude")
+            and not entry.get("pythonImplementation")
+            and ("RunPayloads" if operation == "prepare_run_payload_upload" else entry["resource"].title()) == name
+        ),
+        path,
+    )
+    for name, path in (
+        ("RunPayloads", ""),
+        ("Functions", "functions"),
+        ("Sessions", ""),
+        ("Files", "sessions"),
+        ("Personas", "personas"),
+        ("Profiles", "profiles"),
+        ("Vaults", "vaults"),
+    )
+)
+# Behavior-rich types keep their core identity. Request serialization bypasses
+# business validators; openapi_contract.py guards these core/schema bindings.
+CORE_MODELS = {
+    name: name
+    for name in (
+        "AddCredentialsRequest",
+        "AddCreditCardRequest",
+        "GetCredentialsResponse",
+        "GetCreditCardResponse",
+        "Credential",
+        "ListCredentialsResponse",
+    )
+}
 MODEL_OVERRIDES = {
+    **{
+        schema: ("core", public)
+        for schema, public in {
+            "ApiSessionStartRequest": "SessionStartRequest",
+            "SessionResponse": "SessionResponse",
+            "SessionDebugResponse": "SessionDebugResponse",
+            "ListSessionsParametersQuery": "SessionListRequest",
+            "ManagedAuthReadiness": "SessionAuthResponse",
+            "ReplayResponse": "ReplayResponse",
+            "BodySessionCookiesSetSessionsSessionIdCookiesPost": "SetCookiesRequest",
+            "ExecutionResponse": "SetCookiesResponse",
+            "Cookie": "Cookie",
+            "SessionProfile": "SessionProfile",
+            "NotteProxy": "NotteProxy",
+            "ExternalProxy": "ExternalProxy",
+            "GetCookiesResponse": "GetCookiesResponse",
+        }.items()
+    },
+    **{
+        schema: ("core", public)
+        for schema, public in {
+            "FunctionResponse": "GetFunctionResponse",
+            "FunctionWithLinkResponse": "GetFunctionWithLinkResponse",
+            "PaginatedResponseFunctionListItemResponse": "ListFunctionsResponse",
+            "GetFunctionRunResponse": "GetFunctionRunResponse",
+            "FunctionRunListItemResponse": "FunctionRunListItemResponse",
+            "PaginatedResponseFunctionRunListItemResponse": "ListFunctionRunsResponse",
+            "UpdateFunctionRunResponse": "UpdateFunctionRunResponse",
+            "ListFunctionsParametersQuery": "ListFunctionsRequest",
+            "ListFunctionRunsByFunctionIdParametersQuery": "ListFunctionRunsRequest",
+            "FunctionDownloadUrlParametersQuery": "GetFunctionRequest",
+        }.items()
+    },
+    "SessionProfilePreviewResponse": ("nested_models", "SessionProfilePreviewResponse"),
+    "RunPayloadUploadResponse": ("run_payloads_compat", "UploadResponse"),
+    "ListPersonasParametersQuery": ("core", "PersonaListRequest"),
+    "EmailResponse": ("core", "EmailResponse"),
+    "PersonaSmsListParametersQuery": ("models", "PersonaEmailsListParametersQuery"),
+    **{name: ("core", public) for name, public in CORE_MODELS.items()},
+    "ListVaultsParametersQuery": ("core", "VaultListRequest"),
     "ProfileDeleteResponse": ("profiles_compat", "ProfileDeleteResponse"),
     "ProfileResponse": ("profiles_compat", "ProfileResponse"),
     "ProfileListParametersQuery": ("profiles_compat", "ProfileListRequest"),
 }
 KEYWORD_NAMES = {
+    "ApiSessionStartRequest": "SessionStartRequestDict",
+    "ListSessionsParametersQuery": "SessionListRequestDict",
+    "SessionStopParametersQuery": "SessionStopRequestDict",
+    "BodySessionCookiesSetSessionsSessionIdCookiesPost": "SetCookiesRequestDict",
+    "SessionProfile": "SessionProfileDict",
+    "NotteProxy": "NotteProxyDict",
+    "ExternalProxy": "ExternalProxyDict",
+    "TailnetProxy": "TailnetProxyDict",
+    "BodyFunctionCreateFunctionsPost": "CreateFunctionRequestDict",
+    "FunctionUpdateParametersQuery": "UpdateFunctionRequestDict",
+    "ListFunctionsParametersQuery": "ListFunctionsRequestDict",
+    "ListFunctionRunsByFunctionIdParametersQuery": "ListFunctionRunsRequestDict",
+    "FunctionDownloadUrlParametersQuery": "GetFunctionRequestDict",
+    "ListPersonasParametersQuery": "PersonaListRequestDict",
+    "PersonaEmailsListParametersQuery": "MessageReadRequestDict",
+    "PersonaSmsListParametersQuery": "MessageReadRequestDict",
+    "VaultCredentialsGetParametersQuery": "GetCredentialsRequestDict",
+    "VaultCredentialsDeleteParametersQuery": "DeleteCredentialsRequestDict",
+    "ListVaultsParametersQuery": "VaultListRequestDict",
+    "CredentialsDictInput": "CredentialsDict",
+    "CreditCardDictInput": "CreditCardDict",
     "ProfileCreateRequest": "ProfileCreateRequestDict",
     "ProfileListParametersQuery": "ProfileListRequestDict",
 }
+KEYWORD_ANNOTATIONS = {
+    "ApiSessionStartRequest": {
+        "browser_type": "config.BrowserType",
+        "proxies": "list[core.ProxySettings] | list[ProxySettingsDict] | bool | core.ProxyGeolocationCountry | core.ProxyGeolocationCountryCode",
+        "viewport_width": "int | None",
+        "viewport_height": "int | None",
+        "profile": "SessionProfileDict | core.SessionProfile | None",
+        "auth_ids": "list[str]",
+    },
+    "NotteProxy": {"country": "core.ProxyGeolocationCountry | None"},
+    "ListSessionsParametersQuery": {"include_system": "bool | None"},
+    "SessionStopParametersQuery": {"close_reason": 'Literal["manual", "error"]'},
+    "BodySessionCookiesSetSessionsSessionIdCookiesPost": {"cookies": "list[core.Cookie] | list[config.CookieDict]"},
+    "FunctionRunGetMetadataParametersQuery": {"payload_mode": "str"},
+    "FunctionRunUpdateRequest": {
+        "logs": "list[str]",
+        "result": "Any | None",
+        "status": 'Literal["closed", "active", "failed"]',
+    },
+    "ListSessionFilesParametersQuery": {"source": "str | None"},
+}
+KEYWORD_DOCSTRINGS = {
+    "SessionStartRequestDict": 'Request dictionary for starting a session.\n\nArgs:\n    solve_captchas: Whether to try to automatically solve captchas\n    max_duration_minutes: Maximum session lifetime in minutes (absolute maximum).\n    idle_timeout_minutes: Idle timeout in minutes. Session closes after this period of inactivity.\n    proxies: List of custom proxies to use for the session. If True, the default proxies will be used.\n    browser_type: The browser type to use. Can be chromium or chrome.\n    user_agent: The user agent to use for the session\n    chrome_args: Overwrite the chrome instance arguments\n    viewport_width: The width of the viewport\n    viewport_height: The height of the viewport\n    aspect_ratio: Viewport shape preset ("5:4" or "16:9"). Cannot be combined with viewport_width/viewport_height.\n    cdp_url: The CDP URL of another remote session provider.\n    profile: Browser profile configuration for state persistence.\n    auth_ids: Up to 10 unique Managed Auth connection IDs. The API verifies them inline and can return an authenticating session while login continues.\n    wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.\n    auth_retry: Number of additional retries for transient managed-auth login failures, from 0 to 2. Each retry verifies the session again before submitting credentials. A blocked connection permits one explicit login attempt.',
+    "CreateFunctionRequestDict": "Request dictionary for creating a function.\n\nArgs:\n    path: The path to the function to upload.",
+    "UpdateFunctionRequestDict": "Request dictionary for updating a function.\n\nArgs:\n    path: The path to the function to upload.\n    function_id: The ID of the function to update.\n    version: The version of the function to update.",
+    "GetFunctionRequestDict": "Request dictionary for getting a function.\n\nArgs:\n    function_id: The ID of the function to get.\n    version: The version of the function to get.",
+    "ListFunctionsRequestDict": "Request dictionary for listing functions.\n\nArgs:\n    only_active: Whether to only list active functions.\n    page: The page number to list functions for.\n    page_size: The number of functions to list per page.",
+    "PersonaCreateRequestDict": "Request dictionary for creating a new persona.",
+    "PersonaListRequestDict": "Request dictionary for listing personas.",
+    "MessageReadRequestDict": """Request dictionary for reading emails.
+
+    Args:
+        limit: Max number of emails to return
+        timedelta: Return only emails that are not older than `timedelta`
+        unread_only: Return only previously unread emails
+    """,
+}
 # Existing public keyword surface; runtime exceptions live in _compat/profiles.py.
-HIDDEN_KEYWORDS = {"ProfileListParametersQuery": {"only_active", "only_current_token"}}
-NON_NULL_KEYWORDS = {"ProfileCreateRequest": {"name"}, "ProfileListParametersQuery": {"name"}}
+HIDDEN_KEYWORDS = {
+    "ApiSessionStartRequest": {"screenshot_type", "demonstrate"},
+    "ListSessionsParametersQuery": {"only_current_token"},
+    "BodyFunctionCreateFunctionsPost": {"response_format"},
+    "FunctionUpdateParametersQuery": {"restricted"},
+    "ListFunctionsParametersQuery": {"only_current_token", "include_system"},
+    "ListFunctionRunsByFunctionIdParametersQuery": {"only_current_token", "include_system", "source"},
+    "FunctionDownloadUrlParametersQuery": {"decryption_key"},
+    "FunctionRunUpdateRequest": {"payloads", "result_preview"},
+    "ListPersonasParametersQuery": {"only_current_token", "include_system"},
+    "ProfileListParametersQuery": {"only_active", "only_current_token"},
+    "ListVaultsParametersQuery": {"only_current_token", "include_system"},
+}
+NON_NULL_KEYWORDS = {
+    "ProfileCreateRequest": {"name"},
+    "ProfileListParametersQuery": {"name"},
+    "CredentialsDictInput": {"email", "username", "mfa_secret"},
+}
+# The SDK flattens these nested body fields into public kwargs. Field inventories
+# still come from the schema-derived models, including the standalone dictionaries.
+FLATTENED_KEYWORDS = {
+    "AddCredentialsRequest": {"credentials": "CredentialsDictInput"},
+    "AddCreditCardRequest": {"credit_card": "CreditCardDictInput"},
+}
+OPTIONAL_KEYWORDS = {
+    "FunctionRunUpdateRequest": {"status"},
+    "VaultCredentialsGetParametersQuery": {"url"},
+    "VaultCredentialsDeleteParametersQuery": {"url"},
+}
+EMPTY_REQUESTS = {
+    "vault_delete": "DeleteVaultRequest",
+    "vault_credentials_list": "ListCredentialsRequest",
+    "vault_credit_card_delete": "DeleteCreditCardRequest",
+    "vault_credit_card_get": "GetCreditCardRequest",
+}
 RESULT_FIELDS = {"profile_delete": "success"}
 RESOURCE_HEADER = (
     "# Generated by scripts/generate_sdk_endpoints.py; do not edit.\n# pyright: reportImportCycles=false\n"
@@ -538,9 +624,24 @@ def _binding(index: dict[str, str], ref: str) -> Binding:
 
 
 def _bound(index: dict[str, str], op: Operation) -> Bound:
-    if op.response_shape not in {"object", "array", "page"} or op.response_schema is None:
+    # Function clients expose the page envelope, unlike other list clients.
+    if op.name in {"list_functions", "list_function_runs_by_function_id"}:
+        op = replace(op, response_shape="object", response_schema=f"PaginatedResponse_{op.response_schema}_")
+    # Existing SDK calls omit these optional API-only metadata switches.
+    if op.name in {"session_cookies_set", "session_cookies_get", "session_offset"}:
+        op = replace(op, query_params={})
+    if op.response_shape == "untyped" and NAMING[op.op_id].get("pythonRawResponse"):
+        op = replace(op, response_shape="raw")
+    if op.response_shape not in {"object", "array", "page", "none", "raw"} or (
+        op.response_schema is None and op.response_shape not in {"none", "raw"}
+    ):
         raise GenerationError(f"{op.name}: unsupported resource response {op.response_shape}")
-    if op.header_params or op.method not in {"GET", "POST", "PATCH", "DELETE"}:
+    if set(op.header_params) != set(NAMING[op.op_id].get("pythonHeaders", [])) or op.method not in {
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE",
+    }:
         raise GenerationError(f"{op.name}: unsupported headers/method")
     body = query = None
     if op.body_content_type:
@@ -549,20 +650,32 @@ def _bound(index: dict[str, str], op: Operation) -> Bound:
         body = _binding(index, f"#/components/schemas/{op.body_schema}")
     if op.query_params:
         query = _binding(index, f"#/paths/{op.path.lstrip('/')}/{op.method.lower()}/parameters")
-    if body and query:
-        raise GenerationError(f"{op.name}: combined body/query needs an explicit public signature")
-    return Bound(op, body, _binding(index, f"#/components/schemas/{op.response_schema}"), query)
+    response = (
+        Binding("runtime", "RawResponse", BaseModel)
+        if op.response_shape in {"none", "raw"}
+        else _binding(index, f"#/components/schemas/{op.response_schema}")
+    )
+    # Preserve the existing public wire paths (including their trailing slash).
+    if op.name in {"list_functions", "list_function_runs_by_function_id", "list_sessions"}:
+        op = replace(op, path=op.path.rstrip("/") + "/")
+    return Bound(op, body, response, query)
 
 
 def _keywords(binding: Binding, classes: dict[str, ast.ClassDef]) -> str:
     name = binding.model.__name__
     keyword_name = KEYWORD_NAMES.get(name, f"{name}Dict")
     lines = [f"class {keyword_name}(TypedDict):"]
+    if docstring := KEYWORD_DOCSTRINGS.get(keyword_name):
+        lines.append(f"    {docstring!r}")
     for node in classes[name].body:
         if not isinstance(node, ast.AnnAssign) or not isinstance(node.target, ast.Name):
             continue
         field = node.target.id
         if field not in binding.model.model_fields or field in HIDDEN_KEYWORDS.get(name, set()):
+            continue
+        if nested := FLATTENED_KEYWORDS.get(name, {}).get(field):
+            model = cast(type[BaseModel], getattr(_generated_models(), nested))
+            lines.extend(_keywords(Binding("models", nested, model), classes).splitlines()[1:])
             continue
         annotation = node.annotation
         if isinstance(annotation, ast.Subscript) and ast.unparse(annotation.value) == "Annotated":
@@ -572,14 +685,57 @@ def _keywords(binding: Binding, classes: dict[str, ast.ClassDef]) -> str:
             if ast.unparse(annotation.right) != "None":
                 raise GenerationError(f"{name}.{field}: expected nullable keyword")
             annotation = annotation.left
+        if replacement := KEYWORD_ANNOTATIONS.get(name, {}).get(field):
+            annotation = ast.parse(replacement, mode="eval").body
+
+        # Qualify upstream generated model/enum references, preserving their exact types.
+        class Qualify(ast.NodeTransformer):
+            @override
+            def visit_Name(self, node: ast.Name) -> ast.expr:
+                if node.id in classes:
+                    for base in classes[node.id].bases:
+                        if isinstance(base, ast.Subscript) and ast.unparse(base.value) == "RootModel":
+                            primitive = base.slice
+                            if isinstance(primitive, ast.Name) and primitive.id in {"str", "int", "float", "bool"}:
+                                return primitive
+                    alias, public = MODEL_OVERRIDES.get(node.id, ("models", node.id))
+                    return ast.Attribute(value=ast.Name(id=alias, ctx=ast.Load()), attr=public, ctx=ast.Load())
+                return node
+
+        if not replacement:
+            annotation = Qualify().visit(annotation)
         # Support upstream Python annotations, not arbitrary OpenAPI schema reconstruction.
         if any(
-            isinstance(n, ast.Name) and n.id not in {"str", "int", "bool", "float", "list", "dict"}
+            isinstance(n, ast.Name)
+            and n.id
+            not in {
+                "str",
+                "int",
+                "bool",
+                "float",
+                "list",
+                "dict",
+                "timedelta_aliased",
+                "core",
+                "config",
+                "models",
+                "ProxySettingsDict",
+                "SessionProfileDict",
+                "Any",
+                "Literal",
+            }
             for n in ast.walk(annotation)
         ):
             raise GenerationError(f"{name}.{field}: unsupported keyword annotation {ast.unparse(annotation)}")
-        required = "Required" if binding.model.model_fields[field].is_required() else "NotRequired"
-        lines.append(f"    {field}: {required}[{ast.unparse(annotation)}]")
+        required = (
+            "Required"
+            if binding.model.model_fields[field].is_required() and field not in OPTIONAL_KEYWORDS.get(name, set())
+            else "NotRequired"
+        )
+        public_field = "path" if name == "BodyFunctionCreateFunctionsPost" and field == "file" else field
+        lines.append(f"    {public_field}: {required}[{ast.unparse(annotation)}]")
+    if name == "FunctionUpdateParametersQuery":
+        lines.append("    path: Required[str]")
     return "\n".join(lines) + "\n"
 
 
@@ -588,63 +744,253 @@ def _method(bound: Bound) -> str:
     assert bound.response is not None
     args = ["self", *(f"{p}: str" for p in op.path_params)]
     call_args = list(op.path_params)
-    lines: list[str] = []
+    entry = NAMING[op.op_id]
+    description = op.summary.replace(chr(34) * 3, " ")
+    doc = f"{description} (`{op.method} {op.path}`)."
+    if op.description:
+        doc += "\n\n" + op.description.replace(chr(34) * 3, " ")
+    lines: list[str] = ["        " + repr(doc)]
+    if bound.body and bound.query or op.header_params:
+        args.append("*")
+    if bound.body and bound.query:
+        query_name = KEYWORD_NAMES.get(bound.query.model.__name__, f"{bound.query.model.__name__}Dict")
+        args.append(f"query: {query_name} | None = None")
+        call_args.append("params=wire_request(None, query or {})")
+    for header in op.header_params:
+        args.append(f"{header.replace('-', '_')}: str")
     if request := bound.body or bound.query:
         keyword_name = KEYWORD_NAMES.get(request.model.__name__, f"{request.model.__name__}Dict")
         args.append(f"**data: Unpack[{keyword_name}]")
-        lines.append(f"        request = {request.ref}.model_validate(data)")
-        call_args.append("request" if bound.body else "params=request")
+        if op.name == "profile_list":
+            lines.append('        _ = data.setdefault("page_size", 20)  # SDK default differs from API 10.')
+        if op.name == "list_function_runs_by_function_id":
+            lines.append('        _ = data.setdefault("only_active", True)')
+        if op.name == "session_start":
+            lines.append(
+                "        request = wire_request(None, core.SessionStartRequest.from_data(dict(data)).model_dump(context={'wire': True}))"
+            )
+        elif request.model.__name__ in FLATTENED_KEYWORDS:
+            for field_name in FLATTENED_KEYWORDS[request.model.__name__]:
+                others = [name for name in request.model.model_fields if name != field_name]
+                lines.append("        values = dict(data)")
+                lines.append(
+                    f"        nested = {{key: values.pop(key) for key in list(values) if key not in {others!r}}}"
+                )
+                lines.append(f"        values[{field_name!r}] = nested")
+            lines.append(f"        request = wire_request({request.ref}, values)")
+        else:
+            lines.append(f"        request = wire_request({request.ref}, data)")
+        call_args.insert(len(op.path_params), "request") if bound.body else call_args.append("params=request")
+    if empty := EMPTY_REQUESTS.get(op.name):
+        args.append(f"**data: Unpack[{empty}Dict]")
+
     returns = bound.response.ref
     runtime = "request"
-    if op.response_shape in {"page", "array"}:
+    if op.response_shape == "array" or entry.get("pythonUnwrapItems"):
         runtime, returns = "request_list", f"Sequence[{returns}]"
-    call = f"self.{runtime}(api.{op.name}({', '.join(call_args)}))"
+    endpoint = f"api.{op.name}({', '.join(call_args)})"
+    if op.name in EMPTY_REQUESTS:
+        lines.append(f"        endpoint = {endpoint}")
+        lines.append("        if data:\n            endpoint = endpoint.with_params(wire_request(None, data))")
+        endpoint = "endpoint"
+    if op.response_shape == "raw":
+        runtime, returns = "_request", "Any"
+    headers = ""
+    if op.header_params:
+        headers = (
+            ", headers={" + ", ".join(f"{header!r}: {header.replace('-', '_')}" for header in op.header_params) + "}"
+        )
+    raw = ", check_response_detail=False" if op.response_shape == "raw" else ""
+    call = f"self.{runtime}({endpoint}{headers}{raw})"
+    if op.name == "session_auth_readiness":
+        call = f"self.{runtime}({endpoint}, timeout=10)"
     if field := RESULT_FIELDS.get(op.name):
         if bound.response.model.model_fields[field].annotation is not bool:
             raise GenerationError(f"{op.name}: result field must remain bool")
         call, returns = f"{call}.{field}", "bool"
-    lines.append(f"        return {call}")
-    return f"    def _{op.name}({', '.join(args)}) -> {returns}:\n" + "\n".join(lines) + "\n"
+    lines.append(f"        _ = {call}" if op.response_shape == "none" else f"        return {call}")
+    if op.response_shape == "none":
+        returns = "None"
+    decorator = f"    @track_usage({entry['telemetry']!r})\n" if entry.get("telemetry") else ""
+    return decorator + f"    def {public_method(op.op_id)}({', '.join(args)}) -> {returns}:\n" + "\n".join(lines) + "\n"
 
 
 def render_resources(spec: JsonObject) -> dict[str, str]:
+    check_naming(spec)
     index = cast(dict[str, str], json.loads((SDK_SRC / "_generated/schema_index.json").read_text()))
     tree = ast.parse((SDK_SRC / "_generated/models.py").read_text())
     classes = {node.name: node for node in tree.body if isinstance(node, ast.ClassDef)}
     operations = {op.name: op for op in _parse(spec)}
-    imports = "from notte_sdk._generated import models\nfrom notte_sdk._compat import profiles as profiles_compat\n"
-    factories = RESOURCE_HEADER + "from urllib.parse import quote\n" + imports
-    factories += 'from notte_sdk.endpoints.base import NotteEndpoint\n\ndef _segment(value: str) -> str:\n    return quote(value, safe="")\n'
-    clients = RESOURCE_HEADER + "from collections.abc import Sequence\nfrom typing import Unpack\n" + imports
-    clients += "from notte_sdk._generated import operations as api\nfrom notte_sdk._generated.typing import *\nfrom notte_sdk.endpoints.base import BaseClient\n"
+    imports = (
+        "from notte_core import types as core\nfrom notte_sdk._generated import models, nested_models\n"
+        + "".join(
+            f"from notte_sdk._compat import {alias.removesuffix('_compat')} as {alias}\n"
+            for alias in sorted({alias for alias, _ in MODEL_OVERRIDES.values() if alias.endswith("_compat")})
+        )
+    )
+    factories = (
+        RESOURCE_HEADER + "from urllib.parse import quote\nfrom notte_sdk.endpoints import base as runtime\n" + imports
+    )
+    factories += 'from pydantic import BaseModel\nfrom notte_sdk.endpoints.base import NotteEndpoint\n\ndef _segment(value: str) -> str:\n    return quote(value, safe="")\n'
+    clients = (
+        RESOURCE_HEADER
+        + "from collections.abc import Sequence\nfrom typing import TYPE_CHECKING, Any, Unpack\nfrom notte_core.common.telemetry import track_usage\n"
+        + imports
+    )
+    clients += "from notte_sdk._requests import wire_request\nfrom notte_sdk._generated import operations as api\nfrom notte_sdk._generated.typing import *\nfrom notte_sdk.endpoints.base import BaseClient\n"
+    clients += "\nif TYPE_CHECKING:\n    from notte_sdk.client import NotteClient\n"
     keywords: dict[str, str] = {}
+    public: dict[str, str] = {
+        "Credential": "credentials.Credential",
+        **{
+            name: f"core.{name}"
+            for name in (
+                "WebSocketUrls",
+                "Cookie",
+                "NotteProxy",
+                "ExternalProxy",
+                "ProxySettings",
+                "ManagedAuthOperation",
+                "TabSessionDebugResponse",
+                "SessionProfile",
+                "TailnetProxy",
+            )
+        },
+        "SessionProfileDict": "typing.SessionProfileDict",
+        "ProxySettingsDict": "typing.ProxySettingsDict",
+        "CreateFunctionRequest": "core.CreateFunctionRequest",
+        "UpdateFunctionRequest": "core.UpdateFunctionRequest",
+        "FunctionRunListItemResponse": "core.FunctionRunListItemResponse",
+        "SessionFile": "models.SessionFile",
+        "FileSource": "models.FileSource",
+    }
     for resource in RESOURCES:
-        clients += f"\n\nclass {resource.name}Operations(BaseClient):\n"
+        base = "RunPayloadsOperations" if resource.name == "Functions" else "BaseClient"
+        clients += f"\n\nclass {resource.name}Operations({base}):\n"
+        if resource.client_path:
+            clients += f"""
+    def __init__(self, root_client: "NotteClient", api_key: str | None = None,
+                 server_url: str | None = None, verbose: bool = False):
+        super().__init__(root_client=root_client, base_endpoint_path={resource.client_path!r},
+                         api_key=api_key, server_url=server_url, verbose=verbose)
+"""
         for name in resource.operations:
             if name not in operations:
                 raise GenerationError(f"Migrated operation {name} is absent from the spec")
             bound = _bound(index, operations[name])
-            factories += "\n\n" + _render_operation(bound) + "\n"
+            for binding in (bound.body, bound.query, bound.response):
+                if binding is None or binding.alias == "runtime" or binding.model.__name__ == "ProfileDeleteResponse":
+                    continue
+                public_name = (
+                    KEYWORD_NAMES.get(binding.model.__name__, "").removesuffix("Dict")
+                    if binding is not bound.response
+                    else ""
+                )
+                public[public_name or binding.name] = binding.ref
+            factory = _render_operation(bound)
+            for request in (bound.body, bound.query):
+                if request:
+                    factory = factory.replace(f": {request.ref}", ": BaseModel")
+            factories += "\n\n" + factory + "\n"
             clients += "\n" + _method(bound)
-            if request := bound.body or bound.query:
-                keywords[request.model.__name__] = _keywords(request, classes)
+            for request in (bound.body, bound.query):
+                if request:
+                    keywords[KEYWORD_NAMES.get(request.model.__name__, f"{request.model.__name__}Dict")] = _keywords(
+                        request, classes
+                    )
+    for nested in (
+        "CredentialsDictInput",
+        "CreditCardDictInput",
+        "BodyFunctionCreateFunctionsPost",
+        "FunctionUpdateParametersQuery",
+        "NotteProxy",
+        "ExternalProxy",
+        "TailnetProxy",
+        "SessionProfile",
+    ):
+        model = cast(type[BaseModel], getattr(_generated_models(), nested))
+        keywords[KEYWORD_NAMES.get(nested, f"{nested}Dict")] = _keywords(Binding("models", nested, model), classes)
+    nested_names = ["NotteProxyDict", "ExternalProxyDict", "TailnetProxyDict", "SessionProfileDict"]
+    keywords = {
+        **{name: keywords.pop(name) for name in nested_names},
+        "ProxySettingsDict": 'ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict | TailnetProxyDict, Field(discriminator="type")]\n',
+        **keywords,
+    }
+    for empty in EMPTY_REQUESTS.values():
+        keywords[f"{empty}Dict"] = f"class {empty}Dict(TypedDict):\n    pass\n"
     # Explicit imports keep generated typing strict and avoid wildcard exports.
-    keyword_names = [KEYWORD_NAMES.get(name, f"{name}Dict") for name in keywords]
+    keyword_names = list(keywords)
     clients = clients.replace(
         "from notte_sdk._generated.typing import *",
         "from notte_sdk._generated.typing import " + ", ".join(keyword_names),
     )
     typing = (
-        RESOURCE_HEADER + "from typing import NotRequired, Required, TypedDict\n\n\n" + "\n\n".join(keywords.values())
+        RESOURCE_HEADER
+        + "from datetime import timedelta as timedelta_aliased\nfrom typing import Annotated, Any, Literal, NotRequired, Required\nfrom pydantic import Field\nfrom notte_core import types as core\nfrom notte_core.common import config\nfrom notte_sdk._generated import models\nfrom typing_extensions import TypedDict\n\n\n"
+        + "\n\n".join(keywords.values())
     )
-    outputs = {"operations.py": factories, "resources.py": clients, "typing.py": typing}
+    public.update({name: f"typing.{name}" for name in keyword_names})
+    public.update({name: f"requests.{name}" for name in EMPTY_REQUESTS.values()})
+    public_module = RESOURCE_HEADER
+    for name, ref in sorted(public.items()):
+        alias, model_name = ref.split(".")
+        module = f"_compat.{alias.removesuffix('_compat')}" if alias.endswith("_compat") else f"_generated.{alias}"
+        source = (
+            "notte_core.types"
+            if alias == "core"
+            else "notte_core.credentials.base"
+            if alias == "credentials"
+            else f"notte_sdk.{module}"
+        )
+        public_module += f"from {source} import {model_name} as {name}\n"
+    public_module += f"\n__all__ = {sorted(public)!r}\n"
+    empty_models = RESOURCE_HEADER + "from pydantic import BaseModel\n\n"
+    for empty in EMPTY_REQUESTS.values():
+        empty_models += f"\nclass {empty}(BaseModel):\n    pass\n"
+
+    # Plain-data envelopes with nested behavioral objects are also generated:
+    # reuse the upstream AST and apply the same core type mapping to annotations.
+    class CoreNames(ast.NodeTransformer):
+        @override
+        def visit_Name(self, node: ast.Name) -> ast.expr:
+            alias, name = MODEL_OVERRIDES.get(node.id, ("models", node.id))
+            if alias == "core":
+                return ast.Attribute(value=ast.Name(id="core", ctx=ast.Load()), attr=name, ctx=ast.Load())
+            return node
+
+    nested = (
+        RESOURCE_HEADER
+        + "from typing import Annotated\nfrom pydantic import BaseModel, Field\nfrom notte_core import types as core\n\n"
+    )
+    for name, (alias, _) in MODEL_OVERRIDES.items():
+        if alias == "nested_models":
+            nested += ast.unparse(CoreNames().visit(classes[name])) + "\n\n"
+    outputs = {
+        "nested_models.py": nested,
+        "operations.py": factories,
+        "resources.py": clients,
+        "typing.py": typing,
+        "requests.py": empty_models,
+        "public.py": public_module,
+    }
     with tempfile.TemporaryDirectory(prefix="notte-sdk-resources-") as directory:
         for name, source in outputs.items():
             path = Path(directory) / name
             _ = path.write_text(source)
             for args in (["check", "--select", "E4,E7,E9,F,I", "--fix"], ["format", "--line-length", "120"]):
                 _ = subprocess.run(
-                    [sys.executable, "-m", "ruff", *args, "--isolated", str(path)], check=True, capture_output=True
+                    [
+                        sys.executable,
+                        "-m",
+                        "ruff",
+                        *args,
+                        "--isolated",
+                        "--config",
+                        'lint.isort.known-first-party=["notte_sdk"]',
+                        str(path),
+                    ],
+                    check=True,
+                    capture_output=True,
                 )
             outputs[name] = path.read_text()
     return outputs
@@ -737,11 +1083,12 @@ def main() -> int:
         return 1
     target = OUTPUT.relative_to(REPO_ROOT)
 
+    available = blocks.keys() | migrated_contracts(spec).keys()
     if args.report:
         used = used_operations()
-        for name in sorted(blocks):
+        for name in sorted(available):
             print(f"{'used  ' if name in used else 'unused'} {name}")
-        for name in sorted(used.keys() - blocks.keys()):
+        for name in sorted(used.keys() - available):
             print(f"MISSING {name} (called in {', '.join(used[name])})")
         return 0
 
@@ -751,7 +1098,7 @@ def main() -> int:
         if not OUTPUT.exists() or OUTPUT.read_text() != text:
             print(f"{target} is stale: run `make sdk-endpoints` and commit the result.", file=sys.stderr)
             return 1
-        if missing := sorted(used_operations().keys() - blocks.keys()):
+        if missing := sorted(used_operations().keys() - available):
             print(f"The SDK calls operations the spec lacks: {', '.join(missing)}", file=sys.stderr)
             return 1
         if args.against:

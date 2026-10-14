@@ -86,6 +86,7 @@ export function getRootDomain(url: string): string {
 }
 
 /**
+ * Explicit opt-in URL utility; vault request methods do not call it.
  * Normalise a credential URL to its root domain, the counterpart of
  * `notte_sdk.types.validate_url`. Throws `InvalidRequestError` when the URL
  * has no domain name.
@@ -126,6 +127,7 @@ export function isValidMfaSecret(secret: string): boolean {
 }
 
 /**
+ * Explicit opt-in utility; vault request methods leave validation to the API.
  * Validate an MFA secret like `AddCredentialsRequest.check_email_and_username`
  * in Python. Rejects one-time codes (`999777`) and anything that is not base32.
  */
@@ -136,6 +138,7 @@ export function validateMfaSecret(secret: string): void {
 }
 
 /**
+ * Explicit opt-in utility; vault request methods leave validation to the API.
  * Apply the client-side rules of Python's `AddCredentialsRequest`: exactly one
  * of `username` / `email`, and a base32 `mfa_secret` when one is provided.
  * Returns the credentials unchanged.
@@ -161,8 +164,8 @@ export function validateCredentials(credentials: CredentialsDictInput): Credenti
  *
  * The remote vault is created lazily on the first API operation so local-only
  * helpers such as `generatePassword()` stay side-effect free. Every API
- * failure rejects with a `NotteAPIError`; caller mistakes (invalid URL,
- * one-time code stored as an MFA secret, ...) reject with `InvalidRequestError`.
+ * failure rejects with a `NotteAPIError`, including server-side validation
+ * failures (422 for invalid URLs, credentials, or MFA secrets).
  * // pragma: allowlist secret
  * ```ts
  * const vault = client.Vault({ name: 'My vault' });
@@ -269,9 +272,9 @@ export class NotteVault {
   }
 
   /**
-   * Add or update the credentials stored for a website. The URL is reduced to
-   * its root domain (`https://github.com/login` → `github.com`) before it is
-   * sent, like Python's `AddCredentialsRequest`.
+   * Add or update the credentials stored for a website. Values are sent as
+   * supplied; the API validates credentials and reduces the URL to its root
+   * domain (`https://github.com/login` → `github.com`).
    *
    * ```ts
    * await vault.addCredentials('https://github.com/', {
@@ -282,13 +285,11 @@ export class NotteVault {
    * ```
    */
   async addCredentials(url: string, credentials: CredentialsDictInput): Promise<void> {
-    const domain = validateUrl(url);
-    validateCredentials(credentials);
     const vaultId = await this.ensureInitialized();
     await vaultCredentialsAdd({
       client: this.client.getClient(),
       path: { vault_id: vaultId },
-      body: { url: domain, credentials },
+      body: { url, credentials },
       throwOnError: true,
     });
   }
@@ -303,12 +304,11 @@ export class NotteVault {
    * ```
    */
   async getCredentials(url: string): Promise<CredentialsDictOutput> {
-    const domain = validateUrl(url);
     const vaultId = await this.ensureInitialized();
     const response = await vaultCredentialsGet({
       client: this.client.getClient(),
       path: { vault_id: vaultId },
-      query: { url: domain },
+      query: { url },
       throwOnError: true,
     });
     return response.data.credentials;
@@ -338,12 +338,11 @@ export class NotteVault {
    * ```
    */
   async deleteCredentials(url: string): Promise<void> {
-    const domain = validateUrl(url);
     const vaultId = await this.ensureInitialized();
     await vaultCredentialsDelete({
       client: this.client.getClient(),
       path: { vault_id: vaultId },
-      query: { url: domain },
+      query: { url },
       throwOnError: true,
     });
   }
@@ -391,7 +390,7 @@ export class NotteVault {
    * ```
    */
   async addCredentialsFromEnv(url: string): Promise<void> {
-    const rootDomain = validateUrl(url);
+    const rootDomain = getRootDomain(url);
     const prefix = rootDomain.replace(/\./g, '_').toUpperCase();
     const credentials: Partial<CredentialsDictInput> = {};
     const variableNames: string[] = [];

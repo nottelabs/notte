@@ -2,47 +2,40 @@ from __future__ import annotations
 
 import json
 import re
-from typing import TYPE_CHECKING, Any, ClassVar, Unpack, final, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Unpack, cast, final, overload
 
 import requests
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.errors.base import NotteBaseError
 from notte_core.types import (
-    CreateFunctionRequest,
-    CreateFunctionRequestDict,
     CreateFunctionRunRequest,
     CreateFunctionRunResponse,
-    DeleteFunctionResponse,
-    ForkFunctionRequest,
     FunctionRunResponse,
     FunctionRuntime,
-    FunctionRunUpdateRequest,
+    ReplayResponse,
+    RunFunctionRequestDict,
+)
+from typing_extensions import override
+
+from notte_sdk._generated import operations as api
+from notte_sdk._generated.public import (
+    CreateFunctionRequest,
+    CreateFunctionRequestDict,
+    FunctionRunGetMetadataParametersQueryDict,
     FunctionRunUpdateRequestDict,
     GetFunctionRequest,
-    GetFunctionRequestDict,
     GetFunctionResponse,
     GetFunctionRunResponse,
     GetFunctionWithLinkResponse,
-    ListFunctionRunsRequest,
-    ListFunctionRunsRequestDict,
-    ListFunctionRunsResponse,
-    ListFunctionsRequest,
-    ListFunctionsRequestDict,
-    ListFunctionsResponse,
-    ReplayResponse,
-    RunFunctionRequest,
-    RunFunctionRequestDict,
-    StartFunctionRunRequest,
-    UpdateFunctionRequest,
     UpdateFunctionRequestDict,
     UpdateFunctionRunResponse,
 )
-from pydantic import TypeAdapter
-
-from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.endpoints.run_payloads import PayloadMode, RunUpdateBody, offload_run_fields, resolve_run_fields
-from notte_sdk.endpoints.sessions import SessionsClient
+from notte_sdk._generated.resources import FunctionsOperations
+from notte_sdk._requests import wire_request
+from notte_sdk.endpoints.base import NotteEndpoint
+from notte_sdk.endpoints.run_payloads import RunUpdateBody, offload_run_fields, resolve_run_fields
+from notte_sdk.errors import NotteAPIError
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
@@ -67,7 +60,7 @@ class FailedToRunCloudFunctionError(NotteBaseError):
 
 
 @final
-class FunctionsClient(BaseClient):
+class FunctionsClient(FunctionsOperations):
     """
     Client for the Notte Functions API.
 
@@ -83,7 +76,8 @@ class FunctionsClient(BaseClient):
     DELETE_FUNCTION = "{function_id}"
     LIST_FUNCTIONS = ""
 
-    # RUN endpoints ...
+    # Legacy: create and start-by-run-id are absent from the committed spec.
+    # Streaming and multipart transfers remain hand-written.
     CREATE_FUNCTION_RUN = "{function_id}/runs/create"
     START_FUNCTION_RUN_WITHOUT_RUN_ID = "{function_id}/runs/start"
     STOP_FUNCTION_RUN = "{function_id}/runs/{run_id}"
@@ -94,26 +88,6 @@ class FunctionsClient(BaseClient):
     RUN_FUNCTION_ENDPOINT = "{function_id}/runs/{run_id}"
 
     FUNCTION_RUN_TIMEOUT: ClassVar[int] = 60 * 5  # 5 minutes
-
-    def __init__(
-        self,
-        root_client: "NotteClient",
-        api_key: str | None = None,
-        server_url: str | None = None,
-        verbose: bool = False,
-    ):
-        """
-        Initialize a FunctionsClient instance.
-
-        Initializes the client with an optional API key for function management.
-        """
-        super().__init__(
-            root_client=root_client,
-            base_endpoint_path="functions",
-            server_url=server_url,
-            api_key=api_key,
-            verbose=verbose,
-        )
 
     @staticmethod
     def _create_function_endpoint() -> NotteEndpoint[GetFunctionResponse]:
@@ -141,43 +115,13 @@ class FunctionsClient(BaseClient):
             A NotteEndpoint with the POST method that expects a GetFunctionResponse.
         """
         return NotteEndpoint(
-            path=FunctionsClient.UPDATE_FUNCTION.format(function_id=function_id, restricted=restricted),
+            path=(
+                function_id
+                if restricted is True
+                else FunctionsClient.UPDATE_FUNCTION.format(function_id=function_id, restricted=restricted)
+            ),
             response=GetFunctionResponse,
             method="POST",
-        )
-
-    @staticmethod
-    def _get_function_endpoint(function_id: str) -> NotteEndpoint[GetFunctionWithLinkResponse]:
-        """
-        Returns a NotteEndpoint configured for getting a function with download URL.
-
-        Args:
-            function_id: The ID of the function to get.
-
-        Returns:
-            A NotteEndpoint with the GET method that expects a GetFunctionWithLinkResponse.
-        """
-        return NotteEndpoint(
-            path=FunctionsClient.GET_FUNCTION.format(function_id=function_id),
-            response=GetFunctionWithLinkResponse,
-            method="GET",
-        )
-
-    @staticmethod
-    def _delete_function_endpoint(function_id: str) -> NotteEndpoint[DeleteFunctionResponse]:
-        """
-        Returns a NotteEndpoint configured for deleting a function.
-
-        Args:
-            function_id: The ID of the function to delete.
-
-        Returns:
-            A NotteEndpoint with the DELETE method.
-        """
-        return NotteEndpoint(
-            path=FunctionsClient.DELETE_FUNCTION.format(function_id=function_id),
-            response=DeleteFunctionResponse,
-            method="DELETE",
         )
 
     @staticmethod
@@ -188,17 +132,6 @@ class FunctionsClient(BaseClient):
         return NotteEndpoint(
             path=FunctionsClient.CREATE_FUNCTION_RUN.format(function_id=function_id),
             response=CreateFunctionRunResponse,
-            method="POST",
-        )
-
-    @staticmethod
-    def _fork_function_endpoint(function_id: str) -> NotteEndpoint[GetFunctionResponse]:
-        """
-        Returns a NotteEndpoint configured for forking a function.
-        """
-        return NotteEndpoint(
-            path=FunctionsClient.FORK_FUNCTION.format(function_id=function_id),
-            response=GetFunctionResponse,
             method="POST",
         )
 
@@ -224,64 +157,6 @@ class FunctionsClient(BaseClient):
             method="POST",
         )
 
-    @staticmethod
-    def _stop_function_run_endpoint(function_id: str, run_id: str) -> NotteEndpoint[UpdateFunctionRunResponse]:
-        """
-        Returns a NotteEndpoint configured for stopping a function run.
-        """
-        return NotteEndpoint(
-            path=FunctionsClient.STOP_FUNCTION_RUN.format(function_id=function_id, run_id=run_id),
-            response=UpdateFunctionRunResponse,
-            method="DELETE",
-        )
-
-    @staticmethod
-    def _get_function_run_endpoint(function_id: str, run_id: str) -> NotteEndpoint[GetFunctionRunResponse]:
-        """
-        Returns a NotteEndpoint configured for getting a function run.
-        """
-        return NotteEndpoint(
-            path=FunctionsClient.GET_FUNCTION_RUN.format(function_id=function_id, run_id=run_id),
-            response=GetFunctionRunResponse,
-            method="GET",
-        )
-
-    @staticmethod
-    def _list_function_runs_endpoint(function_id: str) -> NotteEndpoint[ListFunctionRunsResponse]:
-        """
-        Returns a NotteEndpoint configured for listing all function runs.
-        """
-        return NotteEndpoint(
-            path=FunctionsClient.LIST_FUNCTION_RUNS.format(function_id=function_id),
-            response=ListFunctionRunsResponse,
-            method="GET",
-        )
-
-    @staticmethod
-    def _update_function_run_endpoint(function_id: str, run_id: str) -> NotteEndpoint[UpdateFunctionRunResponse]:
-        """
-        Returns a NotteEndpoint configured for updating a function run.
-        """
-        return NotteEndpoint(
-            path=FunctionsClient.UPDATE_FUNCTION_RUN.format(function_id=function_id, run_id=run_id),
-            response=UpdateFunctionRunResponse,
-            method="PATCH",
-        )
-
-    @staticmethod
-    def _list_functions_endpoint() -> NotteEndpoint[ListFunctionsResponse]:
-        """
-        Returns a NotteEndpoint configured for listing all functions.
-
-        Returns:
-            A NotteEndpoint with the GET method that expects a ListFunctionsResponse.
-        """
-        return NotteEndpoint(
-            path=FunctionsClient.LIST_FUNCTIONS,
-            response=ListFunctionsResponse,
-            method="GET",
-        )
-
     @track_usage("cloud.function.create")
     def create(self, **data: Unpack[CreateFunctionRequestDict]) -> GetFunctionResponse:
         """
@@ -293,20 +168,9 @@ class FunctionsClient(BaseClient):
         Returns:
             GetFunctionResponse: The created function information.
         """
-        request = CreateFunctionRequest.model_validate(data)
-        endpoint = self._create_function_endpoint().with_file(request.path).with_request(request)
+        request = wire_request(CreateFunctionRequest, data)
+        endpoint = self._create_function_endpoint().with_file(data["path"]).with_request(request)
         response = self.request(endpoint)
-        return response
-
-    @track_usage("cloud.function.fork")
-    def fork(self, function_id: str) -> GetFunctionResponse:
-        """
-        Fork a function.
-        """
-        request = ForkFunctionRequest(function_id=function_id)
-        endpoint = self._fork_function_endpoint(function_id).with_request(request)
-        response = self.request(endpoint)
-        logger.info(f"[Function] {response.function_id} forked successfully from function_id={function_id}")
         return response
 
     @track_usage("cloud.function.update")
@@ -323,81 +187,31 @@ class FunctionsClient(BaseClient):
         Returns:
             GetFunctionResponse: The updated function information.
         """
-        request = UpdateFunctionRequest.model_validate(data)
-        endpoint = self._update_function_endpoint(function_id, restricted=restricted).with_file(request.path)
-        if request.version is not None:
-            endpoint = endpoint.with_params(GetFunctionRequest(version=request.version))
+        endpoint = self._update_function_endpoint(function_id, restricted=restricted).with_file(data["path"])
+        if (version := data.get("version")) is not None:
+            endpoint = endpoint.with_params(wire_request(GetFunctionRequest, {"version": version}))
         response = self.request(endpoint)
         return response
-
-    @track_usage("cloud.function.get")
-    def get(self, function_id: str, **data: Unpack[GetFunctionRequestDict]) -> GetFunctionWithLinkResponse:
-        """
-        Get a function with download URL.
-
-        Args:
-            function_id: The ID of the function to get.
-            **data: Unpacked dictionary containing parameters for the request.
-
-        Returns:
-            GetFunctionWithLinkResponse: Response containing the function information and download URL.
-        """
-        params = GetFunctionRequest.model_validate(data)
-        response = self.request(self._get_function_endpoint(function_id).with_params(params))
-        return response
-
-    @track_usage("cloud.function.delete")
-    def delete(self, function_id: str) -> DeleteFunctionResponse:
-        """
-        Delete a function.
-
-        Args:
-            function_id: The ID of the function to delete.
-        """
-        return self.request(self._delete_function_endpoint(function_id))
-
-    @track_usage("cloud.function.list")
-    def list(self, **data: Unpack[ListFunctionsRequestDict]) -> ListFunctionsResponse:
-        """
-        List all available functions.
-
-        Args:
-            **data: Unpacked dictionary containing parameters for the request.
-
-        Returns:
-            ListFunctionsResponse: Response containing the list of functions.
-        """
-        params = ListFunctionsRequest.model_validate(data)
-        return self.request(self._list_functions_endpoint().with_params(params))
 
     def create_run(self, function_id: str) -> CreateFunctionRunResponse:
         request = CreateFunctionRunRequest()
         return self.request(self._create_function_run_endpoint(function_id).with_request(request))
 
-    def stop_run(self, function_id: str, run_id: str) -> UpdateFunctionRunResponse:
-        return self.request(self._stop_function_run_endpoint(function_id, run_id))
-
-    def get_run(self, function_id: str, run_id: str) -> GetFunctionRunResponse:
-        endpoint = self._get_function_run_endpoint(function_id, run_id).with_params(PayloadMode())
+    @override
+    def run_get_metadata(
+        self, function_id: str, run_id: str, **data: Unpack[FunctionRunGetMetadataParametersQueryDict]
+    ) -> GetFunctionRunResponse:
+        _ = data.setdefault("payload_mode", "references")
+        endpoint = api.function_run_get_metadata(function_id, run_id, params=wire_request(None, data))
         return GetFunctionRunResponse.model_validate(resolve_run_fields(self._request(endpoint)))
 
-    def update_run(
+    @override
+    def run_update_metadata(
         self, function_id: str, run_id: str, **data: Unpack[FunctionRunUpdateRequestDict]
     ) -> UpdateFunctionRunResponse:
-        request = FunctionRunUpdateRequest.model_validate(data)
-        endpoint = self._update_function_run_endpoint(function_id, run_id)
-        fields = request.model_dump(mode="json", exclude_unset=True)
-        body = offload_run_fields(self, endpoint.path, fields)
-        return self.request(endpoint.with_request(RunUpdateBody(body)))
-
-    def list_runs(self, function_id: str, **data: Unpack[ListFunctionRunsRequestDict]) -> ListFunctionRunsResponse:
-        """
-        List all function runs.
-
-        Use `list_runs(only_active=False)` to retrieve all runs, including completed ones.
-        """
-        request = ListFunctionRunsRequest.model_validate(data)
-        return self.request(self._list_function_runs_endpoint(function_id).with_params(request))
+        fields = wire_request(None, data).model_dump(mode="json")
+        body = offload_run_fields(self, function_id, run_id, fields)
+        return self.request(api.function_run_update_metadata(function_id, run_id, RunUpdateBody(body)))
 
     @staticmethod
     def decode_message(text: str):
@@ -470,20 +284,23 @@ class FunctionsClient(BaseClient):
 
         return "".join(result_parts)
 
-    def run(
+    def run_start(
         self, function_run_id: str, timeout: int | None = None, **data: Unpack[RunFunctionRequestDict]
     ) -> FunctionRunResponse:
-        _request = RunFunctionRequest.model_validate(data)
-        request = StartFunctionRunRequest(
-            function_id=_request.function_id,
-            function_run_id=function_run_id,
-            variables=_request.variables,
-            stream=_request.stream,
-            runtime=_request.runtime,
+        # Reversible SDK normalization: legacy workflow spelling wins, as in AliasChoices.
+        function_id = cast(str, data.get("workflow_id", data.get("function_id")))
+        stream = data.get("stream", True)
+        values = {
+            "workflow_id": function_id,
+            "workflow_run_id": function_run_id,
+            "variables": data.get("variables"),
+            "stream": stream,
+            "runtime": data.get("runtime"),
+        }
+        request = wire_request(None, {key: value for key, value in values.items() if value is not None})
+        endpoint = self._start_function_run_endpoint(function_id=function_id, run_id=function_run_id).with_request(
+            request
         )
-        endpoint = self._start_function_run_endpoint(
-            function_id=request.function_id, run_id=function_run_id
-        ).with_request(request)
 
         headers = {"x-notte-api-key": self.token}
         headers["Content-Type"] = "application/json"
@@ -492,8 +309,10 @@ class FunctionsClient(BaseClient):
         req_data = request.model_dump_json(exclude_none=True)
         timeout = timeout or self.FUNCTION_RUN_TIMEOUT
 
-        if not request.stream:
+        if not stream:
             res = requests.post(url=url, headers=headers, data=req_data, timeout=timeout, stream=True)
+            if not res.ok:
+                raise NotteAPIError(path=self._error_path(endpoint), response=res)
             return FunctionRunResponse.model_validate(res.json())
 
         INITIAL = object()
@@ -501,7 +320,8 @@ class FunctionsClient(BaseClient):
 
         session_id = None
         with requests.post(url=url, headers=headers, data=req_data, timeout=timeout, stream=True) as res:
-            res.raise_for_status()
+            if not res.ok:
+                raise NotteAPIError(path=self._error_path(endpoint), response=res)
             for line in res.iter_lines():
                 if not line:  # Skip empty lines
                     continue
@@ -525,9 +345,7 @@ class FunctionsClient(BaseClient):
                             session_id = log_msg
                             try:
                                 # Keep this optional lookup from using the normal 60-second request timeout.
-                                status_endpoint = SessionsClient._session_status_endpoint(  # pyright: ignore[reportPrivateUsage]
-                                    session_id=session_id
-                                )
+                                status_endpoint = api.session_status(session_id=session_id)
                                 viewer_url = self.root_client.sessions.request(status_endpoint, timeout=2).viewer_url
                             except Exception:
                                 # Viewer discovery is optional; errors may also contain credentials.
@@ -617,7 +435,7 @@ class NotteFunction:
     def response(self) -> GetFunctionResponse | GetFunctionWithLinkResponse:
         if self._response is not None:
             return self._response
-        self._response = self.client.get(function_id=self._function_id)
+        self._response = self.client.download_url(function_id=self._function_id)
         logger.info(f"[Function] {self._response.function_id} metadata retrieved successfully.")
         return self._response
 
@@ -709,7 +527,7 @@ class NotteFunction:
 
     def get_url(self, version: str | None = None, decryption_key: str | None = None) -> str:
         if not isinstance(self.response, GetFunctionWithLinkResponse) or version != self.response.latest_version:
-            self._response = self.client.get(function_id=self.response.function_id, version=version)
+            self._response = self.client.download_url(function_id=self.response.function_id, version=version)
             url = self._response.url
         else:
             url = self.response.url
@@ -815,7 +633,6 @@ class NotteFunction:
 
         > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the function will fail.
         """
-        runtime = TypeAdapter[FunctionRuntime | None](FunctionRuntime | None).validate_python(runtime)
         if input_variables is not None:
             if duplicates := input_variables.keys() & variables.keys():
                 raise ValueError(f"Duplicate input variables: {sorted(duplicates)}")
@@ -832,7 +649,7 @@ class NotteFunction:
         logger.info(
             f"[Function Run] {function_run_id} created and scheduled for cloud execution with raise_on_failure={raise_on_failure}."
         )
-        res = self.client.run(
+        res = self.client.run_start(
             function_id=self.response.function_id,
             function_run_id=function_run_id,
             stream=stream,
@@ -850,14 +667,14 @@ class NotteFunction:
         Manually stop a function run by its ID.
 
         """
-        return self.client.stop_run(function_id=self.function_id, run_id=run_id)
+        return self.client.run_stop(function_id=self.function_id, run_id=run_id)
 
     def get_run(self, run_id: str) -> GetFunctionRunResponse:
         """
         Get a function run by its ID.
 
         """
-        return self.client.get_run(function_id=self.function_id, run_id=run_id)
+        return self.client.run_get_metadata(function_id=self.function_id, run_id=run_id)
 
     def get_curl(self, **variables: Any) -> str:
         """

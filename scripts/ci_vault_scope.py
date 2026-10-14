@@ -17,6 +17,7 @@ from __future__ import annotations
 import os
 import re
 import sys
+from functools import wraps
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -77,6 +78,7 @@ def install() -> None:
 
     original_create = VaultsClient.create
 
+    @wraps(original_create)
     def create(self: Any, **data: Any) -> Any:
         name = data.get("name")
         if name is None or name == "default":

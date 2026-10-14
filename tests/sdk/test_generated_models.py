@@ -27,11 +27,104 @@ def test_every_component_has_an_importable_generated_type() -> None:
 def test_unmigrated_and_page_operation_types_still_reexport_core() -> None:
     for name, cls in vars(core).items():
         if not name.startswith("_") and name not in {
+            "SessionStartRequest",
+            "SessionStartRequestDict",
+            "SessionResponse",
+            "SessionListRequest",
+            "SessionListRequestDict",
+            "WebSocketUrls",
+            "TabSessionDebugResponse",
+            "ManagedAuthOperation",
+            "SessionStopRequest",
+            "SessionStopRequestDict",
+            "SessionAuthResponse",
+            "SessionDebugResponse",
+            "SessionOffsetResponse",
+            "ReplayResponse",
+            "Cookie",
+            "GetCookiesResponse",
+            "SetCookiesRequest",
+            "SetCookiesResponse",
+            "SessionProfile",
+            "SessionProfileDict",
+            "NotteProxy",
+            "NotteProxyDict",
+            "ExternalProxy",
+            "ExternalProxyDict",
+            "TailnetProxy",
+            "TailnetProxyDict",
+            "ProxySettings",
+            "ProxySettingsDict",
+            "CreateFunctionRequest",
+            "CreateFunctionRequestDict",
+            "UpdateFunctionRequest",
+            "UpdateFunctionRequestDict",
+            "GetFunctionRequest",
+            "GetFunctionRequestDict",
+            "GetFunctionResponse",
+            "GetFunctionWithLinkResponse",
+            "DeleteFunctionResponse",
+            "ListFunctionsRequest",
+            "ListFunctionsRequestDict",
+            "ListFunctionsResponse",
+            "FunctionRunUpdateRequest",
+            "FunctionRunUpdateRequestDict",
+            "GetFunctionRunResponse",
+            "FunctionRunListItemResponse",
+            "ListFunctionRunsRequest",
+            "ListFunctionRunsRequestDict",
+            "ListFunctionRunsResponse",
+            "UpdateFunctionRunResponse",
+            "FileSource",
+            "SessionFile",
+            "SessionFilesPage",
+            "PersonaCreateRequest",
+            "PersonaCreateRequestDict",
+            "PersonaListRequest",
+            "PersonaListRequestDict",
+            "PersonaResponse",
+            "DeletePersonaResponse",
+            "MessageReadRequest",
+            "MessageReadRequestDict",
+            "EmailResponse",
+            "SMSResponse",
             "ProfileCreateRequest",
             "ProfileCreateRequestDict",
             "ProfileListRequest",
             "ProfileListRequestDict",
             "ProfileResponse",
+            "AddCredentialsRequest",
+            "AddCreditCardRequest",
+            "DeleteCredentialsRequest",
+            "DeleteCredentialsResponse",
+            "DeleteCreditCardRequest",
+            "DeleteCreditCardResponse",
+            "DeleteVaultRequest",
+            "DeleteVaultResponse",
+            "GetCredentialsRequest",
+            "GetCredentialsResponse",
+            "GetCreditCardRequest",
+            "GetCreditCardResponse",
+            "ListCredentialsRequest",
+            "VaultListRequest",
+            "AddCredentialsResponse",
+            "AddCreditCardResponse",
+            "Credential",
+            "ListCredentialsResponse",
+            "Vault",
+            "VaultCreateRequest",
+            "AddCredentialsRequestDict",
+            "AddCreditCardRequestDict",
+            "CredentialsDict",
+            "CreditCardDict",
+            "DeleteCredentialsRequestDict",
+            "DeleteCreditCardRequestDict",
+            "DeleteVaultRequestDict",
+            "GetCredentialsRequestDict",
+            "GetCreditCardRequestDict",
+            "ListCredentialsRequestDict",
+            "VaultCreateRequestDict",
+            "VaultListRequestDict",
         }:
             assert getattr(public, name) is cls
     assert issubclass(public.ProfileResponse, models.ProfileResponse)
@@ -88,3 +181,29 @@ def test_function_aliases_are_not_mistaken_for_core_alias_choices() -> None:
     assert "workflow_id" in fields and "function_id" in fields
     assert fields["workflow_id"].is_required() and fields["function_id"].is_required()
     assert core.GetFunctionResponse.model_fields["function_id"].validation_alias is not None
+
+
+def test_inline_enums_are_literals_and_named_enums_keep_string_behavior() -> None:
+    from enum import StrEnum
+    from typing import Literal, get_origin
+
+    from pydantic import TypeAdapter
+
+    for model, field, value in [
+        (models.SessionResponse, "status", "closed"),
+        (models.SessionResponse, "browser_type", "chromium"),
+        (models.DeleteVaultResponse, "status", "success"),
+        (models.GetFunctionRunResponse, "status", "closed"),
+        (models.Cookie, "sameSite", "Lax"),
+    ]:
+        annotation = model.model_fields[field].annotation
+        assert annotation is not None
+        assert TypeAdapter(annotation).validate_python(value) == value
+        # Nullable fields contain a Literal inside a union.
+        assert "Literal" in str(annotation) or get_origin(annotation) is Literal
+    for enum, value in [(models.ProxyGeolocationCountry, "fr"), (models.FileSource, "user_upload")]:
+        member = enum(value)
+        assert isinstance(member, StrEnum)
+        assert isinstance(member, str)
+        assert member == value
+        assert member.value == value

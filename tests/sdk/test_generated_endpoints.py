@@ -10,7 +10,8 @@ from typing import Any
 
 import pytest
 from notte_sdk import NotteClient
-from notte_sdk._generated import endpoints as api
+from notte_sdk._generated import endpoints as page_api
+from notte_sdk._generated import operations as api
 from notte_sdk.endpoints.base import RawResponse
 from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import GetCredentialsRequest
@@ -130,8 +131,8 @@ def test_persona_requests(client: NotteClient, monkeypatch: pytest.MonkeyPatch) 
     session.payload = {"items": [PERSONA], "page": 1, "page_size": 10}
     assert [p.persona_id for p in client.personas.list(page_size=10)] == ["persona-1"]
     session.payload = []
-    assert client.personas.list_emails("persona-1", only_unread=True, limit=5) == []
-    assert client.personas.list_sms("persona-1") == []
+    assert client.personas.emails_list("persona-1", only_unread=True, limit=5) == []
+    assert client.personas.sms_list("persona-1") == []
     session.payload = {"status": "success", "message": "deleted"}
     _ = client.personas.delete("persona-1")
     session.payload = {"phone_number": "+1555", "status": "success"}
@@ -142,14 +143,14 @@ def test_persona_requests(client: NotteClient, monkeypatch: pytest.MonkeyPatch) 
     assert [(c.method, c.url.removeprefix(SERVER), c.params) for c in session.calls] == [
         ("GET", "/personas/persona-1", None),
         ("POST", "/personas/create", None),
-        ("GET", "/personas", {"only_active": True, "page_size": 10, "page": 1}),
+        ("GET", "/personas", {"page_size": 10}),
         ("GET", "/personas/persona-1/emails", {"limit": 5, "only_unread": True}),
-        ("GET", "/personas/persona-1/sms", {"limit": 10, "only_unread": False}),
+        ("GET", "/personas/persona-1/sms", {}),
         ("DELETE", "/personas/persona-1", None),
         ("POST", "/personas/persona-1/sms/number", None),
         ("DELETE", "/personas/persona-1/sms/number", None),
     ]
-    assert json.loads(session.calls[1].data) == {"create_vault": False, "create_phone_number": False}
+    assert json.loads(session.calls[1].data) == {"create_vault": False}
 
 
 def test_profile_requests(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -164,7 +165,7 @@ def test_profile_requests(client: NotteClient, monkeypatch: pytest.MonkeyPatch) 
     assert [(c.method, c.url.removeprefix(SERVER), c.params) for c in session.calls] == [
         ("POST", "/profiles/create", None),
         ("GET", "/profiles/profile-1", None),
-        ("GET", "/profiles", {"page": 1, "page_size": 20, "name": "p"}),
+        ("GET", "/profiles", {"page_size": 20, "name": "p"}),
         ("DELETE", "/profiles/profile-1", None),
     ]
 
@@ -181,19 +182,17 @@ def test_vault_requests(client: NotteClient, monkeypatch: pytest.MonkeyPatch) ->
     session.payload = {"items": [VAULT], "page": 1, "page_size": 10}
     assert len(client.vaults.list()) == 1
     session.payload = {"credentials": []}
-    _ = client.vaults.list_credentials("vault-1")
+    _ = client.vaults.credentials_list("vault-1")
     session.payload = {"credentials": {"email": "a@example.test", "password": "pw"}}  # pragma: allowlist secret
-    _ = client.vaults.get_credentials("vault-1", url="https://www.notte.cc/login")
+    _ = client.vaults.credentials_get("vault-1", url="https://www.notte.cc/login")
     session.payload = {"status": "success", "message": "ok"}
-    _ = client.vaults.delete_credentials("vault-1", url="https://www.notte.cc/login")
-    _ = client.vaults.delete_credit_card("vault-1")
+    _ = client.vaults.credentials_delete("vault-1", url="https://www.notte.cc/login")
+    _ = client.vaults.credit_card_delete("vault-1")
     _ = client.vaults.delete("vault-1")
-    with pytest.raises(ValueError):
-        _ = client.vaults.delete("vault-1", unexpected=True)  # pyright: ignore[reportCallIssue]
 
     assert [(c.method, c.url.removeprefix(SERVER), c.params) for c in session.calls] == [
         ("POST", "/vaults/create", None),
-        ("GET", "/vaults", {"only_active": True, "page_size": 10, "page": 1}),
+        ("GET", "/vaults", {}),
         ("GET", "/vaults/vault-1", None),
         ("GET", "/vaults/vault-1/credentials", {"url": url}),
         ("DELETE", "/vaults/vault-1/credentials", {"url": url}),
@@ -212,6 +211,6 @@ def test_errors_name_the_generated_path(client: NotteClient, monkeypatch: pytest
 
 def test_raw_response_keeps_every_field(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
     _ = fake(monkeypatch, {"status": "ok", "version": "1"})
-    response = client.sessions.request(api.health_check())
+    response = client.sessions.request(page_api.health_check())
     assert isinstance(response, RawResponse)
     assert response.model_dump() == {"status": "ok", "version": "1"}

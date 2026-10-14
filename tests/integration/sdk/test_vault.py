@@ -82,13 +82,15 @@ def test_all_credentials_in_system_prompt():
 def test_add_wrong_otp():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    with client.Vault() as vault, pytest.raises(ValueError):
+    with client.Vault() as vault, pytest.raises(NotteAPIError) as error:
         _ = vault.add_credentials(
             url="https://github.com/",
             email="xyz@notte.cc",
             password="xyz",  # pragma: allowlist secret
             mfa_secret="999777",  # pragma: allowlist secret
         )
+
+    assert error.value.status_code == 422
 
 
 def test_add_correct_otp():

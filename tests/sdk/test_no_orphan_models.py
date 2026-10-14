@@ -10,6 +10,8 @@ SDK_SRC = Path(inspect.getfile(notte_sdk)).parent
 
 # Models intentionally retained as import-compatible legacy API types.
 ALLOWED_UNREFERENCED: dict[str, str] = {
+    "ForkFunctionRequest": "Historical import retained; the generated fork operation has no schema request body",
+    "StartFunctionRunRequest": "Historical legacy-run import retained; SDK serialization no longer runs core validation",
     "DownloadFileRequest": "Deprecated global-storage request retained for import compatibility",
     "FileUploadResponse": "Deprecated global-storage response retained for import compatibility",
     "ListFilesResponse": "Deprecated global-storage response retained for import compatibility",

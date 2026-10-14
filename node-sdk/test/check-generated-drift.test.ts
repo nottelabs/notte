@@ -100,7 +100,7 @@ describe('committed-snapshot generation', () => {
     const repoRoot = path.resolve(sdkRoot, '..');
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'snapshot-check-'));
     try {
-      const files = execFileSync('git', ['ls-files', '-z', '--', 'node-sdk', 'openapi/openapi.json'], { cwd: repoRoot, encoding: 'utf8' }).split('\0').filter(Boolean);
+      const files = execFileSync('git', ['ls-files', '-z', '--', 'node-sdk', 'openapi/openapi.json', 'openapi/resources.json'], { cwd: repoRoot, encoding: 'utf8' }).split('\0').filter(Boolean);
       for (const file of files) {
         const source = path.join(repoRoot, file);
         if (!fs.existsSync(source)) continue;

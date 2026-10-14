@@ -351,6 +351,11 @@ export class NotteClient {
     return new Session(this, options);
   }
 
+  /** Generated file operations; use Files(sessionId) for local file IO helpers. */
+  get files() {
+    return this.resources.files;
+  }
+
   /** Access files owned by a specific session, including closed sessions. */
   Files(sessionId: string): SessionFiles {
     return new SessionFiles(this.getClient(), sessionId);

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NotteClient } from '@/index';
 import { InvalidRequestError, NotteAPIError } from '@/errors';
 import { config } from 'dotenv';
-import { cleanupVaults } from './helpers/cleanup-vaults';
+import { cleanupVaults, initializeOwnedVault } from './helpers/cleanup-vaults';
 
 // Load environment variables from .env file
 config();
@@ -291,29 +291,32 @@ describe('Vault Integration Tests', () => {
       await expect(vault.getCredentials('https://github.com/')).resolves.toMatchObject({ mfa_secret: 'mysecret' }); // pragma: allowlist secret
     });
 
-    // Mirrors test_add_wrong_otp: a one-time code is rejected client-side.
+    // Mirrors test_add_wrong_otp: a one-time code is rejected by the API.
     it('should throw error for invalid MFA secret (all numbers)', async () => {
       const vault = client.Vault();
 
-      await expect(vault.addCredentials('https://github.com/', {
+      await initializeOwnedVault(vault, createdVaults);
+      const failure = vault.addCredentials('https://github.com/', {
         email: 'xyz@notte.cc',
         password: 'xyz', // pragma: allowlist secret
         mfa_secret: '999777' // pragma: allowlist secret
-      })).rejects.toBeInstanceOf(InvalidRequestError);
-
-      // Validation fails before the vault is created remotely.
-      expect(() => vault.vaultId).toThrow(InvalidRequestError);
+      });
+      await expect(failure).rejects.toBeInstanceOf(NotteAPIError);
+      await expect(failure).rejects.toMatchObject({ statusCode: 422 });
     });
 
     it('should reject credentials with both username and email', async () => {
       const vault = client.Vault();
 
-      await expect(vault.addCredentials('https://github.com/', {
+      await initializeOwnedVault(vault, createdVaults);
+      const failure = vault.addCredentials('https://github.com/', {
         email: 'xyz@notte.cc',
         username: 'xyz',
         password: 'xyz' // pragma: allowlist secret
-      })).rejects.toThrow('Can only set either username or email');
-      expect(() => vault.vaultId).toThrow(InvalidRequestError);
+      });
+      await expect(failure).rejects.toBeInstanceOf(NotteAPIError);
+      await expect(failure).rejects.toMatchObject({ statusCode: 422 });
+      await expect(failure).rejects.toThrow('Can only set either username or email');
     });
   });
 
@@ -331,10 +334,23 @@ describe('Vault Integration Tests', () => {
       createdVaults.push(vaultId);
     });
 
-    it('should reject an invalid URL before calling the API', async () => {
+    it('should surface the API validation error for an invalid URL', async () => {
       const vault = client.Vault();
-      await expect(vault.getCredentials('https://')).rejects.toBeInstanceOf(InvalidRequestError);
-      expect(() => vault.vaultId).toThrow(InvalidRequestError);
+      await initializeOwnedVault(vault, createdVaults);
+      const failure = vault.getCredentials('https://');
+      await expect(failure).rejects.toBeInstanceOf(NotteAPIError);
+      // Staging's query dependency constructs GetCredentialsRequest directly:
+      // its validation error currently becomes HTTP 500, not FastAPI's body 422.
+      // Preserve the server status until that backend dependency is fixed.
+      await expect(failure).rejects.toMatchObject({ statusCode: 500 });
+    });
+
+    it('should surface API 422 for an invalid credential-body URL', async () => {
+      const vault = client.Vault();
+      await initializeOwnedVault(vault, createdVaults);
+      const failure = vault.addCredentials('https://', { email: 'xyz@notte.cc', password: 'xyz' }); // pragma: allowlist secret
+      await expect(failure).rejects.toBeInstanceOf(NotteAPIError);
+      await expect(failure).rejects.toMatchObject({ statusCode: 422 });
     });
   });
 });

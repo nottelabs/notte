@@ -1,56 +1,23 @@
 from __future__ import annotations
 
 import secrets
-from collections.abc import Sequence
-from typing import TYPE_CHECKING, Unpack, final, overload
+from typing import Unpack, final, overload
 
 from notte_core.common.logging import logger
 from notte_core.common.resource import SyncResource
-from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import (
     BaseVault,
     Credential,
     CredentialsDict,
     CreditCardDict,
-    Vault,
 )
-from notte_core.types import (
-    AddCredentialsRequest,
-    AddCredentialsRequestDict,
-    AddCredentialsResponse,
-    AddCreditCardRequest,
-    AddCreditCardRequestDict,
-    AddCreditCardResponse,
-    DeleteCredentialsRequest,
-    DeleteCredentialsRequestDict,
-    DeleteCredentialsResponse,
-    DeleteCreditCardRequest,
-    DeleteCreditCardRequestDict,
-    DeleteCreditCardResponse,
-    DeleteVaultRequest,
-    DeleteVaultRequestDict,
-    DeleteVaultResponse,
-    GetCredentialsRequest,
-    GetCredentialsRequestDict,
-    GetCredentialsResponse,
-    GetCreditCardRequest,
-    GetCreditCardRequestDict,
-    GetCreditCardResponse,
-    ListCredentialsRequest,
-    ListCredentialsRequestDict,
-    ListCredentialsResponse,
-    VaultCreateRequest,
-    VaultCreateRequestDict,
-    VaultListRequest,
-    VaultListRequestDict,
-)
+from notte_core.profiling import profiler
 from typing_extensions import override
 
-from notte_sdk._generated import endpoints as api
-from notte_sdk.endpoints.base import BaseClient
-
-if TYPE_CHECKING:
-    from notte_sdk.client import NotteClient
+from notte_sdk._generated.resources import VaultsOperations
+from notte_sdk.types import (
+    VaultCreateRequestDict,
+)
 
 
 # DEFINED HERE TO SIMPLIFY CIRCULAR DEPENDENCY
@@ -97,32 +64,38 @@ class NotteVault(BaseVault, SyncResource):
         self.delete()
 
     @override
+    @profiler.profiled(operation_name="BaseVault.add_credentials_async")
+    async def add_credentials_async(self, url: str, **kwargs: Unpack[CredentialsDict]) -> None:
+        """Store credentials remotely; invalid input is reported by the API as 422."""
+        return await self._add_credentials(url, kwargs)
+
+    @override
     async def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
-        _ = self.vault_client.add_or_update_credentials(self.vault_id, url=url, **creds)
+        _ = self.vault_client.credentials_add(self.vault_id, url=url, **creds)
 
     @override
     async def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
-        return self.vault_client.get_credentials(vault_id=self.vault_id, url=url).credentials
+        return self.vault_client.credentials_get(vault_id=self.vault_id, url=url).credentials
 
     @override
     async def delete_credentials_async(self, url: str) -> None:
-        _ = self.vault_client.delete_credentials(vault_id=self.vault_id, url=url)
+        _ = self.vault_client.credentials_delete(vault_id=self.vault_id, url=url)
 
     @override
     async def set_credit_card_async(self, **kwargs: Unpack[CreditCardDict]) -> None:
-        _ = self.vault_client.set_credit_card(self.vault_id, **kwargs)
+        _ = self.vault_client.credit_card_set(self.vault_id, **kwargs)
 
     @override
     async def get_credit_card_async(self) -> CreditCardDict:
-        return self.vault_client.get_credit_card(self.vault_id).credit_card
+        return self.vault_client.credit_card_get(self.vault_id).credit_card
 
     @override
     async def list_credentials_async(self) -> list[Credential]:
-        return self.vault_client.list_credentials(self.vault_id).credentials
+        return self.vault_client.credentials_list(self.vault_id).credentials
 
     @override
     async def delete_credit_card_async(self) -> None:
-        _ = self.vault_client.delete_credit_card(self.vault_id)
+        _ = self.vault_client.credit_card_delete(self.vault_id)
 
     def delete(self) -> None:
         _ = self.vault_client.delete(self.vault_id)
@@ -177,7 +150,7 @@ class NotteVault(BaseVault, SyncResource):
 
 
 @final
-class VaultsClient(BaseClient):
+class VaultsClient(VaultsOperations):
     """
     Client for the Notte API.
 
@@ -185,190 +158,8 @@ class VaultsClient(BaseClient):
     If you need to handle multiple sessions, you need to create a new client for each session.
     """
 
-    def __init__(
-        self,
-        root_client: "NotteClient",
-        api_key: str | None = None,
-        server_url: str | None = None,
-        verbose: bool = False,
-    ):
-        """
-        Initialize a VaultsClient instance.
-
-        Initializes the client with an optional API key for vault management.
-        """
-        super().__init__(
-            root_client=root_client,
-            base_endpoint_path="vaults",
-            server_url=server_url,
-            api_key=api_key,
-            verbose=verbose,
-        )
-
-    @track_usage("cloud.vault.create")
-    def create(self, **data: Unpack[VaultCreateRequestDict]) -> Vault:
-        """
-        Create vault
-
-        Args:
-            **data: Unpacked dictionary containing the vault creation parameters.
-
-        Returns:
-            NotteVault: The created vault
-        """
-        params = VaultCreateRequest.model_validate(data)
-        return self.request(api.vault_create(params))
-
     def get(self, vault_id: str) -> str:
         if len(vault_id) == 0:
             raise ValueError("Vault ID cannot be empty")
-        _ = self.list_credentials(vault_id)
+        _ = self.credentials_list(vault_id)
         return vault_id
-
-    @track_usage("cloud.vault.credentials.add")
-    def add_or_update_credentials(
-        self, vault_id: str, **data: Unpack[AddCredentialsRequestDict]
-    ) -> AddCredentialsResponse:
-        """
-        Adds or updates credentials in a vault.
-
-        Args:
-            vault_id: ID of the vault to add or update credentials in.
-            **data: Unpacked dictionary containing credential information.
-
-        Returns:
-            AddCredentialsResponse: Response from the add credentials endpoint.
-        """
-        params = AddCredentialsRequest.from_dict(data)
-        response = self.request(api.vault_credentials_add(vault_id, params))
-        return response
-
-    @track_usage("cloud.vault.credentials.get")
-    def get_credentials(self, vault_id: str, **data: Unpack[GetCredentialsRequestDict]) -> GetCredentialsResponse:
-        """
-        Retrieves credentials from a vault.
-
-        Args:
-            vault_id: ID of the vault containing the credentials.
-            **data: Unpacked dictionary containing parameters for the request.
-
-        Returns:
-            GetCredentialsResponse: Response containing the requested credentials.
-        """
-        params = GetCredentialsRequest.model_validate(data)
-        response = self.request(api.vault_credentials_get(vault_id, params=params))
-        return response
-
-    @track_usage("cloud.vault.credentials.delete")
-    def delete_credentials(
-        self, vault_id: str, **data: Unpack[DeleteCredentialsRequestDict]
-    ) -> DeleteCredentialsResponse:
-        """
-        Deletes credentials from a vault.
-
-        Args:
-            vault_id: ID of the vault containing the credentials to delete.
-            **data: Unpacked dictionary containing parameters specifying the credentials to delete.
-
-        Returns:
-            DeleteCredentialsResponse: Response from the delete credentials endpoint.
-        """
-        params = DeleteCredentialsRequest.model_validate(data)
-        response = self.request(api.vault_credentials_delete(vault_id, params=params))
-        return response
-
-    @track_usage("cloud.vault.delete")
-    def delete(self, vault_id: str, **data: Unpack[DeleteVaultRequestDict]) -> DeleteVaultResponse:
-        """
-        Deletes a vault.
-
-        Args:
-            vault_id: ID of the vault to delete.
-            **data: Unpacked dictionary containing parameters for the request.
-
-        Returns:
-            DeleteVaultResponse: Response from the delete vault endpoint.
-        """
-        _ = DeleteVaultRequest.model_validate(data)  # no parameters: rejects unknown keywords
-        response = self.request(api.vault_delete(vault_id))
-        return response
-
-    @track_usage("cloud.vault.credentials.list")
-    def list_credentials(self, vault_id: str, **data: Unpack[ListCredentialsRequestDict]) -> ListCredentialsResponse:
-        """
-        Lists credentials in a vault.
-
-        Args:
-            vault_id: ID of the vault to list credentials from.
-            **data: Unpacked dictionary containing parameters for the request.
-
-        Returns:
-            ListCredentialsResponse: Response containing the list of credentials.
-        """
-        _ = ListCredentialsRequest.model_validate(data)  # no parameters: rejects unknown keywords
-        response = self.request(api.vault_credentials_list(vault_id))
-        return response
-
-    @track_usage("cloud.vault.list")
-    def list(self, **data: Unpack[VaultListRequestDict]) -> Sequence[Vault]:
-        """
-        Lists all available vaults.
-
-        Args:
-            **data: Unpacked dictionary containing parameters for the request.
-
-        Returns:
-            ListVaultsResponse: Response containing the list of vaults.
-        """
-        params = VaultListRequest.model_validate(data)
-        return self.request_list(api.list_vaults(params=params))
-
-    @track_usage("cloud.vault.credit_card.delete")
-    def delete_credit_card(
-        self, vault_id: str, **data: Unpack[DeleteCreditCardRequestDict]
-    ) -> DeleteCreditCardResponse:
-        """
-        Deletes a credit card from a vault.
-
-        Args:
-            vault_id: ID of the vault containing the credit card to delete.
-            **data: Unpacked dictionary containing parameters specifying the credit card to delete.
-
-        Returns:
-            DeleteCreditCardResponse: Response from the delete credit card endpoint.
-        """
-        _ = DeleteCreditCardRequest.model_validate(data)  # no parameters: rejects unknown keywords
-        response = self.request(api.vault_credit_card_delete(vault_id))
-        return response
-
-    @track_usage("cloud.vault.credit_card.get")
-    def get_credit_card(self, vault_id: str, **data: Unpack[GetCreditCardRequestDict]) -> GetCreditCardResponse:
-        """
-        Retrieves a credit card from a vault.
-
-        Args:
-            vault_id: ID of the vault containing the credit card.
-            **data: Unpacked dictionary containing parameters for the request.
-
-        Returns:
-            GetCreditCardResponse: Response containing the requested credit card information.
-        """
-        _ = GetCreditCardRequest.model_validate(data)  # no parameters: rejects unknown keywords
-        response = self.request(api.vault_credit_card_get(vault_id))
-        return response
-
-    @track_usage("cloud.vault.credit_card.set")
-    def set_credit_card(self, vault_id: str, **data: Unpack[AddCreditCardRequestDict]) -> AddCreditCardResponse:
-        """
-        Sets a credit card in a vault.
-
-        Args:
-            vault_id: ID of the vault to add the credit card to.
-            **data: Unpacked dictionary containing credit card information.
-
-        Returns:
-            AddCreditCardResponse: Response from the add credit card endpoint.
-        """
-        params = AddCreditCardRequest.from_dict(data)
-        response = self.request(api.vault_credit_card_set(vault_id, params))
-        return response

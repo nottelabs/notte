@@ -47,6 +47,14 @@ Default:
 
 <Accordion title="Properties">
 
+### files
+
+```typescript
+files: { delete: (sessionId: string, fileId: string, requestOptions?: ResourceRequestOptions & { headers?: Omit<{ 'x-notte-request-origin'?: string | null | undefined; 'x-notte-sdk-version'?: string | null | undefined; }, "x-notte-api-key"> | undefined; }) => Promise<void>; download: (sessionId: string, fileId: string, requestOptions?: ResourceRequestOptions & { headers?: Omit<{ 'x-notte-request-origin'?: string | null | undefined; 'x-notte-sdk-version'?: string | null | undefined; }, "x-notte-api-key"> | undefined; }) => Promise<unknown>; list: (sessionId: string, query?: { source?: FileSource | null | undefined; limit?: number | undefined; offset?: number | undefined; } | undefined, requestOptions?: ResourceRequestOptions & { headers?: Omit<{ 'x-notte-request-origin'?: string | null | undefined; 'x-notte-sdk-version'?: string | null | undefined; }, "x-notte-api-key"> | undefined; }) => Promise<SessionFilesPage>; upload: (sessionId: string, body: BodyUploadSessionFileSessionsSessionIdFilesPost, requestOptions?: ResourceRequestOptions & { headers?: Omit<{ 'x-notte-request-origin'?: string | null | undefined; 'x-notte-sdk-version'?: string | null | undefined; }, "x-notte-api-key"> | undefined; }) => Promise<SessionFile>; }
+```
+
+Generated file operations; use Files(sessionId) for local file IO helpers.
+
 ### sessions
 
 ```typescript

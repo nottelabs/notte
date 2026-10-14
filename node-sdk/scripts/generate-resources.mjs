@@ -4,20 +4,21 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-// Other namespaces already have specialized handwritten clients. Expand this
-// list deliberately, so generation cannot silently replace their behavior.
-const groups = ['sessions', 'functions', 'vaults', 'personas', 'profiles'];
-const aliases = {
-  sessionCookiesGet: 'getCookies', sessionCookiesSet: 'setCookies',
-  pageObserve: 'observe', pageExecute: 'execute', pageScrape: 'scrape',
-  functionScheduleSet: 'setSchedule', functionScheduleDelete: 'deleteSchedule',
-  listFunctionRunsByFunctionId: 'listRuns',
-};
-const camel = value => value.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-const lower = value => value[0].toLowerCase() + value.slice(1);
+// Shared public naming contract; Python converts these names to snake_case.
+const naming = JSON.parse(fs.readFileSync(path.join(root, '../openapi/resources.json'), 'utf8'));
+const groups = [...new Set(Object.values(naming).filter(entry => !entry.exclude).map(entry => entry.resource))];
+const camel = value => value.replace(/^_+/, "").replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+const byOperation = new Map(Object.entries(naming).map(([id, entry]) => [camel(id), entry]));
+export function checkCoverage(spec) {
+  const ids = new Set(Object.values(spec.paths).flatMap(item => Object.entries(item)
+    .filter(([method]) => ['get', 'post', 'put', 'patch', 'delete'].includes(method))
+    .map(([, operation]) => operation.operationId)));
+  for (const id of ids) if (!naming[id]) throw new Error(`Unmapped operation: ${id}`);
+  for (const id of Object.keys(naming)) if (!ids.has(id)) throw new Error(`Stale operation mapping: ${id}`);
+}
 
 /** Read the generated AST, not a second endpoint/schema registry. */
-export function generateResources(sdkSource, typesSource) {
+export function generateResources(sdkSource, typesSource, registry = byOperation) {
   const parse = (name, source) => ts.createSourceFile(name, source, ts.ScriptTarget.Latest, true);
   const sdk = parse('sdk.gen.ts', sdkSource);
   const types = parse('types.gen.ts', typesSource);
@@ -36,18 +37,15 @@ export function generateResources(sdkSource, typesSource) {
       const members = new Map(definition.members.map(member => [member.name?.getText(types).replace(/^['"]|['"]$/g, ''), member]));
       const url = members.get('url')?.type;
       if (!url || !ts.isLiteralTypeNode(url) || !ts.isStringLiteral(url.literal)) continue;
-      const group = url.literal.text.split('/')[1];
-      if (!output.has(group)) continue;
-      const singular = group.slice(0, -1);
-      let method = aliases[operation];
-      if (!method) {
-        if (operation === `list${group[0].toUpperCase()}${group.slice(1)}`) method = 'list';
-        else method = lower(operation.startsWith(singular) ? operation.slice(singular.length) : operation);
-      }
+      const entry = registry.get(operation);
+      if (!entry) throw new Error(`Unmapped operation: ${operation}`);
+      if (entry.exclude) continue;
+      const { resource: group, method } = entry;
       if (!/^[a-zA-Z_$][\w$]*$/.test(method)) throw new Error(`Invalid resource method: ${operation}`);
       if (output.get(group).has(method)) throw new Error(`Resource method collision: ${group}.${method}`);
       const args = [];
       const request = ['client', 'throwOnError: true', 'signal: requestOptions.signal'];
+      if (entry.nodeParseAs) request.push(`parseAs: ${JSON.stringify(entry.nodeParseAs)}`);
       const headers = members.get('headers');
       let requestOptions = 'ResourceRequestOptions';
       let requiredHeaders = false;
@@ -95,6 +93,13 @@ export function generateResources(sdkSource, typesSource) {
       if (trailingQuery) args.push(trailingQuery);
       const comment = `    /** ${operation}: ${url.literal.text.replaceAll('*/', '* /')}. Returns the API response body. */`;
       output.get(group).set(method, `${comment}\n    ${method}: async (${args.join(', ')}) => {\n      const response = await operations.${operation}({ ${request.join(', ')} });\n      return response.data;\n    },`);
+      for (const alias of entry.aliases ?? []) {
+        if (!/^[a-zA-Z_$][\w$]*$/.test(alias.method)) throw new Error(`Invalid resource alias: ${operation}`);
+        if (!output.has(alias.resource)) throw new Error(`Unknown alias resource: ${alias.resource}`);
+        if (output.get(alias.resource).has(alias.method)) throw new Error(`Resource method collision: ${alias.resource}.${alias.method}`);
+        const source = output.get(group).get(method).replace(`    ${method}: async`, `    ${alias.method}: async`);
+        output.get(alias.resource).set(alias.method, source);
+      }
     }
   }
   if (![...output.values()].some(methods => methods.size)) throw new Error('No resource operations found');
@@ -102,6 +107,7 @@ export function generateResources(sdkSource, typesSource) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  checkCoverage(JSON.parse(fs.readFileSync(path.join(root, '../openapi/openapi.json'), 'utf8')));
   const content = generateResources(fs.readFileSync(path.join(root, 'src/lib/client/sdk.gen.ts'), 'utf8'), fs.readFileSync(path.join(root, 'src/lib/client/types.gen.ts'), 'utf8'));
   const target = path.join(root, 'src/resources.gen.ts');
   if (process.argv.includes('--check')) {

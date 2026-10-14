@@ -67,6 +67,16 @@ def preserve_function_runtime_default(app: Sphinx, exception: Exception | None) 
             )
         )
 
+    # The upstream schema has no description for this newly exposed nested type.
+    payload_reference = Path(app.confdir).parent / "src/sdk-reference/misc/runpayloadreference.mdx"
+    if payload_reference.exists():
+        _ = payload_reference.write_text(
+            payload_reference.read_text().replace(
+                'description: ""',
+                'description: "Identifies an uploaded run field by its size, checksum, and upload ID."',
+            )
+        )
+
 
 def setup(app: Sphinx) -> None:
     _ = app.connect("build-finished", preserve_function_runtime_default)

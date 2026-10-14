@@ -5,10 +5,10 @@ from unittest.mock import MagicMock
 import pytest
 import requests
 from notte_core.common.logging import logger
+from notte_sdk._generated import operations as api
 from notte_sdk.endpoints import functions
 from notte_sdk.endpoints.base import BaseClient
 from notte_sdk.endpoints.functions import FunctionsClient
-from notte_sdk.endpoints.sessions import SessionsClient
 
 
 @pytest.mark.parametrize("key_source", ["argument", "environment"])
@@ -64,7 +64,7 @@ def test_session_start_does_not_log_api_key(monkeypatch, key_source, explicit_st
     captured = io.StringIO()
     handler = logger.add(captured, level="INFO")
     try:
-        completed = client.run(
+        completed = client.run_start(
             "run-123", function_id="function-123", variables={}, **({"stream": True} if explicit_stream else {})
         )
     finally:
@@ -78,9 +78,7 @@ def test_session_start_does_not_log_api_key(monkeypatch, key_source, explicit_st
         assert viewer_url in output
     else:
         assert "client.sessions.viewer" in output
-    root_client.sessions.request.assert_called_once_with(
-        SessionsClient._session_status_endpoint(session_id=session_id), timeout=2
-    )
+    root_client.sessions.request.assert_called_once_with(api.session_status(session_id=session_id), timeout=2)
     assert "Function is running" in output
     assert completed.session_id == session_id
     assert completed.result == {"ok": True}

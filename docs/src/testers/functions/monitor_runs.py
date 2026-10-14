@@ -24,7 +24,7 @@ run_id = result.function_run_id
 
 # Poll status
 while True:
-    status = client.functions.get_run(function_id, run_id)
+    status = client.functions.run_get_metadata(function_id, run_id)
 
     print(f"Status: {status.status}")
 

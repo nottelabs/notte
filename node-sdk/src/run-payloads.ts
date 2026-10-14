@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
+import { prepareRunPayloadUpload } from '@/lib/client/sdk.gen';
+import type { RunPayloadReference as UploadReference } from '@/lib/client/types.gen';
 import type { NotteClient } from '@/client';
 import type { FunctionRunUpdateRequest, GetFunctionRunResponse } from '@/functions';
 
 type PayloadField = 'result' | 'logs' | 'variables';
-type UploadReference = { upload_id: string; size_bytes: number; sha256: string };
-type UploadResponse = { reference: UploadReference; url: string; headers: Record<string, string> };
 const INLINE_FIELD_BYTES = 1024 * 1024;
 const MAX_PAYLOAD_BYTES = 256 * 1024 * 1024;
 
@@ -24,11 +24,10 @@ export async function offloadRunPayloads(
 		if (payload.length > MAX_PAYLOAD_BYTES) throw new Error(`Function run ${field} exceeds the payload limit`);
 		if (payload.length <= INLINE_FIELD_BYTES) continue;
 		const checksum = createHash('sha256').update(payload).digest('base64');
-		const prepared = await client.post<{ 200: UploadResponse }, unknown, true>({
-			url: '/functions/{function_id}/runs/{run_id}/payloads/{field}/upload',
+		const prepared = await prepareRunPayloadUpload({
+			client,
 			path: { ...path, field },
 			body: { size_bytes: payload.length, sha256: checksum },
-			headers: { 'Content-Type': 'application/json' },
 			throwOnError: true,
 		});
 		const upload = prepared.data;

@@ -3,20 +3,18 @@ from __future__ import annotations
 import os
 import tempfile
 from pathlib import Path, PureWindowsPath
-from typing import TYPE_CHECKING, final
+from typing import final
 
 import requests
 from notte_core.common.cache import CacheDirectory, ensure_cache_directory
 from notte_core.common.telemetry import track_usage
 from notte_core.storage import BaseStorage, FileInfo
-from notte_core.types import FileSource, SessionFile, SessionFilesPage
 from typing_extensions import override
 
-from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk._generated.resources import FilesOperations
+from notte_sdk.endpoints.base import NotteEndpoint
 from notte_sdk.errors import NotteAPIError
-
-if TYPE_CHECKING:
-    from notte_sdk.client import NotteClient
+from notte_sdk.types import FileSource, SessionFile, SessionFilesPage
 
 
 def _get_cache_dir() -> Path:
@@ -28,13 +26,8 @@ NOTTE_CACHE_DIR = _get_cache_dir()
 
 
 @final
-class FileStorageClient(BaseClient):
+class FileStorageClient(FilesOperations):
     """Client for session-owned uploads and browser downloads."""
-
-    def __init__(
-        self, root_client: NotteClient, api_key: str | None = None, server_url: str | None = None, verbose: bool = False
-    ):
-        super().__init__(root_client, "sessions", server_url=server_url, api_key=api_key, verbose=verbose)
 
     @staticmethod
     def _file_endpoint(session_id: str, file_id: str | None = None) -> str:
@@ -50,29 +43,6 @@ class FileStorageClient(BaseClient):
         with path.open("rb") as payload:
             files = {"file": (upload_file_name or path.name, payload)}
             return self.request(endpoint.model_copy(update={"files": files}))
-
-    @track_usage("cloud.files.list")
-    def list(
-        self,
-        session_id: str,
-        *,
-        source: FileSource | str | None = None,
-        limit: int = 100,
-        offset: int = 0,
-    ) -> SessionFilesPage:
-        params: dict[str, str | int] = {"limit": limit, "offset": offset}
-        if source is not None:
-            params["source"] = source.value if isinstance(source, FileSource) else source
-        endpoint = NotteEndpoint(path=self._file_endpoint(session_id), response=SessionFilesPage, method="GET")
-        response = requests.get(
-            self.request_path(endpoint),
-            headers=self.headers(),
-            params=params,
-            timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-        )
-        if not response.ok:
-            raise NotteAPIError(path=f"sessions/{session_id}/files", response=response)
-        return SessionFilesPage.model_validate(response.json())
 
     def metadata(self, session_id: str, file_id: str) -> SessionFile:
         offset = 0
@@ -125,15 +95,6 @@ class FileStorageClient(BaseClient):
             if temporary is not None:
                 temporary.unlink(missing_ok=True)
         return str(destination)
-
-    @track_usage("cloud.files.delete")
-    def delete(self, session_id: str, file_id: str) -> None:
-        endpoint = NotteEndpoint(path=self._file_endpoint(session_id, file_id), response=SessionFile, method="DELETE")
-        response = requests.delete(
-            self.request_path(endpoint), headers=self.headers(), timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS
-        )
-        if not response.ok:
-            raise NotteAPIError(path=f"sessions/{session_id}/files/{file_id}", response=response)
 
 
 class RemoteFileStorage(BaseStorage):
