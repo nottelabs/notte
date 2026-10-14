@@ -200,7 +200,7 @@ def test_vault_backend_error_is_not_logged_verbatim() -> None:
     vault = FailingVault()
     snapshot = make_snapshot(URL)
 
-    with capture_logs() as logs, pytest.raises(VaultLookupError) as exc_info:
+    with capture_logs() as logs, pytest.raises(NoCredentialsFoundError) as exc_info:
         _ = asyncio.run(vault.replace_credentials(FillAction(id="I1", value=PASSWORD), PASSWORD_ATTRS, snapshot))
     assert any("RuntimeError" in log for log in logs)
     assert exc_info.value.__cause__ is None

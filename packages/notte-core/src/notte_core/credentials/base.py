@@ -691,13 +691,14 @@ class BaseVault(ABC):
             logger.error(f"Error getting credit card from vault ({type(e).__name__})")
             raise VaultLookupError(cred_key, type(e).__name__) from None
 
-    async def _get_credentials_for_replacement(self, cred_key: str, url: str) -> CredentialsDict:
+    async def _get_credentials_for_replacement(self, url: str) -> CredentialsDict:
         try:
             creds_dict = await self.get_credentials_async(url)
         except Exception as e:
             # Never log the exception message: vault backends can echo stored values in their errors
             logger.error(f"Error getting credentials for url={url} ({type(e).__name__})")
-            raise VaultLookupError(cred_key, type(e).__name__) from None
+            # Remote vaults raise (e.g. a 404) when they hold no credentials for the URL
+            creds_dict = None
 
         if creds_dict is None:
             raise NoCredentialsFoundError(url)
@@ -709,7 +710,7 @@ class BaseVault(ABC):
         if cred_class in CARD_FIELDS:
             creds_dict = await self._get_credit_card_for_replacement(cred_key)
         else:
-            creds_dict = await self._get_credentials_for_replacement(cred_key, url)
+            creds_dict = await self._get_credentials_for_replacement(url)
 
         cred_value = get_with_fallback(creds_dict, cred_key)
         if cred_value is None:
@@ -739,9 +740,8 @@ class BaseVault(ABC):
 
         Raises:
             ValueError: If the action type is not supported
-            CredentialReplacementError: If a placeholder cannot be replaced (e.g. missing credential field, or the
-                vault cannot be queried), except card holder and card number placeholders
-            NoCredentialsFoundError: If the vault holds no credentials for the current page (login placeholder)
+            CredentialReplacementError: If a placeholder other than card holder or card number cannot be replaced
+            NoCredentialsFoundError: If the vault has no credentials for the page or the lookup fails (login field)
         """
         # Get credentials for current domain
 

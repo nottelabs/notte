@@ -181,11 +181,11 @@ def test_unresolved_card_holder_and_number_are_filled_as_is(vault: NoCardVault, 
         (NoCardVault({URL: {"password": SECRET_PASSWORD}}), MFA, MissingCredentialFieldError),
         (NoCardVault({URL: {"password": SECRET_PASSWORD}}), EMAIL, MissingCredentialFieldError),
         (NoCardVault({URL: {"password": SECRET_PASSWORD}}), USERNAME, MissingCredentialFieldError),
-        # the vault cannot be queried
-        (FailingVault(), PASSWORD, VaultLookupError),
-        (FailingVault(), MFA, VaultLookupError),
-        (FailingVault(), EMAIL, VaultLookupError),
-        (FailingVault(), USERNAME, VaultLookupError),
+        # the lookup fails (remote vaults raise when they hold no credentials for the URL)
+        (FailingVault(), PASSWORD, NoCredentialsFoundError),
+        (FailingVault(), MFA, NoCredentialsFoundError),
+        (FailingVault(), EMAIL, NoCredentialsFoundError),
+        (FailingVault(), USERNAME, NoCredentialsFoundError),
         # no card stored
         (NoCardVault(), CARD_CVV, VaultLookupError),
         (NoCardVault(), CARD_EXPIRATION, VaultLookupError),
@@ -231,8 +231,10 @@ def test_no_credentials_error_names_the_site_only() -> None:
 
     with pytest.raises(NoCredentialsFoundError) as exc_info:
         _ = asyncio.run(session._action_with_vault(FillAction(id="I1", value=EMAIL)))
-    for text in error_texts(exc_info.value):
-        assert "login.example.com" in text
+    error = exc_info.value
+    assert error.dev_message.startswith("No vault credentials for login.example.com, ")
+    assert error.agent_message == error.dev_message
+    for text in error_texts(error):
         assert "canary-token-71d3" not in text
         assert EMAIL not in text
 
@@ -301,7 +303,7 @@ FORM_PAGE = """
     ("vault", "error_type"),
     [
         (NoCardVault({OTHER_URL: {"email": SECRET_EMAIL, "password": SECRET_PASSWORD}}), NoCredentialsFoundError),
-        (FailingVault(), VaultLookupError),
+        (FailingVault(), NoCredentialsFoundError),
     ],
     ids=["no-credentials", "lookup-error"],
 )
