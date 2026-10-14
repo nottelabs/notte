@@ -66,7 +66,7 @@ class NotteClient:
         if not math.isfinite(captcha_timeout_seconds) or captcha_timeout_seconds <= 0:
             raise ValueError("captcha_timeout_seconds must be finite and greater than zero")
         self.captcha_timeout_seconds: float = captcha_timeout_seconds
-        if isinstance(max_retries, bool) or not isinstance(max_retries, int) or max_retries < 0:
+        if type(max_retries) is not int or max_retries < 0:
             raise ValueError("max_retries must be a non-negative integer")
         self.max_retries: int = max_retries
         # Resolve once so the keyring is read at most once per client.

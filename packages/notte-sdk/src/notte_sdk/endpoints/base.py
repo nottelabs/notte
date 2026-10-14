@@ -5,7 +5,7 @@ import time
 from abc import ABC
 from collections.abc import Sequence
 from json import JSONDecodeError
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Self, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Self, TypeVar, cast
 from urllib.parse import quote, urljoin
 
 import requests
@@ -502,12 +502,12 @@ class BaseClient(ABC):
         files: Any = endpoint.files
         if files is None:
             return True
-        uploads: dict[str, Any] = files if isinstance(files, dict) else vars(files)
+        uploads = cast(dict[str, Any], files if isinstance(files, dict) else vars(files))
         handles = uploads.values()
         for handle in handles:
             # requests accepts (filename, payload[, content_type[, headers]]).
             if isinstance(handle, tuple):
-                handle = handle[1]
+                handle = cast(Any, handle)[1]
             # In-memory content is replayable without a file cursor.
             if isinstance(handle, (str, bytes)):
                 continue
