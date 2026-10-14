@@ -45,8 +45,8 @@ describe('buildScrapeBody', () => {
   });
 
   it('forwards the extraction model and omits it when unset', async () => {
-    const body = await buildScrapeBody({ instructions: 'Extract the title', model: 'vertex_ai/gemini-3.1-flash-lite' });
-    expect(body.model).toBe('vertex_ai/gemini-3.1-flash-lite');
+    const body = await buildScrapeBody({ instructions: 'Extract the title', model: 'vertex_ai/gemini-3.5-flash' });
+    expect(body.model).toBe('vertex_ai/gemini-3.5-flash');
     expect(await buildScrapeBody({ instructions: 'Extract the title' })).not.toHaveProperty('model');
   });
 

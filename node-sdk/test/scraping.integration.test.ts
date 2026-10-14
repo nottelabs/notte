@@ -140,7 +140,7 @@ describe('Scraping Integration Tests', () => {
         const data = await session.scrape({
           instructions: 'Extract the main heading of the page',
           response_format: z.object({ title: z.string() }),
-          model: 'vertex_ai/gemini-3.1-flash-lite',
+          model: 'vertex_ai/gemini-3.5-flash',
         });
         expect(data.title.toLowerCase()).toContain('example domain');
       });
@@ -224,7 +224,7 @@ describe('Scraping Integration Tests', () => {
         proxies: false,
         instructions: 'Extract the main heading of the page',
         response_format: z.object({ title: z.string() }),
-        model: 'vertex_ai/gemini-3.1-flash-lite',
+        model: 'vertex_ai/gemini-3.5-flash',
       });
       expect(data.title.toLowerCase()).toContain('example domain');
     });

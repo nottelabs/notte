@@ -3,7 +3,7 @@ from notte_browser.session import NotteSession
 from notte_llm import LlmExtractor
 from pydantic import BaseModel
 
-EXTRACTION_MODEL = "vertex_ai/gemini-3.1-flash-lite"
+EXTRACTION_MODEL = "vertex_ai/gemini-3.5-flash"
 
 
 class PageTitle(BaseModel):
@@ -12,7 +12,8 @@ class PageTitle(BaseModel):
 
 @pytest.mark.asyncio
 async def test_scrape_with_chosen_model() -> None:
-    extractor = LlmExtractor()
+    # A default other than the chosen model, so the per-call service is observable.
+    extractor = LlmExtractor(model="gemini/gemini-3.5-flash")
 
     async with NotteSession(headless=True, extractor=extractor) as page:
         _ = await page.aexecute(type="goto", url="https://example.com/")
