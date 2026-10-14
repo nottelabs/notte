@@ -3,9 +3,10 @@
 #
 # A single 200 is not enough: the API can answer /health while it is scaling up
 # or mid-rollout, then fail or change version on the next call. A poll counts
-# toward the streak only when it returns HTTP 200 with status "healthy" and the
-# same version as the previous healthy poll. Any failure resets the streak and
-# backs off exponentially (capped) until the overall deadline.
+# toward the streak only when it returns HTTP 200 with status "healthy", a
+# non-empty version, and the same version as the previous healthy poll. Any
+# failure resets the streak and backs off exponentially (capped). No poll runs
+# or succeeds past the overall deadline.
 set -uo pipefail
 
 : "${API_URL:?API_URL is required}"
@@ -23,7 +24,14 @@ body_file="$(mktemp)"
 trap 'rm -f "$body_file"' EXIT
 
 while :; do
-  code="$(curl -s -o "$body_file" --max-time 20 -w '%{http_code}' "$url" || true)"
+  remaining=$((deadline - SECONDS))
+  if [ "$remaining" -le 0 ]; then
+    echo "::error::API at $API_URL was not ready within ${TIMEOUT}s."
+    exit 1
+  fi
+  max_time=$((remaining < 20 ? remaining : 20))
+  : > "$body_file"
+  code="$(curl -s -o "$body_file" --max-time "$max_time" -w '%{http_code}' "$url" || true)"
   status=""
   current=""
   if [ "$code" = "200" ]; then
@@ -32,13 +40,13 @@ while :; do
 import json, sys
 try:
     data = json.load(open(sys.argv[1]))
-    print(data.get("status", ""), data.get("version", "") or "-")
+    print(data.get("status") or "-", data.get("version") or "")
 except Exception:
     print("", "")
 ' "$body_file") || true
   fi
 
-  if [ "$code" = "200" ] && [ "$status" = "healthy" ]; then
+  if [ "$code" = "200" ] && [ "$status" = "healthy" ] && [ -n "$current" ] && [ "$SECONDS" -lt "$deadline" ]; then
     if [ "$streak" -gt 0 ] && [ "$current" != "$version" ]; then
       echo "Version changed from $version to $current; restarting the streak."
       streak=0
@@ -55,7 +63,7 @@ except Exception:
   else
     [ "$streak" -gt 0 ] && echo "Streak broken after $streak healthy responses."
     streak=0
-    echo "Not ready yet (HTTP ${code:-none}${status:+, status $status}); retrying in ${backoff}s."
+    echo "Not ready yet (HTTP ${code:-none}${status:+, status $status}${current:+, version $current}); retrying in ${backoff}s."
     delay="$backoff"
     backoff=$((backoff * 2))
     [ "$backoff" -le "$MAX_BACKOFF" ] || backoff="$MAX_BACKOFF"
