@@ -1,9 +1,8 @@
 name: stale-pr-nudge
 
 # Pings the author of an open, ready-for-review pull request that has had no
-# activity for STALE_DAYS days. It comments at most once per idle stretch: a
-# PR whose latest activity is already this workflow's comment is skipped, so
-# it is pinged again only after new activity followed by another idle period.
+# activity for 7 days (scripts/stale_pr_nudge.sh). At most once per idle
+# stretch: a PR whose latest activity is already the ping is skipped.
 
 on:
   schedule:
@@ -14,51 +13,48 @@ on:
         description: 'List the PRs that would be pinged without commenting'
         type: boolean
         default: true
+  pull_request:
+    paths:
+      - '.github/workflows/stale-pr-nudge.yml'
+      - 'scripts/stale_pr_nudge.sh'
+      - 'scripts/test_stale_pr_nudge.sh'
 
 permissions: {}
 
 concurrency:
-  group: stale-pr-nudge
+  group: stale-pr-nudge-${{ github.event_name }}
   cancel-in-progress: false
 
 jobs:
+  test:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: bash scripts/test_stale_pr_nudge.sh
+
   nudge:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
+      contents: read
+      issues: read
       pull-requests: write
-    env:
-      GH_TOKEN: ${{ github.token }}
-      REPO: ${{ github.repository }}
-      STALE_DAYS: 7
-      MARKER: '<!-- stale-pr-nudge -->'
-      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Ping authors of idle pull requests
-        run: |
-          set -euo pipefail
-          gh pr list --repo "$REPO" --state open --limit 500 \
-            --json number,isDraft,updatedAt,author \
-            --jq '.[]
-              | select((.isDraft | not) and (.author.is_bot | not))
-              | select(now - (.updatedAt | fromdateiso8601) > (env.STALE_DAYS | tonumber) * 86400)
-              | [.number, .updatedAt, .author.login] | @tsv' |
-          while IFS=$'\t' read -r number updated author; do
-            # Skip when this workflow's comment is already the latest activity.
-            last_nudge=$(gh api --paginate "repos/$REPO/issues/$number/comments" \
-              --jq '.[] | select(.user.type == "Bot" and (.body | contains(env.MARKER))) | .created_at' | tail -n 1)
-            if [ -n "$last_nudge" ] && jq -en --arg nudge "$last_nudge" --arg updated "$updated" \
-              '($nudge | fromdateiso8601) >= ($updated | fromdateiso8601) - 60' > /dev/null; then
-              echo "#$number: already pinged, no activity since"
-              continue
-            fi
-            if [ "$DRY_RUN" = "true" ]; then
-              echo "#$number: would ping @$author (last activity $updated)"
-              continue
-            fi
-            body="@$author this pull request has had no activity for $STALE_DAYS days. If it is still needed, push an update or ask a reviewer to take a look; otherwise consider closing it.
-
-          $MARKER"
-            gh pr comment "$number" --repo "$REPO" --body "$body"
-            echo "#$number: pinged @$author"
-          done
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          STALE_DAYS: 7
+          MARKER: '<!-- stale-pr-nudge -->'
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: bash scripts/stale_pr_nudge.sh
