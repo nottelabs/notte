@@ -1,5 +1,6 @@
 import asyncio
 from abc import ABC, abstractmethod
+from collections.abc import Awaitable, Callable
 from typing import ClassVar
 
 from notte_core.common.logging import logger
@@ -65,13 +66,44 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
         if options.cdp_url is None:
             raise ValueError("CDP URL is required to connect to a browser over CDP")
         try:
-            match options.browser_type:
-                case "chromium" | "chrome" | "chrome-nightly" | "chrome-turbo":
-                    return await self.playwright.chromium.connect_over_cdp(options.cdp_url)
-                case "firefox":
-                    return await self.playwright.firefox.connect(options.cdp_url)
-        except Exception as e:
-            raise CdpConnectionError(options.cdp_url) from e
+            async with asyncio.timeout(self.BROWSER_CREATION_TIMEOUT_SECONDS):
+                match options.browser_type:
+                    case "chromium" | "chrome" | "chrome-nightly" | "chrome-turbo":
+                        return await self.playwright.chromium.connect_over_cdp(options.cdp_url)
+                    case "firefox":
+                        return await self.playwright.firefox.connect(options.cdp_url)
+        except Exception:
+            # Driver errors can contain the complete authenticated endpoint.
+            # Do not expose it in messages or chained tracebacks.
+            raise CdpConnectionError(options.cdp_url) from None
+
+    async def _cleanup_browser(
+        self,
+        browser: Browser | None,
+        context: BrowserContext | None = None,
+        *,
+        stop_playwright: bool,
+    ) -> None:
+        """Release each owned resource even if an earlier cleanup fails."""
+        cancelled: asyncio.CancelledError | None = None
+        cleanups: list[Callable[[], Awaitable[None]]] = []
+        if context is not None:
+            cleanups.append(context.close)
+        if browser is not None:
+            cleanups.append(browser.close)
+        if stop_playwright:
+            cleanups.append(self.astop)
+        for cleanup in cleanups:
+            try:
+                async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
+                    await cleanup()
+            except asyncio.CancelledError as exc:
+                cancelled = exc
+            except Exception:
+                # Exception messages from remote browsers may contain secrets.
+                logger.warning("Failed to release a browser resource")
+        if cancelled is not None:
+            raise cancelled
 
     @profiler.profiled()
     async def create_playwright_browser(self, options: BrowserWindowOptions) -> Browser:
@@ -147,41 +179,39 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
                 extra_http_headers=options.extra_http_headers,
             )
 
-            if len(context.pages) == 0:
-                page = await context.new_page()
-            else:
-                page = context.pages[-1]
-            return BrowserResource(
-                page=page,
-                options=options,
-            )
+            try:
+                if len(context.pages) == 0:
+                    page = await context.new_page()
+                else:
+                    page = context.pages[-1]
+                return BrowserResource(
+                    page=page,
+                    options=options,
+                )
+            except BaseException:
+                await self._cleanup_browser(None, context, stop_playwright=False)
+                raise
 
     @override
     @profiler.profiled()
     async def new_window(self, options: BrowserWindowOptions | None = None) -> BrowserWindow:
-        started_here = not self.is_started()
-        if started_here:
-            _ = await self.astart()
         options = options or BrowserWindowOptions.from_request(LocalSessionStartRequest())
+        started_here = not self.is_started()
+        browser: Browser | None = None
         try:
+            if started_here:
+                await self.astart()
             if options.cdp_url is not None:
                 browser = await self.connect_cdp_browser(options)
             else:
                 browser = await self.create_playwright_browser(options)
-        except Exception:
-            # No window owns Playwright yet, so stop the instance started for this call.
-            if started_here:
-                await self.astop()
+            resource = await self.get_browser_resource(options, browser)
+        except BaseException:
+            await self._cleanup_browser(browser, stop_playwright=started_here)
             raise
-        resource = await self.get_browser_resource(options, browser)
 
         async def on_close() -> None:
-            try:
-                async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
-                    await browser.close()
-                    await self.astop()
-            except Exception as e:
-                logger.error(f"Failed to close window: {e}")
+            await self._cleanup_browser(browser, resource.page.context, stop_playwright=True)
 
         return BrowserWindow(
             resource=resource,
