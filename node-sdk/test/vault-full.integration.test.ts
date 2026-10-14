@@ -119,7 +119,7 @@ describe('Vault Integration Tests', () => {
       // Verify credentials are deleted: like Python, a missing credential is an API error.
       await expect(vault.getCredentials('https://github.com/')).rejects.toBeInstanceOf(NotteAPIError);
       await expect(vault.hasCredential('https://github.com/')).resolves.toBe(false);
-    }, 60_000);
+    });
   });
 
   describe.skipIf(skipHeavyLive)('Vault with Agent Integration', () => {
