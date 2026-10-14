@@ -317,6 +317,20 @@ True if credentials exist for the URL, False otherwise
 
 ---
 
+### has_unresolved_placeholders
+
+```python
+has_unresolved_placeholders(action: BaseAction) -> bool
+```
+
+Check if the action still holds credential placeholders that have not been replaced yet
+
+**Returns:**
+
+`bool`
+
+---
+
 ### list_credentials
 
 ```python
@@ -404,8 +418,9 @@ Modified action with replaced credentials
 
 **Raises:**
 
-- `ValueError`: If the action type is not supported or if no credentials are found
-- `InvalidPlaceholderError`: If an invalid placeholder is used
+- `ValueError`: If the action type is not supported
+- `CredentialReplacementError`: If a placeholder cannot be replaced (e.g. missing credential field)
+- `NoCredentialsFoundError`: If the vault holds no credentials for the current page
 
 ---
 

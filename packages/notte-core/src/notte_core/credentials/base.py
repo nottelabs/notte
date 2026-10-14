@@ -24,9 +24,14 @@ from notte_core.actions import (
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.logging import logger
 from notte_core.common.types import TResponseFormat
-from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
+from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.errors.actions import NoCredentialsFoundError
-from notte_core.errors.processing import CredentialFieldValidationError, InvalidPlaceholderError
+from notte_core.errors.processing import (
+    CredentialFieldValidationError,
+    InvalidPlaceholderError,
+    MissingCredentialFieldError,
+    VaultLookupError,
+)
 from notte_core.profiling import profiler
 from notte_core.utils.url import get_root_domain
 
@@ -51,7 +56,7 @@ class LocatorAttributes(BaseModel):
 
 
 class CredentialField(BaseModel, ABC, frozen=True):  # pyright: ignore[reportUnsafeMultipleInheritance]
-    value: str = Field(description="Stored value (sensitive)")
+    value: str = Field(description="Stored value (sensitive)", repr=False)
     alias: ClassVar[str] = Field(description="Keyword when setting value")
     exposed: ClassVar[bool] = Field(
         description="Whether to mention to the llm that the placeholder will be shown to it", default=False
@@ -551,7 +556,9 @@ class BaseVault(ABC):
                 try:
                     original_string = json.dumps(arglist[arg_index], indent=2)
                 except Exception as e:
-                    raise ValueError(f"Invalid JSON object at index {arg_index}: {arglist[arg_index]}") from e
+                    raise ValueError(
+                        f"Invalid JSON object at index {arg_index} (type={type(arglist[arg_index]).__name__})"
+                    ) from e
                 og_dict = json.loads(original_string)
 
                 arglist[arg_index] = BaseVault.recursive_replace_mapping(og_dict, replacement_map)  # type: ignore
@@ -627,10 +634,52 @@ class BaseVault(ABC):
 
         return initial
 
+    @staticmethod
+    def _contains_placeholder(value: str) -> bool:
+        return any(placeholder in value for placeholder in CredentialField.all_placeholders())
+
+    def has_unresolved_placeholders(self, action: BaseAction) -> bool:
+        """Check if the action still holds credential placeholders that have not been replaced yet.
+
+        Values already replaced by the vault (`ValueWithPlaceholder`) serialize back to their placeholder,
+        so `contains_credentials` is still true for them: they must not be replaced a second time.
+        Only fill-type actions support credential replacement: other actions always return False.
+        """
+        if isinstance(action, FormFillAction):
+            values = list(action.value.values())
+        elif isinstance(action, (MultiFactorFillAction, FillAction, FallbackFillAction, SelectDropdownOptionAction)):
+            values = [action.value]
+        else:
+            return False
+        return any(isinstance(value, str) and self._contains_placeholder(value) for value in values)
+
+    async def _get_credit_card_for_replacement(self, cred_key: str) -> CreditCardDict:
+        try:
+            return await self.get_credit_card_async()
+        except Exception as e:
+            # Never log the exception message: vault backends can echo stored values in their errors
+            logger.error(f"Error getting credit card from vault ({type(e).__name__})")
+            raise VaultLookupError(cred_key, type(e).__name__) from None
+
+    async def _get_credentials_for_replacement(self, url: str) -> CredentialsDict:
+        try:
+            creds_dict = await self.get_credentials_async(url)
+        except Exception as e:
+            # Never log the exception message: vault backends can echo stored values in their errors
+            logger.error(f"Error getting credentials for url={url} ({type(e).__name__})")
+            creds_dict = None
+
+        if creds_dict is None:
+            raise NoCredentialsFoundError(url)
+        return creds_dict
+
     async def replace_credentials(
         self, action: BaseAction, attrs: LocatorAttributes, snapshot: BrowserSnapshot
     ) -> BaseAction:
         """Replace credentials in the action with actual values from the vault.
+
+        Values that were already replaced (`ValueWithPlaceholder`) and form values that do not contain any
+        placeholder are left untouched.
 
         Args:
             action: The action to replace credentials in
@@ -641,8 +690,9 @@ class BaseVault(ABC):
             Modified action with replaced credentials
 
         Raises:
-            ValueError: If the action type is not supported or if no credentials are found
-            InvalidPlaceholderError: If an invalid placeholder is used
+            ValueError: If the action type is not supported
+            CredentialReplacementError: If a placeholder cannot be replaced (e.g. missing credential field)
+            NoCredentialsFoundError: If the vault holds no credentials for the current page
         """
         # Get credentials for current domain
 
@@ -654,30 +704,31 @@ class BaseVault(ABC):
         values_to_replace = action.value if isinstance(action, FormFillAction) else {"key": action.value}
 
         for action_key, original_action_value in values_to_replace.items():
-            placeholder_value = get_str_value(original_action_value)
+            if isinstance(original_action_value, ValueWithPlaceholder):
+                # already replaced: replacing again would treat the real value as a placeholder
+                continue
+
+            field_name = action_key if isinstance(action, FormFillAction) else None
+            placeholder_value = original_action_value
             cred_class = CredentialField.placeholder_map.get(placeholder_value)
 
             if cred_class is None:
-                raise InvalidPlaceholderError(placeholder_value)
+                if isinstance(action, FormFillAction) and not self._contains_placeholder(placeholder_value):
+                    # regular form value (e.g. a first name): nothing to replace
+                    continue
+                raise InvalidPlaceholderError(field_name)
 
             cred_key = cred_class.alias
 
             if cred_class in (CardHolderField, CardNumberField, CardCVVField, CardFullExpirationField):
-                creds_dict = await self.get_credit_card_async()
+                creds_dict = await self._get_credit_card_for_replacement(cred_key)
             else:
-                try:
-                    creds_dict = await self.get_credentials_async(snapshot.metadata.url)
-                except Exception as e:
-                    logger.error(f"Error getting credentials for url={snapshot.metadata.url}: {e}")
-                    creds_dict = None
-
-                if creds_dict is None:
-                    raise NoCredentialsFoundError(snapshot.metadata.url)
+                creds_dict = await self._get_credentials_for_replacement(snapshot.metadata.url)
 
             cred_value = get_with_fallback(creds_dict, cred_key)
 
             if cred_value is None:
-                raise ValueError(f"No credential of type {cred_key} found in vault")
+                raise MissingCredentialFieldError(cred_key)
 
             cred_instance = cred_class(value=cred_value)
 

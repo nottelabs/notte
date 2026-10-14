@@ -87,10 +87,29 @@ class InvalidA11yChildrenError(InvalidInternalCheckError):
         )
 
 
-class InvalidPlaceholderError(NotteBaseError):
-    def __init__(self, placeholder: str) -> None:
-        dev_message = f"The placeholder {placeholder} is not handled by your current vault."
-        agent_message = f"Could not perform action with value {placeholder}. Try picking a different value"
+class CredentialReplacementError(NotteBaseError):
+    """Base class for errors raised while replacing credential placeholders with vault values.
+
+    The action carrying the placeholder must fail instead of typing the literal placeholder into the page.
+    Messages must never include credential values: only refer to the credential by field type.
+    """
+
+    pass
+
+
+class InvalidPlaceholderError(CredentialReplacementError):
+    """Raised when an action value contains a credential placeholder but is not exactly a known placeholder."""
+
+    def __init__(self, field_name: str | None = None) -> None:
+        field_str = f" for field {field_name!r}" if field_name else ""
+        dev_message = (
+            f"The credential value{field_str} is not an exact vault placeholder. "
+            "Use one of the vault placeholders as the whole value, without any other text."
+        )
+        agent_message = (
+            f"Could not fill the credential{field_str}: the value must be exactly one of the vault placeholders, "
+            "without any other text. Retry with the exact placeholder."
+        )
         user_message = "Unexpected error while requesting credentials from vault"
 
         super().__init__(
@@ -100,7 +119,32 @@ class InvalidPlaceholderError(NotteBaseError):
         )
 
 
-class CredentialFieldValidationError(NotteBaseError):
+class MissingCredentialFieldError(CredentialReplacementError):
+    """Raised when the vault holds credentials for the page, but not the requested field."""
+
+    def __init__(self, cred_key: str) -> None:
+        message = f"No credential of type {cred_key!r} found in the vault."
+        super().__init__(
+            dev_message=f"{message} Add it to the vault and try again.",
+            user_message=message,
+            agent_message=f"{message} Do not use the {cred_key!r} placeholder: try another login method or field.",
+        )
+
+
+class VaultLookupError(CredentialReplacementError):
+    """Raised when the vault could not be queried for a credential."""
+
+    def __init__(self, cred_key: str, error_type: str) -> None:
+        message = f"Could not retrieve credential of type {cred_key!r} from the vault ({error_type})."
+        super().__init__(
+            dev_message=message,
+            user_message=message,
+            agent_message=message,
+            should_retry_later=True,
+        )
+
+
+class CredentialFieldValidationError(CredentialReplacementError):
     """Raised when a credential placeholder targets an element that is not a valid input for that
     credential (e.g. a password placeholder targeted at a <label> instead of the password input).
     Without this error the literal placeholder string would be typed into the page."""
