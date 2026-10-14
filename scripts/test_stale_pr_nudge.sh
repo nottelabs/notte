@@ -8,7 +8,7 @@ trap 'rm -rf "$fake"' EXIT
 
 cat > "$fake/gh" <<'GH'
 #!/bin/bash
-# Fake gh: PR list and timelines from fixtures, filtered with jq like --jq does.
+# Fake gh: PR list (filtered with jq like --jq does) and timelines from fixtures.
 jqexpr="${*: -1}"
 if [ "$1 $2" = "pr list" ]; then
   cat <<'JSON' | jq -r "$jqexpr"
@@ -22,14 +22,17 @@ if [ "$1 $2" = "pr list" ]; then
 ]
 JSON
 elif [ "$1" = "api" ]; then
-  ping='{"event": "commented", "body": "x\n\n<!-- stale-pr-nudge -->", "actor": {"type": "Bot"}}'
-  case "$3" in
+  ping='{"event": "commented", "created_at": "2026-01-02T00:00:00Z", "body": "x\n\n<!-- stale-pr-nudge -->", "actor": {"type": "Bot"}}'
+  commit='{"event": "committed", "committer": {"date": "2026-01-01T00:00:00Z"}}'
+  case "$(printf '%s\n' "$@" | grep /timeline)" in
     # Pinged, then only the notification events the ping itself caused.
-    */2/timeline) echo "[{\"event\": \"committed\"}, $ping, {\"event\": \"mentioned\", \"actor\": {\"type\": \"User\"}}, {\"event\": \"subscribed\", \"actor\": {\"type\": \"User\"}}]" ;;
-    # Pinged, then the author replied seconds later.
-    */6/timeline) echo "[$ping, {\"event\": \"commented\", \"body\": \"on it\", \"actor\": {\"type\": \"User\"}}]" ;;
-    *) echo '[{"event": "committed"}]' ;;
-  esac | jq -r "$jqexpr"
+    */2/timeline) page="[$commit, $ping, {\"event\": \"mentioned\", \"created_at\": \"2026-01-02T00:00:00Z\"}, {\"event\": \"subscribed\", \"created_at\": \"2026-01-02T00:00:00Z\"}]" ;;
+    # Pinged, then the author replied seconds later; listed out of order.
+    */6/timeline) page="[{\"event\": \"commented\", \"created_at\": \"2026-01-02T00:00:30Z\", \"body\": \"on it\", \"actor\": {\"type\": \"User\"}}, $ping]" ;;
+    *) page="[$commit]" ;;
+  esac
+  # --slurp wraps the pages in an outer array.
+  echo "[$page]"
 elif [ "$1 $2" = "pr comment" ]; then
   echo "COMMENT #$3 $(printf '%s' "${*: -1}" | tr '\n' ' ')"
 fi

@@ -22,7 +22,8 @@ on:
 permissions: {}
 
 concurrency:
-  group: stale-pr-nudge-${{ github.event_name }}
+  # Scheduled and manual runs share a group so they never ping the same PR twice.
+  group: stale-pr-nudge-${{ github.event_name == 'pull_request' && 'test' || 'nudge' }}
   cancel-in-progress: false
 
 jobs:

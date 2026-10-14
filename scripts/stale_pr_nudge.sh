@@ -19,9 +19,13 @@ gh pr list --repo "$REPO" --state open --limit 500 \
     | select(now - (.updatedAt | fromdateiso8601) > (env.STALE_DAYS | tonumber) * 86400)
     | [.number, .updatedAt, .author.login] | @tsv' |
 while IFS=$'\t' read -r number updated author; do
-  latest=$(gh api --paginate "repos/$REPO/issues/$number/timeline" \
-    --jq ".[] | select(.event as \$e | $NOISE | index(\$e) | not)
-      | [.event, ((.body // \"\") | contains(env.MARKER)), (.actor.type // .user.type // \"\")] | @tsv" | tail -n 1)
+  # The timeline API does not document an order: sort events by time.
+  latest=$(gh api --paginate --slurp "repos/$REPO/issues/$number/timeline" | jq -r --argjson noise "$NOISE" '
+    add
+    | map(select(.event as $e | $noise | index($e) | not))
+    | sort_by(.created_at // .submitted_at // .committer.date // "")
+    | last // empty
+    | [.event, ((.body // "") | contains(env.MARKER)), (.actor.type // .user.type // "")] | @tsv')
   if [ "$latest" = "commented	true	Bot" ]; then
     echo "#$number: already pinged, no activity since"
     continue
