@@ -36,6 +36,8 @@ _KEYCHAIN_READ_TIMEOUT_SECONDS = 30.0
 _SECURITY_TOOL = "/usr/bin/security"
 # Prefix 99designs/keyring adds to Windows Credential Manager target names.
 _WINCRED_PREFIX = "keyring"
+# notte-cli marks file entries it knows are current (see _get_from_cli_stores).
+_FILE_CURRENT_MARKER = "notte-cli:current"
 # Upper bound on PBKDF2 iterations accepted from a file header.
 _MAX_PBES2_ITERATIONS = 10_000_000
 
@@ -58,18 +60,29 @@ def resolve_env_label(api_url: str) -> str:
     return _HOST_TO_ENV_LABEL.get(hostname, hostname)
 
 
-def _decode_cli_secret(secret: bytes) -> str | None:
-    """Decode a keyring item serialized by github.com/99designs/keyring."""
+def _decode_cli_item(secret: bytes) -> tuple[str, bool] | None:
+    """Decode a keyring item serialized by github.com/99designs/keyring.
+
+    Returns the value and whether notte-cli marked the entry as current.
+    """
     try:
         item: Any = json.loads(secret)
         if not isinstance(item, dict):
             return None
-        data = cast(dict[str, Any], item).get("Data")
+        fields = cast(dict[str, Any], item)
+        data = fields.get("Data")
         if not isinstance(data, str):
             return None
-        return base64.b64decode(data, validate=True).decode() or None
+        value = base64.b64decode(data, validate=True).decode()
+        return (value, fields.get("Description") == _FILE_CURRENT_MARKER) if value else None
     except (UnicodeDecodeError, ValueError, TypeError):
         return None
+
+
+def _decode_cli_secret(secret: bytes) -> str | None:
+    """Decode the value of a keyring item serialized by github.com/99designs/keyring."""
+    item = _decode_cli_item(secret)
+    return item[0] if item else None
 
 
 def _b64url_decode(segment: str) -> bytes:
@@ -120,15 +133,18 @@ def _cli_config_dir() -> Path:
     return (Path(base) if base else Path.home()) / _CONFIG_DIR_NAME
 
 
-def _get_from_file_backend(key: str) -> str | None:
-    """Read the encrypted file notte-cli writes when no system keyring is available."""
+def _read_file_backend(key: str) -> tuple[str, bool] | None:
+    """Read the encrypted file notte-cli writes when no system keyring is available.
+
+    Returns the value and whether notte-cli marked the entry as current.
+    """
     try:
         # 99designs/keyring percent-encodes '%' and '/' in file names.
         filename = key.replace("%", "%25").replace("/", "%2F")
         path = _cli_config_dir() / filename
         if not path.is_file():
             return None
-        return _decode_cli_secret(_decrypt_file_backend_token(path.read_text(), _FILE_BACKEND_PASSWORD))
+        return _decode_cli_item(_decrypt_file_backend_token(path.read_text(), _FILE_BACKEND_PASSWORD))
     except Exception as exc:
         logger.debug(f"Could not read notte-cli file keyring: {type(exc).__name__}")
         return None
@@ -269,23 +285,29 @@ def _get_from_windows_credential_manager(key: str) -> str | None:
         return None
 
 
-def _get_from_cli_stores(key: str) -> str | None:
-    """Read `key` the way notte-cli does: the file store first, then the system store.
-
-    notte-cli only keeps a file entry when no system store was usable, when an
-    older version saved it, or as an identical copy while migrating it into
-    the system store. In each case it is the current key, so the CLI uses it
-    first, and reading it first also avoids a Keychain access prompt.
-    """
-    value = _get_from_file_backend(key)
-    if value:
-        return value
+def _get_from_system_store(key: str) -> str | None:
     platform = _platform()
     if platform == "darwin":
         return _get_from_macos_keychain(key)
     if platform == "win32":
         return _get_from_windows_credential_manager(key)
     return _get_from_secret_service(key)
+
+
+def _get_from_cli_stores(key: str) -> str | None:
+    """Read `key` the way notte-cli does.
+
+    notte-cli marks the file entries it knows are current: a key saved while
+    no system store was usable, or the identical copy it keeps after moving a
+    key into the system store. A marked entry wins, which also avoids a
+    Keychain access prompt. Otherwise the system store wins, and an unmarked
+    entry, written by an older CLI version, is only used when the system
+    store has nothing.
+    """
+    file_item = _read_file_backend(key)
+    if file_item is not None and file_item[1]:
+        return file_item[0]
+    return _get_from_system_store(key) or (file_item[0] if file_item else None)
 
 
 def _is_secure_api_url(api_url: str) -> bool:

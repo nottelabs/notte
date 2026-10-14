@@ -48,6 +48,11 @@ CLI_FILE_BACKEND_VALUES = {
 }
 
 
+def _file_value(key: str) -> str | None:
+    item = auth._read_file_backend(key)
+    return item[0] if item else None
+
+
 def _write_cli_store(config_dir: Path, *keys: str) -> None:
     store = config_dir / ".notte" / "cli"
     store.mkdir(parents=True, exist_ok=True)
@@ -91,7 +96,7 @@ def test_decode_cli_secret() -> None:
 def test_file_backend_reads_items_written_by_cli_library(cli_config_dir: Path, key: str) -> None:
     _write_cli_store(cli_config_dir, key)
 
-    assert auth._get_from_file_backend(key) == CLI_FILE_BACKEND_VALUES[key]
+    assert _file_value(key) == CLI_FILE_BACKEND_VALUES[key]
 
 
 def test_file_backend_escapes_file_names_like_cli(cli_config_dir: Path) -> None:
@@ -99,22 +104,22 @@ def test_file_backend_escapes_file_names_like_cli(cli_config_dir: Path) -> None:
     store.mkdir(parents=True)
     (store / "api_key:a%2Fb%25c").write_text(CLI_FILE_BACKEND_ITEMS["api_key:prod"])
 
-    assert auth._get_from_file_backend("api_key:a/b%c") == "cli-prod-key"
+    assert _file_value("api_key:a/b%c") == "cli-prod-key"
 
 
 def test_file_backend_missing_or_invalid_entries(cli_config_dir: Path) -> None:
     store = cli_config_dir / ".notte" / "cli"
-    assert auth._get_from_file_backend("api_key:prod") is None
+    assert _file_value("api_key:prod") is None
 
     store.mkdir(parents=True)
     (store / "api_key:prod").write_text("not a token")
-    assert auth._get_from_file_backend("api_key:prod") is None
+    assert _file_value("api_key:prod") is None
 
     token = CLI_FILE_BACKEND_ITEMS["api_key:prod"]
     protected, rest = token.split(".", 1)
     tampered = protected + "." + rest[:-4] + ("AAAA" if not rest.endswith("AAAA") else "BBBB")
     (store / "api_key:prod").write_text(tampered)
-    assert auth._get_from_file_backend("api_key:prod") is None
+    assert _file_value("api_key:prod") is None
 
 
 def _jwe_with_header(header: dict[str, Any]) -> str:
@@ -172,14 +177,54 @@ def test_get_keyring_api_key_supports_legacy_prod_key(cli_config_dir: Path) -> N
     assert get_keyring_api_key("https://us-dev.notte.cc") is None
 
 
-def test_get_keyring_api_key_prefers_file_entry(cli_config_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    # Like notte-cli: a file entry is current whenever it exists.
-    monkeypatch.setattr(sys, "platform", "linux")
-    monkeypatch.setattr(auth, "_get_from_secret_service", lambda key: f"secret-service-{key}")
-    assert get_keyring_api_key("https://api.notte.cc") == "secret-service-api_key:prod"
+def _write_cli_item(config_dir: Path, key: str, value: str, description: str = "") -> None:
+    """Write a file store entry encrypted the way 99designs/keyring does."""
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    from cryptography.hazmat.primitives.keywrap import aes_key_wrap
 
-    _write_cli_store(cli_config_dir, "api_key:prod")
-    assert get_keyring_api_key("https://api.notte.cc") == "cli-prod-key"
+    def b64(data: bytes) -> str:
+        return base64.urlsafe_b64encode(data).decode().rstrip("=")
+
+    salt = b"0123456789abcdef"
+    header = {"alg": "PBES2-HS256+A128KW", "enc": "A256GCM", "p2c": 1000, "p2s": b64(salt)}
+    protected = b64(json.dumps(header).encode())
+    kek = PBKDF2HMAC(
+        algorithm=hashes.SHA256(), length=16, salt=b"PBES2-HS256+A128KW\x00" + salt, iterations=1000
+    ).derive(b"notte-cli-keyring")
+    cek, iv = bytes(range(32)), bytes(12)
+    item = {"Key": key, "Data": base64.b64encode(value.encode()).decode(), "Description": description}
+    sealed = AESGCM(cek).encrypt(iv, json.dumps(item).encode(), protected.encode())
+    store = config_dir / ".notte" / "cli"
+    store.mkdir(parents=True, exist_ok=True)
+    token = ".".join([protected, b64(aes_key_wrap(kek, cek)), b64(iv), b64(sealed[:-16]), b64(sealed[-16:])])
+    _ = (store / key).write_text(token)
+
+
+@pytest.mark.parametrize("platform", ["linux", "darwin", "win32"])
+def test_get_keyring_api_key_store_precedence(
+    cli_config_dir: Path, monkeypatch: pytest.MonkeyPatch, platform: str
+) -> None:
+    monkeypatch.setattr(sys, "platform", platform)
+    system_reader = {
+        "linux": "_get_from_secret_service",
+        "darwin": "_get_from_macos_keychain",
+        "win32": "_get_from_windows_credential_manager",
+    }[platform]
+    system: dict[str, str] = {}
+    monkeypatch.setattr(auth, system_reader, system.get)
+
+    # An entry written by an older CLI version is used when the system store has nothing...
+    _write_cli_item(cli_config_dir, "api_key:prod", "old-version-key")
+    assert get_keyring_api_key("https://api.notte.cc") == "old-version-key"
+    # ...but may be older than the system store's entry, which wins.
+    system["api_key:prod"] = "system-key"
+    assert get_keyring_api_key("https://api.notte.cc") == "system-key"
+    # An entry notte-cli marked current wins without reading the system store.
+    _write_cli_item(cli_config_dir, "api_key:prod", "current-key", "notte-cli:current")
+    monkeypatch.setattr(auth, system_reader, lambda key: pytest.fail("system store read"))
+    assert get_keyring_api_key("https://api.notte.cc") == "current-key"
 
 
 def test_resolve_api_key_precedence(cli_config_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -336,43 +381,6 @@ def test_client_without_any_key_raises_after_one_lookup(cli_config_dir: Path) ->
         _ = NotteClient()
 
     assert get_keyring.call_count == 1
-
-
-@pytest.mark.parametrize(
-    ("platform", "order"),
-    [
-        ("linux", ["file", "secret_service"]),
-        ("darwin", ["file", "keychain"]),
-        ("win32", ["file", "wincred"]),
-    ],
-)
-def test_cli_stores_lookup_order(monkeypatch: pytest.MonkeyPatch, platform: str, order: list[str]) -> None:
-    calls: list[str] = []
-
-    def reader(name: str, value: str | None) -> Any:
-        def read(key: str) -> str | None:
-            calls.append(name)
-            return value
-
-        return read
-
-    monkeypatch.setattr(sys, "platform", platform)
-    for name, attr in [
-        ("secret_service", "_get_from_secret_service"),
-        ("file", "_get_from_file_backend"),
-        ("keychain", "_get_from_macos_keychain"),
-        ("wincred", "_get_from_windows_credential_manager"),
-    ]:
-        monkeypatch.setattr(auth, attr, reader(name, None))
-    assert auth._get_from_cli_stores("api_key:prod") is None
-    assert calls == order
-
-    # The first store that has the key wins and the others are not read.
-    calls.clear()
-    first, second = order
-    monkeypatch.setattr(auth, "_get_from_file_backend", reader(first, f"{first}-key"))
-    assert auth._get_from_cli_stores("api_key:prod") == f"{first}-key"
-    assert calls == [first]
 
 
 class _FakeSecurity:

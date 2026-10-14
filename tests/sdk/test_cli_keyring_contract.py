@@ -46,6 +46,11 @@ STORE_KEYS = [f"{auth.KEYRING_KEY}:{auth.resolve_env_label(url)}" for url in API
 RunCli = Callable[[list[dict[str, str]]], None]
 
 
+def _file_value(key: str) -> str | None:
+    item = auth._read_file_backend(key)
+    return item[0] if item else None
+
+
 @pytest.fixture(scope="module")
 def writer(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """Build notte-cli's auth tests with the contract writer added."""
@@ -134,7 +139,7 @@ def _check_store(values: dict[str, str]) -> None:
         if expected is not None:
             assert in_file == (expected == "file"), key
         if in_file:
-            assert auth._get_from_file_backend(key) == value, key
+            assert _file_value(key) == value, key
         else:
             assert _read_system_store(key) == value, key
 
