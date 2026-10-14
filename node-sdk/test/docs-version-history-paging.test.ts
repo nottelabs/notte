@@ -21,12 +21,15 @@ vi.mock('notte-sdk', () => {
 
 afterEach(() => vi.restoreAllMocks());
 
+const name = 'version_history';
+const runExample = () => import(`../../docs/src/testers/functions/management/${name}.ts`);
+
 it.each([1, 3])('finds the owned function on page %i', async ownedPage => {
   vi.resetModules();
   Object.assign(fixture, { ownedPage, calls: [] });
   vi.stubEnv('NOTTE_FUNCTION_ID', 'owned');
   vi.spyOn(console, 'log').mockImplementation(() => {});
-  await expect(import('../../docs/src/testers/functions/management/version_history.ts')).resolves.toMatchObject({ results: [true, true] });
+  await expect(runExample()).resolves.toMatchObject({ results: [true, true] });
   expect(fixture.calls).toContainEqual({ page: ownedPage, page_size: 100 });
 });
 
@@ -35,7 +38,7 @@ it('fails when the owned function is on no page', async () => {
   Object.assign(fixture, { ownedPage: null, calls: [] });
   vi.stubEnv('NOTTE_FUNCTION_ID', 'owned');
   vi.spyOn(console, 'log').mockImplementation(() => {});
-  await expect(import('../../docs/src/testers/functions/management/version_history.ts')).rejects.toThrow('Owned function missing from history');
+  await expect(runExample()).rejects.toThrow('Owned function missing from history');
   // Stops at the last, short page instead of paging forever.
   expect(fixture.calls.at(-1)).toEqual({ page: fixture.totalPages, page_size: 100 });
 });
