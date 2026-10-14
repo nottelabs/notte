@@ -144,6 +144,22 @@ def test_cached_page_logs_when_it_is_no_longer_live(monkeypatch: pytest.MonkeyPa
     )
 
 
+def test_healthy_cached_page_does_not_build_diagnostic_snapshot(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _bare_session()
+    browser, _context, page = _browser_with_page()
+    session._playwright_browser = browser
+    session._playwright_page = page
+    browser.is_connected.return_value = True
+    page.is_closed.return_value = False
+    monkeypatch.setattr(sessions, "_playwright_available", True)
+    snapshot = MagicMock(side_effect=AssertionError("unexpected diagnostic snapshot"))
+    session._playwright_state = snapshot
+
+    assert session.page is page
+
+    snapshot.assert_not_called()
+
+
 def test_new_page_callback_is_instrumented(monkeypatch: pytest.MonkeyPatch) -> None:
     session = _bare_session()
     browser, context, page = _browser_with_page()
@@ -169,9 +185,14 @@ def test_new_page_callback_is_instrumented(monkeypatch: pytest.MonkeyPatch) -> N
 @pytest.mark.parametrize(
     ("url", "expected"),
     [
-        ("https://user@example.com:8443/cb?code=secret#token=secret", "https://example.com:8443/cb"),
-        ("http://example.com/path", "http://example.com/path"),
+        ("https://user@example.com:8443/cb?code=secret#token=secret", "https://example.com:8443"),
+        ("http://example.com/path-secret-token", "http://example.com"),
+        ("wss://example.com/ws?token=secret", "wss://example.com"),
+        ("file:///tmp/page-secret-token.html?x=secret", "file:"),
         ("about:blank", "about:blank"),
+        ("about:blank?code=secret#token=secret", "about:blank"),
+        ("about:srcdoc#secret", "about:srcdoc"),
+        ("about:custom-secret", "about:"),
         ("data:text/html,<p>secret</p>", "data:"),
         ("", "<redacted>"),
     ],
@@ -193,7 +214,7 @@ def captured_logs() -> Iterator[list[tuple[str, str]]]:
         sessions.logger.remove(handler_id)
 
 
-def test_lifecycle_log_does_not_contain_url_secrets(captured_logs: list[tuple[str, str]]) -> None:
+def test_lifecycle_log_does_not_contain_url_paths_or_secrets(captured_logs: list[tuple[str, str]]) -> None:
     session = _bare_session()
     browser, _context, page = _browser_with_page()
     page.url = "https://example.com/callback?code=secret-code#access_token=secret-token"
@@ -204,7 +225,8 @@ def test_lifecycle_log_does_not_contain_url_secrets(captured_logs: list[tuple[st
 
     [(level, message)] = captured_logs
     assert level == "WARNING"
-    assert "https://example.com/callback" in message
+    assert "https://example.com" in message
+    assert "callback" not in message
     assert "secret" not in message
 
 

@@ -87,5 +87,6 @@ def test_playwright_lifecycle_is_logged_against_real_browser(
     assert all(level == "DEBUG" for level, _ in events[1:])
     session.stop.assert_called_once_with(close_reason="manual")
 
-    assert any(html.as_uri() in message for _, message in lifecycle_logs)
+    assert any("'url': 'file:'" in message for _, message in lifecycle_logs)
+    assert not any(html.as_uri() in message for _, message in lifecycle_logs)
     assert not any("secret" in message for _, message in lifecycle_logs)

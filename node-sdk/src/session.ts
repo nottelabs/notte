@@ -162,17 +162,21 @@ export function installServerOwnedDialogPolicy(browser: Pick<Browser, 'contexts'
   }
 }
 
-const LOGGABLE_URL_SCHEMES = new Set(['http', 'https', 'ws', 'wss', 'file']);
+const NETWORK_URL_SCHEMES = new Set(['http', 'https', 'ws', 'wss']);
 
-/** Keep only the scheme, host and path of a URL so logs never carry credentials, queries or fragments. */
+/** Keep only a network origin or a safe browser page name in lifecycle logs. */
 export function redactPlaywrightUrl(url: string): string {
   const scheme = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(url)?.[1]?.toLowerCase();
   if (!scheme) return '<redacted>';
-  if (scheme === 'about') return url;
-  if (!LOGGABLE_URL_SCHEMES.has(scheme)) return `${scheme}:`;
+  if (scheme === 'about') {
+    const pageName = url.slice(url.indexOf(':') + 1).split(/[?#]/, 1)[0].toLowerCase();
+    return pageName === 'blank' || pageName === 'srcdoc' ? `about:${pageName}` : 'about:';
+  }
+  if (scheme === 'file') return 'file:';
+  if (!NETWORK_URL_SCHEMES.has(scheme)) return `${scheme}:`;
   try {
     const parsed = new URL(url);
-    return `${scheme}://${parsed.host}${parsed.pathname}`;
+    return `${scheme}://${parsed.host}`;
   } catch {
     return '<unparseable>';
   }

@@ -115,23 +115,31 @@ def _install_server_owned_dialog_policy(browser: Any) -> None:
 
 
 def _redact_playwright_url(url: str) -> str:
-    """Strip credentials, query strings and fragments from a URL before it is logged."""
+    """Keep only a network origin or a safe browser page name in lifecycle logs."""
     try:
         parts = urlsplit(url)
     except ValueError:
         return "<unparseable>"
-    if parts.scheme == "about":
-        return url
-    if parts.scheme not in ("http", "https", "ws", "wss", "file"):
-        return f"{parts.scheme}:" if parts.scheme else "<redacted>"
+    scheme = parts.scheme.lower()
+    if scheme == "about":
+        page_name = parts.path.lower()
+        return f"about:{page_name}" if page_name in ("blank", "srcdoc") else "about:"
+    if scheme == "file":
+        return "file:"
+    if scheme not in ("http", "https", "ws", "wss"):
+        return f"{scheme}:" if scheme else "<redacted>"
     host = parts.hostname or ""
+    if not host:
+        return "<unparseable>"
+    if ":" in host:
+        host = f"[{host}]"
     try:
         port = parts.port
     except ValueError:
-        port = None
+        return "<unparseable>"
     if port is not None:
         host = f"{host}:{port}"
-    return f"{parts.scheme}://{host}{parts.path}"
+    return f"{scheme}://{host}"
 
 
 def _playwright_object_id(value: Any) -> str:
@@ -979,12 +987,15 @@ class RemoteSession(SyncResource):
         self._playwright_cleanup_in_progress = True
 
     def _log_unhealthy_cached_playwright_page(self, browser: Any, page: Any) -> None:
-        state = self._playwright_state(browser, page)
-        page_state = self._playwright_page_state(page)
-        browser_disconnected = state.get("browser_connected") is False
-        page_closed = page_state.get("is_closed") is True
-        page_missing = not any(context.get("contains_cached_page") for context in state["contexts"])
-        if browser_disconnected or page_closed or page_missing:
+        try:
+            unhealthy = (
+                not browser.is_connected()
+                or page.is_closed()
+                or not any(page in context.pages for context in browser.contexts)
+            )
+        except Exception:
+            unhealthy = True
+        if unhealthy:
             self._log_playwright_event(
                 "sdk_playwright_cached_page_unhealthy",
                 browser=browser,

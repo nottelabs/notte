@@ -138,7 +138,8 @@ describe.runIf(runnable)('session.page() lifecycle against a real browser', () =
     expect(sessionStop).toHaveBeenCalledTimes(1);
 
     const messages = captured.map(([, , message]) => message);
-    expect(messages.some(message => message.includes(`"url":"${pageUrl}"`))).toBe(true);
+    expect(messages.some(message => message.includes('"url":"file:"'))).toBe(true);
+    expect(messages.some(message => message.includes(pageUrl))).toBe(false);
     expect(messages.some(message => message.includes('secret'))).toBe(false);
   });
 

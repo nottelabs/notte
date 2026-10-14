@@ -182,23 +182,26 @@ describe('session.page() lifecycle diagnostics', () => {
     ]);
   });
 
-  it('never logs URL credentials, queries or fragments', async () => {
+  it('never logs URL credentials, paths, queries or fragments', async () => {
     const { browser } = await connectedSession(
       { logLevel: 'debug' },
       'https://user:pass@example.com/callback?code=secret-code#access_token=secret-token', // pragma: allowlist secret
     );
     browser.disconnect();
 
-    expect(captured.at(-1)!.message).toContain('"url":"https://example.com/callback"');
+    expect(captured.at(-1)!.message).toContain('"url":"https://example.com"');
     expect(captured.some(({ message }) => /secret|pass|user/.test(message))).toBe(false);
   });
 
   it.each([
-    ['https://user@example.com:8443/cb?code=secret#token=secret', 'https://example.com:8443/cb'],
-    ['http://example.com/path', 'http://example.com/path'],
-    ['wss://example.com/ws?token=secret', 'wss://example.com/ws'],
-    ['file:///tmp/page.html?x=secret', 'file:///tmp/page.html'],
+    ['https://user@example.com:8443/cb?code=secret#token=secret', 'https://example.com:8443'],
+    ['http://example.com/path-secret-token', 'http://example.com'],
+    ['wss://example.com/ws?token=secret', 'wss://example.com'],
+    ['file:///tmp/page-secret-token.html?x=secret', 'file:'],
     ['about:blank', 'about:blank'],
+    ['about:blank?code=secret#token=secret', 'about:blank'],
+    ['about:srcdoc#secret', 'about:srcdoc'],
+    ['about:custom-secret', 'about:'],
     ['data:text/html,<p>secret</p>', 'data:'],
     ['javascript:alert(1)', 'javascript:'],
     ['', '<redacted>'],
