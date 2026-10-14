@@ -63,3 +63,39 @@ class MetadataUploadPairsTest(unittest.TestCase):
                         else:
                             with self.assertRaises(AssertionError):
                                 runpy.run_path(source)
+
+    def test_version_history_pages_to_the_owned_function(self):
+        def function(function_id: str) -> types.SimpleNamespace:
+            return types.SimpleNamespace(
+                function_id=function_id, name=function_id, latest_version="v1", versions=["v1"]
+            )
+
+        others = [function(f"other-{index}") for index in range(250)]
+        for owned_page in (2, None):
+            with self.subTest(owned_page=owned_page):
+                pages = {page: others[(page - 1) * 100 : page * 100] for page in (1, 2, 3)}
+                if owned_page is not None:
+                    pages[owned_page] = [*pages[owned_page][:99], function("owned")]
+                calls: list[int | None] = []
+
+                def list_functions(page: int | None = None, page_size: int | None = None):
+                    calls.append(page)
+                    items = others[:10] if page is None else pages.get(page, [])
+                    return types.SimpleNamespace(items=items)
+
+                sdk = types.ModuleType("notte_sdk")
+                sdk.NotteClient = lambda: types.SimpleNamespace(functions=types.SimpleNamespace(list=list_functions))
+                with (
+                    patch.dict("sys.modules", {"notte_sdk": sdk}),
+                    patch.dict(os.environ, {"NOTTE_FUNCTION_ID": "owned"}),
+                    patch("builtins.print"),
+                ):
+                    source = str(ROOT / "functions/management/version_history.py")
+                    if owned_page is not None:
+                        self.assertEqual(runpy.run_path(source)["results"], [True, True])
+                        self.assertEqual(calls, [None, 1, 2])
+                    else:
+                        # A missing function stops at the first short page instead of looping.
+                        with self.assertRaises(AssertionError):
+                            runpy.run_path(source)
+                        self.assertEqual(calls, [None, 1, 2, 3])
