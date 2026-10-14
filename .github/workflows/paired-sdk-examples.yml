@@ -53,6 +53,11 @@ jobs:
       (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 20
+    # All live suites for a ref share one queue so they do not hit the API at once.
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
     # The examples are split across shards that run in parallel.
     strategy:
       fail-fast: false
@@ -80,19 +85,15 @@ jobs:
         run: .venv/bin/python -c "import playwright.sync_api; import patchright.sync_api"
       - run: npm ci --prefix node-sdk
       - run: npm run build --prefix node-sdk
-      - name: Wait for the API to be reachable
-        # The staging API scales to zero when idle and wakes on the first
-        # request; poll until it answers before running anything against it.
-        run: |
-          deadline=$((SECONDS + 900))
-          until [ "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' "$NOTTE_API_URL/health")" = "200" ]; do
-            [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
-            sleep 10
-          done
+      - name: Wait for the API to be ready
+        # The staging API scales to zero when idle and wakes on the first request.
+        uses: ./.github/actions/wait-for-api
+        with:
+          api-url: ${{ env.NOTTE_API_URL }}
       - name: Execute both languages against the local SDK packages
         working-directory: node-sdk
         env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
         run: |
           export NOTTE_DOCS_PYTHON="$GITHUB_WORKSPACE/.venv/bin/python"
           # Retry a failed live example once, without rerunning the whole suite.

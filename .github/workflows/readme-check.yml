@@ -54,9 +54,14 @@ jobs:
       (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 30
+    # All live suites for a ref share one queue so they do not hit the API at once.
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
     env:
       NOTTE_API_URL: https://us-staging.notte.cc
-      NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+      NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_README || secrets.NOTTE_API_KEY }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       # Same as nightly-examples: the local-agent example runs on Vertex, not the rate-limited Gemini API key.
       NOTTE_EXAMPLE_MODEL: vertex_ai/gemini-3.5-flash
@@ -77,8 +82,13 @@ jobs:
           enable-cache: false
       - run: uv sync --locked --dev --all-extras
       - run: uv run patchright install --with-deps chromium --no-shell
+      - name: Wait for the API to be ready
+        # The staging API scales to zero when idle and wakes on the first request.
+        uses: ./.github/actions/wait-for-api
+        with:
+          api-url: ${{ env.NOTTE_API_URL }}
       - name: Run README Python blocks
-        run: xvfb-run --auto-servernum uv run pytest tests/examples/test_readme.py -k test_readme_python_code -n 4
+        run: xvfb-run --auto-servernum uv run pytest tests/examples/test_readme.py -k test_readme_python_code -n 2
       - run: npm ci --prefix node-sdk
       - run: npm run build --prefix node-sdk
       - name: Run README TypeScript blocks against the local SDK

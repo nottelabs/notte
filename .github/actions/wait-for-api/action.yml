@@ -1,0 +1,35 @@
+name: Wait for the API
+description: >-
+  Block until the API is ready for live tests: several consecutive healthy
+  /health responses that all report the same version, polled with capped
+  exponential backoff under an overall deadline.
+
+inputs:
+  api-url:
+    description: Base URL of the API to wait for.
+    required: true
+  consecutive:
+    description: Consecutive healthy responses, all reporting the same version, required to pass.
+    default: "3"
+  interval:
+    description: Seconds between polls while the API looks healthy.
+    default: "5"
+  max-backoff:
+    description: Upper bound in seconds for the delay after a failed poll.
+    default: "60"
+  timeout:
+    description: Overall deadline in seconds.
+    default: "900"
+
+runs:
+  using: composite
+  steps:
+    - name: Wait for the API to be ready
+      shell: bash
+      env:
+        API_URL: ${{ inputs.api-url }}
+        CONSECUTIVE: ${{ inputs.consecutive }}
+        INTERVAL: ${{ inputs.interval }}
+        MAX_BACKOFF: ${{ inputs.max-backoff }}
+        TIMEOUT: ${{ inputs.timeout }}
+      run: bash "$GITHUB_ACTION_PATH/wait-for-api.sh"
