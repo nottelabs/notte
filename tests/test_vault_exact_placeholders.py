@@ -23,7 +23,12 @@ from notte_core.credentials import (
 from notte_core.credentials.base import CredentialField, CredentialsDict, CreditCardDict, LocatorAttributes
 from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.errors.actions import NoCredentialsFoundError
-from notte_core.errors.processing import CredentialReplacementError, MissingCredentialFieldError, VaultLookupError
+from notte_core.errors.processing import (
+    CredentialFieldValidationError,
+    CredentialReplacementError,
+    MissingCredentialFieldError,
+    VaultLookupError,
+)
 
 from tests.mock.mock_vault import MockVault
 from tests.mock.snapshot_factory import make_snapshot
@@ -183,6 +188,17 @@ def test_unresolved_secret_placeholder_fails_closed(
             _ = asyncio.run(session._action_with_vault(action))
         assert isinstance(exc_info.value, (CredentialReplacementError, NoCredentialsFoundError))
         assert_no_secret(error_texts(exc_info.value) + logs, SECRETS + (value,))
+
+
+@pytest.mark.parametrize("value", [CARD_HOLDER_NAME, CARD_NUMBER])
+def test_resolved_non_secret_placeholder_on_invalid_target_fails(value: str) -> None:
+    """With a saved card, a card placeholder on an input that is not a card field fails so the agent can retarget."""
+    vault = full_vault()
+    attrs = LocatorAttributes(type="text", autocomplete=None, outerHTML='<input id="search" type="text">')
+
+    with capture_logs() as logs, pytest.raises(CredentialFieldValidationError) as exc_info:
+        _ = asyncio.run(vault.replace_credentials(FillAction(id="I1", value=value), attrs, make_snapshot(URL)))
+    assert_no_secret(error_texts(exc_info.value) + logs, SECRETS)
 
 
 def test_secret_fails_even_when_form_also_holds_unresolved_non_secret() -> None:

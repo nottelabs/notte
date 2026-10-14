@@ -754,13 +754,6 @@ class BaseVault(ABC):
 
             try:
                 cred_value = await self._resolve_credential(cred_class, snapshot.metadata.url)
-                cred_instance = cred_class(value=cred_value)
-                # validate because element chosen by llm (form fill elements are chosen by regex)
-                if not isinstance(action, FormFillAction) and not cred_instance.validate_element(attrs):
-                    # A known placeholder targets an element that fails the field's validation
-                    # (e.g. a password placeholder on a <label> instead of the password input).
-                    # Raise so the literal placeholder is never typed into the page.
-                    raise CredentialFieldValidationError(placeholder_value, cred_key, attrs.type, attrs.outerHTML)
             except (CredentialReplacementError, NoCredentialsFoundError) as e:
                 if cred_class.secret:
                     raise
@@ -769,6 +762,14 @@ class BaseVault(ABC):
                     f"[Vault] No vault credential for the {cred_key!r} placeholder ({type(e).__name__}), filling the value as-is"
                 )
                 continue
+
+            cred_instance = cred_class(value=cred_value)
+            # validate because element chosen by llm (form fill elements are chosen by regex)
+            if not isinstance(action, FormFillAction) and not cred_instance.validate_element(attrs):
+                # A known placeholder targets an element that fails the field's validation
+                # (e.g. a password placeholder on a <label> instead of the password input).
+                # Raise so the literal placeholder is never typed into the page.
+                raise CredentialFieldValidationError(placeholder_value, cred_key, attrs.type, attrs.outerHTML)
 
             if not isinstance(action, FormFillAction):
                 action.value = ValueWithPlaceholder(cred_value, placeholder_value)
