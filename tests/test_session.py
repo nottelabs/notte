@@ -1,6 +1,7 @@
 import asyncio
 from typing import Any
 
+import notte_browser.execution as execution_module
 import notte_core
 import pytest
 from notte_browser.captcha import CaptchaHandler
@@ -322,12 +323,12 @@ async def test_click_empty_selector_returns_failed_result() -> None:
 
 
 @pytest.mark.asyncio
-async def test_interaction_execution_timeout_returns_failed_result() -> None:
+async def test_interaction_execution_timeout_returns_failed_result(monkeypatch: pytest.MonkeyPatch) -> None:
     async def slow_interaction(*_args, **_kwargs) -> None:
         await asyncio.sleep(0.05)
 
     async with NotteSession(headless=True) as session:
-        session.controller._interact = slow_interaction  # pyright: ignore[reportAttributeAccessIssue, reportPrivateUsage]
+        monkeypatch.setattr(execution_module, "_interact", slow_interaction)
 
         result = await session.aexecute(
             ClickAction(selector="#target", timeout=1),
@@ -449,10 +450,10 @@ async def _controller_execute_returning_false(*_args: Any, **_kwargs: Any) -> bo
 
 
 @pytest.mark.asyncio
-async def test_action_failing_by_returning_false_raises_by_default() -> None:
+async def test_action_failing_by_returning_false_raises_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
     """The raise gate asks 'did the action fail', not 'did something throw'."""
     async with NotteSession(headless=True) as session:
-        session.controller.execute = _controller_execute_returning_false  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
+        monkeypatch.setattr(execution_module, "execute", _controller_execute_returning_false)
 
         # the raised error must describe a failure, not echo the success-phrased
         # execution message of the action that did not actually run
@@ -461,9 +462,9 @@ async def test_action_failing_by_returning_false_raises_by_default() -> None:
 
 
 @pytest.mark.asyncio
-async def test_action_failing_by_returning_false_is_quiet_when_not_raising() -> None:
+async def test_action_failing_by_returning_false_is_quiet_when_not_raising(monkeypatch: pytest.MonkeyPatch) -> None:
     async with NotteSession(headless=True) as session:
-        session.controller.execute = _controller_execute_returning_false  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
+        monkeypatch.setattr(execution_module, "execute", _controller_execute_returning_false)
 
         result = await session.aexecute(type="wait", time_ms=1, raise_on_failure=False)
 

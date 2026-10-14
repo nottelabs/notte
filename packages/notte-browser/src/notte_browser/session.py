@@ -80,9 +80,9 @@ from notte_core.utils.files import create_or_append_cookies_to_file
 from pydantic import BaseModel, RootModel, ValidationError
 from typing_extensions import override
 
+from notte_browser import execution
 from notte_browser.action_space import build_action_space
 from notte_browser.captcha import CaptchaHandler
-from notte_browser.controller import BrowserController
 from notte_browser.dom.locate import locate_element
 from notte_browser.errors import (
     BrowserNotStartedError,
@@ -143,7 +143,7 @@ class NotteSession(AsyncResource, SyncResource):
         if self._request.solve_captchas and not CaptchaHandler.is_available:
             raise CaptchaSolverNotAvailableError()
         self._window: BrowserWindow | None = window
-        self.controller: BrowserController = BrowserController(verbose=config.verbose, storage=storage)
+        self._verbose: bool = config.verbose
         self.storage: BaseStorage | None = storage
         # Structured scraping hands the page markdown to `extractor` (by default `notte_llm.LlmExtractor`, if installed).
         self._extractor: StructuredExtractor | None = extractor
@@ -597,8 +597,14 @@ class NotteSession(AsyncResource, SyncResource):
                         raise InboxActionNotSupportedLocallyError(resolved_action)
                     case _:
                         resolved_action = await self._action_with_vault(resolved_action)
-                        # interactions bound themselves by `action.timeout` (see BrowserController)
-                        success = await self.controller.execute(self.window, resolved_action, self._snapshot)
+                        # interactions bound themselves by `action.timeout` (see execution.py)
+                        success = await execution.execute(
+                            self.window,
+                            resolved_action,
+                            storage=self.storage,
+                            prev_snapshot=self._snapshot,
+                            verbose=self._verbose,
+                        )
                         if not success:
                             # `message` still holds the success-phrased execution_message.
                             message = f"Action '{resolved_action.type}' failed during browser execution"

@@ -2,11 +2,11 @@ from collections.abc import AsyncIterator
 from typing import cast
 from unittest.mock import AsyncMock, MagicMock
 
-import notte_browser.controller as controller_module
+import notte_browser.execution as execution_module
 import pytest
 import pytest_asyncio
-from notte_browser.controller import BrowserController
 from notte_browser.errors import ScrollActionFailedError
+from notte_browser.execution import execute_browser_action
 from notte_browser.playwright_async_api import Error, Page, async_playwright
 from notte_browser.window import BrowserResource, BrowserWindow
 from notte_core.actions import ScrollDownAction, ScrollUpAction
@@ -34,7 +34,7 @@ async def page() -> AsyncIterator[Page]:
 async def scroll(page: Page, action: ScrollDownAction | ScrollUpAction) -> bool:
     resource = BrowserResource.model_construct(page=page, options=None)
     window = BrowserWindow(resource=resource)
-    return await BrowserController(verbose=False).execute_browser_action(window, action)
+    return await execute_browser_action(window, action)
 
 
 @pytest.mark.asyncio
@@ -153,7 +153,7 @@ async def test_targeted_scroll_rejects_non_scrollable_element(page: Page) -> Non
 @pytest.mark.asyncio
 async def test_targeted_scroll_rejects_missing_selector(page: Page, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        controller_module, "config", controller_module.config.model_copy(update={"timeout_action_ms": 100})
+        execution_module, "config", execution_module.config.model_copy(update={"timeout_action_ms": 100})
     )
     with pytest.raises(Error):
         await scroll(page, ScrollDownAction(selector="#missing", amount=250))
@@ -175,13 +175,12 @@ async def test_scroll_releases_trackers_on_success_and_failure(outcome: str) -> 
         other_frame = MagicMock()
         other_frame.evaluate_handle = AsyncMock(side_effect=RuntimeError("setup failed"))
         window.page.frames.append(other_frame)
-    controller = BrowserController(verbose=False)
     if outcome == "moved":
-        assert await controller.execute_browser_action(window, ScrollDownAction(amount=100))
+        assert await execute_browser_action(window, ScrollDownAction(amount=100))
     else:
         error = RuntimeError if outcome == "setup-error" else ScrollActionFailedError
         with pytest.raises(error):
-            await controller.execute_browser_action(window, ScrollDownAction(amount=100))
+            await execute_browser_action(window, ScrollDownAction(amount=100))
     handle.evaluate.assert_any_await("tracker => tracker.dispose()")
     handle.dispose.assert_awaited_once()
 
@@ -208,7 +207,7 @@ async def test_scroll_ignores_unrelated_destroyed_frame(phase: str) -> None:
     window.page.wait_for_timeout = AsyncMock()
     window.page.mouse.wheel = AsyncMock()
 
-    assert await BrowserController(verbose=False).execute_browser_action(window, ScrollDownAction(amount=100))
+    assert await execute_browser_action(window, ScrollDownAction(amount=100))
     window.page.mouse.wheel.assert_awaited_once()
     handle.dispose.assert_awaited_once()
     if phase == "check":

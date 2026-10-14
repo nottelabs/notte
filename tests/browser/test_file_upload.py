@@ -2,9 +2,9 @@ import asyncio
 from typing import cast
 from unittest.mock import AsyncMock, MagicMock
 
-import notte_browser.controller as controller_module
+import notte_browser.execution as execution_module
 import pytest
-from notte_browser.controller import BrowserController, _ActionBudget
+from notte_browser.execution import _ActionBudget, _interact
 from notte_browser.window import BrowserWindow
 from notte_core.actions import UploadFileAction
 from notte_core.storage import BaseStorage
@@ -32,14 +32,14 @@ async def test_upload_preserves_press_enter_sequence(
     storage = MagicMock()
     storage.upload_dir = "uploads"
     storage.get_file = AsyncMock(return_value="uploads/example.txt")
-    monkeypatch.setattr(controller_module, "locate_element", AsyncMock(return_value=locator))
+    monkeypatch.setattr(execution_module, "locate_element", AsyncMock(return_value=locator))
 
-    controller = BrowserController(verbose=False, storage=cast(BaseStorage, storage))
-    await controller._interact(  # pyright: ignore[reportPrivateUsage]
+    await _interact(
         cast(BrowserWindow, window),
         UploadFileAction(selector="#upload", file_path="example.txt", press_enter=True),
         _ActionBudget(asyncio.get_running_loop().time() + 10),
         None,
+        storage=cast(BaseStorage, storage),
     )
 
     locator.set_input_files.assert_awaited_once()

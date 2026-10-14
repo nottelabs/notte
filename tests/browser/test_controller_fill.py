@@ -104,7 +104,7 @@ async def test_multi_factor_fill_clear_vs_append(session: NotteSession) -> None:
 async def test_press_enter_waits_before_pressing_outside_verbose_mode(
     session: NotteSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    session.controller.verbose = False
+    monkeypatch.setattr(session, "_verbose", False)
     events: list[str] = []
     window = session.window
     short_wait = type(window).short_wait
