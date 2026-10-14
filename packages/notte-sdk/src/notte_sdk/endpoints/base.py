@@ -14,7 +14,13 @@ from notte_core.common.logging import logger
 from pydantic import BaseModel, ValidationError
 from requests.exceptions import ConnectionError
 
-from notte_sdk import _retry
+from notte_sdk._retry import (
+    DEFAULT_MAX_RETRIES,
+    backoff_delay,
+    is_retryable_exception,
+    is_retryable_status,
+    retry_delay,
+)
 from notte_sdk._transport import request_session
 from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
 from notte_sdk.errors import AuthenticationError, NotteAPIError, NotteAPIExecutionError
@@ -134,8 +140,8 @@ class BaseClient(ABC):
     @property
     def max_retries(self) -> int:
         """Retries for transient failures, from ``NotteClient(max_retries=...)``."""
-        value = getattr(self.root_client, "max_retries", _retry.DEFAULT_MAX_RETRIES)
-        return value if isinstance(value, int) and not isinstance(value, bool) else _retry.DEFAULT_MAX_RETRIES
+        value = getattr(self.root_client, "max_retries", DEFAULT_MAX_RETRIES)
+        return value if isinstance(value, int) and not isinstance(value, bool) else DEFAULT_MAX_RETRIES
 
     def is_custom_endpoint_available(self) -> bool:
         """
@@ -471,19 +477,17 @@ class BaseClient(ABC):
             try:
                 response = self._send(endpoint, url=url, headers=headers, params=params, timeout=timeout)
             except requests.RequestException as e:
-                if not (
-                    can_retry and _retry.is_retryable_exception(e, endpoint.method) and self._rewind_files(endpoint)
-                ):
+                if not (can_retry and is_retryable_exception(e, endpoint.method) and self._rewind_files(endpoint)):
                     raise
-                delay = _retry.backoff_delay(attempt)
+                delay = backoff_delay(attempt)
                 reason = type(e).__name__
             else:
-                if not (can_retry and _retry.is_retryable_status(response.status_code, endpoint.method)):
+                if not (can_retry and is_retryable_status(response.status_code, endpoint.method)):
                     return response
-                retry_delay = _retry.retry_delay(attempt, response.headers.get("Retry-After"))
-                if retry_delay is None or not self._rewind_files(endpoint):
+                response_delay = retry_delay(attempt, response.headers.get("Retry-After"))
+                if response_delay is None or not self._rewind_files(endpoint):
                     return response
-                delay = retry_delay
+                delay = response_delay
                 reason = f"status {response.status_code}"
                 response.close()
             attempt += 1
@@ -498,8 +502,15 @@ class BaseClient(ABC):
         files: Any = endpoint.files
         if files is None:
             return True
-        handles: Any = files.values() if isinstance(files, dict) else vars(files).values()
+        uploads: dict[str, Any] = files if isinstance(files, dict) else vars(files)
+        handles = uploads.values()
         for handle in handles:
+            # requests accepts (filename, payload[, content_type[, headers]]).
+            if isinstance(handle, tuple):
+                handle = handle[1]
+            # In-memory content is replayable without a file cursor.
+            if isinstance(handle, (str, bytes)):
+                continue
             seek = getattr(handle, "seek", None)
             if seek is None:
                 return False

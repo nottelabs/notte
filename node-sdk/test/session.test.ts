@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CLUSTER_OVERLOAD_RETRY_DELAY_MS, Session, type SessionOptions } from '@/session';
-import { MAX_RETRIES_HEADER } from '@/client';
+import { MAX_RETRIES_HEADER, TIMEOUT_HEADER } from '@/client';
 import type { RemoteFileStorage } from '@/files';
 import { NotteAPIError, NotteTimeoutError, sleep } from '@/errors';
 import {
@@ -190,7 +190,41 @@ describe('Session Unit Tests', () => {
 
         expect(sessionStart).toHaveBeenCalledTimes(2);
         expect(sleep).toHaveBeenCalledExactlyOnceWith(4000);
-        expect(sessionStart).toHaveBeenCalledWith(expect.objectContaining({ headers: { [MAX_RETRIES_HEADER]: '0' } }));
+        expect(sessionStart).toHaveBeenCalledWith(expect.objectContaining({ headers: expect.objectContaining({ [MAX_RETRIES_HEADER]: '0' }) }));
+      });
+
+      it('does not wait past the shared start deadline', async () => {
+        vi.mocked(mockClient.getConfig).mockReturnValue({ baseUrl: 'https://api.notte.cc', timeoutMs: 1000, maxRetries: 3 });
+        const error = overloaded(503, '20');
+        vi.mocked(sessionStart).mockRejectedValue(error);
+        await expect(new Session(mockClient).start()).rejects.toBe(error);
+        expect(sessionStart).toHaveBeenCalledTimes(1);
+        expect(sleep).not.toHaveBeenCalled();
+      });
+
+      it('passes only the remaining timeout to subsequent attempts', async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(1000);
+        vi.mocked(mockClient.getConfig).mockReturnValue({ baseUrl: 'https://api.notte.cc', timeoutMs: 5000, maxRetries: 3 });
+        vi.mocked(sessionStart)
+          .mockImplementationOnce(async () => { vi.mocked(Date.now).mockReturnValue(3000); throw overloaded(503, '0'); })
+          .mockResolvedValueOnce({ data: sessionResponse() } as never);
+        await new Session(mockClient).start();
+        expect(sessionStart).toHaveBeenNthCalledWith(2, expect.objectContaining({
+          headers: expect.objectContaining({ [TIMEOUT_HEADER]: '3000' }),
+        }));
+      });
+
+      it('closes a creation that resolves after the shared deadline', async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(1000);
+        vi.mocked(mockClient.getConfig).mockReturnValue({ baseUrl: 'https://api.notte.cc', timeoutMs: 1000, maxRetries: 3 });
+        vi.mocked(sessionStart).mockImplementationOnce(async () => {
+          vi.mocked(Date.now).mockReturnValue(2001);
+          return { data: sessionResponse() } as never;
+        });
+        const session = new Session(mockClient);
+        const stop = vi.spyOn(session, 'stop').mockResolvedValue(undefined);
+        await expect(session.start()).rejects.toBeInstanceOf(NotteTimeoutError);
+        expect(stop).toHaveBeenCalledExactlyOnceWith('error');
       });
 
       it('gives up after maxRetries transient failures', async () => {

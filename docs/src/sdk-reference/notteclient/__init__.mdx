@@ -28,3 +28,7 @@ of SessionsClient, AgentsClient, VaultsClient, and PersonasClient.
 <ParamField path="captcha_timeout_seconds" type="float" default="180">
   Total CAPTCHA wait budget, separate from action and HTTP timeouts.
 </ParamField>
+
+<ParamField path="max_retries" type="int" default="3">
+  Retries for transient failures (502, 503, 504, 529, and connection errors),         with exponential backoff and full jitter. ``Retry-After`` is honored. POST and PATCH         requests are only retried when the API cannot have processed them (503, 529,         connection refused), so they are never applied twice. Set to 0 to disable retries.
+</ParamField>

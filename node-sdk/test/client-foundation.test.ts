@@ -156,7 +156,7 @@ describe('NotteClient transport', () => {
 
     it('rejects with NotteAPIError for non-JSON bodies', async () => {
       stubFetch(async () => new Response('<html>Bad gateway</html>', { status: 502, headers: { 'content-type': 'text/html' } }));
-      const client = new NotteClient({ apiKey: API_KEY, baseUrl: DEFAULT_NOTTE_API_URL });
+      const client = new NotteClient({ apiKey: API_KEY, baseUrl: DEFAULT_NOTTE_API_URL, maxRetries: 0 });
 
       const error = (await client.healthCheck().catch((e: unknown) => e)) as NotteAPIError;
 

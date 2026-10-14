@@ -4,7 +4,7 @@ import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import type { Browser, BrowserContext, Dialog, Page } from 'playwright-core';
-import { MAX_RETRIES_HEADER, NotteClient, REQUEST_ORIGIN, TIMEOUT_HEADER } from '@/client';
+import { DEFAULT_REQUEST_TIMEOUT_MS, MAX_RETRIES_HEADER, NotteClient, REQUEST_ORIGIN, TIMEOUT_HEADER } from '@/client';
 import { SDK_VERSION } from '@/version';
 import type {
   AgentFunctionCodeResponse,
@@ -243,15 +243,22 @@ export class Session {
     // here instead of in the transport, so the caller's signal interrupts the
     // wait between attempts without cancelling a creation already in flight.
     const maxRetries = this.client.getConfig().maxRetries ?? 0;
+    const timeoutMs = this.client.getConfig().timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+    const deadline = timeoutMs > 0 ? Date.now() + timeoutMs : undefined;
+    const fitsDeadline = (wait: number) => deadline === undefined || Date.now() + wait < deadline;
     let transientRetries = 0;
     let tries = SESSION_START_TRIES;
     const origTries = tries;
     let sessionData: SessionResponse | undefined;
     while (tries > 0) {
       options.signal?.throwIfAborted();
+      if (!fitsDeadline(0)) throw new NotteTimeoutError(`Session start timed out after ${timeoutMs}ms`);
       try {
         const response = await sessionStart({
-          client: this.client.getClient(), body, throwOnError: true, headers: { [MAX_RETRIES_HEADER]: '0' },
+          client: this.client.getClient(), body, throwOnError: true, headers: {
+            [MAX_RETRIES_HEADER]: '0',
+            ...(deadline === undefined ? {} : { [TIMEOUT_HEADER]: String(Math.max(1, deadline - Date.now())) }),
+          },
         });
         sessionData = response.data;
         break;
@@ -263,7 +270,7 @@ export class Session {
           const wait = transientRetries >= maxRetries ? undefined : error instanceof NotteAPIError
             ? retryDelayMs(transientRetries, error.response?.headers.get('retry-after'))
             : backoffDelayMs(transientRetries);
-          if (wait === undefined) throw error;
+          if (wait === undefined || !fitsDeadline(wait)) throw error;
           transientRetries += 1;
           console.warn(
             `Failed to start session (${error instanceof NotteAPIError ? error.statusCode : 'connection error'}), retrying in ${(wait / 1000).toFixed(1)}s (${transientRetries}/${maxRetries})`
@@ -277,6 +284,7 @@ export class Session {
           throw error;
         }
         const retryStr = `${origTries - tries}/${origTries - 1}`;
+        if (!fitsDeadline(error.statusCode === 529 ? CLUSTER_OVERLOAD_RETRY_DELAY_MS : 0)) throw error;
         if (error.statusCode === 529) {
           console.warn(
             `Failed to start session due to cluster overload, retrying in ${CLUSTER_OVERLOAD_RETRY_DELAY_MS / 1000} seconds (${retryStr})...`
@@ -305,6 +313,7 @@ export class Session {
     // stop it before rethrowing so a bad cookie file cannot leak a session.
     try {
       options.signal?.throwIfAborted();
+      if (!fitsDeadline(0)) throw new NotteTimeoutError(`Session start timed out after ${timeoutMs}ms`);
       if (shouldWait) await this.waitForAuth(options);
       if (this.openViewer) {
         this.openViewerInBrowser();
