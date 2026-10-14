@@ -47,11 +47,6 @@ class ActionParameter(BaseModel):
         return base
 
 
-class ActionParameterValue(BaseModel):
-    name: str
-    value: str | ValueWithPlaceholder
-
-
 # ############################################################
 # Browser actions models
 # ############################################################
@@ -90,34 +85,6 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
             cls.ACTION_REGISTRY[name] = cls
 
     @classmethod
-    def non_agent_fields(cls) -> set[str]:
-        fields = {
-            # Base action fields
-            "id",
-            "category",
-            "description",
-            # Interaction action fields
-            "selector",
-            "selectors",
-            "press_enter",
-            "option_selector",
-            "text_label",
-            "timeout",
-            # executable action fields
-            "params",
-            "status",
-            "param",
-            # ScrapeAction fields (have sensible defaults, don't need agent exposure)
-            "scrape_links",
-            "scrape_images",
-            "ignored_tags",
-            "response_format",
-        }
-        if "selector" in cls.model_fields:
-            fields.remove("id")
-        return fields
-
-    @classmethod
     def name(cls) -> str:
         """Convert a CamelCase string to snake_case"""
         pattern = re.compile(r"(?<!^)(?=[A-Z])")
@@ -127,24 +94,6 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
     def execution_message(self) -> str:
         """Return the message to be displayed when the action is executed."""
         return f"🚀 Successfully executed action: {self.description}"
-
-    def model_dump_agent(self, include_selector: bool = False) -> dict[str, dict[str, Any]]:
-        fields = self.non_agent_fields()
-        if include_selector and "selector" in fields:
-            fields.remove("selector")
-            fields.add("id")
-        data = self.model_dump(exclude=fields)
-        selector = data.get("selector")
-        if selector:
-            # Handle both NodeSelectors (dict-like) and plain string selectors
-            if isinstance(selector, str):
-                data["selector"] = selector
-            elif isinstance(selector, dict):
-                data["selector"] = selector.get("playwright_selector") or selector.get("xpath_selector")  # pyright: ignore [reportUnknownMemberType]
-        return data
-
-    def model_dump_agent_json(self) -> str:
-        return json.dumps(self.model_dump(exclude=self.non_agent_fields()))
 
 
 class BrowserAction(BaseAction, metaclass=ABCMeta):
@@ -331,12 +280,6 @@ class GotoAction(BrowserAction):
     model_config = {"extra": "forbid", "protected_namespaces": ()}  # type: ignore[reportUnknownMemberType]
 
     __pydantic_fields_set__ = {"url"}  # type: ignore[reportUnknownMemberType]
-
-    @classmethod
-    @override
-    def non_agent_fields(cls) -> set[str]:
-        # a latency knob for scripts, not a decision the agent should be making
-        return super().non_agent_fields() | {"wait_until"}
 
     @override
     def execution_message(self) -> str:

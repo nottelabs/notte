@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — removed prompt APIs
+
+Removed the agent-only action helpers `non_agent_fields`, `model_dump_agent`,
+and `model_dump_agent_json`, and the unused `ActionParameterValue` export.
+Regular action serialization, IDs, and descriptions are unchanged.
 ## Unreleased — retired core errors
 
 Nine unused core error classes and `notte_core.errors.validation` are removed.
