@@ -60,6 +60,10 @@ export type PersonaResponse = {
      */
     phone_number: string | null;
     /**
+     * Provider hosting the persona mailbox
+     */
+    email_provider?: PersonaEmailProvider;
+    /**
      * Name
      */
     name?: string | null;
@@ -104,6 +108,10 @@ ID of the vault
 Phone number of the persona (optional)
 </ParamField>
 
+<ParamField body="email_provider" type={"PersonaEmailProvider | undefined"}>
+Provider hosting the persona mailbox
+</ParamField>
+
 <ParamField body="name" type={"string | null | undefined"}>
 
 </ParamField>
@@ -111,3 +119,7 @@ Phone number of the persona (optional)
 <ParamField body="created_at" type={"string"} required>
 
 </ParamField>
+
+## Related types
+
+- [PersonaEmailProvider](/typescript-sdk-reference/types/personaemailprovider)

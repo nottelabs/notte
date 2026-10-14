@@ -72,4 +72,17 @@ describe('NottePersona email addresses', () => {
     await persona.use(async p => expect(p.personaId).toBe('owned'));
     expect(mocks.personaDelete).toHaveBeenCalledTimes(1);
   });
+
+  it('forwards email_provider when creating a persona', async () => {
+    mocks.personaCreate.mockResolvedValue({
+      data: { persona_id: 'owned', email: 'amy@agentmail.to', email_provider: 'agentmail' }
+    });
+    const persona = new NottePersona(client, { email_provider: 'agentmail' });
+    await persona.get();
+
+    expect(mocks.personaCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { email_provider: 'agentmail' } })
+    );
+    expect(persona.info.email_provider).toBe('agentmail');
+  });
 });
