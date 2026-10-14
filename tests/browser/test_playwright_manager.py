@@ -224,7 +224,7 @@ async def test_stalled_browser_cleanup_still_stops_driver(browser_manager, monke
 @pytest.mark.asyncio
 async def test_cdp_errors_do_not_expose_authenticated_urls(browser_manager):
     manager, playwright, _, _ = browser_manager
-    secret_url = "wss://provider.example.test/private-path?token=PRIVATE-TOKEN"
+    secret_url = "wss://provider.example.test/private-path?token=PRIVATE-TOKEN"  # pragma: allowlist secret
     playwright.chromium.connect_over_cdp.side_effect = RuntimeError(f"Could not connect to {secret_url}")
     options = BrowserWindowOptions.from_request(LocalSessionStartRequest(headless=True, cdp_url=secret_url))
 
