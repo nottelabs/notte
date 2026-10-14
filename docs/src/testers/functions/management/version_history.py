@@ -17,7 +17,7 @@ import os  # noqa: E402 -- hidden live assertions follow the displayed example
 # may not be on the first page: page through the full list until it shows up.
 matched = [func for func in functions.items if func.function_id == os.environ["NOTTE_FUNCTION_ID"]]
 page = 1
-while not matched and page <= 50:
+while not matched:
     batch = client.functions.list(page=page, page_size=100)
     matched = [func for func in batch.items if func.function_id == os.environ["NOTTE_FUNCTION_ID"]]
     if not batch.has_next:
