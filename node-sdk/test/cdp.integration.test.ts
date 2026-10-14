@@ -27,7 +27,7 @@ describe('CDP Integration Tests', () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  it('connects over CDP with cdpUrl()', { timeout: 90_000 }, async () => {
+  it('connects over CDP with cdpUrl()', async () => {
     await client.Session({ proxies: false }).use(async session => {
       const cdpUrl = await session.cdpUrl();
       expect(cdpUrl).toMatch(/^wss?:\/\//);
@@ -46,7 +46,7 @@ describe('CDP Integration Tests', () => {
     });
   });
 
-  it('session.page() leaves native dialogs to the backend', { timeout: 90_000 }, async () => {
+  it('session.page() leaves native dialogs to the backend', async () => {
     await client.Session({ proxies: false }).use(async session => {
       const page = await session.page();
       expect(await session.page()).toBe(page);

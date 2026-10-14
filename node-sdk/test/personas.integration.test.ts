@@ -3,6 +3,7 @@ import { NotteClient, NottePersona } from '@/index';
 import { Session } from '@/session';
 import { Agent } from '@/agent';
 import { config } from 'dotenv';
+import { AGENT_TEST_TIMEOUT_MS, skipHeavyLive } from './helpers/live-scope';
 
 // Load environment variables from .env file
 config();
@@ -10,7 +11,7 @@ config();
 // Load environment variables
 const API_KEY = process.env.NOTTE_API_KEY;
 
-describe('Persona Integration Tests', () => {
+describe.skipIf(skipHeavyLive)('Persona Integration Tests', () => {
   let client: NotteClient;
   let fixturePersona: NottePersona | undefined;
 
@@ -193,7 +194,7 @@ describe('Persona Integration Tests', () => {
   });
 
   describe('Persona with Vault Integration', () => {
-    it('should create persona with vault', { timeout: 30000 }, async () => {
+    it('should create persona with vault', async () => {
       const persona = client.Persona({ create_vault: true });
       let personaId: string | null = null;
 
@@ -271,7 +272,7 @@ describe('Persona Integration Tests', () => {
       }
     });
 
-    it('should handle vault email restrictions', { timeout: 30000 }, async () => {
+    it('should handle vault email restrictions', async () => {
       const persona = client.Persona({ create_vault: true });
       let personaId: string | null = null;
 
@@ -374,7 +375,7 @@ describe('Persona Integration Tests', () => {
           }
         }
       }
-    }, 60000);
+    }, AGENT_TEST_TIMEOUT_MS);
 
     it('should use persona with remote agent', async () => {
       const persona = client.Persona({ create_vault: true });
@@ -430,7 +431,7 @@ describe('Persona Integration Tests', () => {
           }
         }
       }
-    }, 30000); // 30 second timeout
+    }, AGENT_TEST_TIMEOUT_MS);
   });
 
   describe('Email and SMS Operations', () => {

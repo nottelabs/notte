@@ -19,7 +19,7 @@ describe('Interaction Integration Tests', () => {
     client = new NotteClient({ apiKey, baseUrl: process.env.NOTTE_API_URL || 'https://api.notte.cc' });
   });
 
-  it('validates special action parameters', { timeout: 90_000 }, async () => {
+  it('validates special action parameters', async () => {
     await client.Session({ proxies: false, open_viewer: false }).use(async page => {
       await page.execute(actions.goto({ url: 'https://github.com/' }));
       await page.observe({ perception_type: 'fast' });

@@ -50,7 +50,7 @@ describe('Cookies Integration Tests', () => {
     });
   });
 
-  it('gets cookies after navigation', { timeout: 60_000 }, async () => {
+  it('gets cookies after navigation', async () => {
     await client.Session({ proxies: false, idle_timeout_minutes: 1 }).use(async session => {
       await session.execute(actions.goto({ url: 'https://www.ecosia.org' }));
       await session.observe();

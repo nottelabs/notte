@@ -32,6 +32,7 @@ async def load_github_signin_fixture(session: notte.Session) -> None:
     _ = await session.aobserve()
 
 
+@pytest.mark.live_heavy
 def test_vault_in_local_agent():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
@@ -134,6 +135,7 @@ def test_vault_should_be_deleted_after_exit_context():
         _ = client.vaults.get(vault_id)
 
 
+@pytest.mark.live_heavy
 def test_vault_in_remote_agent():
     _ = load_dotenv()
 
@@ -216,6 +218,7 @@ def test_add_correct_otp():
         )
 
 
+@pytest.mark.live_heavy
 def test_invalid_credentials_in_local_agent():
     client = NotteClient()
 

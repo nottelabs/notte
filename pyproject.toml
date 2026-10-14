@@ -81,6 +81,9 @@ asyncio_default_fixture_loop_scope = "session"
 testpaths = ["tests"]
 timeout = 300
 timeout_method = "thread"
+markers = [
+    "live_heavy: slow live tests (agents, personas, vault with an agent); CI skips them on pull requests",
+]
 asyncio_mode = "strict"
 log_cli = true
 log_cli_level = "INFO"

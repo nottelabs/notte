@@ -22,6 +22,7 @@ def agent_step_blocks(steps: list[dict[str, Any]]) -> list[list[dict[str, Any]]]
     return blocks
 
 
+@pytest.mark.live_heavy
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_new_steps():
     client = NotteClient()
@@ -119,6 +120,7 @@ def test_old_session_format():
     assert session_steps[2]["value"]["action"]["type"] == "click"
 
 
+@pytest.mark.live_heavy
 def test_agents_in_single_session():
     client = NotteClient()
     with client.Session(proxies=False, browser_type="chrome", open_viewer=False) as session:
