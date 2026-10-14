@@ -1273,6 +1273,26 @@ export type ConnectLinkStatusResponse = {
      * Error Redirect Uri
      */
     error_redirect_uri?: string | null;
+    /**
+     * Step
+     */
+    step?: 'starting' | 'signing_in' | 'retrying' | 'confirming' | 'saving' | null;
+    /**
+     * Login Attempt
+     */
+    login_attempt?: number | null;
+    /**
+     * Max Login Attempts
+     */
+    max_login_attempts?: number | null;
+    /**
+     * Started At
+     */
+    started_at?: string | null;
+    /**
+     * Expected Seconds
+     */
+    expected_seconds?: number | null;
 };
 
 /**
@@ -4174,7 +4194,13 @@ export type PersonaCreateRequest = {
      * Name
      */
     name?: string | null;
+    email_provider?: PersonaEmailProvider;
 };
+
+/**
+ * PersonaEmailProvider
+ */
+export type PersonaEmailProvider = 'notte' | 'agentmail';
 
 /**
  * PersonaResponse
@@ -4228,6 +4254,10 @@ export type PersonaResponse = {
      * Phone number of the persona (optional)
      */
     phone_number: string | null;
+    /**
+     * Provider hosting the persona mailbox
+     */
+    email_provider?: PersonaEmailProvider;
     /**
      * Name
      */

@@ -283,6 +283,13 @@
             ]
           },
           {
+            "group": "Email",
+            "icon": "envelope",
+            "pages": [
+              "integrations/agentmail"
+            ]
+          },
+          {
             "group": "Browser Drivers",
             "icon": "gamepad",
             "pages": [

@@ -14,7 +14,7 @@ from litellm import (
     ChatCompletionTextObject,
     ChatCompletionToolMessage,
     ChatCompletionUserMessage,
-    ModelResponse,  # type: ignore[reportPrivateImportUsage]
+    ModelResponse,
     OpenAIMessageContent,
 )
 from litellm.utils import token_counter  # type: ignore[reportUnknownVariableType]

@@ -9,7 +9,6 @@ from notte_core.actions import (
     BaseAction,
     CaptchaSolveAction,
     CompletionAction,
-    FormFillAction,
     GotoAction,
     HelpAction,
 )
@@ -19,7 +18,9 @@ from notte_core.common.config import LlmModel, NotteConfig, RaiseCondition
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault, LocatorAttributes
+from notte_core.errors.actions import NoCredentialsFoundError
 from notte_core.errors.base import ErrorConfig, NotteBaseError
+from notte_core.errors.processing import CredentialReplacementError
 from notte_core.profiling import profiler
 from notte_core.trajectory import Trajectory
 from notte_llm.engine import LLMEngine
@@ -88,8 +89,11 @@ class NotteAgent(BaseAgent):
             self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
 
     async def action_with_credentials(self, action: BaseAction) -> BaseAction:
-        """Replace credentials in the action if the vault contains credentials"""
-        if self.vault is not None and self.vault.contains_credentials(action):
+        """Replace credentials in the action if the vault contains credentials.
+
+        Raises `CredentialReplacementError` or `NoCredentialsFoundError` when a placeholder cannot be replaced.
+        """
+        if self.vault is not None and self.vault.has_unresolved_placeholders(action):
             locator = await self.session.locate(action)
             attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
             if locator is not None:
@@ -98,14 +102,13 @@ class NotteAgent(BaseAgent):
                 autocomplete = await locator.get_attribute("autocomplete")
                 outer_html = await locator.evaluate("el => el.outerHTML")
                 attrs = LocatorAttributes(type=attr_type, autocomplete=autocomplete, outerHTML=outer_html)
-                # replace credentials
 
-            if locator is not None or isinstance(action, FormFillAction):
-                action = await self.vault.replace_credentials(
-                    action,
-                    attrs,
-                    self.session.snapshot,
-                )
+            # always replace (or fail): skipping would type the literal placeholder into the page
+            action = await self.vault.replace_credentials(
+                action,
+                attrs,
+                self.session.snapshot,
+            )
         return action
 
     async def output(self, request: AgentRunRequest, answer: str, success: bool) -> AgentResponse:
@@ -247,8 +250,23 @@ class NotteAgent(BaseAgent):
                 return None
             case _:
                 # The action is a regular action => execute it (default case)
-                action = await self.action_with_credentials(response.action)
-                result = await self.session.aexecute(action, raise_on_failure=False)
+                try:
+                    action = await self.action_with_credentials(response.action)
+                except (CredentialReplacementError, NoCredentialsFoundError) as e:
+                    # Report a credential fill that cannot be resolved (wrong element, invalid placeholder,
+                    # missing credential) as a failed step so the agent can retry
+                    empty_span = TimedSpan.empty()
+                    result = ExecutionResult(
+                        action=response.action,
+                        success=False,
+                        message=e.dev_message,
+                        exception=e,
+                        started_at=empty_span.started_at,
+                        ended_at=empty_span.ended_at,
+                    )
+                    await self.trajectory.append(result, force=True)
+                else:
+                    result = await self.session.aexecute(action, raise_on_failure=False)
                 if result.success:
                     self.consecutive_failures = 0
                 else:

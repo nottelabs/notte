@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import wraps
 from typing import TYPE_CHECKING, Any, Callable, TypeAlias
 
-from litellm import AllMessageValues, ModelResponse  # type: ignore[import]
+from litellm import AllMessageValues, ModelResponse
 from notte_core.common.logging import logger
 
 from notte_llm.tracer import LlmTracer
@@ -68,8 +68,8 @@ def trace_llm_usage(
             # Only trace if tracer is provided
             if tracer is not None:
                 try:
-                    _completion: str | None = response.choices[0].message.content  # type: ignore[attr-defined]
-                    completion: str = _completion or ""  # type: ignore[attr-defined]
+                    _completion: str | None = response.choices[0].message.content
+                    completion: str = _completion or ""
 
                     usage = getattr(response, "usage", None)
                     usage_dict = (
@@ -86,7 +86,7 @@ def trace_llm_usage(
                         timestamp=datetime.now().isoformat(),
                         model=model,
                         messages=messages,
-                        completion=completion,  # type: ignore[arg-type]
+                        completion=completion,
                         usage=usage_dict,
                         metadata=kwargs.get("metadata"),
                     )

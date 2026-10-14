@@ -574,33 +574,37 @@ class NotteSession(AsyncResource, SyncResource):
         return None
 
     async def _action_with_vault(self, action: BaseAction) -> BaseAction:
+        """Replace credential placeholders with vault values.
+
+        Raises `CredentialReplacementError` or `NoCredentialsFoundError` when a placeholder cannot be replaced, so
+        that the action fails instead of typing the literal placeholder into the page.
+        """
         # Only fill-type actions support credential replacement
         _SUPPORTED = (FormFillAction, FillAction, FallbackFillAction, MultiFactorFillAction, SelectDropdownOptionAction)
-        if self.vault is None or not isinstance(action, _SUPPORTED) or not self.vault.contains_credentials(action):
+        if (
+            self.vault is None
+            or not isinstance(action, _SUPPORTED)
+            # skip actions already replaced upstream (e.g. by the agent)
+            or not self.vault.has_unresolved_placeholders(action)
+        ):
             return action
 
         if self._window is not None:
             self.snapshot = await self.window.snapshot()
         snapshot = self.snapshot
-        try:
-            if isinstance(action, FormFillAction):
-                attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
-                return await self.vault.replace_credentials(action, attrs, snapshot)
-
-            locator = await self.locate(action)
+        if isinstance(action, FormFillAction):
             attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
-            if locator is not None:
-                attrs = LocatorAttributes(
-                    type=await locator.get_attribute("type"),
-                    autocomplete=await locator.get_attribute("autocomplete"),
-                    outerHTML=await locator.evaluate("el => el.outerHTML"),
-                )
             return await self.vault.replace_credentials(action, attrs, snapshot)
-        except ValueError as e:
-            # Credential field not found in vault (e.g., vault has email but action needs username)
-            # Return original action - it will fail at execution with a clearer error
-            logger.warning(f"Vault credential replacement failed: {e}")
-            return action
+
+        locator = await self.locate(action)
+        attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
+        if locator is not None:
+            attrs = LocatorAttributes(
+                type=await locator.get_attribute("type"),
+                autocomplete=await locator.get_attribute("autocomplete"),
+                outerHTML=await locator.evaluate("el => el.outerHTML"),
+            )
+        return await self.vault.replace_credentials(action, attrs, snapshot)
 
     @overload
     async def aexecute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...

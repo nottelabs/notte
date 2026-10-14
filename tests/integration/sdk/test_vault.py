@@ -11,6 +11,7 @@ from notte_core.credentials import USERNAME as USERNAME_PLACEHOLDER
 from notte_core.credentials.base import BaseVault, CredentialField, EmailField, PasswordField
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
 from notte_core.errors.actions import NoCredentialsFoundError
+from notte_core.errors.base import NotteBaseError
 from notte_sdk import NotteClient
 from notte_sdk.errors import NotteAPIError
 
@@ -221,13 +222,22 @@ def test_invalid_credentials_in_local_agent():
     # storage = notte.FileStorage()
     with client.Vault() as vault, notte.Session() as session:
         agent = notte.Agent(session=session, vault=vault)
-        with pytest.raises(NoCredentialsFoundError):
+        try:
+            # the run outcome depends on the LLM (it may give up or find another way in)
             _ = agent.run(
                 task=(
                     "go to https://apartment-board-demo-nine.vercel.app/auth/signin and login with the credentials "
                     "stored in your vault, not credentials shown on the page, then list the apartments."
                 )
             )
+        except NotteBaseError as e:
+            # the agent can stop in several ways (e.g. max consecutive failures), but the missing
+            # credentials themselves must not abort the run
+            assert not isinstance(e, NoCredentialsFoundError)
+        # the missing credentials fail the fill step instead of aborting the run
+        assert agent.trajectory is not None
+        failed = [r for r in agent.trajectory.execution_results() if isinstance(r.exception, NoCredentialsFoundError)]
+        assert len(failed) > 0
 
 
 # ============================================
