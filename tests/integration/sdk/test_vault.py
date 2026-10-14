@@ -4,7 +4,6 @@ from unittest import TestCase
 
 import pytest
 from dotenv import load_dotenv
-from notte_agent.errors import MaxConsecutiveFailuresError
 from notte_agent.falco.agent import FalcoAgent
 from notte_core.actions import FillAction, FormFillAction, WaitAction
 from notte_core.credentials import PASSWORD as PASSWORD_PLACEHOLDER
@@ -12,6 +11,7 @@ from notte_core.credentials import USERNAME as USERNAME_PLACEHOLDER
 from notte_core.credentials.base import BaseVault, CredentialField, EmailField, PasswordField
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
 from notte_core.errors.actions import NoCredentialsFoundError
+from notte_core.errors.base import NotteBaseError
 from notte_sdk import NotteClient
 from notte_sdk.errors import NotteAPIError
 
@@ -230,8 +230,10 @@ def test_invalid_credentials_in_local_agent():
                 )
             )
             assert not response.success
-        except MaxConsecutiveFailuresError:
-            pass
+        except NotteBaseError as e:
+            # the agent can give up in several ways (e.g. max consecutive failures), but the missing
+            # credentials themselves must not abort the run
+            assert not isinstance(e, NoCredentialsFoundError)
         # the missing credentials fail the fill step instead of aborting the run
         assert agent.trajectory is not None
         failed = [r for r in agent.trajectory.execution_results() if isinstance(r.exception, NoCredentialsFoundError)]
