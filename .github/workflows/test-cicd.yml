@@ -146,7 +146,7 @@ jobs:
           echo "A maintainer can run the full secret-backed suite after reviewing the diff via"
           echo "'Run workflow' (workflow_dispatch) with this PR number."
 
-  # Fast tests: everything outside tests/integration, on a larger runner.
+  # Tests without staging API calls run independently on a larger runner.
   unit:
     needs: changes
     if: >-
@@ -156,6 +156,7 @@ jobs:
     timeout-minutes: 20
     env:
       SUITE: unit
+      REQUIRES_STAGING: "false"
       PYTEST_ARGS: -n logical tests --ignore=tests/integration --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py
       COVERAGE_FILE: .coverage.unit
     steps: &test-steps
@@ -186,12 +187,16 @@ jobs:
 
       - name: Verify environment variables
         env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ env.REQUIRES_STAGING == 'true' && (secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY) || '' }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: |
-          for name in NOTTE_API_KEY GOOGLE_APPLICATION_CREDENTIALS SMTP_SERVER EMAIL_SENDER EMAIL_PASSWORD; do
+          required=(GOOGLE_APPLICATION_CREDENTIALS)
+          if [ "$REQUIRES_STAGING" = "true" ]; then
+            required+=(NOTTE_API_KEY SMTP_SERVER EMAIL_SENDER EMAIL_PASSWORD)
+          fi
+          for name in "${required[@]}"; do
             if [ -z "${!name}" ]; then
               echo "$name is not set. For an external/fork PR, a maintainer should review the diff and run this workflow via 'Run workflow' (workflow_dispatch) with the PR number."
               exit 1
@@ -200,6 +205,7 @@ jobs:
           echo "Environment variables are set"
 
       - name: Wait for the API to be ready
+        if: env.REQUIRES_STAGING == 'true'
         # The staging API scales to zero when idle and wakes on the first request.
         uses: ./.github/actions/wait-for-api
         with:
@@ -207,7 +213,7 @@ jobs:
 
       - name: Run tests
         env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ env.REQUIRES_STAGING == 'true' && (secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY) || '' }}
           NOTTE_VAULT_TEST_EMAIL: ${{ secrets.NOTTE_VAULT_TEST_EMAIL }}
           NOTTE_VAULT_TEST_PASSWORD: ${{ secrets.NOTTE_VAULT_TEST_PASSWORD }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
@@ -219,9 +225,9 @@ jobs:
           uv run pytest $PYTEST_ARGS ${PYTEST_MARKERS:+-m "$PYTEST_MARKERS"} --durations=10 --junitxml="pytest-$SUITE.xml" --cov=packages --cov-report=
 
       - name: Cleanup vaults created by this run
-        if: always()
+        if: always() && env.REQUIRES_STAGING == 'true'
         env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ env.REQUIRES_STAGING == 'true' && (secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY) || '' }}
         run: uv run python scripts/cleanup_ci_vaults.py
 
       - name: Upload test results
@@ -257,6 +263,7 @@ jobs:
         shard: ${{ fromJSON(github.event_name == 'pull_request' && '[1, 2]' || '[1, 2, 3, 4]') }}
     env:
       SUITE: live-${{ matrix.shard }}
+      REQUIRES_STAGING: "true"
       NOTTE_TEST_SHARD: ${{ matrix.shard }}/${{ strategy.job-total }}
       # Two workers per shard: all live suites share the staging API, which slows sharply
       # (vault and persona calls 5-15x) when too many clients hit it at once.

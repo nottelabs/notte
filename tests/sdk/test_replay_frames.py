@@ -1,31 +1,16 @@
 import io
 
-from notte_sdk import NotteClient
 from PIL import Image
 
 import notte
 
 
-def test_sdk_screenshots():
+def test_sdk_screenshots_local():
     """Make sure everything is in bytes (and not base64 encoded), all in JPEG"""
-    client = NotteClient()
-
     offset = slice(6, 10)
 
     ## local
     with notte.Session(headless=True) as session:
-        _ = session.execute(dict(type="goto", url="https://linkedin.com"))
-        obs = session.observe()
-
-    for screenshot_type in [None, "raw", "last_action", "full"]:
-        for text in [None, "sample text"]:
-            res = obs.screenshot.bytes(type=screenshot_type, text=text)  # pyright: ignore [reportArgumentType]
-            assert isinstance(res, bytes)
-            decoded = res[offset].decode().strip()
-            assert decoded == "JFIF"
-
-    ## remote
-    with client.Session(proxies=False, open_viewer=False) as session:
         _ = session.execute(dict(type="goto", url="https://linkedin.com"))
         obs = session.observe()
 

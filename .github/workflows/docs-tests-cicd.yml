@@ -6,11 +6,13 @@ on:
       - main
     paths:
       - 'docs/**'
+      - '.github/workflows/docs-tests-cicd.yml'
   pull_request:
     branches:
       - main
     paths:
       - 'docs/**'
+      - '.github/workflows/docs-tests-cicd.yml'
 
 # Set explicitly, workflow-wide. The SDK falls back to its production base URL
 # when this is unset, so a job that only exports NOTTE_API_KEY runs against
@@ -55,7 +57,6 @@ jobs:
         run: python docs/src/scripts/test_generate_cli_reference.py
 
   type-check:
-    needs: syntax-check
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     env:
@@ -93,7 +94,7 @@ jobs:
         run: cd docs/src && uv run --no-sync pytest -v --tb=no
 
   execution:
-    needs: type-check
+    needs: [syntax-check, type-check]
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     # All live suites for a ref share one queue so they do not hit the API at once.
