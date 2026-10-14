@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from notte_core.actions import FillAction, FormFillAction, WaitAction
 from notte_core.credentials import PASSWORD as PASSWORD_PLACEHOLDER
 from notte_core.credentials import USERNAME as USERNAME_PLACEHOLDER
-from notte_core.credentials.base import BaseVault, CredentialField, EmailField, PasswordField
+from notte_core.credentials.base import EmailField, PasswordField
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
 from notte_sdk import NotteClient
 from notte_sdk.errors import NotteAPIError
@@ -69,14 +69,6 @@ def test_add_credentials_from_env():
         credentials = vault.get_credentials(url="https://test.com/")
         assert credentials is not None
         TestCase().assertDictEqual(credentials, test_dict)
-
-
-def test_all_credentials_in_system_prompt():
-    system_prompt = BaseVault.instructions()
-    all_placeholders = CredentialField.all_placeholders()
-    missing_placeholder = {placeholder for placeholder in all_placeholders if placeholder not in system_prompt}
-
-    assert len(missing_placeholder) == 0
 
 
 def test_add_wrong_otp():

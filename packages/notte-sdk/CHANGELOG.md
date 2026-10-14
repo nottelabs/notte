@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — removed prompt APIs
+
+Removed credential prompt helpers inherited by `NotteVault` (`instructions` and
+`system_instructions`), `CredentialField.instructions` / `default_instructions`,
+and the unused `instruction_name` / `exposed` metadata. Credential substitution,
+validation, serialization, and masking are unchanged.
+
 ## Unreleased — interaction renderer functions
 
 Replaced `InteractionOnlyDomNodeRenderingPipe` with functions in `notte_browser.rendering.interaction_only`:
