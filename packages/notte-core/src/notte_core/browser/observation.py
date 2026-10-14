@@ -84,9 +84,10 @@ class Screenshot(BaseModel):
     last_action_id: str | None = None
 
     model_config = {  # type: ignore[reportUnknownMemberType]
+        "hide_input_in_errors": True,
         "json_encoders": {
-            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
-        }
+            _builtin_bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
+        },
     }
 
     @field_validator("raw", mode="before")
