@@ -9,8 +9,10 @@
 # identifies the ping), DRY_RUN ("true" to only print), GH_TOKEN.
 set -euo pipefail
 
-# Timeline events that follow a comment that mentions someone, not activity.
-NOISE='["mentioned", "subscribed", "unsubscribed"]'
+# Timeline events left out when looking for the latest activity: those a
+# comment that mentions someone causes, and commits, whose timeline date is
+# when they were authored, not pushed. A push shows in the PR's updatedAt.
+NOISE='["mentioned", "subscribed", "unsubscribed", "committed"]'
 
 gh pr list --repo "$REPO" --state open --limit 500 \
   --json number,isDraft,updatedAt,author \
@@ -23,10 +25,14 @@ while IFS=$'\t' read -r number updated author; do
   latest=$(gh api --paginate --slurp "repos/$REPO/issues/$number/timeline" | jq -r --argjson noise "$NOISE" '
     add
     | map(select(.event as $e | $noise | index($e) | not))
-    | sort_by(.created_at // .submitted_at // .committer.date // "")
+    | sort_by(.created_at // .submitted_at // "")
     | last // empty
-    | [.event, ((.body // "") | contains(env.MARKER)), (.actor.type // .user.type // "")] | @tsv')
-  if [ "$latest" = "commented	true	Bot" ]; then
+    | [.event, ((.body // "") | contains(env.MARKER)), (.actor.type // .user.type // ""), (.created_at // "")] | @tsv')
+  IFS=$'\t' read -r event pinged actor at <<<"$latest" || true
+  # The ping is the latest event, and nothing (such as a push) updated the PR
+  # after it: the ping itself sets updatedAt, give or take a few seconds.
+  if [ "$event $pinged $actor" = "commented true Bot" ] &&
+    jq -en --arg at "$at" --arg updated "$updated" '($updated | fromdateiso8601) <= ($at | fromdateiso8601) + 5' > /dev/null; then
     echo "#$number: already pinged, no activity since"
     continue
   fi

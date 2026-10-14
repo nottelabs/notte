@@ -14,11 +14,12 @@ if [ "$1 $2" = "pr list" ]; then
   cat <<'JSON' | jq -r "$jqexpr"
 [
   {"number": 1, "isDraft": false, "updatedAt": "2026-01-01T00:00:00Z", "author": {"login": "idle", "is_bot": false}},
-  {"number": 2, "isDraft": false, "updatedAt": "2026-01-01T00:00:00Z", "author": {"login": "pinged", "is_bot": false}},
+  {"number": 2, "isDraft": false, "updatedAt": "2026-01-02T00:00:01Z", "author": {"login": "pinged", "is_bot": false}},
   {"number": 3, "isDraft": true, "updatedAt": "2026-01-01T00:00:00Z", "author": {"login": "draft", "is_bot": false}},
   {"number": 4, "isDraft": false, "updatedAt": "2026-01-01T00:00:00Z", "author": {"login": "dependabot", "is_bot": true}},
   {"number": 5, "isDraft": false, "updatedAt": "2999-01-01T00:00:00Z", "author": {"login": "active", "is_bot": false}},
-  {"number": 6, "isDraft": false, "updatedAt": "2026-01-01T00:00:00Z", "author": {"login": "replied", "is_bot": false}}
+  {"number": 6, "isDraft": false, "updatedAt": "2026-01-02T00:00:30Z", "author": {"login": "replied", "is_bot": false}},
+  {"number": 7, "isDraft": false, "updatedAt": "2026-01-05T00:00:00Z", "author": {"login": "pushed", "is_bot": false}}
 ]
 JSON
 elif [ "$1" = "api" ]; then
@@ -29,6 +30,8 @@ elif [ "$1" = "api" ]; then
     */2/timeline) page="[$commit, $ping, {\"event\": \"mentioned\", \"created_at\": \"2026-01-02T00:00:00Z\"}, {\"event\": \"subscribed\", \"created_at\": \"2026-01-02T00:00:00Z\"}]" ;;
     # Pinged, then the author replied seconds later; listed out of order.
     */6/timeline) page="[{\"event\": \"commented\", \"created_at\": \"2026-01-02T00:00:30Z\", \"body\": \"on it\", \"actor\": {\"type\": \"User\"}}, $ping]" ;;
+    # Pinged, then a commit authored before the ping was pushed (updatedAt moved on).
+    */7/timeline) page="[$ping, $commit]" ;;
     *) page="[$commit]" ;;
   esac
   # --slurp wraps the pages in an outer array.
@@ -50,6 +53,7 @@ output=$(run false)
 grep -q '^COMMENT #1 @idle .*<!-- stale-pr-nudge -->$' <<<"$output" || fail "idle PR is pinged with the marker"
 grep -q '^#2: already pinged' <<<"$output" || fail "a PR whose latest activity is the ping is skipped"
 grep -q '^COMMENT #6 @replied' <<<"$output" || fail "a reply after the ping makes the PR eligible again"
+grep -q '^COMMENT #7 @pushed' <<<"$output" || fail "a push after the ping makes the PR eligible again, whatever the commit date"
 for n in 3 4 5; do
   ! grep -q "#$n" <<<"$output" || fail "PR #$n (draft, bot or recently active) is left alone"
 done
