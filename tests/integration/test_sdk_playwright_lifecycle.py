@@ -1,3 +1,4 @@
+import weakref
 from collections.abc import Iterator
 from pathlib import Path
 from types import SimpleNamespace
@@ -22,8 +23,8 @@ def _session_for(cdp_url: str) -> RemoteSession:
     session._async_playwright_browser = None
     session._async_playwright_page = None
     session._playwright_connection_generation = 0
-    session._playwright_observed_pages = set()
-    session._playwright_observed_contexts = set()
+    session._playwright_observed_pages = weakref.WeakSet()
+    session._playwright_observed_contexts = weakref.WeakSet()
     session._playwright_cleanup_in_progress = False
     session.cdp_url = MagicMock(return_value=cdp_url)
     session.stop = MagicMock()
