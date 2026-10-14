@@ -4,7 +4,7 @@ import subprocess
 import sys
 from types import SimpleNamespace
 
-from notte_browser.scraping.markdown import page_markdown
+from notte_browser.scrape import page_markdown
 from notte_sdk.types import ScrapeParams
 
 # a window without iframes
@@ -121,7 +121,7 @@ import resource
 import sys
 from types import SimpleNamespace
 import asyncio
-from notte_browser.scraping.markdown import page_markdown
+from notte_browser.scrape import page_markdown
 from notte_sdk.types import ScrapeParams
 
 baseline = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss

@@ -1,6 +1,6 @@
 """Tests for URL percentage calculation in scraping pipe."""
 
-from notte_browser.scraping.pipe import _calculate_url_percentage
+from notte_browser.scrape import _calculate_url_percentage
 
 
 def test_calculate_url_percentage_high_urls() -> None:

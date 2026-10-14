@@ -87,7 +87,6 @@ from notte_browser.dom.locate import locate_element
 from notte_browser.errors import (
     BrowserNotStartedError,
     CaptchaSolverNotAvailableError,
-    EmptyPageContentError,
     InboxActionNotSupportedLocallyError,
     NoSnapshotObservedError,
     NoStorageObjectProvidedError,
@@ -107,7 +106,7 @@ from notte_browser.evaluation_result import (
 from notte_browser.playwright import PlaywrightManager
 from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import resolve_action
-from notte_browser.scraping.pipe import DataScrapingPipe
+from notte_browser.scrape import default_extractor, scrape_page
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
 
@@ -147,7 +146,7 @@ class NotteSession(AsyncResource, SyncResource):
         self.controller: BrowserController = BrowserController(verbose=config.verbose, storage=storage)
         self.storage: BaseStorage | None = storage
         # Structured scraping hands the page markdown to `extractor` (by default `notte_llm.LlmExtractor`, if installed).
-        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(extractor=extractor)
+        self._extractor: StructuredExtractor | None = extractor
         self._vault: BaseVault | None = None
         # Assigning through the `vault` property also masks the vault's secrets in screenshots.
         self.vault = vault
@@ -948,7 +947,9 @@ class NotteSession(AsyncResource, SyncResource):
         data: DataSpace | None = None
         with TimedSpan.capture() as span:
             try:
-                data = await self._ascrape(**params)
+                async with profiler.profile("NotteSession._ascrape", service_name="execution"):
+                    scrape_params = ScrapeParams.model_validate(params)
+                    data = await scrape_page(self.window, scrape_params, get_extractor=self._get_extractor)
             except Exception as e:
                 exception = e
                 # Record failure to trajectory
@@ -1000,22 +1001,11 @@ class NotteSession(AsyncResource, SyncResource):
             return data.structured
         return data.markdown
 
-    @profiler.profiled(service_name="execution")
-    async def _ascrape(self, retries: int = 3, wait_time: int = 2000, **params: Unpack[ScrapeParamsDict]) -> DataSpace:
-        try:
-            scrape_params = ScrapeParams.model_validate(params)
-            return await self._data_scraping_pipe.forward(
-                window=self.window,
-                # scrapes only read the html: skip the dom tree and the screenshot
-                snapshot=await self.window.snapshot(selector=scrape_params.selector, skip_dom=True, screenshot=False),
-                params=scrape_params,
-            )
-        except EmptyPageContentError as e:
-            if retries == 0:
-                raise e
-            logger.warning(f"Scrape failed after empty page content, retrying in {wait_time / 1000} seconds...")
-            await asyncio.sleep(wait_time / 1000)
-            return await self._ascrape(retries=retries - 1, wait_time=wait_time, **params)
+    def _get_extractor(self) -> StructuredExtractor:
+        # Resolved on first structured scrape so that sessions never load an LLM unless they need one.
+        if self._extractor is None:
+            self._extractor = default_extractor()
+        return self._extractor
 
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
