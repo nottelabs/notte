@@ -1,3 +1,11 @@
+"""Local session workflow: lifecycle → observe → execute → scrape.
+
+BrowserWindow owns page state and operations; playwright owns launch/connect setup.
+Execution, files, scraping, bounded evaluation and vault substitution live in their
+named modules. This facade keeps snapshots, credentials, result/raise ordering,
+trajectory events, and the public sync/async methods and generated overloads.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -47,11 +55,11 @@ from notte_core.actions.typedicts import (
 )
 from notte_core.browser.observation import ExecutionResult, Observation, Screenshot, TimedSpan
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import BrowserBackend, CookieDict, RaiseCondition, config
+from notte_core.common.config import CookieDict, RaiseCondition, config
 from notte_core.common.logging import logger, timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
-from notte_core.credentials.base import BaseVault, LocatorAttributes
+from notte_core.credentials.base import BaseVault
 from notte_core.data.extraction import StructuredExtractor
 from notte_core.data.fetch import FetchData, build_fetch_script, response_from_evaluated
 from notte_core.data.space import DataSpace, StructuredData, TBaseModel
@@ -60,7 +68,6 @@ from notte_core.errors.actions import (
     EvaluateJsNoDataError,
     EvaluateJsResultLimitError,
     InvalidActionError,
-    VaultCredentialError,
 )
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
@@ -90,24 +97,15 @@ from notte_browser.errors import (
     InboxActionNotSupportedLocallyError,
     NoSnapshotObservedError,
     NoStorageObjectProvidedError,
-    PlaywrightError,
     ScrapeFailedError,
     ScrapeIsNotAnActionError,
 )
-from notte_browser.evaluation_result import (
-    PAGE_RESULT_GUARD,
-    InvalidPagePayloadError,
-    decode_page_result,
-    format_evaluation_result,
-    new_guard_token,
-    page_expression,
-    page_limit_reason,
-)
+from notte_browser.evaluation_result import evaluate_page
 from notte_browser.playwright import connect, launch
 from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import resolve
 from notte_browser.scrape import default_extractor, scrape_page
-from notte_browser.vault import VaultSecretsScreenshotMask
+from notte_browser.vault import VaultSecretsScreenshotMask, resolve_vault_action
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
 
 if TYPE_CHECKING:
@@ -364,24 +362,7 @@ class NotteSession(AsyncResource, SyncResource):
         if self._window is not None:
             self.snapshot = await self.window.snapshot()
         snapshot = self.snapshot
-        try:
-            if isinstance(action, FormFillAction):
-                attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
-                return await self.vault.replace_credentials(action, attrs, snapshot)
-
-            locator = await self.locate(action)
-            attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
-            if locator is not None:
-                attrs = LocatorAttributes(
-                    type=await locator.get_attribute("type"),
-                    autocomplete=await locator.get_attribute("autocomplete"),
-                    outerHTML=await locator.evaluate("el => el.outerHTML"),
-                )
-            return await self.vault.replace_credentials(action, attrs, snapshot)
-        except ValueError as e:
-            # Credential field not found in vault (e.g., vault has email but action needs username).
-            # Fail the action: executing it as is would type the raw placeholder into the page.
-            raise VaultCredentialError(str(e)) from e
+        return await resolve_vault_action(action, self.vault, snapshot, self.locate)
 
     # BEGIN GENERATED OVERLOADS: aexecute (scripts/generate_action_overloads.py)
     @overload
@@ -533,65 +514,9 @@ class NotteSession(AsyncResource, SyncResource):
                     case ScrapeAction():
                         raise ScrapeIsNotAnActionError()
                     case EvaluateJsAction(code=code):
-                        # Evaluate JavaScript code on the page and return the result.
-                        # The guard runs code with a top-level `return` as a function body.
-                        guard_token = new_guard_token()
-                        try:
-                            evaluate_kwargs: dict[str, bool] = {}
-                            if config.browser_backend == BrowserBackend.PATCHRIGHT:
-                                evaluate_kwargs["isolated_context"] = False
-                            # The guard measures the value inside the page and
-                            # throws past the budget, so an oversized result is
-                            # never serialized by the browser, decoded by the
-                            # driver, or rebuilt as Python objects.
-                            result = await asyncio.wait_for(
-                                self.window.page.evaluate(
-                                    PAGE_RESULT_GUARD,
-                                    [
-                                        page_expression(code),
-                                        config.evaluate_js_max_result_bytes,
-                                        config.evaluate_js_max_result_values,
-                                        guard_token,
-                                    ],
-                                    **evaluate_kwargs,
-                                ),
-                                timeout=config.timeout_evaluate_js_ms / 1000.0,
-                            )
-                        except asyncio.TimeoutError:
-                            success = False
-                            message = f"JavaScript evaluation timed out after {config.timeout_evaluate_js_ms}ms"
-                        except PlaywrightError as js_err:
-                            limit_reason = page_limit_reason(str(js_err), guard_token)
-                            if limit_reason is not None:
-                                raise EvaluateJsResultLimitError(
-                                    config.evaluate_js_max_result_bytes, limit_reason
-                                ) from None
-                            success = False
-                            message = f"JavaScript evaluation failed: {js_err}"
-                        else:
-                            result_str: str | None = None
-                            try:
-                                # The guard returns the result as one JSON string,
-                                # decoded once here instead of value by value by
-                                # Playwright, which cost several times the memory.
-                                result = decode_page_result(
-                                    result,
-                                    guard_token,
-                                    max_bytes=config.evaluate_js_max_result_bytes,
-                                    max_values=config.evaluate_js_max_result_values,
-                                )
-                                result_str = format_evaluation_result(
-                                    result, max_bytes=config.evaluate_js_max_result_bytes
-                                )
-                            except InvalidPagePayloadError as payload_err:
-                                message = f"JavaScript evaluation failed: {payload_err}"
-                            finally:
-                                # The action's frame can itself be retained when a
-                                # failure is raised later or saved in the trajectory.
-                                result = None
-                            success = result_str is not None
-                            if result_str is not None:
-                                scraped_data = DataSpace(markdown=result_str)
+                        success, evaluation_message, scraped_data = await evaluate_page(self.window.page, code)
+                        if evaluation_message is not None:
+                            message = evaluation_message
                     case ToolAction():
                         raise InboxActionNotSupportedLocallyError(resolved_action)
                     case _:

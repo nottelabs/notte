@@ -358,11 +358,11 @@ EVALUATE_JS_TIMEOUT_MS: int = 500
 @pytest.fixture
 def short_evaluate_js_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     """Shorten the evaluate_js timeout (45s by default) so timeout tests stay fast."""
-    from notte_browser import session as session_module
+    from notte_browser import evaluation_result as evaluation_module
     from notte_core.common.config import config
 
     monkeypatch.setattr(
-        session_module,
+        evaluation_module,
         "config",
         config.model_copy(update={"timeout_evaluate_js_ms": EVALUATE_JS_TIMEOUT_MS}),
     )

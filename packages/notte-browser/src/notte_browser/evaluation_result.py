@@ -1,5 +1,6 @@
 """Bound conversion allocations without changing the evaluate_js text format."""
 
+import asyncio
 import datetime
 import json
 import math
@@ -9,7 +10,12 @@ from json.encoder import encode_basestring_ascii
 from typing import Any, cast
 from urllib.parse import urlparse
 
+from notte_core.common.config import BrowserBackend, config
+from notte_core.data.space import DataSpace
 from notte_core.errors.actions import EvaluateJsResultLimitError
+
+from notte_browser.errors import PlaywrightError
+from notte_browser.playwright_async_api import Page
 
 _STRING_CHUNK_CHARS = 8192
 _MAX_DEPTH = 128
@@ -768,3 +774,65 @@ def format_evaluation_result(value: Any, *, max_bytes: int) -> str:
         # Failed actions retain their exception/traceback in the trajectory.
         # Do not retain the partially encoded output through that traceback.
         output.clear()
+
+
+async def evaluate_page(page: Page, code: str) -> tuple[bool, str | None, DataSpace | None]:
+    """Evaluate under the page-side budgets and return the session's result fields."""
+    message: str | None = None
+    scraped_data: DataSpace | None = None
+    # Evaluate JavaScript code on the page and return the result.
+    # The guard runs code with a top-level `return` as a function body.
+    guard_token = new_guard_token()
+    try:
+        evaluate_kwargs: dict[str, bool] = {}
+        if config.browser_backend == BrowserBackend.PATCHRIGHT:
+            evaluate_kwargs["isolated_context"] = False
+        # The guard measures the value inside the page and
+        # throws past the budget, so an oversized result is
+        # never serialized by the browser, decoded by the
+        # driver, or rebuilt as Python objects.
+        result = await asyncio.wait_for(
+            page.evaluate(
+                PAGE_RESULT_GUARD,
+                [
+                    page_expression(code),
+                    config.evaluate_js_max_result_bytes,
+                    config.evaluate_js_max_result_values,
+                    guard_token,
+                ],
+                **evaluate_kwargs,
+            ),
+            timeout=config.timeout_evaluate_js_ms / 1000.0,
+        )
+    except asyncio.TimeoutError:
+        success = False
+        message = f"JavaScript evaluation timed out after {config.timeout_evaluate_js_ms}ms"
+    except PlaywrightError as js_err:
+        limit_reason = page_limit_reason(str(js_err), guard_token)
+        if limit_reason is not None:
+            raise EvaluateJsResultLimitError(config.evaluate_js_max_result_bytes, limit_reason) from None
+        success = False
+        message = f"JavaScript evaluation failed: {js_err}"
+    else:
+        result_str: str | None = None
+        try:
+            # The guard returns the result as one JSON string,
+            # decoded once here instead of value by value by
+            # Playwright, which cost several times the memory.
+            result = decode_page_result(
+                result,
+                guard_token,
+                max_bytes=config.evaluate_js_max_result_bytes,
+                max_values=config.evaluate_js_max_result_values,
+            )
+            result_str = format_evaluation_result(result, max_bytes=config.evaluate_js_max_result_bytes)
+        except InvalidPagePayloadError as payload_err:
+            message = f"JavaScript evaluation failed: {payload_err}"
+        finally:
+            # The action's frame can itself be retained when a
+            # failure is raised later or saved in the trajectory.
+            result = None
+        success = result_str is not None
+        if result_str is not None:
+            scraped_data = DataSpace(markdown=result_str)
+    return success, message, scraped_data
