@@ -643,13 +643,14 @@ class BaseVault(ABC):
 
         Values already replaced by the vault (`ValueWithPlaceholder`) serialize back to their placeholder,
         so `contains_credentials` is still true for them: they must not be replaced a second time.
+        Only fill-type actions support credential replacement: other actions always return False.
         """
         if isinstance(action, FormFillAction):
             values = list(action.value.values())
         elif isinstance(action, (MultiFactorFillAction, FillAction, FallbackFillAction, SelectDropdownOptionAction)):
             values = [action.value]
         else:
-            return self.contains_credentials(action)
+            return False
         return any(isinstance(value, str) and self._contains_placeholder(value) for value in values)
 
     async def _get_credit_card_for_replacement(self, cred_key: str) -> CreditCardDict:

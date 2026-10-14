@@ -6,7 +6,8 @@ description: "Check if the action still holds credential placeholders that have 
 
 
 Values already replaced by the vault (`ValueWithPlaceholder`) serialize back to their placeholder,
-so `contains_credentials` is still true for them: they must not be replaced a second time
+so `contains_credentials` is still true for them: they must not be replaced a second time.
+Only fill-type actions support credential replacement: other actions always return False
 
 
 ## Parameters

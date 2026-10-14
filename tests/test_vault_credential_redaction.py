@@ -13,9 +13,9 @@ import pytest
 from loguru import logger
 from notte_browser.session import NotteSession
 from notte_core import LoggingSetup
-from notte_core.actions import FillAction, FormFillAction, MultiFactorFillAction
-from notte_core.credentials import CARD_NUMBER, EMAIL, MFA, PASSWORD
-from notte_core.credentials.base import CreditCardDict, CredentialsDict, LocatorAttributes, PasswordField
+from notte_core.actions import FillAction, FormFillAction, GotoAction, MultiFactorFillAction, ScrapeAction
+from notte_core.credentials import CARD_HOLDER_NAME, CARD_NUMBER, EMAIL, MFA, PASSWORD
+from notte_core.credentials.base import CredentialsDict, CreditCardDict, LocatorAttributes, PasswordField
 from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.errors.actions import NoCredentialsFoundError
 from notte_core.errors.base import NotteBaseError
@@ -30,7 +30,7 @@ from tests.mock.mock_vault import MockVault
 from tests.mock.snapshot_factory import make_snapshot
 
 URL = "https://example.com"
-SECRET_EMAIL = "leak-canary-7f3a@example.net"
+SECRET_EMAIL = "leak-canary-7f3a@example.net"  # pragma: allowlist secret
 SECRET_PASSWORD = "Leak-Canary-Pw-91c2e"  # pragma: allowlist secret
 SECRETS = (SECRET_EMAIL, SECRET_PASSWORD)
 PASSWORD_ATTRS = LocatorAttributes(type="password", autocomplete=None, outerHTML='<input type="password">')
@@ -120,12 +120,25 @@ def test_session_skips_action_already_replaced_by_agent() -> None:
     vault = make_vault()
     session = NoopLocateSession(vault=vault)
     session.snapshot = make_snapshot(URL)
-    replaced = asyncio.run(vault.replace_credentials(FillAction(id="I1", value=PASSWORD), PASSWORD_ATTRS, session.snapshot))
+    replaced = asyncio.run(
+        vault.replace_credentials(FillAction(id="I1", value=PASSWORD), PASSWORD_ATTRS, session.snapshot)
+    )
 
     with capture_logs() as logs:
         result = asyncio.run(session._action_with_vault(replaced))
     assert result is replaced
     assert_no_secret(logs)
+
+
+def test_non_fill_actions_are_never_replaced() -> None:
+    """Only fill-type actions carry credentials, even if another action's text contains a placeholder."""
+    vault = make_vault()
+    for action in (
+        ScrapeAction(instructions=f"Extract records for {CARD_HOLDER_NAME}"),
+        GotoAction(url=f"https://example.com/?user={EMAIL}"),
+    ):
+        assert vault.contains_credentials(action)
+        assert not vault.has_unresolved_placeholders(action)
 
 
 def test_form_fill_keeps_regular_values() -> None:
@@ -144,7 +157,7 @@ def test_form_fill_keeps_regular_values() -> None:
     "action",
     [
         FillAction(id="I1", value=PASSWORD + "!"),
-        FormFillAction(value={"current_password": "my " + PASSWORD}),
+        FormFillAction(value={"current_password": "my " + PASSWORD}),  # pragma: allowlist secret
     ],
 )
 def test_near_miss_placeholder_fails_without_echoing_value(action: FillAction | FormFillAction) -> None:
