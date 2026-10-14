@@ -7,6 +7,8 @@ from notte_sdk.errors import NotteAPIError
 
 import notte
 
+pytestmark = pytest.mark.live_heavy
+
 # Persistent fixtures shared by CI, frontend tests, and developers. Never delete
 # these from automated cleanup. Cleanup must remain scoped to resources created
 # by the current test run rather than listing and sweeping the whole account.

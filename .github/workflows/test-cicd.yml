@@ -14,6 +14,10 @@ on:
   pull_request:
     branches:
       - main
+  # Full live suite, including agent, persona and vault-with-agent tests that
+  # pull requests skip. Scheduled runs only run the live suite.
+  schedule:
+    - cron: '0 */4 * * 1-5'
   workflow_dispatch:
     inputs:
       pr_number:
@@ -41,7 +45,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  # Decides which suites this change needs. Push and manual runs always run everything.
+  # Decides which suites this change needs. Push and manual runs always run everything;
+  # scheduled runs only run the live suite.
   changes:
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 5
@@ -65,6 +70,12 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
+          if [ "$EVENT" = "schedule" ]; then
+            echo "unit=false" >> "$GITHUB_OUTPUT"
+            echo "live=true" >> "$GITHUB_OUTPUT"
+            echo "cli-contract=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [ "$EVENT" != "pull_request" ]; then
             echo "unit=true" >> "$GITHUB_OUTPUT"
             echo "live=true" >> "$GITHUB_OUTPUT"
@@ -175,7 +186,7 @@ jobs:
 
       - name: Verify environment variables
         env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
@@ -188,19 +199,15 @@ jobs:
           done
           echo "Environment variables are set"
 
-      - name: Wait for the API to be reachable
-        # The staging API scales to zero when idle and wakes on the first
-        # request; poll until it answers before running anything against it.
-        run: |
-          deadline=$((SECONDS + 900))
-          until [ "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' "$NOTTE_API_URL/health")" = "200" ]; do
-            [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
-            sleep 10
-          done
+      - name: Wait for the API to be ready
+        # The staging API scales to zero when idle and wakes on the first request.
+        uses: ./.github/actions/wait-for-api
+        with:
+          api-url: ${{ env.NOTTE_API_URL }}
 
       - name: Run tests
         env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
           NOTTE_VAULT_TEST_EMAIL: ${{ secrets.NOTTE_VAULT_TEST_EMAIL }}
           NOTTE_VAULT_TEST_PASSWORD: ${{ secrets.NOTTE_VAULT_TEST_PASSWORD }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
@@ -209,12 +216,12 @@ jobs:
         run: |
           # PYTEST_ARGS holds several arguments; split it on purpose.
           # shellcheck disable=SC2086
-          uv run pytest $PYTEST_ARGS --durations=10 --junitxml="pytest-$SUITE.xml" --cov=packages --cov-report=
+          uv run pytest $PYTEST_ARGS ${PYTEST_MARKERS:+-m "$PYTEST_MARKERS"} --durations=10 --junitxml="pytest-$SUITE.xml" --cov=packages --cov-report=
 
       - name: Cleanup vaults created by this run
         if: always()
         env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
         run: uv run python scripts/cleanup_ci_vaults.py
 
       - name: Upload test results
@@ -229,7 +236,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
-  # Live tests against the staging API, split into shards that run in parallel.
+  # Live tests against the staging API, split into shards. Pull requests run the smoke
+  # scope (no agent, persona or vault-with-agent tests) in two shards; main, scheduled
+  # and manual runs run everything in four.
   live:
     needs: changes
     if: >-
@@ -237,16 +246,22 @@ jobs:
       (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 20
+    # All live suites for a ref share one queue so they do not hit the API at once.
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: ${{ fromJSON(github.event_name == 'pull_request' && '[1, 2]' || '[1, 2, 3, 4]') }}
     env:
       SUITE: live-${{ matrix.shard }}
-      NOTTE_TEST_SHARD: ${{ matrix.shard }}/4
+      NOTTE_TEST_SHARD: ${{ matrix.shard }}/${{ strategy.job-total }}
       # Two workers per shard: all live suites share the staging API, which slows sharply
       # (vault and persona calls 5-15x) when too many clients hit it at once.
       PYTEST_ARGS: -n 2 tests/integration
+      PYTEST_MARKERS: ${{ github.event_name == 'pull_request' && 'not live_heavy' || '' }}
       COVERAGE_FILE: .coverage.live-${{ matrix.shard }}
       # Shards share a job name; give each its own vault prefix so cleanups stay separate.
       NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}-${{ matrix.shard }}

@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { NotteClient } from '@/client';
 import { z } from 'zod';
+import { AGENT_TEST_TIMEOUT_MS, skipHeavyLive } from './helpers/live-scope';
 
 // Load environment variables
 import { config } from 'dotenv';
 config();
 
-describe('Agent Integration Tests', () => {
+describe.skipIf(skipHeavyLive)('Agent Integration Tests', () => {
   let client: NotteClient;
   const apiKey = process.env.NOTTE_API_KEY;
 
@@ -21,7 +22,7 @@ describe('Agent Integration Tests', () => {
   });
 
   describe('Basic Agent Operations', () => {
-    it('should start and stop an agent', { timeout: 60000 }, async () => {
+    it('should start and stop an agent', { timeout: AGENT_TEST_TIMEOUT_MS }, async () => {
       await client.Session({ proxies: false, headless: true, idle_timeout_minutes: 2 }).use(async (session) => {
         const agent = client.Agent({ session, max_steps: 10 });
 
@@ -42,7 +43,7 @@ describe('Agent Integration Tests', () => {
       });
     });
 
-    it('should run agent with Chromium browser', { timeout: 60000 }, async () => {
+    it('should run agent with Chromium browser', { timeout: AGENT_TEST_TIMEOUT_MS }, async () => {
       await client.Session({ proxies: false, headless: true, idle_timeout_minutes: 2, browser_type: 'chromium' }).use(async (session) => {
         const agent = client.Agent({ session, max_steps: 3 });
 
@@ -55,7 +56,7 @@ describe('Agent Integration Tests', () => {
       });
     });
 
-    it('should start agent with Gemini reasoning model', { timeout: 60000 }, async () => {
+    it('should start agent with Gemini reasoning model', { timeout: AGENT_TEST_TIMEOUT_MS }, async () => {
       await client.Session({ proxies: false, headless: true, idle_timeout_minutes: 2 }).use(async (session) => {
         const agent = client.Agent({
           session,
@@ -80,7 +81,7 @@ describe('Agent Integration Tests', () => {
       summary: z.string(),
     });
 
-    it('should accept a Zod schema on agent.start()', { timeout: 60000 }, async () => {
+    it('should accept a Zod schema on agent.start()', { timeout: AGENT_TEST_TIMEOUT_MS }, async () => {
       await client.Session({ proxies: false, headless: true, idle_timeout_minutes: 2 }).use(async (session) => {
         const agent = client.Agent({ session, max_steps: 3 });
         const resp = await agent.start({
@@ -92,7 +93,7 @@ describe('Agent Integration Tests', () => {
       });
     });
 
-    it('should return a schema-valid Product even when the agent tries to break constraints', { timeout: 120000 }, async () => {
+    it('should return a schema-valid Product even when the agent tries to break constraints', { timeout: AGENT_TEST_TIMEOUT_MS }, async () => {
       const Product = z.object({
         name: z.string(),
         price: z.number().int().min(0).max(5),
@@ -110,7 +111,7 @@ describe('Agent Integration Tests', () => {
       });
     });
 
-    it('should validate agent.run() answer against Zod schema', { timeout: 120000 }, async () => {
+    it('should validate agent.run() answer against Zod schema', { timeout: AGENT_TEST_TIMEOUT_MS }, async () => {
       await client.Session({ proxies: false, headless: true, idle_timeout_minutes: 2 }).use(async (session) => {
         const agent = client.Agent({ session, max_steps: 5 });
         const result = await agent.run({

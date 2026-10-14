@@ -3,6 +3,7 @@ import { NotteClient } from '@/index';
 import { InvalidRequestError, NotteAPIError } from '@/errors';
 import { config } from 'dotenv';
 import { cleanupVaults } from './helpers/cleanup-vaults';
+import { AGENT_TEST_TIMEOUT_MS, skipHeavyLive } from './helpers/live-scope';
 
 // Load environment variables from .env file
 config();
@@ -27,7 +28,7 @@ describe('Vault Integration Tests', () => {
     createdVaults = [];
   });
 
-  it('should only cleanup a vault created by this test', { timeout: 30000 }, async () => {
+  it('should only cleanup a vault created by this test', async () => {
     const vault = client.Vault({ name: 'Node SDK owned cleanup test' });
     await vault.listCredentials();
     const vaultId = vault.vaultId;
@@ -118,11 +119,11 @@ describe('Vault Integration Tests', () => {
       // Verify credentials are deleted: like Python, a missing credential is an API error.
       await expect(vault.getCredentials('https://github.com/')).rejects.toBeInstanceOf(NotteAPIError);
       await expect(vault.hasCredential('https://github.com/')).resolves.toBe(false);
-    }, 15000); // 15 second timeout
+    });
   });
 
-  describe('Vault with Agent Integration', () => {
-    it('should use vault with local agent', { timeout: 180000 }, async () => {
+  describe.skipIf(skipHeavyLive)('Vault with Agent Integration', () => {
+    it('should use vault with local agent', { timeout: AGENT_TEST_TIMEOUT_MS }, async () => {
       const vault = client.Vault();
 
       // Add credentials
@@ -208,7 +209,7 @@ describe('Vault Integration Tests', () => {
       } finally {
         await session.stop();
       }
-    }, 30000); // 30 second timeout
+    }, AGENT_TEST_TIMEOUT_MS);
   });
 
   describe('Password Generation', () => {
@@ -267,7 +268,7 @@ describe('Vault Integration Tests', () => {
 
   describe('Vault Context Manager', () => {
     // Mirrors test_vault_should_be_deleted_after_exit_context: stop() deletes the vault.
-    it('should delete vault after stop()', { timeout: 60000 }, async () => {
+    it('should delete vault after stop()', async () => {
       const vault = client.Vault();
       await vault.addCredentials('https://test.com/', {
         email: 'test@example.com',
@@ -289,7 +290,7 @@ describe('Vault Integration Tests', () => {
 
   describe('Environment Variable Credentials', () => {
     // Mirrors test_add_credentials_from_env.
-    it('should add credentials from environment variables', { timeout: 60000 }, async () => {
+    it('should add credentials from environment variables', async () => {
       vi.stubEnv('PEEPLE_COM_EMAIL', 'xyz@notte.cc');
       vi.stubEnv('PEEPLE_COM_PASSWORD', 'xyz'); // pragma: allowlist secret
       vi.stubEnv('TEST_COM_USERNAME', 'my_xyz_username');
@@ -322,7 +323,7 @@ describe('Vault Integration Tests', () => {
       });
     });
 
-    it('should add an MFA secret from the environment', { timeout: 60000 }, async () => {
+    it('should add an MFA secret from the environment', async () => {
       vi.stubEnv('EXAMPLE_COM_EMAIL', 'xyz@notte.cc');
       vi.stubEnv('EXAMPLE_COM_PASSWORD', 'xyz'); // pragma: allowlist secret
       vi.stubEnv('EXAMPLE_COM_MFA_SECRET', 'JBSWY3DPEHPK3PXP'); // pragma: allowlist secret
@@ -408,7 +409,7 @@ describe('Vault Integration Tests', () => {
   });
 
   describe('Error Handling', () => {
-    it('should handle invalid credentials in agent', { timeout: 120000 }, async () => {
+    it.skipIf(skipHeavyLive)('should handle invalid credentials in agent', { timeout: AGENT_TEST_TIMEOUT_MS }, async () => {
       const vault = client.Vault();
 
       // Create session and agent without valid credentials

@@ -4,6 +4,8 @@ from notte_sdk import NotteClient
 
 import notte
 
+pytestmark = pytest.mark.live_heavy
+
 
 def test_start_stop_agent():
     _ = load_dotenv()

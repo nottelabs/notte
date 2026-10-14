@@ -6,6 +6,10 @@ on:
   push:
     branches: [main]
     paths: ['node-sdk/**', '.github/workflows/node-sdk-*.yml']
+  # Full live suite, including agent, persona and vault-with-agent tests that
+  # pull requests skip.
+  schedule:
+    - cron: '0 */4 * * 1-5'
   workflow_dispatch:
 
 permissions:
@@ -62,11 +66,17 @@ jobs:
     needs: tests
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 45
-    # Live files run serially within a shard; shards run in parallel.
+    # All live suites for a ref share one queue so they do not hit the API at once.
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
+    # Live files run serially within a shard. Pull requests run the smoke scope in
+    # one shard; main, scheduled and manual runs run everything in two.
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: ${{ fromJSON(github.event_name == 'pull_request' && '[1]' || '[1, 2]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -75,24 +85,19 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - name: Wait for the API to be reachable
-        # The staging API scales to zero when idle and wakes on the first
-        # request; poll until it answers before running anything against it.
+      - name: Wait for the API to be ready
+        # The staging API scales to zero when idle and wakes on the first request.
+        uses: ./.github/actions/wait-for-api
+        with:
+          api-url: https://us-staging.notte.cc
+      - name: Run live integration suite
         env:
           NOTTE_API_URL: https://us-staging.notte.cc
-        run: |
-          deadline=$((SECONDS + 900))
-          until [ "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' "$NOTTE_API_URL/health")" = "200" ]; do
-            [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
-            sleep 10
-          done
-      - name: Run complete live integration suite
-        env:
-          NOTTE_API_URL: https://us-staging.notte.cc
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_NODE || secrets.NOTTE_API_KEY }}
+          NOTTE_LIVE_SCOPE: ${{ github.event_name == 'pull_request' && 'smoke' || 'full' }}
         run: |
           test -n "$NOTTE_API_KEY" || { echo 'NOTTE_API_KEY is required'; exit 1; }
-          npm run test:integration -- --shard=${{ matrix.shard }}/2
+          npm run test:integration -- --shard=${{ matrix.shard }}/${{ strategy.job-total }}
 
   generated:
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
@@ -105,15 +110,9 @@ jobs:
           cache: npm
           cache-dependency-path: node-sdk/package-lock.json
       - run: npm ci
-      - name: Wait for the API to be reachable
-        # The staging API scales to zero when idle and wakes on the first
-        # request; poll until it answers before running anything against it.
-        env:
-          NOTTE_API_URL: https://us-staging.notte.cc
-        run: |
-          deadline=$((SECONDS + 900))
-          until [ "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' "$NOTTE_API_URL/health")" = "200" ]; do
-            [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
-            sleep 10
-          done
+      - name: Wait for the API to be ready
+        # The staging API scales to zero when idle and wakes on the first request.
+        uses: ./.github/actions/wait-for-api
+        with:
+          api-url: https://us-staging.notte.cc
       - run: npm run check:staging

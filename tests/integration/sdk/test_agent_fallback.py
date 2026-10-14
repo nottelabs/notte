@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from notte_core.common.config import LlmModel
 from notte_sdk.client import NotteClient
 
+pytestmark = pytest.mark.live_heavy
+
 _ = load_dotenv()
 
 
