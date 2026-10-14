@@ -48,6 +48,15 @@ describe('NottePersona email addresses', () => {
     expect(persona.info.internal_email).toBe(persona.internalEmail);
   });
 
+  it('defaults email_provider to notte when the response omits it', async () => {
+    const persona = new NottePersona(client, {
+      persona_id: '8d5a3550-733f-4d32-8f41-62451f770537'
+    });
+    await persona.get();
+
+    expect(persona.info.email_provider).toBe('notte');
+  });
+
   it.each([false, true])('never deletes a borrowed persona, callback throws=%s', async throws => {
     const persona = new NottePersona(client, { persona_id: 'existing' });
     const result = persona.use(async p => {
@@ -71,5 +80,18 @@ describe('NottePersona email addresses', () => {
     mocks.personaDelete.mockResolvedValue({ data: {} });
     await persona.use(async p => expect(p.personaId).toBe('owned'));
     expect(mocks.personaDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it('forwards email_provider when creating a persona', async () => {
+    mocks.personaCreate.mockResolvedValue({
+      data: { persona_id: 'owned', email: 'amy@agentmail.to', email_provider: 'agentmail' }
+    });
+    const persona = new NottePersona(client, { email_provider: 'agentmail' });
+    await persona.get();
+
+    expect(mocks.personaCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { email_provider: 'agentmail' } })
+    );
+    expect(persona.info.email_provider).toBe('agentmail');
   });
 });

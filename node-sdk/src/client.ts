@@ -16,7 +16,7 @@ import type {
 } from '@/lib/client/types.gen';
 import { Agent, type AgentConstructor } from '@/agent';
 import { NotteVault, type VaultConstructor } from '@/vaults';
-import { NottePersona, type PersonaConstructor, type PersonaListOptions } from '@/personas';
+import { NottePersona, withPersonaDefaults, type PersonaConstructor, type PersonaListOptions } from '@/personas';
 import { NotteFunction, type FunctionConstructor } from '@/functions';
 import {
   healthCheck,
@@ -494,14 +494,21 @@ export class NotteClient {
    * Personas client for listing and managing personas
    */
   get personas() {
+    const personas = this.resources.personas;
     return {
-      ...this.resources.personas,
+      ...personas,
+      create: async (...args: Parameters<typeof personas.create>) =>
+        withPersonaDefaults(await personas.create(...args)),
+      get: async (...args: Parameters<typeof personas.get>) =>
+        withPersonaDefaults(await personas.get(...args)),
+      update: async (...args: Parameters<typeof personas.update>) =>
+        withPersonaDefaults(await personas.update(...args)),
       list: async (options?: PersonaListOptions): Promise<PersonaResponse[]> => {
         const response = await listPersonas({
           client: this.getClient(),
           query: options || {},
         });
-        return (response.data as any)?.items || [];
+        return ((response.data as any)?.items || []).map(withPersonaDefaults);
       },
     };
   }
