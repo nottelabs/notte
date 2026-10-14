@@ -48,6 +48,7 @@ jobs:
     outputs:
       unit: ${{ steps.scope.outputs.unit }}
       live: ${{ steps.scope.outputs.live }}
+      cli-contract: ${{ steps.scope.outputs.cli-contract }}
     steps:
       - name: Checkout code
         if: github.event_name == 'pull_request'
@@ -67,15 +68,22 @@ jobs:
           if [ "$EVENT" != "pull_request" ]; then
             echo "unit=true" >> "$GITHUB_OUTPUT"
             echo "live=true" >> "$GITHUB_OUTPUT"
+            echo "cli-contract=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           unit=false
           live=false
+          cli_contract=false
           while IFS= read -r file; do
             [ -n "$file" ] || continue
             case "$file" in
               # This workflow and its setup action: run everything.
-              .github/workflows/test-cicd.yml|.github/actions/python-setup/*) unit=true; live=true ;;
+              .github/workflows/test-cicd.yml|.github/actions/python-setup/*) unit=true; live=true; cli_contract=true ;;
+              # How the SDK reads the key notte-cli stores, and its contract test.
+              packages/notte-sdk/src/notte_sdk/auth.py|tests/sdk/test_cli_keyring_contract.py|tests/sdk/cli_contract/*)
+                unit=true; live=true; cli_contract=true ;;
+              # A notte-cli bump can change how the CLI stores the key.
+              notte-cli) cli_contract=true ;;
               # Package code, including Markdown prompt templates: run everything.
               packages/*|src/*|tests/*) unit=true; live=true ;;
               # Some unit tests read the docs; the live suite does not.
@@ -88,7 +96,8 @@ jobs:
           done < <(git diff --name-only "$BASE_SHA"..."$HEAD_SHA")
           echo "unit=$unit" >> "$GITHUB_OUTPUT"
           echo "live=$live" >> "$GITHUB_OUTPUT"
-          echo "unit=$unit live=$live"
+          echo "cli-contract=$cli_contract" >> "$GITHUB_OUTPUT"
+          echo "unit=$unit live=$live cli-contract=$cli_contract"
 
   lint:
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
@@ -243,9 +252,90 @@ jobs:
       NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}-${{ matrix.shard }}
     steps: *test-steps
 
+  # The SDK reads the API key saved by `notte auth login`. Store keys with the CLI's own code
+  # (from the notte-cli submodule) on each OS and check the SDK reads them back. Needs no secrets.
+  cli-contract:
+    needs: changes
+    if: needs.changes.outputs.cli-contract == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04, store: file }
+          - { os: ubuntu-24.04, store: secret-service }
+          - { os: macos-15, store: "" }
+          - { os: windows-2025, store: "" }
+    name: cli-contract (${{ matrix.os }}${{ matrix.store && format(', {0}', matrix.store) || '' }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      NOTTE_CLI_CONTRACT: "1"
+      NOTTE_CLI_CONTRACT_STORE: ${{ matrix.store }}
+      # Password of the throwaway keychain the macOS job creates.
+      NOTTE_CLI_CONTRACT_KEYCHAIN_PASSWORD: ci # pragma: allowlist secret
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout PR code (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+          persist-credentials: false
+
+      - name: Checkout code (PR or push)
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - run: git submodule update --init notte-cli
+
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: notte-cli/go.mod
+          cache-dependency-path: notte-cli/go.sum
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Use a dedicated, unlocked default keychain
+        if: runner.os == 'macOS'
+        run: |
+          security create-keychain -p "$NOTTE_CLI_CONTRACT_KEYCHAIN_PASSWORD" notte-ci.keychain
+          security set-keychain-settings notte-ci.keychain
+          security unlock-keychain -p "$NOTTE_CLI_CONTRACT_KEYCHAIN_PASSWORD" notte-ci.keychain
+          security list-keychains -d user -s notte-ci.keychain
+          security default-keychain -d user -s notte-ci.keychain
+
+      - name: Install a Secret Service
+        if: matrix.store == 'secret-service'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gnome-keyring dbus
+          # Creating a collection needs an interactive prompt, so provide the
+          # collection the CLI uses up front, as an unencrypted keyring.
+          mkdir -p ~/.local/share/keyrings
+          printf '[keyring]\ndisplay-name=notte-cli\nctime=0\nmtime=0\nlock-on-idle=false\nlock-after=false\n' \
+            > ~/.local/share/keyrings/notte-cli.keyring
+
+      - name: Run the contract test
+        run: |
+          cmd="uv run --isolated --no-project --python 3.11 \
+            --with-editable ./packages/notte-core --with-editable ./packages/notte-sdk --with pytest --with pytest-timeout \
+            pytest tests/sdk/test_cli_keyring_contract.py --noconftest -p no:cacheprovider -v -rs"
+          if [ "$NOTTE_CLI_CONTRACT_STORE" = secret-service ]; then
+            dbus-run-session -- bash -c "echo -n ci | gnome-keyring-daemon --unlock --components=secrets > /dev/null && $cmd"
+          else
+            $cmd
+          fi
+
   # The required check. Passes when every suite this change needs passed (skipped suites are fine).
   tests:
-    needs: [changes, lint, unit, live]
+    needs: [changes, lint, unit, live, cli-contract]
     if: always()
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 10
