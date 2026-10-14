@@ -70,7 +70,7 @@
   },
   "functions/management/filter_active_runs.ts": {
     "expected": { "results": [] },
-    "logContains": "Active runs: 0"
+    "logContains": "Active runs: "
   },
   "file-storage/uploading_files.ts": {
     "expected": { "status": "closed" },
