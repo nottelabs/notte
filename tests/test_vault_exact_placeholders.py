@@ -1,8 +1,9 @@
-"""Only exact placeholder values are vault placeholders, and only secret placeholders fail closed.
+"""Only exact placeholder values are vault placeholders, and unresolved placeholders fail closed.
 
-Non-secret placeholders (email, username, card holder, card number) are also ordinary values that scripts type on
-purpose (e.g. 'John Doe' or the '4242 4242 4242 4242' test card): without a matching vault credential they are
-filled as written. Secret placeholders (password, MFA, card CVV, card expiration) still fail the action.
+Login placeholders (email, username, password, MFA) and secret card placeholders (card CVV, card expiration) fail the
+action when the vault cannot resolve them, so the literal placeholder is never typed into the page. Card holder and
+card number placeholders are also ordinary values that scripts type on purpose (e.g. 'John Doe' or the
+'4242 4242 4242 4242' test card): without a matching vault credential they are filled as written.
 """
 
 import asyncio
@@ -52,6 +53,8 @@ PASSWORD_ATTRS = LocatorAttributes(type="password", autocomplete=None, outerHTML
 
 NON_SECRET_PLACEHOLDERS = [EMAIL, USERNAME, CARD_HOLDER_NAME, CARD_NUMBER]
 SECRET_PLACEHOLDERS = [PASSWORD, MFA, CARD_CVV, CARD_EXPIRATION]
+# placeholders filled as written when the vault cannot resolve them
+FILLED_AS_IS = [CARD_HOLDER_NAME, CARD_NUMBER]
 # values that contain a placeholder without being one
 LOOKALIKES = [
     "John Doe Corp",
@@ -148,8 +151,8 @@ def test_placeholders_match_exactly_ignoring_surrounding_whitespace(value: str) 
     ],
     ids=["no-credentials", "missing-field", "lookup-error"],
 )
-@pytest.mark.parametrize("value", NON_SECRET_PLACEHOLDERS)
-def test_unresolved_non_secret_placeholder_is_filled_as_is(vault: NoCardVault, value: str) -> None:
+@pytest.mark.parametrize("value", FILLED_AS_IS)
+def test_unresolved_card_holder_and_number_are_filled_as_is(vault: NoCardVault, value: str) -> None:
     session = NoopLocateSession(vault=vault)
     session.snapshot = make_snapshot(URL)
 
@@ -168,18 +171,27 @@ def test_unresolved_non_secret_placeholder_is_filled_as_is(vault: NoCardVault, v
 @pytest.mark.parametrize(
     ("vault", "value", "error_type"),
     [
+        # no credentials for the site
         (NoCardVault({OTHER_URL: {"password": SECRET_PASSWORD}}), PASSWORD, NoCredentialsFoundError),
         (NoCardVault({OTHER_URL: {"password": SECRET_PASSWORD}}), MFA, NoCredentialsFoundError),
+        (NoCardVault({OTHER_URL: {"email": SECRET_EMAIL}}), EMAIL, NoCredentialsFoundError),
+        (NoCardVault({OTHER_URL: {"username": SECRET_USERNAME}}), USERNAME, NoCredentialsFoundError),
+        # credentials for the site, but not the requested field
         (NoCardVault({URL: {"email": SECRET_EMAIL}}), PASSWORD, MissingCredentialFieldError),
         (NoCardVault({URL: {"password": SECRET_PASSWORD}}), MFA, MissingCredentialFieldError),
-        (FailingVault(), PASSWORD, NoCredentialsFoundError),
+        (NoCardVault({URL: {"password": SECRET_PASSWORD}}), EMAIL, MissingCredentialFieldError),
+        (NoCardVault({URL: {"password": SECRET_PASSWORD}}), USERNAME, MissingCredentialFieldError),
+        # the vault cannot be queried
+        (FailingVault(), PASSWORD, VaultLookupError),
+        (FailingVault(), MFA, VaultLookupError),
+        (FailingVault(), EMAIL, VaultLookupError),
+        (FailingVault(), USERNAME, VaultLookupError),
+        # no card stored
         (NoCardVault(), CARD_CVV, VaultLookupError),
         (NoCardVault(), CARD_EXPIRATION, VaultLookupError),
     ],
 )
-def test_unresolved_secret_placeholder_fails_closed(
-    vault: NoCardVault, value: str, error_type: type[Exception]
-) -> None:
+def test_unresolved_placeholder_fails_closed(vault: NoCardVault, value: str, error_type: type[Exception]) -> None:
     session = NoopLocateSession(vault=vault)
     session.snapshot = make_snapshot(URL)
 
@@ -201,13 +213,28 @@ def test_resolved_non_secret_placeholder_on_invalid_target_fails(value: str) -> 
     assert_no_secret(error_texts(exc_info.value) + logs, SECRETS)
 
 
-def test_secret_fails_even_when_form_also_holds_unresolved_non_secret() -> None:
+def test_secret_fails_even_when_form_also_holds_unresolved_card_holder() -> None:
     vault = NoCardVault({OTHER_URL: {"email": SECRET_EMAIL, "password": SECRET_PASSWORD}})
     session = NoopLocateSession(vault=vault)
     session.snapshot = make_snapshot(URL)
 
     with pytest.raises(NoCredentialsFoundError):
-        _ = asyncio.run(session._action_with_vault(FormFillAction(value={"email": EMAIL, "password": PASSWORD})))
+        _ = asyncio.run(
+            session._action_with_vault(FormFillAction(value={"cc_name": CARD_HOLDER_NAME, "password": PASSWORD}))
+        )
+
+
+def test_no_credentials_error_names_the_site_only() -> None:
+    vault = NoCardVault({OTHER_URL: {"email": SECRET_EMAIL, "password": SECRET_PASSWORD}})
+    session = NoopLocateSession(vault=vault)
+    session.snapshot = make_snapshot("https://login.example.com/sso?token=canary-token-71d3")
+
+    with pytest.raises(NoCredentialsFoundError) as exc_info:
+        _ = asyncio.run(session._action_with_vault(FillAction(id="I1", value=EMAIL)))
+    for text in error_texts(exc_info.value):
+        assert "login.example.com" in text
+        assert "canary-token-71d3" not in text
+        assert EMAIL not in text
 
 
 def test_placeholders_are_replaced_when_the_vault_has_credentials() -> None:
@@ -270,8 +297,17 @@ FORM_PAGE = """
 
 
 @pytest.mark.asyncio
-async def test_session_without_credentials_fills_non_secret_values_and_fails_secrets() -> None:
-    vault = NoCardVault({OTHER_URL: {"email": SECRET_EMAIL, "password": SECRET_PASSWORD}})
+@pytest.mark.parametrize(
+    ("vault", "error_type"),
+    [
+        (NoCardVault({OTHER_URL: {"email": SECRET_EMAIL, "password": SECRET_PASSWORD}}), NoCredentialsFoundError),
+        (FailingVault(), VaultLookupError),
+    ],
+    ids=["no-credentials", "lookup-error"],
+)
+async def test_session_without_credentials_fills_ordinary_values_and_fails_placeholders(
+    vault: NoCardVault, error_type: type[Exception]
+) -> None:
     with capture_logs() as logs:
         async with NotteSession(headless=True, vault=vault) as session:
             await session.window.page.set_content(FORM_PAGE)
@@ -280,8 +316,6 @@ async def test_session_without_credentials_fills_non_secret_values_and_fails_sec
                 "#name": CARD_HOLDER_NAME,
                 "#company": "John Doe Corp",
                 "#address": "12 John Doe Street, Springfield",
-                "#email": EMAIL,
-                "#username": USERNAME,
                 "#cc-number": CARD_NUMBER,
                 "#cc-name": CARD_HOLDER_NAME,
             }
@@ -290,16 +324,20 @@ async def test_session_without_credentials_fills_non_secret_values_and_fails_sec
                 assert result.success
                 assert await session.window.page.input_value(selector) == value
 
-            secret_fills = {"#pw": PASSWORD, "#otp": MFA, "#cc-csc": CARD_CVV, "#cc-exp": CARD_EXPIRATION}
+            login_fills = {"#email": EMAIL, "#username": USERNAME, "#pw": PASSWORD, "#otp": MFA}
+            card_fills = {"#cc-csc": CARD_CVV, "#cc-exp": CARD_EXPIRATION}
             failures: list[str] = []
-            for selector, value in secret_fills.items():
+            for selector, value in (login_fills | card_fills).items():
                 result = await session.aexecute(type="fill", selector=selector, value=value, raise_on_failure=False)
                 assert result.success is False
                 assert isinstance(result.exception, (CredentialReplacementError, NoCredentialsFoundError))
+                if selector in login_fills:
+                    assert isinstance(result.exception, error_type)
                 # the literal placeholder is never typed into the page
                 assert await session.window.page.input_value(selector) == ""
                 failures += [result.message, *error_texts(result.exception)]
-            assert_no_secret(failures, SECRETS + tuple(secret_fills.values()))
+            placeholders = tuple(login_fills.values()) + tuple(card_fills.values())
+            assert_no_secret(failures, SECRETS + placeholders)
     assert_no_secret(logs, SECRETS + (PASSWORD,))
 
 
@@ -330,5 +368,7 @@ async def test_session_with_credentials_replaces_placeholders() -> None:
             results.append(otp)
             code = await session.window.page.input_value("#otp")
             assert code.isdigit() and len(code) == 6
-            assert_no_secret([r.message for r in results] + [r.model_dump_json() for r in results], SECRETS)
+            # timestamps are left out: their digits can contain the 3-digit card CVV by chance
+            dumps = [r.model_dump_json(exclude={"started_at", "ended_at"}) for r in results]
+            assert_no_secret([r.message for r in results] + dumps, SECRETS)
     assert_no_secret(logs, SECRETS)

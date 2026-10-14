@@ -151,15 +151,15 @@ async def test_agent_records_failed_step_when_placeholder_cannot_be_replaced(
 
 
 @pytest.mark.asyncio
-async def test_agent_fills_non_secret_lookalike_and_fails_secret_without_credentials() -> None:
-    """Without credentials for the page, a non-secret placeholder lookalike (e.g. a real email address that happens
-    to be the email placeholder) is typed as written, while a secret placeholder records a failed step."""
+async def test_agent_records_failed_steps_for_login_placeholders_without_credentials() -> None:
+    """Without credentials for the page, email and password placeholders both record failed steps: neither literal
+    placeholder is typed into the page, and the run continues."""
     vault = MockVault({"https://other.example.test/": {"email": SECRET_EMAIL, "password": SECRET_PASSWORD}})
     mock_llm = MockLLMEngine(
         [
             create_agent_step_response(action=FillAction(selector="#email", value=EMAIL)),
             create_agent_step_response(action=FillAction(selector="#pw", value=PASSWORD)),
-            create_agent_step_response(action=CompletionAction(success=True, answer="Done")),
+            create_agent_step_response(action=CompletionAction(success=False, answer="No credentials for this site")),
         ]
     )
 
@@ -171,15 +171,16 @@ async def test_agent_fills_non_secret_lookalike_and_fails_secret_without_credent
             with patch.object(agent, "llm", mock_llm), patch.object(agent, "validator", MockValidator()):
                 response = await agent.arun(task="Log in")
 
-            # the run continues after the failed step
-            assert response.success is True
+            # the run continues after the failed steps, and ends with the agent's answer
+            assert response.answer == "No credentials for this site"
             results = list(agent.trajectory.execution_results())
-            failed = [r for r in results if not r.success]
-            assert len(failed) == 1
-            assert isinstance(failed[0].exception, NoCredentialsFoundError)
-            assert await session.window.page.input_value("#email") == EMAIL
-            # the literal secret placeholder is never typed into the page
+            failed = [r for r in results if not r.success and isinstance(r.action, FillAction)]
+            assert len(failed) == 2
+            assert all(isinstance(r.exception, NoCredentialsFoundError) for r in failed)
+            assert all("No vault credentials for" in r.message for r in failed)
+            # the literal placeholders are never typed into the page
+            assert await session.window.page.input_value("#email") == ""
             assert await session.window.page.input_value("#pw") == ""
             assert_no_secret([r.message for r in results])
-            assert PASSWORD not in failed[0].message
+            assert all(EMAIL not in r.message and PASSWORD not in r.message for r in failed)
     assert_no_secret(logs)

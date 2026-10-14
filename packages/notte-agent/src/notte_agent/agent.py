@@ -91,7 +91,7 @@ class NotteAgent(BaseAgent):
     async def action_with_credentials(self, action: BaseAction) -> BaseAction:
         """Replace credentials in the action if the vault contains credentials.
 
-        Raises `CredentialReplacementError` or `NoCredentialsFoundError` when a secret placeholder cannot be replaced.
+        Raises `CredentialReplacementError` or `NoCredentialsFoundError` when a placeholder cannot be replaced.
         """
         if self.vault is not None and self.vault.has_unresolved_placeholders(action):
             locator = await self.session.locate(action)

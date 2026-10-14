@@ -419,8 +419,8 @@ Modified action with replaced credentials
 **Raises:**
 
 - `ValueError`: If the action type is not supported
-- `CredentialReplacementError`: If a secret placeholder cannot be replaced (e.g. missing credential field)
-- `NoCredentialsFoundError`: If the vault holds no credentials for the current page (secret placeholder)
+- `CredentialReplacementError`: If a placeholder cannot be replaced (e.g. missing credential field, or the vault cannot be queried), except card holder and card number placeholders
+- `NoCredentialsFoundError`: If the vault holds no credentials for the current page (login placeholder)
 
 ---
 

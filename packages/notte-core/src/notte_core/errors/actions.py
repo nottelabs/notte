@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from notte_core.errors.base import NotteBaseError
 
 
@@ -91,9 +93,17 @@ class InputActionShouldHaveOneParameterError(InvalidActionError):
 
 
 class NoCredentialsFoundError(ActionError):
+    """Raised when a credential placeholder is used on a site the vault holds no credentials for.
+
+    The action fails and nothing is typed into the page.
+    """
+
     def __init__(self, url: str) -> None:
+        # Only name the site: the full URL can carry tokens in its path or query
+        site = urlparse(url).hostname or "the current page"
         msg = (
-            f"No credentials found in the vault for url={url}. Please add valid credentials in the vault and try again."
+            f"No vault credentials for {site}, so the credential placeholder was not filled. "
+            "Credentials for this site must be added to the vault before they can be used."
         )
         super().__init__(
             dev_message=msg,
