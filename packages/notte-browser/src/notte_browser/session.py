@@ -82,7 +82,7 @@ from typing_extensions import override
 
 from notte_browser import execution
 from notte_browser.action_space import build_action_space
-from notte_browser.captcha import CaptchaHandler
+from notte_browser.captcha import captcha_solver_available
 from notte_browser.dom.locate import locate_element
 from notte_browser.errors import (
     BrowserNotStartedError,
@@ -105,7 +105,7 @@ from notte_browser.evaluation_result import (
 )
 from notte_browser.playwright import connect, launch
 from notte_browser.playwright_async_api import Locator, Page
-from notte_browser.resolution import resolve_action
+from notte_browser.resolution import resolve
 from notte_browser.scrape import default_extractor, scrape_page
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
@@ -140,7 +140,7 @@ class NotteSession(AsyncResource, SyncResource):
         # runnable by default while preserving an explicit opt-in error.
         _ = data.setdefault("solve_captchas", False)
         self._request: LocalSessionStartRequest = LocalSessionStartRequest.model_validate(data)
-        if self._request.solve_captchas and not CaptchaHandler.is_available:
+        if self._request.solve_captchas and not captcha_solver_available():
             raise CaptchaSolverNotAvailableError()
         self._window: BrowserWindow | None = window
         self._verbose: bool = config.verbose
@@ -348,7 +348,7 @@ class NotteSession(AsyncResource, SyncResource):
         return asyncio.run(self.aobserve(**pagination))
 
     async def locate(self, action: BaseAction) -> Locator | None:
-        action_with_selector = await resolve_action(action, self._snapshot)
+        action_with_selector = await resolve(action, self._snapshot)
         if isinstance(action_with_selector, InteractionAction) and action_with_selector.selectors is not None:
             locator: Locator = await locate_element(self.window.page, action_with_selector.selectors)
             assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
@@ -519,7 +519,7 @@ class NotteSession(AsyncResource, SyncResource):
                 # --- Step 1: action resolution --
                 # --------------------------------
 
-                resolved_action = await resolve_action(step_action, self._snapshot, verbose=config.verbose)
+                resolved_action = await resolve(step_action, self._snapshot, verbose=config.verbose)
                 if config.verbose:
                     logger.info(f"🌌 starting execution of action '{resolved_action.type}' ...")
                 # --------------------------------

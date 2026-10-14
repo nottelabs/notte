@@ -43,7 +43,7 @@ from notte_core.storage import BaseStorage
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
 
-from notte_browser.captcha import CaptchaHandler
+from notte_browser.captcha import solve_captcha
 from notte_browser.dom.locate import locate_element
 from notte_browser.errors import (
     PlaywrightTimeoutError,
@@ -296,7 +296,7 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
                 )
 
         case CaptchaSolveAction(captcha_type=_):
-            _ = await CaptchaHandler.handle_captchas(window, action)
+            _ = await solve_captcha(window, action)
         case GotoAction(url=url, wait_until=wait_until):
             await window.goto(url, wait_until=wait_until)
         case GotoNewTabAction(url=url):

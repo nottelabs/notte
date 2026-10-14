@@ -4,7 +4,7 @@ from typing import Any
 import notte_browser.execution as execution_module
 import notte_core
 import pytest
-from notte_browser.captcha import CaptchaHandler
+from notte_browser.captcha import set_captcha_solver
 from notte_browser.errors import (
     CaptchaSolverNotAvailableError,
     NoSnapshotObservedError,
@@ -222,9 +222,14 @@ def test_captcha_solver_not_available_error():
     with pytest.raises(CaptchaSolverNotAvailableError):
         _ = NotteSession(solve_captchas=True, browser_type="chrome")
 
-    CaptchaHandler.is_available = True
-    _ = NotteSession(solve_captchas=True, browser_type="chrome")
-    CaptchaHandler.is_available = False
+    async def solver(*_args) -> bool:
+        return True
+
+    set_captcha_solver(solver)
+    try:
+        _ = NotteSession(solve_captchas=True, browser_type="chrome")
+    finally:
+        set_captcha_solver(None)
 
 
 # ============================================

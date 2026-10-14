@@ -74,7 +74,7 @@ async def generate_playwright_selector(node: DomNode, selectors: NodeSelectors) 
 
 
 @profiler.profiled(operation_name="NodeResolutionPipe.forward", service_name="execution")
-async def resolve_action(
+async def resolve(
     action: BaseAction,
     snapshot: BrowserSnapshot | None,
     verbose: bool = False,
@@ -95,7 +95,7 @@ async def resolve_action(
     node = snapshot.dom_node.interaction_nodes_by_id.get(action.id)
     if node is None:
         raise InvalidActionError(action_id=action.id, reason=f"action '{action.id}' not found in page context.")
-    action.selector = await NodeResolutionPipe.resolve_selectors(node, verbose)
+    action.selector = await resolve_selectors(node, verbose)
     action.text_label = node.inner_text()
     return action
 
@@ -115,10 +115,3 @@ async def resolve_selectors(node: DomNode, verbose: bool = False) -> NodeSelecto
             # copy: the snapshot's selectors stay as observed
             selectors = selectors.model_copy(update={"playwright_selector": playwright_selector})
     return selectors
-
-
-class NodeResolutionPipe:
-    """Legacy mutable hook; algorithms live in the functions above."""
-
-    resolve_selectors = staticmethod(resolve_selectors)  # pyright: ignore[reportUnannotatedClassAttribute]
-    forward = staticmethod(resolve_action)  # pyright: ignore[reportUnannotatedClassAttribute]

@@ -168,13 +168,6 @@ async def test_injected_extractor_error_return_records_one_event(monkeypatch: py
     factory.assert_not_called()
 
 
-def test_legacy_markdown_exports_are_the_same_objects() -> None:
-    from notte_browser.scraping.markdown import VisibleMarkdownConverter, page_markdown
-
-    assert VisibleMarkdownConverter is notte_browser.scrape.VisibleMarkdownConverter
-    assert page_markdown is notte_browser.scrape.page_markdown
-
-
 class PageTitle(BaseModel):
     title: str
 

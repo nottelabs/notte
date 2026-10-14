@@ -12,7 +12,7 @@ import pytest_asyncio
 from notte_browser.dom import parsing
 from notte_browser.dom.parsing import FRAME_EVALUATION_ATTEMPTS
 from notte_browser.playwright_async_api import ElementHandle, Error, Frame
-from notte_browser.resolution import NodeResolutionPipe, SelectorGenerator, set_selector_generator
+from notte_browser.resolution import SelectorGenerator, resolve, set_selector_generator
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction
 from notte_core.browser.dom_tree import DomNode, NodeSelectors
@@ -263,7 +263,7 @@ async def test_selector_generator_is_used_to_resolve_nodes(
     submit = _node(session, "Submit form")
     assert submit.computed_attributes.handle is not None
 
-    action = await NodeResolutionPipe.forward(ClickAction(id=submit.id), session.snapshot)
+    action = await resolve(ClickAction(id=submit.id), session.snapshot)
     assert isinstance(action, ClickAction) and action.selector is not None
     cross_css = _selectors(_iframe_element(session, "cross")).css_selector
     # the generated selector is prefixed with the parent iframes
@@ -289,7 +289,7 @@ async def test_page_rooted_generated_selectors_are_kept(
 
     selector_generator(generator)
     _ = await session.aobserve()
-    action = await NodeResolutionPipe.forward(ClickAction(id=_node(session, "Submit form").id), session.snapshot)
+    action = await resolve(ClickAction(id=_node(session, "Submit form").id), session.snapshot)
     assert isinstance(action, ClickAction) and action.selector is not None
     assert action.selector.playwright_selector == "iframe#cross >> internal:control=enter-frame >> #go"
 
@@ -313,7 +313,7 @@ async def test_selector_generator_falls_back_to_css_and_xpath(
     _ = await session.aobserve()
     submit = _node(session, "Submit form")
 
-    action = await NodeResolutionPipe.forward(ClickAction(id=submit.id), session.snapshot)
+    action = await resolve(ClickAction(id=submit.id), session.snapshot)
     assert isinstance(action, ClickAction) and action.selector is not None
     assert action.selector.playwright_selector is None
     assert action.selector == _selectors(submit)
@@ -340,7 +340,7 @@ async def test_canonical_shadow_node_resolves_and_executes(session: NotteSession
     assert node.text == "Accessible name"
     assert session.snapshot.dom_node.find(node.id) is node
     assert _selectors(node).in_shadow_root
-    resolved = await NodeResolutionPipe.forward(ClickAction(id=node.id), session.snapshot)
+    resolved = await resolve(ClickAction(id=node.id), session.snapshot)
     assert resolved.text_label == "Visible label"
     _ = await session.aexecute(resolved, raise_on_failure=True)
     assert await session.window.page.locator("#host").get_attribute("data-clicked") == "yes"

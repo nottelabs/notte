@@ -3,12 +3,14 @@
 from dataclasses import replace
 from unittest.mock import AsyncMock, MagicMock
 
+import notte_browser.captcha as captcha_module
+import notte_browser.resolution as resolution_module
 import notte_core.common.logging as logging
 import pytest
-from notte_browser.captcha import CaptchaHandler
+from notte_browser.captcha import captcha_solver_available, set_captcha_solver, solve_captcha
 from notte_browser.errors import CaptchaSolverNotAvailableError
 from notte_browser.playwright_async_api import Locator, Page
-from notte_browser.resolution import NodeResolutionPipe
+from notte_browser.resolution import set_selector_generator
 from notte_browser.session import NotteSession
 from notte_browser.window import BrowserWindow, BrowserWindowOptions, ScreenshotMask
 from notte_core.actions import CaptchaSolveAction, ClickAction
@@ -73,7 +75,9 @@ async def test_borrowed_window_callbacks_page_assignment_and_custom_mask() -> No
 
 
 @pytest.mark.asyncio
-async def test_hooks_replaced_after_session_construction_are_used(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_hooks_registered_after_session_construction_are_used(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(captcha_module, "_solver", None)
+    monkeypatch.setattr(resolution_module, "_selector_generator", None)
     page = _page()
     window = BrowserWindow(page=page, options=BrowserWindowOptions.from_request(LocalSessionStartRequest()))
     session = NotteSession(window=window)
@@ -87,8 +91,13 @@ async def test_hooks_replaced_after_session_construction_are_used(monkeypatch: p
         in_shadow_root=False,
         iframe_parent_css_selectors=[],
     )
-    resolver = AsyncMock(return_value=selectors)
-    monkeypatch.setattr(NodeResolutionPipe, "resolve_selectors", resolver)
+    handle = MagicMock()
+    snapshot.dom_node = replace(
+        snapshot.dom_node,
+        computed_attributes=replace(snapshot.dom_node.computed_attributes, handle=handle, selectors=selectors),
+    )
+    resolver = AsyncMock(return_value="#backend")
+    set_selector_generator(resolver)
     locator = MagicMock(spec=Locator)
     page.locator.return_value = locator
     locator.count = AsyncMock(return_value=1)
@@ -99,16 +108,25 @@ async def test_hooks_replaced_after_session_construction_are_used(monkeypatch: p
     assert resolver.await_count == 2
     locator.click.assert_awaited_once()
 
-    monkeypatch.setattr(CaptchaHandler, "is_available", False)
+    assert not captcha_solver_available()
     with pytest.raises(CaptchaSolverNotAvailableError):
         NotteSession(window=window, solve_captchas=True)
     handler = AsyncMock(return_value=True)
-    monkeypatch.setattr(CaptchaHandler, "is_available", True)
-    monkeypatch.setattr(CaptchaHandler, "handle_captchas", handler)
+    set_captcha_solver(handler)
+    assert captcha_solver_available()
     assert NotteSession(window=window, solve_captchas=True).window is window
     action = CaptchaSolveAction()
     assert (await session.aexecute(action, raise_on_failure=True)).success
     handler.assert_awaited_once_with(window, action)
+    replacement = AsyncMock(return_value=True)
+    set_captcha_solver(replacement)
+    assert (await session.aexecute(action, raise_on_failure=True)).success
+    replacement.assert_awaited_once_with(window, action)
+    set_captcha_solver(None)
+    assert not captcha_solver_available()
+    with pytest.raises(CaptchaSolverNotAvailableError):
+        await solve_captcha(window, action)
+    set_selector_generator(None)
 
 
 def test_imported_logger_uses_replaced_provider_and_structured_factory(monkeypatch: pytest.MonkeyPatch) -> None:

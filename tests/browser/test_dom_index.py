@@ -4,7 +4,7 @@ from dataclasses import replace
 
 import pytest
 from notte_browser.action_space import build_action_space
-from notte_browser.resolution import NodeResolutionPipe
+from notte_browser.resolution import resolve
 from notte_core.actions import ClickAction
 from notte_core.browser.dom_tree import ComputedDomAttributes, DomNode
 from notte_core.browser.node_type import NodeRole, NodeType
@@ -86,11 +86,11 @@ async def test_observe_and_execute_share_one_tree_walk(monkeypatch: pytest.Monke
     assert len(obs.screenshot.bboxes) == 3  # Includes the action outside the dialog.
     assert len(snapshot.interaction_nodes()) == 3
     # A fresh ID-only action uses the index; its label is descendant text, not the title attribute.
-    action = await NodeResolutionPipe.forward(ClickAction(id="B1"), snapshot)
+    action = await resolve(ClickAction(id="B1"), snapshot)
     assert action.text_label == "Outside"
     assert action.selectors is root.children[0].computed_attributes.selectors
     with pytest.raises(InvalidActionError):
-        _ = await NodeResolutionPipe.forward(ClickAction(id="missing"), snapshot)
+        _ = await resolve(ClickAction(id="missing"), snapshot)
     assert visits == [id(node) for node in root.flatten()]
 
 

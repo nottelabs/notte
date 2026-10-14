@@ -1,6 +1,6 @@
 import pytest
 from loguru import logger
-from notte_browser.resolution import NodeResolutionPipe
+from notte_browser.resolution import resolve
 from notte_browser.session import NotteSession
 from notte_core.actions import GotoAction
 from notte_core.browser.dom_tree import DomNode
@@ -55,7 +55,7 @@ async def test_action_node_resolution_pipe(url: str) -> None:
                 action = ExecutionRequest.get_action(dict(type=type, id=node.id, value=param))
                 assert action is not None
                 assert len(action.id) > 0, "Action id is required"
-                action = await NodeResolutionPipe.forward(action, page.snapshot)
+                action = await resolve(action, page.snapshot)
             except Exception as e:
                 errors.append(f"Error for node {node.id}: {e}")
 
