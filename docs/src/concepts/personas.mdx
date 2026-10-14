@@ -3,6 +3,8 @@ title: 'Persona Identities'
 description: 'Self-service identities for web automation (account creation, 2FA,etc.)'
 ---
 import PersonaPython from '/snippets/personas/index.mdx';
+import AgentMailPersona from '/snippets/personas/agentmail_inbox.mdx';
+import AgentMailCurl from '/snippets/personas/agentmail_curl.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -62,6 +64,32 @@ The following snippet shows how to create and manage personas using the Notte Py
 > ⚠️ You need to have an active Notte account to create personas. Each persona incurs additional charges for the email and phone services.
 
 <PersonaPython />
+
+### Choosing an email provider
+
+Each persona gets an inbox from an email provider, chosen with `email_provider` when you create it:
+
+| `email_provider` | Inbox |
+|------------------|-------|
+| `notte` (default) | Notte mailbox, the same inbox personas have always had |
+| `agentmail` | An inbox from [AgentMail](https://agentmail.to), an email inbox API for AI agents, on an `@agentmail.to` address |
+
+<AgentMailPersona />
+
+With the REST API, pass `email_provider` to `POST /personas/create`. Persona responses include the `email_provider` field.
+
+<AgentMailCurl />
+
+Only the inbox backend and the email address change. Everything else works the same way with either provider:
+
+- Read emails with `persona.emails()` or `GET /personas/{persona_id}/emails`.
+- Agents that use the persona read verification emails automatically.
+- Vaults, credentials and phone numbers are unaffected.
+- Deleting the persona also deletes its AgentMail inbox.
+
+<Note>
+AgentMail inboxes are receive-only: personas cannot send email. See the [AgentMail integration guide](/integrations/agentmail) for a full sign-up example.
+</Note>
 
 
 ## Use Cases
