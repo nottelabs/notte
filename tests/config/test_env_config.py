@@ -86,3 +86,18 @@ def test_config_file_with_removed_scraping_type_still_loads(tmp_path, monkeypatc
 def test_unknown_keyword_argument_is_still_rejected():
     with pytest.raises(ValidationError):
         _ = NotteConfig.from_toml(max_steps=20)  # pyright: ignore[reportCallIssue]
+
+
+def test_config_file_with_retired_global_fields_warns_and_skips(tmp_path, monkeypatch):
+    config_file = tmp_path / "notte.toml"
+    _ = config_file.write_text('verbose = true\nlevel = "DEBUG"\nmax_error_length = 100\nsolve_captchas = true\n')
+    monkeypatch.setenv("NOTTE_CONFIG_PATH", str(config_file))
+    warnings: list[str] = []
+    monkeypatch.setattr(config_module, "logger", SimpleNamespace(warning=warnings.append))
+
+    local_config = NotteConfig.from_toml()
+
+    assert local_config.verbose is True
+    for field in ("level", "max_error_length", "solve_captchas"):
+        assert not hasattr(local_config, field)
+    assert warnings == [f"Ignoring unknown keys in config file {config_file}: level, max_error_length, solve_captchas"]

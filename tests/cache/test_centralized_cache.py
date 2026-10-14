@@ -13,11 +13,8 @@ import pytest
 from notte_core.common import cache as cache_module
 from notte_core.common.cache import (
     CacheDirectory,
-    check_for_legacy_data,
     ensure_cache_directory,
-    get_cache_info,
     get_cache_root,
-    get_legacy_cache_locations,
 )
 
 
@@ -28,11 +25,9 @@ def reset_cache_root():
     next test on the same xdist worker, so reset the memo around every test."""
     with cache_module._cache_lock:  # pyright: ignore[reportPrivateUsage]
         cache_module._cache_root = None  # pyright: ignore[reportPrivateUsage]
-        cache_module._using_temp_fallback = False  # pyright: ignore[reportPrivateUsage]
     yield
     with cache_module._cache_lock:  # pyright: ignore[reportPrivateUsage]
         cache_module._cache_root = None  # pyright: ignore[reportPrivateUsage]
-        cache_module._using_temp_fallback = False  # pyright: ignore[reportPrivateUsage]
 
 
 class TestCacheRoot:
@@ -162,14 +157,15 @@ class TestEnvironmentVariables:
         """Test XDG_CACHE_HOME override for telemetry."""
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch.dict(os.environ, {"XDG_CACHE_HOME": tmpdir}):
-                # Import telemetry module to trigger directory creation
+                # Import telemetry without creating directories yet
                 # Force reload to pick up new env var
                 from notte_core.common import telemetry
 
                 _ = importlib.reload(telemetry)
 
                 # Check that telemetry uses XDG_CACHE_HOME
-                assert tmpdir in str(telemetry.TELEMETRY_DIR)
+                telemetry_dir, _, _ = telemetry._telemetry_paths()  # pyright: ignore[reportPrivateUsage]
+                assert telemetry_dir == Path(tmpdir) / "notte" / ".cache" / "telemetry"
 
     def test_notte_cache_dir_override(self):
         """Test NOTTE_CACHE_DIR override for file storage."""
@@ -185,39 +181,6 @@ class TestEnvironmentVariables:
                 assert tmpdir == str(files.NOTTE_CACHE_DIR)
 
 
-class TestCacheInfo:
-    """Tests for cache information functions."""
-
-    def test_get_cache_info(self):
-        """Test getting cache information."""
-        info = get_cache_info()
-
-        assert "cache_root" in info
-        assert "using_temp_fallback" in info
-        assert "platform" in info
-        assert isinstance(info["cache_root"], str)
-        assert isinstance(info["using_temp_fallback"], bool)
-        assert isinstance(info["platform"], str)
-
-    def test_get_legacy_cache_locations(self):
-        """Test getting legacy cache locations."""
-        legacy_locations = get_legacy_cache_locations()
-
-        assert "telemetry" in legacy_locations
-        assert "files" in legacy_locations
-        assert isinstance(legacy_locations["telemetry"], Path)
-        assert isinstance(legacy_locations["files"], Path)
-
-    def test_check_for_legacy_data(self):
-        """Test checking for legacy data."""
-        legacy_check = check_for_legacy_data()
-
-        assert "telemetry" in legacy_check
-        assert "files" in legacy_check
-        assert isinstance(legacy_check["telemetry"], bool)
-        assert isinstance(legacy_check["files"], bool)
-
-
 class TestIntegration:
     """Integration tests for the cache system."""
 
@@ -230,7 +193,8 @@ class TestIntegration:
 
         # Check that telemetry files are under cache root or in XDG override
         # The path should contain .notte and .cache somewhere in it
-        telemetry_path = str(telemetry.TELEMETRY_DIR)
+        telemetry_dir, _, _ = telemetry._telemetry_paths()  # pyright: ignore[reportPrivateUsage]
+        telemetry_path = str(telemetry_dir)
         xdg_override = os.getenv("XDG_CACHE_HOME")
 
         assert ".notte" in telemetry_path or (xdg_override is not None and xdg_override in telemetry_path)

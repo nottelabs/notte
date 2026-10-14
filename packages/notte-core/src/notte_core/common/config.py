@@ -68,14 +68,12 @@ class RaiseCondition(StrEnum):
 
 class NotteConfigDict(TypedDict, total=False):
     # [log]
-    level: str
     verbose: bool
     logging_mode: ErrorMode
 
     # [browser]
     headless: bool
     user_agent: str | None
-    solve_captchas: bool
     viewport_width: int | None
     viewport_height: int | None
     cdp_url: str | None
@@ -90,7 +88,6 @@ class NotteConfigDict(TypedDict, total=False):
     evaluate_js_max_result_values: int
 
     # [error]
-    max_error_length: int
     raise_condition: RaiseCondition
 
     # [proxy]
@@ -159,13 +156,11 @@ class NotteConfig(TomlConfig):
         extra: str = "forbid"
 
     # [log]
-    level: str
     verbose: bool
     logging_mode: ErrorMode
 
     # [browser]
     headless: bool
-    solve_captchas: bool
     user_agent: str | None = None
     viewport_width: int | None = None
     viewport_height: int | None = None
@@ -181,7 +176,6 @@ class NotteConfig(TomlConfig):
     evaluate_js_max_result_values: int = Field(default=50_000, gt=0)
 
     # [error]
-    max_error_length: int
     raise_condition: RaiseCondition
 
     # [proxy]

@@ -43,7 +43,8 @@ Customize your session with these options:
 </ParamField>
 
 <ParamField path="solve_captchas" type="boolean" default={true}>
-  Automatically detect and solve captchas (reCAPTCHA, hCaptcha, etc.)
+  Automatically detect and solve captchas (reCAPTCHA, hCaptcha, etc.). Set this option on the session request.
+  The retired global `solve_captchas` TOML key is ignored with a warning.
 </ParamField>
 
 <ParamField path="block_ads" type="boolean" default={true}>

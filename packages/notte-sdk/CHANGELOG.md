@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — core configuration cleanup
+
+Removed the unused core cache diagnostics (`get_cache_info`, `get_legacy_cache_locations`,
+`check_for_legacy_data`), telemetry compatibility attributes (`TELEMETRY_DIR`, `USER_ID_PATH`,
+`VERSION_DOWNLOAD_PATH`), and `BaseTelemetryEvent`. Global config fields `level`,
+`max_error_length`, and `solve_captchas` are removed; old TOML keys still warn and are skipped.
+Session-request `solve_captchas`, cache paths, and PostHog/Scarf delivery are unchanged.
+
 ## Unreleased — v2 public resource names
 
 Generated resource methods follow the Node SDK names (snake_case in Python).

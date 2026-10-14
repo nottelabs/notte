@@ -9,7 +9,6 @@ def test_default_config():
     assert config.verbose is False
     assert config.logging_mode == "agent"
     assert config.raise_condition == "retry"
-    assert config.max_error_length == 500
     assert config.timeout_goto_ms == 10000
     assert config.timeout_default_ms == 8000
     assert config.timeout_action_ms == 15000

@@ -45,19 +45,6 @@ def _telemetry_paths() -> tuple[Path, Path, Path]:
     return telemetry_dir, telemetry_dir / "telemetry_user_id", telemetry_dir / "download_version"
 
 
-def __getattr__(name: str) -> Path:
-    # Lazy module attributes kept for backwards compatibility.
-    match name:
-        case "TELEMETRY_DIR":
-            return _telemetry_paths()[0]
-        case "USER_ID_PATH":
-            return _telemetry_paths()[1]
-        case "VERSION_DOWNLOAD_PATH":
-            return _telemetry_paths()[2]
-        case _:
-            raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-
 POSTHOG_API_KEY: str = "phc_6U4lU1RMI2hyj9DREkuyPFFDg95b0LYkoeaZ0LfaeVb"  # pragma: allowlist secret
 POSTHOG_HOST: str = "https://us.i.posthog.com"
 SCARF_GATEWAY_URL = "https://scarf.notte.cc/events"
@@ -69,17 +56,6 @@ DEBUG_LOGGING = os.environ.get("NOTTE_LOGGING_LEVEL", "info").lower() == "debug"
 POSTHOG_EVENT_SETTINGS = {
     "process_person_profile": True,
 }
-
-
-class BaseTelemetryEvent:
-    """Base class for telemetry events"""
-
-    name: str  # Add type annotation
-    properties: dict[str, Any]  # Add type annotation
-
-    def __init__(self, name: str, properties: dict[str, Any] | None = None):
-        self.name = name
-        self.properties = properties or {}
 
 
 def setup_posthog() -> Any | None:

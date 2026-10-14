@@ -7,7 +7,6 @@ when home directory is not writable.
 
 import getpass
 import os
-import platform
 import tempfile
 import threading
 from enum import Enum
@@ -27,7 +26,6 @@ class CacheDirectory(str, Enum):
 
 # Global cache to avoid repeated filesystem checks
 _cache_root: Path | None = None
-_using_temp_fallback: bool = False
 _cache_lock = threading.Lock()  # Thread-safe access to global state
 
 
@@ -79,7 +77,7 @@ def get_cache_root(force_recheck: bool = False) -> Path:
     Returns:
         Path to the root cache directory
     """
-    global _cache_root, _using_temp_fallback
+    global _cache_root
 
     # Thread-safe access to global cache state
     with _cache_lock:
@@ -92,7 +90,6 @@ def get_cache_root(force_recheck: bool = False) -> Path:
 
         if _is_writable(home_cache):
             _cache_root = home_cache
-            _using_temp_fallback = False
             logger.debug(f"Using cache directory: {_cache_root}")
             return _cache_root
 
@@ -104,7 +101,6 @@ def get_cache_root(force_recheck: bool = False) -> Path:
             # Create with restricted permissions (owner only)
             temp_cache.mkdir(parents=True, exist_ok=True, mode=0o700)
             _cache_root = temp_cache
-            _using_temp_fallback = True
             logger.warning(
                 (
                     f"Home directory not writable, using temp cache: {_cache_root}. "
@@ -117,7 +113,6 @@ def get_cache_root(force_recheck: bool = False) -> Path:
             fallback = Path(tempfile.gettempdir()) / ".notte-cache-fallback"
             fallback.mkdir(parents=True, exist_ok=True, mode=0o700)
             _cache_root = fallback
-            _using_temp_fallback = True
             logger.error(f"Could not create user-isolated cache directory: {e}. Using fallback: {_cache_root}")
             return _cache_root
 
@@ -157,53 +152,3 @@ def ensure_cache_directory(subdir: CacheDirectory | str | None = None) -> Path:
         raise
 
     return cache_path
-
-
-def get_cache_info() -> dict[str, str | bool]:
-    """
-    Get information about the current cache configuration.
-
-    Returns:
-        Dictionary with cache location and status information
-    """
-    root = get_cache_root()
-    return {
-        "cache_root": str(root),
-        "using_temp_fallback": _using_temp_fallback,
-        "platform": platform.system(),
-    }
-
-
-def get_legacy_cache_locations() -> dict[str, Path]:
-    """
-    Get the old cache locations for migration detection.
-
-    Returns:
-        Dictionary mapping cache type to its old location
-    """
-    system = platform.system()
-
-    # Old telemetry locations
-    if system == "Windows":
-        appdata = os.getenv("LOCALAPPDATA") or os.getenv("APPDATA")
-        telemetry_old = Path(appdata) / "notte" if appdata else Path.home() / "AppData" / "Local" / "notte"
-    elif system == "Darwin":
-        telemetry_old = Path.home() / "Library" / "Caches" / "notte"
-    else:
-        telemetry_old = Path.home() / ".cache" / "notte"
-
-    return {
-        "telemetry": telemetry_old,
-        "files": Path.home() / ".notte.cache",
-    }
-
-
-def check_for_legacy_data() -> dict[str, bool]:
-    """
-    Check if legacy cache directories exist.
-
-    Returns:
-        Dictionary mapping cache type to whether old data exists
-    """
-    legacy_locations = get_legacy_cache_locations()
-    return {cache_type: location.exists() for cache_type, location in legacy_locations.items()}

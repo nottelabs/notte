@@ -1,10 +1,8 @@
 # [log]
-level = "INFO"
 verbose = false
 logging_mode = "agent"
 
 # [error]
-max_error_length = 500
 raise_condition = "retry"
 
 # [browser]
@@ -18,7 +16,6 @@ evaluate_js_max_result_bytes = 16777216
 # process memory per value, independent of the formatted size.
 evaluate_js_max_result_values = 50000
 web_security = true
-solve_captchas = false
 # viewport_width = 1920
 # viewport_height = 1080
 # cdp_url = null
