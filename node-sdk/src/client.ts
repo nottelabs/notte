@@ -37,6 +37,7 @@ import {
   type ZodLikeSchema,
 } from '@/scrape';
 import { SDK_VERSION } from '@/version';
+import { isLogLevel, resolveLogLevel, type LogLevel } from '@/logger';
 import { RemoteFileStorage, SessionFiles } from '@/files';
 import type { SearchOptions, SearchResponse, SearchResultsResponse, SearchSourcedAnswerResponse, SearchStructuredResponse } from '@/search';
 import { NotteAnything } from '@/anything';
@@ -79,6 +80,11 @@ export interface NotteClientConfig {
   dbPreview?: string;
   /** Log every request like `NotteClient(verbose=True)` in Python. */
   verbose?: boolean;
+  /**
+   * Minimum level of SDK diagnostic logs, such as Playwright connection events
+   * from `session.page()`. Defaults to `NOTTE_LOG_LEVEL` or `'warn'`.
+   */
+  logLevel?: LogLevel;
 }
 
 export type SessionListOptions = NonNullable<ListSessionsData['query']>;
@@ -91,7 +97,7 @@ export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' |
   wait_for_authentication?: boolean;
 };
 
-type ResolvedConfig = Required<Pick<NotteClientConfig, 'baseUrl' | 'timeoutMs' | 'verbose' | 'captchaTimeoutSeconds'>> &
+type ResolvedConfig = Required<Pick<NotteClientConfig, 'baseUrl' | 'timeoutMs' | 'verbose' | 'captchaTimeoutSeconds' | 'logLevel'>> &
   Pick<NotteClientConfig, 'apiKey' | 'dbPreview'>;
 
 function isRelativeProxyUrl(baseUrl: string): boolean {
@@ -117,6 +123,10 @@ export class NotteClient {
     if (!(timeoutMs >= 0)) {
       throw new InvalidRequestError('timeoutMs must be a non-negative number');
     }
+    if (config.logLevel !== undefined && !isLogLevel(config.logLevel)) {
+      throw new InvalidRequestError("logLevel must be one of 'debug', 'info', 'warn', 'error' or 'silent'");
+    }
+    const logLevel = resolveLogLevel(config.logLevel);
 
     // Only skip the apiKey check for relative proxy paths (e.g. '/api/notte').
     // Any HTTPS URL—including staging—still requires a key.
@@ -136,7 +146,7 @@ export class NotteClient {
       );
     }
 
-    this.config = { baseUrl, apiKey, timeoutMs, captchaTimeoutSeconds, dbPreview, verbose: config.verbose ?? false };
+    this.config = { baseUrl, apiKey, timeoutMs, captchaTimeoutSeconds, dbPreview, verbose: config.verbose ?? false, logLevel };
 
     if (baseUrl !== DEFAULT_NOTTE_API_URL && !isProxyMode) {
       console.warn(`NOTTE_API_URL is set to: ${baseUrl}`);

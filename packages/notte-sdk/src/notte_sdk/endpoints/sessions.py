@@ -2,6 +2,7 @@ import asyncio
 import os
 import random
 import time
+import weakref
 from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from pathlib import Path
@@ -116,6 +117,45 @@ def _observe_server_owned_dialog(_dialog: Any) -> None:
 def _install_server_owned_dialog_policy(browser: Any) -> None:
     for context in browser.contexts:
         context.on("dialog", _observe_server_owned_dialog)
+
+
+def _redact_playwright_url(url: str) -> str:
+    """Keep only a network origin or a safe browser page name in lifecycle logs."""
+    try:
+        parts = urlsplit(url)
+    except ValueError:
+        return "<unparseable>"
+    scheme = parts.scheme.lower()
+    if scheme == "about":
+        page_name = parts.path.lower()
+        return f"about:{page_name}" if page_name in ("blank", "srcdoc") else "about:"
+    if scheme == "file":
+        return "file:"
+    if scheme not in ("http", "https", "ws", "wss"):
+        return f"{scheme}:" if scheme else "<redacted>"
+    host = parts.hostname or ""
+    if not host:
+        return "<unparseable>"
+    if ":" in host:
+        host = f"[{host}]"
+    try:
+        port = parts.port
+    except ValueError:
+        return "<unparseable>"
+    if port is not None:
+        host = f"{host}:{port}"
+    return f"{scheme}://{host}"
+
+
+def _playwright_object_id(value: Any) -> str:
+    """Return a useful, best-effort identity for a Playwright object."""
+    try:
+        guid = getattr(getattr(value, "_impl_obj", None), "_guid", None)
+        if guid is not None:
+            return str(guid)
+    except Exception:
+        pass
+    return hex(id(value))
 
 
 try:
@@ -731,6 +771,193 @@ class RemoteSession(SyncResource):
         self._async_playwright_context: "PlaywrightAsync | None" = None
         self._async_playwright_browser: "BrowserAsync | None" = None
         self._async_playwright_page: "PageAsync | None" = None
+        self._playwright_connection_generation: int = 0
+        # Weak sets: a closed page's id() can be reused by a later tab.
+        self._playwright_observed_pages: weakref.WeakSet[Any] = weakref.WeakSet()
+        self._playwright_observed_contexts: weakref.WeakSet[Any] = weakref.WeakSet()
+        self._playwright_cleanup_in_progress: bool = False
+
+    def _playwright_session_id(self) -> str:
+        try:
+            return self.session_id
+        except Exception:
+            return "unknown"
+
+    @staticmethod
+    def _playwright_page_state(page: Any) -> dict[str, Any]:
+        state: dict[str, Any] = {"page_id": _playwright_object_id(page)}
+        try:
+            state["url"] = _redact_playwright_url(page.url)
+        except Exception as exc:
+            state["url_error"] = f"{type(exc).__name__}: {exc}"
+        try:
+            state["is_closed"] = page.is_closed()
+        except Exception as exc:
+            state["is_closed_error"] = f"{type(exc).__name__}: {exc}"
+        return state
+
+    def _playwright_state(self, browser: Any, cached_page: Any | None) -> dict[str, Any]:
+        state: dict[str, Any] = {
+            "connection_generation": self._playwright_connection_generation,
+            "cleanup_in_progress": self._playwright_cleanup_in_progress,
+            "cached_page_id": _playwright_object_id(cached_page) if cached_page is not None else None,
+        }
+        try:
+            state["browser_connected"] = browser.is_connected()
+        except Exception as exc:
+            state["browser_connected_error"] = f"{type(exc).__name__}: {exc}"
+
+        contexts: list[dict[str, Any]] = []
+        try:
+            for context in browser.contexts:
+                context_state: dict[str, Any] = {"context_id": _playwright_object_id(context)}
+                try:
+                    pages = list(context.pages)
+                    context_state["pages"] = [self._playwright_page_state(page) for page in pages]
+                    context_state["contains_cached_page"] = cached_page in pages if cached_page is not None else False
+                except Exception as exc:
+                    context_state["pages_error"] = f"{type(exc).__name__}: {exc}"
+                contexts.append(context_state)
+        except Exception as exc:
+            state["contexts_error"] = f"{type(exc).__name__}: {exc}"
+        state["contexts"] = contexts
+        return state
+
+    def _log_playwright_event(
+        self,
+        event: str,
+        *,
+        browser: Any,
+        cached_page: Any | None,
+        observed_page: Any | None = None,
+        observed_context: Any | None = None,
+        level: Literal["debug", "info", "warning"] = "warning",
+    ) -> None:
+        if level == "warning" and self._playwright_cleanup_in_progress:
+            # Closes and disconnects caused by the SDK's own cleanup are expected, not failures.
+            level = "debug"
+        details = self._playwright_state(browser, cached_page)
+        if observed_page is not None:
+            details["observed_page"] = self._playwright_page_state(observed_page)
+        if observed_context is not None:
+            details["observed_context_id"] = _playwright_object_id(observed_context)
+        bound_logger = logger.bind(
+            event=event,
+            session_id=self._playwright_session_id(),
+            **details,
+        )
+        getattr(bound_logger, level)(
+            f"[Session Playwright] {event}: session={self._playwright_session_id()} state={details}"
+        )
+
+    def _log_playwright_stop_requested(self) -> None:
+        """Snapshot Playwright state before the SDK starts its own cleanup."""
+        browser = self._playwright_browser or self._async_playwright_browser
+        cached_page = self._playwright_page or self._async_playwright_page
+        if browser is not None:
+            self._log_playwright_event(
+                "sdk_playwright_session_stop_requested",
+                browser=browser,
+                cached_page=cached_page,
+                level="info",
+            )
+        self._playwright_cleanup_in_progress = True
+
+    def _log_unhealthy_cached_playwright_page(self, browser: Any, page: Any) -> None:
+        try:
+            unhealthy = (
+                not browser.is_connected()
+                or page.is_closed()
+                or not any(page in context.pages for context in browser.contexts)
+            )
+        except Exception:
+            unhealthy = True
+        if unhealthy:
+            self._log_playwright_event(
+                "sdk_playwright_cached_page_unhealthy",
+                browser=browser,
+                cached_page=page,
+            )
+
+    def _observe_playwright_page(self, browser: Any, page: Any, *, is_async: bool) -> None:
+        if page in self._playwright_observed_pages:
+            return
+        self._playwright_observed_pages.add(page)
+
+        def on_close(*_args: Any) -> None:
+            cached_page = self._async_playwright_page if is_async else self._playwright_page
+            self._log_playwright_event(
+                "sdk_playwright_page_closed",
+                browser=browser,
+                cached_page=cached_page,
+                observed_page=page,
+                level="warning" if page is cached_page else "info",
+            )
+
+        def on_crash(*_args: Any) -> None:
+            cached_page = self._async_playwright_page if is_async else self._playwright_page
+            self._log_playwright_event(
+                "sdk_playwright_page_crashed",
+                browser=browser,
+                cached_page=cached_page,
+                observed_page=page,
+            )
+
+        page.on("close", on_close)
+        page.on("crash", on_crash)
+
+    def _observe_playwright_browser(self, browser: Any, *, is_async: bool) -> None:
+        cached_page = self._async_playwright_page if is_async else self._playwright_page
+
+        def on_disconnected(*_args: Any) -> None:
+            current_page = self._async_playwright_page if is_async else self._playwright_page
+            self._log_playwright_event(
+                "sdk_playwright_browser_disconnected",
+                browser=browser,
+                cached_page=current_page,
+            )
+
+        browser.on("disconnected", on_disconnected)
+        for context in browser.contexts:
+            if context not in self._playwright_observed_contexts:
+                self._playwright_observed_contexts.add(context)
+
+                def on_page(page: Any, *, _browser: Any = browser, _is_async: bool = is_async) -> None:
+                    self._observe_playwright_page(_browser, page, is_async=_is_async)
+                    current_page = self._async_playwright_page if _is_async else self._playwright_page
+                    self._log_playwright_event(
+                        "sdk_playwright_page_created",
+                        browser=_browser,
+                        cached_page=current_page,
+                        observed_page=page,
+                        level="info",
+                    )
+
+                def on_context_close(
+                    *_args: Any,
+                    _browser: Any = browser,
+                    _context: Any = context,
+                    _is_async: bool = is_async,
+                ) -> None:
+                    current_page = self._async_playwright_page if _is_async else self._playwright_page
+                    self._log_playwright_event(
+                        "sdk_playwright_context_closed",
+                        browser=_browser,
+                        cached_page=current_page,
+                        observed_context=_context,
+                    )
+
+                context.on("page", on_page)
+                context.on("close", on_context_close)
+            for page in context.pages:
+                self._observe_playwright_page(browser, page, is_async=is_async)
+
+        self._log_playwright_event(
+            "sdk_playwright_connected",
+            browser=browser,
+            cached_page=cached_page,
+            level="info",
+        )
 
     @override
     def __exit__(  # pyright: ignore [reportMissingSuperCall]
@@ -740,6 +967,7 @@ class RemoteSession(SyncResource):
             logger.warning(f"Session exiting because of exception: {exc_val}")
 
         # Clean up sync playwright resources
+        self._log_playwright_stop_requested()
         if self._playwright_browser is not None:
             self._playwright_browser.close()
             self._playwright_browser = None
@@ -791,6 +1019,7 @@ class RemoteSession(SyncResource):
             logger.warning(f"Session exiting because of exception: {exc_val}")
 
         # Clean up async playwright resources
+        self._log_playwright_stop_requested()
         if self._async_playwright_browser is not None:
             await self._async_playwright_browser.close()
             self._async_playwright_browser = None
@@ -995,6 +1224,8 @@ class RemoteSession(SyncResource):
             ValueError: If the session hasn't been started (no session_id available).
             RuntimeError: If the session fails to close properly.
         """
+        cleanup_was_in_progress = self._playwright_cleanup_in_progress
+        self._log_playwright_stop_requested()
         if self._cookie_file is not None:
             try:
                 cookies = self.get_cookies()
@@ -1007,6 +1238,8 @@ class RemoteSession(SyncResource):
             if "already stopped" in str(e).lower() or "already closed" in str(e).lower():
                 logger.warning(f"Session {self.session_id} was already stopped")
             else:
+                # The session may still be alive: keep reporting its failures as warnings.
+                self._playwright_cleanup_in_progress = cleanup_was_in_progress
                 raise
 
     @property
@@ -1330,6 +1563,8 @@ class RemoteSession(SyncResource):
 
         # Return cached page if already connected
         if self._playwright_page is not None:
+            if self._playwright_browser is not None:
+                self._log_unhealthy_cached_playwright_page(self._playwright_browser, self._playwright_page)
             return self._playwright_page
 
         if self._async_playwright_page is not None:
@@ -1350,9 +1585,11 @@ class RemoteSession(SyncResource):
                     cdp_url, headers=self._cdp_headers(cdp_url)
                 )
                 _install_server_owned_dialog_policy(self._playwright_browser)
+                self._playwright_connection_generation += 1
 
             # Get the first page from the first context
             self._playwright_page = self._playwright_browser.contexts[0].pages[0]
+            self._observe_playwright_browser(self._playwright_browser, is_async=False)
             return self._playwright_page
         except Exception as e:
             raise RuntimeError("Failed to access the playwright page from CDP") from e
@@ -1389,6 +1626,8 @@ class RemoteSession(SyncResource):
 
         # Return cached page if already connected
         if self._async_playwright_page is not None:
+            if self._async_playwright_browser is not None:
+                self._log_unhealthy_cached_playwright_page(self._async_playwright_browser, self._async_playwright_page)
             return self._async_playwright_page
 
         if self._playwright_browser is not None:
@@ -1408,9 +1647,11 @@ class RemoteSession(SyncResource):
                     cdp_url, headers=self._cdp_headers(cdp_url)
                 )
                 _install_server_owned_dialog_policy(self._async_playwright_browser)
+                self._playwright_connection_generation += 1
 
             # Get the first page from the first context
             self._async_playwright_page = self._async_playwright_browser.contexts[0].pages[0]
+            self._observe_playwright_browser(self._async_playwright_browser, is_async=True)
             return self._async_playwright_page
         except Exception as e:
             raise RuntimeError("Failed to access the async playwright page from CDP") from e

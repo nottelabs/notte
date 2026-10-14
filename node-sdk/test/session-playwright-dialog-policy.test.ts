@@ -17,9 +17,9 @@ vi.mock('playwright-core', () => ({
 }));
 
 function browserWithPage() {
-  const page = { goto: vi.fn() };
+  const page = { goto: vi.fn(), on: vi.fn(), url: () => 'about:blank', isClosed: () => false };
   const context = { on: vi.fn(), pages: () => [page] };
-  const browser = { contexts: () => [context], close: vi.fn(async () => {}) };
+  const browser = { contexts: () => [context], close: vi.fn(async () => {}), on: vi.fn(), isConnected: () => true };
   return { browser, context, page };
 }
 
@@ -42,8 +42,8 @@ describe('session.page()', () => {
     expect(chromium.connectOverCDP).toHaveBeenCalledWith('ws://notte.example/cdp', {
       headers: { 'x-notte-request-origin': REQUEST_ORIGIN, 'x-notte-sdk-version': SDK_VERSION },
     });
-    expect(context.on).toHaveBeenCalledTimes(1);
     expect(context.on).toHaveBeenCalledWith('dialog', observeServerOwnedDialog);
+    expect(context.on.mock.calls.filter(([event]) => event === 'dialog')).toHaveLength(1);
     expect(observeServerOwnedDialog({} as never)).toBeUndefined();
   });
 
@@ -95,7 +95,7 @@ describe('session.page()', () => {
   });
 
   it('fails when the browser has no page', async () => {
-    const browser = { contexts: () => [], close: vi.fn() };
+    const browser = { contexts: () => [], close: vi.fn(), on: vi.fn(), isConnected: () => true };
     vi.mocked(chromium.connectOverCDP).mockResolvedValue(browser as never);
     const session = new Session(mockNotteClient());
     await session.start();

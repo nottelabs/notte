@@ -10,6 +10,8 @@ export { client } from '@/lib/client/client.gen';
 // Export main SDK classes
 export { NotteClient, DEFAULT_NOTTE_API_URL, DEFAULT_REQUEST_TIMEOUT_MS, TIMEOUT_HEADER } from '@/client';
 export { Session } from '@/session';
+export { LOG_LEVEL_ENV } from '@/logger';
+export type { LogLevel } from '@/logger';
 export type { ResourceRequestOptions } from '@/resources.gen';
 export { Agent } from '@/agent';
 export { NotteVault } from '@/vaults';

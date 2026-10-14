@@ -72,6 +72,7 @@ describe('NotteClient transport', () => {
     });
 
     it('resolves defaults into getConfig()', () => {
+      vi.stubEnv('NOTTE_LOG_LEVEL', '');
       const client = new NotteClient({ apiKey: API_KEY, baseUrl: DEFAULT_NOTTE_API_URL });
       expect(client.getConfig()).toEqual({
         apiKey: API_KEY,
@@ -80,7 +81,24 @@ describe('NotteClient transport', () => {
         captchaTimeoutSeconds: 180,
         dbPreview: undefined,
         verbose: false,
+        logLevel: 'warn',
       });
+      vi.unstubAllEnvs();
+    });
+
+    it('reads logLevel from the option, then NOTTE_LOG_LEVEL', () => {
+      vi.stubEnv('NOTTE_LOG_LEVEL', 'WARNING');
+      expect(new NotteClient({ apiKey: API_KEY }).getConfig().logLevel).toBe('warn');
+      vi.stubEnv('NOTTE_LOG_LEVEL', 'debug');
+      expect(new NotteClient({ apiKey: API_KEY }).getConfig().logLevel).toBe('debug');
+      expect(new NotteClient({ apiKey: API_KEY, logLevel: 'silent' }).getConfig().logLevel).toBe('silent');
+      vi.stubEnv('NOTTE_LOG_LEVEL', 'loud');
+      expect(new NotteClient({ apiKey: API_KEY }).getConfig().logLevel).toBe('warn');
+      vi.unstubAllEnvs();
+    });
+
+    it('rejects an unknown logLevel', () => {
+      expect(() => new NotteClient({ apiKey: API_KEY, logLevel: 'verbose' as never })).toThrow(InvalidRequestError);
     });
   });
 
