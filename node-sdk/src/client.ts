@@ -51,6 +51,7 @@ import {
   normalizeErrorBody,
 } from '@/errors';
 import { createUpgradeErrorMessage, startVersionCheck, upgradeSuggestion } from '@/version-check';
+import { createRetryingFetch, DEFAULT_MAX_RETRIES } from '@/retry';
 
 export const DEFAULT_NOTTE_API_URL = 'https://api.notte.cc';
 export const DEFAULT_REQUEST_TIMEOUT_MS = 60_000;
@@ -62,6 +63,11 @@ export const REQUEST_ORIGIN = 'sdk-node';
  * The header is stripped before the request leaves the process.
  */
 export const TIMEOUT_HEADER = 'x-notte-timeout-ms';
+/**
+ * Per-call header read by the request interceptor to override `maxRetries`
+ * for one request. Stripped before the request leaves the process.
+ */
+export const MAX_RETRIES_HEADER = 'x-notte-max-retries';
 const DB_PREVIEW_ENV = 'NOTTE_DB_PREVIEW_BRANCH';
 const DB_PREVIEW_HEADER = 'x-db-preview';
 const EXECUTION_ERROR_CLASS = 'NotteApiExecutionError';
@@ -79,6 +85,15 @@ export interface NotteClientConfig {
   dbPreview?: string;
   /** Log every request like `NotteClient(verbose=True)` in Python. */
   verbose?: boolean;
+  /**
+   * Retries for transient failures (502, 503, 504, 529, and connection
+   * errors), with exponential backoff and full jitter. `Retry-After` is
+   * honored. POST and PATCH requests are only retried when the API cannot
+   * have processed them (503, 529, connection refused), so they are never
+   * applied twice. All attempts share the request timeout. Defaults to 3;
+   * `0` disables retries.
+   */
+  maxRetries?: number;
 }
 
 export type SessionListOptions = NonNullable<ListSessionsData['query']>;
@@ -91,7 +106,7 @@ export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' |
   wait_for_authentication?: boolean;
 };
 
-type ResolvedConfig = Required<Pick<NotteClientConfig, 'baseUrl' | 'timeoutMs' | 'verbose' | 'captchaTimeoutSeconds'>> &
+type ResolvedConfig = Required<Pick<NotteClientConfig, 'baseUrl' | 'timeoutMs' | 'verbose' | 'captchaTimeoutSeconds' | 'maxRetries'>> &
   Pick<NotteClientConfig, 'apiKey' | 'dbPreview'>;
 
 function isRelativeProxyUrl(baseUrl: string): boolean {
@@ -117,6 +132,10 @@ export class NotteClient {
     if (!(timeoutMs >= 0)) {
       throw new InvalidRequestError('timeoutMs must be a non-negative number');
     }
+    const maxRetries = config.maxRetries ?? DEFAULT_MAX_RETRIES;
+    if (!Number.isInteger(maxRetries) || maxRetries < 0) {
+      throw new InvalidRequestError('maxRetries must be a non-negative integer');
+    }
 
     // Only skip the apiKey check for relative proxy paths (e.g. '/api/notte').
     // Any HTTPS URL—including staging—still requires a key.
@@ -136,7 +155,9 @@ export class NotteClient {
       );
     }
 
-    this.config = { baseUrl, apiKey, timeoutMs, captchaTimeoutSeconds, dbPreview, verbose: config.verbose ?? false };
+    this.config = {
+      baseUrl, apiKey, timeoutMs, captchaTimeoutSeconds, dbPreview, maxRetries, verbose: config.verbose ?? false,
+    };
 
     if (baseUrl !== DEFAULT_NOTTE_API_URL && !isProxyMode) {
       console.warn(`NOTTE_API_URL is set to: ${baseUrl}`);
@@ -151,6 +172,10 @@ export class NotteClient {
       baseUrl: this.config.baseUrl,
       redirect: 'manual',
       throwOnError: true,
+      fetch: createRetryingFetch({
+        maxRetries: signal => (signal ? retryOverrides.get(signal) : undefined) ?? this.config.maxRetries,
+        deadline: signal => (signal ? deadlines.get(signal) : undefined),
+      }),
     });
 
     this.client.interceptors.request.use((request: Request) => {
@@ -162,16 +187,24 @@ export class NotteClient {
 
       const override = headers.get(TIMEOUT_HEADER);
       headers.delete(TIMEOUT_HEADER);
+      const retriesOverride = headers.get(MAX_RETRIES_HEADER);
+      headers.delete(MAX_RETRIES_HEADER);
+      const track = (sent: Request): Request => {
+        if (retriesOverride !== null) retryOverrides.set(sent.signal, Number(retriesOverride));
+        return sent;
+      };
       const timeoutMs = override !== null ? Number(override) : this.config.timeoutMs;
 
       if (this.config.verbose) {
         console.info(`Making \`${request.method}\` request to \`${request.url}\``);
       }
       if (!(timeoutMs > 0)) {
-        return new Request(request, { headers });
+        return track(new Request(request, { headers }));
       }
       const deadline = withTimeout(request.signal, timeoutMs);
       const timed = new Request(request, { headers, signal: deadline.signal });
+      deadlines.set(timed.signal, deadline.expiresAt);
+      track(timed);
       // Released by the response/error interceptors below so a completed
       // request does not keep its timer alive until the deadline.
       pendingDeadlines.set(timed, deadline.release);
@@ -579,6 +612,10 @@ function timeoutReason(timeoutMs: number): DOMException {
 }
 
 const pendingDeadlines = new WeakMap<Request, () => void>();
+/** When each request signal's SDK deadline expires, so retries never outlive it. */
+const deadlines = new WeakMap<AbortSignal, number>();
+/** Per-request `maxRetries` overrides set through `MAX_RETRIES_HEADER`. */
+const retryOverrides = new WeakMap<AbortSignal, number>();
 
 function releaseDeadline(request: Request | undefined): void {
   if (!request) return;
@@ -593,6 +630,8 @@ interface Deadline {
   signal: AbortSignal;
   /** Clear the timer and detach from the caller's signal. Idempotent. */
   release: () => void;
+  /** When the deadline fires, in ms since the epoch. */
+  expiresAt: number;
 }
 
 /**
@@ -603,6 +642,7 @@ interface Deadline {
 function withTimeout(signal: AbortSignal | null | undefined, timeoutMs: number): Deadline {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(timeoutReason(timeoutMs)), timeoutMs);
+  const expiresAt = Date.now() + timeoutMs;
   timer.unref?.();
   let detach: () => void = () => undefined;
   let composite: AbortSignal;
@@ -632,5 +672,5 @@ function withTimeout(signal: AbortSignal | null | undefined, timeoutMs: number):
     detach();
   };
   composite.addEventListener('abort', release, { once: true });
-  return { signal: composite, release };
+  return { signal: composite, release, expiresAt };
 }

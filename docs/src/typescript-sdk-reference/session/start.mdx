@@ -11,9 +11,11 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 Start the session: creates a new session on the server.
 
-Retries up to `SESSION_START_TRIES` times on 5xx errors, waiting
-`CLUSTER_OVERLOAD_RETRY_DELAY_MS` on HTTP 529 (cluster overload). 4xx
-errors are never retried.
+503, 529, and refused connections follow the client's retry policy
+(`NotteClientConfig.maxRetries`, honoring `Retry-After`). Other 5xx
+errors are retried up to `SESSION_START_TRIES` times. With client
+retries disabled, 529 waits `CLUSTER_OVERLOAD_RETRY_DELAY_MS` instead.
+4xx errors are never retried.
 
 Managed-auth sessions wait for readiness by default. Pass
 `{ wait_for_authentication: false }` for an explicit nonblocking start,

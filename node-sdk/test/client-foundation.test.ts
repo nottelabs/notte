@@ -76,6 +76,7 @@ describe('NotteClient transport', () => {
       expect(client.getConfig()).toEqual({
         apiKey: API_KEY,
         baseUrl: DEFAULT_NOTTE_API_URL,
+        maxRetries: 3,
         timeoutMs: 60_000,
         captchaTimeoutSeconds: 180,
         dbPreview: undefined,

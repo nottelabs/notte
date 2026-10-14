@@ -23,6 +23,15 @@ export interface NotteClientConfig {
   dbPreview?: string;
   /** Log every request like `NotteClient(verbose=True)` in Python. */
   verbose?: boolean;
+  /**
+   * Retries for transient failures (502, 503, 504, 529, and connection
+   * errors), with exponential backoff and full jitter. `Retry-After` is
+   * honored. POST and PATCH requests are only retried when the API cannot
+   * have processed them (503, 529, connection refused), so they are never
+   * applied twice. All attempts share the request timeout. Defaults to 3;
+   * `0` disables retries.
+   */
+  maxRetries?: number;
 }
 ```
 
@@ -50,4 +59,13 @@ Database preview branch. Defaults to `NOTTE_DB_PREVIEW_BRANCH`. Internal.
 
 <ParamField body="verbose" type={"boolean | undefined"}>
 Log every request like `NotteClient(verbose=True)` in Python.
+</ParamField>
+
+<ParamField body="maxRetries" type={"number | undefined"}>
+Retries for transient failures (502, 503, 504, 529, and connection
+errors), with exponential backoff and full jitter. `Retry-After` is
+honored. POST and PATCH requests are only retried when the API cannot
+have processed them (503, 529, connection refused), so they are never
+applied twice. All attempts share the request timeout. Defaults to 3;
+`0` disables retries.
 </ParamField>

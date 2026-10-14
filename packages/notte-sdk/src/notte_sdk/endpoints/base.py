@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import time
 from abc import ABC
 from collections.abc import Sequence
 from json import JSONDecodeError
@@ -13,6 +14,7 @@ from notte_core.common.logging import logger
 from pydantic import BaseModel, ValidationError
 from requests.exceptions import ConnectionError
 
+from notte_sdk import _retry
 from notte_sdk._transport import request_session
 from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
 from notte_sdk.errors import AuthenticationError, NotteAPIError, NotteAPIExecutionError
@@ -128,6 +130,12 @@ class BaseClient(ABC):
 
         # Check for version mismatch and warn user if needed
         self.check_and_warn_version_mismatch()
+
+    @property
+    def max_retries(self) -> int:
+        """Retries for transient failures, from ``NotteClient(max_retries=...)``."""
+        value = getattr(self.root_client, "max_retries", _retry.DEFAULT_MAX_RETRIES)
+        return value if isinstance(value, int) and not isinstance(value, bool) else _retry.DEFAULT_MAX_RETRIES
 
     def is_custom_endpoint_available(self) -> bool:
         """
@@ -403,47 +411,9 @@ class BaseClient(ABC):
         headers = self.headers(headers=headers)
         url = self.request_path(endpoint)
         params = endpoint.params.model_dump(exclude_none=True) if endpoint.params is not None else None
-        files = endpoint.files if endpoint.files is not None else None
-        json = None
         if self.verbose:
             logger.info(f"Making `{endpoint.method}` request to `{endpoint.path} (i.e `{url}`) with params `{params}`.")
-        with request_session() as session:
-            match endpoint.method:
-                case "GET":
-                    response = session.get(
-                        url=url,
-                        headers=headers,
-                        params=params,
-                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-                    )
-                case "POST" | "PATCH":
-                    if endpoint.request is None and endpoint.files is None:
-                        raise ValueError("Request model or file is required for POST requests")
-                    if endpoint.request is None:
-                        data = None
-                    elif files is None:
-                        data = endpoint.request.model_dump_json(exclude_none=True)
-                        headers["Content-Type"] = "application/json"
-                    else:
-                        # if files is not None, data must not be a string
-                        data = endpoint.request.model_dump(exclude_none=True)
-                    method = session.post if endpoint.method == "POST" else session.patch
-                    response = method(
-                        url=url,
-                        headers=headers,
-                        data=data,
-                        params=params,
-                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-                        files=files,
-                        json=json,
-                    )
-                case "DELETE":
-                    response = session.delete(
-                        url=url,
-                        headers=headers,
-                        params=params,
-                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-                    )
+        response = self._send_with_retries(endpoint, url=url, headers=headers, params=params, timeout=timeout)
         if not 200 <= response.status_code < 300:
             # Check for 422 status code with Pydantic validation errors first
             if response.status_code == 422:
@@ -478,6 +448,116 @@ class BaseClient(ABC):
         if "detail" in response_dict:
             raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
         return response_dict
+
+    def _send_with_retries(
+        self,
+        endpoint: NotteEndpoint[TResponse],
+        *,
+        url: str,
+        headers: dict[str, str],
+        params: dict[str, Any] | None,
+        timeout: float | None,
+    ) -> requests.Response:
+        """Send a request, retrying transient failures as described in ``notte_sdk._retry``.
+
+        Each attempt uses the full request ``timeout``. Waits between attempts use
+        exponential backoff with full jitter, or the API's ``Retry-After``.
+        """
+        max_retries = max(0, self.max_retries)
+        attempt = 0
+        while True:
+            # Uploaded files are rewound before a retry; one that cannot be is not resent.
+            can_retry = attempt < max_retries
+            try:
+                response = self._send(endpoint, url=url, headers=headers, params=params, timeout=timeout)
+            except requests.RequestException as e:
+                if not (
+                    can_retry and _retry.is_retryable_exception(e, endpoint.method) and self._rewind_files(endpoint)
+                ):
+                    raise
+                delay = _retry.backoff_delay(attempt)
+                reason = type(e).__name__
+            else:
+                if not (can_retry and _retry.is_retryable_status(response.status_code, endpoint.method)):
+                    return response
+                retry_delay = _retry.retry_delay(attempt, response.headers.get("Retry-After"))
+                if retry_delay is None or not self._rewind_files(endpoint):
+                    return response
+                delay = retry_delay
+                reason = f"status {response.status_code}"
+                response.close()
+            attempt += 1
+            logger.warning(
+                f"`{endpoint.method} {endpoint.path}` failed ({reason}), retrying in {delay:.1f}s ({attempt}/{max_retries})"
+            )
+            time.sleep(delay)
+
+    @staticmethod
+    def _rewind_files(endpoint: NotteEndpoint[TResponse]) -> bool:
+        """Rewind the endpoint's file uploads. Returns False when one cannot be rewound."""
+        files: Any = endpoint.files
+        if files is None:
+            return True
+        handles: Any = files.values() if isinstance(files, dict) else vars(files).values()
+        for handle in handles:
+            seek = getattr(handle, "seek", None)
+            if seek is None:
+                return False
+            try:
+                _ = seek(0)
+            except (OSError, ValueError):
+                return False
+        return True
+
+    def _send(
+        self,
+        endpoint: NotteEndpoint[TResponse],
+        *,
+        url: str,
+        headers: dict[str, str],
+        params: dict[str, Any] | None,
+        timeout: float | None,
+    ) -> requests.Response:
+        files = endpoint.files if endpoint.files is not None else None
+        headers = dict(headers)
+        with request_session() as session:
+            match endpoint.method:
+                case "GET":
+                    response = session.get(
+                        url=url,
+                        headers=headers,
+                        params=params,
+                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                    )
+                case "POST" | "PATCH":
+                    if endpoint.request is None and endpoint.files is None:
+                        raise ValueError("Request model or file is required for POST requests")
+                    if endpoint.request is None:
+                        data = None
+                    elif files is None:
+                        data = endpoint.request.model_dump_json(exclude_none=True)
+                        headers["Content-Type"] = "application/json"
+                    else:
+                        # if files is not None, data must not be a string
+                        data = endpoint.request.model_dump(exclude_none=True)
+                    method = session.post if endpoint.method == "POST" else session.patch
+                    response = method(
+                        url=url,
+                        headers=headers,
+                        data=data,
+                        params=params,
+                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                        files=files,
+                        json=None,
+                    )
+                case "DELETE":
+                    response = session.delete(
+                        url=url,
+                        headers=headers,
+                        params=params,
+                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                    )
+        return response
 
     def request(
         self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: float | None = None
