@@ -1,3 +1,4 @@
+import json
 from io import BytesIO
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -17,7 +18,7 @@ def response(status: int, retry_after: str | None = None) -> requests.Response:
     result = requests.Response()
     result.status_code = status
     result._content_consumed = True
-    result._content = b'{"message":"unavailable"}'
+    result._content = json.dumps({"message": "unavailable", "status": status}).encode()
     if retry_after is not None:
         result.headers["Retry-After"] = retry_after
     return result
@@ -138,13 +139,17 @@ def test_nonseekable_upload_is_not_retried(transport):
 
 
 @pytest.mark.parametrize("status", [503, 529])
-def test_session_start_does_not_multiply_exhausted_retries(status):
+@pytest.mark.parametrize("max_retries", [0, 2])
+def test_session_start_does_not_multiply_exhausted_retries(status, max_retries, monkeypatch):
+    sleep = Mock()
+    monkeypatch.setattr("notte_sdk.endpoints.sessions.time.sleep", sleep)
     session = object.__new__(RemoteSession)
     error = NotteAPIError(path="sessions/start", response=response(status))
     session.response = None
     session.request = SessionStartRequest()
-    session.client = SimpleNamespace(max_retries=2, start=Mock(side_effect=error))
+    session.client = SimpleNamespace(max_retries=max_retries, start=Mock(side_effect=error))
     with pytest.raises(NotteAPIError) as caught:
         session.start()
     assert caught.value is error
-    session.client.start.assert_called_once()
+    assert session.client.start.call_count == (1 if max_retries else 3)
+    assert sleep.call_count == (2 if max_retries == 0 and status == 529 else 0)

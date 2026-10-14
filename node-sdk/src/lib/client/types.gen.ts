@@ -8686,6 +8686,10 @@ export type AgentStopErrors = {
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * The agent is stopping but its final state is not saved yet; check its status shortly.
+     */
+    503: unknown;
 };
 
 export type AgentStopError = AgentStopErrors[keyof AgentStopErrors];
