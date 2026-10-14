@@ -27,6 +27,7 @@ export type PersonaCreateRequest = {
      * Name
      */
     name?: string | null;
+    email_provider?: PersonaEmailProvider;
 };
 ```
 
@@ -43,3 +44,11 @@ Whether to create a phone number for the persona
 <ParamField body="name" type={"string | null | undefined"}>
 
 </ParamField>
+
+<ParamField body="email_provider" type={"PersonaEmailProvider | undefined"}>
+
+</ParamField>
+
+## Related types
+
+- [PersonaEmailProvider](/typescript-sdk-reference/types/personaemailprovider)
