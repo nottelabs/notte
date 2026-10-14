@@ -52,6 +52,7 @@ import {
 import { openBrowser } from '@/utils';
 import { backoffDelayMs, isRetryableNetworkError, isRetryableStatus, retryDelayMs } from '@/retry';
 import type { RemoteFileStorage } from '@/files';
+import { Logger, resolveLogLevel, type LogMethod } from '@/logger';
 
 /** Number of attempts `start()` makes on 5xx errors, like `RemoteSession.start(tries=3)`. */
 export const SESSION_START_TRIES = 3;
@@ -161,6 +162,70 @@ export function installServerOwnedDialogPolicy(browser: Pick<Browser, 'contexts'
   }
 }
 
+const LOGGABLE_URL_SCHEMES = new Set(['http', 'https', 'ws', 'wss', 'file']);
+
+/** Keep only the scheme, host and path of a URL so logs never carry credentials, queries or fragments. */
+export function redactPlaywrightUrl(url: string): string {
+  const scheme = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(url)?.[1]?.toLowerCase();
+  if (!scheme) return '<redacted>';
+  if (scheme === 'about') return url;
+  if (!LOGGABLE_URL_SCHEMES.has(scheme)) return `${scheme}:`;
+  try {
+    const parsed = new URL(url);
+    return `${scheme}://${parsed.host}${parsed.pathname}`;
+  } catch {
+    return '<unparseable>';
+  }
+}
+
+const fallbackObjectIds = new WeakMap<object, string>();
+let nextFallbackObjectId = 0;
+
+/** Best-effort stable identity for a Playwright object. */
+function playwrightObjectId(value: object): string {
+  try {
+    const guid = (value as { _guid?: unknown })._guid;
+    if (typeof guid === 'string') return guid;
+  } catch {
+    // Fall through to a local id.
+  }
+  let id = fallbackObjectIds.get(value);
+  if (id === undefined) {
+    id = `object@${++nextFallbackObjectId}`;
+    fallbackObjectIds.set(value, id);
+  }
+  return id;
+}
+
+function describeError(error: unknown): string {
+  return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+}
+
+type PlaywrightState = Record<string, unknown>;
+
+function playwrightPageState(page: Page): PlaywrightState {
+  const state: PlaywrightState = { page_id: playwrightObjectId(page) };
+  try {
+    state.url = redactPlaywrightUrl(page.url());
+  } catch (error) {
+    state.url_error = describeError(error);
+  }
+  try {
+    state.is_closed = page.isClosed();
+  } catch (error) {
+    state.is_closed_error = describeError(error);
+  }
+  return state;
+}
+
+interface PlaywrightEventOptions {
+  browser: Browser;
+  cachedPage: Page | null;
+  observedPage?: Page;
+  observedContext?: BrowserContext;
+  level?: Exclude<LogMethod, 'error'>;
+}
+
 /**
  * Browser session created with `client.Session(options)`.
  * Call `start()` before using it and `stop()` when finished, or use `use()`
@@ -184,6 +249,10 @@ export class Session {
   private response: SessionResponse | null = null;
   private playwrightBrowser: Browser | null = null;
   private playwrightPage: Page | null = null;
+  private playwrightLogger: Logger | undefined;
+  private playwrightConnectionGeneration = 0;
+  private playwrightObserved = new WeakSet<object>();
+  private playwrightCleanupInProgress = false;
 
   constructor(client: NotteClient, options: SessionOptions = {}) {
     this.client = client;
@@ -308,6 +377,7 @@ export class Session {
 
     this.sessionId = sessionData.session_id;
     this.isActive = true;
+    this.playwrightCleanupInProgress = false;
     this.response = sessionData;
     this.cookiesLoaded = false;
     this.cookieLoadPromise = undefined;
@@ -405,6 +475,8 @@ export class Session {
       return;
     }
     const sessionId = this.sessionId;
+    const cleanupWasInProgress = this.playwrightCleanupInProgress;
+    this.logPlaywrightStopRequested();
     await this.closePlaywright();
 
     if (this.cookieFile !== undefined && (this.authenticationReady || this.response?.status === 'active')) {
@@ -432,6 +504,8 @@ export class Session {
       if (message.includes('already stopped') || message.includes('already closed')) {
         console.warn(`Session ${sessionId} was already stopped`);
       } else {
+        // The session may still be alive: keep reporting its failures as warnings.
+        this.playwrightCleanupInProgress = cleanupWasInProgress;
         throw error;
       }
     }
@@ -441,13 +515,145 @@ export class Session {
 
   private async closePlaywright(): Promise<void> {
     const browser = this.playwrightBrowser;
-    this.playwrightBrowser = null;
-    this.playwrightPage = null;
-    if (browser) {
-      try {
-        await browser.close();
-      } catch (error) {
-        console.warn(`[Session] Failed to close the Playwright connection: ${String(error)}`);
+    if (!browser) {
+      this.playwrightPage = null;
+      return;
+    }
+    try {
+      // Keep the cached page while closing so lifecycle logs can tell it apart from other tabs.
+      await browser.close();
+    } catch (error) {
+      console.warn(`[Session] Failed to close the Playwright connection: ${String(error)}`);
+    } finally {
+      if (this.playwrightBrowser === browser) {
+        this.playwrightBrowser = null;
+        this.playwrightPage = null;
+      }
+    }
+  }
+
+  // #######################################################################
+  // ###################### Playwright diagnostics #########################
+  // #######################################################################
+
+  private diagnosticsLogger(): Logger {
+    this.playwrightLogger ??= new Logger(resolveLogLevel(this.client.getConfig().logLevel));
+    return this.playwrightLogger;
+  }
+
+  private playwrightState(browser: Browser, cachedPage: Page | null): PlaywrightState {
+    const state: PlaywrightState = {
+      connection_generation: this.playwrightConnectionGeneration,
+      cleanup_in_progress: this.playwrightCleanupInProgress,
+      cached_page_id: cachedPage ? playwrightObjectId(cachedPage) : null,
+    };
+    try {
+      state.browser_connected = browser.isConnected();
+    } catch (error) {
+      state.browser_connected_error = describeError(error);
+    }
+    const contexts: PlaywrightState[] = [];
+    try {
+      for (const context of browser.contexts()) {
+        const contextState: PlaywrightState = { context_id: playwrightObjectId(context) };
+        try {
+          const pages = context.pages();
+          contextState.pages = pages.map(playwrightPageState);
+          contextState.contains_cached_page = cachedPage !== null && pages.includes(cachedPage);
+        } catch (error) {
+          contextState.pages_error = describeError(error);
+        }
+        contexts.push(contextState);
+      }
+    } catch (error) {
+      state.contexts_error = describeError(error);
+    }
+    state.contexts = contexts;
+    return state;
+  }
+
+  private logPlaywrightEvent(event: string, options: PlaywrightEventOptions): void {
+    let level: LogMethod = options.level ?? 'warn';
+    if (level === 'warn' && this.playwrightCleanupInProgress) {
+      // Closes and disconnects caused by the SDK's own cleanup are expected, not failures.
+      level = 'debug';
+    }
+    const logger = this.diagnosticsLogger();
+    if (!logger.isEnabled(level)) return;
+    const details = this.playwrightState(options.browser, options.cachedPage);
+    if (options.observedPage) details.observed_page = playwrightPageState(options.observedPage);
+    if (options.observedContext) details.observed_context_id = playwrightObjectId(options.observedContext);
+    const sessionId = this.sessionId ?? this.response?.session_id ?? 'unknown';
+    logger.log(level, `[Session Playwright] ${event}: session=${sessionId} state=${JSON.stringify(details)}`);
+  }
+
+  /** Snapshot Playwright state before the SDK starts its own cleanup. */
+  private logPlaywrightStopRequested(): void {
+    if (this.playwrightBrowser) {
+      this.logPlaywrightEvent('sdk_playwright_session_stop_requested', {
+        browser: this.playwrightBrowser,
+        cachedPage: this.playwrightPage,
+        level: 'info',
+      });
+    }
+    this.playwrightCleanupInProgress = true;
+  }
+
+  private logUnhealthyCachedPlaywrightPage(browser: Browser, page: Page): void {
+    let unhealthy: boolean;
+    try {
+      unhealthy = !browser.isConnected() || page.isClosed() || !browser.contexts().some(context => context.pages().includes(page));
+    } catch {
+      unhealthy = true;
+    }
+    if (unhealthy) {
+      this.logPlaywrightEvent('sdk_playwright_cached_page_unhealthy', { browser, cachedPage: page });
+    }
+  }
+
+  private observePlaywrightPage(browser: Browser, page: Page): void {
+    if (this.playwrightObserved.has(page)) return;
+    this.playwrightObserved.add(page);
+    page.on('close', () => {
+      const cachedPage = this.playwrightPage;
+      this.logPlaywrightEvent('sdk_playwright_page_closed', {
+        browser,
+        cachedPage,
+        observedPage: page,
+        level: page === cachedPage ? 'warn' : 'info',
+      });
+    });
+    page.on('crash', () => {
+      this.logPlaywrightEvent('sdk_playwright_page_crashed', { browser, cachedPage: this.playwrightPage, observedPage: page });
+    });
+  }
+
+  private observePlaywrightBrowser(browser: Browser): void {
+    browser.on('disconnected', () => {
+      this.logPlaywrightEvent('sdk_playwright_browser_disconnected', { browser, cachedPage: this.playwrightPage });
+    });
+    for (const context of browser.contexts()) {
+      if (!this.playwrightObserved.has(context)) {
+        this.playwrightObserved.add(context);
+        context.on('page', page => {
+          this.observePlaywrightPage(browser, page);
+          this.logPlaywrightEvent('sdk_playwright_page_created', {
+            browser,
+            cachedPage: this.playwrightPage,
+            observedPage: page,
+            level: 'info',
+          });
+        });
+        context.on('close', () => {
+          this.logPlaywrightEvent('sdk_playwright_context_closed', {
+            browser,
+            cachedPage: this.playwrightPage,
+            observedContext: context,
+          });
+        });
+      }
+      for (const page of context.pages()) {
+        this.observePlaywrightPage(browser, page);
       }
     }
   }
@@ -763,6 +969,9 @@ export class Session {
    */
   async page(): Promise<Page> {
     if (this.playwrightPage) {
+      if (this.playwrightBrowser) {
+        this.logUnhealthyCachedPlaywrightPage(this.playwrightBrowser, this.playwrightPage);
+      }
       return this.playwrightPage;
     }
     let playwright: typeof import('playwright-core');
@@ -774,6 +983,7 @@ export class Session {
       });
     }
     try {
+      let connected = false;
       if (!this.playwrightBrowser) {
         const cdpUrl = await this.cdpUrl();
         // Identify the SDK to Notte's CDP endpoint, as every API call does; a caller's
@@ -784,12 +994,18 @@ export class Session {
               headers: { 'x-notte-request-origin': REQUEST_ORIGIN, 'x-notte-sdk-version': SDK_VERSION },
             });
         installServerOwnedDialogPolicy(this.playwrightBrowser);
+        this.playwrightConnectionGeneration += 1;
+        this.observePlaywrightBrowser(this.playwrightBrowser);
+        connected = true;
       }
       const page = this.playwrightBrowser.contexts()[0]?.pages()[0];
       if (!page) {
         throw new Error('the browser has no open page');
       }
       this.playwrightPage = page;
+      if (connected) {
+        this.logPlaywrightEvent('sdk_playwright_connected', { browser: this.playwrightBrowser, cachedPage: page, level: 'info' });
+      }
       return page;
     } catch (error) {
       throw new Error(`Failed to access the playwright page from CDP: ${error instanceof Error ? error.message : String(error)}`, {

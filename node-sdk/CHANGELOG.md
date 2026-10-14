@@ -21,6 +21,11 @@
 
 ## 1.9.7 and earlier
 
+- `session.page()` logs unexpected page, tab, context and CDP connection closes
+  as warnings, with a redacted snapshot of the Playwright state (URLs keep only
+  scheme, host and path). Closes caused by the SDK's own cleanup log at debug.
+  Set the level with the new `logLevel` client option or `NOTTE_LOG_LEVEL`;
+  the default `warn` prints nothing new for a normal session.
 - `session.fetch()` refuses plaintext `http:` targets and redirects by default
   because the request carries the page's cookies; pass `allowInsecure: true`
   to override. Relative URLs resolve against the page.

@@ -1,13 +1,13 @@
 import { vi } from 'vitest';
-import type { NotteClient } from '@/client';
+import type { NotteClient, NotteClientConfig } from '@/client';
 import type { ApiExecutionResponse, SerializedError, SessionResponse } from '@/lib/client/types.gen';
 
 /** A `NotteClient` stand-in exposing only what `Session` reads. */
-export function mockNotteClient(): NotteClient {
+export function mockNotteClient(config: NotteClientConfig = {}): NotteClient {
   return {
     getClient: vi.fn(() => ({})),
     withDbPreview: vi.fn((url: string) => url),
-    getConfig: vi.fn(() => ({ baseUrl: 'https://api.notte.cc', timeoutMs: 60_000, verbose: false })),
+    getConfig: vi.fn(() => ({ baseUrl: 'https://api.notte.cc', timeoutMs: 60_000, verbose: false, ...config })),
   } as unknown as NotteClient;
 }
 

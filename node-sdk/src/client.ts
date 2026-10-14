@@ -33,6 +33,7 @@ import {
   type ZodLikeSchema,
 } from '@/scrape';
 import { SDK_VERSION } from '@/version';
+import { isLogLevel, resolveLogLevel, type LogLevel } from '@/logger';
 import { RemoteFileStorage, SessionFiles } from '@/files';
 import type { SearchOptions, SearchResponse, SearchResultsResponse, SearchSourcedAnswerResponse, SearchStructuredResponse } from '@/search';
 import { NotteAnything } from '@/anything';
@@ -90,6 +91,11 @@ export interface NotteClientConfig {
    * `0` disables retries.
    */
   maxRetries?: number;
+  /**
+   * Minimum level of SDK diagnostic logs, such as Playwright connection events
+   * from `session.page()`. Defaults to `NOTTE_LOG_LEVEL` or `'warn'`.
+   */
+  logLevel?: LogLevel;
 }
 
 export type SessionListOptions = NonNullable<ListSessionsData['query']>;
@@ -101,7 +107,7 @@ export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' |
   wait_for_authentication?: boolean;
 };
 
-type ResolvedConfig = Required<Pick<NotteClientConfig, 'baseUrl' | 'timeoutMs' | 'verbose' | 'captchaTimeoutSeconds' | 'maxRetries'>> &
+type ResolvedConfig = Required<Pick<NotteClientConfig, 'baseUrl' | 'timeoutMs' | 'verbose' | 'captchaTimeoutSeconds' | 'maxRetries' | 'logLevel'>> &
   Pick<NotteClientConfig, 'apiKey' | 'dbPreview'>;
 
 function isRelativeProxyUrl(baseUrl: string): boolean {
@@ -131,6 +137,10 @@ export class NotteClient {
     if (!Number.isInteger(maxRetries) || maxRetries < 0) {
       throw new InvalidRequestError('maxRetries must be a non-negative integer');
     }
+    if (config.logLevel !== undefined && !isLogLevel(config.logLevel)) {
+      throw new InvalidRequestError("logLevel must be one of 'debug', 'info', 'warn', 'error' or 'silent'");
+    }
+    const logLevel = resolveLogLevel(config.logLevel);
 
     // Only skip the apiKey check for relative proxy paths (e.g. '/api/notte').
     // Any HTTPS URL—including staging—still requires a key.
@@ -151,7 +161,7 @@ export class NotteClient {
     }
 
     this.config = {
-      baseUrl, apiKey, timeoutMs, captchaTimeoutSeconds, dbPreview, maxRetries, verbose: config.verbose ?? false,
+      baseUrl, apiKey, timeoutMs, captchaTimeoutSeconds, dbPreview, maxRetries, logLevel, verbose: config.verbose ?? false,
     };
 
     if (baseUrl !== DEFAULT_NOTTE_API_URL && !isProxyMode) {
