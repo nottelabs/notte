@@ -23,6 +23,11 @@ export interface NotteClientConfig {
   dbPreview?: string;
   /** Log every request like `NotteClient(verbose=True)` in Python. */
   verbose?: boolean;
+  /**
+   * Minimum level of SDK diagnostic logs, such as Playwright connection events
+   * from `session.page()`. Defaults to `NOTTE_LOG_LEVEL` or `'warn'`.
+   */
+  logLevel?: LogLevel;
 }
 ```
 
@@ -50,4 +55,9 @@ Database preview branch. Defaults to `NOTTE_DB_PREVIEW_BRANCH`. Internal.
 
 <ParamField body="verbose" type={"boolean | undefined"}>
 Log every request like `NotteClient(verbose=True)` in Python.
+</ParamField>
+
+<ParamField body="logLevel" type={"LogLevel | undefined"}>
+Minimum level of SDK diagnostic logs, such as Playwright connection events
+from `session.page()`. Defaults to `NOTTE_LOG_LEVEL` or `'warn'`.
 </ParamField>
