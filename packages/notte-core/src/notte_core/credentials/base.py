@@ -64,8 +64,7 @@ class CredentialField(BaseModel, ABC, frozen=True):  # pyright: ignore[reportUns
     placeholder_value: ClassVar[str] = Field(
         description="Value the llm has to set before being transcribed to actual value"
     )
-    # Whether the placeholder stands for a secret: an unresolved secret placeholder fails the action, while an
-    # unresolved non-secret placeholder (e.g. 'John Doe') is a regular value and is filled as-is
+    # Whether the placeholder stands for a secret value (password, MFA code, card CVV or expiration)
     secret: ClassVar[bool] = False
     registry: ClassVar[dict[str, type[CredentialField]]] = {}
     placeholder_map: ClassVar[dict[str, type[CredentialField]]] = {}
@@ -243,6 +242,18 @@ class CardFullExpirationField(RegexCredentialField, frozen=True):
         re.IGNORECASE,
     )
     instruction_name: ClassVar[str] = "a payment form expiration date with month and year"
+
+
+# Card details are stored once per vault, not per site
+CARD_FIELDS: tuple[type[CredentialField], ...] = (
+    CardHolderField,
+    CardNumberField,
+    CardCVVField,
+    CardFullExpirationField,
+)
+# Placeholders that are also ordinary values (e.g. 'John Doe', or the '4242 4242 4242 4242' test card): when the vault
+# cannot resolve them, they are filled as written instead of failing the action
+FILLED_AS_IS_WHEN_UNRESOLVED: tuple[type[CredentialField], ...] = (CardHolderField, CardNumberField)
 
 
 recursive_data = list["recursive_data"] | dict[str, "recursive_data"] | str | Any
@@ -686,6 +697,7 @@ class BaseVault(ABC):
         except Exception as e:
             # Never log the exception message: vault backends can echo stored values in their errors
             logger.error(f"Error getting credentials for url={url} ({type(e).__name__})")
+            # Remote vaults raise (e.g. a 404) when they hold no credentials for the URL
             creds_dict = None
 
         if creds_dict is None:
@@ -695,7 +707,7 @@ class BaseVault(ABC):
     async def _resolve_credential(self, cred_class: type[CredentialField], url: str) -> str:
         cred_key = cred_class.alias
         creds_dict: CredentialsDict | CreditCardDict
-        if cred_class in (CardHolderField, CardNumberField, CardCVVField, CardFullExpirationField):
+        if cred_class in CARD_FIELDS:
             creds_dict = await self._get_credit_card_for_replacement(cred_key)
         else:
             creds_dict = await self._get_credentials_for_replacement(url)
@@ -713,9 +725,10 @@ class BaseVault(ABC):
         Only values that are exactly a placeholder (ignoring surrounding whitespace) are replaced. Values that were
         already replaced (`ValueWithPlaceholder`) and regular values are left untouched.
 
-        A secret placeholder (password, MFA, card CVV, card expiration) that cannot be resolved raises. A non-secret
-        placeholder (email, username, card holder, card number) that cannot be resolved is also an ordinary value
-        (e.g. 'John Doe'), so it is left untouched and filled as-is.
+        A login placeholder (email, username, password, MFA) or a secret card placeholder (card CVV, card expiration)
+        that cannot be resolved raises, so the literal placeholder is never typed into the page. A card holder or
+        card number placeholder that cannot be resolved is also an ordinary value (e.g. 'John Doe' or the
+        '4242 4242 4242 4242' test card), so it is left untouched and filled as-is.
 
         Args:
             action: The action to replace credentials in
@@ -727,8 +740,8 @@ class BaseVault(ABC):
 
         Raises:
             ValueError: If the action type is not supported
-            CredentialReplacementError: If a secret placeholder cannot be replaced (e.g. missing credential field)
-            NoCredentialsFoundError: If the vault holds no credentials for the current page (secret placeholder)
+            CredentialReplacementError: If a placeholder other than card holder or card number cannot be replaced
+            NoCredentialsFoundError: If the vault has no credentials for the page or the lookup fails (login field)
         """
         # Get credentials for current domain
 
@@ -755,9 +768,10 @@ class BaseVault(ABC):
             try:
                 cred_value = await self._resolve_credential(cred_class, snapshot.metadata.url)
             except (CredentialReplacementError, NoCredentialsFoundError) as e:
-                if cred_class.secret:
+                if cred_class not in FILLED_AS_IS_WHEN_UNRESOLVED:
+                    # Typing the literal placeholder (e.g. into a login form) is never what the caller wants
                     raise
-                # Non-secret placeholders are also ordinary values (e.g. 'John Doe'): type them as-is
+                # Card holder and number placeholders are also ordinary values (e.g. 'John Doe'): type them as-is
                 logger.info(
                     f"[Vault] No vault credential for the {cred_key!r} placeholder ({type(e).__name__}), filling the value as-is"
                 )
