@@ -48,6 +48,15 @@ describe('NottePersona email addresses', () => {
     expect(persona.info.internal_email).toBe(persona.internalEmail);
   });
 
+  it('defaults email_provider to notte when the response omits it', async () => {
+    const persona = new NottePersona(client, {
+      persona_id: '8d5a3550-733f-4d32-8f41-62451f770537'
+    });
+    await persona.get();
+
+    expect(persona.info.email_provider).toBe('notte');
+  });
+
   it.each([false, true])('never deletes a borrowed persona, callback throws=%s', async throws => {
     const persona = new NottePersona(client, { persona_id: 'existing' });
     const result = persona.use(async p => {
