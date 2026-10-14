@@ -14,7 +14,6 @@ packages = [
 requires-python = ">=3.11"
 dependencies = [
     "notte_core==2.0.0.dev0",
-    "notte_sdk==2.0.0.dev0",
     "beautifulsoup4>=4.15.0",
     "html2text>=2025.4.15",
     "lxml>=5.3.1",

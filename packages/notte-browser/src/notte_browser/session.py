@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Literal, Unpack, overload
+from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 
 import requests
 from notte_core import enable_nest_asyncio
@@ -78,7 +78,6 @@ from notte_core.types import (
     ScrapeParamsDict,
 )
 from notte_core.utils.files import create_or_append_cookies_to_file
-from notte_sdk.endpoints.personas import BasePersona
 from pydantic import BaseModel, RootModel, ValidationError
 from typing_extensions import override
 
@@ -112,6 +111,9 @@ from notte_browser.scraping.pipe import DataScrapingPipe
 from notte_browser.tagging.action_space import build_action_space
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
+
+if TYPE_CHECKING:
+    from notte_sdk.endpoints.personas import BasePersona
 
 enable_nest_asyncio()
 

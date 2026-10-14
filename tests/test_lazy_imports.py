@@ -79,3 +79,25 @@ def test_enabled_profiler_records_spans() -> None:
         """
     )
     assert output.strip() == "['block', 'work']"
+
+
+def test_local_session_can_be_constructed_without_sdk() -> None:
+    _run(
+        """
+        import sys
+
+        sys.modules["notte_sdk"] = None
+
+        import os
+        os.environ["DISABLE_TELEMETRY"] = "true"
+
+        from notte_browser.session import NotteSession
+
+        session = NotteSession()
+        assert session.persona is None
+        assert session.vault is None
+        assert session._window is None
+        assert sys.modules["notte_sdk"] is None
+        assert not any(name.startswith("notte_sdk.") for name in sys.modules)
+        """
+    )
