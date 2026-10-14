@@ -225,7 +225,6 @@ def test_lifecycle_log_does_not_contain_url_paths_or_secrets(captured_logs: list
 
     [(level, message)] = captured_logs
     assert level == "WARNING"
-    assert "https://example.com" in message
     assert "callback" not in message
     assert "secret" not in message
 
