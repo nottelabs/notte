@@ -80,6 +80,7 @@ from notte_core.utils.files import create_or_append_cookies_to_file
 from pydantic import BaseModel, RootModel, ValidationError
 from typing_extensions import override
 
+from notte_browser.action_space import build_action_space
 from notte_browser.captcha import CaptchaHandler
 from notte_browser.controller import BrowserController
 from notte_browser.dom.locate import locate_element
@@ -107,7 +108,6 @@ from notte_browser.playwright import PlaywrightManager
 from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe
-from notte_browser.tagging.action_space import build_action_space
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
 

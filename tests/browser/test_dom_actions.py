@@ -1,8 +1,8 @@
 """Pin action fields that observe's text goldens do not serialize."""
 
 import pytest
+from notte_browser.action_space import build_action_space
 from notte_browser.dom.builder import build_dom_tree
-from notte_browser.tagging.action_space import build_action_space
 from notte_core.actions import ClickAction, FillAction, SelectDropdownOptionAction
 from notte_core.browser.dom_tree import DomNode
 from notte_core.browser.node_type import NodeType

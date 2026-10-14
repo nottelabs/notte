@@ -3,8 +3,8 @@
 from dataclasses import replace
 
 import pytest
+from notte_browser.action_space import build_action_space
 from notte_browser.resolution import NodeResolutionPipe
-from notte_browser.tagging.action_space import build_action_space
 from notte_core.actions import ClickAction
 from notte_core.browser.dom_tree import ComputedDomAttributes, DomNode
 from notte_core.browser.node_type import NodeRole, NodeType
