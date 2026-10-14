@@ -4200,7 +4200,7 @@ export type PersonaCreateRequest = {
 /**
  * PersonaEmailProvider
  */
-export type PersonaEmailProvider = 'notte' | 'agentmail';
+export type PersonaEmailProvider = 'notte' | 'agentmail' | 'resend';
 
 /**
  * PersonaResponse
