@@ -5,7 +5,7 @@ from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.data.extraction import StructuredExtractor
-from notte_core.data.pruning import MarkdownPruningPipe
+from notte_core.data.pruning import IMAGE_PATTERN, LINK_PATTERN, mask_markdown
 from notte_core.data.space import DataSpace
 from notte_core.types import ScrapeParams
 
@@ -29,7 +29,7 @@ def _calculate_url_percentage(text: str) -> float:
 
     Uses the formula: (len(text) - len(text_without_urls)) / len(text)
 
-    Uses the same patterns as MarkdownPruningPipe to ensure consistency.
+    Uses the same patterns as markdown pruning to ensure consistency.
 
     Detects URLs in:
     - Markdown links: [text](url)
@@ -45,20 +45,20 @@ def _calculate_url_percentage(text: str) -> float:
     text_without_urls = text
 
     # Remove URLs from markdown images: ![alt](url) -> ![alt]()
-    # Uses MarkdownPruningPipe.image_pattern to ensure consistency
+    # Uses IMAGE_PATTERN to ensure consistency
     def remove_image_url(match: re.Match[str]) -> str:
         alt_text, _url = match.groups()
         return f"![{alt_text}]()"
 
-    text_without_urls = re.sub(MarkdownPruningPipe.image_pattern, remove_image_url, text_without_urls)
+    text_without_urls = re.sub(IMAGE_PATTERN, remove_image_url, text_without_urls)
 
     # Remove URLs from markdown links: [text](url) -> [text]()
-    # Uses MarkdownPruningPipe.link_pattern to ensure consistency
+    # Uses LINK_PATTERN to ensure consistency
     def remove_link_url(match: re.Match[str]) -> str:
         link_text, _url = match.groups()
         return f"[{link_text}]()"
 
-    text_without_urls = re.sub(MarkdownPruningPipe.link_pattern, remove_link_url, text_without_urls)
+    text_without_urls = re.sub(LINK_PATTERN, remove_link_url, text_without_urls)
 
     # Calculate percentage: (original - without_urls) / original
     url_length = total_length - len(text_without_urls)
@@ -123,7 +123,7 @@ class DataScrapingPipe:
                     "Placeholders are designed for LLM processing and will not be unmasked in the returned markdown."
                 )
             )
-            masked_document = MarkdownPruningPipe.mask(markdown)
+            masked_document = mask_markdown(markdown)
             markdown = masked_document.content
 
         # scrape structured data if required

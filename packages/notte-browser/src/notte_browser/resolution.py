@@ -73,47 +73,52 @@ async def generate_playwright_selector(node: DomNode, selectors: NodeSelectors) 
     return frame_prefix(selectors) + selector
 
 
-class NodeResolutionPipe:
-    @profiler.profiled(service_name="execution")
-    @staticmethod
-    async def forward(
-        action: BaseAction,
-        snapshot: BrowserSnapshot | None,
-        verbose: bool = False,
-    ) -> InteractionAction | BrowserAction:
-        if isinstance(action, BrowserAction):
-            # nothing to do here
-            return action
-
-        if not isinstance(action, InteractionAction):
-            raise InvalidActionError("unknown", f"action is not an interaction action: {action.type}")
-
-        if action.selector is not None:
-            return action
-
-        if snapshot is None:
-            raise NoSnapshotObservedError()
-
-        node = snapshot.dom_node.interaction_nodes_by_id.get(action.id)
-        if node is None:
-            raise InvalidActionError(action_id=action.id, reason=f"action '{action.id}' not found in page context.")
-        action.selector = await NodeResolutionPipe.resolve_selectors(node, verbose)
-        action.text_label = node.inner_text()
+@profiler.profiled(operation_name="NodeResolutionPipe.forward", service_name="execution")
+async def resolve_action(
+    action: BaseAction,
+    snapshot: BrowserSnapshot | None,
+    verbose: bool = False,
+) -> InteractionAction | BrowserAction:
+    if isinstance(action, BrowserAction):
+        # nothing to do here
         return action
 
-    @staticmethod
-    async def resolve_selectors(node: DomNode, verbose: bool = False) -> NodeSelectors:
-        assert node.id is not None, "Interaction nodes must have an id"
-        if node.computed_attributes.selectors is None:
-            raise FailedNodeResolutionError(node.id)
-        selectors = node.computed_attributes.selectors
-        if selectors.in_shadow_root:
-            if verbose:
-                logger.info(f"🔍 Resolving shadow root selectors for {node.id} ({node.text})")
-            selectors = selectors_through_shadow_dom(node)
-        if selectors.playwright_selector is None:
-            playwright_selector = await generate_playwright_selector(node, selectors)
-            if playwright_selector is not None:
-                # copy: the snapshot's selectors stay as observed
-                selectors = selectors.model_copy(update={"playwright_selector": playwright_selector})
-        return selectors
+    if not isinstance(action, InteractionAction):
+        raise InvalidActionError("unknown", f"action is not an interaction action: {action.type}")
+
+    if action.selector is not None:
+        return action
+
+    if snapshot is None:
+        raise NoSnapshotObservedError()
+
+    node = snapshot.dom_node.interaction_nodes_by_id.get(action.id)
+    if node is None:
+        raise InvalidActionError(action_id=action.id, reason=f"action '{action.id}' not found in page context.")
+    action.selector = await NodeResolutionPipe.resolve_selectors(node, verbose)
+    action.text_label = node.inner_text()
+    return action
+
+
+async def resolve_selectors(node: DomNode, verbose: bool = False) -> NodeSelectors:
+    assert node.id is not None, "Interaction nodes must have an id"
+    if node.computed_attributes.selectors is None:
+        raise FailedNodeResolutionError(node.id)
+    selectors = node.computed_attributes.selectors
+    if selectors.in_shadow_root:
+        if verbose:
+            logger.info(f"🔍 Resolving shadow root selectors for {node.id} ({node.text})")
+        selectors = selectors_through_shadow_dom(node)
+    if selectors.playwright_selector is None:
+        playwright_selector = await generate_playwright_selector(node, selectors)
+        if playwright_selector is not None:
+            # copy: the snapshot's selectors stay as observed
+            selectors = selectors.model_copy(update={"playwright_selector": playwright_selector})
+    return selectors
+
+
+class NodeResolutionPipe:
+    """Legacy mutable hook; algorithms live in the functions above."""
+
+    resolve_selectors = staticmethod(resolve_selectors)  # pyright: ignore[reportUnannotatedClassAttribute]
+    forward = staticmethod(resolve_action)  # pyright: ignore[reportUnannotatedClassAttribute]

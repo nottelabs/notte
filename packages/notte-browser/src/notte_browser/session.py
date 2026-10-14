@@ -106,7 +106,7 @@ from notte_browser.evaluation_result import (
 )
 from notte_browser.playwright import PlaywrightManager
 from notte_browser.playwright_async_api import Locator, Page
-from notte_browser.resolution import NodeResolutionPipe
+from notte_browser.resolution import resolve_action
 from notte_browser.scraping.pipe import DataScrapingPipe
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
@@ -350,7 +350,7 @@ class NotteSession(AsyncResource, SyncResource):
         return asyncio.run(self.aobserve(**pagination))
 
     async def locate(self, action: BaseAction) -> Locator | None:
-        action_with_selector = await NodeResolutionPipe.forward(action, self._snapshot)
+        action_with_selector = await resolve_action(action, self._snapshot)
         if isinstance(action_with_selector, InteractionAction) and action_with_selector.selectors is not None:
             locator: Locator = await locate_element(self.window.page, action_with_selector.selectors)
             assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
@@ -521,7 +521,7 @@ class NotteSession(AsyncResource, SyncResource):
                 # --- Step 1: action resolution --
                 # --------------------------------
 
-                resolved_action = await NodeResolutionPipe.forward(step_action, self._snapshot, verbose=config.verbose)
+                resolved_action = await resolve_action(step_action, self._snapshot, verbose=config.verbose)
                 if config.verbose:
                     logger.info(f"🌌 starting execution of action '{resolved_action.type}' ...")
                 # --------------------------------

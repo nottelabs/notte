@@ -3,7 +3,7 @@ import json
 
 from notte_core.common.logging import logger
 from notte_core.common.types import TResponseFormat
-from notte_core.data.pruning import MarkdownPruningPipe
+from notte_core.data.pruning import mask_markdown, unmask_pydantic
 from notte_core.data.space import DictBaseModel, NoStructuredData, StructuredData
 from pydantic import BaseModel
 
@@ -89,7 +89,7 @@ class LlmExtractor:
     ) -> StructuredData[BaseModel]:
         llmserve = self._service(model)
         verbose = llmserve.verbose
-        masked_document = MarkdownPruningPipe.mask(document)
+        masked_document = mask_markdown(document)
         document = llmserve.clip_tokens(masked_document.content if use_link_placeholders else document)
         match (response_format, instructions):
             case (None, None):
@@ -111,9 +111,7 @@ class LlmExtractor:
                     logger.trace(f"LLM Structured Response with no schema:\n{structured}")
                 # Unmask placeholders if requested
                 if use_link_placeholders and structured.data is not None:
-                    structured.data = MarkdownPruningPipe.unmask_pydantic(
-                        document=masked_document, data=structured.data
-                    )
+                    structured.data = unmask_pydantic(document=masked_document, data=structured.data)
                 return structured
             case (_response_format, _):
                 response: StructuredData[DictBaseModel] = await llmserve.structured_completion(
@@ -142,7 +140,7 @@ class LlmExtractor:
                 try:
                     data: BaseModel = _response_format.model_validate(response.data.root)
                     if use_link_placeholders:
-                        data = MarkdownPruningPipe.unmask_pydantic(document=masked_document, data=data)
+                        data = unmask_pydantic(document=masked_document, data=data)
                     return StructuredData[BaseModel](
                         success=response.success,
                         error=response.error,
@@ -158,7 +156,7 @@ class LlmExtractor:
                         )
                     data = response.data
                     if use_link_placeholders:
-                        data = MarkdownPruningPipe.unmask_pydantic(document=masked_document, data=data)
+                        data = unmask_pydantic(document=masked_document, data=data)
                     return StructuredData(
                         success=False,
                         error=f"Cannot validate response into the provided schema for data={data.model_dump_json()}. Error: {e}",
