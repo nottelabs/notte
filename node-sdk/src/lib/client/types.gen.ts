@@ -4190,16 +4190,13 @@ export type PersonaCreateRequest = {
      * Whether to create a phone number for the persona
      */
     create_phone_number?: boolean;
+    email_provider?: PersonaEmailProvider;
     /**
      * Name
      */
     name?: string | null;
-    email_provider?: PersonaEmailProvider;
 };
 
-/**
- * PersonaEmailProvider
- */
 export type PersonaEmailProvider = 'notte' | 'agentmail' | 'resend';
 
 /**
