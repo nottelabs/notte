@@ -1,4 +1,5 @@
 import base64
+import builtins
 import datetime as dt
 import io
 from base64 import b64decode, b64encode
@@ -78,7 +79,7 @@ class FilledTimedSpan(BaseModel):
 
 
 class Screenshot(BaseModel):
-    raw: bytes = Field(repr=False)
+    raw: builtins.bytes = Field(repr=False)
     bboxes: list[BoundingBox] = Field(default_factory=list)
     last_action_id: str | None = None
 
@@ -90,7 +91,7 @@ class Screenshot(BaseModel):
 
     @field_validator("raw", mode="before")
     @classmethod
-    def validate_raw(cls, v: bytes | str) -> bytes:
+    def validate_raw(cls, v: builtins.bytes | str) -> builtins.bytes:
         if isinstance(v, str):
             v = b64decode(v)
 
@@ -173,7 +174,7 @@ class Screenshot(BaseModel):
         return data
 
     @profiler.profiled(service_name="observation")
-    def bytes(self, type: ScreenshotType | None = None, text: str | None = None) -> bytes:
+    def bytes(self, type: ScreenshotType | None = None, text: str | None = None) -> builtins.bytes:
         def _bytes():
             nonlocal type
             type = type or ("full" if config.highlight_elements else "raw")
