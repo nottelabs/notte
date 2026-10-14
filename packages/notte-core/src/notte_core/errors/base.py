@@ -76,23 +76,3 @@ class NotteBaseError(ValueError):
 class NotteTimeoutError(NotteBaseError):
     def __init__(self, message: str) -> None:
         super().__init__(dev_message=message, user_message=message, agent_message=message, should_retry_later=True)
-
-
-class AccessibilityTreeMissingError(NotteBaseError):
-    def __init__(self, message: str = "") -> None:
-        error_message = f"Accessibility tree is missing. {message}"
-        super().__init__(
-            dev_message=error_message, user_message=error_message, agent_message=error_message, should_retry_later=True
-        )
-
-
-class UnexpectedBehaviorError(NotteBaseError):
-    def __init__(self, message: str, advice: str) -> None:
-        super().__init__(
-            dev_message=f"Unexpected behavior: {message}. {advice}",
-            user_message="Something unexpected happened.",
-            agent_message=(
-                "Something unexpected happened. There is likely an issue with this particular action or website."
-            ),
-            should_notify_team=True,
-        )

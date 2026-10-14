@@ -55,13 +55,32 @@ def test_legacy_payload_without_detail_keeps_old_behavior() -> None:
     assert restored.exception.dev_message == str(original)
 
 
-def test_unknown_error_type_falls_back_to_base_class() -> None:
+@pytest.mark.parametrize(
+    "error_type",
+    [
+        "ServerOnlyError",
+        "AccessibilityTreeMissingError",
+        "UnexpectedBehaviorError",
+        "InputActionShouldHaveOneParameterError",
+        "LLMnoOutputCompletionError",
+        "ContextSizeTooLargeError",
+        "InconsistentInteractionsNodesInAxTrees",
+        "NodeFilteringResultsInEmptyGraph",
+        "PydanticValidationError",
+        "ModelValidationError",
+    ],
+)
+@pytest.mark.parametrize("should_retry_later,should_notify_team", [(True, False), (False, True)])
+def test_unknown_or_retired_error_type_falls_back_to_base_class(
+    error_type: str, should_retry_later: bool, should_notify_team: bool
+) -> None:
     detail = SerializedError(
-        error_type="ServerOnlyError",
+        error_type=error_type,
         dev_message="dev",
         user_message="user",
         agent_message="agent",
-        should_retry_later=True,
+        should_retry_later=should_retry_later,
+        should_notify_team=should_notify_team,
     )
     payload = json.loads(_failed_result(ValueError("boom")).model_dump_json())
     payload["exception"] = "dev"
@@ -72,7 +91,9 @@ def test_unknown_error_type_falls_back_to_base_class() -> None:
     assert type(restored.exception) is NotteBaseError
     assert restored.exception.dev_message == "dev"
     assert restored.exception.user_message == "user"
-    assert restored.exception.should_retry_later is True
+    assert restored.exception.agent_message == "agent"
+    assert restored.exception.should_retry_later is should_retry_later
+    assert restored.exception.should_notify_team is should_notify_team
 
 
 def test_first_party_error_outside_core_rehydrates_concrete_type() -> None:

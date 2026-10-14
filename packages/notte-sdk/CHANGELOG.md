@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — retired core errors
+
+Nine unused core error classes and `notte_core.errors.validation` are removed.
+Serialized errors naming these retired classes now rehydrate as `NotteBaseError`,
+preserving all messages and retry/notify flags but losing the retired subtype identity.
+Active error subtypes still rehydrate to their own classes.
 ## Unreleased — core configuration cleanup
 
 Removed the unused core cache diagnostics (`get_cache_info`, `get_legacy_cache_locations`,

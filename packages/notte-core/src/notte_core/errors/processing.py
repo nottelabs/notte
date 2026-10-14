@@ -38,35 +38,6 @@ class InvalidInternalCheckError(SnapshotProcessingError):
         )
 
 
-class InconsistentInteractionsNodesInAxTrees(InvalidInternalCheckError):
-    def __init__(self, check: str) -> None:
-        super().__init__(
-            check=check,
-            dev_advice=(
-                "There are inconsistencies between interaction nodes in two ax trees, this should not happen. "
-                "You should investigate the reason why. You could first try to set `raise_error=False` to "
-                "get more low level information. You should also try to print the ax trees to see where the "
-                "issue is coming from."
-            ),
-            url=None,
-        )
-
-
-class NodeFilteringResultsInEmptyGraph(SnapshotProcessingError):
-    """
-    Error raised when node filtering results in an empty graph.
-    """
-
-    def __init__(self, url: str | None, operation: str = "filtering") -> None:
-        super().__init__(
-            dev_message=(
-                f"Operation '{operation}' resulted in an empty graph. Notte always expect a non-empty graph. "
-                "Please check the `pruning.py` file or `subtree_without` method for more information."
-            ),
-            url=url,
-        )
-
-
 class InvalidPlaceholderError(NotteBaseError):
     def __init__(self, placeholder: str) -> None:
         dev_message = f"The placeholder {placeholder} is not handled by your current vault."

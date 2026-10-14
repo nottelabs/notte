@@ -64,14 +64,6 @@ class InvalidActionError(ActionError):
         )
 
 
-class InputActionShouldHaveOneParameterError(InvalidActionError):
-    def __init__(self, action_id: str) -> None:
-        super().__init__(
-            action_id=action_id,
-            reason="Input actions require exactly one parameter",
-        )
-
-
 class VaultCredentialError(ActionError):
     """A vault credential could not be filled, so its placeholder was not typed into the page."""
 
