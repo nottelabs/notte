@@ -235,7 +235,9 @@ jobs:
     env:
       SUITE: live-${{ matrix.shard }}
       NOTTE_TEST_SHARD: ${{ matrix.shard }}/4
-      PYTEST_ARGS: -n 4 tests/integration
+      # Two workers per shard: all live suites share the staging API, which slows sharply
+      # (vault and persona calls 5-15x) when too many clients hit it at once.
+      PYTEST_ARGS: -n 2 tests/integration
       COVERAGE_FILE: .coverage.live-${{ matrix.shard }}
       # Shards share a job name; give each its own vault prefix so cleanups stay separate.
       NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}-${{ matrix.shard }}
