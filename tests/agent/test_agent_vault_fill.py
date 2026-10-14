@@ -8,7 +8,6 @@ from notte_core.credentials import EMAIL, MFA, PASSWORD
 from notte_core.errors.actions import NoCredentialsFoundError
 from notte_core.errors.processing import (
     CredentialFieldValidationError,
-    InvalidPlaceholderError,
     MissingCredentialFieldError,
 )
 
@@ -116,11 +115,9 @@ async def test_agent_vault_fill_does_not_leak_secret() -> None:
     ("creds_url", "selector", "value", "error_type"),
     [
         # no credentials for the current domain (e.g. after an SSO redirect)
-        ("https://other.example.test/", "#email", EMAIL, NoCredentialsFoundError),
+        ("https://other.example.test/", "#pw", PASSWORD, NoCredentialsFoundError),
         # the field is not stored in the vault
         (LOGIN_URL, "#otp", MFA, MissingCredentialFieldError),
-        # the agent wrote a near-miss placeholder
-        (LOGIN_URL, "#pw", PASSWORD + "1", InvalidPlaceholderError),
     ],
 )
 async def test_agent_records_failed_step_when_placeholder_cannot_be_replaced(
@@ -150,4 +147,39 @@ async def test_agent_records_failed_step_when_placeholder_cannot_be_replaced(
             # the literal placeholder is never typed into the page
             assert await session.window.page.input_value(selector) == ""
             assert_no_secret([failed[0].message])
+    assert_no_secret(logs)
+
+
+@pytest.mark.asyncio
+async def test_agent_fills_non_secret_lookalike_and_fails_secret_without_credentials() -> None:
+    """Without credentials for the page, a non-secret placeholder lookalike (e.g. a real email address that happens
+    to be the email placeholder) is typed as written, while a secret placeholder records a failed step."""
+    vault = MockVault({"https://other.example.test/": {"email": SECRET_EMAIL, "password": SECRET_PASSWORD}})
+    mock_llm = MockLLMEngine(
+        [
+            create_agent_step_response(action=FillAction(selector="#email", value=EMAIL)),
+            create_agent_step_response(action=FillAction(selector="#pw", value=PASSWORD)),
+            create_agent_step_response(action=CompletionAction(success=True, answer="Done")),
+        ]
+    )
+
+    with capture_logs() as logs:
+        async with NotteSession(headless=True, vault=vault) as session:
+            await open_login_page(session)
+            agent = FalcoAgent(session=session, vault=vault, max_steps=5)
+
+            with patch.object(agent, "llm", mock_llm), patch.object(agent, "validator", MockValidator()):
+                response = await agent.arun(task="Log in")
+
+            # the run continues after the failed step
+            assert response.success is True
+            results = list(agent.trajectory.execution_results())
+            failed = [r for r in results if not r.success]
+            assert len(failed) == 1
+            assert isinstance(failed[0].exception, NoCredentialsFoundError)
+            assert await session.window.page.input_value("#email") == EMAIL
+            # the literal secret placeholder is never typed into the page
+            assert await session.window.page.input_value("#pw") == ""
+            assert_no_secret([r.message for r in results])
+            assert PASSWORD not in failed[0].message
     assert_no_secret(logs)
