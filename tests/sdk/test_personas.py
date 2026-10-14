@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, Literal
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -44,34 +44,37 @@ def test_persona_response_without_email_provider_defaults_to_notte() -> None:
     assert response.email_provider == "notte"
 
 
-def test_persona_response_parses_agentmail() -> None:
-    response = PersonaResponse.model_validate(
-        _persona_response_dict(email="amy@agentmail.to", email_provider="agentmail")
-    )
-    assert response.email_provider == "agentmail"
+@pytest.mark.parametrize("provider", ["agentmail", "resend"])
+def test_persona_response_parses_email_provider(provider: Literal["agentmail", "resend"]) -> None:
+    response = PersonaResponse.model_validate(_persona_response_dict(email_provider=provider))
+    assert response.email_provider == provider
 
 
 @patch("notte_sdk._transport._RequestSession.post")
-def test_personas_create_sends_email_provider(mock_post: MagicMock) -> None:
+@pytest.mark.parametrize("provider", ["agentmail", "resend"])
+def test_personas_create_sends_email_provider(mock_post: MagicMock, provider: Literal["agentmail", "resend"]) -> None:
     mock_post.return_value.status_code = 200
-    mock_post.return_value.json.return_value = _persona_response_dict(email_provider="agentmail")
+    mock_post.return_value.json.return_value = _persona_response_dict(email_provider=provider)
     client = NotteClient(api_key="test-api-key")
 
-    response = client.personas.create(email_provider="agentmail")
+    response = client.personas.create(email_provider=provider)
 
-    assert response.email_provider == "agentmail"
+    assert response.email_provider == provider
     body = json.loads(mock_post.call_args.kwargs["data"])
-    assert body["email_provider"] == "agentmail"
+    assert body["email_provider"] == provider
 
 
 @patch("notte_sdk._transport._RequestSession.post")
-def test_persona_constructor_forwards_email_provider(mock_post: MagicMock) -> None:
+@pytest.mark.parametrize("provider", ["agentmail", "resend"])
+def test_persona_constructor_forwards_email_provider(
+    mock_post: MagicMock, provider: Literal["agentmail", "resend"]
+) -> None:
     mock_post.return_value.status_code = 200
-    mock_post.return_value.json.return_value = _persona_response_dict(email_provider="agentmail")
+    mock_post.return_value.json.return_value = _persona_response_dict(email_provider=provider)
     client = NotteClient(api_key="test-api-key")
 
-    persona = client.Persona(email_provider="agentmail")
+    persona = client.Persona(email_provider=provider)
 
-    assert persona.info.email_provider == "agentmail"
+    assert persona.info.email_provider == provider
     body = json.loads(mock_post.call_args.kwargs["data"])
-    assert body["email_provider"] == "agentmail"
+    assert body["email_provider"] == provider
