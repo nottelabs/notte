@@ -14,14 +14,13 @@ from loguru import logger
 from notte_browser.session import NotteSession
 from notte_core import LoggingSetup
 from notte_core.actions import FillAction, FormFillAction, GotoAction, MultiFactorFillAction, ScrapeAction
-from notte_core.credentials import CARD_HOLDER_NAME, CARD_NUMBER, EMAIL, MFA, PASSWORD
+from notte_core.credentials import CARD_CVV, CARD_HOLDER_NAME, EMAIL, MFA, PASSWORD
 from notte_core.credentials.base import CredentialsDict, CreditCardDict, LocatorAttributes, PasswordField
 from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.errors.actions import NoCredentialsFoundError
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.processing import (
     CredentialReplacementError,
-    InvalidPlaceholderError,
     MissingCredentialFieldError,
     VaultLookupError,
 )
@@ -137,7 +136,7 @@ def test_non_fill_actions_are_never_replaced() -> None:
         ScrapeAction(instructions=f"Extract records for {CARD_HOLDER_NAME}"),
         GotoAction(url=f"https://example.com/?user={EMAIL}"),
     ):
-        assert vault.contains_credentials(action)
+        assert not vault.contains_credentials(action)
         assert not vault.has_unresolved_placeholders(action)
 
 
@@ -160,15 +159,18 @@ def test_form_fill_keeps_regular_values() -> None:
         FormFillAction(value={"current_password": "my " + PASSWORD}),  # pragma: allowlist secret
     ],
 )
-def test_near_miss_placeholder_fails_without_echoing_value(action: FillAction | FormFillAction) -> None:
+def test_near_miss_placeholder_is_a_regular_value(action: FillAction | FormFillAction) -> None:
+    """Only exact placeholders are replaced: a value that merely contains one is filled as written."""
     vault = make_vault()
     session = NoopLocateSession(vault=vault)
     session.snapshot = make_snapshot(URL)
+    original = action.model_dump()
 
-    with capture_logs() as logs, pytest.raises(InvalidPlaceholderError) as exc_info:
-        _ = asyncio.run(session._action_with_vault(action))
-    # the error refers to the field, never to the value the agent wrote
-    assert_no_secret(error_texts(exc_info.value) + logs, SECRETS + (PASSWORD + "!", "my " + PASSWORD))
+    with capture_logs() as logs:
+        result = asyncio.run(session._action_with_vault(action))
+    assert result is action
+    assert result.model_dump() == original
+    assert_no_secret(logs, SECRETS + (PASSWORD + "!", "my " + PASSWORD))
 
 
 def test_missing_credential_field_fails() -> None:
@@ -190,7 +192,7 @@ def test_no_credentials_for_domain_fails() -> None:
     session.snapshot = make_snapshot("https://sso.other-domain.test/login")
 
     with capture_logs() as logs, pytest.raises(NoCredentialsFoundError):
-        _ = asyncio.run(session._action_with_vault(FormFillAction(value={"email": EMAIL})))
+        _ = asyncio.run(session._action_with_vault(FormFillAction(value={"current_password": PASSWORD})))
     assert_no_secret(logs)
 
 
@@ -204,7 +206,7 @@ def test_vault_backend_error_is_not_logged_verbatim() -> None:
     assert_no_secret(error_texts(exc_info.value) + logs)
 
     with capture_logs() as logs, pytest.raises(VaultLookupError) as card_exc_info:
-        _ = asyncio.run(vault.replace_credentials(FillAction(id="I1", value=CARD_NUMBER), EMPTY_ATTRS, snapshot))
+        _ = asyncio.run(vault.replace_credentials(FillAction(id="I1", value=CARD_CVV), EMPTY_ATTRS, snapshot))
     assert card_exc_info.value.__cause__ is None
     assert_no_secret(error_texts(card_exc_info.value) + logs)
 
@@ -263,11 +265,9 @@ async def test_session_fill_with_vault_does_not_leak_secret() -> None:
     ("creds_url", "selector", "value", "error_type"),
     [
         # no credentials for the current domain (e.g. after an SSO redirect)
-        ("https://other.example.com", "#email", EMAIL, NoCredentialsFoundError),
+        ("https://other.example.com", "#pw", PASSWORD, NoCredentialsFoundError),
         # the field is not stored in the vault
         (PAGE_URL, "#otp", MFA, MissingCredentialFieldError),
-        # the agent wrote a near-miss placeholder
-        (PAGE_URL, "#pw", PASSWORD + "1", InvalidPlaceholderError),
     ],
 )
 async def test_session_fill_fails_closed_when_placeholder_cannot_be_replaced(

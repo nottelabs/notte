@@ -73,6 +73,7 @@ Each persona gets an inbox from an email provider, chosen with `email_provider` 
 |------------------|-------|
 | `notte` (default) | Notte mailbox, the same inbox personas have always had |
 | `agentmail` | An inbox from [AgentMail](https://agentmail.to), an email inbox API for AI agents, on an `@agentmail.to` address |
+| `resend` | An address on Notte's [Resend](https://resend.com) receiving domain |
 
 <AgentMailPersona />
 
@@ -88,7 +89,7 @@ Only the inbox backend and the email address change. Everything else works the s
 - Deleting the persona also deletes its AgentMail inbox.
 
 <Note>
-AgentMail inboxes are receive-only: personas cannot send email. See the [AgentMail integration guide](/integrations/agentmail) for a full sign-up example.
+AgentMail and Resend inboxes are receive-only: personas cannot send email. See the [AgentMail integration guide](/integrations/agentmail) for a full sign-up example.
 </Note>
 
 
