@@ -3,8 +3,8 @@
 ## Unreleased
 
 - `session.page()` logs unexpected page, tab, context and CDP connection closes
-  as warnings, with a redacted snapshot of the Playwright state (URLs keep only
-  scheme, host and path). Closes caused by the SDK's own cleanup log at debug.
+  as warnings, with a redacted snapshot of the Playwright state (network URLs
+  keep only their origin). Closes caused by the SDK's own cleanup log at debug.
   Set the level with the new `logLevel` client option or `NOTTE_LOG_LEVEL`;
   the default `warn` prints nothing new for a normal session.
 - `session.saveProfile({ name })` / `session.saveProfile({ profile_id })` saves the

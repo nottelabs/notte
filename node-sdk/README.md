@@ -335,8 +335,8 @@ await notte.Session().use(async (session) => {
 
 The SDK reports unexpected page, tab and connection closes as warnings.
 Set `NOTTE_LOG_LEVEL=info` (or `debug`) or pass `logLevel` to `NotteClient`
-to also log the connection lifecycle. URLs are logged without query strings,
-fragments or credentials.
+to also log the connection lifecycle. Network URLs are reduced to their origin;
+local paths and non-network URL payloads are omitted.
 
 #### Replays and cookie files
 
