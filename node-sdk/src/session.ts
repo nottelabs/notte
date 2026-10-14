@@ -4,7 +4,7 @@ import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import type { Browser, BrowserContext, Dialog, Page } from 'playwright-core';
-import { NotteClient, REQUEST_ORIGIN, TIMEOUT_HEADER } from '@/client';
+import { DEFAULT_REQUEST_TIMEOUT_MS, MAX_RETRIES_HEADER, NotteClient, REQUEST_ORIGIN, TIMEOUT_HEADER } from '@/client';
 import { SDK_VERSION } from '@/version';
 import type {
   AgentFunctionCodeResponse,
@@ -51,11 +51,16 @@ import {
   type ZodLikeSchema,
 } from '@/scrape';
 import { openBrowser } from '@/utils';
+import { backoffDelayMs, isRetryableNetworkError, isRetryableStatus, retryDelayMs } from '@/retry';
 import type { RemoteFileStorage } from '@/files';
 
 /** Number of attempts `start()` makes on 5xx errors, like `RemoteSession.start(tries=3)`. */
 export const SESSION_START_TRIES = 3;
-/** Delay before retrying `start()` after an HTTP 529 (cluster overload). */
+/**
+ * Delay before `start()` retries an HTTP 529 (cluster overload) when the
+ * client's own retries are disabled (`maxRetries: 0`). Otherwise the client
+ * already retried the 529, honoring the API's `Retry-After`.
+ */
 export const CLUSTER_OVERLOAD_RETRY_DELAY_MS = 30_000;
 /** @deprecated Legacy request limit; CAPTCHA polls now use at most 10 seconds per request. */
 export const CAPTCHA_SOLVE_TIMEOUT_MS = 100_000;
@@ -196,9 +201,11 @@ export class Session {
   /**
    * Start the session: creates a new session on the server.
    *
-   * Retries up to `SESSION_START_TRIES` times on 5xx errors, waiting
-   * `CLUSTER_OVERLOAD_RETRY_DELAY_MS` on HTTP 529 (cluster overload). 4xx
-   * errors are never retried.
+   * 503, 529, and refused connections follow the client's retry policy
+   * (`NotteClientConfig.maxRetries`, honoring `Retry-After`). Other 5xx
+   * errors are retried up to `SESSION_START_TRIES` times. With client
+   * retries disabled, 529 waits `CLUSTER_OVERLOAD_RETRY_DELAY_MS` instead.
+   * 4xx errors are never retried.
    *
    * Managed-auth sessions wait for readiness by default. Pass
    * `{ wait_for_authentication: false }` for an explicit nonblocking start,
@@ -232,36 +239,57 @@ export class Session {
       ...(request.auth_ids?.length ? { auth_retry: auth_retry ?? 0, wait_for_authentication: false } : {}),
     };
     const shouldWait = options.wait_for_authentication ?? wait_for_authentication ?? true;
+    // The client's retry policy (503, 529, refused connections) is applied
+    // here instead of in the transport, so the caller's signal interrupts the
+    // wait between attempts without cancelling a creation already in flight.
+    const maxRetries = this.client.getConfig().maxRetries ?? 0;
+    const timeoutMs = this.client.getConfig().timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+    const deadline = timeoutMs > 0 ? Date.now() + timeoutMs : undefined;
+    const fitsDeadline = (wait: number) => deadline === undefined || Date.now() + wait < deadline;
+    let transientRetries = 0;
     let tries = SESSION_START_TRIES;
     const origTries = tries;
     let sessionData: SessionResponse | undefined;
     while (tries > 0) {
       options.signal?.throwIfAborted();
-      tries -= 1;
+      if (!fitsDeadline(0)) throw new NotteTimeoutError(`Session start timed out after ${timeoutMs}ms`);
       try {
-        const response = await sessionStart({ client: this.client.getClient(), body, throwOnError: true });
+        const response = await sessionStart({
+          client: this.client.getClient(), body, throwOnError: true, headers: {
+            [MAX_RETRIES_HEADER]: '0',
+            ...(deadline === undefined ? {} : { [TIMEOUT_HEADER]: String(Math.max(1, deadline - Date.now())) }),
+          },
+        });
         sessionData = response.data;
         break;
       } catch (error) {
+        const transient = error instanceof NotteAPIError
+          ? isRetryableStatus(error.statusCode, 'POST')
+          : isRetryableNetworkError(error, 'POST');
+        if (maxRetries > 0 && transient) {
+          const wait = transientRetries >= maxRetries ? undefined : error instanceof NotteAPIError
+            ? retryDelayMs(transientRetries, error.response?.headers.get('retry-after'))
+            : backoffDelayMs(transientRetries);
+          if (wait === undefined || !fitsDeadline(wait)) throw error;
+          transientRetries += 1;
+          console.warn(
+            `Failed to start session (${error instanceof NotteAPIError ? error.statusCode : 'connection error'}), retrying in ${(wait / 1000).toFixed(1)}s (${transientRetries}/${maxRetries})`
+          );
+          await pauseStart(wait, options.signal);
+          continue;
+        }
+        tries -= 1;
         // raise if no tries left, if the error is not an API error, or if it is a 4xx
         if (tries === 0 || !(error instanceof NotteAPIError) || error.statusCode < 500) {
           throw error;
         }
         const retryStr = `${origTries - tries}/${origTries - 1}`;
+        if (!fitsDeadline(error.statusCode === 529 ? CLUSTER_OVERLOAD_RETRY_DELAY_MS : 0)) throw error;
         if (error.statusCode === 529) {
           console.warn(
             `Failed to start session due to cluster overload, retrying in ${CLUSTER_OVERLOAD_RETRY_DELAY_MS / 1000} seconds (${retryStr})...`
           );
-          if (options.signal) {
-            try {
-              await delay(CLUSTER_OVERLOAD_RETRY_DELAY_MS, undefined, { signal: options.signal });
-            } catch (error) {
-              options.signal.throwIfAborted();
-              throw error;
-            }
-          } else {
-            await sleep(CLUSTER_OVERLOAD_RETRY_DELAY_MS);
-          }
+          await pauseStart(CLUSTER_OVERLOAD_RETRY_DELAY_MS, options.signal);
         } else {
           console.warn(`Failed to start session: retrying (${retryStr})`);
         }
@@ -285,6 +313,7 @@ export class Session {
     // stop it before rethrowing so a bad cookie file cannot leak a session.
     try {
       options.signal?.throwIfAborted();
+      if (!fitsDeadline(0)) throw new NotteTimeoutError(`Session start timed out after ${timeoutMs}ms`);
       if (shouldWait) await this.waitForAuth(options);
       if (this.openViewer) {
         this.openViewerInBrowser();
@@ -1007,5 +1036,19 @@ export class Session {
     } finally {
       await this.stop();
     }
+  }
+}
+
+/** Wait between `start()` attempts; the caller's signal interrupts the wait. */
+async function pauseStart(ms: number, signal: AbortSignal | undefined): Promise<void> {
+  if (!signal) {
+    await sleep(ms);
+    return;
+  }
+  try {
+    await delay(ms, undefined, { signal });
+  } catch (error) {
+    signal.throwIfAborted();
+    throw error;
   }
 }

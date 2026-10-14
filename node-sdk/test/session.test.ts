@@ -3,6 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CLUSTER_OVERLOAD_RETRY_DELAY_MS, Session, type SessionOptions } from '@/session';
+import { MAX_RETRIES_HEADER, TIMEOUT_HEADER } from '@/client';
 import type { RemoteFileStorage } from '@/files';
 import { NotteAPIError, NotteTimeoutError, sleep } from '@/errors';
 import {
@@ -170,6 +171,94 @@ describe('Session Unit Tests', () => {
       expect(sleep).toHaveBeenCalledWith(CLUSTER_OVERLOAD_RETRY_DELAY_MS);
       expect(CLUSTER_OVERLOAD_RETRY_DELAY_MS).toBe(30_000);
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('cluster overload, retrying in 30 seconds (1/2)'));
+    });
+
+    describe('with client retries enabled', () => {
+      beforeEach(() => {
+        vi.mocked(mockClient.getConfig).mockReturnValue({ baseUrl: 'https://api.notte.cc', timeoutMs: 60_000, maxRetries: 3 });
+      });
+      const overloaded = (status: number, retryAfter?: string) => new NotteAPIError('/sessions/start', status, {},
+        new Response(null, { status, headers: retryAfter ? { 'retry-after': retryAfter } : {} }));
+      const refused = (code: string) => new TypeError('fetch failed', { cause: Object.assign(new Error(code), { code }) });
+
+      it.each([503, 529])('retries %i with the API Retry-After and opts out of transport retries', async status => {
+        vi.mocked(sessionStart)
+          .mockRejectedValueOnce(overloaded(status, '4'))
+          .mockResolvedValueOnce({ data: sessionResponse() } as never);
+
+        await new Session(mockClient).start();
+
+        expect(sessionStart).toHaveBeenCalledTimes(2);
+        expect(sleep).toHaveBeenCalledExactlyOnceWith(4000);
+        expect(sessionStart).toHaveBeenCalledWith(expect.objectContaining({ headers: expect.objectContaining({ [MAX_RETRIES_HEADER]: '0' }) }));
+      });
+
+      it('does not wait past the shared start deadline', async () => {
+        vi.mocked(mockClient.getConfig).mockReturnValue({ baseUrl: 'https://api.notte.cc', timeoutMs: 1000, maxRetries: 3 });
+        const error = overloaded(503, '20');
+        vi.mocked(sessionStart).mockRejectedValue(error);
+        await expect(new Session(mockClient).start()).rejects.toBe(error);
+        expect(sessionStart).toHaveBeenCalledTimes(1);
+        expect(sleep).not.toHaveBeenCalled();
+      });
+
+      it('passes only the remaining timeout to subsequent attempts', async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(1000);
+        vi.mocked(mockClient.getConfig).mockReturnValue({ baseUrl: 'https://api.notte.cc', timeoutMs: 5000, maxRetries: 3 });
+        vi.mocked(sessionStart)
+          .mockImplementationOnce(async () => { vi.mocked(Date.now).mockReturnValue(3000); throw overloaded(503, '0'); })
+          .mockResolvedValueOnce({ data: sessionResponse() } as never);
+        await new Session(mockClient).start();
+        expect(sessionStart).toHaveBeenNthCalledWith(2, expect.objectContaining({
+          headers: expect.objectContaining({ [TIMEOUT_HEADER]: '3000' }),
+        }));
+      });
+
+      it('closes a creation that resolves after the shared deadline', async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(1000);
+        vi.mocked(mockClient.getConfig).mockReturnValue({ baseUrl: 'https://api.notte.cc', timeoutMs: 1000, maxRetries: 3 });
+        vi.mocked(sessionStart).mockImplementationOnce(async () => {
+          vi.mocked(Date.now).mockReturnValue(2001);
+          return { data: sessionResponse() } as never;
+        });
+        const session = new Session(mockClient);
+        const stop = vi.spyOn(session, 'stop').mockResolvedValue(undefined);
+        await expect(session.start()).rejects.toBeInstanceOf(NotteTimeoutError);
+        expect(stop).toHaveBeenCalledExactlyOnceWith('error');
+      });
+
+      it('gives up after maxRetries transient failures', async () => {
+        const error = overloaded(529);
+        vi.mocked(sessionStart).mockRejectedValue(error);
+
+        await expect(new Session(mockClient).start()).rejects.toBe(error);
+        expect(sessionStart).toHaveBeenCalledTimes(4);
+        expect(sleep).toHaveBeenCalledTimes(3);
+        for (const [ms] of vi.mocked(sleep).mock.calls) expect(ms).toBeLessThanOrEqual(10_000);
+      });
+
+      it('retries a refused connection but not a reset one', async () => {
+        vi.mocked(sessionStart)
+          .mockRejectedValueOnce(refused('ECONNREFUSED'))
+          .mockResolvedValueOnce({ data: sessionResponse() } as never);
+        await new Session(mockClient).start();
+        expect(sessionStart).toHaveBeenCalledTimes(2);
+
+        vi.mocked(sessionStart).mockReset().mockRejectedValue(refused('ECONNRESET'));
+        await expect(new Session(mockClient).start()).rejects.toThrow('fetch failed');
+        expect(sessionStart).toHaveBeenCalledTimes(1);
+      });
+
+      it('still retries other 5xx errors SESSION_START_TRIES times', async () => {
+        vi.mocked(sessionStart)
+          .mockRejectedValueOnce(apiError(502))
+          .mockRejectedValueOnce(apiError(500))
+          .mockResolvedValueOnce({ data: sessionResponse() } as never);
+
+        await new Session(mockClient).start();
+        expect(sessionStart).toHaveBeenCalledTimes(3);
+        expect(sleep).not.toHaveBeenCalled();
+      });
     });
 
     it('never retries 4xx errors', async () => {

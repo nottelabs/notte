@@ -57,6 +57,7 @@ from notte_core.utils.files import create_or_append_cookies_to_file
 from pydantic import BaseModel
 from typing_extensions import final, override
 
+from notte_sdk._retry import is_retryable_status
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.files import RemoteFileStorage
 from notte_sdk.endpoints.page import PageClient
@@ -94,7 +95,9 @@ if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
 
 # Retry configuration constants
-CLUSTER_OVERLOAD_RETRY_DELAY = 30  # seconds to wait before retrying on 529 errors
+# Seconds to wait before retrying a 529 when client retries are disabled (max_retries=0).
+# Otherwise the client already retried it, honoring the API's Retry-After.
+CLUSTER_OVERLOAD_RETRY_DELAY = 30
 CONSOLE_VIEWER_URL = (
     "https://console.notte.cc/static/viewer?ws=wss://api.notte.cc/sessions/{session_id}/debug/recording?token={token}"
 )
@@ -866,6 +869,10 @@ class RemoteSession(SyncResource):
 
                 # raise if error is a 4XX or status is unknown
                 if status is None or 400 <= status < 500:
+                    raise
+
+                # the client already retried this status with backoff: do not multiply attempts
+                if self.client.max_retries > 0 and is_retryable_status(status, "POST"):
                     raise
 
                 # on 529: cluster overload, retry with backoff

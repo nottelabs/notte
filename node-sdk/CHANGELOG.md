@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Requests retry transient failures (502, 503, 504, 529, and connection errors)
+  with exponential backoff and full jitter, honoring `Retry-After`. POST and
+  PATCH are only retried when the API cannot have processed them (503, 529,
+  connection refused). Configure with `maxRetries` (default 3, `0` disables).
 - `session.saveProfile({ name })` / `session.saveProfile({ profile_id })` saves the
   running session's browser state into a new or existing profile without stopping
   the session. With neither option it saves into the session's start profile.
