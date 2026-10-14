@@ -1,10 +1,5 @@
 import asyncio
-import base64
-import json
-import traceback
 from contextlib import suppress
-from pathlib import Path
-from typing import Any, cast
 
 from notte_core.actions import (
     BaseAction,
@@ -47,22 +42,18 @@ from notte_core.profiling import profiler
 from notte_core.storage import BaseStorage
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
-from notte_core.utils.raw_file import DEFAULT_RAW_FILE_SELECTORS
 from typing_extensions import final
 
 from notte_browser.captcha import CaptchaHandler
-from notte_browser.dom.locate import locate_element, locate_file_upload_element, selectors_through_shadow_dom
+from notte_browser.dom.locate import locate_element
 from notte_browser.errors import (
-    FailedToDownloadFileError,
-    FailedToGetFileError,
-    FailedToUploadFileError,
-    NoStorageObjectProvidedError,
     PlaywrightTimeoutError,
     ScrollActionFailedError,
     capture_playwright_errors,
 )
+from notte_browser.files import download_file, upload_file
 from notte_browser.form_filling import FormFiller
-from notte_browser.playwright_async_api import CDPSession, Error, Frame, JSHandle, Locator, evaluate_in_main_world
+from notte_browser.playwright_async_api import Error, Frame, JSHandle, Locator
 from notte_browser.window import BrowserWindow
 
 # Capture the wheel target's ancestors before the browser performs its default
@@ -187,111 +178,6 @@ _FIND_DROPDOWN_OPTION = """
     return null;
 }
 """
-
-
-# Installed once per download action. Wraps URL.createObjectURL so we retain a
-# strong JS reference to each Blob under its URL key, which lets us read the
-# bytes even after the page's URL.revokeObjectURL runs (file-saver.js pattern).
-# Revocation only removes the URL->Blob mapping in the browser's registry;
-# our Map keeps the Blob object alive.
-#
-# Both snippets must run in the page's main world, where the Blob is created.
-# Chromium's top frame uses CDP; iframe and Firefox evaluation explicitly uses
-# the owning frame's page world rather than Patchright's default isolated world.
-_BLOB_CAPTURE_HOOK = """
-(() => {
-  if (window.__notte_blob_capture) return;
-  const origCreate = URL.createObjectURL;
-  const blobs = new Map();
-  const createObjectURL = function (obj) {
-    const url = origCreate.call(URL, obj);
-    try { blobs.set(url, obj); } catch (e) {}
-    return url;
-  };
-  URL.createObjectURL = createObjectURL;
-  window.__notte_blob_capture = {
-    get: (url) => blobs.get(url) || null,
-    clear: () => blobs.clear(),
-    dispose: () => {
-      blobs.clear();
-      if (URL.createObjectURL === createObjectURL) URL.createObjectURL = origCreate;
-      delete window.__notte_blob_capture;
-    },
-  };
-})();
-"""
-
-_BLOB_CAPTURE_DISPOSE = "window.__notte_blob_capture?.dispose?.()"
-
-# Returns base64 so we can ferry bytes safely across CDP.
-_BLOB_READ_SCRIPT = """
-(async (url) => {
-  const blob = window.__notte_blob_capture && window.__notte_blob_capture.get(url);
-  if (!blob) return null;
-  const buf = await blob.arrayBuffer();
-  const bytes = new Uint8Array(buf);
-  let binary = '';
-  const CHUNK = 0x8000;
-  for (let i = 0; i < bytes.length; i += CHUNK) {
-    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
-  }
-  return btoa(binary);
-})(__NOTTE_BLOB_URL__)
-"""
-
-
-async def _main_world_evaluate(cdp: CDPSession, expression: str, await_promise: bool = False) -> Any:
-    """Evaluate an expression in the page's main world and return its value."""
-    raw_response = cast(
-        "object",
-        await cdp.send(  # pyright: ignore [reportUnknownMemberType]
-            "Runtime.evaluate",
-            {"expression": expression, "awaitPromise": await_promise, "returnByValue": True},
-        ),
-    )
-    response = cast("dict[str, Any]", raw_response) if isinstance(raw_response, dict) else {}
-    raw_exception_details: Any = response.get("exceptionDetails")
-    if isinstance(raw_exception_details, dict):
-        exception_details = cast("dict[str, Any]", raw_exception_details)
-        raw_exception: Any = exception_details.get("exception")
-        exception = cast("dict[str, Any]", raw_exception) if isinstance(raw_exception, dict) else None
-        description = exception.get("description") if exception is not None else None
-        message = description if isinstance(description, str) else exception_details.get("text", "unknown error")
-        raise RuntimeError(f"CDP Runtime.evaluate failed: {message}")
-    result: Any = response.get("result")
-    if not isinstance(result, dict):
-        return None
-    return cast("dict[str, Any]", result).get("value")
-
-
-async def _resolve_locator_frame(locator: Locator) -> Frame:
-    """Return the frame containing a locator without retaining its element handle."""
-    handle = await locator.element_handle()
-    try:
-        frame = await handle.owner_frame()
-    finally:
-        await handle.dispose()
-    if frame is None:
-        raise FailedToDownloadFileError()
-    return frame
-
-
-def _should_persist_download(*, manually_fetched: bool, captures_browser_downloads: bool) -> bool:
-    """Return whether the controller owns persistence for a downloaded file."""
-    return manually_fetched or not captures_browser_downloads
-
-
-async def _evaluate_blob_expression(
-    frame: Frame,
-    expression: str,
-    *,
-    cdp: CDPSession | None = None,
-    await_promise: bool = False,
-) -> Any:
-    """Evaluate Blob capture code in the frame that owns the clicked locator."""
-    if cdp is not None:
-        return await _main_world_evaluate(cdp, expression, await_promise=await_promise)
-    return await evaluate_in_main_world(frame, expression)
 
 
 class _ActionBudget:
@@ -649,191 +535,19 @@ class BrowserController:
                     _ = await locator.select_option(get_str_value(value), timeout=budget.remaining_ms())
                 else:
                     await self._select_custom_dropdown_option(window, locator, get_str_value(value), budget)
-            case UploadFileAction(file_path=file_path):
-                if self.storage is None or self.storage.upload_dir is None:
-                    raise NoStorageObjectProvidedError(action.name())
-
-                file_chooser_flag = False
-                upload_file_path = await self.storage.get_file(file_path)
-
-                if upload_file_path is None:
-                    raise FailedToGetFileError(action.id, file_path)
-
-                if prev_snapshot is not None:
-                    locator_node = prev_snapshot.dom_node.find(action.id)
-
-                    if locator_node is not None and locator_node.attributes is not None:
-                        clickable_els = ["button", "a"]
-
-                        # To Do:
-                        # try except for file chooser with set input files fallback
-                        # drag and drop handler
-                        # use validation within action to improve handling?
-                        # change action to take list of file paths for simul multiple file upload?
-
-                        if locator_node.attributes.tag_name in clickable_els:
-                            if self.verbose:
-                                logger.info("Attempting file chooser detection")
-                            async with window.page.expect_file_chooser(timeout=budget.remaining_ms()) as fc:
-                                await locator.click(timeout=budget.remaining_ms())
-                            file_chooser = await fc.value
-                            await file_chooser.set_files(upload_file_path)
-                            file_chooser_flag = True
-                        else:
-                            new_locator_node = None
-
-                            try:
-                                new_locator_node = locate_file_upload_element(locator_node)
-                            except Exception as e:
-                                logger.info(f"Unknown error in locate_file_upload_element: {e}")
-
-                            if self.verbose:
-                                logger.info("Tried to locate file upload input")
-
-                            if new_locator_node is not None and new_locator_node.id != locator_node.id:
-                                if self.verbose and new_locator_node.attributes is not None:
-                                    logger.info(
-                                        f"Found input element! {new_locator_node.attributes.tag_name}, {new_locator_node.attributes.id_name if new_locator_node.attributes.id_name is not None else None}, {new_locator_node.type}"
-                                    )
-                                selectors = new_locator_node.computed_attributes.selectors
-
-                                if selectors is not None:
-                                    if selectors.in_shadow_root:
-                                        if self.verbose:
-                                            logger.info(
-                                                f"🔍 Resolving shadow root selectors for {new_locator_node.id} ({new_locator_node.text})"
-                                            )
-                                        selectors = selectors_through_shadow_dom(new_locator_node)
-
-                                    locator = await locate_element(window.page, selectors)
-
-                if not file_chooser_flag:
-                    try:
-                        if self.verbose:
-                            logger.info("Trying to set files")
-                        await locator.set_input_files(files=[upload_file_path], timeout=budget.remaining_ms())
-                    except Exception as e:
-                        if "Node is not an HTMLInputElement" in str(e):
-                            # this is a special case where the element cannot be clicked on
-                            # try to go to the root element throught the element bounding boxes and click on it
-                            bbox = await locator.bounding_box(timeout=budget.remaining_ms())
-                            if bbox is None:
-                                raise FailedToUploadFileError(
-                                    action_id=action.id,
-                                    file_path=file_path,
-                                    error=e,
-                                )
-                            # click on the center of the element
-                            try:
-                                async with window.page.expect_file_chooser(timeout=budget.remaining_ms()) as fc_info:
-                                    await window.page.mouse.click(
-                                        bbox["x"] + bbox["width"] * 0.54, bbox["y"] + bbox["height"] * 0.35
-                                    )
-                                    fc = await fc_info.value
-                                    await fc.set_files(upload_file_path, timeout=budget.remaining_ms())
-                                    return
-                            except Exception:
-                                logger.warning("Error setting files through bounding box...")
-                        else:
-                            logger.warning(f"Error setting files: {traceback.format_exc()}")
-                        raise FailedToUploadFileError(
-                            action_id=action.id,
-                            file_path=file_path,
-                            error=e,
-                        )
-            case DownloadFileAction():
-                if self.storage is None or self.storage.download_dir is None:
-                    raise NoStorageObjectProvidedError(action.name())
-
-                manually_fetched = window.is_file()
-                if manually_fetched:
-                    file_content, filename = await window.download_file()
-                    logger.info(f"Saving raw file with this filename: {filename}")
-                    file_path = Path(self.storage.download_dir) / filename
-                    with open(file_path, "wb") as f:
-                        _ = f.write(file_content)
-
-                elif action.selectors.playwright_selector in DEFAULT_RAW_FILE_SELECTORS:
-                    raise ValueError(
-                        f"Action: '{action.name()}' with selector='{action.selectors.playwright_selector}' can only be performed on RAW files urls but url='{window.page.url}'"
-                    )
-                else:
-                    # Install the blob-capture hook before the click so any
-                    # URL.createObjectURL call inside the click handler has
-                    # its Blob retained in our side map.
-                    blob_frame = await _resolve_locator_frame(locator)
-                    is_main_frame = blob_frame == window.page.main_frame
-                    cdp = (
-                        await window.page.context.new_cdp_session(window.page)
-                        if window.is_chromium_based and is_main_frame
-                        else None
-                    )
-                    try:
-                        # CDP's default Runtime.evaluate context is the main
-                        # frame. For iframe locators (including cross-origin
-                        # frames), Frame.evaluate targets the owning frame's
-                        # main world directly. Firefox also uses this path.
-                        _ = await _evaluate_blob_expression(blob_frame, _BLOB_CAPTURE_HOOK, cdp=cdp)
-
-                        async with window.page.expect_download(timeout=budget.remaining_ms()) as dw:
-                            await locator.click(timeout=budget.remaining_ms())
-                        download = await dw.value
-
-                        dl_url = download.url
-                        if dl_url.startswith("blob:"):
-                            expression = _BLOB_READ_SCRIPT.replace("__NOTTE_BLOB_URL__", json.dumps(dl_url))
-                            value = await _evaluate_blob_expression(
-                                blob_frame,
-                                expression,
-                                cdp=cdp,
-                                await_promise=True,
-                            )
-                            b64 = value if isinstance(value, str) else None
-                            if b64 is None:
-                                raise FailedToDownloadFileError()
-                            file_bytes = base64.b64decode(b64)
-                        else:
-                            # page.request shares cookies/auth with the page, so
-                            # same-origin protected downloads work.
-                            resp = await window.page.request.get(dl_url)
-                            if resp.status >= 400:
-                                raise FailedToDownloadFileError()
-                            file_bytes = await resp.body()
-                    finally:
-                        try:
-                            _ = await _evaluate_blob_expression(blob_frame, _BLOB_CAPTURE_DISPOSE, cdp=cdp)
-                        except Exception as e:
-                            logger.warning(f"Failed to dispose the Blob capture hook: {e}")
-                        finally:
-                            if cdp is not None:
-                                await cdp.detach()
-
-                    if not file_bytes:
-                        raise FailedToDownloadFileError()
-
-                    # Sanitize: Playwright does not strip path separators from
-                    # Content-Disposition-derived filenames, so a malicious
-                    # header can escape download_dir. Take basename only.
-                    safe_name = Path(download.suggested_filename).name
-                    if not safe_name:
-                        raise FailedToDownloadFileError()
-                    file_path = Path(self.storage.download_dir) / safe_name
-                    with open(file_path, "wb") as f:
-                        _ = f.write(file_bytes)
-
-                # Raw URLs are fetched and written by the controller itself; no
-                # browser download event is emitted for an out-of-band collector
-                # to capture. Native click downloads do emit such an event, so a
-                # collector-backed storage must remain the sole ingester there to
-                # avoid creating duplicate catalog entries.
-                if _should_persist_download(
-                    manually_fetched=manually_fetched,
-                    captures_browser_downloads=self.storage.captures_browser_downloads,
+            case UploadFileAction():
+                if await upload_file(
+                    window,
+                    locator,
+                    action,
+                    budget.remaining_ms,
+                    prev_snapshot,
+                    storage=self.storage,
+                    verbose=self.verbose,
                 ):
-                    res = await self.storage.set_file(str(file_path))
-                    if not res:
-                        raise FailedToDownloadFileError()
-
+                    return
+            case DownloadFileAction():
+                await download_file(window, locator, action, budget.remaining_ms, storage=self.storage)
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         if action.press_enter:

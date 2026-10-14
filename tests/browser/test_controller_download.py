@@ -2,7 +2,7 @@ from typing import cast
 from unittest.mock import AsyncMock
 
 import pytest
-from notte_browser.controller import (
+from notte_browser.files import (
     _BLOB_CAPTURE_DISPOSE,
     _BLOB_CAPTURE_HOOK,
     _evaluate_blob_expression,

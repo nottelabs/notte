@@ -27,7 +27,7 @@ from notte_core.types import (
     Cookie,
     LocalSessionStartRequest,
 )
-from notte_core.utils.raw_file import get_empty_dom_node, get_file_ext, get_filename
+from notte_core.utils.raw_file import get_empty_dom_node, get_file_ext
 from notte_core.utils.url import is_valid_url
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from typing_extensions import override
@@ -263,28 +263,6 @@ class BrowserWindow(BaseModel):
         _ = self._cdp_sessions.pop(id(self.resource.page), None)
         self.resource.page = page
         self.apply_page_callbacks()
-
-    def is_file(self) -> bool:
-        if self.goto_response is None:
-            return get_file_ext(headers=None, url=self.page.url) is not None
-
-        if self.goto_response.url != self.page.url:
-            self.goto_response = None
-            return self.is_file()
-
-        return (
-            "content-type" in self.goto_response.headers
-            and "text/html" not in self.goto_response.headers["content-type"]
-        )
-
-    async def download_file(self) -> tuple[bytes, str]:
-        if not self.is_file():
-            raise ValueError("Page is not a file")
-        resp = await self.page.request.get(self.page.url)
-
-        headers = resp.headers
-        filename = get_filename(headers, self.page.url)
-        return await resp.body(), filename
 
     @property
     def is_chromium_based(self) -> bool:
@@ -553,7 +531,9 @@ class BrowserWindow(BaseModel):
         try:
             snapshot_metadata = await self.snapshot_metadata()
 
-            if self.is_file():
+            from notte_browser.files import is_raw_file
+
+            if is_raw_file(self):
                 ext = get_file_ext(
                     headers=self.goto_response.headers if self.goto_response is not None else None, url=self.page.url
                 )
