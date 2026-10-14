@@ -27,10 +27,11 @@ def test_persona_create_request_email_provider_defaults_to_notte() -> None:
     assert PersonaCreateRequest().email_provider == "notte"
 
 
-def test_persona_create_request_accepts_agentmail() -> None:
-    request = PersonaCreateRequest.model_validate({"email_provider": "agentmail"})
-    assert request.email_provider == "agentmail"
-    assert json.loads(request.model_dump_json(exclude_none=True))["email_provider"] == "agentmail"
+@pytest.mark.parametrize("provider", ["agentmail", "resend"])
+def test_persona_create_request_accepts_provider(provider: str) -> None:
+    request = PersonaCreateRequest.model_validate({"email_provider": provider})
+    assert request.email_provider == provider
+    assert json.loads(request.model_dump_json(exclude_none=True))["email_provider"] == provider
 
 
 def test_persona_create_request_rejects_unknown_email_provider() -> None:
