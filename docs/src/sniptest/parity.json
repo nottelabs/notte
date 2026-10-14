@@ -350,7 +350,7 @@
     "anything-api/start_detached.py": "Raw HTTP example for anything.notte.cc; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it bills a real 2-10 minute Anything API agent build.",
     "integrations/agentmail_read_emails.py": "AgentMail persona example; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it needs a persona whose AgentMail inbox has already received a verification email.",
     "integrations/agentmail_signup.py": "AgentMail persona example; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it provisions a third-party AgentMail inbox and signs an agent up on an external site.",
-    "personas/agentmail_inbox.py": "AgentMail persona example; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it provisions a third-party AgentMail inbox on every CI run.",
+    "personas/agentmail_inbox.py": "AgentMail persona example, executed live by the Python docs suite like the other persona examples; a TypeScript pair would become an executable pair requiring a live behavior contract, and the existing persona examples have no TypeScript fixtures yet.",
     "sessions/tailnet_proxy_console.py": "Tailscale session example; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it needs a real Tailscale OAuth client connected to the workspace and a reachable tailnet host."
   }
 }

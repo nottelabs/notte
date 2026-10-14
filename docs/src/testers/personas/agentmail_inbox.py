@@ -1,5 +1,4 @@
 # @sniptest filename=agentmail_persona.py
-# @sniptest typecheck_only=true
 from notte_sdk import NotteClient
 
 client = NotteClient()
