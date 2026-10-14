@@ -1,3 +1,4 @@
+import weakref
 from collections.abc import Iterator
 from types import SimpleNamespace
 from unittest.mock import ANY, AsyncMock, MagicMock
@@ -22,8 +23,8 @@ def _bare_session() -> RemoteSession:
     session._async_playwright_context = None
     session._async_playwright_page = None
     session._playwright_connection_generation = 0
-    session._playwright_observed_pages = set()
-    session._playwright_observed_contexts = set()
+    session._playwright_observed_pages = weakref.WeakSet()
+    session._playwright_observed_contexts = weakref.WeakSet()
     session._playwright_cleanup_in_progress = False
     session.response = MagicMock(session_id="session-id")
     session.cdp_url = MagicMock(return_value=CDP_URL)
@@ -291,3 +292,18 @@ def test_already_stopped_session_counts_as_cleanup() -> None:
     session.stop()
 
     assert session._playwright_cleanup_in_progress is True
+
+
+def test_new_tab_is_instrumented_even_when_its_id_is_reused(monkeypatch: pytest.MonkeyPatch) -> None:
+    # A closed page's id() can be handed to a later tab; observation must not key on it.
+    monkeypatch.setattr(sessions, "id", lambda _value: 1, raising=False)
+    session = _bare_session()
+    browser, _context, first_page = _browser_with_page()
+    second_page = MagicMock()
+
+    session._observe_playwright_page(browser, first_page, is_async=False)
+    session._observe_playwright_page(browser, second_page, is_async=False)
+    session._observe_playwright_page(browser, second_page, is_async=False)
+
+    for page in (first_page, second_page):
+        assert [call.args[0] for call in page.on.call_args_list] == ["close", "crash"]

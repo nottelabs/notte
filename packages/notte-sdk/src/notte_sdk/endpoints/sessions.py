@@ -2,6 +2,7 @@ import asyncio
 import os
 import random
 import time
+import weakref
 from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from pathlib import Path
@@ -763,8 +764,9 @@ class RemoteSession(SyncResource):
         self._async_playwright_browser: "BrowserAsync | None" = None
         self._async_playwright_page: "PageAsync | None" = None
         self._playwright_connection_generation: int = 0
-        self._playwright_observed_pages: set[int] = set()
-        self._playwright_observed_contexts: set[int] = set()
+        # Weak sets: a closed page's id() can be reused by a later tab.
+        self._playwright_observed_pages: weakref.WeakSet[Any] = weakref.WeakSet()
+        self._playwright_observed_contexts: weakref.WeakSet[Any] = weakref.WeakSet()
         self._playwright_cleanup_in_progress: bool = False
 
     def _playwright_session_id(self) -> str:
@@ -867,9 +869,9 @@ class RemoteSession(SyncResource):
             )
 
     def _observe_playwright_page(self, browser: Any, page: Any, *, is_async: bool) -> None:
-        if id(page) in self._playwright_observed_pages:
+        if page in self._playwright_observed_pages:
             return
-        self._playwright_observed_pages.add(id(page))
+        self._playwright_observed_pages.add(page)
 
         def on_close(*_args: Any) -> None:
             cached_page = self._async_playwright_page if is_async else self._playwright_page
@@ -906,8 +908,8 @@ class RemoteSession(SyncResource):
 
         browser.on("disconnected", on_disconnected)
         for context in browser.contexts:
-            if id(context) not in self._playwright_observed_contexts:
-                self._playwright_observed_contexts.add(id(context))
+            if context not in self._playwright_observed_contexts:
+                self._playwright_observed_contexts.add(context)
 
                 def on_page(page: Any, *, _browser: Any = browser, _is_async: bool = is_async) -> None:
                     self._observe_playwright_page(_browser, page, is_async=_is_async)
