@@ -1,16 +1,25 @@
 # Changelog
 
+## Unreleased — interaction renderer functions
+
+Replaced `InteractionOnlyDomNodeRenderingPipe` with functions in `notte_browser.rendering.interaction_only`:
+`forward` becomes `render_interactions`, `format` becomes `format_node`, and `render_node` and
+`children_texts` keep their names. The attribute constant is now `INCLUDE_ATTRIBUTES`.
+Rendering output is unchanged; callers importing the class must use the module functions.
+
 ## Unreleased — removed prompt APIs
 
 Removed the agent-only action helpers `non_agent_fields`, `model_dump_agent`,
 and `model_dump_agent_json`, and the unused `ActionParameterValue` export.
 Regular action serialization, IDs, and descriptions are unchanged.
+
 ## Unreleased — retired core errors
 
 Nine unused core error classes and `notte_core.errors.validation` are removed.
 Serialized errors naming these retired classes now rehydrate as `NotteBaseError`,
 preserving all messages and retry/notify flags but losing the retired subtype identity.
 Active error subtypes still rehydrate to their own classes.
+
 ## Unreleased — core configuration cleanup
 
 Removed the unused core cache diagnostics (`get_cache_info`, `get_legacy_cache_locations`,

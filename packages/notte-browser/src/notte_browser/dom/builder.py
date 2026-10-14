@@ -8,7 +8,7 @@ in document order (child frames included, at the position of their iframe elemen
 Three text algorithms read the tree, with different outputs, and are kept as they are:
 - `DomNode.text` (`element_name` below): accessible-name-like, e.g. the visible text of a link
 - `DomNode.inner_text()`: the text of an interaction node, used as the action label
-- `InteractionOnlyDomNodeRenderingPipe.children_texts`: the text rendered in the action descriptions
+- `rendering.interaction_only.children_texts`: the text rendered in the action descriptions
 """
 
 from collections import defaultdict

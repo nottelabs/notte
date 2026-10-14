@@ -4,7 +4,7 @@ from notte_core.common.config import config
 from notte_core.errors.processing import InvalidInternalCheckError
 from notte_core.space import ActionSpace
 
-from notte_browser.rendering.interaction_only import InteractionOnlyDomNodeRenderingPipe
+from notte_browser.rendering.interaction_only import render_interactions, render_node
 
 
 def build_action_space(dom_node: DomNode) -> ActionSpace:
@@ -13,7 +13,7 @@ def build_action_space(dom_node: DomNode) -> ActionSpace:
     The description renders the page's interactive elements (attributes cut to 60 characters, and
     only the open dialogs when the page has some), and every interaction node becomes one action.
     """
-    description = InteractionOnlyDomNodeRenderingPipe.forward(
+    description = render_interactions(
         dom_node,
         max_len_per_attribute=60,
         verbose=config.verbose,
@@ -57,7 +57,7 @@ def _interaction_action(node: DomNode) -> InteractionAction:
         param = None
         action = ClickAction(id=node.id, text_label=label)
     action.selector = node.computed_attributes.selectors
-    action.description = InteractionOnlyDomNodeRenderingPipe.render_node(node, include_children=False)
+    action.description = render_node(node, include_children=False)
     action.category = "Interaction action"
     action.param = param
     return action
