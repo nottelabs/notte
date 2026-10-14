@@ -84,7 +84,6 @@ async def test_observe_and_execute_share_one_tree_walk(monkeypatch: pytest.Monke
     space = build_action_space(snapshot.dom_node)
     obs = Observation.from_snapshot(snapshot, space, TimedSpan.empty())
     assert len(obs.screenshot.bboxes) == 3  # Includes the action outside the dialog.
-    assert snapshot.compare_with(snapshot)
     assert len(snapshot.interaction_nodes()) == 3
     # A fresh ID-only action uses the index; its label is descendant text, not the title attribute.
     action = await NodeResolutionPipe.forward(ClickAction(id="B1"), snapshot)
@@ -112,7 +111,6 @@ def test_index_lifetime_and_synthetic_download_nodes() -> None:
     assert list(snapshot.dom_node.interaction_nodes_by_id) == ["I0"]
     snapshot.dom_node = DomNode.empty_root()
     assert not snapshot.interaction_nodes()
-    assert not copied.compare_with(snapshot)
 
 
 def test_index_is_not_serialized() -> None:

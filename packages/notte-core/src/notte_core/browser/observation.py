@@ -50,12 +50,6 @@ class TimedSpan(BaseModel):
             self.ended_at = utc_now()
         return FilledTimedSpan(started_at=self.started_at, ended_at=self.ended_at)
 
-    def as_fields(self) -> dict[str, dt.datetime]:
-        return {
-            "started_at": self.started_at,
-            "ended_at": self.ended_at or utc_now(),
-        }
-
     @staticmethod
     def empty() -> "FilledTimedSpan":
         with TimedSpan.capture() as span:

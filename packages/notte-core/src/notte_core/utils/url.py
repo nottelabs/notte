@@ -1,5 +1,4 @@
 import functools
-import socket
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
@@ -28,26 +27,6 @@ def clean_url(url: str) -> str:
     base = base.replace("https://", "").replace("http://", "")
     base = base.replace("www.", "")
     return base
-
-
-def resolve_domain_to_url(domain: str) -> str | None:
-    """Resolve a domain to its corresponding URL.
-
-    Args:
-        domain (str): The domain to resolve.
-
-    Returns:
-        str | None: The corresponding URL if resolved, None otherwise.
-    """
-    try:
-        # Get the IP address of the domain
-        _ = socket.gethostbyname(domain)
-
-        # Construct the URL
-        url = f"https://{domain}/"
-        return url
-    except socket.gaierror:
-        return None
 
 
 def is_valid_url(url: str, check_reachability: bool = True) -> bool:

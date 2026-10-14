@@ -5,7 +5,6 @@ from collections.abc import Sequence
 from pydantic import BaseModel, Field
 
 from notte_core.browser.dom_tree import DomNode
-from notte_core.common.logging import logger
 from notte_core.utils.url import clean_url
 
 
@@ -50,14 +49,6 @@ class BrowserSnapshot(BaseModel):
     @property
     def clean_url(self) -> str:
         return clean_url(self.metadata.url)
-
-    def compare_with(self, other: "BrowserSnapshot") -> bool:
-        inodes = set(self.dom_node.interaction_nodes_by_id)
-        new_inodes = set(other.dom_node.interaction_nodes_by_id)
-        identical = inodes == new_inodes
-        if not identical:
-            logger.trace(f"Interactive nodes changed: {new_inodes.difference(inodes)}")
-        return identical
 
     def interaction_nodes(self) -> Sequence[DomNode]:
         return self.dom_node.interaction_nodes()

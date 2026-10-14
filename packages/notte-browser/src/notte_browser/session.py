@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 import requests
 from notte_core import enable_nest_asyncio
 from notte_core.actions import (
-    ActionList,
     BaseAction,
     EvaluateJsAction,
     FallbackFillAction,
@@ -692,23 +691,6 @@ class NotteSession(AsyncResource, SyncResource):
             raise exception
         return execution_result
 
-    def execute_saved_actions(self, actions_file: str) -> None:
-        with open(actions_file, "r") as f:
-            action_list = ActionList.model_validate_json(f.read())
-        for i, action in enumerate(action_list.actions):
-            # browser-level actions (wait, goto, ...) have no `id` attribute
-            action_id = getattr(action, "id", "")
-            logger.info(f"💡 Step {i + 1}/{len(action_list.actions)}: executing action '{action.type}' {action_id}")
-            # replay stops gracefully on the first failed step instead of raising
-            res = self.execute(action, raise_on_failure=False)
-            logger.info(f"{'✅' if res.success else '❌'} - {res.message}")
-            if not res.success:
-                logger.error("🚨 Stopping execution of saved actions since last action failed...")
-                return
-            obs = self.observe()
-            logger.info(f"🌌 Observation. Current URL: {obs.clean_url}")
-        logger.info("🎉 All actions executed successfully")
-
     # BEGIN GENERATED OVERLOADS: execute (scripts/generate_action_overloads.py)
     @overload
     def execute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
@@ -1092,9 +1074,3 @@ class NotteSession(AsyncResource, SyncResource):
     @override
     def reset(self) -> None:
         _ = asyncio.run(self.areset())
-
-    def start_from(self, session: "NotteSession") -> None:
-        if len(self.trajectory) > 0 or self._snapshot is not None:
-            raise ValueError("Session already started")
-        self.trajectory = session.trajectory
-        self.snapshot = session._snapshot

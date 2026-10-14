@@ -646,12 +646,3 @@ class FormFiller:
         except Exception as e:
             logger.warning(f"Failed to fill {field_type} field: {str(e)}")
             return False
-
-    async def get_found_fields(self) -> dict[str, bool]:
-        """
-        Return a dictionary indicating which fields were found on the page.
-
-        Returns:
-            Dict mapping field types to boolean indicating if they were found.
-        """
-        return {field_type: bool(await self.find_field(field_type)) for field_type in self.FIELD_SELECTORS.keys()}

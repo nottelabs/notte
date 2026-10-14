@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — unused browser and core helpers
+
+Removed unused Python helpers: `PlaywrightManager.set_playwright`, `FormFiller.get_found_fields`,
+`NotteSession.start_from`, `NotteSession.execute_saved_actions`, `resolve_domain_to_url`,
+`TimedSpan.as_fields`, `BrowserSnapshot.compare_with`, `SpaceCategory.is_data`, and
+`ActionSpace.interaction_markdown`, `is_empty`, and `sample`. Callers of these methods must migrate;
+select actions from `ActionSpace.actions` explicitly instead of using `sample`.
+
 ## Unreleased — removed prompt APIs
 
 Removed credential prompt helpers inherited by `NotteVault` (`instructions` and

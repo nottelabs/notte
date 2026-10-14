@@ -65,6 +65,7 @@ The notte sdk also allows you to `observe` a web page and its actions, `scrape` 
 ```python
 from notte_sdk.client import NotteClient
 import os
+import random
 notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
 # start a session
@@ -73,7 +74,7 @@ with notte.Session() as session:
     result = session.execute(type="goto", url="https://www.google.com")
     obs = session.observe()
     # select random id to click
-    action = obs.space.sample(type="click")
+    action = random.choice([action for action in obs.space.actions if action.type == "click"])
     result = session.execute(action)
     # scrape the page content
     markdown = session.scrape()

@@ -57,9 +57,6 @@ class PlaywrightManager(BaseModel, BaseWindowManager):  # pyright: ignore[report
             raise BrowserNotStartedError()
         return self._playwright
 
-    def set_playwright(self, playwright: Playwright) -> None:
-        self._playwright = playwright
-
     async def connect_cdp_browser(self, options: BrowserWindowOptions) -> Browser:
         if options.cdp_url is None:
             raise ValueError("CDP URL is required to connect to a browser over CDP")
