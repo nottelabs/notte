@@ -1,7 +1,9 @@
 from base64 import b64encode
 from io import BytesIO
+from types import SimpleNamespace
 
 import pytest
+from notte_core.ast import SecureScriptRunner
 from notte_core.browser.observation import Screenshot
 from PIL import Image
 
@@ -20,3 +22,16 @@ def test_screenshot_accepts_image_bytes(encoded: bool) -> None:
     assert screenshot.raw == raw
     assert screenshot.bytes(type="raw") == raw
     assert screenshot.model_dump()["raw"] == b64encode(raw).decode("ascii")
+
+
+def test_observation_does_not_expose_builtins_to_restricted_scripts() -> None:
+    """Importing the bytes type must not expose the builtins module to scripts."""
+    script = """
+def run():
+    import notte_core.browser.observation as observation
+    return observation.builtins
+"""
+
+    runner = SecureScriptRunner(SimpleNamespace())
+
+    assert runner.run_script(script, restricted=True) is None
