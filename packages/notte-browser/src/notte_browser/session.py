@@ -576,8 +576,9 @@ class NotteSession(AsyncResource, SyncResource):
     async def _action_with_vault(self, action: BaseAction) -> BaseAction:
         """Replace credential placeholders with vault values.
 
-        Raises `CredentialReplacementError` or `NoCredentialsFoundError` when a placeholder cannot be replaced, so
-        that the action fails instead of typing the literal placeholder into the page.
+        Raises `CredentialReplacementError` or `NoCredentialsFoundError` when a secret placeholder cannot be replaced,
+        so that the action fails instead of typing the literal placeholder into the page. Non-secret placeholders
+        without a matching vault credential are filled as-is.
         """
         # Only fill-type actions support credential replacement
         _SUPPORTED = (FormFillAction, FillAction, FallbackFillAction, MultiFactorFillAction, SelectDropdownOptionAction)

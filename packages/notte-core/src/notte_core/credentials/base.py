@@ -28,7 +28,7 @@ from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.errors.actions import NoCredentialsFoundError
 from notte_core.errors.processing import (
     CredentialFieldValidationError,
-    InvalidPlaceholderError,
+    CredentialReplacementError,
     MissingCredentialFieldError,
     VaultLookupError,
 )
@@ -64,6 +64,9 @@ class CredentialField(BaseModel, ABC, frozen=True):  # pyright: ignore[reportUns
     placeholder_value: ClassVar[str] = Field(
         description="Value the llm has to set before being transcribed to actual value"
     )
+    # Whether the placeholder stands for a secret: an unresolved secret placeholder fails the action, while an
+    # unresolved non-secret placeholder (e.g. 'John Doe') is a regular value and is filled as-is
+    secret: ClassVar[bool] = False
     registry: ClassVar[dict[str, type[CredentialField]]] = {}
     placeholder_map: ClassVar[dict[str, type[CredentialField]]] = {}
     inverse_registry: ClassVar[dict[type[CredentialField], str]] = {}
@@ -105,6 +108,14 @@ class CredentialField(BaseModel, ABC, frozen=True):  # pyright: ignore[reportUns
                 placeholders.add(cred_type.placeholder_value)
         return placeholders
 
+    @staticmethod
+    def from_placeholder(value: str) -> type[CredentialField] | None:
+        """Return the credential field whose placeholder is exactly `value` (ignoring surrounding whitespace).
+
+        Values that merely contain a placeholder (e.g. 'John Doe Corp') are regular values, not placeholders.
+        """
+        return CredentialField.placeholder_map.get(value.strip())
+
     def instructions(self) -> str:
         return self.default_instructions(self.placeholder_value)
 
@@ -141,6 +152,7 @@ class UserNameField(CredentialField, frozen=True):
 class MFAField(CredentialField, frozen=True):
     alias: ClassVar[str] = "mfa_secret"
     placeholder_value: ClassVar[str] = "999779"
+    secret: ClassVar[bool] = True
 
     @override
     def validate_element(self, attrs: LocatorAttributes) -> bool:
@@ -155,6 +167,7 @@ class MFAField(CredentialField, frozen=True):
 class PasswordField(CredentialField, frozen=True):
     alias: ClassVar[str] = "password"
     placeholder_value: ClassVar[str] = "mycoolpassword"
+    secret: ClassVar[bool] = True
     field_autocomplete: ClassVar[str] = "current-password"
 
     @override
@@ -209,6 +222,7 @@ class CardNumberField(RegexCredentialField, frozen=True):
 class CardCVVField(RegexCredentialField, frozen=True):
     exposed: ClassVar[bool] = True
     alias: ClassVar[str] = "card_cvv"
+    secret: ClassVar[bool] = True
     placeholder_value: ClassVar[str] = "[CardCVVPlaceholder]"
     field_autocomplete: ClassVar[str] = "cc-csc"
     field_regex: ClassVar[re.Pattern[str]] = re.compile(
@@ -221,6 +235,7 @@ class CardCVVField(RegexCredentialField, frozen=True):
 class CardFullExpirationField(RegexCredentialField, frozen=True):
     exposed: ClassVar[bool] = True
     alias: ClassVar[str] = "card_full_expiration"
+    secret: ClassVar[bool] = True
     placeholder_value: ClassVar[str] = "[CardExpirationPlaceholder]"
     field_autocomplete: ClassVar[str] = "cc-exp"
     field_regex: ClassVar[re.Pattern[str]] = re.compile(
@@ -617,8 +632,20 @@ class BaseVault(ABC):
             for cred_key, cred_value in creds_dict.items()
         }
 
+    @staticmethod
+    def _fill_values(action: BaseAction) -> list[str | ValueWithPlaceholder]:
+        """Values of a fill-type action that may hold credential placeholders (empty for other actions)."""
+        if isinstance(action, FormFillAction):
+            return list(action.value.values())
+        if isinstance(action, (MultiFactorFillAction, FillAction, FallbackFillAction, SelectDropdownOptionAction)):
+            return [action.value]
+        return []
+
     def contains_credentials(self, action: BaseAction) -> bool:
         """Check if the action contains credentials.
+
+        A value holds a credential only if it is exactly a placeholder (ignoring surrounding whitespace), or a
+        value already replaced by the vault. Only fill-type actions carry credentials.
 
         Args:
             action: The action to check for credentials
@@ -626,32 +653,24 @@ class BaseVault(ABC):
         Returns:
             True if the action contains credential placeholders, False otherwise
         """
-        json_action = action.model_dump_json()
-        initial = False
-
-        for placeholder_val in CredentialField.all_placeholders():
-            initial |= placeholder_val in json_action
-
-        return initial
-
-    @staticmethod
-    def _contains_placeholder(value: str) -> bool:
-        return any(placeholder in value for placeholder in CredentialField.all_placeholders())
+        return any(
+            isinstance(value, ValueWithPlaceholder) or CredentialField.from_placeholder(value) is not None
+            for value in self._fill_values(action)
+        )
 
     def has_unresolved_placeholders(self, action: BaseAction) -> bool:
         """Check if the action still holds credential placeholders that have not been replaced yet.
 
         Values already replaced by the vault (`ValueWithPlaceholder`) serialize back to their placeholder,
         so `contains_credentials` is still true for them: they must not be replaced a second time.
+        A value is a placeholder only if it is exactly one (ignoring surrounding whitespace): a value that merely
+        contains a placeholder (e.g. 'John Doe Corp') is a regular value.
         Only fill-type actions support credential replacement: other actions always return False.
         """
-        if isinstance(action, FormFillAction):
-            values = list(action.value.values())
-        elif isinstance(action, (MultiFactorFillAction, FillAction, FallbackFillAction, SelectDropdownOptionAction)):
-            values = [action.value]
-        else:
-            return False
-        return any(isinstance(value, str) and self._contains_placeholder(value) for value in values)
+        return any(
+            isinstance(value, str) and CredentialField.from_placeholder(value) is not None
+            for value in self._fill_values(action)
+        )
 
     async def _get_credit_card_for_replacement(self, cred_key: str) -> CreditCardDict:
         try:
@@ -673,13 +692,30 @@ class BaseVault(ABC):
             raise NoCredentialsFoundError(url)
         return creds_dict
 
+    async def _resolve_credential(self, cred_class: type[CredentialField], url: str) -> str:
+        cred_key = cred_class.alias
+        creds_dict: CredentialsDict | CreditCardDict
+        if cred_class in (CardHolderField, CardNumberField, CardCVVField, CardFullExpirationField):
+            creds_dict = await self._get_credit_card_for_replacement(cred_key)
+        else:
+            creds_dict = await self._get_credentials_for_replacement(url)
+
+        cred_value = get_with_fallback(creds_dict, cred_key)
+        if cred_value is None:
+            raise MissingCredentialFieldError(cred_key)
+        return cred_value
+
     async def replace_credentials(
         self, action: BaseAction, attrs: LocatorAttributes, snapshot: BrowserSnapshot
     ) -> BaseAction:
         """Replace credentials in the action with actual values from the vault.
 
-        Values that were already replaced (`ValueWithPlaceholder`) and form values that do not contain any
-        placeholder are left untouched.
+        Only values that are exactly a placeholder (ignoring surrounding whitespace) are replaced. Values that were
+        already replaced (`ValueWithPlaceholder`) and regular values are left untouched.
+
+        A secret placeholder (password, MFA, card CVV, card expiration) that cannot be resolved raises. A non-secret
+        placeholder (email, username, card holder, card number) that cannot be resolved is also an ordinary value
+        (e.g. 'John Doe'), so it is left untouched and filled as-is.
 
         Args:
             action: The action to replace credentials in
@@ -691,8 +727,8 @@ class BaseVault(ABC):
 
         Raises:
             ValueError: If the action type is not supported
-            CredentialReplacementError: If a placeholder cannot be replaced (e.g. missing credential field)
-            NoCredentialsFoundError: If the vault holds no credentials for the current page
+            CredentialReplacementError: If a secret placeholder cannot be replaced (e.g. missing credential field)
+            NoCredentialsFoundError: If the vault holds no credentials for the current page (secret placeholder)
         """
         # Get credentials for current domain
 
@@ -708,55 +744,48 @@ class BaseVault(ABC):
                 # already replaced: replacing again would treat the real value as a placeholder
                 continue
 
-            field_name = action_key if isinstance(action, FormFillAction) else None
-            placeholder_value = original_action_value
-            cred_class = CredentialField.placeholder_map.get(placeholder_value)
-
+            cred_class = CredentialField.from_placeholder(original_action_value)
             if cred_class is None:
-                if isinstance(action, FormFillAction) and not self._contains_placeholder(placeholder_value):
-                    # regular form value (e.g. a first name): nothing to replace
-                    continue
-                raise InvalidPlaceholderError(field_name)
+                # regular value (e.g. a first name, or a value that merely contains a placeholder): nothing to replace
+                continue
 
+            placeholder_value = cred_class.placeholder_value
             cred_key = cred_class.alias
 
-            if cred_class in (CardHolderField, CardNumberField, CardCVVField, CardFullExpirationField):
-                creds_dict = await self._get_credit_card_for_replacement(cred_key)
-            else:
-                creds_dict = await self._get_credentials_for_replacement(snapshot.metadata.url)
-
-            cred_value = get_with_fallback(creds_dict, cred_key)
-
-            if cred_value is None:
-                raise MissingCredentialFieldError(cred_key)
+            try:
+                cred_value = await self._resolve_credential(cred_class, snapshot.metadata.url)
+            except (CredentialReplacementError, NoCredentialsFoundError) as e:
+                if cred_class.secret:
+                    raise
+                # Non-secret placeholders are also ordinary values (e.g. 'John Doe'): type them as-is
+                logger.info(
+                    f"[Vault] No vault credential for the {cred_key!r} placeholder ({type(e).__name__}), filling the value as-is"
+                )
+                continue
 
             cred_instance = cred_class(value=cred_value)
-
-            validate_element = cred_instance.validate_element(attrs)
+            # validate because element chosen by llm (form fill elements are chosen by regex)
+            if not isinstance(action, FormFillAction) and not cred_instance.validate_element(attrs):
+                # A known placeholder targets an element that fails the field's validation
+                # (e.g. a password placeholder on a <label> instead of the password input).
+                # Raise so the literal placeholder is never typed into the page.
+                raise CredentialFieldValidationError(placeholder_value, cred_key, attrs.type, attrs.outerHTML)
 
             if not isinstance(action, FormFillAction):
-                # validate because element chosen by llm
-                if validate_element:
-                    action.value = ValueWithPlaceholder(cred_value, placeholder_value)
+                action.value = ValueWithPlaceholder(cred_value, placeholder_value)
 
-                    # replace fill action if mfa but agent chose the wrong action
-                    if cred_class is MFAField and isinstance(action, FillAction):
-                        action = MultiFactorFillAction(
-                            id=action.id,
-                            selector=action.selector,
-                            value=action.value,
-                            clear_before_fill=action.clear_before_fill,
-                            press_enter=action.press_enter,
-                            text_label=action.text_label,
-                            timeout=action.timeout,
-                        )
-                else:
-                    # A known placeholder targets an element that fails the field's validation
-                    # (e.g. a password placeholder on a <label> instead of the password input).
-                    # Raise so the literal placeholder is never typed into the page.
-                    raise CredentialFieldValidationError(placeholder_value, cred_key, attrs.type, attrs.outerHTML)
+                # replace fill action if mfa but agent chose the wrong action
+                if cred_class is MFAField and isinstance(action, FillAction):
+                    action = MultiFactorFillAction(
+                        id=action.id,
+                        selector=action.selector,
+                        value=action.value,
+                        clear_before_fill=action.clear_before_fill,
+                        press_enter=action.press_enter,
+                        text_label=action.text_label,
+                        timeout=action.timeout,
+                    )
             else:
-                # dont validate because element chosen by regex
                 assert isinstance(action.value, dict)
                 action.value[action_key] = ValueWithPlaceholder(cred_value, placeholder_value)  # pyright: ignore [reportArgumentType]
 
