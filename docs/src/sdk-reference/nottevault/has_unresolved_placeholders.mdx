@@ -1,0 +1,19 @@
+---
+title: "has_unresolved_placeholders"
+description: "Check if the action still holds credential placeholders that have not been replaced yet"
+---
+
+
+
+Values already replaced by the vault (`ValueWithPlaceholder`) serialize back to their placeholder,
+so `contains_credentials` is still true for them: they must not be replaced a second time
+
+
+## Parameters
+
+<ParamField path="action" type="BaseAction" required>
+</ParamField>
+
+## Returns
+
+`bool`

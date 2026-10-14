@@ -4,6 +4,7 @@ from unittest import TestCase
 
 import pytest
 from dotenv import load_dotenv
+from notte_agent.errors import MaxConsecutiveFailuresError
 from notte_agent.falco.agent import FalcoAgent
 from notte_core.actions import FillAction, FormFillAction, WaitAction
 from notte_core.credentials import PASSWORD as PASSWORD_PLACEHOLDER
@@ -221,13 +222,20 @@ def test_invalid_credentials_in_local_agent():
     # storage = notte.FileStorage()
     with client.Vault() as vault, notte.Session() as session:
         agent = notte.Agent(session=session, vault=vault)
-        with pytest.raises(NoCredentialsFoundError):
-            _ = agent.run(
+        try:
+            response = agent.run(
                 task=(
                     "go to https://apartment-board-demo-nine.vercel.app/auth/signin and login with the credentials "
                     "stored in your vault, not credentials shown on the page, then list the apartments."
                 )
             )
+            assert not response.success
+        except MaxConsecutiveFailuresError:
+            pass
+        # the missing credentials fail the fill step instead of aborting the run
+        assert agent.trajectory is not None
+        failed = [r for r in agent.trajectory.execution_results() if isinstance(r.exception, NoCredentialsFoundError)]
+        assert len(failed) > 0
 
 
 # ============================================
