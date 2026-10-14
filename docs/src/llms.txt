@@ -254,6 +254,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GET Session Network Logs](https://docs.notte.cc/api-reference/sessions/session-network-logs.md)
 - [GET Session Offset](https://docs.notte.cc/api-reference/sessions/session-offset.md)
 - [GET Session Profile Preview](https://docs.notte.cc/api-reference/sessions/session-profile-preview.md)
+- [POST Session Profile Save](https://docs.notte.cc/api-reference/sessions/session-profile-save.md)
 - [GET Session Replay](https://docs.notte.cc/api-reference/sessions/session-replay.md)
 - [POST Session Start](https://docs.notte.cc/api-reference/sessions/session-start.md)
 - [GET Session Status](https://docs.notte.cc/api-reference/sessions/session-status.md)
