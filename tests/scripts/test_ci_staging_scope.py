@@ -123,3 +123,11 @@ def test_lightweight_docs_assertions_have_no_workspace_or_secrets() -> None:
     commands = "\n".join(step.get("run", "") for step in job["steps"])
     assert "tests/docs --noconftest" in commands
     assert "uv sync" not in commands
+
+
+def test_deleted_docs_still_run_the_global_link_check() -> None:
+    steps = workflow("test-cicd.yml")["jobs"]["lint"]["steps"]
+    step = next(step for step in steps if step.get("name") == "Run pre-commit")
+    assert step["env"]["DOCS_LINKS"] == "${{ fromJSON(needs.changes.outputs.scope).docs_links }}"
+    assert 'if [ "$DOCS_LINKS" = true ]' in step["run"]
+    assert "pre-commit run check-docs-broken-links --all-files" in step["run"]

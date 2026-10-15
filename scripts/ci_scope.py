@@ -208,6 +208,8 @@ def changed_code(base: str, head: str, path: str) -> bool:
 def select(event: str, base: str, head: str) -> dict[str, bool | str]:
     selected: set[str] = ALL.copy()
     full = True
+    lint_all = False
+    docs_links = False
     try:
         if event in {"push", "pull_request"}:
             if not all(re.fullmatch(r"[0-9a-f]{40}", sha) and set(sha) != {"0"} for sha in (base, head)):
@@ -216,8 +218,19 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str]:
                 base = git("merge-base", base, head).decode().strip()
             # No rename detection: both the old and new paths must contribute coverage.
             paths = git("diff", "--name-only", "--no-renames", "-z", base, head, "--").decode("utf-8").split("\0")
+            docs_paths = {path for path in paths if path.startswith("docs/src/")}
+            if docs_paths:
+                deleted = set(
+                    git("diff", "--name-only", "--diff-filter=D", "--no-renames", "-z", base, head, "--")
+                    .decode("utf-8")
+                    .split("\0")
+                )
+                # Pre-commit omits deleted files. A surviving changed docs file
+                # normally triggers the global link hook; deletion-only diffs cannot.
+                docs_links = docs_paths <= deleted
             selected = set()
             for path in filter(None, paths):
+                lint_all |= path in {".pre-commit-config.yaml", "pyproject.toml"} or path.endswith("/pyproject.toml")
                 markdown = path == "README.md" or (path.startswith("docs/") and path.endswith((".md", ".mdx")))
                 code_changed = changed_code(base, head, path) if markdown else True
                 selected |= scopes_for_path(path, code_changed=code_changed)
@@ -228,7 +241,14 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str]:
     if event == "schedule":
         # Preserve Python's live-only periodic run; Node keeps its full periodic check.
         selected -= {"python_unit", "python_docs", "cli_contract"}
-    return {**{name: name in selected for name in sorted(ALL)}, "full": full, "base": base, "head": head}
+    return {
+        **{name: name in selected for name in sorted(ALL)},
+        "full": full,
+        "lint_all": full or lint_all or selected == ALL,
+        "docs_links": docs_links,
+        "base": base,
+        "head": head,
+    }
 
 
 def main() -> None:

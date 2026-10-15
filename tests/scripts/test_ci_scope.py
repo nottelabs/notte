@@ -199,6 +199,16 @@ class GitHistoryTests(unittest.TestCase):
         next_head = self.commit({"README.md": "Revised prose\n```python\nx = 2\n```\n"})
         self.assertTrue(self.scope("push", head, next_head)["readme_live"])
 
+    def test_lint_configuration_checks_all_files_but_ordinary_edits_do_not(self) -> None:
+        before = self.base
+        for path in (".pre-commit-config.yaml", "pyproject.toml", "packages/notte-sdk/pyproject.toml"):
+            with self.subTest(path=path):
+                head = self.commit({path: "# Updated configuration\n"})
+                self.assertTrue(self.scope("push", before, head)["lint_all"])
+                before = head
+        head = self.commit({"packages/notte-sdk/src/client.py": "runtime = True\n"})
+        self.assertFalse(self.scope("push", before, head)["lint_all"])
+
     def test_deleting_or_renaming_runtime_to_docs_retains_runtime_coverage(self) -> None:
         before = self.commit({"packages/notte-sdk/src/old.py": "old = True\n"})
         (self.repo / "docs/src").mkdir(parents=True)
@@ -215,8 +225,20 @@ class GitHistoryTests(unittest.TestCase):
         head = self.commit({"docs/src/page.mdx": "New prose only\n"})
         self.assertFalse(self.scope("push", self.base, head)["docs_live"])
         (self.repo / "docs/src/page.mdx").unlink()
-        deletion = self.commit({"docs/src/other.mdx": "Other prose\n"})
-        self.assertFalse(self.scope("push", head, deletion)["docs_live"])
+        deletion = self.commit({})
+        scope = self.scope("push", head, deletion)
+        self.assertFalse(scope["docs_live"])
+        self.assertFalse(scope["lint_all"])
+        self.assertTrue(scope["docs_links"])
+
+    def test_doc_renames_keep_link_checks_without_duplicate_global_checks(self) -> None:
+        before = self.commit({"docs/src/old.mdx": "Existing prose\n"})
+        self.git("mv", "docs/src/old.mdx", "docs/src/new.mdx")
+        head = self.commit({})
+        scope = self.scope("push", before, head)
+        self.assertFalse(scope["docs_links"])
+        self.assertTrue(scope["python_static"])
+        self.assertFalse(scope["docs_live"])
 
     def test_pr_uses_merge_base_excluding_main_only_runtime_changes(self) -> None:
         branch = self.git("branch", "--show-current")

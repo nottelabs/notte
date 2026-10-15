@@ -6,6 +6,10 @@ in the push. Pull requests compare their merge base with the head commit.
 Each test workflow starts with a small, credential-free selection job. Its
 summary lists the selected and skipped suites. Selection uses only Python's
 standard library and Git, without installing the SDK or contacting staging.
+Lint checks changed files unless lint/Python configuration changes or broad
+coverage is selected; those cases check all files against the new rules.
+Deletion-only docs changes explicitly run the global link check, since
+pre-commit filters deleted files out of changed-file hooks.
 
 | Change | Checks |
 | --- | --- |
