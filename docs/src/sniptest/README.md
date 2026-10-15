@@ -50,6 +50,10 @@ python docs/src/sniptest/generate.py --check
 ```
 
 Executable TypeScript examples compile against the built local package's public declarations.
+Run `npm ci --prefix docs` to install the pinned third-party integration SDKs.
+Integration pairs may use `typecheck_only=true` in both files when they need
+separate provider credentials. They retain full type checking; their end-to-end
+smoke tests run separately from the shared staging examples.
 Extracted TypeScript scripts and fragments awaiting fixtures receive syntax checks,
 not a misleading claim of full type or live validation. Every catalog Python source
 is syntax-checked, shell commands pass `bash -n`, and JSON responses are parsed.

@@ -36,6 +36,13 @@ class LiveContractTest(unittest.TestCase):
         (self.testers / "example.ts").unlink()
         self.assertTrue(self.check(self.contracts))
 
+    def test_third_party_pairs_are_type_checked_without_live_credentials(self):
+        (self.testers / "example.ts").write_text("// @sniptest typecheck_only=true\n")
+        self.assertTrue(self.check({}))
+        (self.testers / "example.py").write_text("# @sniptest typecheck_only=true\n")
+        self.assertEqual(self.check({}), [])
+        self.assertTrue(self.check(self.contracts))
+
     def test_rejects_empty_or_misspelled_assertions(self):
         for contract in ({}, {"expected": {}}, {"expected": {"status": "closed"}, "closedSesion": True}):
             with self.subTest(contract=contract):

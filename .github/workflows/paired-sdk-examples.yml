@@ -29,6 +29,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: npm ci --prefix node-sdk
+      - run: npm ci --prefix docs
       - run: npm run build --prefix node-sdk
       - run: npm run typecheck --prefix node-sdk
       - run: node docs/src/sniptest/check_typescript.mjs

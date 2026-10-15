@@ -1,6 +1,7 @@
 """Require a behavior contract for every executable pair, not just successful exit."""
 
 import json
+import re
 from pathlib import Path
 
 from catalog import execution_backlog
@@ -19,8 +20,17 @@ DEDICATED_CASES = {
 def check_live_contracts(testers: Path, contracts: dict, dedicated: set[str] | None = None) -> list[str]:
     dedicated = DEDICATED_CASES if dedicated is None else dedicated
     pending = execution_backlog(testers)
-    executable = {str(path.relative_to(testers)) for path in testers.rglob("*.ts")} - set(pending)
     errors = []
+    typecheck_only = set()
+    for path in testers.rglob("*.ts"):
+        if re.search(r"^//\s*@sniptest\s+typecheck_only\s*=\s*true\s*$", path.read_text(), re.MULTILINE):
+            python = path.with_suffix(".py")
+            if not python.is_file() or not re.search(
+                r"^#\s*@sniptest\s+typecheck_only\s*=\s*true\s*$", python.read_text(), re.MULTILINE
+            ):
+                errors.append(f"Type-check-only pair needs a matching Python directive: {path.relative_to(testers)}")
+            typecheck_only.add(str(path.relative_to(testers)))
+    executable = {str(path.relative_to(testers)) for path in testers.rglob("*.ts")} - set(pending) - typecheck_only
     for name in sorted(executable - set(contracts) - dedicated):
         errors.append(f"Executable pair needs a behavior contract: {name}")
     for name in sorted(set(contracts) - executable):

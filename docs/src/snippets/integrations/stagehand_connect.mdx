@@ -1,21 +1,73 @@
 {/* Auto-generated mdx file. Do not edit! */}
 {/* @sniptest testers/integrations/stagehand_connect.py */}
 
-```python notte_stagehand.py
-async def main():
-    client = NotteClient()
+<CodeGroup>
 
-    with client.Session() as session:
-        # Stagehand attaches to the Notte browser over CDP
-        stagehand = Stagehand(
-            browser=await local_browser.connect(cdp_url=session.cdp_url()),
-            model="anthropic/claude-sonnet-4-5-20250929",
-            api_key=os.environ.get("ANTHROPIC_API_KEY"),
-        )
-        await stagehand.initialize()
-        print(await stagehand.extract("the title of the top story"))
-        await stagehand.close()
+```python notte_stagehand.py
+import asyncio
+import os
+
+from notte_sdk import NotteClient
+from pydantic import BaseModel
+from stagehand import Stagehand, local_browser
+
+
+class Heading(BaseModel):
+    heading: str
+
+
+async def main() -> None:
+    with NotteClient().Session() as session:
+        browser = await local_browser.connect(cdp_url=session.cdp_url())
+        try:
+            stagehand = await Stagehand.create(
+                browser=browser,
+                model="anthropic/claude-sonnet-4-6",
+                model_api_key=os.environ["ANTHROPIC_API_KEY"],
+            )
+            try:
+                page = await browser.context.new_page()
+                await page.goto("https://example.com")
+                result = await stagehand.extract("Extract the main heading", Heading, page=page)
+                print(result.data.heading)
+            finally:
+                await stagehand.close()
+        finally:
+            await browser.close()
 
 
 asyncio.run(main())
 ```
+
+```typescript notte_stagehand.ts
+import { NotteClient } from 'notte-sdk';
+import { localBrowser, Stagehand } from '@browserbasehq/stagehand';
+import { z } from 'zod';
+
+await new NotteClient().Session().use(async (session) => {
+  const browser = await localBrowser.connect({ cdpUrl: await session.cdpUrl() });
+  try {
+    const stagehand = await Stagehand.create({
+      browser,
+      model: {
+        modelName: 'anthropic/claude-sonnet-4-6',
+        apiKey: process.env.ANTHROPIC_API_KEY!,
+      },
+    });
+    try {
+      const page = await browser.context.newPage();
+      await page.goto('https://example.com');
+      const result = await stagehand.extract(
+        'Extract the main heading', z.object({ heading: z.string() }), { page },
+      );
+      console.log(result.data.heading);
+    } finally {
+      await stagehand.close();
+    }
+  } finally {
+    await browser.close();
+  }
+});
+```
+
+</CodeGroup>

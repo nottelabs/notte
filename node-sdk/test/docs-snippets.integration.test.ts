@@ -20,6 +20,13 @@ const catalog = JSON.parse(await readFile(`${testers}snippets.json`, 'utf8')) as
 }>;
 const pending = new Set(Object.values(catalog).flatMap(spec => spec.blocks)
   .filter(block => block.execution_pending).map(block => block.source));
+// Third-party integrations require provider credentials and have separate smoke
+// tests. Keep their real SDK imports type-checked in the credential-free job.
+for (const name of (await readdir(testers, { recursive: true })).filter(name => name.endsWith('.ts'))) {
+  if (/^\/\/\s*@sniptest\s+typecheck_only\s*=\s*true\s*$/m.test(await readFile(`${testers}${name}`, 'utf8'))) {
+    pending.add(name);
+  }
+}
 // CI splits the examples across parallel jobs: NOTTE_DOCS_SHARD="<index>/<total>" (1-based).
 const [shardIndex, shardTotal] = (process.env.NOTTE_DOCS_SHARD ?? '1/1').split('/').map(Number);
 if (!(shardIndex >= 1 && shardIndex <= shardTotal)) throw new Error(`Invalid NOTTE_DOCS_SHARD: ${process.env.NOTTE_DOCS_SHARD}`);

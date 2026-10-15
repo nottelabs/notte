@@ -1,40 +1,35 @@
 # @sniptest filename=notte_stagehand.py
-# @sniptest show=22-37
 # @sniptest typecheck_only=true
 import asyncio
 import os
-from typing import Any
 
 from notte_sdk import NotteClient
+from pydantic import BaseModel
+from stagehand import Stagehand, local_browser
 
 
-class LocalBrowser:
-    async def connect(self, *, cdp_url: str) -> Any: ...
+class Heading(BaseModel):
+    heading: str
 
 
-local_browser = LocalBrowser()
-
-
-class Stagehand:
-    def __init__(self, *, browser: Any, model: str, api_key: str | None) -> None: ...
-    async def initialize(self) -> None: ...
-    async def extract(self, instruction: str) -> Any: ...
-    async def close(self) -> None: ...
-
-
-async def main():
-    client = NotteClient()
-
-    with client.Session() as session:
-        # Stagehand attaches to the Notte browser over CDP
-        stagehand = Stagehand(
-            browser=await local_browser.connect(cdp_url=session.cdp_url()),
-            model="anthropic/claude-sonnet-4-5-20250929",
-            api_key=os.environ.get("ANTHROPIC_API_KEY"),
-        )
-        await stagehand.initialize()
-        print(await stagehand.extract("the title of the top story"))
-        await stagehand.close()
+async def main() -> None:
+    with NotteClient().Session() as session:
+        browser = await local_browser.connect(cdp_url=session.cdp_url())
+        try:
+            stagehand = await Stagehand.create(
+                browser=browser,
+                model="anthropic/claude-sonnet-4-6",
+                model_api_key=os.environ["ANTHROPIC_API_KEY"],
+            )
+            try:
+                page = await browser.context.new_page()
+                await page.goto("https://example.com")
+                result = await stagehand.extract("Extract the main heading", Heading, page=page)
+                print(result.data.heading)
+            finally:
+                await stagehand.close()
+        finally:
+            await browser.close()
 
 
 asyncio.run(main())
