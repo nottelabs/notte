@@ -47,6 +47,13 @@ class RoutingTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertTrue(ci.PYTHON_RUNTIME <= ci.scopes_for_path(path))
 
+    def test_shared_pytest_configuration_keeps_readme_example_validation(self) -> None:
+        for path in ("tests/conftest.py", "tests/test_notte_config.toml"):
+            with self.subTest(path=path):
+                selected = ci.scopes_for_path(path)
+                self.assertTrue(ci.PYTHON_RUNTIME <= selected)
+                self.assertTrue(ci.GROUPS["readme"] <= selected)
+
     def test_python_runtime_and_prompt_changes_keep_live_coverage(self) -> None:
         for path in (
             "packages/notte-core/src/notte_core/browser/observation.py",

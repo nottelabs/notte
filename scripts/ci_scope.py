@@ -148,9 +148,10 @@ def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
             return {"python_static", "python_unit"} | GROUPS["readme"]
         if path.startswith("tests/integration/"):
             return {"python_static", "python_live"}
+        # README examples run under tests/conftest.py and its shared config.
+        if path in {"tests/conftest.py", "tests/test_notte_config.toml"}:
+            return PYTHON_RUNTIME | GROUPS["readme"]
         if path.startswith(("tests/data/", "tests/mock/")) or path in {
-            "tests/conftest.py",
-            "tests/test_notte_config.toml",
             "tests/ci_shard.py",
             "tests/ci_smtp.py",
         }:

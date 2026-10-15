@@ -1,5 +1,12 @@
 # CI suite selection
 
+Commit checks validate the code and examples affected by a change. Periodic
+checks keep exercising the staging API even when SDK code has not changed.
+The selector chooses whole suites, not individual test functions. Shared
+configuration must select every suite that consumes it, including README
+examples that inherit the root pytest configuration. When adding a cross-suite
+dependency, add its input to the selector and a regression case to its tests.
+
 Main pushes and pull requests use the same selector in `scripts/ci_scope.py`.
 Pushes compare the event's `before` and `after` commits, including every commit
 in the push. Pull requests compare their merge base with the head commit.
@@ -35,6 +42,7 @@ selects broad coverage rather than silently skipping tests.
 
 Manual runs retain full coverage. Python's periodic run retains its live-only
 scope; Node's periodic run retains its full checks, including staging drift.
+Both existing four-hour weekday schedules and the nightly workflows are unchanged.
 Existing generated reference workflows keep their dedicated path filters.
 Live jobs retain fork protections and the shared staging queue. The required
 Python `tests` check always runs, even when expensive suites are skipped, and
