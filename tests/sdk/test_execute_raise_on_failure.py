@@ -12,8 +12,7 @@ from unittest.mock import MagicMock
 import pytest
 from notte_core.actions import EvaluateJsAction
 from notte_core.browser.observation import ExecutionResult
-from notte_core.errors.actions import ActionExecutionError
-from notte_core.errors.base import ErrorConfig, ErrorMode, NotteBaseError
+from notte_core.errors import ActionExecutionError, ErrorConfig, ErrorMode, NotteBaseError
 from notte_sdk.client import NotteClient
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.types import SessionResponse

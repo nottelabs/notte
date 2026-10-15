@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 
 from notte_core.common.config import BrowserBackend, config
 from notte_core.data.space import DataSpace
-from notte_core.errors.actions import EvaluateJsResultLimitError
+from notte_core.errors import EvaluateJsResultLimitError
 
 from notte_browser.errors import PlaywrightError
 from notte_browser.playwright_async_api import Page

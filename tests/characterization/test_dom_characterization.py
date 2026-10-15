@@ -8,7 +8,7 @@ in another session/process checks determinism without sorting away action/iframe
 from pathlib import Path
 
 import pytest
-from notte_core.errors.actions import InvalidActionError
+from notte_core.errors import InvalidActionError
 
 import notte
 from tests.characterization.pages import PAGES, ROOT, load

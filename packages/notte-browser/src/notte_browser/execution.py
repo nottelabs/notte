@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import suppress
+from typing import Literal
 
 from notte_core.actions import (
     BaseAction,
@@ -36,12 +37,9 @@ from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.credentials.types import get_str_value
-from notte_core.errors.actions import ActionExecutionError
-from notte_core.errors.base import NotteTimeoutError
+from notte_core.errors import ActionExecutionError, NotteTimeoutError
 from notte_core.profiling import profiler
 from notte_core.storage import BaseStorage
-from notte_core.utils.code import text_contains_tabs
-from notte_core.utils.platform import platform_control_key
 
 from notte_browser.captcha import solve_captcha
 from notte_browser.dom.locate import locate_element
@@ -54,6 +52,43 @@ from notte_browser.files import download_file, upload_file
 from notte_browser.form_filling import FormFiller
 from notte_browser.playwright_async_api import Error, Frame, JSHandle, Locator
 from notte_browser.window import BrowserWindow
+
+
+def text_contains_tabs(text: str) -> bool:
+    """
+    Determine if a given text has significant indentation patterns.
+
+    Args:
+        text (str): The text to analyze
+
+    Returns:
+        bool: True if the text has significant indentation patterns, False otherwise
+    """
+    if not text or text.isspace():
+        return False
+
+    # Split into lines and remove empty lines
+    lines = [line for line in text.split("\n") if line.strip()]
+    if not lines:
+        return False
+
+    # Count lines with leading whitespace or tabs
+    indented_lines: int = sum(1 for line in lines if line.startswith((" ", "\t")))
+
+    return indented_lines >= 1
+
+
+def platform_control_key() -> Literal["Meta", "Control"]:
+    """
+    Returns the platform-specific control key modifier.
+
+    Returns:
+        Literal["Meta", "Control"]: "Meta" for macOS (Darwin), "Control" for other platforms
+    """
+    import platform
+
+    return "Meta" if platform.system() == "Darwin" else "Control"
+
 
 # Capture the wheel target's ancestors before the browser performs its default
 # scroll. Keeping element references avoids mistaking DOM replacement for motion,

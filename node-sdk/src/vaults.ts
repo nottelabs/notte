@@ -56,7 +56,7 @@ function extractHostname(url: string): string {
 }
 
 /**
- * Get the root domain of a URL, the counterpart of `notte_core.utils.url.get_root_domain`.
+ * Get the root domain of a URL, the counterpart of `notte_core.url.get_root_domain`.
  * Returns an empty string when no domain can be extracted.
  *
  * ```ts

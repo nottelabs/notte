@@ -23,7 +23,7 @@ from notte_core.actions import (
 )
 from notte_core.actions.actions import ScrapeAction
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.errors.actions import ActionExecutionError, InvalidActionError
+from notte_core.errors import ActionExecutionError, InvalidActionError
 
 from tests.mock.mock_browser import MockBrowserDriver
 

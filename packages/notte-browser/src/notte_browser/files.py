@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING, Any, cast
 from notte_core.actions import DownloadFileAction, UploadFileAction
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.logging import logger
+from notte_core.raw_file import DEFAULT_RAW_FILE_SELECTORS, get_file_ext, get_filename
 from notte_core.storage import BaseStorage
-from notte_core.utils.raw_file import DEFAULT_RAW_FILE_SELECTORS, get_file_ext, get_filename
 
 from notte_browser.dom.locate import locate_element, locate_file_upload_element, selectors_through_shadow_dom
 from notte_browser.errors import (

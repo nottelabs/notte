@@ -8,7 +8,7 @@ from typing import Any
 from notte_core.browser.dom_tree import DomNode, flush_dom_errors
 from notte_core.common.config import config
 from notte_core.common.logging import logger
-from notte_core.errors.processing import SnapshotProcessingError
+from notte_core.errors import SnapshotProcessingError
 from notte_core.profiling import profiler
 from typing_extensions import TypedDict
 

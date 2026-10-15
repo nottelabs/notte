@@ -2,7 +2,7 @@ from typing import Annotated, Any, Generic, Self, TypeVar
 
 from pydantic import BaseModel, Field, RootModel, model_serializer, model_validator
 
-from notte_core.errors.processing import ScrapeFailedError
+from notte_core.errors import ScrapeFailedError
 
 TBaseModel = TypeVar("TBaseModel", bound=BaseModel, covariant=True)
 # Legacy name: used as the raw structured-data wrapper before validating

@@ -1,6 +1,6 @@
 /**
  * Cookie file helpers, the counterpart of `SetCookiesRequest.from_json` and
- * `notte_core.utils.files.create_or_append_cookies_to_file` in Python.
+ * `notte_core.common.config.create_or_append_cookies_to_file` in Python.
  */
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';

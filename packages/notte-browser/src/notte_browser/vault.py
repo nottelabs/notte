@@ -6,7 +6,7 @@ from notte_core.credentials.base import (
     BaseVault,
     LocatorAttributes,
 )
-from notte_core.errors.actions import VaultCredentialError
+from notte_core.errors import VaultCredentialError
 from typing_extensions import override
 
 from notte_browser.playwright_async_api import Locator, Page

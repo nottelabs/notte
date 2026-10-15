@@ -8,7 +8,7 @@ from notte_browser.window import ScreenshotMask
 from notte_core.actions import FillAction, FormFillAction, MultiFactorFillAction
 from notte_core.credentials import EMAIL, MFA, PASSWORD, USERNAME
 from notte_core.credentials.types import ValueWithPlaceholder
-from notte_core.errors.actions import VaultCredentialError
+from notte_core.errors import VaultCredentialError
 
 from tests.mock.mock_vault import MockVault
 from tests.mock.snapshot_factory import make_snapshot

@@ -42,7 +42,7 @@ def test_root_domain_uses_the_bundled_suffix_list_without_network() -> None:
         socket.socket.connect = no_network
         socket.getaddrinfo = no_network
 
-        from notte_core.utils.url import get_root_domain
+        from notte_core.url import get_root_domain
 
         print(get_root_domain("https://login.example.co.uk/path"), get_root_domain("https://app.neo.space/mail/"))
         """

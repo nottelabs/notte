@@ -6,7 +6,7 @@ from typing import Annotated
 from pydantic import BaseModel, Field, computed_field
 
 from notte_core.actions import ActionUnion, BrowserAction, BrowserActionUnion, InteractionAction, InteractionActionUnion
-from notte_core.errors.processing import InvalidInternalCheckError
+from notte_core.errors import InvalidInternalCheckError
 
 
 class SpaceCategory(StrEnum):

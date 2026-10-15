@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from types import TracebackType
-from typing import Self
+from typing import Any, Self
+
+from typing_extensions import override
 
 
 class AsyncResource(ABC):
@@ -49,3 +51,13 @@ class SyncResource(ABC):
         self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> None:
         self.stop()
+
+
+class Singleton(type):
+    _instances: dict[type, Any] = {}
+
+    @override
+    def __call__(cls, *args: Any, **kwargs: Any) -> Any:
+        if cls not in cls._instances:  # pyright: ignore[reportUnnecessaryContains]
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]

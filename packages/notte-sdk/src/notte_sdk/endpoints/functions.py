@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Unpack, cast, final, overload
 import requests
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
-from notte_core.errors.base import NotteBaseError
+from notte_core.errors import NotteBaseError
 from notte_core.types import (
     CreateFunctionRunRequest,
     CreateFunctionRunResponse,

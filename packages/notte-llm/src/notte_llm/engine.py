@@ -25,19 +25,20 @@ from litellm.exceptions import (
 from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTypeStubs]
 from notte_core.common.logging import logger
 from notte_core.common.types import TResponseFormat
-from notte_core.errors.base import NotteBaseError
-from notte_core.errors.llm import LLmModelOverloadedError, LLMParsingError
-from notte_core.errors.provider import (
+from notte_core.errors import (
     ContextWindowExceededError,
     InsufficentCreditsError,
     InvalidAPIKeyError,
     InvalidJsonResponseForStructuredOutput,
+    LLmModelOverloadedError,
+    LLMParsingError,
     LLMProviderError,
     MissingAPIKeyForModel,
     ModelDoesNotSupportImageError,
     ModelNotFoundError,
+    NotteBaseError,
 )
-from notte_core.errors.provider import RateLimitError as NotteRateLimitError
+from notte_core.errors import RateLimitError as NotteRateLimitError
 from notte_core.profiling import profiler
 from pydantic import BaseModel, ValidationError
 

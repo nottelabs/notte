@@ -3,7 +3,7 @@ from notte_browser.errors import ScrollActionFailedError
 from notte_browser.session import NotteSession
 from notte_core.actions import BrowserAction, ClickAction
 from notte_core.browser.observation import ExecutionResult
-from notte_core.errors.base import ErrorConfig
+from notte_core.errors import ErrorConfig
 
 
 def test_browser_actions_list():

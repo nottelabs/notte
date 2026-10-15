@@ -3,7 +3,7 @@ import sys
 from importlib import metadata
 
 from notte_core.common.logging import logger
-from notte_core.errors.base import ErrorConfig, ErrorMessageMode, ErrorMode
+from notte_core.errors import ErrorConfig, ErrorMessageMode, ErrorMode
 
 __version__ = metadata.version("notte_core")
 

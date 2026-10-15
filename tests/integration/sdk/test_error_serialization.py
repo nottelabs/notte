@@ -6,8 +6,7 @@ flags, instead of a bare `NotteBaseError` built from a user-safe string.
 """
 
 import pytest
-from notte_core.errors.actions import InvalidActionError
-from notte_core.errors.base import NotteBaseError
+from notte_core.errors import InvalidActionError, NotteBaseError
 from notte_sdk.client import NotteClient
 
 

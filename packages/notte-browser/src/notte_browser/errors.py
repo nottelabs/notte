@@ -6,8 +6,7 @@ from typing import Any, Callable, TypeVar
 from notte_core.actions import ToolAction
 from notte_core.common.config import config
 from notte_core.common.logging import logger
-from notte_core.errors.base import NotteBaseError, NotteTimeoutError
-from notte_core.errors.processing import InvalidInternalCheckError
+from notte_core.errors import InvalidInternalCheckError, NotteBaseError, NotteTimeoutError
 
 from notte_browser.playwright_async_api import getPlaywrightOrPatchrightError, getPlaywrightOrPatchrightTimeoutError
 
@@ -365,4 +364,4 @@ class ScrapeIsNotAnActionError(NotteBaseError):
 # #######################################################
 
 # Re-export from notte-core for backwards compatibility
-from notte_core.errors.processing import ScrapeFailedError as ScrapeFailedError  # noqa: E402, F401
+from notte_core.errors import ScrapeFailedError as ScrapeFailedError  # noqa: E402, F401

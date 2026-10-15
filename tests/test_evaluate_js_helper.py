@@ -10,7 +10,7 @@ from notte_browser.evaluation_result import format_evaluation_result
 from notte_browser.session import NotteSession
 from notte_core.browser.observation import ExecutionResult
 from notte_core.common.config import config
-from notte_core.errors.actions import ActionExecutionError, EvaluateJsResultLimitError
+from notte_core.errors import ActionExecutionError, EvaluateJsResultLimitError
 
 
 @pytest.mark.asyncio

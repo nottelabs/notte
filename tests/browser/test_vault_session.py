@@ -3,7 +3,7 @@ from notte_browser.session import NotteSession
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_core.actions import FillAction
 from notte_core.credentials import EMAIL, PASSWORD
-from notte_core.errors.actions import VaultCredentialError
+from notte_core.errors import VaultCredentialError
 
 from tests.mock.mock_vault import MockVault
 

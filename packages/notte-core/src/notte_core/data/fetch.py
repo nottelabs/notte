@@ -20,7 +20,7 @@ from urllib.parse import urlencode, urlsplit, urlunsplit
 import requests
 from requests.structures import CaseInsensitiveDict
 
-from notte_core.errors.actions import FetchResponseDecodeError
+from notte_core.errors import FetchResponseDecodeError
 
 FetchData = str | Mapping[str, Any]
 

@@ -6,8 +6,7 @@ from notte_core.common.config import PerceptionType
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import StructuredData, TBaseModel
-from notte_core.errors.base import NotteBaseError
-from notte_core.errors.processing import ScrapeFailedError
+from notte_core.errors import NotteBaseError, ScrapeFailedError
 from notte_core.types import (
     CaptchaExecuteParams,
     ExecutionResultResponse,

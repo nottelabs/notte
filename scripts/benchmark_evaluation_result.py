@@ -20,7 +20,7 @@ CASES = ("original_graph", "bounded_graph", "escaped_string", "exact_limit")
 
 def child(case: str) -> None:
     from notte_browser.evaluation_result import format_evaluation_result
-    from notte_core.errors.actions import EvaluateJsResultLimitError
+    from notte_core.errors import EvaluateJsResultLimitError
 
     if case.endswith("graph"):
         value = {"value": "x"}

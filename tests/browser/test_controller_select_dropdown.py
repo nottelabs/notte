@@ -4,7 +4,7 @@ import pytest
 import pytest_asyncio
 from notte_browser.session import NotteSession
 from notte_core.actions import SelectDropdownOptionAction
-from notte_core.errors.actions import ActionExecutionError
+from notte_core.errors import ActionExecutionError
 
 # A custom dropdown: the listbox opens on click and its options are plain divs.
 PAGE = """

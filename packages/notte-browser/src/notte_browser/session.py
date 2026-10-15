@@ -55,7 +55,7 @@ from notte_core.actions.typedicts import (
 )
 from notte_core.browser.observation import ExecutionResult, Observation, Screenshot, TimedSpan
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import CookieDict, RaiseCondition, config
+from notte_core.common.config import CookieDict, RaiseCondition, config, create_or_append_cookies_to_file
 from notte_core.common.logging import logger, timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
@@ -63,14 +63,14 @@ from notte_core.credentials.base import BaseVault
 from notte_core.data.extraction import StructuredExtractor
 from notte_core.data.fetch import FetchData, build_fetch_script, response_from_evaluated
 from notte_core.data.space import DataSpace, StructuredData, TBaseModel
-from notte_core.errors.actions import (
+from notte_core.errors import (
     ActionExecutionError,
     EvaluateJsNoDataError,
     EvaluateJsResultLimitError,
     InvalidActionError,
+    NotteBaseError,
+    RateLimitError,
 )
-from notte_core.errors.base import NotteBaseError
-from notte_core.errors.provider import RateLimitError
 from notte_core.profiling import profiler
 from notte_core.storage import BaseStorage
 from notte_core.trajectory import Trajectory
@@ -83,7 +83,6 @@ from notte_core.types import (
     ScrapeParams,
     ScrapeParamsDict,
 )
-from notte_core.utils.files import create_or_append_cookies_to_file
 from pydantic import BaseModel, RootModel, ValidationError
 from typing_extensions import override
 

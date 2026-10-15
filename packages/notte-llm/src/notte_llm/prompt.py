@@ -2,7 +2,7 @@ from pathlib import Path
 
 import chevron
 from litellm import Message
-from notte_core.errors.llm import InvalidPromptTemplateError
+from notte_core.errors import InvalidPromptTemplateError
 
 _ROLE_ORDER = ("system", "user", "assistant", "tool", "function")
 

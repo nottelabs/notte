@@ -16,15 +16,25 @@ from notte_core.browser.highlighter import BoundingBox, highlight_screenshot
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
 from notte_core.common.logging import logger
 from notte_core.data.space import DataSpace
-from notte_core.errors.base import NotteBaseError
+from notte_core.errors import NotteBaseError
 from notte_core.space import ActionSpace
-from notte_core.utils.url import clean_url
+from notte_core.url import clean_url
 
 if TYPE_CHECKING:
     # Pillow is imported where an image is decoded or drawn, so importing this module stays cheap.
     from PIL import Image
 
 _empty_observation_instance = None
+
+
+def image_from_bytes(image_bytes: bytes) -> "Image.Image | None":
+    from PIL import Image
+
+    try:
+        image = Image.open(io.BytesIO(image_bytes))
+    except Image.UnidentifiedImageError:
+        return None
+    return image
 
 
 def utc_now() -> dt.datetime:
@@ -193,8 +203,6 @@ class Screenshot(BaseModel):
         return self.raw
 
     def display(self, highlighted: bool = False) -> "Image.Image | None":
-        from notte_core.utils.image import image_from_bytes
-
         return image_from_bytes(self.highlighted() if highlighted else self.raw)
 
 
@@ -341,10 +349,7 @@ class SerializedError(BaseModel):
         import importlib
 
         for module in (
-            "notte_core.errors.actions",
-            "notte_core.errors.llm",
-            "notte_core.errors.processing",
-            "notte_core.errors.provider",
+            "notte_core.errors",
             "notte_browser.errors",
             "notte_sdk.errors",
         ):

@@ -6,7 +6,7 @@ from typing import Any, ClassVar, Literal, Optional, Union, cast  # type: ignore
 from pydantic import BaseModel, ConfigDict, Field, create_model, field_serializer, field_validator, model_validator
 from typing_extensions import override
 
-from notte_core.errors.base import NotteBaseError
+from notte_core.errors import NotteBaseError
 
 TYPE_MAPPING: dict[str, type] = {
     "string": str,

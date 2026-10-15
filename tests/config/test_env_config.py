@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import notte_core.common.config as config_module
 import pytest
 from notte_core.common.config import NotteConfig, config
-from notte_core.errors.base import ErrorConfig
+from notte_core.errors import ErrorConfig
 from pydantic import ValidationError
 
 

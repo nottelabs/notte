@@ -14,7 +14,7 @@ from notte_browser.evaluation_result import (
     page_expression,
     page_limit_reason,
 )
-from notte_core.errors.actions import EvaluateJsResultLimitError
+from notte_core.errors import EvaluateJsResultLimitError
 
 
 @pytest.mark.parametrize(
