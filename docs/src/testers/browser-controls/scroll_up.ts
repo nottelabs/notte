@@ -8,8 +8,8 @@ const session = client.Session();
 await session.use(async () => {
   // Create a page tall enough to scroll.
   await session.evaluateJs("document.body.innerHTML = '<main style=\"height:300vh\">Scroll demo</main>'");
-  await session.execute({ type: "scroll_down" });
-  await session.execute({ type: "scroll_up" });
+  await session.execute({ type: "scroll_down", selector: "html" });
+  await session.execute({ type: "scroll_up", selector: "html" });
 });
 
 const status = await session.status();
