@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+from notte_browser.errors import PlaywrightError
 from notte_browser.playwright_async_api import async_playwright
 from notte_browser.window import BrowserResource, BrowserWindow, BrowserWindowOptions
 from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
@@ -99,3 +100,27 @@ async def test_real_html_capture_matches_image_bearing_capture() -> None:
             assert legacy.screenshot
         finally:
             await browser.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("stage", ["navigation", "metadata"])
+async def test_other_retries_preserve_html_only_capture(stage: str) -> None:
+    target = window()
+    target.short_wait = AsyncMock()
+    target.page.wait_for_timeout = AsyncMock()
+    target.snapshot = lambda **kwargs: BrowserWindow.snapshot(target, **kwargs)
+    if stage == "navigation":
+        target.page.content.side_effect = [
+            RuntimeError("Unable to retrieve content because the page is navigating and changing the content"),
+            "<main>unchanged</main>",
+        ]
+    else:
+        target.snapshot_metadata.side_effect = [
+            PlaywrightError[0]("metadata changed"),
+            target.snapshot_metadata.return_value,
+        ]
+    snapshot = await target.snapshot(skip_dom=True, capture_screenshot=False)
+    assert snapshot.html_content == "<main>unchanged</main>"
+    assert snapshot.screenshot == b""
+    target.screenshot.assert_not_awaited()
+    assert target.page.content.await_count == 2
