@@ -1,12 +1,12 @@
 from collections.abc import Awaitable, Callable
 
 from notte_core.actions import BaseAction, FormFillAction
-from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.credentials.base import (
     BaseVault,
     LocatorAttributes,
 )
 from notte_core.errors import VaultCredentialError
+from notte_core.snapshot import BrowserSnapshot
 from typing_extensions import override
 
 from notte_browser.playwright_async_api import Locator, Page

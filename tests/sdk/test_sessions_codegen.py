@@ -237,7 +237,7 @@ def test_session_request_alias_precedence(client: NotteClient, monkeypatch: pyte
 
 
 def test_debug_response_and_legacy_tab(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
-    from notte_core.browser.snapshot import TabsData
+    from notte_core.snapshot import TabsData
     from notte_sdk.types import TabSessionDebugResponse
 
     tab = dict(

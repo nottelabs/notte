@@ -1,6 +1,6 @@
 import pytest
 from notte_core.actions import ClickAction
-from notte_core.browser.observation import ExecutionResult
+from notte_core.observation import ExecutionResult
 from notte_sdk.client import NotteClient
 
 

@@ -38,12 +38,12 @@ from notte_core.actions.typedicts import (
     WaitActionDict,
     action_dict_to_base_action,
 )
-from notte_core.browser.observation import ExecutionResult
 from notte_core.config import CookieDict, PerceptionType, config, create_or_append_cookies_to_file
 from notte_core.data import StructuredData, TBaseModel
 from notte_core.errors import EvaluateJsNoDataError, NotteBaseError
 from notte_core.fetch import FetchData, build_fetch_script, response_from_evaluated
 from notte_core.logging import logger
+from notte_core.observation import ExecutionResult
 from notte_core.resource import SyncResource
 from notte_core.telemetry import track_usage
 from notte_core.types import (

@@ -5,8 +5,8 @@ from typing import Callable, Literal, TypeAlias, TypeVar, overload
 
 from typing_extensions import override
 
-from notte_core.browser.observation import ExecutionResult, Observation, Screenshot
 from notte_core.logging import logger
+from notte_core.observation import ExecutionResult, Observation, Screenshot
 from notte_core.profiling import profiler
 
 TrajectoryHoldee = ExecutionResult | Observation | Screenshot

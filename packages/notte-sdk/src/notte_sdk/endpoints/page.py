@@ -300,7 +300,7 @@ class PageClient(BaseClient):
             return result
 
         def failure(message: str, code: str) -> ExecutionResultResponse:
-            from notte_core.browser.observation import utc_now
+            from notte_core.observation import utc_now
 
             result = (
                 original

@@ -2,8 +2,7 @@ from unittest.mock import MagicMock
 
 import notte_core.logging as logging
 import pytest
-from notte_core import set_logger_mode
-from notte_core.browser import dom_tree
+from notte_core import dom_tree, set_logger_mode
 
 
 def test_dom_diagnostics_bound_deduplicate_and_reset_samples(monkeypatch: pytest.MonkeyPatch) -> None:

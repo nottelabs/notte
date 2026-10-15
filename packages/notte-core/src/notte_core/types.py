@@ -33,9 +33,6 @@ from notte_core.actions import (
     BrowserAction,
     InteractionAction,
 )
-from notte_core.browser.dom_tree import NodeSelectors
-from notte_core.browser.observation import ExecutionResult, Observation
-from notte_core.browser.snapshot import TabsData
 from notte_core.config import (
     BrowserType,
     PerceptionType,
@@ -44,7 +41,10 @@ from notte_core.config import (
 )
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict
 from notte_core.data import DataSpace
+from notte_core.dom_tree import NodeSelectors
+from notte_core.observation import ExecutionResult, Observation
 from notte_core.schema import convert_response_format_to_pydantic_model
+from notte_core.snapshot import TabsData
 
 # Re-export FileInfo from notte_core for use in SDK
 from notte_core.storage import FileInfo as FileInfo  # noqa: E402

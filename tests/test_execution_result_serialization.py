@@ -11,8 +11,8 @@ import json
 
 import pytest
 from notte_core.actions import ClickAction
-from notte_core.browser.observation import ExecutionResult, SerializedError, TimedSpan
 from notte_core.errors import ActionExecutionError, NotteBaseError
+from notte_core.observation import ExecutionResult, SerializedError, TimedSpan
 
 
 def _failed_result(exception: Exception) -> ExecutionResult:

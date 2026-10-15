@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
 
-# Re-exported (redundant alias): `notte_core.browser.highlighter.BoundingBox` stays a public import path.
-from notte_core.browser.geometry import BoundingBox as BoundingBox
+# Re-exported (redundant alias): `notte_core.highlighter.BoundingBox` stays a public import path.
+from notte_core.geometry import BoundingBox as BoundingBox
 from notte_core.profiling import profiler
 
 if TYPE_CHECKING:

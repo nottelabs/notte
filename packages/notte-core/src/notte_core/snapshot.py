@@ -4,7 +4,7 @@ from collections.abc import Sequence
 
 from pydantic import BaseModel, Field
 
-from notte_core.browser.dom_tree import DomNode
+from notte_core.dom_tree import DomNode
 from notte_core.url import clean_url
 
 

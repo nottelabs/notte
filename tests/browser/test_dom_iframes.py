@@ -15,8 +15,8 @@ from notte_browser.playwright_async_api import ElementHandle, Error, Frame
 from notte_browser.resolution import SelectorGenerator, resolve, set_selector_generator
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction
-from notte_core.browser.dom_tree import DomNode, NodeSelectors
-from notte_core.browser.observation import Observation
+from notte_core.dom_tree import DomNode, NodeSelectors
+from notte_core.observation import Observation
 from patchright.async_api import Route
 
 import notte

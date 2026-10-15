@@ -3,8 +3,8 @@
 from typing import Any
 
 from notte_browser.dom.builder import RawFrame, RawNode, build_dom_tree
-from notte_core.browser.dom_tree import DomNode
-from notte_core.browser.node_type import NodeRole, NodeType
+from notte_core.dom_tree import DomNode
+from notte_core.node_type import NodeRole, NodeType
 
 BBOX = {
     "x": 1,

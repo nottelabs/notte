@@ -12,8 +12,8 @@ from pydantic import ValidationError
 from pydantic_core import InitErrorDetails, PydanticCustomError
 
 from notte_core.actions.actions import ActionUnion
-from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.credentials.types import ValueWithPlaceholder
+from notte_core.dom_tree import NodeSelectors
 
 if TYPE_CHECKING:
     from notte_core.actions.actions import BaseAction

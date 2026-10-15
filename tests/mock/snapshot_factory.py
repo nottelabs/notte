@@ -1,7 +1,7 @@
-from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode
-from notte_core.browser.node_type import NodeType
-from notte_core.browser.observation import Observation
-from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
+from notte_core.dom_tree import ComputedDomAttributes, DomAttributes, DomNode
+from notte_core.node_type import NodeType
+from notte_core.observation import Observation
+from notte_core.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
 
 
 def make_snapshot(url: str) -> BrowserSnapshot:

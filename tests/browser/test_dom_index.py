@@ -6,12 +6,12 @@ import pytest
 from notte_browser.action_space import build_action_space
 from notte_browser.resolution import resolve
 from notte_core.actions import ClickAction
-from notte_core.browser.dom_tree import ComputedDomAttributes, DomNode
-from notte_core.browser.node_type import NodeRole, NodeType
-from notte_core.browser.observation import Observation, TimedSpan
-from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
+from notte_core.dom_tree import ComputedDomAttributes, DomNode
 from notte_core.errors import InvalidActionError
+from notte_core.node_type import NodeRole, NodeType
+from notte_core.observation import Observation, TimedSpan
 from notte_core.raw_file import get_empty_dom_node
+from notte_core.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
 
 from .test_dom_actions import dialog_tree
 

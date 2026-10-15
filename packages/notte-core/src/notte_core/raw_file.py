@@ -4,8 +4,8 @@ import re
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
-from notte_core.browser.node_type import NodeRole, NodeType
+from notte_core.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
+from notte_core.node_type import NodeRole, NodeType
 
 DEFAULT_RAW_FILE_SELECTORS = tuple(["body", "html"])
 

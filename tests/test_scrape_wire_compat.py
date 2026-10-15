@@ -3,8 +3,8 @@ returns `images` in scrape responses and records `only_images` on scrape steps. 
 parsing those payloads: the legacy keys are ignored, not rejected."""
 
 from notte_core.actions import ScrapeAction
-from notte_core.browser.observation import ExecutionResult
 from notte_core.data import DataSpace
+from notte_core.observation import ExecutionResult
 from notte_core.types import ScrapeResponse
 
 

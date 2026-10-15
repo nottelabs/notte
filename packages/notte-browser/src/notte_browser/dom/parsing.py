@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from notte_core.browser.dom_tree import DomNode, flush_dom_errors
 from notte_core.config import config
+from notte_core.dom_tree import DomNode, flush_dom_errors
 from notte_core.errors import SnapshotProcessingError
 from notte_core.logging import logger
 from notte_core.profiling import profiler

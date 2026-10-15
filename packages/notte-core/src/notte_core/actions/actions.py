@@ -11,9 +11,9 @@ from typing import Annotated, Any, ClassVar, Literal, get_args
 from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import override
 
-from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.config import config
 from notte_core.credentials.types import ValueWithPlaceholder
+from notte_core.dom_tree import NodeSelectors
 
 warnings.filterwarnings(
     "ignore", message='Field name "id" in "InteractionAction" shadows an attribute', category=UserWarning

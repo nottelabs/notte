@@ -4,9 +4,9 @@ from typing import Any
 
 import pytest
 from notte_core.actions import BrowserAction, ClickAction
-from notte_core.browser.observation import Observation, Screenshot
-from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
 from notte_core.config import PlaywrightProxySettings
+from notte_core.observation import Observation, Screenshot
+from notte_core.snapshot import SnapshotMetadata, ViewportData
 from notte_core.space import ActionSpace, SpaceCategory
 from notte_sdk.types import (
     ObserveResponse,

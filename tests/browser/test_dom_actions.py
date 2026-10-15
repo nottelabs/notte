@@ -4,8 +4,8 @@ import pytest
 from notte_browser.action_space import build_action_space
 from notte_browser.dom.builder import build_dom_tree
 from notte_core.actions import ClickAction, FillAction, SelectDropdownOptionAction
-from notte_core.browser.dom_tree import DomNode
-from notte_core.browser.node_type import NodeType
+from notte_core.dom_tree import DomNode
+from notte_core.node_type import NodeType
 
 from .test_dom_builder import _element, _frame, _text
 

@@ -5,7 +5,7 @@ import pytest
 from notte_browser.dom.csspaths import build_csspath
 from notte_browser.form_filling import FormFiller
 from notte_browser.playwright_async_api import Error as PlaywrightError
-from notte_core.browser.observation import Screenshot
+from notte_core.observation import Screenshot
 from PIL import Image
 
 
@@ -52,7 +52,7 @@ async def test_select_field_uses_quiet_log_for_expected_exact_match_failure() ->
 
 
 def test_invalid_screenshot_logs_traceback_before_using_empty_screenshot() -> None:
-    with patch("notte_core.browser.observation.logger") as logger:
+    with patch("notte_core.observation.logger") as logger:
         screenshot = Screenshot(raw=b"not an image")
 
     assert screenshot.raw
@@ -66,7 +66,7 @@ def test_truncated_jpeg_logs_traceback_before_using_empty_screenshot() -> None:
     encoded = buffer.getvalue()
     truncated = encoded[: len(encoded) // 2]
 
-    with patch("notte_core.browser.observation.logger") as logger:
+    with patch("notte_core.observation.logger") as logger:
         screenshot = Screenshot(raw=truncated)
 
     assert screenshot.raw != truncated

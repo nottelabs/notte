@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 import pytest
-from notte_core.browser.observation import Observation
+from notte_core.observation import Observation
 
 
 def render_actions(observation: Observation) -> str:

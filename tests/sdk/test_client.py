@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from notte_core import __version__ as notte_core_version
 from notte_core.actions import BrowserAction, ClickAction
-from notte_core.browser.observation import ExecutionResult, Observation
+from notte_core.observation import ExecutionResult, Observation
 from notte_core.space import SpaceCategory
 from notte_sdk.client import NotteClient
 from notte_sdk.endpoints.base import NotteEndpoint

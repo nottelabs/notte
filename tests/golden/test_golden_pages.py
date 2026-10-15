@@ -25,7 +25,7 @@ from pathlib import Path
 
 import pytest
 from lxml import html as lxml_html
-from notte_core.browser.observation import Observation
+from notte_core.observation import Observation
 from patchright.async_api import Route
 
 import notte

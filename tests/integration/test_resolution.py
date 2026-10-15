@@ -3,7 +3,7 @@ from loguru import logger
 from notte_browser.resolution import resolve
 from notte_browser.session import NotteSession
 from notte_core.actions import GotoAction
-from notte_core.browser.dom_tree import DomNode
+from notte_core.dom_tree import DomNode
 from notte_sdk.types import ExecutionRequest
 from patchright.async_api import Page
 

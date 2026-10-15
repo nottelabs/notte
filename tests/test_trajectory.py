@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import pytest
 from notte_core.actions import ClickAction
-from notte_core.browser.observation import ExecutionResult, Observation, Screenshot, TimedSpan
+from notte_core.observation import ExecutionResult, Observation, Screenshot, TimedSpan
 from notte_core.trajectory import Trajectory, TrajectoryHoldee
 
 import notte

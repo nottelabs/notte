@@ -1,4 +1,4 @@
-from notte_core.browser.dom_tree import DomNode, NodeSelectors
+from notte_core.dom_tree import DomNode, NodeSelectors
 from notte_core.logging import logger
 
 from notte_browser.errors import InvalidLocatorRuntimeError

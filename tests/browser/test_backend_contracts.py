@@ -14,9 +14,9 @@ from notte_browser.resolution import set_selector_generator
 from notte_browser.session import NotteSession
 from notte_browser.window import BrowserWindow, BrowserWindowOptions, ScreenshotMask
 from notte_core.actions import CaptchaSolveAction, ClickAction
-from notte_core.browser.dom_tree import NodeSelectors
-from notte_core.browser.node_type import NodeType
 from notte_core.data import DataSpace, DictBaseModel
+from notte_core.dom_tree import NodeSelectors
+from notte_core.node_type import NodeType
 from notte_core.types import LocalSessionStartRequest
 from typing_extensions import override
 

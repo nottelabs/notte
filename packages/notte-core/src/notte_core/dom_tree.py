@@ -7,9 +7,9 @@ from typing import Annotated, Any, Callable, ClassVar, TypeAlias
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
-from notte_core.browser.highlighter import BoundingBox
-from notte_core.browser.node_type import NodeRole, NodeType
+from notte_core.highlighter import BoundingBox
 from notte_core.logging import logger
+from notte_core.node_type import NodeRole, NodeType
 
 
 class NodeSelectors(BaseModel):

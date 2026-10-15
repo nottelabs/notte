@@ -9,13 +9,13 @@ from bs4 import BeautifulSoup
 from lxml import etree
 from lxml import html as lxml_html
 from markdownify import MarkdownConverter
-from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.config import config
 from notte_core.data import DataSpace
 from notte_core.extraction import StructuredExtractor
 from notte_core.logging import logger
 from notte_core.profiling import profiler
 from notte_core.pruning import IMAGE_PATTERN, LINK_PATTERN, mask_markdown
+from notte_core.snapshot import BrowserSnapshot
 from notte_core.types import ScrapeParams
 from typing_extensions import override
 

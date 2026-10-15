@@ -7,7 +7,7 @@ def display_image_in_notebook(image_data: bytes) -> Any:
             clear_output,
             display,  # pyright: ignore [reportUnknownVariableType]
         )
-        from notte_core.browser.observation import image_from_bytes
+        from notte_core.observation import image_from_bytes
 
         image = image_from_bytes(image_data)
         clear_output(wait=True)

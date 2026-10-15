@@ -4,8 +4,8 @@ import io
 import pytest
 from notte_browser.session import NotteSession
 from notte_core.actions import GotoAction
-from notte_core.browser.highlighter import BoundingBox, highlight_screenshot
-from notte_core.browser.observation import Observation, Screenshot
+from notte_core.highlighter import BoundingBox, highlight_screenshot
+from notte_core.observation import Observation, Screenshot
 from PIL import Image
 
 from tests.mock.mock_browser import MockBrowserDriver

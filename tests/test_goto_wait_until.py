@@ -7,7 +7,7 @@ import pytest
 from notte_browser.session import NotteSession
 from notte_core.actions import ActionUnion, GotoAction
 from notte_core.actions.typedicts import action_dict_to_base_action
-from notte_core.browser.observation import ExecutionResult
+from notte_core.observation import ExecutionResult
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 

@@ -51,8 +51,8 @@ def test_root_domain_uses_the_bundled_suffix_list_without_network() -> None:
 
 
 def test_bounding_box_import_path_is_unchanged() -> None:
-    from notte_core.browser.geometry import BoundingBox
-    from notte_core.browser.highlighter import BoundingBox as HighlighterBoundingBox
+    from notte_core.geometry import BoundingBox
+    from notte_core.highlighter import BoundingBox as HighlighterBoundingBox
 
     assert HighlighterBoundingBox is BoundingBox
 

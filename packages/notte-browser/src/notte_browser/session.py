@@ -53,8 +53,6 @@ from notte_core.actions.typedicts import (
     WaitActionDict,
     parse_action,
 )
-from notte_core.browser.observation import ExecutionResult, Observation, Screenshot, TimedSpan
-from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.config import CookieDict, RaiseCondition, config, create_or_append_cookies_to_file
 from notte_core.credentials.base import BaseVault
 from notte_core.data import DataSpace, StructuredData, TBaseModel
@@ -69,8 +67,10 @@ from notte_core.errors import (
 from notte_core.extraction import StructuredExtractor
 from notte_core.fetch import FetchData, build_fetch_script, response_from_evaluated
 from notte_core.logging import logger, timeit
+from notte_core.observation import ExecutionResult, Observation, Screenshot, TimedSpan
 from notte_core.profiling import profiler
 from notte_core.resource import AsyncResource, SyncResource
+from notte_core.snapshot import BrowserSnapshot
 from notte_core.storage import BaseStorage
 from notte_core.telemetry import track_usage
 from notte_core.trajectory import Trajectory
