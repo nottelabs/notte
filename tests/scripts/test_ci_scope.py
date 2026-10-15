@@ -26,6 +26,7 @@ class RoutingTests(unittest.TestCase):
             "docs/src/llms.txt",
             "docs/src/sdk-reference/session.mdx",
             "docs/src/images/logo.svg",
+            "docs/src/docs.json",
             "README.md",
             "node-sdk/README.md",
             "node-sdk/CHANGELOG.md",
@@ -96,6 +97,8 @@ class RoutingTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertIn("node_generated", ci.scopes_for_path(path))
         self.assertNotIn("node_generated", ci.scopes_for_path("node-sdk/src/session.ts"))
+        self.assertNotIn("node_generated", ci.scopes_for_path("node-sdk/scripts/generate-reference.mjs"))
+        self.assertIn("node_generated", ci.scopes_for_path("node-sdk/new-generator.config.json"))
 
     def test_executable_docs_and_readme_changes_keep_live_checks(self) -> None:
         for path in (

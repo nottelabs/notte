@@ -117,6 +117,8 @@ def test_live_selection_does_not_bypass_fork_protection() -> None:
 def test_lightweight_docs_assertions_have_no_workspace_or_secrets() -> None:
     job = workflow("test-cicd.yml")["jobs"]["docs"]
     assert job["permissions"] == {"contents": "read"}
+    assert "github.event_name == 'push' || github.event_name == 'pull_request'" in job["if"]
+    assert "pr_number" not in str(job)
     assert "secrets." not in str(job)
     commands = "\n".join(step.get("run", "") for step in job["steps"])
     assert "tests/docs --noconftest" in commands

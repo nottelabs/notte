@@ -22,6 +22,15 @@ SDK_EXAMPLES = {"docs_static"} | GROUPS["paired"] | GROUPS["readme"]
 POLICY = {"scripts/ci_scope.py", "tests/scripts/test_ci_scope.py"}
 PYTHON_CONFIG = {"pyproject.toml", "uv.lock", ".python-version"}
 NODE_CONFIG = {"node-sdk/package.json", "node-sdk/package-lock.json"}
+NODE_GENERATION = {
+    "node-sdk/openapi-ts.config.ts",
+    "node-sdk/src/proxy/patterns.ts",
+    "node-sdk/src/resources.gen.ts",
+    "node-sdk/scripts/check-generated-drift.js",
+    "node-sdk/scripts/normalize-generated.js",
+    "node-sdk/scripts/generate-proxy-patterns.js",
+    "node-sdk/scripts/generate-resources.mjs",
+}
 WORKFLOWS = {
     "test-cicd.yml": "python",
     "node-sdk-ci.yml": "node",
@@ -54,6 +63,8 @@ def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
         return {"python_static", "readme_static"} | ({"readme_live"} if code_changed else set())
     if path.startswith("docs/"):
         selected = {"python_static", "python_docs", "docs_static", "paired_static"}
+        if path == "docs/src/docs.json":
+            return selected
         # The execution harness runs testers, not prose or generated reference pages.
         if path.startswith(("docs/src/testers/", "docs/src/tests/")) or path == "docs/src/conftest.py":
             selected |= GROUPS["docs"]
@@ -95,6 +106,12 @@ def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
     if path.startswith("node-sdk/"):
         if path in {"node-sdk/README.md", "node-sdk/CHANGELOG.md"}:
             return set()
+        if path in {
+            "node-sdk/scripts/check-package.js",
+            "node-sdk/scripts/generate-reference.mjs",
+            "node-sdk/scripts/generate-reference.test.mjs",
+        }:
+            return {"node_static"}
         if path.startswith("node-sdk/test/"):
             selected = {"node_static"}
             if ".integration.test." in path or path.endswith("/integration.test.ts") or "/helpers/" in path:
@@ -103,11 +120,14 @@ def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
                 selected |= GROUPS["paired"]
             return selected
         selected = {"node_static", "node_live"} | GROUPS["paired"] | GROUPS["readme"]
-        if path.startswith(("node-sdk/src/lib/", "node-sdk/scripts/")) or path in {
-            "node-sdk/openapi-ts.config.ts",
-            "node-sdk/src/proxy/patterns.ts",
-            "node-sdk/src/resources.gen.ts",
+        if path.startswith("node-sdk/src/lib/") or path in NODE_GENERATION:
+            selected |= {"node_generated"}
+        elif not path.startswith("node-sdk/src/") and path not in {
+            "node-sdk/tsconfig.json",
+            "node-sdk/tsup.config.ts",
+            "node-sdk/vitest.config.ts",
         }:
+            # Future build/generation inputs must not silently miss drift validation.
             selected |= {"node_generated"}
         return selected
     if path.startswith("tests/"):
