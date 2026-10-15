@@ -122,7 +122,7 @@ def unmask_pydantic(document: MaskedDocument, data: TBaseModel) -> TBaseModel:
     Unmask the links and images from the document using pydantic.
     """
     # Step 1: first try to unmask the JSON string
-    json_document = document.with_content(data.model_dump_json())
+    json_document = document.with_content(data.model_dump_json(by_alias=True))
     try:
         unmasked = unmask_markdown(json_document)
         data = data.__class__.model_validate_json(unmasked)
@@ -144,5 +144,5 @@ def unmask_pydantic(document: MaskedDocument, data: TBaseModel) -> TBaseModel:
             return [recursive_unmask(item) for item in cast(list[Any], value)]
         return value
 
-    unmasked_data = recursive_unmask(data.model_dump())
+    unmasked_data = recursive_unmask(data.model_dump(by_alias=True))
     return data.__class__.model_validate(unmasked_data)

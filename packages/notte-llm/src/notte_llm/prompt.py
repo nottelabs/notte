@@ -1,8 +1,14 @@
 from pathlib import Path
+from typing import Any, TypedDict
 
 import chevron
-from litellm import Message
 from notte_core.errors import InvalidPromptTemplateError
+
+
+class Message(TypedDict):
+    role: str
+    content: str | list[dict[str, Any]] | None
+
 
 _ROLE_ORDER = ("system", "user", "assistant", "tool", "function")
 
@@ -42,26 +48,26 @@ class PromptLibrary:
                 messages.append(Message(role=role, content=content))
         return messages
 
-    def materialize(self, prompt_id: str, variables: dict[str, str] | None = None) -> list[dict[str, str]]:
+    def materialize(self, prompt_id: str, variables: dict[str, str] | None = None) -> list[Message]:
         # TODO. You cant pass variables that are not in the prompt template
         # But you can fewer variables than in the prompt template
         _messages: list[Message] = self.get(prompt_id)
-        messages: list[dict[str, str]] = []
+        messages: list[Message] = []
         for message in _messages:
-            if message.content is None:
+            if not isinstance(message["content"], str):
                 raise InvalidPromptTemplateError(
                     prompt_id=prompt_id,
-                    message=f"Message content is none: {message.role}",
+                    message=f"Message content is none: {message['role']}",
                 )
-            messages.append({"role": message.role, "content": message.content})
+            messages.append({"role": message["role"], "content": message["content"]})
 
         if variables is None:
             return messages
 
         try:
-            materialized_messages: list[dict[str, str]] = []
+            materialized_messages: list[Message] = []
             for message in messages:
-                formatted_content: str = chevron.render(message["content"], variables, warn=True)
+                formatted_content: str = chevron.render(str(message["content"]), variables, warn=True)
                 materialized_messages.append({"role": message["role"], "content": formatted_content})
             return materialized_messages
         except KeyError as e:

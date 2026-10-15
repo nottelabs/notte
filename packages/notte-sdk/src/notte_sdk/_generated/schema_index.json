@@ -99,7 +99,6 @@
   "#/components/schemas/ImageData": "ImageData",
   "#/components/schemas/LegacyAgentStatusResponse": "LegacyAgentStatusResponse",
   "#/components/schemas/ListCredentialsResponse": "ListCredentialsResponse",
-  "#/components/schemas/LlmModel": "LlmModel",
   "#/components/schemas/MailboxConnectRequest": "MailboxConnectRequest",
   "#/components/schemas/MailboxConnectResponse": "MailboxConnectResponse",
   "#/components/schemas/MailboxConnection": "MailboxConnection",

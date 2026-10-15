@@ -1,160 +1,62 @@
+import json
+
+import httpx
 import pytest
-from notte_llm.models import LlmModel, LlmProvider
-
-# OpenRouter models the LLM extra is expected to support.
-OPENROUTER_MODELS = [
-    "google/gemini-3-flash-preview",
-    "google/gemini-3.5-flash",
-    "anthropic/claude-opus-4.6",
-    "anthropic/claude-sonnet-4.6",
-    "anthropic/claude-haiku-4.5",
-    "openai/gpt-5.2",
-    "openai/gpt-5-nano",
-    "openai/gpt-4o-mini",
-    "minimax/minimax-m2.5",
-    "moonshotai/kimi-k2.5",
-    "deepseek/deepseek-v3.2",
-    "x-ai/grok-4.3",
-    "z-ai/glm-5",
-    "qwen/qwen3.5-flash-02-23",
-]
-
-# Mapping from OpenRouter provider names that differ from LlmProvider enum values.
-# e.g. OpenRouter uses "google" but LlmProvider uses "gemini".
-OPENROUTER_PROVIDER_ALIASES: dict[str, LlmProvider] = {
-    "google": LlmProvider.gemini,
-    "moonshotai": LlmProvider.moonshot,
-    "x-ai": LlmProvider.xai,
-    "z-ai": LlmProvider.zai,
-}
+from notte_llm.engine import OPENROUTER_FALLBACK_MODELS, LLMEngine
 
 
-def _resolve_openrouter_provider(model: str) -> LlmProvider:
-    """Resolve the OpenRouter provider prefix to a LlmProvider."""
-    prefix = model.split("/")[0]
-    if prefix in OPENROUTER_PROVIDER_ALIASES:
-        return OPENROUTER_PROVIDER_ALIASES[prefix]
-    # Try direct match against LlmProvider values
-    if prefix in list(LlmProvider):
-        return LlmProvider(prefix)
-    raise ValueError(
-        f"OpenRouter provider '{prefix}' (from model '{model}') "
-        f"has no matching LlmProvider and no alias in OPENROUTER_PROVIDER_ALIASES."
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "base_url,is_openrouter",
+    [
+        ("https://openrouter.ai/api/v1", True),
+        ("https://openrouter.ai/custom", True),
+        ("https://api.openai.com/v1", False),
+        ("https://openrouter.ai.example.com/v1", False),
+        ("http://localhost:11434/v1", False),
+    ],
+)
+async def test_extras_are_only_sent_to_openrouter_host(base_url, is_openrouter, monkeypatch):
+    monkeypatch.setenv("NOTTE_LLM_BASE_URL", base_url)
+    monkeypatch.setenv("NOTTE_LLM_API_KEY", "test-key")
+    bodies = []
+
+    def handler(request):
+        bodies.append(json.loads(request.content))
+        return httpx.Response(200, json={"choices": []})
+
+    engine = LLMEngine(
+        model="vendor/native-model",
+        transport=httpx.MockTransport(handler),
+        provider_order=["Together"],
+        reasoning={"enabled": False},
     )
+    await engine.completion([])
+    body = bodies[0]
+    assert body["model"] == "vendor/native-model"
+    if is_openrouter:
+        assert body["models"] == ["vendor/native-model", *OPENROUTER_FALLBACK_MODELS]
+        assert body["provider"] == {"order": ["Together"], "allow_fallbacks": True}
+        assert body["reasoning"] == {"enabled": False}
+    else:
+        assert not {"models", "provider", "reasoning"} & body.keys()
 
 
-class TestOpenrouterModelsHaveProvider:
-    """Ensure every provider in OPENROUTER_MODELS maps to a known LlmProvider."""
-
-    @pytest.mark.parametrize("model", OPENROUTER_MODELS)
-    def test_openrouter_model_has_known_provider(self, model: str) -> None:
-        provider = _resolve_openrouter_provider(model)
-        assert isinstance(provider, LlmProvider)
+def test_fallback_list_does_not_repeat_requested_model(monkeypatch):
+    monkeypatch.delenv("NOTTE_LLM_BASE_URL", raising=False)
+    engine = LLMEngine(model=OPENROUTER_FALLBACK_MODELS[0])
+    assert engine._get_extra_body(None)["models"] == list(OPENROUTER_FALLBACK_MODELS)
 
 
-class TestGetOpenrouterProvider:
-    """Tests for LlmModel.get_openrouter_provider() method."""
+@pytest.mark.asyncio
+@pytest.mark.parametrize("model", ["openai/gpt-4o", "google/gemini-3.5-flash", "moonshotai/kimi-k2.5", "native-name"])
+async def test_model_and_temperature_are_passed_without_translation(model, monkeypatch):
+    monkeypatch.setenv("NOTTE_LLM_API_KEY", "test-key")
 
-    def test_cerebras_model_returns_cerebras(self) -> None:
-        assert LlmModel.get_openrouter_provider("cerebras/gpt-oss-120b") == "Cerebras"
+    def handler(request):
+        body = json.loads(request.content)
+        assert body["model"] == model
+        assert body["temperature"] == 0.25
+        return httpx.Response(200, json={"choices": []})
 
-    def test_groq_model_returns_groq(self) -> None:
-        assert LlmModel.get_openrouter_provider("groq/gpt-oss-120b") == "Groq"
-
-    def test_together_model_returns_together(self) -> None:
-        assert LlmModel.get_openrouter_provider("together_ai/meta-llama/llama-3.3-70b-instruct") == "Together"
-
-    def test_openai_model_returns_none(self) -> None:
-        assert LlmModel.get_openrouter_provider("openai/gpt-4o") is None
-
-    def test_anthropic_model_returns_none(self) -> None:
-        assert LlmModel.get_openrouter_provider("anthropic/claude-sonnet-4-5-20250929") is None
-
-    def test_gemini_model_returns_none(self) -> None:
-        assert LlmModel.get_openrouter_provider("gemini/gemini-3.5-flash") is None
-
-
-class TestGetOpenrouterModel:
-    """Tests for LlmModel.get_openrouter_model() method."""
-
-    def test_already_openrouter_model_unchanged(self) -> None:
-        model = "openrouter/google/gemma-3-27b-it"
-        assert LlmModel.get_openrouter_model(model) == model
-
-    def test_gpt_oss_120b_conversion(self) -> None:
-        result = LlmModel.get_openrouter_model("cerebras/gpt-oss-120b")
-        assert result == "openrouter/openai/gpt-oss-120b"
-
-    def test_gemma_conversion(self) -> None:
-        result = LlmModel.get_openrouter_model("some/gemma-3-27b-it")
-        assert result == "openrouter/google/gemma-3-27b-it"
-
-    def test_deepseek_conversion(self) -> None:
-        result = LlmModel.get_openrouter_model("deepseek/deepseek-r1")
-        assert result == "openrouter/deepseek/deepseek-r1"
-
-    def test_claude_sonnet_conversion(self) -> None:
-        result = LlmModel.get_openrouter_model("anthropic/claude-sonnet-4-5-20250929")
-        assert result == "openrouter/anthropic/claude-sonnet-4-5"
-
-    def test_vertex_ai_conversion(self) -> None:
-        result = LlmModel.get_openrouter_model("vertex_ai/gemini-3.5-flash")
-        assert result == "openrouter/google/gemini-3.5-flash"
-
-    def test_gemini_prefix_conversion(self) -> None:
-        result = LlmModel.get_openrouter_model("gemini/gemini-3.5-flash")
-        assert result == "openrouter/google/gemini-3.5-flash"
-
-    def test_kimi_conversion(self) -> None:
-        result = LlmModel.get_openrouter_model("moonshot/kimi-k2.5")
-        assert result == "openrouter/moonshotai/kimi-k2.5"
-
-    def test_llama_conversion(self) -> None:
-        result = LlmModel.get_openrouter_model("together_ai/meta-llama/llama-3.3-70b-instruct")
-        assert result == "openrouter/meta-llama/llama-3.3-70b-instruct"
-
-    def test_openai_model_adds_prefix(self) -> None:
-        result = LlmModel.get_openrouter_model("openai/gpt-4o")
-        assert result == "openrouter/openai/gpt-4o"
-
-    def test_grok_conversion(self) -> None:
-        result = LlmModel.get_openrouter_model("xai/grok-4.3")
-        assert result == "openrouter/x-ai/grok-4.3"
-
-    def test_legacy_grok_value_maps_to_grok_4_3(self) -> None:
-        """The retired public value must not be forwarded to OpenRouter verbatim."""
-        result = LlmModel.get_openrouter_model("xai/grok-4-1-fast-non-reasoning")
-        assert result == "openrouter/x-ai/grok-4.3"
-
-
-class TestLlmModelOpenrouterIntegration:
-    """Tests for LlmModel enum values with OpenRouter methods."""
-
-    @pytest.mark.parametrize(
-        "model",
-        [
-            LlmModel.cerebras,
-            LlmModel.groq,
-            LlmModel.together,
-        ],
-    )
-    def test_provider_models_have_openrouter_provider(self, model: LlmModel) -> None:
-        """Models with specific providers should return a non-None provider."""
-        assert LlmModel.get_openrouter_provider(model.value) is not None
-
-    @pytest.mark.parametrize("model", list(LlmModel))
-    def test_all_models_can_be_converted_to_openrouter(self, model: LlmModel) -> None:
-        """All LlmModel values should be convertible to OpenRouter format."""
-        result = LlmModel.get_openrouter_model(model.value)
-        assert result.startswith("openrouter/")
-
-
-class TestGetDirectModel:
-    """Tests for LlmModel.get_direct_model() method."""
-
-    def test_groq_gpt_oss_uses_groq_model_id(self) -> None:
-        assert LlmModel.get_direct_model(LlmModel.groq) == "groq/openai/gpt-oss-120b"
-
-    @pytest.mark.parametrize("model", [m for m in LlmModel if m != LlmModel.groq])
-    def test_other_models_unchanged(self, model: LlmModel) -> None:
-        assert LlmModel.get_direct_model(model) == model.value
+    await LLMEngine(model=model, transport=httpx.MockTransport(handler)).completion([], temperature=0.25)

@@ -1,141 +1,11 @@
 import json
-from typing import Any
-from unittest.mock import Mock, patch
 
-import litellm
+import httpx
 import pytest
-from litellm import BadRequestError, Message, ServiceUnavailableError
 from notte_core.actions import ActionUnion
-from notte_core.errors import ErrorConfig, LLMProviderError, UnsupportedResponseSchemaError
-from notte_llm.engine import (
-    OPENROUTER_FALLBACK_MODELS,
-    LLMEngine,
-    StructuredContent,
-    fix_schema_for_gemini,
-    fix_schema_for_openai,
-    get_vertex_location,
-    is_schema_rejection,
-)
+from notte_core.errors import ErrorConfig, LLMParsingError, UnsupportedResponseSchemaError
+from notte_llm.engine import LLMEngine, StructuredContent, fix_schema_for_openai, is_schema_rejection
 from pydantic import BaseModel, create_model
-
-
-@pytest.fixture
-def llm_engine() -> LLMEngine:
-    return LLMEngine()
-
-
-@pytest.mark.asyncio
-async def test_completion_success(llm_engine: LLMEngine) -> None:
-    messages = [
-        Message(role="user", content="Hello"),
-    ]
-    model = "gpt-3.5-turbo"
-
-    mock_response = Mock()
-    mock_response.choices = [Mock(message=Mock(content="Hello there!"))]
-
-    with patch("litellm.acompletion", return_value=mock_response):
-        response = await llm_engine.completion(messages=messages, model=model)
-
-        assert response == mock_response
-        assert response.choices[0].message.content == "Hello there!"
-
-
-@pytest.mark.asyncio
-async def test_completion_error(llm_engine: LLMEngine) -> None:
-    messages = [
-        Message(role="user", content="Hello"),
-    ]
-    model = "gpt-3.5-turbo"
-
-    with ErrorConfig.message_mode("developer"):
-        with patch("litellm.acompletion", side_effect=Exception("API Error")):
-            with pytest.raises(ValueError) as exc_info:
-                _ = await llm_engine.completion(messages=messages, model=model)
-
-            assert "API Error" in str(exc_info.value)
-
-
-class TestGetVertexLocation:
-    @pytest.fixture(autouse=True)
-    def _no_configured_location(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr("litellm.vertex_location", None)
-        monkeypatch.delenv("VERTEXAI_LOCATION", raising=False)
-        monkeypatch.delenv("VERTEX_LOCATION", raising=False)
-
-    def test_vertex_gemini_defaults_to_global(self) -> None:
-        assert get_vertex_location("vertex_ai/gemini-3.5-flash") == "global"
-
-    def test_env_location_is_respected(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("VERTEXAI_LOCATION", "europe-west2")
-        assert get_vertex_location("vertex_ai/gemini-3.5-flash") == "europe-west2"
-
-    def test_litellm_location_is_respected(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr("litellm.vertex_location", "us")
-        assert get_vertex_location("vertex_ai/gemini-3.5-flash") == "us"
-
-    @pytest.mark.parametrize(
-        "model",
-        [
-            "gemini/gemini-3.5-flash",
-            "openrouter/google/gemini-3.5-flash",
-            "vertex_ai/claude-sonnet-4-5",
-            "vertex_ai/mistral-large",
-            "vertex_ai/meta/llama-3.3-70b-instruct-maas",
-            "openai/gpt-4o",
-        ],
-    )
-    def test_other_models_have_no_location(self, model: str) -> None:
-        assert get_vertex_location(model) is None
-
-
-@pytest.mark.asyncio
-async def test_completion_passes_global_location_for_vertex_gemini(
-    llm_engine: LLMEngine, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr("litellm.vertex_location", None)
-    monkeypatch.delenv("VERTEXAI_LOCATION", raising=False)
-    monkeypatch.delenv("VERTEX_LOCATION", raising=False)
-    with patch("litellm.acompletion", return_value=Mock()) as acompletion:
-        await llm_engine.completion(
-            messages=[Message(role="user", content="Hello")], model="vertex_ai/gemini-3.5-flash"
-        )
-    assert acompletion.call_args.kwargs["vertex_location"] == "global"
-
-
-@pytest.mark.asyncio
-async def test_completion_omits_location_for_other_models(llm_engine: LLMEngine) -> None:
-    with patch("litellm.acompletion", return_value=Mock()) as acompletion:
-        await llm_engine.completion(messages=[Message(role="user", content="Hello")], model="gpt-3.5-turbo")
-    assert "vertex_location" not in acompletion.call_args.kwargs
-
-
-@pytest.mark.asyncio
-async def test_completion_omits_empty_extra_body(llm_engine: LLMEngine) -> None:
-    with patch("litellm.acompletion", return_value=Mock()) as acompletion:
-        await llm_engine.completion(messages=[Message(role="user", content="Hello")], model="anthropic/x")
-    assert "extra_body" not in acompletion.call_args.kwargs
-
-
-@pytest.mark.asyncio
-async def test_completion_passes_non_empty_extra_body(llm_engine: LLMEngine) -> None:
-    extra_body = {"provider": {"order": ["anthropic"], "allow_fallbacks": True}}
-    with (
-        patch.object(llm_engine, "_get_extra_body", return_value=extra_body),
-        patch("litellm.acompletion", return_value=Mock()) as acompletion,
-    ):
-        await llm_engine.completion(messages=[Message(role="user", content="Hello")], model="anthropic/x")
-    assert acompletion.call_args.kwargs["extra_body"] == extra_body
-
-
-@pytest.mark.asyncio
-async def test_completion_maps_groq_gpt_oss_to_groq_model_id(llm_engine: LLMEngine) -> None:
-    with (
-        patch("notte_llm.engine.enable_openrouter", return_value=False),
-        patch("litellm.acompletion", return_value=Mock()) as acompletion,
-    ):
-        await llm_engine.completion(messages=[Message(role="user", content="Hello")], model="groq/gpt-oss-120b")
-    assert acompletion.call_args.args[0] == "groq/openai/gpt-oss-120b"
 
 
 class TestStructuredContent:
@@ -177,100 +47,6 @@ class _ActionHolder(BaseModel):
     action: ActionUnion
 
 
-class TestFixSchemaForGemini:
-    """Tests for fix_schema_for_gemini to prevent regressions in schema transformation."""
-
-    def test_strips_boolean_additional_properties(self):
-        schema = {
-            "type": "object",
-            "properties": {"x": {"type": "string"}},
-            "additionalProperties": True,
-        }
-        result = fix_schema_for_gemini(schema)
-        assert "additionalProperties" not in result
-
-    def test_strips_default_values(self):
-        schema = {
-            "type": "object",
-            "properties": {"x": {"type": "string", "default": "foo"}},
-        }
-        result = fix_schema_for_gemini(schema)
-        assert "default" not in result["properties"]["x"]
-
-    def test_expands_property_names_with_additional_properties(self):
-        """When additionalProperties has type info + propertyNames enum, expand into explicit properties."""
-        schema = {
-            "type": "object",
-            "propertyNames": {"enum": ["email", "password"]},
-            "additionalProperties": {"type": "string"},
-            "minProperties": 1,
-        }
-        result = fix_schema_for_gemini(schema)
-        assert "properties" in result
-        assert "email" in result["properties"]
-        assert "password" in result["properties"]
-        assert result["properties"]["email"] == {"type": "string", "nullable": True}
-        # propertyNames and minProperties should be removed after expansion
-        assert "propertyNames" not in result
-        assert "minProperties" not in result
-        assert "additionalProperties" not in result
-
-    def test_empty_object_gets_placeholder(self):
-        schema = {"type": "object", "properties": {}}
-        result = fix_schema_for_gemini(schema)
-        assert "_placeholder" in result["properties"]
-
-    def test_form_fill_action_schema_roundtrip(self):
-        """The actual FormFillAction schema must survive Gemini transformation with proper type info."""
-        from notte_core.actions.actions import FormFillAction
-
-        schema = FormFillAction.model_json_schema()
-        result = fix_schema_for_gemini(schema)
-        value_schema = result["properties"]["value"]
-        assert "properties" in value_schema
-        assert "email" in value_schema["properties"]
-        assert "username" in value_schema["properties"]
-        assert "password" in value_schema["properties"]
-        assert len(value_schema["properties"]) > 10
-
-    def test_expanded_properties_are_nullable(self):
-        """Expanded properties from propertyNames must be nullable so Gemini doesn't fill all with null."""
-        schema = {
-            "type": "object",
-            "propertyNames": {"enum": ["email", "password"]},
-            "additionalProperties": {"type": "string"},
-            "minProperties": 1,
-        }
-        result = fix_schema_for_gemini(schema)
-        assert result["properties"]["email"].get("nullable") is True
-        assert result["properties"]["password"].get("nullable") is True
-
-    def test_form_fill_expanded_properties_are_nullable(self):
-        """FormFillAction expanded properties must be nullable for Gemini."""
-        from notte_core.actions.actions import FormFillAction
-
-        schema = FormFillAction.model_json_schema()
-        result = fix_schema_for_gemini(schema)
-        value_schema = result["properties"]["value"]
-        for prop_name, prop_schema in value_schema["properties"].items():
-            assert prop_schema.get("nullable") is True, f"Property '{prop_name}' should be nullable"
-
-    def test_action_union_schema_roundtrip(self):
-        """A schema holding the full action union must keep form_fill value properties after Gemini transform."""
-        schema = _ActionHolder.model_json_schema()
-        result = fix_schema_for_gemini(schema)
-        # Find form_fill in oneOf
-        form_fill = None
-        for item in result["properties"]["action"]["oneOf"]:
-            if item.get("properties", {}).get("type", {}).get("const") == "form_fill":
-                form_fill = item
-                break
-        assert form_fill is not None, "form_fill action not found in schema"
-        value_schema = form_fill["properties"]["value"]
-        assert "properties" in value_schema
-        assert len(value_schema["properties"]) > 10
-
-
 class TestFixSchemaForOpenai:
     """Tests for fix_schema_for_openai to prevent regressions in schema transformation."""
 
@@ -298,22 +74,14 @@ class TestFixSchemaForOpenai:
         assert value_schema["properties"]["email"]["anyOf"][1] == {"type": "null"}
 
     def test_form_fill_action_schema_roundtrip(self):
-        """A schema holding the full action union must keep form_fill value properties after OpenAI transform."""
-        schema = _ActionHolder.model_json_schema()
-        result = fix_schema_for_openai(schema)
+        """Finite form field names retain their typed nullable values in strict mode."""
+        from notte_core.actions.actions import FormFillAction
+
+        result = fix_schema_for_openai(FormFillAction.model_json_schema())
         inner = result["json_schema"]["schema"]
-        # Find form_fill in anyOf (oneOf is converted to anyOf)
-        form_fill = None
-        for item in inner["properties"]["action"]["anyOf"]:
-            if item.get("properties", {}).get("type", {}).get("const") == "form_fill":
-                form_fill = item
-                break
-        assert form_fill is not None, "form_fill action not found in schema"
-        value_schema = form_fill["properties"]["value"]
-        assert "properties" in value_schema
+        value_schema = inner["properties"]["value"]
         assert "email" in value_schema["properties"]
         assert len(value_schema["properties"]) > 10
-        # All expanded properties should be in required (nullable via anyOf)
         assert len(value_schema["required"]) == len(value_schema["properties"])
 
     def test_regular_object_properties_all_required(self):
@@ -354,219 +122,185 @@ Step 4: Process relevant elements.
         assert text == "# Before you continue to Google"
 
 
-class TestSchemaRejectionFallback:
-    ANTHROPIC_DISCRIMINATOR = "output_format.schema: For 'anyOf', 'discriminator' is not supported"
-    ANTHROPIC_UNIONS = (
-        "Schemas contains too many parameters with union types (107 parameters with type arrays or anyOf)."
-    )
-    GROQ_DUPLICATES = "invalid JSON schema for response_format: 'InnerLlmCompletion': duplicate primitive types"
-
-    class Answer(BaseModel):
-        text: str
-
-    @pytest.fixture(autouse=True)
-    def _fresh_rejection_cache(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr("notte_llm.engine._strict_schema_rejected", set())
-
-    @pytest.mark.parametrize("message", [ANTHROPIC_DISCRIMINATOR, ANTHROPIC_UNIONS, GROQ_DUPLICATES])
-    def test_detects_provider_schema_rejections(self, message: str) -> None:
-        assert is_schema_rejection(message)
-
-    @pytest.mark.parametrize("message", ["Missing API Key", "Invalid JSON response", "max_tokens is too large"])
-    def test_ignores_other_bad_requests(self, message: str) -> None:
-        assert not is_schema_rejection(message)
-
-    @staticmethod
-    def _bad_request(message: str) -> BadRequestError:
-        return BadRequestError(message=message, model="m", llm_provider="anthropic")
-
-    @pytest.mark.asyncio
-    async def test_completion_maps_schema_rejection(self, llm_engine: LLMEngine) -> None:
-        with patch("litellm.acompletion", side_effect=self._bad_request(self.ANTHROPIC_DISCRIMINATOR)):
-            with pytest.raises(UnsupportedResponseSchemaError):
-                _ = await llm_engine.completion(
-                    messages=[Message(role="user", content="Hi")], model="anthropic/x", response_format=self.Answer
-                )
-
-    @pytest.mark.asyncio
-    async def test_completion_keeps_other_bad_requests_generic(self, llm_engine: LLMEngine) -> None:
-        with patch("litellm.acompletion", side_effect=self._bad_request("max_tokens is too large")):
-            with pytest.raises(LLMProviderError) as exc_info:
-                _ = await llm_engine.completion(
-                    messages=[Message(role="user", content="Hi")], model="anthropic/x", response_format=self.Answer
-                )
-        assert not isinstance(exc_info.value, UnsupportedResponseSchemaError)
-
-    @pytest.mark.asyncio
-    async def test_structured_completion_falls_back_to_json_object(self, llm_engine: LLMEngine) -> None:
-        formats: list[Any] = []
-        prompts: list[list[Any]] = []
-
-        def fake_acompletion(*_args: Any, **kwargs: Any) -> Mock:
-            formats.append(kwargs.get("response_format"))
-            prompts.append(list(_args[1]))
-            if kwargs.get("response_format") != {"type": "json_object"}:
-                raise self._bad_request(self.GROQ_DUPLICATES)
-            return Mock(choices=[Mock(message=Mock(content='{"text": "done"}'))])
-
-        messages: list[Any] = [{"role": "user", "content": "Answer"}]
-        with patch("litellm.acompletion", side_effect=fake_acompletion):
-            first = await llm_engine.structured_completion(messages, self.Answer, model="groq/some-model")
-            second = await llm_engine.structured_completion(messages, self.Answer, model="groq/some-model")
-
-        assert first.text == second.text == "done"
-        # One rejected strict attempt, then json_object; the second call skips the strict attempt.
-        assert formats[1:] == [{"type": "json_object"}, {"type": "json_object"}]
-        assert formats[0] != {"type": "json_object"}
-
-        assert messages == [{"role": "user", "content": "Answer"}]
-        assert prompts[0] == messages
-        for prompt in prompts[1:]:
-            assert prompt[:-1] == messages
-            assert json.loads(prompt[-1]["content"].split("JSON schema: ", 1)[1]) == self.Answer.model_json_schema()
-
-    @pytest.mark.asyncio
-    async def test_rejection_does_not_leak_to_other_schemas_with_same_name(self, llm_engine: LLMEngine) -> None:
-        first = create_model("Choice", text=(str, ...))
-        second = create_model("Choice", text=(str, ...), score=(int, ...))
-        formats: list[Any] = []
-
-        def fake_acompletion(*_args: Any, **kwargs: Any) -> Mock:
-            formats.append(kwargs.get("response_format"))
-            is_strict = kwargs.get("response_format") != {"type": "json_object"}
-            if is_strict and len(formats) == 1:
-                raise self._bad_request(self.GROQ_DUPLICATES)
-            return Mock(choices=[Mock(message=Mock(content='{"text": "done", "score": 1}'))])
-
-        messages: list[Any] = [{"role": "user", "content": "Answer"}]
-        with patch("litellm.acompletion", side_effect=fake_acompletion):
-            _ = await llm_engine.structured_completion(messages, first, model="groq/some-model")
-            _ = await llm_engine.structured_completion(messages, second, model="groq/some-model")
-
-        # first: rejected strict + json_object fallback; second: still tries strict first.
-        assert formats[1] == {"type": "json_object"}
-        assert formats[2] != {"type": "json_object"}
+class Answer(BaseModel):
+    text: str
 
 
-class TestTransientProviderErrors:
-    OVERLOADED = "This model is currently experiencing high demand. Please try again later."
+@pytest.fixture
+def engine_factory(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("NOTTE_LLM_API_KEY", "test-key")
+    monkeypatch.delenv("NOTTE_LLM_BASE_URL", raising=False)
 
-    class Answer(BaseModel):
-        text: str
+    def make(handler, **kwargs):
+        return LLMEngine(transport=httpx.MockTransport(handler), **kwargs)
 
-    @pytest.fixture(autouse=True)
-    def _no_backoff(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        async def no_sleep(_seconds: float) -> None:
-            return None
-
-        monkeypatch.setattr("notte_llm.engine.asyncio.sleep", no_sleep)
-
-    @classmethod
-    def _overloaded(cls) -> ServiceUnavailableError:
-        return ServiceUnavailableError(message=cls.OVERLOADED, llm_provider="gemini", model="gemini/x")
-
-    @pytest.mark.asyncio
-    async def test_retries_an_overloaded_model_then_succeeds(self, llm_engine: LLMEngine) -> None:
-        ok = Mock()
-        with patch("litellm.acompletion", side_effect=[self._overloaded(), ok]) as acompletion:
-            response = await llm_engine.completion(messages=[Message(role="user", content="Hi")], model="gemini/x")
-        assert response is ok
-        assert acompletion.call_count == 2
-
-    @pytest.mark.asyncio
-    async def test_gives_up_after_the_retries(self, llm_engine: LLMEngine) -> None:
-        with patch("litellm.acompletion", side_effect=[self._overloaded() for _ in range(3)]) as acompletion:
-            with pytest.raises(LLMProviderError):
-                _ = await llm_engine.completion(messages=[Message(role="user", content="Hi")], model="gemini/x")
-        assert acompletion.call_count == 3
-
-    @pytest.mark.asyncio
-    async def test_does_not_retry_a_bad_request(self, llm_engine: LLMEngine) -> None:
-        bad = BadRequestError(message="max_tokens is too large", model="gemini/x", llm_provider="gemini")
-        with patch("litellm.acompletion", side_effect=bad) as acompletion:
-            with pytest.raises(LLMProviderError):
-                _ = await llm_engine.completion(messages=[Message(role="user", content="Hi")], model="gemini/x")
-        assert acompletion.call_count == 1
-
-    @pytest.mark.asyncio
-    async def test_structured_completion_retries_a_response_without_choices(self, llm_engine: LLMEngine) -> None:
-        empty = Mock(choices=[])
-        ok = Mock(choices=[Mock(message=Mock(content='{"text": "done"}'))])
-        messages: list[Any] = [{"role": "user", "content": "Answer"}]
-        with patch("litellm.acompletion", side_effect=[empty, ok]):
-            result = await llm_engine.structured_completion(messages, self.Answer, model="gemini/x")
-        assert result.text == "done"
+    return make
 
 
-class TestOpenRouterFallbacks:
-    @pytest.fixture(autouse=True)
-    def _openrouter_enabled(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr("notte_llm.engine.enable_openrouter", lambda: True)
+def reply(content: str) -> httpx.Response:
+    return httpx.Response(200, json={"choices": [{"message": {"content": content}}]})
 
-    def test_requested_model_comes_first_then_fallbacks(self, llm_engine: LLMEngine) -> None:
-        body = llm_engine._get_extra_body("vertex_ai/gemini-3.5-flash")  # pyright: ignore[reportPrivateUsage]
-        assert body == {"models": ["google/gemini-3.5-flash", *OPENROUTER_FALLBACK_MODELS]}
 
-    def test_fallback_list_does_not_repeat_the_requested_model(self, llm_engine: LLMEngine) -> None:
-        body = llm_engine._get_extra_body(f"openrouter/{OPENROUTER_FALLBACK_MODELS[0]}")  # pyright: ignore[reportPrivateUsage]
-        assert body["models"] == [OPENROUTER_FALLBACK_MODELS[0], *OPENROUTER_FALLBACK_MODELS[1:]]
+@pytest.mark.parametrize(
+    "message",
+    [
+        "output_format.schema: For 'anyOf', 'discriminator' is not supported",
+        "Schemas contains too many parameters with union types",
+        "invalid JSON schema for response_format: duplicate primitive types",
+        "response_format.type: Input should be 'json_schema'",
+    ],
+)
+def test_detects_provider_schema_rejections(message):
+    assert is_schema_rejection(message)
 
-    def test_provider_routing_is_kept_alongside_fallbacks(self, llm_engine: LLMEngine) -> None:
-        body = llm_engine._get_extra_body("groq/gpt-oss-120b")  # pyright: ignore[reportPrivateUsage]
-        assert body["provider"] == {"order": ["Groq"], "allow_fallbacks": True}
-        assert body["models"][0] == "openai/gpt-oss-120b"
 
-    def test_no_fallbacks_without_openrouter(self, llm_engine: LLMEngine, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr("notte_llm.engine.enable_openrouter", lambda: False)
-        assert llm_engine._get_extra_body("gemini/gemini-3.5-flash") == {}  # pyright: ignore[reportPrivateUsage]
+@pytest.mark.parametrize("message", ["Missing API Key", "Invalid JSON response", "max_tokens is too large"])
+def test_ignores_other_bad_requests(message):
+    assert not is_schema_rejection(message)
 
 
 @pytest.mark.asyncio
-async def test_structured_completion_keeps_the_callers_messages(
-    llm_engine: LLMEngine, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    class Answer(BaseModel):
+@pytest.mark.parametrize("status,message", [(400, "invalid JSON schema"), (404, "No endpoints"), (400, "Invalid JSON")])
+async def test_strict_fallback_preserves_schema_and_callers_messages(engine_factory, status, message):
+    bodies = []
+
+    def handler(request):
+        body = json.loads(request.content)
+        bodies.append(body)
+        if body.get("response_format", {}).get("type") == "json_schema":
+            return httpx.Response(status, json={"error": {"message": message}})
+        return reply('{"text":"done"}')
+
+    engine = engine_factory(handler, nb_retries_structured_output=0)
+    messages = [{"role": "user", "content": "Answer"}]
+    assert (await engine.structured_completion(messages, Answer)).text == "done"
+    assert [b["response_format"]["type"] for b in bodies] == ["json_schema", "json_object"]
+    assert messages == [{"role": "user", "content": "Answer"}]
+    assert json.loads(bodies[1]["messages"][-1]["content"].split("JSON schema: ", 1)[1]) == Answer.model_json_schema()
+
+
+@pytest.mark.asyncio
+async def test_json_object_rejection_uses_schema_in_prompt_without_format(engine_factory):
+    bodies = []
+
+    def handler(request):
+        body = json.loads(request.content)
+        bodies.append(body)
+        if "response_format" in body:
+            return httpx.Response(400, json={"error": {"message": "response_format unsupported"}})
+        return reply('{"text":"done"}')
+
+    engine = engine_factory(handler, nb_retries_structured_output=0)
+    assert (await engine.structured_completion([{"role": "user", "content": "Answer"}], Answer)).text == "done"
+    assert len(bodies) == 3
+    assert "response_format" not in bodies[-1]
+    assert bodies[-1]["messages"] == bodies[-2]["messages"]
+
+
+@pytest.mark.asyncio
+async def test_rejections_are_not_cached_across_calls_or_schemas(engine_factory):
+    bodies = []
+
+    def handler(request):
+        body = json.loads(request.content)
+        bodies.append(body)
+        if body["response_format"]["type"] == "json_schema":
+            return httpx.Response(400, json={"error": {"message": "invalid JSON schema"}})
+        return reply('{"text":"done","score":1}')
+
+    engine = engine_factory(handler)
+    for schema in (Answer, Answer, create_model("Answer", text=(str, ...), score=(int, ...))):
+        await engine.structured_completion([{"role": "user", "content": "Answer"}], schema)
+    assert [b["response_format"]["type"] for b in bodies] == ["json_schema", "json_object"] * 3
+
+
+@pytest.mark.asyncio
+async def test_fallback_stops_when_prompt_only_request_is_rejected(engine_factory):
+    bodies = []
+
+    def handler(request):
+        bodies.append(json.loads(request.content))
+        return httpx.Response(400, json={"error": {"message": "response_format unsupported"}})
+
+    with pytest.raises(UnsupportedResponseSchemaError):
+        await engine_factory(handler).structured_completion([{"role": "user", "content": "Answer"}], Answer)
+    assert len(bodies) == 3
+
+
+@pytest.mark.asyncio
+async def test_structured_completion_keeps_the_callers_messages(engine_factory):
+    class Number(BaseModel):
         value: int
 
-    replies = iter(["not json", '{"value": "nan"}', '{"value": 3}'])
-    seen: list[int] = []
+    contents = iter(["not json", '{"value":"nan"}', '{"value":3}'])
+    seen = []
 
-    async def single_completion(messages: list[object], *args: object, **kwargs: object) -> str:
-        seen.append(len(messages))
-        return next(replies)
+    def handler(request):
+        seen.append(len(json.loads(request.content)["messages"]))
+        return reply(next(contents))
 
-    monkeypatch.setattr(llm_engine, "nb_retries_structured_output", 3)
-    monkeypatch.setattr(llm_engine, "single_completion", single_completion)
     messages = [{"role": "user", "content": "How much?"}]
-
-    answer = await llm_engine.structured_completion(messages, Answer, model="openai/gpt-4o")  # pyright: ignore[reportArgumentType]
-
-    assert answer == Answer(value=3)
-    assert seen == [1, 2, 3]  # each retry adds its feedback to the conversation it sends
+    assert (await engine_factory(handler).structured_completion(messages, Number)).value == 3
+    assert seen == [1, 2, 3]
     assert messages == [{"role": "user", "content": "How much?"}]
 
 
-class _Answer(BaseModel):
-    answer: str
+@pytest.mark.asyncio
+@pytest.mark.parametrize("content", ['{"text":"done",}', '{text:"done"}', '{"text":"done" "unused":true}'])
+async def test_repairs_malformed_json(engine_factory, content):
+    assert (await engine_factory(lambda _: reply(content)).structured_completion([], Answer)).text == "done"
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("model", ["openai/gpt-4o-mini", "anthropic/claude-sonnet-4-5-20250929"])
-async def test_structured_completion_parses_a_real_litellm_response(llm_engine: LLMEngine, model: str) -> None:
-    """Run the real litellm.acompletion (with a canned reply) so the engine's kwargs and response parsing
-    are checked against the installed litellm, not a Mock."""
-    real_acompletion = litellm.acompletion
+async def test_parsing_failure_has_a_bounded_retry_count(engine_factory):
+    calls = []
 
-    async def canned(*args: Any, **kwargs: Any) -> Any:
-        return await real_acompletion(*args, mock_response='{"answer": "42"}', **kwargs)
+    def handler(request):
+        calls.append(request)
+        return reply('{"wrong":1}')
 
-    with (
-        patch("notte_llm.engine.enable_openrouter", return_value=False),
-        patch("litellm.acompletion", side_effect=canned) as acompletion,
-    ):
-        result = await llm_engine.structured_completion(
-            messages=[Message(role="user", content="What is the answer?")], response_format=_Answer, model=model
-        )
+    with pytest.raises(LLMParsingError):
+        await engine_factory(handler).structured_completion([], Answer)
+    assert len(calls) == 3
 
-    assert result == _Answer(answer="42")
-    assert acompletion.await_count == 1
+
+def test_repair_does_not_accept_data_with_wrong_schema():
+    assert LLMEngine._try_repair_json('{"wrong":1,}', Answer) is None
+
+
+class TestGenericSchemaCleaning:
+    def test_strips_defaults_and_closes_objects(self):
+        schema = {
+            "type": "object",
+            "properties": {"x": {"type": "string", "default": "foo"}},
+            "additionalProperties": False,
+        }
+        result = fix_schema_for_openai(schema)["json_schema"]["schema"]
+        assert "default" not in result["properties"]["x"]
+        assert result["additionalProperties"] is False
+
+    def test_empty_object_has_explicit_properties(self):
+        result = fix_schema_for_openai({"type": "object"})["json_schema"]["schema"]
+        assert result == {"type": "object", "properties": {}, "additionalProperties": False, "required": []}
+
+    def test_schema_name_is_sanitized_and_refs_are_inlined(self):
+        class Nested(BaseModel):
+            value: Answer
+
+        result = fix_schema_for_openai(Nested.model_json_schema())
+        assert "$ref" not in json.dumps(result)
+        assert result["json_schema"]["schema"]["properties"]["value"]["properties"]["text"]["type"] == "string"
+        result = fix_schema_for_openai({"title": "illegal name[]" * 10, "type": "object"})
+        assert len(result["json_schema"]["name"]) == 64
+        assert " " not in result["json_schema"]["name"]
+
+
+def test_schema_properties_can_be_named_after_keywords():
+    class Keywords(BaseModel):
+        properties: str
+        required: str
+        additionalProperties: str
+
+    schema = fix_schema_for_openai(Keywords.model_json_schema())["json_schema"]["schema"]
+    assert set(schema["properties"]) == {"properties", "required", "additionalProperties"}
+    assert schema["properties"]["properties"] == {"type": "string"}

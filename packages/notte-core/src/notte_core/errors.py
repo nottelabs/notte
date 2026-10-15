@@ -421,13 +421,9 @@ class ModelDoesNotSupportImageError(LLMProviderError):
 
 
 class MissingAPIKeyForModel(LLMProviderError):
-    def __init__(self, model: str) -> None:
+    def __init__(self, model: str, api_key_variables: str = "NOTTE_LLM_API_KEY or OPENROUTER_API_KEY") -> None:
         super().__init__(
-            dev_message=(
-                f"The llm {model} does not have an associated API key"
-                "If you think this is wrong, try to set both perception"
-                "and reasoning models"
-            ),
+            dev_message=(f"The LLM {model} does not have an associated API key. Set {api_key_variables}."),
             user_message="The selected model does not have an associated API key",
             agent_message=None,
         )

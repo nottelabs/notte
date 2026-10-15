@@ -10,26 +10,6 @@ CONFIG_PATH = Path(__file__).parent / "test_notte_config.toml"
 notte_core.set_error_mode("developer")
 
 os.environ["NOTTE_CONFIG_PATH"] = str(CONFIG_PATH)
-# litellm fetches its model cost map from GitHub at import time; offline, the failed fetch crashes the
-# import (a circular import in litellm's logging). Use the bundled map so the unit gate stays offline.
-os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
-
-
-def _bundled_tiktoken_cache() -> str | None:
-    # notte-llm builds a cl100k_base tokenizer, which tiktoken downloads unless TIKTOKEN_CACHE_DIR holds it.
-    # litellm ships that file but (since 1.10x) only points tiktoken at it lazily, so do it here.
-    spec = importlib.util.find_spec("litellm")
-    if spec is None or spec.origin is None:
-        return None
-    path = Path(spec.origin).parent / "litellm_core_utils" / "tokenizers"
-    return str(path) if path.is_dir() else None
-
-
-_TIKTOKEN_CACHE = _bundled_tiktoken_cache()
-if _TIKTOKEN_CACHE is not None:
-    os.environ.setdefault("TIKTOKEN_CACHE_DIR", _TIKTOKEN_CACHE)
-
-
 # if we run in Github Actions, we need to disable GPU
 if os.getenv("GITHUB_ACTIONS") is not None:
     os.environ["DISABLE_GPU"] = "true"

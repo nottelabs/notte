@@ -14,13 +14,8 @@ requires-python = ">=3.11"
 dependencies = [
     "notte_core==2.0.0.dev0",
     "chevron>=0.14.0",
-    # Not imported directly: litellm needs it to authenticate Vertex AI / Gemini service accounts.
-    "google-auth>=2.60.0",
+    "httpx>=0.28.1",
     "json-repair>=0.57.1",
-    "litellm>=1.74.12",
-    # Not imported directly: litellm requires it; declared to bound the version litellm may pull.
-    "openai<3.24.0",
-    "tiktoken>=0.8.0",
 ]
 
 [build-system]

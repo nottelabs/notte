@@ -1,14 +1,12 @@
 from pathlib import Path
 from typing import Any
 
-import tiktoken
 from notte_core.config import config
 from notte_core.logging import logger
 from notte_core.schema import TResponseFormat
 
 from notte_llm.config import LlmSettings
 from notte_llm.engine import LLMEngine
-from notte_llm.models import LlmModel
 from notte_llm.prompt import PromptLibrary
 
 PROMPT_DIR = Path(__file__).parent / "prompts"
@@ -21,22 +19,24 @@ class LLMService:
 
     def __init__(self, base_model: str | None = None) -> None:
         self.lib: PromptLibrary = PromptLibrary(str(PROMPT_DIR))
-        settings = LlmSettings.from_env()
+        settings = LlmSettings.from_env(model=base_model)
         self.base_model: str = base_model or settings.model
-        self.tokenizer: tiktoken.Encoding = tiktoken.get_encoding("cl100k_base")
+        self.context_tokens: int = settings.context_tokens
         self.verbose: bool = config.verbose
         self.nb_retries_structured_output: int = settings.nb_retries_structured_output
 
     def context_length(self) -> int:
-        return LlmModel.get_provider(self.base_model).context_length
+        return self.context_tokens
 
     def clip_tokens(self, document: str, max_tokens: int | None = None) -> str:
-        max_tokens = max_tokens or (self.context_length() - 2000)
-        tokens = self.tokenizer.encode(document)
-        if len(tokens) > max_tokens:
-            logger.debug(f"Cannot process document, exceeds max tokens: {len(tokens)} > {max_tokens}. Clipping...")
-            return self.tokenizer.decode(tokens[:max_tokens])
-        return document
+        # Approximate four characters per token and reserve room for prompts/output.
+        max_tokens = max(0, self.context_length() - 2000) if max_tokens is None else max_tokens
+        if max_tokens < 0:
+            raise ValueError("max_tokens must be non-negative")
+        max_chars = max_tokens * 4
+        if len(document) > max_chars:
+            logger.debug(f"Clipping document to approximately {max_tokens} tokens ({max_chars} characters)")
+        return document[:max_chars]
 
     async def structured_completion(
         self,
@@ -47,9 +47,9 @@ class LLMService:
     ) -> TResponseFormat:
         messages = self.lib.materialize(prompt_id, variables)
         return await LLMEngine(
-            nb_retries_structured_output=self.nb_retries_structured_output, verbose=self.verbose
+            model=self.base_model, nb_retries_structured_output=self.nb_retries_structured_output, verbose=self.verbose
         ).structured_completion(
-            messages=messages,  # type: ignore[arg-type]
+            messages=messages,
             response_format=response_format,
             model=self.base_model,
             use_strict_response_format=use_strict_response_format,
