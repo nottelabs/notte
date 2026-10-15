@@ -10,11 +10,18 @@ dependency, add its input to the selector and a regression case to its tests.
 Main pushes and pull requests use the same selector in `scripts/ci_scope.py`.
 Pushes compare the event's `before` and `after` commits, including every commit
 in the push. Pull requests compare their merge base with the head commit.
-Each test workflow starts with a small, credential-free selection job. Its
-summary lists the selected and skipped suites. Selection uses only Python's
-standard library and Git, without installing the SDK or contacting staging.
+The entry workflow `ci.yml` runs one small, credential-free selection job, then
+calls only the selected workflow families. Its summary lists selected and skipped
+suites. Selection uses only Python's standard library and Git, without installing
+the SDK or contacting staging. The complete Git diff avoids GitHub's native path
+filter limits. Scheduled and manual workflows still select their full scope
+locally. Automatic calls reuse the entry job's decisions without checking out
+history or running selection tests again.
 Lint checks changed files unless lint/Python configuration changes or broad
 coverage is selected; those cases check all files against the new rules.
+Generic file checks run even when Python suites are skipped. Node-only changes
+use standalone pre-commit without installing the Python SDK workspace; Python
+files, Python-related hooks and full lint runs retain the workspace environment.
 Deletion-only docs changes explicitly run the global link check, since
 pre-commit filters deleted files out of changed-file hooks.
 
@@ -45,8 +52,10 @@ scope; Node's periodic run retains its full checks, including staging drift.
 Both existing four-hour weekday schedules and the nightly workflows are unchanged.
 Existing generated reference workflows keep their dedicated path filters.
 Live jobs retain fork protections and the shared staging queue. The required
-Python `tests` check always runs, even when expensive suites are skipped, and
-fails if selection or a selected job fails or is cancelled.
+`tests` check always runs, even when expensive suites are skipped, and
+waits for all selected workflow families and fails if selection or a selected
+family fails or is cancelled. Cancellation stays within the existing Python and
+Node workflows; the entry workflow does not cancel other example suites.
 
 Run the selector's offline regression tests with:
 

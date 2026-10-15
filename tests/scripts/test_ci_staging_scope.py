@@ -1,9 +1,16 @@
 """Keep staging coordination out of independent CI checks."""
 
+import json
+import os
+import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml
+
+from scripts import ci_scope
 
 WORKFLOWS = Path(__file__).resolve().parents[2] / ".github/workflows"
 
@@ -68,26 +75,66 @@ def test_independent_checks_never_depend_on_staging_jobs() -> None:
             assert not staging_jobs.intersection(needs), (name, job_id)
 
 
-def test_suite_selection_is_required_and_has_complete_history() -> None:
-    for name in (
-        "test-cicd.yml",
-        "node-sdk-ci.yml",
-        "docs-tests-cicd.yml",
-        "paired-sdk-examples.yml",
-        "readme-check.yml",
-    ):
+def triggers(config: dict[str, Any]) -> dict[str, Any]:
+    # PyYAML's YAML 1.1 parser reads the unquoted GitHub Actions `on` key as True.
+    return config.get("on", config.get(True))
+
+
+def test_automatic_selection_runs_once_with_complete_history() -> None:
+    config = workflow("ci.yml")
+    assert set(triggers(config)) == {"push", "pull_request"}
+    assert config["permissions"] == {"contents": "read"}
+    for event in ("push", "pull_request"):
+        assert triggers(config)[event] == {"branches": ["main"]}
+    changes = config["jobs"]["changes"]
+    assert "concurrency" not in changes
+    checkout = next(step for step in changes["steps"] if "checkout@" in step.get("uses", ""))
+    assert checkout["with"]["fetch-depth"] == 0
+    assert checkout["with"]["persist-credentials"] is False
+    assert checkout["with"]["ref"] == "${{ github.event.pull_request.head.sha || github.sha }}"
+    assert sum(step.get("uses") == "./.github/actions/ci-scope" for step in changes["steps"]) == 1
+    assert "secrets." not in str(changes)
+
+
+def test_only_selected_families_receive_the_shared_scope() -> None:
+    jobs = workflow("ci.yml")["jobs"]
+    for name, family in ci_scope.WORKFLOWS.items():
+        job = jobs[family]
+        assert job["needs"] == "changes"
+        assert job["uses"] == f"./.github/workflows/{name}"
+        assert job["with"] == {"scope": "${{ needs.changes.outputs.scope }}"}
+        assert job["secrets"] == "inherit"  # pragma: allowlist secret
+        keys = set(re.findall(r"fromJSON\(needs.changes.outputs.scope\)\.(\w+)", job["if"]))
+        assert keys == ci_scope.GROUPS[family] | ({"file_checks"} if family == "python" else set())
+    assert jobs["python"]["permissions"] == {"contents": "read", "pull-requests": "write"}
+
+
+def test_reusable_suites_reuse_scope_and_keep_standalone_selection() -> None:
+    for name in ci_scope.WORKFLOWS:
         config = workflow(name)
-        # PyYAML's YAML 1.1 parser reads the unquoted GitHub Actions `on` key as True.
-        triggers = config.get("on", config.get(True))
-        for event in ("push", "pull_request"):
-            assert "paths" not in triggers[event], (name, event)
+        events = triggers(config)
+        assert "push" not in events and "pull_request" not in events
+        assert "workflow_dispatch" in events
+        assert events["workflow_call"]["inputs"]["scope"] == {
+            "description": "Suite decisions from the shared push or PR selector.",
+            "type": "string",
+            "default": "",
+        }
         jobs = config["jobs"]
-        scope = jobs["changes"]
-        assert "concurrency" not in scope
-        checkout = next(step for step in scope["steps"] if "checkout@" in step.get("uses", ""))
+        changes = jobs["changes"]
+        assert "concurrency" not in changes
+        assert changes["outputs"]["scope"] == "${{ inputs.scope || steps.scope.outputs.scope }}"
+        validation = changes["steps"][0]
+        assert validation["if"] == "inputs.scope != ''"
+        # Node's normal working directory does not exist without a checkout.
+        assert validation["working-directory"] == "${{ github.workspace }}"
+        assert validation["env"] == {"SCOPE": "${{ inputs.scope }}"}
+        checkout = next(step for step in changes["steps"] if "checkout@" in step.get("uses", ""))
+        assert checkout["if"] == "inputs.scope == ''"
         assert checkout["with"]["fetch-depth"] == 0
         assert checkout["with"]["persist-credentials"] is False
-        assert checkout["with"]["ref"] == "${{ github.event.pull_request.head.sha || github.sha }}"
+        selector = next(step for step in changes["steps"] if step.get("uses") == "./.github/actions/ci-scope")
+        assert selector["if"] == "inputs.scope == ''"
         for job_id, job in jobs.items():
             if job_id == "changes":
                 continue
@@ -99,6 +146,20 @@ def test_suite_selection_is_required_and_has_complete_history() -> None:
                 assert job["if"] == "always()"
             else:
                 assert "fromJSON(needs.changes.outputs.scope)" in job["if"], (name, job_id)
+
+
+def test_periodic_coverage_and_cancellation_boundaries_are_preserved() -> None:
+    assert "concurrency" not in workflow("ci.yml")
+    for name in ci_scope.WORKFLOWS:
+        config = workflow(name)
+        if name in {"test-cicd.yml", "node-sdk-ci.yml"}:
+            assert triggers(config)["schedule"] == [{"cron": "0 */4 * * 1-5"}]
+            assert config["concurrency"]["cancel-in-progress"] == "${{ github.event_name == 'pull_request' }}"
+        else:
+            assert "concurrency" not in config
+            assert "schedule" not in triggers(config)
+    inputs = triggers(workflow("test-cicd.yml"))["workflow_dispatch"]["inputs"]
+    assert inputs["pr_number"]["required"] is True
 
 
 def test_live_selection_does_not_bypass_fork_protection() -> None:
@@ -132,4 +193,83 @@ def test_deleted_docs_still_run_the_global_link_check() -> None:
     step = next(step for step in steps if step.get("name") == "Run pre-commit")
     assert step["env"]["DOCS_LINKS"] == "${{ fromJSON(needs.changes.outputs.scope).docs_links }}"
     assert 'if [ "$DOCS_LINKS" = true ]' in step["run"]
-    assert "pre-commit run check-docs-broken-links --all-files" in step["run"]
+    assert '"${runner[@]}" run check-docs-broken-links --all-files' in step["run"]
+
+
+@pytest.mark.parametrize(
+    "changes,selected,expected",
+    [
+        ("success", "success", 0),
+        ("success", "skipped", 0),
+        ("success", "failure", 1),
+        ("success", "cancelled", 1),
+        ("skipped", "success", 1),
+        ("failure", "success", 1),
+        ("cancelled", "success", 1),
+    ],
+)
+def test_required_gate_waits_for_all_families_and_fails_closed(changes: str, selected: str, expected: int) -> None:
+    job = workflow("ci.yml")["jobs"]["tests"]
+    assert job["if"] == "always()"
+    assert set(job["needs"]) == {"changes", *ci_scope.GROUPS}
+    results = {name: {"result": "skipped"} for name in job["needs"]}
+    results["changes"]["result"] = changes
+    results["node"]["result"] = selected
+    result = subprocess.run(
+        ["bash", "-e", "-o", "pipefail", "-c", job["steps"][0]["run"]],
+        env={**os.environ, "RESULTS": json.dumps(results)},
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == expected, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize(
+    "python_setup,full,docs_links", [(False, False, False), (True, False, True), (True, True, False)]
+)
+def test_file_checks_use_the_selected_environment(
+    tmp_path: Path, python_setup: bool, full: bool, docs_links: bool
+) -> None:
+    job = workflow("test-cicd.yml")["jobs"]["lint"]
+    assert job["if"] == "fromJSON(needs.changes.outputs.scope).file_checks"
+    step = next(step for step in job["steps"] if step.get("name") == "Run pre-commit")
+    stub = """#!/usr/bin/env python3
+import json, os, sys
+from pathlib import Path
+with open(os.environ['COMMAND_LOG'], 'a') as log:
+    log.write(json.dumps([Path(sys.argv[0]).name, *sys.argv[1:]]) + '\\n')
+"""
+    for executable in ("uv", "uvx", "git"):
+        path = tmp_path / executable
+        path.write_text(stub)
+        path.chmod(0o755)
+    output = tmp_path / "commands.jsonl"
+    subprocess.run(
+        ["bash", "-e", "-o", "pipefail", "-c", step["run"]],
+        check=True,
+        env={
+            **os.environ,
+            "PATH": f"{tmp_path}:{os.environ['PATH']}",
+            "COMMAND_LOG": str(output),
+            "FULL": str(full).lower(),
+            "PYTHON_SETUP": str(python_setup).lower(),
+            "DOCS_LINKS": str(docs_links).lower(),
+            "BASE_SHA": "a" * 40,
+            "HEAD_SHA": "b" * 40,
+        },
+    )
+    calls = [json.loads(line) for line in output.read_text().splitlines()]
+    runner = (
+        ["uv", "run", "--active", "pre-commit"]
+        if python_setup
+        else ["uvx", "--from", "pre-commit==4.6.2", "pre-commit"]
+    )
+    if full:
+        assert calls == [[*runner, "run", "--all-files"]]
+    else:
+        assert calls[:2] == [
+            ["git", "fetch", "--no-tags", "origin", "a" * 40, "b" * 40],
+            [*runner, "run", "--from-ref", "a" * 40, "--to-ref", "b" * 40],
+        ]
+        if docs_links:
+            assert calls[2] == [*runner, "run", "check-docs-broken-links", "--all-files"]

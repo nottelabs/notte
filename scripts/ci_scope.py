@@ -220,6 +220,7 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str]:
     full = True
     lint_all = False
     docs_links = False
+    file_checks = True
     try:
         if event in {"push", "pull_request"}:
             if not all(re.fullmatch(r"[0-9a-f]{40}", sha) and set(sha) != {"0"} for sha in (base, head)):
@@ -228,6 +229,7 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str]:
                 base = git("merge-base", base, head).decode().strip()
             # No rename detection: both the old and new paths must contribute coverage.
             paths = git("diff", "--name-only", "--no-renames", "-z", base, head, "--").decode("utf-8").split("\0")
+            file_checks = any(paths)
             docs_paths = {path for path in paths if path.startswith("docs/src/")}
             if docs_paths:
                 deleted = set(
@@ -244,6 +246,8 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str]:
                 markdown = path == "README.md" or (path.startswith("docs/") and path.endswith((".md", ".mdx")))
                 code_changed = changed_code(base, head, path) if markdown else True
                 selected |= scopes_for_path(path, code_changed=code_changed)
+                if path.endswith((".py", ".pyi")):
+                    selected.add("python_static")
             full = False
     except (ValueError, subprocess.SubprocessError, UnicodeError) as error:
         print(f"Using full CI coverage: {type(error).__name__}", file=sys.stderr)
@@ -254,6 +258,7 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str]:
     return {
         **{name: name in selected for name in sorted(ALL)},
         "full": full,
+        "file_checks": full or file_checks,
         "lint_all": full or lint_all or selected == ALL,
         "docs_links": docs_links,
         "base": base,
@@ -278,7 +283,7 @@ def main() -> None:
     if args.summary:
         with args.summary.open("a") as summary:
             summary.write("### Selected CI suites\n\n| Suite | Run |\n| --- | --- |\n")
-            for name in sorted(ALL):
+            for name in ["file_checks", *sorted(ALL)]:
                 summary.write(f"| {name} | {'yes' if scope[name] else 'skip'} |\n")
             if scope["full"]:
                 summary.write("\nFull coverage: scheduled/manual run or unavailable comparison.\n")

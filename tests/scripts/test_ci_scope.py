@@ -314,7 +314,32 @@ class GitHistoryTests(unittest.TestCase):
         payload = json.loads(output.read_text().removeprefix("scope="))
         self.assertEqual(payload, json.loads(result.stdout))
         self.assertFalse(any(payload[name] for name in ci.ALL))
+        self.assertFalse(payload["file_checks"])
         self.assertIn("Selected CI suites", summary.read_text())
+
+    def test_non_python_files_keep_generic_file_checks(self) -> None:
+        before = self.base
+        for path in (
+            "node-sdk/src/client.ts",
+            "node-sdk/package.json",
+            "node-sdk/README.md",
+            ".github/workflows/node-sdk-ci.yml",
+            ".github/workflows/docs-tests-cicd.yml",
+            ".github/workflows/paired-sdk-examples.yml",
+            ".github/workflows/readme-check.yml",
+        ):
+            with self.subTest(path=path):
+                head = self.commit({path: "changed content\n"})
+                scope = self.scope("push", before, head)
+                self.assertTrue(scope["file_checks"])
+                self.assertFalse(scope["python_static"])
+                before = head
+
+    def test_python_helpers_outside_packages_keep_python_lint(self) -> None:
+        head = self.commit({"node-sdk/test/helpers/fixture.py": "fixture = True\n"})
+        scope = self.scope("push", self.base, head)
+        self.assertTrue(scope["file_checks"])
+        self.assertTrue(scope["python_static"])
 
     def test_symlinked_readme_never_skips_execution(self) -> None:
         (self.repo / "README.md").unlink()

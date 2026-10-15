@@ -1,10 +1,12 @@
 name: readme-check
 
 on:
-  pull_request:
-    branches: [main]
-  push:
-    branches: [main]
+  workflow_call:
+    inputs:
+      scope:
+        description: Suite decisions from the shared push or PR selector.
+        type: string
+        default: ''
   workflow_dispatch:
 
 permissions:
@@ -15,14 +17,22 @@ jobs:
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 5
     outputs:
-      scope: ${{ steps.scope.outputs.scope }}
+      scope: ${{ inputs.scope || steps.scope.outputs.scope }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Validate supplied scope
+        if: inputs.scope != ''
+        working-directory: ${{ github.workspace }}
+        env:
+          SCOPE: ${{ inputs.scope }}
+        run: python3 -c 'import json, os; json.loads(os.environ["SCOPE"])'
+      - if: inputs.scope == ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: ./.github/actions/ci-scope
+        if: inputs.scope == ''
         id: scope
 
   static:
