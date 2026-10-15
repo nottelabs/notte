@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING, Any, cast
 
-from notte_core.common.config import BrowserBackend, config
+from notte_core.config import BrowserBackend, config
 
 if TYPE_CHECKING:
     from patchright.async_api import Frame as PatchrightFrame
-from notte_core.common.logging import logger
+from notte_core.logging import logger
 
 match config.browser_backend:
     case BrowserBackend.PLAYWRIGHT:

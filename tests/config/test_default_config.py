@@ -1,5 +1,5 @@
 import pytest
-from notte_core.common.config import NotteConfig, config
+from notte_core.config import NotteConfig, config
 from pydantic import ValidationError
 
 

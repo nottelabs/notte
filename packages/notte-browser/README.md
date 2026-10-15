@@ -7,7 +7,7 @@ Local, Playwright-based browser sessions (`notte.Session`) with the same `execut
 - **Browser management**: local Chromium (patchright) or any browser reachable over CDP (`cdp_url`)
 - **Observations**: turns pages into a list of interaction actions plus clean markdown
 - **Actions**: click, fill, select, upload, scroll, tabs, ... by action id or selector
-- **Scraping**: markdown and images; structured data through a pluggable extractor (`notte_core.data.extraction.StructuredExtractor`)
+- **Scraping**: markdown and images; structured data through a pluggable extractor (`notte_core.extraction.StructuredExtractor`)
 - **Vaults and personas**: fill credentials from a vault without exposing them
 
 ## Installation

@@ -1,12 +1,14 @@
 # Code taken from:
 import datetime as dt
 from enum import StrEnum
-from typing import Any, ClassVar, Literal, Optional, Union, cast  # type: ignore[attr-defined]
+from typing import Any, ClassVar, Literal, Optional, TypeVar, Union, cast  # type: ignore[attr-defined]
 
 from pydantic import BaseModel, ConfigDict, Field, create_model, field_serializer, field_validator, model_validator
 from typing_extensions import override
 
 from notte_core.errors import NotteBaseError
+
+TResponseFormat = TypeVar("TResponseFormat", bound=BaseModel)
 
 TYPE_MAPPING: dict[str, type] = {
     "string": str,

@@ -1,7 +1,7 @@
 import notte_sdk.actions as actions
 from notte_browser.session import NotteSession as Session
 from notte_core import check_notte_version, set_error_mode
-from notte_core.common.config import config
+from notte_core.config import config
 from notte_core.credentials import (
     CARD_CVV,
     CARD_EXPIRATION,

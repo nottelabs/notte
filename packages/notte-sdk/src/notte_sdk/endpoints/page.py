@@ -2,11 +2,11 @@ import time
 from typing import TYPE_CHECKING, Any, Literal, Unpack, cast, overload
 
 from notte_core.actions import ActionUnion, CaptchaSolveAction, InteractionActionUnion, WaitAction
-from notte_core.common.config import PerceptionType
-from notte_core.common.logging import logger
-from notte_core.common.telemetry import track_usage
-from notte_core.data.space import StructuredData, TBaseModel
+from notte_core.config import PerceptionType
+from notte_core.data import StructuredData, TBaseModel
 from notte_core.errors import NotteBaseError, ScrapeFailedError
+from notte_core.logging import logger
+from notte_core.telemetry import track_usage
 from notte_core.types import (
     CaptchaExecuteParams,
     ExecutionResultResponse,

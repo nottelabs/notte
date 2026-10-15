@@ -2,7 +2,7 @@ from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
-from notte_core.data.space import StructuredData
+from notte_core.data import StructuredData
 
 
 @runtime_checkable

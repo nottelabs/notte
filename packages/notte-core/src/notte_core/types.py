@@ -36,14 +36,14 @@ from notte_core.actions import (
 from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.browser.observation import ExecutionResult, Observation
 from notte_core.browser.snapshot import TabsData
-from notte_core.common.config import (
+from notte_core.config import (
     BrowserType,
     PerceptionType,
     PlaywrightProxySettings,
     config,
 )
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict
-from notte_core.data.space import DataSpace
+from notte_core.data import DataSpace
 from notte_core.schema import convert_response_format_to_pydantic_model
 
 # Re-export FileInfo from notte_core for use in SDK

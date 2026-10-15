@@ -4,7 +4,7 @@ from typing import Any, Callable, TypeVar, cast
 
 from pydantic import BaseModel
 
-from notte_core.common.logging import logger
+from notte_core.logging import logger
 
 T = TypeVar("T")
 TBaseModel = TypeVar("TBaseModel", bound=BaseModel)

@@ -3,15 +3,15 @@ from __future__ import annotations
 import secrets
 from typing import Unpack, final, overload
 
-from notte_core.common.logging import logger
-from notte_core.common.resource import SyncResource
 from notte_core.credentials.base import (
     BaseVault,
     Credential,
     CredentialsDict,
     CreditCardDict,
 )
+from notte_core.logging import logger
 from notte_core.profiling import profiler
+from notte_core.resource import SyncResource
 from typing_extensions import override
 
 from notte_sdk._generated.resources import VaultsOperations

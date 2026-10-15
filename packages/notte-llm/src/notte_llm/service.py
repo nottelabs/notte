@@ -2,9 +2,9 @@ from pathlib import Path
 from typing import Any
 
 import tiktoken
-from notte_core.common.config import config
-from notte_core.common.logging import logger
-from notte_core.common.types import TResponseFormat
+from notte_core.config import config
+from notte_core.logging import logger
+from notte_core.schema import TResponseFormat
 
 from notte_llm.config import LlmSettings
 from notte_llm.engine import LLMEngine

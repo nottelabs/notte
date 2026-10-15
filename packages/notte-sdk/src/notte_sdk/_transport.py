@@ -6,7 +6,7 @@ import time
 from typing import Any
 
 import requests
-from notte_core.common.logging import logger
+from notte_core.logging import logger
 from requests.adapters import HTTPAdapter
 from typing_extensions import override
 from urllib3.connection import HTTPSConnection

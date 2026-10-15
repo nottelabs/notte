@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import notte_browser.captcha as captcha_module
 import notte_browser.resolution as resolution_module
-import notte_core.common.logging as logging
+import notte_core.logging as logging
 import pytest
 from notte_browser.captcha import captcha_solver_available, set_captcha_solver, solve_captcha
 from notte_browser.errors import CaptchaSolverNotAvailableError
@@ -16,7 +16,7 @@ from notte_browser.window import BrowserWindow, BrowserWindowOptions, Screenshot
 from notte_core.actions import CaptchaSolveAction, ClickAction
 from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.browser.node_type import NodeType
-from notte_core.data.space import DataSpace, DictBaseModel
+from notte_core.data import DataSpace, DictBaseModel
 from notte_core.types import LocalSessionStartRequest
 from typing_extensions import override
 

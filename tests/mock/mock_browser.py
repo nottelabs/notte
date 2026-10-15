@@ -7,7 +7,7 @@ from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, Do
 from notte_core.browser.node_type import NodeType
 from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, TabsData, ViewportData
-from notte_core.common.resource import AsyncResource
+from notte_core.resource import AsyncResource
 from typing_extensions import TypedDict, override
 
 

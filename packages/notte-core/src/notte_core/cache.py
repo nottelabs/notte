@@ -12,7 +12,7 @@ import threading
 from enum import Enum
 from pathlib import Path
 
-from notte_core.common.logging import logger
+from notte_core.logging import logger
 
 
 class CacheDirectory(str, Enum):

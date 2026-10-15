@@ -1,5 +1,5 @@
 from notte_browser.session import NotteSession
-from notte_core.data.extraction import StructuredExtractor
+from notte_core.extraction import StructuredExtractor
 from notte_llm import LlmExtractor
 
 

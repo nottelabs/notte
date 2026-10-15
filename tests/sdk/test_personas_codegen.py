@@ -28,7 +28,7 @@ SMS = {"body": "Hello", "sms_id": "sms-1", "created_at": "2026-10-13T00:00:00Z",
 
 def test_persona_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
     events: list[str] = []
-    monkeypatch.setattr("notte_core.common.telemetry._capture_usage_event", lambda name, **_: events.append(name))
+    monkeypatch.setattr("notte_core.telemetry._capture_usage_event", lambda name, **_: events.append(name))
     session = fake(monkeypatch, PERSONA)
     assert isinstance(client.personas.create(name=None), PersonaResponse)
     _ = client.personas.create(create_vault=True, name="Ada")

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 from notte_browser.session import NotteSession
-from notte_core.common.config import CookieDict, create_or_append_cookies_to_file
+from notte_core.config import CookieDict, create_or_append_cookies_to_file
 
 
 def cookie(name: str, value: str) -> CookieDict:

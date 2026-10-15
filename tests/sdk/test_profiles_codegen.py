@@ -23,7 +23,7 @@ def client(monkeypatch: pytest.MonkeyPatch) -> NotteClient:
 
 def test_profile_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
     events: list[str] = []
-    monkeypatch.setattr("notte_core.common.telemetry._capture_usage_event", lambda name, **_: events.append(name))
+    monkeypatch.setattr("notte_core.telemetry._capture_usage_event", lambda name, **_: events.append(name))
     session = fake(monkeypatch, PROFILE)
     assert isinstance(client.profiles.create(), ProfileResponse)
     _ = client.profiles.create(name="p")

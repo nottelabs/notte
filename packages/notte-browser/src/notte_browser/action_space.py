@@ -1,9 +1,9 @@
 from notte_core.actions import ActionParameter, ClickAction, FillAction, InteractionAction, SelectDropdownOptionAction
 from notte_core.browser.dom_tree import DomNode
 from notte_core.browser.node_type import NodeType
-from notte_core.common.config import config
-from notte_core.common.logging import logger
+from notte_core.config import config
 from notte_core.errors import InvalidInternalCheckError
+from notte_core.logging import logger
 from notte_core.space import ActionSpace
 
 

@@ -9,7 +9,7 @@ from urllib.parse import quote, urljoin
 
 import requests
 from notte_core import __version__ as notte_core_version
-from notte_core.common.logging import logger
+from notte_core.logging import logger
 from pydantic import BaseModel, ConfigDict, ValidationError
 from requests.exceptions import ConnectionError
 

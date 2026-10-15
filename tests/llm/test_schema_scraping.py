@@ -5,8 +5,8 @@ from typing import Any
 
 import pytest
 from dotenv import load_dotenv
-from notte_core.data.pruning import mask_markdown
-from notte_core.data.space import DictBaseModel, StructuredData
+from notte_core.data import DictBaseModel, StructuredData
+from notte_core.pruning import mask_markdown
 from notte_llm.extractor import LlmExtractor
 from notte_llm.models import LlmModel
 from notte_llm.service import LLMService

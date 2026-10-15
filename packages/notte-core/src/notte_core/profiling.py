@@ -6,9 +6,9 @@ import time
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Callable, ParamSpec, TypeVar, cast
 
-from notte_core.common.cache import CacheDirectory, ensure_cache_directory
-from notte_core.common.config import config
-from notte_core.common.logging import logger
+from notte_core.cache import CacheDirectory, ensure_cache_directory
+from notte_core.config import config
+from notte_core.logging import logger
 
 if TYPE_CHECKING:
     # OpenTelemetry is imported once profiling is used: importing notte with profiling

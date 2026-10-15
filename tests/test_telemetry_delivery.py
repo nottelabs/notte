@@ -1,7 +1,7 @@
 from typing import Any
 
 import pytest
-from notte_core.common import telemetry
+from notte_core import telemetry
 
 
 def test_track_usage_delivers_metadata_only_to_telemetry_clients(monkeypatch: pytest.MonkeyPatch) -> None:

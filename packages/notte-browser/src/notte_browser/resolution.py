@@ -8,8 +8,8 @@ from notte_core.actions import (
 )
 from notte_core.browser.dom_tree import DomNode, NodeSelectors
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.logging import logger
 from notte_core.errors import InvalidActionError
+from notte_core.logging import logger
 from notte_core.profiling import profiler
 
 from notte_browser.dom.locate import selectors_through_shadow_dom

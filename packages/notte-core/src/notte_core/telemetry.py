@@ -10,7 +10,7 @@ from typing import Any, Callable, TypeVar
 
 from packaging import version
 
-from notte_core.common.cache import CacheDirectory, ensure_cache_directory
+from notte_core.cache import CacheDirectory, ensure_cache_directory
 
 logger = logging.getLogger("notte.telemetry")
 

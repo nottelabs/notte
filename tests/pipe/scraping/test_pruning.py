@@ -1,7 +1,7 @@
 import difflib
 from pathlib import Path
 
-from notte_core.data.pruning import MaskedDocument, mask_markdown, unmask_markdown, unmask_pydantic
+from notte_core.pruning import MaskedDocument, mask_markdown, unmask_markdown, unmask_pydantic
 from pydantic import BaseModel
 
 

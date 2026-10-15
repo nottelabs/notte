@@ -10,7 +10,7 @@ from notte_browser.errors import PageLoadingError
 from notte_browser.playwright_async_api import Error as PlaywrightError
 from notte_browser.playwright_async_api import async_playwright
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
-from notte_core.common.config import config
+from notte_core.config import config
 from notte_core.types import LocalSessionStartRequest
 
 

@@ -12,8 +12,8 @@ import pytest
 from notte_browser.errors import BrowserNotStartedError, EmptyPageContentError, StructuredExtractorNotAvailableError
 from notte_browser.scrape import default_extractor, scrape_page, scrape_snapshot
 from notte_browser.session import NotteSession
-from notte_core.data.extraction import StructuredExtractor
-from notte_core.data.space import DictBaseModel, StructuredData
+from notte_core.data import DictBaseModel, StructuredData
+from notte_core.extraction import StructuredExtractor
 from notte_core.profiling import profiler
 from notte_sdk.types import ScrapeParams
 from pydantic import BaseModel, RootModel, ValidationError

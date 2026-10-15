@@ -1,10 +1,10 @@
 import datetime as dt
 import json
 
-from notte_core.common.logging import logger
-from notte_core.common.types import TResponseFormat
-from notte_core.data.pruning import mask_markdown, unmask_pydantic
-from notte_core.data.space import DictBaseModel, NoStructuredData, StructuredData
+from notte_core.data import DictBaseModel, NoStructuredData, StructuredData
+from notte_core.logging import logger
+from notte_core.pruning import mask_markdown, unmask_pydantic
+from notte_core.schema import TResponseFormat
 from pydantic import BaseModel
 
 from notte_llm.service import LLMService
@@ -25,7 +25,7 @@ class _Hotels(BaseModel):
 
 class LlmExtractor:
     """
-    Structured extractor (`notte_core.data.extraction.StructuredExtractor`) that asks an LLM to turn the
+    Structured extractor (`notte_core.extraction.StructuredExtractor`) that asks an LLM to turn the
     markdown of a page into JSON, optionally validated against a Pydantic model.
 
     The model defaults to `NOTTE_LLM_MODEL` (see `notte_llm.config.LlmSettings`); a model passed to

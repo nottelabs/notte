@@ -18,8 +18,8 @@ from dataclasses import dataclass, field
 from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
 from notte_core.browser.highlighter import BoundingBox
 from notte_core.browser.node_type import NodeRole, NodeType
-from notte_core.common.config import config
-from notte_core.common.logging import logger
+from notte_core.config import config
+from notte_core.logging import logger
 from typing_extensions import NotRequired, TypedDict
 
 from notte_browser.dom.csspaths import build_csspath

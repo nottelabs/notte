@@ -2,8 +2,8 @@
 
 import asyncio
 
-from notte_core.common.config import config
-from notte_core.common.logging import logger
+from notte_core.config import config
+from notte_core.logging import logger
 from notte_core.profiling import profiler
 from notte_core.types import LocalSessionStartRequest
 

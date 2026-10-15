@@ -4,9 +4,9 @@ from functools import wraps
 from typing import Any, Callable, TypeVar
 
 from notte_core.actions import ToolAction
-from notte_core.common.config import config
-from notte_core.common.logging import logger
+from notte_core.config import config
 from notte_core.errors import InvalidInternalCheckError, NotteBaseError, NotteTimeoutError
+from notte_core.logging import logger
 
 from notte_browser.playwright_async_api import getPlaywrightOrPatchrightError, getPlaywrightOrPatchrightTimeoutError
 

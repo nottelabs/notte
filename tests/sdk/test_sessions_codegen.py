@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 from notte_core import __version__
-from notte_core.common.config import config
+from notte_core.config import config
 from notte_sdk import NotteClient
 from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import SessionResponse

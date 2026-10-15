@@ -5,8 +5,8 @@ from typing import Any, Literal, Unpack, cast, overload
 
 from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
-from notte_core.common.logging import logger
-from notte_core.data.space import StructuredData, TBaseModel
+from notte_core.data import StructuredData, TBaseModel
+from notte_core.logging import logger
 from notte_core.types import ScrapeMarkdownParamsDict, ScrapeRequestDict
 from pydantic import BaseModel
 from typing_extensions import final

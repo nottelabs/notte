@@ -4,7 +4,7 @@ parsing those payloads: the legacy keys are ignored, not rejected."""
 
 from notte_core.actions import ScrapeAction
 from notte_core.browser.observation import ExecutionResult
-from notte_core.data.space import DataSpace
+from notte_core.data import DataSpace
 from notte_core.types import ScrapeResponse
 
 

@@ -14,9 +14,9 @@ from typing_extensions import override
 from notte_core.actions import ActionUnion
 from notte_core.browser.highlighter import BoundingBox, highlight_screenshot
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
-from notte_core.common.logging import logger
-from notte_core.data.space import DataSpace
+from notte_core.data import DataSpace
 from notte_core.errors import NotteBaseError
+from notte_core.logging import logger
 from notte_core.space import ActionSpace
 from notte_core.url import clean_url
 

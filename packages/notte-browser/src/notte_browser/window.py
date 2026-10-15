@@ -16,9 +16,9 @@ from notte_core.browser.snapshot import (
     TabsData,
     ViewportData,
 )
-from notte_core.common.config import BrowserType, CookieDict, PlaywrightProxySettings, config
-from notte_core.common.logging import logger
+from notte_core.config import BrowserType, CookieDict, PlaywrightProxySettings, config
 from notte_core.errors import SnapshotProcessingError
+from notte_core.logging import logger
 from notte_core.profiling import profiler
 from notte_core.raw_file import get_empty_dom_node, get_file_ext
 from notte_core.types import (

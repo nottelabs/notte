@@ -23,8 +23,6 @@ from litellm.exceptions import (
     ContextWindowExceededError as LiteLLMContextWindowExceededError,
 )
 from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTypeStubs]
-from notte_core.common.logging import logger
-from notte_core.common.types import TResponseFormat
 from notte_core.errors import (
     ContextWindowExceededError,
     InsufficentCreditsError,
@@ -39,7 +37,9 @@ from notte_core.errors import (
     NotteBaseError,
 )
 from notte_core.errors import RateLimitError as NotteRateLimitError
+from notte_core.logging import logger
 from notte_core.profiling import profiler
+from notte_core.schema import TResponseFormat
 from pydantic import BaseModel, ValidationError
 
 from notte_llm.config import LlmSettings

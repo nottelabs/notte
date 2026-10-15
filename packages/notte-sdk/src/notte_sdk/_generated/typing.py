@@ -3,8 +3,8 @@
 from datetime import timedelta as timedelta_aliased
 from typing import Annotated, Any, Literal, NotRequired, Required
 
+from notte_core import config
 from notte_core import types as core
-from notte_core.common import config
 from pydantic import Field
 from typing_extensions import TypedDict
 

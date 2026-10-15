@@ -33,7 +33,7 @@ def capture(monkeypatch: pytest.MonkeyPatch, payload: Any, status: int = 200) ->
 
 def test_files_json_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
     events: list[str] = []
-    monkeypatch.setattr("notte_core.common.telemetry._capture_usage_event", lambda name, **_: events.append(name))
+    monkeypatch.setattr("notte_core.telemetry._capture_usage_event", lambda name, **_: events.append(name))
     page = {"files": [file_metadata().model_dump(mode="json")], "total": 4, "limit": 100, "offset": 0}
     session = capture(monkeypatch, page)
     result = client.files.list("session-id")

@@ -32,7 +32,7 @@ PARAM_FIELD_RE = re.compile(r'<ParamField\s+path="([^"]+)"[^>]*?\sdefault=(\{[^}
 def code_defaults() -> dict[str, Any]:
     import inspect
 
-    from notte_core.common.config import config
+    from notte_core.config import config
     from notte_sdk.endpoints.sessions import RemoteSession
     from notte_sdk.types import (
         DEFAULT_HEADLESS_VIEWPORT_HEIGHT,

@@ -834,7 +834,7 @@ def render_resources(spec: JsonObject) -> dict[str, str]:
     factories += 'from pydantic import BaseModel\nfrom notte_sdk.endpoints.base import NotteEndpoint\n\ndef _segment(value: str) -> str:\n    return quote(value, safe="")\n'
     clients = (
         RESOURCE_HEADER
-        + "from collections.abc import Sequence\nfrom typing import TYPE_CHECKING, Any, Unpack\nfrom notte_core.common.telemetry import track_usage\n"
+        + "from collections.abc import Sequence\nfrom typing import TYPE_CHECKING, Any, Unpack\nfrom notte_core.telemetry import track_usage\n"
         + imports
     )
     clients += "from notte_sdk._requests import wire_request\nfrom notte_sdk._generated import operations as api\nfrom notte_sdk._generated.typing import *\nfrom notte_sdk.endpoints.base import BaseClient\n"
@@ -926,7 +926,7 @@ def render_resources(spec: JsonObject) -> dict[str, str]:
     )
     typing = (
         RESOURCE_HEADER
-        + "from datetime import timedelta as timedelta_aliased\nfrom typing import Annotated, Any, Literal, NotRequired, Required\nfrom pydantic import Field\nfrom notte_core import types as core\nfrom notte_core.common import config\nfrom notte_sdk._generated import models\nfrom typing_extensions import TypedDict\n\n\n"
+        + "from datetime import timedelta as timedelta_aliased\nfrom typing import Annotated, Any, Literal, NotRequired, Required\nfrom pydantic import Field\nfrom notte_core import types as core\nfrom notte_core import config\nfrom notte_sdk._generated import models\nfrom typing_extensions import TypedDict\n\n\n"
         + "\n\n".join(keywords.values())
     )
     public.update({name: f"typing.{name}" for name in keyword_names})

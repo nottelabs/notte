@@ -6,10 +6,10 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Unpack, overload
 from urllib.parse import quote
 
-from notte_core.common.logging import logger
-from notte_core.common.resource import SyncResource
-from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault
+from notte_core.logging import logger
+from notte_core.resource import SyncResource
+from notte_core.telemetry import track_usage
 from typing_extensions import final, override
 
 from notte_sdk._generated.resources import PersonasOperations

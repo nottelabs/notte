@@ -9,10 +9,10 @@ from pydantic import BaseModel, Field, computed_field
 from typing_extensions import TypedDict, override
 
 from notte_core import set_logger_mode
-from notte_core.common.logging import logger
 from notte_core.errors import ErrorMode
+from notte_core.logging import logger
 
-DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config.toml"
+DEFAULT_CONFIG_PATH = Path(__file__).parent / "config.toml"
 
 if not DEFAULT_CONFIG_PATH.exists():
     raise FileNotFoundError(f"Config file not found: {DEFAULT_CONFIG_PATH}")

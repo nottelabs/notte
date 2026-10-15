@@ -1,7 +1,7 @@
 # Notte LLM
 
 LLM-based structured data extraction for Notte. It provides `LlmExtractor`, the default implementation of the
-`notte_core.data.extraction.StructuredExtractor` protocol that local sessions use for
+`notte_core.extraction.StructuredExtractor` protocol that local sessions use for
 `scrape(instructions=..., response_format=...)`. Cloud sessions run extraction server side and don't need it.
 
 ```bash

@@ -22,11 +22,11 @@ from notte_core.actions import (
     SelectDropdownOptionAction,
 )
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.logging import logger
-from notte_core.common.types import TResponseFormat
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
 from notte_core.errors import InvalidPlaceholderError, NoCredentialsFoundError, VaultCredentialError
+from notte_core.logging import logger
 from notte_core.profiling import profiler
+from notte_core.schema import TResponseFormat
 from notte_core.url import get_root_domain
 
 

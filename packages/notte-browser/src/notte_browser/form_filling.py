@@ -1,7 +1,7 @@
 import asyncio
 import random
 
-from notte_core.common.logging import logger
+from notte_core.logging import logger
 
 from notte_browser.playwright_async_api import Error as PlaywrightError
 from notte_browser.playwright_async_api import Locator, Page

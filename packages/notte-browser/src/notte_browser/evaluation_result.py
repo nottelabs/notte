@@ -10,8 +10,8 @@ from json.encoder import encode_basestring_ascii
 from typing import Any, cast
 from urllib.parse import urlparse
 
-from notte_core.common.config import BrowserBackend, config
-from notte_core.data.space import DataSpace
+from notte_core.config import BrowserBackend, config
+from notte_core.data import DataSpace
 from notte_core.errors import EvaluateJsResultLimitError
 
 from notte_browser.errors import PlaywrightError

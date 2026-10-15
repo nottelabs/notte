@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 import requests
-from notte_core.common.logging import logger
+from notte_core.logging import logger
 from notte_sdk._generated import operations as api
 from notte_sdk.endpoints import functions
 from notte_sdk.endpoints.base import BaseClient

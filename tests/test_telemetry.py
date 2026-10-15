@@ -3,7 +3,7 @@ import sys
 from typing import Any
 
 import pytest
-from notte_core.common import telemetry
+from notte_core import telemetry
 
 
 def capture_usage_events(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, dict[str, Any] | None]]:
@@ -82,7 +82,7 @@ async def test_track_usage_captures_async_failures_after_await(monkeypatch: pyte
 def test_importing_the_sdk_does_not_start_telemetry() -> None:
     """Telemetry clients (and their imports) are only created on the first captured event."""
     code = (
-        "import sys, notte_sdk, notte_core.common.telemetry as t\n"
+        "import sys, notte_sdk, notte_core.telemetry as t\n"
         "assert 'posthog' not in sys.modules and 'scarf' not in sys.modules, sorted(sys.modules)\n"
         "assert t._clients.cache_info().currsize == 0\n"
     )

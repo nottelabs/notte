@@ -4,7 +4,7 @@ import warnings
 from pathlib import Path
 
 from notte_core.actions import FormFillAction
-from notte_core.common.logging import logger
+from notte_core.logging import logger
 
 from notte_sdk.endpoints.sessions import RemoteSession
 

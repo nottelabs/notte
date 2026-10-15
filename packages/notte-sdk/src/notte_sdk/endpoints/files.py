@@ -6,9 +6,9 @@ from pathlib import Path, PureWindowsPath
 from typing import final
 
 import requests
-from notte_core.common.cache import CacheDirectory, ensure_cache_directory
-from notte_core.common.telemetry import track_usage
+from notte_core.cache import CacheDirectory, ensure_cache_directory
 from notte_core.storage import BaseStorage, FileInfo
+from notte_core.telemetry import track_usage
 from typing_extensions import override
 
 from notte_sdk._generated.resources import FilesOperations

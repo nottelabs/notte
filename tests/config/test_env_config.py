@@ -1,8 +1,8 @@
 from types import SimpleNamespace
 
-import notte_core.common.config as config_module
+import notte_core.config as config_module
 import pytest
-from notte_core.common.config import NotteConfig, config
+from notte_core.config import NotteConfig, config
 from notte_core.errors import ErrorConfig
 from pydantic import ValidationError
 

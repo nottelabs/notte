@@ -10,8 +10,8 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from notte_core.common import cache as cache_module
-from notte_core.common.cache import (
+from notte_core import cache as cache_module
+from notte_core.cache import (
     CacheDirectory,
     ensure_cache_directory,
     get_cache_root,
@@ -66,7 +66,7 @@ class TestCacheRoot:
         assert root1 == root2
 
     @patch.dict(os.environ, {"HOME": "/nonexistent/home"})
-    @patch("notte_core.common.cache._is_writable")
+    @patch("notte_core.cache._is_writable")
     def test_cache_fallback_to_temp(self, mock_is_writable: Any) -> None:
         """Test fallback to temp directory when home is not writable."""
 
@@ -159,7 +159,7 @@ class TestEnvironmentVariables:
             with patch.dict(os.environ, {"XDG_CACHE_HOME": tmpdir}):
                 # Import telemetry without creating directories yet
                 # Force reload to pick up new env var
-                from notte_core.common import telemetry
+                from notte_core import telemetry
 
                 _ = importlib.reload(telemetry)
 
@@ -187,7 +187,7 @@ class TestIntegration:
     def test_telemetry_uses_cache(self):
         """Test that telemetry module uses centralized cache."""
         # Force module reload to pick up current cache state
-        from notte_core.common import telemetry
+        from notte_core import telemetry
 
         _ = importlib.reload(telemetry)
 

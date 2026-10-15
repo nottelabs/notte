@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, Unpack
 
 from notte_core import types as core
-from notte_core.common.telemetry import track_usage
+from notte_core.telemetry import track_usage
 
 from notte_sdk._compat import profiles as profiles_compat
 from notte_sdk._compat import run_payloads as run_payloads_compat

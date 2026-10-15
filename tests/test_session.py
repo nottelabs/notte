@@ -241,7 +241,7 @@ def test_captcha_solver_not_available_error():
 @pytest.mark.asyncio
 async def test_execute_with_default_timeout() -> None:
     """Test that execute works with default timeout from config."""
-    from notte_core.common.config import config
+    from notte_core.config import config
 
     async with NotteSession(headless=True) as session:
         _ = await session.aexecute(type="goto", url="https://www.google.com")
@@ -266,7 +266,7 @@ async def test_execute_with_custom_timeout() -> None:
 
 
 def test_interaction_action_zero_timeout_uses_default_config_timeout() -> None:
-    from notte_core.common.config import config
+    from notte_core.config import config
 
     action = ClickAction(id="B1", timeout=0)
 
@@ -359,7 +359,7 @@ EVALUATE_JS_TIMEOUT_MS: int = 500
 def short_evaluate_js_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     """Shorten the evaluate_js timeout (45s by default) so timeout tests stay fast."""
     from notte_browser import evaluation_result as evaluation_module
-    from notte_core.common.config import config
+    from notte_core.config import config
 
     monkeypatch.setattr(
         evaluation_module,

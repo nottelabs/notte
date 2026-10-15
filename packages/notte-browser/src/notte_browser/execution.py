@@ -34,10 +34,10 @@ from notte_core.actions import (
     # WriteFileAction,
 )
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import config
-from notte_core.common.logging import logger
+from notte_core.config import config
 from notte_core.credentials.types import get_str_value
 from notte_core.errors import ActionExecutionError, NotteTimeoutError
+from notte_core.logging import logger
 from notte_core.profiling import profiler
 from notte_core.storage import BaseStorage
 

@@ -1,6 +1,6 @@
 import pytest
 from dotenv import load_dotenv
-from notte_core.common.config import BrowserType
+from notte_core.config import BrowserType
 from notte_sdk import NotteClient
 from notte_sdk.errors import NotteAPIError
 

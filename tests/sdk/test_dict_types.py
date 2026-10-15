@@ -2,7 +2,7 @@ from typing import ClassVar, get_args, get_origin, get_type_hints
 
 import pytest
 from notte_core import types as core_types
-from notte_core.common.config import CookieDict, NotteConfig, NotteConfigDict
+from notte_core.config import CookieDict, NotteConfig, NotteConfigDict
 from notte_sdk.types import (
     Cookie,
     CreateFunctionRunRequest,
