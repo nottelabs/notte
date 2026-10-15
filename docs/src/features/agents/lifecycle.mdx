@@ -2,9 +2,6 @@
 title: Agent Lifecycle
 description: Understand agent execution modes, states, and control flow
 ---
-import AsyncExecution from "/snippets/agents/async_execution.mdx";
-import ParallelAgents from "/snippets/agents/parallel_agents.mdx";
-import RetryPattern from "/snippets/agents/retry_pattern.mdx";
 import RunBlocking from "/snippets/agents/lifecycle/run_blocking.mdx";
 import StartWait from "/snippets/agents/lifecycle/start_wait.mdx";
 import StateRunning from "/snippets/agents/lifecycle/state_running.mdx";
@@ -28,7 +25,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Agents support multiple execution patterns - from simple blocking calls to advanced asynchronous monitoring. Choose the right pattern for your use case.
+Run an agent and wait for completion, or start it first and monitor its progress separately.
 
 ## Execution Modes
 
@@ -55,19 +52,6 @@ Start the agent and wait for completion separately:
 - You need to start multiple agents in parallel
 - You want to do other work while the agent runs
 - You need more control over execution
-
----
-
-### Async Execution
-
-Run agents asynchronously with `async`/`await`:
-
-<AsyncExecution />
-
-**When to use:**
-- Building async applications
-- Running multiple agents concurrently
-- Integrating with async frameworks (FastAPI, aiohttp)
 
 ## Agent States
 
@@ -129,14 +113,6 @@ Check status periodically:
 
 <PollingPattern />
 
-## Parallel Execution
-
-### Multiple Independent Agents
-
-Run multiple agents simultaneously:
-
-<ParallelAgents />
-
 ## Stopping Agents
 
 ### Manual Stop
@@ -172,12 +148,6 @@ Inspect individual steps:
 Handle failures gracefully:
 
 <GracefulDegradation />
-
-### Retry Pattern
-
-Retry failed agents:
-
-<RetryPattern />
 
 ### Agent Fallback
 
