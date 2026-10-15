@@ -33,7 +33,7 @@ from pydantic import BaseModel
 from typing_extensions import override
 
 from notte_browser.dom.parsing import parse_dom
-from notte_browser.driver import Browser, CDPSession, Locator, Page, Playwright, Response
+from notte_browser.driver import Browser, BrowserContext, CDPSession, Locator, Page, Playwright, Response
 from notte_browser.errors import (
     BrowserExpiredError,
     EmptyPageContentError,
@@ -202,6 +202,7 @@ class BrowserWindow:
         self.page_callbacks: dict[str, Callable[[Page], None]] = {}
         self.goto_response: Response | None = None
         self._cdp_sessions: dict[int, CDPSession] = {}
+        self._owned_context: BrowserContext | None = None
         self._owned_browser: Browser | None = None
         self._owned_driver: Playwright | None = None
         page.set_default_timeout(config.timeout_default_ms)
@@ -210,17 +211,19 @@ class BrowserWindow:
         self.apply_page_callbacks()
 
     async def _close_owned(self) -> None:
+        from notte_browser.cleanup import cleanup_resources
+
+        cleanups: list[Callable[[], Awaitable[None]]] = []
+        if self._owned_context is not None:
+            cleanups.append(self._owned_context.close)
+        if self._owned_browser is not None:
+            cleanups.append(self._owned_browser.close)
+        if self._owned_driver is not None:
+            cleanups.append(self._owned_driver.stop)
         try:
-            async with asyncio.timeout(30):
-                try:
-                    if self._owned_browser is not None:
-                        await self._owned_browser.close()
-                finally:
-                    if self._owned_driver is not None:
-                        await self._owned_driver.stop()
-        except Exception as e:
-            logger.error(f"Failed to close window: {e}")
+            await cleanup_resources(*cleanups)
         finally:
+            self._owned_context = None
             self._owned_browser = None
             self._owned_driver = None
 

@@ -2,6 +2,7 @@ import base64
 import datetime as dt
 import io
 from base64 import b64decode, b64encode
+from builtins import bytes as _builtin_bytes
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from io import BytesIO
@@ -88,12 +89,13 @@ class Screenshot(BaseModel):
     element ids on top of it.
     """
 
-    raw: bytes = Field(repr=False)
+    raw: _builtin_bytes = Field(repr=False)
     bboxes: list[BoundingBox] = Field(default_factory=list)
 
     model_config = {  # type: ignore[reportUnknownMemberType]
+        "hide_input_in_errors": True,
         "json_encoders": {
-            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
+            _builtin_bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
         },
         # notte 1.x servers also send `last_action_id`, which only served the removed local
         # replay. Unknown fields are ignored so their payloads keep parsing.
@@ -102,7 +104,7 @@ class Screenshot(BaseModel):
 
     @field_validator("raw", mode="before")
     @classmethod
-    def validate_raw(cls, v: bytes | str) -> bytes:
+    def validate_raw(cls, v: _builtin_bytes | str) -> _builtin_bytes:
         if isinstance(v, str):
             v = b64decode(v)
 
@@ -198,7 +200,7 @@ class Screenshot(BaseModel):
         return highlight_screenshot(self.raw, self.bboxes, action_ids=action_ids)
 
     # Defined after `highlighted`: inside the class body, `bytes` names this method from here on.
-    def bytes(self) -> bytes:
+    def bytes(self) -> _builtin_bytes:
         """The screenshot image as captured, without annotations."""
         return self.raw
 

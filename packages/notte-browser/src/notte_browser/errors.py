@@ -83,10 +83,13 @@ class BrowserNotStartedError(BrowserError):
 
 class CdpConnectionError(BrowserError):
     def __init__(self, cdp_url: str) -> None:
+        # CDP URLs often carry provider tokens in the path or query string.
+        # Keep the argument for compatibility, but never copy it into errors.
+        message = "Failed to connect to the external browser. Check the CDP URL and browser availability."
         super().__init__(
-            dev_message=f"Failed to connect to CDP: {cdp_url}. Check if the CDP URL is valid.",
-            user_message=f"Failed to connect to CDP: {cdp_url}. Check if the CDP URL is valid.",
-            agent_message=f"Failed to connect to CDP: {cdp_url}. Check if the CDP URL is valid.",
+            dev_message=message,
+            user_message=message,
+            agent_message=message,
         )
 
 

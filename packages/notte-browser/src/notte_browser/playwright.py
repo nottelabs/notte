@@ -7,6 +7,7 @@ from notte_core.logging import logger
 from notte_core.profiling import profiler
 from notte_core.types import LocalSessionStartRequest
 
+from notte_browser.cleanup import cleanup_resources
 from notte_browser.driver import Browser, BrowserContext, Page, Playwright, async_playwright
 from notte_browser.errors import BrowserNotAvailableError, CdpConnectionError
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
@@ -19,13 +20,14 @@ async def _connect_browser(driver: Playwright, options: BrowserWindowOptions) ->
     if options.cdp_url is None:
         raise ValueError("CDP URL is required to connect to a browser over CDP")
     try:
-        match options.browser_type:
-            case "chromium" | "chrome" | "chrome-nightly" | "chrome-turbo":
-                return await driver.chromium.connect_over_cdp(options.cdp_url)
-            case "firefox":
-                return await driver.firefox.connect(options.cdp_url)
-    except Exception as e:
-        raise CdpConnectionError(options.cdp_url) from e
+        async with asyncio.timeout(BROWSER_CREATION_TIMEOUT_SECONDS):
+            match options.browser_type:
+                case "chromium" | "chrome" | "chrome-nightly" | "chrome-turbo":
+                    return await driver.chromium.connect_over_cdp(options.cdp_url)
+                case "firefox":
+                    return await driver.firefox.connect(options.cdp_url)
+    except Exception:
+        raise CdpConnectionError(options.cdp_url) from None
 
 
 @profiler.profiled("PlaywrightManager.create_playwright_browser")
@@ -103,11 +105,11 @@ async def _new_page(options: BrowserWindowOptions, browser: Browser) -> Page:
             extra_http_headers=options.extra_http_headers,
         )
 
-        if len(context.pages) == 0:
-            page = await context.new_page()
-        else:
-            page = context.pages[-1]
-        return page
+        try:
+            return context.pages[-1] if context.pages else await context.new_page()
+        except BaseException:
+            await cleanup_resources(context.close)
+            raise
 
 
 async def _start_driver() -> Playwright:
@@ -127,12 +129,12 @@ async def launch(options: BrowserWindowOptions) -> BrowserWindow:
         page = await _new_page(options, browser)
         window = BrowserWindow(page, options)
     except BaseException:
-        try:
-            if browser is not None:
-                await browser.close()
-        finally:
-            await driver.stop()
+        if browser is not None:
+            await cleanup_resources(browser.close, driver.stop)
+        else:
+            await cleanup_resources(driver.stop)
         raise
+    window._owned_context = page.context  # pyright: ignore[reportPrivateUsage]
     window._owned_browser = browser  # pyright: ignore[reportPrivateUsage]
     window._owned_driver = driver  # pyright: ignore[reportPrivateUsage]
     window.on_close = window._close_owned  # pyright: ignore[reportPrivateUsage]
@@ -140,13 +142,14 @@ async def launch(options: BrowserWindowOptions) -> BrowserWindow:
 
 
 async def connect(cdp_url: str, options: BrowserWindowOptions | None = None) -> BrowserWindow:
-    """Attach to an existing browser; closing the window only disconnects this driver."""
+    """Borrow existing pages; close only a context created here and our driver."""
     options = (
         BrowserWindowOptions.from_request(LocalSessionStartRequest(cdp_url=cdp_url))
         if options is None
         else options.model_copy(update={"cdp_url": cdp_url})
     )
     driver = await _start_driver()
+    owned_context: BrowserContext | None = None
     try:
         browser = await _connect_browser(driver, options)
         if browser.contexts:
@@ -156,10 +159,15 @@ async def connect(cdp_url: str, options: BrowserWindowOptions | None = None) -> 
             page = context.pages[-1] if context.pages else await context.new_page()
         else:
             page = await _new_page(options, browser)
+            owned_context = page.context
         window = BrowserWindow(page, options)
     except BaseException:
-        await driver.stop()
+        if owned_context is not None:
+            await cleanup_resources(owned_context.close, driver.stop)
+        else:
+            await cleanup_resources(driver.stop)
         raise
+    window._owned_context = owned_context  # pyright: ignore[reportPrivateUsage]
     window._owned_driver = driver  # pyright: ignore[reportPrivateUsage]
     window.on_close = window._close_owned  # pyright: ignore[reportPrivateUsage]
     return window
