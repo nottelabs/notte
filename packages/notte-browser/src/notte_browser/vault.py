@@ -8,7 +8,7 @@ from notte_core.credentials.base import (
 from notte_core.snapshot import BrowserSnapshot
 from typing_extensions import override
 
-from notte_browser.playwright_async_api import Locator, Page
+from notte_browser.driver import Locator, Page
 from notte_browser.window import ScreenshotMask
 
 

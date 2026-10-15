@@ -1,8 +1,8 @@
 from notte_core.dom_tree import DomNode, NodeSelectors
 from notte_core.logging import logger
 
+from notte_browser.driver import FrameLocator, Locator, Page
 from notte_browser.errors import InvalidLocatorRuntimeError
-from notte_browser.playwright_async_api import FrameLocator, Locator, Page
 
 
 async def locale_element_in_iframes(page: Page, selectors: NodeSelectors) -> FrameLocator | Page:

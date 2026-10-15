@@ -12,9 +12,9 @@ from notte_core.profiling import profiler
 from typing_extensions import TypedDict
 
 from notte_browser.dom.builder import RawFrame, RawNode, build_dom_tree
+from notte_browser.driver import ElementHandle, Frame, Page
 from notte_browser.errors import PlaywrightError
 from notte_browser.js import script
-from notte_browser.playwright_async_api import ElementHandle, Frame, Page
 from notte_browser.resolution import get_selector_generator
 
 DOM_TREE_JS = script("buildDomNode.js")

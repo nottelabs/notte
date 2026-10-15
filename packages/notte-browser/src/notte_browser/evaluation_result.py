@@ -14,9 +14,9 @@ from notte_core.config import BrowserBackend, config
 from notte_core.data import DataSpace
 from notte_core.errors import EvaluateJsResultLimitError
 
+from notte_browser.driver import Page
 from notte_browser.errors import PlaywrightError
 from notte_browser.js import script
-from notte_browser.playwright_async_api import Page
 
 _STRING_CHUNK_CHARS = 8192
 _MAX_DEPTH = 128

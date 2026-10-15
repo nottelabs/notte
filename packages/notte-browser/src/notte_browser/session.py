@@ -90,6 +90,7 @@ from notte_browser import execution
 from notte_browser.action_space import build_action_space
 from notte_browser.captcha import captcha_solver_available
 from notte_browser.dom.locate import locate_element
+from notte_browser.driver import Locator, Page
 from notte_browser.errors import (
     BrowserNotStartedError,
     CaptchaSolverNotAvailableError,
@@ -101,7 +102,6 @@ from notte_browser.errors import (
 )
 from notte_browser.evaluation_result import evaluate_page
 from notte_browser.playwright import connect, launch
-from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import resolve
 from notte_browser.scrape import default_extractor, scrape_page
 from notte_browser.vault import VaultSecretsScreenshotMask, resolve_vault_action

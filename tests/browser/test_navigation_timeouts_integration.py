@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock, patch
 import notte_browser.window as window_module
 import pytest
 from aiohttp import web
+from notte_browser.driver import Error as PlaywrightError
+from notte_browser.driver import async_playwright
 from notte_browser.errors import PageLoadingError
-from notte_browser.playwright_async_api import Error as PlaywrightError
-from notte_browser.playwright_async_api import async_playwright
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
 from notte_core.config import config
 from notte_core.types import LocalSessionStartRequest

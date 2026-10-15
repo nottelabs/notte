@@ -8,8 +8,8 @@ import notte_browser.resolution as resolution_module
 import notte_core.logging as logging
 import pytest
 from notte_browser.captcha import captcha_solver_available, set_captcha_solver, solve_captcha
+from notte_browser.driver import Locator, Page
 from notte_browser.errors import CaptchaSolverNotAvailableError
-from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import set_selector_generator
 from notte_browser.session import NotteSession
 from notte_browser.window import BrowserWindow, BrowserWindowOptions, ScreenshotMask

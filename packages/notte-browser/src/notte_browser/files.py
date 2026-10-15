@@ -17,6 +17,7 @@ from notte_core.snapshot import BrowserSnapshot
 from notte_core.storage import BaseStorage
 
 from notte_browser.dom.locate import locate_element, locate_file_upload_element, selectors_through_shadow_dom
+from notte_browser.driver import CDPSession, Frame, Locator, evaluate_in_main_world
 from notte_browser.errors import (
     FailedToDownloadFileError,
     FailedToGetFileError,
@@ -24,7 +25,6 @@ from notte_browser.errors import (
     NoStorageObjectProvidedError,
 )
 from notte_browser.js import script
-from notte_browser.playwright_async_api import CDPSession, Frame, Locator, evaluate_in_main_world
 
 if TYPE_CHECKING:
     from notte_browser.window import BrowserWindow

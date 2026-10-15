@@ -19,9 +19,9 @@ from notte_core.snapshot import BrowserSnapshot
 from notte_core.types import ScrapeParams
 from typing_extensions import override
 
+from notte_browser.driver import Frame
 from notte_browser.errors import EmptyPageContentError, PlaywrightError, StructuredExtractorNotAvailableError
 from notte_browser.js import script
-from notte_browser.playwright_async_api import Frame
 from notte_browser.window import BrowserWindow
 
 

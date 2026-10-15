@@ -3,9 +3,9 @@ import random
 
 from notte_core.logging import logger
 
+from notte_browser.driver import Error as PlaywrightError
+from notte_browser.driver import Locator, Page
 from notte_browser.js import script
-from notte_browser.playwright_async_api import Error as PlaywrightError
-from notte_browser.playwright_async_api import Locator, Page
 
 _SELECT_OPTIONS = script("select_options.js")
 

@@ -1,8 +1,8 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from notte_browser.driver import TimeoutError as PlaywrightTimeoutError
 from notte_browser.errors import PageLoadingError
-from notte_browser.playwright_async_api import TimeoutError as PlaywrightTimeoutError
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
 from notte_core.types import LocalSessionStartRequest
 

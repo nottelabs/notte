@@ -23,7 +23,7 @@ from notte_core.node_type import NodeRole, NodeType
 from typing_extensions import NotRequired, TypedDict
 
 from notte_browser.dom.csspaths import build_csspath
-from notte_browser.playwright_async_api import ElementHandle
+from notte_browser.driver import ElementHandle
 
 
 class RawNode(TypedDict):

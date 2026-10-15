@@ -3,7 +3,7 @@
 from typing import Any, cast
 
 import pytest
-from notte_browser.playwright_async_api import Page
+from notte_browser.driver import Page
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
 from notte_core.types import LocalSessionStartRequest
 

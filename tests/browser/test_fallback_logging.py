@@ -3,8 +3,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from notte_browser.dom.csspaths import build_csspath
+from notte_browser.driver import Error as PlaywrightError
 from notte_browser.form_filling import FormFiller
-from notte_browser.playwright_async_api import Error as PlaywrightError
 from notte_core.observation import Screenshot
 from PIL import Image
 

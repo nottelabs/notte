@@ -13,8 +13,8 @@ from notte_core.profiling import profiler
 from notte_core.snapshot import BrowserSnapshot
 
 from notte_browser.dom.locate import selectors_through_shadow_dom
+from notte_browser.driver import ElementHandle
 from notte_browser.errors import FailedNodeResolutionError, NoSnapshotObservedError
-from notte_browser.playwright_async_api import ElementHandle
 
 
 class SelectorGenerator(Protocol):

@@ -8,13 +8,13 @@ from notte_core.config import config
 from notte_core.errors import InvalidInternalCheckError, NotteBaseError, NotteTimeoutError
 from notte_core.logging import logger
 
-from notte_browser.playwright_async_api import getPlaywrightOrPatchrightError, getPlaywrightOrPatchrightTimeoutError
+from notte_browser.driver import error_types, timeout_error_types
 
 T = TypeVar("T")
 
 
-PlaywrightTimeoutError = getPlaywrightOrPatchrightTimeoutError()
-PlaywrightError = getPlaywrightOrPatchrightError()
+PlaywrightTimeoutError = timeout_error_types()
+PlaywrightError = error_types()
 
 # #######################################################
 # #################### Browser errors ###################

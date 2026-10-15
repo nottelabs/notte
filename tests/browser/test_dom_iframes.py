@@ -11,7 +11,7 @@ import pytest
 import pytest_asyncio
 from notte_browser.dom import parsing
 from notte_browser.dom.parsing import FRAME_EVALUATION_ATTEMPTS
-from notte_browser.playwright_async_api import ElementHandle, Error, Frame
+from notte_browser.driver import ElementHandle, Error, Frame
 from notte_browser.resolution import SelectorGenerator, resolve, set_selector_generator
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction

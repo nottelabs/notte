@@ -5,9 +5,9 @@ from unittest.mock import AsyncMock, MagicMock
 import notte_browser.execution as execution_module
 import pytest
 import pytest_asyncio
+from notte_browser.driver import Error, Page, async_playwright
 from notte_browser.errors import ScrollActionFailedError
 from notte_browser.execution import execute_browser_action
-from notte_browser.playwright_async_api import Error, Page, async_playwright
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
 from notte_core.actions import ScrollDownAction, ScrollUpAction
 from notte_core.types import LocalSessionStartRequest

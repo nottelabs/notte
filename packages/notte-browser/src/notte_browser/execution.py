@@ -43,6 +43,7 @@ from notte_core.storage import BaseStorage
 
 from notte_browser.captcha import solve_captcha
 from notte_browser.dom.locate import locate_element
+from notte_browser.driver import Error, Frame, JSHandle, Locator
 from notte_browser.errors import (
     PlaywrightTimeoutError,
     ScrollActionFailedError,
@@ -51,7 +52,6 @@ from notte_browser.errors import (
 from notte_browser.files import download_file, upload_file
 from notte_browser.form_filling import FormFiller
 from notte_browser.js import script
-from notte_browser.playwright_async_api import Error, Frame, JSHandle, Locator
 from notte_browser.window import BrowserWindow
 
 _BLUR_ACTIVE_ELEMENT = script("blur_active_element.js")

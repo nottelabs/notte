@@ -2,6 +2,7 @@ from typing import cast
 from unittest.mock import AsyncMock
 
 import pytest
+from notte_browser.driver import CDPSession, Frame, Locator
 from notte_browser.files import (
     _BLOB_CAPTURE_DISPOSE,
     _BLOB_CAPTURE_HOOK,
@@ -10,7 +11,6 @@ from notte_browser.files import (
     _resolve_locator_frame,
     _should_persist_download,
 )
-from notte_browser.playwright_async_api import CDPSession, Frame, Locator
 
 
 @pytest.mark.asyncio

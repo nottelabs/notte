@@ -7,8 +7,8 @@ from notte_core.logging import logger
 from notte_core.profiling import profiler
 from notte_core.types import LocalSessionStartRequest
 
+from notte_browser.driver import Browser, BrowserContext, Page, Playwright, async_playwright
 from notte_browser.errors import BrowserNotAvailableError, CdpConnectionError
-from notte_browser.playwright_async_api import Browser, BrowserContext, Page, Playwright, async_playwright
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
 
 BROWSER_CREATION_TIMEOUT_SECONDS = 30

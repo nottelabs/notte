@@ -33,6 +33,7 @@ from pydantic import BaseModel
 from typing_extensions import override
 
 from notte_browser.dom.parsing import parse_dom
+from notte_browser.driver import Browser, CDPSession, Locator, Page, Playwright, Response
 from notte_browser.errors import (
     BrowserExpiredError,
     EmptyPageContentError,
@@ -45,7 +46,6 @@ from notte_browser.errors import (
     UnexpectedBrowserError,
 )
 from notte_browser.js import script
-from notte_browser.playwright_async_api import Browser, CDPSession, Locator, Page, Playwright, Response
 
 _PAGE_METADATA = script("page_metadata.js")
 

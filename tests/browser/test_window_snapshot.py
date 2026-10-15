@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 import pytest_asyncio
-from notte_browser.playwright_async_api import Error
+from notte_browser.driver import Error
 from notte_browser.session import NotteSession
 from notte_browser.window import BrowserWindow
 from notte_core.snapshot import SnapshotMetadata

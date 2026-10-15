@@ -51,7 +51,7 @@ match config.browser_backend:
         )  # pyright: ignore[reportUnreachable]
 
 
-def getPlaywrightOrPatchrightTimeoutError() -> tuple[type[Exception], type[Exception]] | type[Exception]:
+def timeout_error_types() -> tuple[type[Exception], type[Exception]] | type[Exception]:
     errors: list[type[Exception]] = []
     try:
         from patchright.async_api import TimeoutError as _PatchrightTimeoutError
@@ -73,7 +73,7 @@ def getPlaywrightOrPatchrightTimeoutError() -> tuple[type[Exception], type[Excep
         raise RuntimeError("Unexpected number of errors")
 
 
-def getPlaywrightOrPatchrightError() -> tuple[type[Exception], type[Exception]] | type[Exception]:
+def error_types() -> tuple[type[Exception], type[Exception]] | type[Exception]:
     errors: list[type[Exception]] = []
     try:
         from patchright.async_api import Error as _PatchrightError
