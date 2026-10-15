@@ -570,6 +570,15 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [get](https://docs.notte.cc/typescript-sdk-reference/notteusage/get.md)
 - [logs](https://docs.notte.cc/typescript-sdk-reference/notteusage/logs.md)
 
+#### API Resources
+
+- [client.sessions](https://docs.notte.cc/typescript-sdk-reference/resources/sessions.md)
+- [client.agents](https://docs.notte.cc/typescript-sdk-reference/resources/agents.md)
+- [client.vaults](https://docs.notte.cc/typescript-sdk-reference/resources/vaults.md)
+- [client.functions](https://docs.notte.cc/typescript-sdk-reference/resources/functions.md)
+- [client.personas](https://docs.notte.cc/typescript-sdk-reference/resources/personas.md)
+- [client.profiles](https://docs.notte.cc/typescript-sdk-reference/resources/profiles.md)
+
 ### Debug
 
 

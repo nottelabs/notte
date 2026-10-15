@@ -27,3 +27,9 @@ let title: string;
 }
 `), []);
 });
+
+test('rejects invalid display ranges instead of silently skipping checks', () => {
+  for (const range of ['abc', '1-x', '1.5-3', '3-1', '0-2', '1-2-3', '9007199254740992']) {
+    assert.throws(() => hiddenAssignmentDeclarations(`// @sniptest show=${range}\nlet title = '';\n`), /Invalid @sniptest show value/);
+  }
+});

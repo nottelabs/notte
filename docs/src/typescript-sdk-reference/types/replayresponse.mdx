@@ -24,6 +24,18 @@ export type ReplayResponse = {
      */
     expires_at: string;
     /**
+     * Mouse Manifest Url
+     */
+    mouse_manifest_url?: string | null;
+    /**
+     * Mouse Chunk Urls
+     */
+    mouse_chunk_urls?: Array<string> | null;
+    /**
+     * Mouse Next Offset
+     */
+    mouse_next_offset?: number | null;
+    /**
      * Video Start Ms
      */
     video_start_ms?: number | null;
@@ -45,6 +57,18 @@ export type ReplayResponse = {
 </ParamField>
 
 <ParamField body="expires_at" type={"string"} required>
+
+</ParamField>
+
+<ParamField body="mouse_manifest_url" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="mouse_chunk_urls" type={"string[] | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="mouse_next_offset" type={"number | null | undefined"}>
 
 </ParamField>
 

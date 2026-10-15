@@ -35,7 +35,7 @@ def unreferenced_snippets(src: Path) -> list[Path]:
     """Generated examples need a page or partial that actually imports them."""
     referenced = set()
     for page in src.rglob("*.mdx"):
-        for match in re.finditer(r"""(?:from\s*|import\s*)["'](/[^"']+\.mdx)["']""", page.read_text()):
+        for match in re.finditer(r"""(?:from\s*|import\s*)["'](/[^"']+\.mdx)["']""", page.read_text(encoding="utf-8")):
             referenced.add(src / match.group(1).lstrip("/"))
     return sorted(set((src / "snippets").rglob("*.mdx")) - referenced)
 

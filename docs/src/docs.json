@@ -817,6 +817,18 @@
                       "typescript-sdk-reference/notteusage/get",
                       "typescript-sdk-reference/notteusage/logs"
                     ]
+                  },
+                  {
+                    "group": "API Resources",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/resources/sessions",
+                      "typescript-sdk-reference/resources/agents",
+                      "typescript-sdk-reference/resources/vaults",
+                      "typescript-sdk-reference/resources/functions",
+                      "typescript-sdk-reference/resources/personas",
+                      "typescript-sdk-reference/resources/profiles"
+                    ]
                   }
                 ]
               },

@@ -60,6 +60,11 @@ export function createResources(client: Client, getApiKey: () => string) {
       const response = await operations.listSessionFiles({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
       return response.data;
     },
+    /** sessionMouseReplay: /sessions/{session_id}/replay/mouse. Returns the API response body. */
+    mouseReplay: async (sessionId: Types.SessionMouseReplayData['path']["session_id"], query: Types.SessionMouseReplayData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionMouseReplayData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionMouseReplay({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
+      return response.data;
+    },
     /** sessionNetworkLogs: /sessions/{session_id}/network/logs. Returns the API response body. */
     networkLogs: async (sessionId: Types.SessionNetworkLogsData['path']["session_id"], query: Types.SessionNetworkLogsData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionNetworkLogsData['headers']>, 'x-notte-api-key'> } = {}) => {
       const response = await operations.sessionNetworkLogs({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });

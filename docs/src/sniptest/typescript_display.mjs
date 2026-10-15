@@ -13,7 +13,13 @@ export function hiddenAssignmentDeclarations(text) {
     const directive = line.match(/^\/\/\s*@sniptest\s+(\w+)=(.+)$/);
     if (!directive) break;
     if (directive[1] === 'show') {
-      const [start, end = start] = directive[2].split('-').map(Number);
+      const range = directive[2].trim().match(/^(\d+)(?:-(\d+))?$/);
+      if (!range) throw new Error(`Invalid @sniptest show value: ${directive[2]}`);
+      const start = Number(range[1]);
+      const end = range[2] === undefined ? start : Number(range[2]);
+      if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 1 || end < start) {
+        throw new Error(`Invalid @sniptest show value: ${directive[2]}`);
+      }
       show = [start - 1, end];
     }
     offset++;
