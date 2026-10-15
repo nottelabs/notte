@@ -68,6 +68,8 @@ dev = [
     "twine>=6.1.0",
     "ty>=0.0.69",
     "typer>=0.19.2",
+    # The Nike example harness imports its progress display.
+    "tqdm>=4.67.1",
 ]
 lint = [
     "ruff==0.11.10",
@@ -92,7 +94,6 @@ filterwarnings = [
     "ignore::DeprecationWarning:sklearn.utils.fixes:",
     "ignore::pydantic.warnings.PydanticDeprecatedSince20:",
     "ignore::DeprecationWarning:importlib.resources._legacy:",
-    "ignore::DeprecationWarning:litellm.utils:",
     "ignore:open_text is deprecated*:DeprecationWarning",
     "ignore:distutils Version classes are deprecated. Use packaging.version instead.*:DeprecationWarning",
     'ignore:configuration option "asyncio_default_fixture_loop_scope" is unset',

@@ -9,29 +9,20 @@ from notte_core.errors import LLMProviderError
 from notte_llm.engine import LLMEngine
 from pydantic import BaseModel
 
-# Real LiteLLM Gemini calls against a local server that speaks the Gemini API, so the
-# provider's actual error mapping reaches the engine without a live outage.
+# Real HTTP calls against a local OpenAI-compatible server exercise transport error mapping.
 OVERLOADED = (
     503,
     {"error": {"code": 503, "message": "This model is currently experiencing high demand.", "status": "UNAVAILABLE"}},
 )
-NO_CANDIDATES = (200, {"candidates": [], "usageMetadata": {"promptTokenCount": 1, "totalTokenCount": 1}})
-ANSWER = (
-    200,
-    {
-        "candidates": [
-            {"content": {"role": "model", "parts": [{"text": '{"text": "done"}'}]}, "finishReason": "STOP", "index": 0}
-        ],
-        "usageMetadata": {"promptTokenCount": 1, "candidatesTokenCount": 1, "totalTokenCount": 2},
-    },
-)
+NO_CANDIDATES = (200, {"choices": []})
+ANSWER = (200, {"choices": [{"message": {"content": '{"text":"done"}'}}]})
 
 
 class Answer(BaseModel):
     text: str
 
 
-class FakeGemini:
+class FakeEndpoint:
     """Answers each request with the next queued response, then with a valid answer."""
 
     def __init__(self, responses: list[tuple[int, dict[str, Any]]]) -> None:
@@ -58,13 +49,12 @@ class FakeGemini:
 
 
 @pytest.fixture
-def gemini(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> Iterator[FakeGemini]:
-    fake = FakeGemini(request.param)
+def endpoint(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> Iterator[FakeEndpoint]:
+    fake = FakeEndpoint(request.param)
     thread = threading.Thread(target=fake.server.serve_forever, daemon=True)
     thread.start()
-    monkeypatch.setattr("litellm.api_base", f"http://127.0.0.1:{fake.server.server_address[1]}")
-    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
-    monkeypatch.setattr("notte_llm.engine.enable_openrouter", lambda: False)
+    monkeypatch.setenv("NOTTE_LLM_BASE_URL", f"http://127.0.0.1:{fake.server.server_address[1]}/v1")
+    monkeypatch.setenv("NOTTE_LLM_API_KEY", "test-key")
 
     async def no_sleep(_seconds: float) -> None:
         return None
@@ -81,27 +71,27 @@ MESSAGES: list[Any] = [{"role": "user", "content": 'Reply with {"text": "done"}'
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("gemini", [[OVERLOADED]], indirect=True)
-async def test_overloaded_gemini_is_retried(gemini: FakeGemini):
-    result = await LLMEngine(model="gemini/gemini-test").structured_completion(MESSAGES, Answer)
+@pytest.mark.parametrize("endpoint", [[OVERLOADED]], indirect=True)
+async def test_overloaded_provider_is_retried(endpoint: FakeEndpoint):
+    result = await LLMEngine(model="test-model").structured_completion(MESSAGES, Answer)
 
     assert result.text == "done"
-    assert gemini.requests == 2
+    assert endpoint.requests == 2
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("gemini", [[NO_CANDIDATES]], indirect=True)
-async def test_gemini_response_without_candidates_is_retried(gemini: FakeGemini):
-    result = await LLMEngine(model="gemini/gemini-test").structured_completion(MESSAGES, Answer)
+@pytest.mark.parametrize("endpoint", [[NO_CANDIDATES]], indirect=True)
+async def test_response_without_choices_is_retried(endpoint: FakeEndpoint):
+    result = await LLMEngine(model="test-model").structured_completion(MESSAGES, Answer)
 
     assert result.text == "done"
-    assert gemini.requests == 2
+    assert endpoint.requests == 2
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("gemini", [[OVERLOADED, OVERLOADED, OVERLOADED]], indirect=True)
-async def test_persistent_gemini_overload_fails_after_the_retries(gemini: FakeGemini):
+@pytest.mark.parametrize("endpoint", [[OVERLOADED, OVERLOADED, OVERLOADED]], indirect=True)
+async def test_persistent_provider_overload_fails_after_the_retries(endpoint: FakeEndpoint):
     with pytest.raises(LLMProviderError):
-        _ = await LLMEngine(model="gemini/gemini-test").structured_completion(MESSAGES, Answer)
+        _ = await LLMEngine(model="test-model").structured_completion(MESSAGES, Answer)
 
-    assert gemini.requests == 3
+    assert endpoint.requests == 3

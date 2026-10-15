@@ -2073,7 +2073,7 @@ class ScrapeParams(SdkRequest):
     model: Annotated[
         str | None,
         Field(
-            description="The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.5-flash'. Defaults to the platform model."
+            description="The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'google/gemini-3.5-flash'. Defaults to the platform model."
         ),
     ] = None
 

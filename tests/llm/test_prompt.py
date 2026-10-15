@@ -38,9 +38,9 @@ def test_get_prompt(temp_prompts_dir: Path) -> None:
     # Test successful prompt retrieval
     messages = prompt_lib.get("test-prompt")
     assert len(messages) == 3
-    assert any(msg.role == "user" for msg in messages)
-    assert any(msg.role == "system" for msg in messages)
-    assert any(msg.role == "assistant" for msg in messages)
+    assert any(msg["role"] == "user" for msg in messages)
+    assert any(msg["role"] == "system" for msg in messages)
+    assert any(msg["role"] == "assistant" for msg in messages)
 
     # Test non-existent prompt
     with pytest.raises(FileNotFoundError):
@@ -81,4 +81,4 @@ def test_get_prompt_orders_messages_by_role_not_by_listing(
 
     messages = PromptLibrary(temp_prompts_dir).get("test-prompt")
 
-    assert [msg.role for msg in messages] == ["system", "user", "assistant"]
+    assert [msg["role"] for msg in messages] == ["system", "user", "assistant"]

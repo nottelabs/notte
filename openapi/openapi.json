@@ -10493,9 +10493,6 @@
           "reasoning_model": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/LlmModel"
-              },
-              {
                 "type": "string"
               }
             ],
@@ -15218,9 +15215,6 @@
           "model": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/LlmModel"
-              },
-              {
                 "type": "string"
               },
               {
@@ -15228,7 +15222,7 @@
               }
             ],
             "title": "Model",
-            "description": "The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model."
+            "description": "The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'google/gemini-3.5-flash'. Defaults to the platform model."
           },
           "use_link_placeholders": {
             "type": "boolean",
@@ -15601,25 +15595,6 @@
           "credentials"
         ],
         "title": "ListCredentialsResponse"
-      },
-      "LlmModel": {
-        "type": "string",
-        "enum": [
-          "openai/gpt-4o",
-          "gemini/gemini-3.5-flash",
-          "vertex_ai/gemini-3.5-flash",
-          "openrouter/google/gemma-3-27b-it",
-          "cerebras/gpt-oss-120b",
-          "groq/gpt-oss-120b",
-          "perplexity/sonar-pro",
-          "deepseek/deepseek-r1",
-          "together_ai/meta-llama/llama-3.3-70b-instruct",
-          "anthropic/claude-sonnet-4-5-20250929",
-          "moonshot/kimi-k2.5",
-          "xai/grok-4.3",
-          "minimax/minimax-m2.5"
-        ],
-        "title": "LlmModel"
       },
       "MailboxConnectRequest": {
         "properties": {
@@ -18440,9 +18415,6 @@
           "model": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/LlmModel"
-              },
-              {
                 "type": "string"
               },
               {
@@ -18450,7 +18422,7 @@
               }
             ],
             "title": "Model",
-            "description": "The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model."
+            "description": "The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'google/gemini-3.5-flash'. Defaults to the platform model."
           },
           "use_link_placeholders": {
             "type": "boolean",
@@ -18549,9 +18521,6 @@
           "model": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/LlmModel"
-              },
-              {
                 "type": "string"
               },
               {
@@ -18559,7 +18528,7 @@
               }
             ],
             "title": "Model",
-            "description": "The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model."
+            "description": "The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'google/gemini-3.5-flash'. Defaults to the platform model."
           },
           "use_link_placeholders": {
             "type": "boolean",

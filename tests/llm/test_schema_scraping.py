@@ -5,12 +5,11 @@ from typing import Any
 
 import pytest
 from dotenv import load_dotenv
-from notte_core.data import DictBaseModel, StructuredData
+from notte_core.errors import LLMParsingError
 from notte_core.pruning import mask_markdown
 from notte_llm.extractor import LlmExtractor
-from notte_llm.models import LlmModel
 from notte_llm.service import LLMService
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel, RootModel, ValidationError
 from typing_extensions import override
 
 _ = load_dotenv()
@@ -22,7 +21,6 @@ class MockLLMServiceForSchema(LLMService):
     def __init__(self, mock_data: Any) -> None:
         """Initialize with mock data that contains placeholders."""
         self.mock_data = mock_data
-        self.tokenizer = None  # type: ignore[assignment]
         self.base_model = "mock-model"
         self.verbose = False
 
@@ -38,13 +36,12 @@ class MockLLMServiceForSchema(LLMService):
         response_format: type[Any],
         variables: dict[str, Any] | None = None,
         use_strict_response_format: bool = True,
-    ) -> StructuredData[DictBaseModel]:
-        """Return mock structured data with placeholders."""
-        return StructuredData[DictBaseModel](
-            success=True,
-            error=None,
-            data=DictBaseModel(self.mock_data),
-        )
+    ) -> Any:
+        """Honor the service contract: return an instance of the requested wire model."""
+        try:
+            return response_format.model_validate({"success": True, "error": None, "data": self.mock_data})
+        except ValidationError as e:
+            raise LLMParsingError("Response does not match the requested extraction schema") from e
 
 
 class ScrapedItem(BaseModel):
@@ -113,22 +110,22 @@ async def test_schema_scraping_validates_root_model_and_base_model_shapes(
 ) -> None:
     schema_pipe = LlmExtractor(llmserve=MockLLMServiceForSchema(mock_data))
 
-    result = await schema_pipe.extract(
-        url="https://example.com",
-        document="[A](https://example.com/a) [B](https://example.com/b)",
-        response_format=response_format,
-        instructions="Extract test data",
-        use_link_placeholders=True,
-    )
+    async def extract():
+        return await schema_pipe.extract(
+            url="https://example.com",
+            document="[A](https://example.com/a) [B](https://example.com/b)",
+            response_format=response_format,
+            instructions="Extract test data",
+            use_link_placeholders=True,
+        )
 
-    assert result.success is expected_success
     if expected_success:
-        assert result.data is not None
+        result = await extract()
+        assert result.success
         assert isinstance(result.data, response_format)
     else:
-        assert result.data is None
-        assert result.error is not None
-        assert "Cannot validate response into the provided schema" in result.error
+        with pytest.raises(LLMParsingError):
+            await extract()
 
 
 @pytest.mark.asyncio
@@ -156,10 +153,10 @@ async def test_schema_scraping_unmasks_root_model_list() -> None:
 
 
 @pytest.mark.live
-@pytest.mark.skipif("OPENAI_API_KEY" not in os.environ, reason="requires OPENAI_API_KEY")
+@pytest.mark.skipif(not (os.getenv("NOTTE_LLM_API_KEY") or os.getenv("OPENROUTER_API_KEY")), reason="requires LLM key")
 @pytest.mark.asyncio
 async def test_schema_scraping_root_model_list_with_real_llm_round_trip() -> None:
-    schema_pipe = LlmExtractor(llmserve=LLMService(base_model=LlmModel.openai))
+    schema_pipe = LlmExtractor(llmserve=LLMService())
 
     result = await schema_pipe.extract(
         url="https://example.com/products",
@@ -268,3 +265,176 @@ async def test_unmask_placeholders_with_instructions_only() -> None:
     assert hotel2["booking_url"] == "https://booking.com/hotel2", (
         f"Expected unmasked URL 'https://booking.com/hotel2', got '{hotel2['booking_url']}'"
     )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "schema,payload",
+    [
+        (RootItemList, [{"rank": 1, "title": "A", "url": "link1"}]),
+        (WrappedItemList, {"items": [{"rank": 1, "title": "A", "url": "link1"}]}),
+        (RootStringList, ["alpha", "beta"]),
+        (RootString, "alpha"),
+        (RootDict, {"a": 1, "b": 2}),
+    ],
+)
+async def test_extractor_round_trip_with_compatible_http_client(schema, payload, monkeypatch):
+    import json
+
+    import httpx
+    from notte_llm.engine import LLMEngine
+
+    monkeypatch.setenv("NOTTE_LLM_API_KEY", "test-key")
+    bodies = []
+
+    def handler(request):
+        body = json.loads(request.content)
+        bodies.append(body)
+        assert body["response_format"]["type"] == ("json_object" if schema == RootDict else "json_schema")
+        return httpx.Response(
+            200,
+            json={"choices": [{"message": {"content": json.dumps({"success": True, "error": None, "data": payload})}}]},
+        )
+
+    transport = httpx.MockTransport(handler)
+    monkeypatch.setattr("notte_llm.service.LLMEngine", lambda **kwargs: LLMEngine(transport=transport, **kwargs))
+    result = await LlmExtractor().extract(
+        url="https://example.com",
+        document="[A](https://example.com/a)",
+        response_format=schema,
+        instructions="Extract the entries",
+    )
+    assert result.success
+    assert isinstance(result.data, schema)
+    if schema == RootItemList:
+        assert result.data.root[0].url == "https://example.com/a"
+    elif schema == WrappedItemList:
+        assert result.data.items[0].url == "https://example.com/a"
+    else:
+        assert result.data.root == payload
+    if schema != RootDict:
+        wire_schema = bodies[0]["response_format"]["json_schema"]["schema"]
+        assert "RootModel[Any]" not in json.dumps(wire_schema)
+
+
+@pytest.mark.asyncio
+async def test_extractor_preserves_failure_wrapper_and_retries_bad_data(monkeypatch):
+    import json
+
+    import httpx
+    from notte_llm.engine import LLMEngine
+
+    monkeypatch.setenv("NOTTE_LLM_API_KEY", "test-key")
+    replies = iter(
+        [
+            {"success": True, "data": {"items": "wrong"}},
+            {"success": False, "error": "No items on this page", "data": None},
+        ]
+    )
+    bodies = []
+
+    def handler(request):
+        bodies.append(json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(next(replies))}}]})
+
+    transport = httpx.MockTransport(handler)
+    monkeypatch.setattr("notte_llm.service.LLMEngine", lambda **kwargs: LLMEngine(transport=transport, **kwargs))
+    result = await LlmExtractor().extract(
+        url="https://example.com", document="# Empty", response_format=WrappedItemList, instructions=None
+    )
+    assert not result.success
+    assert result.error == "No items on this page"
+    assert result.data is None
+    assert len(bodies) == 2
+    assert "Error parsing LLM response" in bodies[-1]["messages"][-1]["content"]
+
+
+def test_extraction_wire_wrapper_requires_data_and_preserves_errors():
+    from notte_llm.extractor import _ExtractionResult
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError, match="data field is None"):
+        _ExtractionResult[PlainItem].model_validate({"success": True, "data": None})
+    result = _ExtractionResult[PlainItem].model_validate({"success": True, "error": "Nothing found", "data": None})
+    assert not result.success
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("use_link_placeholders", [True, False])
+async def test_extractor_preserves_aliased_fields(use_link_placeholders, monkeypatch):
+    import json
+
+    import httpx
+    from notte_llm.engine import LLMEngine
+    from pydantic import Field
+
+    class AliasedItem(BaseModel):
+        title: str = Field(alias="pageTitle")
+        link: str = Field(alias="pageLink")
+
+    monkeypatch.setenv("NOTTE_LLM_API_KEY", "test-key")
+
+    def handler(_):
+        data = {"pageTitle": "A", "pageLink": "link1" if use_link_placeholders else "https://example.com/a"}
+        return httpx.Response(
+            200, json={"choices": [{"message": {"content": json.dumps({"success": True, "data": data})}}]}
+        )
+
+    monkeypatch.setattr(
+        "notte_llm.service.LLMEngine", lambda **kwargs: LLMEngine(transport=httpx.MockTransport(handler), **kwargs)
+    )
+    result = await LlmExtractor().extract(
+        url="https://example.com",
+        document="[A](https://example.com/a)",
+        response_format=AliasedItem,
+        instructions=None,
+        use_link_placeholders=use_link_placeholders,
+    )
+    assert result.success
+    assert isinstance(result.data, AliasedItem)
+    assert result.data.title == "A"
+    assert result.data.link == "https://example.com/a"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("recursive", [True, False])
+async def test_extractor_keeps_recursive_and_dictionary_contracts(recursive, monkeypatch):
+    import json
+
+    import httpx
+    from notte_llm.engine import LLMEngine
+    from pydantic import Field
+
+    class Node(BaseModel):
+        name: str
+        children: list["Node"] = Field(default_factory=list)
+
+    class Metadata(BaseModel):
+        metadata: dict[str, str]
+
+    schema = Node if recursive else Metadata
+    data = (
+        {"name": "root", "children": [{"name": "child", "children": []}]}
+        if recursive
+        else {"metadata": {"source": "example", "type": "page"}}
+    )
+    monkeypatch.setenv("NOTTE_LLM_API_KEY", "test-key")
+
+    def handler(request):
+        body = json.loads(request.content)
+        assert body["response_format"] == {"type": "json_object"}
+        raw = json.loads(body["messages"][-1]["content"].split("JSON schema: ", 1)[1])
+        if not recursive:
+            assert raw["$defs"]["Metadata"]["properties"]["metadata"]["additionalProperties"] == {"type": "string"}
+        return httpx.Response(
+            200, json={"choices": [{"message": {"content": json.dumps({"success": True, "data": data})}}]}
+        )
+
+    monkeypatch.setattr(
+        "notte_llm.service.LLMEngine", lambda **kwargs: LLMEngine(transport=httpx.MockTransport(handler), **kwargs)
+    )
+    result = await LlmExtractor().extract(
+        url="https://example.com", document="# Example", response_format=schema, instructions=None
+    )
+    assert result.success
+    assert result.data.model_dump() == data

@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 import pytest
-from notte_llm.engine import OPENROUTER_FALLBACK_MODELS, LLMEngine
+from notte_llm.engine import LLMEngine
 from pydantic import BaseModel
 
 
@@ -56,9 +56,8 @@ def openrouter(monkeypatch: pytest.MonkeyPatch) -> Iterator[FakeOpenRouter]:
     fake = FakeOpenRouter()
     thread = threading.Thread(target=fake.server.serve_forever, daemon=True)
     thread.start()
-    monkeypatch.setenv("OPENROUTER_API_BASE", f"http://127.0.0.1:{fake.server.server_address[1]}/api/v1")
-    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
-    monkeypatch.setattr("notte_llm.engine.enable_openrouter", lambda: True)
+    monkeypatch.setenv("NOTTE_LLM_BASE_URL", f"http://127.0.0.1:{fake.server.server_address[1]}/api/v1")
+    monkeypatch.setenv("NOTTE_LLM_API_KEY", "test-key")
     try:
         yield fake
     finally:
@@ -67,13 +66,14 @@ def openrouter(monkeypatch: pytest.MonkeyPatch) -> Iterator[FakeOpenRouter]:
 
 
 @pytest.mark.asyncio
-async def test_openrouter_request_lists_fallback_models(openrouter: FakeOpenRouter):
+async def test_local_compatible_server_receives_native_model(openrouter: FakeOpenRouter):
     messages: list[Any] = [{"role": "user", "content": 'Reply with {"text": "done"}'}]
 
-    result = await LLMEngine(model="gemini/gemini-3.5-flash").structured_completion(messages, Answer)
+    result = await LLMEngine(model="google/gemini-3.5-flash").structured_completion(messages, Answer)
 
     assert result.text == "done"
     body = openrouter.bodies[-1]
     assert body["model"] == "google/gemini-3.5-flash"
     # OpenRouter moves to the next model in this list when the requested one errors.
-    assert body["models"] == ["google/gemini-3.5-flash", *OPENROUTER_FALLBACK_MODELS]
+    # A custom host must receive only standard Chat Completions parameters.
+    assert "models" not in body

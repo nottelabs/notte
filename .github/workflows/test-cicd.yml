@@ -220,7 +220,7 @@ jobs:
         with:
             ref: ${{ github.event.pull_request.head.sha }}
 
-      # Vertex credentials are only used by the notte-llm structured output tests (tests/llm).
+      # Mint credentials at the deployment boundary; notte-llm only receives a bearer token.
       - id: 'auth'
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
@@ -268,10 +268,6 @@ jobs:
             echo "NOTTE_API_KEY is not set. For an external/fork PR, a maintainer should review the diff and run this workflow via 'Run workflow' (workflow_dispatch) with the PR number."
             exit 1
           fi
-          if [ -z "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
-            echo "GOOGLE_APPLICATION_CREDENTIALS is not set"
-            exit 1
-          fi
           # The SMTP test (tests/integration/sdk/test_persona_inbox.py) skips itself without these, so only warn.
           for name in SMTP_SERVER EMAIL_SENDER EMAIL_PASSWORD; do
             if [ -z "${!name}" ]; then
@@ -284,6 +280,9 @@ jobs:
         uses: ./.github/actions/wait-for-api
         with:
           api-url: https://us-staging.notte.cc
+
+      - name: Configure compatible LLM endpoint
+        run: uv run --script .github/scripts/configure_llm.py
 
       - name: Run staging and live tests
         env:

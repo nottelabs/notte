@@ -26,11 +26,26 @@ Otherwise, the default config will be used and your changes will not be applied.
 
 The config file only covers browser, DOM parsing and timeout settings. Local LLM features (structured `scrape(instructions=..., response_format=...)` on a local `notte.Session`) are an optional extra installed with `pip install 'notte[llm]'`, and they are configured through environment variables instead:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `NOTTE_LLM_MODEL` | provider default | LiteLLM model name used for structured extraction |
-| `NOTTE_LLM_NB_RETRIES_STRUCTURED_OUTPUT` | `2` | Retries when the LLM output does not match the schema |
-| `NOTTE_LLM_TEMPERATURE` | `0.0` | Sampling temperature |
+Set `OPENROUTER_API_KEY` to use OpenRouter with `google/gemini-3.5-flash` by default.
+For another OpenAI-compatible endpoint, set all three of `NOTTE_LLM_BASE_URL`,
+`NOTTE_LLM_API_KEY`, and `NOTTE_LLM_MODEL` (the endpoint's own model ID):
+
+- OpenAI: `NOTTE_LLM_BASE_URL=https://api.openai.com/v1`, `NOTTE_LLM_MODEL=gpt-4o`.
+- Gemini: `NOTTE_LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai`, `NOTTE_LLM_MODEL=gemini-3.5-flash`.
+- Ollama/custom: `NOTTE_LLM_BASE_URL=http://localhost:11434/v1`, your local model ID, and `NOTTE_LLM_API_KEY=ollama` for an unauthenticated local server. Ollama has not been live-tested.
+
+`NOTTE_LLM_API_KEY` overrides `OPENROUTER_API_KEY`. The latter is used only at the default
+OpenRouter URL, so it is never sent to a custom endpoint. The per-call `model=` argument
+selects a model at the configured endpoint without translating its ID.
+
+| Variable | Default |
+| --- | --- |
+| `NOTTE_LLM_BASE_URL` | `https://openrouter.ai/api/v1` |
+| `NOTTE_LLM_API_KEY` | `OPENROUTER_API_KEY` at the default URL; required elsewhere |
+| `NOTTE_LLM_MODEL` | `google/gemini-3.5-flash` at the default URL; required elsewhere |
+| `NOTTE_LLM_TEMPERATURE` | `0.0` |
+| `NOTTE_LLM_NB_RETRIES_STRUCTURED_OUTPUT` | `2` |
+| `NOTTE_LLM_CONTEXT_TOKENS` | `128000` (document clipping estimates four characters per token) |
 
 ## JavaScript result size
 

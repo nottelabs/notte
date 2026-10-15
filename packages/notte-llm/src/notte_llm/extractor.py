@@ -1,13 +1,30 @@
 import datetime as dt
 import json
+from typing import Generic, Self
 
 from notte_core.data import DictBaseModel, NoStructuredData, StructuredData
 from notte_core.logging import logger
 from notte_core.pruning import mask_markdown, unmask_pydantic
 from notte_core.schema import TResponseFormat
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from notte_llm.service import LLMService
+
+
+class _ExtractionResult(BaseModel, Generic[TResponseFormat]):
+    # The wire schema must describe the requested data, without an unconstrained
+    # RootModel[Any] alternative that erases strict-output guarantees.
+    success: bool = True
+    error: str | None = None
+    data: TResponseFormat | None = None
+
+    @model_validator(mode="after")
+    def validate_result(self) -> Self:
+        if self.error and self.error.strip():
+            self.success = False
+        if self.success and self.data is None:
+            raise ValueError("Scraping was successful but data field is None")
+        return self
 
 
 class _Hotel(BaseModel):
@@ -114,10 +131,10 @@ class LlmExtractor:
                     structured.data = unmask_pydantic(document=masked_document, data=structured.data)
                 return structured
             case (_response_format, _):
-                response: StructuredData[DictBaseModel] = await llmserve.structured_completion(
+                response = await llmserve.structured_completion(
                     prompt_id="extract-json-schema/multi-entity",
-                    response_format=StructuredData[DictBaseModel],
-                    use_strict_response_format=False,
+                    response_format=_ExtractionResult[_response_format],
+                    use_strict_response_format=True,
                     variables={
                         "url": url,
                         "failure_example": StructuredData(
@@ -126,7 +143,7 @@ class LlmExtractor:
                             data=None,
                         ).model_dump_json(),
                         "success_example": self.success_example().model_dump_json(),
-                        "schema": json.dumps(StructuredData[_response_format].model_json_schema()),
+                        "schema": json.dumps(_ExtractionResult[_response_format].model_json_schema()),
                         "content": document,
                         "timestamp": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
                         "instructions": instructions,
@@ -136,9 +153,9 @@ class LlmExtractor:
                     logger.trace(f"LLM Structured Response with user provided schema:\n{response}")
                 # try model_validate
                 if not response.success or response.data is None:
-                    return response
+                    return StructuredData(success=response.success, error=response.error, data=None)
                 try:
-                    data: BaseModel = _response_format.model_validate(response.data.root)
+                    data: BaseModel = response.data
                     if use_link_placeholders:
                         data = unmask_pydantic(document=masked_document, data=data)
                     return StructuredData[BaseModel](

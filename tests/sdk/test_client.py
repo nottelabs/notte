@@ -244,10 +244,10 @@ def test_scrape_sends_model(mock_post: MagicMock, client: NotteClient, session_i
         "session": session_response_dict(session_id),
     }
 
-    _ = client.sessions.page.scrape(session_id, instructions="extract", model="vertex_ai/gemini-3.5-flash")
+    _ = client.sessions.page.scrape(session_id, instructions="extract", model="google/gemini-3.5-flash")
 
     body = json.loads(mock_post.call_args.kwargs["data"])
-    assert body["model"] == "vertex_ai/gemini-3.5-flash"
+    assert body["model"] == "google/gemini-3.5-flash"
     assert body["instructions"] == "extract"
 
 

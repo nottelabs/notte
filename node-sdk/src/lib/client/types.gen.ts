@@ -288,7 +288,7 @@ export type ApiAgentStartRequest = {
      *
      * The reasoning model to use
      */
-    reasoning_model?: LlmModel | string;
+    reasoning_model?: string;
     /**
      * Use Vision
      *
@@ -3014,9 +3014,9 @@ export type GlobalScrapeRequest = {
     /**
      * Model
      *
-     * The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model.
+     * The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'google/gemini-3.5-flash'. Defaults to the platform model.
      */
-    model?: LlmModel | string | null;
+    model?: string | null;
     /**
      * Use Link Placeholders
      *
@@ -3271,11 +3271,6 @@ export type ListCredentialsResponse = {
      */
     credentials: Array<Credential>;
 };
-
-/**
- * LlmModel
- */
-export type LlmModel = 'openai/gpt-4o' | 'gemini/gemini-3.5-flash' | 'vertex_ai/gemini-3.5-flash' | 'openrouter/google/gemma-3-27b-it' | 'cerebras/gpt-oss-120b' | 'groq/gpt-oss-120b' | 'perplexity/sonar-pro' | 'deepseek/deepseek-r1' | 'together_ai/meta-llama/llama-3.3-70b-instruct' | 'anthropic/claude-sonnet-4-5-20250929' | 'moonshot/kimi-k2.5' | 'xai/grok-4.3' | 'minimax/minimax-m2.5';
 
 /**
  * MailboxConnectRequest
@@ -4841,9 +4836,9 @@ export type ScrapeFromHtmlRequest = {
     /**
      * Model
      *
-     * The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model.
+     * The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'google/gemini-3.5-flash'. Defaults to the platform model.
      */
-    model?: LlmModel | string | null;
+    model?: string | null;
     /**
      * Use Link Placeholders
      *
@@ -4913,9 +4908,9 @@ export type ScrapeRequest = {
     /**
      * Model
      *
-     * The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model.
+     * The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'google/gemini-3.5-flash'. Defaults to the platform model.
      */
-    model?: LlmModel | string | null;
+    model?: string | null;
     /**
      * Use Link Placeholders
      *
