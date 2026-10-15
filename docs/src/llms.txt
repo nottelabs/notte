@@ -219,11 +219,6 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GET Profile Get](https://docs.notte.cc/api-reference/profiles/profile-get.md)
 - [GET Profile List](https://docs.notte.cc/api-reference/profiles/profile-list.md)
 
-## Prompts
-
-- [POST Improve Prompt](https://docs.notte.cc/api-reference/prompts/improve-prompt.md)
-- [POST Nudge Prompt](https://docs.notte.cc/api-reference/prompts/nudge-prompt.md)
-
 ## Scrape
 
 - [POST Scrape From Html](https://docs.notte.cc/api-reference/scrape/scrape-from-html.md)
@@ -258,6 +253,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GET Session Network Logs](https://docs.notte.cc/api-reference/sessions/session-network-logs.md)
 - [GET Session Offset](https://docs.notte.cc/api-reference/sessions/session-offset.md)
 - [GET Session Profile Preview](https://docs.notte.cc/api-reference/sessions/session-profile-preview.md)
+- [POST Session Profile Save](https://docs.notte.cc/api-reference/sessions/session-profile-save.md)
 - [GET Session Replay](https://docs.notte.cc/api-reference/sessions/session-replay.md)
 - [POST Session Start](https://docs.notte.cc/api-reference/sessions/session-start.md)
 - [GET Session Status](https://docs.notte.cc/api-reference/sessions/session-status.md)
