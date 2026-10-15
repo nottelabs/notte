@@ -45,72 +45,27 @@ permissions:
   pull-requests: write
 
 jobs:
-  # Decides which suites this change needs. Push and manual runs always run everything;
-  # scheduled runs only run the live suite.
+  # Keep the required workflow running even when every expensive suite is skipped.
   changes:
+    permissions:
+      contents: read
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 5
     outputs:
-      unit: ${{ steps.scope.outputs.unit }}
-      live: ${{ steps.scope.outputs.live }}
-      cli-contract: ${{ steps.scope.outputs.cli-contract }}
+      scope: ${{ steps.scope.outputs.scope }}
     steps:
       - name: Checkout code
-        if: github.event_name == 'pull_request'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-
-      - name: Which suites does this change need?
+      - uses: ./.github/actions/ci-scope
         id: scope
-        env:
-          EVENT: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          if [ "$EVENT" = "schedule" ]; then
-            echo "unit=false" >> "$GITHUB_OUTPUT"
-            echo "live=true" >> "$GITHUB_OUTPUT"
-            echo "cli-contract=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          if [ "$EVENT" != "pull_request" ]; then
-            echo "unit=true" >> "$GITHUB_OUTPUT"
-            echo "live=true" >> "$GITHUB_OUTPUT"
-            echo "cli-contract=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          unit=false
-          live=false
-          cli_contract=false
-          while IFS= read -r file; do
-            [ -n "$file" ] || continue
-            case "$file" in
-              # This workflow and its setup action: run everything.
-              .github/workflows/test-cicd.yml|.github/actions/python-setup/*) unit=true; live=true; cli_contract=true ;;
-              # How the SDK reads the key notte-cli stores, and its contract test.
-              packages/notte-sdk/src/notte_sdk/auth.py|tests/sdk/test_cli_keyring_contract.py|tests/sdk/cli_contract/*)
-                unit=true; live=true; cli_contract=true ;;
-              # A notte-cli bump can change how the CLI stores the key.
-              notte-cli) cli_contract=true ;;
-              # Package code, including Markdown prompt templates: run everything.
-              packages/*|src/*|tests/*) unit=true; live=true ;;
-              # Some unit tests read the docs; the live suite does not.
-              docs/*) unit=true ;;
-              # Covered by their own workflows (Node SDK, README check) or not code.
-              node-sdk/*|.github/*|*.md|LICENSE) ;;
-              browserarena|notte-cli|notte-skills|templates|integrations/*|example-apps/*) ;;
-              *) unit=true; live=true ;;
-            esac
-          done < <(git diff --name-only "$BASE_SHA"..."$HEAD_SHA")
-          echo "unit=$unit" >> "$GITHUB_OUTPUT"
-          echo "live=$live" >> "$GITHUB_OUTPUT"
-          echo "cli-contract=$cli_contract" >> "$GITHUB_OUTPUT"
-          echo "unit=$unit live=$live cli-contract=$cli_contract"
 
   lint:
+    needs: changes
+    if: fromJSON(needs.changes.outputs.scope).python_static
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 15
     steps:
@@ -135,7 +90,17 @@ jobs:
           pre-commit: "true"
 
       - name: Run pre-commit
-        run: uv run --active pre-commit run --all-files
+        env:
+          FULL: ${{ fromJSON(needs.changes.outputs.scope).full }}
+          BASE_SHA: ${{ fromJSON(needs.changes.outputs.scope).base }}
+          HEAD_SHA: ${{ fromJSON(needs.changes.outputs.scope).head }}
+        run: |
+          if [ "$FULL" = true ]; then
+            uv run --active pre-commit run --all-files
+          else
+            git fetch --no-tags origin "$BASE_SHA" "$HEAD_SHA"
+            uv run --active pre-commit run --from-ref "$BASE_SHA" --to-ref "$HEAD_SHA"
+          fi
 
       - name: Note - secret-backed tests skipped (fork PR)
         if: ${{ env.IS_TRUSTED != 'true' }}
@@ -150,7 +115,7 @@ jobs:
   unit:
     needs: changes
     if: >-
-      needs.changes.outputs.unit == 'true' &&
+      fromJSON(needs.changes.outputs.scope).python_unit &&
       (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-8vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 20
@@ -248,7 +213,7 @@ jobs:
   live:
     needs: changes
     if: >-
-      needs.changes.outputs.live == 'true' &&
+      fromJSON(needs.changes.outputs.scope).python_live &&
       (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 20
@@ -278,7 +243,7 @@ jobs:
   # (from the notte-cli submodule) on each OS and check the SDK reads them back. Needs no secrets.
   cli-contract:
     needs: changes
-    if: needs.changes.outputs.cli-contract == 'true'
+    if: fromJSON(needs.changes.outputs.scope).cli_contract
     strategy:
       fail-fast: false
       matrix:
@@ -355,9 +320,28 @@ jobs:
             $cmd
           fi
 
-  # The required check. Passes when every suite this change needs passed (skipped suites are fine).
+  # Docs assertions need neither the SDK workspace nor cloud credentials.
+  docs:
+    permissions:
+      contents: read
+    needs: changes
+    if: fromJSON(needs.changes.outputs.scope).python_docs
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/pull/{0}/head', github.event.inputs.pr_number) || github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+      - run: python -m pip install pytest
+      - run: python -m pytest tests/docs --noconftest -q
+
+  # The required check stays present and waits for every selected Python suite.
   tests:
-    needs: [changes, lint, unit, live, cli-contract]
+    needs: [changes, lint, unit, live, cli-contract, docs]
     if: always()
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 10
@@ -370,7 +354,7 @@ jobs:
           import json, sys
           results = {name: job["result"] for name, job in json.load(sys.stdin).items()}
           print(results)
-          sys.exit(any(result in ("failure", "cancelled") for result in results.values()))
+          sys.exit(results["changes"] != "success" or any(result in ("failure", "cancelled") for result in results.values()))
           '
 
       - name: Checkout code

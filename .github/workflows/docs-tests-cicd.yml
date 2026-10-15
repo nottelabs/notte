@@ -4,15 +4,13 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'docs/**'
-      - '.github/workflows/docs-tests-cicd.yml'
   pull_request:
     branches:
       - main
-    paths:
-      - 'docs/**'
-      - '.github/workflows/docs-tests-cicd.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 # Set explicitly, workflow-wide. The SDK falls back to its production base URL
 # when this is unset, so a job that only exports NOTTE_API_KEY runs against
@@ -22,7 +20,23 @@ env:
   NOTTE_API_URL: "https://us-staging.notte.cc"
 
 jobs:
+  changes:
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 5
+    outputs:
+      scope: ${{ steps.scope.outputs.scope }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/ci-scope
+        id: scope
+
   syntax-check:
+    needs: changes
+    if: fromJSON(needs.changes.outputs.scope).docs_static
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     env:
@@ -57,6 +71,8 @@ jobs:
         run: python docs/src/scripts/test_generate_cli_reference.py
 
   type-check:
+    needs: changes
+    if: fromJSON(needs.changes.outputs.scope).docs_static
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     env:
@@ -94,7 +110,10 @@ jobs:
         run: cd docs/src && uv run --no-sync pytest -v --tb=no
 
   execution:
-    needs: [syntax-check, type-check]
+    needs: [changes, syntax-check, type-check]
+    if: >-
+      fromJSON(needs.changes.outputs.scope).docs_live &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     # All live suites for a ref share one queue so they do not hit the API at once.

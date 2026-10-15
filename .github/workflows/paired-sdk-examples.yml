@@ -2,17 +2,32 @@ name: paired-sdk-examples
 
 on:
   pull_request:
-    paths: ['docs/**', 'node-sdk/**', 'packages/**', 'uv.lock', '.github/workflows/paired-sdk-examples.yml']
+    branches: [main]
   push:
     branches: [main]
-    paths: ['docs/**', 'node-sdk/**', 'packages/**', 'uv.lock', '.github/workflows/paired-sdk-examples.yml']
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  changes:
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 5
+    outputs:
+      scope: ${{ steps.scope.outputs.scope }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/ci-scope
+        id: scope
+
   checks:
+    needs: changes
+    if: fromJSON(needs.changes.outputs.scope).paired_static
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 15
     steps:
@@ -49,11 +64,12 @@ jobs:
           fi
 
   live:
-    needs: checks
+    needs: [changes, checks]
     # Test same-repository PRs before merging; forks must not receive staging credentials.
     if: >-
-      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
-      (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
+      fromJSON(needs.changes.outputs.scope).paired_live &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name != 'pull_request' && github.ref == 'refs/heads/main'))
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 20
     # All live suites for a ref share one queue so they do not hit the API at once.
