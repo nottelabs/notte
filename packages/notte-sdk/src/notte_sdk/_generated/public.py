@@ -88,6 +88,7 @@ from notte_sdk._generated.models import (
 from notte_sdk._generated.models import (
     ListSessionFilesParametersQuery as ListSessionFilesParametersQuery,
 )
+from notte_sdk._generated.models import MouseReplayPage as MouseReplayPage
 from notte_sdk._generated.models import NetworkLogsResponse as NetworkLogsResponse
 from notte_sdk._generated.models import (
     PageScreenshotParametersQuery as PageScreenshotParametersQuery,
@@ -117,6 +118,9 @@ from notte_sdk._generated.models import ScheduleDeleteResponse as ScheduleDelete
 from notte_sdk._generated.models import ScheduleResponse as ScheduleResponse
 from notte_sdk._generated.models import SessionFile as SessionFile
 from notte_sdk._generated.models import SessionFilesPage as SessionFilesPage
+from notte_sdk._generated.models import (
+    SessionMouseReplayParametersQuery as SessionMouseReplayParametersQuery,
+)
 from notte_sdk._generated.models import (
     SessionNetworkLogsParametersQuery as SessionNetworkLogsParametersQuery,
 )
@@ -240,6 +244,9 @@ from notte_sdk._generated.typing import (
 )
 from notte_sdk._generated.typing import SessionListRequestDict as SessionListRequestDict
 from notte_sdk._generated.typing import (
+    SessionMouseReplayParametersQueryDict as SessionMouseReplayParametersQueryDict,
+)
+from notte_sdk._generated.typing import (
     SessionNetworkLogsParametersQueryDict as SessionNetworkLogsParametersQueryDict,
 )
 from notte_sdk._generated.typing import SessionProfileDict as SessionProfileDict
@@ -335,6 +342,7 @@ __all__ = [
     "ManagedAuthOperation",
     "MessageReadRequest",
     "MessageReadRequestDict",
+    "MouseReplayPage",
     "NetworkLogsResponse",
     "NotteProxy",
     "NotteProxyDict",
@@ -374,6 +382,8 @@ __all__ = [
     "SessionFilesPage",
     "SessionListRequest",
     "SessionListRequestDict",
+    "SessionMouseReplayParametersQuery",
+    "SessionMouseReplayParametersQueryDict",
     "SessionNetworkLogsParametersQuery",
     "SessionNetworkLogsParametersQueryDict",
     "SessionOffsetResponse",

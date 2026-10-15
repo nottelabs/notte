@@ -1900,6 +1900,98 @@
         "x-codeSamples": []
       }
     },
+    "/sessions/{session_id}/replay/mouse": {
+      "get": {
+        "tags": [
+          "sessions",
+          "replay"
+        ],
+        "summary": "Session Mouse Replay",
+        "operationId": "session_mouse_replay",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MouseReplayPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": []
+      }
+    },
     "/sessions/{session_id}/replay": {
       "get": {
         "tags": [
@@ -15949,6 +16041,48 @@
         ],
         "title": "ManagedAuthReadiness"
       },
+      "MouseReplayPage": {
+        "properties": {
+          "mouse_manifest_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mouse Manifest Url"
+          },
+          "mouse_chunk_urls": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mouse Chunk Urls"
+          },
+          "mouse_next_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mouse Next Offset"
+          }
+        },
+        "type": "object",
+        "title": "MouseReplayPage"
+      },
       "MultiFactorFillAction-Input": {
         "properties": {
           "type": {
@@ -17782,6 +17916,42 @@
           "expires_at": {
             "type": "string",
             "title": "Expires At"
+          },
+          "mouse_manifest_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mouse Manifest Url"
+          },
+          "mouse_chunk_urls": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mouse Chunk Urls"
+          },
+          "mouse_next_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mouse Next Offset"
           },
           "video_start_ms": {
             "anyOf": [
