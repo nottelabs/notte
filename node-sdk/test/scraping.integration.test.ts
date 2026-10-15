@@ -58,7 +58,7 @@ describe('Scraping Integration Tests', () => {
   });
 
   describe('Session-based Scraping', () => {
-    it('should scrape markdown from a webpage', { timeout: 60_000 }, async () => {
+    it('should scrape markdown from a webpage', async () => {
       await client.Session({ proxies: false, idle_timeout_minutes: 1 }).use(async session => {
         const result = await session.execute(actions.goto({ url: 'https://www.notte.cc/pricing' }));
         expect(result.success).toBe(true);
@@ -69,7 +69,7 @@ describe('Scraping Integration Tests', () => {
       });
     });
 
-    it('should scrape with a JSON schema response format and raiseOnFailure false', { timeout: 60_000 }, async () => {
+    it('should scrape with a JSON schema response format and raiseOnFailure false', async () => {
       await client.Session({ proxies: false, idle_timeout_minutes: 1 }).use(async session => {
         await session.execute(actions.goto({ url: 'https://www.notte.cc/pricing' }));
 
@@ -85,7 +85,7 @@ describe('Scraping Integration Tests', () => {
       });
     });
 
-    it('should scrape with custom instructions', { timeout: 60_000 }, async () => {
+    it('should scrape with custom instructions', async () => {
       await client.Session({ proxies: false, idle_timeout_minutes: 1 }).use(async session => {
         await session.execute(actions.goto({ url: 'https://www.notte.cc/pricing' }));
 
@@ -103,7 +103,7 @@ describe('Scraping Integration Tests', () => {
       });
     });
 
-    it('should scrape with custom instructions and a Zod response format', { timeout: 60_000 }, async () => {
+    it('should scrape with custom instructions and a Zod response format', async () => {
       await client.Session({ proxies: false, idle_timeout_minutes: 1 }).use(async session => {
         await session.execute(actions.goto({ url: 'https://www.notte.cc/pricing' }));
 
@@ -125,7 +125,7 @@ describe('Scraping Integration Tests', () => {
       });
     });
 
-    it('should scrape structured data with instructions only', { timeout: 60_000 }, async () => {
+    it('should scrape structured data with instructions only', async () => {
       await client.Session({ proxies: false }).use(async session => {
         await session.execute(actions.goto({ url: 'https://gymbeam.pl' }));
         const data = await session.scrape({ instructions: 'Extract the company name' });
@@ -134,7 +134,7 @@ describe('Scraping Integration Tests', () => {
       });
     });
 
-    it('should scrape structured data with a chosen extraction model', { timeout: 60_000 }, async () => {
+    it('should scrape structured data with a chosen extraction model', async () => {
       await client.Session({ proxies: false, idle_timeout_minutes: 1 }).use(async session => {
         await session.execute(actions.goto({ url: 'https://example.com' }));
         const data = await session.scrape({
@@ -148,13 +148,13 @@ describe('Scraping Integration Tests', () => {
   });
 
   describe('Direct Client Scraping', () => {
-    it('should scrape markdown from URL', { timeout: 60_000 }, async () => {
+    it('should scrape markdown from URL', async () => {
       const data = await client.scrape('https://www.notte.cc', { proxies: false });
       expect(typeof data).toBe('string');
       expect(data.length).toBeGreaterThan(0);
     });
 
-    it('should scrape with a JSON schema response format', { timeout: 60_000 }, async () => {
+    it('should scrape with a JSON schema response format', async () => {
       const structured = (await client.scrape('https://www.notte.cc/pricing', {
         proxies: false,
         response_format: pricingPlansJson,
@@ -165,7 +165,7 @@ describe('Scraping Integration Tests', () => {
       expect(plans.plans.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should scrape with Zod schema validation', { timeout: 60_000 }, async () => {
+    it('should scrape with Zod schema validation', async () => {
       const validatedData = await client.scrape('https://www.notte.cc/pricing', {
         proxies: false,
         response_format: PricingPlansSchema,
@@ -178,7 +178,7 @@ describe('Scraping Integration Tests', () => {
   });
 
   describe('README Examples', () => {
-    it('should work with the sync scraping example', { timeout: 60_000 }, async () => {
+    it('should work with the sync scraping example', async () => {
       await client.Session({ proxies: false }).use(async session => {
         const result = await session.execute({ type: 'goto', url: 'https://www.notte.cc' });
         expect(result.success).toBe(true);
@@ -196,7 +196,7 @@ describe('Scraping Integration Tests', () => {
       await expect(session.scrape()).rejects.toThrow('Session not started');
     });
 
-    it('should handle invalid URLs', { timeout: 60_000 }, async () => {
+    it('should handle invalid URLs', async () => {
       try {
         await client.scrape('https://example.invalid', { proxies: false });
         // If it doesn't throw, that's also acceptable
@@ -207,19 +207,19 @@ describe('Scraping Integration Tests', () => {
   });
 
   describe('Scraping Options', () => {
-    it('should scrape with only main content', { timeout: 60_000 }, async () => {
+    it('should scrape with only main content', async () => {
       const data = await client.scrape('https://www.notte.cc', { proxies: false, only_main_content: true });
       expect(typeof data).toBe('string');
       expect(data.length).toBeGreaterThan(0);
     });
 
-    it('should scrape with custom ignored tags', { timeout: 60_000 }, async () => {
+    it('should scrape with custom ignored tags', async () => {
       const data = await client.scrape('https://www.notte.cc', { proxies: false, ignored_tags: ['script', 'style'] });
       expect(typeof data).toBe('string');
       expect(data.length).toBeGreaterThan(0);
     });
 
-    it('should scrape with a chosen extraction model', { timeout: 60_000 }, async () => {
+    it('should scrape with a chosen extraction model', async () => {
       const data = await client.scrape('https://example.com', {
         proxies: false,
         instructions: 'Extract the main heading of the page',
@@ -229,7 +229,7 @@ describe('Scraping Integration Tests', () => {
       expect(data.title.toLowerCase()).toContain('example domain');
     });
 
-    it('should scrape with scrape_links and scrape_images disabled', { timeout: 60_000 }, async () => {
+    it('should scrape with scrape_links and scrape_images disabled', async () => {
       const data = await client.scrape('https://www.notte.cc', { proxies: false, scrape_links: false, scrape_images: false });
       expect(typeof data).toBe('string');
       expect(data.length).toBeGreaterThan(0);

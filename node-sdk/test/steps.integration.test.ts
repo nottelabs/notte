@@ -24,7 +24,7 @@ describe('Steps Integration Tests', () => {
     client = new NotteClient({ apiKey, baseUrl: process.env.NOTTE_API_URL || 'https://api.notte.cc' });
   });
 
-  it('records execute and observe calls as session steps', { timeout: 90_000 }, async () => {
+  it('records execute and observe calls as session steps', async () => {
     const session = client.Session({ proxies: false, open_viewer: false });
     await session.use(async s => {
       await s.execute(actions.goto({ url: 'https://example.com' }));

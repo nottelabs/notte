@@ -191,7 +191,7 @@ describe('Persona Integration Tests', () => {
   });
 
   describe('Persona with Vault Integration', () => {
-    it('should create persona with vault', { timeout: 30000 }, async () => {
+    it('should create persona with vault', async () => {
       const persona = client.Persona({ create_vault: true });
       let personaId: string | null = null;
 
@@ -269,7 +269,7 @@ describe('Persona Integration Tests', () => {
       }
     });
 
-    it('should handle vault email restrictions', { timeout: 30000 }, async () => {
+    it('should handle vault email restrictions', async () => {
       const persona = client.Persona({ create_vault: true });
       let personaId: string | null = null;
 

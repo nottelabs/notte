@@ -27,7 +27,7 @@ describe('Vault Integration Tests', () => {
     createdVaults = [];
   });
 
-  it('should only cleanup a vault created by this test', { timeout: 30000 }, async () => {
+  it('should only cleanup a vault created by this test', async () => {
     const vault = client.Vault({ name: 'Node SDK owned cleanup test' });
     await vault.listCredentials();
     const vaultId = vault.vaultId;
@@ -177,7 +177,7 @@ describe('Vault Integration Tests', () => {
 
   describe('Vault Context Manager', () => {
     // Mirrors test_vault_should_be_deleted_after_exit_context: stop() deletes the vault.
-    it('should delete vault after stop()', { timeout: 60000 }, async () => {
+    it('should delete vault after stop()', async () => {
       const vault = client.Vault();
       await vault.addCredentials('https://test.com/', {
         email: 'test@example.com',
@@ -199,7 +199,7 @@ describe('Vault Integration Tests', () => {
 
   describe('Environment Variable Credentials', () => {
     // Mirrors test_add_credentials_from_env.
-    it('should add credentials from environment variables', { timeout: 60000 }, async () => {
+    it('should add credentials from environment variables', async () => {
       vi.stubEnv('PEEPLE_COM_EMAIL', 'xyz@notte.cc');
       vi.stubEnv('PEEPLE_COM_PASSWORD', 'xyz'); // pragma: allowlist secret
       vi.stubEnv('TEST_COM_USERNAME', 'my_xyz_username');
@@ -232,7 +232,7 @@ describe('Vault Integration Tests', () => {
       });
     });
 
-    it('should add an MFA secret from the environment', { timeout: 60000 }, async () => {
+    it('should add an MFA secret from the environment', async () => {
       vi.stubEnv('EXAMPLE_COM_EMAIL', 'xyz@notte.cc');
       vi.stubEnv('EXAMPLE_COM_PASSWORD', 'xyz'); // pragma: allowlist secret
       vi.stubEnv('EXAMPLE_COM_MFA_SECRET', 'JBSWY3DPEHPK3PXP'); // pragma: allowlist secret

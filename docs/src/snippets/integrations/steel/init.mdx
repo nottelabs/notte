@@ -2,7 +2,6 @@
 {/* @sniptest testers/integrations/steel/init.py */}
 
 ```python steel_init.py
-
 STEEL_API_KEY = os.getenv("STEEL_API_KEY")
 
 # Initialize clients
@@ -10,4 +9,5 @@ steel = Steel(steel_api_key=STEEL_API_KEY)
 client = NotteClient()
 
 # Create a browser session on Steel
+steel_session = steel.sessions.create()
 ```

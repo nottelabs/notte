@@ -153,7 +153,7 @@ describe('Function live integration', () => {
 		expect(plain.function_run_id).not.toBe(streamed.function_run_id);
 	});
 
-	it('rejects a run for an unknown run ID with NotteAPIError', { timeout: 60000 }, async () => {
+	it('rejects a run for an unknown run ID with NotteAPIError', async () => {
 		await expect(fn.run({ value: 'x' }, { functionRunId: 'invalid-run-id', stream: false })).rejects.toBeInstanceOf(NotteAPIError);
 	});
 });

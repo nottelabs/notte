@@ -19,7 +19,7 @@ describe('evaluateJs and fetch Integration Tests', () => {
     client = new NotteClient({ apiKey, baseUrl: process.env.NOTTE_API_URL || 'https://api.notte.cc' });
   });
 
-  it('evaluates JavaScript and returns the stringified value', { timeout: 90_000 }, async () => {
+  it('evaluates JavaScript and returns the stringified value', async () => {
     await client.Session({ proxies: false, open_viewer: false }).use(async session => {
       await session.execute(actions.goto({ url: 'https://example.com' }));
 
@@ -36,7 +36,7 @@ describe('evaluateJs and fetch Integration Tests', () => {
     });
   });
 
-  it('fetches from inside the page with the page cookies and follows redirects', { timeout: 90_000 }, async () => {
+  it('fetches from inside the page with the page cookies and follows redirects', async () => {
     await client.Session({ proxies: false, open_viewer: false }).use(async session => {
       await session.execute(actions.goto({ url: 'https://en.wikipedia.org/wiki/Main_Page' }));
 

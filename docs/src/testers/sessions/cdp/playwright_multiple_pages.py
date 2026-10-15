@@ -9,10 +9,10 @@ with client.Session() as session:
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(cdp_url)
 
-        # Create a new context with custom settings
-        context = browser.new_context(viewport={"width": 1920, "height": 1080}, user_agent="Custom User Agent")
+        # Reuse the session's existing browser context
+        context = browser.contexts[0]
 
-        # Create multiple pages
+        # Open additional pages (tabs) in that context
         page1 = context.new_page()
         page2 = context.new_page()
 

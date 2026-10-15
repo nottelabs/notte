@@ -1,8 +1,5 @@
 import datetime as dt
-import os
-import smtplib
 import uuid
-from email.message import EmailMessage
 
 import pytest
 from notte_browser.errors import InboxActionNotSupportedLocallyError
@@ -11,12 +8,8 @@ from notte_sdk import NotteClient
 from notte_sdk.endpoints.personas import NottePersona
 
 import notte
+from tests.ci_smtp import require_smtp_configuration, send_test_email
 
-SMTP_SERVER_ENV = "SMTP_SERVER"
-SMTP_PORT_ENV = "SMTP_PORT"
-SMTP_USERNAME_ENV = "EMAIL_SENDER"
-SMTP_PASSWORD_ENV = "EMAIL_PASSWORD"  # pragma: allowlist secret
-SMTP_STARTTLS_ENV = "SMTP_STARTTLS"
 EMAIL_READ_WINDOW = dt.timedelta(minutes=10)
 EMAIL_READ_TIMEOUT_S = 40.0
 EMAIL_READ_POLL_INTERVAL_S = 10.0
@@ -46,50 +39,14 @@ def test_local_session_rejects_inbox_actions(persona: NottePersona):
             _ = session.execute(action=EmailReadAction(only_unread=False))
 
 
-def _send_test_email(recipient: str, subject: str) -> str:
-    missing_env = [name for name in [SMTP_SERVER_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV] if not os.getenv(name)]
-    if missing_env:
-        pytest.skip(f"{', '.join(missing_env)} required")
-
-    server = os.getenv(SMTP_SERVER_ENV)
-    username = os.getenv(SMTP_USERNAME_ENV)
-    password = os.getenv(SMTP_PASSWORD_ENV)
-    assert server is not None
-    assert username is not None
-    assert password is not None
-
-    host, _, server_port = server.partition(":")
-    port = int(os.getenv(SMTP_PORT_ENV, server_port or "587"))
-    message = EmailMessage()
-    message["From"] = username
-    message["To"] = recipient
-    message["Subject"] = subject
-    message.set_content(f"Notte persona email delivery test: {subject}")
-
-    if port == 465:
-        with smtplib.SMTP_SSL(host, port, timeout=30) as server:
-            server.login(username, password)
-            server.send_message(message)
-    else:
-        with smtplib.SMTP(host, port, timeout=30) as server:
-            if os.getenv(SMTP_STARTTLS_ENV, "true").lower() != "false":
-                server.starttls()
-            server.login(username, password)
-            server.send_message(message)
-
-    return username
-
-
 @pytest.mark.flaky(reruns=3, reruns_delay=5)
 def test_signup_email_extraction(client: NotteClient):
-    missing_env = [name for name in [SMTP_SERVER_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV] if not os.getenv(name)]
-    if missing_env:
-        pytest.skip(f"{', '.join(missing_env)} required")
+    require_smtp_configuration()
 
     with client.Persona(create_vault=False, create_phone_number=False) as persona:
         started_at = dt.datetime.now(dt.UTC) - dt.timedelta(seconds=10)
         subject = f"Notte signup persona email delivery {uuid.uuid4()}"
-        sender = _send_test_email(persona.info.email, subject)
+        sender = send_test_email(persona.info.email, subject)
         print(f"Sent SMTP email from {sender} to persona {persona.persona_id}: {persona.info.email}")
 
         # A fresh persona has an empty inbox, so the first email listed is the one just sent.

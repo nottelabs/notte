@@ -81,7 +81,7 @@ class MetadataUploadPairsTest(unittest.TestCase):
                 def list_functions(page: int | None = None, page_size: int | None = None):
                     calls.append(page)
                     items = others[:10] if page is None else pages.get(page, [])
-                    return types.SimpleNamespace(items=items)
+                    return types.SimpleNamespace(items=items, has_next=len(items) == 100)
 
                 sdk = types.ModuleType("notte_sdk")
                 sdk.NotteClient = lambda: types.SimpleNamespace(functions=types.SimpleNamespace(list=list_functions))

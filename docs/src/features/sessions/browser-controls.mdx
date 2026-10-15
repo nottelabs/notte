@@ -121,12 +121,9 @@ Click on an element.
 <Click />
 
 **Parameters:**
-- `selector` (str): CSS selector for the element
-- `id` (str): Element ID
-- `text` (str): Exact text content
-- `aria_label` (str): ARIA label attribute
-- `placeholder` (str): Placeholder text
-- `title` (str): Title attribute
+- `selector` (str): Selector for the element (CSS, XPath, or Playwright selector such as `button:has-text('Submit')`)
+- `id` (str): Element ID from the latest `observe()` output (for example `B1`)
+- `timeout` (int, optional): Action timeout in milliseconds
 
 **Use for:** Clicking buttons, links, checkboxes, any clickable element
 
@@ -139,11 +136,11 @@ Fill a text input or textarea.
 <Fill />
 
 **Parameters:**
-- `selector` (str): CSS selector for the input
-- `id` (str): Element ID
-- `placeholder` (str): Placeholder text
-- `aria_label` (str): ARIA label
+- `selector` (str): Selector for the input
+- `id` (str): Element ID from the latest `observe()` output (for example `I1`)
 - `value` (str): The text to fill
+- `clear_before_fill` (bool, optional): Clear the field first (default: True)
+- `press_enter` (bool, optional): Press Enter after filling
 
 **Use for:** Filling forms, search boxes, text inputs
 
@@ -156,9 +153,9 @@ Check or uncheck a checkbox.
 <Check />
 
 **Parameters:**
-- `selector` (str): CSS selector for the checkbox
-- `id` (str): Element ID
-- `checked` (bool): True to check, False to uncheck
+- `selector` (str): Selector for the checkbox
+- `id` (str): Element ID from the latest `observe()` output
+- `value` (bool): True to check, False to uncheck
 
 **Use for:** Toggling checkboxes, accepting terms, selecting options
 
@@ -171,9 +168,9 @@ Select an option from a dropdown.
 <SelectDropdownOption />
 
 **Parameters:**
-- `selector` (str): CSS selector for the select element
-- `option_text` (str): Visible text of the option
-- `option_value` (str): Value attribute of the option
+- `selector` (str): Selector for the select element
+- `id` (str): Element ID from the latest `observe()` output
+- `value` (str): Visible text or value attribute of the option to select
 
 **Use for:** Selecting from dropdowns, choosing options
 
@@ -266,8 +263,8 @@ Upload a file to a file input.
 <UploadFile />
 
 **Parameters:**
-- `selector` (str): CSS selector for the file input
-- `id` (str): Element ID
+- `selector` (str): Selector for the file input
+- `id` (str): Element ID from the latest `observe()` output
 - `file_path` (str): In cloud sessions, a stored filename or a public HTTP(S) file URL, including signed URLs.
 
 URL files download on the API server without navigating away from the form. They do
@@ -287,8 +284,8 @@ Download a file from a link.
 <DownloadFile />
 
 **Parameters:**
-- `selector` (str): CSS selector for the download link
-- `id` (str): Element ID
+- `selector` (str): Selector for the download link
+- `id` (str): Element ID from the latest `observe()` output
 
 **Use for:** Downloading files, reports, documents
 
@@ -303,7 +300,7 @@ Pause execution for a specified duration.
 <Wait />
 
 **Parameters:**
-- `duration` (int): Time to wait in milliseconds
+- `time_ms` (int): Time to wait in milliseconds
 
 **Use for:** Waiting for page loads, animations, dynamic content
 
@@ -328,7 +325,7 @@ Extract data from the current page.
 
 **Use for:** Data extraction, web scraping, content analysis
 
-See [Fetch](/concepts/scraping) for detailed documentation.
+See [Scraping](/concepts/scraping) for detailed documentation.
 
 ---
 

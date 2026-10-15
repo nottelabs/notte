@@ -117,6 +117,86 @@
     {
       "source": "/sdk-reference/remoteworkflow/:slug*",
       "destination": "/sdk-reference/manual/function"
+    },
+    {
+      "source": "/features/sessions/browser-types",
+      "destination": "/features/sessions/configuration"
+    },
+    {
+      "source": "/features/sessions/browser-pools",
+      "destination": "/features/sessions/configuration"
+    },
+    {
+      "source": "/features/sessions/multi-region",
+      "destination": "/features/sessions/proxies"
+    },
+    {
+      "source": "/features/sessions/static-ips",
+      "destination": "/features/sessions/proxies"
+    },
+    {
+      "source": "/features/sessions/browser-extensions",
+      "destination": "/features/sessions/external-providers"
+    },
+    {
+      "source": "/features/sessions/selenium",
+      "destination": "/features/sessions/playwright"
+    },
+    {
+      "source": "/zin",
+      "destination": "/"
+    },
+    {
+      "source": "/cli",
+      "destination": "/cli-reference/index"
+    },
+    {
+      "source": "/intro/pricing",
+      "destination": "/pricing"
+    },
+    {
+      "source": "/releases/github",
+      "destination": "/resources"
+    },
+    {
+      "source": "/releases/pypi",
+      "destination": "/resources"
+    },
+    {
+      "source": "/integrations/openai-cua",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/openai-computer-use",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/claude-agent-sdk",
+      "destination": "/mcp-server"
+    },
+    {
+      "source": "/integrations/claude-computer-use",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/computer-use-openagi",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/gemini-computer-use",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/laminar",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/magnitude",
+      "destination": "/integrations"
+    },
+    {
+      "source": "/integrations/val-town",
+      "destination": "/integrations"
     }
   ],
   "errors": {
@@ -153,18 +233,13 @@
                 "group": "Session Capabilities",
                 "collapsed": true,
                 "pages": [
-                  "features/sessions/browser-types",
-                  "features/sessions/browser-pools",
                   "features/sessions/stealth-mode",
                   "features/sessions/proxies",
-                  "features/sessions/multi-region",
                   "features/sessions/captcha-solving",
                   "features/sessions/ad-blocking",
-                  "features/sessions/static-ips",
                   "features/sessions/recordings",
                   "features/sessions/live-view",
                   "features/sessions/embed-iframe",
-                  "features/sessions/browser-extensions",
                   "features/sessions/cookies",
                   "features/sessions/cloudflare-web-bot-auth"
                 ]
@@ -175,7 +250,6 @@
                 "pages": [
                   "features/sessions/playwright",
                   "features/sessions/puppeteer",
-                  "features/sessions/selenium",
                   "features/sessions/external-providers"
                 ]
               }
@@ -251,7 +325,6 @@
               "integrations/google-adk",
               "integrations/vercel-ai-sdk",
               "integrations/mastra",
-              "integrations/openai-cua",
               "integrations/openclaw",
               "integrations/hermes",
               "integrations/stagehand"
@@ -639,6 +712,35 @@
                   }
                 ]
               }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "CLI",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "cli-reference/index"
+            ]
+          },
+          {
+            "group": "Commands",
+            "pages": [
+              "cli-reference/auth",
+              "cli-reference/files",
+              "cli-reference/functions",
+              "cli-reference/page",
+              "cli-reference/payment",
+              "cli-reference/personas",
+              "cli-reference/profiles",
+              "cli-reference/sessions",
+              "cli-reference/skill",
+              "cli-reference/tunnel",
+              "cli-reference/usage",
+              "cli-reference/vaults",
+              "cli-reference/other"
             ]
           }
         ]

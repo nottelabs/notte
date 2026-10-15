@@ -1,0 +1,94 @@
+name: readme-check
+
+on:
+  pull_request:
+    paths: ['.github/actions/wait-for-api/**', 'README.md', 'node-sdk/**', 'packages/**', 'uv.lock', 'pyproject.toml', 'scripts/readme_blocks.py', 'tests/examples/test_readme.py', 'tests/scripts/test_readme_blocks.py', '.github/workflows/readme-check.yml']
+  push:
+    branches: [main]
+    paths: ['.github/actions/wait-for-api/**', 'README.md', 'node-sdk/**', 'packages/**', 'uv.lock', 'pyproject.toml', 'scripts/readme_blocks.py', 'tests/examples/test_readme.py', 'tests/scripts/test_readme_blocks.py', '.github/workflows/readme-check.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: node-sdk/package-lock.json
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.11'
+      - name: Syntax-check Python and shell blocks
+        run: python scripts/readme_blocks.py check
+      - run: npm ci --prefix node-sdk
+      - run: npm run build --prefix node-sdk
+      - name: Type-check TypeScript blocks against the local SDK
+        run: |
+          python scripts/readme_blocks.py extract
+          if compgen -G 'node-sdk/.readme-check/*.mts' > /dev/null; then
+            node-sdk/node_modules/.bin/tsc -p node-sdk/.readme-check/tsconfig.json
+          fi
+      - name: Run setup commands in a clean environment
+        run: |
+          python scripts/readme_blocks.py setup-commands | tee "$RUNNER_TEMP/setup.sh"
+          if grep -q '^claude ' "$RUNNER_TEMP/setup.sh"; then npm install -g @anthropic-ai/claude-code; fi
+          python -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          cd "$(mktemp -d)"
+          bash -ex "$RUNNER_TEMP/setup.sh" < /dev/null
+
+  live:
+    needs: static
+    # Run README examples for same-repository PRs; forks must not receive credentials.
+    if: >-
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NOTTE_API_URL: https://us-staging.notte.cc
+      NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_README || secrets.NOTTE_API_KEY }}
+      DISABLE_TELEMETRY: 'true'
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      # Do not restore dependency caches into the credentialed job.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+        with:
+          enable-cache: false
+      - run: uv sync --locked --dev --all-extras
+      - run: uv run patchright install --with-deps chromium --no-shell
+      - name: Wait for the API to be ready
+        uses: ./.github/actions/wait-for-api
+        with:
+          api-url: https://us-staging.notte.cc
+      - name: Run README Python blocks
+        run: xvfb-run --auto-servernum uv run pytest tests/examples/test_readme.py -k test_readme_python_code -n 2
+      - run: npm ci --prefix node-sdk
+      - run: npm run build --prefix node-sdk
+      - name: Run README TypeScript blocks against the local SDK
+        run: |
+          uv run python scripts/readme_blocks.py extract
+          shopt -s nullglob
+          for file in node-sdk/.readme-check/*.mts; do
+            echo "::group::$file"
+            node --experimental-strip-types "$file"
+            echo "::endgroup::"
+          done

@@ -1,6 +1,6 @@
 # @sniptest filename=cleanup_old_runs.py
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from notte_sdk import NotteClient
 
@@ -9,9 +9,10 @@ client = NotteClient()
 
 def archive_old_runs(function_id: str, days_old: int = 30):
     """Archive runs older than specified days."""
-    runs = client.functions.list_runs(function_id, only_active=False)
+    # Most recent page of runs (up to 100), including finished ones
+    runs = client.functions.list_runs(function_id, only_active=False, page_size=100)
 
-    cutoff_date = datetime.now() - timedelta(days=days_old)
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_old)
     archive = []
 
     for run in runs.items:

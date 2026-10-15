@@ -8,7 +8,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-[Claude Managed Agents](https://docs.claude.com/en/api/agent-sdk/overview) run in Anthropic-hosted sandboxes. Those sandboxes have a shell but no browser, so give them the [notte CLI](https://github.com/nottelabs/notte-cli) and they can drive real browsers - many at once, one per subagent - while your API key stays in a vault the model never reads.
+Claude Managed Agents run in Anthropic-hosted sandboxes. Those sandboxes have a shell but no browser, so give them the [notte CLI](https://github.com/nottelabs/notte-cli) and they can drive real browsers - many at once, one per subagent - while your API key stays in a vault the model never reads.
 
 ## Prerequisites
 
@@ -29,6 +29,8 @@ The environment is the sandbox image. The vault holds your Notte key and substit
 <ManagedAgentsSetup />
 
 ## 3. Run an agent
+
+Create the agent, open a session that binds it to the environment and the vault, then send it a task and stream the reply.
 
 <ManagedAgentsRun />
 

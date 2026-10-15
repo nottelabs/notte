@@ -6,6 +6,10 @@ import RealisticBehavior from "/snippets/sessions/stealth/realistic_behavior.mdx
 import RotateProxies from "/snippets/sessions/stealth/rotate_proxies.mdx";
 import MatchViewport from "/snippets/sessions/stealth/match_viewport.mdx";
 import CombineTechniques from "/snippets/sessions/stealth/combine_techniques.mdx";
+import DefaultProxy from "/snippets/sessions/default_proxy.mdx";
+import CountryProxy from "/snippets/sessions/country_proxy.mdx";
+import StealthConfiguration from "/snippets/sessions/stealth_configuration.mdx";
+import CaptchaCombineStealth from "/snippets/sessions/captcha/combine_stealth.mdx";
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -16,66 +20,34 @@ Notte sessions include built-in stealth features to help your automations avoid 
 
 All Notte sessions automatically include:
 
-- **Clean browser fingerprints** - Realistic browser signatures
-- **Navigator properties** - Proper webdriver, plugins, and language settings
-- **Canvas fingerprinting protection** - Randomized canvas signatures
-- **WebGL fingerprinting protection** - Unique WebGL parameters
-- **Timezone and locale matching** - Consistent geolocation data
-- **Chrome DevTools Protocol hiding** - CDP detection prevention
+- **Coherent browser fingerprint** - A realistic, recent Chrome desktop fingerprint (user agent, platform, screen, and graphics hardware) that stays internally consistent
+- **Location matching** - Timezone, locale, and geolocation follow the session's proxy exit IP
+- **Residential proxies** - On by default (`proxies=True`). See [Proxies](/features/sessions/proxies)
+- **Captcha solving** - On by default (`solve_captchas=True`). See [CAPTCHA Solving](/features/sessions/captcha-solving)
 
 ## Basic Usage
 
 Stealth features are enabled by default. Simply create a session:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+<DefaultProxy />
 
-  client = NotteClient()
+## Proxy Location
 
-  with client.Session() as session:
-      page = session.page
-      page.goto("https://bot-detection-test.com")
-      # Stealth features automatically active
-  ```
-</CodeGroup>
+Residential proxies are on by default and exit in the US. Pick a country to match your target site; the fingerprint's timezone and locale follow it:
 
-## Enhanced Stealth with Proxies
+<CountryProxy />
 
-Combine stealth mode with residential proxies for maximum anonymity:
+## Advanced Stealth
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
+For sites with sophisticated bot detection, `advanced_stealth=True` runs the session in Notte's highest-fidelity browser environment. It is available to approved workspaces; contact [hello@notte.cc](mailto:hello@notte.cc) to enable it.
 
-  client = NotteClient()
-
-  with client.Session(
-      proxies=True,  # Enable residential proxies
-      browser_type="chrome"  # Use Chrome for best compatibility
-  ) as session:
-      page = session.page
-      page.goto("https://example.com")
-  ```
-</CodeGroup>
+Set the `advanced_stealth` session option to `True` in Python or `true` in TypeScript after your workspace is approved. See [Session Configuration](/features/sessions/configuration).
 
 ## Custom User Agents
 
-Override the default user agent for specific requirements:
+Override the default user agent for specific requirements. Note that a custom user agent replaces the one Notte generates to match the rest of the fingerprint:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  with client.Session(
-      user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-  ) as session:
-      page = session.page
-      page.goto("https://example.com")
-  ```
-</CodeGroup>
+<StealthConfiguration />
 
 ## Stealth Best Practices
 
@@ -107,26 +79,7 @@ Layer stealth features for best results:
 
 Test your stealth configuration against detection services:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  test_sites = [
-      "https://bot.sannysoft.com/",
-      "https://arh.antoinevastel.com/bots/areyouheadless",
-      "https://fingerprint.com/demo/"
-  ]
-
-  with client.Session(proxies=True) as session:
-      page = session.page
-
-      for site in test_sites:
-          page.goto(site)
-          page.screenshot(path=f"stealth_test_{site.split('//')[1].split('/')[0]}.png")
-  ```
-</CodeGroup>
+Visit [Sannysoft](https://bot.sannysoft.com/), [Are You Headless](https://arh.antoinevastel.com/bots/areyouheadless), or [Fingerprint](https://fingerprint.com/demo/) in your session and inspect the reported browser properties. Save screenshots with the [Playwright page API](/features/sessions/playwright).
 
 ## What Stealth Can't Do
 
@@ -141,21 +94,7 @@ Stealth features help avoid detection, but they cannot:
 
 Combine stealth with automatic captcha solving for comprehensive protection:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  with client.Session(
-      solve_captchas=True,
-      proxies=True
-  ) as session:
-      page = session.page
-      page.goto("https://example.com/login")
-      # Both stealth and captcha solving active
-  ```
-</CodeGroup>
+<CaptchaCombineStealth />
 
 ## Next Steps
 
@@ -168,11 +107,11 @@ Combine stealth with automatic captcha solving for comprehensive protection:
     Automatically solve captchas
   </Card>
 
-  <Card title="Browser Types" icon="browser" href="/features/sessions/browser-types">
-    Choose the right browser engine
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    All session configuration options
   </Card>
 
-  <Card title="Multi-Region Support" icon="globe" href="/features/sessions/multi-region">
-    Run sessions in different regions
+  <Card title="Browser Profiles" icon="user" href="/features/sessions/browser-profiles">
+    Reuse logged-in browser state
   </Card>
 </CardGroup>

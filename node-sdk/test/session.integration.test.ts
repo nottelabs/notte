@@ -113,7 +113,7 @@ describe('Session Integration Tests', () => {
   });
 
   describe('Page Operations', () => {
-    it('should execute goto action and observe page', { timeout: 60_000 }, async () => {
+    it('should execute goto action and observe page', async () => {
       await client.Session({ proxies: false, idle_timeout_minutes: 1 }).use(async session => {
         const executeResult = await session.execute(actions.goto({ url: 'https://www.ecosia.org' }));
         expect(executeResult.success).toBe(true);
@@ -129,7 +129,7 @@ describe('Session Integration Tests', () => {
       });
     });
 
-    it('exposes debug info and the workflow script', { timeout: 60_000 }, async () => {
+    it('exposes debug info and the workflow script', async () => {
       const session = client.Session({ proxies: false, idle_timeout_minutes: 1 });
       await session.use(async s => {
         await s.execute(actions.goto({ url: 'https://example.com' }));
@@ -145,7 +145,7 @@ describe('Session Integration Tests', () => {
   });
 
   describe('Action Validation', () => {
-    it('should validate action parameters', { timeout: 60_000 }, async () => {
+    it('should validate action parameters', async () => {
       await client.Session({ proxies: false }).use(async session => {
         await session.execute(actions.goto({ url: 'https://github.com/' }));
         await session.observe('fast');

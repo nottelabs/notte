@@ -5,6 +5,7 @@
 
 ```python monitor_runs.py
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from notte_sdk import NotteClient
 
@@ -12,25 +13,30 @@ client = NotteClient()
 
 function = client.Function(function_id=function_id)
 
-# Start run
-result = function.run(
-    url="https://example.com",
-    stream=False,  # Don't stream logs
-)
+# Create the run first so you know its ID
+run_id = function.create_run().function_run_id
 
-run_id = result.function_run_id
+# run() blocks until completion; keep its exception visible to the polling thread.
+with ThreadPoolExecutor(max_workers=1) as executor:
+    execution = executor.submit(
+        function.run,
+        function_run_id=run_id,
+        url="https://example.com",
+        stream=False,
+    )
 
-# Poll status
-while True:
-    status = client.functions.run_get_metadata(function_id, run_id)
+    # Poll status while it runs
+    while True:
+        if execution.done():
+            execution.result()  # Propagate a rejected start instead of polling forever.
+        status = client.functions.run_get_metadata(function_id, run_id)
+        print(f"Status: {status.status}")
+        if status.status in ["closed", "failed"]:
+            print(f"Final result: {status.result}")
+            break
+        time.sleep(5)  # Check every 5 seconds
 
-    print(f"Status: {status.status}")
-
-    if status.status in ["closed", "failed"]:
-        print(f"Final result: {status.result}")
-        break
-
-    time.sleep(5)  # Check every 5 seconds
+    execution.result()
 ```
 
 ```typescript monitor_runs.ts
@@ -41,16 +47,24 @@ const client = new NotteClient();
 
 const fn = client.NotteFunction({ function_id: functionId });
 
-// Start run
-const result = await fn.run(
-  { url: 'https://example.com' },
-  { stream: false }, // Don't stream logs
-);
+// Create the run first so you know its ID
+const { function_run_id: runId } = await fn.createRun();
 
-const runId = result.function_run_id;
+// Start it without awaiting: run() resolves only when the run finishes
+let callError: unknown;
+const execution = fn
+  .run({ url: 'https://example.com' }, { functionRunId: runId, stream: false })
+  .catch((error: unknown) => {
+    callError = error;
+  });
 
-// Poll status
+// Poll status while it runs
 while (true) {
+  if (callError) {
+    console.log('Run failed:', callError);
+    break;
+  }
+
   const status = await fn.getRun(runId);
 
   console.log(`Status: ${status.status}`);
@@ -62,6 +76,8 @@ while (true) {
 
   await sleep(5000); // Check every 5 seconds
 }
+
+await execution;
 ```
 
 </CodeGroup>

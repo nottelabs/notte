@@ -81,16 +81,11 @@ Must have a `run()` function:
 
 ### Dependencies
 
-Import Notte SDK and standard libraries:
+Import the Notte SDK, the standard library, and common third-party libraries such as `requests` and `pydantic`:
 
 <Dependencies />
 
-**Available packages:**
-- `notte-sdk` - Notte SDK
-- `requests` - HTTP client
-- `pydantic` - Data validation
-- Standard Python library
-- Most common packages
+Imports are checked when you upload the code. Standard library modules that give process, filesystem, or network-socket access (for example `os`, `subprocess`, `pathlib`, `socket`) are rejected by default, as are packages that are not available in the runtime. The upload error lists what is allowed.
 
 ### Return Values
 
@@ -106,23 +101,23 @@ Return JSON-serializable data:
 
 ### Type Validation
 
-Use type hints for automatic validation:
+Type hints document what each parameter expects. They are not enforced, so convert or validate values yourself:
 
 <TypeValidation />
 
 ### Complex Types
 
-Use Pydantic for structured parameters:
+Structured parameters arrive as plain JSON values (dicts and lists). Validate them with Pydantic inside `run()`:
 
 <ComplexTypes />
 
-## Environment Variables
+## Secrets
 
-Access secrets securely:
+Store API keys and tokens as Function Secrets, either in the [Console](https://console.notte.cc) under **Settings > Function Secrets**, or with `POST /secrets` using the `function_env` namespace (`client.secrets.store(...)` in TypeScript). Every run of your functions receives them as environment variables:
 
 <EnvironmentVariables />
 
-Set environment variables in Console or locally for testing.
+Reading environment variables needs the `os` module, which the default code check rejects. Upload code that reads secrets with the check relaxed: `function.update(path="read_secrets.py", restricted=False)` in Python, or `fn.update({ path: './read_secrets.py', restricted: false })` in TypeScript.
 
 ## Error Handling
 
@@ -168,7 +163,7 @@ Log key steps for debugging:
 
 ### 4. Set Timeouts
 
-Prevent functions from hanging:
+Bound how long each browser session can stay open, so a stuck page does not keep the run alive:
 
 <SetTimeouts />
 

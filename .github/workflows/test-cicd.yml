@@ -22,8 +22,8 @@ on:
         required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   CACHE_TYPE: "pip"
@@ -43,10 +43,65 @@ permissions:
   pull-requests: write
 
 jobs:
+  changes:
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 5
+    outputs:
+      unit: ${{ steps.scope.outputs.unit }}
+      live: ${{ steps.scope.outputs.live }}
+    steps:
+      - name: Checkout code
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Which suites does this change need?
+        id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT" = "schedule" ]; then
+            echo "unit=false" >> "$GITHUB_OUTPUT"
+            echo "live=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$EVENT" != "pull_request" ]; then
+            echo "unit=true" >> "$GITHUB_OUTPUT"
+            echo "live=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          unit=false
+          live=false
+          while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            case "$file" in
+              # This workflow and its setup action: run everything.
+              .github/workflows/test-cicd.yml|.github/actions/*) unit=true; live=true ;;
+              # Package code, including Markdown prompt templates: run everything.
+              packages/*|src/*|tests/*) unit=true; live=true ;;
+              # Some unit tests read the docs; the live suite does not.
+              docs/*) unit=true ;;
+              # Covered by their own workflows (Node SDK, README check) or not code.
+              node-sdk/*|.github/*|*.md|LICENSE) ;;
+              browserarena|notte-cli|notte-skills|templates|integrations/*|example-apps/*) ;;
+              *) unit=true; live=true ;;
+            esac
+          done < <(git diff --name-only "$BASE_SHA"..."$HEAD_SHA")
+          echo "unit=$unit" >> "$GITHUB_OUTPUT"
+          echo "live=$live" >> "$GITHUB_OUTPUT"
+          echo "unit=$unit live=$live"
+
+
   # The PR gate: pre-commit plus every test not marked `staging` or `live` (see the markers in
   # pyproject.toml). Offline - a local browser and localhost only, no secrets - so it runs on
   # fork PRs too and cannot be failed by a third-party website or a staging deploy.
   tests:
+    needs: changes
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     steps:
@@ -64,67 +119,19 @@ jobs:
         with:
             ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: ./.github/actions/python-setup
         with:
-            enable-cache: true
-            cache-dependency-glob: "uv.lock"
-
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        with:
-          python-version-file: ".python-version"
-          cache: ${{ env.CACHE_TYPE }}
-
-      - name: Cache patchright
-        id: cache-patchright
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ github.workspace }}/.playwright-browsers
-          key: ${{ runner.os }}-patchright-${{ hashFiles('**/uv.lock') }}-v2
-          restore-keys: |
-            ${{ runner.os }}-patchright-${{ hashFiles('**/uv.lock') }}-
-            ${{ runner.os }}-patchright-
-
-      - name: Verify browser cache
-        run: |
-          echo "Browser cache path: $PLAYWRIGHT_BROWSERS_PATH"
-          if [ -d "$PLAYWRIGHT_BROWSERS_PATH" ]; then
-            echo "Cache directory exists"
-            ls -la "$PLAYWRIGHT_BROWSERS_PATH"
-          else
-            echo "Cache directory doesn't exist yet (will be created during install)"
-          fi
-
-      - name: Cache pre-commit
-        id: cache-pre-commit
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/pre-commit
-          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml', '**/pyproject.toml') }}-v1
-          restore-keys: |
-            ${{ runner.os }}-pre-commit-
-
-      - name: Install dependencies
-        run: uv sync --dev --all-extras
+          browsers: "true"
+          pre-commit: "true"
 
       - name: Check generated SDK models
         run: make sdk-codegen-check
-
-      - name: Install patchright
-        if: steps.cache-patchright.outputs.cache-hit != 'true'
-        run: |
-          echo "Cache miss - installing patchright"
-          uv run patchright install --with-deps chromium --no-shell
-
-      - name: Install pre-commit
-        if: steps.cache-pre-commit.outputs.cache-hit != 'true'
-        run: uv run pre-commit install --install-hooks
 
       - name: Run pre-commit
         run: uv run --active pre-commit run --all-files
 
       - name: Run unit tests
+        if: needs.changes.outputs.unit == 'true'
         run: |
           set -o pipefail
           make test-cicd | tee pytest-coverage.txt
@@ -140,7 +147,7 @@ jobs:
 
       - name: Pytest coverage comment
         # Fork PRs get a read-only token, so they cannot post the comment.
-        if: ${{ always() && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}
+        if: ${{ always() && needs.changes.outputs.unit == 'true' && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}
         uses: MishaKav/pytest-coverage-comment@9ee59af31bd7bcada1cc496f086b407122602dbd # v1.12.3
         with:
           pytest-coverage-path: ./pytest-coverage.txt
@@ -151,9 +158,22 @@ jobs:
   # services outside this repo, so failures are retried (`make test-live`) and the job is kept
   # separate from the `tests` gate - do not make it a required check.
   staging-and-live:
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    needs: changes
+    if: ${{ needs.changes.outputs.live == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        shard: [1, 2]
+    env:
+      NOTTE_TEST_SHARD: ${{ matrix.shard }}/2
+      NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}-${{ matrix.shard }}
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
     steps:
       - name: Checkout PR code (manual trigger)
         if: github.event_name == 'workflow_dispatch'
@@ -208,7 +228,7 @@ jobs:
 
       - name: Verify environment variables
         env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
@@ -229,28 +249,23 @@ jobs:
           done
           echo "Environment variables are set"
 
-      - name: Wait for the API to be reachable
-        # The staging API scales to zero when idle and wakes on the first
-        # request; poll until it answers before running anything against it.
-        run: |
-          deadline=$((SECONDS + 900))
-          until [ "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' "$NOTTE_API_URL/health")" = "200" ]; do
-            [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
-            sleep 10
-          done
+      - name: Wait for the API to be ready
+        uses: ./.github/actions/wait-for-api
+        with:
+          api-url: https://us-staging.notte.cc
 
       - name: Run staging and live tests
         env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
           NOTTE_VAULT_TEST_EMAIL: ${{ secrets.NOTTE_VAULT_TEST_EMAIL }}
           NOTTE_VAULT_TEST_PASSWORD: ${{ secrets.NOTTE_VAULT_TEST_PASSWORD }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        run: make test-live
+        run: make test-live PYTEST_LIVE='uv run pytest -n 2 tests -m "staging or live" --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py'
 
       - name: Cleanup vaults created by this run
         if: ${{ always() }}
         env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
         run: uv run python scripts/cleanup_ci_vaults.py

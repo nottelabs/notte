@@ -100,3 +100,14 @@ import Example from '/snippets/agents/example.mdx';
 ## No Inline Code
 
 Never write code blocks directly in MDX. Always import from `/snippets/`.
+
+## Generated CLI reference
+
+`cli-reference/*.mdx` is generated from the pinned `notte-cli` command tree by
+`scripts/generate_cli_reference.py`. Its command usage and examples remain in
+that single source of truth rather than being copied into hand-maintained
+`testers/` files. Do not hand-edit these generated fences. The `cli-reference`
+workflow verifies the full generated pages, navigation and CLI entries in
+`llms.txt`; generator tests verify presentation normalization. This exception
+is limited to generated CLI command reference pages. Hand-written SDK and HTTP
+examples still use `testers/` and generated `snippets/` imports.

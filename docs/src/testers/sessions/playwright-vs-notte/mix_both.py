@@ -1,6 +1,9 @@
+import os
+
 from notte_sdk import NotteClient
 
 client = NotteClient()
+token = os.environ["API_TOKEN"]
 
 with client.Session() as session:
     # Use Notte for high-level navigation

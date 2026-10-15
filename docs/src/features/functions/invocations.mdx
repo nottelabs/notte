@@ -54,7 +54,7 @@ The simplest way to call a Function:
 
 ## Via HTTP API
 
-Call Functions as HTTP endpoints:
+Call Functions as HTTP endpoints. Send your API key both as `Authorization: Bearer` and in the `x-notte-api-key` header. Set `"stream": false` to get a single JSON response instead of a log stream:
 
 ### POST Request
 
@@ -160,7 +160,9 @@ Configure webhook in external service:
 ```
 Webhook URL: https://api.notte.cc/functions/function_abc123/runs/start
 Method: POST
-Headers: Authorization: Bearer YOUR_API_KEY
+Headers:
+  Authorization: Bearer YOUR_API_KEY
+  x-notte-api-key: YOUR_API_KEY
 ```
 
 ### Testing Webhooks

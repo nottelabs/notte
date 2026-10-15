@@ -20,8 +20,12 @@ const catalog = JSON.parse(await readFile(`${testers}snippets.json`, 'utf8')) as
 }>;
 const pending = new Set(Object.values(catalog).flatMap(spec => spec.blocks)
   .filter(block => block.execution_pending).map(block => block.source));
+// CI splits the examples across parallel jobs: NOTTE_DOCS_SHARD="<index>/<total>" (1-based).
+const [shardIndex, shardTotal] = (process.env.NOTTE_DOCS_SHARD ?? '1/1').split('/').map(Number);
+if (!(shardIndex >= 1 && shardIndex <= shardTotal)) throw new Error(`Invalid NOTTE_DOCS_SHARD: ${process.env.NOTTE_DOCS_SHARD}`);
 const snippets = (await readdir(testers, { recursive: true }))
-  .filter(name => name.endsWith('.ts') && !pending.has(name)).sort();
+  .filter(name => name.endsWith('.ts') && !pending.has(name)).sort()
+  .filter((_, index) => index % shardTotal === shardIndex - 1);
 
 // Opt in explicitly: this suite provisions live resources and requires a built SDK.
 describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examples', () => {
@@ -277,7 +281,7 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
     }
   }
 
-  it('cleans deployments when either language is killed while starting a blocking cloud run', async () => {
+  it.skipIf(shardIndex !== 1)('cleans deployments when either language is killed while starting a blocking cloud run', async () => {
     for (const language of ['typescript', 'python']) {
       const directory = await mkdtemp(join(tmpdir(), 'notte-deploy-kill-'));
       const tracker = await trackDeployments(process.env.NOTTE_API_URL!);

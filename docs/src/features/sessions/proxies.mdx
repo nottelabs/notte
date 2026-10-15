@@ -21,7 +21,9 @@ With Notte, you can:
 
 - Use built-in proxies: Effortlessly route traffic through our managed residential proxies
 - Bring your own proxies: Use custom HTTP/HTTPS proxies for greater control over network routing
-- Combine multiple proxies: Set custom routing rules to direct traffic through different proxies based on domain or location
+- Reach private services: Route the session through your Tailscale tailnet
+
+Each session uses a single proxy.
 
 Proxies are configured when creating a session through the API or SDK.
 
@@ -29,15 +31,15 @@ Proxies are configured when creating a session through the API or SDK.
 
 Use Notte's built-in proxies to route traffic through managed, residential proxies. This is the simplest option and requires very little setup.
 
-Setting `proxies=True` will make a best-effort attempt to use a US-based proxy. If nearby US proxies are unavailable, we may route through nearby countries (like Canada).
+Built-in proxies are on by default (`proxies=True`) and exit in the US unless you pick a country. Set `proxies=False` to disable them.
 
 <DefaultProxy/>
 
 <Warning>
-  `ERR_TUNNEL_CONNECTION_FAILED` indicates either a temporary proxy hiccup or a site unsupported by our built-in proxies. Please try again or email support@notte.com.
+  `ERR_TUNNEL_CONNECTION_FAILED` indicates either a temporary proxy hiccup or a site unsupported by our built-in proxies. Please try again or email support@notte.cc.
 </Warning>
 
-the `proxies` parameter can also be customized to use a specific country proxy as follows:
+To exit from a specific country, pass its two-letter code, or an explicit `NotteProxy`:
 
 <CountryProxy/>
 
@@ -49,7 +51,7 @@ Notte supports custom proxy configurations, allowing you to route traffic throug
 <CustomProxy/>
 
 <Warning>
-  Notte validates proxy connections at session creation time. If we are unable to connect to the specified proxy, an error will be thrown. Ensure that your proxy server is accessible and the provided credentials are correct before creating a session. We also do not support all proxy providers.
+  Ensure that your proxy server is reachable from the internet and the provided credentials are correct before creating a session. We do not support all proxy providers.
 </Warning>
 
 ## Tailscale (tsnet) Proxies
@@ -85,6 +87,10 @@ With either option, you can navigate to any hostname reachable on your tailnet o
 By default only tailnet addresses go through your tailnet, and public sites are reached from Notte's network. Set `exit_node` to send the session's public traffic out through one of your own devices instead, such as your laptop, so sites see your connection's IP address. It works with both options, for example `TailnetProxy(exit_node="my-laptop")`.
 
 Name the device by hostname, MagicDNS name, or Tailscale IP. It must be [advertised and approved as an exit node](https://tailscale.com/kb/1103/exit-nodes), and your policy must let `tag:notte` reach `autogroup:internet`. If the device is offline or not usable as an exit node, the session fails to start rather than falling back to Notte's network.
+
+### Fixed egress IP
+
+If a site needs to see the same IP address on every session, for example because it allowlists your IP, run an exit node on a machine with a fixed public IP and point `exit_node` at it. All of the session's public traffic then leaves from that address.
 
 ## Usage Measurement
 

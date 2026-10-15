@@ -36,7 +36,7 @@ Notte supports multiple viewer types:
 
 ### Browser Viewer (Default)
 
-Frame-by-frame replay in your browser:
+Live screencast of the session in your browser:
 
 <ViewerBrowser />
 
@@ -54,7 +54,7 @@ Display live view directly in Jupyter notebooks:
 
 ## Sharing Live View
 
-Share the `viewer_url` with your team for collaborative debugging:
+Share the `viewer_url` with your team for collaborative debugging. The link is signed and stays valid for 12 hours after it is issued:
 
 <SharingViewer />
 
@@ -67,7 +67,7 @@ Set a default viewer type for all sessions:
 <ViewerConfig />
 
 Available viewer types:
-- `SessionViewerType.BROWSER` - Frame-by-frame browser viewer (default)
+- `SessionViewerType.BROWSER` - Live screencast viewer in your browser (default)
 - `SessionViewerType.CDP` - Chrome DevTools Protocol debugger
 - `SessionViewerType.JUPYTER` - Jupyter notebook display
 
@@ -98,7 +98,6 @@ Open multiple viewer types simultaneously:
 | **Timing** | Real-time during execution | After session ends |
 | **Interactivity** | Can observe as it happens | Playback only |
 | **Use Case** | Debugging, monitoring | Archiving, sharing |
-| **Availability** | During session only | 24 hours after session |
 
 ## Next Steps
 

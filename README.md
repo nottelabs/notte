@@ -3,7 +3,7 @@
 <div align="center">
   <p>
     Stealth cloud browsers, a Playwright-based browser framework, and serverless functions to run your web automations <br/>
-    → <a href="https://docs.notte.cc?ref=github" target="_blank" rel="noopener noreferrer">Docs</a> • <a href="https://x.com/nottecore?ref=github" target="_blank" rel="noopener noreferrer">X</a> • <a href="https://www.linkedin.com/company/nottelabsinc/?ref=github" target="_blank" rel="noopener noreferrer">LinkedIn</a> • <a href="https://notte.cc?ref=github" target="_blank" rel="noopener noreferrer">Landing</a> • <a href="https://console.notte.cc/?ref=github" target="_blank" rel="noopener noreferrer">Console</a>
+    → <a href="https://docs.notte.cc?ref=github" target="_blank" rel="noopener noreferrer">Docs</a> • <a href="https://console.notte.cc/?ref=github" target="_blank" rel="noopener noreferrer">Console</a> • <a href="https://anything.notte.cc?ref=github" target="_blank" rel="noopener noreferrer">Anything API</a> • <a href="https://notte.cc?ref=github" target="_blank" rel="noopener noreferrer">Landing</a> • <a href="https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA" target="_blank" rel="noopener noreferrer">Slack</a> • <a href="https://x.com/nottecore?ref=github" target="_blank" rel="noopener noreferrer">X</a>
   </p>
 </div>
 
@@ -13,6 +13,7 @@
 
 [![GitHub stars](https://img.shields.io/github/stars/nottelabs/notte?style=social)](https://github.com/nottelabs/notte/stargazers)
 [![License: SSPL-1.0](https://img.shields.io/badge/License-SSPL%201.0-blue.svg)](https://spdx.org/licenses/SSPL-1.0.html)
+[![npm version](https://img.shields.io/npm/v/notte-sdk?color=blue)](https://www.npmjs.com/package/notte-sdk)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![PyPI version](https://img.shields.io/pypi/v/notte?color=blue)](https://pypi.org/project/notte/)
 [![PyPI Downloads](https://static.pepy.tech/badge/notte?color=blue)](https://pepy.tech/projects/notte)
@@ -22,6 +23,17 @@
 # What is Notte?
 
 Notte gives AI agents and scripts a reliable browser. Drive cloud browser sessions with built-in stealth, CAPTCHA solving and proxies, or a local browser with the same API; deploy automations as functions; and keep credentials and identities out of your code. Read more in our documentation [here](https://docs.notte.cc) 🔥
+
+Choose your starting point:
+
+| Product | Use it for |
+|---|---|
+| [Notte CLI](https://docs.notte.cc/cli-reference/index) | Drive browsers from the terminal, scripts or CI |
+| [Notte MCP](https://docs.notte.cc/mcp-server) | Give your coding agent a cloud browser |
+| [Browser sessions](#cloud-sessions) | Run Playwright or Puppeteer on stealth cloud browsers |
+| [Browser functions](#functions) | Deploy a browser script as an API or scheduled job |
+| [Anything API](https://anything.notte.cc) | Turn a described task into a deployed API |
+| [Scraping](#scraping) | Extract structured data from a page |
 
 **Open-source core:**
 - **[Local browser sessions](#local-sessions)** → A Playwright-based browser that turns pages into actionable observations and clean markdown
@@ -317,7 +329,7 @@ curl -X POST 'https://api.notte.cc/scrape' \
   -H 'Content-Type: application/json' \
   -d '{
     "url": "https://notte.cc",
-    "only_main_content": false,
+    "only_main_content": false
   }'
 ```
 

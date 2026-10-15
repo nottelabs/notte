@@ -2,10 +2,10 @@ name: node sdk cicd
 
 on:
   pull_request:
-    paths: ['node-sdk/**', 'openapi/**', 'docs/src/typescript-sdk-reference/**', 'docs/src/docs.json', '.github/workflows/node-sdk-*.yml']
+    paths: ['.github/actions/wait-for-api/**', 'node-sdk/**', 'openapi/**', 'docs/src/typescript-sdk-reference/**', 'docs/src/docs.json', '.github/workflows/node-sdk-*.yml']
   push:
     branches: [main]
-    paths: ['node-sdk/**', 'openapi/**', 'docs/src/typescript-sdk-reference/**', 'docs/src/docs.json', '.github/workflows/node-sdk-*.yml']
+    paths: ['.github/actions/wait-for-api/**', 'node-sdk/**', 'openapi/**', 'docs/src/typescript-sdk-reference/**', 'docs/src/docs.json', '.github/workflows/node-sdk-*.yml']
   workflow_dispatch:
 
 permissions:
@@ -60,6 +60,10 @@ jobs:
     needs: tests
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -68,24 +72,18 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - name: Wait for the API to be reachable
-        # The staging API scales to zero when idle and wakes on the first
-        # request; poll until it answers before running anything against it.
-        env:
-          NOTTE_API_URL: https://us-staging.notte.cc
-        run: |
-          deadline=$((SECONDS + 900))
-          until [ "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' "$NOTTE_API_URL/health")" = "200" ]; do
-            [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
-            sleep 10
-          done
+      - name: Wait for the API to be ready
+        uses: ./.github/actions/wait-for-api
+        with:
+          api-url: https://us-staging.notte.cc
+
       - name: Run complete live integration suite
         env:
           NOTTE_API_URL: https://us-staging.notte.cc
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_NODE || secrets.NOTTE_API_KEY }}
         run: |
           test -n "$NOTTE_API_KEY" || { echo 'NOTTE_API_KEY is required'; exit 1; }
-          npm run test:integration
+          npm run test:integration -- --maxWorkers 2 --retry 1
 
   generated:
     runs-on: ubuntu-latest

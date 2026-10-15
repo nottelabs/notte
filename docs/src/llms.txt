@@ -27,18 +27,13 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 ### Session Capabilities
 
-- [Browser Types](https://docs.notte.cc/features/sessions/browser-types.md): Choose between Chromium or Chrome for your sessions
-- [Browser Pools](https://docs.notte.cc/features/sessions/browser-pools.md): Managed pools of browser instances for high-throughput automation
 - [Stealth Mode](https://docs.notte.cc/features/sessions/stealth-mode.md): Configure anti-detection features for your browser sessions
 - [Proxies](https://docs.notte.cc/features/sessions/proxies.md): Route your automation traffic with precision & control
-- [Multi-Region Support](https://docs.notte.cc/features/sessions/multi-region.md): Run browser sessions across multiple geographic regions
 - [CAPTCHA Solving](https://docs.notte.cc/features/sessions/captcha-solving.md): Automatically detect and solve captchas during browser automation
 - [Ad Blocking](https://docs.notte.cc/features/sessions/ad-blocking.md): Built-in ad and tracker blocking for browser sessions
-- [Static IPs](https://docs.notte.cc/features/sessions/static-ips.md): Use dedicated static IP addresses for your browser sessions
 - [Recordings](https://docs.notte.cc/features/sessions/recordings.md): Record and replay your browser sessions for debugging and analysis
 - [Live View](https://docs.notte.cc/features/sessions/live-view.md): Watch your browser sessions in real-time as they execute
 - [Embed in your app](https://docs.notte.cc/features/sessions/embed-iframe.md): Drop the live browser viewer into your own web app via iframe
-- [Browser Extensions](https://docs.notte.cc/features/sessions/browser-extensions.md): Load custom browser extensions in your sessions
 - [Cookies](https://docs.notte.cc/features/sessions/cookies.md): Persist authentication and manage cookies across sessions
 - [Cloudflare Web Bot Auth](https://docs.notte.cc/features/sessions/cloudflare-web-bot-auth.md): Access Cloudflare-protected websites by cryptographically signing browser requests
 
@@ -46,7 +41,6 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Connect with Playwright](https://docs.notte.cc/features/sessions/playwright.md): Use Playwright directly with Notte sessions via Chrome DevTools Protocol
 - [Connect with Puppeteer](https://docs.notte.cc/features/sessions/puppeteer.md): Use Puppeteer with Notte sessions via Chrome DevTools Protocol
-- [Connect with Selenium](https://docs.notte.cc/features/sessions/selenium.md): Use Selenium with Notte sessions via Chrome DevTools Protocol
 - [External Providers](https://docs.notte.cc/features/sessions/external-providers.md): Connect Notte to external browser infrastructure via Chrome DevTools Protocol
 
 ## Authentication
@@ -60,7 +54,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Functions](https://docs.notte.cc/concepts/functions.md): Deploy browser automations as serverless API endpoints
 - [Creating Functions](https://docs.notte.cc/features/functions/creating.md): Write and deploy browser automation Functions
 - [Function Invocations](https://docs.notte.cc/features/functions/invocations.md): Call Functions via API, SDK, cURL, or webhooks
-- [Function Schedules](https://docs.notte.cc/features/functions/schedules.md): Schedule Functions to run automatically with cron expressions
+- [Function Schedules](https://docs.notte.cc/features/functions/schedules.md): Run Functions automatically on a cron schedule
 - [Function Management](https://docs.notte.cc/features/functions/management.md): Update, version, monitor, and manage your deployed Functions
 
 ## Web API
@@ -97,7 +91,6 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Google ADK](https://docs.notte.cc/integrations/google-adk.md): Give Google ADK agents a browser with the Notte MCP server
 - [Vercel AI SDK](https://docs.notte.cc/integrations/vercel-ai-sdk.md): Give AI SDK agents a browser with the Notte MCP server
 - [Mastra](https://docs.notte.cc/integrations/mastra.md): Give Mastra agents a browser with the Notte MCP server
-- [OpenAI CUA](https://docs.notte.cc/integrations/openai-cua.md): Integrate OpenAI CUA with Notte Browser Sessions
 - [OpenClaw](https://docs.notte.cc/integrations/openclaw.md): Use Notte cloud browsers with OpenClaw
 - [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
 - [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Connecting Stagehand to Notte cloud browsers
@@ -552,6 +545,29 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [getClient](https://docs.notte.cc/typescript-sdk-reference/client/getclient.md)
 - [getResponse](https://docs.notte.cc/typescript-sdk-reference/session/getresponse.md)
 - [isSessionActive](https://docs.notte.cc/typescript-sdk-reference/session/issessionactive.md)
+
+
+# CLI
+
+## Getting Started
+
+- [CLI](https://docs.notte.cc/cli-reference/index.md): Drive Notte browser sessions, functions, and vaults from your terminal
+
+## Commands
+
+- [Auth](https://docs.notte.cc/cli-reference/auth.md): Manage authentication
+- [Files](https://docs.notte.cc/cli-reference/files.md): Manage stored files
+- [Functions](https://docs.notte.cc/cli-reference/functions.md): Manage functions
+- [Page](https://docs.notte.cc/cli-reference/page.md): Execute page actions (syntactic sugar for sessions execute)
+- [Payment](https://docs.notte.cc/cli-reference/payment.md): Request a temporary card for a browser session
+- [Personas](https://docs.notte.cc/cli-reference/personas.md): Manage personas
+- [Profiles](https://docs.notte.cc/cli-reference/profiles.md): Manage browser profiles
+- [Sessions](https://docs.notte.cc/cli-reference/sessions.md): Manage browser sessions
+- [Skill](https://docs.notte.cc/cli-reference/skill.md): Manage Notte skills for AI coding assistants
+- [Tunnel](https://docs.notte.cc/cli-reference/tunnel.md): Route sessions through this machine's internet connection
+- [Usage](https://docs.notte.cc/cli-reference/usage.md): Show API usage statistics
+- [Vaults](https://docs.notte.cc/cli-reference/vaults.md): Manage vaults
+- [Other commands](https://docs.notte.cc/cli-reference/other.md): Standalone Notte CLI commands
 
 
 # Resources

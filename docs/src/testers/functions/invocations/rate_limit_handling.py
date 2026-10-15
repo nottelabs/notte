@@ -1,6 +1,7 @@
 import time
 
 from notte_sdk import NotteClient
+from notte_sdk.errors import NotteAPIError
 
 client = NotteClient()
 
@@ -12,8 +13,8 @@ def invoke_with_retry(function, **variables):
     for attempt in range(max_retries):
         try:
             return function.run(**variables)
-        except Exception as e:
-            if "rate limit" in str(e).lower():
+        except NotteAPIError as e:
+            if e.status_code == 429:
                 wait_time = 2**attempt  # Exponential backoff
                 time.sleep(wait_time)
             else:

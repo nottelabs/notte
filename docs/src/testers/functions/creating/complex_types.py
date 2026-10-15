@@ -9,7 +9,8 @@ class SearchParams(BaseModel):
     max_results: int = 10
 
 
-def run(params: SearchParams):
-    # params is validated against SearchParams model
+def run(params: dict):
+    # Variables arrive as plain JSON values: validate them yourself
+    search = SearchParams.model_validate(params)
     client = NotteClient()
-    # Use params.url, params.query, etc.
+    # Use search.url, search.query, etc.
