@@ -2,6 +2,7 @@ import base64
 import datetime as dt
 import io
 from base64 import b64decode, b64encode
+from builtins import bytes as _builtin_bytes
 from collections.abc import Iterator
 from contextlib import contextmanager
 from io import BytesIO
@@ -78,19 +79,20 @@ class FilledTimedSpan(BaseModel):
 
 
 class Screenshot(BaseModel):
-    raw: bytes = Field(repr=False)
+    raw: _builtin_bytes = Field(repr=False)
     bboxes: list[BoundingBox] = Field(default_factory=list)
     last_action_id: str | None = None
 
     model_config = {  # type: ignore[reportUnknownMemberType]
+        "hide_input_in_errors": True,
         "json_encoders": {
-            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
-        }
+            _builtin_bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
+        },
     }
 
     @field_validator("raw", mode="before")
     @classmethod
-    def validate_raw(cls, v: bytes | str) -> bytes:
+    def validate_raw(cls, v: _builtin_bytes | str) -> _builtin_bytes:
         if isinstance(v, str):
             v = b64decode(v)
 
@@ -173,7 +175,7 @@ class Screenshot(BaseModel):
         return data
 
     @profiler.profiled(service_name="observation")
-    def bytes(self, type: ScreenshotType | None = None, text: str | None = None) -> bytes:
+    def bytes(self, type: ScreenshotType | None = None, text: str | None = None) -> _builtin_bytes:
         def _bytes():
             nonlocal type
             type = type or ("full" if config.highlight_elements else "raw")
