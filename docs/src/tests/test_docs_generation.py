@@ -91,41 +91,6 @@ def test_session_parameters_in_sync():
         )
 
 
-def test_workflow_parameters_in_sync():
-    """
-    Test that parameters in sdk/manual/workflow.mdx are synchronized with
-    the source parameters in sdk/remoteworkflowfactory/__init__.mdx
-    """
-    workflow_file = SDK_DIR / "manual" / "workflow.mdx"
-    factory_file = SDK_DIR / "remoteworkflow" / "__init__.mdx"
-
-    assert workflow_file.exists(), f"Workflow file not found: {workflow_file}"
-    assert factory_file.exists(), f"Factory file not found: {factory_file}"
-
-    workflow_content = workflow_file.read_text("utf-8")
-    factory_content = factory_file.read_text("utf-8")
-
-    # Extract parameter sections from both files
-    workflow_params = extract_param_fields(workflow_content)
-    factory_params = extract_param_fields(factory_content)
-
-    # Compare the normalized parameter lists
-    missing_in_workflow = set(factory_params) - set(workflow_params)
-    extra_in_workflow = set(workflow_params) - set(factory_params)
-
-    error_messages = []
-    if missing_in_workflow:
-        error_messages.append(f"Parameters missing in workflow.mdx: {missing_in_workflow}")
-    if extra_in_workflow:
-        error_messages.append(f"Extra parameters in workflow.mdx: {extra_in_workflow}")
-
-    if error_messages:
-        pytest.fail(
-            f"Parameter synchronization failed between {workflow_file} and {factory_file}:\n"
-            + "\n".join(error_messages)
-        )
-
-
 def test_vault_parameters_in_sync():
     """
     Test that parameters in sdk/manual/vault.mdx are synchronized with

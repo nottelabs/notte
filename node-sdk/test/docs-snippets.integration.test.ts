@@ -9,7 +9,6 @@ import { NotteClient, functionCreate, functionDelete, listFunctionRunsByFunction
 import { withPythonPageRetry } from './helpers/python-page-retry';
 import { expectSessionClosed } from './helpers/session-closure';
 import { collectExampleResult, verifyExampleOutput, type ExampleContract } from './helpers/docs-examples';
-import { withUsableBuiltinPage } from './helpers/builtin-page-check';
 import { deploymentExamples, trackDeployments, cleanupDeployments, DEPLOYMENT_CHILD_TIMEOUT_MS, DEPLOYMENT_PAIR_TIMEOUT_MS, DEPLOYMENT_DRAIN_TIMEOUT_MS, DEPLOYMENT_CLEANUP_TIMEOUT_MS } from './helpers/deployment-tracker';
 
 const execute = promisify(execFile);
@@ -196,15 +195,7 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
       // Module namespace exports are read-only; normalize captured snapshots
       // on a copy, never by assigning back into the imported example.
       const load = () => import(/* @vite-ignore */ `${testers}${name}`);
-      if (name === 'sessions/cdp/selenium_builtin_page.ts') {
-        // Use the same built SDK as the unchanged example, not the source alias.
-        // Unit CI typechecks before dist exists; resolve the live package at runtime.
-        const sdkPackage: string = 'notte-sdk';
-        const { Session } = await import(/* @vite-ignore */ sdkPackage);
-        exported = { ...await withUsableBuiltinPage(Session.prototype, load) };
-      } else {
-        exported = { ...await load() };
-      }
+      exported = { ...await load() };
     } finally {
       log.mockRestore();
     }
@@ -227,7 +218,7 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
         exported = { status: logged[0][0] };
       }
       const pythonValues = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!);
-      if (name === 'sessions/capabilities/match_viewport.ts' || name === 'sessions/stealth/match_viewport.ts') {
+      if (name === 'sessions/stealth/match_viewport.ts') {
         const ids = [];
         for (const [language, values] of [['typescript', exported!], ['python', pythonValues]] as const) {
           expect(values.results).toHaveLength(2);

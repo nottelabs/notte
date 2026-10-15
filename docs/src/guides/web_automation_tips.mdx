@@ -25,9 +25,9 @@ Most web automation issues can be prevented by understanding timing, element sel
 
 <Steps>
   <Step title="Managing Wait Times">
-    Web pages load asynchronously, and content may appear at different rates. While Notte handles most timing automatically, you can add explicit waits when needed.
+    Wait for an observable condition, such as the target element becoming visible or a loading indicator disappearing. Playwright locators auto-wait for actionability; prefer those checks over a fixed delay. Use a fixed delay only when no reliable condition is available.
 
-    **Add custom wait times:**
+    **Fallback: add a fixed delay:**
 
     <WaitTime />
 
@@ -39,7 +39,7 @@ Most web automation issues can be prevented by understanding timing, element sel
   </Step>
 
   <Step title="Handling Popups and Modals">
-    Popups, cookie banners, and modals are common obstacles in web automation. The fastest and most reliable way to dismiss them is using the Escape key.
+    Use the popup's observed close or consent control. Escape can dismiss some dialogs, but cookie banners and other overlays may require an explicit button.
 
     **Close popups with Escape:**
 
@@ -67,7 +67,7 @@ Most web automation issues can be prevented by understanding timing, element sel
 
     **Solution - Select specific element:**
 
-    Append `>> nth=0` to your selector to select the first matching element:
+    First scope the selector to the intended region or add a role, label, or stable attribute so it identifies one element. Use a positional match only when the order is part of the workflow and you have verified it:
 
     <SelectElement />
 
@@ -124,7 +124,7 @@ Most web automation issues can be prevented by understanding timing, element sel
   <Accordion title="Not handling multiple element matches">
     **Problem:** Playwright's strict mode violations when selectors match multiple elements
 
-    **Solution:** Use `>> nth=0` or make selectors more specific
+    **Solution:** Scope the selector to the intended region or use a unique role, label, or attribute. Avoid selecting the first match merely to suppress the error.
   </Accordion>
 
   <Accordion title="Not testing with real-world conditions">
@@ -138,12 +138,12 @@ Most web automation issues can be prevented by understanding timing, element sel
 
 The Playwright ecosystem is mature and well-documented, with extensive resources available online. LLMs have been trained on thousands of Playwright examples, making them excellent at helping you solve complex automation challenges.
 
-Notte is fully Playwright-compatible, giving you direct access to the underlying Playwright page object whenever you need it:
+Notte exposes a Playwright page over Chromium CDP. See [Playwright vs Notte Controls](/features/sessions/playwright-vs-notte) for capabilities and limitations:
 
 <PlaywrightAccess />
 
 This means you can:
-- Use any Playwright method directly on `session.page`
+- Use Playwright page APIs supported over CDP through `session.page`
 - Leverage the vast Playwright documentation and community resources
 - Combine Notte's high-level automation with Playwright's low-level control
 - Ask LLMs for help with Playwright-specific solutions that work seamlessly with Notte

@@ -39,36 +39,9 @@ Session recordings capture:
 
 <DownloadMp4 />
 
-### Replay response (`mp4_url`)
+### Replay response
 
-The replay endpoint returns JSON. The field you usually want is `mp4_url`:
-
-| Field | Description |
-|-------|-------------|
-| `mp4_url` | Presigned URL to download the MP4 recording |
-| `playlist_content` | HLS playlist with presigned segment URLs (for streaming) |
-| `expires_at` | When the presigned URLs expire (1 hour after the request) |
-| `video_start_ms` | Video start offset in milliseconds |
-| `video_duration_ms` | Video duration in milliseconds |
-
-REST example:
-
-```bash
-curl "https://api.notte.cc/sessions/{session_id}/replay" \
-  -H "Authorization: Bearer $NOTTE_API_KEY"
-```
-
-```json
-{
-  "mp4_url": "https://storage.example.com/replays/session_abc.mp4?X-Amz-Signature=...",
-  "playlist_content": "#EXTM3U\n...",
-  "expires_at": "2026-08-06T18:00:00+00:00",
-  "video_start_ms": 0,
-  "video_duration_ms": 45200
-}
-```
-
-Full API reference: <Visibility for="humans">[Session Replay](/api-reference/using-session-replay)</Visibility><Visibility for="agents">[Session Replay](/api-reference/using-session-replay.md)</Visibility>.
+For the response fields, HTTP example, and interactive API playground, see [Session Replay](/api-reference/sessions/session-replay). Use `mp4_url` for a video file or `playlist_content` for HLS playback. Check `expires_at` before reusing a presigned URL.
 
 ### Replay by Session ID
 

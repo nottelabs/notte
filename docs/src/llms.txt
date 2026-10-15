@@ -48,6 +48,17 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Secret Vaults](https://docs.notte.cc/concepts/vaults.md): Enterprise-grade credential management for your Sessions & Agents
 - [Browser Profiles](https://docs.notte.cc/features/sessions/browser-profiles.md): Persist browser state across sessions
 - [Persona Identities](https://docs.notte.cc/concepts/personas.md): Self-service identities for web automation (account creation, 2FA,etc.)
+- [Managed Auth](https://docs.notte.cc/guides/managed-auth.md): Start browser sessions with saved authentication connections
+
+## Agents
+
+- [Browser Agents](https://docs.notte.cc/concepts/agents.md): AI-powered agents that autonomously complete browser tasks
+- [Agent Lifecycle](https://docs.notte.cc/features/agents/lifecycle.md): Understand agent execution modes, states, and control flow
+- [Agent Configuration](https://docs.notte.cc/features/agents/configuration.md): Configure agent behavior with creation and runtime parameters
+- [Structured Output](https://docs.notte.cc/features/agents/structured-output.md): Get type-safe, structured responses from agents using Pydantic models
+- [Agent to Function Conversion](https://docs.notte.cc/features/agents/workflows.md): Convert agent executions into reusable function code
+- [Agent Fallback](https://docs.notte.cc/features/agents/fallback.md): Automatically recover from script failures with AI agents
+- [Replay & Debugging](https://docs.notte.cc/features/agents/replay.md): Debug agents with visual replays and step-by-step inspection
 
 ## Functions
 
@@ -65,10 +76,10 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 ## Guides
 
-- [Advanced Scraping](https://docs.notte.cc/guides/scraping.md): How to build reliable web scrapers with Notte
-- [Anti-Detection Playbook](https://docs.notte.cc/guides/stealth.md): How to avoid CAPTCHAs and bot detection in Notte Sessions
+- [Anti-Detection Playbook](https://docs.notte.cc/guides/stealth.md): Diagnose blocked browser sessions and choose the next step
 - [Create accounts with Personas](https://docs.notte.cc/guides/account_creation.md): How to use notte personas for account creation
 - [Web Automation Best Practices](https://docs.notte.cc/guides/web_automation_tips.md): Playwright guidelines and common pitfalls for reliable web automation
+- [Sign in to Okta with MFA](https://docs.notte.cc/guides/okta_mfa.md): Let an agent clear an Okta MFA challenge using a TOTP secret stored in a Vault
 
 
 # Integrations

@@ -14,6 +14,11 @@ with client.Session() as session:
 ```
 
 ```typescript monitor_state.ts
+import { NotteClient, type SessionResponse } from 'notte-sdk';
+
+const client = new NotteClient();
+let status: SessionResponse | undefined;
+
 const session = client.Session();
 await session.use(async () => {
   status = await session.status();

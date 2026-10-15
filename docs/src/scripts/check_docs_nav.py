@@ -11,6 +11,7 @@ so the entry becomes a dead link and its pages lose their sidebar.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -28,6 +29,15 @@ CHILD_FIELDS = (
     "versions",
 )
 LABEL_FIELDS = ("tab", "group", "anchor", "dropdown", "language", "version")
+
+
+def unreferenced_snippets(src: Path) -> list[Path]:
+    """Generated examples need a page or partial that actually imports them."""
+    referenced = set()
+    for page in src.rglob("*.mdx"):
+        for match in re.finditer(r"""(?:from\s*|import\s*)["'](/[^"']+\.mdx)["']""", page.read_text()):
+            referenced.add(src / match.group(1).lstrip("/"))
+    return sorted(set((src / "snippets").rglob("*.mdx")) - referenced)
 
 
 def label(entry: dict[str, Any]) -> str:
@@ -61,6 +71,10 @@ def main() -> int:
     navigation = json.loads(DOCS_JSON.read_text())["navigation"]
     errors: list[str] = []
     check(navigation, "navigation", errors)
+    for snippet in unreferenced_snippets(SRC_DIR):
+        errors.append(
+            f"unreferenced snippet {snippet.relative_to(SRC_DIR)}; remove its source or import it from a page"
+        )
     for error in errors:
         print(f"docs.json: {error}", file=sys.stderr)
     return 1 if errors else 0

@@ -10,6 +10,11 @@ with client.Session(idle_timeout_minutes=15) as session:
 ```
 
 ```typescript timeout_example.ts
+import { NotteClient, type SessionResponse } from 'notte-sdk';
+
+const client = new NotteClient();
+let status: SessionResponse | undefined;
+
 const session = client.Session({ idle_timeout_minutes: 15 });
 await session.use(async () => {
   status = await session.status();

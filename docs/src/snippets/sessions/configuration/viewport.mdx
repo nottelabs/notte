@@ -11,6 +11,13 @@ with client.Session(viewport_width=3840, viewport_height=2160) as session:
 ```
 
 ```typescript TypeScript
+import { NotteClient, type SessionResponse } from 'notte-sdk';
+
+const client = new NotteClient();
+let status: SessionResponse | undefined;
+let title: string | undefined;
+let viewport: { width: number; height: number } | undefined;
+
 const session = client.Session({
   viewport_width: 3840,
   viewport_height: 2160,

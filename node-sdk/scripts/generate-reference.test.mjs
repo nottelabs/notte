@@ -94,6 +94,14 @@ test('real SDK output covers factories, aliases and inherited session options wi
   for (const content of actual.pages.values()) assert.doesNotMatch(content, /import\("\/|\/Users\/|\/private\/tmp\//);
 });
 
+test('client overview links to resource schemas without expanding transport signatures', () => {
+  const overview = actual.pages.get('typescript-sdk-reference/manual/client.mdx');
+  assert.doesNotMatch(overview, /\[withDbPreview\]|sessions: \{ list:/);
+  assert.match(overview, /### sessions/);
+  assert.match(overview, /API reference/);
+  assert.ok(actual.pages.has('typescript-sdk-reference/client/withdbpreview.mdx'));
+});
+
 test('navigation and generated reference links resolve; supporting APIs can remain hidden', () => {
   const listed = new Set();
   const walk = node => {

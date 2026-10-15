@@ -40,6 +40,8 @@ const actionOrder = [
   'CaptchaSolveAction', 'SmsReadAction', 'EmailReadAction', 'EmailVerificationReadAction',
 ];
 const diagnosticMethods = new Set(['client/getconfig', 'client/getclient', 'session/getresponse', 'session/issessionactive', 'agent/isrunning']);
+// Preview routing remains addressable for compatibility, outside the task overview.
+const overviewHiddenMethods = new Set(['client/withdbpreview']);
 const portableType = text => text.replace(/import\("[^"]+"\)\./g, '');
 const fence = text => `\`\`\`typescript\n${text}\n\`\`\``;
 // JSDoc is prose, not JSX. Preserve code spans but escape MDX expressions/tags.
@@ -221,11 +223,14 @@ export function createReference(root = sdkRoot) {
       if (!deprecated && !ts.isComputedPropertyName(method.name) && !hiddenMethods.has(`${classSlug}/${memberSlug(methodName)}`)) {
         navigableMethods.add(path);
         nav.push(path);
-        if (!diagnosticMethods.has(`${classSlug}/${memberSlug(methodName)}`)) methodLinks.push(`- [${methodName}](/${path})${doc(checker.getSymbolAtLocation(method.name)) ? `: ${doc(checker.getSymbolAtLocation(method.name)).split(/\n\s*\n/)[0].replace(/\s*\n\s*/g, ' ')}` : ''}`);
+        if (!diagnosticMethods.has(`${classSlug}/${memberSlug(methodName)}`) && !overviewHiddenMethods.has(`${classSlug}/${memberSlug(methodName)}`)) methodLinks.push(`- [${methodName}](/${path})${doc(checker.getSymbolAtLocation(method.name)) ? `: ${doc(checker.getSymbolAtLocation(method.name)).split(/\n\s*\n/)[0].replace(/\s*\n\s*/g, ' ')}` : ''}`);
       }
     }
     const props = members.filter(m => ts.isPropertyDeclaration(m) || ts.isGetAccessorDeclaration(m)).map(m => {
       const symbol = checker.getSymbolAtLocation(m.name);
+      if (name === 'NotteClient') {
+        return `### ${m.name.getText()}\n\n${doc(symbol) || 'Low-level resource operations. Prefer the high-level methods above for managed lifecycle and convenience helpers.'}\n\nSee the [API reference](/api-reference/authentication) for endpoint request and response schemas.`;
+      }
       return `### ${m.name.getText()}\n\n${fence(`${m.name.getText()}${m.questionToken ? '?' : ''}: ${typeText(checker.getTypeAtLocation(m))}`)}\n\n${doc(symbol)}`;
     });
     const ctorOverloads = constructors.some(n => !n.body) ? constructors.filter(n => !n.body) : constructors;
