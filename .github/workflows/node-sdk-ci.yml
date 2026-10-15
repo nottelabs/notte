@@ -1,26 +1,56 @@
 name: node sdk cicd
 
 on:
-  pull_request:
-    paths: ['.github/actions/wait-for-api/**', 'node-sdk/**', 'openapi/**', 'docs/src/typescript-sdk-reference/**', 'docs/src/docs.json', '.github/workflows/node-sdk-*.yml']
-  push:
-    branches: [main]
-    paths: ['.github/actions/wait-for-api/**', 'node-sdk/**', 'openapi/**', 'docs/src/typescript-sdk-reference/**', 'docs/src/docs.json', '.github/workflows/node-sdk-*.yml']
+  workflow_call:
+    inputs:
+      scope:
+        description: Suite decisions from the shared push or PR selector.
+        type: string
+        default: ''
+  # Keep periodic coverage of the complete v2 Node suite.
+  schedule:
+    - cron: '0 */4 * * 1-5'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: node-sdk-${{ github.ref }}
-  cancel-in-progress: true
+  # PR runs share a group so a new push cancels the superseded run. Every other run (main
+  # pushes, manual runs) gets its own group so none is cancelled or replaced while queued.
+  group: node-sdk-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 defaults:
   run:
     working-directory: node-sdk
 
 jobs:
+  changes:
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 5
+    outputs:
+      scope: ${{ inputs.scope || steps.scope.outputs.scope }}
+    steps:
+      - name: Validate supplied scope
+        if: inputs.scope != ''
+        working-directory: ${{ github.workspace }}
+        env:
+          SCOPE: ${{ inputs.scope }}
+        run: python3 -c 'import json, os; json.loads(os.environ["SCOPE"])'
+      - if: inputs.scope == ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/ci-scope
+        if: inputs.scope == ''
+        id: scope
+
   tests:
+    needs: changes
+    if: fromJSON(needs.changes.outputs.scope).node_static
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -55,9 +85,10 @@ jobs:
   integration-tests:
     # Same-repository PRs run against staging; fork PRs never receive API credentials.
     if: >-
-      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
-      (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
-    needs: tests
+      fromJSON(needs.changes.outputs.scope).node_live &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name != 'pull_request' && github.ref == 'refs/heads/main'))
+    needs: [changes, tests]
     runs-on: ubuntu-latest
     timeout-minutes: 45
     concurrency:
@@ -86,6 +117,8 @@ jobs:
           npm run test:integration -- --maxWorkers 2 --retry 1
 
   generated:
+    needs: changes
+    if: fromJSON(needs.changes.outputs.scope).node_generated
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

@@ -1,0 +1,105 @@
+name: CI
+
+# One complete diff for every automatic run, with no native path-filter limit.
+on:
+  push:
+    branches: [main]
+  # Fork PRs never receive repository secrets. Never use pull_request_target here.
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Keep cancellation within the existing Python and Node workflows. Cancelling the
+# entire caller would also interrupt example suites and their cleanup steps.
+jobs:
+  changes:
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 5
+    outputs:
+      scope: ${{ steps.scope.outputs.scope }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/ci-scope
+        id: scope
+
+  python:
+    needs: changes
+    if: >-
+      fromJSON(needs.changes.outputs.scope).file_checks ||
+      fromJSON(needs.changes.outputs.scope).python_static ||
+      fromJSON(needs.changes.outputs.scope).python_unit ||
+      fromJSON(needs.changes.outputs.scope).python_live ||
+      fromJSON(needs.changes.outputs.scope).python_docs ||
+      fromJSON(needs.changes.outputs.scope).cli_contract
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: ./.github/workflows/test-cicd.yml
+    with:
+      scope: ${{ needs.changes.outputs.scope }}
+    secrets: inherit # pragma: allowlist secret
+
+  node:
+    needs: changes
+    if: >-
+      fromJSON(needs.changes.outputs.scope).node_static ||
+      fromJSON(needs.changes.outputs.scope).node_live ||
+      fromJSON(needs.changes.outputs.scope).node_generated
+    uses: ./.github/workflows/node-sdk-ci.yml
+    with:
+      scope: ${{ needs.changes.outputs.scope }}
+    secrets: inherit # pragma: allowlist secret
+
+  docs:
+    needs: changes
+    if: >-
+      fromJSON(needs.changes.outputs.scope).docs_static ||
+      fromJSON(needs.changes.outputs.scope).docs_live
+    uses: ./.github/workflows/docs-tests-cicd.yml
+    with:
+      scope: ${{ needs.changes.outputs.scope }}
+    secrets: inherit # pragma: allowlist secret
+
+  paired:
+    needs: changes
+    if: >-
+      fromJSON(needs.changes.outputs.scope).paired_static ||
+      fromJSON(needs.changes.outputs.scope).paired_live
+    uses: ./.github/workflows/paired-sdk-examples.yml
+    with:
+      scope: ${{ needs.changes.outputs.scope }}
+    secrets: inherit # pragma: allowlist secret
+
+  readme:
+    needs: changes
+    if: >-
+      fromJSON(needs.changes.outputs.scope).readme_static ||
+      fromJSON(needs.changes.outputs.scope).readme_live
+    uses: ./.github/workflows/readme-check.yml
+    with:
+      scope: ${{ needs.changes.outputs.scope }}
+    secrets: inherit # pragma: allowlist secret
+
+  # Preserve the required check name and wait for all selected suite families.
+  tests:
+    needs: [changes, python, node, docs, paired, readme]
+    if: always()
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 5
+    steps:
+      - name: Check suite results
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | python3 -c '
+          import json, sys
+          results = {name: job["result"] for name, job in json.load(sys.stdin).items()}
+          print(results)
+          sys.exit(results["changes"] != "success" or any(result in ("failure", "cancelled") for result in results.values()))
+          '
