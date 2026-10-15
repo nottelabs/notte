@@ -1,0 +1,16 @@
+# @sniptest filename=agentmail_persona.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# email_provider defaults to "notte"; "agentmail" gives the persona an AgentMail inbox
+persona = client.Persona(email_provider="agentmail")
+print(f"Persona email: {persona.info.email}")  # an @agentmail.to address
+
+# read emails exactly as with the default provider
+emails = persona.emails(limit=10)
+for email in emails:
+    print(email.subject)
+
+# deleting the persona also deletes its AgentMail inbox
+persona.delete()

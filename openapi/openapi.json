@@ -3,7 +3,7 @@
   "info": {
     "title": "Notte API",
     "description": "Notte API is a REST API that allows you to interact with Notte. It is used to create cloud browser sessions, scrape webpages, and run web ai agents to act on your behalf on the internet.",
-    "version": "1.9.7",
+    "version": "1.9.8",
     "x-logo": {
       "url": "https://www.notte.cc/images/logo/logo-white.png"
     }
@@ -8531,168 +8531,6 @@
         "x-codeSamples": []
       }
     },
-    "/prompts/improve": {
-      "post": {
-        "tags": [
-          "prompts"
-        ],
-        "summary": "Improve Prompt",
-        "operationId": "improve_prompt",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ImprovePromptRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ImprovePromptResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-hidden": true
-      }
-    },
-    "/prompts/nudge": {
-      "post": {
-        "tags": [
-          "prompts"
-        ],
-        "summary": "Nudge Prompt",
-        "operationId": "nudge_prompt",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NudgePromptRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NudgePromptResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-hidden": true
-      }
-    },
     "/usage": {
       "get": {
         "tags": [
@@ -12297,6 +12135,69 @@
               }
             ],
             "title": "Error Redirect Uri"
+          },
+          "step": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "starting",
+                  "signing_in",
+                  "retrying",
+                  "confirming",
+                  "saving"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Step"
+          },
+          "login_attempt": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Login Attempt"
+          },
+          "max_login_attempts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Login Attempts"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "expected_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Seconds"
           }
         },
         "type": "object",
@@ -15398,7 +15299,7 @@
           "version": {
             "type": "string",
             "title": "Version",
-            "default": "1.9.7"
+            "default": "1.9.8"
           },
           "description": {
             "type": "string",
@@ -15490,47 +15391,6 @@
         },
         "type": "object",
         "title": "ImageData"
-      },
-      "ImprovePromptRequest": {
-        "properties": {
-          "prompt": {
-            "type": "string",
-            "maxLength": 10000,
-            "title": "Prompt"
-          }
-        },
-        "type": "object",
-        "required": [
-          "prompt"
-        ],
-        "title": "ImprovePromptRequest"
-      },
-      "ImprovePromptResponse": {
-        "properties": {
-          "prompt": {
-            "type": "string",
-            "title": "Prompt"
-          },
-          "variables": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Variables"
-          }
-        },
-        "type": "object",
-        "required": [
-          "prompt"
-        ],
-        "title": "ImprovePromptResponse"
       },
       "LegacyAgentStatusResponse": {
         "properties": {
@@ -16473,43 +16333,6 @@
         "type": "object",
         "title": "NotteProxy"
       },
-      "NudgePromptRequest": {
-        "properties": {
-          "task": {
-            "type": "string",
-            "maxLength": 10000,
-            "title": "Task"
-          },
-          "agent_messages": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "type": "array",
-            "maxItems": 100,
-            "title": "Agent Messages"
-          }
-        },
-        "type": "object",
-        "required": [
-          "task",
-          "agent_messages"
-        ],
-        "title": "NudgePromptRequest"
-      },
-      "NudgePromptResponse": {
-        "properties": {
-          "prompt": {
-            "type": "string",
-            "title": "Prompt"
-          }
-        },
-        "type": "object",
-        "required": [
-          "prompt"
-        ],
-        "title": "NudgePromptResponse"
-      },
       "Observation": {
         "properties": {
           "started_at": {
@@ -17313,6 +17136,10 @@
             "description": "Whether to create a phone number for the persona",
             "default": false
           },
+          "email_provider": {
+            "$ref": "#/components/schemas/PersonaEmailProvider",
+            "default": "notte"
+          },
           "name": {
             "anyOf": [
               {
@@ -17328,6 +17155,14 @@
         "additionalProperties": false,
         "type": "object",
         "title": "PersonaCreateRequest"
+      },
+      "PersonaEmailProvider": {
+        "type": "string",
+        "enum": [
+          "notte",
+          "agentmail",
+          "resend"
+        ]
       },
       "PersonaResponse": {
         "properties": {
@@ -17384,6 +17219,11 @@
             ],
             "title": "Phone Number",
             "description": "Phone number of the persona (optional)"
+          },
+          "email_provider": {
+            "$ref": "#/components/schemas/PersonaEmailProvider",
+            "description": "Provider hosting the persona mailbox",
+            "default": "notte"
           },
           "name": {
             "anyOf": [

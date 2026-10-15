@@ -96,7 +96,14 @@ export function createReference(root = sdkRoot) {
     const file = `node-sdk/${relative(root, node.getSourceFile().fileName).replaceAll('\\', '/')}`;
     return `[Source: ${file}](https://github.com/nottelabs/notte/blob/main/${file})`;
   };
-  const page = (title, node, content) => `---\ntitle: ${attr(title)}\n---\nimport AgentMdNotice from '/partials/agent-md-notice.mdx';\n\n<AgentMdNotice />\n\n${marker}\n\n${node ? `${sourceLink(node)}\n\n` : ''}${content.trim()}\n`.replace(/ +$/gm, '');
+  // Curated summaries for the profile and mailbox-provider additions.
+  const descriptions = {
+    saveProfile: "Save a running session's browser state into a profile.",
+    SaveProfileOptions: "Choose a new or existing profile for a running session's browser state.",
+    ProfileResponse: "Profile identifiers, timestamps, and persisted browser domains.",
+    PersonaEmailProvider: "Supported mailbox providers for Notte personas.",
+  };
+  const page = (title, node, content) => `---\ntitle: ${attr(title)}\n${descriptions[title] ? `description: ${attr(descriptions[title])}\n` : ''}---\nimport AgentMdNotice from '/partials/agent-md-notice.mdx';\n\n<AgentMdNotice />\n\n${marker}\n\n${node ? `${sourceLink(node)}\n\n` : ''}${content.trim()}\n`.replace(/ +$/gm, '');
   const classes = [];
   const types = new Map();
   const typeNames = new Map();

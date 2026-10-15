@@ -3,7 +3,8 @@
 import random
 import ssl
 import time
-from typing import Any
+from collections.abc import Callable
+from typing import Any, Protocol, cast
 
 import requests
 from notte_core.logging import logger
@@ -11,6 +12,19 @@ from requests.adapters import HTTPAdapter
 from typing_extensions import override
 from urllib3.connection import HTTPSConnection
 from urllib3.connectionpool import HTTPSConnectionPool
+
+from notte_sdk._retry import backoff_delay, is_retryable_exception, is_retryable_status, retry_delay
+
+
+class _RetryRequest(Protocol):
+    @property
+    def method(self) -> str: ...
+
+    @property
+    def path(self) -> str: ...
+
+    @property
+    def files(self) -> Any: ...
 
 
 class _HandshakeConnection(HTTPSConnection):
@@ -74,3 +88,72 @@ def request_session() -> requests.Session:
     HTTP responses and failures after transmission never trigger retries.
     """
     return _RequestSession()
+
+
+def send_with_retries(
+    endpoint: _RetryRequest, send: Callable[[float], requests.Response], *, max_retries: int, timeout: float
+) -> requests.Response:
+    """Retry transient responses and replayable uploads within one request time budget."""
+    max_retries = max(0, max_retries)
+    deadline = time.monotonic() + timeout
+    positions = _upload_positions(endpoint)
+    attempt = 0
+    while True:
+        # Uploaded files are rewound before a retry; one that cannot be is not resent.
+        can_retry = attempt < max_retries
+        remaining = timeout if attempt == 0 else deadline - time.monotonic()
+        if remaining <= 0:
+            raise requests.Timeout("SDK request retry deadline exceeded")
+        try:
+            response = send(remaining)
+        except requests.RequestException as e:
+            if not (can_retry and is_retryable_exception(e, endpoint.method) and _rewind_files(positions)):
+                raise
+            delay = backoff_delay(attempt)
+            if time.monotonic() + delay >= deadline:
+                raise
+            reason = type(e).__name__
+        else:
+            if not (can_retry and is_retryable_status(response.status_code, endpoint.method)):
+                return response
+            response_delay = retry_delay(attempt, response.headers.get("Retry-After"))
+            if response_delay is None or time.monotonic() + response_delay >= deadline or not _rewind_files(positions):
+                return response
+            delay = response_delay
+            reason = f"status {response.status_code}"
+            response.close()
+        attempt += 1
+        logger.warning(
+            f"`{endpoint.method} {endpoint.path}` failed ({reason}), retrying in {delay:.1f}s ({attempt}/{max_retries})"
+        )
+        time.sleep(delay)
+
+
+def _upload_positions(endpoint: _RetryRequest) -> list[tuple[Any, int]] | None:
+    """Remember original cursors so retries send the same bytes as the first attempt."""
+    files: Any = endpoint.files
+    if files is None:
+        return []
+    uploads = cast(dict[str, Any], files if isinstance(files, dict) else vars(files))
+    positions: list[tuple[Any, int]] = []
+    for handle in uploads.values():
+        if isinstance(handle, tuple):
+            handle = cast(Any, handle)[1]
+        if isinstance(handle, (str, bytes)):
+            continue
+        try:
+            positions.append((handle, handle.tell()))
+        except (AttributeError, OSError, ValueError):
+            return None
+    return positions
+
+
+def _rewind_files(positions: list[tuple[Any, int]] | None) -> bool:
+    if positions is None:
+        return False
+    for handle, offset in positions:
+        try:
+            handle.seek(offset)
+        except (AttributeError, OSError, ValueError):
+            return False
+    return True

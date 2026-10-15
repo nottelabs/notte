@@ -32,6 +32,7 @@ Use consistent icons across all documentation. This mapping ensures visual consi
 |------|------|
 | Quickstart | `square-arrow-up-right` |
 | Concepts | `book` |
+| Email | `envelope` |
 
 ## Usage
 

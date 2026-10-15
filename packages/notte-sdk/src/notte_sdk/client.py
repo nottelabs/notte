@@ -1,5 +1,6 @@
 # pyright: reportImportCycles=false
 import math
+import os
 from functools import partial
 from typing import Any, Literal, Unpack, cast, overload
 
@@ -11,6 +12,9 @@ from notte_core.types import ScrapeMarkdownParamsDict, ScrapeRequestDict
 from pydantic import BaseModel
 from typing_extensions import final
 
+from notte_sdk._retry import DEFAULT_MAX_RETRIES
+from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
+from notte_sdk.endpoints.base import BaseClient
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
 from notte_sdk.endpoints.functions import FunctionsClient, NotteFunction
 from notte_sdk.endpoints.managed_auth import ManagedAuthClient
@@ -18,6 +22,7 @@ from notte_sdk.endpoints.personas import NottePersona, PersonasClient
 from notte_sdk.endpoints.profiles import ProfilesClient
 from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
+from notte_sdk.errors import AuthenticationError
 
 enable_nest_asyncio()
 
@@ -38,6 +43,7 @@ class NotteClient:
         verbose: bool = False,
         viewer_type: SessionViewerType = SessionViewerType.BROWSER,
         captcha_timeout_seconds: float = 180,
+        max_retries: int = DEFAULT_MAX_RETRIES,
     ):
         """Initialize a NotteClient instance.
 
@@ -47,11 +53,22 @@ class NotteClient:
         Args:
             api_key: Optional API key for authentication.
             captcha_timeout_seconds: Total CAPTCHA wait budget, separate from action and HTTP timeouts.
+            max_retries: Retries for transient failures (502, 503, 504, 529, and connection errors),
+                with exponential backoff and full jitter. ``Retry-After`` is honored. POST and PATCH
+                requests are only retried when the API cannot have processed them (503, 529,
+                connection refused), so they are never applied twice. Set to 0 to disable retries.
         """
 
         if not math.isfinite(captcha_timeout_seconds) or captcha_timeout_seconds <= 0:
             raise ValueError("captcha_timeout_seconds must be finite and greater than zero")
         self.captcha_timeout_seconds: float = captcha_timeout_seconds
+        if type(max_retries) is not int or max_retries < 0:
+            raise ValueError("max_retries must be a non-negative integer")
+        self.max_retries: int = max_retries
+        # Resolve once so the keyring is read at most once per client.
+        api_key = resolve_api_key(api_key, server_url or os.getenv("NOTTE_API_URL") or BaseClient.DEFAULT_NOTTE_API_URL)
+        if api_key is None:
+            raise AuthenticationError(MISSING_API_KEY_MESSAGE)
         self.sessions: SessionsClient = SessionsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose, viewer_type=viewer_type
         )

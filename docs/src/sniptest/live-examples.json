@@ -12,6 +12,9 @@
     "expected": { "status": "closed" },
     "closedSession": true
   },
+  "sessions/profiles/save_profile.ts": {
+    "expected": { "results": ["example-login", true] }
+  },
   "sessions/country_proxy.ts": {
     "expected": { "results": ["notte", "fr"] }
   },

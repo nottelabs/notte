@@ -27,6 +27,12 @@ export type PersonaListOptions = NonNullable<ListPersonasData['query']>;
 // the internal address directly.
 export type PersonaResponseWithInternalEmail = PersonaResponse;
 
+/** Fill in `email_provider` for API responses that predate the field. */
+export function withPersonaDefaults<T extends PersonaResponse | null | undefined>(persona: T): T {
+  if (!persona || persona.email_provider) return persona;
+  return { ...persona, email_provider: 'notte' };
+}
+
 // Constructor overloads for NottePersona - mirrors Python overloads
 export interface PersonaConstructorWithId {
   persona_id: string;
@@ -120,7 +126,7 @@ export class NottePersona {
       throw new Error(`Failed to get persona: ${formatError(response.error)}`);
     }
 
-    this.response = response.data as PersonaResponseWithInternalEmail;
+    this.response = withPersonaDefaults(response.data as PersonaResponseWithInternalEmail);
     return this.response;
   }
 
@@ -134,7 +140,7 @@ export class NottePersona {
       throw new Error(`Failed to create persona: ${formatError(response.error)}`);
     }
 
-    this.response = response.data as PersonaResponseWithInternalEmail;
+    this.response = withPersonaDefaults(response.data as PersonaResponseWithInternalEmail);
     console.warn(
       `[Persona] ${this.response.persona_id} created since no persona id was provided. Please store this to retrieve it later.`
     );

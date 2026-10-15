@@ -85,14 +85,14 @@ export function createResources(client: Client, getApiKey: () => string) {
       const response = await operations.sessionProfilePreview({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
       return response.data;
     },
-    /** sessionProfileSave: /sessions/{session_id}/profile/save. Returns the API response body. */
-    profileSave: async (sessionId: Types.SessionProfileSaveData['path']["session_id"], body: Types.SessionProfileSaveData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionProfileSaveData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.sessionProfileSave({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, body });
-      return response.data;
-    },
     /** sessionReplay: /sessions/{session_id}/replay. Returns the API response body. */
     replay: async (sessionId: Types.SessionReplayData['path']["session_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionReplayData['headers']>, 'x-notte-api-key'> } = {}) => {
       const response = await operations.sessionReplay({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId } });
+      return response.data;
+    },
+    /** sessionProfileSave: /sessions/{session_id}/profile/save. Returns the API response body. */
+    saveProfile: async (sessionId: Types.SessionProfileSaveData['path']["session_id"], body: Types.SessionProfileSaveData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionProfileSaveData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionProfileSave({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, body });
       return response.data;
     },
     /** pageScrape: /sessions/{session_id}/page/scrape. Returns the API response body. */

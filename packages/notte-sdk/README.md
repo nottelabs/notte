@@ -10,6 +10,9 @@ pip install notte-sdk
 pip install 'notte-sdk[playwright]'
 ```
 
+If no API key is passed or set in `NOTTE_API_KEY`, the SDK reads the matching
+API key saved by `notte auth login` from the operating system credential store.
+
 ## Quick start
 
 ```python

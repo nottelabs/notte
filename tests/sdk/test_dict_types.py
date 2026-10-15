@@ -1,4 +1,5 @@
-from typing import ClassVar, get_args, get_origin, get_type_hints
+from enum import Enum
+from typing import ClassVar, Literal, get_args, get_origin, get_type_hints
 
 import pytest
 from notte_core import types as core_types
@@ -94,6 +95,11 @@ def _test_request_dict_alignment(base_request: type[BaseModel], base_request_dic
             dict_type_args = get_args(dict_type)
             if type(None) in dict_type_args:
                 dict_type = next(t for t in dict_type_args if t is not type(None))
+
+        # Generated named OpenAPI enums accept the same wire values as public literal kwargs.
+        if isinstance(request_type, type) and issubclass(request_type, Enum) and get_origin(dict_type) is Literal:
+            assert {member.value for member in request_type} == set(get_args(dict_type))
+            continue
 
         # Compare the types
         if field_name not in ("selector", "profile", "proxies"):

@@ -70,10 +70,6 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^profiles\/[^\/]+\/duplicate$/, // /profiles/{profile_id}/duplicate
   /^profiles\/create$/, // /profiles/create
 
-  // Prompts endpoints
-  /^prompts\/improve$/, // /prompts/improve
-  /^prompts\/nudge$/, // /prompts/nudge
-
   // Ready endpoints
   /^ready$/, // /ready
 

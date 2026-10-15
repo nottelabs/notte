@@ -160,10 +160,6 @@ describe('validatePath', () => {
     it('should allow usage/logs', () => {
       expect(validatePath(['usage', 'logs'], DEFAULT_ALLOWED_PATTERNS).isValid).toBe(true);
     });
-
-    it('should allow prompts/improve', () => {
-      expect(validatePath(['prompts', 'improve'], DEFAULT_ALLOWED_PATTERNS).isValid).toBe(true);
-    });
   });
 
   describe('invalid paths', () => {
@@ -179,6 +175,8 @@ describe('validatePath', () => {
       expect(validatePath(['bua'], DEFAULT_ALLOWED_PATTERNS).isValid).toBe(false);
       expect(validatePath(['bua', 'completions'], DEFAULT_ALLOWED_PATTERNS).isValid).toBe(false);
       expect(validatePath(['health', 'sessions'], DEFAULT_ALLOWED_PATTERNS).isValid).toBe(false);
+      expect(validatePath(['prompts', 'improve'], DEFAULT_ALLOWED_PATTERNS).isValid).toBe(false);
+      expect(validatePath(['prompts', 'nudge'], DEFAULT_ALLOWED_PATTERNS).isValid).toBe(false);
     });
   });
 

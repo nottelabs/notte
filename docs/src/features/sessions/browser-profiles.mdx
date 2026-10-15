@@ -9,6 +9,7 @@ import ReuseProfile from '/snippets/sessions/profiles/reuse_profile.mdx';
 import ListProfiles from '/snippets/sessions/profiles/list_profiles.mdx';
 import GetProfile from '/snippets/sessions/profiles/get_profile.mdx';
 import DeleteProfile from '/snippets/sessions/profiles/delete_profile.mdx';
+import SaveProfile from '/snippets/sessions/profiles/save_profile.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -19,7 +20,7 @@ Profiles let you save and reuse browser state—including cookies, local storage
 
 A profile is a saved snapshot of a browser's user data directory. By default, each Notte session uses a fresh browser state to ensure isolation.
 
-When you create a profile and use it in a session with `persist=True`, Notte saves that session's browser state. You can then attach the profile to future sessions to restore the saved state.
+When you create a profile and use it in a session with `persist=True`, Notte saves that session's browser state when the session ends. You can also save any running session into a profile at any time with `save_profile()`. You can then attach the profile to future sessions to restore the saved state.
 
 ## Create a Profile
 
@@ -51,6 +52,16 @@ The `persist` parameter controls whether session changes are saved back to the p
 First, create a profile and perform a login. When the session ends with `persist=True`, all cookies and browser state are saved to the profile:
 
 <PersistProfile />
+
+### Save a Running Session
+
+If you only decide to keep the browser state after the session has started, save it directly. `save_profile()` snapshots the running session into a new profile (`name`) or an existing one (`profile_id`) and the session keeps running. It works on any session, including one started without a profile or with `persist=False`. With neither argument, it saves into the profile the session was started with.
+
+<SaveProfile />
+
+<Note>
+  `save_profile()` does not change the session's `persist` setting. A session started with `persist=True` still saves again when it ends.
+</Note>
 
 ### Step 2: Reuse the Saved Profile
 

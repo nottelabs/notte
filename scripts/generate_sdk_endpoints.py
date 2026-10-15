@@ -536,6 +536,7 @@ KEYWORD_NAMES = {
     "ProfileListParametersQuery": "ProfileListRequestDict",
 }
 KEYWORD_ANNOTATIONS = {
+    "PersonaCreateRequest": {"email_provider": 'Literal["notte", "agentmail", "resend"]'},
     "ApiSessionStartRequest": {
         "browser_type": "config.BrowserType",
         "proxies": "list[core.ProxySettings] | list[ProxySettingsDict] | bool | core.ProxyGeolocationCountry | core.ProxyGeolocationCountryCode",

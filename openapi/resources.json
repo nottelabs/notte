@@ -172,9 +172,6 @@
   "health_check": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
-  "improve_prompt": {
-    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
-  },
   "list_agents": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
@@ -242,9 +239,6 @@
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
   "managed_auth_connect_link_create": {
-    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
-  },
-  "nudge_prompt": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
   "page_execute": {
@@ -390,9 +384,9 @@
     "telemetry": null
   },
   "session_profile_save": {
-    "method": "profileSave",
+    "method": "saveProfile",
     "resource": "sessions",
-    "telemetry": null
+    "telemetry": "cloud.session.profile.save"
   },
   "session_replay": {
     "method": "replay",

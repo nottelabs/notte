@@ -23,6 +23,7 @@ export type PersonaCreateRequest = {
      * Whether to create a phone number for the persona
      */
     create_phone_number?: boolean;
+    email_provider?: PersonaEmailProvider;
     /**
      * Name
      */
@@ -40,6 +41,14 @@ Whether to create a vault for the persona
 Whether to create a phone number for the persona
 </ParamField>
 
+<ParamField body="email_provider" type={"PersonaEmailProvider | undefined"}>
+
+</ParamField>
+
 <ParamField body="name" type={"string | null | undefined"}>
 
 </ParamField>
+
+## Related types
+
+- [PersonaEmailProvider](/typescript-sdk-reference/types/personaemailprovider)

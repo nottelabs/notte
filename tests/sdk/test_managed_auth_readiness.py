@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import requests
+from notte_core import __version__ as notte_core_version
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.types import SessionStartRequest
 
@@ -19,6 +20,7 @@ def bare_session():
     )
     session.client = MagicMock()
     session.client.server_url = "https://api.notte.cc"
+    session.client.REQUEST_ORIGIN = "sdk-python"
     session.client.start.return_value = SimpleNamespace(session_id="session", status="authenticating")
     session.client.auth_readiness.return_value = SimpleNamespace(status="active", error=None)
     session.client.status.return_value = SimpleNamespace(session_id="session", status="active")
@@ -138,40 +140,56 @@ def test_capability_does_not_bypass_failed_readiness(monkeypatch, asynchronous):
     session.client.auth_readiness.assert_called_once_with("session")
 
 
+SDK_HEADERS = {"x-notte-request-origin": "sdk-python", "x-notte-sdk-version": notte_core_version}
+
+
+def test_cdp_connection_identifies_the_sdk(monkeypatch):
+    monkeypatch.delenv("NOTTE_AUTH_CAPABILITY", raising=False)
+    session = bare_session()
+    assert session._cdp_headers("wss://api.notte.cc/sessions/s/cdp") == SDK_HEADERS
+    assert session._cdp_headers("wss://external.invalid/cdp") is None
+
+
 def test_cdp_capability_is_header_only_and_not_sent_to_external_provider(monkeypatch):
     from notte_sdk.endpoints.base import BaseClient
 
     monkeypatch.setenv("NOTTE_AUTH_CAPABILITY", "runner-capability")
     session = bare_session()
-    assert session._cdp_auth_headers("wss://api.notte.cc/sessions/s/cdp") == {
-        "x-notte-auth-capability": "runner-capability"
+    assert session._cdp_headers("wss://api.notte.cc/sessions/s/cdp") == {
+        **SDK_HEADERS,
+        "x-notte-auth-capability": "runner-capability",
     }
     client = SimpleNamespace(db_preview=None)
     assert (
         BaseClient._with_db_preview(client, "wss://api.notte.cc/sessions/s/cdp") == "wss://api.notte.cc/sessions/s/cdp"
     )
-    assert session._cdp_auth_headers("wss://external.invalid/cdp") is None
+    assert session._cdp_headers("wss://external.invalid/cdp") is None
     session.request.cdp_url = "wss://external.invalid/cdp"
-    assert session._cdp_auth_headers("wss://api.notte.cc/sessions/s/cdp") is None
+    assert session._cdp_headers("wss://api.notte.cc/sessions/s/cdp") is None
 
 
 @pytest.mark.parametrize(
     ("api_url", "cdp_url", "expected"),
     [
-        ("https://api.notte.cc", "wss://api.notte.cc:443/cdp", True),
-        ("https://api.notte.cc:443", "wss://api.notte.cc/cdp", True),
-        ("http://localhost", "ws://localhost:80/cdp", False),
-        ("http://localhost:80", "ws://localhost/cdp", False),
-        ("https://api.notte.cc:8443", "wss://api.notte.cc:8443/cdp", True),
-        ("https://api.notte.cc", "wss://api.notte.cc:8443/cdp", False),
-        ("https://api.notte.cc", "ws://api.notte.cc:443/cdp", False),
-        ("https://api.notte.cc", "wss://external.invalid:443/cdp", False),
+        ("https://api.notte.cc", "wss://api.notte.cc:443/cdp", "capability"),
+        ("https://api.notte.cc:443", "wss://api.notte.cc/cdp", "capability"),
+        ("http://localhost", "ws://localhost:80/cdp", "identity"),
+        ("http://localhost:80", "ws://localhost/cdp", "identity"),
+        ("http://localhost:8000", "ws://localhost:8000/cdp", "identity"),
+        ("http://localhost:8000", "ws://localhost:9000/cdp", None),
+        ("https://api.notte.cc:8443", "wss://api.notte.cc:8443/cdp", "capability"),
+        ("https://api.notte.cc", "wss://api.notte.cc:8443/cdp", None),
+        ("https://api.notte.cc", "ws://api.notte.cc:443/cdp", None),
+        ("https://api.notte.cc", "wss://external.invalid:443/cdp", None),
     ],
 )
 def test_cdp_capability_matches_effective_origin(monkeypatch, api_url, cdp_url, expected):
     monkeypatch.setenv("NOTTE_AUTH_CAPABILITY", "runner-capability")
     session = bare_session()
     session.client.server_url = api_url
-    assert session._cdp_auth_headers(cdp_url) == (
-        {"x-notte-auth-capability": "runner-capability"} if expected else None
-    )
+    headers = {
+        "capability": {**SDK_HEADERS, "x-notte-auth-capability": "runner-capability"},
+        "identity": SDK_HEADERS,
+        None: None,
+    }[expected]
+    assert session._cdp_headers(cdp_url) == headers

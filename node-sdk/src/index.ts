@@ -34,6 +34,7 @@ export {
   retry,
 } from '@/errors';
 export type { NotteAPIErrorBody, RetryOptions } from '@/errors';
+export { DEFAULT_MAX_RETRIES } from '@/retry';
 
 // Scrape helpers shared by `client.scrape()` and `session.scrape()`
 export { processScrapeResponse } from '@/scrape';
@@ -51,6 +52,7 @@ export type {
   SessionOptions,
   ExecuteOptions,
   ReplayOptions,
+  SaveProfileOptions,
   SessionScriptOptions,
   PerceptionType,
   SessionCloseReason,

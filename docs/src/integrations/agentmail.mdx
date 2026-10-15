@@ -1,0 +1,54 @@
+---
+title: AgentMail
+description: 'Give Notte personas an AgentMail inbox for sign-ups and verification emails'
+---
+import AgentMailPersona from '/snippets/personas/agentmail_inbox.mdx';
+import AgentMailCurl from '/snippets/personas/agentmail_curl.mdx';
+import AgentMailReadEmails from '/snippets/integrations/agentmail_read_emails.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[AgentMail](https://agentmail.to) is an email inbox API built for AI agents. Notte [personas](/concepts/personas) can use an AgentMail inbox instead of the default Notte mailbox: set `email_provider="agentmail"` when you create the persona and it gets its own `@agentmail.to` address.
+
+Use the persona's email address in a sign-up form, then read the inbox to retrieve the site's verification code or link.
+
+Notte creates and manages the AgentMail inbox for you. You don't need an AgentMail account or API key.
+
+## Prerequisites
+
+- A Notte API key ([get one here](https://console.notte.cc))
+- The Notte Python SDK (`pip install notte-sdk`), in a version that supports the `email_provider` option
+
+## Create a persona with an AgentMail inbox
+
+Pass `email_provider="agentmail"` when you create the persona. The default is `"notte"`.
+
+<AgentMailPersona />
+
+With the REST API, send `email_provider` to `POST /personas/create`:
+
+<AgentMailCurl />
+
+The persona response includes `email_provider`, so you can check which inbox a persona uses.
+
+## Read emails from the inbox
+
+You can also read the inbox yourself, for example to extract a verification code or link in your own code:
+
+<AgentMailReadEmails />
+
+Each email includes the subject, sender, timestamp, and text and HTML bodies. `email.links()` returns the URLs found in the text body.
+
+## Limitations
+
+- AgentMail inboxes are receive-only. Personas cannot send email.
+- Deleting the persona also deletes its AgentMail inbox.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Persona Identities" icon="fingerprint" href="/concepts/personas">
+    Everything a persona can do.
+  </Card>
+</CardGroup>

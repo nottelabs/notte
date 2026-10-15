@@ -244,7 +244,8 @@ class SessionsOperations(BaseClient):
         request = wire_request(models.SessionProfilePreviewParametersQuery, data)
         return self.request(api.session_profile_preview(session_id, params=request))
 
-    def profile_save(
+    @track_usage("cloud.session.profile.save")
+    def save_profile(
         self, session_id: str, **data: Unpack[SessionProfileSaveRequestDict]
     ) -> profiles_compat.ProfileResponse:
         "Session Profile Save (`POST /sessions/{session_id}/profile/save`)."

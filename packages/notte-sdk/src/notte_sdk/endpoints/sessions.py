@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 from webbrowser import open as open_browser
 
 import requests
+from notte_core import __version__ as notte_core_version
 from notte_core.actions import BaseAction, InteractionActionUnion
 from notte_core.actions.typedicts import (
     CaptchaSolveActionDict,
@@ -61,8 +62,10 @@ from typing_extensions import final, override
 
 from notte_sdk._generated import operations as api
 from notte_sdk._generated.public import (
+    ProfileResponse,
     ReplayResponse,
     SessionDebugResponse,
+    SessionProfileSaveRequestDict,
     SessionResponse,
     SessionStartRequest,
     SessionStartRequestDict,
@@ -72,6 +75,7 @@ from notte_sdk._generated.public import (
     TabSessionDebugResponse,
 )
 from notte_sdk._generated.resources import SessionsOperations
+from notte_sdk._retry import is_retryable_status
 from notte_sdk.endpoints.base import NotteEndpoint
 from notte_sdk.endpoints.files import RemoteFileStorage
 from notte_sdk.endpoints.page import PageClient
@@ -615,6 +619,9 @@ class RemoteSession(SyncResource):
                 if status is None or 400 <= status < 500:
                     raise
 
+                if self.client.max_retries > 0 and is_retryable_status(status, "POST"):
+                    raise
+
                 # on 529: cluster overload, retry with backoff
                 retry_str = f"{orig_tries - tries}/{orig_tries - 1}"
                 if status == 529:
@@ -943,6 +950,41 @@ class RemoteSession(SyncResource):
         cookies = self.client.get_cookies(session_id=self.session_id).cookies
         return [cookie.model_dump() for cookie in cookies]  # type: ignore
 
+    def save_profile(self, profile_id: str | None = None, name: str | None = None) -> ProfileResponse:
+        """
+        Saves the session's current browser state into a profile, without stopping the session.
+
+        See [Browser Profiles](/features/sessions/browser-profiles) for the tested Python and TypeScript example.
+
+        Use it to keep a login from a session that was started without ``persist=True``.
+        It does not change the session's start-time profile settings, so a session started
+        with ``persist=True`` still saves again when it stops.
+
+        Args:
+            profile_id: Existing profile to overwrite with the current browser state.
+            name: Create a new profile with this name and save into it. Mutually exclusive with ``profile_id``.
+                With neither, the state is saved into the profile the session was started with.
+
+        Returns:
+            ProfileResponse: The profile, with ``persisted_domains`` computed from the saved state.
+
+        Raises:
+            ValueError: If both ``profile_id`` and ``name`` are provided, or if either is empty.
+            ValueError: If the session hasn't been started yet (no session_id available).
+        """
+        if profile_id is not None and name is not None:
+            raise ValueError("profile_id and name are mutually exclusive")
+        if profile_id is not None and not profile_id.strip():
+            raise ValueError("profile_id must not be empty")
+        if name is not None and not name.strip():
+            raise ValueError("name must not be empty")
+        data: SessionProfileSaveRequestDict = {}
+        if profile_id is not None:
+            data["profile_id"] = profile_id
+        if name is not None:
+            data["name"] = name
+        return self.client.save_profile(session_id=self.session_id, **data)
+
     def debug_info(self) -> SessionDebugResponse:
         """
         Get detailed debug information for the session.
@@ -988,22 +1030,27 @@ class RemoteSession(SyncResource):
         debug = self.debug_info()
         return self.client._with_db_preview(debug.ws.cdp)  # pyright: ignore [reportPrivateUsage]
 
-    def _cdp_auth_headers(self, cdp_url: str) -> dict[str, str] | None:
-        """Send the runner capability only to this API's CDP connection."""
-        capability = os.getenv("NOTTE_AUTH_CAPABILITY")
-        if capability and self.request.cdp_url is None:
-            target = urlsplit(cdp_url)
-            api = urlsplit(self.client.server_url)
-            target_port = target.port if target.port is not None else 443
-            api_port = api.port if api.port is not None else 443
-            if (
-                target.scheme == "wss"
-                and api.scheme == "https"
-                and target.hostname == api.hostname
-                and target_port == api_port
-            ):
-                return {"x-notte-auth-capability": capability}
-        return None
+    def _cdp_headers(self, cdp_url: str) -> dict[str, str] | None:
+        """Headers for this API's CDP connection: the SDK identity, and the runner capability if set.
+
+        Nothing is sent to a CDP endpoint served by someone else.
+        """
+        if self.request.cdp_url is not None:
+            return None
+        target = urlsplit(cdp_url)
+        api = urlsplit(self.client.server_url)
+        secure = target.scheme == "wss" and api.scheme == "https"
+        plain = target.scheme == "ws" and api.scheme == "http"
+        default_port = 443 if secure else 80
+        target_port = target.port if target.port is not None else default_port
+        api_port = api.port if api.port is not None else default_port
+        if not ((secure or plain) and target.hostname == api.hostname and target_port == api_port):
+            return None
+        headers = {"x-notte-request-origin": self.client.REQUEST_ORIGIN, "x-notte-sdk-version": notte_core_version}
+        # The capability is a credential: only ever sent over TLS.
+        if secure and (capability := os.getenv("NOTTE_AUTH_CAPABILITY")):
+            headers["x-notte-auth-capability"] = capability
+        return headers
 
     @property
     def page(self) -> "PageSync":
@@ -1054,7 +1101,7 @@ class RemoteSession(SyncResource):
             if self._playwright_browser is None:
                 cdp_url = self.cdp_url()
                 self._playwright_browser = self._playwright_context.chromium.connect_over_cdp(
-                    cdp_url, headers=self._cdp_auth_headers(cdp_url)
+                    cdp_url, headers=self._cdp_headers(cdp_url)
                 )
                 _install_server_owned_dialog_policy(self._playwright_browser)
 
@@ -1112,7 +1159,7 @@ class RemoteSession(SyncResource):
             if self._async_playwright_browser is None:
                 cdp_url = self.cdp_url()
                 self._async_playwright_browser = await self._async_playwright_context.chromium.connect_over_cdp(
-                    cdp_url, headers=self._cdp_auth_headers(cdp_url)
+                    cdp_url, headers=self._cdp_headers(cdp_url)
                 )
                 _install_server_owned_dialog_policy(self._async_playwright_browser)
 

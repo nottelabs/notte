@@ -97,6 +97,7 @@ describe('managed auth transport and lifecycle', () => {
   });
 
   it('persists cookies when metadata fails after readiness succeeds', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0); // instant retry backoff
     const directory = await mkdtemp(join(tmpdir(), 'notte-auth-'));
     const cookieFile = join(directory, 'cookies.json');
     try {
@@ -161,6 +162,8 @@ describe('managed auth transport and lifecycle', () => {
   });
 
   it.each([1, 2, 3])('retries %s final metadata failures without another start', async failures => {
+    // Exercise the readiness loop's own error budget, not the client's retries.
+    client = new NotteClient({ apiKey: 'test-key', maxRetries: 0 }); // pragma: allowlist secret (test fixture)
     let remaining = failures;
     const original = handle;
     handle = request => request.url.endsWith('/sessions/session-1') && request.method === 'GET' && remaining-- > 0

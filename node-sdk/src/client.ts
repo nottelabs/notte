@@ -13,7 +13,7 @@ import type {
   Vault,
 } from '@/lib/client/types.gen';
 import { NotteVault, type VaultConstructor } from '@/vaults';
-import { NottePersona, type PersonaConstructor, type PersonaListOptions } from '@/personas';
+import { NottePersona, withPersonaDefaults, type PersonaConstructor, type PersonaListOptions } from '@/personas';
 import { NotteFunction, type FunctionConstructor } from '@/functions';
 import {
   healthCheck,
@@ -47,6 +47,7 @@ import {
   normalizeErrorBody,
 } from '@/errors';
 import { createUpgradeErrorMessage, startVersionCheck, upgradeSuggestion } from '@/version-check';
+import { createRetryingFetch, DEFAULT_MAX_RETRIES } from '@/retry';
 
 export const DEFAULT_NOTTE_API_URL = 'https://api.notte.cc';
 export const DEFAULT_REQUEST_TIMEOUT_MS = 60_000;
@@ -58,6 +59,11 @@ export const REQUEST_ORIGIN = 'sdk-node';
  * The header is stripped before the request leaves the process.
  */
 export const TIMEOUT_HEADER = 'x-notte-timeout-ms';
+/**
+ * Per-call header read by the request interceptor to override `maxRetries`
+ * for one request. Stripped before the request leaves the process.
+ */
+export const MAX_RETRIES_HEADER = 'x-notte-max-retries';
 const DB_PREVIEW_ENV = 'NOTTE_DB_PREVIEW_BRANCH';
 const DB_PREVIEW_HEADER = 'x-db-preview';
 const EXECUTION_ERROR_CLASS = 'NotteApiExecutionError';
@@ -75,6 +81,15 @@ export interface NotteClientConfig {
   dbPreview?: string;
   /** Log every request like `NotteClient(verbose=True)` in Python. */
   verbose?: boolean;
+  /**
+   * Retries for transient failures (502, 503, 504, 529, and connection
+   * errors), with exponential backoff and full jitter. `Retry-After` is
+   * honored. POST and PATCH requests are only retried when the API cannot
+   * have processed them (503, 529, connection refused), so they are never
+   * applied twice. All attempts share the request timeout. Defaults to 3;
+   * `0` disables retries.
+   */
+  maxRetries?: number;
 }
 
 export type SessionListOptions = NonNullable<ListSessionsData['query']>;
@@ -86,7 +101,7 @@ export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' |
   wait_for_authentication?: boolean;
 };
 
-type ResolvedConfig = Required<Pick<NotteClientConfig, 'baseUrl' | 'timeoutMs' | 'verbose' | 'captchaTimeoutSeconds'>> &
+type ResolvedConfig = Required<Pick<NotteClientConfig, 'baseUrl' | 'timeoutMs' | 'verbose' | 'captchaTimeoutSeconds' | 'maxRetries'>> &
   Pick<NotteClientConfig, 'apiKey' | 'dbPreview'>;
 
 function isRelativeProxyUrl(baseUrl: string): boolean {
@@ -112,6 +127,10 @@ export class NotteClient {
     if (!(timeoutMs >= 0)) {
       throw new InvalidRequestError('timeoutMs must be a non-negative number');
     }
+    const maxRetries = config.maxRetries ?? DEFAULT_MAX_RETRIES;
+    if (!Number.isInteger(maxRetries) || maxRetries < 0) {
+      throw new InvalidRequestError('maxRetries must be a non-negative integer');
+    }
 
     // Only skip the apiKey check for relative proxy paths (e.g. '/api/notte').
     // Any HTTPS URL—including staging—still requires a key.
@@ -131,7 +150,9 @@ export class NotteClient {
       );
     }
 
-    this.config = { baseUrl, apiKey, timeoutMs, captchaTimeoutSeconds, dbPreview, verbose: config.verbose ?? false };
+    this.config = {
+      baseUrl, apiKey, timeoutMs, captchaTimeoutSeconds, dbPreview, maxRetries, verbose: config.verbose ?? false,
+    };
 
     if (baseUrl !== DEFAULT_NOTTE_API_URL && !isProxyMode) {
       console.warn(`NOTTE_API_URL is set to: ${baseUrl}`);
@@ -157,6 +178,8 @@ export class NotteClient {
 
       const override = headers.get(TIMEOUT_HEADER);
       headers.delete(TIMEOUT_HEADER);
+      const retriesOverride = headers.get(MAX_RETRIES_HEADER);
+      headers.delete(MAX_RETRIES_HEADER);
       const timeoutMs = override !== null ? Number(override) : this.config.timeoutMs;
 
       if (this.config.verbose) {
@@ -168,7 +191,7 @@ export class NotteClient {
       const deadline = timeoutMs > 0 ? withTimeout(callerSignal, timeoutMs) : undefined;
       const signal = deadline?.signal ?? callerSignal;
       const timed = new Request(request, { headers, signal });
-      pendingRequests.set(timed, { signal, release: deadline?.release ?? (() => undefined) });
+      pendingRequests.set(timed, { signal, release: deadline?.release ?? (() => undefined), expiresAt: deadline?.expiresAt ?? Infinity });
 
       // Pass the strongly held signal in fetch's init, bypassing Request's weak
       // signal-following link. Keeping the Request preserves all fetch options
@@ -177,7 +200,12 @@ export class NotteClient {
       // SSE reconnects reuse opts; never wrap a previous attempt's signal.
       const transport = originalTransports.get(opts) ?? opts.fetch ?? globalThis.fetch;
       originalTransports.set(opts, transport);
-      opts.fetch = (input, init) => transport(input, { ...init, signal });
+      const retrying = createRetryingFetch({
+        fetch: transport,
+        maxRetries: () => retriesOverride !== null ? Number(retriesOverride) : this.config.maxRetries,
+        deadline: () => deadline?.expiresAt,
+      });
+      opts.fetch = (input, init) => retrying(input, { ...init, signal });
       return timed;
     });
 
@@ -485,14 +513,21 @@ export class NotteClient {
    * Personas client for listing and managing personas
    */
   get personas() {
+    const personas = this.resources.personas;
     return {
-      ...this.resources.personas,
+      ...personas,
+      create: async (...args: Parameters<typeof personas.create>) =>
+        withPersonaDefaults(await personas.create(...args)),
+      get: async (...args: Parameters<typeof personas.get>) =>
+        withPersonaDefaults(await personas.get(...args)),
+      update: async (...args: Parameters<typeof personas.update>) =>
+        withPersonaDefaults(await personas.update(...args)),
       list: async (options?: PersonaListOptions): Promise<PersonaResponse[]> => {
         const response = await listPersonas({
           client: this.getClient(),
           query: options || {},
         });
-        return (response.data as any)?.items || [];
+        return ((response.data as any)?.items || []).map(withPersonaDefaults);
       },
     };
   }
@@ -579,6 +614,8 @@ interface Deadline {
   signal: AbortSignal;
   /** Clear the timer and detach from the caller's signal. Idempotent. */
   release: () => void;
+  /** When the deadline fires, in ms since the epoch. */
+  expiresAt: number;
 }
 
 /**
@@ -589,6 +626,7 @@ interface Deadline {
 function withTimeout(signal: AbortSignal | null | undefined, timeoutMs: number): Deadline {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(timeoutReason(timeoutMs)), timeoutMs);
+  const expiresAt = Date.now() + timeoutMs;
   timer.unref?.();
   let detach: () => void = () => undefined;
   let composite: AbortSignal;
@@ -618,5 +656,5 @@ function withTimeout(signal: AbortSignal | null | undefined, timeoutMs: number):
     detach();
   };
   composite.addEventListener('abort', release, { once: true });
-  return { signal: composite, release };
+  return { signal: composite, release, expiresAt };
 }

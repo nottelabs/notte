@@ -195,6 +195,16 @@
       }
     ]
   },
+  "personas/agentmail_curl.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "personas/agentmail_curl.sh",
+        "language": "bash",
+        "title": "cURL"
+      }
+    ]
+  },
   "quickstart/cdp_session.mdx": {
     "group": true,
     "blocks": [

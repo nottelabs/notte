@@ -106,6 +106,10 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte browser agents inside n8n workflows
 
+## Email
+
+- [AgentMail](https://docs.notte.cc/integrations/agentmail.md): Give Notte personas an AgentMail inbox for sign-ups and verification emails
+
 ## Browser Drivers
 
 - [Connect with Playwright](https://docs.notte.cc/features/sessions/playwright.md): Use Playwright directly with Notte sessions via Chrome DevTools Protocol
@@ -426,6 +430,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [status](https://docs.notte.cc/typescript-sdk-reference/session/status.md)
 - [waitForAuth](https://docs.notte.cc/typescript-sdk-reference/session/waitforauth.md)
 - [downloadReplay](https://docs.notte.cc/typescript-sdk-reference/session/downloadreplay.md)
+- [saveProfile](https://docs.notte.cc/typescript-sdk-reference/session/saveprofile.md): Save a running session's browser state into a profile.
 - [debugInfo](https://docs.notte.cc/typescript-sdk-reference/session/debuginfo.md)
 - [debugTabInfo](https://docs.notte.cc/typescript-sdk-reference/session/debugtabinfo.md)
 - [cdpUrl](https://docs.notte.cc/typescript-sdk-reference/session/cdpurl.md)

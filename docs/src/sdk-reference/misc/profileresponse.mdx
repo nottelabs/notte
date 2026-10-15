@@ -1,0 +1,32 @@
+---
+title: "ProfileResponse"
+description: "Profile metadata with the SDK's non-null, independently allocated domain list"
+---
+
+
+
+## Fields
+
+<ParamField path="profile_id" type="str" required>
+  Profile ID (format: notte-profile-{16 hex chars})
+</ParamField>
+
+<ParamField path="name" type="UnionType[str, None]" required>
+  Profile name
+</ParamField>
+
+<ParamField path="created_at" type="datetime" required>
+  Profile creation timestamp
+</ParamField>
+
+<ParamField path="updated_at" type="datetime" required>
+  Profile last update timestamp
+</ParamField>
+
+<ParamField path="persisted_domains" type="list[str]" required>
+</ParamField>
+
+
+## Module
+
+`notte_sdk._compat.profiles`

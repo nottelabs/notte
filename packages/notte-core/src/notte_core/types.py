@@ -1805,16 +1805,26 @@ class PersonaCreateRequestDict(TypedDict, total=False):
 
     create_vault: bool
     create_phone_number: bool
+    email_provider: Literal["notte", "agentmail", "resend"]
     name: str | None
 
 
 class PersonaCreateRequest(SdkRequest):
+    email_provider: Annotated[
+        Literal["notte", "agentmail", "resend"],
+        Field(
+            description="Provider hosting the persona mailbox: notte, agentmail, or resend (external inboxes are receive only)"
+        ),
+    ] = "notte"
     create_vault: Annotated[bool, Field(description="Whether to create a vault for the persona")] = False
     create_phone_number: Annotated[bool, Field(description="Whether to create a phone number for the persona")] = False
     name: Annotated[str | None, Field(description="Display name of the persona")] = None
 
 
 class PersonaResponse(SdkResponse):
+    email_provider: Annotated[
+        Literal["notte", "agentmail", "resend"], Field(description="Provider hosting the persona mailbox")
+    ] = "notte"
     persona_id: Annotated[str, Field(description="ID of the created persona")]
     status: Annotated[str, Field(description="Status of the persona (active, closed)")]
     first_name: Annotated[str, Field(description="First name of the persona")]

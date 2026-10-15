@@ -200,6 +200,7 @@ class PersonaCreateRequestDict(TypedDict):
 
     create_vault: NotRequired[bool]
     create_phone_number: NotRequired[bool]
+    email_provider: NotRequired[Literal["notte", "agentmail", "resend"]]
     name: NotRequired[str | None]
 
 

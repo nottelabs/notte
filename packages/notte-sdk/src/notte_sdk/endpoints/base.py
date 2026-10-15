@@ -13,7 +13,9 @@ from notte_core.logging import logger
 from pydantic import BaseModel, ConfigDict, ValidationError
 from requests.exceptions import ConnectionError
 
-from notte_sdk._transport import request_session
+from notte_sdk._retry import DEFAULT_MAX_RETRIES
+from notte_sdk._transport import request_session, send_with_retries
+from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
 from notte_sdk.errors import AuthenticationError, NotteAPIError, NotteAPIExecutionError
 
 if TYPE_CHECKING:
@@ -113,32 +115,38 @@ class BaseClient(ABC):
         """
         Initialize a new API client instance.
 
-        Sets up the client by resolving an API key from the provided parameter or the
-        NOTTE_API_KEY environment variable. Selects the server URL (defaulting to a
-        preconfigured server if none is provided), initializes a mapping of endpoints
-        using the implemented 'endpoints' method, and stores an optional base endpoint
-        path for constructing request URLs.
+        Sets up the client by resolving an API key from the provided parameter, the
+        NOTTE_API_KEY environment variable, or the notte-cli keyring. Selects the server
+        URL (defaulting to a preconfigured server if none is provided), initializes a
+        mapping of endpoints using the implemented 'endpoints' method, and stores an
+        optional base endpoint path for constructing request URLs.
 
         Args:
             base_endpoint_path: Optional base path to be prefixed to endpoint URLs.
             api_key: Optional API key for authentication; if not supplied, retrieved from
-                the NOTTE_API_KEY environment variable.
+                the NOTTE_API_KEY environment variable or the notte-cli keyring.
 
         Raises:
-            AuthenticationError: If an API key is neither provided nor available in the environment.
+            AuthenticationError: If an API key cannot be resolved.
         """
         self.root_client = root_client  # pyright: ignore [reportUnannotatedClassAttribute]
-        token = api_key or os.getenv("NOTTE_API_KEY")
-        if token is None:
-            raise AuthenticationError("NOTTE_API_KEY needs to be provided")
-        self.token: str = token
         self.server_url: str = server_url or os.getenv("NOTTE_API_URL") or self.DEFAULT_NOTTE_API_URL
+        token = resolve_api_key(api_key, self.server_url)
+        if token is None:
+            raise AuthenticationError(MISSING_API_KEY_MESSAGE)
+        self.token: str = token
         self.base_endpoint_path: str | None = base_endpoint_path
         self.verbose: bool = verbose
         self.db_preview = (os.getenv("NOTTE_DB_PREVIEW_BRANCH") or "").strip() or None
 
         # Check for version mismatch and warn user if needed
         self.check_and_warn_version_mismatch()
+
+    @property
+    def max_retries(self) -> int:
+        """Retries for transient failures, from ``NotteClient(max_retries=...)``."""
+        value = getattr(self.root_client, "max_retries", DEFAULT_MAX_RETRIES)
+        return value if isinstance(value, int) and not isinstance(value, bool) else DEFAULT_MAX_RETRIES
 
     def is_custom_endpoint_available(self) -> bool:
         """
@@ -425,46 +433,14 @@ class BaseClient(ABC):
         headers = self.headers(headers=headers)
         url = self.request_path(endpoint)
         params = endpoint.params.model_dump(exclude_none=True) if endpoint.params is not None else None
-        files = endpoint.files if endpoint.files is not None else None
-        json = None
         if self.verbose:
-            logger.info(f"Making `{endpoint.method}` request to `{endpoint.path} (i.e `{url}`) with params `{params}`.")
-        with request_session() as session:
-            match endpoint.method:
-                case "GET":
-                    response = session.get(
-                        url=url,
-                        headers=headers,
-                        params=params,
-                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-                    )
-                case "POST" | "PATCH":
-                    # Without a request model or file the request has no body (e.g. `function_fork`).
-                    if endpoint.request is None:
-                        data = None
-                    elif files is None:
-                        data = endpoint.request.model_dump_json(exclude_none=True)
-                        headers["Content-Type"] = "application/json"
-                    else:
-                        # if files is not None, data must not be a string
-                        data = endpoint.request.model_dump(exclude_none=True)
-                    method = session.post if endpoint.method == "POST" else session.patch
-                    response = method(
-                        url=url,
-                        headers=headers,
-                        data=data,
-                        params=params,
-                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-                        files=files,
-                        json=json,
-                    )
-                case "DELETE":
-                    response = session.delete(
-                        url=url,
-                        headers=headers,
-                        params=params,
-                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-                    )
+            logger.info(f"Making `{endpoint.method}` request to `{endpoint.path}` with params `{params}`.")
+        response = send_with_retries(
+            endpoint,
+            lambda remaining: self._send(endpoint, url=url, headers=headers, params=params, timeout=remaining),
+            max_retries=self.max_retries,
+            timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+        )
         if not 200 <= response.status_code < 300:
             # Check for 422 status code with Pydantic validation errors first
             if response.status_code == 422:
@@ -499,6 +475,54 @@ class BaseClient(ABC):
         if check_response_detail and isinstance(response_dict, dict) and "detail" in response_dict:
             raise NotteAPIError(path=self._error_path(endpoint), response=response)
         return cast(Any, response_dict)
+
+    def _send(
+        self,
+        endpoint: NotteEndpoint[TResponse],
+        *,
+        url: str,
+        headers: dict[str, str],
+        params: dict[str, Any] | None,
+        timeout: float | None,
+    ) -> requests.Response:
+        files = endpoint.files if endpoint.files is not None else None
+        headers = dict(headers)
+        with request_session() as session:
+            match endpoint.method:
+                case "GET":
+                    response = session.get(
+                        url=url,
+                        headers=headers,
+                        params=params,
+                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                    )
+                case "POST" | "PATCH":
+                    if endpoint.request is None:
+                        data = None
+                    elif files is None:
+                        data = endpoint.request.model_dump_json(exclude_none=True)
+                        headers["Content-Type"] = "application/json"
+                    else:
+                        # if files is not None, data must not be a string
+                        data = endpoint.request.model_dump(exclude_none=True)
+                    method = session.post if endpoint.method == "POST" else session.patch
+                    response = method(
+                        url=url,
+                        headers=headers,
+                        data=data,
+                        params=params,
+                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                        files=files,
+                        json=None,
+                    )
+                case "DELETE":
+                    response = session.delete(
+                        url=url,
+                        headers=headers,
+                        params=params,
+                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                    )
+        return response
 
     def request(
         self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: float | None = None
