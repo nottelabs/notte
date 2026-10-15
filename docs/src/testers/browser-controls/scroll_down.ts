@@ -1,12 +1,13 @@
 // @sniptest filename=scroll_down.ts
-// @sniptest show=1-9
+// @sniptest show=1-10
 import { NotteClient } from 'notte-sdk';
 
 const client = new NotteClient();
 
 const session = client.Session();
 await session.use(async () => {
-  await session.execute({ type: "goto", url: "https://en.wikipedia.org/wiki/Web_browser" });
+  // Create a page tall enough to scroll.
+  await session.evaluateJs("document.body.innerHTML = '<main style=\"height:300vh\">Scroll demo</main>'");
   await session.execute({ type: "scroll_down" });
 });
 

@@ -548,61 +548,48 @@ describe.skipIf(skipHeavyLive)('Persona Integration Tests', () => {
         browser_type: 'chromium',
         viewport_width: 1280,
         viewport_height: 1080,
-        headless: true
+        headless: true,
       });
+      const fixtureUrl = 'https://persona-fixture.notte.test/';
 
       try {
         await persona.get();
         personaId = persona.personaId;
+        const firstName = persona.info?.first_name;
+        const lastName = persona.info?.last_name;
+        expect(firstName).toBeTruthy();
+        expect(lastName).toBeTruthy();
 
-        await session.start();
-
-        try {
-          const agent = client.Agent({
-            session,
-            max_steps: 5,
-            persona
+        await session.use(async () => {
+          const page = await session.page();
+          // Serve the owned form and abort all other requests.
+          await page.route('**/*', async route => {
+            if (route.request().url() === fixtureUrl) {
+              await route.fulfill({
+                status: 200,
+                contentType: 'text/html',
+                body: '<!doctype html><html><body><h1>Persona form</h1><label for="full-name">Full name</label><input id="full-name" name="full_name" autocomplete="name"></body></html>',
+              });
+            } else {
+              await route.abort();
+            }
           });
+          await page.goto(fixtureUrl, { waitUntil: 'domcontentloaded' });
 
+          const agent = client.Agent({ session, max_steps: 5, persona });
           const response = await agent.run({
-            task: "Open the Google form and fill your name.\nDon't fill the form completely. Simply stop once you filled your name. Return your name.",
-            url: "https://docs.google.com/forms/d/e/1FAIpQLScjj4EZm-Iz68RrRiv6Gf_K5PhS1Z9d34YRYr5t-sjwDtMOtQ/viewform?usp=dialog"
+            task: "The form is already open. Fill the Full name field with your persona's first and last names. Do not submit or navigate. Finish and return the full name.",
           });
 
-          expect(response).toBeDefined();
-          // The response should be a LegacyAgentStatusResponse
-          if (response && typeof response === 'object' && 'success' in response) {
-            expect(response.success).toBeDefined();
-            if (response.success !== null && response.success !== undefined) {
-              expect(response.success).toBe(true);
-            }
-            if (response.answer) {
-              expect(persona.info?.first_name).toBeDefined();
-              expect(persona.info?.last_name).toBeDefined();
-              expect(response.answer).toContain(persona.info?.first_name || '');
-              expect(response.answer).toContain(persona.info?.last_name || '');
-            }
-          } else {
-            // If response doesn't have expected structure, at least verify agent was created
-            expect(agent.agentId).toBeDefined();
-          }
-        } finally {
-          await session.stop();
-        }
-      } catch (error) {
-        // If persona creation fails, fail the test (don't skip)
-        throw error;
+          expect(response.success).toBe(true);
+          expect(response.answer).toContain(firstName);
+          expect(response.answer).toContain(lastName);
+          expect(await page.inputValue('#full-name')).toBe(`${firstName} ${lastName}`);
+        });
       } finally {
-        // Clean up in the same test
-        if (personaId) {
-          try {
-            await client.Persona({ persona_id: personaId }).delete();
-          } catch (error) {
-            console.warn(`Failed to delete persona ${personaId} during cleanup: ${error}`);
-          }
-        }
+        if (personaId) await client.Persona({ persona_id: personaId }).delete();
       }
-    }); // Use the live suite's 120-second budget for the agent and resource cleanup.
+    });
   });
 
 });

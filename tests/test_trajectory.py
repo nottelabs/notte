@@ -1,13 +1,16 @@
 from collections import defaultdict
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from notte_agent.falco.agent import FalcoAgent
+from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction
 from notte_core.agent_types import AgentCompletion
 from notte_core.browser.observation import ExecutionResult, Observation, Screenshot, TimedSpan
 from notte_core.trajectory import AgentStepStart, AgentStepStop, StepBundle, TrajectoryHoldee
 
 import notte
+from tests.agent.test_consistent_trajectory import create_agent_step_response
 
 
 @pytest.mark.asyncio
@@ -214,15 +217,36 @@ async def test_trajectory_callback_from_session():
 
 @pytest.mark.asyncio
 async def test_agent_observes_page_correctly():
-    with notte.Session(headless=True) as session:
-        _ = session.execute(type="goto", url="https://duckduckgo.com")
+    # Exercise real observation and execution; the model's action choice is not
+    # part of the trajectory contract and must not depend on a live LLM.
+    async with NotteSession(headless=True) as session:
+        fixture_url = "https://trajectory-fixture.notte.test/"
+
+        async def serve_fixture(route):
+            if route.request.url == fixture_url:
+                await route.fulfill(
+                    status=200,
+                    content_type="text/html",
+                    body='<label for="search">Search field fixture 6f9c</label><input id="search" type="search">',
+                )
+            else:
+                await route.abort()
+
+        await session.window.page.route("**/*", serve_fixture)
+        await session.aexecute(type="goto", url=fixture_url, wait_until="domcontentloaded", raise_on_failure=True)
         agent = notte.Agent(session=session, max_steps=1).create_agent()
         assert isinstance(agent, FalcoAgent)
-        task = "fill in the search bar with 'einstein'"
-        resp = await agent.arun(task=task)
+        completion = AsyncMock(return_value=create_agent_step_response(action=FillAction(id="I1", value="einstein")))
+        with patch.object(agent.llm, "structured_completion", completion):
+            resp = await agent.arun(task="Fill in the search bar with 'einstein'")
 
-        # since the agent observed, it saw the page and saw it can already fill
+        completion.assert_awaited_once()
+        assert completion.await_args is not None
+        messages = str(completion.await_args.args[0])
+        assert "Search field fixture 6f9c" in messages
+        assert "I1" in messages
         action = resp.steps[-1].action
         assert isinstance(action, FillAction)
         assert action.id == "I1"
+        assert await session.window.page.input_value("#search") == "einstein"
         assert not resp.success

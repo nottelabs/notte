@@ -73,6 +73,7 @@ class BrowserSettingsPairsTest(unittest.TestCase):
         for suffix in (".py", ".ts"):
             for name in ("scroll_down", "scroll_up"):
                 _, rendered = parse_file(root / (name + suffix))
-                self.assertIn("https://en.wikipedia.org/wiki/Web_browser", rendered)
+                self.assertIn("height:300vh", rendered)
+                self.assertNotIn("https://", rendered)
                 if name == "scroll_up":
                     self.assertLess(rendered.index('"scroll_down"'), rendered.index('"scroll_up"'))
