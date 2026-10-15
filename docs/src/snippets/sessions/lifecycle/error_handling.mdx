@@ -19,6 +19,12 @@ except ValueError as error:
 ```
 
 ```typescript TypeScript - Automatic Cleanup
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+let sessionId: string | null = null;
+let errorMessage: string | undefined;
+
 const session = client.Session();
 const expectedError = new Error('Example automation failure');
 try {
@@ -56,6 +62,12 @@ except ValueError as error:
 ```
 
 ```typescript TypeScript - Manual Error Handling
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+let sessionId: string | null = null;
+let errorMessage: string | undefined;
+
 const session = client.Session();
 const expectedError = new Error('Example automation failure');
 try {

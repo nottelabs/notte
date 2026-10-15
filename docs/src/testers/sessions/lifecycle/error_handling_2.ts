@@ -1,5 +1,5 @@
 // @sniptest filename=error_handling_2.ts
-// @sniptest show=7-25
+// @sniptest show=1-25
 import { NotteClient } from 'notte-sdk';
 
 const client = new NotteClient();

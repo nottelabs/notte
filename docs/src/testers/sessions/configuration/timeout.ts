@@ -1,5 +1,5 @@
 // @sniptest filename=timeout.ts
-// @sniptest show=7-16
+// @sniptest show=1-16
 import { NotteClient, type SessionResponse } from 'notte-sdk';
 
 const client = new NotteClient();

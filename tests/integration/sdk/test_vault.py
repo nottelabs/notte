@@ -23,10 +23,15 @@ async def load_github_signin_fixture(session: notte.Session) -> None:
     html = fixture_path.read_text(encoding="utf-8")
 
     async def fulfill_github_login(route):  # pyright: ignore[reportUnknownParameterType, reportMissingParameterType]
-        await route.fulfill(status=200, content_type="text/html", body=html)
+        if route.request.url == "https://github.com/login":
+            await route.fulfill(status=200, content_type="text/html", body=html)
+        else:
+            # The saved page's scripts and styles are not part of the fixture.
+            # Avoid waiting on missing assets or contacting the real login site.
+            await route.abort()
 
-    await session.window.page.route("https://github.com/login", fulfill_github_login)
-    _ = await session.window.page.goto(url="https://github.com/login")
+    await session.window.page.route("**/*", fulfill_github_login)
+    _ = await session.window.page.goto(url="https://github.com/login", wait_until="domcontentloaded")
     res = await session.aexecute(WaitAction(time_ms=100))
     assert res.success
     _ = await session.aobserve()
@@ -157,11 +162,11 @@ def test_vault_in_remote_agent():
 def test_add_credentials_from_env():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    peeple_dict = dict(email="xyz@notte.cc", password="xyz")
+    peeple_dict = {"email": "xyz@notte.cc", "password": "xyz"}
     os.environ["PEEPLE_COM_EMAIL"] = peeple_dict["email"]
     os.environ["PEEPLE_COM_PASSWORD"] = peeple_dict["password"]
 
-    test_dict = dict(username="my_xyz_username", password="my_xyz_password")
+    test_dict = {"username": "my_xyz_username", "password": "my_xyz_password"}  # pragma: allowlist secret
     os.environ["TEST_COM_USERNAME"] = test_dict["username"]
     os.environ["TEST_COM_PASSWORD"] = test_dict["password"]
     with client.Vault() as vault:
@@ -196,14 +201,13 @@ def test_all_credentials_in_system_prompt():
 def test_add_wrong_otp():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    with client.Vault() as vault:
-        with pytest.raises(ValueError):
-            _ = vault.add_credentials(
-                url="https://github.com/",
-                email="xyz@notte.cc",
-                password="xyz",  # pragma: allowlist secret
-                mfa_secret="999777",  # pragma: allowlist secret
-            )
+    with client.Vault() as vault, pytest.raises(ValueError):
+        _ = vault.add_credentials(
+            url="https://github.com/",
+            email="xyz@notte.cc",
+            password="xyz",  # pragma: allowlist secret
+            mfa_secret="999777",  # pragma: allowlist secret
+        )
 
 
 def test_add_correct_otp():
@@ -256,7 +260,7 @@ async def test_session_form_fill_with_vault_without_observe_uses_live_url():
     base_url = "https://apartment-board-demo-nine.vercel.app"
     login_url = f"{base_url}/auth/signin"
     username = "alder"
-    password = "test-password"  # noqa: S105  # pragma: allowlist secret
+    password = "test-password"  # pragma: allowlist secret
 
     with client.Vault() as vault:
         _ = vault.add_credentials(url=base_url, username=username, password=password)

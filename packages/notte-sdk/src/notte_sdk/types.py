@@ -1636,7 +1636,7 @@ class ProfileCreateRequest(SdkRequest):
 
 
 class ProfileResponse(SdkResponse):
-    profile_id: Annotated[str, Field(description="Profile ID (format: notte-profile-{16 hex chars})")]
+    profile_id: Annotated[str, Field(description="Profile ID (format: `notte-profile-{16 hex chars}`)")]
     name: Annotated[str | None, Field(description="Profile name")]
     created_at: Annotated[dt.datetime, Field(description="Profile creation timestamp")]
     updated_at: Annotated[dt.datetime, Field(description="Profile last update timestamp")]

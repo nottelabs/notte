@@ -1,0 +1,34 @@
+---
+title: Managed Auth
+description: Start browser sessions with saved authentication connections
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Managed Auth verifies saved authentication connections when you start a browser session and logs in when needed. Unlike a [browser profile](/features/sessions/browser-profiles), which restores saved browser state, it checks whether the requested connections are ready to use.
+
+## Prerequisites
+
+Create the connection through your application's Managed Auth connect flow and retain its connection ID. The [API reference](/api-reference/managed-auth/managed-auth-connect-link-create) describes how to create a connect link. Never expose your Notte API key to the browser.
+
+## Start a session
+
+Pass up to ten connection IDs in `auth_ids` when creating a session. By default, the SDK waits for authentication before returning control. See [Session Configurations](/features/sessions/configuration#managed-auth) for the parameters.
+
+If you set `wait_for_authentication=False` in Python or `wait_for_authentication: false` in TypeScript, the session can be `authenticating`. Call `session.wait_for_auth()` in Python or `await session.waitForAuth()` in TypeScript before browser actions. See [Session Lifecycle](/features/sessions/lifecycle) for session states.
+
+## Handle failures
+
+Use `auth_retry` only for transient login failures, with zero to two additional retries. Expired credentials or a connection that needs user interaction require recovery through the connection flow. Avoid creating replacement sessions repeatedly when the underlying connection needs attention.
+
+Stop the session when you finish by using Python's context manager or TypeScript's `session.use()`. A timeout while waiting does not mean that the session was automatically stopped.
+
+## Choose the right authentication tool
+
+| Tool | Purpose |
+|------|---------|
+| [Vaults](/concepts/vaults) | Store credentials and substitute them into supported actions outside the model context. |
+| [Profiles](/features/sessions/browser-profiles) | Restore saved cookies and browser storage. |
+| [Personas](/concepts/personas) | Supply an email inbox and optional phone number for account and verification flows. |
+| Managed Auth | Verify requested connections and complete login when needed before automation. |

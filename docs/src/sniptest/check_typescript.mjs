@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { hiddenAssignmentDeclarations } from './typescript_display.mjs';
 
 const require = createRequire(new URL('../../../node-sdk/package.json', import.meta.url));
 const ts = require('typescript');
@@ -15,6 +16,9 @@ const configPath = path.join(directory, 'tsconfig.json');
 const config = ts.readConfigFile(configPath, ts.sys.readFile);
 if (config.error) throw new Error(ts.flattenDiagnosticMessageText(config.error.messageText, '\n'));
 const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, directory);
+const displayErrors = parsed.fileNames.flatMap(file =>
+  hiddenAssignmentDeclarations(readFileSync(file, 'utf8')).map(name =>
+    `${path.relative(testers, file)}: displayed assignment to ${name} hides its declaration; expand show= or declare it in the excerpt.`));
 const executable = parsed.fileNames.filter(name => !pending.has(path.resolve(name)));
 const program = ts.createProgram(executable, parsed.options);
 const diagnostics = [...parsed.errors, ...ts.getPreEmitDiagnostics(program)];
@@ -25,6 +29,10 @@ for (const file of parsed.fileNames.filter(name => pending.has(path.resolve(name
     fileName: file, compilerOptions: parsed.options, reportDiagnostics: true,
   });
   diagnostics.push(...(result.diagnostics || []));
+}
+if (displayErrors.length) {
+  console.error(displayErrors.join('\n'));
+  process.exitCode = 1;
 }
 if (diagnostics.length) {
   console.error(ts.formatDiagnosticsWithColorAndContext(diagnostics, {

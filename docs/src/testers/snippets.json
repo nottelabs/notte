@@ -922,28 +922,6 @@
       }
     ]
   },
-  "sessions/cdp/selenium_connect.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "sessions/cdp/selenium_connect.py",
-        "language": "python",
-        "title": "Python",
-        "execution_pending": "Legacy example from sessions/cdp/selenium_connect.mdx; needs owned fixtures and behavior assertions before live execution."
-      }
-    ]
-  },
-  "sessions/cdp/selenium_form.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "sessions/cdp/selenium_form.py",
-        "language": "python",
-        "title": "Python",
-        "execution_pending": "Legacy example from sessions/cdp/selenium_form.mdx; needs owned fixtures and behavior assertions before live execution."
-      }
-    ]
-  },
   "sessions/configuration/captcha_solving.mdx": {
     "group": true,
     "blocks": [
