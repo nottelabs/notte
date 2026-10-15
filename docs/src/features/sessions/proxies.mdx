@@ -94,10 +94,25 @@ If a site needs to see the same IP address on every session, for example because
 
 ## Usage Measurement
 
-Proxy usage is measured by the total amount of data transferred through the proxy. This includes:
+Proxy usage is measured by the total amount of data transferred through the proxy, for both built-in and custom proxies. This includes:
 
 - Webpage content, downloads, and media files
 - HTTP headers, authentication data, and encryption overhead
 - Any requests and responses routed through the proxy
 
 Since all traffic must pass through the proxy server before reaching its final destination, every interaction contributes to your total bandwidth usage.
+
+## Billing
+
+Proxy bandwidth is billed on every session that uses a proxy, whether it is a built-in Notte proxy or your own custom proxy (`type: "external"`). Sessions without a proxy are not billed for bandwidth.
+
+| Proxy | Rate |
+|-------|------|
+| Built-in proxies | $10 per GB |
+| Custom proxies (Startup plan) | $3 per GB (30% of the proxy rate), on top of what your proxy provider charges |
+
+Bandwidth is counted as request plus response bytes, rounded up to the next MB per session.
+
+For a custom proxy, the full bandwidth is first recorded as a **Proxy** charge at $10 per GB. When the session closes, a **BYO Proxy Credit** refunds 70% of it on the Startup plan, so the net fee is 30%. The credit is final, and both lines appear in your usage and billing view.
+
+Enterprise plans can have custom terms. See [pricing](https://www.notte.cc/pricing) or [contact us](https://cal.com/team/notte/demo) for custom terms.
