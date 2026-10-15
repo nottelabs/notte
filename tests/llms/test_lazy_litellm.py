@@ -1,10 +1,11 @@
-"""litellm (and the provider SDKs it imports) loads on the first LLM call, not when a browser session is set up."""
+"""litellm (with the provider SDKs it imports) and the tokenizer load on the first LLM call, not with a session."""
 
 import os
 import subprocess
 import sys
 
-# Session, scraping, action listing and the LLM service, built but never asked to call a model.
+# A session (with the pipes it builds), scraping, action listing and the LLM service, set up but
+# never asked to call a model. The session is not started, so no browser is needed.
 NO_LLM_CALL = """
 import sys
 from notte_browser.session import NotteSession
@@ -12,8 +13,10 @@ from notte_browser.scraping.schema import SchemaScrapingPipe
 from notte_browser.tagging.action.llm_taging.base import RetryPipeWrapper
 from notte_llm.engine import LLMEngine
 from notte_llm.service import LLMService
+_ = NotteSession()
 _ = LLMService()
-print("LOADED:" + ",".join(name for name in ("litellm", "openai", "llamux") if name in sys.modules))
+loaded = ("litellm", "openai", "llamux", "tiktoken.load")
+print("LOADED:" + ",".join(name for name in loaded if name in sys.modules))
 """
 
 FIRST_LLM_CALL = """
