@@ -355,7 +355,11 @@ class NotteSession(AsyncResource, SyncResource):
     async def _action_with_vault(self, action: BaseAction) -> BaseAction:
         # Only fill-type actions support credential replacement
         _SUPPORTED = (FormFillAction, FillAction, FallbackFillAction, MultiFactorFillAction, SelectDropdownOptionAction)
-        if self.vault is None or not isinstance(action, _SUPPORTED) or not self.vault.contains_credentials(action):
+        if (
+            self.vault is None
+            or not isinstance(action, _SUPPORTED)
+            or not self.vault.has_unresolved_placeholders(action)
+        ):
             return action
 
         if self._window is not None:

@@ -3,7 +3,7 @@ from notte_browser.session import NotteSession
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_core.actions import FillAction
 from notte_core.credentials import EMAIL, PASSWORD
-from notte_core.errors import VaultCredentialError
+from notte_core.errors import CredentialFieldValidationError
 
 from tests.mock.mock_vault import MockVault
 
@@ -49,7 +49,7 @@ async def test_unvalidated_vault_credential_fails_without_typing_the_placeholder
         result = await session.aexecute(FillAction(selector="#other", value=PASSWORD), raise_on_failure=False)
 
         assert not result.success
-        assert isinstance(result.exception, VaultCredentialError)
+        assert isinstance(result.exception, CredentialFieldValidationError)
         value = await session.window.page.locator("#other").input_value()
         assert value == "public"
         assert PASSWORD not in value and SECRET_PASSWORD not in value

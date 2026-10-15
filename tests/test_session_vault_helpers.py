@@ -7,8 +7,9 @@ from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import ScreenshotMask
 from notte_core.actions import FillAction, FormFillAction, MultiFactorFillAction
 from notte_core.credentials import EMAIL, MFA, PASSWORD, USERNAME
+from notte_core.credentials.base import LocatorAttributes
 from notte_core.credentials.types import ValueWithPlaceholder
-from notte_core.errors import VaultCredentialError
+from notte_core.errors import CredentialFieldValidationError, MissingCredentialFieldError
 
 from tests.mock.mock_vault import MockVault
 from tests.mock.snapshot_factory import make_snapshot
@@ -215,7 +216,7 @@ def test_session_vault_rejects_credential_for_unvalidated_element() -> None:
     session = NoopLocateSession(vault=vault)
     session.snapshot = make_snapshot("https://example.com")
 
-    with pytest.raises(VaultCredentialError, match="does not look like a 'password' field"):
+    with pytest.raises(CredentialFieldValidationError):
         _ = asyncio.run(session._action_with_vault(FillAction(selector="#name", value=PASSWORD)))
 
 
@@ -224,7 +225,7 @@ def test_session_vault_rejects_credential_missing_from_vault() -> None:
     session = NoopLocateSession(vault=vault)
     session.snapshot = make_snapshot("https://example.com")
 
-    with pytest.raises(VaultCredentialError, match="No credential of type password"):
+    with pytest.raises(MissingCredentialFieldError):
         _ = asyncio.run(session._action_with_vault(FillAction(selector="#pw", value=PASSWORD)))
 
 
@@ -264,3 +265,129 @@ def test_session_vault_only_matches_whole_placeholder_values() -> None:
     email = asyncio.run(session._action_with_vault(FillAction(selector="#email", value=EMAIL)))
     assert isinstance(email.value, ValueWithPlaceholder)
     assert email.value.get_secret_value() == "real@example.com"
+
+
+def test_password_placeholder_on_invalid_element_raises() -> None:
+    """A password sentinel typed into a non-password element (e.g. a <label>) must raise instead
+    of silently no-op'ing. Otherwise the literal placeholder string is typed into the field."""
+    vault = MockVault({"https://example.com": {"username": "real_user", "password": "s3cr3t"}})
+    snapshot = make_snapshot("https://example.com")
+
+    # Mimics the locator attrs you get when targeting a <label> instead of <input type="password">:
+    # the type attribute is None because <label> has no type.
+    label_attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML="<label>Password</label>")
+    action = FillAction(id="M2", value=PASSWORD)
+
+    with pytest.raises(CredentialFieldValidationError) as exc_info:
+        asyncio.run(vault.replace_credentials(action, label_attrs, snapshot))
+
+    # Error message should name the credential and hint at the wrong-element cause, without the secret
+    assert "password" in exc_info.value.dev_message
+    assert PASSWORD in exc_info.value.dev_message
+    assert "tag='label'" in exc_info.value.dev_message
+    for message in (exc_info.value.dev_message, exc_info.value.agent_message, exc_info.value.user_message):
+        assert "s3cr3t" not in message
+
+    # The action value must not have been replaced: the caller decides whether to recover.
+    assert action.value == PASSWORD
+
+
+def test_password_placeholder_on_password_input_substitutes() -> None:
+    """Happy path: when the targeted element really is type=password, substitution proceeds."""
+    vault = MockVault({"https://example.com": {"username": "real_user", "password": "s3cr3t"}})
+    snapshot = make_snapshot("https://example.com")
+
+    input_attrs = LocatorAttributes(
+        type="password", autocomplete="current-password", outerHTML='<input type="password">'
+    )
+    action = FillAction(id="I2", value=PASSWORD)
+    updated = asyncio.run(vault.replace_credentials(action, input_attrs, snapshot))
+
+    assert isinstance(updated.value, ValueWithPlaceholder)
+    assert updated.value.get_secret_value() == "s3cr3t"
+
+
+def test_username_placeholder_unaffected_by_validation_change() -> None:
+    """UserNameField.validate_element returns True unconditionally, so username substitution
+    still works even when targeting a non-input wrapper. This pins the asymmetric design that
+    only PasswordField (and other typed fields) gates on element type."""
+    vault = MockVault({"https://example.com": {"username": "real_user", "password": "s3cr3t"}})
+    snapshot = make_snapshot("https://example.com")
+
+    label_attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML="<label>Username</label>")
+    action = FillAction(id="M1", value=USERNAME)
+    updated = asyncio.run(vault.replace_credentials(action, label_attrs, snapshot))
+
+    assert isinstance(updated.value, ValueWithPlaceholder)
+    assert updated.value.get_secret_value() == "real_user"
+
+
+def test_session_action_with_vault_propagates_validation_error() -> None:
+    """The session-level catch must not swallow CredentialFieldValidationError, otherwise the
+    placeholder is typed into the page despite the raise."""
+    vault = MockVault({"https://example.com": {"username": "u", "password": "p"}})
+
+    # locate() returns None, so replace_credentials runs against empty LocatorAttributes
+    # (type=None), which fails the PasswordField check.
+    session = NoopLocateSession(vault=vault)
+    session.snapshot = make_snapshot("https://example.com")
+
+    action = FillAction(id="M2", value=PASSWORD)
+    with pytest.raises(CredentialFieldValidationError):
+        asyncio.run(session._action_with_vault(action))
+
+
+def test_credential_validation_error_omits_element_html() -> None:
+    outer_html = '<input type="text" name="pw" value="prefilled-secret" data-token="abc123">'
+    error = CredentialFieldValidationError(PASSWORD, "password", "text", outer_html)
+
+    for message in (error.dev_message, error.agent_message, error.user_message):
+        assert "prefilled-secret" not in message
+        assert "abc123" not in message
+    assert "tag='input'" in error.dev_message
+    assert "type='text'" in error.dev_message
+
+
+LOGIN_PAGE = """
+<form>
+    <label for="user">Username</label>
+    <input id="user" type="text" />
+    <label id="pw-label" for="pw">Password</label>
+    <input id="pw" type="password" />
+</form>
+"""
+
+
+@pytest.mark.asyncio
+async def test_session_password_placeholder_on_label_is_not_typed_into_page() -> None:
+    """Filling a <label> retargets to its associated input in the browser, so without the
+    validation error the literal password placeholder would be typed into the password field."""
+    vault = MockVault({"about:blank": {"username": "real_user", "password": "s3cr3t"}})
+    async with NotteSession(headless=True, vault=vault) as session:
+        await session.window.page.set_content(LOGIN_PAGE)
+
+        result = await session.aexecute(type="fill", selector="#pw-label", value=PASSWORD, raise_on_failure=False)
+
+        assert result.success is False
+        assert isinstance(result.exception, CredentialFieldValidationError)
+        assert "s3cr3t" not in result.message
+        assert await session.window.page.input_value("#pw") == ""
+
+        with pytest.raises(CredentialFieldValidationError):
+            _ = await session.aexecute(type="fill", selector="#pw-label", value=PASSWORD, raise_on_failure=True)
+        assert await session.window.page.input_value("#pw") == ""
+
+
+@pytest.mark.asyncio
+async def test_session_password_placeholder_on_password_input_types_secret() -> None:
+    vault = MockVault({"about:blank": {"username": "real_user", "password": "s3cr3t"}})
+    async with NotteSession(headless=True, vault=vault) as session:
+        await session.window.page.set_content(LOGIN_PAGE)
+
+        username = await session.aexecute(type="fill", selector="#user", value=USERNAME, raise_on_failure=True)
+        password = await session.aexecute(type="fill", selector="#pw", value=PASSWORD, raise_on_failure=True)
+
+        assert username.success is True
+        assert password.success is True
+        assert await session.window.page.input_value("#user") == "real_user"
+        assert await session.window.page.input_value("#pw") == "s3cr3t"

@@ -5,7 +5,6 @@ from notte_core.credentials.base import (
     BaseVault,
     LocatorAttributes,
 )
-from notte_core.errors import VaultCredentialError
 from notte_core.snapshot import BrowserSnapshot
 from typing_extensions import override
 
@@ -39,21 +38,16 @@ async def resolve_vault_action(
     locate: Callable[[BaseAction], Awaitable[Locator | None]],
 ) -> BaseAction:
     """Substitute validated credentials, retaining locator metadata and masked values."""
-    try:
-        if isinstance(action, FormFillAction):
-            attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
-            return await vault.replace_credentials(action, attrs, snapshot)
-
-        locator = await locate(action)
+    if isinstance(action, FormFillAction):
         attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
-        if locator is not None:
-            attrs = LocatorAttributes(
-                type=await locator.get_attribute("type"),
-                autocomplete=await locator.get_attribute("autocomplete"),
-                outerHTML=await locator.evaluate("el => el.outerHTML"),
-            )
         return await vault.replace_credentials(action, attrs, snapshot)
-    except ValueError as e:
-        # Credential field not found in vault (e.g., vault has email but action needs username).
-        # Fail the action: executing it as is would type the raw placeholder into the page.
-        raise VaultCredentialError(str(e)) from e
+
+    locator = await locate(action)
+    attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
+    if locator is not None:
+        attrs = LocatorAttributes(
+            type=await locator.get_attribute("type"),
+            autocomplete=await locator.get_attribute("autocomplete"),
+            outerHTML=await locator.evaluate("el => el.outerHTML"),
+        )
+    return await vault.replace_credentials(action, attrs, snapshot)

@@ -171,6 +171,14 @@ class LlmModel(StrEnum):
         return self.provider.context_length
 
     @staticmethod
+    def get_direct_model(model: str) -> str:
+        """Model id for direct (non-OpenRouter) provider calls."""
+        # Groq serves gpt-oss under the openai/ namespace; the public value omits it.
+        if model == "groq/gpt-oss-120b":
+            return "groq/openai/gpt-oss-120b"
+        return model
+
+    @staticmethod
     def use_strict_response_format(val: "str | LlmModel") -> bool:
         val_str = str(val)
         # Providers that don't support strict response format or have schema size limits
