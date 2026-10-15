@@ -506,7 +506,14 @@ class BrowserWindow(BaseModel):
         retries: int = config.empty_page_max_retry,
         selector: str | None = None,
         skip_dom: bool = False,
+        *,
+        capture_screenshot: bool = True,
     ) -> BrowserSnapshot:
+        """Capture page state; explicit HTML consumers may omit the image.
+
+        An omitted image is represented by empty bytes. Default snapshots and
+        the existing screenshot argument retain their prior behavior.
+        """
         if retries <= 0:
             raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
         html_content: str = ""
@@ -520,7 +527,7 @@ class BrowserWindow(BaseModel):
                 html_content_await = profiler.profiled(service_name="observation")(self.page.content)()
 
             html_content = await html_content_await
-            snapshot_screenshot = await self.screenshot()
+            snapshot_screenshot = await self.screenshot() if capture_screenshot else b""
             if skip_dom:
                 dom_node = DomNode.empty_root()
             else:
@@ -529,7 +536,13 @@ class BrowserWindow(BaseModel):
 
         except SnapshotProcessingError:
             await self.long_wait()
-            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector, skip_dom=skip_dom)
+            return await self.snapshot(
+                screenshot=screenshot,
+                retries=retries - 1,
+                selector=selector,
+                skip_dom=skip_dom,
+                capture_screenshot=capture_screenshot,
+            )
 
         except Exception as e:
             if "has been closed" in str(e):
@@ -556,7 +569,13 @@ class BrowserWindow(BaseModel):
             if config.verbose:
                 logger.warning(f"Empty page content for {self.page.url}. Retry in {config.wait_retry_snapshot_ms}ms")
             await self.page.wait_for_timeout(config.wait_retry_snapshot_ms)
-            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector, skip_dom=skip_dom)
+            return await self.snapshot(
+                screenshot=screenshot,
+                retries=retries - 1,
+                selector=selector,
+                skip_dom=skip_dom,
+                capture_screenshot=capture_screenshot,
+            )
 
         try:
             snapshot_metadata = await self.snapshot_metadata()
@@ -580,7 +599,13 @@ class BrowserWindow(BaseModel):
                 screenshot=snapshot_screenshot,
             )
         except PlaywrightError:
-            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector)
+            return await self.snapshot(
+                screenshot=screenshot,
+                retries=retries - 1,
+                selector=selector,
+                skip_dom=skip_dom,
+                capture_screenshot=capture_screenshot,
+            )
 
     async def goto_and_wait(
         self,
