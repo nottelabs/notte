@@ -20,6 +20,7 @@ from notte_core.types import ScrapeParams
 from typing_extensions import override
 
 from notte_browser.errors import EmptyPageContentError, PlaywrightError, StructuredExtractorNotAvailableError
+from notte_browser.js import script
 from notte_browser.playwright_async_api import Frame
 from notte_browser.window import BrowserWindow
 
@@ -352,12 +353,8 @@ class VisibleMarkdownConverter(MarkdownConverter):
         return super().convert_soup(soup)
 
 
-# position of an iframe element among its document's elements (iframes in a shadow root take their host's position)
-_FRAME_ELEMENT_POSITION = """el => {
-    let node = el;
-    while (node.getRootNode() instanceof ShadowRoot) node = node.getRootNode().host;
-    return Array.prototype.indexOf.call(node.ownerDocument.getElementsByTagName("*"), node);
-}"""
+# Page-side implementation: js/frame_element_position.js
+_FRAME_ELEMENT_POSITION = script("frame_element_position.js")
 
 
 async def _frames_in_document_order(frame: Frame) -> list[Frame]:

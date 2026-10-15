@@ -3,8 +3,11 @@ import random
 
 from notte_core.logging import logger
 
+from notte_browser.js import script
 from notte_browser.playwright_async_api import Error as PlaywrightError
 from notte_browser.playwright_async_api import Locator, Page
+
+_SELECT_OPTIONS = script("select_options.js")
 
 
 def escape_css_selector(selector: str) -> str:
@@ -582,12 +585,7 @@ class FormFiller:
             )
             try:
                 # If exact match fails, try case-insensitive match
-                options: list[dict[str, str]] = await field.evaluate("""select => {
-                    return Array.from(select.options).map(option => ({
-                        value: option.value,
-                        text: option.text
-                    }));
-                }""")
+                options: list[dict[str, str]] = await field.evaluate(_SELECT_OPTIONS)
 
                 # Try to find a matching option
                 target_value: str = value.lower()

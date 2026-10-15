@@ -44,7 +44,10 @@ from notte_browser.errors import (
     PlaywrightTimeoutError,
     UnexpectedBrowserError,
 )
+from notte_browser.js import script
 from notte_browser.playwright_async_api import Browser, CDPSession, Locator, Page, Playwright, Response
+
+_PAGE_METADATA = script("page_metadata.js")
 
 WaitUntil = Literal["commit", "domcontentloaded", "load", "networkidle"]
 
@@ -351,15 +354,7 @@ class BrowserWindow:
         page = self.page
         # Read the active document in one browser call. Keep int() on the Python
         # side so fractional scroll offsets retain the existing truncation.
-        metadata = await page.evaluate("""() => ({
-            title: document.title,
-            scroll_x: window.scrollX,
-            scroll_y: window.scrollY,
-            viewport_width: window.innerWidth,
-            viewport_height: window.innerHeight,
-            total_width: document.documentElement.scrollWidth,
-            total_height: document.documentElement.scrollHeight,
-        })""")
+        metadata = await page.evaluate(_PAGE_METADATA)
         return SnapshotMetadata(
             title=metadata["title"],
             url=page.url,

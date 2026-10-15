@@ -23,6 +23,7 @@ from notte_browser.errors import (
     FailedToUploadFileError,
     NoStorageObjectProvidedError,
 )
+from notte_browser.js import script
 from notte_browser.playwright_async_api import CDPSession, Frame, Locator, evaluate_in_main_world
 
 if TYPE_CHECKING:
@@ -53,55 +54,13 @@ async def download_raw_file(window: BrowserWindow) -> tuple[bytes, str]:
     return await resp.body(), filename
 
 
-# Installed once per download action. Wraps URL.createObjectURL so we retain a
-# strong JS reference to each Blob under its URL key, which lets us read the
-# bytes even after the page's URL.revokeObjectURL runs (file-saver.js pattern).
-# Revocation only removes the URL->Blob mapping in the browser's registry;
-# our Map keeps the Blob object alive.
-#
-# Both snippets must run in the page's main world, where the Blob is created.
-# Chromium's top frame uses CDP; iframe and Firefox evaluation explicitly uses
-# the owning frame's page world rather than Patchright's default isolated world.
-_BLOB_CAPTURE_HOOK = """
-(() => {
-  if (window.__notte_blob_capture) return;
-  const origCreate = URL.createObjectURL;
-  const blobs = new Map();
-  const createObjectURL = function (obj) {
-    const url = origCreate.call(URL, obj);
-    try { blobs.set(url, obj); } catch (e) {}
-    return url;
-  };
-  URL.createObjectURL = createObjectURL;
-  window.__notte_blob_capture = {
-    get: (url) => blobs.get(url) || null,
-    clear: () => blobs.clear(),
-    dispose: () => {
-      blobs.clear();
-      if (URL.createObjectURL === createObjectURL) URL.createObjectURL = origCreate;
-      delete window.__notte_blob_capture;
-    },
-  };
-})();
-"""
+# Page-side implementation: js/blob_capture_hook.js
+_BLOB_CAPTURE_HOOK = script("blob_capture_hook.js")
 
 _BLOB_CAPTURE_DISPOSE = "window.__notte_blob_capture?.dispose?.()"
 
-# Returns base64 so we can ferry bytes safely across CDP.
-_BLOB_READ_SCRIPT = """
-(async (url) => {
-  const blob = window.__notte_blob_capture && window.__notte_blob_capture.get(url);
-  if (!blob) return null;
-  const buf = await blob.arrayBuffer();
-  const bytes = new Uint8Array(buf);
-  let binary = '';
-  const CHUNK = 0x8000;
-  for (let i = 0; i < bytes.length; i += CHUNK) {
-    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
-  }
-  return btoa(binary);
-})(__NOTTE_BLOB_URL__)
-"""
+# Page-side implementation: js/blob_read.js
+_BLOB_READ_SCRIPT = script("blob_read.js")
 
 
 async def _main_world_evaluate(cdp: CDPSession, expression: str, await_promise: bool = False) -> Any:
@@ -312,7 +271,7 @@ async def download_file(
 
             dl_url = download.url
             if dl_url.startswith("blob:"):
-                expression = _BLOB_READ_SCRIPT.replace("__NOTTE_BLOB_URL__", json.dumps(dl_url))
+                expression = f"({_BLOB_READ_SCRIPT})({json.dumps(dl_url)})"
                 value = await _evaluate_blob_expression(
                     blob_frame,
                     expression,

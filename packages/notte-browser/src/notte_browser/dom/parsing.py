@@ -2,7 +2,6 @@ import asyncio
 import json
 from collections.abc import Collection, Iterable
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 from notte_core.config import config
@@ -14,10 +13,11 @@ from typing_extensions import TypedDict
 
 from notte_browser.dom.builder import RawFrame, RawNode, build_dom_tree
 from notte_browser.errors import PlaywrightError
+from notte_browser.js import script
 from notte_browser.playwright_async_api import ElementHandle, Frame, Page
 from notte_browser.resolution import get_selector_generator
 
-DOM_TREE_JS_PATH = Path(__file__).parent / "buildDomNode.js"
+DOM_TREE_JS = script("buildDomNode.js")
 
 # each frame's DOM is evaluated up to this many times when the evaluation raises (e.g. mid-navigation)
 FRAME_EVALUATION_ATTEMPTS: int = 3
@@ -55,7 +55,7 @@ async def parse_dom(page: Page) -> DomNode:
 @profiler.profiled(service_name="observation")
 async def parse_frames(page: Page) -> RawFrame:
     """Evaluates `buildDomNode.js` in every visible frame. Returns the main frame's payload, child frames grafted."""
-    js_code = DOM_TREE_JS_PATH.read_text()
+    js_code = DOM_TREE_JS
     dom_config: dict[str, Any] = {
         "highlight_elements": config.highlight_elements,
         "focus_element": config.focus_element,

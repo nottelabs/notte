@@ -134,8 +134,8 @@ def test_guard_tokens_are_unique():
 
 
 def test_page_guard_is_a_function_taking_code_budgets_and_token():
-    assert PAGE_RESULT_GUARD.startswith("async ([code, maxBytes, maxValues, token]) =>")
-    assert RESULT_LIMIT_MARKER in PAGE_RESULT_GUARD
+    assert "async ([code, maxBytes, maxValues, token, maxDepth, resultLimitMarker, " in PAGE_RESULT_GUARD
+    assert "allowancePerValue, allowanceFixed]) =>" in PAGE_RESULT_GUARD
 
 
 def test_decode_page_result_restores_playwright_values():

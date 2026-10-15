@@ -50,8 +50,13 @@ from notte_browser.errors import (
 )
 from notte_browser.files import download_file, upload_file
 from notte_browser.form_filling import FormFiller
+from notte_browser.js import script
 from notte_browser.playwright_async_api import Error, Frame, JSHandle, Locator
 from notte_browser.window import BrowserWindow
+
+_BLUR_ACTIVE_ELEMENT = script("blur_active_element.js")
+_IS_DISABLED = script("is_disabled.js")
+_PASTE_TEXT = script("paste_text.js")
 
 
 def text_contains_tabs(text: str) -> bool:
@@ -90,47 +95,11 @@ def platform_control_key() -> Literal["Meta", "Control"]:
     return "Meta" if platform.system() == "Darwin" else "Control"
 
 
-# Capture the wheel target's ancestors before the browser performs its default
-# scroll. Keeping element references avoids mistaking DOM replacement for motion,
-# and composedPath includes scroll containers inside open shadow roots.
-_SCROLL_TRACKER = """
-() => {
-    const initialY = window.scrollY;
-    const positions = new Map();
-    const onWheel = (event) => {
-        for (const node of event.composedPath()) {
-            if (node instanceof Element && !positions.has(node)) {
-                positions.set(node, node.scrollTop);
-            }
-        }
-    };
-    // A passive listener can run after compositor scrolling has already happened.
-    // This listener never cancels the event, but must snapshot before its default action.
-    window.addEventListener('wheel', onWheel, {capture: true, passive: false});
-    return {
-        hasScrolled: () => window.scrollY !== initialY ||
-            Array.from(positions).some(([node, top]) => node.isConnected && node.scrollTop !== top),
-        dispose: () => {
-            window.removeEventListener('wheel', onWheel, true);
-            positions.clear();
-        },
-    };
-}
-"""
+# Page-side implementation: js/scroll_tracker.js
+_SCROLL_TRACKER = script("scroll_tracker.js")
 
-_SCROLL_BOUNDARY = """
-(element, delta) => {
-    const max = Math.max(0, element.scrollHeight - element.clientHeight);
-    const style = getComputedStyle(element);
-    const isContainer = element === document.scrollingElement ||
-        /^(auto|scroll|overlay)$/.test(style.overflowY) ||
-        (max > 0 && style.overflowY === 'hidden');
-    const reversed = /^(flex|inline-flex)$/.test(style.display) && style.flexDirection === 'column-reverse';
-    const lower = reversed ? -max : 0;
-    const upper = reversed ? 0 : max;
-    return isContainer && (delta > 0 ? element.scrollTop >= upper - 1 : element.scrollTop <= lower + 1);
-}
-"""
+# Page-side implementation: js/scroll_boundary.js
+_SCROLL_BOUNDARY = script("scroll_boundary.js")
 
 
 def _scroll_context_disappeared(frame: Frame, error: Error) -> bool:
@@ -144,74 +113,13 @@ def _scroll_context_disappeared(frame: Frame, error: Error) -> bool:
     )
 
 
-# Put the caret at the end of the element's text so typed or pasted text is appended.
-# Inputs without a selection API (e.g. type=email) keep the browser's caret placement.
-_MOVE_CARET_TO_END = """
-(el) => {
-    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-        try {
-            el.setSelectionRange(el.value.length, el.value.length);
-        } catch {}
-        return;
-    }
-    const selection = el.ownerDocument.getSelection();
-    if (selection === null) {
-        return;
-    }
-    const range = el.ownerDocument.createRange();
-    range.selectNodeContents(el);
-    range.collapse(false);
-    selection.removeAllRanges();
-    selection.addRange(range);
-}
-"""
+# Page-side implementation: js/move_caret_to_end.js
+_MOVE_CARET_TO_END = script("move_caret_to_end.js")
 
 _IS_TEXT_FORM_CONTROL = "(el) => el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement"
 
-# Finds the option of an opened custom dropdown whose visible text, `data-value`
-# or `value` is the requested value. When the dropdown names its list with
-# aria-controls/aria-owns, only that list is searched, so a missing option is an
-# error rather than a click on an unrelated item elsewhere on the page. Otherwise
-# options inside the dropdown and its closest ancestors come first, then any in
-# the document (popups are often portaled to <body>). ARIA options win over plain
-# list items at every distance.
-_FIND_DROPDOWN_OPTION = """
-(el, value) => {
-    const norm = (text) => (text || "").replace(/\\s+/g, " ").trim();
-    const wanted = norm(value);
-    const root = el.getRootNode();
-    const scopes = [];
-    for (const attr of ["aria-controls", "aria-owns"]) {
-        for (const id of (el.getAttribute(attr) || "").split(/\\s+/).filter(Boolean)) {
-            const owned = root.getElementById ? root.getElementById(id) : document.getElementById(id);
-            if (owned) scopes.push(owned);
-        }
-    }
-    if (scopes.length === 0) {
-        for (let node = el; node; node = node.parentElement) scopes.push(node);
-        scopes.push(root);
-    }
-    const visible = (node) => {
-        const rect = node.getBoundingClientRect();
-        const style = getComputedStyle(node);
-        return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none";
-    };
-    const matches = (node) =>
-        node !== el &&
-        visible(node) &&
-        (norm(node.innerText) === wanted ||
-            node.getAttribute("data-value") === value ||
-            node.getAttribute("value") === value);
-    for (const selector of ['[role="option"], [role="menuitemradio"], [role="menuitem"]', "li"]) {
-        for (const scope of scopes) {
-            for (const node of scope.querySelectorAll(selector)) {
-                if (matches(node)) return node;
-            }
-        }
-    }
-    return null;
-}
-"""
+# Page-side implementation: js/find_dropdown_option.js
+_FIND_DROPDOWN_OPTION = script("find_dropdown_option.js")
 
 
 class _ActionBudget:
@@ -355,11 +263,7 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
             await window.page.keyboard.press(key)
         case ScrollUpAction(amount=amount) | ScrollDownAction(amount=amount):
             # blur the active element to prevent scroll from being blocked by the element
-            await window.page.evaluate("""
-                if (document.activeElement instanceof HTMLElement) {
-                    document.activeElement.blur();
-                }
-            """)
+            await window.page.evaluate(_BLUR_ACTIVE_ELEMENT)
             await window.page.wait_for_timeout(200)
             if action.selector is not None:
                 await _scroll_target(window, action)
@@ -458,27 +362,7 @@ async def _interact(
         # Interaction actions
         case ClickAction():
             is_disabled = await locator.evaluate(
-                """(el) => {
-                    const isDisabled = (node) =>
-                        node.disabled === true ||
-                        node.inert === true ||
-                        node.getAttribute('disabled') !== null ||
-                        node.getAttribute('aria-disabled') === 'true';
-                    let node = el;
-                    while (node !== null) {
-                        if (isDisabled(node)) {
-                            return true;
-                        }
-                        if (node.assignedSlot) {
-                            node = node.assignedSlot;
-                            continue;
-                        }
-                        const root = node.getRootNode && node.getRootNode();
-                        node = root instanceof ShadowRoot ? root.host : node.parentElement;
-                    }
-                    return false;
-                }
-                """,
+                _IS_DISABLED,
                 timeout=budget.remaining_ms(),
             )
             if is_disabled:
@@ -505,18 +389,7 @@ async def _interact(
 
                 # Use isolated clipboard variable instead of system clipboard
                 await window.page.evaluate(
-                    """
-                    (text) => {
-                        window.__isolatedClipboard = text;
-                        const dataTransfer = new DataTransfer();
-                        dataTransfer.setData('text/plain', window.__isolatedClipboard);
-                        document.activeElement.dispatchEvent(new ClipboardEvent('paste', {
-                            clipboardData: dataTransfer,
-                            bubbles: true,
-                            cancelable: true
-                        }));
-                    }
-                """,
+                    _PASTE_TEXT,
                     get_str_value(value),
                 )
 
