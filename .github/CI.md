@@ -14,6 +14,7 @@ pre-commit filters deleted files out of changed-file hooks.
 | Change | Checks |
 | --- | --- |
 | Docs prose, pricing, generated reference text, images | Changed-file hooks, offline docs checks, docs assertions |
+| Offline llms.txt generator | Lightweight docs and offline generator tests |
 | README prose surrounding unchanged fenced code | README static checks and changed-file hooks |
 | Executable docs, snippet runners, catalogs, or fenced docs code | Relevant offline and live example suites |
 | Python unit tests | Python lint and unit suite |

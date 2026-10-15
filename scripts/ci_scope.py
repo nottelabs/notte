@@ -63,7 +63,16 @@ def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
         return {"python_static", "readme_static"} | ({"readme_live"} if code_changed else set())
     if path.startswith("docs/"):
         selected = {"python_static", "python_docs", "docs_static", "paired_static"}
-        if path == "docs/src/docs.json":
+        if path in {"docs/src/docs.json", "docs/src/scripts/generate_llms.py"}:
+            return selected
+        if path.endswith((".md", ".mdx")) and path.startswith(
+            (
+                "docs/src/sdk-reference/",
+                "docs/src/typescript-sdk-reference/",
+                "docs/src/cli-reference/",
+                "docs/src/api-reference/",
+            )
+        ):
             return selected
         # The execution harness runs testers, not prose or generated reference pages.
         if path.startswith(("docs/src/testers/", "docs/src/tests/")) or path == "docs/src/conftest.py":
@@ -92,7 +101,7 @@ def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
                 ".pdf",
             )
         ):
-            selected |= GROUPS["docs"] | GROUPS["paired"]
+            selected |= GROUPS["docs"] | GROUPS["paired"] | {"python_unit"}
         return selected
     if path.startswith(("packages/", "src/")):
         if path.rsplit("/", 1)[-1] in {"README.md", "CHANGELOG.md"}:
@@ -133,7 +142,7 @@ def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
     if path.startswith("tests/"):
         if path.startswith("tests/sdk/cli_contract/") or path == "tests/sdk/test_cli_keyring_contract.py":
             return {"python_static", "python_unit", "cli_contract"}
-        if path.startswith("tests/docs/"):
+        if path.startswith("tests/docs/") or path == "tests/test_generate_llms_offline.py":
             return {"python_static", "python_docs"}
         if path in {"tests/examples/test_readme.py", "tests/scripts/test_readme_blocks.py"}:
             return {"python_static", "python_unit"} | GROUPS["readme"]

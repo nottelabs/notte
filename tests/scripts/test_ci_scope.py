@@ -114,6 +114,23 @@ class RoutingTests(unittest.TestCase):
         self.assertIn("readme_live", ci.scopes_for_path("README.md", code_changed=True))
         self.assertIn("docs_live", ci.scopes_for_path("docs/src/guides/example.mdx", code_changed=True))
 
+    def test_offline_generator_and_its_tests_use_the_lightweight_suite(self) -> None:
+        for path in ("docs/src/scripts/generate_llms.py", "tests/test_generate_llms_offline.py"):
+            with self.subTest(path=path):
+                selected = ci.scopes_for_path(path)
+                self.assertIn("python_docs", selected)
+                self.assertNotIn("python_unit", selected)
+                self.assertFalse({name for name in selected if name.endswith("_live")})
+        # Unfamiliar executable docs may also have regression tests outside tests/docs.
+        self.assertIn("python_unit", ci.scopes_for_path("docs/src/scripts/new_generator.py"))
+
+    def test_generated_reference_code_changes_only_need_offline_checks(self) -> None:
+        for directory in ("sdk-reference", "typescript-sdk-reference", "cli-reference", "api-reference"):
+            with self.subTest(directory=directory):
+                selected = ci.scopes_for_path(f"docs/src/{directory}/session.mdx", code_changed=True)
+                self.assertIn("docs_static", selected)
+                self.assertFalse({name for name in selected if name.endswith("_live")})
+
     def test_policy_and_unknown_paths_select_broad_coverage(self) -> None:
         for path in (
             "scripts/ci_scope.py",

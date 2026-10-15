@@ -121,7 +121,9 @@ def test_lightweight_docs_assertions_have_no_workspace_or_secrets() -> None:
     assert "pr_number" not in str(job)
     assert "secrets." not in str(job)
     commands = "\n".join(step.get("run", "") for step in job["steps"])
-    assert "tests/docs --noconftest" in commands
+    assert "pytest -c /dev/null" in commands
+    assert "tests/docs tests/test_generate_llms_offline.py --noconftest" in commands
+    assert "pytest pyyaml" in commands
     assert "uv sync" not in commands
 
 
