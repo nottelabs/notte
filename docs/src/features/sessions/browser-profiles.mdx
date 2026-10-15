@@ -141,7 +141,7 @@ Load a profile without saving changes by setting `persist=False`:
 |---------|----------|---------|
 | **Scope** | Cookies, local storage, and session storage | Cookies only |
 | **Storage** | Managed by Notte | JSON file you manage |
-| **Persistence** | Automatic on session end | Manual export/import |
+| **Persistence** | Save on session end with `persist=True`, or call `save_profile()` | Manual export/import, or automatic load/save with `cookie_file` |
 | **Use case** | Long-term state preservation | Quick cookie injection |
 
 Use profiles when you need to preserve cookies and web storage together. Use cookies when you only need to inject specific authentication tokens.

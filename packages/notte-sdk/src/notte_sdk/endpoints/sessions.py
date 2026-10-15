@@ -819,8 +819,8 @@ class RemoteSession(SyncResource):
 
         Args:
             wait: If True (default), poll until the replay is ready.
-            timeout: Maximum seconds to wait (default 120).
-            poll_interval: Seconds between polling attempts (default 2).
+            timeout: Maximum seconds to wait (default 240).
+            poll_interval: Seconds between polling attempts (default 5).
 
         Returns:
             ReplayResponse: Presigned URLs for HLS playlist and MP4 download.

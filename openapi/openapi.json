@@ -17558,7 +17558,7 @@
           "profile_id": {
             "type": "string",
             "title": "Profile Id",
-            "description": "Profile ID (format: notte-profile-{16 hex chars})"
+            "description": "Profile ID (format: `notte-profile-{16 hex chars}`)"
           },
           "name": {
             "anyOf": [

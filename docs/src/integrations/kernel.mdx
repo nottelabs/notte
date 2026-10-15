@@ -2,23 +2,30 @@
 title: Kernel.sh
 description: 'Integrate with Kernel browsers'
 ---
-import ExternalBasic from '/snippets/sessions/cdp/external_basic.mdx';
+import KernelSession from '/snippets/sessions/cdp/external_kernel.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Kernel provides cloud browsers that expose a Chrome DevTools Protocol (CDP) endpoint. Connect a Notte session to that endpoint to observe pages, execute actions, and scrape content.
+Kernel.sh is a developer platform that provides browser infrastructure for web automation. By integrating with Notte, you can use Kernel browser infra to run reliable browser automations using Chrome DevTools Protocol (CDP).
 
-## Connect a Kernel browser
+## Adding Kernel to existing Notte implementations
 
-1. Install the `notte-sdk` and `kernel` Python packages in your environment.
-2. Create a browser using your Kernel account and obtain its `cdp_ws_url`. See the [Kernel documentation](https://docs.onkernel.com/) for browser provisioning and authentication.
-3. Pass that URL as `cdp_url` when creating your Notte session. Replace the external-provider URL in this shared CDP example with the URL of your Kernel browser:
+### 1. Install Notte and Kernel SDK
 
-<ExternalBasic />
+Install the `notte-sdk` and `kernel` packages in your Python environment.
 
-The same session supports `observe`, `execute`, and `scrape`. For more connection options, see [External Providers](/features/sessions/external-providers).
+### 2. Create and connect a browser
 
-## Browser ownership
+Use Kernel's `cdp_ws_url` as the `cdp_url` when starting a Notte session. Configure proxies, launch arguments, and viewport with Kernel before connecting.
 
-The Notte session context manages its own connection. Keep the Kernel browser ID and delete the browser through Kernel when your automation finishes, including when it raises an error. Only delete browsers created by your automation.
+<KernelSession />
+
+The Notte context manager stops the Notte session. The `finally` block separately deletes the browser owned by Kernel, including when the automation fails.
+
+## Benefits of using Kernel with Notte
+
+* **No local browser management**: Run automations without installing or maintaining browsers locally
+* **Scalability**: Launch multiple browser sessions in parallel for concurrent tasks
+* **Cloud infrastructure**: Leverage Kernel's optimized browser infrastructure
+* **Session control**: Programmatic control over browser lifecycle

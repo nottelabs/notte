@@ -8,14 +8,13 @@ import UrlUpload from '/snippets/file-storage/url_upload.mdx';
 import DownloadingFiles from '/snippets/file-storage/downloading_files.mdx';
 import ForceOverwrite from '/snippets/file-storage/force_overwrite.mdx';
 import UsingWithSessions from '/snippets/file-storage/using_with_sessions.mdx';
-import AttachBeforeStarting from '/snippets/file-storage/attach_before_starting.mdx';
 import DescriptiveFilenames from '/snippets/file-storage/descriptive_filenames.mdx';
 import CheckDownloads from '/snippets/file-storage/check_downloads.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-File Storage provides a cloud bucket for uploading files to use in your automations and downloading files that your sessions retrieve from websites.
+File Storage manages session-owned uploads and browser downloads. Upload files for your automation to attach to forms, and retrieve files the browser saves.
 
 ## Quick Start
 
@@ -23,9 +22,9 @@ File Storage provides a cloud bucket for uploading files to use in your automati
 
 ## How It Works
 
-File Storage has two buckets:
+Files have two sources:
 
-| Bucket | Purpose | API |
+| Source | Purpose | API |
 |--------|---------|-----|
 | **Uploads** | Files you upload for sessions to use | `storage.upload()` |
 | **Downloads** | Files sessions download from websites | `storage.download()` |

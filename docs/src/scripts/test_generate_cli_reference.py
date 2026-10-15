@@ -11,7 +11,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-import generate_cli_reference as gen  # noqa: E402
+import generate_cli_reference as gen
 
 PAGES = ["cli-reference/index", "cli-reference/auth", "cli-reference/sessions", "cli-reference/other"]
 
@@ -44,6 +44,13 @@ class SyncNavTests(unittest.TestCase):
 
 
 class NavPagesTests(unittest.TestCase):
+    def test_session_compatibility_note_survives_regeneration_without_duplicates(self) -> None:
+        text = "---\ntitle: Sessions\ndescription: Manage sessions\n---\n\nCommands.\n"
+        prepared = gen.prepare_page("sessions", text)
+        self.assertIn(gen.SESSION_COMPATIBILITY_NOTE, prepared)
+        self.assertEqual(gen.prepare_page("sessions", prepared), prepared)
+        self.assertNotIn(gen.SESSION_COMPATIBILITY_NOTE, gen.prepare_page("auth", text))
+
     def test_overview_first_and_other_last(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             for name in ["vaults", "other", "auth", "index", "sessions"]:

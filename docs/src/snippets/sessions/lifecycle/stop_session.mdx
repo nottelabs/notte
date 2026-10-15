@@ -16,6 +16,11 @@ print("Session stopped successfully")
 ```
 
 ```typescript TypeScript
+import { NotteClient, type SessionResponse } from 'notte-sdk';
+
+const client = new NotteClient();
+let status: SessionResponse | undefined;
+
 const session = client.Session();
 await session.start();
 try {

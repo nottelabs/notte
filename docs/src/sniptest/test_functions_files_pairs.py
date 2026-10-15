@@ -14,7 +14,6 @@ class FunctionsFilesPairsTest(unittest.TestCase):
         root = Path(__file__).resolve().parents[1] / "testers"
         for name in (
             "file-storage/uploading_files",
-            "file-storage/attach_before_starting",
             "functions/management/filter_active_runs",
             "file-storage/descriptive_filenames",
             "file-storage/force_overwrite",
@@ -81,7 +80,7 @@ class UploadCleanupTest(unittest.TestCase):
 
     def test_partial_failures_delete_all_successful_uploads(self):
         root = Path(__file__).resolve().parents[1] / "testers/file-storage"
-        for example in ("uploading_files", "attach_before_starting", "descriptive_filenames"):
+        for example in ("uploading_files", "descriptive_filenames"):
             failures = ["status", "list", "delete"]
             if example == "uploading_files":
                 failures.append("second-upload")

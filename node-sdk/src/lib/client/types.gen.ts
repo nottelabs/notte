@@ -4400,7 +4400,7 @@ export type ProfileResponse = {
     /**
      * Profile Id
      *
-     * Profile ID (format: notte-profile-{16 hex chars})
+     * Profile ID (format: `notte-profile-{16 hex chars}`)
      */
     profile_id: string;
     /**

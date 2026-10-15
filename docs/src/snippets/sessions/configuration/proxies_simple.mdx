@@ -10,6 +10,12 @@ with client.Session(proxies=True) as session:
 ```
 
 ```typescript proxies_simple.ts
+import { NotteClient, type SessionResponse } from 'notte-sdk';
+
+const client = new NotteClient();
+let status: SessionResponse | undefined;
+let title: string | undefined;
+
 const session = client.Session({ proxies: true });
 await session.use(async () => {
   status = await session.status();

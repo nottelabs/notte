@@ -19,7 +19,7 @@ When you access `session.page`, you get a Playwright-compatible page object that
 
 <PlaywrightDirect />
 
-This gives you the full Playwright API - everything you can do with Playwright works here. You control the browser directly through WebSocket connections with low latency.
+You control the Chromium browser through a CDP WebSocket connection. Most page automation APIs work over CDP, but this connection has lower fidelity than Playwright's native protocol. Check [Playwright's CDP limitations](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp) before relying on advanced features. Local filesystem operations and browser launch settings also need to account for the remote browser.
 
 ## Notte SDK Methods
 
@@ -33,7 +33,7 @@ These methods use Notte's backend to execute actions, with built-in AI capabilit
 
 | Feature | Playwright (`session.page`) | Notte SDK (`execute/observe/scrape`) |
 |---------|---------------------------|--------------------------------------|
-| **API Surface** | Full Playwright API | Streamlined action-based API |
+| **API Surface** | Playwright APIs supported over Chromium CDP | Streamlined action-based API |
 | **Dependencies** | Requires `playwright` package | Just `notte-sdk` |
 | **Element Selection** | Manual CSS/XPath selectors | AI-powered natural language + selectors |
 | **Page Understanding** | Manual interpretation | AI describes page with `observe()` |
@@ -42,7 +42,7 @@ These methods use Notte's backend to execute actions, with built-in AI capabilit
 | **Error Handling** | Manual try/except | Automatic retries and validation |
 | **Network Control** | ✅ Intercept, modify requests | Send requests from the page with `session.fetch()` (no interception) |
 | **Latency** | Lower (WebSocket) | Higher (HTTP API) |
-| **Action Coverage** | Everything | Everything via extensive action library |
+| **Action Coverage** | Chromium CDP capabilities | Documented browser actions |
 
 ## Why Use Playwright?
 
@@ -52,7 +52,7 @@ Choose `session.page` when you need:
 - **Event monitoring** - Listen to console logs, network events, page errors
 - **Lowest latency** - Direct WebSocket communication for high-speed operations
 - **Standard patterns** - Use familiar Playwright code and examples
-- **Fine-grained control** - Access to every Playwright feature
+- **Fine-grained control** - Access to Playwright page, context, and event APIs supported over CDP
 
 <PlaywrightExample />
 

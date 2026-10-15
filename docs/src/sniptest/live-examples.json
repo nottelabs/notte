@@ -55,7 +55,12 @@
     "closedSession": true
   },
   "sessions/profiles/save_profile.ts": {
-    "expected": { "results": ["example-login", true] }
+    "expected": {
+      "results": [
+        "example-login",
+        true
+      ]
+    }
   },
   "sessions/country_proxy.ts": {
     "expected": {
@@ -66,23 +71,6 @@
     }
   },
   "scraping/quick_scrape.ts": {
-    "expected": {
-      "results": [
-        true,
-        true
-      ]
-    }
-  },
-  "scraping/quickstart.ts": {
-    "expected": {
-      "results": [
-        true,
-        true
-      ]
-    },
-    "logContains": "Example Domain"
-  },
-  "scraping/simple.ts": {
     "expected": {
       "results": [
         true,
@@ -242,12 +230,6 @@
     },
     "closedSession": true
   },
-  "file-storage/attach_before_starting.ts": {
-    "expected": {
-      "status": "closed"
-    },
-    "closedSession": true
-  },
   "sessions/cdp/playwright_context_managers.ts": {
     "expected": {
       "status": "active"
@@ -281,20 +263,6 @@
       "status": "active"
     },
     "closedSession": true
-  },
-  "sessions/cdp/selenium_javascript.ts": {
-    "expected": {
-      "status": "active"
-    },
-    "closedSession": true,
-    "logContains": "Result: 10"
-  },
-  "sessions/cdp/selenium_playwright_alternative.ts": {
-    "expected": {
-      "status": "active"
-    },
-    "closedSession": true,
-    "logContains": "Title: Example Domain"
   },
   "sessions/index.ts": {
     "expected": {
@@ -489,37 +457,13 @@
     },
     "closedSession": true
   },
-  "sessions/capabilities/captcha_combine_stealth.ts": {
-    "expected": {
-      "status": "closed"
-    },
-    "closedSession": true
-  },
   "sessions/captcha/combine_stealth.ts": {
     "expected": {
       "status": "closed"
     },
     "closedSession": true
   },
-  "sessions/capabilities/captcha_ensure_requirements.ts": {
-    "expected": {
-      "status": "closed"
-    },
-    "closedSession": true
-  },
   "sessions/captcha/ensure_requirements.ts": {
-    "expected": {
-      "status": "closed"
-    },
-    "closedSession": true
-  },
-  "sessions/capabilities/captcha_increase_timeout.ts": {
-    "expected": {
-      "status": "closed"
-    },
-    "closedSession": true
-  },
-  "sessions/capabilities/combine_stealth.ts": {
     "expected": {
       "status": "closed"
     },
@@ -537,12 +481,6 @@
     },
     "closedSession": true
   },
-  "sessions/stealth_configuration.ts": {
-    "expected": {
-      "status": "closed"
-    },
-    "closedSession": true
-  },
   "sessions/cdp.ts": {
     "expected": {
       "status": "closed"
@@ -550,18 +488,6 @@
     "closedSession": true
   },
   "sessions/configuration/cookie_file.ts": {
-    "expected": {
-      "status": "closed"
-    },
-    "closedSession": true
-  },
-  "sessions/cdp/selenium_builtin_page.ts": {
-    "expected": {
-      "status": "closed"
-    },
-    "closedSession": true
-  },
-  "sessions/capabilities/match_viewport.ts": {
     "expected": {
       "status": "closed"
     },

@@ -48,6 +48,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Secret Vaults](https://docs.notte.cc/concepts/vaults.md): Enterprise-grade credential management for your Sessions
 - [Browser Profiles](https://docs.notte.cc/features/sessions/browser-profiles.md): Persist browser state across sessions
 - [Persona Identities](https://docs.notte.cc/concepts/personas.md): Self-service identities for web automation (account creation, 2FA,etc.)
+- [Managed Auth](https://docs.notte.cc/guides/managed-auth.md): Start browser sessions with saved authentication connections
 
 ## Functions
 
@@ -65,8 +66,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 ## Guides
 
-- [Advanced Scraping](https://docs.notte.cc/guides/scraping.md): How to build reliable web scrapers with Notte
-- [Anti-Detection Playbook](https://docs.notte.cc/guides/stealth.md): How to avoid CAPTCHAs and bot detection in Notte Sessions
+- [Anti-Detection Playbook](https://docs.notte.cc/guides/stealth.md): Diagnose blocked browser sessions and choose the next step
 - [Create accounts with Personas](https://docs.notte.cc/guides/account_creation.md): How to use notte personas for account creation
 
 
@@ -535,6 +535,15 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/notteusage.md)
 - [get](https://docs.notte.cc/typescript-sdk-reference/notteusage/get.md)
 - [logs](https://docs.notte.cc/typescript-sdk-reference/notteusage/logs.md)
+
+#### API Resources
+
+- [client.files](https://docs.notte.cc/typescript-sdk-reference/resources/files.md): Method signatures, arguments, and return types for client.files API operations.
+- [client.sessions](https://docs.notte.cc/typescript-sdk-reference/resources/sessions.md): Method signatures, arguments, and return types for client.sessions API operations.
+- [client.vaults](https://docs.notte.cc/typescript-sdk-reference/resources/vaults.md): Method signatures, arguments, and return types for client.vaults API operations.
+- [client.functions](https://docs.notte.cc/typescript-sdk-reference/resources/functions.md): Method signatures, arguments, and return types for client.functions API operations.
+- [client.personas](https://docs.notte.cc/typescript-sdk-reference/resources/personas.md): Method signatures, arguments, and return types for client.personas API operations.
+- [client.profiles](https://docs.notte.cc/typescript-sdk-reference/resources/profiles.md): Method signatures, arguments, and return types for client.profiles API operations.
 
 ### Debug
 

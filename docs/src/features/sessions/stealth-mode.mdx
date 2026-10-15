@@ -6,10 +6,9 @@ import RealisticBehavior from "/snippets/sessions/stealth/realistic_behavior.mdx
 import RotateProxies from "/snippets/sessions/stealth/rotate_proxies.mdx";
 import MatchViewport from "/snippets/sessions/stealth/match_viewport.mdx";
 import CombineTechniques from "/snippets/sessions/stealth/combine_techniques.mdx";
-import DefaultProxy from "/snippets/sessions/default_proxy.mdx";
-import CountryProxy from "/snippets/sessions/country_proxy.mdx";
-import StealthConfiguration from "/snippets/sessions/stealth_configuration.mdx";
-import CaptchaCombineStealth from "/snippets/sessions/captcha/combine_stealth.mdx";
+import BasicSession from '/snippets/sessions/index.mdx';
+import CountryProxy from '/snippets/sessions/country_proxy.mdx';
+import AdvancedStealth from '/snippets/sessions/configuration/headless_mode.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -29,7 +28,7 @@ All Notte sessions automatically include:
 
 Stealth features are enabled by default. Simply create a session:
 
-<DefaultProxy />
+<BasicSession />
 
 ## Proxy Location
 
@@ -41,13 +40,11 @@ Residential proxies are on by default and exit in the US. Pick a country to matc
 
 For sites with sophisticated bot detection, `advanced_stealth=True` runs the session in Notte's highest-fidelity browser environment. It is available to approved workspaces; contact [hello@notte.cc](mailto:hello@notte.cc) to enable it.
 
-Set the `advanced_stealth` session option to `True` in Python or `true` in TypeScript after your workspace is approved. See [Session Configuration](/features/sessions/configuration).
+<AdvancedStealth />
 
 ## Custom User Agents
 
-Override the default user agent for specific requirements. Note that a custom user agent replaces the one Notte generates to match the rest of the fingerprint:
-
-<StealthConfiguration />
+Keep the generated user agent unless the target requires a specific override. A custom `user_agent` replaces one part of Notte's fingerprint and can make it inconsistent with the browser version, platform, or other properties. Test the complete fingerprint before using an override in production.
 
 ## Stealth Best Practices
 
@@ -79,7 +76,7 @@ Layer stealth features for best results:
 
 Test your stealth configuration against detection services:
 
-Visit [Sannysoft](https://bot.sannysoft.com/), [Are You Headless](https://arh.antoinevastel.com/bots/areyouheadless), or [Fingerprint](https://fingerprint.com/demo/) in your session and inspect the reported browser properties. Save screenshots with the [Playwright page API](/features/sessions/playwright).
+Use a fresh session to compare [bot.sannysoft.com](https://bot.sannysoft.com/), [areyouheadless](https://arh.antoinevastel.com/bots/areyouheadless), or [Fingerprint](https://fingerprint.com/demo/). Inspect the browser fingerprint and keep a screenshot or recording of the result. A detector result alone does not guarantee access to your target site.
 
 ## What Stealth Can't Do
 
@@ -94,7 +91,7 @@ Stealth features help avoid detection, but they cannot:
 
 Combine stealth with automatic captcha solving for comprehensive protection:
 
-<CaptchaCombineStealth />
+Both options are enabled by default. See [CAPTCHA Solving](/features/sessions/captcha-solving) for supported challenges and waiting behavior.
 
 ## Next Steps
 
