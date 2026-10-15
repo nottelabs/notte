@@ -15,6 +15,12 @@ with client.Session(viewport_width=1920, viewport_height=1080) as session:
 ```
 
 ```typescript TypeScript - Context Manager
+import { NotteClient, type SessionResponse } from 'notte-sdk';
+
+const client = new NotteClient();
+let status: SessionResponse | undefined;
+let title: string | undefined;
+
 // Recommended: Use .use() for automatic cleanup.
 await client
   .Session({ viewport_width: 1920, viewport_height: 1080 })
@@ -48,6 +54,12 @@ finally:
 ```
 
 ```typescript TypeScript - Manual Management
+import { NotteClient, type SessionResponse } from 'notte-sdk';
+
+const client = new NotteClient();
+let status: SessionResponse | undefined;
+let title: string | undefined;
+
 const session = client.Session();
 await session.start();
 try {

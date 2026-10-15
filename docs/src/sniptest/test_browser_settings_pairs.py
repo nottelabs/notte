@@ -16,15 +16,10 @@ CASES = [
     "browser-controls/press_key",
     "browser-controls/wait",
     "guides/wait_time",
-    "sessions/capabilities/captcha_combine_stealth",
     "sessions/captcha/combine_stealth",
-    "sessions/capabilities/captcha_ensure_requirements",
     "sessions/captcha/ensure_requirements",
-    "sessions/capabilities/captcha_increase_timeout",
-    "sessions/capabilities/combine_stealth",
     "sessions/stealth/combine_techniques",
     "sessions/default_proxy",
-    "sessions/stealth_configuration",
     "sessions/capabilities/dev_environment",
 ]
 

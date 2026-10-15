@@ -10,16 +10,15 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ## Overview
 
 Notte provides an enterprise-grade secure vault system that allows you to safely share authentication details with AI agents.
-All sensitive data is encrypted at rest and in transit, and credentials are never exposed to LLMs or third-party services during agent execution.
-This ensures your passwords, API keys, and other secrets remain protected while enabling agents to authenticate and interact with services on your behalf.
+Secrets are encrypted at rest and in transit. During supported credential-fill actions, the vault substitutes real credentials for placeholders outside the model context. The target website receives the credentials needed to authenticate. Treat browser access, screenshots, page content, and downloaded files as sensitive; placeholder substitution is not a guarantee that a website cannot reveal a submitted value.
 
 ## Secure your credentials
 
 Your credentials are protected with multiple layers of security:
 
-- **End-to-End Encryption**: All secrets are encrypted at rest and in transit.
-- **Zero Trust Architecture**: Credentials are never forwarded to LLM calls or external services.
-- **Restricted Access**: Only your agents can access your credentials.
+- **Encryption**: Secrets are encrypted at rest and in transit.
+- **Credential substitution**: Supported fill actions resolve placeholders outside the model context.
+- **Access control**: Authorized API clients and agents can use the vault.
 - **2FA Support**: Comprehensive support for two-factor authentication credentials.
 
 ## How it works
@@ -31,7 +30,7 @@ Some actions like `FillActions` may contain secure information such as passwords
 When the system detects that the intent of the LLM Agent is to use such sensitive information, the vault takes over the execution and manually replaces the dummy
 credentials provided by the LLM with the actual credentials based on the content of the vault.
 
-The significant security benefit of this approach is that the LLM never actually sees the actual credentials.
+This avoids including the real credential in the model-generated fill action.
 
 ## Vault Management
 
@@ -41,10 +40,6 @@ The following snippet shows how to manage your vault using the Notte Python SDK.
 
 <VaultPython />
 
-## Security Guarantees
+## Handling credentials
 
-- 🔒 Credentials are never stored in plain text
-- 🔒 No credential data is sent to LLM providers
-- 🔒 Credentials are substituted into the page by the vault, outside the LLM context
-- 🔒 Access to credentials is strictly controlled and logged
-- 🔒 Open-source implementation for transparency
+Use vault placeholders instead of putting real passwords in prompts or source code. Credential substitution happens outside the model context, but the browser still interacts with the destination website. Avoid logging secrets and review what your automation captures or shares.

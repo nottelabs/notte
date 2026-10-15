@@ -40,6 +40,8 @@ const actionOrder = [
   'CaptchaSolveAction', 'SmsReadAction', 'EmailReadAction', 'EmailVerificationReadAction',
 ];
 const diagnosticMethods = new Set(['client/getconfig', 'client/getclient', 'session/getresponse', 'session/issessionactive', 'agent/isrunning']);
+// Preview routing remains addressable for compatibility, outside the task overview.
+const overviewHiddenMethods = new Set(['client/withdbpreview']);
 const portableType = text => text.replace(/import\("[^"]+"\)\./g, '');
 const fence = text => `\`\`\`typescript\n${text}\n\`\`\``;
 // JSDoc is prose, not JSX. Preserve code spans but escape MDX expressions/tags.
@@ -186,6 +188,7 @@ export function createReference(root = sdkRoot) {
   };
   const groups = [];
   const navigableMethods = new Set();
+  const resourcePages = [];
   for (const { symbol, node } of classes) {
     const name = symbol.name;
     const classSlug = slug(name);
@@ -221,11 +224,31 @@ export function createReference(root = sdkRoot) {
       if (!deprecated && !ts.isComputedPropertyName(method.name) && !hiddenMethods.has(`${classSlug}/${memberSlug(methodName)}`)) {
         navigableMethods.add(path);
         nav.push(path);
-        if (!diagnosticMethods.has(`${classSlug}/${memberSlug(methodName)}`)) methodLinks.push(`- [${methodName}](/${path})${doc(checker.getSymbolAtLocation(method.name)) ? `: ${doc(checker.getSymbolAtLocation(method.name)).split(/\n\s*\n/)[0].replace(/\s*\n\s*/g, ' ')}` : ''}`);
+        if (!diagnosticMethods.has(`${classSlug}/${memberSlug(methodName)}`) && !overviewHiddenMethods.has(`${classSlug}/${memberSlug(methodName)}`)) methodLinks.push(`- [${methodName}](/${path})${doc(checker.getSymbolAtLocation(method.name)) ? `: ${doc(checker.getSymbolAtLocation(method.name)).split(/\n\s*\n/)[0].replace(/\s*\n\s*/g, ' ')}` : ''}`);
       }
     }
     const props = members.filter(m => ts.isPropertyDeclaration(m) || ts.isGetAccessorDeclaration(m)).map(m => {
       const symbol = checker.getSymbolAtLocation(m.name);
+      if (name === 'NotteClient') {
+        const resourceName = m.name.getText();
+        const resourceType = checker.getTypeAtLocation(m);
+        const resourceClass = classes.find(entry => entry.symbol === resourceType.getSymbol());
+        if (resourceClass) {
+          return `### ${resourceName}\n\n${doc(symbol)}\n\nSee [${resourceClass.symbol.name}](/${prefix}/manual/${slug(resourceClass.symbol.name)}) for methods and parameters.`;
+        }
+        const path = `${prefix}/resources/${memberSlug(resourceName)}`;
+        const operations = checker.getPropertiesOfType(resourceType).flatMap(operation => {
+          const signatures = checker.getTypeOfSymbolAtLocation(operation, m).getCallSignatures();
+          if (!signatures.length) return [];
+          const declarations = signatures.map(signature =>
+            `client.${resourceName}.${operation.name}${portableType(checker.signatureToString(signature, m, ts.TypeFormatFlags.NoTruncation))};`);
+          return [`## ${operation.name}\n\n${doc(operation)}\n\n${fence(declarations.join('\n'))}`];
+        });
+        pages.set(`${path}.mdx`, page(`client.${resourceName}`, m,
+          `${doc(symbol)}\n\nThese operations use the configured client's authentication and transport. Signatures below preserve positional arguments, optional parameters, and return types. See the [OpenAPI schema](https://api.notte.cc/openapi.json) for HTTP request and response fields.\n\n${operations.join('\n\n')}`));
+        resourcePages.push(path);
+        return `### ${resourceName}\n\n${doc(symbol)}\n\nSee [client.${resourceName}](/${path}) for method signatures and argument order.`;
+      }
       return `### ${m.name.getText()}\n\n${fence(`${m.name.getText()}${m.questionToken ? '?' : ''}: ${typeText(checker.getTypeAtLocation(m))}`)}\n\n${doc(symbol)}`;
     });
     const ctorOverloads = constructors.some(n => !n.body) ? constructors.filter(n => !n.body) : constructors;
@@ -297,6 +320,7 @@ export function createReference(root = sdkRoot) {
   }
   // Use the SDK's action union, not every model with "Action" in its name.
   const actionSpace = types.get('ActionSpace');
+  if (resourcePages.length) categories.Tooling.push({ group: 'API Resources', collapsed: true, pages: resourcePages });
   const actions = actionSpace && checker.getTypeAtLocation(actionSpace).getProperty('actions');
   const actionType = actions && checker.getIndexTypeOfType(checker.getTypeOfSymbolAtLocation(actions, actionSpace), ts.IndexKind.Number);
   if (actionType) {

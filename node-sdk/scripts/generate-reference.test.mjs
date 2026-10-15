@@ -94,6 +94,19 @@ test('real SDK output covers factories, aliases and inherited session options wi
   for (const content of actual.pages.values()) assert.doesNotMatch(content, /import\("\/|\/Users\/|\/private\/tmp\//);
 });
 
+test('client overview links to resource references without losing method signatures', () => {
+  const overview = actual.pages.get('typescript-sdk-reference/manual/client.mdx');
+  assert.doesNotMatch(overview, /\[withDbPreview\]|sessions: \{ list:/);
+  assert.match(overview, /### sessions/);
+  assert.match(overview, /\[client.sessions\]\(\/typescript-sdk-reference\/resources\/sessions\)/);
+  const sessions = actual.pages.get('typescript-sdk-reference/resources/sessions.mdx');
+  assert.match(sessions, /client.sessions.createPayment\(sessionId: CreatePaymentData\["path"\]\["session_id"\], body: CreatePaymentData\["body"\], query:/);
+  assert.match(sessions, /requestOptions: ResourceRequestOptions/);
+  assert.match(sessions, /https:\/\/api.notte.cc\/openapi.json/);
+  assert.match(actual.pages.get('typescript-sdk-reference/resources/profiles.mdx'), /client.profiles.create\(/);
+  assert.ok(actual.pages.has('typescript-sdk-reference/client/withdbpreview.mdx'));
+});
+
 test('navigation and generated reference links resolve; supporting APIs can remain hidden', () => {
   const listed = new Set();
   const walk = node => {
@@ -192,7 +205,7 @@ test('Node SDK mirrors Python categories and appears below Python in the sidebar
   assert.match(actual.pages.get('typescript-sdk-reference/authentication.mdx'), /NOTTE_API_KEY/);
   assert.match(actual.pages.get('typescript-sdk-reference/rate-limits.mdx'), /error.statusCode === 429/);
   assert.deepEqual(categoryNames('Core Features'), ['Session', 'Actions', 'Agent', 'Function', 'Anything', 'Managed Auth']);
-  assert.deepEqual(categoryNames('Tooling'), ['Vault', 'Persona', 'File Storage', 'Secrets', 'Usage']);
+  assert.deepEqual(categoryNames('Tooling'), ['Vault', 'Persona', 'File Storage', 'Secrets', 'Usage', 'API Resources']);
   const actions = actual.navigation.pages.find(group => group.group === 'Core Features').pages.find(group => group.group === 'Actions');
   assert.ok(actions.pages.includes('typescript-sdk-reference/types/gotoaction'));
   assert.ok(actions.pages.includes('typescript-sdk-reference/types/clickactionoutput'));

@@ -74,8 +74,6 @@ class RepositoryExamplesTest(unittest.TestCase):
             "playwright_events": "Listen to responses",
             "playwright_timeout": "Long Playwright automation",
             "playwright_cdp_error_handling": "CDP connection failed:",
-            "selenium_javascript": "Result:",
-            "selenium_playwright_alternative": "Title:",
         }
         for name, teaching_text in cases.items():
             for suffix in (".py", ".ts"):

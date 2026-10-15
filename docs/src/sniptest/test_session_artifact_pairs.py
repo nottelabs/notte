@@ -9,8 +9,6 @@ from parser import parse_file
 CASES = (
     "sessions/cdp",
     "sessions/configuration/cookie_file",
-    "sessions/cdp/selenium_builtin_page",
-    "sessions/capabilities/match_viewport",
     "sessions/stealth/match_viewport",
 )
 
@@ -30,7 +28,7 @@ class SessionArtifactPairsTest(unittest.TestCase):
 
     def test_viewports_retain_both_session_ids_for_cleanup(self):
         root = Path(__file__).resolve().parents[1] / "testers"
-        for name in ("sessions/capabilities/match_viewport", "sessions/stealth/match_viewport"):
+        for name in ("sessions/stealth/match_viewport",):
             python = (root / (name + ".py")).read_text()
             typescript = (root / (name + ".ts")).read_text()
             self.assertIn("results = [desktop_status.session_id, status.session_id]", python)

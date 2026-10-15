@@ -1,51 +1,7 @@
-# How to use local LLMs (Ollama) to power Notte
+# Use local models with Notte
 
-## Installing notte in server mode
+Use the local `notte` package when you want to supply your own model. Follow the [local setup](setup.md), then select the Ollama model explicitly with the agent's `reasoning_model` parameter.
 
-First you need to install the server version of Notte
+Start Ollama and download a model using the [Ollama documentation](https://docs.ollama.com/quickstart). Use the [LiteLLM Ollama integration](https://docs.litellm.ai/docs/providers/ollama) to choose a supported model identifier and configure its endpoint.
 
-```
-uv sync --extra server
-```
-
-## Installing Ollama
-For Mac and Windows, [download Ollama](https://ollama.com/download).
-
-For Linux:
-```
-curl -fsSL https://ollama.com/install.sh | sh
-```
-
-## Downloading models
-Ollama has a library of models to choose from, see them [here](https://ollama.com/library).
-
-Before you can use a model, you need to download it (using the name of the model from the library):
-
-```
-ollama pull llama3:instruct
-```
-
-To view the models you have downloaded and can use:
-
-```
-ollama list
-```
-
-## Running LiteLLM proxy server
-
-To run LiteLLM with the model you have downloaded, in your terminal:
-
-```
-litellm --model ollama/llama3:instruct
-```
-then you simply need to set the name of the model you want to use inside the notte config object:
-
-## Python code example (notebook)
-
-```python
-from notte_agent import Agent
-agi = Agent(reasoning_model="ollama/llama3:instruct")
-agi.run(task="doom scroll cat memes on google images")
-```
-
-notte that there is currently a bug with litellm and ollama which prevents us from using the structured output feature ([issue reference](https://github.com/BerriAI/litellm/issues/8594)).
+Create a local `notte.Session` and pass it to `notte.Agent`, as shown in the repository [README](../README.md#open-source-or-notte-cloud). Supply your Ollama model identifier as `reasoning_model`. Model support for tool use, vision, and structured output varies; verify the capabilities required by your workflow with the model and provider versions you install.

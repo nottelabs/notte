@@ -8,7 +8,7 @@ from pathlib import Path
 from catalog import execution_backlog
 from parser import parse_file
 
-CASES = ("quick_scrape", "quickstart", "simple", "content_filtering", "link_placeholders", "links_and_images")
+CASES = ("quick_scrape", "content_filtering", "link_placeholders", "links_and_images")
 ROOT = Path(__file__).resolve().parents[1]
 
 

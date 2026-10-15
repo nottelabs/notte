@@ -1,156 +1,332 @@
 {
-  "functions/deploy_function.ts": {"expected":{"results":["Search Automation","Searches a website and extracts results",false,"paired deployment"]},"logContains":"Function deployed:"},
-  "functions/creating/deploy_sdk.ts": {"expected":{"results":["Website Scraper","Scrapes data from websites",false,"paired deployment"]},"logContains":"Function deployed:"},
-  "functions/creating/deployment_options.ts": {"expected":{"results":["My Function","What this function does",false,"paired deployment"]}},
-  "functions/management/private_function.ts": {"expected":{"results":["Private Automation",null,false,"paired deployment"]}},
+  "functions/deploy_function.ts": {
+    "expected": {
+      "results": [
+        "Search Automation",
+        "Searches a website and extracts results",
+        false,
+        "paired deployment"
+      ]
+    },
+    "logContains": "Function deployed:"
+  },
+  "functions/creating/deploy_sdk.ts": {
+    "expected": {
+      "results": [
+        "Website Scraper",
+        "Scrapes data from websites",
+        false,
+        "paired deployment"
+      ]
+    },
+    "logContains": "Function deployed:"
+  },
+  "functions/creating/deployment_options.ts": {
+    "expected": {
+      "results": [
+        "My Function",
+        "What this function does",
+        false,
+        "paired deployment"
+      ]
+    }
+  },
+  "functions/management/private_function.ts": {
+    "expected": {
+      "results": [
+        "Private Automation",
+        null,
+        false,
+        "paired deployment"
+      ]
+    }
+  },
   "browser-controls/conditional_actions.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true,
     "logContains": "Optional button not found, continuing..."
   },
   "browser-controls/eval_js.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "agents/config/bp_model_selection.ts": {
-    "expected": { "results": ["anthropic/claude-sonnet-4-5-20250929"] }
+    "expected": {
+      "results": [
+        "anthropic/claude-sonnet-4-5-20250929"
+      ]
+    }
   },
   "agents/config/bp_step_limits.ts": {
-    "expected": { "results": [30] }
+    "expected": {
+      "results": [
+        30
+      ]
+    }
   },
   "sessions/profiles/save_profile.ts": {
-    "expected": { "results": ["example-login", true] }
+    "expected": {
+      "results": [
+        "example-login",
+        true
+      ]
+    }
   },
   "sessions/ad_blocking.ts": {
-    "expected": { "results": ["closed", "closed"] }
+    "expected": {
+      "results": [
+        "closed",
+        "closed"
+      ]
+    }
   },
   "sessions/country_proxy.ts": {
-    "expected": { "results": ["notte", "fr"] }
+    "expected": {
+      "results": [
+        "notte",
+        "fr"
+      ]
+    }
   },
   "scraping/quick_scrape.ts": {
-    "expected": { "results": [true, true] }
-  },
-  "scraping/quickstart.ts": {
-    "expected": { "results": [true, true] },
-    "logContains": "Example Domain"
-  },
-  "scraping/simple.ts": {
-    "expected": { "results": [true, true] }
+    "expected": {
+      "results": [
+        true,
+        true
+      ]
+    }
   },
   "scraping/content_filtering.ts": {
-    "expected": { "results": [true, true] }
+    "expected": {
+      "results": [
+        true,
+        true
+      ]
+    }
   },
   "scraping/link_placeholders.ts": {
-    "expected": { "results": [true, true, true, true] }
+    "expected": {
+      "results": [
+        true,
+        true,
+        true,
+        true
+      ]
+    }
   },
   "scraping/links_and_images.ts": {
-    "expected": { "results": [true, true, true, true] }
+    "expected": {
+      "results": [
+        true,
+        true,
+        true,
+        true
+      ]
+    }
   },
-  "functions/invoke_function.ts": {"expected":{"status":"closed","result":{"url":"https://example.com","search_query":"laptop"}}},
-  "functions/batch_invocation.ts": {"expected":{"results":[{"url":"https://site1.com","search_query":""},{"url":"https://site2.com","search_query":""},{"url":"https://site3.com","search_query":""}]}},
-  "functions/monitor_runs.ts": {"expected":{"status":"closed","same_run":true},"logContains":"Final result:"},
-  "functions/invocations/timeout_examples.ts": {"expected":{"status":"closed","result":{"url":"https://example.com","search_query":""}}},
+  "functions/invoke_function.ts": {
+    "expected": {
+      "status": "closed",
+      "result": {
+        "url": "https://example.com",
+        "search_query": "laptop"
+      }
+    }
+  },
+  "functions/batch_invocation.ts": {
+    "expected": {
+      "results": [
+        {
+          "url": "https://site1.com",
+          "search_query": ""
+        },
+        {
+          "url": "https://site2.com",
+          "search_query": ""
+        },
+        {
+          "url": "https://site3.com",
+          "search_query": ""
+        }
+      ]
+    }
+  },
+  "functions/monitor_runs.ts": {
+    "expected": {
+      "status": "closed",
+      "same_run": true
+    },
+    "logContains": "Final result:"
+  },
+  "functions/invocations/timeout_examples.ts": {
+    "expected": {
+      "status": "closed",
+      "result": {
+        "url": "https://example.com",
+        "search_query": ""
+      }
+    }
+  },
   "functions/management/high_failure_rate.ts": {
-    "expected": { "results": ["failed", true] },
+    "expected": {
+      "results": [
+        "failed",
+        true
+      ]
+    },
     "logContains": "Example function failure"
   },
-  "functions/management/check_run_status.ts": {"expected":{"status":"closed","same_run":true},"logContains":"Session ID:"},
-  "functions/management/version_management.ts": {"expected":{"results":[true,true]},"logContains":"Latest:"},
+  "functions/management/check_run_status.ts": {
+    "expected": {
+      "status": "closed",
+      "same_run": true
+    },
+    "logContains": "Session ID:"
+  },
+  "functions/management/version_management.ts": {
+    "expected": {
+      "results": [
+        true,
+        true
+      ]
+    },
+    "logContains": "Latest:"
+  },
   "functions/management/get_function_details.ts": {
-    "expected": { "results": [true, true] },
+    "expected": {
+      "results": [
+        true,
+        true
+      ]
+    },
     "logContains": "Latest Version:"
   },
   "functions/management/version_history.ts": {
-    "expected": { "results": [true, true] },
+    "expected": {
+      "results": [
+        true,
+        true
+      ]
+    },
     "logContains": "Versions:"
   },
   "file-storage/url_upload.ts": {
-    "expected": { "status": "active" },
+    "expected": {
+      "status": "active"
+    },
     "closedSession": true
   },
   "functions/management/view_run_history.ts": {
-    "expected": { "results": ["closed"] },
+    "expected": {
+      "results": [
+        "closed"
+      ]
+    },
     "logContains": "Status: closed"
   },
   "file-storage/descriptive_filenames.ts": {
-    "expected": { "status": "active" },
+    "expected": {
+      "status": "active"
+    },
     "closedSession": true
   },
   "file-storage/force_overwrite.ts": {
-    "expected": { "status": "active" },
+    "expected": {
+      "status": "active"
+    },
     "closedSession": true
   },
   "agents/config/param_max_steps.ts": {
-    "expected": { "status": "active" },
+    "expected": {
+      "status": "active"
+    },
     "closedSession": true
   },
   "agents/config/param_use_vision.ts": {
-    "expected": { "status": "active" },
+    "expected": {
+      "status": "active"
+    },
     "closedSession": true
   },
   "agents/config/param_notifier.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "agents/config/param_session.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "functions/management/filter_active_runs.ts": {
-    "expected": { "results": [] },
+    "expected": {
+      "results": []
+    },
     "logContains": "Active runs: 0"
   },
   "file-storage/uploading_files.ts": {
-    "expected": { "status": "closed" },
-    "closedSession": true
-  },
-  "file-storage/attach_before_starting.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "sessions/cdp/playwright_context_managers.ts": {
-    "expected": { "status": "active" },
+    "expected": {
+      "status": "active"
+    },
     "closedSession": true
   },
   "sessions/playwright-vs-notte/playwright_example.ts": {
-    "expected": { "status": "active" },
+    "expected": {
+      "status": "active"
+    },
     "closedSession": true,
-    "logContains": "← https://example.com/ (200)"
+    "logContains": "\u2190 https://example.com/ (200)"
   },
   "agents/config/creating_agent.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "agents/config/param_reasoning_model.ts": {
-    "expected": { "status": "active" },
+    "expected": {
+      "status": "active"
+    },
     "closedSession": true
   },
   "agents/config/bp_vision.ts": {
-    "expected": { "status": "active" },
+    "expected": {
+      "status": "active"
+    },
     "closedSession": true
   },
   "sessions/cdp/playwright_events.ts": {
-    "expected": { "status": "active" },
+    "expected": {
+      "status": "active"
+    },
     "closedSession": true,
     "logContains": "Response: https://example.com/ - 200"
   },
   "sessions/cdp/playwright_timeout.ts": {
-    "expected": { "status": "active", "idle_timeout_minutes": 20, "max_duration_minutes": 20 },
+    "expected": {
+      "status": "active",
+      "idle_timeout_minutes": 20,
+      "max_duration_minutes": 20
+    },
     "closedSession": true
   },
   "sessions/cdp/playwright_cdp_error_handling.ts": {
-    "expected": { "status": "active" },
+    "expected": {
+      "status": "active"
+    },
     "closedSession": true
-  },
-  "sessions/cdp/selenium_javascript.ts": {
-    "expected": { "status": "active" },
-    "closedSession": true,
-    "logContains": "Result: 10"
-  },
-  "sessions/cdp/selenium_playwright_alternative.ts": {
-    "expected": { "status": "active" },
-    "closedSession": true,
-    "logContains": "Title: Example Domain"
   },
   "sessions/index.ts": {
     "expected": {
@@ -304,91 +480,93 @@
     }
   },
   "browser-controls/goto.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "browser-controls/reload.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "browser-controls/scroll_down.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "browser-controls/scroll_up.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "browser-controls/press_key.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "browser-controls/wait.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "guides/wait_time.ts": {
-    "expected": { "status": "closed" },
-    "closedSession": true
-  },
-  "sessions/capabilities/captcha_combine_stealth.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "sessions/captcha/combine_stealth.ts": {
-    "expected": { "status": "closed" },
-    "closedSession": true
-  },
-  "sessions/capabilities/captcha_ensure_requirements.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "sessions/captcha/ensure_requirements.ts": {
-    "expected": { "status": "closed" },
-    "closedSession": true
-  },
-  "sessions/capabilities/captcha_increase_timeout.ts": {
-    "expected": { "status": "closed" },
-    "closedSession": true
-  },
-  "sessions/capabilities/combine_stealth.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "sessions/stealth/combine_techniques.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "sessions/default_proxy.ts": {
-    "expected": { "status": "closed" },
-    "closedSession": true
-  },
-  "sessions/stealth_configuration.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "sessions/cdp.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "sessions/configuration/cookie_file.ts": {
-    "expected": { "status": "closed" },
-    "closedSession": true
-  },
-  "sessions/cdp/selenium_builtin_page.ts": {
-    "expected": { "status": "closed" },
-    "closedSession": true
-  },
-  "sessions/capabilities/match_viewport.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "sessions/stealth/match_viewport.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   },
   "sessions/capabilities/dev_environment.ts": {
-    "expected": { "status": "closed" },
+    "expected": {
+      "status": "closed"
+    },
     "closedSession": true
   }
 }

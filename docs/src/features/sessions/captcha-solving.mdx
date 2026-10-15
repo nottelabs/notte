@@ -10,6 +10,7 @@ import EnsureRequirements from "/snippets/sessions/captcha/ensure_requirements.m
 import TimeoutHandling from "/snippets/sessions/captcha/timeout_handling.mdx";
 import RecaptchaSolveAction from "/snippets/sessions/captcha/recaptcha_solve_action.mdx";
 import TextCaptchaSolveAction from "/snippets/sessions/captcha/text_captcha_solve_action.mdx";
+import CaptchaQuickStart from '/snippets/sessions/configuration/captcha_solving.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -21,18 +22,7 @@ Notte can automatically detect and solve captchas including reCAPTCHA v2, hCaptc
 
 Captcha solving is enabled by default. You can set it explicitly when creating a session:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  with client.Session(solve_captchas=True) as session:
-      page = session.page
-      page.goto("https://www.google.com/recaptcha/api2/demo")
-      # Captcha automatically solved
-  ```
-</CodeGroup>
+<CaptchaQuickStart />
 
 ## Supported CAPTCHA Types
 
@@ -58,21 +48,7 @@ No additional code is needed - captchas are solved automatically when encountere
 
 Combine captcha solving with proxies for better success rates:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  with client.Session(
-      solve_captchas=True,
-      proxies=True  # Use residential proxies
-  ) as session:
-      page = session.page
-      page.goto("https://example.com")
-      # Both captcha solving and proxies active
-  ```
-</CodeGroup>
+Residential proxies and CAPTCHA solving are both on by default. Use [Proxies](/features/sessions/proxies) to choose a location or supply a custom proxy.
 
 ## Best Practices
 
@@ -114,12 +90,7 @@ The Python SDK polls one ongoing solve through short HTTP requests. Repeated
 `captcha_solve` calls join that solve or return its completed result. Configure the
 total wait separately from ordinary action timeouts:
 
-```python
-client = notte.NotteClient(captcha_timeout_seconds=180)
-with client.Session(solve_captchas=True) as session:
-    session.execute(type="goto", url="https://www.google.com/recaptcha/api2/demo")
-    session.execute(type="captcha_solve", captcha_type="recaptcha")
-```
+Set `captcha_timeout_seconds=180` when constructing `NotteClient`. Then use the `captcha_solve` action shown above; do not restart the session to wait for the same challenge.
 
 The default CAPTCHA wait is three minutes. A terminal solver failure, page change,
 or expired wait budget follows the usual `raise_on_failure` behavior. Polling does
@@ -175,30 +146,7 @@ Increase session timeout for captcha-heavy workflows:
 
 Test captcha solving on demo sites:
 
-<CodeGroup>
-  ```python Python
-  from notte_sdk import NotteClient
-
-  client = NotteClient()
-
-  test_sites = [
-      "https://www.google.com/recaptcha/api2/demo",
-      "https://2captcha.com/demo/recaptcha-v2",
-      "https://democaptcha.com/demo-form-eng/hcaptcha.html"
-  ]
-
-  with client.Session(
-      solve_captchas=True,
-      open_viewer=True
-  ) as session:
-      page = session.page
-
-      for site in test_sites:
-          print(f"Testing {site}")
-          page.goto(site)
-          page.screenshot(path=f"captcha_test_{test_sites.index(site)}.png")
-  ```
-</CodeGroup>
+Use the live viewer to inspect a demo challenge and save a screenshot or recording of the result. The reCAPTCHA and text CAPTCHA examples above handle failure explicitly. Verify the challenge type on your target site rather than treating a demo success as a guarantee.
 
 ## Next Steps
 
