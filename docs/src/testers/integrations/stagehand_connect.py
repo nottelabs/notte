@@ -12,7 +12,7 @@ class Heading(BaseModel):
     heading: str
 
 
-async def main() -> None:
+async def main() -> dict[str, str]:
     with NotteClient().Session() as session:
         browser = await local_browser.connect(cdp_url=session.cdp_url())
         try:
@@ -26,10 +26,11 @@ async def main() -> None:
                 await page.goto("https://example.com")
                 result = await stagehand.extract("Extract the main heading", Heading, page=page)
                 print(result.data.heading)
+                return {"heading": result.data.heading, "session_id": session.session_id}
             finally:
                 await stagehand.close()
         finally:
             await browser.close()
 
 
-asyncio.run(main())
+result = asyncio.run(main())

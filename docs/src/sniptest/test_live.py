@@ -43,6 +43,10 @@ class LiveContractTest(unittest.TestCase):
         self.assertEqual(self.check({}), [])
         self.assertTrue(self.check(self.contracts))
 
+    def test_rejects_python_only_typecheck_directive(self):
+        (self.testers / "example.py").write_text("# @sniptest typecheck_only=true\n")
+        self.assertTrue(self.check(self.contracts))
+
     def test_rejects_empty_or_misspelled_assertions(self):
         for contract in ({}, {"expected": {}}, {"expected": {"status": "closed"}, "closedSesion": True}):
             with self.subTest(contract=contract):

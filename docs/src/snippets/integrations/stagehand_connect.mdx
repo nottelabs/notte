@@ -16,7 +16,7 @@ class Heading(BaseModel):
     heading: str
 
 
-async def main() -> None:
+async def main() -> dict[str, str]:
     with NotteClient().Session() as session:
         browser = await local_browser.connect(cdp_url=session.cdp_url())
         try:
@@ -30,13 +30,14 @@ async def main() -> None:
                 await page.goto("https://example.com")
                 result = await stagehand.extract("Extract the main heading", Heading, page=page)
                 print(result.data.heading)
+                return {"heading": result.data.heading, "session_id": session.session_id}
             finally:
                 await stagehand.close()
         finally:
             await browser.close()
 
 
-asyncio.run(main())
+result = asyncio.run(main())
 ```
 
 ```typescript notte_stagehand.ts
@@ -44,7 +45,7 @@ import { NotteClient } from 'notte-sdk';
 import { localBrowser, Stagehand } from '@browserbasehq/stagehand';
 import { z } from 'zod';
 
-await new NotteClient().Session().use(async (session) => {
+export const result = await new NotteClient().Session().use(async (session) => {
   const browser = await localBrowser.connect({ cdpUrl: await session.cdpUrl() });
   try {
     const stagehand = await Stagehand.create({
@@ -61,6 +62,7 @@ await new NotteClient().Session().use(async (session) => {
         'Extract the main heading', z.object({ heading: z.string() }), { page },
       );
       console.log(result.data.heading);
+      return { heading: result.data.heading, session_id: session.getId()! };
     } finally {
       await stagehand.close();
     }

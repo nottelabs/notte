@@ -94,7 +94,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Mastra](https://docs.notte.cc/integrations/mastra.md): Give Mastra agents a browser with the Notte MCP server
 - [OpenClaw](https://docs.notte.cc/integrations/openclaw.md): Use Notte cloud browsers with OpenClaw
 - [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
-- [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Connecting Stagehand to Notte cloud browsers
+- [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Use Stagehand v4 with a Notte cloud browser in Python or TypeScript
 
 ## Workflow Automation
 

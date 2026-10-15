@@ -23,12 +23,14 @@ def check_live_contracts(testers: Path, contracts: dict, dedicated: set[str] | N
     errors = []
     typecheck_only = set()
     for path in testers.rglob("*.ts"):
-        if re.search(r"^//\s*@sniptest\s+typecheck_only\s*=\s*true\s*$", path.read_text(), re.MULTILINE):
-            python = path.with_suffix(".py")
-            if not python.is_file() or not re.search(
-                r"^#\s*@sniptest\s+typecheck_only\s*=\s*true\s*$", python.read_text(), re.MULTILINE
-            ):
-                errors.append(f"Type-check-only pair needs a matching Python directive: {path.relative_to(testers)}")
+        ts_only = bool(re.search(r"^//\s*@sniptest\s+typecheck_only\s*=\s*true\s*$", path.read_text(), re.MULTILINE))
+        python = path.with_suffix(".py")
+        py_only = python.is_file() and bool(
+            re.search(r"^#\s*@sniptest\s+typecheck_only\s*=\s*true\s*$", python.read_text(), re.MULTILINE)
+        )
+        if ts_only != py_only:
+            errors.append(f"Type-check-only directives must match in both languages: {path.relative_to(testers)}")
+        if ts_only:
             typecheck_only.add(str(path.relative_to(testers)))
     executable = {str(path.relative_to(testers)) for path in testers.rglob("*.ts")} - set(pending) - typecheck_only
     for name in sorted(executable - set(contracts) - dedicated):

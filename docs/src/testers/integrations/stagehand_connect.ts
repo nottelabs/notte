@@ -4,7 +4,7 @@ import { NotteClient } from 'notte-sdk';
 import { localBrowser, Stagehand } from '@browserbasehq/stagehand';
 import { z } from 'zod';
 
-await new NotteClient().Session().use(async (session) => {
+export const result = await new NotteClient().Session().use(async (session) => {
   const browser = await localBrowser.connect({ cdpUrl: await session.cdpUrl() });
   try {
     const stagehand = await Stagehand.create({
@@ -21,6 +21,7 @@ await new NotteClient().Session().use(async (session) => {
         'Extract the main heading', z.object({ heading: z.string() }), { page },
       );
       console.log(result.data.heading);
+      return { heading: result.data.heading, session_id: session.getId()! };
     } finally {
       await stagehand.close();
     }
