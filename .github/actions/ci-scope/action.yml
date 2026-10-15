@@ -1,0 +1,24 @@
+name: Select CI suites
+description: Select relevant suites from the complete push or pull request diff.
+outputs:
+  scope:
+    description: JSON suite decisions and comparison commits.
+    value: ${{ steps.scope.outputs.scope }}
+runs:
+  using: composite
+  steps:
+    - name: Test suite selection
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      run: python3 -m unittest discover -s tests/scripts -p test_ci_scope.py
+    - name: Select relevant suites
+      id: scope
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        EVENT: ${{ github.event_name }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      run: >-
+        python3 scripts/ci_scope.py --event "$EVENT" --base "$BASE_SHA" --head "$HEAD_SHA"
+        --output "$GITHUB_OUTPUT" --summary "$GITHUB_STEP_SUMMARY"
