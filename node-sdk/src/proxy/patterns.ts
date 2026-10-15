@@ -104,6 +104,7 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^sessions\/[^\/]+\/profile-preview$/, // /sessions/{session_id}/profile-preview
   /^sessions\/[^\/]+\/profile\/save$/, // /sessions/{session_id}/profile/save
   /^sessions\/[^\/]+\/replay$/, // /sessions/{session_id}/replay
+  /^sessions\/[^\/]+\/replay\/mouse$/, // /sessions/{session_id}/replay/mouse
   /^sessions\/[^\/]+\/stop$/, // /sessions/{session_id}/stop
   /^sessions\/[^\/]+\/workflow\/code$/, // /sessions/{session_id}/workflow/code
   /^sessions\/start$/, // /sessions/start
