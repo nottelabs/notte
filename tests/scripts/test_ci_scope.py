@@ -215,6 +215,24 @@ class RoutingTests(unittest.TestCase):
 
 
 class GitHistoryTests(unittest.TestCase):
+    def test_vibium_dedicated_workflow_and_native_recipe_keep_offline_global_checks(self) -> None:
+        head = self.commit(
+            {
+                ".github/workflows/vibium-integration.yml": "name: Vibium integration\n",
+                "examples/vibium/connection.py": "native_bidi = True\n",
+                "examples/vibium/src/connection.ts": "export const nativeBidi = true;\n",
+                "docs/src/integrations/vibium.mdx": "Use the linked native browser recipes.\n",
+            }
+        )
+        scope = self.scope("pull_request", self.base, head)
+        self.assertTrue(scope["python_static"])
+        self.assertTrue(scope["python_unit"])
+        self.assertFalse(scope["full"])
+        self.assertFalse(any(scope[name] for name in ci.ALL if name.endswith("_live")))
+        self.assertEqual(
+            ci.scopes_for_path(".github/workflows/vibium-integration.yml"), {"python_static", "python_unit"}
+        )
+
     def setUp(self) -> None:
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
