@@ -20,3 +20,5 @@ npm start
 Reuse `fill_login(page, username_ref, password_ref)` or `fillLogin(page, usernameRef, passwordRef)` on your login page. Adapt the Username, Password, and Sign in locators to that page. The helper reads only the two requested fields and does not print their values.
 
 From `typescript`, run `NOTTE_ONEPASSWORD_PYTHON=../.venv/bin/python npm run test:live` after installing both projects. Native reference validation runs without keys. Browser cleanup after a rejected token requires `NOTTE_API_KEY`; successful vault reads require all four environment variables. Tests independently query each owned browser's final status.
+
+Verified with the native SDK and real Notte browsers: reference validation, rejected-token errors, and browser cleanup in both languages. Successful reads from a populated 1Password vault have not been live-tested.
