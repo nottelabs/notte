@@ -7,6 +7,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotteClient } from '@/client';
+import { NotteAPIError } from '@/errors';
 import { FUNCTION_RUN_ENDPOINTS, NotteFunction } from '@/functions';
 import type { FunctionCreateData, FunctionUpdateData } from '@/lib/client/types.gen';
 
@@ -151,12 +152,12 @@ describe('function endpoint paths', () => {
 		expect(calls).toEqual([expect.objectContaining({ method: 'GET', path: `/functions/${FUNCTION_ID}/runs/${RUN_ID}?payload_mode=references` })]);
 	});
 
-	it('runs lists /functions/{id}/runs with only_active=false', async () => {
+	it('runs lists /functions/{id}/runs with API defaults', async () => {
 		responses.push({ items: [], page: 1, page_size: 10, has_next: false, has_previous: false });
 
 		await fn.runs();
 
-		expect(calls).toEqual([expect.objectContaining({ method: 'GET', path: `/functions/${FUNCTION_ID}/runs?only_active=false` })]);
+		expect(calls).toEqual([expect.objectContaining({ method: 'GET', path: `/functions/${FUNCTION_ID}/runs` })]);
 	});
 
 	it('get and getUrl read /functions/{id}', async () => {
@@ -197,7 +198,23 @@ describe('function endpoint paths', () => {
 		expect(calls).toEqual([
 			expect.objectContaining({ method: 'POST', path: `/functions/${FUNCTION_ID}/schedule`, body: { cron: '0 9 * * *', variables: null } }),
 			expect.objectContaining({ method: 'DELETE', path: `/functions/${FUNCTION_ID}/schedule` }),
-			expect.objectContaining({ method: 'POST', path: `/functions/${FUNCTION_ID}/rollback?restricted=true`, body: { version: 'v1' } }),
+			expect.objectContaining({ method: 'POST', path: `/functions/${FUNCTION_ID}/rollback`, body: { version: 'v1' } }),
 		]);
 	});
+});
+
+
+it.each([true, false])('invalid runtime reaches the API and maps 422 (stream=%s)', async stream => {
+    const captured: unknown[] = [];
+    const client = new NotteClient({ apiKey: 'test-api-key', baseUrl: BASE_URL }); // pragma: allowlist secret
+    client.getClient().setConfig({ fetch: async input => {
+        const request = input instanceof Request ? input : new Request(input);
+        captured.push(await request.json());
+        return Response.json({ detail: 'invalid runtime' }, { status: 422 });
+    }});
+    const fn = client.NotteFunction({ function_id: FUNCTION_ID });
+    const result = fn.run({}, { functionRunId: RUN_ID, stream, runtime: 'invalid' as never });
+    await expect(result).rejects.toBeInstanceOf(NotteAPIError);
+    await expect(result).rejects.toMatchObject({ statusCode: 422 });
+    expect(captured).toEqual([expect.objectContaining({ runtime: 'invalid' })]);
 });

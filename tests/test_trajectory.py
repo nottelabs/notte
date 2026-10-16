@@ -1,184 +1,91 @@
 from collections import defaultdict
-from unittest.mock import AsyncMock, patch
 
 import pytest
-from notte_agent.falco.agent import FalcoAgent
-from notte_browser.session import NotteSession
-from notte_core.actions import ClickAction, FillAction
-from notte_core.agent_types import AgentCompletion
-from notte_core.browser.observation import ExecutionResult, Observation, Screenshot, TimedSpan
-from notte_core.trajectory import AgentStepStart, AgentStepStop, StepBundle, TrajectoryHoldee
+from notte_core.actions import ClickAction
+from notte_core.observation import ExecutionResult, Observation, Screenshot, TimedSpan
+from notte_core.trajectory import Trajectory, TrajectoryHoldee
 
 import notte
-from tests.agent.test_consistent_trajectory import create_agent_step_response
+
+
+def _click_result() -> ExecutionResult:
+    span = TimedSpan.empty()
+    return ExecutionResult(
+        action=ClickAction(id="B1"),
+        success=True,
+        message="clicked",
+        started_at=span.started_at,
+        ended_at=span.ended_at,
+    )
 
 
 @pytest.mark.asyncio
-async def test_trajectory_and_view():
-    with notte.Session(headless=True) as session:
-        # first agent
+async def test_trajectory_records_elements_in_order():
+    trajectory = Trajectory()
+    first_obs, result, screenshot, last_obs = (
+        Observation.empty(),
+        _click_result(),
+        Screenshot(raw=b"png"),
+        Observation.empty(),
+    )
+    for element in (first_obs, result, screenshot, last_obs):
+        await trajectory.append(element)
 
-        original_view = session.trajectory.view()
+    assert len(trajectory) == 4
+    assert list(trajectory) == trajectory.elements == [first_obs, result, screenshot, last_obs]
+    assert trajectory[1] is result
+    assert list(trajectory.observations()) == [first_obs, last_obs]
+    assert list(trajectory.execution_results()) == [result]
+    assert list(trajectory.screenshots()) == [screenshot]
+    assert trajectory.last_observation is last_obs
+    assert trajectory.last_result is result
+    assert trajectory.last_screenshot is screenshot
+    assert repr(trajectory) == "Trajectory(observations=2, executions=1)"
 
-        # step 1
-        _ = await original_view.start_step()
-        await original_view.append(Observation.empty(), force=True)
-        await original_view.append(AgentCompletion.initial(url="https://www.google.com"), force=True)
-        _ = await original_view.stop_step()
 
-        # second view
-        second_view = session.trajectory.view()
-        span = TimedSpan.empty()
-        # step 2
-        _ = await original_view.start_step()
-        await original_view.append(
-            ExecutionResult(
-                action=ClickAction(id="B1"),
-                success=True,
-                message="clicked",
-                started_at=span.started_at,
-                ended_at=span.ended_at,
-            ),
-            force=True,
-        )
-        await original_view.append(Observation.empty(), force=True)
-        await original_view.append(Observation.empty(), force=True)
-        _ = await original_view.stop_step()
-
-        # step 3
-        _ = await original_view.start_step()
-        await original_view.append(Observation.empty(), force=True)
-        _ = await original_view.stop_step()
-
-        original_view.stop()
-
-        # only 2 steps
-        late_view = session.trajectory._view(stop=len(original_view._elements) - 3)  # pyright: ignore [reportPrivateUsage]
-
-        # agent steps
-        assert session.trajectory.num_steps == 3
-        assert original_view.num_steps == 3
-        assert second_view.num_steps == 2
-        assert late_view.num_steps == 2
-
-        # elements in traj
-        session.trajectory.debug_log()
-        assert len(session.trajectory) == 6
-        assert len(original_view) == 6
-        assert len(second_view) == 4
-        assert len(late_view) == 5
-
-        # number of observations
-        assert len(list(session.trajectory.observations())) == 4
-        assert len(list(original_view.observations())) == 4
-        assert len(list(second_view.observations())) == 3
-        assert len(list(late_view.observations())) == 3
-
-        # number of action exec
-        assert len(list(session.trajectory.execution_results())) == 1
-        assert len(list(original_view.execution_results())) == 1
-        assert len(list(second_view.execution_results())) == 1
-        assert len(list(late_view.execution_results())) == 1
-
-        # number of completions
-        assert len(list(session.trajectory.agent_completions())) == 1
-        assert len(list(original_view.agent_completions())) == 1
-        assert len(list(second_view.agent_completions())) == 0
-        assert len(list(late_view.agent_completions())) == 1
+def test_empty_trajectory_has_no_last_elements():
+    trajectory = Trajectory()
+    assert len(trajectory) == 0
+    assert trajectory.last_observation is None
+    assert trajectory.last_result is None
+    assert trajectory.last_screenshot is None
 
 
 @pytest.mark.asyncio
 async def test_trajectory_callbacks():
-    with notte.Session(headless=True) as session:
-        # first agent
+    trajectory = Trajectory()
+    callback_calls: dict[str, int] = defaultdict(lambda: 0)
+    init_exec = _click_result()
+    init_obs = Observation.empty()
 
-        view = session.trajectory.view()
+    async def observe_call(obs: Observation):
+        callback_calls["obs"] += 1
+        assert obs is init_obs
 
-        callback_calls: dict[str, int] = defaultdict(lambda: 0)
-        span = TimedSpan.empty()
-        init_comp = AgentCompletion.initial(url="https://www.google.com")
-        init_exec = ExecutionResult(
-            action=ClickAction(id="B1"),
-            success=True,
-            message="clicked",
-            started_at=span.started_at,
-            ended_at=span.ended_at,
-        )
-        init_obs = Observation.empty()
+    async def exec_call(res: ExecutionResult):
+        callback_calls["exec"] += 1
+        assert res is init_exec
 
-        async def observe_call(obs: Observation):
-            callback_calls["obs"] += 1
-            assert obs is init_obs
+    async def any_call(_: TrajectoryHoldee):
+        callback_calls["any"] += 1
 
-        async def exec_call(res: ExecutionResult):
-            callback_calls["exec"] += 1
-            assert res is init_exec
+    trajectory.set_callback("observation", observe_call)
+    trajectory.set_callback("execution_result", exec_call)
+    trajectory.set_callback("any", any_call)
 
-        async def comp_call(comp: AgentCompletion):
-            callback_calls["comp"] += 1
-            assert comp is init_comp
+    await trajectory.append(init_obs)
+    await trajectory.append(init_exec)
+    await trajectory.append(init_obs)
 
-        async def start_call(_: AgentStepStart):
-            callback_calls["start"] += 1
-
-        async def stop_call(_: AgentStepStop):
-            callback_calls["stop"] += 1
-
-        async def any_call(_: TrajectoryHoldee):
-            # ignore agent start / stops
-            callback_calls["any"] += 1
-
-        async def step_call_1(step: StepBundle):
-            callback_calls["step"] += 1
-            assert step.observation is init_obs
-            assert step.agent_completion is None
-            assert step.execution_result is None
-
-        async def step_call_2(step: StepBundle):
-            callback_calls["step"] += 1
-            assert step.observation is init_obs
-            assert step.agent_completion is init_comp
-            assert step.execution_result is init_exec
-
-        view.set_callback("observation", observe_call)
-        view.set_callback("execution_result", exec_call)
-        view.set_callback("agent_completion", comp_call)
-        view.set_callback("agent_step_start", start_call)
-        view.set_callback("agent_step_stop", stop_call)
-        view.set_callback("any", any_call)
-        view.set_callback("step", step_call_1)
-
-        # step 1
-        _ = await view.start_step()
-        await view.append(init_obs, force=True)
-        _ = await view.stop_step()
-
-        view.set_callback("step", step_call_2)
-
-        # step 2
-        _ = await view.start_step()
-        await view.append(init_comp, force=True)
-        await view.append(init_exec, force=True)
-        await view.append(init_obs, force=True)
-        _ = await view.stop_step()
-
-        assert callback_calls["obs"] == 2
-        assert callback_calls["comp"] == 1
-        assert callback_calls["exec"] == 1
-        assert callback_calls["any"] == 8
-
-        assert callback_calls["start"] == 2
-        assert callback_calls["stop"] == 2
-        assert callback_calls["step"] == 2
+    assert callback_calls["obs"] == 2
+    assert callback_calls["exec"] == 1
+    assert callback_calls["any"] == 3
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_trajectory_callback_from_session():
     with notte.Session(headless=True) as session:
-        # first agent
-
-        view = session.trajectory.view()
-
         callback_calls: dict[str, int] = defaultdict(lambda: 0)
 
         async def observe_call(obs: Observation):
@@ -186,9 +93,6 @@ async def test_trajectory_callback_from_session():
 
         async def exec_call(res: ExecutionResult):
             callback_calls["exec"] += 1
-
-        async def comp_call(comp: AgentCompletion):
-            callback_calls["comp"] += 1
 
         async def screenshot_call(screen: Screenshot):
             callback_calls["screen"] += 1
@@ -196,11 +100,10 @@ async def test_trajectory_callback_from_session():
         async def any_call(elem: TrajectoryHoldee):
             callback_calls["any"] += 1
 
-        view.set_callback("observation", observe_call)
-        view.set_callback("execution_result", exec_call)
-        view.set_callback("agent_completion", comp_call)
-        view.set_callback("screenshot", screenshot_call)
-        view.set_callback("any", any_call)
+        session.trajectory.set_callback("observation", observe_call)
+        session.trajectory.set_callback("execution_result", exec_call)
+        session.trajectory.set_callback("screenshot", screenshot_call)
+        session.trajectory.set_callback("any", any_call)
 
         _ = session.observe()
         _ = session.execute(type="goto", url="https://www.google.com")
@@ -208,69 +111,10 @@ async def test_trajectory_callback_from_session():
         _ = session.execute(type="reload")
         _ = session.observe()
         _ = session.execute(type="click", id="B1")
+        # actions no longer append a screenshot; only explicit ones are recorded
+        _ = session.screenshot()
 
         assert callback_calls["obs"] == 3
         assert callback_calls["exec"] == 3
-        assert callback_calls["screen"] == 3
-        assert callback_calls["any"] == 9
-
-
-SEARCH_FIXTURE_URL = "https://trajectory-fixture.notte.test/"
-
-
-async def open_search_fixture(session: NotteSession) -> None:
-    async def serve_fixture(route):
-        if route.request.url == SEARCH_FIXTURE_URL:
-            await route.fulfill(
-                status=200,
-                content_type="text/html",
-                body='<!doctype html><label for="search">Search field fixture 6f9c</label>'
-                '<input id="search" type="search">'
-                '<label for="other">Leave this field blank</label><input id="other">',
-            )
-        else:
-            await route.abort()
-
-    await session.window.page.route("**/*", serve_fixture)
-    await session.aexecute(type="goto", url=SEARCH_FIXTURE_URL, wait_until="domcontentloaded", raise_on_failure=True)
-
-
-@pytest.mark.asyncio
-async def test_agent_passes_observation_and_executes_model_action():
-    async with NotteSession(headless=True) as session:
-        await open_search_fixture(session)
-        agent = notte.Agent(session=session, max_steps=1).create_agent()
-        assert isinstance(agent, FalcoAgent)
-        completion = AsyncMock(return_value=create_agent_step_response(action=FillAction(id="I1", value="einstein")))
-        with patch.object(agent.llm, "structured_completion", completion):
-            resp = await agent.arun(task="Fill in the search bar with 'einstein'")
-
-        completion.assert_awaited_once()
-        assert completion.await_args is not None
-        messages = str(completion.await_args.args[0])
-        assert "Search field fixture 6f9c" in messages
-        assert "I1" in messages
-        action = resp.steps[-1].action
-        assert isinstance(action, FillAction)
-        assert action.id == "I1"
-        assert await session.window.page.input_value("#search") == "einstein"
-        assert not resp.success
-
-
-@pytest.mark.asyncio
-async def test_agent_observes_page_correctly():
-    # Keep a real model in this check. Verify the task's outcome without requiring
-    # a particular action spelling or a fixed element ID from the model.
-    async with NotteSession(headless=True) as session:
-        await open_search_fixture(session)
-        agent = notte.Agent(session=session, max_steps=3).create_agent()
-        response = await agent.arun(
-            task="The page is already open. Fill 'Search field fixture 6f9c' with 'einstein'. "
-            "Leave the other field blank. Do not navigate or submit. Complete when the field is filled."
-        )
-
-        assert response.success, response.answer
-        assert await session.window.page.input_value("#search") == "einstein"
-        assert await session.window.page.input_value("#other") == ""
-        assert session.window.page.url == SEARCH_FIXTURE_URL
-        assert all(step.action.type not in {"goto", "goto_new_tab"} for step in response.steps)
+        assert callback_calls["screen"] == 1
+        assert callback_calls["any"] == 7

@@ -66,7 +66,6 @@ export type GetFunctionRunResponseWritable = Omit<ApiGetFunctionRunResponseWrita
 export type FunctionRunUpdateRequest = Omit<ApiFunctionRunUpdateRequest, 'payloads' | 'result_preview'>;
 
 export type FunctionRunStatus = GetFunctionRunResponse['status'];
-const FUNCTION_RUNTIMES: readonly FunctionRuntime[] = ['standard', 'extended'];
 const FUNCTION_RUN_STATUSES: readonly FunctionRunStatus[] = ['closed', 'active', 'failed'];
 
 /** Reference an existing function by ID. */
@@ -314,7 +313,7 @@ export class NotteFunction {
 			throwOnError: true,
 			path: { function_id: functionId },
 			query: {
-				restricted: options.restricted ?? true,
+				restricted: options.restricted,
 				...(options.version !== undefined ? { version: options.version } : {}),
 			},
 			body: { file },
@@ -416,7 +415,7 @@ export class NotteFunction {
 			client: this.client.getClient(),
 			throwOnError: true,
 			path: { function_id: functionId },
-			query: { restricted: options.restricted ?? true },
+			query: { restricted: options.restricted },
 			body: { version: options.version },
 		});
 		return response.data;
@@ -514,7 +513,7 @@ export class NotteFunction {
 			client: this.client.getClient(),
 			throwOnError: true,
 			path: { function_id: functionId },
-			query: { ...options, only_active: options.only_active ?? false },
+			query: options,
 		});
 		return response.data;
 	}
@@ -547,9 +546,6 @@ export class NotteFunction {
 		const timeoutMs = options.timeoutMs ?? FUNCTION_RUN_TIMEOUT_MS;
 		if (!(timeoutMs > 0)) {
 			throw new InvalidRequestError('timeoutMs must be a positive number');
-		}
-		if (options.runtime !== undefined && !FUNCTION_RUNTIMES.includes(options.runtime)) {
-			throw new InvalidRequestError(`runtime must be one of ${FUNCTION_RUNTIMES.join(', ')}, got '${String(options.runtime)}'`);
 		}
 		const functionId = await this.ensureInitialized();
 		// Create the run record first, like RemoteWorkflow.run in Python.

@@ -8,9 +8,21 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 Functions are serverless deployments of your browser automations that can be invoked via API, scheduled to run automatically, or triggered by events.
 
-import FunctionsPython from '/snippets/workflows/index.mdx';
+import HandlerFunction from '/snippets/functions/handler_function.mdx';
+import DeployFunction from '/snippets/functions/deploy_function.mdx';
+import InvokeSdk from '/snippets/functions/invoke_sdk.mdx';
 
-<FunctionsPython />
+Write a Python file that exposes a `run` handler. Its parameters become the function's variables:
+
+<HandlerFunction />
+
+Deploy the file to get a function ID:
+
+<DeployFunction />
+
+Invoke the deployed function from the SDK. Runs always execute on Notte's cloud:
+
+<InvokeSdk />
 
 ## Create or load a Function
 

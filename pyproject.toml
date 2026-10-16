@@ -1,7 +1,7 @@
 [project]
 name = "notte"
-version = "1.9.8.dev0"
-description = "Notte, the full-stack web AI agent framework"
+version = "1.10.0.dev0"
+description = "Notte: browser infrastructure for AI agents and web automation"
 readme = "README.md"
 license = "SSPL-1.0"
 authors = [
@@ -9,24 +9,21 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "notte-core==1.9.8.dev0",
-    "notte-sdk==1.9.8.dev0",
-    "notte-browser==1.9.8.dev0",
-    "notte-agent==1.9.8.dev0",
-    "google-auth>=2.39.0",
-    "toml>=0.10.2",
+    "notte-core==1.10.0.dev0",
+    "notte-sdk==1.10.0.dev0",
+    "notte-browser==1.10.0.dev0",
 ]
 
 [project.optional-dependencies]
-integrations = ["notte-integrations==1.9.8.dev0"]
+llm = ["notte-llm==1.10.0.dev0"]
+# Drive cloud sessions with Playwright over CDP (session.page / session.cdp_url()).
+playwright = ["notte-sdk[playwright]==1.10.0.dev0"]
 
 [tool.uv.sources]
 notte-core = { workspace = true }
 notte-sdk = { workspace = true }
 notte-browser = { workspace = true }
-notte-agent = { workspace = true }
 notte-llm = { workspace = true }
-notte-integrations = { workspace = true }
 
 
 [tool.uv.workspace]
@@ -44,18 +41,17 @@ packages = ["src/notte"]
 [dependency-groups]
 
 dev = [
-    "aiomultiprocess>=0.9.1",
-    "basedpyright>=1.27.1",
-    "cloudpickle>=3.1.1",
-    "freezegun>=1.5.2",
-    "halo>=0.0.28",
-    "joblib>=1.4.2",
+    # SDK regeneration invokes the same pinned formatter as pre-commit.
+    { include-group = "lint" },
+    # Local HTTP servers in the browser tests (aiohttp.web).
+    "aiohttp>=3.11.13",
+    "basedpyright>=1.40.2",
+    # Generates SDK-owned wire models from the committed OpenAPI snapshot.
+    "datamodel-code-generator==0.83.0",
     "jupyter>=1.1.1",
+    # Exercises notte_core.profiling with profiling enabled (the `notte-core[profiling]` extra).
+    "opentelemetry-sdk>=1.34.1",
     "lxml-stubs>=0.5.1",
-    "notte-sdk[playwright]",
-    "pandas",
-    "pandas-stubs>=2.2.3.250308",
-    "pebble>=5.1.1",
     "pre-commit>=4.1.0",
     "pytest>=8.3.4",
     "pytest-asyncio>=0.25.3",
@@ -66,33 +62,38 @@ dev = [
     "pytest-rerunfailures>=15.0",
     "pytest-timeout>=2.4.0",
     "pytest-xdist[psutil]>=3.8.0",
+    "python-dotenv>=1.0.1",
     "sphinx>=8.2.3",
     "sphinx-mintlify>=0.1.0",
     "twine>=6.1.0",
     "ty>=0.0.69",
     "typer>=0.19.2",
+    # The Nike example harness imports its progress display.
+    "tqdm>=4.67.1",
 ]
 lint = [
-    "ruff>=0.9.7",
+    "ruff==0.11.10",
 ]
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "session"
 testpaths = ["tests"]
+# A misspelt `live`/`staging` mark would silently put a network test back in the offline gate.
+addopts = ["--strict-markers"]
+markers = [
+    "staging: talks to the Notte API (needs NOTTE_API_KEY); runs in `make test-live`, not the offline unit gate",
+    "live: reaches third-party websites or LLM providers; runs in `make test-live`, not the offline unit gate",
+    "use_cli_args: parametrize the test from the pytest command line options (see tests/conftest.py)",
+]
 timeout = 300
 timeout_method = "thread"
-markers = [
-    "live_heavy: slow live tests (agents, personas, vault with an agent); CI skips them on pull requests",
-]
 asyncio_mode = "strict"
 log_cli = true
 log_cli_level = "INFO"
 filterwarnings = [
     "ignore::DeprecationWarning:sklearn.utils.fixes:",
-    "ignore::DeprecationWarning:pandas.core.common:",
     "ignore::pydantic.warnings.PydanticDeprecatedSince20:",
     "ignore::DeprecationWarning:importlib.resources._legacy:",
-    "ignore::DeprecationWarning:litellm.utils:",
     "ignore:open_text is deprecated*:DeprecationWarning",
     "ignore:distutils Version classes are deprecated. Use packaging.version instead.*:DeprecationWarning",
     'ignore:configuration option "asyncio_default_fixture_loop_scope" is unset',
@@ -115,6 +116,8 @@ extend-select = ["I"]
 
 [tool.basedpyright]
 exclude = [".venv", "uv-cache", "**/site-packages/**", "**/dist-packages/**", "tests", "typing_cases", "old", "notebook", "dist", ".github"]
+# Upstream-generated annotations are checked by import/schema tests; keep facade typing strict.
+ignore = ["packages/notte-sdk/src/notte_sdk/_generated/models.py"]
 enableTypeIgnoreComments = true
 reportIgnoreCommentWithoutRule = false
 failOnWarnings = true

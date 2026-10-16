@@ -1,0 +1,475 @@
+[
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://society6.com/\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://society6.com/\"></a>",
+      "id": "L1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > header > div > div > div > div > div > div > div > span > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi3.s2kwpi6.s2kwpi9.s2kwpi7._1fragem32._1fragempn[href=\"https://society6.com/\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:8940967478267649475:4952162657592269817:6530775206483707303:-3129748244603136357:7244502793946482467:8027926634828706024:-5715384940892718431:5022616082698963075:5644552241927878554:-4646237399141818154:8643633880962890729:-7124260390842490460:2469642603562859637:-5885996279896320512:1848728812415420532:-2599022017251709679:-3367884279316366074:5231595468632045079:-6075933685450901190:2862872337597403474",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/header/div/div/div/div/div/div/div/span/a"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://society6.com/checkouts/cn/Z2NwLXVzLWVhc3QxOjAxSzA4MzAwM1BNVjlIUVpIMUNDMUcxUUg4?payment=shop_pay&checkout_queue_token=A_pZ0R4kxe1xnbCjQRDs2G7pM6js2kVxYgbhFhrPA6sy-vk7tevyU5d6QBhV2VeWV1tJezxbyj8tYyMEuTZeJ4lXqtoYetnRtS28MOo2gV37WPs70pE6EA%3D%3D&redirect_source=direct_checkout_checkout\" aria_label=\"Shop Pay\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://society6.com/checkouts/cn/Z2NwLXVzLWVhc3QxOjAxSzA4MzAwM1BNVjlIUVpIMUNDMUcxUUg4?payment=shop_pay&checkout_queue_token=A_pZ0R4kxe1xnbCjQRDs2G7pM6js2kVxYgbhFhrPA6sy-vk7tevyU5d6QBhV2VeWV1tJezxbyj8tYyMEuTZeJ4lXqtoYetnRtS28MOo2gV37WPs70pE6EA%3D%3D&redirect_source=direct_checkout_checkout\" aria_label=\"Shop Pay\"></a>",
+      "id": "L2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(1) > div > div > section > div > div:nth-of-type(2) > div:nth-of-type(1) > div > a.Xicuw.vowWK.pFvjc[id=\"shop-pay-button\"][href=\"https://society6.com/checkouts/cn/Z2NwLXVzLWVhc3QxOjAxSzA4MzAwM1BNVjlIUVpIMUNDMUcxUUg4?payment=shop_pay&checkout_queue_token=A_pZ0R4kxe1xnbCjQRDs2G7pM6js2kVxYgbhFhrPA6sy-vk7tevyU5d6QBhV2VeWV1tJezxbyj8tYyMEuTZeJ4lXqtoYetnRtS28MOo2gV37WPs70pE6EA%3D%3D&redirect_source=direct_checkout_checkout\"][aria-label=\"Shop Pay\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-3737730513455463742:7281264800217697944:5107202441367304987:-1123376913461254689:6824362048902757862:-3984054150174743861:-2167454659304434992:-1183092683999807723:2957560507355263748:-1622880149560947488:-1222709905196312388:8831171015554863270:-403230888422941334:-4928936366765589240:-1399939208053559475:2593859877867367103:-5721911599771272623:2497281910935548042:6253764734771105575:634790812562911130:3818684214283979189:778667702983940249",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[1]/div/div/section/div/div[2]/div[1]/div/a"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\"></button>",
+      "id": "B1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(1) > div > div > section > div > div:nth-of-type(2) > div:nth-of-type(2) > button._1m2hr9ge._1m2hr9gd._1fragemu6._1fragemms._1fragemor._1fragemtk._1fragemtz._1fragemu1._1fragemtq._1m2hr9g1h._1m2hr9g1e._1fragemu1._1fragemtz._1fragemtp._1fragemte._1m2hr9gi._1m2hr9gg._1fragem3m._1m2hr9g1w._1m2hr9g1a._1m2hr9g18._1fragempn._1m2hr9g1k[type=\"button\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-3737730513455463742:7281264800217697944:5107202441367304987:-1123376913461254689:6824362048902757862:-3984054150174743861:-2167454659304434992:-1183092683999807723:2957560507355263748:-1622880149560947488:-1222709905196312388:8831171015554863270:-403230888422941334:-4928936366765589240:-1399939208053559475:2593859877867367103:3281367899433757415:9011940120204786266:-7609067538165130071:1468223460984724027",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[1]/div/div/section/div/div[2]/div[2]/button"
+      },
+      "text_label": "Show more options",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://account.society6.com/authentication/oauth/authorize?client_id=83aa640d-9b1a-4f5d-b332-2be0ee054e6b&consent_id=d76ebd5b-733b-42f0-b4ba-dcbc1d4f9a04&locale=en-US&nonce=1bc58375-a9dc-45e3-8683-5e2059650945&redirect_uri=https%3A%2F%2Fsociety6.com%2Fcustomer_authentication%2Fcallback%3Fsource%3Dcore&response_type=code&scope=openid+email+customer-account-api%3Afull&state=01K08302Q2HF9MPRZ1W2R740VX\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://account.society6.com/authentication/oauth/authorize?client_id=83aa640d-9b1a-4f5d-b332-2be0ee054e6b&consent_id=d76ebd5b-733b-42f0-b4ba-dcbc1d4f9a04&locale=en-US&nonce=1bc58375-a9dc-45e3-8683-5e2059650945&redirect_uri=https%3A%2F%2Fsociety6.com%2Fcustomer_authentication%2Fcallback%3Fsource%3Dcore&response_type=code&scope=openid+email+customer-account-api%3Afull&state=01K08302Q2HF9MPRZ1W2R740VX\"></a>",
+      "id": "L3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi2.s2kwpi5.s2kwpi4._1fragemtm.s2kwpi8[href=\"https://account.society6.com/authentication/oauth/authorize?client_id=83aa640d-9b1a-4f5d-b332-2be0ee054e6b&consent_id=d76ebd5b-733b-42f0-b4ba-dcbc1d4f9a04&locale=en-US&nonce=1bc58375-a9dc-45e3-8683-5e2059650945&redirect_uri=https%3A%2F%2Fsociety6.com%2Fcustomer_authentication%2Fcallback%3Fsource%3Dcore&response_type=code&scope=openid+email+customer-account-api%3Afull&state=01K08302Q2HF9MPRZ1W2R740VX\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-3737730513455463742:7281264800217697944:5107202441367304987:-1123376913461254689:7661589087154904202:8111970659077860590:7168043579656794172:5868250098840158573:5878032107907883215:-4939136022388815398:-8216156179201341790:7861010170612388604:6276661472340794612:8940160978919417426:-8805430089398921994:4648059535709325329",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[1]/a"
+      },
+      "text_label": "Log in",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-3737730513455463742:7281264800217697944:5107202441367304987:-1123376913461254689:7661589087154904202:8111970659077860590:7168043579656794172:5868250098840158573:5878032107907883215:-4939136022388815398:-8216156179201341790:7861010170612388604:4278218781426570656:6236512134197614004:1880700405009297885:-4446318004468353164:4924029834671251159:-8958931244614513360:-5069457035979849059:3093758768549559037:-4861845375470118254:-9070977509096944422:5943865799081341018:-5128904487067602964",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[1]/div/div/div/div"
+      },
+      "text_label": "email",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"email\" value=\"\" placeholder=\"Email\" name=\"email\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"email\" value=\"\" placeholder=\"Email\" name=\"email\"></input>",
+      "id": "I1",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u12._7ozb2u1j._7ozb2ur[id=\"email\"][name=\"email\"][placeholder=\"Email\"][required][type=\"email\"][aria-labelledby=\"email-label\"][autocomplete=\"shipping email\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-3737730513455463742:7281264800217697944:5107202441367304987:-1123376913461254689:7661589087154904202:8111970659077860590:7168043579656794172:5868250098840158573:5878032107907883215:-4939136022388815398:-8216156179201341790:7861010170612388604:4278218781426570656:6236512134197614004:1880700405009297885:-4446318004468353164:4924029834671251159:-8958931244614513360:-5069457035979849059:3093758768549559037:-4861845375470118254:-9070977509096944422:5943865799081341018:-5128904487067602964:-1080425809176294172:-920492007959264092",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[1]/div/div/div/div/input"
+      },
+      "text_label": "email",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"checkbox\" name=\"marketing_opt_in\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<input type=\"checkbox\" name=\"marketing_opt_in\"></input>",
+      "id": "B2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > div > div > input._1mmswk96._1mmswk95._1fragemq1._1fragempz._1fragemq3._1fragempx._1fragemr1._1fragemqx._1fragemr5._1fragemqt._1fragemci._1fragemby._1fragemd2._1fragembe._1fragemor._1fragem32._1fragempm._1fragem2x._1fragemtv._1fragemtp._1fragemu2._1mmswk97._1fragemoi._1mmswk9a._1mmswk98._1fragemue[type=\"checkbox\"][id=\"marketing_opt_in\"][name=\"marketing_opt_in\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-3737730513455463742:7281264800217697944:5107202441367304987:-1123376913461254689:7661589087154904202:8111970659077860590:7168043579656794172:5868250098840158573:5878032107907883215:-4939136022388815398:-8216156179201341790:7861010170612388604:4278218781426570656:6236512134197614004:5067145638335373183:-695032862819638244:-7740413520270919539:7007740979022448935:-2001441622096510799:6615064244879802244:4073704785781953033:3312376328970685808:6310138471753148173:-551937931163292403",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[2]/div/div/div/input"
+      },
+      "text_label": "marketing_opt_in",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<label></label>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<label></label>",
+      "id": "M2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > div > label._1mmswk9g._1mmswk9f._1fragem32._1fragemlo._1fragemor._1fragemjl[for=\"marketing_opt_in\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-3737730513455463742:7281264800217697944:5107202441367304987:-1123376913461254689:7661589087154904202:8111970659077860590:7168043579656794172:5868250098840158573:5878032107907883215:-4939136022388815398:-8216156179201341790:7861010170612388604:4278218781426570656:6236512134197614004:5067145638335373183:-695032862819638244:-7740413520270919539:7007740979022448935:-2001441622096510799:6615064244879802244:-8726491935146561094:8411389848146963695",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[2]/div/div/label"
+      },
+      "text_label": "Email me with news and offers",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<select name=\"countryCode\"></select>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<select name=\"countryCode\"></select>",
+      "id": "I2",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > select.ZHJU6._1k3449n5._1k3449n3._1fragemue.oAlPg.IWR5K.tu1VS[name=\"countryCode\"][id=\"Select182\"][required][autocomplete=\"shipping country\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:-8484080420912285599:4569199872936115622:868035225930822786:-4993724529401756404:8648292562235018805:7995855798612650971:5201094096976660455:1913656384509822606:-3052085038616178439:9161542953161024704",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[1]/div/div/div/select"
+      },
+      "text_label": "Canada United States",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:4045368906913632661:-2277735445232482177:-7148191918875771374:-8191737923073964615:-5833898333850627207:4906717828928771305:-136219590201407755:-2229360349746235687",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[1]/div/div"
+      },
+      "text_label": "firstName",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"First name\" name=\"firstName\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"First name\" name=\"firstName\"></input>",
+      "id": "I3",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id=\"TextField594\"][name=\"firstName\"][placeholder=\"First name\"][required][type=\"text\"][aria-labelledby=\"TextField594-label\"][autocomplete=\"shipping given-name\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:4045368906913632661:-2277735445232482177:-7148191918875771374:-8191737923073964615:-5833898333850627207:4906717828928771305:-136219590201407755:-2229360349746235687:3563084554679934981:2179574575652824542",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[1]/div/div/input"
+      },
+      "text_label": "firstName",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M4",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:4045368906913632661:-2277735445232482177:5185447207437981686:7833862468425577089:-200006900132428783:-6684328141347128626:488120961635715462:-7182647297829908286",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[2]/div/div"
+      },
+      "text_label": "lastName",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"Last name\" name=\"lastName\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"Last name\" name=\"lastName\"></input>",
+      "id": "I4",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id=\"TextField595\"][name=\"lastName\"][placeholder=\"Last name\"][required][type=\"text\"][aria-labelledby=\"TextField595-label\"][autocomplete=\"shipping family-name\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:4045368906913632661:-2277735445232482177:5185447207437981686:7833862468425577089:-200006900132428783:-6684328141347128626:488120961635715462:-7182647297829908286:-3996892999210654808:8621652882933715778",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[2]/div/div/input"
+      },
+      "text_label": "lastName",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M5",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:8713024675170430851:4175231641139189581:2354574319079294017:7757545775247704649:3333316814494425621:-8859457509919395644:5144368907051877287:-9013126745735082935",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[3]/div/div/div"
+      },
+      "text_label": "company",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"Company (optional)\" name=\"company\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"Company (optional)\" name=\"company\"></input>",
+      "id": "I5",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id=\"TextField596\"][name=\"company\"][placeholder=\"Company (optional)\"][type=\"text\"][aria-labelledby=\"TextField596-label\"][autocomplete=\"shipping organization\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:8713024675170430851:4175231641139189581:2354574319079294017:7757545775247704649:3333316814494425621:-8859457509919395644:5144368907051877287:-9013126745735082935:-6022196850885210633:1287570992407825962",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[3]/div/div/div/input"
+      },
+      "text_label": "company",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M6",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:6705362878467119470:939365490865572835:134412265756167884:6488533049260092388:-3860047785769001077:7641874151601564563:-4937181836273429680:-1852491492316742905:3708741311080027274:-29107656493359259:-2107903137721826207:-7344508092898825157:-7943785059997080604:5629279134288319547:5645918496897152774:7477545614893900502:-6359662284298316575:-2837364820614047831:7597606459681451436:-7515105955203664188:-4885582132276880581:5443120903329847077:-7520743925902876498:2049597500996371752:5358665978778447825:7745081928782936102:8835432047927877037:-2517275487589621346:-3571866030015192752:-9173816402905923728:5372606850971660150:6269032069205073089",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div"
+      },
+      "text_label": "reductions",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"Discount code or gift card\" name=\"reductions\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"Discount code or gift card\" name=\"reductions\"></input>",
+      "id": "I6",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id=\"ReductionsInput102\"][name=\"reductions\"][placeholder=\"Discount code or gift card\"][type=\"text\"][aria-labelledby=\"ReductionsInput102-label\"][autocomplete=\"on\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:6705362878467119470:939365490865572835:134412265756167884:6488533049260092388:-3860047785769001077:7641874151601564563:-4937181836273429680:-1852491492316742905:3708741311080027274:-29107656493359259:-2107903137721826207:-7344508092898825157:-7943785059997080604:5629279134288319547:5645918496897152774:7477545614893900502:-6359662284298316575:-2837364820614047831:7597606459681451436:-7515105955203664188:-4885582132276880581:5443120903329847077:-7520743925902876498:2049597500996371752:5358665978778447825:7745081928782936102:8835432047927877037:-2517275487589621346:-3571866030015192752:-9173816402905923728:5372606850971660150:6269032069205073089:3958130710304057300:1073827991274266550",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div/input"
+      },
+      "text_label": "reductions",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\" aria_label=\"Shipping policy\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\" aria_label=\"Shipping policy\"></button>",
+      "id": "B3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > section > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > button._1s82kpb1._1s82kpb0._1fragemor._1fragemms._1fragemtk._1fragemtv._1fragemtq._1fragemu5._1fragemte._1fragem32[type=\"button\"][aria-label=\"Shipping policy\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/society6.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:6705362878467119470:939365490865572835:134412265756167884:6488533049260092388:-3860047785769001077:7641874151601564563:-4937181836273429680:-1852491492316742905:3708741311080027274:-29107656493359259:-2107903137721826207:-7344508092898825157:3279155698937388949:2480402445731120011:-6891137645838249732:-662262011422150972:-1196468058297924492:102790131227739939:-6257659910093507484:-3581513531454267919:-2433360950352629510:-7817947107577202502:-8510615098511673032:204079005294251053:-6429012906345906466:-5457654040729488497:505863974454820805:2166406592729978908",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/section/div[2]/div[2]/div[2]/div[1]/div/div/button"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  }
+]

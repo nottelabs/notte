@@ -1,0 +1,8 @@
+### Content of 'WebArea' component with text 'body content'
+_[:]Script-built page
+B1[:]<button>Static button</button>
+B2[:]<button>Generated
+button</button>
+I1[:]<input placeholder="Generated input"></input>
+I2[:]<select aria_label="Generated choice">Alpha
+Beta</select>

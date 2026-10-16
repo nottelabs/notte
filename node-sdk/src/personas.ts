@@ -47,7 +47,7 @@ export type PersonaConstructor = PersonaConstructorWithId | PersonaConstructorCr
 /**
  * Self-service identities for web automation (account creation, 2FA, etc.)
  *
- * Notte Personas provide automated identity management for AI agents, enabling them to create accounts,
+ * Notte Personas provide automated identity management for browser workflows, enabling account creation,
  * handle two-factor authentication, and interact with web platforms without manual intervention.
  *
  * Notte Personas come with complete digital identities:

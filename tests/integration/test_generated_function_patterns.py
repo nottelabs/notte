@@ -26,7 +26,7 @@ import json
 
 import pytest
 from notte_browser.session import NotteSession
-from notte_core.errors.actions import ActionExecutionError
+from notte_core.errors import ActionExecutionError
 
 # Reduced from the real Tapology bout-search script. It reads a property off an
 # element it expects to find, which is what every generated extraction script

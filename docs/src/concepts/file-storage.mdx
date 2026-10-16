@@ -7,7 +7,6 @@ import UploadingFiles from '/snippets/file-storage/uploading_files.mdx';
 import UrlUpload from '/snippets/file-storage/url_upload.mdx';
 import DownloadingFiles from '/snippets/file-storage/downloading_files.mdx';
 import ForceOverwrite from '/snippets/file-storage/force_overwrite.mdx';
-import UsingWithAgents from '/snippets/file-storage/using_with_agents.mdx';
 import UsingWithSessions from '/snippets/file-storage/using_with_sessions.mdx';
 import DescriptiveFilenames from '/snippets/file-storage/descriptive_filenames.mdx';
 import CheckDownloads from '/snippets/file-storage/check_downloads.mdx';
@@ -27,10 +26,8 @@ Files have two sources:
 
 | Source | Purpose | API |
 |--------|---------|-----|
-| **Uploads** (`user_upload`) | Files you upload for agents to use | `storage.upload()` |
-| **Downloads** (`session_download`) | Files the browser downloads from websites | `storage.list("session_download")` + `storage.download()` |
-
-Files belong to a session. In Python, every session creates its own `session.storage` automatically. In TypeScript, create `client.FileStorage()` and pass it to `client.Session({ storage })`; the session binds it when it starts. To access files from an existing or closed session, use `client.FileStorage(session_id=...)` in Python or `client.FileStorage(sessionId)` in TypeScript.
+| **Uploads** | Files you upload for sessions to use | `storage.upload()` |
+| **Downloads** | Files sessions download from websites | `storage.download()` |
 
 ```
 ┌─────────────┐                    ┌──────────────┐
@@ -40,7 +37,7 @@ Files belong to a session. In Python, every session creates its own `session.sto
                                          v
                                   ┌──────────────┐
                                   │   Session    │
-                                  │   / Agent    │
+                                  │              │
                                   └──────┬───────┘
                                          │
                                          v
@@ -79,7 +76,7 @@ when the session is cleaned up and are not added to the session's file list.
 
 ## Downloading Files
 
-Download files that agents retrieved from websites:
+Download files that your session retrieved from websites with the `download_file` action:
 
 <DownloadingFiles />
 
@@ -93,12 +90,6 @@ or listing the file. The Node example uses the `client` initialized above.
 
 <ForceOverwrite />
 
-## Using with Agents
-
-Agents can interact with files on websites when storage is attached:
-
-<UsingWithAgents />
-
 ## Using with Sessions
 
 Use file storage with scripted automation:
@@ -111,10 +102,10 @@ Use file storage with scripted automation:
 
 | Method | Description |
 |--------|-------------|
-| `upload(file_path, upload_file_name=None)` | Upload a local file to the session's storage. Returns a `SessionFile` |
-| `list(source=None, *, limit=100, offset=0)` | List files. `source` is `"user_upload"`, `"session_download"`, or `None` for both. Returns a page whose `.files` holds `SessionFile` objects |
-| `download(file_id, local_dir=".", *, force=False)` | Save a file to a local directory and return its path |
-| `delete(file_id)` | Delete a file from storage |
+| `upload(file_path, upload_file_name=None)` | Upload a local file to storage |
+| `download(file_name, local_dir, force=False)` | Download a file to local directory |
+| `list_uploaded_files()` | List files you've uploaded |
+| `list_downloaded_files()` | List files downloaded by sessions |
 
 ### Parameters
 

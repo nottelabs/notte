@@ -14,7 +14,7 @@ SMTP_STARTTLS_ENV = "SMTP_STARTTLS"
 
 
 def require_smtp_configuration() -> None:
-    missing = [name for name in (SMTP_SERVER_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV) if os.getenv(name) is None]
+    missing = [name for name in (SMTP_SERVER_ENV, SMTP_USERNAME_ENV, SMTP_PASSWORD_ENV) if not os.getenv(name)]
     if missing:
         pytest.skip(f"{', '.join(missing)} required")
 

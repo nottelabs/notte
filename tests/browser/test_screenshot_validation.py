@@ -1,11 +1,9 @@
 from base64 import b64encode
 from io import BytesIO
-from types import SimpleNamespace
 from typing import get_type_hints
 
 import pytest
-from notte_core.ast import SecureScriptRunner
-from notte_core.browser.observation import Screenshot
+from notte_core.observation import Screenshot
 from PIL import Image
 
 
@@ -21,21 +19,15 @@ def test_screenshot_accepts_image_bytes(encoded: bool) -> None:
 
     assert Screenshot.model_fields["raw"].annotation is bytes
     assert screenshot.raw == raw
-    assert screenshot.bytes(type="raw") == raw
+    assert screenshot.bytes() == raw
     assert screenshot.model_dump()["raw"] == b64encode(raw).decode("ascii")
 
 
-def test_observation_does_not_expose_builtins_to_restricted_scripts() -> None:
-    """Importing the bytes type must not expose the builtins module to scripts."""
-    script = """
-def run():
-    import notte_core.browser.observation as observation
-    return observation.builtins
-"""
+def test_observation_does_not_expose_builtins_module() -> None:
+    """V2 removed restricted execution; keep its module namespace free of builtins."""
+    import notte_core.observation as observation
 
-    runner = SecureScriptRunner(SimpleNamespace())
-
-    assert runner.run_script(script, restricted=True) is None
+    assert not hasattr(observation, "builtins")
 
 
 def test_screenshot_annotations_stay_bytes_after_model_rebuild() -> None:
@@ -61,4 +53,4 @@ def test_screenshot_json_roundtrip() -> None:
     restored = Screenshot.model_validate_json(screenshot.model_dump_json())
 
     assert restored.raw == screenshot.raw
-    assert restored.bytes(type="raw") == screenshot.raw
+    assert restored.bytes() == screenshot.raw

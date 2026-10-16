@@ -1,6 +1,10 @@
 """Comprehensive tests for the simplified proxy API."""
 
+import json
+
 import pytest
+from notte_sdk import NotteClient
+from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
     ExternalProxy,
     NotteProxy,
@@ -9,6 +13,9 @@ from notte_sdk.types import (
     TailnetProxy,
 )
 from pydantic import ValidationError
+
+from tests.sdk.test_generated_endpoints import fake
+from tests.sdk.test_sessions_codegen import SESSION
 
 
 class TestDirectProxyValidation:
@@ -41,15 +48,11 @@ class TestDirectProxyValidation:
         assert proxy.country is None
         assert proxy.city == "Madrid"
 
-    def test_notte_proxy_from_city_rejects_empty_city(self):
-        """Test NotteProxy.from_city rejects empty city names."""
-        with pytest.raises(ValidationError, match="city must be a non-empty string"):
-            NotteProxy.from_city("")
+    def test_notte_proxy_from_city_rejects_empty_city(self, monkeypatch):
+        assert_proxy_api_validation(monkeypatch, [NotteProxy.from_city("")])
 
-    def test_notte_proxy_rejects_whitespace_city(self):
-        """Test NotteProxy rejects whitespace-only city names."""
-        with pytest.raises(ValidationError, match="city must be a non-empty string"):
-            NotteProxy.model_validate({"type": "notte", "city": "   "})
+    def test_notte_proxy_rejects_whitespace_city(self, monkeypatch):
+        assert_proxy_api_validation(monkeypatch, [NotteProxy.from_raw({"city": "   "})])
 
     def test_notte_proxy_from_city_with_proxy_id(self):
         """Test NotteProxy.from_city helper with proxy_id."""
@@ -118,29 +121,14 @@ class TestDirectProxyValidation:
 class TestSessionStartRequestWithStringCountryCodes:
     """Test SessionStartRequest with string country code shortcuts."""
 
-    def test_string_country_us(self):
-        """Test proxies='us' string shorthand."""
-        request = SessionStartRequest.model_validate({"proxies": "us"})
-        assert isinstance(request.proxies, list)
-        assert len(request.proxies) == 1
-        assert request.proxies[0].type == "notte"
-        assert request.proxies[0].country == ProxyGeolocationCountry.UNITED_STATES
+    def test_string_country_us(self, monkeypatch):
+        assert_proxy_sent(monkeypatch, "us")
 
-    def test_string_country_gb(self):
-        """Test proxies='gb' string shorthand."""
-        request = SessionStartRequest.model_validate({"proxies": "gb"})
-        assert isinstance(request.proxies, list)
-        assert len(request.proxies) == 1
-        assert request.proxies[0].type == "notte"
-        assert request.proxies[0].country == ProxyGeolocationCountry.UNITED_KINGDOM
+    def test_string_country_gb(self, monkeypatch):
+        assert_proxy_sent(monkeypatch, "gb")
 
-    def test_string_country_fr(self):
-        """Test proxies='fr' string shorthand."""
-        request = SessionStartRequest.model_validate({"proxies": "fr"})
-        assert isinstance(request.proxies, list)
-        assert len(request.proxies) == 1
-        assert request.proxies[0].type == "notte"
-        assert request.proxies[0].country == ProxyGeolocationCountry.FRANCE
+    def test_string_country_fr(self, monkeypatch):
+        assert_proxy_sent(monkeypatch, "fr")
 
     def test_invalid_country_code(self):
         """Test that invalid country code fails validation."""
@@ -168,11 +156,14 @@ class TestSessionStartRequestWithDictConfigs:
         assert request.proxies[0].country is None
         assert request.proxies[0].city == "Chicago"
 
-    def test_notte_proxy_dict_with_typo_in_country(self):
-        """Test NotteProxy dict with typo in 'country' field should fail validation."""
-        # The typo "coutnry" is rejected because pydantic has extra="forbid"
-        with pytest.raises(ValidationError, match="coutnry"):
-            SessionStartRequest.model_validate({"proxies": [{"type": "notte", "coutnry": "us"}]})
+    def test_notte_proxy_dict_with_typo_in_country(self, monkeypatch):
+        """Unknown proxy keys reach API validation without being discarded."""
+        proxies = [{"type": "notte", "coutnry": "us"}]
+        api = fake(monkeypatch, {"detail": "invalid proxy"}, 422)
+        with pytest.raises(NotteAPIError) as error:
+            NotteClient(api_key="test").sessions.start(proxies=proxies)  # pragma: allowlist secret
+        assert error.value.status_code == 422
+        assert json.loads(api.calls[0].data)["proxies"] == proxies
 
     def test_notte_proxy_dict_minimal(self):
         """Test NotteProxy dict minimal: {"type": "notte"}."""
@@ -294,35 +285,20 @@ class TestSessionStartRequestWithListConfigs:
 class TestBackwardCompatibility:
     """Test backward compatibility with old geolocation syntax."""
 
-    def test_notte_proxy_with_geolocation_dict(self):
-        """Test NotteProxy.model_validate with old geolocation syntax."""
-        proxy = NotteProxy.model_validate({"type": "notte", "geolocation": {"country": "us", "city": "Seattle"}})
-        assert proxy.type == "notte"
-        assert proxy.country == ProxyGeolocationCountry.UNITED_STATES
-        assert proxy.city == "Seattle"
-        # geolocation should not exist as a field
-        assert not hasattr(proxy, "geolocation")
+    def test_notte_proxy_with_geolocation_dict(self, monkeypatch):
+        assert_proxy_sent(monkeypatch, [{"type": "notte", "geolocation": {"country": "us", "city": "Seattle"}}])
 
-    def test_session_start_request_with_geolocation_list(self):
-        """Test SessionStartRequest with old geolocation syntax in list."""
-        request = SessionStartRequest.model_validate({"proxies": [{"type": "notte", "geolocation": {"country": "gb"}}]})
-        assert request.proxies[0].type == "notte"
-        assert request.proxies[0].country == ProxyGeolocationCountry.UNITED_KINGDOM
+    def test_session_start_request_with_geolocation_list(self, monkeypatch):
+        assert_proxy_sent(monkeypatch, [{"type": "notte", "geolocation": {"country": "gb"}}])
 
-    def test_geolocation_with_country_already_set(self):
-        """Test that country field takes precedence if both are provided."""
-        proxy = NotteProxy.model_validate(
-            {"type": "notte", "country": "us", "city": "Austin", "geolocation": {"country": "gb", "city": "London"}}
+    def test_geolocation_with_country_already_set(self, monkeypatch):
+        assert_proxy_sent(
+            monkeypatch,
+            [{"type": "notte", "country": "us", "city": "Austin", "geolocation": {"country": "gb", "city": "London"}}],
         )
-        # top-level fields should take precedence over geolocation
-        assert proxy.country == ProxyGeolocationCountry.UNITED_STATES
-        assert proxy.city == "Austin"
 
-    def test_geolocation_with_id(self):
-        """Test old geolocation syntax with id field."""
-        proxy = NotteProxy.model_validate({"type": "notte", "id": "test-proxy", "geolocation": {"country": "ca"}})
-        assert proxy.id == "test-proxy"
-        assert proxy.country == ProxyGeolocationCountry.CANADA
+    def test_geolocation_with_id(self, monkeypatch):
+        assert_proxy_sent(monkeypatch, [{"type": "notte", "id": "test-proxy", "geolocation": {"country": "ca"}}])
 
 
 class TestEdgeCasesAndErrorHandling:
@@ -374,3 +350,18 @@ class TestEdgeCasesAndErrorHandling:
         playwright_proxy = request.playwright_proxy
         assert playwright_proxy is not None
         assert playwright_proxy["server"] == "http://localhost:8080"
+
+
+def assert_proxy_sent(monkeypatch, proxies):
+    api = fake(monkeypatch, SESSION)
+    NotteClient(api_key="test").sessions.start(proxies=proxies)  # pragma: allowlist secret
+    assert json.loads(api.calls[0].data)["proxies"] == proxies
+
+
+def assert_proxy_api_validation(monkeypatch, proxies):
+    api = fake(monkeypatch, {"detail": "invalid proxy"}, 422)
+    with pytest.raises(NotteAPIError) as error:
+        NotteClient(api_key="test").sessions.start(proxies=proxies)  # pragma: allowlist secret
+    assert error.value.status_code == 422
+    assert len(api.calls) == 1
+    assert json.loads(api.calls[0].data)["proxies"][0]["city"] == proxies[0].city

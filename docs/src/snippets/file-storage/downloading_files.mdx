@@ -6,8 +6,8 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 with client.Session() as session:
-    agent = client.Agent(session=session)
-    agent.run(task="Download the invoice from the account page")
+    session.execute(type="goto", url="https://example.com/account")
+    session.execute(type="download_file", selector="a.invoice")
 
 # List downloaded files
 downloaded = session.storage.list("session_download").files

@@ -4,23 +4,19 @@ import { createResources } from '@/resources.gen';
 import { getParseAs } from '@/lib/client/client/utils.gen';
 import { Session, type SessionOptions } from '@/session';
 import type {
-  AgentResponse,
   FunctionListItemResponse,
   GlobalScrapeRequest,
-  ListAgentsData,
   ListFunctionsData,
   ListSessionsData,
   ListVaultsData,
   PersonaResponse,
   Vault,
 } from '@/lib/client/types.gen';
-import { Agent, type AgentConstructor } from '@/agent';
 import { NotteVault, type VaultConstructor } from '@/vaults';
 import { NottePersona, withPersonaDefaults, type PersonaConstructor, type PersonaListOptions } from '@/personas';
 import { NotteFunction, type FunctionConstructor } from '@/functions';
 import {
   healthCheck,
-  listAgents,
   listFunctions,
   listPersonas,
   listSessions,
@@ -97,11 +93,10 @@ export interface NotteClientConfig {
 }
 
 export type SessionListOptions = NonNullable<ListSessionsData['query']>;
-export type AgentListOptions = NonNullable<ListAgentsData['query']>;
 export type VaultListOptions = NonNullable<ListVaultsData['query']>;
 export type FunctionListOptions = NonNullable<ListFunctionsData['query']>;
 /** Options of `client.scrape()`: the global scrape request minus `url`, plus the SDK-only scrape options. */
-export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' | 'response_format' | 'wait_for_authentication'> & ScrapeOptions<T> & {
+export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' | 'response_format' | 'wait_for_authentication' | 'only_images'> & ScrapeOptions<T> & {
   /** Whether to wait for Managed Auth before the scrape request completes. Defaults to true. Authentication failure or timeout can fail the scrape request. */
   wait_for_authentication?: boolean;
 };
@@ -114,7 +109,7 @@ function isRelativeProxyUrl(baseUrl: string): boolean {
   return /^\/(?!\/)/.test(baseUrl);
 }
 
-/** Entry point for sessions, agents, functions, vaults, personas, and session files. */
+/** Entry point for sessions, functions, vaults, personas, and session files. */
 export class NotteClient {
   private readonly config: ResolvedConfig;
   private readonly client = createClient();
@@ -172,13 +167,9 @@ export class NotteClient {
       baseUrl: this.config.baseUrl,
       redirect: 'manual',
       throwOnError: true,
-      fetch: createRetryingFetch({
-        maxRetries: signal => (signal ? retryOverrides.get(signal) : undefined) ?? this.config.maxRetries,
-        deadline: signal => (signal ? deadlines.get(signal) : undefined),
-      }),
     });
 
-    this.client.interceptors.request.use((request: Request) => {
+    this.client.interceptors.request.use((request: Request, opts) => {
       const headers = new Headers(request.headers);
       if (this.config.apiKey) headers.set('Authorization', `Bearer ${this.config.apiKey}`);
       headers.set('x-notte-request-origin', REQUEST_ORIGIN);
@@ -189,25 +180,32 @@ export class NotteClient {
       headers.delete(TIMEOUT_HEADER);
       const retriesOverride = headers.get(MAX_RETRIES_HEADER);
       headers.delete(MAX_RETRIES_HEADER);
-      const track = (sent: Request): Request => {
-        if (retriesOverride !== null) retryOverrides.set(sent.signal, Number(retriesOverride));
-        return sent;
-      };
       const timeoutMs = override !== null ? Number(override) : this.config.timeoutMs;
 
       if (this.config.verbose) {
         console.info(`Making \`${request.method}\` request to \`${request.url}\``);
       }
-      if (!(timeoutMs > 0)) {
-        return track(new Request(request, { headers }));
-      }
-      const deadline = withTimeout(request.signal, timeoutMs);
-      const timed = new Request(request, { headers, signal: deadline.signal });
-      deadlines.set(timed.signal, deadline.expiresAt);
-      track(timed);
-      // Released by the response/error interceptors below so a completed
-      // request does not keep its timer alive until the deadline.
-      pendingDeadlines.set(timed, deadline.release);
+      // Use the original signal: even request.signal follows opts.signal via
+      // an undici WeakRef and can stop receiving aborts after garbage collection.
+      const callerSignal = opts.signal ?? request.signal;
+      const deadline = timeoutMs > 0 ? withTimeout(callerSignal, timeoutMs) : undefined;
+      const signal = deadline?.signal ?? callerSignal;
+      const timed = new Request(request, { headers, signal });
+      pendingRequests.set(timed, { signal, release: deadline?.release ?? (() => undefined), expiresAt: deadline?.expiresAt ?? Infinity });
+
+      // Pass the strongly held signal in fetch's init, bypassing Request's weak
+      // signal-following link. Keeping the Request preserves all fetch options
+      // (including streamed uploads), without reconstructing them field by field.
+      // Wrap the resolved fetch per call so custom transports and redirects use it too.
+      // SSE reconnects reuse opts; never wrap a previous attempt's signal.
+      const transport = originalTransports.get(opts) ?? opts.fetch ?? globalThis.fetch;
+      originalTransports.set(opts, transport);
+      const retrying = createRetryingFetch({
+        fetch: transport,
+        maxRetries: () => retriesOverride !== null ? Number(retriesOverride) : this.config.maxRetries,
+        deadline: () => deadline?.expiresAt,
+      });
+      opts.fetch = (input, init) => retrying(input, { ...init, signal });
       return timed;
     });
 
@@ -255,7 +253,7 @@ export class NotteClient {
           method: request.method,
           headers: headerRecord,
           body: opts.serializedBody ?? undefined,
-          signal: request.signal,
+          signal: requestSignal(request),
           redirect: 'manual',
         });
         currentUrl = location;
@@ -318,14 +316,15 @@ export class NotteClient {
     // Fetch body reads may throw AbortError even when the signal's reason is
     // TimeoutError. Preserve caller cancellation and report SDK deadlines as
     // timeouts rather than HTTP errors with a misleading status of 200.
-    if (request?.signal.aborted) {
-      error = request.signal.reason ?? error;
+    const signal = request && requestSignal(request);
+    if (signal?.aborted) {
+      error = signal.reason ?? error;
     }
     if (isTimeoutAbort(error)) {
       const target = request ? ` to \`${requestPath(request)}\`` : '';
       return new NotteTimeoutError(`Request${target} ${(error as Error).message}`, { cause: error });
     }
-    if (request?.signal.aborted) return error;
+    if (signal?.aborted) return error;
     if (response) {
       const path = requestPath(request, response);
       const body = normalizeErrorBody(error);
@@ -380,6 +379,11 @@ export class NotteClient {
     return new Session(this, options);
   }
 
+  /** Generated file operations; use Files(sessionId) for local file IO helpers. */
+  get files() {
+    return this.resources.files;
+  }
+
   /** Access files owned by a specific session, including closed sessions. */
   Files(sessionId: string): SessionFiles {
     return new SessionFiles(this.getClient(), sessionId);
@@ -398,13 +402,6 @@ export class NotteClient {
    */
   FileStorage(sessionId?: string): RemoteFileStorage {
     return new RemoteFileStorage(this, sessionId);
-  }
-
-  /**
-   * Create a new agent
-   */
-  Agent(options: AgentConstructor): Agent {
-    return new Agent(this, options);
   }
 
   /**
@@ -439,17 +436,6 @@ export class NotteClient {
       ...this.resources.sessions,
       list: async (options: SessionListOptions = {}): Promise<SessionResponse[]> => {
         const response = await listSessions({ client: this.getClient(), query: options });
-        return response.data?.items ?? [];
-      },
-    };
-  }
-
-  /** Client-bound agent API operations. `list()` retains its array return value. */
-  get agents() {
-    return {
-      ...this.resources.agents,
-      list: async (options: AgentListOptions = {}): Promise<AgentResponse[]> => {
-        const response = await listAgents({ client: this.getClient(), query: options });
         return response.data?.items ?? [];
       },
     };
@@ -611,19 +597,17 @@ function timeoutReason(timeoutMs: number): DOMException {
   return new DOMException(`timed out after ${timeoutMs}ms`, 'TimeoutError');
 }
 
-const pendingDeadlines = new WeakMap<Request, () => void>();
-/** When each request signal's SDK deadline expires, so retries never outlive it. */
-const deadlines = new WeakMap<AbortSignal, number>();
-/** Per-request `maxRetries` overrides set through `MAX_RETRIES_HEADER`. */
-const retryOverrides = new WeakMap<AbortSignal, number>();
+// Keep the signal available for typed error mapping even after releasing the
+// timer. Weak keys let completed requests (and their signals) be collected.
+const pendingRequests = new WeakMap<Request, Deadline>();
+const originalTransports = new WeakMap<object, typeof fetch>();
+
+function requestSignal(request: Request): AbortSignal {
+  return pendingRequests.get(request)?.signal ?? request.signal;
+}
 
 function releaseDeadline(request: Request | undefined): void {
-  if (!request) return;
-  const release = pendingDeadlines.get(request);
-  if (release) {
-    pendingDeadlines.delete(request);
-    release();
-  }
+  if (request) pendingRequests.get(request)?.release();
 }
 
 interface Deadline {

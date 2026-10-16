@@ -24,9 +24,7 @@ from notte_sdk.errors import (
 | `AuthenticationError` | API key is missing or invalid |
 | `InvalidRequestError` | Request parameters are invalid |
 | `NotteAPIExecutionError` | Operation failed during execution |
-| `NotteAPIError` | Any other API error response |
-
-These four exceptions are siblings: catching `NotteAPIError` does not catch the other three. To catch all of them in one clause, use their common base class `NotteBaseError` from `notte_core.errors.base`.
+| `NotteAPIError` | General API error (base class) |
 
 ## Handling errors
 
@@ -65,5 +63,6 @@ pip install --upgrade notte-sdk
 The SDK warns you when updates are available:
 
 ```
-You are using notte-sdk version 1.7.3, but version 1.7.4 is available on PyPI. Run 'pip install notte-sdk==1.7.4' to avoid any interruptions.
+You are using notte-sdk version 1.7.3, but version 1.7.4 is available.
+Run 'pip install notte-sdk==1.7.4' to avoid any interruptions.
 ```

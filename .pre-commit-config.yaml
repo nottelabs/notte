@@ -19,23 +19,24 @@ repos:
       - id: basedpyright
         args: ["--project", "."]
         verbose: true
-        exclude: ^(docs/src/|examples/|typing_cases/)
+        exclude: ^(docs/src/|examples/|typing_cases/|packages/notte-sdk/src/notte_sdk/_generated/models\.py$)
 
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250306_README\.md|README\.md||tests/data/.*|docs/src/.*)$
+        # Schema-name mappings such as SecretValueResponse are not credentials.
+        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250306_README\.md|README\.md|packages/notte-sdk/src/notte_sdk/_generated/schema_index\.json||tests/data/.*|tests/golden/snapshots/.*|docs/src/.*)$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
         types: [file]
-        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250307_README\.md|README\.md|.*\.(gif|png|ico|otf|woff|woff2|ttf|eot|jpg|jpeg))$
+        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250307_README\.md|README\.md|tests/golden/snapshots/.*|.*\.(gif|png|ico|otf|woff|woff2|ttf|eot|jpg|jpeg))$
       - id: end-of-file-fixer
         types: [file]
-        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250307_README\.md|README\.md|.*\.(gif|png|ico|otf|woff|woff2|ttf|eot|jpg|jpeg))$
+        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250307_README\.md|README\.md|tests/golden/snapshots/.*|.*\.(gif|png|ico|otf|woff|woff2|ttf|eot|jpg|jpeg))$
       - id: check-yaml
         types: [file]
         files: \.(yaml|yml)$
@@ -92,13 +93,36 @@ repos:
         name: Check documented session-config defaults against the SDK
         entry: bash -c "uv run python docs/src/scripts/check_config_docs_defaults.py"
         language: system
-        files: ^(docs/src/features/sessions/configuration\.mdx|docs/src/scripts/check_config_docs_defaults\.py|packages/notte-sdk/src/notte_sdk/types\.py|packages/notte-core/src/notte_core/config\.toml)$
+        files: ^(docs/src/features/sessions/configuration\.mdx|docs/src/scripts/check_config_docs_defaults\.py|packages/notte-core/src/notte_core/types\.py|packages/notte-core/src/notte_core/config\.toml)$
         pass_filenames: false
       - id: docs-quickstart-setup-prompt
         name: Check shared Quickstart setup link
         entry: bash -c "cd docs/src && uv run python scripts/sync_quickstart_setup_prompt.py --check"
         language: system
         files: ^docs/src/
+        pass_filenames: false
+      - id: openapi-contract
+        name: Check the wire models match the OpenAPI snapshot
+        entry: bash -c "uv run --no-sync python scripts/openapi_contract.py --check"
+        language: system
+        files: ^(openapi/.*|packages/notte-sdk/src/notte_sdk/types\.py|scripts/openapi_contract\.py|\.pre-commit-config\.yaml)$
+        pass_filenames: false
+      - id: action-overloads
+        name: Check the execute() overloads match the action registry
+        entry: bash -c "uv run --no-sync python scripts/generate_action_overloads.py --check"
+        language: system
+        files: ^(packages/notte-core/src/notte_core/actions/.*|packages/notte-browser/src/notte_browser/session\.py|packages/notte-sdk/src/notte_sdk/endpoints/sessions\.py|scripts/generate_action_overloads\.py|\.pre-commit-config\.yaml)$
+      - id: sdk-codegen
+        name: Check SDK-owned models match the OpenAPI snapshot
+        entry: bash -c "uv run --no-sync python scripts/generate_sdk_models.py --check"
+        language: system
+        files: ^(openapi/.*|packages/notte-sdk/src/notte_sdk/_generated/(models\.py|schema_index\.json)|scripts/generate_sdk_models\.py|pyproject\.toml|uv\.lock|\.pre-commit-config\.yaml)$
+        pass_filenames: false
+      - id: sdk-endpoints
+        name: Check the generated SDK endpoints match the OpenAPI snapshot
+        entry: bash -c "uv run --no-sync python scripts/generate_sdk_endpoints.py --check"
+        language: system
+        files: ^(openapi/.*|packages/notte-sdk/src/notte_sdk/.*\.py|packages/notte-core/src/notte_core/(types|credentials/base)\.py|scripts/(generate_sdk_endpoints|openapi_contract)\.py|\.pre-commit-config\.yaml)$
         pass_filenames: false
       - id: no-loguru-logger-import
         name: Check for loguru logger imports

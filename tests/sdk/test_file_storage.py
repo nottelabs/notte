@@ -5,6 +5,8 @@ import pytest
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
 from notte_sdk.types import FileSource, SessionFile, SessionFilesPage
 
+from tests.sdk.test_generated_endpoints import fake
+
 
 @pytest.fixture
 def files_client() -> FileStorageClient:
@@ -38,21 +40,21 @@ def test_every_operation_requires_a_session(files_client: FileStorageClient) -> 
         storage.list()
 
 
-def test_list_uses_session_endpoint(files_client: FileStorageClient) -> None:
-    response = Mock(ok=True)
-    response.json.return_value = {
-        "files": [file_metadata().model_dump(mode="json")],
-        "total": 1,
-        "limit": 100,
-        "offset": 0,
-    }
-    with patch("notte_sdk.endpoints.files.requests.get", return_value=response) as get:
-        result = files_client.list("session-id", source=FileSource.USER_UPLOAD)
-
+def test_list_uses_session_endpoint(files_client: FileStorageClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = fake(
+        monkeypatch,
+        {
+            "files": [file_metadata().model_dump(mode="json")],
+            "total": 1,
+            "limit": 100,
+            "offset": 0,
+        },
+    )
+    result = files_client.list("session-id", source=FileSource.USER_UPLOAD)
     assert isinstance(result, SessionFilesPage)
     assert result.files[0].id == "file-id"
-    assert get.call_args.args[0] == "https://api.notte.test/sessions/session-id/files"
-    assert get.call_args.kwargs["params"]["source"] == "user_upload"
+    assert session.calls[0].url == "https://api.notte.test/sessions/session-id/files"
+    assert session.calls[0].params == {"source": "user_upload"}
 
 
 def test_download_is_id_based(files_client: FileStorageClient, tmp_path: Path) -> None:

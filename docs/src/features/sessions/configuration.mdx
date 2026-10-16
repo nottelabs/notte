@@ -43,7 +43,8 @@ Customize your session with these options:
 </ParamField>
 
 <ParamField path="solve_captchas" type="boolean" default={true}>
-  Automatically detect and solve captchas (reCAPTCHA, hCaptcha, etc.)
+  Automatically detect and solve captchas (reCAPTCHA, hCaptcha, etc.). Set this option on the session request.
+  The retired global `solve_captchas` TOML key is ignored with a warning.
 </ParamField>
 
 <ParamField path="block_ads" type="boolean" default={true}>
@@ -94,10 +95,6 @@ Customize your session with these options:
 
 <ParamField path="extra_http_headers" type="dict[str, str]">
   Extra HTTP headers sent with every request.
-</ParamField>
-
-<ParamField path="screenshot_type" type="string" default="last_action">
-  Screenshot mode for observations: `"raw"`, `"full"`, or `"last_action"`.
 </ParamField>
 
 <ParamField path="profile" type="SessionProfile">

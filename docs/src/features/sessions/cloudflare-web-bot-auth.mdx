@@ -4,7 +4,6 @@ description: Access Cloudflare-protected websites by cryptographically signing b
 ---
 import QuickStart from "/snippets/sessions/web-bot-auth/quick_start.mdx";
 import CompleteExample from "/snippets/sessions/web-bot-auth/complete_example.mdx";
-import AgentExample from "/snippets/sessions/web-bot-auth/agent_example.mdx";
 import Testing from "/snippets/sessions/web-bot-auth/testing.mdx";
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
@@ -36,12 +35,6 @@ Pass `web_bot_auth=True` when creating a session:
 Web bot auth pairs well with other session features. Here's an example combining it with residential proxies and the live viewer:
 
 <CompleteExample />
-
-## Using with Agents
-
-Agents automatically inherit web bot auth from the underlying session:
-
-<AgentExample />
 
 ## Verifying Your Setup
 

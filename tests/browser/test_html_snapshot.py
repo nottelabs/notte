@@ -1,14 +1,14 @@
 import os
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock
 
 import pytest
+from notte_browser.driver import async_playwright
 from notte_browser.errors import PlaywrightError
-from notte_browser.playwright_async_api import async_playwright
-from notte_browser.window import BrowserResource, BrowserWindow, BrowserWindowOptions
-from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
-from notte_core.errors.processing import SnapshotProcessingError
+from notte_browser.window import BrowserWindow, BrowserWindowOptions
+from notte_core.errors import SnapshotProcessingError
+from notte_core.snapshot import SnapshotMetadata, ViewportData
 from notte_sdk.types import LocalSessionStartRequest
 
 
@@ -25,16 +25,16 @@ def window() -> SimpleNamespace:
         page=SimpleNamespace(url=metadata.url, content=AsyncMock(return_value="<main>unchanged</main>")),
         screenshot=AsyncMock(return_value=b"image"),
         snapshot_metadata=AsyncMock(return_value=metadata),
-        is_file=Mock(return_value=False),
+        goto_response=None,
     )
 
 
 @pytest.mark.asyncio
 async def test_explicit_html_snapshot_skips_image_without_retry() -> None:
     target = window()
-    snapshot = await BrowserWindow.snapshot(target, skip_dom=True, capture_screenshot=False)
+    snapshot = await BrowserWindow.snapshot(target, skip_dom=True, screenshot=False)
     assert snapshot.html_content == "<main>unchanged</main>"
-    assert snapshot.screenshot == b""
+    assert snapshot.screenshot is None
     target.screenshot.assert_not_awaited()
     target.page.content.assert_awaited_once()
 
@@ -68,8 +68,8 @@ async def test_html_snapshot_retries_keep_capture_capability() -> None:
         "<main>unchanged</main>",
     ]
     target.snapshot = lambda **kwargs: BrowserWindow.snapshot(target, **kwargs)
-    snapshot = await target.snapshot(skip_dom=True, capture_screenshot=False)
-    assert snapshot.screenshot == b""
+    snapshot = await target.snapshot(skip_dom=True, screenshot=False)
+    assert snapshot.screenshot is None
     assert snapshot.html_content == "<main>unchanged</main>"
     target.screenshot.assert_not_awaited()
     assert target.page.content.await_count == 2
@@ -87,16 +87,14 @@ async def test_real_html_capture_matches_image_bearing_capture() -> None:
             page = await browser.new_page()
             await page.set_content(html)
             target = BrowserWindow(
-                resource=BrowserResource(
-                    page=page, options=BrowserWindowOptions.from_request(LocalSessionStartRequest(headless=True))
-                )
+                page=page, options=BrowserWindowOptions.from_request(LocalSessionStartRequest(headless=True))
             )
             legacy = await target.snapshot(skip_dom=True)
-            candidate = await target.snapshot(skip_dom=True, capture_screenshot=False)
+            candidate = await target.snapshot(skip_dom=True, screenshot=False)
             assert candidate.html_content == legacy.html_content
             assert candidate.dom_node == legacy.dom_node
             assert candidate.metadata.url == legacy.metadata.url
-            assert candidate.screenshot == b""
+            assert candidate.screenshot is None
             assert legacy.screenshot
         finally:
             await browser.close()
@@ -119,8 +117,8 @@ async def test_other_retries_preserve_html_only_capture(stage: str) -> None:
             PlaywrightError[0]("metadata changed"),
             target.snapshot_metadata.return_value,
         ]
-    snapshot = await target.snapshot(skip_dom=True, capture_screenshot=False)
+    snapshot = await target.snapshot(skip_dom=True, screenshot=False)
     assert snapshot.html_content == "<main>unchanged</main>"
-    assert snapshot.screenshot == b""
+    assert snapshot.screenshot is None
     target.screenshot.assert_not_awaited()
     assert target.page.content.await_count == 2
