@@ -170,6 +170,7 @@ def test_periodic_coverage_and_cancellation_boundaries_are_preserved() -> None:
             assert "schedule" not in triggers(config)
     inputs = triggers(workflow("test-cicd.yml"))["workflow_dispatch"]["inputs"]
     assert inputs["pr_number"]["required"] is True
+    assert "llm_provider" not in inputs  # Paid dispatch requires the coordinating SHA validation.
 
 
 def test_live_selection_does_not_bypass_fork_protection() -> None:

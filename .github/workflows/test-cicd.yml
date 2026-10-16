@@ -25,11 +25,6 @@ on:
       pr_number:
         description: 'PR number to run the FULL secret-backed CI on. For external (fork) PRs, only dispatch after reviewing the diff - this runs the contributor''s code with our secrets.'
         required: true
-      llm_provider:
-        description: Provider for live local extraction tests
-        type: choice
-        options: [gemini, openai]
-        default: gemini
 
 concurrency:
   # PR runs share a group so a new push cancels the superseded run. Every other run (main
