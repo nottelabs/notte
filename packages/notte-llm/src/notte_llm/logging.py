@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import inspect
 import typing
 from collections.abc import Coroutine
@@ -7,12 +5,13 @@ from datetime import datetime
 from functools import wraps
 from typing import TYPE_CHECKING, Any, Callable, TypeAlias
 
+from litellm import AllMessageValues, ModelResponse
 from notte_core.common.logging import logger
 
-if TYPE_CHECKING:
-    from litellm import AllMessageValues, ModelResponse
+from notte_llm.tracer import LlmTracer
 
-    from notte_llm.tracer import LlmTracer
+if TYPE_CHECKING:
+    pass
 
 
 def strip_images_from_llm_conversation(conversation: list[AllMessageValues]) -> list[AllMessageValues]:
@@ -46,7 +45,7 @@ def recover_args(func: Callable[..., Any], args: tuple[Any, ...], kwargs: dict[s
     return all_params
 
 
-ModelResponseCoroutine: TypeAlias = "Coroutine[Any, Any, ModelResponse]"
+ModelResponseCoroutine: TypeAlias = Coroutine[Any, Any, ModelResponse]
 
 
 def trace_llm_usage(
