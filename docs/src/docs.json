@@ -187,10 +187,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/laminar",
-      "destination": "/integrations"
-    },
-    {
       "source": "/integrations/magnitude",
       "destination": "/integrations"
     },
@@ -368,6 +364,13 @@
             "icon": "diagram-project",
             "pages": [
               "integrations/n8n"
+            ]
+          },
+          {
+            "group": "Observability",
+            "icon": "chart-line",
+            "pages": [
+              "integrations/laminar"
             ]
           },
           {
