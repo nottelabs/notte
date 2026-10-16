@@ -10,7 +10,7 @@ Use a Notte browser to repair a JSON selector map in [GitHub Actions](https://gi
 
 ## Set up
 
-Use Python 3.11+ or Node.js 24.8+ and a [Notte API key](https://console.notte.cc/apikeys). Clone the [Notte repository](https://github.com/nottelabs/notte) and open `examples/github-actions`. Run `uv sync --locked` or `npm ci`, set `NOTTE_API_KEY`, and run `uv run --locked python repair.py` or `npm start`.
+On Linux or macOS, use Python 3.11+ or Node.js 24.8+ and a [Notte API key](https://console.notte.cc/apikeys). Clone the [Notte repository](https://github.com/nottelabs/notte) and open `examples/github-actions`. Run `uv sync --locked` or `npm ci`, set `NOTTE_API_KEY`, and run `uv run --locked python repair.py` or `npm start`.
 
 Edit `selectors.json` with your page URL and each selector's expected role (`link` or `button`) and exact name. The recipe writes a proposal and closes its browser. It refuses missing, ambiguous or unstable targets and cross-origin redirects. It updates selector data rather than generating application code; no model key is required.
 

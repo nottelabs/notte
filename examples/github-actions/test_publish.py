@@ -11,7 +11,7 @@ from urllib.parse import parse_qs, urlsplit
 from proposal import MAP_PATH, apply_proposal
 from publish import publish
 
-SOURCE = Path(__file__).with_name("selectors.json").read_bytes()
+SOURCE = Path(__file__).with_name("fixtures").joinpath("selectors.json").read_bytes()
 SHA = "a" * 40
 
 

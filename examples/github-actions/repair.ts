@@ -21,7 +21,7 @@ function readMap(source: Buffer): Document {
   return value;
 }
 
-export async function repair(source: Buffer, options: { fixtureHtml?: string; fixtureRedirect?: string; signal?: AbortSignal } = {}) {
+export async function repair(source: Buffer, options: { fixtureHtml?: string; fixtureRedirect?: string; fixtureLateRedirect?: string; signal?: AbortSignal } = {}) {
   const map = readMap(source);
   const signal = AbortSignal.any([AbortSignal.timeout(90_000), ...(options.signal ? [options.signal] : [])]);
   let sessionId = 'unallocated';
@@ -36,17 +36,41 @@ export async function repair(source: Buffer, options: { fixtureHtml?: string; fi
         signal.throwIfAborted();
         page = await browser.page();
         signal.throwIfAborted();
+        const expectedOrigin = new URL(map.url).origin;
+        let changedOrigin = false;
+        page.on('framenavigated', (frame) => {
+          if (frame === page!.mainFrame() && new URL(frame.url()).origin !== expectedOrigin) {
+            changedOrigin = true; stage = 'origin';
+          }
+        });
+        await page.route('**/*', async (route) => {
+          const request = route.request();
+          if (request.isNavigationRequest() && request.frame() === page!.mainFrame() && new URL(request.url()).origin !== expectedOrigin) {
+            changedOrigin = true; stage = 'origin';
+            await route.abort();
+          } else await route.continue();
+        });
+        const checkOrigin = () => {
+          if (changedOrigin || new URL(page!.url()).origin !== expectedOrigin) throw new Error('Navigation changed origin');
+        };
         if (options.fixtureRedirect) await page.route(map.url, (route) => route.fulfill({ status: 302, headers: { location: options.fixtureRedirect! }, body: '' }));
         stage = 'navigation';
         await page.goto(map.url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
         stage = 'origin';
-        if (new URL(page.url()).origin !== new URL(map.url).origin) throw new Error('Navigation changed origin');
+        checkOrigin();
         stage = 'DOM';
         if (options.fixtureHtml !== undefined) await page.setContent(options.fixtureHtml);
+        if (options.fixtureLateRedirect) {
+          const blocked = page.waitForEvent('requestfailed');
+          await page.evaluate((url) => { location.href = url; }, options.fixtureLateRedirect);
+          await blocked;
+        }
+        stage = 'origin'; checkOrigin(); stage = 'DOM';
         const changes = [];
         for (const [key, entry] of Object.entries(map.selectors)) {
           signal.throwIfAborted();
           const target = page.getByRole(entry.role, { name: entry.name, exact: true });
+          await target.first().waitFor({ state: 'attached', timeout: 5_000 });
           if (await target.count() !== 1) throw new Error('Expected exactly one semantic target');
           let valid = false;
           try { valid = await page.locator('css=' + entry.selector).count() === 1 && await target.evaluate((el, selector) => el.matches(selector), entry.selector); }
@@ -64,6 +88,7 @@ export async function repair(source: Buffer, options: { fixtureHtml?: string; fi
           changes.push({ key, before: entry.selector, after });
         }
         signal.throwIfAborted();
+        stage = 'origin'; checkOrigin();
         return { version: 1, source_sha256: createHash('sha256').update(source).digest('hex'), session_id: sessionId, changes };
       } catch {
         throw new Error(`Selector repair ${signal.aborted ? 'cancelled' : 'refused'}: ${stage} (session ${sessionId})`);

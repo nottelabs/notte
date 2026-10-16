@@ -19,7 +19,13 @@ CANDIDATE = """el => {
 }"""
 
 
-async def repair(source: bytes, *, fixture_html: str | None = None, fixture_redirect: str | None = None) -> dict:
+async def repair(
+    source: bytes,
+    *,
+    fixture_html: str | None = None,
+    fixture_redirect: str | None = None,
+    fixture_late_redirect: str | None = None,
+) -> dict:
     document = read_map(source)
     browser = NotteClient().Session(max_duration_minutes=3)
     stage = "claim"
@@ -28,6 +34,36 @@ async def repair(source: bytes, *, fixture_html: str | None = None, fixture_redi
             try:
                 async with asyncio.timeout(90):
                     page = await browser.apage
+
+                    def origin(url):
+                        parsed = urlsplit(url)
+                        return parsed.scheme, parsed.hostname, parsed.port or (443 if parsed.scheme == "https" else 80)
+
+                    expected = origin(document["url"])
+                    changed_origin = False
+
+                    async def guard_navigation(route):
+                        nonlocal changed_origin, stage
+                        request = route.request
+                        if (
+                            request.is_navigation_request()
+                            and request.frame == page.main_frame
+                            and origin(request.url) != expected
+                        ):
+                            changed_origin = True
+                            stage = "origin"
+                            await route.abort()
+                        else:
+                            await route.continue_()
+
+                    def navigated(frame):
+                        nonlocal changed_origin, stage
+                        if frame == page.main_frame and origin(frame.url) != expected:
+                            changed_origin = True
+                            stage = "origin"
+
+                    page.on("framenavigated", navigated)
+                    await page.route("**/*", guard_navigation)
                     if fixture_redirect is not None:
                         await page.route(
                             document["url"],
@@ -36,19 +72,25 @@ async def repair(source: bytes, *, fixture_html: str | None = None, fixture_redi
                     stage = "navigation"
                     await page.goto(document["url"], wait_until="domcontentloaded", timeout=30_000)
                     stage = "origin"
-                    expected, actual = urlsplit(document["url"]), urlsplit(page.url)
 
-                    def origin(url):
-                        return url.scheme, url.hostname, url.port or (443 if url.scheme == "https" else 80)
+                    def check_origin():
+                        if changed_origin or origin(page.url) != expected:
+                            raise ValueError("Navigation changed origin")
 
-                    if origin(expected) != origin(actual):
-                        raise ValueError("Navigation changed origin")
+                    check_origin()
                     stage = "DOM"
                     if fixture_html is not None:
                         await page.set_content(fixture_html)
+                    if fixture_late_redirect is not None:
+                        async with page.expect_event("requestfailed"):
+                            await page.evaluate("url => { location.href = url; }", fixture_late_redirect)
+                    stage = "origin"
+                    check_origin()
+                    stage = "DOM"
                     changes = []
                     for key, entry in document["selectors"].items():
                         target = page.get_by_role(entry["role"], name=entry["name"], exact=True)
+                        await target.first.wait_for(state="attached", timeout=5_000)
                         if await target.count() != 1:
                             raise ValueError("Expected exactly one semantic target")
                         before = entry["selector"]
@@ -66,6 +108,8 @@ async def repair(source: bytes, *, fixture_html: str | None = None, fixture_redi
                         if not await target.evaluate("(el, selector) => el.matches(selector)", after):
                             raise ValueError("Replacement does not identify the expected target")
                         changes.append({"key": key, "before": before, "after": after})
+                    stage = "origin"
+                    check_origin()
                     return {
                         "version": 1,
                         "source_sha256": hashlib.sha256(source).hexdigest(),

@@ -4,9 +4,13 @@ import { test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { repair } from '../repair.ts';
 
-const source = JSON.parse(await readFile(new URL('../selectors.json', import.meta.url), 'utf8'));
+const source = JSON.parse(await readFile(new URL('../fixtures/selectors.json', import.meta.url), 'utf8'));
 const cases: Record<string, string | undefined> = {
   repair: undefined, unchanged: undefined,
+  delayed: `<script>setTimeout(() => { document.body.innerHTML = '<a id="learn-more" href="/a">Learn more</a>'; }, 150)</script>`,
+  id: '<a id="learn-more" href="/a">Learn more</a>',
+  escaped_id: '<a id="learn:more" href="/a">Learn more</a>',
+  late_redirect: undefined,
   missing: '<a id="other">Other</a>',
   ambiguous: '<a href="/a">Learn more</a><a href="/b">Learn more</a>',
   unstable: '<a role="link">Learn more</a>',
@@ -36,20 +40,23 @@ for (const [mode, fixtureHtml] of Object.entries(cases)) {
     if (mode === 'redirect') document.url = 'https://notte-selector-fixture.invalid/start';
     const controller = new AbortController();
     if (mode === 'cancel') controller.abort(); // Claim still completes; the already-aborted callback must release it.
-    const run = repair(Buffer.from(JSON.stringify(document)), { fixtureHtml, fixtureRedirect: mode === 'redirect' ? 'https://example.com' : undefined, signal: controller.signal });
+    const run = repair(Buffer.from(JSON.stringify(document)), { fixtureHtml, fixtureLateRedirect: mode === 'late_redirect' ? 'https://www.iana.org' : undefined, fixtureRedirect: mode === 'redirect' ? 'https://example.com' : undefined, signal: controller.signal });
     let id: string;
-    if (['repair', 'unchanged'].includes(mode)) {
+    if (['repair', 'unchanged', 'id', 'escaped_id', 'delayed'].includes(mode)) {
       const result = await run;
       id = result.session_id;
       assert.equal(result.changes.length, mode === 'unchanged' ? 0 : 1);
-      if (result.changes.length) assert.match(result.changes[0].after!, /^a\[href="/);
+      if (result.changes.length) {
+        if (['id', 'escaped_id', 'delayed'].includes(mode)) assert.equal(result.changes[0].after, mode !== 'escaped_id' ? 'a#learn-more' : 'a#learn\\:more');
+        else assert.match(result.changes[0].after!, /^a\[href="/);
+      }
     } else {
       try { await run; assert.fail('Expected refusal'); }
       catch (error) {
         assert.ok(error instanceof Error);
         assert.ok(!error.message.includes(process.env.NOTTE_API_KEY!));
         assert.ok(!error.message.includes('wss:'));
-        if (mode === 'redirect') assert.ok(error.message.includes('origin'));
+        if (['redirect', 'late_redirect'].includes(mode)) assert.ok(error.message.includes('origin'));
         id = error.message.match(/session ([a-f0-9-]{36})/)![1];
       }
     }

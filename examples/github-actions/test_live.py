@@ -9,7 +9,7 @@ from pathlib import Path
 import requests
 from repair import repair
 
-SOURCE = Path(__file__).with_name("selectors.json").read_bytes()
+SOURCE = Path(__file__).with_name("fixtures").joinpath("selectors.json").read_bytes()
 
 
 def closed(sid):
@@ -32,6 +32,10 @@ class LiveTests(unittest.TestCase):
     def test_dom_backed_repair_and_refusals(self):
         cases = {
             "repair": None,
+            "delayed": """<script>setTimeout(() => { document.body.innerHTML = '<a id="learn-more" href="/a">Learn more</a>'; }, 150)</script>""",
+            "id": '<a id="learn-more" href="/a">Learn more</a>',
+            "escaped_id": '<a id="learn:more" href="/a">Learn more</a>',
+            "late_redirect": None,
             "unchanged": None,
             "missing": '<a id="other">Other</a>',
             "ambiguous": '<a href="/a">Learn more</a><a href="/b">Learn more</a>',
@@ -58,6 +62,7 @@ class LiveTests(unittest.TestCase):
                             raw,
                             fixture_html=html,
                             fixture_redirect="https://example.com" if mode == "redirect" else None,
+                            fixture_late_redirect="https://www.iana.org" if mode == "late_redirect" else None,
                         )
                     )
                     if mode == "cancel":
@@ -66,12 +71,18 @@ class LiveTests(unittest.TestCase):
                     return await task
 
                 with asyncio.Runner() as runner:
-                    if mode in {"repair", "unchanged"}:
+                    if mode in {"repair", "unchanged", "id", "escaped_id", "delayed"}:
                         result = runner.run(run())
                         sid = result["session_id"]
                         self.assertEqual(len(result["changes"]), 0 if mode == "unchanged" else 1)
                         if result["changes"]:
-                            self.assertTrue(result["changes"][0]["after"].startswith('a[href="'))
+                            after = result["changes"][0]["after"]
+                            if mode in {"id", "escaped_id", "delayed"}:
+                                self.assertEqual(
+                                    after, "a#learn-more" if mode in {"id", "delayed"} else r"a#learn\:more"
+                                )
+                            else:
+                                self.assertTrue(after.startswith('a[href="'))
                             self.assertNotEqual(result["changes"][0]["before"], result["changes"][0]["after"])
                     else:
                         with self.assertRaises(asyncio.CancelledError if mode == "cancel" else RuntimeError) as error:
@@ -79,7 +90,7 @@ class LiveTests(unittest.TestCase):
                         message = str(error.exception)
                         self.assertNotIn(os.environ["NOTTE_API_KEY"], message)
                         self.assertNotIn("wss:", message)
-                        if mode == "redirect":
+                        if mode in {"redirect", "late_redirect"}:
                             self.assertIn("origin", message)
                         sid = re.search(r"session ([a-f0-9-]{36})", message).group(1)
                 closed(sid)
