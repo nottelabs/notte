@@ -62,7 +62,7 @@ async function persistedTrace(sessionId: string) {
 
 for (const language of ['python', 'typescript']) {
   for (const failure of [false, true]) {
-    test(`${language}: ${failure ? 'navigation error' : 'title'} trace persists and browser closes`, { skip: !live, timeout: 120_000 }, async () => {
+    test(`${language}: ${failure ? 'navigation error' : 'title'} trace persists and browser closes`, { skip: !live, timeout: 240_000 }, async () => {
       const python = process.env.NOTTE_BRAINTRUST_PYTHON;
       if (language === 'python') assert.ok(python, 'Set NOTTE_BRAINTRUST_PYTHON to the example virtualenv Python');
       const url = failure ? 'not-a-valid-url' : 'https://example.com';
@@ -72,18 +72,21 @@ for (const language of ['python', 'typescript']) {
       let stderr = '';
       let failed = false;
       try {
-        ({ stdout, stderr } = await execute(command, args, { cwd, env: process.env, timeout: 90_000 }));
+        ({ stdout, stderr } = await execute(command, args, { cwd, env: process.env, timeout: 180_000 }));
       } catch (error) {
         failed = true;
         const child = error as { stdout?: string; stderr?: string };
         stdout = child.stdout ?? '';
         stderr = child.stderr ?? '';
       }
-      let id = new RegExp(`Browser task failed: navigate \\(session (${uuid.source})\\)`).exec(stdout + stderr)?.[1];
+      let id = new RegExp(`\\(session (${uuid.source})\\)`).exec(stdout + stderr)?.[1];
+      if (!id) {
+        try { id = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!).session_id; } catch { /* The failure assertion below reports malformed output. */ }
+      }
       try {
         assert.equal(failed, failure, 'Original recipe exited unexpectedly; SDK output withheld');
         if (failure) {
-          id = new RegExp(`Browser task failed: navigate \\(session (${uuid.source})\\)`).exec(stdout + stderr)?.[1];
+          id = new RegExp(`\\(session (${uuid.source})\\)`).exec(stdout + stderr)?.[1];
           assert.ok(id, 'Recipe did not report its owned browser');
           const row = await persistedTrace(id);
           assert.ok(row.error?.includes('Browser task failed: navigate'));

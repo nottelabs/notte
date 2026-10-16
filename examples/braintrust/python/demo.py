@@ -26,8 +26,12 @@ async def run_demo(url: str = "https://example.com") -> dict:
                     title = await page.title()
                 span.log(output={"title": title})
                 return {"title": title, "session_id": session_id, "span_id": span.id, "trace_url": span.permalink()}
-            except Exception:
-                raise RuntimeError(f"Browser task failed: {stage} (session {session_id})") from None
+            except Exception as error:
+                category = type(error).__name__
+                status = getattr(error, "status_code", None)
+                if isinstance(status, int):
+                    category += f" HTTP {status}"
+                raise RuntimeError(f"Browser task failed: {stage} [{category}] (session {session_id})") from None
     finally:
         logger.flush()
 
