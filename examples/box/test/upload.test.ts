@@ -28,10 +28,20 @@ test('uploads original bytes and verifies Box metadata', async () => {
 
 test('rejects mismatched Box content', async () => {
   const image = Buffer.from('offline-browser-capture');
-  await assert.rejects(uploadCapture(image, 'session1', 'test-only-token', 'folder1', client(image, true)), /Could not upload and verify/);
+  await assert.rejects(uploadCapture(image, 'session1', 'test-only-token', 'folder1', client(image, true)), /Box content verification failed/);
 });
 
 test('provider errors do not expose authenticated request headers', async () => {
   const failing: typeof fetch = async () => { throw new Error('request headers contain test-only-token'); };
-  await assert.rejects(uploadCapture(Buffer.from('test'), 'session1', 'test-only-token', 'folder1', failing), { message: 'Could not upload and verify the Box capture' });
+  await assert.rejects(uploadCapture(Buffer.from('test'), 'session1', 'test-only-token', 'folder1', failing), { message: 'Box upload failed' });
+});
+
+test('HTTP status remains actionable without provider secrets', async () => {
+  const unauthorized: typeof fetch = async () => new Response('secret', { status: 401 });
+  await assert.rejects(uploadCapture(Buffer.from('test'), 'session1', 'test-only-token', 'folder1', unauthorized), { message: 'Box upload failed (HTTP 401)' });
+});
+
+test('timeouts identify the failed step', async () => {
+  const timeout: typeof fetch = async () => { throw new DOMException('secret', 'TimeoutError'); };
+  await assert.rejects(uploadCapture(Buffer.from('test'), 'session1', 'test-only-token', 'folder1', timeout), { message: 'Box upload timed out' });
 });

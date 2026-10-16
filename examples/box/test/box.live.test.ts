@@ -54,7 +54,7 @@ test('Box with a hosted Notte browser', { skip: process.env.NOTTE_BOX_LIVE !== '
       assert.deepEqual(uploads, [201]);
     }));
     await t.test('real Box failure closes the browser', () => owned('not-a-folder', async uploads => {
-      await assert.rejects(main(), { message: 'Could not upload and verify the Box capture' });
+      await assert.rejects(main(), /Box upload failed \(HTTP (400|404)\)/);
       assert.equal(uploads.length, 1);
       assert.ok([400, 404].includes(uploads[0]));
     }));

@@ -25,6 +25,7 @@ def capture_page():
 
 
 def upload_capture(image: bytes, session_id: str, token: str, folder_id: str, http=requests):
+    step, status = "Box upload", None
     try:
         name = f"notte-{session_id}.png"
         headers = {"Authorization": f"Bearer {token}"}
@@ -35,18 +36,25 @@ def upload_capture(image: bytes, session_id: str, token: str, folder_id: str, ht
             files={"file": (name, io.BytesIO(image), "image/png")},
             timeout=60,
         )
+        status = response.status_code
         response.raise_for_status()
         file_id = response.json()["entries"][0]["id"]
+        step, status = "Box metadata lookup", None
         response = http.get(
             f"https://api.box.com/2.0/files/{file_id}", headers=headers, params={"fields": "id,size,sha1"}, timeout=30
         )
+        status = response.status_code
         response.raise_for_status()
         stored = response.json()
+        step, status = "Box content verification", None
         if stored["size"] != len(image) or stored["sha1"] != hashlib.sha1(image, usedforsecurity=False).hexdigest():
             raise RuntimeError("Box content verification failed")
         return {"box_file_id": file_id, "session_id": session_id}
+    except requests.Timeout:
+        raise RuntimeError(f"{step} timed out") from None
     except Exception:
-        raise RuntimeError("Could not upload and verify the Box capture") from None
+        detail = f" (HTTP {status})" if status is not None and status >= 400 else ""
+        raise RuntimeError(f"{step} failed{detail}") from None
 
 
 def main():

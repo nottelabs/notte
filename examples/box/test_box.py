@@ -82,7 +82,7 @@ class BoxLiveTests(unittest.TestCase):
 
     def test_real_box_failure_closes_browser(self):
         with self.owned("not-a-folder") as uploads:
-            with self.assertRaisesRegex(RuntimeError, "Could not upload and verify"):
+            with self.assertRaisesRegex(RuntimeError, r"Box upload failed \(HTTP (400|404)\)"):
                 demo.main()
             self.assertEqual(len(uploads), 1)
             self.assertIn(uploads[0], (400, 404))

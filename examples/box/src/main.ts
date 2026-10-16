@@ -19,6 +19,7 @@ export async function capturePage() {
 }
 
 export async function uploadCapture(image: Buffer, sessionId: string, token: string, folderId: string, fetcher: typeof fetch = fetch) {
+  let step = 'Box upload', status: number | undefined;
   try {
     const form = new FormData();
     const name = `notte-${sessionId}.png`;
@@ -28,19 +29,24 @@ export async function uploadCapture(image: Buffer, sessionId: string, token: str
     const uploaded = await fetcher('https://upload.box.com/api/2.0/files/content', {
       method: 'POST', headers, body: form, signal: AbortSignal.timeout(60_000),
     });
-    if (!uploaded.ok) throw new Error('Box upload failed');
+    status = uploaded.status;
+    if (!uploaded.ok) throw new Error();
     const fileId = (await uploaded.json()).entries[0].id as string;
+    step = 'Box metadata lookup'; status = undefined;
     const metadata = await fetcher(`https://api.box.com/2.0/files/${encodeURIComponent(fileId)}?fields=id,size,sha1`, {
       headers, signal: AbortSignal.timeout(30_000),
     });
-    if (!metadata.ok) throw new Error('Box verification failed');
+    status = metadata.status;
+    if (!metadata.ok) throw new Error();
     const stored = await metadata.json();
+    step = 'Box content verification'; status = undefined;
     if (stored.size !== image.length || stored.sha1 !== createHash('sha1').update(image).digest('hex')) {
       throw new Error('Box content verification failed');
     }
     return { box_file_id: fileId, session_id: sessionId };
-  } catch {
-    throw new Error('Could not upload and verify the Box capture');
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TimeoutError') throw new Error(`${step} timed out`);
+    throw new Error(`${step} failed${status !== undefined && status >= 400 ? ` (HTTP ${status})` : ''}`);
   }
 }
 
