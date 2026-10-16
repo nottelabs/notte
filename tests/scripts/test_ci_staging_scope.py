@@ -89,7 +89,7 @@ def test_automatic_selection_runs_once_with_complete_history() -> None:
     config = workflow("ci.yml")
     assert set(triggers(config)) == {"push", "pull_request"}
     assert config["permissions"] == {"contents": "read"}
-    assert triggers(config)["push"] == {"branches": ["main", "ci-reviewed/openai/*"]}
+    assert triggers(config)["push"] == {"branches": ["main"]}
     assert triggers(config)["pull_request"] == {"branches": ["main"]}
     changes = config["jobs"]["changes"]
     assert "concurrency" not in changes
@@ -108,14 +108,10 @@ def test_only_selected_families_receive_the_shared_scope() -> None:
         assert job["needs"] == "changes"
         assert job["uses"] == f"./.github/workflows/{name}"
         expected_inputs = {"scope": "${{ needs.changes.outputs.scope }}"}
-        if family in {"python", "node", "paired", "readme"}:
-            expected_inputs["reviewed_sha"] = "${{ github.sha }}"
-        if family == "paired":
-            expected_inputs["comparison_base"] = "${{ needs.changes.outputs.base_sha }}"
         if family == "python":
             expected_inputs.update(
-                reviewed_sha="${{ github.sha }}",
-                llm_provider="${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci-reviewed/openai/') && 'openai' || 'gemini' }}",
+                source_sha="${{ needs.changes.outputs.source_sha }}",
+                llm_provider="${{ needs.changes.outputs.llm_provider }}",
             )
         assert job["with"] == expected_inputs
         assert job["secrets"] == "inherit"  # pragma: allowlist secret
@@ -186,11 +182,7 @@ def test_live_selection_does_not_bypass_fork_protection() -> None:
         condition = workflow(name)["jobs"][job_id]["if"]
         assert "github.event.pull_request.head.repo.full_name == github.repository" in condition
         assert "fromJSON(needs.changes.outputs.scope)" in condition
-        if name in {"node-sdk-ci.yml", "paired-sdk-examples.yml", "readme-check.yml"}:
-            assert (
-                "github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci-reviewed/openai/') && !github.event.deleted && inputs.reviewed_sha == github.sha"
-                in condition
-            )
+        assert "ci-reviewed/" not in condition
 
 
 def test_lightweight_docs_assertions_have_no_workspace_or_secrets() -> None:
@@ -254,70 +246,94 @@ def test_scoped_checks_fetch_history_only_during_authenticated_checkout() -> Non
 
 
 @pytest.mark.parametrize(
-    "pr,actual,state,base,repository,deleted,expected",
+    "event,attempt,label,fork,moved,expected",
     [
-        ("1214", "a" * 40, "open", "main", "owner/repo", "false", 0),
-        ("1214", "b" * 40, "open", "main", "owner/repo", "false", 1),
-        ("oops", "a" * 40, "open", "main", "owner/repo", "false", 1),
-        ("1214", "a" * 40, "closed", "main", "owner/repo", "false", 1),
-        ("1214", "a" * 40, "open", "other", "owner/repo", "false", 1),
-        ("1214", "a" * 40, "open", "main", "fork/repo", "false", 1),
-        ("1214", "a" * 40, "open", "main", "owner/repo", "true", 1),
+        ("pull_request", 1, True, False, False, "gemini"),
+        ("pull_request", 2, True, False, False, "openai"),
+        ("pull_request", 2, False, False, False, "gemini"),
+        ("pull_request", 2, True, True, False, "gemini"),
+        ("pull_request", 2, True, False, True, None),
+        ("push", 1, True, False, False, "openai"),
+        ("push", 1, False, False, False, "gemini"),
     ],
 )
-def test_reviewed_push_refuses_an_unreviewed_commit(
-    tmp_path: Path, pr: str, actual: str, state: str, base: str, repository: str, deleted: str, expected: int
+def test_provider_selection_executes_the_normal_workflow(
+    tmp_path: Path, event: str, attempt: int, label: bool, fork: bool, moved: bool, expected: str | None
 ) -> None:
-    step = workflow("ci.yml")["jobs"]["changes"]["steps"][0]
-    assert step["if"] == "github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci-reviewed/openai/')"
+    step = next(s for s in workflow("ci.yml")["jobs"]["changes"]["steps"] if s.get("id") == "provider")
+    pull = {
+        "state": "open" if event == "pull_request" else "closed",
+        "merged_at": None if event == "pull_request" else "2026-10-16T00:00:00Z",
+        "merge_commit_sha": "a" * 40,
+        "base": {"ref": "main", "repo": {"full_name": "owner/repo"}},
+        "head": {"sha": ("b" if moved else "a") * 40, "repo": {"full_name": "owner/repo"}},
+        "labels": [{"name": "ci:openai"}] if label else [],
+        "user": {"login": "fixture-maintainer"},
+    }
+    response = tmp_path / "response.json"
+    response.write_text(json.dumps(pull if event == "pull_request" else [pull]))
     stub = tmp_path / "gh"
-    stub.write_text('#!/bin/sh\nprintf "%s\\n" "$PR_RESPONSE"\n')
+    stub.write_text("""#!/usr/bin/env python3
+import os, subprocess, sys
+from pathlib import Path
+args = sys.argv[1:]
+Path(os.environ["CALLED"]).write_text(args[1])
+sys.exit(subprocess.run(["jq", args[args.index("--jq") + 1]], stdin=open(os.environ["RESPONSE"])).returncode)
+""")
     stub.chmod(0o755)
+    output = tmp_path / "outputs"
     result = subprocess.run(
         ["bash", "-e", "-o", "pipefail", "-c", step["run"]],
+        cwd=WORKFLOWS.parents[1],
         env={
             **os.environ,
             "PATH": f"{tmp_path}:{os.environ['PATH']}",
-            "GITHUB_REF": f"refs/heads/ci-reviewed/openai/{pr}",
-            "DELETED": deleted,
-            "EXPECTED_SHA": "a" * 40,
-            "PR_RESPONSE": "\t".join([state, base, repository, actual, "c" * 40]),
-            "GITHUB_OUTPUT": str(tmp_path / "outputs"),
+            "EVENT_NAME": event,
+            "GITHUB_REF": "refs/heads/main" if event == "push" else "refs/pull/1214/merge",
+            "GITHUB_RUN_ATTEMPT": str(attempt),
+            "SOURCE_SHA": "a" * 40,
+            "PR_NUMBER": "1214",
+            "SAME_REPOSITORY": "false" if fork else "true",
+            "DELETED": "false",
+            "RESPONSE": str(response),
+            "CALLED": str(tmp_path / "called"),
+            "RUNNER_TEMP": str(tmp_path),
+            "GITHUB_OUTPUT": str(output),
             "GITHUB_REPOSITORY": "owner/repo",
         },
         capture_output=True,
         text=True,
     )
-    assert result.returncode == expected, result.stdout + result.stderr
-    if expected == 0:
-        assert (tmp_path / "outputs").read_text() == f"base_sha={'c' * 40}\n"
+    assert (result.returncode == 0) == (expected is not None), result.stdout + result.stderr
+    assert (tmp_path / "called").exists() is not fork
+    if expected is not None:
+        assert output.read_text() == f"provider={expected}\nsource_sha={'a' * 40}\n"
+        assert (tmp_path / "ci-provider-pulls.json").stat().st_mode & 0o077 == 0
 
 
 @pytest.mark.parametrize(
-    "provider,key,reviewed,succeeds",
+    "provider,key,source_matches,checkout_matches,succeeds",
     [
-        ("gemini", "", True, True),
-        ("openai", "dummy-test-key", True, True),
-        ("openai", "", True, False),
-        ("unknown", "", True, False),
-        ("openai", "dummy-test-key", False, False),
+        ("gemini", "", True, True, True),
+        ("openai", "dummy-test-key", True, True, True),
+        ("openai", "", True, True, False),
+        ("unknown", "", True, True, False),
+        ("openai", "dummy-test-key", False, True, False),
+        ("openai", "dummy-test-key", True, False, False),
     ],
 )
-def test_reviewed_push_provider_runs_the_full_live_suite(
-    tmp_path: Path, provider: str, key: str, reviewed: bool, succeeds: bool
+def test_selected_provider_runs_the_full_live_suite(
+    tmp_path: Path, provider: str, key: str, source_matches: bool, checkout_matches: bool, succeeds: bool
 ) -> None:
     step = next(
         s
         for s in workflow("test-cicd.yml")["jobs"]["staging-and-live"]["steps"]
         if s.get("name") == "Run staging and live tests"
     )
-    # Automatic PRs cannot opt in to the paid secret through supplied reusable inputs.
-    assert step["env"]["OPENAI_API_KEY"] == (
-        "${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci-reviewed/openai/') && !github.event.deleted && inputs.llm_provider == 'openai' && inputs.reviewed_sha == github.sha && secrets.OPENAI_API_KEY || '' }}"
-    )
-    assert step["env"]["NOTTE_CI_LLM_PROVIDER"].startswith(
-        "${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci-reviewed/openai/') && !github.event.deleted && "
-    )
+    paid_key = step["env"]["OPENAI_API_KEY"]
+    assert "github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt > 1" in paid_key
+    assert "inputs.source_sha == (github.event.pull_request.head.sha || github.sha)" in paid_key
+    assert "github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.deleted" in paid_key
     output = tmp_path / "invocation.json"
     stub = tmp_path / "make"
     stub.write_text("""#!/usr/bin/env python3
@@ -329,6 +345,9 @@ Path(os.environ["OUTPUT"]).write_text(json.dumps({
     "key_matches": os.environ["NOTTE_LLM_API_KEY"] == os.environ["OPENAI_API_KEY"]}))
 """)
     stub.chmod(0o755)
+    git = tmp_path / "git"
+    git.write_text('#!/bin/sh\ntest "$*" = "rev-parse HEAD" || exit 1\nprintf "%s\\n" "$CHECKED_OUT_SHA"\n')
+    git.chmod(0o755)
     result = subprocess.run(
         ["bash", "-e", "-o", "pipefail", "-c", step["run"]],
         env={
@@ -336,8 +355,10 @@ Path(os.environ["OUTPUT"]).write_text(json.dumps({
             "PATH": f"{tmp_path}:{os.environ['PATH']}",
             "OUTPUT": str(output),
             "NOTTE_CI_LLM_PROVIDER": provider,
-            "NOTTE_CI_REVIEWED_SHA": "a" * 40 if reviewed else "",
-            "GITHUB_SHA": "a" * 40,
+            "NOTTE_CI_SOURCE_SHA": "a" * 40 if source_matches else "",
+            "NOTTE_CI_EXPECTED_SHA": "a" * 40,
+            "CHECKED_OUT_SHA": ("a" if checkout_matches else "c") * 40,
+            "GITHUB_SHA": "b" * 40,  # The PR's synthetic merge SHA differs from its actual source.
             "OPENAI_API_KEY": key,
             "NOTTE_LLM_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai",
             "NOTTE_LLM_MODEL": "gemini-3.5-flash-lite",
@@ -364,13 +385,13 @@ Path(os.environ["OUTPUT"]).write_text(json.dumps({
 
 
 @pytest.mark.parametrize("base", ["a" * 40, "0" * 40, ""])
-def test_parity_uses_the_reviewed_pr_base(tmp_path: Path, base: str) -> None:
+def test_parity_uses_the_actual_comparison_base(tmp_path: Path, base: str) -> None:
     step = next(
         s
         for s in workflow("paired-sdk-examples.yml")["jobs"]["checks"]["steps"]
         if s.get("name") == "Enforce example parity and shrinking backlog"
     )
-    assert step["env"]["BASE_SHA"].startswith("${{ inputs.comparison_base || ")
+    assert step["env"]["BASE_SHA"] == "${{ github.event.pull_request.base.sha || github.event.before }}"
     stub = tmp_path / "python"
     output = tmp_path / "args"
     stub.write_text('#!/bin/sh\nprintf "%s\\n" "$@" > "$OUTPUT"\n')

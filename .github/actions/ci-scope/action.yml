@@ -16,7 +16,7 @@ runs:
       shell: bash
       working-directory: ${{ github.workspace }}
       env:
-        EVENT: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci-reviewed/openai/') && 'reviewed_push' || github.event_name }}
+        EVENT: ${{ github.event_name }}
         BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       run: >-

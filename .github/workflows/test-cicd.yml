@@ -7,12 +7,12 @@ on:
         description: Suite decisions from the shared push or PR selector.
         type: string
         default: ''
-      reviewed_sha:
-        description: Immutable reviewed commit supplied by the coordinating workflow
+      source_sha:
+        description: Immutable source commit validated by the coordinating workflow
         type: string
         default: ''
       llm_provider:
-        description: Provider for the validated reviewed commit
+        description: Extraction provider selected from live PR metadata
         type: string
         default: gemini
   # Periodic full live coverage; offline tests remain the secret-free PR gate.
@@ -186,8 +186,7 @@ jobs:
 
       - name: Pytest coverage comment
         # Fork PRs get a read-only token, so they cannot post the comment.
-        # Reviewed pushes retain the report in their log without posting a commit comment.
-        if: ${{ always() && fromJSON(needs.changes.outputs.scope).python_unit && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' && !startsWith(github.ref, 'refs/heads/ci-reviewed/openai/') }}
+        if: ${{ always() && fromJSON(needs.changes.outputs.scope).python_unit && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}
         uses: MishaKav/pytest-coverage-comment@9ee59af31bd7bcada1cc496f086b407122602dbd # v1.12.3
         with:
           pytest-coverage-path: ./pytest-coverage.txt
@@ -286,10 +285,11 @@ jobs:
 
       - name: Run staging and live tests
         env:
-          # Paid credentials require a validated, explicit maintainer test-branch push.
-          NOTTE_CI_REVIEWED_SHA: ${{ inputs.reviewed_sha }}
-          NOTTE_CI_LLM_PROVIDER: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci-reviewed/openai/') && !github.event.deleted && inputs.llm_provider || 'gemini' }}
-          OPENAI_API_KEY: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci-reviewed/openai/') && !github.event.deleted && inputs.llm_provider == 'openai' && inputs.reviewed_sha == github.sha && secrets.OPENAI_API_KEY || '' }}
+          # PR selection requires a full write-authorized rerun. Forks receive no key.
+          NOTTE_CI_SOURCE_SHA: ${{ inputs.source_sha }}
+          NOTTE_CI_EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          NOTTE_CI_LLM_PROVIDER: ${{ inputs.llm_provider || 'gemini' }}
+          OPENAI_API_KEY: ${{ inputs.llm_provider == 'openai' && inputs.source_sha == (github.event.pull_request.head.sha || github.sha) && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt > 1) || (github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.deleted)) && secrets.OPENAI_API_KEY || '' }}
           NOTTE_LLM_BASE_URL: https://generativelanguage.googleapis.com/v1beta/openai
           NOTTE_LLM_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NOTTE_LLM_MODEL: gemini-3.5-flash-lite
@@ -304,8 +304,8 @@ jobs:
           case "$NOTTE_CI_LLM_PROVIDER" in
             gemini) ;;
             openai)
-              test "$NOTTE_CI_REVIEWED_SHA" = "$GITHUB_SHA" || { echo 'Use the coordinating CI workflow for a reviewed OpenAI run'; exit 1; }
-              test -n "$OPENAI_API_KEY" || { echo 'Set the existing OpenAI repository secret for this dispatch'; exit 1; }
+              test "$NOTTE_CI_SOURCE_SHA" = "$NOTTE_CI_EXPECTED_SHA" && test "$(git rev-parse HEAD)" = "$NOTTE_CI_SOURCE_SHA" || { echo 'Provider selection does not match the checked-out source'; exit 1; }
+              test -n "$OPENAI_API_KEY" || { echo 'The selected provider requires the existing OpenAI repository secret'; exit 1; }
               export NOTTE_LLM_BASE_URL=https://api.openai.com/v1
               export NOTTE_LLM_API_KEY="$OPENAI_API_KEY"
               export NOTTE_LLM_MODEL=gpt-4.1-mini
