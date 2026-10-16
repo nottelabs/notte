@@ -1,6 +1,7 @@
 import asyncio
 import os
 import re
+import signal
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from urllib.parse import urlparse
@@ -175,24 +176,38 @@ async def fill_password(notte, proxy, token, target, connect=None):
                     await disconnect(browser)
 
 
-async def main():
-    target = os.environ["EVERVAULT_FORM_URL"]
-    token, proxy = await create_token(
-        os.environ["EVERVAULT_APP_ID"],
-        os.environ["EVERVAULT_API_KEY"],
-        os.environ["EVERVAULT_ENCRYPTED_PASSWORD"],
-        target,
-    )
-    notte = Notte(os.environ["NOTTE_API_KEY"], os.environ.get("NOTTE_API_URL", "https://api.notte.cc"))
+async def main(tokenize=create_token):
+    task = asyncio.current_task()
+    loop = asyncio.get_running_loop()
+    previous = signal.getsignal(signal.SIGTERM)
+
+    def cancel(*_):
+        if task:
+            loop.call_soon_threadsafe(task.cancel)
+
+    signal.signal(signal.SIGTERM, cancel)
     try:
-        await fill_password(notte, proxy, token, target)
-        print("Token filled; owned browser closed.")
+        target = os.environ["EVERVAULT_FORM_URL"]
+        token, proxy = await tokenize(
+            os.environ["EVERVAULT_APP_ID"],
+            os.environ["EVERVAULT_API_KEY"],
+            os.environ["EVERVAULT_ENCRYPTED_PASSWORD"],
+            target,
+        )
+        notte = Notte(os.environ["NOTTE_API_KEY"], os.environ.get("NOTTE_API_URL", "https://api.notte.cc"))
+        try:
+            await fill_password(notte, proxy, token, target)
+            print("Token filled; owned browser closed.")
+        finally:
+            await notte.http.aclose()
     finally:
-        await notte.http.aclose()
+        signal.signal(signal.SIGTERM, previous)
 
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
+    except (asyncio.CancelledError, KeyboardInterrupt):
+        raise SystemExit("Browser Tokens task cancelled.") from None
     except Exception:
         raise SystemExit("Browser Tokens task failed.") from None

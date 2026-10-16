@@ -267,7 +267,7 @@ test("browser failure redacts the cause and still stops and confirms closure", a
   }
 });
 
-test("pre-cancelled caller still recovers and closes its owned start", async () => {
+test("pre-cancelled caller never allocates a browser", async () => {
   const f = await fixture();
   const browser = browserFixture();
   try {
@@ -282,10 +282,7 @@ test("pre-cancelled caller still recovers and closes its owned start", async () 
       ),
     );
     assert.equal(browser.state.connected, 0);
-    assert.deepEqual(
-      f.requests.map((r) => r.method),
-      ["POST", "DELETE", "GET"],
-    );
+    assert.deepEqual(f.requests, []);
   } finally {
     await f.close();
   }

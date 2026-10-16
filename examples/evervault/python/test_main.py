@@ -2,7 +2,12 @@ import asyncio
 import base64
 import json
 import os
+import signal
+import subprocess
+import sys
+import threading
 from datetime import datetime, timedelta, timezone
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -215,6 +220,80 @@ async def test_unresponsive_cdp_close_cannot_prevent_owned_stop_and_get_closed()
         assert [r.method for r in requests] == ["POST", "DELETE", "GET"]
     finally:
         await notte.http.aclose()
+
+
+@pytest.mark.parametrize("termination", [signal.SIGTERM, signal.SIGINT])
+async def test_native_cli_signal_during_startup_recovers_response_and_closes(termination):
+    entered, release = threading.Event(), threading.Event()
+    requests = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *_):
+            pass
+
+        def reply(self, data, headers=None):
+            body = json.dumps(data).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            for key, value in (headers or {}).items():
+                self.send_header(key, value)
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_POST(self):
+            self.rfile.read(int(self.headers.get("Content-Length", "0")))
+            requests.append(("POST", self.path))
+            entered.set()
+            release.wait(45)
+            self.reply({"session_id": ID}, MARKERS)
+
+        def do_DELETE(self):
+            requests.append(("DELETE", self.path))
+            self.reply({})
+
+        def do_GET(self):
+            requests.append(("GET", self.path))
+            self.reply({"status": "closed"})
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    script = (
+        "import asyncio\nfrom main import main\nasync def tokens(*_):\n return 'fixture-token', "
+        + repr(PROXY)
+        + "\ntry:\n asyncio.run(main(tokens))\nexcept (asyncio.CancelledError, KeyboardInterrupt):\n raise SystemExit(1) from None\n"
+    )
+    child = subprocess.Popen(
+        [sys.executable, "-c", script],
+        env={
+            "PATH": os.environ.get("PATH", ""),
+            "NOTTE_API_KEY": "fixture-notte-key",  # pragma: allowlist secret (dummy fixture)
+            "NOTTE_API_URL": f"http://127.0.0.1:{server.server_port}",
+            "EVERVAULT_APP_ID": "fixture-app",
+            "EVERVAULT_API_KEY": "fixture-vendor-key",  # pragma: allowlist secret (dummy fixture)
+            "EVERVAULT_ENCRYPTED_PASSWORD": "ev:fixture",  # pragma: allowlist secret (dummy fixture)
+            "EVERVAULT_FORM_URL": TARGET,
+        },
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    try:
+        assert await asyncio.to_thread(entered.wait, 45), "CLI did not reach startup"
+        child.send_signal(termination)
+        await asyncio.sleep(0.1)
+        release.set()
+        await asyncio.to_thread(child.communicate, timeout=15)
+        assert child.returncode not in (0, -termination), "CLI terminated without graceful task cancellation"
+        assert requests == [("POST", "/sessions/start"), ("DELETE", f"/sessions/{ID}/stop"), ("GET", f"/sessions/{ID}")]
+    finally:
+        release.set()
+        if child.poll() is None:
+            child.kill()
+            await asyncio.to_thread(child.communicate, timeout=5)
+        await asyncio.to_thread(server.shutdown)
+        server.server_close()
+        thread.join(timeout=2)
 
 
 async def test_plaintext_is_rejected_before_vendor_request():

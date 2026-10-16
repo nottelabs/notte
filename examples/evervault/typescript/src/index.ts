@@ -249,6 +249,7 @@ export async function fillPassword(
   signal?: AbortSignal,
   connect: Connect = (url) => chromium.connectOverCDP(url, { timeout: 30_000 }),
 ) {
+  signal?.throwIfAborted();
   return notte.owned(
     {
       max_duration_minutes: 3,
