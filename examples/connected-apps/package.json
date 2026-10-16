@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.8" },
+  "scripts": {
+    "start": "node connected_apps.ts",
+    "test": "node --test connected_apps.test.ts"
+  }
+}

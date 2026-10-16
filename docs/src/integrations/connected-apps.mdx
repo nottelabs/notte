@@ -1,0 +1,25 @@
+---
+title: Connected apps with Quaso
+description: Discover connected apps and call Quaso actions with your Notte workspace key.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Use your Notte workspace key to discover [Quaso](https://www.quaso.ai) app connections and call typed actions. The Python and TypeScript [example project](https://github.com/nottelabs/notte/tree/main/examples/connected-apps) lists app, account and action counts without executing actions.
+
+## Set up
+
+Connect an app in [Quaso Settings](https://www.quaso.ai/settings#integrations). Use a Notte API key belonging to that same workspace, plus Python 3.11+ or Node.js 24.8+.
+
+Clone the [Notte repository](https://github.com/nottelabs/notte), open `examples/connected-apps`, and set `NOTTE_API_KEY`. Run `python connected_apps.py` or `npm start`. Set `CONNECTED_APP` to a catalog slug such as `github` to choose a provider.
+
+## Discover and invoke
+
+The example reads `/api/integrations/apps`, `/api/integrations/accounts` and `/api/integrations/actions` on `https://www.quaso.ai`. Accounts contain connection metadata; provider credentials stay server-side. The live catalog includes both OAuth and API-key providers.
+
+To invoke an action, select a healthy account and an action from that same provider, then call the example's `run_action` or `runAction` helper with its required properties. Review operations with side effects before invoking them. The server binds the selected account, so omit authentication properties.
+
+OAuth connection and disconnection happen in Quaso's UI. This integration does not add connected-app tools automatically to Notte Agent API runs or expose a programmable OAuth lifecycle.
+
+Local HTTP protocol tests cover discovery, a read-only action fixture, error handling and rejected redirects. Live OAuth and vendor action execution have not been tested.

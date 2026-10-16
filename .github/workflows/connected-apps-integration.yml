@@ -1,0 +1,38 @@
+name: Connected apps integration
+
+on:
+  pull_request:
+    paths:
+      - 'examples/connected-apps/**'
+      - 'docs/src/integrations/connected-apps.mdx'
+      - '.github/workflows/connected-apps-integration.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'examples/connected-apps/**'
+      - 'docs/src/integrations/connected-apps.mdx'
+      - '.github/workflows/connected-apps-integration.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: connected-apps-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  protocol:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: python -m unittest -v
+        working-directory: examples/connected-apps
+      - run: npm test
+        working-directory: examples/connected-apps
