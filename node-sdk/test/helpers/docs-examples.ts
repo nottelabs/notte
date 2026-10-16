@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 export interface ExampleContract {
   expected: Record<string, unknown>;
   closedSession?: boolean;
+  closedSessions?: boolean;
   logContains?: string;
 }
 
