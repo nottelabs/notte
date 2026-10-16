@@ -12,24 +12,11 @@ Run Notte browser tasks as [Temporal Activities](https://docs.temporal.io/activi
 
 Use Node.js 24+, a [Notte API key](https://console.notte.cc), and the [Temporal CLI](https://docs.temporal.io/cli).
 
-Start a local Temporal server:
+Clone the [Notte repository](https://github.com/nottelabs/notte) and open `examples/temporal`. Use three terminals:
 
-```bash
-temporal server start-dev
-```
-
-In another terminal, start the worker:
-
-```bash
-git clone https://github.com/nottelabs/notte.git
-cd notte/examples/temporal
-npm ci
-npm run build
-export NOTTE_API_KEY=your-notte-api-key
-npm run worker
-```
-
-In a third terminal, run `npm start` from `examples/temporal`. The result contains `title: "Example Domain"` and the stopped session's `session_id`.
+1. Start the local server with `temporal server start-dev`.
+2. Run `npm ci` and `npm run build`, set `NOTTE_API_KEY` to your Notte API key, then run `npm run worker`.
+3. Run `npm start`. The result contains `title: "Example Domain"` and the stopped session's `session_id`.
 
 ## Retries and browser ownership
 
