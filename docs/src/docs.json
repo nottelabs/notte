@@ -176,7 +176,7 @@
     },
     {
       "source": "/integrations/claude-computer-use",
-      "destination": "/integrations"
+      "destination": "/integrations/anthropic-computer-use"
     },
     {
       "source": "/integrations/computer-use-openagi",
@@ -360,6 +360,13 @@
               "integrations/openclaw",
               "integrations/hermes",
               "integrations/stagehand"
+            ]
+          },
+          {
+            "group": "Computer Use",
+            "icon": "hand-pointer",
+            "pages": [
+              "integrations/anthropic-computer-use"
             ]
           },
           {
