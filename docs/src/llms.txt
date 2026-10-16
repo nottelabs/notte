@@ -103,7 +103,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Google ADK](https://docs.notte.cc/integrations/google-adk.md): Give Google ADK agents a browser with the Notte MCP server
 - [Vercel AI SDK](https://docs.notte.cc/integrations/vercel-ai-sdk.md): Give AI SDK agents a browser with the Notte MCP server
 - [Mastra](https://docs.notte.cc/integrations/mastra.md): Give Mastra agents a browser with the Notte MCP server
-- [Inngest AgentKit](https://docs.notte.cc/integrations/inngest.md): Give AgentKit agents browser tools with Notte.
+- [Inngest AgentKit](https://docs.notte.cc/integrations/inngest-agentkit.md): Give AgentKit agents browser tools with Notte.
 - [OpenClaw](https://docs.notte.cc/integrations/openclaw.md): Use Notte cloud browsers with OpenClaw
 - [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
 - [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Use Stagehand v4 with a Notte cloud browser in Python or TypeScript

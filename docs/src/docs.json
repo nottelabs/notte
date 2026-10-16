@@ -416,7 +416,7 @@
               "integrations/google-adk",
               "integrations/vercel-ai-sdk",
               "integrations/mastra",
-              "integrations/inngest",
+              "integrations/inngest-agentkit",
               "integrations/openclaw",
               "integrations/hermes",
               "integrations/stagehand"
