@@ -35,9 +35,12 @@ async def run(task: str) -> dict[str, str]:
         headers={"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"},
     )
     with NotteClient().Session(max_duration_minutes=3) as session:
+        stage = "MCP connection"
         try:
             async with MCPAdapter(transport) as adapter:
+                stage = "tool discovery"
                 tools = browser_tools(await adapter.list_tools(), session.session_id)
+                stage = "agent initialization"
                 agent = create_deep_agent(
                     model=ChatAnthropic(
                         model=os.getenv("DEEPAGENTS_MODEL", "claude-haiku-5-5"),
@@ -52,10 +55,15 @@ async def run(task: str) -> dict[str, str]:
                         "Navigate with browser_action before reading. Report only what the browser shows."
                     ),
                 )
+                stage = "agent execution"
                 result = await agent.ainvoke({"messages": [{"role": "user", "content": task}]}, {"recursion_limit": 20})
                 return {"answer": result["messages"][-1].text, "session_id": session.session_id}
-        except Exception:
-            raise RuntimeError(f"Deep Agents failed (session {session.session_id})") from None
+        except Exception as error:
+            code = getattr(error, "status_code", None)
+            status = f" HTTP {code}" if type(code) is int else ""
+            raise RuntimeError(
+                f"Deep Agents failed during {stage}: {type(error).__name__}{status} (session {session.session_id})"
+            ) from None
 
 
 if __name__ == "__main__":

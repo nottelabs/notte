@@ -113,7 +113,10 @@ class DeepAgentsTests(unittest.IsolatedAsyncioTestCase):
                 },
             ):
                 async with owned():
-                    with self.assertRaisesRegex(RuntimeError, r"^Deep Agents failed \(session [0-9a-f-]{36}\)$"):
+                    with self.assertRaisesRegex(
+                        RuntimeError,
+                        r"^Deep Agents failed during agent execution: AnthropicAuthenticationError HTTP 401 \(session [0-9a-f-]{36}\)$",
+                    ):
                         await agent.run("Visit https://example.com and read its title.")
             self.assertEqual(len(requests), 1, "The actual framework must reach the injected provider")
             self.assertFalse(requests[0] & {"glob", "grep", "execute"})

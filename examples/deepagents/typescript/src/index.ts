@@ -21,8 +21,10 @@ export async function run(task: string) {
       url: `${(process.env.NOTTE_API_URL ?? 'https://api.notte.cc').replace(/\/$/, '')}/mcp/`,
       headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },
     } } });
+    let stage = 'MCP connection and tool discovery';
     try {
       const tools = browserTools(await adapter.listTools(), session.getId()!);
+      stage = 'agent initialization';
       const agent = createDeepAgent({
         model: new ChatAnthropic({
           model: process.env.DEEPAGENTS_MODEL ?? 'claude-haiku-5-5', maxTokens: 1024, maxRetries: 0,
@@ -33,10 +35,15 @@ export async function run(task: string) {
         systemPrompt: `Use Notte browser tools with browser_id ${session.getId()} for every browser call. `
           + 'Navigate with notte_browser_action before reading. Report only what the browser shows.',
       });
+      stage = 'agent execution';
       const result = await agent.invoke({ messages: [{ role: 'user', content: task }] }, { recursionLimit: 20 });
       return { answer: result.messages.at(-1)?.text ?? '', session_id: session.getId()! };
-    } catch {
-      throw new Error(`Deep Agents failed (session ${session.getId()})`);
+    } catch (error) {
+      for (let depth = 0; depth < 32 && error instanceof Error && error.cause instanceof Error; depth++) error = error.cause;
+      const code = (error as { status?: unknown } | null)?.status;
+      const status = typeof code === 'number' ? ` HTTP ${code}` : '';
+      const category = error instanceof Error ? error.constructor.name : 'UnknownError';
+      throw new Error(`Deep Agents failed during ${stage}: ${category}${status} (session ${session.getId()})`);
     } finally { await adapter.close(); }
   });
 }

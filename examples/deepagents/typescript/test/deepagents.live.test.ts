@@ -82,7 +82,8 @@ test('A real framework provider 401 closes the owned browser', { skip: !live, ti
     assert.ok(address && typeof address !== 'string');
     process.env.ANTHROPIC_BASE_URL = `http://127.0.0.1:${address.port}`;
     process.env.ANTHROPIC_API_KEY = 'not-a-real-key'; // pragma: allowlist secret
-    await assert.rejects(owned(() => run('Read the page title')), /^Error: Deep Agents failed \(session [0-9a-f-]{36}\)$/);
+    await assert.rejects(owned(() => run('Read the page title')),
+      /^Error: Deep Agents failed during agent execution: AuthenticationError HTTP 401 \(session [0-9a-f-]{36}\)$/);
     assert.equal(requests, 1, 'The actual framework must reach the injected provider');
     assert.equal(tools.some(name => ['glob', 'grep', 'execute'].includes(name)), false);
     assert.ok(tools.includes('read_file'));
