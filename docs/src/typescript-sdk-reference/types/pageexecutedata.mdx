@@ -32,7 +32,7 @@ export type PageExecuteData = {
         type: 'reload';
     } & ReloadAction) | ({
         type: 'wait';
-    } & WaitAction) | ({
+    } & NotteCoreActionsActionsWaitAction) | ({
         type: 'press_key';
     } & PressKeyAction) | ({
         type: 'scroll_up';
@@ -111,7 +111,7 @@ export type PageExecuteData = {
 
 ## Fields
 
-<ParamField body="body" type={"({ type: \"form_fill\"; } & FormFillActionWritable) | ({ type: \"goto\"; } & GotoAction) | ({ type: \"goto_new_tab\"; } & GotoNewTabAction) | ({ type: \"close_tab\"; } & CloseTabAction) | ({ type: \"switch_tab\"; } & SwitchTabAction) | ({ type: \"go_back\"; } & GoBackAction) | ({ type: \"go_forward\"; } & GoForwardAction) | ({ type: \"reload\"; } & ReloadAction) | ({ type: \"wait\"; } & WaitAction) | ({ type: \"press_key\"; } & PressKeyAction) | ({ type: \"scroll_up\"; } & ScrollUpAction) | ({ type: \"scroll_down\"; } & ScrollDownAction) | ({ type: \"captcha_solve\"; } & CaptchaSolveAction) | ({ type: \"help\"; } & HelpAction) | ({ type: \"completion\"; } & CompletionAction) | ({ type: \"scrape\"; } & ScrapeAction) | ({ type: \"email_read\"; } & EmailReadAction) | ({ type: \"email_verification_read\"; } & EmailVerificationReadAction) | ({ type: \"sms_read\"; } & SmsReadAction) | ({ type: \"evaluate_js\"; } & EvaluateJsAction) | ({ type: \"click\"; } & ClickActionInput) | ({ type: \"fill\"; } & FillActionInputWritable) | ({ type: \"multi_factor_fill\"; } & MultiFactorFillActionInputWritable) | ({ type: \"fallback_fill\"; } & FallbackFillActionInputWritable) | ({ type: \"check\"; } & CheckActionInput) | ({ type: \"select_dropdown_option\"; } & SelectDropdownOptionActionInputWritable) | ({ type: \"upload_file\"; } & UploadFileActionInput) | ({ type: \"download_file\"; } & DownloadFileActionInput)"} required>
+<ParamField body="body" type={"({ type: \"form_fill\"; } & FormFillActionWritable) | ({ type: \"goto\"; } & GotoAction) | ({ type: \"goto_new_tab\"; } & GotoNewTabAction) | ({ type: \"close_tab\"; } & CloseTabAction) | ({ type: \"switch_tab\"; } & SwitchTabAction) | ({ type: \"go_back\"; } & GoBackAction) | ({ type: \"go_forward\"; } & GoForwardAction) | ({ type: \"reload\"; } & ReloadAction) | ({ type: \"wait\"; } & NotteCoreActionsActionsWaitAction) | ({ type: \"press_key\"; } & PressKeyAction) | ({ type: \"scroll_up\"; } & ScrollUpAction) | ({ type: \"scroll_down\"; } & ScrollDownAction) | ({ type: \"captcha_solve\"; } & CaptchaSolveAction) | ({ type: \"help\"; } & HelpAction) | ({ type: \"completion\"; } & CompletionAction) | ({ type: \"scrape\"; } & ScrapeAction) | ({ type: \"email_read\"; } & EmailReadAction) | ({ type: \"email_verification_read\"; } & EmailVerificationReadAction) | ({ type: \"sms_read\"; } & SmsReadAction) | ({ type: \"evaluate_js\"; } & EvaluateJsAction) | ({ type: \"click\"; } & ClickActionInput) | ({ type: \"fill\"; } & FillActionInputWritable) | ({ type: \"multi_factor_fill\"; } & MultiFactorFillActionInputWritable) | ({ type: \"fallback_fill\"; } & FallbackFillActionInputWritable) | ({ type: \"check\"; } & CheckActionInput) | ({ type: \"select_dropdown_option\"; } & SelectDropdownOptionActionInputWritable) | ({ type: \"upload_file\"; } & UploadFileActionInput) | ({ type: \"download_file\"; } & DownloadFileActionInput)"} required>
 Action
 </ParamField>
 
@@ -153,6 +153,7 @@ Action
 - [GotoNewTabAction](/typescript-sdk-reference/types/gotonewtabaction)
 - [HelpAction](/typescript-sdk-reference/types/helpaction)
 - [MultiFactorFillActionInputWritable](/typescript-sdk-reference/types/multifactorfillactioninputwritable)
+- [NotteCoreActionsActionsWaitAction](/typescript-sdk-reference/types/nottecoreactionsactionswaitaction)
 - [PressKeyAction](/typescript-sdk-reference/types/presskeyaction)
 - [ReloadAction](/typescript-sdk-reference/types/reloadaction)
 - [ScrapeAction](/typescript-sdk-reference/types/scrapeaction)
@@ -160,4 +161,3 @@ Action
 - [SmsReadAction](/typescript-sdk-reference/types/smsreadaction)
 - [SwitchTabAction](/typescript-sdk-reference/types/switchtabaction)
 - [UploadFileActionInput](/typescript-sdk-reference/types/uploadfileactioninput)
-- [WaitAction](/typescript-sdk-reference/types/waitaction)
