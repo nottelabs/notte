@@ -372,6 +372,13 @@
             ]
           },
           {
+            "group": "Payments",
+            "icon": "credit-card",
+            "pages": [
+              "integrations/stripe-link"
+            ]
+          },
+          {
             "group": "Email",
             "icon": "envelope",
             "pages": [

@@ -101,6 +101,10 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte browser agents inside n8n workflows
 - [Temporal](https://docs.notte.cc/integrations/temporal.md): Run durable browser tasks with Temporal and Notte.
 
+## Payments
+
+- [Stripe Link](https://docs.notte.cc/integrations/stripe-link.md): Fill approved Link test credentials into a Notte browser with the native SDK.
+
 ## Email
 
 - [AgentMail](https://docs.notte.cc/integrations/agentmail.md): Give Notte personas an AgentMail inbox for sign-ups and verification emails
