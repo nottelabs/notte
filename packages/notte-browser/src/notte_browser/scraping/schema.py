@@ -1,6 +1,6 @@
 import datetime as dt
-import json
 
+from litellm import json
 from notte_core.common.logging import logger
 from notte_core.common.types import TResponseFormat
 from notte_core.data.space import DictBaseModel, NoStructuredData, StructuredData

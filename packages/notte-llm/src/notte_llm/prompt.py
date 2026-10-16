@@ -1,13 +1,8 @@
-from __future__ import annotations
-
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import chevron
+from litellm import Message
 from notte_core.errors.llm import InvalidPromptTemplateError
-
-if TYPE_CHECKING:
-    from litellm import Message
 
 
 class PromptLibrary:
@@ -17,8 +12,6 @@ class PromptLibrary:
             raise NotADirectoryError(f"Prompts directory not found: {prompts_dir}")
 
     def get(self, prompt_id: str) -> list[Message]:
-        from litellm import Message
-
         prompt_path: Path = self.prompts_dir / prompt_id
         prompt_files: list[Path] = list(prompt_path.glob("*.md"))
         if len(prompt_files) == 0:
