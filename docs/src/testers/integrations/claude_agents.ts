@@ -18,7 +18,7 @@ export const result = await new NotteClient().Session({ max_duration_minutes: 3 
         mcpServers: {
           notte: {
             type: 'http',
-            url: new URL('/mcp', process.env.NOTTE_API_URL || 'https://api.notte.cc').href,
+            url: `${(process.env.NOTTE_API_URL || 'https://api.notte.cc').replace(/\/+$/, '')}/mcp`,
             headers: { Authorization: 'Bearer ${NOTTE_API_KEY}' },
           },
         },

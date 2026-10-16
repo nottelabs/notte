@@ -73,5 +73,6 @@ jobs:
           # Provider credentials run only on the reviewed main branch.
           ANTHROPIC_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.ANTHROPIC_API_KEY || '' }}
         run: |
+          : "${NOTTE_API_KEY:?The Claude Agent SDK live tests require the CI test key}"
           export NOTTE_DOCS_PYTHON="$GITHUB_WORKSPACE/.venv/bin/python"
           npx vitest run test/claude-agents.integration.test.ts
