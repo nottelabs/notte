@@ -6,7 +6,7 @@ import argparse
 import json
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 _SHA = re.compile(r"[0-9a-fA-F]{40}")
 _REPOSITORY = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
@@ -20,10 +20,13 @@ def _repository(pr: dict[str, Any], side: str) -> str | None:
     branch = pr.get(side)
     if not isinstance(branch, dict) or "repo" not in branch:
         raise ValueError("Invalid PR branch metadata")
-    repository = branch.get("repo")
+    repository = cast(dict[str, Any], branch).get("repo")
     if repository is None:  # A deleted fork cannot authorize a paid run.
         return None
-    if not isinstance(repository, dict) or not isinstance(repository.get("full_name"), str):
+    if not isinstance(repository, dict):
+        raise ValueError("Invalid PR repository metadata")
+    repository = cast(dict[str, Any], repository)
+    if not isinstance(repository.get("full_name"), str):
         raise ValueError("Invalid PR repository metadata")
     if not _REPOSITORY.fullmatch(repository["full_name"]):
         raise ValueError("Invalid PR repository identity")
@@ -31,17 +34,26 @@ def _repository(pr: dict[str, Any], side: str) -> str | None:
 
 
 def _validate(pr: Any) -> dict[str, Any]:
-    if not isinstance(pr, dict) or pr.get("state") not in ("open", "closed"):
+    if not isinstance(pr, dict):
         raise ValueError("Invalid PR metadata")
-    _repository(pr, "base")
-    _repository(pr, "head")
+    pr = cast(dict[str, Any], pr)
+    if pr.get("state") not in ("open", "closed"):
+        raise ValueError("Invalid PR metadata")
+    _ = _repository(pr, "base")
+    _ = _repository(pr, "head")
     if not isinstance(pr["base"].get("ref"), str) or not _is_sha(pr["head"].get("sha")):
         raise ValueError("Invalid PR branch metadata")
     user, labels = pr.get("user"), pr.get("labels")
-    if not isinstance(user, dict) or not isinstance(user.get("login"), str) or not user["login"]:
+    if not isinstance(user, dict):
         raise ValueError("Invalid PR author metadata")
-    if not isinstance(labels, list) or any(
-        not isinstance(label, dict) or not isinstance(label.get("name"), str) for label in labels
+    user = cast(dict[str, Any], user)
+    if not isinstance(user.get("login"), str) or not user["login"]:
+        raise ValueError("Invalid PR author metadata")
+    if not isinstance(labels, list):
+        raise ValueError("Invalid PR labels")
+    if any(
+        not isinstance(label, dict) or not isinstance(cast(dict[str, Any], label).get("name"), str)
+        for label in cast(list[Any], labels)
     ):
         raise ValueError("Invalid PR labels")
     return pr
@@ -66,7 +78,7 @@ def select_provider(*, event: str, ref: str, repository: str, head: str, attempt
     result = {"provider": "gemini", "source_sha": head}
     if event != "pull_request" and not (event == "push" and ref == "refs/heads/main"):
         return result
-    validated = [_validate(pr) for pr in pulls]
+    validated = [_validate(pr) for pr in cast(list[Any], pulls)]
     if event == "pull_request":
         if not validated:  # The coordinator intentionally does not fetch fork PRs.
             return result
@@ -81,7 +93,7 @@ def select_provider(*, event: str, ref: str, repository: str, head: str, attempt
             result["provider"] = "openai"
         return result
 
-    matches = []
+    matches: list[dict[str, Any]] = []
     for pr in validated:
         merged, merge_sha = pr.get("merged"), pr.get("merge_commit_sha")
         if not isinstance(merged, bool) or (merge_sha is not None and not _is_sha(merge_sha)):
@@ -104,9 +116,9 @@ def select_provider(*, event: str, ref: str, repository: str, head: str, attempt
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("event", "ref", "repository", "head"):
-        parser.add_argument(f"--{name}", required=True)
-    parser.add_argument("--attempt", type=int, required=True)
-    parser.add_argument("--pulls", type=Path, required=True)
+        _ = parser.add_argument(f"--{name}", required=True)
+    _ = parser.add_argument("--attempt", type=int, required=True)
+    _ = parser.add_argument("--pulls", type=Path, required=True)
     args = parser.parse_args()
     try:
         result = select_provider(
