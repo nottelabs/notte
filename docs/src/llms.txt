@@ -96,6 +96,10 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
 - [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Use Stagehand v4 with a Notte cloud browser in Python or TypeScript
 
+## Computer Use
+
+- [Tzafon Lightcone](https://docs.notte.cc/integrations/tzafon.md): Run a Northstar computer-use loop on a Notte browser.
+
 ## Workflow Automation
 
 - [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte browser agents inside n8n workflows

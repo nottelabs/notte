@@ -1,0 +1,97 @@
+name: Tzafon Lightcone integration
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/tzafon-integration.yml
+      - examples/tzafon/**
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - node-sdk/src/**
+      - node-sdk/package.json
+      - node-sdk/package-lock.json
+      - uv.lock
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/tzafon-integration.yml
+      - examples/tzafon/**
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - node-sdk/src/**
+      - node-sdk/package.json
+      - node-sdk/package-lock.json
+      - uv.lock
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    timeout-minutes: 10
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+      - run: uv sync --locked && uv run --locked python -m unittest discover -s python
+        working-directory: examples/tzafon
+      - run: npm ci && npm run typecheck && npm test
+        working-directory: examples/tzafon/typescript
+  live:
+    needs: static
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [published, source]
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+      - if: matrix.sdk == 'published'
+        run: uv sync --locked
+        working-directory: examples/tzafon
+      - if: matrix.sdk == 'source'
+        run: uv sync --locked --package notte-sdk --no-dev
+      - if: matrix.sdk == 'source'
+        run: uv pip install tzafon==2.44.1 playwright==1.64.0 && uv pip check
+      - run: npm ci && npm run typecheck
+        working-directory: examples/tzafon/typescript
+      - if: matrix.sdk == 'source'
+        run: npm ci --prefix node-sdk && npm run build --prefix node-sdk
+      - if: matrix.sdk == 'source'
+        run: npm install --no-save --package-lock=false ../../../node-sdk && npm run typecheck
+        working-directory: examples/tzafon/typescript
+      - uses: ./.github/actions/wait-for-api
+        with:
+          api-url: https://us-staging.notte.cc
+          timeout: '300'
+      - name: Verify native protocol, form effects, refusal, and browser cleanup
+        working-directory: examples/tzafon/typescript
+        env:
+          NOTTE_API_URL: https://us-staging.notte.cc
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+          NOTTE_TZAFON_PYTHON: ${{ github.workspace }}/${{ matrix.sdk == 'source' && '.venv' || 'examples/tzafon/.venv' }}/bin/python
+          NOTTE_TZAFON_REQUIRE_LIVE: '1'
+          DISABLE_TELEMETRY: 'true'
+        run: npm run test:live
