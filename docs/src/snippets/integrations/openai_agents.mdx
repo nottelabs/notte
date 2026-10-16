@@ -68,7 +68,7 @@ import { z } from 'zod';
 export const result = await new NotteClient().Session({ max_duration_minutes: 3 }).use(async (session) => {
   const server = new MCPServerStreamableHttp({
     name: 'Notte',
-    url: new URL('/mcp', process.env.NOTTE_API_URL || 'https://api.notte.cc').href,
+    url: `${(process.env.NOTTE_API_URL || 'https://api.notte.cc').replace(/\/+$/, '')}/mcp`,
     requestInit: { headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY!}` } },
     clientSessionTimeoutSeconds: 120,
     toolFilter: createMCPToolStaticFilter({
