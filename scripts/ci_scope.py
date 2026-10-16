@@ -50,6 +50,42 @@ WORKFLOWS = {
     "paired-sdk-examples.yml": "paired",
     "readme-check.yml": "readme",
 }
+INTEGRATION_WORKFLOWS = {
+    "agent-browser-integration.yml",
+    "agentcard-integration.yml",
+    "anthropic-computer-use-integration.yml",
+    "box-integration.yml",
+    "braintrust-integration.yml",
+    "claude-agents-integration.yml",
+    "deepagents-integration.yml",
+    "docker-sandboxes-integration.yml",
+    "e2e-integration.yml",
+    "eve-integration.yml",
+    "evervault-integration.yml",
+    "fx-integration.yml",
+    "gemini-computer-use-integration.yml",
+    "github-actions-integration.yml",
+    "inngest-integration.yml",
+    "laminar-integration.yml",
+    "mongodb-integration.yml",
+    "onepassword-integration.yml",
+    "openagi-integration.yml",
+    "openai-agents-integration.yml",
+    "openai-computer-use-integration.yml",
+    "pipedream-integration.yml",
+    "prime-intellect-integration.yml",
+    "replit-integration.yml",
+    "selenium-integration.yml",
+    "selector-repair.yml",
+    "stripe-link-integration.yml",
+    "temporal-integration.yml",
+    "terraform-profiles-integration.yml",
+    "trigger-integration.yml",
+    "tzafon-integration.yml",
+    "valtown-integration.yml",
+    "watsonx-integration.yml",
+    "yutori-integration.yml",
+}
 
 
 def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
@@ -61,7 +97,12 @@ def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
     if path.startswith(".github/actions/python-setup/"):
         return GROUPS["python"] | SDK_EXAMPLES
     if path.startswith(".github/workflows/"):
-        family = WORKFLOWS.get(path.removeprefix(".github/workflows/"))
+        name = path.removeprefix(".github/workflows/")
+        if name in INTEGRATION_WORKFLOWS:
+            # Dedicated integration workflows cover these standalone changes.
+            # SDK changes in the same diff still select the SDK's live suites.
+            return {"python_static", "python_unit"}
+        family = WORKFLOWS.get(name)
         return GROUPS[family].copy() if family else ALL.copy()
     if path in PYTHON_CONFIG:
         return GROUPS["python"] | SDK_EXAMPLES

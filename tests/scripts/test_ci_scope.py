@@ -161,6 +161,7 @@ class RoutingTests(unittest.TestCase):
             "new-runtime/config.json",
             "Makefile",
             ".github/workflows/new-test-workflow.yml",
+            ".github/workflows/unknown-integration.yml",
         ):
             with self.subTest(path=path):
                 self.assertEqual(ci.scopes_for_path(path), ci.ALL)
@@ -199,6 +200,10 @@ class RoutingTests(unittest.TestCase):
         self.assertTrue(all(scheduled[name] for name in ci.GROUPS["node"]))
         manual = ci.select("workflow_dispatch", "", "")
         self.assertTrue(all(manual[name] for name in ci.ALL))
+        # Reviewed pushes retain every suite even when a valid comparison exists.
+        reviewed = ci.select("reviewed_push", "a" * 40, "b" * 40)
+        self.assertTrue(reviewed["full"])
+        self.assertTrue(all(reviewed[name] for name in ci.ALL))
 
     def test_fences_preserve_language_options_code_and_unclosed_blocks(self) -> None:
         original = 'Prose\n```python title="demo"\nx = 1\n```\nMore prose\n'
@@ -246,6 +251,37 @@ class GitHistoryTests(unittest.TestCase):
         self.assertTrue(scope["python_docs"])
         self.assertFalse(scope["node_generated"])
         self.assertFalse(scope["full"])
+
+    def test_standalone_integration_diff_keeps_offline_checks_without_global_live_suites(self) -> None:
+        head = self.commit(
+            {
+                ".github/workflows/braintrust-integration.yml": "name: Braintrust integration\n",
+                "examples/braintrust/python/demo.py": "browser_task = True\n",
+                "examples/braintrust/typescript/src/demo.ts": "export const browserTask = true;\n",
+                "examples/braintrust/uv.lock": "version = 1\n",
+                "docs/src/integrations/braintrust.mdx": "Trace browser tasks with the linked examples.\n",
+                "docs/src/integrations/index.mdx": "Browse integrations.\n",
+                "docs/src/docs.json": "{}\n",
+                "docs/src/llms.txt": "Braintrust guide\n",
+                "tests/scripts/test_ci_staging_scope.py": "# Validate workflow coordination\n",
+            }
+        )
+        scope = self.scope("pull_request", self.base, head)
+        for name in ("python_static", "python_unit", "python_docs", "docs_static", "paired_static"):
+            self.assertTrue(scope[name], name)
+        for name in ci.ALL:
+            if name.endswith("_live"):
+                self.assertFalse(scope[name], name)
+
+        runtime = self.commit(
+            {
+                "packages/notte-sdk/src/notte_sdk/client.py": "runtime = True\n",
+                "node-sdk/src/session.ts": "export const runtime = true;\n",
+            }
+        )
+        scope = self.scope("pull_request", self.base, runtime)
+        for name in ("python_live", "node_live", "paired_live", "readme_live"):
+            self.assertTrue(scope[name], name)
 
     def test_docs_only_push_does_not_run_python_unit_live_or_cli(self) -> None:
         before = self.commit({"docs/src/pricing.mdx": "Price: 1\n"})
