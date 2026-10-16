@@ -81,6 +81,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Claude Code & AI Agents](https://docs.notte.cc/integrations/claude-code-ai-agents.md): Use Notte with AI coding assistants like Claude Code, Cursor, and Windsurf
 - [Claude Managed Agents](https://docs.notte.cc/integrations/claude-managed-agents.md): Give Anthropic's hosted agents a Notte browser, with your key held in a vault
+- [fx](https://docs.notte.cc/integrations/fx.md): Run the native fx agent engine with an owned Notte browser.
 
 ## Agent Frameworks
 

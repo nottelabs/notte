@@ -1,0 +1,19 @@
+---
+title: fx
+description: Run the native fx agent engine with an owned Notte browser.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[fx](https://fx.sh/docs/lib) is Vercel Labs' coding agent. The [runnable TypeScript example](https://github.com/nottelabs/notte/tree/main/examples/fx) embeds its native Zig engine through `libfx` and exposes one Notte-backed `read_page` tool.
+
+## Set up
+
+Use Node.js 24+, a [Notte API key](https://console.notte.cc/apikeys), and your configured model provider. Follow `examples/fx/README.md` for the embedded engine or fx CLI MCP configuration.
+
+## How it connects
+
+Each embedded request owns a three-minute Notte session. The native engine calls a Playwright tool over CDP; the model receives page titles without CDP credentials. The connection, engine, and owned browser close in `finally`, including after provider errors.
+
+Native engine tool calls, real browser results, redacted navigation errors, and provider-401 cleanup are tested with a scripted model transport. Paid model turns, CLI account execution, and hosted deployment remain unverified.
