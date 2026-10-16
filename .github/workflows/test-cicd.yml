@@ -279,8 +279,8 @@ jobs:
         env:
           NOTTE_LLM_BASE_URL: https://generativelanguage.googleapis.com/v1beta/openai
           NOTTE_LLM_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          NOTTE_LLM_MODEL: gemini-3.8-flash
-          NOTTE_TEST_DEFAULT_MODEL: gemini-3.5-flash-lite
+          NOTTE_LLM_MODEL: gemini-3.5-flash-lite
+          NOTTE_TEST_DEFAULT_MODEL: gemini-3.8-flash
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
           NOTTE_VAULT_TEST_EMAIL: ${{ secrets.NOTTE_VAULT_TEST_EMAIL }}
           NOTTE_VAULT_TEST_PASSWORD: ${{ secrets.NOTTE_VAULT_TEST_PASSWORD }}
