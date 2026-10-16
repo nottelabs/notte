@@ -99,6 +99,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 ## Workflow Automation
 
 - [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte browser agents inside n8n workflows
+- [Temporal](https://docs.notte.cc/integrations/temporal.md): Run durable browser tasks with Temporal and Notte.
 
 ## Observability
 
