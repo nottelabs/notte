@@ -39,8 +39,8 @@ for (const language of ['python', 'typescript']) {
       if (language === 'python') assert.ok(python, 'Set NOTTE_ONEPASSWORD_PYTHON to the example virtualenv Python');
       const env: NodeJS.ProcessEnv = {
         ...process.env,
-        OP_USERNAME_REF: process.env.OP_USERNAME_REF ?? 'op://NotteIntegrationTests/BrowserLogin/username',
-        OP_PASSWORD_REF: process.env.OP_PASSWORD_REF ?? 'op://NotteIntegrationTests/BrowserLogin/password',
+        OP_USERNAME_REF: process.env.OP_USERNAME_REF || 'op://NotteIntegrationTests/BrowserLogin/username',
+        OP_PASSWORD_REF: process.env.OP_PASSWORD_REF || 'op://NotteIntegrationTests/BrowserLogin/password',
       };
       if (failure) env.OP_SERVICE_ACCOUNT_TOKEN = 'test-invalid-token'; // pragma: allowlist secret
       const command = language === 'python' ? python! : process.execPath;
