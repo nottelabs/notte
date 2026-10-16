@@ -7,6 +7,14 @@ on:
         description: Suite decisions from the shared push or PR selector.
         type: string
         default: ''
+      reviewed_sha:
+        description: Immutable reviewed commit supplied by the coordinating workflow
+        type: string
+        default: ''
+      llm_provider:
+        description: Explicit maintainer dispatch provider for live local extraction
+        type: string
+        default: gemini
   # Periodic full live coverage; offline tests remain the secret-free PR gate.
   schedule:
     - cron: '0 */4 * * 1-5'
@@ -17,6 +25,11 @@ on:
       pr_number:
         description: 'PR number to run the FULL secret-backed CI on. For external (fork) PRs, only dispatch after reviewing the diff - this runs the contributor''s code with our secrets.'
         required: true
+      llm_provider:
+        description: Provider for live local extraction tests
+        type: choice
+        options: [gemini, openai]
+        default: gemini
 
 concurrency:
   # PR runs share a group so a new push cancels the superseded run. Every other run (main
@@ -78,7 +91,7 @@ jobs:
         with:
           # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
           # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
-          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+          ref: ${{ inputs.reviewed_sha || format('refs/pull/{0}/head', github.event.inputs.pr_number) }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -149,7 +162,7 @@ jobs:
         with:
           # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
           # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
-          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+          ref: ${{ inputs.reviewed_sha || format('refs/pull/{0}/head', github.event.inputs.pr_number) }}
 
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
@@ -212,7 +225,7 @@ jobs:
         with:
           # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
           # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
-          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+          ref: ${{ inputs.reviewed_sha || format('refs/pull/{0}/head', github.event.inputs.pr_number) }}
 
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
@@ -277,6 +290,9 @@ jobs:
 
       - name: Run staging and live tests
         env:
+          # Paid provider credentials remain exclusive to explicit maintainer dispatch.
+          NOTTE_CI_LLM_PROVIDER: ${{ github.event_name == 'workflow_dispatch' && inputs.llm_provider || 'gemini' }}
+          OPENAI_API_KEY: ${{ github.event_name == 'workflow_dispatch' && inputs.llm_provider == 'openai' && secrets.OPENAI_API_KEY || '' }}
           NOTTE_LLM_BASE_URL: https://generativelanguage.googleapis.com/v1beta/openai
           NOTTE_LLM_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NOTTE_LLM_MODEL: gemini-3.5-flash-lite
@@ -287,7 +303,19 @@ jobs:
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        run: make test-live PYTEST_LIVE='uv run pytest -n 2 tests -m "staging or live" --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --ignore=tests/llm/test_provider_matrix.py'
+        run: |
+          case "$NOTTE_CI_LLM_PROVIDER" in
+            gemini) ;;
+            openai)
+              test -n "$OPENAI_API_KEY" || { echo 'Set the existing OpenAI repository secret for this dispatch'; exit 1; }
+              export NOTTE_LLM_BASE_URL=https://api.openai.com/v1
+              export NOTTE_LLM_API_KEY="$OPENAI_API_KEY"
+              export NOTTE_LLM_MODEL=gpt-4.1-mini
+              export NOTTE_TEST_DEFAULT_MODEL=gpt-4.1-nano
+              ;;
+            *) echo 'Unsupported extraction provider'; exit 1 ;;
+          esac
+          make test-live PYTEST_LIVE='uv run pytest -n 2 tests -m "staging or live" --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --ignore=tests/llm/test_provider_matrix.py'
 
       - name: Cleanup vaults created by this run
         if: ${{ always() }}
@@ -309,7 +337,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+          ref: ${{ inputs.reviewed_sha || format('refs/pull/{0}/head', github.event.inputs.pr_number) }}
           persist-credentials: false
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
@@ -378,7 +406,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+          ref: ${{ inputs.reviewed_sha || format('refs/pull/{0}/head', github.event.inputs.pr_number) }}
           persist-credentials: false
 
       - name: Checkout code (PR or push)

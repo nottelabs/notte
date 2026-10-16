@@ -87,7 +87,7 @@ def triggers(config: dict[str, Any]) -> dict[str, Any]:
 
 def test_automatic_selection_runs_once_with_complete_history() -> None:
     config = workflow("ci.yml")
-    assert set(triggers(config)) == {"push", "pull_request"}
+    assert set(triggers(config)) == {"push", "pull_request", "workflow_dispatch"}
     assert config["permissions"] == {"contents": "read"}
     for event in ("push", "pull_request"):
         assert triggers(config)[event] == {"branches": ["main"]}
@@ -107,7 +107,13 @@ def test_only_selected_families_receive_the_shared_scope() -> None:
         job = jobs[family]
         assert job["needs"] == "changes"
         assert job["uses"] == f"./.github/workflows/{name}"
-        assert job["with"] == {"scope": "${{ needs.changes.outputs.scope }}"}
+        expected_inputs = {"scope": "${{ needs.changes.outputs.scope }}"}
+        if family == "python":
+            expected_inputs.update(
+                reviewed_sha="${{ github.sha }}",
+                llm_provider="${{ github.event_name == 'workflow_dispatch' && inputs.llm_provider || 'gemini' }}",
+            )
+        assert job["with"] == expected_inputs
         assert job["secrets"] == "inherit"  # pragma: allowlist secret
         keys = set(re.findall(r"fromJSON\(needs.changes.outputs.scope\)\.(\w+)", job["if"]))
         assert keys == ci_scope.GROUPS[family] | ({"file_checks"} if family == "python" else set())
@@ -235,6 +241,95 @@ def test_scoped_checks_fetch_history_only_during_authenticated_checkout() -> Non
         assert step["with"]["persist-credentials"] is False
     lint = next(step for step in job["steps"] if step.get("name") == "Run pre-commit")
     assert "git fetch" not in lint["run"]
+
+
+@pytest.mark.parametrize("pr,actual,expected", [("1214", "a" * 40, 0), ("1214", "b" * 40, 1), ("oops", "a" * 40, 1)])
+def test_manual_ci_refuses_an_unreviewed_commit(tmp_path: Path, pr: str, actual: str, expected: int) -> None:
+    step = workflow("ci.yml")["jobs"]["changes"]["steps"][0]
+    assert step["if"] == "github.event_name == 'workflow_dispatch'"
+    stub = tmp_path / "gh"
+    stub.write_text('#!/bin/sh\nprintf "%s\\n" "$ACTUAL_SHA"\n')
+    stub.chmod(0o755)
+    result = subprocess.run(
+        ["bash", "-e", "-o", "pipefail", "-c", step["run"]],
+        env={
+            **os.environ,
+            "PATH": f"{tmp_path}:{os.environ['PATH']}",
+            "PR_NUMBER": pr,
+            "EXPECTED_SHA": "a" * 40,
+            "ACTUAL_SHA": actual,
+            "GITHUB_REPOSITORY": "owner/repo",
+        },
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == expected, result.stdout + result.stderr
+    for job in workflow("test-cicd.yml")["jobs"].values():
+        for checkout in job.get("steps", []):
+            if checkout.get("if") == "github.event_name == 'workflow_dispatch'" and "checkout@" in checkout.get(
+                "uses", ""
+            ):
+                assert checkout["with"]["ref"].startswith("${{ inputs.reviewed_sha || ")
+
+
+@pytest.mark.parametrize(
+    "provider,key,succeeds",
+    [("gemini", "", True), ("openai", "dummy-test-key", True), ("openai", "", False), ("unknown", "", False)],
+)
+def test_manual_provider_selection_runs_the_full_live_suite(
+    tmp_path: Path, provider: str, key: str, succeeds: bool
+) -> None:
+    step = next(
+        s
+        for s in workflow("test-cicd.yml")["jobs"]["staging-and-live"]["steps"]
+        if s.get("name") == "Run staging and live tests"
+    )
+    # Automatic PRs cannot opt in to the paid secret through supplied reusable inputs.
+    assert step["env"]["OPENAI_API_KEY"] == (
+        "${{ github.event_name == 'workflow_dispatch' && inputs.llm_provider == 'openai' && secrets.OPENAI_API_KEY || '' }}"
+    )
+    assert step["env"]["NOTTE_CI_LLM_PROVIDER"].startswith("${{ github.event_name == 'workflow_dispatch' && ")
+    output = tmp_path / "invocation.json"
+    stub = tmp_path / "make"
+    stub.write_text("""#!/usr/bin/env python3
+import json, os, sys
+from pathlib import Path
+Path(os.environ["OUTPUT"]).write_text(json.dumps({
+    "args": sys.argv[1:], "url": os.environ["NOTTE_LLM_BASE_URL"],
+    "model": os.environ["NOTTE_LLM_MODEL"], "default": os.environ["NOTTE_TEST_DEFAULT_MODEL"],
+    "key_matches": os.environ["NOTTE_LLM_API_KEY"] == os.environ["OPENAI_API_KEY"]}))
+""")
+    stub.chmod(0o755)
+    result = subprocess.run(
+        ["bash", "-e", "-o", "pipefail", "-c", step["run"]],
+        env={
+            **os.environ,
+            "PATH": f"{tmp_path}:{os.environ['PATH']}",
+            "OUTPUT": str(output),
+            "NOTTE_CI_LLM_PROVIDER": provider,
+            "OPENAI_API_KEY": key,
+            "NOTTE_LLM_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai",
+            "NOTTE_LLM_MODEL": "gemini-3.5-flash-lite",
+            "NOTTE_TEST_DEFAULT_MODEL": "gemini-3.5-flash-lite",
+            "NOTTE_LLM_API_KEY": "dummy-gemini-key",
+        },
+        capture_output=True,
+        text=True,
+    )
+    assert (result.returncode == 0) == succeeds, result.stdout + result.stderr
+    assert output.exists() == succeeds
+    if succeeds:
+        invocation = json.loads(output.read_text())
+        assert invocation["args"][0] == "test-live"
+        assert '-m "staging or live"' in invocation["args"][1]
+        if provider == "openai":
+            assert invocation["url"] == "https://api.openai.com/v1"
+            assert invocation["model"] == "gpt-4.1-mini"
+            assert invocation["default"] == "gpt-4.1-nano"
+            assert invocation["key_matches"] is True
+        else:
+            assert invocation["model"] == "gemini-3.5-flash-lite"
+            assert invocation["key_matches"] is False
 
 
 @pytest.mark.parametrize(

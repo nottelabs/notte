@@ -7,6 +7,17 @@ on:
   # Fork PRs never receive repository secrets. Never use pull_request_target here.
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Reviewed PR whose head matches the selected workflow branch
+        required: true
+        type: string
+      llm_provider:
+        description: Provider for live local extraction tests
+        type: choice
+        options: [gemini, openai]
+        default: gemini
 
 permissions:
   contents: read
@@ -15,11 +26,24 @@ permissions:
 # entire caller would also interrupt example suites and their cleanup steps.
 jobs:
   changes:
+    permissions:
+      contents: read
+      pull-requests: read
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 5
     outputs:
       scope: ${{ steps.scope.outputs.scope }}
     steps:
+      - name: Validate reviewed PR head
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
+          EXPECTED_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          case "$PR_NUMBER" in ''|*[!0-9]*) echo 'Provide a numeric PR number'; exit 1 ;; esac
+          ACTUAL_SHA=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .head.sha)
+          test "$ACTUAL_SHA" = "$EXPECTED_SHA" || { echo 'Select the reviewed PR head branch'; exit 1; }
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -44,6 +68,8 @@ jobs:
     uses: ./.github/workflows/test-cicd.yml
     with:
       scope: ${{ needs.changes.outputs.scope }}
+      reviewed_sha: ${{ github.sha }}
+      llm_provider: ${{ github.event_name == 'workflow_dispatch' && inputs.llm_provider || 'gemini' }}
     secrets: inherit # pragma: allowlist secret
 
   node:
