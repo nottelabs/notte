@@ -61,6 +61,47 @@ test('Browser actions fill a form and honor confirmation before clicking', { ski
   await closed(id);
 });
 
+test('Delayed popup replans a stale action using the new tab screenshot', { skip: !live, timeout: 120_000 }, async () => {
+  const original = globalThis.fetch, key = process.env.GEMINI_API_KEY, ids: string[] = [];
+  let calls = 0, state: { text?: string; data?: string }[] = [];
+  process.env.GEMINI_API_KEY = 'integration-test-not-a-real-key'; // pragma: allowlist secret
+  globalThis.fetch = async (input, init) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (new URL(url).hostname === 'generativelanguage.googleapis.com') {
+      calls++;
+      if (calls === 2) await new Promise(resolve => setTimeout(resolve, 3000));
+      if (calls === 3) {
+        const request = input instanceof Request ? await input.clone().json() : JSON.parse(String(init?.body));
+        state = request.input[0].result;
+      }
+      return Response.json({ id: `interaction-${calls}`, status: 'completed', steps: calls === 1
+        ? [{ type: 'function_call', id: 'click-1', name: 'click', arguments: { x: 50, y: 50 } }]
+        : calls === 2 ? [{ type: 'function_call', id: 'type-2', name: 'type', arguments: { text: 'stale' } }]
+        : [{ type: 'model_output', content: [{ type: 'text', text: 'Done' }] }] });
+    }
+    const response = await original(input, init);
+    if (new URL(url).pathname === '/sessions/start' && response.ok) ids.push((await response.clone().json()).session_id);
+    return response;
+  };
+  try {
+    const html = `<button style="position:absolute;left:20px;top:20px;width:100px;height:50px" onclick="setTimeout(()=>{const p=window.open('about:blank');p.document.write('<title>Popup</title><input autofocus oninput=&quot;document.title=String.fromCharCode(83,116,97,108,101)&quot;>');p.document.close()},2500)">Open</button>`;
+    const result = await run('Open the new tab', 'data:text/html;base64,' + Buffer.from(html).toString('base64'));
+    assert.equal(calls, 3);
+    assert.match(state[0].text!, /not executed/);
+    assert.ok(state[1].data);
+    assert.equal(result.title, 'Popup');
+    assert.equal(result.actions, 1);
+    assert.deepEqual(ids, [result.session_id]);
+  } finally {
+    try { for (const id of ids) await closed(id); }
+    finally {
+      globalThis.fetch = original;
+      if (key === undefined) delete process.env.GEMINI_API_KEY;
+      else process.env.GEMINI_API_KEY = key;
+    }
+  }
+});
+
 test('Provider failure closes the browser and sanitizes the error', { skip: !live, timeout: 120_000 }, async () => {
   assert.ok(process.env.NOTTE_API_URL);
   const original = globalThis.fetch, key = process.env.GEMINI_API_KEY;

@@ -138,6 +138,23 @@ async def run(task: str, initial_url: str = "https://example.com") -> dict[str, 
                 page = await browser.contexts[0].new_page()
                 await page.set_viewport_size({"width": 1440, "height": 900})
                 await page.goto(initial_url, wait_until="domcontentloaded", timeout=30_000)
+                active_page = page
+
+                def opened(destination: Page) -> None:
+                    nonlocal active_page
+                    active_page = destination
+
+                page.context.on("page", opened)
+
+                async def refresh_page() -> bool:
+                    nonlocal page
+                    if active_page is page or active_page.is_closed():
+                        return False
+                    page = active_page
+                    await page.set_viewport_size({"width": 1440, "height": 900})
+                    await page.wait_for_load_state("domcontentloaded", timeout=30_000)
+                    return True
+
                 screenshot = base64.b64encode(await page.screenshot()).decode()
                 interaction = await ai.interactions.create(
                     model=model,
@@ -149,8 +166,26 @@ async def run(task: str, initial_url: str = "https://example.com") -> dict[str, 
                 )
                 actions = 0
                 for turn in range(13):
+                    changed = await refresh_page()
                     calls = [step for step in interaction.steps if step.type == "function_call"]
                     if not calls:
+                        if changed and turn < 12:
+                            image = base64.b64encode(await page.screenshot()).decode()
+                            interaction = await ai.interactions.create(
+                                model=model,
+                                tools=[tool],
+                                previous_interaction_id=interaction.id,
+                                input=[
+                                    {
+                                        "type": "text",
+                                        "text": "A new browser tab opened. Continue the original task using this screenshot.",
+                                    },
+                                    {"type": "image", "data": image, "mime_type": "image/png"},
+                                ],
+                            )
+                            continue
+                        if changed:
+                            raise RuntimeError("Computer task exceeded twelve turns")
                         if interaction.status != "completed":
                             raise RuntimeError("Computer task did not complete")
                         answer = " ".join(
@@ -170,8 +205,18 @@ async def run(task: str, initial_url: str = "https://example.com") -> dict[str, 
                         raise RuntimeError("Computer task exceeded twelve turns")
                     results = []
                     for call in calls:
-                        page = await perform(page, call.name, call.arguments)
-                        actions += 1
+                        changed = await refresh_page() or changed
+                        previous_page = page
+                        executed = not changed
+                        if executed:
+                            page = await perform(page, call.name, call.arguments)
+                            actions += 1
+                            await refresh_page()
+                        state = {"url": page.url}
+                        if not executed:
+                            state["note"] = (
+                                "A new tab opened; this action was not executed. Use the current screenshot."
+                            )
                         image = base64.b64encode(await page.screenshot()).decode()
                         results.append(
                             {
@@ -179,11 +224,12 @@ async def run(task: str, initial_url: str = "https://example.com") -> dict[str, 
                                 "name": call.name,
                                 "call_id": call.id,
                                 "result": [
-                                    {"type": "text", "text": json.dumps({"url": page.url})},
+                                    {"type": "text", "text": json.dumps(state)},
                                     {"type": "image", "data": image, "mime_type": "image/png"},
                                 ],
                             }
                         )
+                        changed = changed or page is not previous_page
                     interaction = await ai.interactions.create(
                         model=model,
                         tools=[tool],

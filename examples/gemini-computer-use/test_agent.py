@@ -74,6 +74,75 @@ class ComputerUseTests(unittest.IsolatedAsyncioTestCase):
         await closed(client, session.session_id)
 
     @unittest.skipUnless(os.getenv("NOTTE_GEMINI_LIVE") == "1", "Opt-in cloud browser test")
+    async def test_delayed_popup_replans_stale_action(self):
+        client, ids = NotteClient(), []
+        original = client.sessions.start
+
+        def start(**kwargs):
+            result = original(**kwargs)
+            ids.append(result.session_id)
+            return result
+
+        class Provider:
+            calls = 0
+            state = None
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *_):
+                return False
+
+            @property
+            def interactions(self):
+                return self
+
+            async def create(provider, **request):
+                provider.calls += 1
+                number = provider.calls
+                if number == 2:
+                    await asyncio.sleep(3)
+                if number == 3:
+                    provider.state = request["input"][0]["result"]
+                step = (
+                    SimpleNamespace(
+                        type="function_call", id=f"call-{number}", name="click", arguments={"x": 50, "y": 50}
+                    )
+                    if number == 1
+                    else SimpleNamespace(
+                        type="function_call", id=f"call-{number}", name="type", arguments={"text": "stale"}
+                    )
+                    if number == 2
+                    else SimpleNamespace(type="model_output", content=[SimpleNamespace(type="text", text="Done")])
+                )
+                return SimpleNamespace(id=f"interaction-{number}", status="completed", steps=[step])
+
+        provider = Provider()
+        html = """<button style="position:absolute;left:20px;top:20px;width:100px;height:50px" onclick="setTimeout(()=>{const p=window.open('about:blank');p.document.write('<title>Popup</title><input autofocus oninput=&quot;document.title=String.fromCharCode(83,116,97,108,101)&quot;>');p.document.close()},2500)">Open</button>"""
+        try:
+            with (
+                patch.object(client.sessions, "start", side_effect=start),
+                patch.object(agent, "NotteClient", return_value=client),
+                patch.object(agent.genai, "Client", return_value=SimpleNamespace(aio=provider)),
+                patch.dict(
+                    os.environ,
+                    {"GEMINI_API_KEY": "integration-test-not-a-real-key"},  # pragma: allowlist secret
+                ),  # pragma: allowlist secret
+            ):
+                result = await agent.run(
+                    "Open the new tab", "data:text/html;base64," + base64.b64encode(html.encode()).decode()
+                )
+            self.assertEqual(provider.calls, 3)
+            self.assertIn("not executed", provider.state[0]["text"])
+            self.assertTrue(provider.state[1]["data"])
+            self.assertEqual(result["title"], "Popup")
+            self.assertEqual(result["actions"], 1)
+            self.assertEqual(ids, [result["session_id"]])
+        finally:
+            for session_id in ids:
+                await closed(client, session_id)
+
+    @unittest.skipUnless(os.getenv("NOTTE_GEMINI_LIVE") == "1", "Opt-in cloud browser test")
     async def test_provider_failure_closes_browser(self):
         self.assertTrue(os.getenv("NOTTE_API_URL"))
         client, ids = NotteClient(), []

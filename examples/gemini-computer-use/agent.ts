@@ -94,6 +94,15 @@ export async function run(task: string, initialUrl = 'https://example.com') {
       let page = await browser.contexts()[0].newPage();
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.goto(initialUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+      let activePage = page;
+      page.context().on('page', destination => { activePage = destination; });
+      const refreshPage = async () => {
+        if (activePage === page || activePage.isClosed()) return false;
+        page = activePage;
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.waitForLoadState('domcontentloaded', { timeout: 30_000 });
+        return true;
+      };
       let interaction = await ai.interactions.create({
         model, tools,
         input: [
@@ -103,8 +112,17 @@ export async function run(task: string, initialUrl = 'https://example.com') {
       });
       let actions = 0;
       for (let turn = 0; turn <= 12; turn++) {
+        let changed = await refreshPage();
         const calls = interaction.steps.filter(step => step.type === 'function_call');
         if (!calls.length) {
+          if (changed && turn < 12) {
+            interaction = await ai.interactions.create({ model, tools, previous_interaction_id: interaction.id, input: [
+              { type: 'text', text: 'A new browser tab opened. Continue the original task using this screenshot.' },
+              { type: 'image', data: (await page.screenshot()).toString('base64'), mime_type: 'image/png' },
+            ] });
+            continue;
+          }
+          if (changed) throw new Error('Computer task exceeded twelve turns');
           if (interaction.status !== 'completed') throw new Error('Computer task did not complete');
           const answer = interaction.steps.flatMap(step => step.type === 'model_output'
             ? (step.content ?? []).filter(part => part.type === 'text').map(part => part.text) : []).join(' ');
@@ -113,12 +131,19 @@ export async function run(task: string, initialUrl = 'https://example.com') {
         if (turn === 12) throw new Error('Computer task exceeded twelve turns');
         const results = [];
         for (const call of calls) {
-          page = await perform(page, call.name!, call.arguments as Args);
-          actions++;
+          changed = await refreshPage() || changed;
+          const previousPage = page, executed = !changed;
+          if (executed) {
+            page = await perform(page, call.name!, call.arguments as Args);
+            actions++;
+            await refreshPage();
+          }
+          const state = { url: page.url(), ...(executed ? {} : { note: 'A new tab opened; this action was not executed. Use the current screenshot.' }) };
           results.push({ type: 'function_result' as const, name: call.name, call_id: call.id, result: [
-            { type: 'text' as const, text: JSON.stringify({ url: page.url() }) },
+            { type: 'text' as const, text: JSON.stringify(state) },
             { type: 'image' as const, data: (await page.screenshot()).toString('base64'), mime_type: 'image/png' as const },
           ] });
+          changed = changed || page !== previousPage;
         }
         interaction = await ai.interactions.create({
           model, tools, previous_interaction_id: interaction.id, input: results,
