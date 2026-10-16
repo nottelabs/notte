@@ -104,6 +104,10 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [AgentMail](https://docs.notte.cc/integrations/agentmail.md): Give Notte personas an AgentMail inbox for sign-ups and verification emails
 
+## Credentials
+
+- [1Password](https://docs.notte.cc/integrations/onepassword.md): Fill Notte browser forms with login fields from 1Password.
+
 ## Browser Drivers
 
 - [Connect with Playwright](https://docs.notte.cc/features/sessions/playwright.md): Use Playwright directly with Notte sessions via Chrome DevTools Protocol

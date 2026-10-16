@@ -378,6 +378,13 @@
             ]
           },
           {
+            "group": "Credentials",
+            "icon": "key",
+            "pages": [
+              "integrations/onepassword"
+            ]
+          },
+          {
             "group": "Browser Drivers",
             "icon": "gamepad",
             "pages": [
