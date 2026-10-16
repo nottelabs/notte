@@ -387,6 +387,13 @@
             ]
           },
           {
+            "group": "Infrastructure as Code",
+            "icon": "cubes",
+            "pages": [
+              "integrations/terraform"
+            ]
+          },
+          {
             "group": "Browser Infrastructure",
             "icon": "server",
             "pages": [

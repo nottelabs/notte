@@ -110,6 +110,10 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Connect with Playwright](https://docs.notte.cc/features/sessions/playwright.md): Use Playwright directly with Notte sessions via Chrome DevTools Protocol
 - [Connect with Puppeteer](https://docs.notte.cc/features/sessions/puppeteer.md): Use Puppeteer with Notte sessions via Chrome DevTools Protocol
 
+## Infrastructure as Code
+
+- [Terraform](https://docs.notte.cc/integrations/terraform.md): Manage durable Notte profiles with a native Terraform provider.
+
 ## Browser Infrastructure
 
 - [Kernel.sh](https://docs.notte.cc/integrations/kernel.md): Integrate with Kernel browsers
