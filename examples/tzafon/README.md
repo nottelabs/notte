@@ -26,6 +26,6 @@ The form supports left click, point-and-type, typing, Enter/Tab, wait, and scree
 
 Run `uv run --locked python -m unittest discover -s python` and, from `typescript`, `npm test` for native SDK wire contracts, coordinate boundaries, limits, denied actions, and cancellation.
 
-Set `NOTTE_TZAFON_PYTHON` to this directory's `.venv/bin/python`, then run `npm run test:live` from `typescript`. These tests use real Notte browsers and injected Lightcone HTTP responses for form completion, SDK HTTP 401 handling, pending safety checks, and invalid coordinates. Each case independently verifies that its owned session is closed. CI requires the Notte key and tests both published and source SDKs.
+Set `NOTTE_TZAFON_PYTHON` to this directory's `.venv/bin/python`, then run `npm run test:live` from `typescript`. These tests use real Notte browsers and injected Lightcone HTTP responses for form completion, SDK HTTP 401 handling, pending safety checks, and invalid coordinates, and cancellation during a pending browser operation. Each case independently verifies that its owned session is closed. CI requires the Notte key and tests both published and source SDKs.
 
 The pinned SDK declarations still name the older computer tool; the examples send `computer_use` from the [current API documentation](https://docs.lightcone.ai/guides/responses-api/). Wire tests enforce that body and history format. Live Tzafon model inference, perception, and hosted API acceptance have not been tested.

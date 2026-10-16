@@ -1,6 +1,8 @@
 import asyncio
 import unittest
+from unittest.mock import AsyncMock, patch
 
+import demo
 import httpx
 from computer import NotteComputer, pixel
 from fixture import Wire, response
@@ -103,6 +105,30 @@ class ComputerContract(unittest.IsolatedAsyncioTestCase):
                     response({"type": "click", "x": 160, "y": 260, "button": "left"})["output"][0]
                 )
         self.assertEqual(page.events, [])
+
+    async def test_cleanup_failure_retains_the_created_session_id(self):
+        class Session:
+            session_id = "00000000-0000-4000-8000-000000000001"
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *args):
+                raise RuntimeError("PRIVATE_FIXTURE_BODY")
+
+        class Client:
+            def Session(self, **kwargs):
+                return Session()
+
+        with (
+            patch.object(demo, "NotteClient", Client),
+            patch.object(demo, "_run_form", AsyncMock(return_value={"output": "Accepted"})),
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError, r"browser cleanup.*session 00000000-0000-4000-8000-000000000001"
+            ) as caught:
+                await demo.run_demo()
+        self.assertNotIn("PRIVATE_FIXTURE_BODY", str(caught.exception))
 
     def test_coordinate_grid_boundaries(self):
         self.assertEqual((pixel(0, 1024), pixel(500, 1024), pixel(999, 1024)), (0, 512, 1022))

@@ -14,9 +14,10 @@ if (process.env.NOTTE_TZAFON_REQUIRE_LIVE === '1') {
 
 async function assertClosed(id: string) {
   const deadline = Date.now() + 15_000;
+  const signal = AbortSignal.timeout(15_000);
   while (true) {
     const response = await fetch(`${process.env.NOTTE_API_URL ?? 'https://api.notte.cc'}/sessions/${id}`, {
-      headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal: AbortSignal.timeout(15_000),
+      headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal,
     });
     assert.equal(response.status, 200, 'Authoritative session lookup failed');
     const { status } = await response.json() as { status: string };
@@ -28,7 +29,7 @@ async function assertClosed(id: string) {
 }
 
 for (const language of ['python', 'typescript']) {
-  for (const mode of ['protocol', 'reject', 'safety', 'out-of-bounds']) {
+  for (const mode of ['protocol', 'reject', 'safety', 'out-of-bounds', ...(language === 'typescript' ? ['cancel'] : [])]) {
     const skip = !process.env.NOTTE_API_KEY;
     test(`${language}: ${mode} closes its browser and withholds credentials`, { skip, timeout: 240_000 }, async () => {
       const python = process.env.NOTTE_TZAFON_PYTHON;
@@ -47,7 +48,7 @@ for (const language of ['python', 'typescript']) {
         output = (result.stdout ?? '') + (result.stderr ?? '');
       }
       let id = new RegExp(`\\(session (${uuid})\\)`).exec(output)?.[1];
-      let result: { output?: string; actions?: string[]; session_id?: string } | undefined;
+      let result: { output?: string; actions?: string[]; cancelled?: boolean; session_id?: string } | undefined;
       if (!id) {
         for (const line of output.split(/\r?\n/)) {
           try { result = JSON.parse(line); } catch { continue; }
@@ -55,7 +56,7 @@ for (const language of ['python', 'typescript']) {
         }
       }
       try {
-        assert.equal(failed, mode !== 'protocol', 'Recipe exited unexpectedly; SDK output withheld');
+        assert.equal(failed, mode !== 'protocol' && mode !== 'cancel', 'Recipe exited unexpectedly; SDK output withheld');
         assert.ok(id && new RegExp(`^${uuid}$`).test(id), 'Recipe did not report its owned browser');
         for (const secret of [env.NOTTE_API_KEY, 'fixture-provider-key', 'PRIVATE_FIXTURE_BODY']) {
           if (secret) assert.ok(!output.includes(secret), 'Private data entered recipe output');
@@ -64,7 +65,8 @@ for (const language of ['python', 'typescript']) {
         if (failed) {
           assert.match(output, mode === 'reject' ? /Lightcone form failed: provider HTTP 401/ : /Lightcone form failed: model request/);
           if (mode === 'reject') assert.match(output, /HTTP 401/);
-        } else {
+        } else if (mode === 'cancel') assert.equal(result?.cancelled, true);
+        else {
           assert.equal(result?.output, 'Accepted');
           assert.deepEqual(result?.actions, ['point_and_type', 'keypress']);
         }

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import Lightcone from '@tzafon/lightcone';
 import type { ResponseComputerToolCall } from '@tzafon/lightcone/resources/responses';
 import type { Page } from 'playwright-core';
-import { NotteComputer, pixel } from '../src/computer.ts';
+import { NotteComputer, pixel, withBrowserDeadline } from '../src/computer.ts';
 import { response, wire } from './fixture.ts';
 
 function page() {
@@ -61,4 +61,26 @@ test('cancelled approval never acts', async () => {
 test('coordinate grid boundaries', () => {
   assert.deepEqual([pixel(0, 1024), pixel(500, 1024), pixel(999, 1024)], [0, 512, 1022]);
   for (const bad of [-1, 1000, NaN, Infinity, true, '500']) assert.throws(() => pixel(bad as number, 1024));
+});
+
+
+test('abort disconnects pending browser work before later effects', async () => {
+  const { fake, keys } = page();
+  let entered!: () => void;
+  let finishClick!: () => void;
+  const pending = new Promise<void>(resolve => { finishClick = resolve; });
+  const clicking = new Promise<void>(resolve => { entered = resolve; });
+  fake.mouse.click = async () => { entered(); await pending; };
+  let closed = 0;
+  const browser = { close: async () => { closed++; finishClick(); } };
+  const controller = new AbortController();
+  const computer = new NotteComputer(fake, () => true, controller.signal);
+  const command = response({ type: 'point_and_type', x: 160, y: 260, text: 'must-not-type' }).output[0] as ResponseComputerToolCall;
+  const operation = withBrowserDeadline(browser, controller.signal, () => computer.handle(command));
+  await clicking;
+  controller.abort();
+  await assert.rejects(operation);
+  assert.ok(closed >= 1);
+  assert.deepEqual(keys, []);
+  assert.deepEqual(computer.actions, []);
 });
