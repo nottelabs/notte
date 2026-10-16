@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any, ClassVar, Literal, Unpack, overload
 
 import requests
-from litellm import BaseModel
 from notte_core import enable_nest_asyncio
 from notte_core.actions import (
     ActionList,
@@ -90,7 +89,7 @@ from notte_sdk.types import (
     ScrapeParams,
     ScrapeParamsDict,
 )
-from pydantic import RootModel, ValidationError
+from pydantic import BaseModel, RootModel, ValidationError
 from typing_extensions import override
 
 from notte_browser.action_selection.pipe import ActionSelectionPipe
