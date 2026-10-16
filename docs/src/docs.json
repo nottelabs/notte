@@ -418,8 +418,7 @@
               "integrations/mastra",
               "integrations/openclaw",
               "integrations/hermes",
-              "integrations/stagehand",
-              "integrations/agent-browser"
+              "integrations/stagehand"
             ]
           },
           {
@@ -441,7 +440,8 @@
             "icon": "gamepad",
             "pages": [
               "features/sessions/playwright",
-              "features/sessions/puppeteer"
+              "features/sessions/puppeteer",
+              "integrations/agent-browser"
             ]
           },
           {
