@@ -1,0 +1,60 @@
+name: agent-browser integration
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/agent-browser-integration.yml
+      - docs/src/testers/integrations/agent_browser.*
+      - node-sdk/test/agent-browser.integration.test.ts
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/agent-browser-integration.yml
+      - docs/src/testers/integrations/agent_browser.*
+      - node-sdk/src/**
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
+    env:
+      NOTTE_API_URL: https://us-staging.notte.cc
+      NOTTE_AGENT_BROWSER_LIVE: '1'
+      VITEST_INTEGRATION: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+      - run: uv sync --locked --package notte-sdk --no-dev
+      - run: npm ci --prefix node-sdk
+      - run: npm run build --prefix node-sdk
+      - name: Install the pinned CLI
+        run: |
+          npm install --prefix "$RUNNER_TEMP/notte-agent-browser" --no-audit --no-fund agent-browser@0.39.1
+          echo "$RUNNER_TEMP/notte-agent-browser/node_modules/.bin" >> "$GITHUB_PATH"
+      - name: Wait for the API
+        uses: ./.github/actions/wait-for-api
+        with:
+          api-url: ${{ env.NOTTE_API_URL }}
+      - name: Execute recipes and lifecycle checks
+        working-directory: node-sdk
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+        run: |
+          export NOTTE_DOCS_PYTHON="$GITHUB_WORKSPACE/.venv/bin/python"
+          npx vitest run test/agent-browser.integration.test.ts
