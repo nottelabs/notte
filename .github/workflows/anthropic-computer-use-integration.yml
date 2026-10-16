@@ -40,11 +40,20 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.11'
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+      - run: uv sync --locked && uv run --locked python -c 'from anthropic import Anthropic; from notte_sdk import NotteClient'
+        working-directory: examples/anthropic-computer-use
       - run: npm ci && npm run typecheck
         working-directory: examples/anthropic-computer-use/typescript
       - run: python -m compileall -q examples/anthropic-computer-use/python
   live:
     needs: static
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [published, source]
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -62,10 +71,19 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           enable-cache: false
-      - run: uv sync --locked --package notte-sdk --no-dev
-      - run: uv pip install anthropic==1.15.0 playwright==1.64.0
-      - run: npm ci --prefix node-sdk && npm run build --prefix node-sdk
-      - run: npm ci && npm install --no-save --package-lock=false ../../../node-sdk && npm run typecheck
+      - if: matrix.sdk == 'published'
+        run: uv sync --locked
+        working-directory: examples/anthropic-computer-use
+      - if: matrix.sdk == 'source'
+        run: uv sync --locked --package notte-sdk --no-dev
+      - if: matrix.sdk == 'source'
+        run: uv pip install anthropic==1.15.0 playwright==1.64.0
+      - run: npm ci && npm run typecheck
+        working-directory: examples/anthropic-computer-use/typescript
+      - if: matrix.sdk == 'source'
+        run: npm ci --prefix node-sdk && npm run build --prefix node-sdk
+      - if: matrix.sdk == 'source'
+        run: npm install --no-save --package-lock=false ../../../node-sdk && npm run typecheck
         working-directory: examples/anthropic-computer-use/typescript
       - uses: ./.github/actions/wait-for-api
         with:
@@ -75,7 +93,8 @@ jobs:
         env:
           NOTTE_API_URL: https://us-staging.notte.cc
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+          NOTTE_COMPUTER_USE_PYTHON: ${{ github.workspace }}/${{ matrix.sdk == 'source' && '.venv' || 'examples/anthropic-computer-use/.venv' }}/bin/python
           ANTHROPIC_API_KEY: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && secrets.ANTHROPIC_API_KEY || '' }}
         run: |
-          .venv/bin/python -m unittest discover -s examples/anthropic-computer-use/python -p test_live.py -v
+          "$NOTTE_COMPUTER_USE_PYTHON" -m unittest discover -s examples/anthropic-computer-use/python -p test_live.py -v
           npm run test:live --prefix examples/anthropic-computer-use/typescript
