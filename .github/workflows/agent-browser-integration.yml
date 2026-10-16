@@ -12,6 +12,7 @@ on:
     paths:
       - .github/workflows/agent-browser-integration.yml
       - docs/src/testers/integrations/agent_browser.*
+      - node-sdk/test/agent-browser.integration.test.ts
       - node-sdk/src/**
 
 permissions:
