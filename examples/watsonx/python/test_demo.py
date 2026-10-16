@@ -9,6 +9,7 @@ from demo import describe
 
 PNG = b"\x89PNG\r\n\x1a\nfixture"
 SETTINGS = {
+    "WATSONX_URL": "https://us-south.ml.cloud.ibm.com",
     "WATSONX_API_KEY": "fixture-api-key",  # pragma: allowlist secret
     "WATSONX_PROJECT_ID": "fixture-project",
     "WATSONX_MODEL_ID": "fixture-model",
@@ -68,6 +69,11 @@ class WatsonxContract(unittest.TestCase):
         for _, options in http.calls:
             self.assertEqual(options["timeout"], 30)
             self.assertIs(options["allow_redirects"], False)
+
+    def test_regional_endpoint_accepts_a_trailing_slash(self):
+        with patch.dict(os.environ, {"WATSONX_URL": "https://eu-de.ml.cloud.ibm.com/"}), Transport() as http:
+            describe(PNG, http)
+        self.assertEqual(http.calls[1][0], "https://eu-de.ml.cloud.ibm.com/ml/v1/text/chat")
 
     def test_failed_or_invalid_iam_never_sends_image(self):
         for mode in ["iam-reject", "invalid-token", "redirect"]:

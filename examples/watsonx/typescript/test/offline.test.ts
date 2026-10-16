@@ -4,6 +4,7 @@ import { describe } from '../src/demo.ts';
 import { transport } from './transport.ts';
 
 process.env.WATSONX_API_KEY = 'fixture-api-key'; // pragma: allowlist secret
+process.env.WATSONX_URL = 'https://us-south.ml.cloud.ibm.com';
 process.env.WATSONX_PROJECT_ID = 'fixture-project';
 process.env.WATSONX_MODEL_ID = 'fixture-model';
 
@@ -41,4 +42,14 @@ test('model rejection and empty result fail', async () => {
     const { mock } = transport(mode);
     await assert.rejects(describe(Buffer.from('fixture'), mock));
   }
+});
+
+
+test('regional endpoint accepts a trailing slash', async () => {
+  process.env.WATSONX_URL = 'https://eu-de.ml.cloud.ibm.com/';
+  try {
+    const { mock, calls } = transport();
+    await describe(Buffer.from('fixture'), mock);
+    assert.equal(calls[1].url, 'https://eu-de.ml.cloud.ibm.com/ml/v1/text/chat?version=2024-05-31');
+  } finally { process.env.WATSONX_URL = 'https://us-south.ml.cloud.ibm.com'; }
 });
