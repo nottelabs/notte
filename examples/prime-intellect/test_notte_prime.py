@@ -115,6 +115,7 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
         else:
             started, stopped = [], []
             session = SimpleNamespace(
+                response=object(),
                 session_id="11111111-1111-4111-8111-111111111111",
                 start=lambda: started.append("owned"),
                 stop=lambda: stopped.append("owned"),
@@ -186,6 +187,65 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
         task = next(iter(example.NotteTaskset(vf.TasksetConfig())))
         trace = SimpleNamespace(state=example.BrowserState(title="Example Domain", url="https://different.example"))
         self.assertEqual(await task.title_matches(trace), 0)
+
+    async def test_cancelled_creation_finishes_and_closes_before_propagating(self):
+        task = next(iter(example.NotteTaskset(vf.TasksetConfig())))
+        entered, release = threading.Event(), threading.Event()
+        stopped = []
+
+        class Session:
+            response = None
+
+            def start(self):
+                entered.set()
+                if not release.wait(5):
+                    raise TimeoutError("Test did not release creation")
+                self.response = object()
+
+            @property
+            def session_id(self):
+                if self.response is None:
+                    raise ValueError("Session has not started")
+                return "owned"
+
+            def stop(self):
+                stopped.append(self.session_id)
+
+        session = Session()
+        with patch.object(example, "NotteClient", return_value=SimpleNamespace(Session=lambda **_: session)):
+            starting = asyncio.create_task(task.setup(SimpleNamespace(state=example.BrowserState()), None))
+            try:
+                self.assertTrue(await asyncio.to_thread(entered.wait, 5))
+                starting.cancel()
+                await asyncio.sleep(0)
+                self.assertFalse(starting.done())
+            finally:
+                release.set()
+            with self.assertRaises(asyncio.CancelledError):
+                await asyncio.wait_for(starting, 5)
+        self.assertEqual(stopped, ["owned"])
+        self.assertIsNone(task.session)
+
+    async def test_failed_creation_preserves_safe_error_and_clears_owner(self):
+        task = next(iter(example.NotteTaskset(vf.TasksetConfig())))
+
+        class Session:
+            response = None
+
+            def start(self):
+                raise RuntimeError(FAKE_CREDENTIAL)
+
+            @property
+            def session_id(self):
+                raise ValueError("Session has not started")
+
+            def stop(self):
+                raise AssertionError("An unstarted browser must not be stopped")
+
+        with patch.object(example, "NotteClient", return_value=SimpleNamespace(Session=lambda **_: Session())):
+            with self.assertRaisesRegex(RuntimeError, "^Could not prepare the rollout browser$"):
+                await task.setup(SimpleNamespace(state=example.BrowserState()), None)
+        self.assertIsNone(task.session)
 
     @unittest.skipUnless(LIVE, "Opt-in real browser rollout")
     async def test_full_framework_provider_failure_closes_its_browser(self):

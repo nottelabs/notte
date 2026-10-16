@@ -49,12 +49,20 @@ class BrowserTask(vf.Task[BrowserData, BrowserState, vf.TaskConfig]):
     async def setup(self, trace, runtime):
         await self.close()
         self.session = NotteClient().Session(max_duration_minutes=3)
+        starting = asyncio.create_task(asyncio.to_thread(self.session.start))
         try:
-            await asyncio.to_thread(self.session.start)
+            await asyncio.shield(starting)
             trace.state.session_id = self.session.session_id
             trace.state.cdp_url = self.session.cdp_url()
-        except Exception:
+        except BaseException as error:
+            # Cancelling to_thread does not stop the browser creation request.
+            try:
+                await starting
+            except Exception:
+                pass
             await self.close()
+            if not isinstance(error, Exception):
+                raise
             raise RuntimeError("Could not prepare the rollout browser") from None
 
     async def finalize(self, trace, runtime):
@@ -65,7 +73,7 @@ class BrowserTask(vf.Task[BrowserData, BrowserState, vf.TaskConfig]):
 
     async def close(self):
         if getattr(self, "session", None):
-            if self.session.session_id:
+            if self.session.response is not None:
                 await asyncio.to_thread(self.session.stop)
             self.session = None
 
