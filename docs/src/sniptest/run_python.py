@@ -7,7 +7,18 @@ import sys
 
 def capture_example(path: str) -> dict:
     namespace = runpy.run_path(path, run_name="__main__")
-    fields = ("status", "title", "viewport", "session_id", "error_message", "result", "results", "run_status", "run_id")
+    fields = (
+        "status",
+        "title",
+        "viewport",
+        "session_id",
+        "session_ids",
+        "error_message",
+        "result",
+        "results",
+        "run_status",
+        "run_id",
+    )
     return {
         key: value.model_dump(mode="json") if hasattr(value, "model_dump") else value
         for key in fields

@@ -75,7 +75,7 @@ jobs:
         env:
           NOTTE_API_URL: https://us-staging.notte.cc
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && secrets.ANTHROPIC_API_KEY || '' }}
         run: |
           .venv/bin/python -m unittest discover -s examples/anthropic-computer-use/python -p test_live.py -v
           npm run test:live --prefix examples/anthropic-computer-use/typescript

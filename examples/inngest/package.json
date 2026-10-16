@@ -1,0 +1,19 @@
+{
+  "name": "notte-inngest-example",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test:live": "node --test test/agent.live.test.ts"
+  },
+  "dependencies": {
+    "@inngest/agent-kit": "0.13.2",
+    "inngest": "4.24.0",
+    "notte-sdk": "1.9.7",
+    "playwright-core": "1.63.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": { "@types/node": "24.10.0", "typescript": "6.0.3" }
+}
