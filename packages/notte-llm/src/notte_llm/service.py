@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import os
+from functools import cached_property
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import tiktoken
-from litellm import ModelResponse
-from llamux import Router  # type: ignore[import]
 from notte_core.common.config import LlmModel, PerceptionType, config
 from notte_core.common.logging import logger
 from notte_core.errors.llm import InvalidPromptTemplateError
@@ -12,6 +13,10 @@ from notte_core.errors.llm import InvalidPromptTemplateError
 from notte_llm.engine import LLMEngine
 from notte_llm.prompt import PromptLibrary
 from notte_llm.types import TResponseFormat
+
+if TYPE_CHECKING:
+    from litellm import ModelResponse
+    from llamux import Router  # type: ignore[import]
 
 PROMPT_DIR = Path(__file__).parent / "prompts"
 LLAMUX_CONFIG = Path(__file__).parent / "config" / "endpoints.csv"
@@ -38,15 +43,21 @@ class LLMService:
 
         # A caller-chosen model must not be overridden by the router.
         if config.use_llamux and use_router:
+            from llamux import Router  # type: ignore[import]
+
             llamux_config = get_llamux_config(config.verbose)
             path = Path(llamux_config)
             if not path.exists():
                 raise FileNotFoundError(f"LLAMUX config file not found at {path}")
             self.router = Router.from_csv(llamux_config)
         self.base_model: str = base_model or LlmModel.default()
-        self.tokenizer: tiktoken.Encoding = tiktoken.get_encoding("cl100k_base")
         self.verbose: bool = config.verbose
         self.nb_retries_structured_output: int = config.nb_retries_structured_output
+
+    @cached_property
+    def tokenizer(self) -> tiktoken.Encoding:
+        # Loaded on the first token count (tens of MiB), not for services that never call a model.
+        return tiktoken.get_encoding("cl100k_base")
 
     @staticmethod
     def from_config(perception_type: PerceptionType = config.perception_type) -> "LLMService":
