@@ -180,7 +180,7 @@
     },
     {
       "source": "/integrations/computer-use-openagi",
-      "destination": "/integrations"
+      "destination": "/integrations/openagi"
     },
     {
       "source": "/integrations/gemini-computer-use",
