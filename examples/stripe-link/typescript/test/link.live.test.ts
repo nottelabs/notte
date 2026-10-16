@@ -9,6 +9,9 @@ const execute = promisify(execFile);
 const cwd = fileURLToPath(new URL('..', import.meta.url));
 const uuid = '[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}';
 const configured = Boolean(process.env.LINK_ACCESS_TOKEN && process.env.LINK_SPEND_REQUEST_ID);
+if (process.env.NOTTE_LINK_REQUIRE_LIVE === '1') {
+  assert.ok(process.env.NOTTE_API_KEY, 'CI requires NOTTE_API_KEY for the browser and rejection checks');
+}
 
 async function assertClosed(id: string) {
   const deadline = Date.now() + 15_000;

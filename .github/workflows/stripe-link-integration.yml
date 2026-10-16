@@ -91,5 +91,6 @@ jobs:
           NOTTE_API_URL: https://us-staging.notte.cc
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
           NOTTE_LINK_PYTHON: ${{ github.workspace }}/${{ matrix.sdk == 'source' && '.venv' || 'examples/stripe-link/.venv' }}/bin/python
+          NOTTE_LINK_REQUIRE_LIVE: '1'
           DISABLE_TELEMETRY: 'true'
         run: npm run test:live
