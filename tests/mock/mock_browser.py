@@ -2,11 +2,12 @@ from dataclasses import dataclass
 from typing import Any, final
 
 from loguru import logger
-from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
-from notte_core.browser.node_type import NodeType
-from notte_core.browser.observation import Observation
-from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, TabsData, ViewportData
-from notte_core.common.resource import AsyncResource
+from notte_browser.window import ScreenshotMask
+from notte_core.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
+from notte_core.node_type import NodeType
+from notte_core.observation import Observation
+from notte_core.resource import AsyncResource
+from notte_core.snapshot import BrowserSnapshot, SnapshotMetadata, TabsData, ViewportData
 from typing_extensions import TypedDict, override
 
 
@@ -94,6 +95,8 @@ class MockBrowserDriver(AsyncResource):
             timeout=timeout,
             screenshot=screenshot,
         )
+        # Mirrors BrowserWindow.screenshot_mask (set by the session when a vault is attached).
+        self.screenshot_mask: ScreenshotMask | None = None
 
         self._mock_dom_node = DomNode(
             id="mock",
@@ -140,7 +143,6 @@ class MockBrowserDriver(AsyncResource):
                 ],
             ),
             html_content="<html><body>Mock HTML</body></html>",
-            a11y_tree=None,
             screenshot=Observation.empty().screenshot.raw,
             dom_node=self._mock_dom_node,
         )
@@ -191,7 +193,6 @@ class MockBrowserDriver(AsyncResource):
                 ],
             ),
             html_content="<html><body>Mock HTML</body></html>",
-            a11y_tree=None,
             screenshot=Observation.empty().screenshot.raw,
             dom_node=self._mock_dom_node,
         )

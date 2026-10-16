@@ -35,11 +35,11 @@ steel_session = steel.sessions.create()
 try:
     # Connect Notte to Steel's browser via CDP
     with client.Session(cdp_url=steel_session.websocket_url) as session:
-        agent = client.Agent(session=session, max_steps=10)
+        session.execute(type="goto", url="https://www.notte.cc/pricing")
 
-        result = agent.run(task="extract pricing plans from https://www.notte.cc")
+        pricing = session.scrape(instructions="extract the pricing plans")
 
-        print(f"Task completed: {result.answer}")
+        print(f"Pricing: {pricing}")
 
 except Exception as e:
     print(f"Error during automation: {e}")

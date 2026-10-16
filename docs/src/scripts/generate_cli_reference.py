@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import filecmp
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -67,7 +68,30 @@ def generate(out: Path) -> None:
     # Match what the repository's hooks would do to the pages: add the agent
     # notice every sidebar page carries, and end with one newline.
     for page in out.glob("*.mdx"):
-        page.write_text(prepare_page(page.stem, page.read_text()))
+        page.write_text(prepare_page(page.stem, normalize_icons(page.read_text())))
+
+
+def normalize_icons(text: str) -> str:
+    # The submodule owns commands; the docs site owns product presentation.
+    for title, icon in (("Functions", "flower"), ("Sessions", "tv")):
+        text = re.sub(r'<Card icon="[^"]+" title="' + title + r'"', f'<Card icon="{icon}" title="{title}"', text)
+    return text
+
+
+def cli_llms_matches(fresh: Path, existing: str) -> bool:
+    expected = []
+    for name in nav_pages(fresh):
+        text = (fresh / (name.split("/")[-1] + ".mdx")).read_text()
+        # gendocs emits JSON-quoted YAML strings; decode escapes, not display quotes.
+        fields = {}
+        for field in ("title", "description"):
+            match = re.search(r"^" + field + r": (.+)$", text, re.MULTILINE)
+            if match is None:
+                return False
+            fields[field] = json.loads(match.group(1))
+        expected.append(f"- [{fields['title']}](https://docs.notte.cc/{name}.md): {fields['description']}")
+    actual = [line for line in existing.splitlines() if "](https://docs.notte.cc/cli-reference/" in line]
+    return actual == expected
 
 
 def nav_pages(out: Path) -> list[str]:
@@ -125,6 +149,9 @@ def main() -> int:
                 stale.append("docs/src/cli-reference/")
             if json.loads(current) != docs:
                 stale.append("docs/src/docs.json (CLI tab)")
+            llms_path = DOCS_JSON.with_name("llms.txt")
+            if not llms_path.exists() or not cli_llms_matches(fresh, llms_path.read_text()):
+                stale.append("docs/src/llms.txt (CLI entries)")
             if stale:
                 print(
                     "CLI reference is out of date with the notte-cli submodule: "

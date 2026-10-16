@@ -7,7 +7,6 @@ Do not remove an execution exemption until the script has a behavior assertion, 
 ## Remaining work
 
 - Use controlled pages to verify structured extraction, missing fields, filtering, images, and link placeholders.
-- Give agent examples bounded step limits and owned vault/persona fixtures, and check their answers and cleanup.
 - Verify cookie, recording, and file artifacts without overwriting user files.
 - Test external-provider and Puppeteer examples with isolated dependencies and credentials.
 - Keep Python Function-runtime handlers separate from caller SDK examples. Do not imply that Functions execute TypeScript.

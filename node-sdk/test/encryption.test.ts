@@ -4,7 +4,7 @@ import { Encryption } from '@/encryption';
 // Fixture generated with the python SDK, so that a drift in either
 // implementation fails here:
 //
-//   from notte_core.utils.encryption import Encryption
+//   # Backend Fernet encryption helper (no longer shipped in notte-core)
 //   Encryption(root_key=ROOT_KEY).encrypt(PLAINTEXT)
 const ROOT_KEY = 'public-sdk-test-key'; // pragma: allowlist secret
 const PLAINTEXT = 'https://example.com/function.py?signature=test';

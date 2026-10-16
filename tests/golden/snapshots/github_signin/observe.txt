@@ -1,0 +1,50 @@
+### Content of 'WebArea' component with text 'body content'
+L1[:]<a href="https://github.com/login#start-of-content">Skip to content</a>
+_[:]You signed in with another tab or window.
+_[:]Reload
+_[:]to refresh your session.
+_[:]You signed out in another tab or window.
+_[:]Reload
+_[:]to refresh your session.
+_[:]You switched accounts on another tab or window.
+_[:]Reload
+_[:]to refresh your session.
+_[:]Dismiss alert
+_[:]Sign in to GitHub
+_[:]Username or email address
+I1[:]<input type="text" name="login"></input>
+_[:]Password
+I2[:]<input type="password" name="password"></input>
+L2[:]<a href="https://github.com/password_reset">Forgot password?</a>
+B1[:]<input type="submit" value="Sign in" name="commit"></input>
+_[:]This browser or device is reporting partial passkey support.
+_[:]Webauthn isn't supported. Use a different browser or device to use your passkey.
+_[:]Loading
+_[:]Waiting for input from browser interaction...
+_[:]Continue with passkey
+_[:]Password login alternatives
+B2[:]<button type="button">Sign in with a passkey</button>
+_[:]New to GitHub?
+L3[:]<a href="https://github.com/signup?source=login">Create an account</a>
+L4[:]<a href="https://docs.github.com/site-policy/github-terms/github-term...">Terms</a>
+L5[:]<a href="https://docs.github.com/site-policy/privacy-policies/github-...">Privacy</a>
+L6[:]<a href="https://docs.github.com/">Docs</a>
+L7[:]<a href="https://support.github.com/">Contact GitHub Support</a>
+B3[:]<button type="button">Manage cookies</button>
+B4[:]<button type="button">Do not share my personal information</button>
+_[:]You can’t perform that action at this time.
+
+# interaction actions
+L1	click	'Skip to content'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > a.px-2.py-4.color-bg-accent-emphasis.color-fg-on-emphasis.show-on-focus.js-skip-to-content[href="https://github.com/login#start-of-content"]	html/body/div[1]/div[1]/a	in_iframe=False	in_shadow_root=False
+I1	fill	'login'	html > body > div:nth-of-type(1) > div:nth-of-type(3) > main > div > div:nth-of-type(4) > form > input:nth-of-type(3).form-control.input-block.js-login-field[type="text"][name="login"][id="login_field"][autocomplete="username"][required="required"]	html/body/div[1]/div[3]/main/div/div[4]/form/input[3]	in_iframe=False	in_shadow_root=False
+I2	fill	'password'	html > body > div:nth-of-type(1) > div:nth-of-type(3) > main > div > div:nth-of-type(4) > form > div > input:nth-of-type(1).form-control.form-control.input-block.js-password-field[type="password"][name="password"][id="password"][autocomplete="current-password"][required="required"]	html/body/div[1]/div[3]/main/div/div[4]/form/div/input[1]	in_iframe=False	in_shadow_root=False
+L2	click	'Forgot password?'	html > body > div:nth-of-type(1) > div:nth-of-type(3) > main > div > div:nth-of-type(4) > form > div > a.label-link.position-absolute.top-0.right-0[id="forgot-password"][href="https://github.com/password_reset"]	html/body/div[1]/div[3]/main/div/div[4]/form/div/a	in_iframe=False	in_shadow_root=False
+B1	click	'commit'	html > body > div:nth-of-type(1) > div:nth-of-type(3) > main > div > div:nth-of-type(4) > form > div > input:nth-of-type(13).btn.btn-primary.btn-block.js-sign-in-button[type="submit"][name="commit"]	html/body/div[1]/div[3]/main/div/div[4]/form/div/input[13]	in_iframe=False	in_shadow_root=False
+B2	click	'Sign in with a passkey'	html > body > div:nth-of-type(1) > div:nth-of-type(3) > main > div > div:nth-of-type(5) > webauthn-subtle > p > button.Button--link.Button--medium.Button[type="button"]	html/body/div[1]/div[3]/main/div/div[5]/webauthn-subtle/p/button	in_iframe=False	in_shadow_root=False
+L3	click	'Create an account'	html > body > div:nth-of-type(1) > div:nth-of-type(3) > main > div > div:nth-of-type(5) > p > a[href="https://github.com/signup?source=login"]	html/body/div[1]/div[3]/main/div/div[5]/p/a	in_iframe=False	in_shadow_root=False
+L4	click	'Terms'	html > body > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(1) > a.Link--secondary.Link[href="https://docs.github.com/site-policy/github-terms/github-terms-of-service"]	html/body/div[1]/div[4]/ul/li[1]/a	in_iframe=False	in_shadow_root=False
+L5	click	'Privacy'	html > body > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(2) > a.Link--secondary.Link[href="https://docs.github.com/site-policy/privacy-policies/github-privacy-statement"]	html/body/div[1]/div[4]/ul/li[2]/a	in_iframe=False	in_shadow_root=False
+L6	click	'Docs'	html > body > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(3) > a.Link--secondary.Link[href="https://docs.github.com/"]	html/body/div[1]/div[4]/ul/li[3]/a	in_iframe=False	in_shadow_root=False
+L7	click	'Contact GitHub Support'	html > body > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(4) > a.Link--secondary.Link[href="https://support.github.com/"]	html/body/div[1]/div[4]/ul/li[4]/a	in_iframe=False	in_shadow_root=False
+B3	click	'Manage cookies'	html > body > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(5) > cookie-consent-link > button.Link--secondary.underline-on-hover.border-0.p-0.color-bg-transparent[type="button"]	html/body/div[1]/div[4]/ul/li[5]/cookie-consent-link/button	in_iframe=False	in_shadow_root=False
+B4	click	'Do not share my personal information'	html > body > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(6) > cookie-consent-link > button.Link--secondary.underline-on-hover.border-0.p-0.color-bg-transparent[type="button"]	html/body/div[1]/div[4]/ul/li[6]/cookie-consent-link/button	in_iframe=False	in_shadow_root=False

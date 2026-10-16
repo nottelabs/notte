@@ -45,20 +45,10 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 ## Authentication
 
-- [Secret Vaults](https://docs.notte.cc/concepts/vaults.md): Enterprise-grade credential management for your Sessions & Agents
+- [Secret Vaults](https://docs.notte.cc/concepts/vaults.md): Enterprise-grade credential management for your Sessions
 - [Browser Profiles](https://docs.notte.cc/features/sessions/browser-profiles.md): Persist browser state across sessions
 - [Persona Identities](https://docs.notte.cc/concepts/personas.md): Self-service identities for web automation (account creation, 2FA,etc.)
 - [Managed Auth](https://docs.notte.cc/guides/managed-auth.md): Start browser sessions with saved authentication connections
-
-## Agents
-
-- [Browser Agents](https://docs.notte.cc/concepts/agents.md): AI-powered agents that autonomously complete browser tasks
-- [Agent Lifecycle](https://docs.notte.cc/features/agents/lifecycle.md): Understand agent execution modes, states, and control flow
-- [Agent Configuration](https://docs.notte.cc/features/agents/configuration.md): Configure agent behavior with creation and runtime parameters
-- [Structured Output](https://docs.notte.cc/features/agents/structured-output.md): Get type-safe, structured responses from agents using Pydantic models
-- [Agent to Function Conversion](https://docs.notte.cc/features/agents/workflows.md): Convert agent executions into reusable function code
-- [Agent Fallback](https://docs.notte.cc/features/agents/fallback.md): Automatically recover from script failures with AI agents
-- [Replay & Debugging](https://docs.notte.cc/features/agents/replay.md): Debug agents with visual replays and step-by-step inspection
 
 ## Functions
 
@@ -78,8 +68,6 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Anti-Detection Playbook](https://docs.notte.cc/guides/stealth.md): Diagnose blocked browser sessions and choose the next step
 - [Create accounts with Personas](https://docs.notte.cc/guides/account_creation.md): How to use notte personas for account creation
-- [Web Automation Best Practices](https://docs.notte.cc/guides/web_automation_tips.md): Playwright guidelines and common pitfalls for reliable web automation
-- [Sign in to Okta with MFA](https://docs.notte.cc/guides/okta_mfa.md): Let an agent clear an Okta MFA challenge using a TOTP secret stored in a Vault
 
 
 # Integrations
@@ -230,6 +218,11 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GET Profile Get](https://docs.notte.cc/api-reference/profiles/profile-get.md)
 - [GET Profile List](https://docs.notte.cc/api-reference/profiles/profile-list.md)
 
+## Prompts
+
+- [POST Improve Prompt](https://docs.notte.cc/api-reference/prompts/improve-prompt.md)
+- [POST Nudge Prompt](https://docs.notte.cc/api-reference/prompts/nudge-prompt.md)
+
 ## Scrape
 
 - [POST Scrape From Html](https://docs.notte.cc/api-reference/scrape/scrape-from-html.md)
@@ -265,7 +258,6 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GET Session Network Logs](https://docs.notte.cc/api-reference/sessions/session-network-logs.md)
 - [GET Session Offset](https://docs.notte.cc/api-reference/sessions/session-offset.md)
 - [GET Session Profile Preview](https://docs.notte.cc/api-reference/sessions/session-profile-preview.md)
-- [POST Session Profile Save](https://docs.notte.cc/api-reference/sessions/session-profile-save.md)
 - [GET Session Replay](https://docs.notte.cc/api-reference/sessions/session-replay.md)
 - [POST Session Start](https://docs.notte.cc/api-reference/sessions/session-start.md)
 - [GET Session Status](https://docs.notte.cc/api-reference/sessions/session-status.md)
@@ -325,8 +317,6 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [viewer_cdp](https://docs.notte.cc/sdk-reference/remotesession/viewer_cdp.md): Open a browser tab with the debug URL for visualizing the session
 - [viewer](https://docs.notte.cc/sdk-reference/remotesession/viewer.md): Open the viewer for the session based on the viewer_type
 - [status](https://docs.notte.cc/sdk-reference/remotesession/status.md): Get the current status of the session
-- [evaluate_js](https://docs.notte.cc/sdk-reference/remotesession/evaluate_js.md): Evaluate JavaScript on the current page and return its result as a string
-- [wait_for_auth](https://docs.notte.cc/sdk-reference/remotesession/wait_for_auth.md): Wait for this browser to be ready without restarting or relogging it
 
 #### Actions
 
@@ -348,36 +338,22 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [SelectDropdownOptionAction](https://docs.notte.cc/sdk-reference/misc/selectdropdownoptionaction.md): Select an option from a dropdown
 - [UploadFileAction](https://docs.notte.cc/sdk-reference/misc/uploadfileaction.md): Upload file to interactive element with file path
 - [DownloadFileAction](https://docs.notte.cc/sdk-reference/misc/downloadfileaction.md): Download files from interactive elements
-- [ScrapeAction](https://docs.notte.cc/sdk-reference/misc/scrapeaction.md): Scrape the current page data in text format
+- [ScrapeAction](https://docs.notte.cc/sdk-reference/misc/scrapeaction.md): Record of a `session
 - [CaptchaSolveAction](https://docs.notte.cc/sdk-reference/misc/captchasolveaction.md): Solve a CAPTCHA challenge on the current page
 - [SmsReadAction](https://docs.notte.cc/sdk-reference/misc/smsreadaction.md): Read sms messages received recently
 - [EmailReadAction](https://docs.notte.cc/sdk-reference/misc/emailreadaction.md): Read recent emails from the mailbox
 - [EmailVerificationReadAction](https://docs.notte.cc/sdk-reference/misc/emailverificationreadaction.md): Read a recent verification code or link from a workspace mailbox
 
-#### Agent
-
-- [Get started](https://docs.notte.cc/sdk-reference/manual/agent.md): Running agents is a breeze
-- [run](https://docs.notte.cc/sdk-reference/remoteagent/run.md): Run an agent with the specified request parameters and wait for completion
-- [start](https://docs.notte.cc/sdk-reference/remoteagent/start.md): Start the agent with the specified request parameters
-- [stop](https://docs.notte.cc/sdk-reference/remoteagent/stop.md): Stop the currently running agent
-- [status](https://docs.notte.cc/sdk-reference/remoteagent/status.md): Get the current status of the agent
-- [wait](https://docs.notte.cc/sdk-reference/remoteagent/wait.md): Wait for the agent to complete its current task
-- [watch_logs_and_wait](https://docs.notte.cc/sdk-reference/remoteagent/watch_logs_and_wait.md): Watch the logs of the agent and wait for completion
-- [Agent Fallback](https://docs.notte.cc/sdk-reference/manual/agent_fallback.md): Gracefully handle script execution failures with Web Agents
-
 #### Function
 
 - [Get started](https://docs.notte.cc/sdk-reference/manual/function.md): Create, manage, and execute Notte functions
 - [create_run](https://docs.notte.cc/sdk-reference/nottefunction/create_run.md): Create a run record without starting execution
-- [run](https://docs.notte.cc/sdk-reference/nottefunction/run.md): Run the function code using the specified version and variables
-- [update](https://docs.notte.cc/sdk-reference/nottefunction/update.md): Update the workflow with a new code version
-- [delete](https://docs.notte.cc/sdk-reference/nottefunction/delete.md): Delete the workflow from the notte console
+- [run](https://docs.notte.cc/sdk-reference/nottefunction/run.md): Run the function on the Notte cloud using the specified variables
+- [update](https://docs.notte.cc/sdk-reference/nottefunction/update.md): Update the function with a new code version
+- [delete](https://docs.notte.cc/sdk-reference/nottefunction/delete.md): Delete the function from the notte console
 - [download](https://docs.notte.cc/sdk-reference/nottefunction/download.md): Download the function code from the notte console as a python file
 - [fork](https://docs.notte.cc/sdk-reference/nottefunction/fork.md): Fork a shared function into your own private function
-- [get_curl](https://docs.notte.cc/sdk-reference/nottefunction/get_curl.md): Convert the workflow/run to a curl request
-- [get_run](https://docs.notte.cc/sdk-reference/nottefunction/get_run.md): Get a function run by its ID
-- [get_url](https://docs.notte.cc/sdk-reference/nottefunction/get_url.md): No description available
-- [stop_run](https://docs.notte.cc/sdk-reference/nottefunction/stop_run.md): Manually stop a function run by its ID
+- [get_curl](https://docs.notte.cc/sdk-reference/nottefunction/get_curl.md): Convert the function run to a curl request
 
 ### Tooling
 
@@ -406,8 +382,8 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [FileStorage](https://docs.notte.cc/sdk-reference/manual/file_storage.md): Upload and download files for your automations
 - [download](https://docs.notte.cc/sdk-reference/remotefilestorage/download.md): No description available
 - [upload](https://docs.notte.cc/sdk-reference/remotefilestorage/upload.md): No description available
-- [list](https://docs.notte.cc/sdk-reference/remotefilestorage/list.md): No description available
-- [delete](https://docs.notte.cc/sdk-reference/remotefilestorage/delete.md): No description available
+- [list_downloaded_files](https://docs.notte.cc/sdk-reference/remotefilestorage/list_downloaded_files.md): List all files in the download_dir
+- [list_uploaded_files](https://docs.notte.cc/sdk-reference/remotefilestorage/list_uploaded_files.md): List all files from the upload_dir
 
 ### Debug
 
@@ -448,7 +424,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [status](https://docs.notte.cc/typescript-sdk-reference/session/status.md)
 - [waitForAuth](https://docs.notte.cc/typescript-sdk-reference/session/waitforauth.md)
 - [downloadReplay](https://docs.notte.cc/typescript-sdk-reference/session/downloadreplay.md)
-- [saveProfile](https://docs.notte.cc/typescript-sdk-reference/session/saveprofile.md)
+- [saveProfile](https://docs.notte.cc/typescript-sdk-reference/session/saveprofile.md): Save a running session's browser state into a profile.
 - [debugInfo](https://docs.notte.cc/typescript-sdk-reference/session/debuginfo.md)
 - [debugTabInfo](https://docs.notte.cc/typescript-sdk-reference/session/debugtabinfo.md)
 - [cdpUrl](https://docs.notte.cc/typescript-sdk-reference/session/cdpurl.md)
@@ -465,7 +441,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GoBackAction](https://docs.notte.cc/typescript-sdk-reference/types/gobackaction.md)
 - [GoForwardAction](https://docs.notte.cc/typescript-sdk-reference/types/goforwardaction.md)
 - [ReloadAction](https://docs.notte.cc/typescript-sdk-reference/types/reloadaction.md)
-- [WaitActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/waitactionoutput.md)
+- [WaitActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/waitactionoutput.md): Browser wait-action fields returned in execution responses.
 - [PressKeyAction](https://docs.notte.cc/typescript-sdk-reference/types/presskeyaction.md)
 - [ScrollUpAction](https://docs.notte.cc/typescript-sdk-reference/types/scrollupaction.md)
 - [ScrollDownAction](https://docs.notte.cc/typescript-sdk-reference/types/scrolldownaction.md)
@@ -482,16 +458,6 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [SmsReadAction](https://docs.notte.cc/typescript-sdk-reference/types/smsreadaction.md)
 - [EmailReadAction](https://docs.notte.cc/typescript-sdk-reference/types/emailreadaction.md)
 - [EmailVerificationReadAction](https://docs.notte.cc/typescript-sdk-reference/types/emailverificationreadaction.md)
-
-#### Agent
-
-- [Get started](https://docs.notte.cc/typescript-sdk-reference/manual/agent.md)
-- [run](https://docs.notte.cc/typescript-sdk-reference/agent/run.md)
-- [start](https://docs.notte.cc/typescript-sdk-reference/agent/start.md)
-- [stop](https://docs.notte.cc/typescript-sdk-reference/agent/stop.md)
-- [status](https://docs.notte.cc/typescript-sdk-reference/agent/status.md)
-- [hasStarted](https://docs.notte.cc/typescript-sdk-reference/agent/hasstarted.md)
-- [isActive](https://docs.notte.cc/typescript-sdk-reference/agent/isactive.md)
 
 #### Function
 
@@ -573,12 +539,12 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 
 #### API Resources
 
-- [client.sessions](https://docs.notte.cc/typescript-sdk-reference/resources/sessions.md)
-- [client.agents](https://docs.notte.cc/typescript-sdk-reference/resources/agents.md)
-- [client.vaults](https://docs.notte.cc/typescript-sdk-reference/resources/vaults.md)
-- [client.functions](https://docs.notte.cc/typescript-sdk-reference/resources/functions.md)
-- [client.personas](https://docs.notte.cc/typescript-sdk-reference/resources/personas.md)
-- [client.profiles](https://docs.notte.cc/typescript-sdk-reference/resources/profiles.md)
+- [client.files](https://docs.notte.cc/typescript-sdk-reference/resources/files.md): Method signatures, arguments, and return types for client.files API operations.
+- [client.sessions](https://docs.notte.cc/typescript-sdk-reference/resources/sessions.md): Method signatures, arguments, and return types for client.sessions API operations.
+- [client.vaults](https://docs.notte.cc/typescript-sdk-reference/resources/vaults.md): Method signatures, arguments, and return types for client.vaults API operations.
+- [client.functions](https://docs.notte.cc/typescript-sdk-reference/resources/functions.md): Method signatures, arguments, and return types for client.functions API operations.
+- [client.personas](https://docs.notte.cc/typescript-sdk-reference/resources/personas.md): Method signatures, arguments, and return types for client.personas API operations.
+- [client.profiles](https://docs.notte.cc/typescript-sdk-reference/resources/profiles.md): Method signatures, arguments, and return types for client.profiles API operations.
 
 ### Debug
 

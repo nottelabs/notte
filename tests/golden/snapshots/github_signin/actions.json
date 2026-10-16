@@ -1,0 +1,328 @@
+[
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://github.com/login#start-of-content\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://github.com/login#start-of-content\"></a>",
+      "id": "L1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > a.px-2.py-4.color-bg-accent-emphasis.color-fg-on-emphasis.show-on-focus.js-skip-to-content[href=\"https://github.com/login#start-of-content\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/github_signin.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-5642296126833804569:3084515599419921015",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/a"
+      },
+      "text_label": "Skip to content",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" name=\"login\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" name=\"login\"></input>",
+      "id": "I1",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > main > div > div:nth-of-type(4) > form > input:nth-of-type(3).form-control.input-block.js-login-field[type=\"text\"][name=\"login\"][id=\"login_field\"][autocomplete=\"username\"][required=\"required\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/github_signin.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-9051226944786828331:2440513216421307567:-6269889075443882951:1801245794512106580:2405321989325840406:-3543945237365302152:-8985297275284006757:4114548164384410908:-7093709533027522591:-6516698356577867250:4895432987547258552:1334335698709979",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[3]/main/div/div[4]/form/input[3]"
+      },
+      "text_label": "login",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"password\" name=\"password\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"password\" name=\"password\"></input>",
+      "id": "I2",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > main > div > div:nth-of-type(4) > form > div > input:nth-of-type(1).form-control.form-control.input-block.js-password-field[type=\"password\"][name=\"password\"][id=\"password\"][autocomplete=\"current-password\"][required=\"required\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/github_signin.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-9051226944786828331:2440513216421307567:-6269889075443882951:1801245794512106580:2405321989325840406:-3543945237365302152:-8985297275284006757:4114548164384410908:-7093709533027522591:-6516698356577867250:-3913223360988255576:-8736959325184123462:-6665458461413091466:8017550190203542366",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[3]/main/div/div[4]/form/div/input[1]"
+      },
+      "text_label": "password",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://github.com/password_reset\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://github.com/password_reset\"></a>",
+      "id": "L2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > main > div > div:nth-of-type(4) > form > div > a.label-link.position-absolute.top-0.right-0[id=\"forgot-password\"][href=\"https://github.com/password_reset\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/github_signin.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-9051226944786828331:2440513216421307567:-6269889075443882951:1801245794512106580:2405321989325840406:-3543945237365302152:-8985297275284006757:4114548164384410908:-7093709533027522591:-6516698356577867250:-3913223360988255576:-8736959325184123462:-7502982900586490244:-2734759913596071962",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[3]/main/div/div[4]/form/div/a"
+      },
+      "text_label": "Forgot password?",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"submit\" value=\"Sign in\" name=\"commit\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<input type=\"submit\" value=\"Sign in\" name=\"commit\"></input>",
+      "id": "B1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > main > div > div:nth-of-type(4) > form > div > input:nth-of-type(13).btn.btn-primary.btn-block.js-sign-in-button[type=\"submit\"][name=\"commit\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/github_signin.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-9051226944786828331:2440513216421307567:-6269889075443882951:1801245794512106580:2405321989325840406:-3543945237365302152:-8985297275284006757:4114548164384410908:-7093709533027522591:-6516698356577867250:-3913223360988255576:-8736959325184123462:5847409868585150257:-2357614990016502110",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[3]/main/div/div[4]/form/div/input[13]"
+      },
+      "text_label": "commit",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\"></button>",
+      "id": "B2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > main > div > div:nth-of-type(5) > webauthn-subtle > p > button.Button--link.Button--medium.Button[type=\"button\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/github_signin.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-9051226944786828331:2440513216421307567:-6269889075443882951:1801245794512106580:2405321989325840406:-3543945237365302152:-1941716713530493099:-2745822900895663464:165699980642154380:8478416366749199006:-4111488125919443667:4686576270278695092:5384363338239069967:8616443371088972392",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[3]/main/div/div[5]/webauthn-subtle/p/button"
+      },
+      "text_label": "Sign in with a passkey",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://github.com/signup?source=login\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://github.com/signup?source=login\"></a>",
+      "id": "L3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > main > div > div:nth-of-type(5) > p > a[href=\"https://github.com/signup?source=login\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/github_signin.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-9051226944786828331:2440513216421307567:-6269889075443882951:1801245794512106580:2405321989325840406:-3543945237365302152:-1941716713530493099:-2745822900895663464:4514938162438654117:-3874087969248771206:3045573845047399125:-3170320506985335279",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[3]/main/div/div[5]/p/a"
+      },
+      "text_label": "Create an account",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://docs.github.com/site-policy/github-terms/github-terms-of-service\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://docs.github.com/site-policy/github-terms/github-terms-of-service\"></a>",
+      "id": "L4",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(1) > a.Link--secondary.Link[href=\"https://docs.github.com/site-policy/github-terms/github-terms-of-service\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/github_signin.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:3100309451624990574:6187810542622423816:-4949098812017109708:-1760699280667126409:-4331775953658577911:1581602235571267291:4911018563790824417:-6752836635459194438",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[4]/ul/li[1]/a"
+      },
+      "text_label": "Terms",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://docs.github.com/site-policy/privacy-policies/github-privacy-statement\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://docs.github.com/site-policy/privacy-policies/github-privacy-statement\"></a>",
+      "id": "L5",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(2) > a.Link--secondary.Link[href=\"https://docs.github.com/site-policy/privacy-policies/github-privacy-statement\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/github_signin.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:3100309451624990574:6187810542622423816:-4949098812017109708:-1760699280667126409:-2279674485488865247:-6950661261754785524:3840342410873355773:3363033668200140281",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[4]/ul/li[2]/a"
+      },
+      "text_label": "Privacy",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://docs.github.com/\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://docs.github.com/\"></a>",
+      "id": "L6",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(3) > a.Link--secondary.Link[href=\"https://docs.github.com/\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/github_signin.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:3100309451624990574:6187810542622423816:-4949098812017109708:-1760699280667126409:1881079929658311415:-2048246372030541107:1027123897909057646:2438473194366695158",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[4]/ul/li[3]/a"
+      },
+      "text_label": "Docs",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://support.github.com/\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://support.github.com/\"></a>",
+      "id": "L7",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(4) > a.Link--secondary.Link[href=\"https://support.github.com/\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/github_signin.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:3100309451624990574:6187810542622423816:-4949098812017109708:-1760699280667126409:1169677972053996495:5023622088545271198:-4418180230300843379:-5979560235368069549",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[4]/ul/li[4]/a"
+      },
+      "text_label": "Contact GitHub Support",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\"></button>",
+      "id": "B3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(5) > cookie-consent-link > button.Link--secondary.underline-on-hover.border-0.p-0.color-bg-transparent[type=\"button\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/github_signin.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:3100309451624990574:6187810542622423816:-4949098812017109708:-1760699280667126409:-4391064720181372543:-4731717427457842896:588346961158766109:-1270594936936418122:-686931294801071710:6065972129655616794",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[4]/ul/li[5]/cookie-consent-link/button"
+      },
+      "text_label": "Manage cookies",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\"></button>",
+      "id": "B4",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(6) > cookie-consent-link > button.Link--secondary.underline-on-hover.border-0.p-0.color-bg-transparent[type=\"button\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/github_signin.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:3100309451624990574:6187810542622423816:-4949098812017109708:-1760699280667126409:2197928335602457879:2471046486805414620:6559854076060022951:5280610906498082995:-1954088599003267517:1385088888456285796",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[4]/ul/li[6]/cookie-consent-link/button"
+      },
+      "text_label": "Do not share my personal information",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  }
+]

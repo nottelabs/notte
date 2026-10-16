@@ -2,7 +2,10 @@
 
 import pytest
 from notte_browser.session import NotteSession
-from notte_core.errors.actions import ActionExecutionError
+from notte_core.errors import ActionExecutionError
+
+# Every test here loads www.example.com first.
+pytestmark = pytest.mark.live
 
 
 @pytest.mark.asyncio

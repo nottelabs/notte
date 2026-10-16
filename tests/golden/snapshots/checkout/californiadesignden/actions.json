@@ -1,0 +1,451 @@
+[
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.californiadesignden.com/\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.californiadesignden.com/\"></a>",
+      "id": "L1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > header > div > div > div > div > div > span > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi3.s2kwpi6.s2kwpi9.s2kwpi7._1fragem32._1fragempn[href=\"https://www.californiadesignden.com/\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:8940967478267649475:4952162657592269817:6530775206483707303:-3129748244603136357:7244502793946482467:8027926634828706024:-5715384940892718431:5022616082698963075:5644552241927878554:-4646237399141818154:8643633880962890729:-7124260390842490460:6376219674634008110:162327069058299249:-1573817346186432496:8744848640930596215",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/header/div/div/div/div/div/span/a"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.californiadesignden.com/cart\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.californiadesignden.com/cart\"></a>",
+      "id": "L2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > div > div > nav > div > ol > li:nth-of-type(1) > div > span:nth-of-type(1) > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi2.s2kwpi6.s2kwpi8[href=\"https://www.californiadesignden.com/cart\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:3564544100962497480:4394893339652380895:-5077655681350523180:3137224592371865339:-3894020512230004669:2711249593220735159:4871397779190352009:-3571071283368693626:-1360385610004343332:-4162113493421030726:3324190227073771350:6908326997246139884:8745865334571480995:-4785155018391337320:-7529471463494525546:4253013652020465905:-1663791916274175568:-2225679032316045783:-925365280317894177:5908701156120746207:-321616307564999867:8677172365266026628",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/div/div/div/div/nav/div/ol/li[1]/div/span[1]/a"
+      },
+      "text_label": "Cart",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.californiadesignden.com/checkouts/cn/Z2NwLXVzLXdlc3QxOjAxSzA4MzdUWTdNU0VBR0VXOTlQUjk0VzlO?payment=shop_pay&checkout_queue_token=A5NXzPCPoA8rg55g5wLi359_27lRJKcStCHpSRbBVkDJf2CGlVpLpogYmrPbDczmqJHfIuVA3IVkUpSVH3UgFk7412dQiK73R4Q-EEoG1lO6cuHvzP4z&redirect_source=direct_checkout_checkout\" aria_label=\"Shop Pay\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.californiadesignden.com/checkouts/cn/Z2NwLXVzLXdlc3QxOjAxSzA4MzdUWTdNU0VBR0VXOTlQUjk0VzlO?payment=shop_pay&checkout_queue_token=A5NXzPCPoA8rg55g5wLi359_27lRJKcStCHpSRbBVkDJf2CGlVpLpogYmrPbDczmqJHfIuVA3IVkUpSVH3UgFk7412dQiK73R4Q-EEoG1lO6cuHvzP4z&redirect_source=direct_checkout_checkout\" aria_label=\"Shop Pay\"></a>",
+      "id": "L3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > div > div:nth-of-type(2) > div:nth-of-type(1) > div > a.Xicuw.vowWK.pFvjc[id=\"shop-pay-button\"][href=\"https://www.californiadesignden.com/checkouts/cn/Z2NwLXVzLXdlc3QxOjAxSzA4MzdUWTdNU0VBR0VXOTlQUjk0VzlO?payment=shop_pay&checkout_queue_token=A5NXzPCPoA8rg55g5wLi359_27lRJKcStCHpSRbBVkDJf2CGlVpLpogYmrPbDczmqJHfIuVA3IVkUpSVH3UgFk7412dQiK73R4Q-EEoG1lO6cuHvzP4z&redirect_source=direct_checkout_checkout\"][aria-label=\"Shop Pay\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:-2267747731118813587:3814060105153463843:-5551036555686318624:5086754920793227961:-6310005933995838847:-5166693712089206548:2659746359754986253:-83159818914286623:-7886118686243278406:-7481391032266476574:1161945859859210590:1730549201891504938:4057962608459264443:-1478200564692565354:2004524356960586160:6859691208265095830:-6312855446381085963:-8154709810672854920:4364890164702113159:5461798619862265871:-354841799929917216:-1668351275055360419:8065054885206957689:-7521719606240231634:2036230147590386692:8506500186857475629:-6747581885990518840:1503526857239382830:-6218465440278073461:5517563919404387894:-8845690064694547291:-4991701889887354347",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[1]/div[1]/div/section/div/div[2]/div[1]/div/a"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://shopify.com/authentication/2463760495/oauth/authorize?client_id=e40b40dc-0a00-4513-96a4-e943ca743d9d&consent_id=&locale=en-US&nonce=878bf8d3-77bd-4f54-805e-63871ad69ae2&redirect_uri=https%3A%2F%2Fwww.californiadesignden.com%2Fcustomer_authentication%2Fcallback%3Fsource%3Dcore&response_type=code&scope=openid+email+customer-account-api%3Afull&state=01K0837XWH79MS7CVSN722C9DE\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://shopify.com/authentication/2463760495/oauth/authorize?client_id=e40b40dc-0a00-4513-96a4-e943ca743d9d&consent_id=&locale=en-US&nonce=878bf8d3-77bd-4f54-805e-63871ad69ae2&redirect_uri=https%3A%2F%2Fwww.californiadesignden.com%2Fcustomer_authentication%2Fcallback%3Fsource%3Dcore&response_type=code&scope=openid+email+customer-account-api%3Afull&state=01K0837XWH79MS7CVSN722C9DE\"></a>",
+      "id": "L4",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > section > div > div:nth-of-type(1) > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi2.s2kwpi5.s2kwpi4._1fragemtm.s2kwpi8[href=\"https://shopify.com/authentication/2463760495/oauth/authorize?client_id=e40b40dc-0a00-4513-96a4-e943ca743d9d&consent_id=&locale=en-US&nonce=878bf8d3-77bd-4f54-805e-63871ad69ae2&redirect_uri=https%3A%2F%2Fwww.californiadesignden.com%2Fcustomer_authentication%2Fcallback%3Fsource%3Dcore&response_type=code&scope=openid+email+customer-account-api%3Afull&state=01K0837XWH79MS7CVSN722C9DE\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:-2267747731118813587:3814060105153463843:-5551036555686318624:5086754920793227961:-6310005933995838847:-5166693712089206548:2659746359754986253:-83159818914286623:-7886118686243278406:-7481391032266476574:1161945859859210590:1730549201891504938:4057962608459264443:-1478200564692565354:-3933770128431581601:1670190147432815565:5572382876711013990:-2834759941554494036:-7287651527669727636:5906352342706377620:-4030054671621146505:7719020245640206311:6104926396406219786:-1889812116047208020:-5471760880540407362:1159358363589794732:-1959090360414633847:-6891811608824665628",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[2]/div/div[1]/section/div/div[1]/a"
+      },
+      "text_label": "Log in",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > section > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:-2267747731118813587:3814060105153463843:-5551036555686318624:5086754920793227961:-6310005933995838847:-5166693712089206548:2659746359754986253:-83159818914286623:-7886118686243278406:-7481391032266476574:1161945859859210590:1730549201891504938:4057962608459264443:-1478200564692565354:-3933770128431581601:1670190147432815565:5572382876711013990:-2834759941554494036:-7287651527669727636:5906352342706377620:-4030054671621146505:7719020245640206311:6104926396406219786:-1889812116047208020:4858188591864577995:1744372189781376528:4908820219478860240:157875491437859559:-9145995525504222301:-7906416067906577846:1440766557505481558:6100409603710946869:1285742377579961954:903968422460719396:9180348711935871321:3516341469185610745",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[2]/div/div[1]/section/div/div[2]/div[1]/div/div/div/div"
+      },
+      "text_label": "email",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"email\" value=\"\" placeholder=\"Email\" name=\"email\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"email\" value=\"\" placeholder=\"Email\" name=\"email\"></input>",
+      "id": "I1",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > section > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u12._7ozb2u1j._7ozb2ur[id=\"email\"][name=\"email\"][placeholder=\"Email\"][required][type=\"email\"][aria-labelledby=\"email-label\"][autocomplete=\"shipping email\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:-2267747731118813587:3814060105153463843:-5551036555686318624:5086754920793227961:-6310005933995838847:-5166693712089206548:2659746359754986253:-83159818914286623:-7886118686243278406:-7481391032266476574:1161945859859210590:1730549201891504938:4057962608459264443:-1478200564692565354:-3933770128431581601:1670190147432815565:5572382876711013990:-2834759941554494036:-7287651527669727636:5906352342706377620:-4030054671621146505:7719020245640206311:6104926396406219786:-1889812116047208020:4858188591864577995:1744372189781376528:4908820219478860240:157875491437859559:-9145995525504222301:-7906416067906577846:1440766557505481558:6100409603710946869:1285742377579961954:903968422460719396:9180348711935871321:3516341469185610745:7820648165969316511:1951758773094925071",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[2]/div/div[1]/section/div/div[2]/div[1]/div/div/div/div/input"
+      },
+      "text_label": "email",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"checkbox\" name=\"marketing_opt_in\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<input type=\"checkbox\" name=\"marketing_opt_in\"></input>",
+      "id": "B1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > section > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div > input._1mmswk96._1mmswk95._1fragemq1._1fragempz._1fragemq3._1fragempx._1fragemr1._1fragemqx._1fragemr5._1fragemqt._1fragemci._1fragemby._1fragemd2._1fragembe._1fragemor._1fragem32._1fragempm._1fragem2x._1fragemtv._1fragemtp._1fragemu2._1mmswk97._1fragemoi._1mmswk9a._1mmswk98._1fragemue[type=\"checkbox\"][id=\"marketing_opt_in\"][name=\"marketing_opt_in\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:-2267747731118813587:3814060105153463843:-5551036555686318624:5086754920793227961:-6310005933995838847:-5166693712089206548:2659746359754986253:-83159818914286623:-7886118686243278406:-7481391032266476574:1161945859859210590:1730549201891504938:4057962608459264443:-1478200564692565354:-3933770128431581601:1670190147432815565:5572382876711013990:-2834759941554494036:-7287651527669727636:5906352342706377620:-4030054671621146505:7719020245640206311:6104926396406219786:-1889812116047208020:4858188591864577995:1744372189781376528:-1969487300363533190:-5611021160112597666:-4368157613971954989:5102696408517965572:5419038881553736149:-2904888170068537089:4829013911390664122:3584361867901978935:-1855941999272503740:1937117130728150880",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[2]/div/div[1]/section/div/div[2]/div[2]/div/div/div/input"
+      },
+      "text_label": "marketing_opt_in",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<label></label>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<label></label>",
+      "id": "M2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > section > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div > label._1mmswk9g._1mmswk9f._1fragem32._1fragemlo._1fragemor._1fragemjl[for=\"marketing_opt_in\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:-2267747731118813587:3814060105153463843:-5551036555686318624:5086754920793227961:-6310005933995838847:-5166693712089206548:2659746359754986253:-83159818914286623:-7886118686243278406:-7481391032266476574:1161945859859210590:1730549201891504938:4057962608459264443:-1478200564692565354:-3933770128431581601:1670190147432815565:5572382876711013990:-2834759941554494036:-7287651527669727636:5906352342706377620:-4030054671621146505:7719020245640206311:6104926396406219786:-1889812116047208020:4858188591864577995:1744372189781376528:-1969487300363533190:-5611021160112597666:-4368157613971954989:5102696408517965572:5419038881553736149:-2904888170068537089:1923327035043054290:-8198952302688785440",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[2]/div/div[1]/section/div/div[2]/div[2]/div/div/label"
+      },
+      "text_label": "Email me with news and offers",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<select name=\"countryCode\"></select>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<select name=\"countryCode\"></select>",
+      "id": "I2",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > section > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > select.ZHJU6._1k3449n5._1k3449n3._1fragemue.oAlPg.IWR5K.tu1VS[name=\"countryCode\"][id=\"Select2\"][required][autocomplete=\"shipping country\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:-2267747731118813587:3814060105153463843:-5551036555686318624:5086754920793227961:-6310005933995838847:-5166693712089206548:2659746359754986253:-83159818914286623:-7886118686243278406:-7481391032266476574:1161945859859210590:1730549201891504938:4057962608459264443:-1478200564692565354:-3933770128431581601:1670190147432815565:5572382876711013990:-2834759941554494036:-7287651527669727636:5906352342706377620:-57093076485368165:-4513224256832372167:5488195771989788228:326299957277105410:-735227582408701020:-5146139347060782209:-3564414411725562583:75136678266191643:-1290732719798368439:-1732299746640622691:3416593360053030177:5622724776021490475:-2267256164501407927:-4589869839205236673:-6411853269319309510:-4677780311966373157:3831815537863083632:2541790020033471253:-5200708104594266077:-4560688847228021123:3609318899715049005:-3686045070124904350:-5647396866872464586:5348487172657282368",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[2]/div/div[1]/div/section/div/div/div[1]/div/div[1]/div[1]/div/div/div/select"
+      },
+      "text_label": "United States",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > section > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:-2267747731118813587:3814060105153463843:-5551036555686318624:5086754920793227961:-6310005933995838847:-5166693712089206548:2659746359754986253:-83159818914286623:-7886118686243278406:-7481391032266476574:1161945859859210590:1730549201891504938:4057962608459264443:-1478200564692565354:-3933770128431581601:1670190147432815565:5572382876711013990:-2834759941554494036:-7287651527669727636:5906352342706377620:-57093076485368165:-4513224256832372167:5488195771989788228:326299957277105410:-735227582408701020:-5146139347060782209:-3564414411725562583:75136678266191643:-1290732719798368439:-1732299746640622691:3416593360053030177:5622724776021490475:-2267256164501407927:-4589869839205236673:7687692769557149108:1931130046563780409:-2363484304482751410:1331709064695008743:-5015747983736446905:2298424848147851170:-5657923462614237290:7714770457340650840",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[2]/div/div[1]/div/section/div/div/div[1]/div/div[1]/div[2]/div[1]/div/div"
+      },
+      "text_label": "firstName",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"First name\" name=\"firstName\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"First name\" name=\"firstName\"></input>",
+      "id": "I3",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > section > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id=\"TextField7\"][name=\"firstName\"][placeholder=\"First name\"][required][type=\"text\"][aria-labelledby=\"TextField7-label\"][autocomplete=\"shipping given-name\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:-2267747731118813587:3814060105153463843:-5551036555686318624:5086754920793227961:-6310005933995838847:-5166693712089206548:2659746359754986253:-83159818914286623:-7886118686243278406:-7481391032266476574:1161945859859210590:1730549201891504938:4057962608459264443:-1478200564692565354:-3933770128431581601:1670190147432815565:5572382876711013990:-2834759941554494036:-7287651527669727636:5906352342706377620:-57093076485368165:-4513224256832372167:5488195771989788228:326299957277105410:-735227582408701020:-5146139347060782209:-3564414411725562583:75136678266191643:-1290732719798368439:-1732299746640622691:3416593360053030177:5622724776021490475:-2267256164501407927:-4589869839205236673:7687692769557149108:1931130046563780409:-2363484304482751410:1331709064695008743:-5015747983736446905:2298424848147851170:-5657923462614237290:7714770457340650840:7683401337834354062:-8196747646137542524",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[2]/div/div[1]/div/section/div/div/div[1]/div/div[1]/div[2]/div[1]/div/div/input"
+      },
+      "text_label": "firstName",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M4",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > section > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:-2267747731118813587:3814060105153463843:-5551036555686318624:5086754920793227961:-6310005933995838847:-5166693712089206548:2659746359754986253:-83159818914286623:-7886118686243278406:-7481391032266476574:1161945859859210590:1730549201891504938:4057962608459264443:-1478200564692565354:-3933770128431581601:1670190147432815565:5572382876711013990:-2834759941554494036:-7287651527669727636:5906352342706377620:-57093076485368165:-4513224256832372167:5488195771989788228:326299957277105410:-735227582408701020:-5146139347060782209:-3564414411725562583:75136678266191643:-1290732719798368439:-1732299746640622691:3416593360053030177:5622724776021490475:-2267256164501407927:-4589869839205236673:7687692769557149108:1931130046563780409:-3297021840847191407:-2053584679810535688:4448689862611145212:-5460163243806360763:-8314500340328314229:-6219352384075571606",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[2]/div/div[1]/div/section/div/div/div[1]/div/div[1]/div[2]/div[2]/div/div"
+      },
+      "text_label": "lastName",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"Last name\" name=\"lastName\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"Last name\" name=\"lastName\"></input>",
+      "id": "I4",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > section > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id=\"TextField8\"][name=\"lastName\"][placeholder=\"Last name\"][required][type=\"text\"][aria-labelledby=\"TextField8-label\"][autocomplete=\"shipping family-name\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:-2267747731118813587:3814060105153463843:-5551036555686318624:5086754920793227961:-6310005933995838847:-5166693712089206548:2659746359754986253:-83159818914286623:-7886118686243278406:-7481391032266476574:1161945859859210590:1730549201891504938:4057962608459264443:-1478200564692565354:-3933770128431581601:1670190147432815565:5572382876711013990:-2834759941554494036:-7287651527669727636:5906352342706377620:-57093076485368165:-4513224256832372167:5488195771989788228:326299957277105410:-735227582408701020:-5146139347060782209:-3564414411725562583:75136678266191643:-1290732719798368439:-1732299746640622691:3416593360053030177:5622724776021490475:-2267256164501407927:-4589869839205236673:7687692769557149108:1931130046563780409:-3297021840847191407:-2053584679810535688:4448689862611145212:-5460163243806360763:-8314500340328314229:-6219352384075571606:-7154001758696100909:7066756563064985487",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[2]/div/div[1]/div/section/div/div/div[1]/div/div[1]/div[2]/div[2]/div/div/input"
+      },
+      "text_label": "lastName",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M5",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > section > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:-2267747731118813587:3814060105153463843:-5551036555686318624:5086754920793227961:-6310005933995838847:-5166693712089206548:2659746359754986253:-83159818914286623:-7886118686243278406:-7481391032266476574:1161945859859210590:1730549201891504938:4057962608459264443:-1478200564692565354:-3933770128431581601:1670190147432815565:5572382876711013990:-2834759941554494036:-7287651527669727636:5906352342706377620:-57093076485368165:-4513224256832372167:5488195771989788228:326299957277105410:-735227582408701020:-5146139347060782209:-3564414411725562583:75136678266191643:-1290732719798368439:-1732299746640622691:3416593360053030177:5622724776021490475:-2267256164501407927:-4589869839205236673:-722558091194571542:3073908596654555240:-4101952108603678921:-5336080535646252980:-4235235124824109445:-3706735445978723276:-6025235540257024186:-6736207844877843213",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[2]/div/div[1]/div/section/div/div/div[1]/div/div[1]/div[3]/div/div/div"
+      },
+      "text_label": "company",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"Company (optional)\" name=\"company\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"Company (optional)\" name=\"company\"></input>",
+      "id": "I5",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > div:nth-of-type(1) > div > div > form > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > section > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id=\"TextField9\"][name=\"company\"][placeholder=\"Company (optional)\"][type=\"text\"][aria-labelledby=\"TextField9-label\"][autocomplete=\"shipping organization\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:-2267747731118813587:3814060105153463843:-5551036555686318624:5086754920793227961:-6310005933995838847:-5166693712089206548:2659746359754986253:-83159818914286623:-7886118686243278406:-7481391032266476574:1161945859859210590:1730549201891504938:4057962608459264443:-1478200564692565354:-3933770128431581601:1670190147432815565:5572382876711013990:-2834759941554494036:-7287651527669727636:5906352342706377620:-57093076485368165:-4513224256832372167:5488195771989788228:326299957277105410:-735227582408701020:-5146139347060782209:-3564414411725562583:75136678266191643:-1290732719798368439:-1732299746640622691:3416593360053030177:5622724776021490475:-2267256164501407927:-4589869839205236673:-722558091194571542:3073908596654555240:-4101952108603678921:-5336080535646252980:-4235235124824109445:-3706735445978723276:-6025235540257024186:-6736207844877843213:6802372267355513024:-6663531445597273338",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/div[1]/div/div/form/div[1]/div/div/div[2]/div/div[1]/div/section/div/div/div[1]/div/div[1]/div[3]/div/div/div/input"
+      },
+      "text_label": "company",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M6",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:6705362878467119470:939365490865572835:134412265756167884:6488533049260092388:-3860047785769001077:7641874151601564563:-4937181836273429680:-1852491492316742905:3708741311080027274:-29107656493359259:-2107903137721826207:-7344508092898825157:-7943785059997080604:5629279134288319547:5645918496897152774:7477545614893900502:-6359662284298316575:-2837364820614047831:7597606459681451436:-7515105955203664188:-4885582132276880581:5443120903329847077:-7520743925902876498:2049597500996371752:5358665978778447825:7745081928782936102:8835432047927877037:-2517275487589621346:-3571866030015192752:-9173816402905923728:5372606850971660150:6269032069205073089",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div"
+      },
+      "text_label": "reductions",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"Discount code or gift card\" name=\"reductions\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"Discount code or gift card\" name=\"reductions\"></input>",
+      "id": "I6",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id=\"ReductionsInput1\"][name=\"reductions\"][placeholder=\"Discount code or gift card\"][type=\"text\"][aria-labelledby=\"ReductionsInput1-label\"][autocomplete=\"on\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/californiadesignden.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:6705362878467119470:939365490865572835:134412265756167884:6488533049260092388:-3860047785769001077:7641874151601564563:-4937181836273429680:-1852491492316742905:3708741311080027274:-29107656493359259:-2107903137721826207:-7344508092898825157:-7943785059997080604:5629279134288319547:5645918496897152774:7477545614893900502:-6359662284298316575:-2837364820614047831:7597606459681451436:-7515105955203664188:-4885582132276880581:5443120903329847077:-7520743925902876498:2049597500996371752:5358665978778447825:7745081928782936102:8835432047927877037:-2517275487589621346:-3571866030015192752:-9173816402905923728:5372606850971660150:6269032069205073089:3958130710304057300:-8567843092419155661",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div/input"
+      },
+      "text_label": "reductions",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  }
+]

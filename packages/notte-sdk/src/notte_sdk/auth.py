@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, cast, final
 from urllib.parse import urlparse
 
-from notte_core.common.logging import logger
+from notte_core.logging import logger
 
 KEYRING_SERVICE = "notte-cli"
 KEYRING_KEY = "api_key"

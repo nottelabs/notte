@@ -1,0 +1,375 @@
+[
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.urbanoutfitters.com/?ref=logo\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.urbanoutfitters.com/?ref=logo\"></a>",
+      "id": "L1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(1) > div > div > a.c-pwa-link.c-pwa-link--client.c-pwa-site-header-logo__link[href=\"https://www.urbanoutfitters.com/?ref=logo\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:272185808239662543:-9130029914923174315:-1398789436366937188:-2025656866940625521:-6415881096437286802:1023994791524086688:2320971791487794626:-1052258984399772533:3064080234446576505:3749539365531625196:2731340822202424120:1525511452944299263:-7866532067266109432:-2487421920547343412:5971238674947724067:2420450593048748036",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div[1]/header/div/div/div/div[1]/div/div/a"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<picture></picture>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<picture></picture>",
+      "id": "M1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(1) > div > div > a > picture",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:272185808239662543:-9130029914923174315:-1398789436366937188:-2025656866940625521:-6415881096437286802:1023994791524086688:2320971791487794626:-1052258984399772533:3064080234446576505:3749539365531625196:2731340822202424120:1525511452944299263:-7866532067266109432:-2487421920547343412:5971238674947724067:2420450593048748036:-709191069379412301:6198169916235391078",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div[1]/header/div/div/div/div[1]/div/div/a/picture"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.urbanoutfitters.com/account/hearted-products\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.urbanoutfitters.com/account/hearted-products\"></a>",
+      "id": "L2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(2) > a.c-pwa-link.c-pwa-link--client.c-pwa-main-bar__heart-link[href=\"https://www.urbanoutfitters.com/account/hearted-products\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:272185808239662543:-9130029914923174315:-1398789436366937188:-2025656866940625521:-6415881096437286802:1023994791524086688:2320971791487794626:-1052258984399772533:-8235139590085322258:-4985592911163544825:-2507646839708248581:-4545123839719336047",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div[1]/header/div/div/div/div[2]/a"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.urbanoutfitters.com/cart\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.urbanoutfitters.com/cart\"></a>",
+      "id": "L3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(2) > div > div > a.c-pwa-link.c-pwa-link--client.c-pwa-site-basket__link[href=\"https://www.urbanoutfitters.com/cart\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:272185808239662543:-9130029914923174315:-1398789436366937188:-2025656866940625521:-6415881096437286802:1023994791524086688:2320971791487794626:-1052258984399772533:-8235139590085322258:-4985592911163544825:-3289687144491576029:-6008134121822929162:-4256036988759513019:955901340416909122:-338022000546876286:-3872951003246733205",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div[1]/header/div/div/div/div[2]/div/div/a"
+      },
+      "text_label": "Product Count 1",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\"></button>",
+      "id": "B1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > button.o-pwa-button-secondary[type=\"button\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:-8496308230912463791:-5097437054300092743:454886152992192387:-8066550740631909137:-1111842944295825124:8058678821057720793:-7097745534508730274:-4062648910262172457:4294248712315232628:7311280684458826763:6467820713664609665:1899300346067739772:-6310689331639442078:-3696828934445766971:-8454068671605171136:-6834972304584526030:-7911835967522907381:-5581885502083744768:201504687257750988:7600500612512396525:-1227161588444811067:-3346696362433909870:4591946461105738846:4053527605316375198",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[1]/div[1]/div/div/div[2]/button"
+      },
+      "text_label": "Sign In",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"email\" value=\"\" name=\"emailAddress\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"email\" value=\"\" name=\"emailAddress\"></input>",
+      "id": "I1",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(1) > div > div > input.c-pwa-input.c-pwa-input--email[type=\"email\"][id=\"email-address\"][name=\"emailAddress\"][required]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:-8496308230912463791:-5097437054300092743:454886152992192387:-8066550740631909137:-1111842944295825124:8058678821057720793:-7097745534508730274:-4062648910262172457:4294248712315232628:7311280684458826763:6467820713664609665:1899300346067739772:-6310689331639442078:-3696828934445766971:7912744006343182506:-6193942351502229261:3074038964700903421:9099740774816208673:-3104222058773125416:4711962273922132211:1717850950763449970:1921083387085981488:-7976790440116901442:-6286046345065122647:-6300360102616604642:-4170594417400856485:992377329018567018:-5596438774499020184",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[1]/div[2]/div/form/div[1]/div/div/input"
+      },
+      "text_label": "emailAddress",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"checkbox\" value=\"true\" name=\"emailOptIn\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<input type=\"checkbox\" value=\"true\" name=\"emailOptIn\"></input>",
+      "id": "B2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(2) > div > div > label > input.o-pwa-checkbox__input[type=\"checkbox\"][aria-labelledby=\"email-opt-in--text\"][id=\"email-opt-in\"][name=\"emailOptIn\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:-8496308230912463791:-5097437054300092743:454886152992192387:-8066550740631909137:-1111842944295825124:8058678821057720793:-7097745534508730274:-4062648910262172457:4294248712315232628:7311280684458826763:6467820713664609665:1899300346067739772:-6310689331639442078:-3696828934445766971:7912744006343182506:-6193942351502229261:3074038964700903421:9099740774816208673:-3104222058773125416:4711962273922132211:1475563915597036682:-8767747831839635446:-7494539868261605026:-4204095811108603862:-1354622734891666869:6882859673317813056:3127897595428423128:-7801293262247591314:-8985432747677858803:-8938334421125865738",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[1]/div[2]/div/form/div[2]/div/div/label/input"
+      },
+      "text_label": "emailOptIn",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.urbanoutfitters.com/help/privacy\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.urbanoutfitters.com/help/privacy\"></a>",
+      "id": "L4",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(2) > div > div > label > span > span > a[target=\"_blank\"][href=\"https://www.urbanoutfitters.com/help/privacy\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:-8496308230912463791:-5097437054300092743:454886152992192387:-8066550740631909137:-1111842944295825124:8058678821057720793:-7097745534508730274:-4062648910262172457:4294248712315232628:7311280684458826763:6467820713664609665:1899300346067739772:-6310689331639442078:-3696828934445766971:7912744006343182506:-6193942351502229261:3074038964700903421:9099740774816208673:-3104222058773125416:4711962273922132211:1475563915597036682:-8767747831839635446:-7494539868261605026:-4204095811108603862:-1354622734891666869:6882859673317813056:3127897595428423128:-7801293262247591314:-5759424472875908773:2422026862247727638:1147146928454755017:7096507645735061082:-1624928743193956706:-1860810405720671027",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[1]/div[2]/div/form/div[2]/div/div/label/span/span/a"
+      },
+      "text_label": "Privacy Policy here",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button tabindex=\"0\" role=\"tab\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button tabindex=\"0\" role=\"tab\"></button>",
+      "id": "B3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1).c-pwa-tabs__tab.is-selected[id=\"urbn-tab-ship-tab\"][role=\"tab\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:-8496308230912463791:-5097437054300092743:454886152992192387:-8066550740631909137:-1111842944295825124:8058678821057720793:-7097745534508730274:-4062648910262172457:4294248712315232628:7311280684458826763:6467820713664609665:1899300346067739772:-1095929260720696690:-3529414527689628963:-1119973282005094884:-604686199478323243:7930457863338539254:6854515108001738689",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[2]/div[1]/button[1]"
+      },
+      "text_label": "Ship",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button tabindex=\"-1\" role=\"tab\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button tabindex=\"-1\" role=\"tab\"></button>",
+      "id": "B4",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2).c-pwa-tabs__tab[id=\"urbn-tab-pickup-tab\"][role=\"tab\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:-8496308230912463791:-5097437054300092743:454886152992192387:-8066550740631909137:-1111842944295825124:8058678821057720793:-7097745534508730274:-4062648910262172457:4294248712315232628:7311280684458826763:6467820713664609665:1899300346067739772:-1095929260720696690:-3529414527689628963:-1119973282005094884:-604686199478323243:1814448807462066077:5994073475802724196",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[2]/div[1]/button[2]"
+      },
+      "text_label": "Pick Up",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<select name=\"country\"></select>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<select name=\"country\"></select>",
+      "id": "I2",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > form > div:nth-of-type(1) > div > div:nth-of-type(1) > select.c-pwa-select[id=\"country-default\"][name=\"country\"][required]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:-8496308230912463791:-5097437054300092743:454886152992192387:-8066550740631909137:-1111842944295825124:8058678821057720793:-7097745534508730274:-4062648910262172457:4294248712315232628:7311280684458826763:6467820713664609665:1899300346067739772:-1095929260720696690:-3529414527689628963:4999811739012693153:-6489880875320482056:297644064919085274:3498142568777044506:-4413216828809124572:-5884440990606823013:4984332080499049117:56888433789156633:-2252655593213552835:-3718062948251734909:-2539078584387752445:-8062763359526418161:1476501238365436916:-1891588587409127295",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[2]/div[2]/div/form/div[1]/div/div[1]/select"
+      },
+      "text_label": "Albania Andorra Anguilla Antigua and Barbuda Argentina Armenia Aruba Australia Austria Azerbaijan Bahamas Bahrain Bangladesh Barbados Belgium Belize Bermuda Bolivia Bosnia-Herzegovina Brazil British Virgin Islands Brunei Darussalam Bulgaria Canada Cayman Islands Chile China Colombia Cook Islands Costa Rica Croatia Cyprus Czech Republic Denmark Dominica Dominican Republic Ecuador El Salvador Estonia Falkland Islands Faroe Islands Fiji Finland France French Polynesia Germany Gibraltar Greece Greenland Grenada Guernsey Guyana Honduras Hong Kong SAR Hungary Iceland India Indonesia Ireland Isle Of Man Israel Italy Jamaica Japan Jersey Jordan Kazakhstan Kuwait Latvia Lebanon Liechtenstein Lithuania Luxembourg Macau SAR Macedona Malaysia Malta Mexico Monaco Montenegro Netherlands New Caledonia New Zealand Nicaragua Niue Norway Oman Palau Panama Papua New Guinea Paraguay Peru Philippines Poland Portugal Qatar Romania Saint Kitts and Nevis Saint Lucia Saint Pierre and Miquelon Saint Vincent and the Grenadines Samao Sao Tome And Principe Saudi Arabia Serbia Singapore Slovakia Slovenia Solomon Islands South Africa South Korea Spain Suriname Sweden Switzerland Taiwan Region Thailand Timor Leste Trinidad And Tobago Turkey Turks and Caicos Islands Ukraine United Arab Emirates United Kingdom United States Uruguay Vanuatu Vatican City Venezuela",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"tel:8002822200\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"tel:8002822200\"></a>",
+      "id": "L5",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > a.c-pwa-contact[href=\"tel:8002822200\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:-8496308230912463791:-5097437054300092743:454886152992192387:-8066550740631909137:-1111842944295825124:8058678821057720793:6050290010432449013:2477948203937356151:-466226928108598547:2995168244457711489:-5415897446569936556:-1424852920458560183:-522239326773089171:5653418900264198194:3068095179645594294:3221193748743491998",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[1]/div/a"
+      },
+      "text_label": "800.282.2200",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
+      "id": "B5",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > h3 > button.o-pwa-button-none.o-pwa-accordion__toggle[type=\"button\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:-8496308230912463791:-5097437054300092743:454886152992192387:-8066550740631909137:-1111842944295825124:8058678821057720793:6050290010432449013:2477948203937356151:-466226928108598547:2995168244457711489:-4895994270417803258:-9134040538583378679:5643730469096999271:-3726642972736053705:-1440637967884371475:-6532819547418383794:-262889082337487102:6282544993025707751:2073110341851399394:-3328978697820414037:6941880697241857538:-3451367178216298878:3641648838132991722:1382643272874193720",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[2]/div/div[1]/div/div/h3/button"
+      },
+      "text_label": "Promo Code",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > h3 > button > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:-8496308230912463791:-5097437054300092743:454886152992192387:-8066550740631909137:-1111842944295825124:8058678821057720793:6050290010432449013:2477948203937356151:-466226928108598547:2995168244457711489:-4895994270417803258:-9134040538583378679:5643730469096999271:-3726642972736053705:-1440637967884371475:-6532819547418383794:-262889082337487102:6282544993025707751:2073110341851399394:-3328978697820414037:6941880697241857538:-3451367178216298878:3641648838132991722:1382643272874193720:-3933181266903377195:-2788157644736543561",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[2]/div/div[1]/div/div/h3/button/div"
+      },
+      "text_label": "Promo Code",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\"></button>",
+      "id": "B6",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div:nth-of-type(3) > button.o-pwa-button-cart.s-pwa-proceed-button[type=\"button\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:-8496308230912463791:-5097437054300092743:454886152992192387:-8066550740631909137:-1111842944295825124:8058678821057720793:6050290010432449013:2477948203937356151:-466226928108598547:2995168244457711489:-4895994270417803258:-9134040538583378679:5643730469096999271:-3726642972736053705:7830544304593306659:5844476965462734357:55126990935610848:5807377196159507011",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[2]/div/div[3]/button"
+      },
+      "text_label": "Continue",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  }
+]

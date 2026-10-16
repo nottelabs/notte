@@ -37,6 +37,17 @@ describe('cookie files', () => {
     expect((await readCookiesFile(file)).map(c => c.name)).toEqual(['a', 'b']);
   });
 
+  it('keeps one entry per cookie, the newest value winning', async () => {
+    const file = join(dir, 'cookies.json');
+    await createOrAppendCookiesToFile(file, [cookie('a'), cookie('b')]);
+    await createOrAppendCookiesToFile(file, [{ ...cookie('a'), value: 'new' }, cookie('b')]);
+    const saved = await readCookiesFile(file);
+    expect(saved.map(c => [c.name, c.value])).toEqual([
+      ['a', 'new'],
+      ['b', cookie('b').value],
+    ]);
+  });
+
   it('serialises concurrent appends to the same file so no write is lost', async () => {
     const file = join(dir, 'shared.json');
     const names = Array.from({ length: 25 }, (_, i) => `c${i}`);

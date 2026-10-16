@@ -491,8 +491,8 @@ describe('handleProxyRequest', () => {
         }),
       );
 
-      const request = makeRequest('agents/start', { method: 'POST', body: '{}' });
-      const response = await handleProxyRequest(request, ['agents', 'start'], baseConfig());
+      const request = makeRequest('anything/start', { method: 'POST', body: '{}' });
+      const response = await handleProxyRequest(request, ['anything', 'start'], baseConfig());
 
       expect(response.status).toBe(200);
       expect(response.headers.get('content-type')).toBe('text/event-stream');

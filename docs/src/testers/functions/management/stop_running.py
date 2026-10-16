@@ -4,6 +4,6 @@ from notte_sdk import NotteClient
 client = NotteClient()
 
 # Stop specific run
-client.functions.stop_run("function_abc123", "run_xyz789")
+client.functions.run_stop("function_abc123", "run_xyz789")
 
 print("Function execution stopped")

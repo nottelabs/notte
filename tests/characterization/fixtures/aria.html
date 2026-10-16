@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><title>ARIA widgets</title></head><body>
+<h1>Custom controls</h1>
+<div id="button" data-probe="button" role="button" tabindex="0">Custom button</div>
+<div id="checkbox" data-probe="checkbox" role="checkbox" aria-checked="false" tabindex="0" onclick="this.setAttribute('aria-checked', this.getAttribute('aria-checked') === 'false' ? 'true' : 'false')">Custom checkbox</div>
+<div id="combo" data-probe="combo" role="combobox" aria-label="Custom choice" aria-controls="choices" aria-expanded="true" tabindex="0">Choose a fruit</div>
+<div id="choices" role="listbox" aria-label="Fruit choices">
+  <div id="apple" data-probe="apple" role="option" aria-selected="false" tabindex="0">Apple</div>
+  <div id="banana" data-probe="banana" role="option" aria-selected="false" tabindex="0">Banana</div>
+</div>
+<div role="menu"><div id="menuitem" data-probe="menuitem" role="menuitem" tabindex="0">Settings</div></div>
+<div role="tablist"><div id="tab" data-probe="tab" role="tab" aria-selected="false" tabindex="0" onclick="this.setAttribute('aria-selected', 'true')">Overview</div></div>
+<script>
+for (const option of document.querySelectorAll('[role=option]')) {
+  option.addEventListener('click', () => {
+    option.setAttribute('aria-selected', 'true');
+    document.getElementById('combo').dataset.selected = option.id;
+  });
+}
+</script>
+</body></html>

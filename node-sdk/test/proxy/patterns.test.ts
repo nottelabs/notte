@@ -64,28 +64,6 @@ describe('validatePath', () => {
     });
   });
 
-  describe('valid agent paths', () => {
-    it('should allow agents list', () => {
-      expect(validatePath(['agents'], DEFAULT_ALLOWED_PATTERNS).isValid).toBe(true);
-    });
-
-    it('should allow agents/start', () => {
-      expect(validatePath(['agents', 'start'], DEFAULT_ALLOWED_PATTERNS).isValid).toBe(true);
-    });
-
-    it('should allow agents/{id}', () => {
-      expect(validatePath(['agents', 'agent-123'], DEFAULT_ALLOWED_PATTERNS).isValid).toBe(true);
-    });
-
-    it('should allow agents/{id}/stop', () => {
-      expect(validatePath(['agents', 'agent-123', 'stop'], DEFAULT_ALLOWED_PATTERNS).isValid).toBe(true);
-    });
-
-    it('should allow agents/{id}/workflow/code', () => {
-      expect(validatePath(['agents', 'agent-123', 'workflow', 'code'], DEFAULT_ALLOWED_PATTERNS).isValid).toBe(true);
-    });
-  });
-
   describe('valid vault paths', () => {
     it('should allow vaults list', () => {
       expect(validatePath(['vaults'], DEFAULT_ALLOWED_PATTERNS).isValid).toBe(true);

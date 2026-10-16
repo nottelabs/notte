@@ -1,0 +1,611 @@
+[
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://article.com/financing\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://article.com/financing\"></a>",
+      "id": "L1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > nav > div:nth-of-type(1) > div:nth-of-type(1) > div > span > a.secondary[target=\"_blank\"][href=\"https://article.com/financing\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-8429965920182844809:-6218148624536786536:-3287797309716785599:2054509838199947514:5880631090732954697:8019283252105161450:660674000893713494:8571287594788337293:5981867351956599201:-3966851160464465208:4475184054591188611:7575764473826551988",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/nav/div[1]/div[1]/div/span/a"
+      },
+      "text_label": "Learn more.",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button tabindex=\"0\" aria_label=\"Close site message\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button tabindex=\"0\" aria_label=\"Close site message\"></button>",
+      "id": "B1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > nav > div:nth-of-type(1) > div:nth-of-type(1) > div > button.basic-btn.close-site-message[aria-label=\"Close site message\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-8429965920182844809:-6218148624536786536:-3287797309716785599:2054509838199947514:5880631090732954697:8019283252105161450:660674000893713494:8571287594788337293:-1576931235304079883:-4712323218871072539",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/nav/div[1]/div[1]/div/button"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.article.com/\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.article.com/\"></a>",
+      "id": "L2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > nav > div:nth-of-type(1) > div:nth-of-type(2) > div > a[href=\"https://www.article.com/\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-8429965920182844809:-6218148624536786536:-3287797309716785599:2054509838199947514:4472839096529136243:1062951644370846691:1928213689858622757:6442092202944759408:-7064127916132841713:-8009806402176455418",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/nav/div[1]/div[2]/div/a"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"email\" value=\"\" name=\"email\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"email\" value=\"\" name=\"email\"></input>",
+      "id": "I1",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > label > input[id=\"textInput_0\"][type=\"email\"][name=\"email\"][autocomplete=\"email\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:-6488890637167473762:4671469434374242036:-5942911261915141192:-9179426050671801781:3619385558678801070:2939982040868810430:6509521460238337947:-1364975929533170579:-7147760879656306886:7681889704192273264:3872699441204270860:-7473232307619276059:-5717378322684275646:-5258777673588878926",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]/label/input"
+      },
+      "text_label": "email",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"tel\" value=\"\" placeholder=\"(000) 000-0000\" name=\"tel\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"tel\" value=\"\" placeholder=\"(000) 000-0000\" name=\"tel\"></input>",
+      "id": "I2",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > label > input.masked-input[type=\"tel\"][placeholder=\"(000) 000-0000\"][id=\"telephoneInput_1\"][autocomplete=\"tel\"][name=\"tel\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:-6488890637167473762:4671469434374242036:-5942911261915141192:-9179426050671801781:3619385558678801070:2939982040868810430:6509521460238337947:-1364975929533170579:7065102275900318687:1146882132027021143:-4873436860329514971:-8198977042031882916:5289983233554838444:4807539266903671841:4427259728657455988:2528052974131698298",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]/div/label/input"
+      },
+      "text_label": "tel",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"tel\" value=\"\" placeholder=\"0000\" name=\"tel-extension\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"tel\" value=\"\" placeholder=\"0000\" name=\"tel-extension\"></input>",
+      "id": "I3",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > label > input.masked-input[type=\"tel\"][placeholder=\"0000\"][id=\"telephoneInput_2\"][autocomplete=\"tel-extension\"][name=\"tel-extension\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:-6488890637167473762:4671469434374242036:-5942911261915141192:-9179426050671801781:3619385558678801070:2939982040868810430:6509521460238337947:-1364975929533170579:7065102275900318687:1146882132027021143:7353827476418373730:6778920202705901868:-6751355873797151358:-6099119749036411267",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]/label/input"
+      },
+      "text_label": "tel-extension",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" name=\"given-name\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" name=\"given-name\"></input>",
+      "id": "I4",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > label:nth-of-type(1) > input[id=\"textInput_3\"][type=\"text\"][name=\"given-name\"][autocomplete=\"given-name\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:-6488890637167473762:4671469434374242036:-5942911261915141192:-9179426050671801781:1797805623877097962:3547119433355510334:-8506941515741808496:-3604680429781416433:-3301972109018361048:5791301409395187630:-1092032218243802566:-7017882837323544776",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[2]/label[1]/input"
+      },
+      "text_label": "given-name",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" name=\"family-name\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" name=\"family-name\"></input>",
+      "id": "I5",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > label:nth-of-type(2) > input[id=\"textInput_4\"][type=\"text\"][name=\"family-name\"][autocomplete=\"family-name\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:-6488890637167473762:4671469434374242036:-5942911261915141192:-9179426050671801781:1797805623877097962:3547119433355510334:-8506941515741808496:-3604680429781416433:-4896363110026382635:-3623821311039206744:3669305396211968125:8736237003320181786",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[2]/label[2]/input"
+      },
+      "text_label": "family-name",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"Street Address\" name=\"address-line1\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"Street Address\" name=\"address-line1\"></input>",
+      "id": "I6",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > label:nth-of-type(1) > input[id=\"textInput_5\"][type=\"text\"][placeholder=\"Street Address\"][name=\"address-line1\"][autocomplete=\"address-line1\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:-6488890637167473762:4671469434374242036:-5942911261915141192:-9179426050671801781:1797805623877097962:3547119433355510334:2019742464021007712:3456887523169399872:7762978284565873868:-7920737229542217730:-2207003385867804668:-4823835526340737938",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[3]/label[1]/input"
+      },
+      "text_label": "address-line1",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"e.g. 412 or Unit 412\" name=\"address-line2\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"e.g. 412 or Unit 412\" name=\"address-line2\"></input>",
+      "id": "I7",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > label:nth-of-type(2) > input[id=\"textInput_6\"][type=\"text\"][placeholder=\"e.g. 412 or Unit 412\"][name=\"address-line2\"][autocomplete=\"address-line2\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:-6488890637167473762:4671469434374242036:-5942911261915141192:-9179426050671801781:1797805623877097962:3547119433355510334:2019742464021007712:3456887523169399872:-1584247442598578216:-461687121092104039:-568403011859466100:-7784741662241167314",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[3]/label[2]/input"
+      },
+      "text_label": "address-line2",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"94117\" name=\"postal-code\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"94117\" name=\"postal-code\"></input>",
+      "id": "I8",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > label:nth-of-type(3) > input[id=\"textInput_7\"][type=\"text\"][name=\"postal-code\"][autocomplete=\"postal-code\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:-6488890637167473762:4671469434374242036:-5942911261915141192:-9179426050671801781:1797805623877097962:3547119433355510334:2019742464021007712:3456887523169399872:2749501442096406987:-6307191145837239064:5187897520511913641:1245023584871697865",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[3]/label[3]/input"
+      },
+      "text_label": "postal-code",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"San Francisco\" name=\"address-level2\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"San Francisco\" name=\"address-level2\"></input>",
+      "id": "I9",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > label:nth-of-type(4) > input[id=\"textInput_8\"][type=\"text\"][name=\"address-level2\"][autocomplete=\"address-level2\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:-6488890637167473762:4671469434374242036:-5942911261915141192:-9179426050671801781:1797805623877097962:3547119433355510334:2019742464021007712:3456887523169399872:6284522263731570543:6134556811036749369:7032479389393578967:-2608883494924262112",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[3]/label[4]/input"
+      },
+      "text_label": "address-level2",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<select></select>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<select></select>",
+      "id": "I10",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > label:nth-of-type(5) > select[autocomplete=\"address-level1\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:-6488890637167473762:4671469434374242036:-5942911261915141192:-9179426050671801781:1797805623877097962:3547119433355510334:2019742464021007712:3456887523169399872:-2201145499409691899:5714669352194162345:7206540140269889148:-4691516403652341883",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[3]/label[5]/select"
+      },
+      "text_label": "Select… Alabama Alaska Arizona Arkansas California Colorado Connecticut Delaware District of Columbia Florida Georgia Hawaii Idaho Illinois Indiana Iowa Kansas Kentucky Louisiana Maine Maryland Massachusetts Michigan Minnesota Mississippi Missouri Montana Nebraska Nevada New Hampshire New Jersey New Mexico New York North Carolina North Dakota Ohio Oklahoma Oregon Pennsylvania Rhode Island South Carolina South Dakota Tennessee Texas Utah Vermont Virginia Washington West Virginia Wisconsin Wyoming",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<select></select>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<select></select>",
+      "id": "I11",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > label:nth-of-type(6) > select[autocomplete=\"country-name\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:-6488890637167473762:4671469434374242036:-5942911261915141192:-9179426050671801781:1797805623877097962:3547119433355510334:2019742464021007712:3456887523169399872:3698980147272705082:-5934441007002232981:7512692551970272088:8972717675780010943",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[1]/div[1]/div[2]/div[3]/label[6]/select"
+      },
+      "text_label": "Select… United States Canada",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.article.com/product/28855/portima-c-side-table-oak\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.article.com/product/28855/portima-c-side-table-oak\"></a>",
+      "id": "L3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > a.product-image[href=\"https://www.article.com/product/28855/portima-c-side-table-oak\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:728520255028746337:3320642849327943296:-4336701046307007361:-4321955886038961771:-519047374781719540:-4781691773640328989:-9066423235864271119:8402481069312163123:-7046939383319129217:7227843387299275576:9126948101840398608:-2651969551846832524:-8088820889650096403:397152918557342587:7536631532780100195:5196210143247368268",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div/a"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > a > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:728520255028746337:3320642849327943296:-4336701046307007361:-4321955886038961771:-519047374781719540:-4781691773640328989:-9066423235864271119:8402481069312163123:-7046939383319129217:7227843387299275576:9126948101840398608:-2651969551846832524:-8088820889650096403:397152918557342587:7536631532780100195:5196210143247368268:6059663377761180874:-5506370568481844011",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div/a/div"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<picture></picture>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<picture></picture>",
+      "id": "M2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > a > div > picture",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:728520255028746337:3320642849327943296:-4336701046307007361:-4321955886038961771:-519047374781719540:-4781691773640328989:-9066423235864271119:8402481069312163123:-7046939383319129217:7227843387299275576:9126948101840398608:-2651969551846832524:-8088820889650096403:397152918557342587:7536631532780100195:5196210143247368268:6059663377761180874:-5506370568481844011:8077524451458290270:-5775218566652606344",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div/a/div/picture"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.article.com/product/28855/portima-c-side-table-oak\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.article.com/product/28855/portima-c-side-table-oak\"></a>",
+      "id": "L4",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > a.product-name[href=\"https://www.article.com/product/28855/portima-c-side-table-oak\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:728520255028746337:3320642849327943296:-4336701046307007361:-4321955886038961771:-519047374781719540:-4781691773640328989:-9066423235864271119:8402481069312163123:-7046939383319129217:7227843387299275576:9126948101840398608:-2651969551846832524:-8088820889650096403:397152918557342587:7501742818290736312:-1528253362294225392:4669094257601499491:-6166544979240768371",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div/div[1]/a"
+      },
+      "text_label": "Portima C Side Table - Oak",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<select aria_label=\"Product quantity selector\"></select>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<select aria_label=\"Product quantity selector\"></select>",
+      "id": "I12",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > select.small[readonly][aria-label=\"Product quantity selector\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:728520255028746337:3320642849327943296:-4336701046307007361:-4321955886038961771:-519047374781719540:-4781691773640328989:-9066423235864271119:8402481069312163123:-7046939383319129217:7227843387299275576:9126948101840398608:-2651969551846832524:-8088820889650096403:397152918557342587:7501742818290736312:-1528253362294225392:-8055088426345238834:7974302192820188100:-552269264823389838:8035320234458139968:-6674769249094795835:-1505053989001080373",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div/div[1]/div[2]/div/select"
+      },
+      "text_label": "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Remove Item\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button aria_label=\"Remove Item\"></button>",
+      "id": "B2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > button.basic-btn[aria-label=\"Remove Item\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:728520255028746337:3320642849327943296:-4336701046307007361:-4321955886038961771:-519047374781719540:-4781691773640328989:-9066423235864271119:8402481069312163123:-7046939383319129217:7227843387299275576:9126948101840398608:-2651969551846832524:-8088820889650096403:397152918557342587:7501742818290736312:-1528253362294225392:-8055088426345238834:7974302192820188100:4379617900153109579:4288731180553230412",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div/div[1]/div[2]/button"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a></a>",
+      "id": "L5",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > span > a.not-accent",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:728520255028746337:3320642849327943296:-6753541650299613556:5965809590252569495:-7796789519508429404:8005643098558949767:1974942405668458211:-2329816820581222233:-1172966900528234851:8807489839070585360:-1527107064464258346:-3413960596573236894:5239455448623725561:-4133732286942582007:2976633670073592112:-8132847297277990914",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[2]/div[2]/div[1]/div[2]/div/div/span/a"
+      },
+      "text_label": "Affirm financing",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.article.com/help-center/returns#30-day-satisfaction-guarantee\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.article.com/help-center/returns#30-day-satisfaction-guarantee\"></a>",
+      "id": "L6",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > span > a.accent.underline[target=\"_blank\"][href=\"https://www.article.com/help-center/returns#30-day-satisfaction-guarantee\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:728520255028746337:3320642849327943296:-6753541650299613556:5965809590252569495:8744990812400327126:-5702335583556691117:-6364366220856019586:7653203599753022545:-3363456118597747988:-1538656762988771621:-2292304316518220705:-2327231620686329501",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[2]/div[2]/div[3]/div[2]/span/a"
+      },
+      "text_label": "satisfaction guarantee.",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  }
+]

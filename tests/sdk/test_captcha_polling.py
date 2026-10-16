@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from notte_core.actions import CaptchaSolveAction, ClickAction, WaitAction
-from notte_core.browser.observation import utc_now
+from notte_core.observation import utc_now
 from notte_sdk.client import NotteClient
 from notte_sdk.endpoints.page import PageClient
 from notte_sdk.types import CaptchaStatus, ExecutionResultResponse

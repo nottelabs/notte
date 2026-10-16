@@ -160,9 +160,12 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
           }
           if (name === 'sessions/configuration/cookie_file.ts') {
             const cookies = JSON.parse(await readFile(join(cwd, 'cookies.json'), 'utf8'));
-            // stop() appends browser cookies to the fixture, proving load + save.
-            expect(cookies.filter((cookie: { name: string; value: string }) =>
-              cookie.name === 'sniptest_cookie' && cookie.value === 'paired')).toHaveLength(2);
+            // stop() merges the browser's cookies into the fixture: the loaded cookie comes back once,
+            // rewritten with the attributes the browser reports (more than the fixture's 5 keys), proving load + save.
+            const saved = cookies.filter((cookie: { name: string; value: string }) =>
+              cookie.name === 'sniptest_cookie' && cookie.value === 'paired');
+            expect(saved).toHaveLength(1);
+            expect(Object.keys(saved[0]).length).toBeGreaterThan(5);
           }
         }
         expect(ids[0]).not.toBe(ids[1]);

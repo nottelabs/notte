@@ -1,4 +1,4 @@
-from notte_core.utils.code import text_contains_tabs
+from notte_browser.execution import text_contains_tabs
 
 
 def test_positive_indentation_examples():

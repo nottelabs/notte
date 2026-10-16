@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><title>Forms</title></head><body>
+<h1>Account form</h1>
+<form onsubmit="event.preventDefault()">
+  <label for="name">Full name</label><input id="name" data-probe="name" type="text" autocomplete="off">
+  <input id="email" data-probe="email" type="email" aria-label="Email address" placeholder="email@example.test">
+  <input id="password" data-probe="password" type="password" aria-label="Account password" autocomplete="new-password">
+  <textarea id="notes" data-probe="notes" placeholder="Notes for delivery"></textarea>
+  <label for="country">Country</label><select id="country" data-probe="country"><option value="a">Alpha</option><option value="b">Beta</option></select>
+  <label><input id="agree" data-probe="agree" type="checkbox">Accept terms</label>
+  <label><input id="radio" data-probe="radio" type="radio" name="plan" value="basic">Basic plan</label>
+  <label><input id="other-radio" data-probe="other-radio" type="radio" name="plan" value="pro">Pro plan</label>
+  <div id="editor" data-probe="editor" contenteditable="true" role="textbox" aria-label="Rich notes">Initial notes</div>
+  <input id="disabled-input" data-probe="disabled-input" disabled aria-label="Disabled input" value="Locked">
+  <button id="disabled-button" data-probe="disabled-button" disabled>Disabled submit</button>
+  <button id="save" data-probe="save" type="button" title="Save the complete account form including delivery preferences and all notification settings for this account">Save <strong>account</strong></button>
+  <button id="icon" data-probe="icon" type="button" aria-label="Help"><span aria-hidden="true">?</span></button>
+  <a id="link" data-probe="link" href="#details" onclick="event.preventDefault()">Read <em>details</em></a>
+</form>
+</body></html>

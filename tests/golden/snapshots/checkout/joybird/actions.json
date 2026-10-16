@@ -1,0 +1,718 @@
+[
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://joybird.com/\" aria_label=\"Joybird\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://joybird.com/\" aria_label=\"Joybird\"></a>",
+      "id": "L1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > span > a[aria-label=\"Joybird\"][href=\"https://joybird.com/\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:-1240875454276419760:5103259840852300795:2068284025424900499:-8318342896379682860:-5531499219428969982:6099384139019624832:-7463555009350811822:-8557449045197982261:-7692755024340385951:3797307293323962559",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div[1]/div/span/a"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"#email\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"#email\"></a>",
+      "id": "L2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > ol > li:nth-of-type(1) > a.text-base.font-bold.block.pt-3.pb-3.pl-0.capitalize.text-brand.border-t-4.border-solid.border-t-brand[href=\"#email\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:-1240875454276419760:5103259840852300795:2068284025424900499:-8318342896379682860:6541367353798960385:-6378273147500121977:-1047627338895787171:-7237668578363912911:1365399157773062502:-1751381537848247341:-5646392149704581369:-4072269163544052508",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div[1]/nav/ol/li[1]/a"
+      },
+      "text_label": "1. Email",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"#shipping\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"#shipping\"></a>",
+      "id": "L3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > ol > li:nth-of-type(2) > a.text-base.font-bold.block.pt-3.pb-3.pl-0.capitalize.text-brand.border-t-4.border-solid.border-t-brand[href=\"#shipping\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:-1240875454276419760:5103259840852300795:2068284025424900499:-8318342896379682860:6541367353798960385:-6378273147500121977:-1047627338895787171:-7237668578363912911:-6632316801266162548:-7138007495996954903:-6932142830423613722:-4004117834778750352",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div[1]/nav/ol/li[2]/a"
+      },
+      "text_label": "2. Shipping",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"first_name\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"first_name\"></input>",
+      "id": "I1",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby=\"first_name-error \"][autocomplete=\"given-name\"][id=\"first_name\"][name=\"first_name\"][placeholder][type=\"text\"][required]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:-1240875454276419760:5103259840852300795:8876757161602101371:786505723878342476:-7294354762090170525:5773350639740689725:-1119153515339724329:-5141126694262696053:-3019047118626234759:5152114783310978409:-773851370133782520:506429393609041200:4567386787780700127:-7641144352417432983:-7955196720980818687:8574608840395787135:-5886187314355440080:-678020910395236678:1002353667364633404:762998134494186503:-2733835476968367096:6942285190553441292",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[1]/div[1]/div[1]/div/span[2]/input"
+      },
+      "text_label": "first_name",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"last_name\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"last_name\"></input>",
+      "id": "I2",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby=\"last_name-error \"][autocomplete=\"family-name\"][id=\"last_name\"][name=\"last_name\"][placeholder][type=\"text\"][required]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:-1240875454276419760:5103259840852300795:8876757161602101371:786505723878342476:-7294354762090170525:5773350639740689725:-1119153515339724329:-5141126694262696053:-3019047118626234759:5152114783310978409:-773851370133782520:506429393609041200:675206404514258899:-2253284920699855500:5586646310410733800:-1618890139280575743:-5089144333608567768:-3969208208097423075:106761233676985147:8849669529393164370:-6249180205739347863:1187973163504558756",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[1]/div[2]/div[1]/div/span[2]/input"
+      },
+      "text_label": "last_name",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div role=\"combobox\" aria_expanded=\"false\"></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div role=\"combobox\" aria_expanded=\"false\"></div>",
+      "id": "I3",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(2).react-autosuggest__container[role=\"combobox\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:-1240875454276419760:5103259840852300795:8876757161602101371:786505723878342476:-7294354762090170525:5773350639740689725:-1119153515339724329:-5141126694262696053:-3019047118626234759:5152114783310978409:6800264405176807842:7135508564155365947",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[2]"
+      },
+      "text_label": "Street address * Street address * address",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"address\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"address\"></input>",
+      "id": "I4",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby=\"LabeledTextInput__input-5625354-error \"][autocomplete=\"address-line1\"][id=\"LabeledTextInput__input-5625354\"][name=\"address\"][placeholder][type=\"text\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:-1240875454276419760:5103259840852300795:8876757161602101371:786505723878342476:-7294354762090170525:5773350639740689725:-1119153515339724329:-5141126694262696053:-3019047118626234759:5152114783310978409:6800264405176807842:7135508564155365947:-1262014719958693995:4436762645835071831:3281323331175163169:3796811877324939434:-3033271368625349427:-6669250129393474817:-8502332684495328554:-5104778232811152407:2631542254931449019:7189245168965639396",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[2]/div[1]/div[1]/div/span[2]/input"
+      },
+      "text_label": "address",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"city\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"city\"></input>",
+      "id": "I5",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(3) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby=\"city-error \"][autocomplete=\"address-level2\"][id=\"city\"][name=\"city\"][placeholder][type=\"text\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:-1240875454276419760:5103259840852300795:8876757161602101371:786505723878342476:-7294354762090170525:5773350639740689725:-1119153515339724329:-5141126694262696053:-3019047118626234759:5152114783310978409:2291008693508691986:-6604694270593556381:-5186542912744980976:5311541874891549139:3341680295338896375:1136594935601484692:2678595100068519614:5152709532919393059:8682461379372216016:1573523821140502744",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[3]/div[1]/div/span[2]/input"
+      },
+      "text_label": "city",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"apartment\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"apartment\"></input>",
+      "id": "I6",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(4) > div:nth-of-type(1) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby=\"apartment-error \"][autocomplete=\"address-line2\"][id=\"apartment\"][name=\"apartment\"][placeholder][type=\"text\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:-1240875454276419760:5103259840852300795:8876757161602101371:786505723878342476:-7294354762090170525:5773350639740689725:-1119153515339724329:-5141126694262696053:-3019047118626234759:5152114783310978409:3337348372881707528:-6220747377215952551:-5528248226562798906:-3572916643537764159:-1324763258029032382:370055251191209206:-4825921545907835138:-9098492390659172460:6083371674272843102:6100573082335094964:2972781891297344608:-6586218661380438235",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[4]/div[1]/div[1]/div/span[2]/input"
+      },
+      "text_label": "apartment",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"company\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"company\"></input>",
+      "id": "I7",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby=\"company-error \"][autocomplete=\"organization\"][id=\"company\"][name=\"company\"][placeholder][type=\"text\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:-1240875454276419760:5103259840852300795:8876757161602101371:786505723878342476:-7294354762090170525:5773350639740689725:-1119153515339724329:-5141126694262696053:-3019047118626234759:5152114783310978409:3337348372881707528:-6220747377215952551:-2519273184723802932:79983692014507989:2377387252059405618:-1832268693202822362:8654813499467150637:-8391550451700004486:5691370764706607804:1396479215941730124:-8195466514462140107:-3753922736934497544",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[4]/div[2]/div[1]/div/span[2]/input"
+      },
+      "text_label": "company",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<select></select>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<select></select>",
+      "id": "I8",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(1) > div > span:nth-of-type(2) > select.appearance-none.border-0.h-full.w-full[aria-describedby=\"state-error\"][autocomplete=\"address-level1\"][id=\"state\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:-1240875454276419760:5103259840852300795:8876757161602101371:786505723878342476:-7294354762090170525:5773350639740689725:-1119153515339724329:-5141126694262696053:-3019047118626234759:5152114783310978409:-8174631245529081236:-7516763992826663803:-8075055743120540626:1188521456111045494:-1687601041576449741:2395126261240605383:6598597031697436688:-115515892169722539:-1194276311568168305:337759671419308731:-1335728600538076891:-7822004310853057156",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[5]/div[1]/div[1]/div/span[2]/select"
+      },
+      "text_label": "Alabama Arizona Arkansas California Colorado Connecticut Delaware District Of Columbia Florida Georgia Idaho Illinois Indiana Iowa Kansas Kentucky Louisiana Maine Maryland Massachusetts Michigan Minnesota Mississippi Missouri Montana Nebraska Nevada New Hampshire New Jersey New Mexico New York North Carolina North Dakota Ohio Oklahoma Oregon Pennsylvania Rhode Island South Carolina South Dakota Tennessee Texas Utah Vermont Virginia Washington West Virginia Wisconsin Wyoming",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"zipcode\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"zipcode\"></input>",
+      "id": "I9",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(5) > div:nth-of-type(2) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby=\"zipcode-error \"][autocomplete=\"postal-code\"][id=\"zipcode\"][name=\"zipcode\"][placeholder][type=\"text\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:-1240875454276419760:5103259840852300795:8876757161602101371:786505723878342476:-7294354762090170525:5773350639740689725:-1119153515339724329:-5141126694262696053:-3019047118626234759:5152114783310978409:-8174631245529081236:-7516763992826663803:-57388004058910921:3722238343498205050:8048025697099089658:-6592480823077377701:8918391927411749499:-3634535457574583572:1658566900094327320:-7764370761127686421:-5840915623533582723:-2858917197191501805",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[5]/div[2]/div[1]/div/span[2]/input"
+      },
+      "text_label": "zipcode",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"tel\" value=\"\" placeholder=\"\" name=\"phone_number\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"tel\" value=\"\" placeholder=\"\" name=\"phone_number\"></input>",
+      "id": "I10",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(6) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[type=\"tel\"][aria-describedby=\"phone_number-error \"][autocomplete=\"tel\"][id=\"phone_number\"][name=\"phone_number\"][placeholder]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:-1240875454276419760:5103259840852300795:8876757161602101371:786505723878342476:-7294354762090170525:5773350639740689725:-1119153515339724329:-5141126694262696053:-3019047118626234759:5152114783310978409:-2351005410100941550:-5737726984378114652:4404645126879289902:-2248641837546335889:-3922333830039481540:4280767348234445977:-5230497530186191464:5065114755037164005:3493325928863291660:-5894245728327172839",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[6]/div[1]/div/span[2]/input"
+      },
+      "text_label": "phone_number",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\" aria_label=\"Show/hide order summary\" aria_expanded=\"true\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\" aria_label=\"Show/hide order summary\" aria_expanded=\"true\"></button>",
+      "id": "B1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button.order-summary-header.p-0.font-bold.bg-transparent.text-gray.flex.flex-col.text-left.border-0.order-summary-header--open[type=\"button\"][aria-label=\"Show/hide order summary\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:1778108473632204440:-3857388397489231332:6256142755541391026:-8559819348318912201:-7976971823407072184:-7003779160519726640",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/button"
+      },
+      "text_label": "Your Cart 1 item Winnie Outdoor Side Table Black Frame Qty 1 Original price: $427 Price: $278 Ready-to-Ship",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(1)",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:1778108473632204440:-3857388397489231332:6256142755541391026:-8559819348318912201:-7976971823407072184:-7003779160519726640:-8524512829467188928:-3305501972340705458",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/button/div[1]"
+      },
+      "text_label": "Your Cart 1 item",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2)",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:1778108473632204440:-3857388397489231332:6256142755541391026:-8559819348318912201:-7976971823407072184:-7003779160519726640:9159089987109492556:7159917177018385323",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/button/div[2]"
+      },
+      "text_label": "Winnie Outdoor Side Table Black Frame Qty 1 Original price: $427 Price: $278 Ready-to-Ship",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:1778108473632204440:-3857388397489231332:6256142755541391026:-8559819348318912201:-7976971823407072184:-7003779160519726640:9159089987109492556:7159917177018385323:1359844950056188870:-552513746680867181",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div"
+      },
+      "text_label": "Winnie Outdoor Side Table Black Frame Qty 1 Original price: $427 Price: $278 Ready-to-Ship",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M4",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:1778108473632204440:-3857388397489231332:6256142755541391026:-8559819348318912201:-7976971823407072184:-7003779160519726640:9159089987109492556:7159917177018385323:1359844950056188870:-552513746680867181:-8415080277134270685:7878290461474994658",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div"
+      },
+      "text_label": "Winnie Outdoor Side Table Black Frame Qty 1 Original price: $427 Price: $278 Ready-to-Ship",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M5",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:1778108473632204440:-3857388397489231332:6256142755541391026:-8559819348318912201:-7976971823407072184:-7003779160519726640:9159089987109492556:7159917177018385323:1359844950056188870:-552513746680867181:-8415080277134270685:7878290461474994658:-2297111242633311428:-3157752994905491540",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div"
+      },
+      "text_label": "Winnie Outdoor Side Table Black Frame Qty 1 Original price: $427 Price: $278 Ready-to-Ship",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M6",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div > div:nth-of-type(1)",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:1778108473632204440:-3857388397489231332:6256142755541391026:-8559819348318912201:-7976971823407072184:-7003779160519726640:9159089987109492556:7159917177018385323:1359844950056188870:-552513746680867181:-8415080277134270685:7878290461474994658:-2297111242633311428:-3157752994905491540:8325709191518211792:-7717753815122239565",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div/div[1]"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M7",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div > div:nth-of-type(2)",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:1778108473632204440:-3857388397489231332:6256142755541391026:-8559819348318912201:-7976971823407072184:-7003779160519726640:9159089987109492556:7159917177018385323:1359844950056188870:-552513746680867181:-8415080277134270685:7878290461474994658:-2297111242633311428:-3157752994905491540:-6145191696347541077:912977468281355142",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div/div[2]"
+      },
+      "text_label": "Winnie Outdoor Side Table Black Frame Qty 1 Original price: $427 Price: $278 Ready-to-Ship",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M8",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div:nth-of-type(1)",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:1778108473632204440:-3857388397489231332:6256142755541391026:-8559819348318912201:-7976971823407072184:-7003779160519726640:9159089987109492556:7159917177018385323:1359844950056188870:-552513746680867181:-8415080277134270685:7878290461474994658:-2297111242633311428:-3157752994905491540:-6145191696347541077:912977468281355142:-7765477833774822343:2999723227657963655",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div/div[2]/div[1]"
+      },
+      "text_label": "Winnie Outdoor Side Table Black Frame Qty 1",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M9",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:1778108473632204440:-3857388397489231332:6256142755541391026:-8559819348318912201:-7976971823407072184:-7003779160519726640:9159089987109492556:7159917177018385323:1359844950056188870:-552513746680867181:-8415080277134270685:7878290461474994658:-2297111242633311428:-3157752994905491540:-6145191696347541077:912977468281355142:-7765477833774822343:2999723227657963655:7904326571727369772:-4945899428360264871",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div/div[2]/div[1]/div"
+      },
+      "text_label": "Black Frame Qty 1",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M10",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div:nth-of-type(2)",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:1778108473632204440:-3857388397489231332:6256142755541391026:-8559819348318912201:-7976971823407072184:-7003779160519726640:9159089987109492556:7159917177018385323:1359844950056188870:-552513746680867181:-8415080277134270685:7878290461474994658:-2297111242633311428:-3157752994905491540:-6145191696347541077:912977468281355142:-8247523804222208847:-6282095885405995601",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div/div[2]/div[2]"
+      },
+      "text_label": "Original price: $427 Price: $278 Ready-to-Ship",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M11",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:1778108473632204440:-3857388397489231332:6256142755541391026:-8559819348318912201:-7976971823407072184:-7003779160519726640:9159089987109492556:7159917177018385323:1359844950056188870:-552513746680867181:-8415080277134270685:7878290461474994658:-2297111242633311428:-3157752994905491540:-6145191696347541077:912977468281355142:-8247523804222208847:-6282095885405995601:-9120799818365310056:2964856640796829470",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div/div[2]/div[2]/div"
+      },
+      "text_label": "Original price: $427 Price: $278 Ready-to-Ship",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M12",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:1778108473632204440:-3857388397489231332:6256142755541391026:-8559819348318912201:-7976971823407072184:-7003779160519726640:9159089987109492556:7159917177018385323:1359844950056188870:-552513746680867181:-8415080277134270685:7878290461474994658:-2297111242633311428:-3157752994905491540:-6145191696347541077:912977468281355142:-8247523804222208847:-6282095885405995601:-9120799818365310056:2964856640796829470:-5402788170128215382:3654285529426072994",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div/div[2]/div[2]/div/div"
+      },
+      "text_label": "Original price: $427 Price: $278",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
+      "id": "B2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > div > div > div > div:nth-of-type(1) > button.text-base.font-bold.font-sans.text-brand.cursor-pointer.border-0[type=\"button\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:1778108473632204440:-3857388397489231332:6256142755541391026:-8559819348318912201:699267760992554804:-7919756594807971100:2395808414931849502:4380190727815306565:-4740871862712881120:-3729874707502838199:1292999977781322429:-8721144907584771276:-3127202980419700557:4217115269633090658",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/div/div/div/div[1]/button"
+      },
+      "text_label": "Apply Gift Card/Promo Code +",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  }
+]

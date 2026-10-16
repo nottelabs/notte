@@ -11,7 +11,7 @@ const FERNET_HMAC_LENGTH = 32;
 const FERNET_HEADER_LENGTH = 1 + 8 + FERNET_IV_LENGTH;
 
 /**
- * Decrypts the tokens produced by `notte_core.utils.encryption.Encryption`.
+ * Decrypts the tokens produced by the backend’s Fernet encryption helper.
  *
  * A token is `base64url(salt || fernet_token)`. The Fernet key is derived from
  * the root key with PBKDF2-HMAC-SHA256 (100k iterations) over that salt, and the

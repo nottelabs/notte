@@ -27,10 +27,10 @@ def main():
     # Create a session with Massive proxy
     proxies: list[ProxySettings] = [massive_proxy]
     with client.Session(proxies=proxies) as session:
-        # Run an agent task through the proxied session
-        agent = client.Agent(session=session, max_steps=10)
-        result = agent.run(task="extract pricing information from https://www.notte.cc")
-        print(f"Task completed: {result.answer}")
+        # Browse and scrape through the proxied session
+        session.execute(type="goto", url="https://www.notte.cc/pricing")
+        pricing = session.scrape(instructions="extract the pricing information")
+        print(f"Pricing: {pricing}")
 
 
 if __name__ == "__main__":

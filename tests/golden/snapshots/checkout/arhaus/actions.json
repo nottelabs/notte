@@ -1,0 +1,553 @@
+[
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.arhaus.com/\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.arhaus.com/\"></a>",
+      "id": "L1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > header > div > div > div > div > div > div > span > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi3.s2kwpi6.s2kwpi9.s2kwpi7._1fragem32._1fragempn[href=\"https://www.arhaus.com/\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:-2853758029228150920:8565112890991844576:-4314081193523589705:2232166402458481048:2114104700060082082:-8852252683828576600:7908808594008158603:7163864655159316687:-5192471409611110659:-8577159360494723148:-6502647278235630745:-6980642220853046508:724878221802311246:-633540140284346482:-5481611419091234704:4956744410889035079:5876539744212329847:8858282153944422210",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/header/div/div/div/div/div/div/span/a"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.arhaus.com/cart\" aria_label=\"Cart\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.arhaus.com/cart\" aria_label=\"Cart\"></a>",
+      "id": "L2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > header > div > div > div > div > div > span > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi2.s2kwpi5.s2kwpi4._1fragemtm.s2kwpi9.s2kwpi7._1fragem32._1fragempn[aria-label=\"Cart\"][id=\"cart-link\"][href=\"https://www.arhaus.com/cart\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:-2853758029228150920:8565112890991844576:-4314081193523589705:2232166402458481048:2114104700060082082:-8852252683828576600:7908808594008158603:7163864655159316687:-5192471409611110659:-8577159360494723148:-6502647278235630745:-6980642220853046508:-1683231068860588115:3183526788688953094:4779076357887253115:7318016574785631919",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/header/div/div/div/div/div/span/a"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.arhaus.com/account/login?checkout_url=%2Fcheckouts%2Fcn%2FZ2NwLXVzLXdlc3QxOjAxSzA4MllSNkM3NUdNRTBBMDQ2M1lHODZF%3Fcompany_location_id%26locale%3Den-US\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://www.arhaus.com/account/login?checkout_url=%2Fcheckouts%2Fcn%2FZ2NwLXVzLXdlc3QxOjAxSzA4MllSNkM3NUdNRTBBMDQ2M1lHODZF%3Fcompany_location_id%26locale%3Den-US\"></a>",
+      "id": "L3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi2.s2kwpi5.s2kwpi4._1fragemtm.s2kwpi8[href=\"https://www.arhaus.com/account/login?checkout_url=%2Fcheckouts%2Fcn%2FZ2NwLXVzLXdlc3QxOjAxSzA4MllSNkM3NUdNRTBBMDQ2M1lHODZF%3Fcompany_location_id%26locale%3Den-US\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-3737730513455463742:7281264800217697944:5107202441367304987:-1123376913461254689:7661589087154904202:8111970659077860590:7168043579656794172:5868250098840158573:5878032107907883215:-4939136022388815398:-8216156179201341790:7861010170612388604:6276661472340794612:8940160978919417426:-8805430089398921994:8328467163536557376",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[1]/a"
+      },
+      "text_label": "Log in",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-3737730513455463742:7281264800217697944:5107202441367304987:-1123376913461254689:7661589087154904202:8111970659077860590:7168043579656794172:5868250098840158573:5878032107907883215:-4939136022388815398:-8216156179201341790:7861010170612388604:4278218781426570656:6236512134197614004:1880700405009297885:-4446318004468353164:4924029834671251159:-8958931244614513360:-5069457035979849059:3093758768549559037:-4861845375470118254:-9070977509096944422:5943865799081341018:-5128904487067602964",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[1]/div/div/div/div"
+      },
+      "text_label": "email",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"email\" value=\"\" placeholder=\"Email\" name=\"email\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"email\" value=\"\" placeholder=\"Email\" name=\"email\"></input>",
+      "id": "I1",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u12._7ozb2u1j._7ozb2ur[id=\"email\"][name=\"email\"][placeholder=\"Email\"][required][type=\"email\"][aria-labelledby=\"email-label\"][autocomplete=\"shipping email\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-3737730513455463742:7281264800217697944:5107202441367304987:-1123376913461254689:7661589087154904202:8111970659077860590:7168043579656794172:5868250098840158573:5878032107907883215:-4939136022388815398:-8216156179201341790:7861010170612388604:4278218781426570656:6236512134197614004:1880700405009297885:-4446318004468353164:4924029834671251159:-8958931244614513360:-5069457035979849059:3093758768549559037:-4861845375470118254:-9070977509096944422:5943865799081341018:-5128904487067602964:-1080425809176294172:-920492007959264092",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[1]/div/div/div/div/input"
+      },
+      "text_label": "email",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"checkbox\" name=\"marketing_opt_in\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<input type=\"checkbox\" name=\"marketing_opt_in\"></input>",
+      "id": "B1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > div > div > input._1mmswk96._1mmswk95._1fragemq1._1fragempz._1fragemq3._1fragempx._1fragemr1._1fragemqx._1fragemr5._1fragemqt._1fragemci._1fragemby._1fragemd2._1fragembe._1fragemor._1fragem32._1fragempm._1fragem2x._1fragemtv._1fragemtp._1fragemu2._1mmswk97._1fragemoi._1mmswk9a._1mmswk98._1fragemue[type=\"checkbox\"][id=\"marketing_opt_in\"][name=\"marketing_opt_in\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-3737730513455463742:7281264800217697944:5107202441367304987:-1123376913461254689:7661589087154904202:8111970659077860590:7168043579656794172:5868250098840158573:5878032107907883215:-4939136022388815398:-8216156179201341790:7861010170612388604:4278218781426570656:6236512134197614004:5067145638335373183:-695032862819638244:-7740413520270919539:7007740979022448935:-2001441622096510799:6615064244879802244:4073704785781953033:3312376328970685808:6310138471753148173:-551937931163292403",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[2]/div/div/div/input"
+      },
+      "text_label": "marketing_opt_in",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<label></label>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<label></label>",
+      "id": "M2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > div > label._1mmswk9g._1mmswk9f._1fragem32._1fragemlo._1fragemor._1fragemjl[for=\"marketing_opt_in\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-3737730513455463742:7281264800217697944:5107202441367304987:-1123376913461254689:7661589087154904202:8111970659077860590:7168043579656794172:5868250098840158573:5878032107907883215:-4939136022388815398:-8216156179201341790:7861010170612388604:4278218781426570656:6236512134197614004:5067145638335373183:-695032862819638244:-7740413520270919539:7007740979022448935:-2001441622096510799:6615064244879802244:-8726491935146561094:8411389848146963695",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[2]/div/div/label"
+      },
+      "text_label": "Email me with news and offers",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<select name=\"countryCode\"></select>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<select name=\"countryCode\"></select>",
+      "id": "I2",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > select.ZHJU6._1k3449n5._1k3449n3._1fragemue.oAlPg.IWR5K.tu1VS[name=\"countryCode\"][id=\"Select0\"][required][autocomplete=\"shipping country\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:-8484080420912285599:4569199872936115622:868035225930822786:-4993724529401756404:8648292562235018805:7995855798612650971:5201094096976660455:1913656384509822606:-3052085038616178439:-3026503654173508762",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[1]/div/div/div/select"
+      },
+      "text_label": "United States",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:4045368906913632661:-2277735445232482177:-7148191918875771374:-8191737923073964615:-5833898333850627207:4906717828928771305:-136219590201407755:-2229360349746235687",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[1]/div/div"
+      },
+      "text_label": "firstName",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"First name\" name=\"firstName\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"First name\" name=\"firstName\"></input>",
+      "id": "I3",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id=\"TextField0\"][name=\"firstName\"][placeholder=\"First name\"][required][type=\"text\"][aria-labelledby=\"TextField0-label\"][autocomplete=\"shipping given-name\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:4045368906913632661:-2277735445232482177:-7148191918875771374:-8191737923073964615:-5833898333850627207:4906717828928771305:-136219590201407755:-2229360349746235687:3563084554679934981:-4814824204876355977",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[1]/div/div/input"
+      },
+      "text_label": "firstName",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M4",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:4045368906913632661:-2277735445232482177:5185447207437981686:7833862468425577089:-200006900132428783:-6684328141347128626:488120961635715462:-7182647297829908286",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[2]/div/div"
+      },
+      "text_label": "lastName",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"Last name\" name=\"lastName\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"Last name\" name=\"lastName\"></input>",
+      "id": "I4",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id=\"TextField1\"][name=\"lastName\"][placeholder=\"Last name\"][required][type=\"text\"][aria-labelledby=\"TextField1-label\"][autocomplete=\"shipping family-name\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:4045368906913632661:-2277735445232482177:5185447207437981686:7833862468425577089:-200006900132428783:-6684328141347128626:488120961635715462:-7182647297829908286:-3996892999210654808:-4546522772211426752",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[2]/div/div/input"
+      },
+      "text_label": "lastName",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M5",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:8713024675170430851:4175231641139189581:2354574319079294017:7757545775247704649:3333316814494425621:-8859457509919395644:5144368907051877287:-9013126745735082935:-2302720659910295754:3187635898626304080:3204717931963840387:2904956348073462286:-4783551836384432414:-8108968979914619962",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[3]/div/div/div/div/div/div"
+      },
+      "text_label": "address1",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"Address\" name=\"address1\" role=\"combobox\" aria_expanded=\"false\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<input type=\"text\" value=\"\" placeholder=\"Address\" name=\"address1\" role=\"combobox\" aria_expanded=\"false\"></input>",
+      "id": "I5",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2uv._7ozb2uu._1fragemqa._1fragemqm._7ozb2u11._7ozb2u1j._7ozb2ur[id=\"shipping-address1\"][name=\"address1\"][placeholder=\"Address\"][required][type=\"text\"][aria-labelledby=\"shipping-address1-label\"][role=\"combobox\"][autocomplete=\"shipping address-line1\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:8713024675170430851:4175231641139189581:2354574319079294017:7757545775247704649:3333316814494425621:-8859457509919395644:5144368907051877287:-9013126745735082935:-2302720659910295754:3187635898626304080:3204717931963840387:2904956348073462286:-4783551836384432414:-8108968979914619962:8173074580375115234:3343778253377122547",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[3]/div/div/div/div/div/div/input"
+      },
+      "text_label": "address1",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M6",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(4) > div > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:3649094864390277709:4814440992488703280:9028641902137509464:-3671173795165073891:3680676985927757445:-433495755136420181:1368756202403326833:-3541462349533664813",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[4]/div/div/div"
+      },
+      "text_label": "address2",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"Apartment, suite, etc. (optional)\" name=\"address2\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"Apartment, suite, etc. (optional)\" name=\"address2\"></input>",
+      "id": "I6",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(4) > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id=\"TextField2\"][name=\"address2\"][placeholder=\"Apartment, suite, etc. (optional)\"][type=\"text\"][aria-labelledby=\"TextField2-label\"][autocomplete=\"shipping address-line2\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:-3258598125113550437:-6294206005914078523:580307488880223936:2526415431384315035:8365355054466073486:-2641489915148327043:3815557363938759431:-8804812005643482376:5095624474838542409:-5224623045761867560:-2860086732156667997:-5206696646213330023:-4781055670037694697:1111144862059594312:-2762889610118994218:2913158899380288793:5850522505015727640:-100480508299119877:6349317157598236617:6670216847317419777:-7520923985535900373:-1154710050246324349:8876656043582329344:3638585555602835784:6592992503137568095:6570271691766410576:3904895959782260595:1420513645690483159:7556051873099103056:-1710455662241099385:-3306279952049934054:3367908461082407741:5307386406904111570:2742838836235476347:-8626753698596710930:-7689810788945392561:6194128075481048552:-6719349924460184763:3649094864390277709:4814440992488703280:9028641902137509464:-3671173795165073891:3680676985927757445:-433495755136420181:1368756202403326833:-3541462349533664813:-3472335003769897912:7017617972773904683",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[4]/div/div/div/input"
+      },
+      "text_label": "address2",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div></div>",
+      "id": "M7",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:6705362878467119470:939365490865572835:134412265756167884:6488533049260092388:-3860047785769001077:7641874151601564563:-4937181836273429680:-1852491492316742905:3708741311080027274:-29107656493359259:-2107903137721826207:-7344508092898825157:-7943785059997080604:5629279134288319547:5645918496897152774:7477545614893900502:-6359662284298316575:-2837364820614047831:7597606459681451436:-7515105955203664188:-4885582132276880581:5443120903329847077:-7520743925902876498:2049597500996371752:5358665978778447825:7745081928782936102:8835432047927877037:-2517275487589621346:-3571866030015192752:-9173816402905923728:5372606850971660150:6269032069205073089",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div"
+      },
+      "text_label": "reductions",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"Discount Code or Trade ID\" name=\"reductions\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\" value=\"\" placeholder=\"Discount Code or Trade ID\" name=\"reductions\"></input>",
+      "id": "I7",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id=\"ReductionsInput0\"][name=\"reductions\"][placeholder=\"Discount Code or Trade ID\"][type=\"text\"][aria-labelledby=\"ReductionsInput0-label\"][autocomplete=\"on\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:6705362878467119470:939365490865572835:134412265756167884:6488533049260092388:-3860047785769001077:7641874151601564563:-4937181836273429680:-1852491492316742905:3708741311080027274:-29107656493359259:-2107903137721826207:-7344508092898825157:-7943785059997080604:5629279134288319547:5645918496897152774:7477545614893900502:-6359662284298316575:-2837364820614047831:7597606459681451436:-7515105955203664188:-4885582132276880581:5443120903329847077:-7520743925902876498:2049597500996371752:5358665978778447825:7745081928782936102:8835432047927877037:-2517275487589621346:-3571866030015192752:-9173816402905923728:5372606850971660150:6269032069205073089:3958130710304057300:2077707896783529643",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div/input"
+      },
+      "text_label": "reductions",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
+      "id": "B2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > div > div > div > div > div:nth-of-type(1) > button._1m2hr9ge._1m2hr9gd._1fragemu6._1fragemms._1fragemor._1fragemtk._1fragemtz._1fragemu1._1fragemtq._1m2hr9g1h._1m2hr9g1e._1fragemu1._1fragemtz._1fragemtp._1fragemte._1m2hr9gi._1m2hr9gg._1fragem3m._1m2hr9g1v._1m2hr9g1b._1m2hr9g1j._1m2hr9g1i._1fragemtm[id=\"CommandInvoker0\"][type=\"button\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:6705362878467119470:939365490865572835:134412265756167884:6488533049260092388:-3860047785769001077:7641874151601564563:-4937181836273429680:-1852491492316742905:3708741311080027274:-29107656493359259:-2107903137721826207:-7344508092898825157:-7943785059997080604:5629279134288319547:5645918496897152774:7477545614893900502:-6359662284298316575:-2837364820614047831:7597606459681451436:-7515105955203664188:3350732324150882332:133538769892887954:4363489345875172651:-3887306878948493469:-5868852714407947117:-6852403382906937487:7535724115475097227:-2016941130738467907:-3561212164608302177:-8588601500218754904:5050338155235716769:5351002168539227341",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/div/div/div/div/div[1]/button"
+      },
+      "text_label": "Click here",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
+      "id": "B3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > div > div > div > div > div:nth-of-type(3) > button._1m2hr9ge._1m2hr9gd._1fragemu6._1fragemms._1fragemor._1fragemtk._1fragemtz._1fragemu1._1fragemtq._1m2hr9g1h._1m2hr9g1e._1fragemu1._1fragemtz._1fragemtp._1fragemte._1m2hr9gi._1m2hr9gg._1fragem3m._1m2hr9g1v._1m2hr9g1b._1m2hr9g1j._1m2hr9g1i._1fragemtm[id=\"CommandInvoker1\"][type=\"button\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:6705362878467119470:939365490865572835:134412265756167884:6488533049260092388:-3860047785769001077:7641874151601564563:-4937181836273429680:-1852491492316742905:3708741311080027274:-29107656493359259:-2107903137721826207:-7344508092898825157:-7943785059997080604:5629279134288319547:5645918496897152774:7477545614893900502:-6359662284298316575:-2837364820614047831:7597606459681451436:-7515105955203664188:3350732324150882332:133538769892887954:4363489345875172651:-3887306878948493469:-5868852714407947117:-6852403382906937487:7535724115475097227:-2016941130738467907:1924722101205275444:-4408532698608715140:5670870871794270943:-3170146497605135527",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/div/div/div/div/div[3]/button"
+      },
+      "text_label": "Click here",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\" aria_label=\"Shipping policy\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\" aria_label=\"Shipping policy\"></button>",
+      "id": "B4",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > section > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > button._1s82kpb1._1s82kpb0._1fragemor._1fragemms._1fragemtk._1fragemtv._1fragemtq._1fragemu5._1fragemte._1fragem32[type=\"button\"][aria-label=\"Shipping policy\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/checkout/arhaus.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:-7700408049278522877:3648220037507992754:-1032450893973374349:8822217766487363621:4498350452539373053:-3330665442755817878:2560370965033261715:-6548981139265026104:-5259153152968750773:7892293832200577774:5932286193699661151:555884381612784530:6705362878467119470:939365490865572835:134412265756167884:6488533049260092388:-3860047785769001077:7641874151601564563:-4937181836273429680:-1852491492316742905:3708741311080027274:-29107656493359259:-2107903137721826207:-7344508092898825157:3279155698937388949:2480402445731120011:-6891137645838249732:5552113337983828923:-1196468058297924492:102790131227739939:-6257659910093507484:-3581513531454267919:-2433360950352629510:-7817947107577202502:-8510615098511673032:204079005294251053:-6429012906345906466:-5457654040729488497:505863974454820805:2166406592729978908",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/section/div[2]/div[2]/div[2]/div[1]/div/div/button"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  }
+]

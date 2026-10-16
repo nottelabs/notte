@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { InvalidRequestError } from '@/errors';
 import { NotteClient } from '@/client';
 
 const { vaultDeleteMock } = vi.hoisted(() => ({
@@ -9,7 +10,7 @@ vi.mock('@/lib/client/sdk.gen', () => ({
   vaultDelete: vaultDeleteMock,
 }));
 
-import { cleanupVaults } from './helpers/cleanup-vaults';
+import { cleanupVaults, initializeOwnedVault } from './helpers/cleanup-vaults';
 
 describe('cleanupVaults', () => {
   const client = {
@@ -51,5 +52,35 @@ describe('cleanupVaults', () => {
     expect(vaultDeleteMock).toHaveBeenCalledTimes(2);
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('Failed to delete owned vault gone'));
     warn.mockRestore();
+  });
+});
+
+
+describe('initializeOwnedVault', () => {
+  it('registers a created vault even when its first credential list fails', async () => {
+    const error = new Error('list timed out after successful creation');
+    const owned: string[] = [];
+    const vault = { vaultId: 'created-before-timeout', listCredentials: vi.fn().mockRejectedValue(error) };
+    await expect(initializeOwnedVault(vault, owned)).rejects.toBe(error);
+    expect(owned).toEqual(['created-before-timeout']);
+    await cleanupVaults({ getClient: () => ({}) } as NotteClient, owned);
+    expect(vaultDeleteMock).toHaveBeenCalledWith(expect.objectContaining({ path: { vault_id: 'created-before-timeout' } }));
+  });
+
+  it('preserves creation failures without recording an uninitialized ID', async () => {
+    const error = new Error('creation failed');
+    const owned: string[] = [];
+    const vault = {
+      get vaultId(): string { throw new InvalidRequestError('Vault not initialized'); },
+      listCredentials: vi.fn().mockRejectedValue(error),
+    };
+    await expect(initializeOwnedVault(vault, owned)).rejects.toBe(error);
+    expect(owned).toEqual([]);
+  });
+
+  it('registers a successful initialization exactly once', async () => {
+    const owned: string[] = [];
+    await initializeOwnedVault({ vaultId: 'owned', listCredentials: vi.fn().mockResolvedValue([]) }, owned);
+    expect(owned).toEqual(['owned']);
   });
 });

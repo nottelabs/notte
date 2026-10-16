@@ -1,4 +1,4 @@
-import { pollAuth, validateAuthRetry, ManagedAuthError, type AuthWaitOptions, type AuthSessionResponse as SessionResponse } from '@/managed-auth';
+import { pollAuth, ManagedAuthError, type AuthWaitOptions, type AuthSessionResponse as SessionResponse } from '@/managed-auth';
 import { existsSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -12,7 +12,6 @@ import type {
   ApiSessionStartRequest,
   Cookie,
   ExecutionResponse,
-  ImageData,
   Observation,
   PageExecuteData,
   ObserveRequest,
@@ -130,7 +129,7 @@ export interface SessionOptions extends ApiSessionStartRequest {
    * appended with the session cookies on `stop()`.
    */
   cookie_file?: string;
-  /** File storage to attach to the session so agents can consume uploaded files. */
+  /** File storage to attach to the session for uploads and downloads. */
   storage?: RemoteFileStorage;
 }
 
@@ -218,11 +217,6 @@ export class Session {
    * await session.start();
    */
   async start(options: SessionStartOptions = {}): Promise<void> {
-    if (this.legacyHeadless === false) {
-      throw new Error(
-        'Remote `headless: false` is no longer supported. `headless: true` sessions still include session replays and access to the live viewer.'
-      );
-    }
     if (this.legacyHeadless === true) {
       console.warn('`headless: true` is deprecated and ignored; remote sessions always use the supported browser launch mode.');
       this.legacyHeadless = undefined;
@@ -232,11 +226,12 @@ export class Session {
     }
 
     options.signal?.throwIfAborted();
-    validateAuthRetry(this.options.auth_retry ?? 0);
     const { auth_retry, wait_for_authentication, ...request } = this.options;
     const body = {
       ...request,
-      ...(request.auth_ids?.length ? { auth_retry: auth_retry ?? 0, wait_for_authentication: false } : {}),
+      ...(this.legacyHeadless !== undefined ? { headless: this.legacyHeadless } : {}),
+      ...(auth_retry !== undefined ? { auth_retry } : {}),
+      ...(request.auth_ids?.length ? { wait_for_authentication: false } : {}),
     };
     const shouldWait = options.wait_for_authentication ?? wait_for_authentication ?? true;
     // The client's retry policy (503, 529, refused connections) is applied
@@ -658,9 +653,7 @@ export class Session {
    * start-time profile settings are not changed, so a session started with `persist: true`
    * still saves again when it stops.
    *
-   * @example
-   * const profile = await session.saveProfile({ name: 'github' });
-   * // later: client.Session({ profile: { id: profile.profile_id } })
+   * See [Browser Profiles](/features/sessions/browser-profiles) for the tested Python and TypeScript example.
    */
   async saveProfile(options: SaveProfileOptions = {}): Promise<ProfileResponse> {
     const { profile_id, name } = options;
@@ -958,13 +951,11 @@ export class Session {
    * `raiseOnFailure: false` to receive the `StructuredData` wrapper instead.
    * @example
    * const markdown = await session.scrape({ only_main_content: true });
-   * const images = await session.scrape({ only_images: true });
    * const product = await session.scrape({ response_format: Product, instructions: 'Extract the product' });
    * const result = await session.scrape({ response_format: Product, raiseOnFailure: false });
    * if (result.success) console.log(result.data);
    */
-  async scrape(options: SessionScrapeOptions<unknown> & { only_images: true }): Promise<ImageData[]>;
-  async scrape(options?: SessionScrapeOptions<unknown> & { response_format?: undefined; instructions?: undefined | null; only_images?: false }): Promise<string>;
+  async scrape(options?: SessionScrapeOptions<unknown> & { response_format?: undefined; instructions?: undefined | null }): Promise<string>;
   async scrape<T>(options: SessionScrapeOptions<T> & { response_format: ZodLikeSchema<T>; raiseOnFailure?: true }): Promise<T>;
   async scrape<T>(options: SessionScrapeOptions<T> & { response_format: ZodLikeSchema<T>; raiseOnFailure: false }): Promise<StructuredData<T>>;
   async scrape(options: SessionScrapeOptions<unknown>): Promise<ScrapeResult<unknown>>;

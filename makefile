@@ -3,13 +3,28 @@ ifneq ("$(wildcard .env)","")
   export $(shell sed 's/=.*//' .env)
 endif
 
+# The test selections below are the single source of truth: .github/workflows/test-cicd.yml runs
+# `make test-cicd` (the offline unit gate) and `make test-live` (Notte API + third-party sites).
+# Markers are declared in pyproject.toml; tests/integration/conftest.py marks that directory by path.
+# The README and examples suites run nightly (nightly-examples.yml), never in these targets.
+PYTEST_IGNORE := --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py
+PYTEST_UNIT := uv run pytest -n logical tests -m "not staging and not live" $(PYTEST_IGNORE)
+PYTEST_LIVE := uv run pytest -n logical tests -m "staging or live" $(PYTEST_IGNORE)
+
+# Offline: needs a local browser, no secrets and no network beyond localhost.
 .PHONY: test
 test:
-	@uv run pytest -n 3 tests
+	$(PYTEST_UNIT)
 
 .PHONY: test-cicd
 test-cicd:
-	uv run pytest -n 3 tests --ignore=tests/integration/test_webvoyager_scripts.py --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10
+	$(PYTEST_UNIT) --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages
+
+# Needs NOTTE_API_KEY (and NOTTE_API_URL for staging) plus internet access. Live sites are flaky by
+# nature, so failures are retried; tests with their own @pytest.mark.flaky keep their own count.
+.PHONY: test-live
+test-live:
+	$(PYTEST_LIVE) --reruns 2 --reruns-delay 5 --durations=10
 
 .PHONY: test-sdk
 test-sdk:
@@ -19,11 +34,6 @@ test-sdk:
 .PHONY: test-docs
 test-docs:
 	uv run pytest -n logical tests/docs
-
-.PHONY: test-agent
-test-agent:
-	uv run pytest -n logical tests/agent
-	uv run pytest -n logical tests/integration/sdk/test_vault.py
 
 .PHONY: test-sdk-staging
 test-sdk-staging:
@@ -167,3 +177,54 @@ release:
 	fi
 	@echo "\033[0;35mBuilding version: $(filter-out $@,$(MAKECMDGOALS))\033[0m"
 	python3 scripts/build_release.py $(filter-out $@,$(MAKECMDGOALS))
+
+# The wire models in notte_core.types are the source of truth; openapi/openapi.json is the API's
+# rendering of them. See docs/design/openapi-contract.md.
+.PHONY: openapi-check
+openapi-check:
+	uv run --no-sync python scripts/openapi_contract.py --check
+
+# Refresh the snapshot from staging (override with OPENAPI_URL=https://api.notte.cc).
+OPENAPI_URL ?= https://us-staging.notte.cc
+.PHONY: openapi-fetch
+openapi-fetch:
+	uv run --no-sync python scripts/openapi_contract.py --fetch --url $(OPENAPI_URL)
+
+# Release gate: production must serve the wire models we are about to publish, and every
+# operation the Python SDK calls (method, path, parameters, models) as the snapshot describes it.
+.PHONY: openapi-check-prod
+openapi-check-prod:
+	uv run --no-sync python scripts/openapi_contract.py --check --against https://api.notte.cc
+	uv run --no-sync python scripts/generate_sdk_endpoints.py --check --against https://api.notte.cc
+
+# The Python SDK's endpoint layer (notte_sdk/_generated/endpoints.py) is generated from the
+# snapshot. See docs/design/sdk-generated-endpoints.md.
+.PHONY: sdk-endpoints
+sdk-endpoints:
+	uv run --no-sync python scripts/generate_sdk_endpoints.py
+
+.PHONY: sdk-endpoints-check
+sdk-endpoints-check:
+	uv run --no-sync python scripts/generate_sdk_endpoints.py --check
+
+# SDK-owned models, side by side with the existing public API during migration.
+.PHONY: sdk-codegen sdk-codegen-check
+sdk-codegen:
+	uv run --no-sync python scripts/generate_sdk_models.py
+	uv run --no-sync python scripts/generate_sdk_endpoints.py
+
+sdk-codegen-check:
+	uv run --no-sync python scripts/generate_sdk_models.py --check
+	uv run --no-sync python scripts/generate_sdk_endpoints.py --check
+
+# One reviewed contract update for both SDKs. Install uv and npm dependencies first.
+.PHONY: openapi-refresh sdk-generate-all node-sdk-codegen
+openapi-refresh:
+	$(MAKE) openapi-fetch
+	$(MAKE) -k sdk-generate-all
+
+# Keep independent generators running even if one reports an incompatible contract.
+sdk-generate-all: sdk-codegen sdk-endpoints node-sdk-codegen
+
+node-sdk-codegen:
+	cd node-sdk && npm run generate && npm run docs:generate

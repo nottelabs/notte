@@ -1,14 +1,13 @@
 ---
 title: "NotteFunction"
-description: "Notte function that can be run on the cloud or locally"
+description: "Notte function that runs on the Notte cloud"
 ---
 
 # NotteFunction
 
-Notte function that can be run on the cloud or locally.
+Notte function that runs on the Notte cloud.
 
 Functions are saved in the notte console for easy access and versioning for users.
-This is a wrapper around RemoteWorkflow that uses function_id terminology.
 
 ## Methods
 
@@ -55,7 +54,7 @@ This is a wrapper around RemoteWorkflow that uses function_id terminology.
       icon="function"
       href="/sdk-reference/nottefunction/delete"
     >
-      Delete the workflow from the notte console
+      Delete the function from the notte console
     </Card>
   </Visibility>
   <Visibility for="agents">
@@ -64,7 +63,7 @@ This is a wrapper around RemoteWorkflow that uses function_id terminology.
       icon="function"
       href="/sdk-reference/nottefunction/delete.md"
     >
-      Delete the workflow from the notte console
+      Delete the function from the notte console
     </Card>
   </Visibility>
   <Visibility for="humans">
@@ -109,7 +108,7 @@ This is a wrapper around RemoteWorkflow that uses function_id terminology.
       icon="function"
       href="/sdk-reference/nottefunction/get_curl"
     >
-      Convert the workflow/run to a curl request
+      Convert the function run to a curl request
     </Card>
   </Visibility>
   <Visibility for="agents">
@@ -118,7 +117,7 @@ This is a wrapper around RemoteWorkflow that uses function_id terminology.
       icon="function"
       href="/sdk-reference/nottefunction/get_curl.md"
     >
-      Convert the workflow/run to a curl request
+      Convert the function run to a curl request
     </Card>
   </Visibility>
   <Visibility for="humans">
@@ -163,7 +162,7 @@ This is a wrapper around RemoteWorkflow that uses function_id terminology.
       icon="function"
       href="/sdk-reference/nottefunction/replay"
     >
-      Get presigned URLs for the workflow run replay
+      Get presigned URLs for the function run replay
     </Card>
   </Visibility>
   <Visibility for="agents">
@@ -172,7 +171,7 @@ This is a wrapper around RemoteWorkflow that uses function_id terminology.
       icon="function"
       href="/sdk-reference/nottefunction/replay.md"
     >
-      Get presigned URLs for the workflow run replay
+      Get presigned URLs for the function run replay
     </Card>
   </Visibility>
   <Visibility for="humans">
@@ -181,7 +180,7 @@ This is a wrapper around RemoteWorkflow that uses function_id terminology.
       icon="function"
       href="/sdk-reference/nottefunction/run"
     >
-      Run the function code using the specified version and variables
+      Run the function on the Notte cloud using the specified variables
     </Card>
   </Visibility>
   <Visibility for="agents">
@@ -190,7 +189,7 @@ This is a wrapper around RemoteWorkflow that uses function_id terminology.
       icon="function"
       href="/sdk-reference/nottefunction/run.md"
     >
-      Run the function code using the specified version and variables
+      Run the function on the Notte cloud using the specified variables
     </Card>
   </Visibility>
   <Visibility for="humans">
@@ -217,7 +216,7 @@ This is a wrapper around RemoteWorkflow that uses function_id terminology.
       icon="function"
       href="/sdk-reference/nottefunction/update"
     >
-      Update the workflow with a new code version
+      Update the function with a new code version
     </Card>
   </Visibility>
   <Visibility for="agents">
@@ -226,7 +225,7 @@ This is a wrapper around RemoteWorkflow that uses function_id terminology.
       icon="function"
       href="/sdk-reference/nottefunction/update.md"
     >
-      Update the workflow with a new code version
+      Update the function with a new code version
     </Card>
   </Visibility>
 </CardGroup>
@@ -235,5 +234,5 @@ This is a wrapper around RemoteWorkflow that uses function_id terminology.
 
 <Info>
 **Module:** `notte_sdk.endpoints.functions`
-**Inheritance:** NotteFunction → RemoteWorkflow
+**Inheritance:** NotteFunction
 </Info>

@@ -27,6 +27,98 @@
   "seo.indexing": "all",
   "redirects": [
     {
+      "source": "/typescript-sdk-reference/manual/nottesearch",
+      "destination": "/typescript-sdk-reference/client/search"
+    },
+    {
+      "source": "/typescript-sdk-reference/nottesearch/search",
+      "destination": "/typescript-sdk-reference/client/search"
+    },
+    {
+      "source": "/integrations/mcp",
+      "destination": "/mcp-server"
+    },
+    {
+      "source": "/guides/vibe-coding",
+      "destination": "/mcp-server"
+    },
+    {
+      "source": "/guides/reliability",
+      "destination": "/concepts/sessions"
+    },
+    {
+      "source": "/products",
+      "destination": "/"
+    },
+    {
+      "source": "/product/anything-api",
+      "destination": "/concepts/anything"
+    },
+    {
+      "source": "/concepts/agents",
+      "destination": "/concepts/anything"
+    },
+    {
+      "source": "/concepts/bua",
+      "destination": "/concepts/anything"
+    },
+    {
+      "source": "/features/agents/hello",
+      "destination": "/concepts/anything"
+    },
+    {
+      "source": "/features/agents/configuration",
+      "destination": "/concepts/anything"
+    },
+    {
+      "source": "/features/agents/lifecycle",
+      "destination": "/concepts/anything"
+    },
+    {
+      "source": "/features/agents/replay",
+      "destination": "/features/sessions/recordings"
+    },
+    {
+      "source": "/features/agents/structured-output",
+      "destination": "/concepts/scraping"
+    },
+    {
+      "source": "/features/agents/fallback",
+      "destination": "/concepts/functions"
+    },
+    {
+      "source": "/features/agents/workflows",
+      "destination": "/concepts/functions"
+    },
+    {
+      "source": "/sdk-reference/manual/agent",
+      "destination": "/sdk-reference/notteclient"
+    },
+    {
+      "source": "/sdk-reference/manual/agent_fallback",
+      "destination": "/sdk-reference/notteclient"
+    },
+    {
+      "source": "/sdk-reference/manual/workflow",
+      "destination": "/sdk-reference/manual/function"
+    },
+    {
+      "source": "/sdk-reference/remoteagent/:slug*",
+      "destination": "/sdk-reference/notteclient"
+    },
+    {
+      "source": "/sdk-reference/remoteagentfallback/:slug*",
+      "destination": "/sdk-reference/notteclient"
+    },
+    {
+      "source": "/sdk-reference/agentsclient/:slug*",
+      "destination": "/sdk-reference/notteclient"
+    },
+    {
+      "source": "/sdk-reference/remoteworkflow/:slug*",
+      "destination": "/sdk-reference/manual/function"
+    },
+    {
       "source": "/features/sessions/browser-types",
       "destination": "/features/sessions/configuration"
     },
@@ -49,14 +141,6 @@
     {
       "source": "/features/sessions/selenium",
       "destination": "/features/sessions/playwright"
-    },
-    {
-      "source": "/features/agents/hello",
-      "destination": "/features/sessions/external-providers"
-    },
-    {
-      "source": "/concepts/bua",
-      "destination": "/concepts/agents"
     },
     {
       "source": "/zin",
@@ -115,38 +199,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/typescript-sdk-reference/manual/nottesearch",
-      "destination": "/typescript-sdk-reference/client/search"
-    },
-    {
-      "source": "/typescript-sdk-reference/nottesearch/search",
-      "destination": "/typescript-sdk-reference/client/search"
-    },
-    {
-      "source": "/integrations/mcp",
-      "destination": "/mcp-server"
-    },
-    {
-      "source": "/guides/vibe-coding",
-      "destination": "/mcp-server"
-    },
-    {
-      "source": "/guides/reliability",
-      "destination": "/concepts/sessions"
-    },
-    {
-      "source": "/products",
-      "destination": "/"
-    },
-    {
-      "source": "/product/anything-api",
-      "destination": "/concepts/anything"
-    },
-    {
-      "source": "/sdk-reference/manual/workflow",
-      "destination": "/sdk-reference/manual/function"
-    },
-    {
       "source": "/guides/scraping",
       "destination": "/concepts/scraping"
     },
@@ -157,10 +209,6 @@
     {
       "source": "/sdk-reference/misc/rootmodel",
       "destination": "https://docs.pydantic.dev/latest/api/root_model/"
-    },
-    {
-      "source": "/sdk-reference/misc/agentsclient",
-      "destination": "/sdk-reference/manual/agent"
     },
     {
       "source": "/sdk-reference/nottepersona/start",
@@ -177,98 +225,6 @@
     {
       "source": "/sdk-reference/nottevault/stop",
       "destination": "/sdk-reference/manual/vault"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/request_download",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/list",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/watch_logs_and_wait",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/is_custom_endpoint_available",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/create_function",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/function_code",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/index",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/run_custom",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/stop",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/headers",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/health_check",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/wait",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/start",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/async_watch_logs",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/check_and_warn_version_mismatch",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/request_list",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/watch_logs",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/request_path",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/status",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/async_watch_logs_and_wait",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/request",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/__init__",
-      "destination": "/sdk-reference/manual/agent"
-    },
-    {
-      "source": "/sdk-reference/agentsclient/run",
-      "destination": "/sdk-reference/manual/agent"
     },
     {
       "source": "/api-reference/using-session-replay",
@@ -342,19 +298,6 @@
             ]
           },
           {
-            "group": "Agents",
-            "icon": "robot",
-            "pages": [
-              "concepts/agents",
-              "features/agents/lifecycle",
-              "features/agents/configuration",
-              "features/agents/structured-output",
-              "features/agents/workflows",
-              "features/agents/fallback",
-              "features/agents/replay"
-            ]
-          },
-          {
             "group": "Functions",
             "icon": "/logo/square-function.svg",
             "pages": [
@@ -379,9 +322,7 @@
             "icon": "book-open",
             "pages": [
               "guides/stealth",
-              "guides/account_creation",
-              "guides/web_automation_tips",
-              "guides/okta_mfa"
+              "guides/account_creation"
             ]
           }
         ]
@@ -504,9 +445,7 @@
                       "sdk-reference/remotesession/viewer_browser",
                       "sdk-reference/remotesession/viewer_cdp",
                       "sdk-reference/remotesession/viewer",
-                      "sdk-reference/remotesession/status",
-                      "sdk-reference/remotesession/evaluate_js",
-                      "sdk-reference/remotesession/wait_for_auth"
+                      "sdk-reference/remotesession/status"
                     ]
                   },
                   {
@@ -539,20 +478,6 @@
                     ]
                   },
                   {
-                    "group": "Agent",
-                    "collapsed": true,
-                    "pages": [
-                      "sdk-reference/manual/agent",
-                      "sdk-reference/remoteagent/run",
-                      "sdk-reference/remoteagent/start",
-                      "sdk-reference/remoteagent/stop",
-                      "sdk-reference/remoteagent/status",
-                      "sdk-reference/remoteagent/wait",
-                      "sdk-reference/remoteagent/watch_logs_and_wait",
-                      "sdk-reference/manual/agent_fallback"
-                    ]
-                  },
-                  {
                     "group": "Function",
                     "collapsed": true,
                     "pages": [
@@ -563,10 +488,7 @@
                       "sdk-reference/nottefunction/delete",
                       "sdk-reference/nottefunction/download",
                       "sdk-reference/nottefunction/fork",
-                      "sdk-reference/nottefunction/get_curl",
-                      "sdk-reference/nottefunction/get_run",
-                      "sdk-reference/nottefunction/get_url",
-                      "sdk-reference/nottefunction/stop_run"
+                      "sdk-reference/nottefunction/get_curl"
                     ]
                   }
                 ]
@@ -606,8 +528,8 @@
                       "sdk-reference/manual/file_storage",
                       "sdk-reference/remotefilestorage/download",
                       "sdk-reference/remotefilestorage/upload",
-                      "sdk-reference/remotefilestorage/list",
-                      "sdk-reference/remotefilestorage/delete"
+                      "sdk-reference/remotefilestorage/list_downloaded_files",
+                      "sdk-reference/remotefilestorage/list_uploaded_files"
                     ]
                   }
                 ]
@@ -699,19 +621,6 @@
                       "typescript-sdk-reference/types/smsreadaction",
                       "typescript-sdk-reference/types/emailreadaction",
                       "typescript-sdk-reference/types/emailverificationreadaction"
-                    ]
-                  },
-                  {
-                    "group": "Agent",
-                    "collapsed": true,
-                    "pages": [
-                      "typescript-sdk-reference/manual/agent",
-                      "typescript-sdk-reference/agent/run",
-                      "typescript-sdk-reference/agent/start",
-                      "typescript-sdk-reference/agent/stop",
-                      "typescript-sdk-reference/agent/status",
-                      "typescript-sdk-reference/agent/hasstarted",
-                      "typescript-sdk-reference/agent/isactive"
                     ]
                   },
                   {
@@ -822,8 +731,8 @@
                     "group": "API Resources",
                     "collapsed": true,
                     "pages": [
+                      "typescript-sdk-reference/resources/files",
                       "typescript-sdk-reference/resources/sessions",
-                      "typescript-sdk-reference/resources/agents",
                       "typescript-sdk-reference/resources/vaults",
                       "typescript-sdk-reference/resources/functions",
                       "typescript-sdk-reference/resources/personas",

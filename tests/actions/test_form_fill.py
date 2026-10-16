@@ -48,7 +48,7 @@ async def test_form_fill(checkout_file: str):
 
         res = await session.aexecute(WaitAction(time_ms=100))
         assert res.success
-        _ = await session.aobserve(perception_type="fast")
+        _ = await session.aobserve()
 
         values = {
             "first_name": "John",
@@ -80,3 +80,29 @@ async def test_form_fill(checkout_file: str):
             else:
                 input_value = await value.input_value()
                 assert input_value == values[key], f"Value for {key} should be {values[key]}, got {input_value}"
+
+
+@pytest.mark.asyncio
+async def test_form_fill_fails_when_no_field_is_filled():
+    async with notte.Session(headless=True) as session:
+        await session.window.page.set_content("<html><body><p>No form on this page</p></body></html>")
+
+        res = await session.aexecute(
+            FormFillAction(value={"email": "john.doe@example.com", "city": "Cambridge"}), raise_on_failure=False
+        )
+
+        assert not res.success
+        assert res.message is not None and "no form field could be filled" in res.message
+
+
+@pytest.mark.asyncio
+async def test_form_fill_finds_field_through_aria_labelledby():
+    async with notte.Session(headless=True) as session:
+        await session.window.page.set_content(
+            '<html><body><div><label id="lbl-city">City</label></div><div><input aria-labelledby="lbl-city"></div></body></html>'
+        )
+
+        res = await session.aexecute(FormFillAction(value={"city": "Cambridge"}), raise_on_failure=True)
+
+        assert res.success
+        assert await session.window.page.locator("input").input_value() == "Cambridge"

@@ -9,7 +9,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/encryption.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/encryption.ts)
 
-Decrypts the tokens produced by `notte_core.utils.encryption.Encryption`.
+Decrypts the tokens produced by the backend’s Fernet encryption helper.
 
 A token is `base64url(salt || fernet_token)`. The Fernet key is derived from
 the root key with PBKDF2-HMAC-SHA256 (100k iterations) over that salt, and the

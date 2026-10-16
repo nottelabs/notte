@@ -56,8 +56,8 @@ to respect staging quotas. This migration intentionally preserves existing tests
 and their failures. Some legacy tests still require `NOTTE_PERSONA_ID` or
 `NOTTE_SESSION_ID`; missing fixtures and stale SDK assumptions
 are tracked in [the integration backlog](INTEGRATION_BACKLOG.md), not hidden by
-new passing assertions. The account needs session, function, vault, persona, and
-agent permissions with sufficient quotas.
+new passing assertions. The account needs session, function, vault, and
+persona permissions with sufficient quotas.
 
 The separate paired-documentation workflow enables `docs-snippets.integration.test.ts`
 with `NOTTE_DOCS_LIVE=1`; it requires the Python documentation test environment.

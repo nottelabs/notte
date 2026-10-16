@@ -14,6 +14,7 @@ const GENERATED_DIR = path.join(__dirname, '../src/lib/client');
 const GENERATED_FILES = [
 	'index.ts',
 	'client.gen.ts',
+	'client/client.gen.ts',
 	'sdk.gen.ts',
 	'types.gen.ts',
 ];
@@ -39,6 +40,17 @@ function normalizeFile(filePath) {
 	// its ClientOptions URL literal on production, matching the SDK default.
 	if (['client.gen.ts', 'types.gen.ts'].includes(path.basename(filePath))) {
 		content = content.replace(/baseUrl: '[^']*'/g, "baseUrl: 'https://api.notte.cc'");
+	}
+
+	// The SSE client copies opts before onRequest runs. Resolve fetch lazily so
+	// the SDK's request interceptor can install its cancellation adapter.
+	if (filePath === path.join(GENERATED_DIR, 'client/client.gen.ts')) {
+		const marker = '    return createSseClient({\n      ...opts,';
+		const adapter = '      // Request interceptors can replace fetch when the stream starts.\n      fetch: (input, init) => {\n        const transport = opts.fetch!;\n        return transport(input, init);\n      },';
+		if (!content.includes(adapter)) {
+			if (!content.includes(marker)) throw new Error(`SSE client structure changed in ${filePath}`);
+			content = content.replace(marker, `${marker}\n${adapter}`);
+		}
 	}
 
 	// Ensure file ends with exactly one newline
