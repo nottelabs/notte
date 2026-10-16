@@ -19,6 +19,33 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   // Audit-events endpoints
   /^audit-events$/, // /audit-events
 
+  // Data endpoints
+  /^data$/, // /data
+  /^data\/brand\/retrieve$/, // /data/brand/retrieve
+  /^data\/maps\/search$/, // /data/maps/search
+  /^data\/monitors$/, // /data/monitors
+  /^data\/monitors\/[^\/]+$/, // /data/monitors/{monitor_id}
+  /^data\/monitors\/[^\/]+\/changes$/, // /data/monitors/{monitor_id}/changes
+  /^data\/monitors\/[^\/]+\/changes\/[^\/]+$/, // /data/monitors/{monitor_id}/changes/{change_id}
+  /^data\/monitors\/[^\/]+\/run$/, // /data/monitors/{monitor_id}/run
+  /^data\/monitors\/[^\/]+\/runs$/, // /data/monitors/{monitor_id}/runs
+  /^data\/monitors\/[^\/]+\/runs\/[^\/]+$/, // /data/monitors/{monitor_id}/runs/{run_id}
+  /^data\/monitors\/[^\/]+\/webhook\/rotate-secret$/, // /data/monitors/{monitor_id}/webhook/rotate-secret
+  /^data\/monitors\/changes$/, // /data/monitors/changes
+  /^data\/monitors\/credit-usage$/, // /data/monitors/credit-usage
+  /^data\/monitors\/limits$/, // /data/monitors/limits
+  /^data\/monitors\/runs$/, // /data/monitors/runs
+  /^data\/news\/search$/, // /data/news/search
+  /^data\/people\/enrich$/, // /data/people/enrich
+  /^data\/products\/extract$/, // /data/products/extract
+  /^data\/web\/scrape$/, // /data/web/scrape
+  /^data\/web\/styleguide$/, // /data/web/styleguide
+  /^data\/webhooks\/deliveries$/, // /data/webhooks/deliveries
+  /^data\/webhooks\/deliveries\/[^\/]+$/, // /data/webhooks/deliveries/{delivery_id}
+  /^data\/webhooks\/deliveries\/[^\/]+\/attempts$/, // /data/webhooks/deliveries/{delivery_id}/attempts
+  /^data\/webhooks\/deliveries\/[^\/]+\/retry$/, // /data/webhooks/deliveries/{delivery_id}/retry
+  /^data\/youtube\/extract$/, // /data/youtube/extract
+
   // Functions endpoints
   /^functions$/, // /functions
   /^functions\/[^\/]+$/, // /functions/{function_id}
