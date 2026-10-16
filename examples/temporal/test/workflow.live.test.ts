@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { setTimeout as delay } from 'node:timers/promises';
 import { test } from 'node:test';
 import { activityInfo } from '@temporalio/activity';
 import { WorkflowFailedError } from '@temporalio/client';
@@ -56,11 +57,18 @@ test('Temporal runs Notte browser activities', {
     try {
       const client = new NotteClient();
       for (const sessionId of sessions) {
-        const response = await sessionStatus({
-          client: client.getClient(), path: { session_id: sessionId }, throwOnError: true,
-          signal: AbortSignal.timeout(15_000),
-        });
-        assert.equal(response.data.status, 'closed', `Activity leaked session ${sessionId}`);
+        // Stop acknowledges closure before the terminal status is persisted.
+        const deadline = Date.now() + 15_000;
+        const signal = AbortSignal.timeout(15_000);
+        while (true) {
+          const response = await sessionStatus({
+            client: client.getClient(), path: { session_id: sessionId }, throwOnError: true, signal,
+          });
+          if (response.data.status === 'closed') break;
+          assert.equal(response.data.status, 'active', `Unexpected session status for ${sessionId}`);
+          assert.ok(Date.now() < deadline, `Activity leaked session ${sessionId}`);
+          await delay(Math.min(500, deadline - Date.now()), undefined, { signal });
+        }
       }
     } finally {
       await env.teardown();

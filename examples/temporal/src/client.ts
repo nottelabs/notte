@@ -8,7 +8,7 @@ async function main() {
     const client = new Client({ connection, namespace: process.env.TEMPORAL_NAMESPACE ?? 'default' });
     const result = await client.workflow.execute(readNottePage, {
       args: ['https://example.com'], taskQueue: 'notte-browser', workflowId: `notte-${randomUUID()}`,
-      workflowExecutionTimeout: '10 minutes',
+      workflowExecutionTimeout: '15 minutes',
     });
     console.log(JSON.stringify(result));
   } finally {
