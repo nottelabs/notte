@@ -74,4 +74,4 @@ jobs:
           api-url: https://us-staging.notte.cc
           timeout: '300'
       - name: Check an owned application profile without a live Terraform apply
-        run: go test -run '^TestLiveProfileWire$' -v .
+        run: go test -count=1 -run '^TestLiveProfileWire$' -v .

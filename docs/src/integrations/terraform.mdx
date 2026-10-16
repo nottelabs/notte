@@ -16,4 +16,4 @@ Set `NOTTE_API_KEY` and use the included `notte_profile` configuration. Review t
 
 Changing a profile's name replaces it and removes its saved browser state. Use `lifecycle.prevent_destroy` when you need to protect an important profile. Cookies and browser storage are managed by your browser automation and are not stored as Terraform resource attributes.
 
-The provider manages profiles only. Project and browser-pool resources and profile metadata updates are unsupported. Tests exercise the real Terraform CLI against a local API fixture and independently verify an owned Notte profile's API lifecycle.
+The provider manages profiles only. Project and browser-pool resources and profile metadata updates are unsupported. Tests cover the native CLI against a local API fixture and real apply, refresh, and destroy against Notte's development API, with profile removal independently verified.
