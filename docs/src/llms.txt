@@ -101,6 +101,10 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte browser agents inside n8n workflows
 - [Temporal](https://docs.notte.cc/integrations/temporal.md): Run durable browser tasks with Temporal and Notte.
 
+## File Storage
+
+- [Box](https://docs.notte.cc/integrations/box.md): Store hosted browser captures in Box.
+
 ## Email
 
 - [AgentMail](https://docs.notte.cc/integrations/agentmail.md): Give Notte personas an AgentMail inbox for sign-ups and verification emails
