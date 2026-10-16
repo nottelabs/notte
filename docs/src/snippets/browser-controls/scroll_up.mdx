@@ -12,7 +12,9 @@ with client.Session() as session:
     # Create a page tall enough to scroll.
     session.evaluate_js("document.body.innerHTML = '<main style=\"height:300vh\">Scroll demo</main>'")
     session.execute(type="scroll_down", selector="html")
+    print("Moved down: " + session.evaluate_js("String(window.scrollY > 0)"))
     session.execute(type="scroll_up", selector="html")
+    print("Returned to top: " + session.evaluate_js("String(window.scrollY === 0)"))
 ```
 
 ```typescript scroll_up.ts
@@ -25,7 +27,9 @@ await session.use(async () => {
   // Create a page tall enough to scroll.
   await session.evaluateJs("document.body.innerHTML = '<main style=\"height:300vh\">Scroll demo</main>'");
   await session.execute({ type: "scroll_down", selector: "html" });
+  console.log("Moved down: " + await session.evaluateJs("String(window.scrollY > 0)"));
   await session.execute({ type: "scroll_up", selector: "html" });
+  console.log("Returned to top: " + await session.evaluateJs("String(window.scrollY === 0)"));
 });
 ```
 
