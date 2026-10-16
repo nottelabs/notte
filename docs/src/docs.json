@@ -368,7 +368,8 @@
             "icon": "diagram-project",
             "pages": [
               "integrations/n8n",
-              "integrations/temporal"
+              "integrations/temporal",
+              "integrations/pipedream"
             ]
           },
           {
