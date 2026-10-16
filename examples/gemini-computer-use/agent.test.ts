@@ -61,7 +61,7 @@ test('Provider failure closes the browser and sanitizes the error', { skip: !liv
   const original = globalThis.fetch, key = process.env.GEMINI_API_KEY;
   const ids: string[] = [];
   let providerCalls = 0;
-  process.env.GEMINI_API_KEY = 'integration-test-not-a-real-key';
+  process.env.GEMINI_API_KEY = 'integration-test-not-a-real-key'; // pragma: allowlist secret
   globalThis.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     if (new URL(url).hostname === 'generativelanguage.googleapis.com') {

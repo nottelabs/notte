@@ -94,7 +94,7 @@ class ComputerUseTests(unittest.IsolatedAsyncioTestCase):
             patch.object(client.sessions, "start", side_effect=start),
             patch.object(agent, "NotteClient", return_value=client),
             patch.object(agent.genai, "Client", return_value=SimpleNamespace(aio=ProviderFailure())),
-            patch.dict(os.environ, {"GEMINI_API_KEY": "integration-test-not-a-real-key"}),
+            patch.dict(os.environ, {"GEMINI_API_KEY": "integration-test-not-a-real-key"}),  # pragma: allowlist secret
         ):
             with self.assertRaisesRegex(RuntimeError, "^Gemini computer task failed$"):
                 await agent.run("Read the page title")
