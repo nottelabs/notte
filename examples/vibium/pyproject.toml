@@ -1,0 +1,10 @@
+[project]
+name = "notte-vibium-example"
+version = "0.0.0"
+requires-python = ">=3.11"
+dependencies = ["notte-sdk==1.9.7", "vibium==26.8.21", "httpx==0.28.1", "websockets>=16.1.1,<18"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]

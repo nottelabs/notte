@@ -1,0 +1,21 @@
+---
+title: Vibium
+description: Use native Vibium clients with a Notte browser.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+<Note>
+This integration is in preparation. Hosted availability has not been verified. It requires a Notte environment with native BiDi attachment support.
+</Note>
+
+Use [Vibium](https://github.com/VibiumDev/vibium) with a browser owned by Notte. The original Python and TypeScript recipes in [examples/vibium](https://github.com/nottelabs/notte/tree/main/examples/vibium) connect local ChromeDriver to Notte's authenticated CDP connection through a loopback discovery adapter. Vibium then uses ChromeDriver's native BiDi endpoint.
+
+## Set up
+
+Use Linux or macOS, Python 3.11+ or Node.js 24+, a [Notte API key](https://console.notte.cc/api-keys), and [ChromeDriver](https://googlechromelabs.github.io/chrome-for-testing/) matching the hosted browser's major version. No local Chrome installation is needed.
+
+Clone the Notte repository and open `examples/vibium`. Set `NOTTE_API_KEY` and `CHROMEDRIVER_PATH`. For Python, run `uv sync --locked` followed by `uv run --no-sync python demo.py`. For TypeScript, run `npm ci` followed by `npm start`.
+
+The recipes read Example Domain, save `screenshot.png`, reconnect, and stop the session. Keep your native Vibium commands inside the supplied owner context so the Notte session also closes after failures or cancellation.

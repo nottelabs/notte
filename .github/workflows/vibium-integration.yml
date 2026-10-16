@@ -1,0 +1,140 @@
+name: Vibium integration
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/vibium-integration.yml
+      - examples/vibium/**
+      - docs/src/integrations/vibium.mdx
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - node-sdk/**
+      - uv.lock
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/vibium-integration.yml
+      - examples/vibium/**
+      - docs/src/integrations/vibium.mdx
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - node-sdk/**
+      - uv.lock
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: Notte environment with deployed native BiDi attachment support
+        type: choice
+        options:
+          - https://us-staging.notte.cc
+          - https://api.notte.cc
+        default: https://us-staging.notte.cc
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [published, source]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+          python-version: '3.11'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - run: uv sync --locked && npm ci
+        working-directory: examples/vibium
+      - if: matrix.sdk == 'source'
+        run: |
+          uv sync --locked --package notte-sdk --no-dev
+          uv pip install --python .venv/bin/python vibium==26.8.21 httpx==0.28.1
+          npm ci --prefix node-sdk
+          npm run build --prefix node-sdk
+          cd examples/vibium
+          npm install --no-save --package-lock=false ../../node-sdk
+      - name: Install isolated native test browser and driver
+        run: |
+          curl -fsS --retry 3 https://storage.googleapis.com/chrome-for-testing-public/150.0.7871.124/linux64/chrome-linux64.zip -o "$RUNNER_TEMP/chrome.zip"
+          curl -fsS --retry 3 https://storage.googleapis.com/chrome-for-testing-public/150.0.7871.124/linux64/chromedriver-linux64.zip -o "$RUNNER_TEMP/driver.zip"
+          echo "a02216d56e594eecaa3d324de65517d130171c2ca09514320519c820cf400ae0  $RUNNER_TEMP/driver.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/chrome.zip" -d "$RUNNER_TEMP/native"
+          unzip -q "$RUNNER_TEMP/driver.zip" -d "$RUNNER_TEMP/native"
+          test -x "$RUNNER_TEMP/native/chrome-linux64/chrome"
+          test -x "$RUNNER_TEMP/native/chromedriver-linux64/chromedriver"
+          echo "VIBIUM_TEST_CHROME=$RUNNER_TEMP/native/chrome-linux64/chrome" >> "$GITHUB_ENV"
+          echo "CHROMEDRIVER_PATH=$RUNNER_TEMP/native/chromedriver-linux64/chromedriver" >> "$GITHUB_ENV"
+      - name: Verify original transports, native actions, PNG, reconnect, and cleanup
+        env:
+          EXAMPLE_PYTHON: ${{ github.workspace }}/${{ matrix.sdk == 'source' && '.venv' || 'examples/vibium/.venv' }}/bin/python
+        run: |
+          npm run typecheck
+          npm test
+          "$EXAMPLE_PYTHON" -m unittest -v test_bridge test_cleanup test_native
+        working-directory: examples/vibium
+  hosted:
+    if: github.event_name == 'workflow_dispatch' && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [published, source]
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+          python-version: '3.11'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - run: uv sync --locked && npm ci
+        working-directory: examples/vibium
+      - if: matrix.sdk == 'source'
+        run: |
+          uv sync --locked --package notte-sdk --no-dev
+          uv pip install --python .venv/bin/python vibium==26.8.21 httpx==0.28.1
+          npm ci --prefix node-sdk
+          npm run build --prefix node-sdk
+          cd examples/vibium
+          npm install --no-save --package-lock=false ../../node-sdk
+      - name: Install only the matching driver
+        run: |
+          curl -fsS --retry 3 https://storage.googleapis.com/chrome-for-testing-public/150.0.7871.124/linux64/chromedriver-linux64.zip -o "$RUNNER_TEMP/driver.zip"
+          echo "a02216d56e594eecaa3d324de65517d130171c2ca09514320519c820cf400ae0  $RUNNER_TEMP/driver.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/driver.zip" -d "$RUNNER_TEMP/native"
+          echo "CHROMEDRIVER_PATH=$RUNNER_TEMP/native/chromedriver-linux64/chromedriver" >> "$GITHUB_ENV"
+      - name: Verify actual owned Notte attachment and independent API closure
+        env:
+          NOTTE_API_URL: ${{ inputs.api_url }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+          NOTTE_VIBIUM_LIVE: '1'
+          VIBIUM_OWNERSHIP_JOURNAL: ${{ runner.temp }}/vibium-owned.jsonl
+          EXAMPLE_PYTHON: ${{ github.workspace }}/${{ matrix.sdk == 'source' && '.venv' || 'examples/vibium/.venv' }}/bin/python
+        run: |
+          test -n "$NOTTE_API_KEY" || { echo 'Set the Notte CI API key'; exit 1; }
+          "$EXAMPLE_PYTHON" -m unittest -v test_live test_cli
+          npm run test:live
+        working-directory: examples/vibium
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: vibium-owned-${{ matrix.sdk }}
+          path: ${{ runner.temp }}/vibium-owned.jsonl
+          if-no-files-found: ignore
