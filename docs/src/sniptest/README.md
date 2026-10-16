@@ -48,6 +48,18 @@ python docs/src/sniptest/generate.py --check
 ```
 
 Executable TypeScript examples compile against the built local package's public declarations.
+Run `npm ci --prefix docs` to install the pinned third-party integration SDKs.
+Integration pairs may use `typecheck_only=true` in both files when they need
+separate provider credentials. They retain full type checking; their end-to-end
+smoke tests run separately from the shared staging examples.
+
+Stagehand's opt-in smoke suite executes both published recipes unchanged and
+checks the extracted heading and closed session state. Install `stagehand==4.2.1`
+in the Python environment and run `npm ci --prefix docs` and the SDK build first.
+Set `NOTTE_API_KEY`, `ANTHROPIC_API_KEY`, `NOTTE_API_URL` to the target environment,
+and `NOTTE_DOCS_PYTHON` to the Python executable. From `node-sdk`, run
+`NOTTE_STAGEHAND_LIVE=1 VITEST_INTEGRATION=1 npx vitest run test/stagehand.integration.test.ts`.
+This creates two billed sessions and makes model calls.
 Extracted TypeScript scripts and fragments awaiting fixtures receive syntax checks,
 not a misleading claim of full type or live validation. Every catalog Python source
 is syntax-checked, shell commands pass `bash -n`, and JSON responses are parsed.

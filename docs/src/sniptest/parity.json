@@ -229,7 +229,6 @@
     "integrations/mcp/crewai.py",
     "integrations/mcp/google_adk.py",
     "integrations/mcp/langchain.py",
-    "integrations/stagehand_connect.py",
     "integrations/steel/complete.py",
     "integrations/steel/connect.py",
     "integrations/steel/init.py",
