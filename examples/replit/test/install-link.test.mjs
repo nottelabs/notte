@@ -13,5 +13,5 @@ test('install link uses the official Replit shape and contains no authentication
 
 test('the guide uses the current generated install link', async () => {
   const guide = await readFile(new URL('../../../docs/src/integrations/replit.mdx', import.meta.url), 'utf8');
-  assert.ok(guide.includes(`href="${await installLink()}"`));
+  assert.ok(guide.includes(`](${await installLink()})`));
 });
