@@ -7,9 +7,29 @@ import os
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import Any, Literal, cast
 
+import litellm
 from json_repair import repair_json
+from litellm import (
+    AllMessageValues,
+    ChatCompletionUserMessage,
+)
+from litellm.exceptions import (
+    APIConnectionError,
+    APIError,
+    AuthenticationError,
+    BadRequestError,
+    InternalServerError,
+    NotFoundError,
+    RateLimitError,
+    ServiceUnavailableError,
+    Timeout,
+)
+from litellm.exceptions import (
+    ContextWindowExceededError as LiteLLMContextWindowExceededError,
+)
+from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTypeStubs]
 from notte_core.common.config import LlmModel, config, enable_openrouter
 from notte_core.common.logging import logger
 from notte_core.errors.base import NotteBaseError
@@ -30,15 +50,8 @@ from notte_core.profiling import profiler
 from pydantic import BaseModel, ValidationError, create_model
 
 from notte_llm.logging import trace_llm_usage
+from notte_llm.tracer import LlmTracer, LlmUsageFileTracer
 from notte_llm.types import TResponseFormat
-
-# litellm (and the provider SDKs it pulls in) is imported on the first LLM call, not with this
-# module: importing it takes seconds and over 100 MiB, which browser-only sessions never need.
-if TYPE_CHECKING:
-    from litellm import AllMessageValues
-    from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTypeStubs]
-
-    from notte_llm.tracer import LlmTracer
 
 
 def _resolve_schema_refs(schema: dict[str, Any]) -> dict[str, Any]:
@@ -170,8 +183,6 @@ def get_vertex_location(model: str) -> str | None:
     """
     if not model.lower().startswith("vertex_ai/gemini"):
         return None
-    import litellm
-
     return litellm.vertex_location or os.getenv("VERTEXAI_LOCATION") or os.getenv("VERTEX_LOCATION") or "global"
 
 
@@ -354,18 +365,7 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
 
 # Provider errors that usually clear on their own (overloaded model, rate limit, dropped
 # connection, timeout). completion() retries them after these delays before giving up.
-def _transient_llm_errors() -> tuple[type[Exception], ...]:
-    from litellm.exceptions import (
-        APIConnectionError,
-        InternalServerError,
-        RateLimitError,
-        ServiceUnavailableError,
-        Timeout,
-    )
-
-    return (ServiceUnavailableError, InternalServerError, APIConnectionError, RateLimitError, Timeout)
-
-
+_TRANSIENT_LLM_ERRORS = (ServiceUnavailableError, InternalServerError, APIConnectionError, RateLimitError, Timeout)
 _TRANSIENT_RETRY_DELAYS_SECONDS = (2.0, 5.0)
 
 # OpenRouter tries these, in order, when the requested model errors (for example a 503 while it
@@ -387,8 +387,6 @@ class LLMEngine:
         self.sc: StructuredContent = StructuredContent(inner_tag="json", fail_if_inner_tag=False)
 
         if tracer is None:
-            from notte_llm.tracer import LlmUsageFileTracer
-
             tracer = LlmUsageFileTracer()
 
         self.tracer: LlmTracer = tracer
@@ -407,8 +405,6 @@ class LLMEngine:
         model: str | None = None,
         use_strict_response_format: bool = True,
     ) -> TResponseFormat:
-        from litellm import ChatCompletionUserMessage
-
         tries = self.nb_retries_structured_output + 1
         content = None
         effective_model = model or self.model
@@ -625,19 +621,6 @@ class LLMEngine:
         response_format: dict[str, str] | type[BaseModel] | None = None,
         n: int = 1,
     ) -> ModelResponse:
-        import litellm
-        from litellm.exceptions import (
-            APIError,
-            AuthenticationError,
-            BadRequestError,
-            NotFoundError,
-            RateLimitError,
-            Timeout,
-        )
-        from litellm.exceptions import (
-            ContextWindowExceededError as LiteLLMContextWindowExceededError,
-        )
-
         extra_body = self._get_extra_body(model)
         model = self._get_model(model)
         # Apply model-specific temperature overrides
@@ -667,8 +650,8 @@ class LLMEngine:
                         **extra_kwargs,
                     )
                     # Cast to ModelResponse since we know it's not streaming in this case
-                    return cast("ModelResponse", response)
-                except _transient_llm_errors() as e:
+                    return cast(ModelResponse, response)
+                except _TRANSIENT_LLM_ERRORS as e:
                     if retry_delay is None:
                         raise
                     logger.warning(
