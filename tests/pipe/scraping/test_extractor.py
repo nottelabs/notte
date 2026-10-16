@@ -55,8 +55,8 @@ def test_recording_extractor_satisfies_protocol() -> None:
 
 
 def test_scrape_params_accepts_model() -> None:
-    params = ScrapeParams(instructions="extract", model="google/gemini-3.5-flash")
-    assert params.model == "google/gemini-3.5-flash"
+    params = ScrapeParams(instructions="extract", model="vertex_ai/gemini-3.5-flash")
+    assert params.model == "vertex_ai/gemini-3.5-flash"
     assert ScrapeParams(instructions="extract").model is None
 
 
