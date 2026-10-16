@@ -52,6 +52,7 @@ WORKFLOWS = {
 }
 INTEGRATION_WORKFLOWS = {
     "agent-browser-integration.yml",
+    "agentcard-integration.yml",
     "anthropic-computer-use-integration.yml",
     "box-integration.yml",
     "braintrust-integration.yml",
@@ -63,9 +64,11 @@ INTEGRATION_WORKFLOWS = {
     "mongodb-integration.yml",
     "onepassword-integration.yml",
     "openai-agents-integration.yml",
+    "openai-computer-use-integration.yml",
     "selenium-integration.yml",
     "temporal-integration.yml",
     "trigger-integration.yml",
+    "valtown-integration.yml",
 }
 
 
