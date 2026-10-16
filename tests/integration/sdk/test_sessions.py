@@ -90,7 +90,8 @@ def test_scroll_moves_the_hosted_page_and_returns_to_start():
                 route.abort()
 
         page.route("**/*", serve_fixture)
-        _ = session.execute(type="goto", url=fixture_url, wait_until="domcontentloaded")
+        # Keep the synchronous Playwright event loop running for route callbacks.
+        _ = page.goto(fixture_url, wait_until="domcontentloaded")
         assert page.evaluate("document.scrollingElement.scrollHeight > window.innerHeight")
 
         for selector in (None, "html"):

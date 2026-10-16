@@ -128,7 +128,7 @@ describe('Session Integration Tests', () => {
             await route.abort();
           }
         });
-        await session.execute(actions.goto({ url: fixtureUrl, wait_until: 'domcontentloaded' }));
+        await page.goto(fixtureUrl, { waitUntil: 'domcontentloaded' });
         expect(await page.evaluate(() => document.scrollingElement!.scrollHeight > window.innerHeight)).toBe(true);
 
         for (const selector of [undefined, 'html']) {
