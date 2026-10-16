@@ -36,3 +36,5 @@ npm run test:live
 ```
 
 Set `NOTTE_LAMINAR_EXPORT_LIVE=1` as well to verify that the actual Laminar service stores each language's trace. This needs `LMNR_PROJECT_API_KEY` and reads back the exported span through Laminar's SQL API.
+
+Without either opt-in, the same behavior tests use fake browser sessions and local traces. They require no credentials or network access.

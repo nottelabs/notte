@@ -1,21 +1,50 @@
 import assert from 'node:assert/strict';
-import { after, test } from 'node:test';
+import { after, mock, test } from 'node:test';
+import { randomUUID } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { Laminar } from '@lmnr-ai/lmnr';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NotteClient, sessionStatus } from 'notte-sdk';
+import { chromium } from 'playwright-core';
 import { readPage } from '../src/index.ts';
 
 const live = process.env.NOTTE_LAMINAR_LIVE === '1';
+const fakeCredential = 'notte-offline-test-credential'; // pragma: allowlist secret
+if (!live) process.env.NOTTE_API_KEY = fakeCredential;
 const exporter = new InMemorySpanExporter();
-if (live) {
-  Laminar.initialize({
+Laminar.initialize({
     projectApiKey: 'integration-test-not-a-real-key', // pragma: allowlist secret
     instrumentModules: {}, spanProcessor: new SimpleSpanProcessor(exporter),
-  });
-  after(async () => { await Laminar.shutdown(); });
+});
+after(async () => { await Laminar.shutdown(); });
+
+async function offlineOwned<T>(operation: () => Promise<T>) {
+  const id = randomUUID();
+  let stopped = false, disconnected = false;
+  const page = {
+    title: async () => 'Example Domain',
+    goto: async (url: string) => {
+      if (url === 'http://127.0.0.1:1') throw new Error(`Browser error containing ${fakeCredential}`);
+    },
+  };
+  const browser = { contexts: () => [{ newPage: async () => page }], close: async () => { disconnected = true; } };
+  const session = { getId: () => id, cdpUrl: async () => `wss://example.invalid?api_key=${fakeCredential}` };
+  const sessionMock = mock.method(NotteClient.prototype, 'Session', (() => ({
+    use: async (run: (value: typeof session) => Promise<T>) => {
+      try { return await run(session); }
+      finally { stopped = true; }
+    },
+  })) as never);
+  const connectionMock = mock.method(chromium, 'connectOverCDP', (async () => browser) as never);
+  try { return { result: await operation(), ids: [id] }; }
+  finally {
+    sessionMock.mock.restore();
+    connectionMock.mock.restore();
+    assert.ok(stopped, 'The owned session was not stopped');
+    assert.ok(disconnected, 'The browser was not disconnected');
+  }
 }
 
 async function closed(id: string) {
@@ -29,6 +58,7 @@ async function closed(id: string) {
 }
 
 async function owned<T>(operation: () => Promise<T>) {
+  if (!live) return await offlineOwned(operation);
   assert.ok(process.env.NOTTE_API_URL, 'Choose the browser API explicitly');
   const original = globalThis.fetch, ids: string[] = [];
   globalThis.fetch = async (input, init) => {
@@ -54,13 +84,13 @@ async function emitted(offset: number) {
   assert.equal(spans.length, 1);
   const payload = JSON.stringify({ attributes: spans[0].attributes, events: spans[0].events });
   assert.ok(process.env.NOTTE_API_KEY);
-  for (const value of [process.env.NOTTE_API_KEY, 'integration-test-not-a-real-key']) {
+  for (const value of [process.env.NOTTE_API_KEY, fakeCredential, 'integration-test-not-a-real-key']) {
     assert.equal(payload.includes(value), false, 'Trace payload contained a credential');
   }
   return { span: spans[0], payload };
 }
 
-test('The browser result is traced and its owned session closes', { skip: !live, timeout: 120_000 }, async () => {
+test('The browser result is traced and its owned session closes', { timeout: 120_000 }, async () => {
   const offset = exporter.getFinishedSpans().length;
   const { result, ids } = await owned(() => readPage());
   assert.equal(result.title, 'Example Domain');
@@ -72,7 +102,7 @@ test('The browser result is traced and its owned session closes', { skip: !live,
   assert.ok(payload.includes(ids[0]));
 });
 
-test('Navigation failure is traced and its owned session closes', { skip: !live, timeout: 120_000 }, async () => {
+test('Navigation failure is traced and its owned session closes', { timeout: 120_000 }, async () => {
   const offset = exporter.getFinishedSpans().length;
   await assert.rejects(owned(() => readPage('http://127.0.0.1:1')),
     /failed during navigation \(session [0-9a-f-]{36}, trace [0-9a-f]{32}\)/);

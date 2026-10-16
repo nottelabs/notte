@@ -13,7 +13,8 @@ import uuid
 from contextlib import asynccontextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 
 import read_page
 from lmnr import Laminar
@@ -21,6 +22,43 @@ from notte_sdk import NotteClient
 from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import ExportTraceServiceRequest
 
 LIVE = os.getenv("NOTTE_LAMINAR_LIVE") == "1"
+FAKE_CREDENTIAL = "notte-offline-test-credential"  # pragma: allowlist secret
+
+
+@asynccontextmanager
+async def offline_owned():
+    session_id, stopped = str(uuid.uuid4()), []
+    page = SimpleNamespace(title=AsyncMock(return_value="Example Domain"))
+
+    async def goto(url, **_):
+        if url == "http://127.0.0.1:1":
+            raise RuntimeError(f"Browser error containing {FAKE_CREDENTIAL}")
+
+    page.goto = goto
+    browser = SimpleNamespace(contexts=[SimpleNamespace(new_page=AsyncMock(return_value=page))], close=AsyncMock())
+
+    class Session:
+        def __enter__(self):
+            return SimpleNamespace(
+                session_id=session_id, cdp_url=lambda: f"wss://example.invalid?api_key={FAKE_CREDENTIAL}"
+            )
+
+        def __exit__(self, *_):
+            stopped.append(session_id)
+
+    @asynccontextmanager
+    async def driver():
+        yield SimpleNamespace(chromium=SimpleNamespace(connect_over_cdp=AsyncMock(return_value=browser)))
+
+    with (
+        patch.object(read_page, "NotteClient", return_value=SimpleNamespace(Session=lambda **_: Session())),
+        patch.object(read_page, "async_playwright", driver),
+    ):
+        try:
+            yield [session_id]
+        finally:
+            assert stopped == [session_id], "The owned session was not stopped"
+            browser.close.assert_awaited_once()
 
 
 async def closed(client, session_id):
@@ -34,6 +72,10 @@ async def closed(client, session_id):
 
 @asynccontextmanager
 async def owned():
+    if not LIVE:
+        async with offline_owned() as ids:
+            yield ids
+        return
     if not os.getenv("NOTTE_API_URL"):
         raise AssertionError("Choose the browser API explicitly")
     client, ids = NotteClient(), []
@@ -57,7 +99,6 @@ async def owned():
             raise AssertionError("The example must own exactly one session")
 
 
-@unittest.skipUnless(LIVE, "Opt-in cloud browser and trace tests")
 class LaminarTests(unittest.IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls):
@@ -106,7 +147,7 @@ class LaminarTests(unittest.IsolatedAsyncioTestCase):
         ]
         self.assertEqual(len(spans), 1)
         payload = spans[0].SerializeToString()
-        for value in [os.environ["NOTTE_API_KEY"], "integration-test-not-a-real-key"]:
+        for value in [os.getenv("NOTTE_API_KEY", FAKE_CREDENTIAL), FAKE_CREDENTIAL, "integration-test-not-a-real-key"]:
             self.assertFalse(value.encode() in payload, "Trace payload contained a credential")
         return spans[0], payload
 
@@ -134,7 +175,9 @@ class LaminarTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(b"failed during navigation", payload)
         self.assertIn(ids[0].encode(), payload)
 
-    @unittest.skipUnless(os.getenv("NOTTE_LAMINAR_EXPORT_LIVE") == "1", "Opt-in actual Laminar export and readback")
+    @unittest.skipUnless(
+        LIVE and os.getenv("NOTTE_LAMINAR_EXPORT_LIVE") == "1", "Opt-in actual Laminar export and readback"
+    )
     async def test_trace_is_persisted_in_laminar(self):
         self.assertTrue(os.getenv("LMNR_PROJECT_API_KEY"))
         child = await asyncio.to_thread(
@@ -155,7 +198,9 @@ class LaminarTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(output["title"], "Example Domain")
         self.assertEqual(output["session_id"], result["session_id"])
 
-    @unittest.skipUnless(os.getenv("NOTTE_LAMINAR_EXPORT_LIVE") == "1", "Opt-in actual Laminar export and readback")
+    @unittest.skipUnless(
+        LIVE and os.getenv("NOTTE_LAMINAR_EXPORT_LIVE") == "1", "Opt-in actual Laminar export and readback"
+    )
     async def test_failed_trace_is_persisted_in_laminar(self):
         child = await asyncio.to_thread(
             subprocess.run,
