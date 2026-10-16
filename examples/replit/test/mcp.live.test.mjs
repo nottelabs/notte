@@ -5,6 +5,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
 const key = process.env.NOTTE_API_KEY;
+assert.ok(key, 'Set NOTTE_API_KEY before running live MCP tests');
 const api = (process.env.NOTTE_API_URL ?? 'https://api.notte.cc').replace(/\/$/, '');
 const headers = { Authorization: `Bearer ${key}` };
 
@@ -28,7 +29,7 @@ async function assertClosed(id) {
 }
 
 for (const failure of [false, true]) {
-  test(`hosted MCP browser ${failure ? 'failure' : 'success'} and cleanup`, { skip: !key, timeout: 90_000 }, async () => {
+  test(`hosted MCP browser ${failure ? 'failure' : 'success'} and cleanup`, { timeout: 90_000 }, async () => {
     const transport = new StreamableHTTPClientTransport(new URL(`${api}/mcp`), { requestInit: { headers } });
     const client = new Client({ name: 'notte-replit-contract-test', version: '1.0.0' });
     let id;
