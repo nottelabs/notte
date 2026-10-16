@@ -513,7 +513,8 @@
         "closed",
         "closed"
       ]
-    }
+    },
+    "closedSessions": true
   },
   "functions/schedules/manage_schedule.ts": {
     "expected": {
