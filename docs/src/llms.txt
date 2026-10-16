@@ -466,7 +466,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GoBackAction](https://docs.notte.cc/typescript-sdk-reference/types/gobackaction.md)
 - [GoForwardAction](https://docs.notte.cc/typescript-sdk-reference/types/goforwardaction.md)
 - [ReloadAction](https://docs.notte.cc/typescript-sdk-reference/types/reloadaction.md)
-- [WaitAction](https://docs.notte.cc/typescript-sdk-reference/types/waitaction.md)
+- [WaitActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/waitactionoutput.md)
 - [PressKeyAction](https://docs.notte.cc/typescript-sdk-reference/types/presskeyaction.md)
 - [ScrollUpAction](https://docs.notte.cc/typescript-sdk-reference/types/scrollupaction.md)
 - [ScrollDownAction](https://docs.notte.cc/typescript-sdk-reference/types/scrolldownaction.md)
