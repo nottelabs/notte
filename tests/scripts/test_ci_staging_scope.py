@@ -28,6 +28,7 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("readme-check.yml", "live"),
         ("temporal-integration.yml", "browser-workflow"),
         ("inngest-integration.yml", "live"),
+        ("agentcard-integration.yml", "live"),
     }
     queued = set()
     for path in WORKFLOWS.glob("*.yml"):
