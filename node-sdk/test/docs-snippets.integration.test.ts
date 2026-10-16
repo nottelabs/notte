@@ -242,6 +242,20 @@ describe.skipIf(process.env.NOTTE_DOCS_LIVE !== '1')('paired documentation examp
       }
       // Post-stop snapshots can precede asynchronous cleanup. For contracts
       // teaching completed lifecycle, verify the actual persisted response.
+      if (contract.closedSessions) {
+        const ownedIds: string[] = [];
+        for (const [language, values] of [['typescript', exported!], ['python', pythonValues]] as const) {
+          const ids: unknown = values.session_ids;
+          if (!Array.isArray(ids)) throw new Error(`${name} (${language}): missing owned session IDs`);
+          expect(ids).toHaveLength((contract.expected.results as unknown[]).length);
+          values.results = await Promise.all(ids.map(async (id: string) => {
+            expect(id).toMatch(/^[0-9a-f-]{36}$/i);
+            ownedIds.push(id);
+            return (await expectSessionClosed(client, id, `${name} (${language})`)).status;
+          }));
+        }
+        expect(new Set(ownedIds).size).toBe(ownedIds.length);
+      }
       if (contract.closedSession && contract.expected.status === 'closed') {
         for (const [language, values] of [['typescript', exported!], ['python', pythonValues]] as const) {
           const snapshot = values.status as { session_id?: string };
