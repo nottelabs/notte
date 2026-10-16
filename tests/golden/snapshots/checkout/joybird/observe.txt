@@ -1,0 +1,158 @@
+### Content of 'WebArea' component with text 'body content'
+_[:]Skip to content
+L1[:]<a href="https://joybird.com/" aria_label="Joybird"></a>
+L2[:]<a href="#email">1. Email</a>
+L3[:]<a href="#shipping">2. Shipping</a>
+_[:]3. Delivery
+_[:]4. Billing
+_[:]2
+_[:]Shipping Information
+_[:]Fields marked with an asterisk (*) are required.
+_[:]First name *
+_[:]First name *
+I1[:]<input type="text" value="" placeholder="" name="first_name"></input>
+_[:]Error:
+_[:]First name is required
+_[:]Last name *
+_[:]Last name *
+I2[:]<input type="text" value="" placeholder="" name="last_name"></input>
+I3[:]<div role="combobox" aria_expanded="false">Street address *
+Street address *</div>
+I4[:]<input type="text" value="" placeholder="" name="address"></input>
+_[:]City *
+_[:]City *
+I5[:]<input type="text" value="" placeholder="" name="city"></input>
+_[:]Apartment / suite # (optional)
+_[:]Apartment / suite # (optional)
+I6[:]<input type="text" value="" placeholder="" name="apartment"></input>
+_[:]Company (optional)
+_[:]Company (optional)
+I7[:]<input type="text" value="" placeholder="" name="company"></input>
+_[:]State *
+_[:]State *
+I8[:]<select>Alabama
+Arizona
+Arkansas
+California
+Colorado
+Connecticut
+Delaware
+District Of Columbia
+Florida
+Georgia
+Idaho
+Illinois
+Indiana
+Iowa
+Kansas
+Kentucky
+Louisiana
+Maine
+Maryland
+Massachusetts
+Michigan
+Minnesota
+Mississippi
+Missouri
+Montana
+Nebraska
+Nevada
+New Hampshire
+New Jersey
+New Mexico
+New York
+North Carolina
+North Dakota
+Ohio
+Oklahoma
+Oregon
+Pennsylvania
+Rhode Island
+South Carolina
+South Dakota
+Tennessee
+Texas
+Utah
+Vermont
+Virginia
+Washington
+West Virginia
+Wisconsin
+Wyoming</select>
+_[:]State *
+_[:]Zip code *
+_[:]Zip code *
+I9[:]<input type="text" value="" placeholder="" name="zipcode"></input>
+_[:]Phone (delivery contact) *
+_[:]Phone (delivery contact) *
+I10[:]<input type="tel" value="" placeholder="" name="phone_number"></input>
+_[:]I'd also like to receive shipping updates via text message. By signing up, you agree to our
+_[:]Privacy Policy.
+_[:]Continue to delivery
+B1[:]<button type="button" aria_label="Show/hide order summary" aria_expanded="true"></button>
+M1[:]<div>Your Cart
+1 item</div>
+M2[:]<div></div>
+M3[:]<div></div>
+M4[:]<div></div>
+M5[:]<div></div>
+M6[:]<div></div>
+M7[:]<div></div>
+M8[:]<div>Winnie Outdoor Side Table</div>
+M9[:]<div>Black Frame
+Qty 1</div>
+M10[:]<div></div>
+M11[:]<div>Ready-to-Ship</div>
+M12[:]<div>Original price:
+$427
+Price:
+$278</div>
+_[:]Subtotal
+_[:]$278
+_[:]Shipping
+_[:]$179
+_[:]Sales Tax
+_[:]$23.98
+_[:]Total
+_[:]$480.98
+_[:]You saved
+_[:]$149
+B2[:]<button type="button" aria_expanded="false">Apply Gift Card/Promo Code +</button>
+_[:]Changed your mind?
+_[:]If you need to cancel your order, you must cancel within 24 hours in order to receive a full refund. Made to Order pieces cannot be cancelled after 24 hours and are not eligible for returns. For full details on returns & cancellations please visit:
+_[:]joybird.com/returns
+_[:]Call us
+_[:]888-282-0842
+_[:]Email us
+_[:]support@joybird.com
+_[:]© 2025 Joybird, All rights reserved.
+_[:]insert
+
+# interaction actions
+L1	click	''	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > span > a[aria-label="Joybird"][href="https://joybird.com/"]	html/body/div[1]/div/div/div/div[1]/div[1]/div/span/a	in_iframe=False	in_shadow_root=False
+L2	click	'1.\xa0Email'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > ol > li:nth-of-type(1) > a.text-base.font-bold.block.pt-3.pb-3.pl-0.capitalize.text-brand.border-t-4.border-solid.border-t-brand[href="#email"]	html/body/div[1]/div/div/div/div[1]/div[1]/nav/ol/li[1]/a	in_iframe=False	in_shadow_root=False
+L3	click	'2.\xa0Shipping'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > ol > li:nth-of-type(2) > a.text-base.font-bold.block.pt-3.pb-3.pl-0.capitalize.text-brand.border-t-4.border-solid.border-t-brand[href="#shipping"]	html/body/div[1]/div/div/div/div[1]/div[1]/nav/ol/li[2]/a	in_iframe=False	in_shadow_root=False
+I1	fill	'first_name'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby="first_name-error "][autocomplete="given-name"][id="first_name"][name="first_name"][placeholder][type="text"][required]	html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[1]/div[1]/div[1]/div/span[2]/input	in_iframe=False	in_shadow_root=False
+I2	fill	'last_name'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby="last_name-error "][autocomplete="family-name"][id="last_name"][name="last_name"][placeholder][type="text"][required]	html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[1]/div[2]/div[1]/div/span[2]/input	in_iframe=False	in_shadow_root=False
+I3	select_dropdown_option	'Street address * Street address * address'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(2).react-autosuggest__container[role="combobox"]	html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[2]	in_iframe=False	in_shadow_root=False
+I4	fill	'address'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby="LabeledTextInput__input-5625354-error "][autocomplete="address-line1"][id="LabeledTextInput__input-5625354"][name="address"][placeholder][type="text"]	html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[2]/div[1]/div[1]/div/span[2]/input	in_iframe=False	in_shadow_root=False
+I5	fill	'city'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(3) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby="city-error "][autocomplete="address-level2"][id="city"][name="city"][placeholder][type="text"]	html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[3]/div[1]/div/span[2]/input	in_iframe=False	in_shadow_root=False
+I6	fill	'apartment'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(4) > div:nth-of-type(1) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby="apartment-error "][autocomplete="address-line2"][id="apartment"][name="apartment"][placeholder][type="text"]	html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[4]/div[1]/div[1]/div/span[2]/input	in_iframe=False	in_shadow_root=False
+I7	fill	'company'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby="company-error "][autocomplete="organization"][id="company"][name="company"][placeholder][type="text"]	html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[4]/div[2]/div[1]/div/span[2]/input	in_iframe=False	in_shadow_root=False
+I8	select_dropdown_option	'Alabama Arizona Arkansas California Colorado Connecticut Delaware District Of Columbia Florida Georgia Idaho Illinois Indiana Iowa Kansas Kentucky Louisiana Maine Maryland Massachusetts Michigan Minnesota Mississippi Missouri Montana Nebraska Nevada New Hampshire New Jersey New Mexico New York North Carolina North Dakota Ohio Oklahoma Oregon Pennsylvania Rhode Island South Carolina South Dakota Tennessee Texas Utah Vermont Virginia Washington West Virginia Wisconsin Wyoming'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(1) > div > span:nth-of-type(2) > select.appearance-none.border-0.h-full.w-full[aria-describedby="state-error"][autocomplete="address-level1"][id="state"]	html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[5]/div[1]/div[1]/div/span[2]/select	in_iframe=False	in_shadow_root=False
+I9	fill	'zipcode'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(5) > div:nth-of-type(2) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby="zipcode-error "][autocomplete="postal-code"][id="zipcode"][name="zipcode"][placeholder][type="text"]	html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[5]/div[2]/div[1]/div/span[2]/input	in_iframe=False	in_shadow_root=False
+I10	fill	'phone_number'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(6) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[type="tel"][aria-describedby="phone_number-error "][autocomplete="tel"][id="phone_number"][name="phone_number"][placeholder]	html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[6]/div[1]/div/span[2]/input	in_iframe=False	in_shadow_root=False
+B1	click	'Your Cart 1 item Winnie Outdoor Side Table Black Frame Qty 1 Original price: $427 Price: $278 Ready-to-Ship'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button.order-summary-header.p-0.font-bold.bg-transparent.text-gray.flex.flex-col.text-left.border-0.order-summary-header--open[type="button"][aria-label="Show/hide order summary"]	html/body/div[1]/div/div/div/div[2]/div/button	in_iframe=False	in_shadow_root=False
+M1	click	'Your Cart 1 item'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(1)	html/body/div[1]/div/div/div/div[2]/div/button/div[1]	in_iframe=False	in_shadow_root=False
+M2	click	'Winnie Outdoor Side Table Black Frame Qty 1 Original price: $427 Price: $278 Ready-to-Ship'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2)	html/body/div[1]/div/div/div/div[2]/div/button/div[2]	in_iframe=False	in_shadow_root=False
+M3	click	'Winnie Outdoor Side Table Black Frame Qty 1 Original price: $427 Price: $278 Ready-to-Ship'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div	html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div	in_iframe=False	in_shadow_root=False
+M4	click	'Winnie Outdoor Side Table Black Frame Qty 1 Original price: $427 Price: $278 Ready-to-Ship'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div	html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div	in_iframe=False	in_shadow_root=False
+M5	click	'Winnie Outdoor Side Table Black Frame Qty 1 Original price: $427 Price: $278 Ready-to-Ship'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div	html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div	in_iframe=False	in_shadow_root=False
+M6	click	''	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div > div:nth-of-type(1)	html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div/div[1]	in_iframe=False	in_shadow_root=False
+M7	click	'Winnie Outdoor Side Table Black Frame Qty 1 Original price: $427 Price: $278 Ready-to-Ship'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div > div:nth-of-type(2)	html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div/div[2]	in_iframe=False	in_shadow_root=False
+M8	click	'Winnie Outdoor Side Table Black Frame Qty 1'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div:nth-of-type(1)	html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div/div[2]/div[1]	in_iframe=False	in_shadow_root=False
+M9	click	'Black Frame Qty 1'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div	html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div/div[2]/div[1]/div	in_iframe=False	in_shadow_root=False
+M10	click	'Original price: $427 Price: $278 Ready-to-Ship'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div:nth-of-type(2)	html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div/div[2]/div[2]	in_iframe=False	in_shadow_root=False
+M11	click	'Original price: $427 Price: $278 Ready-to-Ship'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div	html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div/div[2]/div[2]/div	in_iframe=False	in_shadow_root=False
+M12	click	'Original price: $427 Price: $278'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > button > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div	html/body/div[1]/div/div/div/div[2]/div/button/div[2]/div/div/div/div[2]/div[2]/div/div	in_iframe=False	in_shadow_root=False
+B2	click	'Apply Gift Card/Promo Code +'	html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div > div > div > div > div:nth-of-type(1) > button.text-base.font-bold.font-sans.text-brand.cursor-pointer.border-0[type="button"]	html/body/div[1]/div/div/div/div[2]/div/div/div/div/div[1]/button	in_iframe=False	in_shadow_root=False

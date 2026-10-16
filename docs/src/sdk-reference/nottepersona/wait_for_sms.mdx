@@ -1,0 +1,36 @@
+---
+title: "wait_for_sms"
+description: "Poll the persona inbox until at least one SMS matches, e"
+---
+
+g. to read a 2FA code.
+
+```python
+sms = persona.wait_for_sms(only_unread=True, timeout=120)
+```
+
+Raises `TimeoutError` if nothing arrives within `timeout` seconds. Listed SMS are marked as read
+
+
+## Parameters
+
+<ParamField path="timeout" type="float" default="60.0">
+</ParamField>
+
+<ParamField path="poll_interval" type="float" default="5.0">
+</ParamField>
+
+<ParamField path="limit" type="int">
+  Max number of emails to return
+</ParamField>
+
+<ParamField path="timedelta" type="datetime.timedelta | None">
+  Return only emails that are not older than `timedelta`
+</ParamField>
+
+<ParamField path="only_unread" type="bool">
+</ParamField>
+
+## Returns
+
+`Sequence`[<Visibility for="humans">[`SMSResponse`](/sdk-reference/misc/smsresponse)</Visibility><Visibility for="agents">[`SMSResponse`](/sdk-reference/misc/smsresponse.md)</Visibility>]

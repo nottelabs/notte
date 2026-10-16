@@ -8,7 +8,7 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from notte_core.common.logging import logger
+from notte_core.logging import logger
 from notte_sdk import NotteClient, auth
 from notte_sdk.auth import _decode_cli_secret, get_keyring_api_key, resolve_api_key, resolve_env_label
 from notte_sdk.errors import AuthenticationError
@@ -344,7 +344,7 @@ def test_client_uses_cli_keyring(cli_config_dir: Path) -> None:
 
     client = NotteClient()
 
-    assert client.sessions.token == client.workflows.token == client.files.token == "cli-prod-key"
+    assert client.sessions.token == client.functions.token == client.files.token == "cli-prod-key"
 
 
 def test_client_uses_cli_keyring_for_api_url(cli_config_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -370,7 +370,7 @@ def test_client_reads_keyring_once(cli_config_dir: Path) -> None:
         client = NotteClient()
 
     assert get_keyring.call_count == 1
-    assert client.agents.token == "cli-prod-key"
+    assert client.personas.token == "cli-prod-key"
 
 
 def test_client_without_any_key_raises_after_one_lookup(cli_config_dir: Path) -> None:

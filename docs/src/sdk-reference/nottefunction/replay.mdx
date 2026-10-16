@@ -1,6 +1,6 @@
 ---
 title: "replay"
-description: "Get presigned URLs for the workflow run replay"
+description: "Get presigned URLs for the function run replay"
 ---
 
 
@@ -10,7 +10,7 @@ function = notte.Function("<your-function-id>")
 function.run()
 replay = function.replay()
 print(replay.mp4_url)  # Presigned URL for MP4 download
-replay.download("workflow.mp4")
+replay.download("function.mp4")
 ```
 
 

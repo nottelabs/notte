@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><title>Script-built controls</title></head><body>
+<h1>Script-built page</h1>
+<button id="static" data-probe="static">Static button</button>
+<div id="mount"></div>
+<script>
+document.getElementById('mount').innerHTML = `
+  <section aria-label="Generated section">
+    <button id="generated" data-probe="generated">Generated <strong>button</strong></button>
+    <input id="generated-input" data-probe="generated-input" placeholder="Generated input">
+    <select id="generated-select" data-probe="generated-select" aria-label="Generated choice">
+      <option value="a">Alpha</option><option value="b">Beta</option>
+    </select>
+  </section>`;
+</script>
+</body></html>

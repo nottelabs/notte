@@ -17,7 +17,7 @@ Special (pre-processing, not passed to Mintlify):
 
 Usage:
     python parser.py <input_file.py> [output_file.mdx]
-    python parser.py testers/agents/fallback.py snippets/agents/fallback.mdx
+    python parser.py testers/scraping/simple.py snippets/scraping/simple.mdx
 """
 
 import re

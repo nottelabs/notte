@@ -1,7 +1,7 @@
 [project]
 name = "notte-sdk"
-version = "1.9.8.dev0"
-description = "The SDK for Notte"
+version = "1.10.0.dev0"
+description = "Python SDK for the Notte API: cloud browser sessions, functions, vaults and personas"
 readme = "README.md"
 authors = [
     { name = "Notte Team ", email = "hello@notte.cc" }
@@ -12,12 +12,15 @@ packages = [
 
 requires-python = ">=3.11"
 dependencies = [
-    "halo>=0.0.28",
     "requests>=2.32.3,<3",
+    # Generated Data API models validate email addresses.
+    "pydantic[email]>=2.10.6,<3",
     "urllib3>=2.2.3,<3",
-    "notte-core==1.9.8.dev0",
-    "websockets>=13.1",
     "secretstorage>=3.3; sys_platform == 'linux'",
+    "notte-core==1.10.0.dev0",
+    "websockets>=17.2",
+    # Only needed to decrypt encrypted function download URLs (imported lazily).
+    "cryptography>=43.0.3",
 ]
 
 [project.optional-dependencies]

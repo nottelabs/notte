@@ -6,27 +6,23 @@ from typing import Any, Literal, Unpack, cast, overload
 
 from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
-from notte_core.common.config import LlmModel
-from notte_core.common.logging import logger
-from notte_core.data.space import ImageData, StructuredData, TBaseModel
+from notte_core.data import StructuredData, TBaseModel
+from notte_core.logging import logger
+from notte_core.types import ScrapeMarkdownParamsDict, ScrapeRequestDict
 from pydantic import BaseModel
 from typing_extensions import final
 
 from notte_sdk._retry import DEFAULT_MAX_RETRIES
-from notte_sdk.agent_fallback import RemoteAgentFallback
 from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
-from notte_sdk.endpoints.agents import AgentsClient, RemoteAgent
 from notte_sdk.endpoints.base import BaseClient
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
-from notte_sdk.endpoints.functions import NotteFunction
+from notte_sdk.endpoints.functions import FunctionsClient, NotteFunction
 from notte_sdk.endpoints.managed_auth import ManagedAuthClient
 from notte_sdk.endpoints.personas import NottePersona, PersonasClient
 from notte_sdk.endpoints.profiles import ProfilesClient
 from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
-from notte_sdk.endpoints.workflows import RemoteWorkflow, WorkflowsClient
 from notte_sdk.errors import AuthenticationError
-from notte_sdk.types import ScrapeMarkdownParamsDict, ScrapeRequestDict
 
 enable_nest_asyncio()
 
@@ -52,7 +48,7 @@ class NotteClient:
         """Initialize a NotteClient instance.
 
         Initializes the NotteClient with the specified API key and server URL, creating instances
-        of SessionsClient, AgentsClient, VaultsClient, and PersonasClient.
+        of SessionsClient, FunctionsClient, VaultsClient, and PersonasClient.
 
         Args:
             api_key: Optional API key for authentication.
@@ -76,9 +72,6 @@ class NotteClient:
         self.sessions: SessionsClient = SessionsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose, viewer_type=viewer_type
         )
-        self.agents: AgentsClient = AgentsClient(
-            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
-        )
         self.personas: PersonasClient = PersonasClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
@@ -94,26 +87,16 @@ class NotteClient:
         self.files: FileStorageClient = FileStorageClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
-        self.workflows: WorkflowsClient = WorkflowsClient(
+        self.functions: FunctionsClient = FunctionsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
-
-        self.functions = self.workflows
 
         if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
             logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
 
     @property
-    def models(self) -> type[LlmModel]:
-        return LlmModel
-
-    @property
     def Session(self) -> type[RemoteSession]:
         return cast(type[RemoteSession], partial(RemoteSession, _client=self.sessions))
-
-    @property
-    def Agent(self) -> type[RemoteAgent]:
-        return cast(type[RemoteAgent], partial(RemoteAgent, _client=self.agents))
 
     @property
     def Vault(self) -> type[NotteVault]:
@@ -128,16 +111,8 @@ class NotteClient:
         return cast(type[RemoteFileStorage], partial(RemoteFileStorage, _client=self.files))
 
     @property
-    def Workflow(self) -> type[RemoteWorkflow]:
-        return cast(type[RemoteWorkflow], partial(RemoteWorkflow, _client=self))
-
-    @property
     def Function(self) -> type[NotteFunction]:
         return cast(type[NotteFunction], partial(NotteFunction, _client=self))
-
-    @property
-    def AgentFallback(self) -> type[RemoteAgentFallback]:
-        return cast(type[RemoteAgentFallback], partial(RemoteAgentFallback, _client=self))
 
     def health_check(self) -> None:
         """
@@ -145,12 +120,9 @@ class NotteClient:
         """
         return self.sessions.health_check()
 
-    @overload
-    def scrape(self, /, url: str, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
-
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
-    def scrape(
+    def scrape(  # pyright: ignore[reportOverlappingOverload]
         self,
         /,
         url: str,
@@ -206,7 +178,7 @@ class NotteClient:
 
     def scrape(
         self, /, url: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
-    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str:
         """
         Scrape the current page data.
 
@@ -247,7 +219,6 @@ class NotteClient:
             When using instructions/response_format and raise_on_failure=True: returns the extracted data directly.
             When raise_on_failure=False: returns StructuredData wrapper so user can check .success.
             For markdown scraping: returns str.
-            For image scraping: returns list[ImageData].
         """
         with self.Session(open_viewer=False, perception_type="fast") as session:
             # best-effort navigation: scrape whatever loaded unless the goto

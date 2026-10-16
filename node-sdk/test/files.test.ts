@@ -124,10 +124,10 @@ describe('SessionFiles', () => {
     );
   });
 
-  it('defaults to limit 100 and offset 0', async () => {
+  it('leaves omitted pagination defaults to the API', async () => {
     mocks.listSessionFiles.mockResolvedValue(page([]));
     await new SessionFiles(generatedClient, 'session-id').list();
-    expect(mocks.listSessionFiles.mock.calls[0]![0].query).toEqual({ limit: 100, offset: 0, source: undefined });
+    expect(mocks.listSessionFiles.mock.calls[0]![0].query).toEqual({});
   });
 
   it('downloads binary data as a Blob', async () => {
@@ -294,7 +294,7 @@ describe('RemoteFileStorage', () => {
     await expect((await storage.downloadBlob('file-id')).text()).resolves.toBe('hello');
     await storage.delete('file-id');
 
-    expect(mocks.listSessionFiles.mock.calls[0]![0].query).toEqual({ source: 'user_upload', limit: 100, offset: 0 });
+    expect(mocks.listSessionFiles.mock.calls[0]![0].query).toEqual({ source: 'user_upload' });
     expect(mocks.deleteSessionFile.mock.calls[0]![0].path).toEqual({ session_id: 'session-id', file_id: 'file-id' });
   });
 

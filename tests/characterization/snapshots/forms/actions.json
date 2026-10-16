@@ -1,0 +1,331 @@
+[
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"text\"></input>",
+      "id": "I1",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > form > input:nth-of-type(1)[id=\"name\"][type=\"text\"][autocomplete=\"off\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/forms:4527775504046182633:3609651542926669075:-6847071392462774918:4402018955441831749:-4394414503062406320:7250840129435001130",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/form/input[1]"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"email\" placeholder=\"email@example.test\" aria_label=\"Email address\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"email\" placeholder=\"email@example.test\" aria_label=\"Email address\"></input>",
+      "id": "I2",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > form > input:nth-of-type(2)[id=\"email\"][type=\"email\"][aria-label=\"Email address\"][placeholder=\"email@example.test\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/forms:4527775504046182633:3609651542926669075:-6847071392462774918:4402018955441831749:-4070784339476334177:5319274590987903009",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/form/input[2]"
+      },
+      "text_label": "Email address",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"password\" aria_label=\"Account password\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input type=\"password\" aria_label=\"Account password\"></input>",
+      "id": "I3",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > form > input:nth-of-type(3)[id=\"password\"][type=\"password\"][aria-label=\"Account password\"][autocomplete=\"new-password\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/forms:4527775504046182633:3609651542926669075:-6847071392462774918:4402018955441831749:-4548633557399495884:-8708897739364385576",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/form/input[3]"
+      },
+      "text_label": "Account password",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<textarea placeholder=\"Notes for delivery\"></textarea>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<textarea placeholder=\"Notes for delivery\"></textarea>",
+      "id": "I4",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > form > textarea[id=\"notes\"][placeholder=\"Notes for delivery\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/forms:4527775504046182633:3609651542926669075:-6847071392462774918:4402018955441831749:-8498559210252930352:1047768342399480856",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/form/textarea"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<select></select>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<select></select>",
+      "id": "I5",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > form > select[id=\"country\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/forms:4527775504046182633:3609651542926669075:-6847071392462774918:4402018955441831749:2717360289582349948:-6824355418579336628",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/form/select"
+      },
+      "text_label": "Alpha Beta",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"checkbox\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<input type=\"checkbox\"></input>",
+      "id": "B1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > form > label:nth-of-type(3) > input[id=\"agree\"][type=\"checkbox\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/forms:4527775504046182633:3609651542926669075:-6847071392462774918:4402018955441831749:-1619785525054868063:-750590306268211730:-3186062871816307892:8052289023250283096",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/form/label[3]/input"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"radio\" value=\"basic\" name=\"plan\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<input type=\"radio\" value=\"basic\" name=\"plan\"></input>",
+      "id": "B2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > form > label:nth-of-type(4) > input[id=\"radio\"][type=\"radio\"][name=\"plan\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/forms:4527775504046182633:3609651542926669075:-6847071392462774918:4402018955441831749:5798452713838906620:-2770413299542376069:-3965495654820381622:8129469669004607288",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/form/label[4]/input"
+      },
+      "text_label": "plan",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"radio\" value=\"pro\" name=\"plan\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<input type=\"radio\" value=\"pro\" name=\"plan\"></input>",
+      "id": "B3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > form > label:nth-of-type(5) > input[id=\"other-radio\"][type=\"radio\"][name=\"plan\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/forms:4527775504046182633:3609651542926669075:-6847071392462774918:4402018955441831749:2963084737901655931:5376035552299241932:2246148785176332648:62569666228738915",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/form/label[5]/input"
+      },
+      "text_label": "plan",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div role=\"textbox\" aria_label=\"Rich notes\"></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<div role=\"textbox\" aria_label=\"Rich notes\"></div>",
+      "id": "I6",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > form > div[id=\"editor\"][role=\"textbox\"][aria-label=\"Rich notes\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/forms:4527775504046182633:3609651542926669075:-6847071392462774918:4402018955441831749:-3161388068357735315:-5587548866665605824",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/form/div"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\" title=\"Save the complete account form including delivery preferences and all notification settings for this account\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\" title=\"Save the complete account form including delivery preferences and all notification settings for this account\"></button>",
+      "id": "B4",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > form > button:nth-of-type(2)[id=\"save\"][type=\"button\"][title=\"Save the complete account form including delivery preferences and all notification settings for this account\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/forms:4527775504046182633:3609651542926669075:-6847071392462774918:4402018955441831749:2579657564016684229:-5451005692751997008",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/form/button[2]"
+      },
+      "text_label": "Save account",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button type=\"button\" aria_label=\"Help\"></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button type=\"button\" aria_label=\"Help\"></button>",
+      "id": "B5",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > form > button:nth-of-type(3)[id=\"icon\"][type=\"button\"][aria-label=\"Help\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/forms:4527775504046182633:3609651542926669075:-6847071392462774918:4402018955441831749:-2311984370789579986:-204572364960605119",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/form/button[3]"
+      },
+      "text_label": "?",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"#details\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"#details\"></a>",
+      "id": "L1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > form > a[id=\"link\"][href=\"#details\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/forms:4527775504046182633:3609651542926669075:-6847071392462774918:4402018955441831749:1732244108475353152:-8174730817557169686",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/form/a"
+      },
+      "text_label": "Read details",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  }
+]

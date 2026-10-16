@@ -24,11 +24,8 @@ classmd_output_dir = "src/sdk-reference"
 classmd_classes = [
     # Example: Document a single class
     "notte_sdk.client.NotteClient",
-    "notte_sdk.endpoints.agents.RemoteAgent",
     "notte_sdk.endpoints.sessions.RemoteSession",
     "notte_sdk.endpoints.functions.NotteFunction",
-    # agent fallback
-    "notte_sdk.agent_fallback.RemoteAgentFallback",
     # tooling
     "notte_sdk.endpoints.vaults.NotteVault",
     "notte_sdk.endpoints.personas.NottePersona",
@@ -71,6 +68,16 @@ def preserve_function_runtime_default(app: Sphinx, exception: Exception | None) 
             )
         )
 
+    # The upstream schema has no description for this newly exposed nested type.
+    payload_reference = Path(app.confdir).parent / "src/sdk-reference/misc/runpayloadreference.mdx"
+    if payload_reference.exists():
+        _ = payload_reference.write_text(
+            payload_reference.read_text().replace(
+                'description: ""',
+                'description: "Identifies an uploaded run field by its size, checksum, and upload ID."',
+            )
+        )
+
 
 def setup(app: Sphinx) -> None:
     _ = app.connect("build-finished", preserve_function_runtime_default)
@@ -85,7 +92,6 @@ def curate_reference(app: Sphinx, exception: Exception | None) -> None:
     replacements = {
         "/sdk-reference/misc/basemodel": "https://docs.pydantic.dev/latest/api/base_model/",
         "/sdk-reference/misc/rootmodel": "https://docs.pydantic.dev/latest/api/root_model/",
-        "/sdk-reference/misc/agentsclient": "/sdk-reference/manual/agent",
         "/sdk-reference/nottepersona/start": "/sdk-reference/manual/persona",
         "/sdk-reference/nottepersona/stop": "/sdk-reference/manual/persona",
         "/sdk-reference/nottevault/start": "/sdk-reference/manual/vault",

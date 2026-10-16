@@ -125,7 +125,7 @@ export class SessionFiles {
     const response = await listSessionFiles({
       client: this.client,
       path: { session_id: this.sessionId },
-      query: { limit: options.limit ?? 100, offset: options.offset ?? 0, source: options.source },
+      query: options,
       throwOnError: true,
     });
     return response.data;

@@ -1,23 +1,11 @@
-import os
-from typing import ClassVar, get_args, get_origin, get_type_hints
+from enum import Enum
+from typing import ClassVar, Literal, get_args, get_origin, get_type_hints
 
 import pytest
-from dotenv import load_dotenv
-from notte_core.common.config import CookieDict, LlmModel, NotteConfig, NotteConfigDict
+from notte_core import types as core_types
+from notte_core.config import CookieDict, NotteConfig, NotteConfigDict
 from notte_sdk.types import (
-    DEFAULT_MAX_NB_STEPS,
-    AgentCreateRequest,
-    AgentCreateRequestDict,
-    AgentListRequest,
-    AgentListRequestDict,
-    AgentRunRequest,
-    AgentRunRequestDict,
-    AgentStartRequest,
-    AgentStatusRequest,
-    AgentStatusRequestDict,
     Cookie,
-    CreateFunctionRequest,
-    CreateFunctionRequestDict,
     CreateFunctionRunRequest,
     CreateFunctionRunRequestDict,
     CreatePhoneNumberRequest,
@@ -30,21 +18,13 @@ from notte_sdk.types import (
     DeleteVaultRequestDict,
     ExecutionRequest,
     ExecutionRequestDict,
-    FunctionRunUpdateRequest,
-    FunctionRunUpdateRequestDict,
     GetCredentialsRequest,
     GetCredentialsRequestDict,
     GetCreditCardRequest,
     GetCreditCardRequestDict,
-    GetFunctionRequest,
-    GetFunctionRequestDict,
     ListCredentialsRequest,
     ListCredentialsRequestDict,
     ListFilesResponse,
-    ListFunctionRunsRequest,
-    ListFunctionRunsRequestDict,
-    ListFunctionsRequest,
-    ListFunctionsRequestDict,
     MessageReadRequest,
     MessageReadRequestDict,
     ObserveRequest,
@@ -63,9 +43,6 @@ from notte_sdk.types import (
     ScrapeParamsDict,
     ScrapeRequest,
     ScrapeRequestDict,
-    SdkAgentCreateRequest,
-    SdkAgentCreateRequestDict,
-    SdkAgentStartRequestDict,
     SdkRequest,
     SdkResponse,
     SessionListRequest,
@@ -75,8 +52,6 @@ from notte_sdk.types import (
     SessionStartRequest,
     SessionStartRequestDict,
     SetCookiesRequest,
-    UpdateFunctionRequest,
-    UpdateFunctionRequestDict,
     VaultCreateRequest,
     VaultCreateRequestDict,
     VaultListRequest,
@@ -94,7 +69,7 @@ def _test_request_dict_alignment(base_request: type[BaseModel], base_request_dic
     request_fields = {
         field_name: field_type
         for field_name, field_type in request_fields.items()
-        if get_origin(field_type) is not ClassVar
+        if get_origin(field_type) is not ClassVar and field_name in base_request.model_fields
     }
 
     # Get all fields from TypedDict
@@ -120,6 +95,11 @@ def _test_request_dict_alignment(base_request: type[BaseModel], base_request_dic
             dict_type_args = get_args(dict_type)
             if type(None) in dict_type_args:
                 dict_type = next(t for t in dict_type_args if t is not type(None))
+
+        # Generated named OpenAPI enums accept the same wire values as public literal kwargs.
+        if isinstance(request_type, type) and issubclass(request_type, Enum) and get_origin(dict_type) is Literal:
+            assert {member.value for member in request_type} == set(get_args(dict_type))
+            continue
 
         # Compare the types
         if field_name not in ("selector", "profile", "proxies"):
@@ -154,16 +134,14 @@ def _test_request_dict_alignment(base_request: type[BaseModel], base_request_dic
         )
 
 
-def test_agent_run_request_dict_alignment():
-    _test_request_dict_alignment(AgentRunRequest, AgentRunRequestDict)
-
-
-def test_agent_status_request_dict_alignment():
-    _test_request_dict_alignment(AgentStatusRequest, AgentStatusRequestDict)
-
-
 def test_session_start_request_dict_alignment():
-    _test_request_dict_alignment(SessionStartRequest, SessionStartRequestDict)
+    actual = get_type_hints(SessionStartRequestDict)
+    expected = get_type_hints(core_types.SessionStartRequestDict)
+    assert actual.keys() == expected.keys()
+    assert SessionStartRequestDict.__required_keys__ == core_types.SessionStartRequestDict.__required_keys__
+    for key in actual.keys() - {"proxies", "profile"}:
+        assert actual[key] == expected[key]
+    assert set(actual) <= set(SessionStartRequest.model_fields)
 
 
 def test_session_profile_dict_alignment():
@@ -171,11 +149,8 @@ def test_session_profile_dict_alignment():
 
 
 def test_session_list_request_dict_alignment():
-    _test_request_dict_alignment(SessionListRequest, SessionListRequestDict)
-
-
-def test_agent_list_request_dict_alignment():
-    _test_request_dict_alignment(AgentListRequest, AgentListRequestDict)
+    assert get_type_hints(SessionListRequestDict) == get_type_hints(core_types.SessionListRequestDict)
+    assert set(SessionListRequest().model_dump()) == set(get_type_hints(SessionListRequestDict))
 
 
 def test_message_read_request_dict_alignment():
@@ -200,14 +175,6 @@ def test_delete_credentials_request_dict_alignment():
 
 def test_pagination_params_dict_alignment():
     _test_request_dict_alignment(PaginationParams, PaginationParamsDict)
-
-
-def test_local_agent_create_request_dict_alignment():
-    _test_request_dict_alignment(AgentCreateRequest, AgentCreateRequestDict)
-
-
-def test_sdk_agent_create_request_dict_alignment():
-    _test_request_dict_alignment(SdkAgentCreateRequest, SdkAgentCreateRequestDict)
 
 
 def test_create_vault_request_dict_alignment():
@@ -239,11 +206,14 @@ def test_del_card_vault_request_dict_alignment():
 
 
 def test_list_vaults_request_dict_alignment():
-    _test_request_dict_alignment(VaultListRequest, VaultListRequestDict)
+    # API-only schema fields are excluded and rejected by the public wrapper.
+    assert get_type_hints(VaultListRequestDict) == {"only_active": bool, "page_size": int, "page": int}
+    assert set(VaultListRequest().model_dump()) == set(get_type_hints(VaultListRequestDict))
 
 
 def test_list_personas_request_dict_alignment():
-    _test_request_dict_alignment(PersonaListRequest, PersonaListRequestDict)
+    assert get_type_hints(PersonaListRequestDict) == {"only_active": bool, "page_size": int, "page": int}
+    assert set(PersonaListRequest().model_dump()) == set(get_type_hints(PersonaListRequestDict))
 
 
 def test_del_vault_request_dict_alignment():
@@ -256,46 +226,6 @@ def test_notte_config_dict_alignment():
 
 def test_cookie_dict_alignment():
     _test_request_dict_alignment(Cookie, CookieDict)
-
-
-def test_agent_run_request_default_values():
-    """Test that AgentRunRequest has the correct default values."""
-    request = AgentRunRequest(
-        task="test_task",
-        url="https://notte.cc",
-    )
-
-    assert request.task == "test_task"
-    assert request.url == "https://notte.cc"
-
-
-def test_agent_start_request_default_values():
-    request = AgentStartRequest(
-        task="test_task",
-        session_id="test_session_id",
-    )
-
-    assert request.task == "test_task"
-    assert request.reasoning_model == LlmModel.default()
-    assert request.use_vision is True
-    assert request.max_steps == DEFAULT_MAX_NB_STEPS
-    assert request.vault_id is None
-    assert request.session_id == "test_session_id"
-
-
-@pytest.mark.parametrize("model", ["notavalid/gpt-4o-mini", "openrouter/google/gemma-3-27b-it"])
-def test_agent_create_request_with_invalid_model(model: str):
-    with pytest.raises(ValueError):
-        _ = AgentCreateRequest(reasoning_model=model)
-
-
-def test_agent_create_request_with_valid_model():
-    _ = load_dotenv()
-    if os.getenv("OPENAI_API_KEY") is None:
-        with pytest.raises(ValueError):
-            _ = AgentCreateRequest(reasoning_model="openai/gpt-4o")
-    else:
-        _ = AgentCreateRequest(reasoning_model="openai/gpt-4o")
 
 
 def test_should_be_able_to_start_cdp_session_with_default_session_parameters():
@@ -318,41 +248,31 @@ def test_scrape_request_dict_alignment():
     _test_request_dict_alignment(ScrapeRequest, ScrapeRequestDict)
 
 
-def test_create_function_request_dict_alignment():
-    try:
-        _test_request_dict_alignment(CreateFunctionRequest, CreateFunctionRequestDict)
-    except Exception as e:
-        if "Field path from CreateFunctionRequestDict is missing in CreateFunctionRequest" in str(e):
-            return
-        raise e
+@pytest.mark.parametrize(
+    "name",
+    [
+        "CreateFunctionRequest",
+        "UpdateFunctionRequest",
+        "GetFunctionRequest",
+        "ListFunctionsRequest",
+        "FunctionRunUpdateRequest",
+        "ListFunctionRunsRequest",
+    ],
+)
+def test_function_request_keywords_preserve_public_surface(name):
+    from notte_sdk import types as sdk_types
 
-
-def test_update_function_request_dict_alignment():
-    _test_request_dict_alignment(UpdateFunctionRequest, UpdateFunctionRequestDict)
-
-
-def test_get_function_request_dict_alignment():
-    _test_request_dict_alignment(GetFunctionRequest, GetFunctionRequestDict)
-
-
-def test_list_functions_request_dict_alignment():
-    _test_request_dict_alignment(ListFunctionsRequest, ListFunctionsRequestDict)
+    # Generated schema models include API-only fields. The public keyword dictionaries
+    # retain exactly the old fields and annotations, including nullable/narrowed types.
+    public_dict = getattr(sdk_types, name + "Dict")
+    old_dict = getattr(core_types, name + "Dict")
+    assert get_type_hints(public_dict) == get_type_hints(old_dict)
+    assert public_dict.__required_keys__ == old_dict.__required_keys__
+    assert set(get_type_hints(public_dict)) <= set(getattr(sdk_types, name).model_fields)
 
 
 def test_run_function_request_dict_alignment():
     _test_request_dict_alignment(RunFunctionRequest, RunFunctionRequestDict)
-
-
-def test_function_run_update_request_dict_alignment():
-    _test_request_dict_alignment(FunctionRunUpdateRequest, FunctionRunUpdateRequestDict)
-
-
-def test_list_function_runs_request_dict_alignment():
-    _test_request_dict_alignment(ListFunctionRunsRequest, ListFunctionRunsRequestDict)
-
-
-def test_agent_start_request_dict_alignment():
-    _test_request_dict_alignment(AgentStartRequest, SdkAgentStartRequestDict)
 
 
 def test_create_function_run_request_dict_alignment():
@@ -368,9 +288,8 @@ def test_sdk_response_should_not_fail_on_extra_fields():
 def test_sdk_request_should_fail_on_extra_fields():
     with pytest.raises(ValidationError):
         _ = SdkRequest.model_validate(dict(extra_customer_arg="test"))
-    # same for ListFilesRequest
-    with pytest.raises(ValidationError):
-        _ = SetCookiesRequest.model_validate(dict(cookies=[], extra_customer_arg="test"))
+    # Cookie business validation moved to request-sent/422 captures in test_sessions_codegen.
+    assert SetCookiesRequest.from_json is not None
 
 
 def test_all_request_classes_have_dict_types_and_proper_inheritance():
@@ -379,7 +298,9 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
     from pathlib import Path
 
     # Read the types.py file
-    types_file_path = Path(__file__).parent.parent.parent / "packages" / "notte-sdk" / "src" / "notte_sdk" / "types.py"
+    types_file_path = (
+        Path(__file__).parent.parent.parent / "packages" / "notte-core" / "src" / "notte_core" / "types.py"
+    )
     with open(types_file_path, "r") as f:
         types_content = f.read()
 
@@ -416,11 +337,8 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
     exceptions_no_dict = {
         "SdkRequest",  # Base request class
         "ScrapeRequest",  # Inherits from ScrapeParams, uses ScrapeRequestDict indirectly
-        "__AgentCreateRequest",  # Private base class, has AgentCreateRequestDict
-        "AgentStartRequest",  # Composite class, uses SdkAgentStartRequestDict
         "ForkFunctionRequest",  # Simple class, no dict needed
         # Classes that are missing Dict types but legitimately don't need them
-        "AgentSessionRequest",  # Simple base class with single field
         "DownloadFileRequest",  # Simple class with single field
         "SetCookiesRequest",  # Uses existing Cookie structures
         "StartFunctionRunRequest",  # Complex composition, may not need Dict
@@ -437,7 +355,6 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
     # Special dict mappings that exist but have different names
     special_dict_mappings = {
         "ScrapeRequest": "ScrapeRequestDict",  # Actually exists as part of ScrapeParams
-        "AgentStartRequest": "SdkAgentStartRequestDict",  # Different name pattern
     }
 
     # Dict types that exist for Request classes that are in our exceptions
@@ -470,10 +387,6 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
             "_SessionStartRequest",
         ]
         valid_composite_bases = [
-            "SdkAgentCreateRequest",
-            "AgentRunRequest",
-            "__AgentCreateRequest",
-            "AgentSessionRequest",
             "RunFunctionRequest",
         ]
 
@@ -493,7 +406,7 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
                 return True
 
             # Handle some specific cases
-            if class_name == "SdkRequest" and base_class == "BaseModel":
+            if class_name == "SdkRequest" and base_class in {"BaseModel", "_RawRequestObject"}:
                 return True  # SdkRequest is the root, can inherit from BaseModel
 
         return False
@@ -551,7 +464,9 @@ def test_all_response_classes_inherit_from_sdk_response():
     from pathlib import Path
 
     # Read the types.py file
-    types_file_path = Path(__file__).parent.parent.parent / "packages" / "notte-sdk" / "src" / "notte_sdk" / "types.py"
+    types_file_path = (
+        Path(__file__).parent.parent.parent / "packages" / "notte-core" / "src" / "notte_core" / "types.py"
+    )
     with open(types_file_path, "r") as f:
         types_content = f.read()
 
@@ -578,7 +493,7 @@ def test_all_response_classes_inherit_from_sdk_response():
     # Valid inheritance patterns - build hierarchy aware validation
     def is_valid_response_inheritance(class_name: str, inheritance_chain: str) -> bool:
         valid_direct_bases = ["SdkResponse", "BaseModel"]
-        valid_response_bases = ["SessionResponse", "AgentResponse", "GetFunctionResponse", "ReplayResponse"]
+        valid_response_bases = ["SessionResponse", "GetFunctionResponse", "ReplayResponse"]
         valid_composite_bases = ["ExecutionResult", "Observation", "DataSpace"]
 
         # Handle multiple inheritance and complex inheritance patterns

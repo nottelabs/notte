@@ -1,5 +1,6 @@
 ---
 title: "saveProfile"
+description: "Save a running session's browser state into a profile."
 ---
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
@@ -16,6 +17,8 @@ Pass `profile_id` to overwrite an existing profile or `name` to create a new one
 neither, the state is saved into the profile the session was started with. The session's
 start-time profile settings are not changed, so a session started with `persist: true`
 still saves again when it stops.
+
+See [Browser Profiles](/features/sessions/browser-profiles) for the tested Python and TypeScript example.
 
 ```typescript
 Session.saveProfile(options?: SaveProfileOptions): Promise<ProfileResponse>;
@@ -35,13 +38,6 @@ Default:
 
 ```typescript
 Promise<ProfileResponse>
-```
-
-## Example
-
-```typescript
-const profile = await session.saveProfile({ name: 'github' });
-// later: client.Session({ profile: { id: profile.profile_id } })
 ```
 
 ## Related types

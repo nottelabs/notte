@@ -1,3 +1,5 @@
+import { InvalidRequestError } from '@/errors';
+import type { NotteVault } from '@/vaults';
 import { NotteClient } from '@/client';
 import { vaultDelete } from '@/lib/client/sdk.gen';
 
@@ -25,5 +27,22 @@ export async function cleanupVaults(client: NotteClient, vaultIds: Iterable<stri
         console.warn(`Failed to delete owned vault ${batch[index]} during cleanup: ${result.reason}`);
       }
     });
+  }
+}
+
+
+/** Initialize a test-owned vault and register its ID for the caller's cleanup. */
+export async function initializeOwnedVault(
+  vault: Pick<NotteVault, 'listCredentials' | 'vaultId'>, vaultIds: string[],
+): Promise<void> {
+  try {
+    await vault.listCredentials();
+  } finally {
+    try {
+      vaultIds.push(vault.vaultId);
+    } catch (error) {
+      // A failed create has no ID; preserve that original error.
+      if (!(error instanceof InvalidRequestError)) throw error;
+    }
   }
 }

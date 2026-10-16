@@ -1,5 +1,6 @@
 import argparse
 import datetime as dt
+import re
 from pathlib import Path
 from typing import Annotated
 
@@ -58,30 +59,20 @@ class ShoppingList(BaseModel):
 
 
 # ############################################
-# Agents
+# Scrapers
 # ############################################
 
 
 @retry(max_tries=5)
 def scrape_categories(session: RemoteSession) -> ProductCategories:
-    response = notte.Agent(session=session, max_steps=5).run(
-        task=f"""
-Get all the product categories from the nike.com home page (focus on the men's section).
-Return the response in a json format ```{ProductCategories.model_json_schema()}```
-Here is an example of successfull output
-
-```json
-{ProductCategories.example().model_dump_json()}
-```
-
-Your turn. Be as exhaustive as possible
-""",
-        url=url,
-    )
-    if response.answer is None:
-        raise Exception("No response from the agent")
-    categories = ProductCategories.model_validate_json(response.answer)
-    return categories
+    # Category links are plain navigation links: read them from the page markdown, no LLM needed.
+    _ = session.execute(type="goto", url=url)
+    markdown = session.scrape(scrape_links=True, only_main_content=False)
+    links = re.findall(r"\[([^\]\n]+)\]\((https://www\.nike\.com/w/[^)\s]+)\)", markdown)
+    categories = {link: name for name, link in links}
+    if not categories:
+        raise Exception("No product categories found on the page")
+    return ProductCategories(categories=[ProductCategory(name=name, url=link) for link, name in categories.items()])
 
 
 @retry(max_tries=3)

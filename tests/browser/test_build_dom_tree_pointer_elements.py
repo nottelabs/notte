@@ -3,6 +3,7 @@ import pytest
 import notte
 
 
+@pytest.mark.live
 @pytest.mark.skip(reason="website no longer accessible?")
 def test_pointer_elements_on_hover():
     with notte.Session() as session:

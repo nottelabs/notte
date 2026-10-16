@@ -1,29 +1,28 @@
 import contextlib
-import csv
 import functools
 import inspect
-import json
 import os
 import time
 from collections import defaultdict
-from typing import Any, Callable, ParamSpec, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, ParamSpec, TypeVar, cast
 
-# OpenTelemetry imports
-from opentelemetry import trace
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import SpanProcessor
-from opentelemetry.sdk.trace import TracerProvider as SDKTracerProvider
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-from opentelemetry.trace import Status, StatusCode, Tracer
+from notte_core.cache import CacheDirectory, ensure_cache_directory
+from notte_core.config import config
+from notte_core.logging import logger
 
-from notte_core.common.cache import CacheDirectory, ensure_cache_directory
-from notte_core.common.config import config
-from notte_core.common.logging import logger
+if TYPE_CHECKING:
+    # OpenTelemetry is imported once profiling is used: importing notte with profiling
+    # disabled (the default) does not need it, and it is an optional dependency (`notte-core[profiling]`).
+    from opentelemetry.sdk.trace import SpanProcessor
+    from opentelemetry.sdk.trace import TracerProvider as SDKTracerProvider
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+    from opentelemetry.trace import Tracer
 
 P = ParamSpec("P")
 R = TypeVar("R")
-TP = TypeVar("TP", bound=SDKTracerProvider)
+TP = TypeVar("TP", bound="SDKTracerProvider")
+
+_MISSING_OPENTELEMETRY = "Profiling needs OpenTelemetry: install it with `pip install 'notte-core[profiling]'`."
 
 
 class NotteProfiler:
@@ -50,12 +49,12 @@ class NotteProfiler:
         self.default_service_name: str = default_service_name
 
         # Multiple tracer providers for different services
-        self._tracer_providers: dict[str, SDKTracerProvider] = {}
-        self._tracers: dict[str, Tracer] = {}
+        self._tracer_providers: dict[str, "SDKTracerProvider"] = {}
+        self._tracers: dict[str, "Tracer"] = {}
 
-        # Shared memory exporter for all services
-        self.memory_exporter: InMemorySpanExporter = InMemorySpanExporter()
-        self.additional_processors: list[SpanProcessor] = []
+        # Shared memory exporter for all services, created on first use (see `memory_exporter`)
+        self._memory_exporter: "InMemorySpanExporter | None" = None
+        self.additional_processors: list["SpanProcessor"] = []
         self.enable_memory_exporter: bool = True
         self._tracer_setup_done: bool = False
 
@@ -65,6 +64,22 @@ class NotteProfiler:
             self.setup_tracer(default_service_name)
 
         self.start_time: float | None = None
+
+    @property
+    def memory_exporter(self) -> "InMemorySpanExporter":
+        """The in-memory span exporter shared by all services (used for flamegraph generation)."""
+        if self._memory_exporter is None:
+            try:
+                from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+            except ImportError as e:
+                raise ImportError(_MISSING_OPENTELEMETRY) from e
+
+            self._memory_exporter = InMemorySpanExporter()
+        return self._memory_exporter
+
+    @memory_exporter.setter
+    def memory_exporter(self, exporter: "InMemorySpanExporter") -> None:
+        self._memory_exporter = exporter
 
     def disable_memory_exporter(self) -> None:
         """
@@ -99,6 +114,8 @@ class NotteProfiler:
         if was_enabled and self._tracer_setup_done:
             if self._tracer_providers:
                 try:
+                    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
                     # Shutdown forces the processor to stop accepting new spans
                     memory_processor = SimpleSpanProcessor(self.memory_exporter)
                     memory_processor.shutdown()
@@ -110,7 +127,7 @@ class NotteProfiler:
         else:
             logger.info("In-memory span exporter disabled to prevent memory growth")
 
-    def add_span_processor(self, processor: SpanProcessor, service_name: str | None = None) -> None:
+    def add_span_processor(self, processor: "SpanProcessor", service_name: str | None = None) -> None:
         """
         Add an additional span processor to export traces to external systems.
 
@@ -164,6 +181,14 @@ class NotteProfiler:
         if service_name in self._tracer_providers:
             return
 
+        try:
+            from opentelemetry import trace
+            from opentelemetry.sdk.resources import Resource
+            from opentelemetry.sdk.trace import TracerProvider as SDKTracerProvider
+            from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+        except ImportError as e:
+            raise ImportError(_MISSING_OPENTELEMETRY) from e
+
         resource = Resource.create({"service.name": service_name})
 
         # Create tracer provider for this service
@@ -194,7 +219,7 @@ class NotteProfiler:
 
         logger.info(f"Tracer setup complete for service: {service_name}")
 
-    def get_tracer(self, service_name: str | None = None) -> Tracer:
+    def get_tracer(self, service_name: str | None = None) -> "Tracer":
         """
         Get a tracer for a specific service, creating it if necessary.
 
@@ -212,6 +237,11 @@ class NotteProfiler:
             if self.enable:
                 self.setup_tracer(service_name)
             else:
+                try:
+                    from opentelemetry import trace
+                except ImportError as e:
+                    raise ImportError(_MISSING_OPENTELEMETRY) from e
+
                 # Return no-op tracer if profiling is disabled
                 return trace.get_tracer(__name__)
 
@@ -237,6 +267,8 @@ class NotteProfiler:
             self.start_time = time.perf_counter()
 
         tracer = self.get_tracer(service_name)
+        from opentelemetry.trace import Status, StatusCode
+
         with tracer.start_as_current_span(operation_name) as span:
             # Add custom attributes
             if attributes:
@@ -274,6 +306,8 @@ class NotteProfiler:
             self.start_time = time.perf_counter()
 
         tracer = self.get_tracer(service_name)
+        from opentelemetry.trace import Status, StatusCode
+
         with tracer.start_as_current_span(operation_name) as span:
             # Add custom attributes
             if attributes:
@@ -375,6 +409,8 @@ class NotteProfiler:
             logger.warning("Memory exporter is disabled. No span data available for flamegraph generation.")
             return []
 
+        from opentelemetry.trace import StatusCode
+
         spans = self.memory_exporter.get_finished_spans()
         span_data: list[dict[str, Any]] = []
 
@@ -460,52 +496,6 @@ class NotteProfiler:
 
         traverse_spans(hierarchy)
         return flamegraph_data
-
-    def save_results(self, output_file: str | None = None) -> None:
-        """Save profiling results to CSV.
-
-        Args:
-            output_file: Path to output CSV file. If None, uses cache directory.
-                        If relative path, uses it relative to cwd.
-                        If absolute path, uses it as-is.
-        """
-        if not self.enable:
-            raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
-
-        # Use cache directory if no output file specified
-        if output_file is None:
-            profiling_dir = ensure_cache_directory(CacheDirectory.PROFILING)
-            output_file = str(profiling_dir / "otel_profile_results.csv")
-
-        span_data = self.get_span_data()
-        flamegraph_data = self.generate_stack_paths(span_data)
-
-        try:
-            with open(output_file, "w", newline="") as csvfile:
-                fieldnames = ["name", "stack_path", "start_time", "end_time", "duration", "depth"]
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                writer.writeheader()
-                writer.writerows(flamegraph_data)
-        except Exception as e:
-            logger.error(f"Error saving results: {e}")
-
-    def print_results(self) -> None:
-        """Print hierarchical profiling results."""
-        if not self.enable:
-            raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
-
-        span_data = self.get_span_data()
-        flamegraph_data = self.generate_stack_paths(span_data)
-
-        print("OpenTelemetry Profiling Results:")
-        print("-" * 80)
-        print(f"{'Operation':<40} {'Start':<10} {'End':<10} {'Duration':<12}")
-        print("-" * 80)
-
-        for item in flamegraph_data:
-            indent = "  " * item["depth"]
-            name = f"{indent}{item['name']}"
-            print(f"{name:<40} {item['start_time']:<10.6f} {item['end_time']:<10.6f} {item['duration']:<12.6f}")
 
     def generate_flamegraph_svg(self, output_file: str | None = None, width: int = 1200, height: int = 600) -> None:
         """Generate a traditional dark flamegraph with compact layout.
@@ -1102,30 +1092,6 @@ class NotteProfiler:
                 _ = f.write("\n".join(svg_lines))
         except Exception as e:
             logger.error(f"Error generating flamegraph: {e}")
-
-    def save_trace_json(self, output_file: str | None = None) -> None:
-        """Save trace data in JSON format for external tools.
-
-        Args:
-            output_file: Path to output JSON file. If None, uses cache directory.
-                        If relative path, uses it relative to cwd.
-                        If absolute path, uses it as-is.
-        """
-        if not self.enable:
-            raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
-
-        # Use cache directory if no output file specified
-        if output_file is None:
-            profiling_dir = ensure_cache_directory(CacheDirectory.PROFILING)
-            output_file = str(profiling_dir / "trace.json")
-
-        span_data = self.get_span_data()
-
-        try:
-            with open(output_file, "w") as f:
-                json.dump(span_data, f, indent=2)
-        except Exception as e:
-            logger.error(f"Error saving trace data: {e}")
 
     def reset(self) -> None:
         """

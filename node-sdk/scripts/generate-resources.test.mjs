@@ -2,7 +2,16 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
 import ts from 'typescript';
-import { generateResources } from './generate-resources.mjs';
+import { generateResources as generateMappedResources, checkCoverage } from './generate-resources.mjs';
+
+const naming = JSON.parse(fs.readFileSync(new URL('../../openapi/resources.json', import.meta.url), 'utf8'));
+const registry = new Map(Object.entries(naming).map(([id, entry]) => [entry.nodeOperation ?? id.replace(/^_+/, '').replace(/_([a-z])/g, (_, c) => c.toUpperCase()), entry]));
+registry.set('sessionExample', { resource: 'sessions', method: 'example' });
+registry.set('sessionList', { resource: 'sessions', method: 'list' });
+const generateResources = (sdk, types) => generateMappedResources(sdk, types, registry);
+test('rejects spec operations without an explicit mapping or exclusion', () => {
+  assert.throws(() => checkCoverage({ paths: { '/new': { get: { operationId: 'unknown' } } } }), /Unmapped operation: unknown/);
+});
 
 const sdk = name => `export const ${name} = (options: Options<ExampleData, true>) => client.get(options);`;
 const data = fields => `export type ExampleData = { ${fields} };`;
@@ -66,6 +75,20 @@ test('rejects method collisions', () => {
   assert.throws(() => generateResources(`${sdk('sessionList')}\n${sdk('listSessions')}`, data(`url: '/sessions';`)), /collision/);
 });
 
+test('rejects aliases that would replace another method', () => {
+  const generate = (entries, names) => generateMappedResources(names.map(sdk).join('\n'), data(`url: '/sessions';`), new Map(entries));
+  // An alias targeting a method another operation already emitted.
+  assert.throws(() => generate([
+    ['sessionList', { resource: 'sessions', method: 'list' }],
+    ['sessionExample', { resource: 'sessions', method: 'example', aliases: [{ resource: 'sessions', method: 'list' }] }],
+  ], ['sessionList', 'sessionExample']), /collision: sessions\.list/);
+  // Two aliases with the same target.
+  assert.throws(() => generate([
+    ['sessionList', { resource: 'sessions', method: 'list', aliases: [{ resource: 'sessions', method: 'all' }] }],
+    ['sessionExample', { resource: 'sessions', method: 'example', aliases: [{ resource: 'sessions', method: 'all' }] }],
+  ], ['sessionList', 'sessionExample']), /collision: sessions\.all/);
+});
+
 test('rejects path names that would shadow the bound client', () => {
   assert.throws(() => generateResources(sdk('sessionExample'), data(`
     path: { client: string }; url: '/sessions/{client}';
@@ -82,6 +105,25 @@ test('checked-in output is reproducible from the checked-in OpenAPI-derived SDK'
   assert.equal(generateResources(read('lib/client/sdk.gen.ts'), read('lib/client/types.gen.ts')), read('resources.gen.ts'));
 });
 
+
+test('spec-owned agent operations stay outside client resources while sessions remain callable', async () => {
+  const read = file => fs.readFileSync(new URL(`../src/lib/client/${file}`, import.meta.url), 'utf8');
+  const source = read('sdk.gen.ts');
+  assert.match(source, /export const agentStart\b/);
+  const generated = generateResources(source, read('types.gen.ts'));
+  const js = ts.transpile(generated, { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 });
+  const requests = [];
+  const exports = {};
+  const client = {};
+  new Function('require', 'exports', js)(() => ({ sessionStatus: async options => {
+    requests.push(options);
+    return { data: { session_id: options.path.session_id } };
+  } }), exports);
+  const resources = exports.createResources(client, () => 'bound-key');
+  assert.equal('agents' in resources, false);
+  assert.deepEqual(await resources.sessions.status('session'), { session_id: 'session' });
+  assert.equal(requests[0].client, client);
+});
 
 test('preserves run metadata request options before its new payload query', async () => {
   const generated = generateResources(sdk('functionRunGetMetadata'), data(`
@@ -108,4 +150,11 @@ test('preserves run metadata request options before its new payload query', asyn
   }
   assert.equal(requests[0].query, undefined);
   assert.deepEqual(requests[1].query, { payload_mode: 'references' });
+});
+
+// The Data API's operationId "delete" becomes "delete_" in TypeScript.
+test('honors generated names for reserved operation identifiers', () => {
+  const source = `${sdk('delete_')}\n${sdk('listSessions')}`;
+  assert.doesNotThrow(() => generateMappedResources(source, data(`url: '/sessions';`)));
+  assert.throws(() => generateMappedResources(sdk('unmapped_'), data(`url: '/sessions';`)), /Unmapped operation: unmapped_/);
 });

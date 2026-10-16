@@ -1,0 +1,4 @@
+### Content of 'dialog' component with text 'Confirmation'
+_[:]Inside heading
+B2[:]<button>Inside button</button>
+I2[:]<input aria_label="Inside input"></input>

@@ -29,7 +29,7 @@ def test_small_update_remains_inline_and_preserves_unset_fields():
         patch.object(client.functions, "request") as request,
         patch("notte_sdk.endpoints.run_payloads.requests.Session") as s3,
     ):
-        client.functions.update_run("fn", "run", status="closed", result="ok")
+        client.functions.run_update_metadata("fn", "run", status="closed", result="ok")
     body = request.call_args.args[0].request.model_dump()
     assert body == {"status": "closed", "result": "ok"}
     s3.assert_not_called()
@@ -50,12 +50,12 @@ def test_large_logs_are_uploaded_before_final_update_without_api_credentials():
         patch.object(client.functions, "request", return_value=upload) as request,
         patch("notte_sdk.endpoints.run_payloads.requests.Session", return_value=session),
     ):
-        body = offload_run_fields(client.functions, "fn/runs/run", original)
+        body = offload_run_fields(client.functions, "fn", "run", original)
     assert uploaded == [raw]
     assert "logs" not in body
     assert body["payloads"]["logs"] == upload.reference.model_dump()
     assert original["logs"] is logs
-    assert request.call_args.args[0].path == "fn/runs/run/payloads/logs/upload"
+    assert request.call_args.args[0].path == "/functions/fn/runs/run/payloads/logs/upload"
     assert session.put.call_args.kwargs["headers"] == {"If-None-Match": "*"}
     assert session.put.call_args.kwargs["allow_redirects"] is False
 
@@ -72,7 +72,7 @@ def test_upload_failure_never_finalizes_run():
         patch("notte_sdk.endpoints.run_payloads.requests.Session", return_value=storage_session(response)),
     ):
         with pytest.raises(RuntimeError, match="upload unavailable"):
-            client.functions.update_run("fn", "run", status="closed", result="long result")
+            client.functions.run_update_metadata("fn", "run", status="closed", result="long result")
     assert request.call_count == 1
     assert request.call_args.args[0].method == "POST"
 
@@ -119,16 +119,57 @@ def test_missing_download_url_fails_before_storage_request(urls):
 def test_result_preview_is_bounded_and_full_result_is_in_storage():
     result = "x" * 20000
     raw = json.dumps(result).encode()
-    client = MagicMock()
-    client.request.return_value = UploadResponse(reference=reference(raw), url="https://storage/object", headers={})
+    client = NotteClient(api_key="test").functions
+    upload = UploadResponse(reference=reference(raw), url="https://storage/object", headers={})
     with (
+        patch.object(client, "request", return_value=upload),
         patch("notte_sdk.endpoints.run_payloads.INLINE_FIELD_BYTES", 1),
         patch(
             "notte_sdk.endpoints.run_payloads.requests.Session",
             return_value=storage_session(MagicMock(status_code=200)),
         ),
     ):
-        body = offload_run_fields(client, "fn/runs/run", {"status": "closed", "result": result})
+        body = offload_run_fields(client, "fn", "run", {"status": "closed", "result": result})
     assert len(body["result_preview"]) == 16000
     assert "result" not in body
     assert body["payloads"]["result"]["size_bytes"] == len(raw)
+
+
+@pytest.mark.parametrize("threshold", [1, 10000])
+def test_run_update_serializes_python_values_before_offloading(threshold):
+    from datetime import datetime, timezone
+    from uuid import UUID
+
+    client = NotteClient(api_key="test").functions
+    stamp = datetime(2026, 10, 13, tzinfo=timezone.utc)
+    identifier = UUID("f18936c0-6926-4d2c-8a40-9a991c5412bd")
+    stored = MagicMock(status_code=200)
+    session = storage_session(stored)
+    uploads = []
+    session.put.side_effect = lambda *args, **kwargs: (
+        uploads.append(kwargs["data"].read()),
+        stored,
+    )[1]
+
+    def respond(endpoint):
+        if endpoint.method == "POST":
+            return UploadResponse(
+                reference=UploadReference(upload_id="upload", **endpoint.request.model_dump()),
+                url="https://storage/object",
+                headers={},
+            )
+        return MagicMock()
+
+    with (
+        patch("notte_sdk.endpoints.run_payloads.INLINE_FIELD_BYTES", threshold),
+        patch.object(client, "request", side_effect=respond) as request,
+        patch("notte_sdk.endpoints.run_payloads.requests.Session", return_value=session),
+    ):
+        client.run_update_metadata("fn", "run", status="closed", variables={"at": stamp}, result=identifier)
+    body = request.call_args.args[0].request.model_dump()
+    if threshold == 1:
+        assert [json.loads(raw) for raw in uploads] == [str(identifier), {"at": "2026-10-13T00:00:00Z"}]
+        assert set(body["payloads"]) == {"variables", "result"}
+    else:
+        assert body == {"status": "closed", "variables": {"at": "2026-10-13T00:00:00Z"}, "result": str(identifier)}
+        assert uploads == []

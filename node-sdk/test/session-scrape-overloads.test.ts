@@ -5,7 +5,7 @@ import { Session } from '@/session';
 import { ScrapeFailedError } from '@/errors';
 import type { ScrapeResult, StructuredData } from '@/scrape';
 import { pageScrape, sessionStart } from '@/lib/client/sdk.gen';
-import type { DataSpace, ImageData } from '@/lib/client/types.gen';
+import type { DataSpace } from '@/lib/client/types.gen';
 import { mockNotteClient, sessionResponse } from './helpers/session-mocks';
 
 vi.mock('@/lib/client/sdk.gen', () => ({
@@ -17,10 +17,8 @@ vi.mock('@/lib/client/sdk.gen', () => ({
 const Profile = z.object({ name: z.string(), age: z.number() });
 type Profile = z.infer<typeof Profile>;
 
-const images: ImageData[] = [{ url: 'https://example.com/a.png', category: 'content_image', description: 'a' }];
-
 function dataSpace(overrides: Partial<DataSpace> = {}): DataSpace {
-  return { markdown: '# Hello', images, structured: { success: true, error: null, data: { name: 'Ada', age: 36 } }, ...overrides };
+  return { markdown: '# Hello', structured: { success: true, error: null, data: { name: 'Ada', age: 36 } }, ...overrides };
 }
 
 async function startedSession(response: DataSpace): Promise<Session> {
@@ -42,7 +40,6 @@ describe('session.scrape overloads', () => {
       expectTypeOf(session.scrape({ response_format: Profile, instructions: 'x' })).toEqualTypeOf<Promise<Profile>>();
       expectTypeOf(session.scrape({ response_format: Profile, raiseOnFailure: true })).toEqualTypeOf<Promise<Profile>>();
       expectTypeOf(session.scrape({ response_format: Profile, raiseOnFailure: false })).toEqualTypeOf<Promise<StructuredData<Profile>>>();
-      expectTypeOf(session.scrape({ only_images: true })).toEqualTypeOf<Promise<ImageData[]>>();
       expectTypeOf(session.scrape()).toEqualTypeOf<Promise<string>>();
       expectTypeOf(session.scrape({ only_main_content: true, selector: 'article' })).toEqualTypeOf<Promise<string>>();
       expectTypeOf(session.scrape({ instructions: 'Extract the company name' })).toEqualTypeOf<Promise<ScrapeResult<unknown>>>();
@@ -56,11 +53,6 @@ describe('session.scrape overloads', () => {
     expect(pageScrape).toHaveBeenCalledWith(
       expect.objectContaining({ path: { session_id: 'session-123' }, body: { only_main_content: true, selector: 'article' } }),
     );
-  });
-
-  it('returns the images with only_images', async () => {
-    const session = await startedSession(dataSpace());
-    expect(await session.scrape({ only_images: true })).toEqual(images);
   });
 
   it('sends the zod schema as JSON schema and never invents instructions', async () => {

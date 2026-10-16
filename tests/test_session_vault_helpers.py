@@ -1,15 +1,19 @@
 import asyncio
+from typing import Any
 
 import pytest
 from notte_browser.session import NotteSession
+from notte_browser.vault import VaultSecretsScreenshotMask
+from notte_browser.window import ScreenshotMask
 from notte_core.actions import FillAction, FormFillAction, MultiFactorFillAction
 from notte_core.credentials import EMAIL, MFA, PASSWORD, USERNAME
 from notte_core.credentials.base import LocatorAttributes
 from notte_core.credentials.types import ValueWithPlaceholder
-from notte_core.errors.processing import CredentialFieldValidationError
+from notte_core.errors import CredentialFieldValidationError, MissingCredentialFieldError
 
 from tests.mock.mock_vault import MockVault
 from tests.mock.snapshot_factory import make_snapshot
+from tests.test_session_persona_helpers import StubPersona
 
 
 class FakeWindow:
@@ -138,6 +142,129 @@ def test_session_vault_preserves_selector_when_fill_mfa_becomes_multi_factor_fil
     assert isinstance(updated.value, ValueWithPlaceholder)
     assert len(updated.value.get_secret_value()) == 6
     assert updated.value.get_secret_value().isdigit()
+
+
+class MaskableWindow(FakeWindow):
+    def __init__(self, url: str, screenshot_mask: ScreenshotMask | None = None) -> None:
+        super().__init__(url)
+        self.screenshot_mask: ScreenshotMask | None = screenshot_mask
+
+
+def _session_with_window(window: MaskableWindow, **kwargs: Any) -> NotteSession:
+    return NotteSession(window=window, **kwargs)  # pyright: ignore[reportArgumentType]
+
+
+def test_session_without_vault_installs_no_screenshot_mask() -> None:
+    window = MaskableWindow("https://example.com")
+    _ = _session_with_window(window)
+    assert window.screenshot_mask is None
+
+
+def test_session_vault_masks_screenshots() -> None:
+    vault = MockVault({"https://example.com": {"email": "real@example.com"}})
+    window = MaskableWindow("https://example.com")
+    _ = _session_with_window(window, vault=vault)
+
+    assert isinstance(window.screenshot_mask, VaultSecretsScreenshotMask)
+    assert window.screenshot_mask.vault is vault
+
+
+def test_session_set_vault_toggles_screenshot_mask() -> None:
+    vault = MockVault({"https://example.com": {"email": "real@example.com"}})
+    window = MaskableWindow("https://example.com")
+    session = _session_with_window(window)
+    assert window.screenshot_mask is None
+
+    session.set_vault(vault)
+    assert isinstance(window.screenshot_mask, VaultSecretsScreenshotMask)
+    assert window.screenshot_mask.vault is vault
+
+    session.set_vault(None)
+    assert window.screenshot_mask is None
+
+
+def test_session_persona_vault_masks_screenshots() -> None:
+    vault = MockVault({"https://example.com": {"email": "real@example.com"}})
+    window = MaskableWindow("https://example.com")
+    session = _session_with_window(window)
+
+    session.attach_persona(StubPersona(emails=[], sms=[], vault=vault))
+
+    assert isinstance(window.screenshot_mask, VaultSecretsScreenshotMask)
+    assert window.screenshot_mask.vault is vault
+
+
+def test_session_persona_without_vault_installs_no_screenshot_mask() -> None:
+    window = MaskableWindow("https://example.com")
+    _ = _session_with_window(window, persona=StubPersona(emails=[], sms=[]))
+    assert window.screenshot_mask is None
+
+
+def test_session_vault_keeps_custom_screenshot_mask() -> None:
+    custom_mask = ScreenshotMask()
+    window = MaskableWindow("https://example.com", screenshot_mask=custom_mask)
+    session = _session_with_window(window, vault=MockVault())
+    assert window.screenshot_mask is custom_mask
+
+    session.set_vault(None)
+    assert window.screenshot_mask is custom_mask
+
+
+def test_session_vault_rejects_credential_for_unvalidated_element() -> None:
+    """A password must not be typed (as its placeholder) into an element that is not a password field."""
+    vault = MockVault({"https://example.com": {"email": "test@test.com", "password": "pw"}})
+    session = NoopLocateSession(vault=vault)
+    session.snapshot = make_snapshot("https://example.com")
+
+    with pytest.raises(CredentialFieldValidationError):
+        _ = asyncio.run(session._action_with_vault(FillAction(selector="#name", value=PASSWORD)))
+
+
+def test_session_vault_rejects_credential_missing_from_vault() -> None:
+    vault = MockVault({"https://example.com": {"email": "test@test.com"}})
+    session = NoopLocateSession(vault=vault)
+    session.snapshot = make_snapshot("https://example.com")
+
+    with pytest.raises(MissingCredentialFieldError):
+        _ = asyncio.run(session._action_with_vault(FillAction(selector="#pw", value=PASSWORD)))
+
+
+def test_session_vault_form_fill_keeps_plain_values_next_to_credentials() -> None:
+    vault = MockVault({"https://example.com": {"email": "real@example.com"}})
+    session = NotteSession(vault=vault)
+    session.snapshot = make_snapshot("https://example.com")
+
+    action = FormFillAction(value={"email": EMAIL, "city": "Paris"})
+    updated = asyncio.run(session._action_with_vault(action))
+
+    assert isinstance(updated.value["email"], ValueWithPlaceholder)
+    assert updated.value["email"].get_secret_value() == "real@example.com"
+    assert updated.value["city"] == "Paris"
+
+
+def test_session_vault_only_matches_whole_placeholder_values() -> None:
+    vault = MockVault({"https://example.com": {"email": "real@example.com", "password": "pw"}})
+    session = NoopLocateSession(vault=vault)
+    session.snapshot = make_snapshot("https://example.com")
+
+    # Placeholders inside other text, or in fields other than the value, are not credentials.
+    for action in (
+        FillAction(selector="#msg", value=f"Hi John Doe, use {PASSWORD} or 999779"),
+        FillAction(id="I999779", value="hello"),
+        FormFillAction(value={"full_name": "John Doe Jr", "city": "user@example.org street"}),
+    ):
+        assert not vault.contains_credentials(action)
+        assert asyncio.run(session._action_with_vault(action)) is action
+
+    # A plain-text placeholder is typed as given outside a payment field.
+    plain = FillAction(selector="#name", value="John Doe")
+    assert asyncio.run(session._action_with_vault(plain)) is plain
+    assert plain.value == "John Doe"
+
+    # Whole-value placeholders still resolve.
+    email = asyncio.run(session._action_with_vault(FillAction(selector="#email", value=EMAIL)))
+    assert isinstance(email.value, ValueWithPlaceholder)
+    assert email.value.get_secret_value() == "real@example.com"
 
 
 def test_password_placeholder_on_invalid_element_raises() -> None:

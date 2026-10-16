@@ -15,7 +15,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Notte can connect to any browser that exposes a Chrome DevTools Protocol (CDP) endpoint. This allows you to use Notte's features (Agents, Actions, Scraping) with browser infrastructure from providers like Kernel.sh or BrowserBase.
+Notte can connect to any browser that exposes a Chrome DevTools Protocol (CDP) endpoint. This allows you to use Notte's features (Actions, Scraping, Observation) with browser infrastructure from providers like Kernel.sh or BrowserBase.
 
 ## How It Works
 
@@ -70,8 +70,8 @@ Use Notte's built-in browsers when you want:
 When you connect Notte to an external browser, you get:
 
 <CardGroup cols={2}>
-  <Card title="AI Agents" icon="sparkles">
-    Use Notte's Agent to automate complex tasks with natural language
+  <Card title="Session Replay" icon="video">
+    Record your automation and download a video replay for debugging
   </Card>
 
   <Card title="Smart Actions" icon="hand-pointer">
@@ -99,7 +99,6 @@ When using external browsers, Notte supports:
 
 ✅ **Supported**:
 - Page navigation and interaction via Playwright
-- Agent-based automation
 - Structured scraping with `scrape()`
 - Action execution with `execute()`
 - Page observation with `observe()`

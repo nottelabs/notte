@@ -1,8 +1,8 @@
 # notte-sdk
 
-> TypeScript SDK for Notte - Cloud-hosted browser sessions with LLM-powered web agents
+> TypeScript SDK for Notte - Cloud-hosted browser sessions and automation
 
-The official TypeScript SDK for Notte API, providing cloud-hosted browser sessions with precise control, LLM-powered web agents for automated tasks, serverless functions, and secure credential management.
+The official TypeScript SDK for Notte API, providing cloud-hosted browser sessions with precise control, serverless functions, and secure credential management.
 
 ## Contributing
 
@@ -23,12 +23,30 @@ npm pack --dry-run
 ```
 
 `npm run build` compiles the checked-in client without contacting the API.
-To update the generated client, run `npm run generate:staging`, review the diff,
-and commit it. `npm run check:staging` checks for drift without editing your files.
+`npm run generate` uses `../openapi/openapi.json`, the committed snapshot shared
+with Python, and ignores `NOTTE_API_URL` (which configures runtime API calls).
+Run `npm run docs:generate` afterward and commit the generated changes.
+`npm run check:generated` regenerates in a temporary directory and checks the
+TypeScript reference without editing your files or contacting staging.
+
+To deliberately refresh the snapshot and regenerate **both SDKs** and the TypeScript
+reference, install dependencies with `uvx uv@latest sync --all-packages --all-extras`
+at the repo root and `npm ci` here, then run from the repo root:
+
+```bash
+make openapi-refresh                                    # staging
+make openapi-refresh OPENAPI_URL=https://api.notte.cc     # production
+```
+
+Review and commit the snapshot and all generated diffs together. If a generator
+rejects the new contract, resolve the reported incompatibility before committing.
+The scheduled `openapi-bump.yml` workflow proposes this same combined refresh as
+one PR for manual review in `nottelabs/notte`; it is repository-guarded and does not
+run in `nottelabs/notte-v2`. There is no separate live Node generation check.
 
 ### Generated resource methods
 
-The SDK generates client-bound methods for `sessions`, `agents`, `functions`,
+The SDK generates client-bound methods for `sessions`, `functions`,
 `vaults`, `personas`, and `profiles` from the checked-in OpenAPI-derived types
 and operations. No per-call client or `throwOnError` is needed:
 
@@ -47,12 +65,12 @@ example `client.sessions.createPayment(sessionId, body, undefined, { headers: { 
 Keep the same idempotency key when retrying the same payment request. The SDK
 binds `x-notte-api-key` automatically; callers cannot override it through typed headers.
 Methods return the API response body and throw the client's typed API errors.
-The five existing `list()` methods still return arrays for compatibility;
+The four existing `list()` methods still return arrays for compatibility;
 the newly added `profiles.list()` returns the API pagination response.
 
 These are API operations, not lifecycle helpers: they do not poll for completion,
 decrypt credentials, or manage cleanup. Continue using `Session().use()`,
-`Agent().run()`, `Function().run()`, and `Vault()` for those behaviors. Existing
+`Function().run()` and `Vault()` for those behaviors. Existing
 standalone generated exports remain supported.
 
 `npm run generate` refreshes this layer too. Use `npm run resources:generate`
@@ -69,15 +87,20 @@ npx vitest run test/function-create-run.integration.test.ts
 
 This test creates its own function and deletes it afterward. Other live suites
 may require pre-existing fixtures; see [test documentation](test/README.md).
-The `node sdk cicd` workflow runs on every PR touching `node-sdk/`:
+The `node sdk cicd` workflow runs on PRs touching `node-sdk/`, the OpenAPI snapshot,
+or the generated TypeScript reference:
 
 - `tests` runs unit tests, local HTTP integration tests, type checks, and package
   checks on Node.js 22 and 24, including for fork PRs.
-- `integration-tests` runs the isolated live function lifecycle tests against
+- `integration-tests` runs the complete live integration suite against
   staging on same-repository PRs. Fork PRs skip this credentialed job.
 
-Both jobs also run on main pushes and manual workflow runs on main. API drift
-checks remain limited to main pushes and manual workflow runs on main.
+- `generated` checks the client, proxy patterns, resources and TypeScript reference
+  against the committed snapshot, including on fork PRs.
+
+These jobs also run on main pushes and manual workflow runs (live integration
+requires main for manual runs). Staging contract drift is handled only by the
+scheduled snapshot refresh PR, so it cannot break unrelated PR generation checks.
 
 ### Releases
 
@@ -109,6 +132,10 @@ API URLs must use HTTPS, except HTTP loopback addresses for local development.
 
 ## Features
 
+Since 1.10 the SDK has no high-level agent API, matching Python. Releases up to
+1.9 keep agent support. Generated low-level agent endpoints and schemas remain tied
+to the API specification; they are not exposed through client resources.
+
 ### Server-side proxy security
 
 `createNotteProxy` from `notte-sdk/next` requires an `authenticate` callback at
@@ -116,15 +143,12 @@ runtime. Without one, requests return 401 even when a server API key is configur
 The callback must verify caller identity and authorize access to requested
 resources. Returning a user-specific Notte API key isolates accounts; returning
 void uses the shared server key and requires application-level ownership checks.
-An endpoint allowlist is not a substitute for authorization. Relative HTTP proxy
-clients poll agent status for completion because they cannot use backend WebSockets.
+An endpoint allowlist is not a substitute for authorization.
 
 - 🌐 **Cloud Browser Sessions** - Access remote browsers with full control
-- 🤖 **LLM-Powered Agents** - Intelligent web automation with natural language
 - 🔒 **Secret Vaults** - Enterprise-grade credential management with end-to-end encryption
 - 👤 **Digital Personas** - Complete identities with email, SMS, and 2FA for automated account creation
 - 🎯 **Session Management** - Context managers for reliable resource cleanup
-- 📡 **Real-time Updates** - WebSocket support for live agent monitoring
 - 📝 **Type Safety** - Full TypeScript support with generated types
 - ⚡ **Serverless Functions** - Run pre-built automation workflows with simple API calls
 - 🔍 **Web Search, Secrets and Usage** - Search the web, manage workspace secrets and read billing usage
@@ -155,30 +179,6 @@ await notte.Session({ idle_timeout_minutes: 5 }).use(async (session) => {
 });
 ```
 
-### Agent Automation
-
-```typescript
-import { NotteClient } from 'notte-sdk';
-
-const notte = new NotteClient();
-
-// Run an agent task with live updates
-await notte.Session().use(async (session) => {
-  const agent = notte.Agent({ session, max_steps: 10 });
-
-  const response = await agent.run({
-    task: "Find the best Italian restaurant in San Francisco and book a table for 2 at 7pm today",
-    updateHandler: (update) => {
-      // Receive real-time updates via WebSocket
-      console.log(`[${update.type}]`, update.data);
-    }
-  });
-
-  console.log(`Agent completed: ${response.success ? 'Success' : 'Failed'}`);
-  console.log(`Answer: ${response.answer}`);
-});
-```
-
 ## Core Classes
 
 ### NotteClient
@@ -198,9 +198,6 @@ const notte = new NotteClient({
 // Create sessions
 const session = notte.Session({ idle_timeout_minutes: 5, max_duration_minutes: 30 });
 
-// Create agents
-const agent = notte.Agent({ session, max_steps: 15 });
-
 // Create vaults
 const vault = notte.Vault({ name: 'My Vault' });
 
@@ -215,12 +212,11 @@ await notte.healthCheck();
 
 Every resource has a `list()` namespace, mirroring `client.sessions.list()` and
 friends in Python. Options are the generated query parameters of the matching
-endpoint (`SessionListOptions`, `AgentListOptions`, `VaultListOptions`,
+endpoint (`SessionListOptions`, `VaultListOptions`,
 `FunctionListOptions`, `PersonaListOptions`).
 
 ```typescript
 const sessions = await notte.sessions.list({ only_active: true });
-const agents = await notte.agents.list({ page_size: 10 });
 const vaults = await notte.vaults.list();
 const functions = await notte.functions.list();
 const personas = await notte.personas.list({ only_active: true });
@@ -368,79 +364,6 @@ await session.downloadReplay('./session.mp4');
 - `storage` - The `RemoteFileStorage` attached with the `storage` option
 - `client.sessions.list(options?)` - List sessions
 
-### Agent
-
-Executes tasks using LLM-powered web automation.
-
-```typescript
-import { NotteClient } from 'notte-sdk';
-
-const notte = new NotteClient();
-
-await notte.Session().use(async (session) => {
-  const agent = notte.Agent({
-    session,
-    max_steps: 10
-  });
-
-  // Non-blocking: start agent and get its ID
-  await agent.start({ task: "Navigate to Google and search for 'TypeScript'" });
-  console.log('Agent started:', agent.agentId);
-
-  // Check agent status
-  const status = await agent.status();
-  console.log('Agent status:', status);
-
-  // Blocking: run agent and wait for completion with live updates
-  const response = await agent.run({
-    task: "Find the latest TypeScript documentation",
-    updateHandler: (update) => {
-      if (update.type === 'step') {
-        console.log(`Step update:`, update.data);
-      } else if (update.type === 'completion') {
-        console.log(`Completed:`, update.data);
-      }
-    }
-  });
-
-  console.log('Final result:', response);
-});
-```
-
-#### Agent Methods
-
-- `start(request)` - Start agent with `{ task, url?, ... }` (non-blocking)
-- `run(request)` - Start agent and wait for completion (blocking); pass `updateHandler` for live updates
-- `status()` - Get agent status
-- `stop()` - Stop the agent
-- `agentId` - The agent ID (read-only property, available after `start()` / `run()`)
-- `sessionId` - The session ID the agent runs in (read-only property)
-- `hasStarted()` - Whether `start()`/`run()` was called on this instance (local check)
-- `isActive()` - Whether the agent is still active on the server (fetches the status)
-- `isRunning()` - Deprecated alias of `hasStarted()`; it does not contact the API
-
-#### Structured answers with Zod
-
-Both `agent.start()` and `agent.run()` accept a Zod schema as `response_format`.
-The SDK converts it to JSON Schema before calling the API. On `run()`, the final
-`answer` is validated against the schema and typed accordingly.
-
-```typescript
-import { z } from 'zod';
-
-const Answer = z.object({ title: z.string(), summary: z.string() });
-
-await notte.Session().use(async (session) => {
-  const agent = notte.Agent({ session, max_steps: 5 });
-  const result = await agent.run({
-    task: 'Go to notte.cc and return the page title and summary',
-    response_format: Answer,
-  });
-  // result.answer is typed as { title: string; summary: string } and validated
-  console.log(result.answer.title);
-});
-```
-
 ### Secret Vaults
 
 Manage credentials securely with enterprise-grade encryption.
@@ -463,19 +386,6 @@ await vault.addCredentials('https://github.com/', {
 // Generate secure passwords
 const strongPassword = vault.generatePassword(20, true); // 20 chars with special chars
 const simplePassword = vault.generatePassword(12, false); // 12 chars, no special chars
-
-// Use with agents for automatic credential management
-await notte.Session().use(async (session) => {
-  const agent = notte.Agent({
-    session,
-    vault_id: vault.vaultId // Agent will use vault for authentication
-  });
-
-  const result = await agent.run({
-    task: "Login to GitHub and create a new repository",
-    url: "https://github.com/login"
-  });
-});
 
 // Access existing vault
 const existingVault = notte.Vault({ vault_id: 'vault-abc-123' });
@@ -536,19 +446,6 @@ const smsMessages = await persona.sms({
 });
 console.log(`Received ${smsMessages.length} SMS messages`);
 
-// Use with agents for automated account creation
-await notte.Session().use(async (session) => {
-  const agent = notte.Agent({
-    session,
-    vault_id: persona.vault.vaultId // Agent will use persona's vault
-  });
-
-  const result = await agent.run({
-    task: `Create an account on GitHub using the persona credentials`
-  });
-  console.log(`Account created: ${result.success}`);
-});
-
 // Access existing persona
 const existingPersona = notte.Persona({ persona_id: 'persona-abc-123' });
 const personaEmails = await existingPersona.emails();
@@ -589,7 +486,6 @@ const sms = await persona.sms(options);
 
 - **Complete Digital Identity** - Unique email address
 - **2FA Support** - Receive and read SMS verification codes automatically
-- **Automated Account Creation** - Seamless integration with agents for signup flows
 - **Vault Integration** - Optional secure credential storage
 - **Email Management** - Full email reading capabilities
 - **Message Tracking** - Mark messages as read/unread automatically
@@ -787,7 +683,7 @@ await notte.Session({ storage }).use(async (session) => {
   const uploaded = await storage.upload('./invoice.pdf');
   fileId = uploaded.id;
 
-  // ... let the session / an agent download something ...
+  // ... download a file through the session ...
 
   const downloads = await storage.list({ source: 'session_download' });
   for (const file of downloads.files) {
@@ -874,15 +770,6 @@ const session = notte.Session({
 });
 ```
 
-### Agent Configuration
-
-```typescript
-const agent = notte.Agent({
-  session: session,
-  max_steps: 20,             // Maximum steps for agent (default: 10)
-});
-```
-
 ### Error Handling
 
 Every error thrown by the SDK extends `NotteError`, mirroring `notte_sdk.errors`
@@ -898,12 +785,7 @@ import { NotteAPIError, NotteError, NotteTimeoutError } from 'notte-sdk';
 
 try {
   await notte.Session().use(async (session) => {
-    const agent = notte.Agent({ session });
-    const response = await agent.run({ task: "Complete a complex task" });
-
-    if (!response.success) {
-      console.error('Agent failed:', response.answer);
-    }
+    await session.execute({ type: "goto", url: "https://example.com" });
   });
 } catch (error) {
   if (error instanceof NotteAPIError) {
@@ -947,29 +829,6 @@ const start = retry(() => notte.Session().start(), {
 await start();
 ```
 
-### WebSocket Updates
-
-The `agent.run()` method provides real-time updates via WebSocket through the
-`updateHandler` option:
-
-```typescript
-const response = await agent.run({
-  task: "Your task",
-  updateHandler: (update) => {
-    switch (update.type) {
-      case 'step':
-        console.log('Step:', update.data);
-        break;
-      case 'completion':
-        console.log('Task completed:', update.data);
-        break;
-      default:
-        console.log('Update:', update);
-    }
-  }
-});
-```
-
 ### Legacy API Support
 
 For backward compatibility, you can still use the legacy client creation:
@@ -1006,12 +865,6 @@ notte = NotteClient()
 with notte.Session(idle_timeout_minutes=2) as session:
     status = session.status()
     print(status)
-
-# Agent usage
-with notte.Session() as session:
-    agent = notte.Agent(session=session, max_steps=10)
-    response = agent.run(task="Find the best italian restaurant in SF")
-    print(f"Agent completed: {response.success}, answer: {response.answer}")
 ```
 
 ### TypeScript
@@ -1024,13 +877,6 @@ const notte = new NotteClient();
 await notte.Session({ idle_timeout_minutes: 2 }).use(async (session) => {
   const status = await session.status();
   console.log(status);
-});
-
-// Agent usage
-await notte.Session().use(async (session) => {
-  const agent = notte.Agent({ session, max_steps: 10 });
-  const response = await agent.run({ task: "Find the best italian restaurant in SF" });
-  console.log(`Agent completed: ${response.success}, answer: ${response.answer}`);
 });
 ```
 
@@ -1086,15 +932,13 @@ This will fetch the latest API specification and update the generated client cod
 The SDK is built with full TypeScript support:
 
 ```typescript
-import { NotteClient, type SessionResponse, type LegacyAgentStatusResponse } from 'notte-sdk';
+import { NotteClient, type SessionResponse } from 'notte-sdk';
 
 const notte = new NotteClient();
 
 // All types are properly inferred
 await notte.Session().use(async (session) => {
   const status: SessionResponse = await session.status();
-  const agent = notte.Agent({ session });
-  const response: LegacyAgentStatusResponse = await agent.run({ task: "task" });
 });
 ```
 
@@ -1111,10 +955,6 @@ import type {
   SessionOptions,
   SessionResponse,
   SessionListOptions,
-  AgentConstructor,
-  AgentRunRequest,
-  AgentUpdateHandler,
-  AgentListOptions,
   VaultConstructor,
   VaultListOptions,
   CredentialsDictInput,
