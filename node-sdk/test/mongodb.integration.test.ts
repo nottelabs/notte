@@ -76,6 +76,7 @@ describe.skipIf(process.env.NOTTE_MONGODB_LIVE !== '1')('MongoDB documentation',
       // Code 121 comes from the real MongoDB server's document validator.
       const sessionId = output.match(/MongoDB export failed \(session ([0-9a-f-]{36}), code 121\)/i)?.[1];
       if (!sessionId) throw new Error(`${language} did not report the owned browser after a MongoDB validation error (SDK output withheld)`);
+      expect(output).toContain('MongoDB insert:');
       await expectSessionClosed(new NotteClient(), sessionId, `MongoDB ${language} failure`);
       expect(await collection.countDocuments()).toBe(0);
     } finally {
