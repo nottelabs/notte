@@ -18,6 +18,6 @@ In your project's development dashboard, test `notte-read-page` with:
 {"url":"https://example.com"}
 ```
 
-The output contains `title` and `session_id`. Each attempt creates its own browser and closes it before returning or propagating an error. The task retries up to three times, so keep this example read-only. A three-minute session limit also bounds browser lifetime if the worker is terminated before cleanup runs.
+The output contains `title` and `session_id`. Each attempt creates its own browser and closes it before returning or propagating an error. The task allows up to three attempts, so keep this example read-only. A three-minute session limit also bounds browser lifetime if the worker is terminated before cleanup runs.
 
 For deployment, follow [Trigger.dev's deployment guide](https://trigger.dev/docs/deploy). Configure `NOTTE_API_KEY` in the target Trigger.dev environment. No local Chromium installation is needed.

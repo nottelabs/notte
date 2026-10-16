@@ -37,6 +37,6 @@ In your project's development dashboard, test `notte-read-page` with this payloa
 {"url":"https://example.com"}
 ```
 
-The result contains `title: "Example Domain"` and the stopped session's `session_id`. Each attempt creates its own session and closes it when the handler returns or raises an error. The example retries up to three times and performs only page reads. Keep operations with external side effects out of automatic retries unless they are idempotent.
+The result contains `title: "Example Domain"` and the stopped session's `session_id`. Each attempt creates its own session and closes it when the handler returns or raises an error. The example allows up to three attempts and performs only page reads. Keep operations with external side effects out of automatic retries unless they are idempotent.
 
 For deployment, follow [Trigger.dev's deployment guide](https://trigger.dev/docs/deploy) and configure `NOTTE_API_KEY` in the target environment. No local browser installation is needed.
