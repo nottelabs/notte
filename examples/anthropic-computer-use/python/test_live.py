@@ -110,7 +110,7 @@ class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
             with patch.dict(
                 os.environ,
                 {
-                    "ANTHROPIC_API_KEY": "test-invalid-key",
+                    "ANTHROPIC_API_KEY": "test-invalid-key",  # pragma: allowlist secret
                     "ANTHROPIC_BASE_URL": f"http://127.0.0.1:{server.server_port}",
                 },
             ):

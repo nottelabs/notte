@@ -76,7 +76,7 @@ test('unchanged demo closes its session after a real provider HTTP 401', { skip:
   const previous = { key: process.env.ANTHROPIC_API_KEY, url: process.env.ANTHROPIC_BASE_URL };
   const address = server.address();
   assert.ok(address && typeof address !== 'string');
-  process.env.ANTHROPIC_API_KEY = 'test-invalid-key';
+  process.env.ANTHROPIC_API_KEY = 'test-invalid-key'; // pragma: allowlist secret
   process.env.ANTHROPIC_BASE_URL = `http://127.0.0.1:${address.port}`;
   try {
     let id: string | undefined;
