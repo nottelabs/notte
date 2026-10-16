@@ -132,6 +132,10 @@ class SetCookiesRequestDict(TypedDict):
     cookies: Required[list[core.Cookie] | list[config.CookieDict]]
 
 
+class SessionMouseReplayParametersQueryDict(TypedDict):
+    offset: NotRequired[int]
+
+
 class SessionNetworkLogsParametersQueryDict(TypedDict):
     limit: NotRequired[int]
     download: NotRequired[bool]

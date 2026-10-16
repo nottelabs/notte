@@ -37,6 +37,20 @@ TAB = "CLI"
 # The CLI tab sits right after this one.
 AFTER_TAB = "APIs and SDKs"
 GENERATE_TIMEOUT_SECONDS = 600
+SESSION_COMPATIBILITY_NOTE = (
+    "<Note>\n"
+    "  Hosted sessions use Notte-managed Chromium. Browser-type flags and their legacy aliases are accepted for "
+    "compatibility; they do not select a different hosted browser build. "
+    "See [Session configuration](/sdk-reference/manual/session) for supported settings.\n"
+    "</Note>\n"
+)
+
+
+def prepare_page(name: str, text: str) -> str:
+    text = ensure_notice(text.rstrip("\n") + "\n")
+    if name == "sessions" and SESSION_COMPATIBILITY_NOTE not in text:
+        text = text.replace("<AgentMdNotice />\n", "<AgentMdNotice />\n\n" + SESSION_COMPATIBILITY_NOTE, 1)
+    return text
 
 
 def generate(out: Path) -> None:
@@ -54,7 +68,7 @@ def generate(out: Path) -> None:
     # Match what the repository's hooks would do to the pages: add the agent
     # notice every sidebar page carries, and end with one newline.
     for page in out.glob("*.mdx"):
-        page.write_text(ensure_notice(normalize_icons(page.read_text()).rstrip("\n") + "\n"))
+        page.write_text(prepare_page(page.stem, normalize_icons(page.read_text())))
 
 
 def normalize_icons(text: str) -> str:

@@ -767,6 +767,13 @@ class ReplayResponse(SdkResponse):
     ] = None
     mp4_url: Annotated[str | None, Field(description="Presigned URL for MP4 download", repr=False)] = None
     expires_at: Annotated[str | None, Field(description="Expiration time of the presigned URLs")] = None
+    mouse_manifest_url: Annotated[str | None, Field(description="Presigned mouse replay manifest URL", repr=False)] = (
+        None
+    )
+    mouse_chunk_urls: Annotated[
+        list[str] | None, Field(description="Presigned mouse replay chunk URLs", repr=False)
+    ] = None
+    mouse_next_offset: Annotated[int | None, Field(description="Next mouse replay pagination offset")] = None
     video_start_ms: Annotated[int | None, Field(description="Video start offset in milliseconds")] = None
     video_duration_ms: Annotated[int | None, Field(description="Video duration in milliseconds")] = None
 

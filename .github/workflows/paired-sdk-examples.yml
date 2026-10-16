@@ -1,18 +1,43 @@
 name: paired-sdk-examples
 
 on:
-  pull_request:
-    paths: ['.github/actions/wait-for-api/**', 'docs/**', 'node-sdk/**', 'packages/**', 'uv.lock', '.github/workflows/paired-sdk-examples.yml']
-  push:
-    branches: [main]
-    paths: ['.github/actions/wait-for-api/**', 'docs/**', 'node-sdk/**', 'packages/**', 'uv.lock', '.github/workflows/paired-sdk-examples.yml']
+  workflow_call:
+    inputs:
+      scope:
+        description: Suite decisions from the shared push or PR selector.
+        type: string
+        default: ''
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  changes:
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 5
+    outputs:
+      scope: ${{ inputs.scope || steps.scope.outputs.scope }}
+    steps:
+      - name: Validate supplied scope
+        if: inputs.scope != ''
+        working-directory: ${{ github.workspace }}
+        env:
+          SCOPE: ${{ inputs.scope }}
+        run: python3 -c 'import json, os; json.loads(os.environ["SCOPE"])'
+      - if: inputs.scope == ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/ci-scope
+        if: inputs.scope == ''
+        id: scope
+
   checks:
+    needs: changes
+    if: fromJSON(needs.changes.outputs.scope).paired_static
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -32,9 +57,12 @@ jobs:
       - run: npm run build --prefix node-sdk
       - run: npm run typecheck --prefix node-sdk
       - run: node docs/src/sniptest/check_typescript.mjs
+      - run: node --test docs/src/sniptest/test_typescript_display.mjs
       - run: python docs/src/sniptest/live.py
       - run: python -m unittest discover -s docs/src/sniptest -p 'test_*.py'
       - run: python docs/src/sniptest/generate.py --check
+      - run: python docs/src/scripts/check_docs_nav.py
+      - run: python -m unittest discover -s docs/src/scripts -p 'test_*.py'
       - name: Enforce example parity and shrinking backlog
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
@@ -46,11 +74,12 @@ jobs:
           fi
 
   live:
-    needs: checks
+    needs: [changes, checks]
     # Test same-repository PRs before merging; forks must not receive staging credentials.
     if: >-
-      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
-      (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
+      fromJSON(needs.changes.outputs.scope).paired_live &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name != 'pull_request' && github.ref == 'refs/heads/main'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:

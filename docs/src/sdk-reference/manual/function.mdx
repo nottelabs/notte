@@ -24,6 +24,10 @@ Invoke the deployed function from the SDK. Runs always execute on Notte's cloud:
 
 <InvokeSdk />
 
+## Create or load a Function
+
+To deploy code, pass `path` to your Python file. To load an existing Function, pass its `function_id` and omit `path`. See [Creating Functions](/features/functions/creating) and [Function Invocations](/features/functions/invocations) for complete examples.
+
 ## Parameters
 
 <ParamField path="function_id" type="str | None" default="None">
@@ -32,7 +36,7 @@ Invoke the deployed function from the SDK. Runs always execute on Notte's cloud:
 <ParamField path="decryption_key" type="str | None" default="None">
 </ParamField>
 
-<ParamField path="path" type="str" required>
+<ParamField path="path" type="str">
   The path to the function to upload.
 </ParamField>
 

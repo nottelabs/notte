@@ -1,20 +1,17 @@
 name: pytest cicd
 
 on:
-  push:
-    branches:
-      - main
-  # SECURITY: Use `pull_request`, never `pull_request_target`. `pull_request_target`
-  # runs in the base-repo context with full secret access; combined with checking out
-  # the PR head, it lets any fork PR run arbitrary code with our secrets and exfiltrate
-  # them. With `pull_request`, fork PRs run in an isolated context with no secret access.
-  # Fork PRs run the `tests` job (pre-commit + the offline unit suite, which needs no
-  # secrets) and skip `staging-and-live`. To run that job on an external PR, a maintainer
-  # uses the `workflow_dispatch` trigger below AFTER reviewing the diff (dispatch runs the
-  # PR's code WITH secrets).
-  pull_request:
-    branches:
-      - main
+  workflow_call:
+    inputs:
+      scope:
+        description: Suite decisions from the shared push or PR selector.
+        type: string
+        default: ''
+  # Periodic full live coverage; offline tests remain the secret-free PR gate.
+  schedule:
+    - cron: '0 */4 * * 1-5'
+  # SECURITY: Automatic runs use pull_request in ci.yml, never pull_request_target.
+  # Forks receive no secrets. Dispatch runs the reviewed PR's code WITH secrets.
   workflow_dispatch:
     inputs:
       pr_number:
@@ -22,6 +19,8 @@ on:
         required: true
 
 concurrency:
+  # PR runs share a group so a new push cancels the superseded run. Every other run (main
+  # pushes, manual runs) gets its own group so none is cancelled or replaced while queued.
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
@@ -32,76 +31,115 @@ env:
   PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright-browsers
   # True for push, manual dispatch, and same-repo PRs; false for fork PRs. Steps that
   # need secrets are gated on this so fork PRs skip them cleanly instead of failing.
-  # (Job-level `if:` cannot read `env`, so staging-and-live repeats the expression.)
   IS_TRUSTED: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
   # Scope vault creates to this workflow job; cleanup deletes only this prefix.
   NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}
 
 permissions:
-  # Needed to check out private repositories (e.g. the notte-v2 staging repo).
   contents: read
   pull-requests: write
 
 jobs:
+  # Scheduled and manual runs select locally; automatic runs reuse the caller scope.
   changes:
+    permissions:
+      contents: read
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 5
     outputs:
-      unit: ${{ steps.scope.outputs.unit }}
-      live: ${{ steps.scope.outputs.live }}
+      scope: ${{ inputs.scope || steps.scope.outputs.scope }}
     steps:
+      - name: Validate supplied scope
+        if: inputs.scope != ''
+        working-directory: ${{ github.workspace }}
+        env:
+          SCOPE: ${{ inputs.scope }}
+        run: python3 -c 'import json, os; json.loads(os.environ["SCOPE"])'
       - name: Checkout code
-        if: github.event_name == 'pull_request'
+        if: inputs.scope == ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/ci-scope
+        if: inputs.scope == ''
+        id: scope
+
+  checks:
+    needs: changes
+    if: fromJSON(needs.changes.outputs.scope).file_checks
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 15
+    steps:
+      - name: Checkout PR code (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
+          # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout code (PR or push)
+        if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Which suites does this change need?
-        id: scope
+      - uses: ./.github/actions/python-setup
+        if: fromJSON(needs.changes.outputs.scope).python_static || fromJSON(needs.changes.outputs.scope).lint_all
+        with:
+          pre-commit: "true"
+
+      - name: Set up standalone file checks
+        if: >-
+          (github.event_name == 'push' || github.event_name == 'pull_request') &&
+          !fromJSON(needs.changes.outputs.scope).python_static && !fromJSON(needs.changes.outputs.scope).lint_all
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+
+      - name: Run pre-commit
         env:
-          EVENT: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          FULL: ${{ fromJSON(needs.changes.outputs.scope).lint_all }}
+          BASE_SHA: ${{ fromJSON(needs.changes.outputs.scope).base }}
+          HEAD_SHA: ${{ fromJSON(needs.changes.outputs.scope).head }}
+          DOCS_LINKS: ${{ fromJSON(needs.changes.outputs.scope).docs_links }}
+          PYTHON_SETUP: ${{ fromJSON(needs.changes.outputs.scope).python_static || fromJSON(needs.changes.outputs.scope).lint_all }}
         run: |
-          if [ "$EVENT" = "schedule" ]; then
-            echo "unit=false" >> "$GITHUB_OUTPUT"
-            echo "live=true" >> "$GITHUB_OUTPUT"
-            exit 0
+          if [ "$PYTHON_SETUP" = true ]; then
+            runner=(uv run --active pre-commit)
+          else
+            runner=(uvx --from pre-commit==4.6.2 pre-commit)
           fi
-          if [ "$EVENT" != "pull_request" ]; then
-            echo "unit=true" >> "$GITHUB_OUTPUT"
-            echo "live=true" >> "$GITHUB_OUTPUT"
-            exit 0
+          if [ "$FULL" = true ]; then
+            "${runner[@]}" run --all-files
+          else
+            "${runner[@]}" run --from-ref "$BASE_SHA" --to-ref "$HEAD_SHA"
+            if [ "$DOCS_LINKS" = true ]; then
+              "${runner[@]}" run check-docs-broken-links --all-files
+            fi
           fi
-          unit=false
-          live=false
-          while IFS= read -r file; do
-            [ -n "$file" ] || continue
-            case "$file" in
-              # This workflow and its setup action: run everything.
-              .github/workflows/test-cicd.yml|.github/actions/*) unit=true; live=true ;;
-              # Package code, including Markdown prompt templates: run everything.
-              packages/*|src/*|tests/*) unit=true; live=true ;;
-              # Some unit tests read the docs; the live suite does not.
-              docs/*) unit=true ;;
-              # Covered by their own workflows (Node SDK, README check) or not code.
-              node-sdk/*|.github/*|*.md|LICENSE) ;;
-              browserarena|notte-cli|notte-skills|templates|integrations/*|example-apps/*) ;;
-              *) unit=true; live=true ;;
-            esac
-          done < <(git diff --name-only "$BASE_SHA"..."$HEAD_SHA")
-          echo "unit=$unit" >> "$GITHUB_OUTPUT"
-          echo "live=$live" >> "$GITHUB_OUTPUT"
-          echo "unit=$unit live=$live"
 
+      - name: Note - secret-backed tests skipped (fork PR)
+        if: ${{ env.IS_TRUSTED != 'true' }}
+        run: |
+          echo "This is a fork PR. Steps that require secrets (Vertex auth + the pytest suite)"
+          echo "were skipped - fork PRs intentionally have no access to repository secrets."
+          echo "Build, install, and pre-commit (lint + type checks) ran above and reflect your change."
+          echo "A maintainer can run the full secret-backed suite after reviewing the diff via"
+          echo "'Run workflow' (workflow_dispatch) with this PR number."
 
-  # The PR gate: pre-commit plus every test not marked `staging` or `live` (see the markers in
+  # The offline suite: every test not marked `staging` or `live` (see the markers in
   # pyproject.toml). Offline - a local browser and localhost only, no secrets - so it runs on
   # fork PRs too and cannot be failed by a third-party website or a staging deploy.
   tests:
     needs: changes
+    if: fromJSON(needs.changes.outputs.scope).python_unit
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     steps:
@@ -124,14 +162,7 @@ jobs:
           browsers: "true"
           pre-commit: "true"
 
-      - name: Check generated SDK models
-        run: make sdk-codegen-check
-
-      - name: Run pre-commit
-        run: uv run --active pre-commit run --all-files
-
       - name: Run unit tests
-        if: needs.changes.outputs.unit == 'true'
         run: |
           set -o pipefail
           make test-cicd | tee pytest-coverage.txt
@@ -147,19 +178,19 @@ jobs:
 
       - name: Pytest coverage comment
         # Fork PRs get a read-only token, so they cannot post the comment.
-        if: ${{ always() && needs.changes.outputs.unit == 'true' && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}
+        if: ${{ always() && fromJSON(needs.changes.outputs.scope).python_unit && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}
         uses: MishaKav/pytest-coverage-comment@9ee59af31bd7bcada1cc496f086b407122602dbd # v1.12.3
         with:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml
 
   # Everything marked `staging` (Notte API, us-staging) or `live` (third-party websites, LLM
-  # providers): all of tests/integration plus a few marked tests elsewhere. These depend on
+  # providers), including marked tests outside tests/integration. These depend on
   # services outside this repo, so failures are retried (`make test-live`) and the job is kept
   # separate from the `tests` gate - do not make it a required check.
   staging-and-live:
     needs: changes
-    if: ${{ needs.changes.outputs.live == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    if: ${{ fromJSON(needs.changes.outputs.scope).python_live && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     strategy:
@@ -268,3 +299,104 @@ jobs:
         env:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
         run: uv run python scripts/cleanup_ci_vaults.py
+
+  cli-contract:
+    needs: changes
+    if: fromJSON(needs.changes.outputs.scope).cli_contract
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04, store: file }
+          - { os: ubuntu-24.04, store: secret-service }
+          - { os: macos-15, store: "" }
+          - { os: windows-2025, store: "" }
+    name: cli-contract (${{ matrix.os }}${{ matrix.store && format(', {0}', matrix.store) || '' }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      NOTTE_CLI_CONTRACT: "1"
+      NOTTE_CLI_CONTRACT_STORE: ${{ matrix.store }}
+      # Password of the throwaway keychain the macOS job creates.
+      NOTTE_CLI_CONTRACT_KEYCHAIN_PASSWORD: ci # pragma: allowlist secret
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout PR code (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+          persist-credentials: false
+
+      - name: Checkout code (PR or push)
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - run: git submodule update --init notte-cli
+
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: notte-cli/go.mod
+          cache-dependency-path: notte-cli/go.sum
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Use a dedicated, unlocked default keychain
+        if: runner.os == 'macOS'
+        run: |
+          security create-keychain -p "$NOTTE_CLI_CONTRACT_KEYCHAIN_PASSWORD" notte-ci.keychain
+          security set-keychain-settings notte-ci.keychain
+          security unlock-keychain -p "$NOTTE_CLI_CONTRACT_KEYCHAIN_PASSWORD" notte-ci.keychain
+          security list-keychains -d user -s notte-ci.keychain
+          security default-keychain -d user -s notte-ci.keychain
+
+      - name: Install a Secret Service
+        if: matrix.store == 'secret-service'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gnome-keyring dbus
+          # Creating a collection needs an interactive prompt, so provide the
+          # collection the CLI uses up front, as an unencrypted keyring.
+          mkdir -p ~/.local/share/keyrings
+          printf '[keyring]\ndisplay-name=notte-cli\nctime=0\nmtime=0\nlock-on-idle=false\nlock-after=false\n' \
+            > ~/.local/share/keyrings/notte-cli.keyring
+
+      - name: Run the contract test
+        run: |
+          cmd="uv run --isolated --no-project --python 3.11 \
+            --with-editable ./packages/notte-core --with-editable ./packages/notte-sdk --with pytest --with pytest-timeout \
+            pytest tests/sdk/test_cli_keyring_contract.py --noconftest -p no:cacheprovider -v -rs"
+          if [ "$NOTTE_CLI_CONTRACT_STORE" = secret-service ]; then
+            dbus-run-session -- bash -c "echo -n ci | gnome-keyring-daemon --unlock --components=secrets > /dev/null && $cmd"
+          else
+            $cmd
+          fi
+
+  # Docs assertions need neither the SDK workspace nor cloud credentials.
+  docs:
+    permissions:
+      contents: read
+    needs: changes
+    # Manual runs already execute these assertions in the full unit suite.
+    if: >-
+      (github.event_name == 'push' || github.event_name == 'pull_request') &&
+      fromJSON(needs.changes.outputs.scope).python_docs
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --no-cache-dir pytest pyyaml
+      - run: python -m pytest -c /dev/null --rootdir=. tests/docs tests/test_generate_llms_offline.py --noconftest -q

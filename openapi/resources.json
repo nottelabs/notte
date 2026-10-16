@@ -368,6 +368,11 @@
     "resource": "sessions",
     "telemetry": "cloud.session.debug"
   },
+  "session_mouse_replay": {
+    "method": "mouseReplay",
+    "resource": "sessions",
+    "telemetry": null
+  },
   "session_network_logs": {
     "method": "networkLogs",
     "resource": "sessions",

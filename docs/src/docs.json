@@ -197,6 +197,38 @@
     {
       "source": "/integrations/val-town",
       "destination": "/integrations"
+    },
+    {
+      "source": "/guides/scraping",
+      "destination": "/concepts/scraping"
+    },
+    {
+      "source": "/sdk-reference/misc/basemodel",
+      "destination": "https://docs.pydantic.dev/latest/api/base_model/"
+    },
+    {
+      "source": "/sdk-reference/misc/rootmodel",
+      "destination": "https://docs.pydantic.dev/latest/api/root_model/"
+    },
+    {
+      "source": "/sdk-reference/nottepersona/start",
+      "destination": "/sdk-reference/manual/persona"
+    },
+    {
+      "source": "/sdk-reference/nottepersona/stop",
+      "destination": "/sdk-reference/manual/persona"
+    },
+    {
+      "source": "/sdk-reference/nottevault/start",
+      "destination": "/sdk-reference/manual/vault"
+    },
+    {
+      "source": "/sdk-reference/nottevault/stop",
+      "destination": "/sdk-reference/manual/vault"
+    },
+    {
+      "source": "/api-reference/using-session-replay",
+      "destination": "/api-reference/sessions/session-replay"
     }
   ],
   "errors": {
@@ -261,7 +293,8 @@
             "pages": [
               "concepts/vaults",
               "features/sessions/browser-profiles",
-              "concepts/personas"
+              "concepts/personas",
+              "guides/managed-auth"
             ]
           },
           {
@@ -288,7 +321,6 @@
             "group": "Guides",
             "icon": "book-open",
             "pages": [
-              "guides/scraping",
               "guides/stealth",
               "guides/account_creation"
             ]
@@ -693,6 +725,18 @@
                       "typescript-sdk-reference/manual/notteusage",
                       "typescript-sdk-reference/notteusage/get",
                       "typescript-sdk-reference/notteusage/logs"
+                    ]
+                  },
+                  {
+                    "group": "API Resources",
+                    "collapsed": true,
+                    "pages": [
+                      "typescript-sdk-reference/resources/files",
+                      "typescript-sdk-reference/resources/sessions",
+                      "typescript-sdk-reference/resources/vaults",
+                      "typescript-sdk-reference/resources/functions",
+                      "typescript-sdk-reference/resources/personas",
+                      "typescript-sdk-reference/resources/profiles"
                     ]
                   }
                 ]

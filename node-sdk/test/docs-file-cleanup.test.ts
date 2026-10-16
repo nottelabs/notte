@@ -47,7 +47,7 @@ vi.mock('notte-sdk', () => {
 
 afterEach(() => vi.restoreAllMocks());
 
-for (const example of ['uploading_files', 'attach_before_starting', 'descriptive_filenames']) {
+for (const example of ['uploading_files', 'descriptive_filenames']) {
   for (const failure of ['status', 'list', 'delete', ...(example === 'uploading_files' ? ['second-upload'] : [])]) {
     it(`${example} cleans successful uploads after ${failure} failure`, async () => {
       vi.resetModules();

@@ -73,4 +73,4 @@ data = client.scrape(
 
 ## Returns
 
-`UnionType`[<Visibility for="humans">[`StructuredData[BaseModel]`](/sdk-reference/misc/structureddata)</Visibility><Visibility for="agents">[`StructuredData[BaseModel]`](/sdk-reference/misc/structureddata.md)</Visibility>, <Visibility for="humans">[`BaseModel`](/sdk-reference/misc/basemodel)</Visibility><Visibility for="agents">[`BaseModel`](/sdk-reference/misc/basemodel.md)</Visibility>, `Dict`[`str`, `Any`], `str`]: returns the extracted data directly.     When raise_on_failure=False: returns StructuredData wrapper so user can check .success.     For markdown scraping: returns str.
+`UnionType`[<Visibility for="humans">[`StructuredData[BaseModel]`](/sdk-reference/misc/structureddata)</Visibility><Visibility for="agents">[`StructuredData[BaseModel]`](/sdk-reference/misc/structureddata.md)</Visibility>, [`BaseModel`](https://docs.pydantic.dev/latest/api/base_model/), `Dict`[`str`, `Any`], `str`]: returns the extracted data directly.     When raise_on_failure=False: returns StructuredData wrapper so user can check .success.     For markdown scraping: returns str.

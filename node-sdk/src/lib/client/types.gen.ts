@@ -3499,6 +3499,24 @@ export type ManagedAuthReadiness = {
 };
 
 /**
+ * MouseReplayPage
+ */
+export type MouseReplayPage = {
+    /**
+     * Mouse Manifest Url
+     */
+    mouse_manifest_url?: string | null;
+    /**
+     * Mouse Chunk Urls
+     */
+    mouse_chunk_urls?: Array<string> | null;
+    /**
+     * Mouse Next Offset
+     */
+    mouse_next_offset?: number | null;
+};
+
+/**
  * MultiFactorFillAction
  */
 export type MultiFactorFillActionInput = {
@@ -4377,7 +4395,7 @@ export type ProfileResponse = {
     /**
      * Profile Id
      *
-     * Profile ID (format: notte-profile-{16 hex chars})
+     * Profile ID (format: `notte-profile-{16 hex chars}`)
      */
     profile_id: string;
     /**
@@ -4479,6 +4497,18 @@ export type ReplayResponse = {
      * Expires At
      */
     expires_at: string;
+    /**
+     * Mouse Manifest Url
+     */
+    mouse_manifest_url?: string | null;
+    /**
+     * Mouse Chunk Urls
+     */
+    mouse_chunk_urls?: Array<string> | null;
+    /**
+     * Mouse Next Offset
+     */
+    mouse_next_offset?: number | null;
     /**
      * Video Start Ms
      */
@@ -8289,6 +8319,51 @@ export type SessionNetworkLogsResponses = {
 };
 
 export type SessionNetworkLogsResponse = SessionNetworkLogsResponses[keyof SessionNetworkLogsResponses];
+
+export type SessionMouseReplayData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: {
+        /**
+         * Offset
+         */
+        offset?: number;
+    };
+    url: '/sessions/{session_id}/replay/mouse';
+};
+
+export type SessionMouseReplayErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionMouseReplayError = SessionMouseReplayErrors[keyof SessionMouseReplayErrors];
+
+export type SessionMouseReplayResponses = {
+    /**
+     * Successful Response
+     */
+    200: MouseReplayPage;
+};
+
+export type SessionMouseReplayResponse = SessionMouseReplayResponses[keyof SessionMouseReplayResponses];
 
 export type SessionReplayData = {
     body?: never;

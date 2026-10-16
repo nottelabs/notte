@@ -43,6 +43,7 @@ from notte_sdk._generated.typing import (
     ProfileListRequestDict,
     RunPayloadUploadRequestDict,
     SessionListRequestDict,
+    SessionMouseReplayParametersQueryDict,
     SessionNetworkLogsParametersQueryDict,
     SessionProfilePreviewParametersQueryDict,
     SessionProfileSaveRequestDict,
@@ -224,6 +225,13 @@ class SessionsOperations(BaseClient):
     def debug_info(self, session_id: str) -> core.SessionDebugResponse:
         "Session Debug Info (`GET /sessions/{session_id}/debug`)."
         return self.request(api.session_debug_info(session_id))
+
+    def mouse_replay(
+        self, session_id: str, **data: Unpack[SessionMouseReplayParametersQueryDict]
+    ) -> models.MouseReplayPage:
+        "Session Mouse Replay (`GET /sessions/{session_id}/replay/mouse`)."
+        request = wire_request(models.SessionMouseReplayParametersQuery, data)
+        return self.request(api.session_mouse_replay(session_id, params=request))
 
     def network_logs(
         self, session_id: str, **data: Unpack[SessionNetworkLogsParametersQueryDict]

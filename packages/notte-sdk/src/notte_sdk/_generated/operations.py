@@ -346,6 +346,20 @@ def session_debug_info(
     )
 
 
+def session_mouse_replay(
+    session_id: str,
+    *,
+    params: BaseModel | None = None,
+) -> NotteEndpoint[models.MouseReplayPage]:
+    """Session Mouse Replay (`GET /sessions/{session_id}/replay/mouse`)."""
+    return NotteEndpoint(
+        method="GET",
+        path=f"/sessions/{_segment(session_id)}/replay/mouse",
+        response=models.MouseReplayPage,
+        params=params,
+    )
+
+
 def session_network_logs(
     session_id: str,
     *,

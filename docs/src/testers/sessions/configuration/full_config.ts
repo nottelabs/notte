@@ -1,5 +1,5 @@
 // @sniptest filename=full_config.ts
-// @sniptest show=8-29
+// @sniptest show=1-29
 import { NotteClient, type SessionResponse } from 'notte-sdk';
 
 const client = new NotteClient();

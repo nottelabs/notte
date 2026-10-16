@@ -9,18 +9,14 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 ## Overview
 
-Notte provides an enterprise-grade secure vault system that lets your sessions authenticate without your code ever handling the secrets.
-All sensitive data is encrypted at rest and in transit, and credentials are never exposed to LLMs (including the coding agents that write your automations) or third-party services.
-This ensures your passwords, API keys, and other secrets remain protected while your automations log in and interact with services on your behalf.
+Notte provides a secure vault system that lets sessions authenticate using credential placeholders. Secrets are encrypted at rest and in transit. During supported credential-fill actions, the vault substitutes real credentials for placeholders outside the model context. The target website receives the credentials needed to authenticate. Treat browser access, screenshots, page content, and downloaded files as sensitive; placeholder substitution is not a guarantee that a website cannot reveal a submitted value.
 
 ## Secure your credentials
 
-Your credentials are protected with multiple layers of security:
-
-- **End-to-End Encryption**: All secrets are encrypted at rest and in transit.
-- **Zero Trust Architecture**: Credentials are never forwarded to LLM calls or external services.
-- **Restricted Access**: Only sessions you attach the vault to can use your credentials.
-- **2FA Support**: Comprehensive support for two-factor authentication credentials.
+- **Encryption**: Secrets are encrypted at rest and in transit.
+- **Credential substitution**: Supported fill actions resolve placeholders outside the model context.
+- **Access control**: Authorized API clients and sessions can use the vault.
+- **2FA Support**: Support for two-factor authentication credentials.
 
 ## How it works
 
@@ -31,7 +27,7 @@ Attach a vault to a session with `client.Session(vault_id=...)`, then fill forms
 When a `fill` or `form_fill` action contains a placeholder, the vault takes over the execution and replaces the dummy value with the actual
 credential for the current website, directly inside the browser.
 
-The significant security benefit of this approach is that neither your code nor the LLM that wrote it ever sees the actual credentials.
+This avoids including the real credential in the placeholder fill action.
 
 ## Vault Management
 
@@ -41,10 +37,6 @@ The following snippet shows how to manage your vault using the Notte Python SDK.
 
 <VaultPython />
 
-## Security Guarantees
+## Handling credentials
 
-- 🔒 Credentials are never stored in plain text
-- 🔒 No credential data is sent to LLM providers
-- 🔒 Credentials are substituted into the page by the vault, outside the LLM context
-- 🔒 Access to credentials is strictly controlled and logged
-- 🔒 Open-source implementation for transparency
+Use vault placeholders instead of putting real passwords in prompts or source code. Credential substitution happens outside the model context, but the browser still interacts with the destination website. Avoid logging secrets and review what your automation captures or shares.

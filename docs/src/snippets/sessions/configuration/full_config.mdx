@@ -17,6 +17,13 @@ with client.Session(
 ```
 
 ```typescript TypeScript
+import { NotteClient, type SessionResponse } from 'notte-sdk';
+
+const client = new NotteClient();
+let status: SessionResponse | undefined;
+let title: string | undefined;
+let viewport: { width: number; height: number } | undefined;
+
 const session = client.Session({
   idle_timeout_minutes: 10,
   advanced_stealth: false,

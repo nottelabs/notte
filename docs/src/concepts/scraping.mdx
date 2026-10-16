@@ -21,6 +21,8 @@ import SpecificInstructions from '/snippets/scraping/specific_instructions.mdx';
 import PreciseSchemas from '/snippets/scraping/precise_schemas.mdx';
 import HandleMissingData from '/snippets/scraping/handle_missing_data.mdx';
 import ScopeScrapes from '/snippets/scraping/scope_scrapes.mdx';
+import AgentScrape from '/snippets/scraping/agent.mdx';
+import SchemaDesign from '/snippets/guides/schema_design.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -195,6 +197,16 @@ Use selectors to focus on relevant content:
     Deploy scraping as serverless functions
   </Card>
 </CardGroup>
+
+## Multi-step extraction
+
+Use `client.scrape()` for a single URL, or `session.scrape()` after navigation and authentication:
+
+<AgentScrape />
+
+Design the schema around the actual page content. Make fields optional when the source may omit them; request only data you need.
+
+<SchemaDesign />
 
 ## Local Python extraction configuration
 

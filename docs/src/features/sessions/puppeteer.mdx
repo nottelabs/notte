@@ -85,28 +85,13 @@ npm install puppeteer-core
 
 CDP connections can be interrupted. Always wrap operations in try-catch:
 
-```javascript
-try {
-  const browser = await puppeteer.connect({
-    browserWSEndpoint: cdpUrl
-  });
-  // ... operations
-} catch (error) {
-  console.error('Connection failed:', error);
-}
-```
+Catch connection errors around `puppeteer.connect()`. Put browser operations inside `try/finally` so errors still reach your session cleanup.
 
 ### 3. Disconnect Properly
 
 Always disconnect the browser when done:
 
-```javascript
-try {
-  // ... operations
-} finally {
-  await browser.disconnect();
-}
-```
+Call `browser.disconnect()` in `finally` to disconnect Puppeteer. Also stop the Notte session, or use `session.use()` to manage that lifecycle. Disconnecting the client and stopping the session are separate operations.
 
 ### 4. Session Timeout
 
@@ -118,9 +103,7 @@ Remember that Notte sessions have a timeout. Set an appropriate value when creat
 
 Store your Notte API key in environment variables:
 
-```javascript
-const API_KEY = process.env.NOTTE_API_KEY;
-```
+Read the key from `process.env.NOTTE_API_KEY` on your server. The complete example below shows the authenticated HTTP requests.
 
 ## Complete Example: Web Scraping
 

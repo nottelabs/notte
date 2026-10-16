@@ -6,38 +6,24 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-When you exceed rate limits, the API returns a `429` status code. Implement backoff to handle this gracefully.
+The API uses HTTP `429` both for rate-window exhaustion and for maximum-active-resource limits. See the [API rate-limit reference](/api-reference/rate-limits) for the `X-Error-Class` values that distinguish them.
 
-## Exponential backoff
+## Identify the limit
 
-```python
-import time
-from notte_sdk import NotteClient
-from notte_sdk.errors import NotteAPIError
+A Python `NotteAPIError` exposes `status_code` and the parsed response body in `error`. It does not expose the response headers. If your integration needs `X-Error-Class`, use an HTTP client that preserves the response headers instead of parsing message text.
 
-client = NotteClient()
+For `NotteApiMaxActiveResourcesError`, stop resources you no longer need or reduce concurrency. Retrying without releasing resources does not address the limit.
 
-def request_with_backoff(max_retries=3):
-    for attempt in range(max_retries):
-        try:
-            with client.Session() as session:
-                return session.scrape(url="https://example.com")
-        except NotteAPIError as e:
-            if e.status_code == 429:
-                wait_time = 2 ** attempt  # 1, 2, 4 seconds
-                print(f"Rate limited. Waiting {wait_time}s...")
-                time.sleep(wait_time)
-            else:
-                raise
-    raise Exception("Max retries exceeded")
-```
+For `NotteApiRateLimitExceededError`, use a bounded number of retries with exponential backoff and jitter. These `429` responses do not include `Retry-After`; the API uses that header for `529` capacity responses.
 
-## Best practices
+## Retry only the rejected operation
 
-1. **Implement backoff** — Always handle 429 responses with exponential backoff
-2. **Batch requests** — Combine multiple operations when possible
-3. **Cache responses** — Avoid redundant API calls by caching results
+Do not wrap an entire automation in a retry loop. Repeating navigation, form submission, or a Function invocation can duplicate work that already succeeded. Retry only when you know the rejected operation is safe to repeat, and let the final exception reach your caller after the retry budget is exhausted.
 
-## Increasing limits
+The SDK already retries selected transient transport and capacity failures. See <Visibility for="humans">[NotteClient configuration](/sdk-reference/notteclient/__init__)</Visibility><Visibility for="agents">[NotteClient configuration](/sdk-reference/notteclient/__init__.md)</Visibility> for `max_retries`; avoid stacking another unrestricted retry loop around it.
 
-Need higher limits? [Contact us](https://cal.com/team/notte/demo) to discuss enterprise options.
+## Reduce request volume
+
+Limit concurrent sessions, avoid polling unchanged state, and reuse results when your application can safely do so.
+
+[Contact us](https://cal.com/team/notte/demo) to discuss higher limits.
