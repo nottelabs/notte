@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { randomBytes } from 'node:crypto';
 import { NotteClient, sessionStatus } from 'notte-sdk';
 import { chromium, type Page } from 'playwright-core';
 import { execute, perform, run } from './agent.ts';
@@ -78,7 +79,7 @@ test('Provider failure closes the browser and sanitizes the error', { skip: !liv
   };
   try {
     await assert.rejects(run('Read the page title'), (error: Error) => {
-      assert.match(error.message, /^Gemini API error 401:/);
+      assert.match(error.message, /^Gemini API error 401/);
       assert.doesNotMatch(error.message, /https?:|wss?:|integration-test-not-a-real-key/);
       return true;
     });
@@ -103,8 +104,11 @@ test('Gemini drives the cloud browser and closes it on every outcome', { skip: !
     return response;
   };
   try {
-    const result = await run('Go to https://example.com and read its page title.');
-    assert.equal(result.title, 'Example Domain');
+    const nonce = randomBytes(4).toString('hex').toUpperCase();
+    const html = `<title>Visual check</title><h1>Code: ${nonce}</h1><label>Code<input></label><button onclick="document.title='Saved '+document.querySelector('input').value">Save</button>`;
+    const result = await run('Read the code shown on the page. Enter it in the Code field, then click Save.',
+      'data:text/html;base64,' + Buffer.from(html).toString('base64'));
+    assert.equal(result.title, `Saved ${nonce}`);
     assert.ok(result.actions > 0, 'The model must execute a browser action');
     assert.equal(ids.length, 1);
     assert.equal(result.session_id, ids[0]);

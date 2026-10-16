@@ -27,6 +27,8 @@ npm start -- "Go to https://example.com and read its page title."
 
 Both examples return the agent's answer, page title, session ID, and executed action count. No local Chromium installation is needed. Each run owns a three-minute Notte session and closes it on success or failure.
 
+The default model is `gemini-3.8-flash`. Set `GEMINI_MODEL` to use another [supported Computer Use model](https://ai.google.dev/gemini-api/docs/computer-use#model-versions).
+
 The browser loop supports Gemini's browser actions, uses screenshots rather than the DOM, and stops after twelve turns. It stops on blocked actions or requests for user confirmation. It never acknowledges those requests automatically. Add your application's approval flow before adapting this example to tasks that require confirmation.
 
 ## Verify

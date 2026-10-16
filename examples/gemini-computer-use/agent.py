@@ -123,8 +123,9 @@ async def perform(page: Page, name: str, args: dict[str, Any]) -> Page:
             await asyncio.gather(popup, return_exceptions=True)
 
 
-async def run(task: str) -> dict[str, Any]:
+async def run(task: str, initial_url: str = "https://example.com") -> dict[str, Any]:
     api_key = os.environ["GEMINI_API_KEY"]
+    model = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
     tool = {"type": "computer_use", "environment": "browser", "enable_prompt_injection_detection": True}
     with NotteClient().Session(max_duration_minutes=3) as session:
         async with (
@@ -136,9 +137,10 @@ async def run(task: str) -> dict[str, Any]:
                 browser = await driver.chromium.connect_over_cdp(session.cdp_url())
                 page = await browser.contexts[0].new_page()
                 await page.set_viewport_size({"width": 1440, "height": 900})
+                await page.goto(initial_url, wait_until="domcontentloaded", timeout=30_000)
                 screenshot = base64.b64encode(await page.screenshot()).decode()
                 interaction = await ai.interactions.create(
-                    model="gemini-3.8-flash",
+                    model=model,
                     tools=[tool],
                     input=[
                         {"type": "text", "text": task},
@@ -183,7 +185,7 @@ async def run(task: str) -> dict[str, Any]:
                             }
                         )
                     interaction = await ai.interactions.create(
-                        model="gemini-3.8-flash",
+                        model=model,
                         tools=[tool],
                         previous_interaction_id=interaction.id,
                         input=results,
@@ -199,7 +201,7 @@ async def run(task: str) -> dict[str, Any]:
                         if value:
                             detail = detail.replace(value, "[REDACTED]")
                     detail = re.sub(r"(?:https?|wss?)://\S+", "[URL]", detail)
-                    raise RuntimeError(f"Gemini API error {code}: {detail[:240]}") from None
+                    raise RuntimeError(f"Gemini API error {code} ({type(error).__name__}): {detail[:240]}") from None
                 raise RuntimeError("Gemini computer task failed") from None
             finally:
                 if browser:

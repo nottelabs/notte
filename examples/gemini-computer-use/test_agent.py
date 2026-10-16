@@ -1,5 +1,7 @@
 import asyncio
+import base64
 import os
+import secrets
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -129,8 +131,13 @@ class ComputerUseTests(unittest.IsolatedAsyncioTestCase):
                 patch.object(client.sessions, "start", side_effect=start),
                 patch.object(agent, "NotteClient", return_value=client),
             ):
-                result = await agent.run("Go to https://example.com and read its page title.")
-            self.assertEqual(result["title"], "Example Domain")
+                nonce = secrets.token_hex(4).upper()
+                html = f"""<title>Visual check</title><h1>Code: {nonce}</h1><label>Code<input></label><button onclick="document.title='Saved '+document.querySelector('input').value">Save</button>"""
+                result = await agent.run(
+                    "Read the code shown on the page. Enter it in the Code field, then click Save.",
+                    "data:text/html;base64," + base64.b64encode(html.encode()).decode(),
+                )
+            self.assertEqual(result["title"], f"Saved {nonce}")
             self.assertGreater(result["actions"], 0)
             self.assertEqual(ids, [result["session_id"]])
         finally:

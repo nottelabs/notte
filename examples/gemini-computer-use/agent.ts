@@ -82,9 +82,10 @@ export async function perform(page: Page, name: string, args: Args): Promise<Pag
   return destination;
 }
 
-export async function run(task: string) {
+export async function run(task: string, initialUrl = 'https://example.com') {
   if (!process.env.GEMINI_API_KEY) throw new Error('Set GEMINI_API_KEY');
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: { timeout: 60_000, retryOptions: { attempts: 1 } } });
+  const model = process.env.GEMINI_MODEL ?? 'gemini-3.8-flash';
   const tools = [{ type: 'computer_use' as const, environment: 'browser' as const, enable_prompt_injection_detection: true }];
   return new NotteClient().Session({ max_duration_minutes: 3 }).use(async session => {
     let browser: Browser | undefined;
@@ -92,8 +93,9 @@ export async function run(task: string) {
       browser = await chromium.connectOverCDP(await session.cdpUrl());
       let page = await browser.contexts()[0].newPage();
       await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto(initialUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
       let interaction = await ai.interactions.create({
-        model: 'gemini-3.8-flash', tools,
+        model, tools,
         input: [
           { type: 'text', text: task },
           { type: 'image', data: (await page.screenshot()).toString('base64'), mime_type: 'image/png' },
@@ -119,7 +121,7 @@ export async function run(task: string) {
           ] });
         }
         interaction = await ai.interactions.create({
-          model: 'gemini-3.8-flash', tools, previous_interaction_id: interaction.id, input: results,
+          model, tools, previous_interaction_id: interaction.id, input: results,
         });
       }
       throw new Error('Computer task exceeded twelve turns');
@@ -133,7 +135,7 @@ export async function run(task: string) {
           if (value) detail = detail.replaceAll(value, '[REDACTED]');
         }
         detail = detail.replace(/(?:https?|wss?):\/\/\S+/g, '[URL]');
-        throw new Error(`Gemini API error ${code}: ${detail.slice(0, 240)}`);
+        throw new Error(`Gemini API error ${code} (${error instanceof Error ? error.name : 'APIError'}): ${detail.slice(0, 240)}`);
       }
       throw new Error('Gemini computer task failed');
     } finally {
