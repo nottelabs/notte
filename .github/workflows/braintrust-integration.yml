@@ -97,4 +97,9 @@ jobs:
           BRAINTRUST_API_KEY: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && secrets.BRAINTRUST_API_KEY || '' }}
           BRAINTRUST_PROJECT: notte-integration-tests
           NOTTE_BRAINTRUST_PYTHON: ${{ github.workspace }}/${{ matrix.sdk == 'source' && '.venv' || 'examples/braintrust/.venv' }}/bin/python
-        run: npm run test:live
+        run: |
+          if [ -z "$NOTTE_API_KEY" ]; then
+            echo "NOTTE_API_KEY is required for browser checks"
+            exit 1
+          fi
+          npm run test:live
