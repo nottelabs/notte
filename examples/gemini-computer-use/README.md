@@ -2,6 +2,8 @@
 
 Use Gemini's browser computer-use tool with a Notte cloud browser. Requires Python 3.11+ or Node.js 24+, a Notte key, and a paid Gemini API project.
 
+Browser actions, safety handling, and cleanup are verified with real Notte browsers and injected Gemini responses. End-to-end model tasks remain unverified: Gemini 3.8 returned HTTP 503, and 3.5 Flash Lite returned an explicit safety block on the test form. The loop preserves those provider decisions.
+
 Create a Gemini key at [AI Studio](https://aistudio.google.com/api-keys). Enable [billing](https://aistudio.google.com/billing) for its project; computer use is unavailable on the free tier.
 
 ```bash
@@ -35,4 +37,4 @@ The browser loop supports Gemini's browser actions, uses screenshots rather than
 
 `npm test` and `python -m unittest -v test_agent.py` check that safety decisions prevent browser access. Set `NOTTE_GEMINI_LIVE=1`, `NOTTE_API_KEY`, and an explicit `NOTTE_API_URL` to also check form actions, confirmation handling, injected provider failures, and browser cleanup. These checks do not call Gemini.
 
-Set `NOTTE_GEMINI_MODEL_LIVE=1` and a funded `GEMINI_API_KEY` to run the actual Gemini model against the cloud browser in each language. A skipped model test is not a verified integration.
+Set `NOTTE_GEMINI_MODEL_LIVE=1` and a funded `GEMINI_API_KEY` to run the actual Gemini model against the cloud browser in each language. Pull requests verify browser actions with injected provider responses; model tests use the repository key only on main pushes or manual runs on main. A skipped model test does not establish model compatibility.

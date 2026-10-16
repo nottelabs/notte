@@ -28,3 +28,5 @@ Set `NOTTE_API_KEY` from [Notte](https://console.notte.cc/apikeys) and `GEMINI_A
 The default task opens `https://example.com` and reads its title. Pass your own task as a command-line argument. Both examples return `answer`, `title`, `session_id`, and the number of browser actions performed.
 
 Each attempt owns its browser session and closes it on completion or error. The example stops on a request for confirmation or a blocked action, and limits the loop to twelve turns. Add your application's approval flow before using tasks that require confirmation. No local browser installation is needed.
+
+Browser actions, safety handling, and cleanup have been tested with real Notte browsers and injected Gemini responses. End-to-end model tasks remain unverified because the provider returned availability errors or explicit safety blocks. See the example README for details and verification commands.

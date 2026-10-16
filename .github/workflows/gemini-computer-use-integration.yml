@@ -63,13 +63,13 @@ jobs:
         with:
           api-url: https://us-staging.notte.cc
           timeout: '300'
-      - name: Verify Gemini models, browser actions, and cleanup
+      - name: Verify browser actions and cleanup
         working-directory: examples/gemini-computer-use
         env:
           NOTTE_API_URL: https://us-staging.notte.cc
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
           NOTTE_GEMINI_LIVE: '1'
-          NOTTE_GEMINI_MODEL_LIVE: '1'
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NOTTE_GEMINI_MODEL_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && '1' || '0' }}
+          GEMINI_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.GEMINI_API_KEY || '' }}
           DISABLE_TELEMETRY: 'true'
         run: npm test && python -m unittest -v test_agent.py
