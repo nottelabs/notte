@@ -96,5 +96,9 @@ jobs:
           NOTTE_COMPUTER_USE_PYTHON: ${{ github.workspace }}/${{ matrix.sdk == 'source' && '.venv' || 'examples/anthropic-computer-use/.venv' }}/bin/python
           ANTHROPIC_API_KEY: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && secrets.ANTHROPIC_API_KEY || '' }}
         run: |
+          if [ -z "$NOTTE_API_KEY" ]; then
+            echo "NOTTE_API_KEY is required for browser checks"
+            exit 1
+          fi
           "$NOTTE_COMPUTER_USE_PYTHON" -m unittest discover -s examples/anthropic-computer-use/python -p test_live.py -v
           npm run test:live --prefix examples/anthropic-computer-use/typescript
