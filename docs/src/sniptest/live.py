@@ -45,10 +45,11 @@ def check_live_contracts(testers: Path, contracts: dict, dedicated: set[str] | N
         if not isinstance(contract, dict) or not isinstance(contract.get("expected"), dict) or not contract["expected"]:
             errors.append(f"Behavior contract needs nonempty expected output: {name}")
             continue
-        if set(contract) - {"expected", "closedSession", "logContains"}:
+        if set(contract) - {"expected", "closedSession", "closedSessions", "logContains"}:
             errors.append(f"Unknown behavior contract fields: {name}")
-        if "closedSession" in contract and not isinstance(contract["closedSession"], bool):
-            errors.append(f"closedSession must be boolean: {name}")
+        for field in ("closedSession", "closedSessions"):
+            if field in contract and not isinstance(contract[field], bool):
+                errors.append(f"{field} must be boolean: {name}")
         if "logContains" in contract and (not isinstance(contract["logContains"], str) or not contract["logContains"]):
             errors.append(f"logContains must be a nonempty string: {name}")
     return errors
