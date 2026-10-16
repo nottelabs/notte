@@ -269,6 +269,10 @@
     {
       "source": "/api-reference/using-session-replay",
       "destination": "/api-reference/sessions/session-replay"
+    },
+    {
+      "source": "/integrations/claude-agent-sdk",
+      "destination": "/integrations/claude-agents"
     }
   ],
   "errors": {
@@ -415,7 +419,7 @@
               "integrations/openclaw",
               "integrations/hermes",
               "integrations/stagehand",
-              "integrations/claude-agent-sdk"
+              "integrations/claude-agents"
             ]
           },
           {
