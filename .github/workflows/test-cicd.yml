@@ -186,7 +186,8 @@ jobs:
 
       - name: Pytest coverage comment
         # Fork PRs get a read-only token, so they cannot post the comment.
-        if: ${{ always() && fromJSON(needs.changes.outputs.scope).python_unit && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}
+        # Reviewed pushes retain the report in their log without posting a commit comment.
+        if: ${{ always() && fromJSON(needs.changes.outputs.scope).python_unit && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' && !startsWith(github.ref, 'refs/heads/ci-reviewed/openai/') }}
         uses: MishaKav/pytest-coverage-comment@9ee59af31bd7bcada1cc496f086b407122602dbd # v1.12.3
         with:
           pytest-coverage-path: ./pytest-coverage.txt
