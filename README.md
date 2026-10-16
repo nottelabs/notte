@@ -45,7 +45,7 @@ Choose your starting point:
 - **[Secrets vaults](#vaults)** → Credential management for emails, passwords, MFA tokens, credit cards
 - **[Digital personas](#personas)** → Identities with their own email, phone number and automated 2FA
 
-> **Coming from notte 1.x?** The agent loop (`notte.Agent`, `client.Agent`, `AgentFallback`), workflows and local function execution were removed in 2.0. Coding agents such as Claude Code drive Notte through the [CLI](https://docs.notte.cc/cli), the [MCP server](https://docs.notte.cc/mcp-server) or this SDK instead. If you still need the agent APIs, pin `notte<2`.
+> **Coming from notte 1.9 or earlier?** The agent loop (`notte.Agent`, `client.Agent`, `AgentFallback`), workflows and local function execution were removed in 1.10. Coding agents such as Claude Code drive Notte through the [CLI](https://docs.notte.cc/cli), the [MCP server](https://docs.notte.cc/mcp-server) or this SDK instead. If you still need the agent APIs, pin `notte<1.10`.
 
 # Quickstart
 

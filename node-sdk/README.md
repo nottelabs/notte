@@ -132,8 +132,8 @@ API URLs must use HTTPS, except HTTP loopback addresses for local development.
 
 ## Features
 
-The v2 SDK has no high-level agent API, matching Python. Existing 1.x releases
-keep agent support. Generated low-level agent endpoints and schemas remain tied
+Since 1.10 the SDK has no high-level agent API, matching Python. Releases up to
+1.9 keep agent support. Generated low-level agent endpoints and schemas remain tied
 to the API specification; they are not exposed through client resources.
 
 ### Server-side proxy security

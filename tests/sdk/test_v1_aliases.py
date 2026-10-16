@@ -70,7 +70,7 @@ def test_import_alias(old: str, new: str, monkeypatch: pytest.MonkeyPatch) -> No
     assert len(caught) == 1
     assert caught[0].category is DeprecationWarning
     assert new in str(caught[0].message)
-    assert "removed in notte 3.0" in str(caught[0].message)
+    assert "removed in notte 2.0" in str(caught[0].message)
     assert set(alias.__all__) <= set(dir(alias))
     monkeypatch.setattr(alias, "_warned", False)
     namespace: dict[str, object] = {}
@@ -198,7 +198,7 @@ def test_method_alias_transport(
     assert len(caught) == 1
     assert caught[0].category is DeprecationWarning
     assert f"{cls.__name__}.{new}" in str(caught[0].message)
-    assert "removed in notte 3.0" in str(caught[0].message)
+    assert "removed in notte 2.0" in str(caught[0].message)
     if old != "run":
         assert transport.calls[0] == transport.calls[1] == transport.calls[2]
 
@@ -248,9 +248,9 @@ def test_dropped_local_keyword(client: NotteClient, monkeypatch: pytest.MonkeyPa
         wrapped(function, local=False)
     assert len(caught) == 1
     assert "without `local`" in str(caught[0].message)
-    assert "removed in notte 3.0" in str(caught[0].message)
+    assert "removed in notte 2.0" in str(caught[0].message)
     assert "local" not in run.call_args.kwargs
-    with pytest.raises(ValueError, match="local execution was removed in notte 2.0"):
+    with pytest.raises(ValueError, match="local execution was removed in notte 1.10"):
         function.run(local=True)
     monkeypatch.setattr(client.functions, "create_run", Mock(return_value=Mock(function_run_id="run")))
     result = Mock(status="closed", session_id=None)

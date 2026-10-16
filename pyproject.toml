@@ -1,6 +1,6 @@
 [project]
 name = "notte"
-version = "2.0.0.dev0"
+version = "1.10.0.dev0"
 description = "Notte: browser infrastructure for AI agents and web automation"
 readme = "README.md"
 license = "SSPL-1.0"
@@ -9,15 +9,15 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "notte-core==2.0.0.dev0",
-    "notte-sdk==2.0.0.dev0",
-    "notte-browser==2.0.0.dev0",
+    "notte-core==1.10.0.dev0",
+    "notte-sdk==1.10.0.dev0",
+    "notte-browser==1.10.0.dev0",
 ]
 
 [project.optional-dependencies]
-llm = ["notte-llm==2.0.0.dev0"]
+llm = ["notte-llm==1.10.0.dev0"]
 # Drive cloud sessions with Playwright over CDP (session.page / session.cdp_url()).
-playwright = ["notte-sdk[playwright]==2.0.0.dev0"]
+playwright = ["notte-sdk[playwright]==1.10.0.dev0"]
 
 [tool.uv.sources]
 notte-core = { workspace = true }

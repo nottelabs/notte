@@ -1,4 +1,4 @@
-"""Runtime-only 1.x import aliases. Delete this file and its activation import in 3.0."""
+"""Runtime-only aliases for notte 1.9 import paths. Delete this file and its activation import in 2.0."""
 
 import importlib
 import sys
@@ -210,13 +210,13 @@ class _AliasModule(types.ModuleType):
             stdlib = _STDLIB_REEXPORTS.get(self.__name__, {}).get(name)
             if stdlib is None:
                 raise AttributeError(
-                    f"module {self.__name__!r} has no attribute {name!r} (removed in notte 2.0)"
+                    f"module {self.__name__!r} has no attribute {name!r} (removed in notte 1.10)"
                 ) from None
             value = importlib.import_module(stdlib)
         if not self._warned:
             self._warned = True
             warnings.warn(
-                f"`{self.__name__}` is deprecated and will be removed in notte 3.0; import from `{self._new}` instead.",
+                f"`{self.__name__}` is deprecated and will be removed in notte 2.0; import from `{self._new}` instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )

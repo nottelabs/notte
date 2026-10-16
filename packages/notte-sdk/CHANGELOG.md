@@ -50,10 +50,10 @@ Removed the unused core cache diagnostics (`get_cache_info`, `get_legacy_cache_l
 `max_error_length`, and `solve_captchas` are removed; old TOML keys still warn and are skipped.
 Session-request `solve_captchas`, cache paths, and PostHog/Scarf delivery are unchanged.
 
-## Unreleased — v2 public resource names
+## Unreleased (1.10) — public resource names
 
 Generated resource methods follow the Node SDK names (snake_case in Python).
-Deprecated runtime aliases are provided until notte 3.0 (see below). Stateful convenience methods retain their v2 behavior.
+Deprecated runtime aliases are provided until notte 2.0 (see below). Stateful convenience methods retain their 1.10 behavior.
 
 - `client.vaults.add_or_update_credentials` → `client.vaults.credentials_add`
 - `client.vaults.get_credentials` → `client.vaults.credentials_get`
@@ -78,12 +78,12 @@ Cleanup completes shared-table coverage and renames `client.functions.run` to `r
 ### Migrating from 1.x
 
 These aliases emit one `DeprecationWarning` per old module/method/attribute per
-process, naming the replacement and removal in notte 3.0. Enable them with
+process, naming the replacement and removal in notte 2.0. Enable them with
 `python -W default::DeprecationWarning script.py`, then update imports and calls.
-They are runtime-only: type checkers should use the v2 names. The implementation
+They are runtime-only: type checkers should use the 1.10 names. The implementation
 is isolated in `notte_core/_v1_aliases.py` and `notte_sdk/_v1_aliases.py`, each
 activated by one normal import at the end of its package initializer. Removing
-support in 3.0 means deleting those two files and those two import lines.
+support in 2.0 means deleting those two files and those two import lines.
 The existing SDK `_compat/` package and generated code are unchanged.
 
 Core module aliases (prefix every entry with `notte_core.`):
@@ -138,7 +138,7 @@ SDK resource aliases (arguments and results are forwarded unchanged):
 `workflow_path` → `path`, rejecting conflicting values. It returns a v2
 `NotteFunction`; retired workflow behavior is not restored.
 `NotteFunction.run(local=False)` is equivalent to omitting `local`, warns once,
-and preserves the v2 signature for introspection. `local=True` raises before
+and preserves the 1.10 signature for introspection. `local=True` raises before
 starting a cloud run. Other removed keywords and old positional signatures
 must be migrated explicitly.
 

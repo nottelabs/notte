@@ -1,4 +1,4 @@
-"""Runtime-only 1.x SDK aliases. Delete this file and its activation import in 3.0."""
+"""Runtime-only aliases for notte 1.9 SDK names. Delete this file and its activation import in 2.0."""
 
 import warnings
 from collections.abc import Callable
@@ -44,7 +44,7 @@ def _warn(old: str, new: str) -> None:
     if old not in _warned:
         _warned.add(old)
         warnings.warn(
-            f"`{old}` is deprecated and will be removed in notte 3.0; use `{new}` instead.",
+            f"`{old}` is deprecated and will be removed in notte 2.0; use `{new}` instead.",
             DeprecationWarning,
             stacklevel=3,
         )
@@ -91,7 +91,7 @@ def _drop_kwargs(method: Callable[..., Any], dropped: dict[str, Any]) -> Callabl
                 value = kwargs.pop(name)
                 if value is not default:
                     raise ValueError(
-                        f"{method.__qualname__}({name}={value!r}): local execution was removed in notte 2.0; "
+                        f"{method.__qualname__}({name}={value!r}): local execution was removed in notte 1.10; "
                         + f"use {method.__qualname__}() for cloud execution."
                     )
                 _warn(f"{method.__qualname__}({name}=False)", f"{method.__qualname__}() without `{name}`")
