@@ -358,6 +358,7 @@
               "integrations/openai-agents",
               "integrations/vercel-ai-sdk",
               "integrations/mastra",
+              "integrations/inngest-agentkit",
               "integrations/openclaw",
               "integrations/hermes",
               "integrations/stagehand"
