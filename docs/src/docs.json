@@ -352,6 +352,7 @@
             "pages": [
               "integrations/browser-use",
               "integrations/langchain",
+              "integrations/deepagents",
               "integrations/crewai",
               "integrations/agno",
               "integrations/google-adk",

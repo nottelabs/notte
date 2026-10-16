@@ -1,0 +1,30 @@
+---
+title: Deep Agents
+description: Give LangChain Deep Agents a Notte cloud browser.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[Deep Agents](https://docs.langchain.com/oss/python/deepagents/quickstart) combines LangChain models, tools, and task delegation. The runnable [Python and TypeScript examples](https://github.com/nottelabs/notte/tree/main/examples/deepagents) connect its MCP adapter to Notte.
+
+## Set up
+
+Use a [Notte API key](https://console.notte.cc/apikeys) and an [Anthropic API key](https://platform.claude.com/settings/keys) with model credits. Set `NOTTE_API_KEY` and `ANTHROPIC_API_KEY` in your environment.
+
+<Tabs>
+  <Tab title="Python">
+    Use Python 3.11+ and uv. Clone the Notte repository, open `examples/deepagents`, run `uv sync --frozen`, then `uv run python agent.py`.
+  </Tab>
+  <Tab title="TypeScript">
+    Use Node.js 24+. Clone the Notte repository, open `examples/deepagents/typescript`, run `npm ci`, then `npm start`.
+  </Tab>
+</Tabs>
+
+The example visits `https://example.com` and reports its title. Pass a task as the command's argument to browse another page. Set `DEEPAGENTS_MODEL` to use another Anthropic model.
+
+## How it connects
+
+The agent receives Notte's `browser_action`, `browser_observe`, and `browser_scrape` tools over authenticated MCP. Each run creates one browser session, uses its ID in browser calls, and closes the session on success or failure. No local browser installation is needed.
+
+The project's README includes live verification commands. See LangChain's [Python MCP](https://docs.langchain.com/oss/python/langchain/mcp) and [TypeScript MCP](https://docs.langchain.com/oss/javascript/langchain/mcp) guides to customize the adapter.
