@@ -30,7 +30,7 @@ def main() -> None:
             f"NOTTE_LLM_BASE_URL=https://aiplatform.googleapis.com/v1/projects/{project}"
             "/locations/global/endpoints/openapi\n"
             f"NOTTE_LLM_API_KEY={credentials.token}\n"
-            "NOTTE_LLM_MODEL=google/gemini-3.5-flash\n"
+            "NOTTE_LLM_MODEL=google/gemini-3.5-flash-lite\n"
         )
 
 

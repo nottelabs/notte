@@ -13,7 +13,7 @@ class PageTitle(BaseModel):
 @pytest.mark.asyncio
 async def test_scrape_with_chosen_model() -> None:
     # A default other than the chosen model, so the per-call service is observable.
-    extractor = LlmExtractor(model="google/gemini-2.5-flash")
+    extractor = LlmExtractor(model="google/gemini-3.8-flash")
 
     async with NotteSession(headless=True, extractor=extractor) as page:
         _ = await page.aexecute(type="goto", url="https://example.com/")

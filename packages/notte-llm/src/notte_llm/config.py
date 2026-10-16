@@ -5,7 +5,7 @@ from notte_core.errors import MissingAPIKeyForModel
 from pydantic import BaseModel, Field, SecretStr
 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_MODEL = "google/gemini-3.5-flash"
+DEFAULT_MODEL = "google/gemini-3.5-flash-lite"
 
 
 class LlmSettings(BaseModel):

@@ -28,7 +28,7 @@ class FakeOpenRouter:
                         "id": "gen-test",
                         "object": "chat.completion",
                         "created": 0,
-                        "model": "google/gemini-2.5-flash",
+                        "model": "google/gemini-3.8-flash",
                         "choices": [
                             {
                                 "index": 0,

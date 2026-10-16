@@ -211,13 +211,13 @@ Design the schema around the actual page content. Make fields optional when the 
 ## Local Python extraction configuration
 
 Install `notte[llm]` and set `OPENROUTER_API_KEY` for local structured extraction.
-The default model is `google/gemini-3.5-flash` at `https://openrouter.ai/api/v1`.
+The default model is `google/gemini-3.5-flash-lite` at `https://openrouter.ai/api/v1`.
 Cloud sessions use the platform's server-side extraction configuration.
 
 For another OpenAI-compatible endpoint, set `NOTTE_LLM_API_KEY` and use the endpoint's own model ID:
 
 - OpenAI: `NOTTE_LLM_BASE_URL=https://api.openai.com/v1`, `NOTTE_LLM_MODEL=gpt-4o`.
-- Gemini: `NOTTE_LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai`, `NOTTE_LLM_MODEL=gemini-3.5-flash`.
+- Gemini: `NOTTE_LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai`, `NOTTE_LLM_MODEL=gemini-3.5-flash-lite`.
 - Ollama/custom: `NOTTE_LLM_BASE_URL=http://localhost:11434/v1`, `NOTTE_LLM_MODEL` set to your local model, and `NOTTE_LLM_API_KEY=ollama` for an unauthenticated local server. Ollama is documented but has not been live-tested.
 
 `NOTTE_LLM_API_KEY` takes precedence over `OPENROUTER_API_KEY`; the latter is only used at the default

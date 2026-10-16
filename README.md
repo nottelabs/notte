@@ -70,14 +70,14 @@ with notte.Session(headless=True) as session:
     markdown = session.scrape(only_main_content=True)
 ```
 
-Structured scraping on a local session hands the page markdown to an extractor. Install the LLM extractor with `pip install 'notte[llm]'` and set `OPENROUTER_API_KEY`; it defaults to `google/gemini-3.5-flash`. You can also pass your own extractor with `notte.Session(extractor=...)`.
+Structured scraping on a local session hands the page markdown to an extractor. Install the LLM extractor with `pip install 'notte[llm]'` and set `OPENROUTER_API_KEY`; it defaults to `google/gemini-3.5-flash-lite`. You can also pass your own extractor with `notte.Session(extractor=...)`.
 
-Set `OPENROUTER_API_KEY` to use OpenRouter with `google/gemini-3.5-flash` by default.
+Set `OPENROUTER_API_KEY` to use OpenRouter with `google/gemini-3.5-flash-lite` by default.
 For another OpenAI-compatible endpoint, set all three of `NOTTE_LLM_BASE_URL`,
 `NOTTE_LLM_API_KEY`, and `NOTTE_LLM_MODEL` (the endpoint's own model ID):
 
 - OpenAI: `NOTTE_LLM_BASE_URL=https://api.openai.com/v1`, `NOTTE_LLM_MODEL=gpt-4o`.
-- Gemini: `NOTTE_LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai`, `NOTTE_LLM_MODEL=gemini-3.5-flash`.
+- Gemini: `NOTTE_LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai`, `NOTTE_LLM_MODEL=gemini-3.5-flash-lite`.
 - Ollama/custom: `NOTTE_LLM_BASE_URL=http://localhost:11434/v1`, your local model ID, and `NOTTE_LLM_API_KEY=ollama` for an unauthenticated local server. Ollama has not been live-tested.
 
 `NOTTE_LLM_API_KEY` overrides `OPENROUTER_API_KEY`. The latter is used only at the default

@@ -228,7 +228,7 @@ _TRANSIENT_RETRY_DELAYS_SECONDS = (2.0, 5.0)
 
 # OpenRouter tries these, in order, when the requested model errors (for example a 503 while it
 # is overloaded). Both support the structured outputs the agent relies on.
-OPENROUTER_FALLBACK_MODELS = ("google/gemini-2.5-flash", "openai/gpt-4.1-mini")
+OPENROUTER_FALLBACK_MODELS = ("google/gemini-3.8-flash", "openai/gpt-4.1-mini")
 
 
 class LLMEngine:
