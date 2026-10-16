@@ -70,3 +70,42 @@ def test_start_close_session_with_browser_type(browser_type: BrowserType):
         status = session.status()
         assert status.status == "active"
     assert session.response is not None
+
+
+def test_scroll_moves_the_hosted_page_and_returns_to_start():
+    client = NotteClient()
+    fixture_url = "https://scroll-fixture.notte.test/"
+    with client.Session(proxies=False, viewport_width=1280, viewport_height=800) as session:
+        page = session.page
+
+        def serve_fixture(route):
+            if route.request.url == fixture_url:
+                route.fulfill(
+                    status=200,
+                    content_type="text/html",
+                    body="<!doctype html><style>html {scroll-behavior:auto} body {margin:0}</style>"
+                    '<main style="height:300vh">Scrollable fixture</main>',
+                )
+            else:
+                route.abort()
+
+        page.route("**/*", serve_fixture)
+        _ = session.execute(type="goto", url=fixture_url, wait_until="domcontentloaded")
+        assert page.evaluate("document.scrollingElement.scrollHeight > window.innerHeight")
+
+        for selector in (None, "html"):
+            start = page.evaluate("window.scrollY")
+            down = session.execute(type="scroll_down", selector=selector)
+            after_down = page.evaluate("window.scrollY")
+            assert down.success
+            assert after_down > start, f"Scroll did not move the page (selector={selector!r})"
+
+            up = session.execute(type="scroll_up", selector=selector)
+            assert up.success
+            assert page.evaluate("window.scrollY") == start
+
+        page.set_content("<!doctype html><p>No scrolling here</p>")
+        failed = session.execute(type="scroll_down", raise_on_failure=False)
+        assert not failed.success
+        assert failed.exception_detail is not None
+        assert failed.exception_detail.error_type == "ScrollActionFailedError"

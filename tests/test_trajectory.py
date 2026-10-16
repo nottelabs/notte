@@ -215,25 +215,30 @@ async def test_trajectory_callback_from_session():
         assert callback_calls["any"] == 9
 
 
+SEARCH_FIXTURE_URL = "https://trajectory-fixture.notte.test/"
+
+
+async def open_search_fixture(session: NotteSession) -> None:
+    async def serve_fixture(route):
+        if route.request.url == SEARCH_FIXTURE_URL:
+            await route.fulfill(
+                status=200,
+                content_type="text/html",
+                body='<!doctype html><label for="search">Search field fixture 6f9c</label>'
+                '<input id="search" type="search">'
+                '<label for="other">Leave this field blank</label><input id="other">',
+            )
+        else:
+            await route.abort()
+
+    await session.window.page.route("**/*", serve_fixture)
+    await session.aexecute(type="goto", url=SEARCH_FIXTURE_URL, wait_until="domcontentloaded", raise_on_failure=True)
+
+
 @pytest.mark.asyncio
-async def test_agent_observes_page_correctly():
-    # Exercise real observation and execution; the model's action choice is not
-    # part of the trajectory contract and must not depend on a live LLM.
+async def test_agent_passes_observation_and_executes_model_action():
     async with NotteSession(headless=True) as session:
-        fixture_url = "https://trajectory-fixture.notte.test/"
-
-        async def serve_fixture(route):
-            if route.request.url == fixture_url:
-                await route.fulfill(
-                    status=200,
-                    content_type="text/html",
-                    body='<label for="search">Search field fixture 6f9c</label><input id="search" type="search">',
-                )
-            else:
-                await route.abort()
-
-        await session.window.page.route("**/*", serve_fixture)
-        await session.aexecute(type="goto", url=fixture_url, wait_until="domcontentloaded", raise_on_failure=True)
+        await open_search_fixture(session)
         agent = notte.Agent(session=session, max_steps=1).create_agent()
         assert isinstance(agent, FalcoAgent)
         completion = AsyncMock(return_value=create_agent_step_response(action=FillAction(id="I1", value="einstein")))
@@ -250,3 +255,22 @@ async def test_agent_observes_page_correctly():
         assert action.id == "I1"
         assert await session.window.page.input_value("#search") == "einstein"
         assert not resp.success
+
+
+@pytest.mark.asyncio
+async def test_agent_observes_page_correctly():
+    # Keep a real model in this check. Verify the task's outcome without requiring
+    # a particular action spelling or a fixed element ID from the model.
+    async with NotteSession(headless=True) as session:
+        await open_search_fixture(session)
+        agent = notte.Agent(session=session, max_steps=3).create_agent()
+        response = await agent.arun(
+            task="The page is already open. Fill 'Search field fixture 6f9c' with 'einstein'. "
+            "Leave the other field blank. Do not navigate or submit. Complete when the field is filled."
+        )
+
+        assert response.success, response.answer
+        assert await session.window.page.input_value("#search") == "einstein"
+        assert await session.window.page.input_value("#other") == ""
+        assert session.window.page.url == SEARCH_FIXTURE_URL
+        assert all(step.action.type not in {"goto", "goto_new_tab"} for step in response.steps)

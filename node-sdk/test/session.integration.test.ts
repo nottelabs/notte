@@ -113,6 +113,42 @@ describe('Session Integration Tests', () => {
   });
 
   describe('Page Operations', () => {
+    it('scrolls the hosted page down and back up with wheel and targeted actions', async () => {
+      const fixtureUrl = 'https://scroll-fixture.notte.test/';
+      await client.Session({ proxies: false, viewport_width: 1280, viewport_height: 800 }).use(async session => {
+        const page = await session.page();
+        await page.route('**/*', async route => {
+          if (route.request().url() === fixtureUrl) {
+            await route.fulfill({
+              status: 200,
+              contentType: 'text/html',
+              body: '<!doctype html><style>html {scroll-behavior:auto} body {margin:0}</style><main style="height:300vh">Scrollable fixture</main>',
+            });
+          } else {
+            await route.abort();
+          }
+        });
+        await session.execute(actions.goto({ url: fixtureUrl, wait_until: 'domcontentloaded' }));
+        expect(await page.evaluate(() => document.scrollingElement!.scrollHeight > window.innerHeight)).toBe(true);
+
+        for (const selector of [undefined, 'html']) {
+          const start = await page.evaluate(() => window.scrollY);
+          const down = await session.execute(actions.scrollDown({ selector }));
+          expect(down.success).toBe(true);
+          expect(await page.evaluate(() => window.scrollY), `selector=${selector}`).toBeGreaterThan(start);
+
+          const up = await session.execute(actions.scrollUp({ selector }));
+          expect(up.success).toBe(true);
+          expect(await page.evaluate(() => window.scrollY)).toBe(start);
+        }
+
+        await page.setContent('<!doctype html><p>No scrolling here</p>');
+        const failed = await session.execute(actions.scrollDown(), { raiseOnFailure: false });
+        expect(failed.success).toBe(false);
+        expect(failed.exception_detail?.error_type).toBe('ScrollActionFailedError');
+      });
+    });
+
     it('should execute goto action and observe page', async () => {
       await client.Session({ proxies: false, idle_timeout_minutes: 1 }).use(async session => {
         const executeResult = await session.execute(actions.goto({ url: 'https://www.ecosia.org' }));
