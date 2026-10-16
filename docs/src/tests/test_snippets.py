@@ -30,7 +30,6 @@ MYPY_DISABLED_ERROR_CODES = [
 # Files with unavoidable SDK-level type issues
 # These files still get type checked but with relaxed rules
 FILES_WITH_SDK_TYPE_ISSUES = {
-    "agents/fallback.py": ["call-arg"],  # AgentFallback internal _client param
     "sessions/stealth_configuration.py": ["call-overload"],  # **dict unpacking
     "sessions/upload_cookies_simple.py": ["arg-type"],  # Cookie TypedDict vs dict
     "sessions/upload_cookies.py": ["arg-type"],  # Cookie TypedDict vs dict
@@ -201,14 +200,6 @@ def handle_vault_index(
             run_example(eval_example, code=code)
 
 
-@handle_file("agents/index.py")
-def handle_agent(
-    eval_example: EvalExample,
-    code: str,
-) -> None:
-    run_example(eval_example, code=code)
-
-
 @handle_file("personas/create_account.py")
 def handle_create_account(
     eval_example: EvalExample,
@@ -225,7 +216,7 @@ def handle_create_account(
 
 
 @handle_file("scraping/agent.py")
-def handle_scraping_agent(
+def handle_scraping_authenticated(
     eval_example: EvalExample,
     code: str,
 ) -> None:
@@ -246,29 +237,6 @@ def handle_vault_manual(
     except Exception as e:
         if "The vault does not exist" not in str(e):
             raise
-
-
-@handle_file("workflows/fork.py")
-def handle_workflow_fork(
-    eval_example: EvalExample,
-    code: str,
-) -> None:
-    code = code.replace("<any-public-workflow-id>", "9fb6d40e-c76a-4d44-a73a-aa7843f0f535")
-    run_example(eval_example, code=code)
-
-
-@handle_file("getting-started/concept_vault.py")
-def handle_concept_vault(
-    eval_example: EvalExample,
-    code: str,
-) -> None:
-    """Cap agent steps in execution mode; vault cleanup uses `with client.Vault()`."""
-    if not (FAST_MODE or TYPE_CHECK_MODE):
-        code = code.replace(
-            "agent = client.Agent(session=session, vault=vault)",
-            "agent = client.Agent(session=session, vault=vault, max_steps=1)",
-        )
-    run_example(eval_example, code=code)
 
 
 @handle_file("sessions/file_storage_basic.py")

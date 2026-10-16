@@ -1,9 +1,8 @@
 # @sniptest filename=concept_identity.py
-# @sniptest show=5-8
+# @sniptest show=4-6
 from notte_sdk import NotteClient
 
 client = NotteClient()
-with client.Session() as session:
-    persona = client.Persona()  # Generate synthetic identity
-    agent = client.Agent(session=session, persona=persona)
-    agent.run(task="Sign up for newsletter")
+with client.Persona() as persona:  # Generate synthetic identity
+    print(f"Sign up with {persona.email}")
+    emails = persona.emails(only_unread=True)  # Read verification emails

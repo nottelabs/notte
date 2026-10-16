@@ -6,15 +6,14 @@ flags, instead of a bare `NotteBaseError` built from a user-safe string.
 """
 
 import pytest
-from notte_core.errors.actions import InvalidActionError
-from notte_core.errors.base import NotteBaseError
+from notte_core.errors import InvalidActionError, NotteBaseError
 from notte_sdk.client import NotteClient
 
 
 def test_failed_action_rehydrates_concrete_exception_over_the_wire():
     client = NotteClient()
     with client.Session(proxies=False, open_viewer=False) as page:
-        _ = page.execute(type="goto", value="https://www.example.com")
+        _ = page.execute(type="goto", url="https://www.example.com")
         _ = page.observe(perception_type="fast")
 
         # non-raising path: the structured detail crosses the wire and the

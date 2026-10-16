@@ -58,13 +58,10 @@ with client.Session() as session:
 <ParamField path="use_link_placeholders" type="bool">
 </ParamField>
 
-<ParamField path="model" type="notte_core.common.config.LlmModel | str | None">
+<ParamField path="model" type="str | None">
 </ParamField>
 
 <ParamField path="ignored_tags" type="list">
-</ParamField>
-
-<ParamField path="only_images" type="bool">
 </ParamField>
 
 <ParamField path="response_format" type="type[pydantic.main.BaseModel] | None">
@@ -75,4 +72,4 @@ with client.Session() as session:
 
 ## Returns
 
-`UnionType`[<Visibility for="humans">[`StructuredData[BaseModel]`](/sdk-reference/misc/structureddata)</Visibility><Visibility for="agents">[`StructuredData[BaseModel]`](/sdk-reference/misc/structureddata.md)</Visibility>, [`BaseModel`](https://docs.pydantic.dev/latest/api/base_model/), `Dict`[`str`, `Any`], `str`, `list`[<Visibility for="humans">[`ImageData`](/sdk-reference/misc/imagedata)</Visibility><Visibility for="agents">[`ImageData`](/sdk-reference/misc/imagedata.md)</Visibility>]]:     Extracted data as structured data, markdown text, image data, or a StructuredData wrapper when     ``raise_on_failure=False``.
+`UnionType`[<Visibility for="humans">[`StructuredData[BaseModel]`](/sdk-reference/misc/structureddata)</Visibility><Visibility for="agents">[`StructuredData[BaseModel]`](/sdk-reference/misc/structureddata.md)</Visibility>, [`BaseModel`](https://docs.pydantic.dev/latest/api/base_model/), `Dict`[`str`, `Any`], `str`]:     Extracted data as structured data, markdown text, or a StructuredData wrapper when     ``raise_on_failure=False``.

@@ -6,6 +6,7 @@ import contextlib
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -41,9 +42,22 @@ class RoutingTests(unittest.TestCase):
 
     def test_python_unit_and_integration_changes_are_separate(self) -> None:
         self.assertEqual(ci.scopes_for_path("tests/browser/test_window.py"), {"python_static", "python_unit"})
-        self.assertEqual(ci.scopes_for_path("tests/integration/sdk/test_session.py"), {"python_static", "python_live"})
+        self.assertEqual(ci.scopes_for_path("tests/integration/sdk/test_session.py"), ci.PYTHON_RUNTIME)
         self.assertEqual(ci.scopes_for_path("tests/docs/test_pricing_docs.py"), {"python_static", "python_docs"})
         for path in ("tests/conftest.py", "tests/data/cookies.json", "tests/mock/mock_service.py"):
+            with self.subTest(path=path):
+                self.assertTrue(ci.PYTHON_RUNTIME <= ci.scopes_for_path(path))
+
+    def test_marked_live_tests_outside_integration_keep_live_coverage(self) -> None:
+        marked = {
+            path.relative_to(ROOT).as_posix()
+            for path in (ROOT / "tests").rglob("test_*.py")
+            if not path.is_relative_to(ROOT / "tests/integration")
+            and re.search(r"pytest\.mark\.(?:live|staging)\b", path.read_text())
+        }
+        self.assertEqual(ci.PYTHON_LIVE_TESTS, marked)
+        self.assertIn("tests/test_fetch_helper.py", marked)
+        for path in marked:
             with self.subTest(path=path):
                 self.assertTrue(ci.PYTHON_RUNTIME <= ci.scopes_for_path(path))
 
@@ -56,10 +70,10 @@ class RoutingTests(unittest.TestCase):
 
     def test_python_runtime_and_prompt_changes_keep_live_coverage(self) -> None:
         for path in (
-            "packages/notte-core/src/notte_core/browser/observation.py",
+            "packages/notte-core/src/notte_core/observation.py",
             "packages/notte-core/src/notte_core/prompts/system.md",
             "packages/notte-browser/src/notte_browser/playwright.py",
-            "packages/notte-agent/pyproject.toml",
+            "packages/notte-browser/pyproject.toml",
             "src/notte/__init__.py",
         ):
             with self.subTest(path=path):
@@ -154,6 +168,29 @@ class RoutingTests(unittest.TestCase):
             with self.subTest(workflow=workflow):
                 self.assertEqual(ci.scopes_for_path(f".github/workflows/{workflow}"), ci.GROUPS[family])
 
+    def test_provider_matrix_routes_library_schema_and_fixture_inputs(self) -> None:
+        for path in (
+            "packages/notte-llm/src/notte_llm/engine.py",
+            "packages/notte-llm/src/notte_llm/prompts/extract-json-schema/multi-entity/system.md",
+            "packages/notte-core/src/notte_core/schema.py",
+            "packages/notte-core/src/notte_core/extraction.py",
+            "packages/notte-core/src/notte_core/pruning.py",
+            "packages/notte-core/src/notte_core/data.py",
+            "tests/llm/test_provider_matrix.py",
+            "tests/llm/provider_matrix.py",
+            "tests/golden/snapshots/github_signin/scrape.md",
+            "tests/golden/snapshots/duckduckgo/scrape.md",
+            "tests/golden/snapshots/checkout/article/scrape.md",
+            ".github/scripts/configure_llm.py",
+            "scripts/llm_matrix_report.py",
+            "tests/conftest.py",
+        ):
+            with self.subTest(path=path):
+                self.assertIn("llm_provider_live", ci.scopes_for_path(path))
+        self.assertNotIn("llm_provider_live", ci.scopes_for_path("node-sdk/src/client.ts"))
+        self.assertNotIn("llm_provider_live", ci.scopes_for_path("packages/notte-browser/src/notte_browser/files.py"))
+        self.assertTrue(ci.select("schedule", "", "")["llm_provider_live"])
+
     def test_periodic_and_manual_coverage(self) -> None:
         scheduled = ci.select("schedule", "", "")
         self.assertTrue(scheduled["python_live"])
@@ -178,6 +215,8 @@ class GitHistoryTests(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.repo = Path(self.directory.name)
         self.git("init", "-q")
+        self.git("config", "commit.gpgsign", "false")
+        self.git("config", "core.hooksPath", "/dev/null")
         self.git("config", "user.name", "CI test")
         self.git("config", "user.email", "ci@example.invalid")
         self.base = self.commit({"README.md": "Original prose\n```python\nx = 1\n```\n"})

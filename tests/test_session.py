@@ -1,14 +1,18 @@
 import asyncio
-from pathlib import Path
 from typing import Any
 
+import notte_browser.execution as execution_module
 import notte_core
 import pytest
-from notte_browser.captcha import CaptchaHandler
-from notte_browser.errors import CaptchaSolverNotAvailableError, NoSnapshotObservedError, ScrollActionFailedError
+from notte_browser.captcha import set_captcha_solver
+from notte_browser.errors import (
+    CaptchaSolverNotAvailableError,
+    NoSnapshotObservedError,
+    ScrapeIsNotAnActionError,
+    ScrollActionFailedError,
+)
 from notte_browser.session import NotteSession
 from notte_core.actions import (
-    ActionList,
     ClickAction,
     GotoAction,
     GotoNewTabAction,
@@ -18,46 +22,16 @@ from notte_core.actions import (
     WaitAction,
 )
 from notte_core.actions.actions import ScrapeAction
-from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.errors.actions import ActionExecutionError, InvalidActionError
-from notte_llm.service import LLMService
+from notte_core.errors import ActionExecutionError, InvalidActionError
+from notte_core.snapshot import BrowserSnapshot
 
 from tests.mock.mock_browser import MockBrowserDriver
-from tests.mock.mock_service import MockLLMService
-from tests.mock.mock_service import patch_llm_service as _patch_llm_service
-
-patch_llm_service = _patch_llm_service
 
 notte_core.set_error_mode("developer")
 
 
-@pytest.fixture
-def mock_llm_response() -> str:
-    return """
-| ID  | Description | Parameters | Category |
-| L1  | Opens more information page | | Navigation |
-"""
-
-
-@pytest.fixture
-def mock_llm_service(mock_llm_response: str) -> MockLLMService:
-    return MockLLMService(
-        mock_response=f"""
-<document-summary>
-This is a mock document summary
-</document-summary>
-<document-category>
-homepage
-</document-category>
-<action-listing>
-{mock_llm_response}
-</action-listing>
-"""
-    )
-
-
 @pytest.mark.asyncio
-async def test_context_property_before_observation(patch_llm_service: MockLLMService) -> None:
+async def test_context_property_before_observation() -> None:
     """Test that accessing context before observation raises an error"""
     with pytest.raises(
         NoSnapshotObservedError,
@@ -67,7 +41,7 @@ async def test_context_property_before_observation(patch_llm_service: MockLLMSer
 
 
 @pytest.mark.asyncio
-async def test_context_property_after_observation(patch_llm_service: MockLLMService) -> None:
+async def test_context_property_after_observation() -> None:
     """Test that context is properly set after observation"""
     driver = MockBrowserDriver()
     async with NotteSession(window=driver) as page:
@@ -77,19 +51,18 @@ async def test_context_property_after_observation(patch_llm_service: MockLLMServ
     # Verify context exists and has expected properties
     assert isinstance(page.snapshot, BrowserSnapshot)
     assert page.snapshot.metadata.url == "https://notte.cc"
-    assert page.snapshot.a11y_tree is None
     assert page.snapshot.dom_node is not None
 
 
 @pytest.mark.asyncio
-async def test_trajectory_empty_before_observation(patch_llm_service: MockLLMService) -> None:
+async def test_trajectory_empty_before_observation() -> None:
     """Test that list_actions returns None before any observation"""
     async with NotteSession(window=MockBrowserDriver()) as page:
         assert len(page.trajectory) == 0
 
 
 @pytest.mark.asyncio
-async def test_valid_observation_after_observation(patch_llm_service: MockLLMService) -> None:
+async def test_valid_observation_after_observation() -> None:
     """Test that last observation returns valid actions after observation"""
     async with NotteSession(window=MockBrowserDriver()) as page:
         _ = await page.aexecute(GotoAction(url="https://www.example.com"))
@@ -109,7 +82,7 @@ async def test_valid_observation_after_observation(patch_llm_service: MockLLMSer
 
 @pytest.mark.skip(reason="TODO: fix this")
 @pytest.mark.asyncio
-async def test_valid_observation_after_step(patch_llm_service: MockLLMService) -> None:
+async def test_valid_observation_after_step() -> None:
     """Test that last observation returns valid actions after taking a step"""
     # Initial observation
     async with NotteSession(window=MockBrowserDriver()) as page:
@@ -126,15 +99,6 @@ async def test_valid_observation_after_step(patch_llm_service: MockLLMService) -
 
 
 @pytest.mark.asyncio
-async def test_llm_service_from_config(patch_llm_service: MockLLMService, mock_llm_response) -> None:
-    """Test that LLMService.from_config returns the mock service"""
-    service = LLMService.from_config()
-    assert isinstance(service, MockLLMService)
-    assert service.mock_response == patch_llm_service.mock_response
-    assert mock_llm_response in (await service.completion(prompt_id="test", variables={})).choices[0].message.content
-
-
-@pytest.mark.asyncio
 async def test_step_should_fail_without_observation() -> None:
     """Test that step should fail without observation"""
     async with NotteSession() as page:
@@ -142,21 +106,23 @@ async def test_step_should_fail_without_observation() -> None:
             _ = await page.aexecute(ClickAction(id="L1"))
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_step_should_succeed_after_observation() -> None:
     """Test that step should fail without observation"""
     async with NotteSession() as page:
-        _ = await page.aexecute(type="goto", value="https://www.example.com")
-        _ = await page.aobserve(perception_type="fast")
+        _ = await page.aexecute(type="goto", url="https://www.example.com")
+        _ = await page.aobserve()
         _ = await page.aexecute(ClickAction(id="L1"))
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_step_should_return_valid_timed_span() -> None:
     """Test that step should fail without observation"""
     async with NotteSession() as page:
-        _ = await page.aexecute(type="goto", value="https://www.notte.cc")
-        obs = await page.aobserve(perception_type="fast")
+        _ = await page.aexecute(type="goto", url="https://www.notte.cc")
+        obs = await page.aobserve()
         assert obs.started_at is not None
         assert obs.ended_at is not None
         assert obs.ended_at > obs.started_at
@@ -164,12 +130,15 @@ async def test_step_should_return_valid_timed_span() -> None:
         assert res.started_at is not None
         assert res.ended_at is not None
         assert res.ended_at > res.started_at
-        data = await page.aexecute(ScrapeAction(instructions="Extract the title of the page"))
+        _ = await page.ascrape()
+        data = page.trajectory.last_result
+        assert data is not None and isinstance(data.action, ScrapeAction)
         assert data.started_at is not None
         assert data.ended_at is not None
         assert data.ended_at > data.started_at
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_browser_action_step_should_succeed_without_observation() -> None:
     """Test that step should fail without observation"""
@@ -183,6 +152,7 @@ async def test_browser_action_step_should_succeed_without_observation() -> None:
             _ = await page.aexecute(ScrollDownAction())
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action_id", ["INVALID_ACTION_ID", "B999", "X999"])
 async def test_step_with_invalid_action_id_returns_failed_result(action_id: str):
@@ -190,8 +160,8 @@ async def test_step_with_invalid_action_id_returns_failed_result(action_id: str)
 
     async with NotteSession() as session:
         # First observe a page to get a snapshot
-        _ = await session.aexecute(type="goto", value="https://www.example.com")
-        _ = await session.aobserve(perception_type="fast")
+        _ = await session.aexecute(type="goto", url="https://www.example.com")
+        _ = await session.aobserve()
         # Try to step with an invalid action ID that doesn't exist on the page
         step_response = await session.aexecute(type="click", id=action_id, raise_on_failure=False)
 
@@ -201,14 +171,15 @@ async def test_step_with_invalid_action_id_returns_failed_result(action_id: str)
         assert step_response.exception is not None
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_step_with_empty_action_id_should_fail_validation_pydantic():
     """Test that stepping with an invalid action ID returns a failed StepResult."""
 
     async with NotteSession() as session:
         # First observe a page to get a snapshot
-        _ = await session.aexecute(type="goto", value="https://www.example.com")
-        _ = await session.aobserve(perception_type="fast")
+        _ = await session.aexecute(type="goto", url="https://www.example.com")
+        _ = await session.aobserve()
         # Try to step with an invalid action ID that doesn't exist on the page
         res = await session.aexecute(type="click", id="action_id", raise_on_failure=False)
         assert not res.success, f"Expected failure, got {res}"
@@ -251,9 +222,14 @@ def test_captcha_solver_not_available_error():
     with pytest.raises(CaptchaSolverNotAvailableError):
         _ = NotteSession(solve_captchas=True, browser_type="chrome")
 
-    CaptchaHandler.is_available = True
-    _ = NotteSession(solve_captchas=True, browser_type="chrome")
-    CaptchaHandler.is_available = False
+    async def solver(*_args) -> bool:
+        return True
+
+    set_captcha_solver(solver)
+    try:
+        _ = NotteSession(solve_captchas=True, browser_type="chrome")
+    finally:
+        set_captcha_solver(None)
 
 
 # ============================================
@@ -261,14 +237,15 @@ def test_captcha_solver_not_available_error():
 # ============================================
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_execute_with_default_timeout() -> None:
     """Test that execute works with default timeout from config."""
-    from notte_core.common.config import config
+    from notte_core.config import config
 
     async with NotteSession(headless=True) as session:
         _ = await session.aexecute(type="goto", url="https://www.google.com")
-        _ = await session.aobserve(perception_type="fast")
+        _ = await session.aobserve()
         # Execute with default timeout (should use config.timeout_action_ms = 15000ms)
         # Try to click on first button (may fail if not found, but timeout param should work)
         result = await session.aexecute(type="click", id="B1", raise_on_failure=False)
@@ -276,19 +253,20 @@ async def test_execute_with_default_timeout() -> None:
         assert config.timeout_action_ms == 15000  # Verify default
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_execute_with_custom_timeout() -> None:
     """Test that execute accepts custom timeout parameter."""
     async with NotteSession(headless=True) as session:
         _ = await session.aexecute(type="goto", url="https://www.google.com")
-        _ = await session.aobserve(perception_type="fast")
+        _ = await session.aobserve()
         # Execute with custom timeout (10 seconds)
         result = await session.aexecute(type="click", id="B1", timeout=10000, raise_on_failure=False)
         assert result is not None
 
 
 def test_interaction_action_zero_timeout_uses_default_config_timeout() -> None:
-    from notte_core.common.config import config
+    from notte_core.config import config
 
     action = ClickAction(id="B1", timeout=0)
 
@@ -350,13 +328,12 @@ async def test_click_empty_selector_returns_failed_result() -> None:
 
 
 @pytest.mark.asyncio
-async def test_interaction_execution_timeout_returns_failed_result() -> None:
-    async def slow_execute(*_args, **_kwargs) -> bool:
+async def test_interaction_execution_timeout_returns_failed_result(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def slow_interaction(*_args, **_kwargs) -> None:
         await asyncio.sleep(0.05)
-        return True
 
     async with NotteSession(headless=True) as session:
-        session.controller.execute = slow_execute  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
+        monkeypatch.setattr(execution_module, "_interact", slow_interaction)
 
         result = await session.aexecute(
             ClickAction(selector="#target", timeout=1),
@@ -381,11 +358,11 @@ EVALUATE_JS_TIMEOUT_MS: int = 500
 @pytest.fixture
 def short_evaluate_js_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     """Shorten the evaluate_js timeout (45s by default) so timeout tests stay fast."""
-    from notte_browser import session as session_module
-    from notte_core.common.config import config
+    from notte_browser import evaluation_result as evaluation_module
+    from notte_core.config import config
 
     monkeypatch.setattr(
-        session_module,
+        evaluation_module,
         "config",
         config.model_copy(update={"timeout_evaluate_js_ms": EVALUATE_JS_TIMEOUT_MS}),
     )
@@ -478,10 +455,10 @@ async def _controller_execute_returning_false(*_args: Any, **_kwargs: Any) -> bo
 
 
 @pytest.mark.asyncio
-async def test_action_failing_by_returning_false_raises_by_default() -> None:
+async def test_action_failing_by_returning_false_raises_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
     """The raise gate asks 'did the action fail', not 'did something throw'."""
     async with NotteSession(headless=True) as session:
-        session.controller.execute = _controller_execute_returning_false  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
+        monkeypatch.setattr(execution_module, "execute", _controller_execute_returning_false)
 
         # the raised error must describe a failure, not echo the success-phrased
         # execution message of the action that did not actually run
@@ -490,9 +467,9 @@ async def test_action_failing_by_returning_false_raises_by_default() -> None:
 
 
 @pytest.mark.asyncio
-async def test_action_failing_by_returning_false_is_quiet_when_not_raising() -> None:
+async def test_action_failing_by_returning_false_is_quiet_when_not_raising(monkeypatch: pytest.MonkeyPatch) -> None:
     async with NotteSession(headless=True) as session:
-        session.controller.execute = _controller_execute_returning_false  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
+        monkeypatch.setattr(execution_module, "execute", _controller_execute_returning_false)
 
         result = await session.aexecute(type="wait", time_ms=1, raise_on_failure=False)
 
@@ -513,12 +490,9 @@ async def test_help_action_raises_by_default() -> None:
             _ = await session.aexecute(type="help", reason="the page layout is unclear")
 
 
-def test_execute_saved_actions_stops_gracefully_on_failed_step(tmp_path: Path) -> None:
-    """Replay logs the failed step and returns instead of raising."""
-    actions_file = tmp_path / "actions.json"
-    actions_file.write_text(ActionList(actions=[WaitAction(time_ms=1)]).model_dump_json())
-
-    with NotteSession(headless=True) as session:
-        session.controller.execute = _controller_execute_returning_false  # pyright: ignore[reportAttributeAccessIssue, reportMethodAssign]
-
-        session.execute_saved_actions(str(actions_file))  # must not raise
+@pytest.mark.parametrize("action", [{"type": "scrape"}, {"type": "scrape", "only_main_content": True}])
+def test_scrape_is_not_an_executable_action(action: dict[str, Any]) -> None:
+    """`scrape` only records `session.scrape()` calls in the trajectory; executing it points to the method."""
+    session = NotteSession()
+    with pytest.raises(ScrapeIsNotAnActionError, match=r"session\.scrape"):
+        _ = asyncio.run(session.aexecute(action=action))

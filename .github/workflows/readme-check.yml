@@ -38,7 +38,7 @@ jobs:
   static:
     needs: changes
     if: fromJSON(needs.changes.outputs.scope).readme_static
-    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -78,27 +78,20 @@ jobs:
       fromJSON(needs.changes.outputs.scope).readme_live &&
       ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
       (github.event_name != 'pull_request' && github.ref == 'refs/heads/main'))
-    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    # All live suites for a ref share one queue so they do not hit the API at once.
+    env:
+      NOTTE_API_URL: https://us-staging.notte.cc
+      NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_README || secrets.NOTTE_API_KEY }}
+      DISABLE_TELEMETRY: 'true'
     concurrency:
       group: notte-live-api-${{ github.ref }}
       queue: max
       cancel-in-progress: false
-    env:
-      NOTTE_API_URL: https://us-staging.notte.cc
-      NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_README || secrets.NOTTE_API_KEY }}
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      # Same as nightly-examples: the local-agent example runs on Vertex, not the rate-limited Gemini API key.
-      NOTTE_EXAMPLE_MODEL: vertex_ai/gemini-3.5-flash
-      DISABLE_TELEMETRY: 'true'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
-      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
-        with:
-          credentials_json: ${{ secrets.VERTEX_AI }}
       # Do not restore dependency caches into the credentialed job.
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -109,10 +102,9 @@ jobs:
       - run: uv sync --locked --dev --all-extras
       - run: uv run patchright install --with-deps chromium --no-shell
       - name: Wait for the API to be ready
-        # The staging API scales to zero when idle and wakes on the first request.
         uses: ./.github/actions/wait-for-api
         with:
-          api-url: ${{ env.NOTTE_API_URL }}
+          api-url: https://us-staging.notte.cc
       - name: Run README Python blocks
         run: xvfb-run --auto-servernum uv run pytest tests/examples/test_readme.py -k test_readme_python_code -n 2
       - run: npm ci --prefix node-sdk

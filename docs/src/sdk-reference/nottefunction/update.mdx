@@ -1,6 +1,6 @@
 ---
 title: "update"
-description: "Update the workflow with a new code version"
+description: "Update the function with a new code version"
 ---
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
@@ -11,18 +11,16 @@ function = notte.Function("<your-function-id>")
 function.update(path="<path-to-your-function.py>")
 ```
 
-If you set a version, only that version will be updated
+If you set a version, only that version will be updated. `restricted` controls how
+strictly the uploaded code is validated by the Notte API
 
 
 ## Parameters
 
-<ParamField path="path" type="UnionType[str, None]" default="None">
+<ParamField path="path" type="str" required>
 </ParamField>
 
 <ParamField path="version" type="UnionType[str, None]" default="None">
-</ParamField>
-
-<ParamField path="workflow_path" type="UnionType[str, None]" default="None">
 </ParamField>
 
 <ParamField path="restricted" type="bool" default="True">

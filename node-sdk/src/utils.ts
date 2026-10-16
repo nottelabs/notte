@@ -80,7 +80,7 @@ const SCHEMA_MAP_KEYWORDS = new Set(['properties', 'patternProperties', '$defs',
  * are passed through untouched even if they happen to contain a `type` key.
  *
  * When a type array is expanded, the split mirrors how the API's converter
- * (`notte_core.utils.pydantic_schema.create_model_from_schema`) reads a
+ * (`notte_core.schema.create_model_from_schema`) reads a
  * property: it resolves the Python type by recursing into each `anyOf` branch,
  * so type-scoped keywords (`items`, `properties`, `required`, `format`, ...)
  * move into the matching typed branch, while field constraints and

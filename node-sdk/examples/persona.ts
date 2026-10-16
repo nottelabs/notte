@@ -81,39 +81,14 @@ async function personaExample() {
     await persona.addCredentials('https://github.com/');
     console.log('Credentials added to vault with auto-generated password');
   }
-  // Example 5: Use persona with agent for automated account creation
-  console.log('\n=== Using persona with Agent ===');
-  if (persona.hasVault) {
-    try {
-      await client.Session().use(async (session) => {
-        const agent = client.Agent({
-          session,
-          max_steps: 10,
-          vault_id: persona.vault.vaultId // Use the persona's vault
-        });
-
-        const result = await agent.run({
-          task: "Create an account on GitHub using the persona credentials",
-          url: "https://github.com/login"
-        });
-        console.log(`Account created: ${result.success ? 'Success' : 'Failed'}`);
-        console.log(`Result: ${result.answer}`);
-      });
-    } catch (error) {
-      console.log('Agent task failed:', error instanceof Error ? error.message : String(error));
-    }
-  } else {
-    console.log('Persona has no vault, skipping agent example with credentials');
-  }
-
-  // Example 6: Access an existing persona by id
+  // Example 5: Access an existing persona by id
   console.log('\n=== Using existing persona ===');
   const existingPersona = client.Persona({ persona_id: existingPersonaId });
 
   const existingEmails = await existingPersona.emails();
   console.log(`Existing persona has ${existingEmails.length} emails`);
 
-  // Example 7: Cleanup (only if we created a new persona)
+  // Example 6: Cleanup (only if we created a new persona)
   console.log('\n=== Cleanup ===');
   console.log('Deleting the persona created by this example. Borrowed personas are left untouched.');
   await persona.delete();

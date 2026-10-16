@@ -3,7 +3,7 @@
  * `session.scrape()`, mirroring `PageClient.scrape` in the Python SDK.
  */
 import { normalizeJsonSchema } from '@/utils';
-import type { DataSpace, ImageData, ScrapeRequest, StructuredDataBaseModel } from '@/lib/client/types.gen';
+import type { DataSpace, ScrapeRequest, StructuredDataBaseModel } from '@/lib/client/types.gen';
 import { ScrapeFailedError } from '@/errors';
 
 /** Minimal structural view of a Zod schema so `zod` stays an optional import path. */
@@ -31,9 +31,10 @@ export interface ScrapeOptions<T = unknown> {
   raiseOnFailure?: boolean;
 }
 
-export type SessionScrapeOptions<T = unknown> = Omit<ScrapeRequest, 'response_format'> & ScrapeOptions<T>;
+/** `only_images` is still in the generated request type (the 1.x API accepts it) but image scraping was removed. */
+export type SessionScrapeOptions<T = unknown> = Omit<ScrapeRequest, 'response_format' | 'only_images'> & ScrapeOptions<T>;
 
-export type ScrapeResult<T> = string | ImageData[] | T | StructuredData<T>;
+export type ScrapeResult<T> = string | T | StructuredData<T>;
 
 export function isZodSchema<T>(value: unknown): value is ZodLikeSchema<T> {
   return typeof value === 'object' && value !== null && typeof (value as ZodLikeSchema<T>).parse === 'function';
@@ -68,23 +69,18 @@ export async function buildScrapeBody<T>(
 
 /**
  * Post-process a scrape response according to the request options:
- * - `only_images` returns the image list,
  * - `response_format` / `instructions` return the extracted data (validated by
  *   the Zod schema when one was given) or throw `ScrapeFailedError`,
  * - otherwise the markdown string is returned.
  */
 export function processScrapeResponse<T = unknown>(
   scrapeResponse: DataSpace | undefined,
-  options: SessionScrapeOptions<T> & { instructions?: string | null; only_images?: boolean },
+  options: SessionScrapeOptions<T> & { instructions?: string | null },
 ): ScrapeResult<T> {
   if (!scrapeResponse) {
     throw new ScrapeFailedError('empty response');
   }
   const raiseOnFailure = options.raiseOnFailure ?? true;
-
-  if (options.only_images) {
-    return scrapeResponse.images ?? [];
-  }
 
   if (requiresSchema(options)) {
     const structured = scrapeResponse.structured as StructuredDataBaseModel | null | undefined;

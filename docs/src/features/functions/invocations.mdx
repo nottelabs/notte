@@ -27,7 +27,6 @@ import DisableRaise from "/snippets/functions/invocations/disable_raise.mdx";
 import HttpErrorHandling from "/snippets/functions/invocations/http_error_handling.mdx";
 import Sequential from "/snippets/functions/invocations/sequential.mdx";
 import CloudExecution from "/snippets/functions/invocations/cloud_execution.mdx";
-import LocalExecution from "/snippets/functions/invocations/local_execution.mdx";
 import RateLimitHandling from "/snippets/functions/invocations/rate_limit_handling.mdx";
 import TimeoutExamples from "/snippets/functions/invocations/timeout_examples.mdx";
 import StreamDebug from "/snippets/functions/invocations/stream_debug.mdx";
@@ -114,7 +113,6 @@ Response streams:
 Use Python's `function.create_run()` or TypeScript's `fn.createRun()` only when you need a run ID before execution begins.
 It creates the run record only. Pass that ID to `function.run(function_run_id=...)`
 or `fn.run(variables, { functionRunId })` to execute it. Omitting the ID automatically creates a new run.
-For Python local execution, pass `local=True` to both calls.
 
 Set `NOTTE_FUNCTION_ID` to your deployed function's ID before running these examples:
 
@@ -197,9 +195,9 @@ Test webhook locally:
 
 <Sequential />
 
-## Local vs Cloud Execution
+## Cloud Execution
 
-### Cloud Execution (Default)
+Functions always run on Notte's cloud infrastructure:
 
 <CloudExecution />
 
@@ -209,36 +207,25 @@ Test webhook locally:
 - Built-in logging
 - Session replays available
 
-### Local Execution
-
-<LocalExecution />
-
-**Advantages:**
-- Debugging
-- Development/testing
-- No cloud execution costs
-
-**Requirements:**
-- Access to the function's code (you own it or it is shared with you)
-- Notte-managed functions also need their decryption key, passed as `decryption_key` when creating the Function instance
+To iterate on a function before deploying it, call its `run` handler directly from Python (see [Testing Locally](/features/functions/creating#testing-locally)).
 
 ## Rate Limits
 
-### Rate-Limited Runs
+### Account Limits
 
-Running a published function that you do not own is rate limited per caller. When you exceed the limit, the API answers with HTTP `429`.
+Functions have rate limits based on your plan:
+
+- **Free**: 10 concurrent runs
+- **Pro**: 50 concurrent runs
+- **Enterprise**: Custom limits
 
 ### Handling Rate Limits
-
-Retry with backoff when a run is rejected with `429`:
 
 <RateLimitHandling />
 
 ## Best Practices
 
 ### 1. Use Appropriate Timeout
-
-In Python, `timeout` is how many seconds the SDK waits for data from the server before giving up (default 300); a long run that keeps streaming logs is not cut off. In TypeScript, `timeoutMs` is a deadline for the whole call (default 5 minutes) and throws `NotteTimeoutError` when it elapses. Both only control how long your code waits for the result.
 
 <TimeoutExamples />
 

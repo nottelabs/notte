@@ -1,0 +1,193 @@
+### Content of 'WebArea' component with text 'body content'
+_[:]normal
+_[:]Skip to content
+L1[:]<a href="https://www.polywood.com/"></a>
+L2[:]<a href="https://www.polywood.com/cart" aria_label="Cart"></a>
+_[:]Order summary
+_[:]Original price
+_[:]$229.00
+_[:]POLYWOOD Checkout
+_[:]Express checkout
+L3[:]<a href="https://www.polywood.com/checkouts/cn/Z2NwLXVzLXdlc3QxOjAxSz..." aria_label="Shop Pay"></a>
+_[:]Show more options
+_[:]OR
+_[:]Contact
+L4[:]<a href="https://account.polywood.com/authentication/oauth/authorize?...">Log in</a>
+_[:]Email
+M1[:]<div></div>
+I1[:]<input type="email" value="" placeholder="Email" name="email"></input>
+B1[:]<input type="checkbox" name="marketing_opt_in"></input>
+M2[:]<label>I'd like to receive emails from POLYWOOD about outdoor living, new products, and special offers.</label>
+_[:]Delivery
+_[:]Country/Region
+I2[:]<select name="countryCode">United States</select>
+_[:]First name
+M3[:]<div></div>
+I3[:]<input type="text" value="" placeholder="First name" name="firstName"></input>
+_[:]Last name
+M4[:]<div></div>
+I4[:]<input type="text" value="" placeholder="Last name" name="lastName"></input>
+_[:]Company (optional)
+M5[:]<div></div>
+I5[:]<input type="text" value="" placeholder="Company (optional)" name="company"></input>
+_[:]Address
+M6[:]<div></div>
+I6[:]<input type="text" value="" placeholder="Address" name="address1" role="combobox" aria_expanded="false"></input>
+_[:]Apartment, suite, etc. (optional)
+_[:]City
+_[:]State
+_[:]Alabama
+_[:]Alaska
+_[:]American Samoa
+_[:]Arizona
+_[:]Arkansas
+_[:]California
+_[:]Colorado
+_[:]Connecticut
+_[:]Delaware
+_[:]Micronesia
+_[:]Florida
+_[:]Georgia
+_[:]Guam
+_[:]Hawaii
+_[:]Idaho
+_[:]Illinois
+_[:]Indiana
+_[:]Iowa
+_[:]Kansas
+_[:]Kentucky
+_[:]Louisiana
+_[:]Maine
+_[:]Marshall Islands
+_[:]Maryland
+_[:]Massachusetts
+_[:]Michigan
+_[:]Minnesota
+_[:]Mississippi
+_[:]Missouri
+_[:]Montana
+_[:]Nebraska
+_[:]Nevada
+_[:]New Hampshire
+_[:]New Jersey
+_[:]New Mexico
+_[:]New York
+_[:]North Carolina
+_[:]North Dakota
+_[:]Northern Mariana Islands
+_[:]Ohio
+_[:]Oklahoma
+_[:]Oregon
+_[:]Palau
+_[:]Pennsylvania
+_[:]Puerto Rico
+_[:]Rhode Island
+_[:]South Carolina
+_[:]South Dakota
+_[:]Tennessee
+_[:]Texas
+_[:]Utah
+_[:]Vermont
+_[:]Virginia
+_[:]Washington
+_[:]Washington DC
+_[:]West Virginia
+_[:]Wisconsin
+_[:]Wyoming
+_[:]U.S. Virgin Islands
+_[:]Armed Forces Americas
+_[:]Armed Forces Europe
+_[:]Armed Forces Pacific
+_[:]ZIP code
+_[:]Phone
+_[:]Shipping method - Select the dropdown for White Glove Delivery
+_[:]Enter your shipping address to view available shipping methods.
+_[:]Payment
+_[:]All transactions are secure and encrypted.
+_[:]Credit card
+_[:]+4
+_[:]+5
+_[:]Additional payment methods
+_[:]Card number
+_[:]Expiration date (MM / YY)
+_[:]Security code
+_[:]Issue date (MM / YY)
+_[:]Issue number
+_[:]Name on card
+_[:]Use shipping address as billing address
+_[:]PayPal
+_[:]Check / Money Order
+_[:]Remember me
+_[:]Save my information for a faster checkout with a Shop account
+_[:]Mobile phone number
+_[:]Secure and encrypted
+_[:]Pay now
+_[:]Your info will be saved to a Shop account. By continuing, you agree to Shop’s
+_[:]Terms of Service
+_[:]and acknowledge the
+_[:]Privacy Policy
+_[:].
+_[:]Submit
+_[:]Refund policy
+_[:]Shipping policy
+_[:]Privacy policy
+_[:]Terms of service
+_[:]Order summary
+_[:]Shopping cart
+_[:]Product image
+_[:]Description
+_[:]Quantity
+_[:]Price
+_[:]Quantity
+_[:]1
+_[:]Presidential Rocking Chair
+_[:]Slate Grey
+_[:]1
+_[:]$229.00
+_[:]Scroll for more items
+_[:]Discount code or gift card
+_[:]Discount code or gift card
+M7[:]<div></div>
+I7[:]<input type="text" value="" placeholder="Discount code or gift card" name="reductions"></input>
+_[:]Apply
+_[:]Submit
+_[:]Estimated Ship Date 7/23 - 7/25
+_[:](If you order by 3 PM ET 7/16)
+_[:]Cost summary
+_[:]Item
+_[:]Value
+_[:]Subtotal
+_[:]$229.00
+_[:]Shipping
+B2[:]<button type="button" aria_label="Shipping policy"></button>
+_[:]Enter shipping address
+_[:]Total
+_[:]USD
+_[:]$229.00
+_[:]Opens external website in a new window.
+_[:]Opens in a new window.
+_[:]Opens external website.
+_[:]Updated total price: $229.00 USD
+_[:]Your order’s being processed.
+
+# interaction actions
+L1	click	''	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > header > div > div > div > div > div > div > span > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi3.s2kwpi6.s2kwpi9.s2kwpi7._1fragem32._1fragempn[href="https://www.polywood.com/"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/header/div/div/div/div/div/div/span/a	in_iframe=False	in_shadow_root=False
+L2	click	''	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > header > div > div > div > div > div > span > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi2.s2kwpi5.s2kwpi4._1fragemtm.s2kwpi9.s2kwpi7._1fragem32._1fragempn[aria-label="Cart"][id="cart-link"][href="https://www.polywood.com/cart"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/header/div/div/div/div/div/span/a	in_iframe=False	in_shadow_root=False
+L3	click	''	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(1) > div > div > section > div > div:nth-of-type(2) > div:nth-of-type(1) > div > a.Xicuw.vowWK.pFvjc[id="shop-pay-button"][href="https://www.polywood.com/checkouts/cn/Z2NwLXVzLXdlc3QxOjAxSzA4MzZFWDU3NzZGQzQwQ0FRSFFXMEo4?payment=shop_pay&checkout_queue_token=A8XfBxwjXO1BPT30vkRQHUxVvYIkazA910EDxXkzQ5LxTZi4d3dUM6Zf2--eWqxy2NuIOr2ZgvWeAeJkiaK52chjukcLAY6_YFkGO6aop7mBa0EqElkcUQ%3D%3D&redirect_source=direct_checkout_checkout"][aria-label="Shop Pay"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[1]/div/div/section/div/div[2]/div[1]/div/a	in_iframe=False	in_shadow_root=False
+L4	click	'Log in'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > a.s2kwpi1.s2kwpi0._1fragemms._1fragemtv._1fragemu1._1fragemtp.s2kwpi2.s2kwpi5.s2kwpi4._1fragemtm.s2kwpi8[href="https://account.polywood.com/authentication/oauth/authorize?client_id=8a645c74-b828-44e9-aefa-cdafe205667b&consent_id=&locale=en-US&nonce=66bf913e-0ed1-4560-bfa2-2d19be015f4e&redirect_uri=https%3A%2F%2Fwww.polywood.com%2Fcustomer_authentication%2Fcallback%3Fsource%3Dcore&response_type=code&scope=openid+email+customer-account-api%3Afull&state=01K08377DCPVEQDN9FCH49N5T7"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[1]/a	in_iframe=False	in_shadow_root=False
+M1	click	'email'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[1]/div/div/div/div	in_iframe=False	in_shadow_root=False
+I1	fill	'email'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u12._7ozb2u1j._7ozb2ur[id="email"][name="email"][placeholder="Email"][required][type="email"][aria-labelledby="email-label"][autocomplete="shipping email"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[1]/div/div/div/div/input	in_iframe=False	in_shadow_root=False
+B1	click	'marketing_opt_in'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > div > div > input._1mmswk96._1mmswk95._1fragemq1._1fragempz._1fragemq3._1fragempx._1fragemr1._1fragemqx._1fragemr5._1fragemqt._1fragemci._1fragemby._1fragemd2._1fragembe._1fragemor._1fragem32._1fragempm._1fragem2x._1fragemtv._1fragemtp._1fragemu2._1mmswk97._1fragemoi._1mmswk9a._1mmswk98._1fragemue[type="checkbox"][id="marketing_opt_in"][name="marketing_opt_in"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[2]/div/div/div/input	in_iframe=False	in_shadow_root=False
+M2	click	"I'd like to receive emails from POLYWOOD about outdoor living, new products, and special offers."	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(1) > section > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > div > label._1mmswk9g._1mmswk9f._1fragem32._1fragemlo._1fragemor._1fragemjl[for="marketing_opt_in"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[1]/section/div[3]/div[1]/div/div/div[3]/div[2]/div/div/label	in_iframe=False	in_shadow_root=False
+I2	select_dropdown_option	'United States'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > select.ZHJU6._1k3449n5._1k3449n3._1fragemue.oAlPg.IWR5K.tu1VS[name="countryCode"][id="Select55"][required][autocomplete="shipping country"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[1]/div/div/div/select	in_iframe=False	in_shadow_root=False
+M3	click	'firstName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[1]/div/div	in_iframe=False	in_shadow_root=False
+I3	fill	'firstName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="TextField178"][name="firstName"][placeholder="First name"][required][type="text"][aria-labelledby="TextField178-label"][autocomplete="shipping given-name"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[1]/div/div/input	in_iframe=False	in_shadow_root=False
+M4	click	'lastName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[2]/div/div	in_iframe=False	in_shadow_root=False
+I4	fill	'lastName'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="TextField179"][name="lastName"][placeholder="Last name"][required][type="text"][aria-labelledby="TextField179-label"][autocomplete="shipping family-name"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[2]/div[2]/div/div/input	in_iframe=False	in_shadow_root=False
+M5	click	'company'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[3]/div/div/div	in_iframe=False	in_shadow_root=False
+I5	fill	'company'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="TextField180"][name="company"][placeholder="Company (optional)"][type="text"][aria-labelledby="TextField180-label"][autocomplete="shipping organization"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[3]/div/div/div/input	in_iframe=False	in_shadow_root=False
+M6	click	'address1'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(4) > div > div > div > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[4]/div/div/div/div/div/div	in_iframe=False	in_shadow_root=False
+I6	select_dropdown_option	'address1'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > main > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > section > div > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(4) > div > div > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2uv._7ozb2uu._1fragemqa._1fragemqm._7ozb2u11._7ozb2u1j._7ozb2ur[id="shipping-address1"][name="address1"][placeholder="Address"][required][type="text"][aria-labelledby="shipping-address1-label"][role="combobox"][autocomplete="shipping address-line1"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[1]/div/main/div/form/div[1]/div[2]/div/section/div/div[2]/section/div/div/div[1]/div/div/div/div[1]/div[4]/div/div/div/div/div/div/input	in_iframe=False	in_shadow_root=False
+M7	click	'reductions'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div	in_iframe=False	in_shadow_root=False
+I7	fill	'reductions'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > div:nth-of-type(2) > div > section > div > form > div:nth-of-type(1) > div > div > div > div > input._7ozb2uq._7ozb2up._1fragemms._1fragemu9._1fragempm._1fragemtf._7ozb2ut._7ozb2us._1fragemtv._1fragemtq._1fragemu5._7ozb2u11._7ozb2u1j._7ozb2ur[id="ReductionsInput31"][name="reductions"][placeholder="Discount code or gift card"][type="text"][aria-labelledby="ReductionsInput31-label"][autocomplete="on"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/div[2]/div/section/div/form/div[1]/div/div/div/div/input	in_iframe=False	in_shadow_root=False
+B2	click	''	html > body > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > aside > div > section > div > section > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > button._1s82kpb1._1s82kpb0._1fragemor._1fragemms._1fragemtk._1fragemtv._1fragemtq._1fragemu5._1fragemte._1fragem32[type="button"][aria-label="Shipping policy"]	html/body/div[1]/div[1]/div/div[1]/div[1]/div/div/div[2]/div/aside/div/section/div/section/div[2]/div[2]/div[2]/div[1]/div/div/button	in_iframe=False	in_shadow_root=False

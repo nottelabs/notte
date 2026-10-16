@@ -1,57 +1,35 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import json
-import os
 import re
-from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Literal, cast
+from typing import Any, cast
 
-import litellm
+import httpx
 from json_repair import repair_json
-from litellm import (
-    AllMessageValues,
-    ChatCompletionUserMessage,
-)
-from litellm.exceptions import (
-    APIConnectionError,
-    APIError,
-    AuthenticationError,
-    BadRequestError,
-    InternalServerError,
-    NotFoundError,
-    RateLimitError,
-    ServiceUnavailableError,
-    Timeout,
-)
-from litellm.exceptions import (
-    ContextWindowExceededError as LiteLLMContextWindowExceededError,
-)
-from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTypeStubs]
-from notte_core.common.config import LlmModel, config, enable_openrouter
-from notte_core.common.logging import logger
-from notte_core.errors.base import NotteBaseError
-from notte_core.errors.llm import LLmModelOverloadedError, LLMParsingError
-from notte_core.errors.provider import (
+from notte_core.errors import (
     ContextWindowExceededError,
     InsufficentCreditsError,
     InvalidAPIKeyError,
     InvalidJsonResponseForStructuredOutput,
+    LLMParsingError,
     LLMProviderError,
-    MissingAPIKeyForModel,
-    ModelDoesNotSupportImageError,
     ModelNotFoundError,
     UnsupportedResponseSchemaError,
 )
-from notte_core.errors.provider import RateLimitError as NotteRateLimitError
+from notte_core.errors import RateLimitError as NotteRateLimitError
+from notte_core.logging import logger
 from notte_core.profiling import profiler
-from pydantic import BaseModel, ValidationError, create_model
+from notte_core.schema import TResponseFormat
+from pydantic import BaseModel, ValidationError
 
-from notte_llm.logging import trace_llm_usage
-from notte_llm.tracer import LlmTracer, LlmUsageFileTracer
-from notte_llm.types import TResponseFormat
+from notte_llm.config import LlmSettings
+from notte_llm.prompt import Message
+
+
+class _UnsupportedStrictSchema(ValueError):
+    """The strict subset cannot preserve the caller's data contract."""
 
 
 def _resolve_schema_refs(schema: dict[str, Any]) -> dict[str, Any]:
@@ -60,21 +38,23 @@ def _resolve_schema_refs(schema: dict[str, Any]) -> dict[str, Any]:
 
     defs: dict[str, Any] = schema.get("$defs", {})
 
-    def resolve_refs(obj: Any) -> Any:
+    def resolve_refs(obj: Any, active_refs: tuple[str, ...] = ()) -> Any:
         if isinstance(obj, dict):
             obj_dict = cast(dict[str, Any], obj)
             if "$ref" in obj_dict:
                 ref_name = str(obj_dict["$ref"]).split("/")[-1]
+                if ref_name in active_refs:
+                    raise _UnsupportedStrictSchema("Recursive references require the schema-in-prompt path")
                 if ref_name in defs:
                     resolved = copy.deepcopy(defs[ref_name])
                     for key, value in obj_dict.items():
                         if key != "$ref":
                             resolved[key] = value
-                    return resolve_refs(resolved)
-                return cast(dict[str, Any], obj)
-            return {k: resolve_refs(v) for k, v in obj_dict.items()}
+                    return resolve_refs(resolved, (*active_refs, ref_name))
+                raise _UnsupportedStrictSchema("Unresolved references require the schema-in-prompt path")
+            return {k: resolve_refs(v, active_refs) for k, v in obj_dict.items()}
         elif isinstance(obj, list):
-            return [resolve_refs(item) for item in cast(list[Any], obj)]
+            return [resolve_refs(item, active_refs) for item in cast(list[Any], obj)]
         return obj
 
     resolved = resolve_refs(schema)
@@ -82,137 +62,12 @@ def _resolve_schema_refs(schema: dict[str, Any]) -> dict[str, Any]:
     return resolved
 
 
-def fix_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
-    """
-    Convert a Pydantic JSON schema to Gemini-compatible format.
-
-    Courtesy of https://github.com/browser-use/browser-use
-
-    Gemini doesn't support:
-    - $ref/$defs (JSON Schema references) - must be inlined
-    - additionalProperties
-    - default values in schema
-    - Empty object properties (must have at least one property)
-    """
-    # Step 1: Resolve all $ref references by inlining definitions
-    schema = _resolve_schema_refs(schema)
-
-    # Step 2: Remove unsupported properties and handle edge cases
-    def clean_schema(obj: Any, parent_key: str | None = None) -> Any:
-        if isinstance(obj, dict):
-            obj_dict = cast(dict[str, Any], obj)
-
-            # When an object uses additionalProperties with real type info (not just
-            # true/false) together with propertyNames, Gemini cannot represent this
-            # pattern.  Convert it into explicit ``properties`` so the model knows
-            # what keys and value types are expected.
-            additional: Any = obj_dict.get("additionalProperties")
-            property_names_enum: list[str] | None = None
-            pn = obj_dict.get("propertyNames")
-            if isinstance(pn, dict):
-                pn_dict = cast(dict[str, Any], pn)
-                property_names_enum = cast(list[str] | None, pn_dict.get("enum"))
-
-            if isinstance(additional, dict) and property_names_enum is not None and obj_dict.get("type") == "object":
-                # Build explicit properties from the enum keys + value schema
-                value_schema: dict[str, Any] = clean_schema(additional, parent_key="additionalProperties")
-                explicit_props: dict[str, Any] = {}
-                for prop_name in property_names_enum:
-                    explicit_props[prop_name] = {**value_schema, "nullable": True}
-                # Rebuild the object schema with explicit properties, all optional
-                cleaned: dict[str, Any] = {}
-                for key, value in obj_dict.items():
-                    if key in ["additionalProperties", "default", "propertyNames", "minProperties"]:
-                        continue
-                    cleaned[key] = clean_schema(value, parent_key=key)
-                # Merge with any pre-existing static properties rather than overwriting
-                existing_props = cast(dict[str, Any], cleaned.get("properties", {}))
-                merged = {**existing_props, **explicit_props}
-                cleaned["properties"] = merged if merged else {"_placeholder": {"type": "string"}}
-                return cleaned
-
-            cleaned = {}
-            for key, value in obj_dict.items():
-                # Skip keys that Gemini doesn't support
-                # Note: 'title' is kept as Gemini handles it fine and it's useful for descriptions
-                if key in ["additionalProperties", "default", "propertyNames", "minProperties"]:
-                    continue
-
-                cleaned_value = clean_schema(value, parent_key=key)
-
-                # Handle empty object properties - Gemini rejects these
-                if (
-                    key == "properties"
-                    and isinstance(cleaned_value, dict)
-                    and len(cast(dict[str, Any], cleaned_value)) == 0
-                    and obj_dict.get("type") == "object"
-                ):
-                    # Add a placeholder property so Gemini doesn't error
-                    cleaned["properties"] = {"_placeholder": {"type": "string"}}
-                else:
-                    cleaned[key] = cleaned_value
-
-            return cleaned
-        elif isinstance(obj, list):
-            obj_list = cast(list[Any], obj)
-            return [clean_schema(item, parent_key=parent_key) for item in obj_list]
-        return obj
-
-    return clean_schema(schema)
-
-
-def is_gemini_model(model: str) -> bool:
-    """Check if the model is a Gemini model that needs schema transformation.
-
-    Note: vertex_ai/claude-* models are Anthropic models hosted on Vertex AI,
-    not Gemini models. They should use the Anthropic path, not this one.
-    """
-    model_lower = model.lower()
-    # Check for Anthropic models on Vertex AI first - they're not Gemini
-    if "vertex_ai" in model_lower and ("claude" in model_lower or "anthropic" in model_lower):
-        return False
-    return "gemini" in model_lower or "vertex_ai" in model_lower
-
-
-def get_vertex_location(model: str) -> str | None:
-    """Vertex AI location to use for a Gemini model, or None for other models.
-
-    litellm defaults to us-central1, but recent Gemini models (e.g. gemini-3.5-flash) are only
-    served from the global endpoint and a few regions. Default to global unless a location is
-    already configured.
-    """
-    if not model.lower().startswith("vertex_ai/gemini"):
-        return None
-    return litellm.vertex_location or os.getenv("VERTEXAI_LOCATION") or os.getenv("VERTEX_LOCATION") or "global"
-
-
-def is_anthropic_model(model: str) -> bool:
-    """Check if the model is an Anthropic model."""
-    model_lower = model.lower()
-    return (
-        model_lower.startswith("anthropic/")
-        or model_lower.startswith("claude-")
-        or "/anthropic/" in model_lower
-        or "/claude-" in model_lower
-    )
-
-
-# Provider messages for a request whose structured output schema was rejected, e.g. Anthropic
-# ("output_format.schema: ... 'discriminator' is not supported", "too many parameters with union types")
-# and Groq ("invalid JSON schema for response_format").
-_SCHEMA_REJECTION = re.compile(r"output_format\.schema|invalid json schema|union types", re.IGNORECASE)
-
-# (model, response format) pairs whose strict schema a provider rejected; later calls go straight to json_object.
-_strict_schema_rejected: set[tuple[str, str]] = set()
-
-
 def is_schema_rejection(message: str) -> bool:
-    return _SCHEMA_REJECTION.search(message) is not None
-
-
-def is_openrouter_model(model: str) -> bool:
-    """Check if the model is routed through OpenRouter."""
-    return model.lower().startswith("openrouter/")
+    """Recognize schema/format rejections across compatible endpoints."""
+    return (
+        re.search(r"json.?schema|response.?format|output_format\.schema|union types", message, re.IGNORECASE)
+        is not None
+    )
 
 
 def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
@@ -293,6 +148,10 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
                 if expanded is not None:
                     obj_dict = expanded
                     was_expanded = True
+                elif obj_dict.get("additionalProperties") is True or isinstance(
+                    obj_dict.get("additionalProperties"), dict
+                ):
+                    raise _UnsupportedStrictSchema("Open-ended dictionaries require the schema-in-prompt path")
 
             cleaned: dict[str, Any] = {}
             for key, value in obj_dict.items():
@@ -325,7 +184,7 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
             # 1. additionalProperties: false on all objects
             # 2. properties must be defined (even if empty)
             # 3. required must include exactly all property keys
-            if "properties" in cleaned or cleaned.get("type") == "object":
+            if not is_properties_map and ("properties" in cleaned or cleaned.get("type") == "object"):
                 cleaned["additionalProperties"] = False
                 # Ensure properties exists (OpenAI requires it for objects)
                 if "properties" not in cleaned:
@@ -365,12 +224,11 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
 
 # Provider errors that usually clear on their own (overloaded model, rate limit, dropped
 # connection, timeout). completion() retries them after these delays before giving up.
-_TRANSIENT_LLM_ERRORS = (ServiceUnavailableError, InternalServerError, APIConnectionError, RateLimitError, Timeout)
 _TRANSIENT_RETRY_DELAYS_SECONDS = (2.0, 5.0)
 
 # OpenRouter tries these, in order, when the requested model errors (for example a 503 while it
 # is overloaded). Both support the structured outputs the agent relies on.
-OPENROUTER_FALLBACK_MODELS = ("google/gemini-2.5-flash", "openai/gpt-4.1-mini")
+OPENROUTER_FALLBACK_MODELS = ("google/gemini-3.8-flash", "openai/gpt-4.1-mini")
 
 
 class LLMEngine:
@@ -379,119 +237,82 @@ class LLMEngine:
     def __init__(
         self,
         model: str | None = None,
-        tracer: LlmTracer | None = None,
-        nb_retries_structured_output: int = config.nb_retries_structured_output,
+        nb_retries_structured_output: int | None = None,
         verbose: bool = False,
+        *,
+        transport: httpx.AsyncBaseTransport | None = None,
+        provider_order: list[str] | None = None,
+        reasoning: dict[str, Any] | None = None,
+        extra_body: dict[str, Any] | None = None,
     ):
-        self.model: str = model or LlmModel.default()
+        self.settings: LlmSettings = LlmSettings.from_env(model=model)
+        self.model: str = self.settings.model
+        self.transport: httpx.AsyncBaseTransport | None = transport
+        self.provider_order: list[str] | None = provider_order
+        self.reasoning: dict[str, Any] | None = reasoning
+        self.extra_body: dict[str, Any] = dict(extra_body or {})
         self.sc: StructuredContent = StructuredContent(inner_tag="json", fail_if_inner_tag=False)
 
-        if tracer is None:
-            tracer = LlmUsageFileTracer()
-
-        self.tracer: LlmTracer = tracer
-        self.completion = trace_llm_usage(tracer=self.tracer)(self.completion)  # pyright: ignore [reportAttributeAccessIssue]
+        if nb_retries_structured_output is None:
+            nb_retries_structured_output = self.settings.nb_retries_structured_output
         self.nb_retries_structured_output: int = nb_retries_structured_output
         self.verbose: bool = verbose
-
-    def context_length(self) -> int:
-        return LlmModel.get_provider(self.model).context_length
 
     @profiler.profiled(service_name="llm")
     async def structured_completion(
         self,
-        messages: list[AllMessageValues],
+        messages: list[Message],
         response_format: type[TResponseFormat],
         model: str | None = None,
         use_strict_response_format: bool = True,
     ) -> TResponseFormat:
+        # Retries add feedback messages: keep them out of the caller's list.
+        messages = list(messages)
         tries = self.nb_retries_structured_output + 1
         content = None
         effective_model = model or self.model
 
-        litellm_response_format: dict[str, Any] | type[BaseModel] = dict(type="json_object")
+        request_format: dict[str, Any] | None = dict(type="json_object")
         raw_schema = response_format.model_json_schema()
-        # Keyed by schema content: different schemas can share a class name (e.g. `choice`, `create_model_from_schema`)
-        schema_key = (effective_model, hashlib.sha256(json.dumps(raw_schema, sort_keys=True).encode()).hexdigest())
-        if schema_key in _strict_schema_rejected:
-            use_strict_response_format = False
         if use_strict_response_format:
-            # For Anthropic models via OpenRouter, use non-strict json_object format
-            # OpenRouter routes to various backends with incompatible schema support:
-            # - Bedrock doesn't support oneOf at all
-            # - Anthropic direct limits anyOf to 16 parameters
-            is_routed_via_openrouter = is_openrouter_model(effective_model) or enable_openrouter()
-            if is_routed_via_openrouter and is_anthropic_model(effective_model):
-                litellm_response_format = dict(type="json_object")
+            try:
+                request_format = fix_schema_for_openai(raw_schema)
+            except _UnsupportedStrictSchema as e:
+                logger.debug(f"Using schema in prompt for model {effective_model}: {e}")
                 use_strict_response_format = False
-            # For OpenRouter-prefixed models, use OpenAI schema format
-            # OpenRouter expects OpenAI-compatible json_schema wrapper, not Gemini's native format
-            elif is_openrouter_model(effective_model):
-                litellm_response_format = fix_schema_for_openai(raw_schema)
-            # For direct Gemini models (not via OpenRouter), transform schema to Gemini-compatible format
-            # Gemini doesn't support $ref/$defs, additionalProperties, etc.
-            # Only use Gemini schema when NOT routed via OpenRouter (OpenRouter expects OpenAI format)
-            elif is_gemini_model(effective_model) and not is_routed_via_openrouter:
-                litellm_response_format = fix_schema_for_gemini(raw_schema)
-            elif is_anthropic_model(effective_model):
-                # For Anthropic models, pass the Pydantic model directly
-                # litellm handles the conversion to Anthropic's format
-                litellm_response_format = response_format
-            else:
-                # For OpenAI and other models (including via OpenRouter), use OpenAI's json_schema format
-                litellm_response_format = fix_schema_for_openai(raw_schema)
 
         raised_exc = None
+        schema_in_messages = False
 
         while tries > 0:
+            if not use_strict_response_format and not schema_in_messages:
+                # json_object constrains syntax only. Preserve the answer contract when
+                # strict mode is unavailable.
+                messages.append(
+                    Message(
+                        role="user",
+                        content=f"Return a JSON object matching this JSON schema: {json.dumps(raw_schema)}",
+                    )
+                )
+                schema_in_messages = True
             tries -= 1
             try:
-                content = (
-                    await self.single_completion(messages, model, response_format=litellm_response_format) or ""
-                ).strip()
-            except InvalidJsonResponseForStructuredOutput as e:
+                content = (await self.single_completion(messages, model, response_format=request_format) or "").strip()
+            except (InvalidJsonResponseForStructuredOutput, UnsupportedResponseSchemaError, ModelNotFoundError) as e:
                 if use_strict_response_format:
-                    # fallback to non-strict response format
-                    litellm_response_format = dict(type="json_object")
+                    logger.warning(f"Model {effective_model} rejected strict output; retrying with json_object")
+                    request_format = {"type": "json_object"}
                     use_strict_response_format = False
-                    tries += 1  # Don't consume a retry slot for the format fallback
+                    tries += 1  # Format negotiation does not consume a parsing retry.
                     continue
-                raised_exc = e
-                raise e
-            except UnsupportedResponseSchemaError as e:
-                # Some providers reject parts of the strict schema (e.g. Anthropic and Groq on the agent's
-                # action union). Retry with json_object and skip the strict attempt on later calls.
-                if use_strict_response_format:
-                    logger.warning(
-                        f"Model {effective_model} rejected the strict response_format schema, retrying with json_object format"
-                    )
-                    _strict_schema_rejected.add(schema_key)
-                    litellm_response_format = dict(type="json_object")
-                    use_strict_response_format = False
-                    tries += 1  # Don't consume a retry slot for the format fallback
+                if isinstance(e, UnsupportedResponseSchemaError) and request_format is not None:
+                    # Some compatibility layers support strict schemas but reject json_object.
+                    # The schema already in the prompt still defines the answer contract.
+                    logger.warning(f"Model {effective_model} rejected json_object; retrying with schema in prompt")
+                    request_format = None
+                    tries += 1
                     continue
-                raised_exc = e
-                raise e
-            except ModelNotFoundError as e:
-                # Some models (especially via OpenRouter) don't support strict json_schema
-                # When we get a 404, retry with non-strict json_object format
-                if use_strict_response_format:
-                    logger.warning(
-                        f"Model {effective_model} returned 404 with strict response_format, retrying with json_object format"
-                    )
-                    litellm_response_format = dict(type="json_object")
-                    use_strict_response_format = False
-                    tries += 1  # Don't consume a retry slot for the format fallback
-                    continue
-                raised_exc = e
-                raise e
-            except NotteBaseError as e:
-                raised_exc = e
-                raise e
-
-            except Exception as e:
-                raised_exc = e
-                raise e
+                raise
             content = self.sc.extract(content).strip()
 
             if "```json" in content:
@@ -503,7 +324,7 @@ class LLMEngine:
                 content = content[len(LLMEngine.PREFIXES[1]) : -1].strip()
             elif not content.startswith("{") or not content.endswith("}"):
                 messages.append(
-                    ChatCompletionUserMessage(
+                    Message(
                         role="user",
                         content="Invalid LLM response. JSON code blocks or JSON object expected, but content does not start with curly brackets. Retrying",
                     )
@@ -534,7 +355,7 @@ class LLMEngine:
                     retry_content = f"Error parsing LLM response: {error_details}, retrying"
 
                 messages.append(
-                    ChatCompletionUserMessage(
+                    Message(
                         role="user",
                         content=retry_content,
                     )
@@ -571,211 +392,160 @@ class LLMEngine:
     @profiler.profiled(service_name="llm")
     async def single_completion(
         self,
-        messages: list[AllMessageValues],
+        messages: list[Message],
         model: str | None = None,
-        temperature: float = config.temperature,
-        response_format: dict[str, str] | type[BaseModel] | None = None,
+        temperature: float | None = None,
+        response_format: dict[str, Any] | type[BaseModel] | None = None,
     ) -> str | None:
-        model = model or self.model
         response = await self.completion(
-            messages,
-            model=model,
-            temperature=temperature,
-            n=1,
-            response_format=response_format,
+            messages, model=model, temperature=temperature, response_format=response_format
         )
-        if not response.choices:
-            # The provider returned no candidates (e.g. an overloaded or filtered Gemini response).
-            # Report it as empty content so structured_completion retries like any unusable reply.
+        choices = response.get("choices", [])
+        if not choices:
             return None
-        return response.choices[0].message.content
-
-    def _get_model(self, model: str | None) -> str:
-        model = model or self.model
-        if enable_openrouter():
-            return LlmModel.get_openrouter_model(model)
-        return LlmModel.get_direct_model(model)
+        content = choices[0]["message"].get("content")
+        if content is not None and not isinstance(content, str):
+            raise LLMProviderError(
+                dev_message=f"Invalid message content from model {model or self.model}",
+                user_message="The LLM provider returned an invalid response.",
+                agent_message=None,
+                should_retry_later=True,
+            )
+        return cast(str | None, content)
 
     def _get_extra_body(self, model: str | None) -> dict[str, Any]:
-        model = model or self.model
-        if enable_openrouter():
-            requested = LlmModel.get_openrouter_model(model).removeprefix("openrouter/")
-            body: dict[str, Any] = {
-                "models": [requested, *(fallback for fallback in OPENROUTER_FALLBACK_MODELS if fallback != requested)]
-            }
-            provider = LlmModel.get_openrouter_provider(model)
-            if provider is not None:
-                body["provider"] = {
-                    "order": [provider],
-                    "allow_fallbacks": True,
-                }
-            return body
-        return {}
+        if not self.settings.is_openrouter:
+            return {}
+        requested = model or self.model
+        body: dict[str, Any] = {
+            "models": [requested, *(fallback for fallback in OPENROUTER_FALLBACK_MODELS if fallback != requested)]
+        }
+        if self.provider_order is not None:
+            body["provider"] = {"order": self.provider_order, "allow_fallbacks": True}
+        if self.reasoning is not None:
+            body["reasoning"] = self.reasoning
+        return body
+
+    def _raise_provider_error(self, status: int, message: str, model: str) -> None:
+        if status in (401, 403):
+            raise InvalidAPIKeyError(provider=model)
+        if status == 404:
+            raise ModelNotFoundError(model)
+        if status == 429:
+            raise NotteRateLimitError(provider=model)
+        if re.search(
+            r"context[_ -]?(length|window)|maximum context|too many (input )?tokens|prompt is too long|current length is",
+            message,
+            re.IGNORECASE,
+        ):
+            sizes = re.search(r"Current length is (\d+) while limit is (\d+)", message)
+            raise ContextWindowExceededError(
+                provider=model,
+                current_size=int(sizes[1]) if sizes else None,
+                max_size=int(sizes[2]) if sizes else None,
+            )
+        if status in (400, 422) and is_schema_rejection(message):
+            raise UnsupportedResponseSchemaError(model, error_msg=message)
+        if status == 400 and "invalid json" in message.lower():
+            raise InvalidJsonResponseForStructuredOutput(model, error_msg=message)
+        if status == 402 or "insufficient balance" in message.lower() or "credit balance is too low" in message.lower():
+            raise InsufficentCreditsError()
+        raise LLMProviderError(
+            dev_message=f"HTTP {status} from LLM model {model}: {message}",
+            user_message="The LLM provider could not process the request.",
+            agent_message=None,
+            should_retry_later=status >= 500 or status in (408, 429),
+        )
 
     @profiler.profiled(service_name="llm")
     async def completion(
         self,
-        messages: list[AllMessageValues],
+        messages: list[Message],
         model: str | None = None,
-        temperature: float = config.temperature,
-        response_format: dict[str, str] | type[BaseModel] | None = None,
+        temperature: float | None = None,
+        response_format: dict[str, Any] | type[BaseModel] | None = None,
         n: int = 1,
-    ) -> ModelResponse:
-        extra_body = self._get_extra_body(model)
-        model = self._get_model(model)
-        # Apply model-specific temperature overrides
-        temperature = LlmModel.get_temperature(model, temperature)
-        vertex_location = get_vertex_location(model)
-        vertex_kwargs: dict[str, Any] = {"vertex_location": vertex_location} if vertex_location is not None else {}
-        # Only send extra_body when set: recent litellm forwards an empty one to Anthropic, which rejects it.
-        extra_kwargs: dict[str, Any] = {"extra_body": extra_body} if extra_body else {}
-        try:
+    ) -> dict[str, Any]:
+        model = model or self.model
+        key = self.settings.require_api_key()
+        if isinstance(response_format, type):
+            response_format = fix_schema_for_openai(response_format.model_json_schema())
+        body: dict[str, Any] = {
+            "model": model,
+            "messages": messages,
+            "temperature": self.settings.temperature if temperature is None else temperature,
+            "max_completion_tokens": 8192,
+            "n": n,
+            **self._get_extra_body(model),
+        }
+        if response_format is not None:
+            body["response_format"] = response_format
+        # Explicit endpoint options override defaults; None removes an optional field.
+        body.update(self.extra_body)
+        body = {name: value for name, value in body.items() if value is not None}
+        async with httpx.AsyncClient(transport=self.transport) as client:
             for attempt, retry_delay in enumerate((*_TRANSIENT_RETRY_DELAYS_SECONDS, None), start=1):
                 try:
-                    response = await litellm.acompletion(
-                        model,
-                        messages,
-                        temperature=temperature,
-                        n=n,
-                        response_format=response_format,
-                        max_completion_tokens=8192,
-                        drop_params=True,
-                        # Bound the HTTP call so a stalled upstream stream cannot park the event loop
-                        # indefinitely. Without this, httpx has no read timeout and silent server
-                        # stalls hang the whole agent run.
-                        timeout=60,
-                        # This loop is the only retry policy; stop provider clients from retrying too.
-                        max_retries=0,
-                        **vertex_kwargs,
-                        **extra_kwargs,
+                    response = await client.post(
+                        f"{self.settings.base_url}/chat/completions",
+                        headers={"Authorization": f"Bearer {key}"},
+                        json=body,
+                        timeout=60.0,
                     )
-                    # Cast to ModelResponse since we know it's not streaming in this case
-                    return cast(ModelResponse, response)
-                except _TRANSIENT_LLM_ERRORS as e:
-                    if retry_delay is None:
-                        raise
-                    logger.warning(
-                        f"Transient error from {model} (attempt {attempt}): {type(e).__name__}. Retrying in {retry_delay}s"
-                    )
-                    await asyncio.sleep(retry_delay)
-            raise AssertionError("unreachable: the last attempt returns or raises")
-
-        except NotFoundError as e:
-            raise ModelNotFoundError(model) from e
-        except Timeout as e:
-            logger.warning(f"LLM request to {model} timed out after 60s: {e}")
-            raise LLMProviderError(
-                dev_message=f"LLM request to {model} timed out: {str(e)}",
-                user_message="The LLM provider did not respond in time.",
-                agent_message=None,
-                should_retry_later=True,
-            ) from e
-        except RateLimitError as e:
-            logger.opt(exception=True).error(
-                f"Rate limit exceeded for model {model}. You should wait a few seconds before retrying..."
-            )
-            raise NotteRateLimitError(provider=model) from e
-        except AuthenticationError as e:
-            raise InvalidAPIKeyError(provider=model) from e
-        except LiteLLMContextWindowExceededError as e:
-            # Try to extract size information from error message
-            current_size = None
-            max_size = None
-            pattern = r"Current length is (\d+) while limit is (\d+)"
-            match = re.search(pattern, str(e))
-            if match:
-                current_size = int(match.group(1))
-                max_size = int(match.group(2))
-            raise ContextWindowExceededError(
-                provider=model,
-                current_size=current_size,
-                max_size=max_size,
-            ) from e
-        except BadRequestError as e:
-            if "Missing API Key" in str(e):
-                raise MissingAPIKeyForModel(model) from e
-            if response_format is not None and is_schema_rejection(str(e)):
-                raise UnsupportedResponseSchemaError(model, error_msg=e.message) from e
-            if "Input should be a valid string" in str(e):
-                raise ModelDoesNotSupportImageError(model) from e
-            if "Invalid JSON" in str(e):
-                raise InvalidJsonResponseForStructuredOutput(model, error_msg=e.message) from e
-            raise LLMProviderError(
-                dev_message=f"Bad request to provider {model}. {str(e)}",
-                user_message="Invalid request parameters to LLM provider.",
-                agent_message=None,
-                should_retry_later=False,
-            ) from e
-        except APIError as e:
-            raise LLMProviderError(
-                dev_message=f"API error from provider {model}. {str(e)}",
-                user_message="An unexpected error occurred while processing your request.",
-                agent_message=None,
-                should_retry_later=True,
-            ) from e
-        except Exception as e:
-            logger.debug(f"Error generating response: {str(e)}")
-            logger.exception("Full traceback:")
-            if "credit balance is too low" in str(e):
-                raise InsufficentCreditsError() from e
-            if "model is overloaded" in str(e):
-                raise LLmModelOverloadedError(model) from e
-            raise LLMProviderError(
-                dev_message=f"Unexpected error from LLM provider: {str(e)}",
-                user_message="An unexpected error occurred while processing your request.",
-                should_retry_later=True,
-                agent_message=None,
-            ) from e
-
-    async def choice(self, query: str, choices: list[str] | set[str]) -> str:
-        """
-        Use LLM to choose the most appropriate answer from the given list of choices.
-
-        Example:
-            >>> llm = LLMEngine(model="gpt-4o-mini")
-            >>> llm.choice("What is the capital of France?", ["Paris", "London", "Berlin"])
-            "Paris"
-
-        Args:
-            query: The user query to choose the most appropriate answer from the given list of choices.
-            choices: The list of choices to choose the most appropriate answer from.
-
-        Returns:
-            The most appropriate answer from the given list of choices.
-        """
-        if query in choices:
-            logger.info(f"User query {query} is already in choices")
-            return query
-        if len(choices) == 1:
-            choice = choices[0] if isinstance(choices, list) else next(iter(choices))
-            logger.info(f"Only one choice available: {choice}")
-            return choice
-        logger.info(f"User query '{query}' is not in choices. Using LLM to choose from: '{choices}'")
-
-        def create_choice_model(types: Iterable[str]) -> type[BaseModel]:
-            # Create a Literal type with all possible vehicle models
-            ModelType = Literal[tuple(types)]
-
-            # Create the dynamic Choice model
-            Choice = create_model(
-                "Choice",
-                choice=(ModelType, ...),  # Required field with type annotation
-                __base__=BaseModel,
-            )
-            return Choice
-
-        messages: list[AllMessageValues] = [
-            {
-                "role": "user",
-                "content": f"""
-                Based on the following user query: {query}, I need you to select the most appropriate answer from the following list:
-                {choices}
-                If you don't know the answer, make a educated guess.
-                """,
-            }
-        ]
-        choice = await self.structured_completion(messages=messages, response_format=create_choice_model(choices))
-        return choice.choice  # type: ignore
+                    status = response.status_code
+                    try:
+                        payload: Any = response.json()
+                    except ValueError:
+                        payload = None
+                    # Compatible gateways can also embed a provider error in an HTTP 200 body.
+                    if isinstance(payload, dict) and "error" in payload and status < 400:
+                        error = cast(dict[str, Any], payload).get("error")
+                        status = cast(dict[str, Any], error).get("code", 502) if isinstance(error, dict) else 502
+                        if not isinstance(status, int) or not 400 <= status <= 599:
+                            status = 502
+                    if status == 408 or status == 429 or status >= 500:
+                        if retry_delay is not None:
+                            logger.warning(f"Transient HTTP {status} from {model} (attempt {attempt}); retrying")
+                            await asyncio.sleep(retry_delay)
+                            continue
+                    if status >= 400:
+                        # Never propagate the request or its Authorization header in an error.
+                        message = response.text.replace(key, "[REDACTED]")
+                        self._raise_provider_error(status, message, model)
+                    if not isinstance(payload, dict) or not isinstance(
+                        cast(dict[str, Any], payload).get("choices"), list
+                    ):
+                        raise LLMProviderError(
+                            dev_message=f"Invalid Chat Completions response from model {model}",
+                            user_message="The LLM provider returned an invalid response.",
+                            agent_message=None,
+                            should_retry_later=True,
+                        )
+                    choices = cast(list[Any], cast(dict[str, Any], payload)["choices"])
+                    if any(
+                        not isinstance(choice, dict)
+                        or not isinstance(cast(dict[str, Any], choice).get("message"), dict)
+                        for choice in choices
+                    ):
+                        raise LLMProviderError(
+                            dev_message=f"Invalid Chat Completions choices from model {model}",
+                            user_message="The LLM provider returned an invalid response.",
+                            agent_message=None,
+                            should_retry_later=True,
+                        )
+                    return cast(dict[str, Any], payload)
+                except (httpx.TimeoutException, httpx.TransportError) as e:
+                    if retry_delay is not None:
+                        logger.warning(f"Transient {type(e).__name__} from {model} (attempt {attempt}); retrying")
+                        await asyncio.sleep(retry_delay)
+                        continue
+                    raise LLMProviderError(
+                        dev_message=f"LLM request to {model} failed after retries ({type(e).__name__})",
+                        user_message="The LLM provider did not respond in time or could not be reached.",
+                        agent_message=None,
+                        should_retry_later=True,
+                    ) from None
+        raise AssertionError("unreachable: the last attempt returns or raises")
 
 
 @dataclass

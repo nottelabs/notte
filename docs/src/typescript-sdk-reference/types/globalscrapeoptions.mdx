@@ -12,7 +12,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 Options of `client.scrape()`: the global scrape request minus `url`, plus the SDK-only scrape options.
 
 ```typescript
-export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' | 'response_format' | 'wait_for_authentication'> & ScrapeOptions<T> & {
+export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' | 'response_format' | 'wait_for_authentication' | 'only_images'> & ScrapeOptions<T> & {
   /** Whether to wait for Managed Auth before the scrape request completes. Defaults to true. Authentication failure or timeout can fail the scrape request. */
   wait_for_authentication?: boolean;
 };
@@ -82,10 +82,6 @@ Whether to only scrape the main content of the page. If True, navbars, footers, 
 
 <ParamField body="selector" type={"string | null | undefined"}>
 Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
-</ParamField>
-
-<ParamField body="only_images" type={"boolean | undefined"}>
-Whether to only scrape images from the page. If True, the page content is excluded.
 </ParamField>
 
 <ParamField body="scrape_links" type={"boolean | undefined"}>

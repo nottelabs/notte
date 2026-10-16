@@ -22,7 +22,7 @@ def bare_session():
     session.client.server_url = "https://api.notte.cc"
     session.client.REQUEST_ORIGIN = "sdk-python"
     session.client.start.return_value = SimpleNamespace(session_id="session", status="authenticating")
-    session.client.auth_status.return_value = SimpleNamespace(status="active", error=None)
+    session.client.auth_readiness.return_value = SimpleNamespace(status="active", error=None)
     session.client.status.return_value = SimpleNamespace(session_id="session", status="active")
     session.storage = MagicMock()
     session._open_viewer = False
@@ -34,26 +34,26 @@ def bare_session():
 def test_default_start_waits_using_readiness_without_repeating_start(monkeypatch):
     monkeypatch.setattr("notte_sdk.endpoints.sessions.time.sleep", lambda _: None)
     session = bare_session()
-    session.client.auth_status.side_effect = [
+    session.client.auth_readiness.side_effect = [
         SimpleNamespace(status="authenticating"),
         SimpleNamespace(status="active"),
     ]
     session.start()
     session.client.start.assert_called_once()
-    assert session.client.auth_status.call_count == 2
+    assert session.client.auth_readiness.call_count == 2
     assert session.response.status == "active"
 
 
 def test_explicit_nonblocking_start_returns_pending_without_polling():
     session = bare_session()
     session.start(wait_for_authentication=False)
-    session.client.auth_status.assert_not_called()
+    session.client.auth_readiness.assert_not_called()
     assert session.response.status == "authenticating"
 
 
 def test_terminal_authentication_failure_closes_without_another_start():
     session = bare_session()
-    session.client.auth_status.return_value = SimpleNamespace(status="failed", error="Invalid credentials")
+    session.client.auth_readiness.return_value = SimpleNamespace(status="failed", error="Invalid credentials")
     with pytest.raises(RuntimeError, match="Invalid credentials"):
         session.start()
     session.client.start.assert_called_once()
@@ -131,13 +131,13 @@ def test_capability_does_not_bypass_failed_readiness(monkeypatch, asynchronous):
     monkeypatch.setenv("NOTTE_AUTH_CAPABILITY", "runner-capability")
     session = bare_session()
     session.response = SimpleNamespace(session_id="session", status="authenticating")
-    session.client.auth_status.return_value = SimpleNamespace(status="failed", error="Login failed")
+    session.client.auth_readiness.return_value = SimpleNamespace(status="failed", error="Login failed")
     with pytest.raises(RuntimeError, match="Login failed"):
         if asynchronous:
             asyncio.run(session.await_for_auth())
         else:
             session.wait_for_auth()
-    session.client.auth_status.assert_called_once_with("session")
+    session.client.auth_readiness.assert_called_once_with("session")
 
 
 SDK_HEADERS = {"x-notte-request-origin": "sdk-python", "x-notte-sdk-version": notte_core_version}

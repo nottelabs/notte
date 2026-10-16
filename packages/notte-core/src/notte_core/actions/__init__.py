@@ -6,7 +6,6 @@
 from notte_core.actions.actions import (
     ActionList,
     ActionParameter,
-    ActionParameterValue,
     ActionUnion,
     ActionValidation,
     BaseAction,
@@ -123,7 +122,6 @@ __all__ = [
     "ActionList",
     "ActionValidation",
     "ActionParameter",
-    "ActionParameterValue",
     # TypedDicts
     "ActionDict",
     "ActionType",

@@ -1,11 +1,15 @@
 """Tests to ensure action classes, TypedDicts, and session method overloads stay synchronized."""
 
-import re
+import ast
+import importlib.util
+import sys
 from pathlib import Path
+from types import ModuleType
 from typing import get_args, get_origin, get_type_hints
 
+import pytest
 from notte_core.actions import typedicts as typedicts_module
-from notte_core.actions.actions import BaseAction
+from notte_core.actions.actions import BaseAction, BrowserAction
 from notte_core.actions.typedicts import ActionType
 
 
@@ -27,6 +31,24 @@ def _get_action_to_typeddict_mapping() -> dict[str, tuple[type[BaseAction], type
             mapping[action_type] = (action_cls, typeddict_cls)
 
     return mapping
+
+
+def _public_action_typedicts(hidden: frozenset[str]) -> set[str]:
+    """TypedDicts of the actions that a session exposes (hidden actions only stay parseable)."""
+    return {
+        f"{action_cls.__name__}Dict"
+        for action_type, action_cls in BaseAction.ACTION_REGISTRY.items()
+        if action_type not in hidden
+    }
+
+
+# Local sessions can't run inbox reads; cloud sessions still run the API-side `email_verification_read`.
+LOCAL_SESSION_HIDDEN_ACTIONS = BrowserAction.unlisted_action_types()
+SDK_SESSION_HIDDEN_ACTIONS = (
+    BrowserAction.LEGACY_AGENT_ACTION_TYPES
+    | BrowserAction.PERSONA_INBOX_ACTION_TYPES
+    | BrowserAction.RECORD_ONLY_ACTION_TYPES
+)
 
 
 def test_all_actions_have_typeddict() -> None:
@@ -143,92 +165,69 @@ def test_typeddict_type_field_matches_action_type() -> None:
         raise AssertionError("Type field mismatches:\n  - " + "\n  - ".join(errors))
 
 
-def _extract_overload_typedicts_from_file(file_path: Path, method_name: str) -> set[str]:
-    """
-    Extract TypedDict names used in @overload signatures for a specific method.
-
-    Args:
-        file_path: Path to the Python file
-        method_name: Name of the method to check (e.g., 'execute', 'aexecute')
-
-    Returns:
-        Set of TypedDict names found in Unpack[XxxActionDict] patterns
-    """
-    content = file_path.read_text()
-
-    # Pattern to find @overload decorated methods with Unpack[XxxActionDict]
-    # This captures the TypedDict name from patterns like:
-    # @overload
-    # def execute(..., **kwargs: Unpack[GotoActionDict]) -> ...
-    # or
-    # async def aexecute(..., **kwargs: Unpack[GotoActionDict]) -> ...
-    pattern = rf"@overload\s+(?:async\s+)?def\s+{method_name}\s*\([^)]*Unpack\[(\w+ActionDict)\][^)]*\)"
-
-    matches = re.findall(pattern, content)
-    return set(matches)
+GENERATOR = Path(__file__).parents[2] / "scripts" / "generate_action_overloads.py"
 
 
-def test_browser_session_execute_overloads_present() -> None:
-    """Test that notte_browser/session.py has execute overloads for all TypedDicts."""
-    session_file = (
-        Path(__file__).parent.parent.parent / "packages" / "notte-browser" / "src" / "notte_browser" / "session.py"
-    )
-
-    assert session_file.exists(), f"Session file not found: {session_file}"
-
-    overloaded_typedicts = _extract_overload_typedicts_from_file(session_file, "execute")
-
-    # Get all expected TypedDicts
-    expected_typedicts = {f"{action_cls.__name__}Dict" for action_cls in BaseAction.ACTION_REGISTRY.values()}
-
-    missing = expected_typedicts - overloaded_typedicts
-    if missing:
-        raise AssertionError(
-            "notte_browser/session.py execute() is missing overloads for:\n  - " + "\n  - ".join(sorted(missing))
-        )
+def _load_generator() -> ModuleType:
+    spec = importlib.util.spec_from_file_location("generate_action_overloads", GENERATOR)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module  # dataclasses resolve their module through sys.modules
+    spec.loader.exec_module(module)
+    return module
 
 
-def test_browser_session_aexecute_overloads_present() -> None:
-    """Test that notte_browser/session.py has aexecute overloads for all TypedDicts."""
-    session_file = (
-        Path(__file__).parent.parent.parent / "packages" / "notte-browser" / "src" / "notte_browser" / "session.py"
-    )
-
-    assert session_file.exists(), f"Session file not found: {session_file}"
-
-    overloaded_typedicts = _extract_overload_typedicts_from_file(session_file, "aexecute")
-
-    # Get all expected TypedDicts
-    expected_typedicts = {f"{action_cls.__name__}Dict" for action_cls in BaseAction.ACTION_REGISTRY.values()}
-
-    missing = expected_typedicts - overloaded_typedicts
-    if missing:
-        raise AssertionError(
-            "notte_browser/session.py aexecute() is missing overloads for:\n  - " + "\n  - ".join(sorted(missing))
-        )
+generator = _load_generator()
 
 
-def test_sdk_session_execute_overloads_present() -> None:
-    """Test that notte_sdk/endpoints/sessions.py has execute overloads for all TypedDicts."""
-    sessions_file = (
-        Path(__file__).parent.parent.parent
-        / "packages"
-        / "notte-sdk"
-        / "src"
-        / "notte_sdk"
-        / "endpoints"
-        / "sessions.py"
-    )
+def _overload_typedicts_in_file(path: Path, class_name: str, method: str) -> list[str]:
+    """`XxxActionDict` names of the `**kwargs: Unpack[...]` overloads of `class_name.method`, in order."""
+    tree = ast.parse(path.read_text())
+    cls = next(node for node in ast.walk(tree) if isinstance(node, ast.ClassDef) and node.name == class_name)
+    names: list[str] = []
+    for node in cls.body:
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) or node.name != method:
+            continue
+        if not any(isinstance(d, ast.Name) and d.id == "overload" for d in node.decorator_list):
+            continue
+        kwarg = node.args.kwarg
+        if kwarg is not None and isinstance(kwarg.annotation, ast.Subscript):
+            names.append(ast.unparse(kwarg.annotation.slice))
+    return names
 
-    assert sessions_file.exists(), f"Sessions file not found: {sessions_file}"
 
-    overloaded_typedicts = _extract_overload_typedicts_from_file(sessions_file, "execute")
+def test_generated_overloads_are_up_to_date() -> None:
+    """The overload regions and TypedDict imports match `scripts/generate_action_overloads.py`."""
+    stale = [
+        str(path.relative_to(GENERATOR.parents[1]))
+        for path in dict.fromkeys(target.path for target in generator.TARGETS)
+        if generator.generate(path, path.read_text()) != path.read_text()
+    ]
+    assert not stale, f"Out of date, run `uv run --no-sync python scripts/generate_action_overloads.py`: {stale}"
 
-    # Get all expected TypedDicts
-    expected_typedicts = {f"{action_cls.__name__}Dict" for action_cls in BaseAction.ACTION_REGISTRY.values()}
 
-    missing = expected_typedicts - overloaded_typedicts
-    if missing:
-        raise AssertionError(
-            "notte_sdk/endpoints/sessions.py execute() is missing overloads for:\n  - " + "\n  - ".join(sorted(missing))
-        )
+@pytest.mark.parametrize(
+    ("path", "class_name", "method", "hidden"),
+    [
+        (generator.LOCAL_SESSION, "NotteSession", "aexecute", LOCAL_SESSION_HIDDEN_ACTIONS),
+        (generator.LOCAL_SESSION, "NotteSession", "execute", LOCAL_SESSION_HIDDEN_ACTIONS),
+        (generator.REMOTE_SESSION, "RemoteSession", "execute", SDK_SESSION_HIDDEN_ACTIONS),
+    ],
+)
+def test_execute_overloads_cover_exactly_the_exposed_actions(
+    path: Path, class_name: str, method: str, hidden: frozenset[str]
+) -> None:
+    (target,) = [target for target in generator.TARGETS if (target.path, target.method) == (path, method)]
+    assert target.hidden == hidden
+
+    overloaded = _overload_typedicts_in_file(path, class_name, method)
+    assert overloaded == generator.overload_typedicts(hidden)
+    assert set(overloaded) == _public_action_typedicts(hidden)
+
+
+def test_api_only_actions_are_typed_on_cloud_sessions_only() -> None:
+    local = set(generator.overload_typedicts(LOCAL_SESSION_HIDDEN_ACTIONS))
+    remote = set(generator.overload_typedicts(SDK_SESSION_HIDDEN_ACTIONS))
+    assert remote - local == {"EmailVerificationReadActionDict"}
+    for hidden in ("EmailReadActionDict", "SmsReadActionDict", "ScrapeActionDict", "HelpActionDict"):
+        assert hidden not in local | remote

@@ -7,7 +7,7 @@
 packages_to_check=("notte-core" "notte-sdk")
 
 # Forbidden packages that should not be imported
-forbidden_packages=("notte_browser" "notte_agent")
+forbidden_packages=("notte_browser" "notte_agent" "notte_llm")
 
 found_violations=false
 

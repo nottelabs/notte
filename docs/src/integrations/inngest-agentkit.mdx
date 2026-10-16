@@ -12,14 +12,7 @@ Use [Inngest AgentKit](https://agentkit.inngest.com/) with a Notte browser tool.
 
 Use Node.js 24+, a [Notte API key](https://console.notte.cc), and an [Anthropic API key](https://platform.claude.com/settings/keys).
 
-```bash
-git clone https://github.com/nottelabs/notte.git
-cd notte/examples/inngest
-npm ci
-export NOTTE_API_KEY=your-notte-api-key
-export ANTHROPIC_API_KEY=your-anthropic-api-key
-npm start
-```
+Clone the [Notte repository](https://github.com/nottelabs/notte), open `examples/inngest`, and run `npm ci`. Set `NOTTE_API_KEY` and `ANTHROPIC_API_KEY` to your keys, then run `npm start`.
 
 The agent calls `page_title` for `https://example.com`. The tool result contains `title: "Example Domain"` and the stopped session's `session_id`.
 

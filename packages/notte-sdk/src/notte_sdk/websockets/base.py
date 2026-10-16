@@ -4,8 +4,8 @@ from collections.abc import AsyncIterator
 from typing import Any, Callable
 
 import websockets.client
-from notte_core.common.logging import logger
-from notte_core.common.resource import SyncResource
+from notte_core.logging import logger
+from notte_core.resource import SyncResource
 from pydantic import BaseModel, PrivateAttr
 from typing_extensions import override
 

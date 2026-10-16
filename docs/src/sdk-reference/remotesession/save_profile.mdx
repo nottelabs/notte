@@ -5,13 +5,7 @@ description: "Saves the session's current browser state into a profile, without 
 
 
 
-```python
-with client.Session() as session:
-    session.execute(type="goto", url="https://github.com/login")
-    # ... log in ...
-    profile = session.save_profile(name="github")
-# later: client.Session(profile={"id": profile.profile_id})
-```
+See [Browser Profiles](/features/sessions/browser-profiles) for the tested Python and TypeScript example.
 
 Use it to keep a login from a session that was started without ``persist=True``.
 It does not change the session's start-time profile settings, so a session started

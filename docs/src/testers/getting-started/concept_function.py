@@ -3,6 +3,6 @@
 from notte_sdk import NotteClient
 
 client = NotteClient()
-# Create a function from existing workflow
-function = client.Function(function_id="workflow_abc123")
+# Load an existing function by ID
+function = client.Function(function_id="func_abc123")
 function.run(url="https://example.com")

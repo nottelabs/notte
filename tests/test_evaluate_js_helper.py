@@ -4,13 +4,13 @@ import gc
 import json
 import weakref
 
-import notte_browser.session as session_module
+import notte_browser.evaluation_result as evaluation_module
 import pytest
 from notte_browser.evaluation_result import format_evaluation_result
 from notte_browser.session import NotteSession
-from notte_core.browser.observation import ExecutionResult
-from notte_core.common.config import config
-from notte_core.errors.actions import ActionExecutionError, EvaluateJsResultLimitError
+from notte_core.config import config
+from notte_core.errors import ActionExecutionError, EvaluateJsResultLimitError
+from notte_core.observation import ExecutionResult
 
 
 @pytest.mark.asyncio
@@ -48,7 +48,7 @@ async def test_aevaluate_js_returns_the_envelope_when_not_raising() -> None:
 
 @pytest.mark.asyncio
 async def test_large_result_fails_action_and_session_remains_usable(monkeypatch) -> None:
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
     code = '() => { let x = {value: "x"}; for(let i=0;i<25;i++) x={left:x,right:x}; return x; }'
     async with NotteSession(headless=True) as session:
         result = await session.aevaluate_js(code, raise_on_failure=False)
@@ -67,10 +67,10 @@ async def test_saved_limit_errors_do_not_retain_rejected_results(monkeypatch, ra
     class TrackedList(list):
         pass
 
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 1024}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 1024}))
     references = []
     failures = []
-    original_decode = session_module.decode_page_result
+    original_decode = evaluation_module.decode_page_result
 
     def decode(payload, token, **limits):
         # Track the decoded result, the value the formatter then rejects.
@@ -80,7 +80,7 @@ async def test_saved_limit_errors_do_not_retain_rejected_results(monkeypatch, ra
             references.append(weakref.ref(value))
         return value
 
-    monkeypatch.setattr(session_module, "decode_page_result", decode)
+    monkeypatch.setattr(evaluation_module, "decode_page_result", decode)
     async with NotteSession(headless=True) as session:
         original_evaluate = session.window.page.evaluate
 
@@ -121,11 +121,31 @@ async def test_expression_forms_keep_their_meaning_behind_the_guard() -> None:
 
 
 @pytest.mark.asyncio
+async def test_only_a_top_level_return_runs_the_code_as_a_function_body() -> None:
+    async with NotteSession(headless=True) as session:
+        # A `return` inside a nested function leaves the code an expression.
+        assert await session.aevaluate_js("[1, 2].map(n => { return n * 2 })") == "[\n  2,\n  4\n]"
+        assert await session.aevaluate_js("[1, 2].filter(function (n) { return n > 1 }).length") == "1"
+        assert await session.aevaluate_js("const f = () => { return 3 }; f()") == "3"
+        assert await session.aevaluate_js("'return'") == "return"
+        # A `return` outside any function, even inside a block, is a function body.
+        assert await session.aevaluate_js("if (true) { return 8 } else { return 9 }") == "8"
+        assert await session.aevaluate_js("const xs = [1].map(n => { return n }); return xs.length") == "1"
+        # The checks compile the code without running it: side effects happen once.
+        code = "window.__runs = (window.__runs || 0) + 1; [0].map(n => { return n }); window.__runs"
+        assert await session.aevaluate_js(code) == "1"
+        assert await session.aevaluate_js("window.__probe = (window.__probe || 0) + 1; return window.__probe") == "1"
+        assert await session.aevaluate_js("typeof __probeVar") == "undefined"
+        assert await session.aevaluate_js("var __probeVar = 1; return 2") == "2"
+        assert await session.aevaluate_js("typeof __probeVar") == "undefined"
+
+
+@pytest.mark.asyncio
 async def test_oversized_result_is_rejected_inside_the_page(monkeypatch) -> None:
     # A single large string is cheap for the page to build but, without the
     # guard, every byte would be serialized by the browser, decoded by the
     # driver and copied into Python before the conversion budget ran.
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
     async with NotteSession(headless=True) as session:
         transferred: list[int] = []
         original_evaluate = session.window.page.evaluate
@@ -161,7 +181,7 @@ async def test_guard_works_on_a_page_without_unsafe_eval() -> None:
 
 @pytest.mark.asyncio
 async def test_guard_counts_escaped_width_in_containers_and_utf8_for_text(monkeypatch) -> None:
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
     async with NotteSession(headless=True) as session:
         transferred: list[int] = []
         original_evaluate = session.window.page.evaluate
@@ -188,7 +208,7 @@ async def test_guard_counts_escaped_width_in_containers_and_utf8_for_text(monkey
 async def test_guard_never_rejects_what_the_formatter_accepts(monkeypatch) -> None:
     # 2500 zeros format to about 12.5 KB of indented JSON, within the budget.
     # A guard charging a fixed size per number would have rejected them.
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
     expected = format_evaluation_result([0] * 2500, max_bytes=16384)
     async with NotteSession(headless=True) as session:
         assert await session.aevaluate_js("Array(2500).fill(0)") == expected
@@ -215,7 +235,7 @@ async def test_page_errors_that_imitate_the_guard_stay_javascript_failures() -> 
 
 @pytest.mark.asyncio
 async def test_getter_values_are_measured_and_read_once(monkeypatch) -> None:
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
     async with NotteSession(headless=True) as session:
         transferred: list[int] = []
         original_evaluate = session.window.page.evaluate
@@ -280,7 +300,7 @@ async def test_getter_values_are_measured_and_read_once(monkeypatch) -> None:
 async def test_guarded_results_match_playwright(monkeypatch, code) -> None:
     # The guard returns a snapshot of the value. Whatever Playwright would
     # have transferred for the original must come out of the snapshot too.
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
     async with NotteSession(headless=True) as session:
         native = format_evaluation_result(await session.window.page.evaluate(code), max_bytes=16384)
         assert await session.aevaluate_js(code) == native
@@ -288,7 +308,7 @@ async def test_guarded_results_match_playwright(monkeypatch, code) -> None:
 
 @pytest.mark.asyncio
 async def test_tiny_budgets_accept_results_that_fit(monkeypatch) -> None:
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 2}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 2}))
     async with NotteSession(headless=True) as session:
         assert await session.aevaluate_js("[]") == "[]"
         assert await session.aevaluate_js("new Uint8Array(0)") == "[]"
@@ -311,7 +331,7 @@ HUGE = "4 * 1024 * 1024"
     ],
 )
 async def test_special_values_cannot_smuggle_data_past_the_guard(monkeypatch, code) -> None:
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
     async with NotteSession(headless=True) as session:
         transferred: list[int] = []
         original_evaluate = session.window.page.evaluate
@@ -331,7 +351,7 @@ async def test_special_values_cannot_smuggle_data_past_the_guard(monkeypatch, co
 @pytest.mark.asyncio
 async def test_error_stack_is_not_transferred(monkeypatch) -> None:
     # Only the message is printed, so a huge stack is neither measured nor sent.
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
     async with NotteSession(headless=True) as session:
         transferred: list[int] = []
         original_evaluate = session.window.page.evaluate
@@ -351,7 +371,7 @@ async def test_error_stack_is_not_transferred(monkeypatch) -> None:
 async def test_forged_special_types_are_sent_as_plain_objects(monkeypatch) -> None:
     # Only genuine Dates are sent as dates, so a forged tag cannot make
     # Playwright call a page-supplied toJSON after the measurement.
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
     async with NotteSession(headless=True) as session:
         transferred: list[int] = []
         original_evaluate = session.window.page.evaluate
@@ -396,7 +416,7 @@ async def test_getters_named_like_regexp_flags_run_once() -> None:
 
 @pytest.mark.asyncio
 async def test_unencoded_typed_arrays_and_prototype_pollution(monkeypatch) -> None:
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
     async with NotteSession(headless=True) as session:
         page = session.window.page
         if await page.evaluate("typeof Float16Array === 'function'"):
@@ -426,7 +446,7 @@ async def _transfers(session, monkeypatch) -> list[int]:
 
 @pytest.mark.asyncio
 async def test_value_cap_counts_every_value(monkeypatch) -> None:
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_values": 100}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_values": 100}))
     async with NotteSession(headless=True) as session:
         transferred = await _transfers(session, monkeypatch)
         # The array plus 99 numbers is exactly 100 values.
@@ -487,7 +507,7 @@ async def test_own_proto_key_is_kept() -> None:
 
 @pytest.mark.asyncio
 async def test_repeated_references_cost_their_full_size(monkeypatch) -> None:
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_values": 100}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_values": 100}))
     async with NotteSession(headless=True) as session:
         transferred = await _transfers(session, monkeypatch)
         # A 20-value row referenced 4 times is 1 + 4 x 20 values when written out.
@@ -527,7 +547,7 @@ async def test_inherited_tojson_does_not_change_the_result() -> None:
 )
 async def test_a_replaced_json_stringify_has_no_effect(monkeypatch, replacement) -> None:
     # The guard writes the JSON itself, so a page's JSON.stringify is never called.
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
     async with NotteSession(headless=True) as session:
         await session.window.page.evaluate(f"() => {{ JSON.stringify = {replacement}; }}", isolated_context=False)
         transferred = await _transfers(session, monkeypatch)
@@ -541,7 +561,7 @@ async def test_forged_values_within_the_byte_allowance_are_rejected(monkeypatch)
     # that tampers a built-in to splice 40,000 one-digit values into a result
     # near the value cap would fit that allowance; the writer's own value count
     # must still reject it in the page.
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_values": 1000}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_values": 1000}))
     async with NotteSession(headless=True) as session:
         await session.window.page.evaluate(
             "() => { const forged = ['a', Array(40000).fill(0)]; const get = Map.prototype.get;"
@@ -572,7 +592,7 @@ async def test_forged_values_within_the_byte_allowance_are_rejected(monkeypatch)
 async def test_tampered_builtins_cannot_inflate_the_payload(monkeypatch, tamper) -> None:
     # A page can replace built-ins before evaluate_js runs. The guard's writer
     # counts values itself, so the payload still holds at most the value cap.
-    monkeypatch.setattr(session_module, "config", config.model_copy(update={"evaluate_js_max_result_values": 1000}))
+    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_values": 1000}))
     async with NotteSession(headless=True) as session:
         await session.window.page.evaluate(f"() => {{ {tamper} }}", isolated_context=False)
         transferred = await _transfers(session, monkeypatch)

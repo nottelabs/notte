@@ -17,9 +17,8 @@ with client.Session(cdp_url=cdp_url) as session:
     page = session.page
     page.goto("https://example.com")
 
-    # Use Notte's Agent
-    agent = client.Agent(session=session, max_steps=10)
-    result = agent.run(task="Extract all product names")
+    # Use Notte's structured scraping
+    products = session.scrape(instructions="Extract all product names")
 ```
 
 </CodeGroup>

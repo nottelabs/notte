@@ -22,6 +22,10 @@ for (const run of activeRuns.items) {
 
 const history = await fixture.runs({ only_active: false });
 assert.ok(history.items.some(run => run.function_run_id === completed.function_run_id));
-const results = activeRuns.items.map(run => run.status);
+// Other runs of the shared CI function may be active; only the finished run must be excluded.
+assert.ok(activeRuns.items.every(run => run.status === 'active'));
+const results = activeRuns.items
+  .map(run => run.function_run_id)
+  .filter(runId => runId === completed.function_run_id);
 assert.deepEqual(results, []);
 export { results };

@@ -19,7 +19,6 @@ import EnvironmentVariables from "/snippets/functions/creating/environment_varia
 import GracefulErrors from "/snippets/functions/creating/graceful_errors.mdx";
 import RaisingExceptions from "/snippets/functions/creating/raising_exceptions.mdx";
 import TestLocally from "/snippets/functions/creating/test_locally.mdx";
-import MockApiCalls from "/snippets/functions/creating/mock_api_calls.mdx";
 import DocumentParams from "/snippets/functions/creating/document_params.mdx";
 import ReturnStructured from "/snippets/functions/creating/return_structured.mdx";
 import AddLogging from "/snippets/functions/creating/add_logging.mdx";
@@ -70,7 +69,7 @@ Deploy from Python:
 - `path` (str, required): Path to your Python file
 - `name` (str, optional): Function display name
 - `description` (str, optional): What the function does
-- `shared` (bool, default=False): Whether other users can view and fork the function. Listing in the marketplace is separate (the read-only `published` field).
+- `shared` (bool, default=False): Whether function is publicly accessible
 
 ## Function Requirements
 
@@ -141,12 +140,6 @@ Let Functions fail explicitly:
 Run your function locally:
 
 <TestLocally />
-
-### Run a Deployed Function Locally
-
-Run the uploaded code on your machine, for example to debug it:
-
-<MockApiCalls />
 
 ## Best Practices
 

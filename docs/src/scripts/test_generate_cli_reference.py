@@ -88,6 +88,24 @@ class SameTreeTests(unittest.TestCase):
         self.assertFalse(gen.same_tree(Path(self.temp.name) / "absent", self.b))
 
 
+class PresentationTests(unittest.TestCase):
+    def test_product_icons_follow_site_mapping(self) -> None:
+        self.assertEqual(
+            gen.normalize_icons('<Card icon="code" title="Functions"><Card icon="browser" title="Sessions">'),
+            '<Card icon="flower" title="Functions"><Card icon="tv" title="Sessions">',
+        )
+
+    def test_llms_check_detects_missing_stale_and_duplicate_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fresh = Path(tmp)
+            (fresh / "index.mdx").write_text('---\ntitle: "CLI"\ndescription: "New description"\n---\n')
+            current = "- [CLI](https://docs.notte.cc/cli-reference/index.md): New description"
+            self.assertTrue(gen.cli_llms_matches(fresh, current))
+            for stale in ("", current.replace("New", "Old"), current + "\n" + current):
+                with self.subTest(stale=stale):
+                    self.assertFalse(gen.cli_llms_matches(fresh, stale))
+
+
 class RegenerateTests(unittest.TestCase):
     """main() in write mode, with the Go generator and llms.txt build stubbed."""
 

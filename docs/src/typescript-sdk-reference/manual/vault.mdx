@@ -14,8 +14,8 @@ Vault that fetches credentials stored using the SDK, the counterpart of
 
 The remote vault is created lazily on the first API operation so local-only
 helpers such as `generatePassword()` stay side-effect free. Every API
-failure rejects with a `NotteAPIError`; caller mistakes (invalid URL,
-one-time code stored as an MFA secret, ...) reject with `InvalidRequestError`.
+failure rejects with a `NotteAPIError`, including server-side validation
+failures (422 for invalid URLs, credentials, or MFA secrets).
 // pragma: allowlist secret
 ```ts
 const vault = client.Vault({ name: 'My vault' });
@@ -42,7 +42,7 @@ client.Vault(options?: VaultConstructor): NotteVault;
 
 ## Usage
 
-- [addCredentials](/typescript-sdk-reference/vault/addcredentials): Add or update the credentials stored for a website. The URL is reduced to its root domain (`https://github.com/login` → `github.com`) before it is sent, like Python's `AddCredentialsRequest`.
+- [addCredentials](/typescript-sdk-reference/vault/addcredentials): Add or update the credentials stored for a website. Values are sent as supplied; the API validates credentials and reduces the URL to its root domain (`https://github.com/login` → `github.com`).
 - [getCredentials](/typescript-sdk-reference/vault/getcredentials): Get the credentials stored for a website. Rejects with a `NotteAPIError` when the vault holds no credentials for that domain, like Python's `get_credentials`.
 - [deleteCredentials](/typescript-sdk-reference/vault/deletecredentials): Delete the credentials stored for a website.
 - [listCredentials](/typescript-sdk-reference/vault/listcredentials): List the websites the vault holds credentials for. Passwords are never returned.

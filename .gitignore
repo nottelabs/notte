@@ -201,7 +201,6 @@ _customers/
 
 tests/agent/output_messages.json
 tests/agent/output_fail_completion_messages.json
-examples/readme_agent.py
 packages/notte-core/src/notte_core/local.py
 interviews/
 
@@ -220,6 +219,7 @@ flamegraph*.html
 # npm pack / inspect artifacts
 .npm-inspect/
 *.tgz
+nike_results/
 
 # README code blocks extracted by scripts/readme_blocks.py
 node-sdk/.readme-check/

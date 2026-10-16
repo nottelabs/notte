@@ -9,8 +9,10 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/scrape.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/scrape.ts)
 
+`only_images` is still in the generated request type (the 1.x API accepts it) but image scraping was removed.
+
 ```typescript
-export type SessionScrapeOptions<T = unknown> = Omit<ScrapeRequest, 'response_format'> & ScrapeOptions<T>;
+export type SessionScrapeOptions<T = unknown> = Omit<ScrapeRequest, 'response_format' | 'only_images'> & ScrapeOptions<T>;
 ```
 
 ## Fields
@@ -25,10 +27,6 @@ Whether to only scrape the main content of the page. If True, navbars, footers, 
 
 <ParamField body="selector" type={"string | null | undefined"}>
 Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
-</ParamField>
-
-<ParamField body="only_images" type={"boolean | undefined"}>
-Whether to only scrape images from the page. If True, the page content is excluded.
 </ParamField>
 
 <ParamField body="scrape_links" type={"boolean | undefined"}>

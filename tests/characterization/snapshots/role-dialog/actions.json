@@ -1,0 +1,112 @@
+[
+  {
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button></button>",
+      "id": "B1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > button[id=\"outside\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/role-dialog:4527775504046182633:3609651542926669075:-954529461061893870:6435013078458316481",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/button"
+      },
+      "text_label": "Outside button",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input aria_label=\"Outside input\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input aria_label=\"Outside input\"></input>",
+      "id": "I1",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > input[id=\"outside-input\"][aria-label=\"Outside input\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/role-dialog:4527775504046182633:3609651542926669075:8113990692294626132:2224432599716801316",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/input"
+      },
+      "text_label": "Outside input",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button></button>",
+      "id": "B2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div > button[id=\"inside\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/role-dialog:4527775504046182633:3609651542926669075:6390467218696966908:-4165048949171082851:-1754721159806164697:-122190065914605965",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div/button"
+      },
+      "text_label": "Inside button",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input aria_label=\"Inside input\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input aria_label=\"Inside input\"></input>",
+      "id": "I2",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div > input[id=\"inside-input\"][aria-label=\"Inside input\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/role-dialog:4527775504046182633:3609651542926669075:6390467218696966908:-4165048949171082851:1417956729130661241:6786776358870673219",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div/input"
+      },
+      "text_label": "Inside input",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  }
+]

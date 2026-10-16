@@ -19,6 +19,18 @@ description: "Response containing presigned URLs for session replay"
   Expiration time of the presigned URLs
 </ParamField>
 
+<ParamField path="mouse_manifest_url" type="UnionType[str, None]">
+  Presigned mouse replay manifest URL
+</ParamField>
+
+<ParamField path="mouse_chunk_urls" type="UnionType[list[str], None]">
+  Presigned mouse replay chunk URLs
+</ParamField>
+
+<ParamField path="mouse_next_offset" type="UnionType[int, None]">
+  Next mouse replay pagination offset
+</ParamField>
+
 <ParamField path="video_start_ms" type="UnionType[int, None]">
   Video start offset in milliseconds
 </ParamField>
@@ -30,4 +42,4 @@ description: "Response containing presigned URLs for session replay"
 
 ## Module
 
-`notte_sdk.types`
+`notte_core.types`
