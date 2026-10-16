@@ -17,9 +17,10 @@ const tool = (name: string, input: Record<string, unknown> = {}): BetaToolUseBlo
 
 async function assertClosed(id: string) {
   const deadline = Date.now() + 15_000;
+  const signal = AbortSignal.timeout(15_000);
   while (true) {
     const response = await fetch(`${process.env.NOTTE_API_URL ?? 'https://api.notte.cc'}/sessions/${id}`, {
-      headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal: AbortSignal.timeout(15_000),
+      headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal,
     });
     assert.equal(response.status, 200, 'Authoritative session lookup failed');
     const { status } = await response.json() as { status: string };
