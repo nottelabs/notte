@@ -61,7 +61,7 @@ describe.skipIf(process.env.NOTTE_CLAUDE_AGENTS_LIVE !== '1')('Claude Agent SDK 
       try {
         await recipe(language, {
           ANTHROPIC_BASE_URL: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
-          ANTHROPIC_API_KEY: 'not-a-real-key',
+          ANTHROPIC_API_KEY: 'not-a-real-key', // pragma: allowlist secret
           CLAUDE_CODE_MAX_RETRIES: '0',
         });
         throw new Error('The framework unexpectedly accepted invalid credentials');
