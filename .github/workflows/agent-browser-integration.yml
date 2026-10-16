@@ -51,6 +51,7 @@ jobs:
         uses: ./.github/actions/wait-for-api
         with:
           api-url: ${{ env.NOTTE_API_URL }}
+          timeout: '300'
       - name: Execute recipes and lifecycle checks
         working-directory: node-sdk
         env:
