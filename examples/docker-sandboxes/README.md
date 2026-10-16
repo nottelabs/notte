@@ -4,7 +4,7 @@ Connect a local Docker Sandboxes coding agent to Notte Browser MCP through Sandb
 
 Install [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/install/) 0.48+, run `sbx login`, and configure your coding agent's usual authentication. Get a [Notte API key](https://console.notte.cc/apikeys).
 
-Run `sh setup.sh claude notte-browser` from your intended workspace. The script registers the hosted MCP endpoint, prompts for the Notte key through `sbx secret set`, then starts Claude with `--static-mcp notte`. Substitute a supported agent such as `codex` if preferred. The literal header placeholder resolves from the host credential store; the key is not put in shell arguments or the sandbox environment.
+Run `sh /path/to/notte/examples/docker-sandboxes/setup.sh claude notte-browser` from your intended workspace. The script registers the hosted MCP endpoint, prompts for the Notte key through `sbx secret set`, then starts Claude with `--static-mcp notte`. Substitute a supported agent such as `codex` if preferred. The literal header placeholder resolves from the host credential store; the key is not put in shell arguments or the sandbox environment.
 
 Ask the agent to start a Notte browser, visit `https://example.com`, observe its title, and stop that browser even if a step fails. Stop the local sandbox afterward with `sbx stop notte-browser`. A sandbox and its remote browser have separate lifecycles.
 

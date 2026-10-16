@@ -27,7 +27,7 @@ test('real Notte MCP browser protocol', { skip: process.env.NOTTE_SANDBOXES_LIVE
         id = browserId;
         await call('browser_action', { browser_id: browserId, action: { type: 'goto', url: 'https://example.com' } });
         await call('browser_action', { browser_id: browserId, action: { type: 'click', selector: '[' } });
-      }), { message: 'Notte MCP browser task failed' });
+      }), { message: 'Notte MCP tool browser_action failed' });
     } finally {
       assert.ok(id, 'Expected an owned browser before the failing command');
       await closed(id);

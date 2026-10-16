@@ -5,7 +5,7 @@
   "engines": { "node": ">=24" },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "node --test test/setup.test.ts",
+    "test": "node --test test/setup.test.ts test/errors.test.ts",
     "test:live": "node --test test/mcp.live.test.ts"
   },
   "dependencies": {
