@@ -30,7 +30,10 @@ function toolData(result: unknown): unknown {
 
 export async function runDemo(config: PipedreamConfig, options: Options = {}) {
   const signal = AbortSignal.any([AbortSignal.timeout(90_000), ...(options.signal ? [options.signal] : [])]);
-  const providerFetch = options.providerFetch ?? fetch;
+  const boundedFetch = (send: typeof fetch): typeof fetch => (input, init) => send(input, {
+    ...init, signal: AbortSignal.any([signal, ...(init?.signal ? [init.signal] : [])]),
+  });
+  const providerFetch = boundedFetch(options.providerFetch ?? fetch);
   let sessionId = 'unallocated';
   try {
     return await new NotteClient().Session({ max_duration_minutes: 3 }).use(async (browser) => {
@@ -41,6 +44,7 @@ export async function runDemo(config: PipedreamConfig, options: Options = {}) {
       try {
         const api = process.env.NOTTE_API_URL ?? 'https://api.notte.cc';
         await notte.connect(new StreamableHTTPClientTransport(new URL('/mcp', api), {
+          fetch: boundedFetch(fetch),
           requestInit: { headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY!}` }, signal, redirect: 'error' },
         }));
         const action = toolData(await notte.callTool({ name: 'browser_action', arguments: {
@@ -63,8 +67,18 @@ export async function runDemo(config: PipedreamConfig, options: Options = {}) {
             'x-pd-app-slug': config.app ?? 'github',
           } },
         }));
-        const { tools } = await pipedream.listTools({}, { signal });
-        const names = tools.map((tool) => tool.name);
+        const names: string[] = [];
+        const seen = new Set<string>();
+        let cursor: string | undefined;
+        for (let page = 0; page < 20; page++) {
+          const result = await pipedream.listTools({ cursor }, { signal });
+          names.push(...result.tools.map((tool) => tool.name));
+          cursor = result.nextCursor;
+          if (!cursor) break;
+          if (seen.has(cursor)) throw new Error('Tool discovery repeated a cursor');
+          seen.add(cursor);
+        }
+        if (cursor) throw new Error('Tool discovery exceeded 20 pages');
         if (options.approvedAction) {
           if (!names.includes(options.approvedAction.name)) throw new Error('Approved tool was not offered');
           const output = await pipedream.callTool(options.approvedAction, undefined, { signal });
@@ -93,7 +107,20 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     if (!value) throw new Error(`Set ${name}`);
     return value;
   };
-  const result = await runDemo({ clientId: required('PIPEDREAM_CLIENT_ID'), clientSecret: required('PIPEDREAM_CLIENT_SECRET'),
-    projectId: required('PIPEDREAM_PROJECT_ID'), externalUserId: required('PIPEDREAM_EXTERNAL_USER_ID'), app: process.env.PIPEDREAM_APP }, { approvedAction: await loadAction(process.env.PIPEDREAM_ACTION_FILE) });
-  console.log(JSON.stringify({ session_id: result.session_id, tool_count: result.tool_names.length, tool_call_completed: result.tool_call_completed }));
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  process.on('SIGINT', abort);
+  process.on('SIGTERM', abort);
+  try {
+    const result = await runDemo({ clientId: required('PIPEDREAM_CLIENT_ID'), clientSecret: required('PIPEDREAM_CLIENT_SECRET'),
+      projectId: required('PIPEDREAM_PROJECT_ID'), externalUserId: required('PIPEDREAM_EXTERNAL_USER_ID'), app: process.env.PIPEDREAM_APP },
+      { approvedAction: await loadAction(process.env.PIPEDREAM_ACTION_FILE), signal: controller.signal });
+    console.log(JSON.stringify({ session_id: result.session_id, tool_count: result.tool_names.length, tool_call_completed: result.tool_call_completed }));
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : 'Pipedream discovery failed');
+    process.exitCode = controller.signal.aborted ? 130 : 1;
+  } finally {
+    process.off('SIGINT', abort);
+    process.off('SIGTERM', abort);
+  }
 }

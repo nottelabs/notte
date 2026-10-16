@@ -7,9 +7,11 @@ import time
 import unittest
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from unittest.mock import patch
 
 import httpx2
 from demo import PipedreamConfig, load_action, run_demo
+from notte_sdk import NotteClient
 
 CONFIG = PipedreamConfig("fixture-client", "fixture-secret", "proj_fixture", "user-fixture")
 
@@ -65,16 +67,20 @@ def provider(mode="success"):
                 if mode == "cancel":
                     state["waiting"].set()
                     state["release"].wait(15)
+                cursor = body.get("params", {}).get("cursor")
+                paginated = mode in {"pagination", "cursor_cycle"}
                 result = {
                     "tools": [
                         {
-                            "name": "fixture_catalog_read",
+                            "name": "fixture_first_page" if paginated and not cursor else "fixture_catalog_read",
                             "description": "Synthetic test tool, not a vendor action",
                             "inputSchema": {"type": "object", "properties": {}},
                             "annotations": {"readOnlyHint": True},
                         }
                     ]
                 }
+                if paginated and (not cursor or mode == "cursor_cycle"):
+                    result["nextCursor"] = "fixture-next"
             elif method == "tools/call":
                 result = {
                     "content": [{"type": "text", "text": "private fixture-output detail"}],
@@ -128,8 +134,52 @@ class LiveTests(unittest.TestCase):
             self.assertEqual(load_action(file.name), {"name": "fixture_catalog_read", "arguments": {}})
         self.assertIsNone(load_action(None))
 
+    def test_cancellation_during_claim_reaps_owned_browser(self):
+        client = NotteClient()
+        original_start = client.sessions.start
+        owned = []
+        claimed, release = threading.Event(), threading.Event()
+
+        def start(*args, **kwargs):
+            response = original_start(*args, **kwargs)
+            owned.append(response.session_id)
+            claimed.set()
+            if not release.wait(15):
+                raise TimeoutError("Claim fixture was not released")
+            return response
+
+        async def execute():
+            with patch.object(client.sessions, "start", start):
+                task = asyncio.create_task(run_demo(CONFIG, client=client))
+                async with asyncio.timeout(70):
+                    while not claimed.is_set() and not task.done():
+                        await asyncio.sleep(0.05)
+                self.assertTrue(claimed.is_set(), "Native asynchronous claim did not complete")
+                task.cancel()
+                release.set()
+                with self.assertRaises(asyncio.CancelledError) as error:
+                    await task
+                self.assertIn(owned[0], str(error.exception))
+
+        try:
+            with asyncio.Runner() as runner:
+                runner.run(execute())
+        finally:
+            release.set()
+        row = closed(owned[0])
+        self.assertFalse(any(step.get("type") == "execution_result" for step in row["steps"]))
+        print(f"claim cancellation: owned browser {owned[0]} independently closed")
+
     def test_native_transports_and_owned_browser_cleanup(self):
-        for mode in ["success", "action", "action_error", "unoffered", "oauth401", "mcp401", "navigation", "cancel"]:
+        self.check_modes(
+            ["success", "action", "action_error", "unoffered", "oauth401", "mcp401", "navigation", "cancel"]
+        )
+
+    def test_native_pagination_and_cursor_refusal(self):
+        self.check_modes(["pagination", "cursor_cycle"])
+
+    def check_modes(self, modes):
+        for mode in modes:
             with self.subTest(mode=mode), provider(mode) as (base, state):
 
                 async def execute():
@@ -140,7 +190,7 @@ class LiveTests(unittest.TestCase):
                                 "name": "fixture_not_offered" if mode == "unoffered" else "fixture_catalog_read",
                                 "arguments": {"private": "fixture-private-argument"},
                             }
-                            if mode in {"action", "action_error", "unoffered"}
+                            if mode in {"action", "action_error", "unoffered", "pagination", "cursor_cycle"}
                             else None,
                             oauth_url=f"{base}/v1/oauth/token",
                             mcp_url=f"{base}/v3",
@@ -160,12 +210,17 @@ class LiveTests(unittest.TestCase):
                     return await task
 
                 with asyncio.Runner() as runner:
-                    if mode in {"success", "action"}:
+                    if mode in {"success", "action", "pagination"}:
                         result = runner.run(execute())
                         session_id = result["session_id"]
                         self.assertIn("Example Domain", json.dumps(result["page"]))
-                        self.assertEqual(result["tool_names"], ["fixture_catalog_read"])
-                        self.assertEqual(result["tool_call_completed"], mode == "action")
+                        self.assertEqual(
+                            result["tool_names"],
+                            ["fixture_first_page", "fixture_catalog_read"]
+                            if mode == "pagination"
+                            else ["fixture_catalog_read"],
+                        )
+                        self.assertEqual(result["tool_call_completed"], mode in {"action", "pagination"})
                         self.assertNotIn("fixture-output", json.dumps(result))
                         self.assertNotIn("fixture-private-argument", json.dumps(result))
                     else:
@@ -211,7 +266,11 @@ class LiveTests(unittest.TestCase):
                     self.assertEqual(headers["x-pd-environment"], "development")
                     self.assertEqual(headers["x-pd-app-slug"], "github")
                 calls = [body for _, _, body in requests if body.get("method") == "tools/call"]
-                self.assertEqual(len(calls), 1 if mode in {"action", "action_error"} else 0)
+                self.assertEqual(len(calls), 1 if mode in {"action", "action_error", "pagination"} else 0)
+                if mode in {"pagination", "cursor_cycle"}:
+                    lists = [body for _, _, body in requests if body.get("method") == "tools/list"]
+                    self.assertEqual(len(lists), 2)
+                    self.assertEqual(lists[1]["params"]["cursor"], "fixture-next")
                 if calls:
                     self.assertEqual(
                         calls[0]["params"],

@@ -42,6 +42,7 @@ Maintainers can run `uv run --locked python -m unittest test_live -v` and
 `npm test` with only `NOTTE_API_KEY`. `NOTTE_API_URL` selects a Notte environment.
 These tests use real Notte browsers and native MCP clients with a local Pipedream
 protocol fixture. Discovery, synthetic action success/error, unoffered-tool rejection, OAuth/MCP
-HTTP 401, failed navigation and cancellation all receive independent session-closure checks. No Pipedream credentials are used.
+HTTP 401, failed navigation, pagination/cursor refusal, CLI interruption and
+Python claim-time cancellation all receive independent session-closure checks. No Pipedream credentials are used.
 
 Hosted Pipedream OAuth and vendor action execution have not been tested.

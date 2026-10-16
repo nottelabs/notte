@@ -8,7 +8,7 @@ from typing import Any
 import httpx2
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
-from mcp.types import CallToolResult
+from mcp.types import CallToolResult, PaginatedRequestParams
 from notte_sdk import NotteClient
 
 
@@ -25,7 +25,7 @@ def load_action(path: str | None) -> dict[str, Any] | None:
     if not path:
         return None
     try:
-        with open(path) as file:
+        with open(path, encoding="utf-8") as file:
             value = json.load(file)
         if (
             not isinstance(value, dict)
@@ -113,8 +113,20 @@ async def discover(
                 "x-pd-app-slug": config.app,
             },
         )
-        tools = (await pipedream.list_tools()).tools
-        names = [tool.name for tool in tools]
+        names: list[str] = []
+        cursor = None
+        seen: set[str] = set()
+        for _ in range(20):
+            page_tools = await pipedream.list_tools(params=PaginatedRequestParams(cursor=cursor))
+            names.extend(tool.name for tool in page_tools.tools)
+            cursor = page_tools.next_cursor
+            if not cursor:
+                break
+            if cursor in seen:
+                raise RuntimeError("Tool discovery repeated a cursor")
+            seen.add(cursor)
+        else:
+            raise RuntimeError("Tool discovery exceeded 20 pages")
         if approved_action is not None:
             if approved_action["name"] not in names:
                 raise RuntimeError("Approved tool was not offered")
@@ -142,16 +154,26 @@ async def run_demo(
     mcp_url: str = "https://remote.mcp.pipedream.net/v3",
     page_url: str = "https://example.com",
     approved_action: dict[str, Any] | None = None,
+    client: NotteClient | None = None,
 ) -> dict[str, Any]:
-    with NotteClient().Session(max_duration_minutes=3) as browser:
-        session_id = browser.session_id
-        try:
-            return await discover(config, session_id, oauth_url, mcp_url, page_url, approved_action)
-        except asyncio.CancelledError:
-            raise asyncio.CancelledError(f"Pipedream discovery cancelled (session {session_id})") from None
-        except Exception as error:
-            # Sanitize before the SDK context logs the exception during cleanup.
-            raise RuntimeError(f"Pipedream discovery failed: {type(error).__name__} (session {session_id})") from None
+    client = client or NotteClient()
+    browser = client.Session(max_duration_minutes=3)
+    try:
+        async with browser:
+            session_id = browser.session_id
+            try:
+                return await discover(config, session_id, oauth_url, mcp_url, page_url, approved_action)
+            except asyncio.CancelledError:
+                raise asyncio.CancelledError(f"Pipedream discovery cancelled (session {session_id})") from None
+            except Exception:
+                # Sanitize before the SDK context logs the exception during cleanup.
+                raise RuntimeError(f"Pipedream discovery failed (session {session_id})") from None
+    except asyncio.CancelledError:
+        session_id = browser.session_id if browser.response is not None else "unallocated"
+        raise asyncio.CancelledError(f"Pipedream discovery cancelled (session {session_id})") from None
+    except Exception:
+        session_id = browser.session_id if browser.response is not None else "unallocated"
+        raise RuntimeError(f"Pipedream discovery failed (session {session_id})") from None
 
 
 if __name__ == "__main__":

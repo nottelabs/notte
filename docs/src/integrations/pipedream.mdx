@@ -24,4 +24,4 @@ Tool discovery does not make every advertised action read-only. To call one tool
 
 The example owns a browser with a three-minute lifetime and closes it on success, failure or cancellation. It does not add a Notte OAuth UI or automatically attach connected-app tools to Notte Agent API runs.
 
-Native protocol tests cover a real Notte browser with local Pipedream OAuth/MCP fixtures, including synthetic tool-call success/error and unoffered-tool rejection. Hosted Pipedream OAuth and vendor action execution have not been tested.
+Native protocol tests cover a real Notte browser with local Pipedream OAuth/MCP fixtures, including synthetic tool-call success/error, pagination, unoffered-tool rejection and browser cleanup during cancellation. Hosted Pipedream OAuth and vendor action execution have not been tested.
