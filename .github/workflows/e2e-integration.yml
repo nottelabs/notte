@@ -1,0 +1,79 @@
+name: e2e integration
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/e2e-integration.yml
+      - examples/e2e/**
+      - docs/src/integrations/e2e.mdx
+      - node-sdk/src/**
+      - node-sdk/package.json
+      - node-sdk/package-lock.json
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/e2e-integration.yml
+      - examples/e2e/**
+      - docs/src/integrations/e2e.mdx
+      - node-sdk/src/**
+      - node-sdk/package.json
+      - node-sdk/package-lock.json
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - run: npm ci && npm run typecheck
+        working-directory: examples/e2e
+  live:
+    needs: static
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [published, source]
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
+    env:
+      E2E_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - run: npm ci
+        working-directory: examples/e2e
+      - if: matrix.sdk == 'source'
+        run: npm ci --prefix node-sdk && npm run build --prefix node-sdk
+      - if: matrix.sdk == 'source'
+        run: npm install --no-save --package-lock=false ../../node-sdk
+        working-directory: examples/e2e
+      - run: npm run typecheck
+        working-directory: examples/e2e
+      - uses: ./.github/actions/wait-for-api
+        with:
+          api-url: https://us-staging.notte.cc
+          timeout: '300'
+      - name: Verify native e2e tests and browser cleanup
+        env:
+          NOTTE_API_URL: https://us-staging.notte.cc
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+        run: npm run test:live && npm test
+        working-directory: examples/e2e

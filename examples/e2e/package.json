@@ -1,0 +1,13 @@
+{
+  "name": "notte-e2e-example",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.8" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "e2e run",
+    "test:live": "node --test test/provider.live.test.ts"
+  },
+  "dependencies": { "e2e": "0.21.1", "@e2e-dev/web": "0.15.1", "notte-sdk": "1.9.7" },
+  "devDependencies": { "@types/node": "24.10.0", "typescript": "6.0.3" }
+}

@@ -379,6 +379,13 @@
             ]
           },
           {
+            "group": "Testing",
+            "icon": "vial",
+            "pages": [
+              "integrations/e2e"
+            ]
+          },
+          {
             "group": "Browser Drivers",
             "icon": "gamepad",
             "pages": [
