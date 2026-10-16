@@ -175,10 +175,6 @@
       "destination": "/mcp-server"
     },
     {
-      "source": "/integrations/claude-computer-use",
-      "destination": "/integrations/anthropic-computer-use"
-    },
-    {
       "source": "/integrations/computer-use-openagi",
       "destination": "/integrations"
     },
@@ -229,6 +225,10 @@
     {
       "source": "/api-reference/using-session-replay",
       "destination": "/api-reference/sessions/session-replay"
+    },
+    {
+      "source": "/integrations/anthropic-computer-use",
+      "destination": "/integrations/claude-computer-use"
     }
   ],
   "errors": {
@@ -366,7 +366,7 @@
             "group": "Computer Use",
             "icon": "hand-pointer",
             "pages": [
-              "integrations/anthropic-computer-use"
+              "integrations/claude-computer-use"
             ]
           },
           {

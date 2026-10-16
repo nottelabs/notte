@@ -2,7 +2,7 @@ import asyncio
 import json
 import secrets
 
-from anthropic import AsyncAnthropic
+from anthropic import APIStatusError, APITimeoutError, AsyncAnthropic
 from notte_computer import NotteComputer
 from notte_sdk import NotteClient
 
@@ -10,6 +10,7 @@ from notte_sdk import NotteClient
 async def run_demo() -> dict:
     client = NotteClient()
     async with client.Session(max_duration_minutes=3, viewport_width=1024, viewport_height=768) as session:
+        stage = "browser setup"
         try:
             async with asyncio.timeout(120):
                 page = await session.apage
@@ -30,6 +31,7 @@ async def run_demo() -> dict:
 
                 calls: list[str] = []
                 async with NotteComputer(page, confirm=confirm) as computer, AsyncAnthropic() as provider:
+                    stage = "model request"
                     runner = provider.beta.messages.tool_runner(
                         model="claude-haiku-5-5",
                         max_tokens=1024,
@@ -45,12 +47,18 @@ async def run_demo() -> dict:
                     )
                     async for message in runner:
                         calls.extend(block.name for block in message.content if block.type == "tool_use")
+                    stage = "verify page result"
                     output = await page.locator("output").inner_text()
                     if output != "Accepted" or await page.locator("input").input_value() != code:
                         raise RuntimeError("The computer agent did not complete the form")
                 return {"output": output, "session_id": session.session_id, "calls": calls}
-        except Exception:
-            raise RuntimeError(f"Computer use failed (session {session.session_id})") from None
+        except Exception as error:
+            category = stage
+            if isinstance(error, APIStatusError):
+                category = f"provider HTTP {error.status_code}"
+            elif isinstance(error, (TimeoutError, APITimeoutError)):
+                category = "timeout"
+            raise RuntimeError(f"Computer use failed: {category} (session {session.session_id})") from error
 
 
 if __name__ == "__main__":

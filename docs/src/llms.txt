@@ -97,7 +97,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 ## Computer Use
 
-- [Anthropic Computer Use](https://docs.notte.cc/integrations/anthropic-computer-use.md): Run Claude's screenshot, mouse, and keyboard tools on a Notte browser.
+- [Anthropic Computer Use](https://docs.notte.cc/integrations/claude-computer-use.md): Run Claude's screenshot, mouse, and keyboard tools on a Notte browser.
 
 ## Workflow Automation
 

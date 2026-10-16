@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import { once } from 'node:events';
 import { test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
+import Anthropic from '@anthropic-ai/sdk';
 import type { BetaToolUseBlock } from '@anthropic-ai/sdk/resources/beta';
 import { NotteClient } from 'notte-sdk';
 import { chromium } from 'playwright-core';
@@ -81,7 +82,8 @@ test('unchanged demo closes its session after a real provider HTTP 401', { skip:
   try {
     let id: string | undefined;
     await assert.rejects(runDemo, (error: Error) => {
-      id = /^Computer use failed \(session ([a-f0-9-]+)\)$/.exec(error.message)?.[1];
+      id = /^Computer use failed: provider HTTP 401 \(session ([a-f0-9-]+)\)$/.exec(error.message)?.[1];
+      assert.ok(error.cause instanceof Anthropic.AuthenticationError);
       return Boolean(id);
     });
     assert.ok(requests > 0, 'The actual provider request must reach the test server');

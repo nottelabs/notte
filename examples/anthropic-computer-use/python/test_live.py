@@ -10,6 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest.mock import patch
 
 import requests
+from anthropic import AuthenticationError
 from anthropic.types.beta import BetaToolUseBlock
 from demo import run_demo
 from notte_computer import NotteComputer
@@ -114,9 +115,12 @@ class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
                     "ANTHROPIC_BASE_URL": f"http://127.0.0.1:{server.server_port}",
                 },
             ):
-                with self.assertRaisesRegex(RuntimeError, r"Computer use failed \(session [a-f0-9-]+\)") as failure:
+                with self.assertRaisesRegex(
+                    RuntimeError, r"Computer use failed: provider HTTP 401 \(session [a-f0-9-]+\)"
+                ) as failure:
                     await run_demo()
             self.assertGreater(Unauthorized.requests, before)
+            self.assertIsInstance(failure.exception.__cause__, AuthenticationError)
             session_id = re.search(r"session ([a-f0-9-]+)", str(failure.exception))[1]
             await assert_closed(session_id)
         finally:

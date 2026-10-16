@@ -8,6 +8,7 @@ export async function runDemo() {
   const client = new NotteClient();
   return client.Session({ max_duration_minutes: 3, viewport_width: 1024, viewport_height: 768 }).use(async (session) => {
     const id = session.getId()!;
+    let stage = 'browser setup';
     try {
       const browser = await chromium.connectOverCDP(await session.cdpUrl());
       try {
@@ -20,6 +21,7 @@ export async function runDemo() {
         const computer = new NotteComputer(page, () => page.url() === 'about:blank', signal);
         const calls: string[] = [];
         try {
+          stage = 'model request';
           const runner = new Anthropic().beta.messages.toolRunner({
             model: 'claude-haiku-5-5', max_tokens: 1024, max_iterations: 8,
             tools: [computer],
@@ -28,6 +30,7 @@ export async function runDemo() {
           for await (const message of runner) {
             for (const block of message.content) if (block.type === 'tool_use') calls.push(block.name);
           }
+          stage = 'verify page result';
           const output = await page.locator('output').innerText();
           if (output !== 'Accepted' || await page.locator('input').inputValue() !== code) {
             throw new Error('The computer agent did not complete the form');
@@ -39,8 +42,10 @@ export async function runDemo() {
       } finally {
         await browser.close();
       }
-    } catch {
-      throw new Error(`Computer use failed (session ${id})`);
+    } catch (error) {
+      const category = error instanceof Anthropic.APIConnectionTimeoutError || (error instanceof Error && error.name === 'TimeoutError')
+        ? 'timeout' : error instanceof Anthropic.APIError ? `provider HTTP ${error.status ?? 'transport'}` : stage;
+      throw new Error(`Computer use failed: ${category} (session ${id})`, { cause: error });
     }
   });
 }
