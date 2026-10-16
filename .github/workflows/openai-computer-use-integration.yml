@@ -30,6 +30,7 @@ permissions:
 jobs:
   static:
     runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -54,7 +55,7 @@ jobs:
       fail-fast: false
       matrix:
         sdk: [published, source]
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     concurrency:
@@ -96,5 +97,6 @@ jobs:
           NOTTE_COMPUTER_USE_PYTHON: ${{ github.workspace }}/${{ matrix.sdk == 'source' && '.venv' || 'examples/openai-computer-use/.venv' }}/bin/python
           OPENAI_API_KEY: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && secrets.OPENAI_API_KEY || '' }}
         run: |
+          test -n "$NOTTE_API_KEY" || { echo 'Set the Notte CI API key'; exit 1; }
           "$NOTTE_COMPUTER_USE_PYTHON" -m unittest discover -s examples/openai-computer-use/python -p test_live.py -v
           npm run test:live --prefix examples/openai-computer-use/typescript
