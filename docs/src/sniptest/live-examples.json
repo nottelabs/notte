@@ -508,7 +508,6 @@
     "closedSession": true
   },
   "sessions/ad_blocking.ts": {
-    "closedSessions": true,
     "expected": {
       "results": [
         "closed",
