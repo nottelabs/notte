@@ -30,7 +30,10 @@ PARAM_FIELD_RE = re.compile(r'<ParamField\s+path="([^"]+)"[^>]*?\sdefault=(\{[^}
 
 
 def code_defaults() -> dict[str, Any]:
-    from notte_core.common.config import config
+    import inspect
+
+    from notte_core.config import config
+    from notte_sdk.endpoints.sessions import RemoteSession
     from notte_sdk.types import (
         DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
         DEFAULT_HEADLESS_VIEWPORT_WIDTH,
@@ -49,7 +52,6 @@ def code_defaults() -> dict[str, Any]:
         "proxies": field_default("proxies"),
         "idle_timeout_minutes": field_default("idle_timeout_minutes"),
         "max_duration_minutes": field_default("max_duration_minutes"),
-        "screenshot_type": field_default("screenshot_type"),
         "web_bot_auth": field_default("web_bot_auth"),
         "wait_for_authentication": field_default("wait_for_authentication"),
         "auth_retry": field_default("auth_retry"),
@@ -58,7 +60,7 @@ def code_defaults() -> dict[str, Any]:
         "viewport_width": DEFAULT_HEADLESS_VIEWPORT_WIDTH,
         "viewport_height": DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
         "browser_type": field_default("browser_type"),
-        "perception_type": config.perception_type,
+        "perception_type": inspect.signature(RemoteSession.__init__).parameters["perception_type"].default,
         "raise_on_failure": config.raise_on_session_execution_failure,
     }
 

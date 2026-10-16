@@ -20,7 +20,7 @@ def workspace(tmp_path: Path) -> Path:
     (tmp_path / "pyproject.toml").write_text(
         '[project]\nname = "notte"\nversion = "1.9.1.dev0"\n'
         'dependencies = ["notte-core==1.9.1.dev0", "unrelated==1.9.1.dev0"]\n'
-        '[project.optional-dependencies]\nextra = ["notte_core==1.9.1.dev0"]\n'
+        '[project.optional-dependencies]\nextra = ["notte_core==1.9.1.dev0", "notte-core[llm]==1.9.1.dev0"]\n'
     )
     (tmp_path / "packages/notte-core/pyproject.toml").write_text(
         '[project]\nname = "notte-core"\nversion = "1.9.1.dev0"\n'
@@ -38,6 +38,7 @@ def test_release_normalizes_matching_versions_and_internal_pins(workspace: Path,
     assert version == "1.9.1"
     assert '"notte-core==1.9.1"' in texts[workspace / "pyproject.toml"]
     assert '"notte_core==1.9.1"' in texts[workspace / "pyproject.toml"]
+    assert '"notte-core[llm]==1.9.1"' in texts[workspace / "pyproject.toml"]
     assert f'"unrelated=={current}"' in texts[workspace / "pyproject.toml"]
 
 

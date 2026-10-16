@@ -35,6 +35,7 @@ jobs:
       fromJSON(needs.changes.outputs.scope).python_static ||
       fromJSON(needs.changes.outputs.scope).python_unit ||
       fromJSON(needs.changes.outputs.scope).python_live ||
+      fromJSON(needs.changes.outputs.scope).llm_provider_live ||
       fromJSON(needs.changes.outputs.scope).python_docs ||
       fromJSON(needs.changes.outputs.scope).cli_contract
     permissions:

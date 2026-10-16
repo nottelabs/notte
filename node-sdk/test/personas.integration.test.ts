@@ -1,9 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { NotteClient, NottePersona } from '@/index';
-import { Session } from '@/session';
-import { Agent } from '@/agent';
 import { config } from 'dotenv';
-import { AGENT_TEST_TIMEOUT_MS, skipHeavyLive } from './helpers/live-scope';
 
 // Load environment variables from .env file
 config();
@@ -11,7 +8,7 @@ config();
 // Load environment variables
 const API_KEY = process.env.NOTTE_API_KEY;
 
-describe.skipIf(skipHeavyLive)('Persona Integration Tests', () => {
+describe('Persona Integration Tests', () => {
   let client: NotteClient;
   let fixturePersona: NottePersona | undefined;
 
@@ -318,120 +315,6 @@ describe.skipIf(skipHeavyLive)('Persona Integration Tests', () => {
         }
       }
     });
-  });
-
-  describe('Persona with Agent Integration', () => {
-    it('should let a local agent read persona email', async () => {
-      const persona = client.Persona({ create_vault: true });
-      let personaId: string | null = null;
-      const session = client.Session({ proxies: false });
-
-      try {
-        await persona.get();
-        personaId = persona.personaId;
-
-        await session.start();
-
-        const agent = client.Agent({
-          session,
-          max_steps: 3,
-          persona
-        });
-        const actionNames: string[] = [];
-
-        try {
-          const result = await agent.run({
-            task: 'Call email_read now to check the persona inbox. Do not navigate to a website. Then immediately complete with a short summary.',
-            updateHandler: (update) => {
-              if (update.type !== 'step') {
-                return;
-              }
-
-              const actionName = update.data?.action?.name ?? update.data?.action?.type;
-              if (typeof actionName === 'string') {
-                actionNames.push(actionName);
-              }
-            }
-          });
-
-          expect(result.status).toBe('closed');
-          expect(result.success).toBe(true);
-          expect(result.session_id).toBe(session.getId());
-          expect(actionNames).toContain('email_read');
-          expect(agent.agentId).toBe(result.agent_id);
-        } finally {
-          await session.stop();
-        }
-      } catch (error) {
-        // If persona creation fails, fail the test (don't skip)
-        throw error;
-      } finally {
-        // Clean up in the same test
-        if (personaId) {
-          try {
-            await client.Persona({ persona_id: personaId }).delete();
-          } catch (error) {
-            console.warn(`Failed to delete persona ${personaId} during cleanup: ${error}`);
-          }
-        }
-      }
-    }, AGENT_TEST_TIMEOUT_MS);
-
-    it('should use persona with remote agent', async () => {
-      const persona = client.Persona({ create_vault: true });
-      let personaId: string | null = null;
-      const session = client.Session({ proxies: false, headless: true });
-
-      try {
-        await persona.get();
-        personaId = persona.personaId;
-
-        // Add credentials to persona's vault
-        await persona.vault.addCredentials('https://github.com/', {
-          email: persona.info?.email || 'test@example.com',
-          password: 'password' // pragma: allowlist secret
-        });
-
-        // Create session and agent
-        await session.start();
-
-        try {
-          const agent = client.Agent({
-            session,
-            max_steps: 1,
-            persona
-          });
-
-          // Run agent task
-          const result = await agent.run({
-            task: "Try to login to github.com with the persona's credentials"
-          });
-
-          expect(result).toBeDefined();
-          // The result should be a LegacyAgentStatusResponse
-          if (result && typeof result === 'object' && 'success' in result) {
-            expect(result.success).toBeDefined();
-          } else {
-            // If result doesn't have expected structure, at least verify agent was created
-            expect(agent.agentId).toBeDefined();
-          }
-        } finally {
-          await session.stop();
-        }
-      } catch (error) {
-        // If persona creation fails, fail the test (don't skip)
-        throw error;
-      } finally {
-        // Clean up in the same test
-        if (personaId) {
-          try {
-            await client.Persona({ persona_id: personaId }).delete();
-          } catch (error) {
-            console.warn(`Failed to delete persona ${personaId} during cleanup: ${error}`);
-          }
-        }
-      }
-    }, AGENT_TEST_TIMEOUT_MS);
   });
 
   describe('Email and SMS Operations', () => {

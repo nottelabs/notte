@@ -23,6 +23,7 @@ jobs:
   # happens here, in a job that holds no write token; the bump job pins
   # notte-cli to the commit generated from and commits the result.
   cli-reference:
+    if: github.repository == 'nottelabs/notte'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
@@ -58,6 +59,7 @@ jobs:
           if-no-files-found: error
 
   bump:
+    if: github.repository == 'nottelabs/notte'
     needs: cli-reference
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 45

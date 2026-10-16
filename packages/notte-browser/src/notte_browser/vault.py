@@ -1,15 +1,20 @@
+from collections.abc import Awaitable, Callable
+
+from notte_core.actions import BaseAction, FormFillAction
 from notte_core.credentials.base import (
     BaseVault,
+    LocatorAttributes,
 )
+from notte_core.snapshot import BrowserSnapshot
 from typing_extensions import override
 
-from notte_browser.playwright_async_api import Locator, Page
+from notte_browser.driver import Locator, Page
 from notte_browser.window import ScreenshotMask
 
 
 class VaultSecretsScreenshotMask(ScreenshotMask):
-    vault: BaseVault
-    model_config = {"arbitrary_types_allowed": True}  # pyright: ignore[reportUnannotatedClassAttribute]
+    def __init__(self, vault: BaseVault) -> None:
+        self.vault: BaseVault = vault
 
     @override
     async def mask(self, page: Page) -> list[Locator]:
@@ -24,3 +29,25 @@ class VaultSecretsScreenshotMask(ScreenshotMask):
             hidden_values_list,
         )
         return [input_locator.nth(i) for i in matching_indices]
+
+
+async def resolve_vault_action(
+    action: BaseAction,
+    vault: BaseVault,
+    snapshot: BrowserSnapshot,
+    locate: Callable[[BaseAction], Awaitable[Locator | None]],
+) -> BaseAction:
+    """Substitute validated credentials, retaining locator metadata and masked values."""
+    if isinstance(action, FormFillAction):
+        attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
+        return await vault.replace_credentials(action, attrs, snapshot)
+
+    locator = await locate(action)
+    attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
+    if locator is not None:
+        attrs = LocatorAttributes(
+            type=await locator.get_attribute("type"),
+            autocomplete=await locator.get_attribute("autocomplete"),
+            outerHTML=await locator.evaluate("el => el.outerHTML"),
+        )
+    return await vault.replace_credentials(action, attrs, snapshot)

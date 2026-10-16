@@ -1,11 +1,12 @@
 import { defineConfig } from '@hey-api/openapi-ts';
-import dotenv from 'dotenv';
-dotenv.config();
-
-const baseUrl = process.env.NOTTE_API_URL || 'https://us-staging.notte.cc';
 
 export default defineConfig({
-    input: `${baseUrl}/openapi.json`,
+    input: '../openapi/openapi.json',
     output: 'src/lib/client',
-    client: '@hey-api/client-fetch',
+    plugins: [
+        '@hey-api/typescript',
+        '@hey-api/sdk',
+        // The committed snapshot has no servers; preserve the runtime default.
+        { name: '@hey-api/client-fetch', baseUrl: 'https://api.notte.cc' },
+    ],
 });

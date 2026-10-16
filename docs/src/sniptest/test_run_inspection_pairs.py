@@ -40,13 +40,13 @@ class RunInspectionPairsTest(unittest.TestCase):
             requests.append((function_id, options))
             return types.SimpleNamespace(items=[failed] if options.get("only_active") is False else [])
 
-        def get_run(function_id, run_id):
+        def run_get_metadata(function_id, run_id):
             inspected.append((function_id, run_id))
             return types.SimpleNamespace(result="Example function failure")
 
         client = types.SimpleNamespace(
             Function=lambda _: types.SimpleNamespace(run=lambda **kwargs: failed),
-            functions=types.SimpleNamespace(list_runs=list_runs, get_run=get_run),
+            functions=types.SimpleNamespace(list_runs=list_runs, run_get_metadata=run_get_metadata),
         )
         values = self.execute("high_failure_rate", client)
         self.assertEqual(values["results"], ["failed", True])

@@ -72,11 +72,11 @@ jobs:
       - name: Run syntax checks
         run: cd docs/src && uv run pytest -v --tb=no
 
+      - name: Test CLI reference generation
+        run: python docs/src/scripts/test_generate_cli_reference.py
+
       - name: Test shared setup synchronization
         run: python docs/src/scripts/test_sync_quickstart_setup_prompt.py
-
-      - name: Test CLI reference sync
-        run: python docs/src/scripts/test_generate_cli_reference.py
 
   type-check:
     needs: changes
@@ -124,14 +124,13 @@ jobs:
       (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
-    # All live suites for a ref share one queue so they do not hit the API at once.
+    env:
+      # Scope vault creates to this job only; cleanup deletes only this prefix.
+      NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}
     concurrency:
       group: notte-live-api-${{ github.ref }}
       queue: max
       cancel-in-progress: false
-    env:
-      # Scope vault creates to this job only; cleanup deletes only this prefix.
-      NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -166,10 +165,10 @@ jobs:
           echo "Environment variables are set"
 
       - name: Wait for the API to be ready
-        # The staging API scales to zero when idle and wakes on the first request.
         uses: ./.github/actions/wait-for-api
         with:
-          api-url: ${{ env.NOTTE_API_URL }}
+          api-url: https://us-staging.notte.cc
+
       - name: Run execution tests
         env:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_DOCS || secrets.NOTTE_API_KEY }}

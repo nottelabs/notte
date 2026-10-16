@@ -4,13 +4,11 @@ from typing import Any
 
 import pytest
 from notte_core.actions import BrowserAction, ClickAction
-from notte_core.browser.observation import Observation, Screenshot
-from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
-from notte_core.common.config import PlaywrightProxySettings
+from notte_core.config import PlaywrightProxySettings
+from notte_core.observation import Observation, Screenshot
+from notte_core.snapshot import SnapshotMetadata, ViewportData
 from notte_core.space import ActionSpace, SpaceCategory
 from notte_sdk.types import (
-    AgentStatus,
-    AgentStatusResponse,
     ObserveResponse,
     ReplayResponse,
     SessionResponse,
@@ -136,24 +134,6 @@ def test_observe_response_from_observation():
     assert response.space.interaction_actions == obs.space.interaction_actions
 
 
-def test_agent_status_response():
-    # Test basic AgentStatusResponse without replay fields
-    response = AgentStatusResponse.model_validate(
-        {
-            "agent_id": "test_agent",
-            "created_at": "2024-03-20",
-            "session_id": "test_session",
-            "status": AgentStatus.active,
-            "task": "test_task",
-            "url": "https://www.google.com",
-        }
-    )
-    assert response.task == "test_task"
-    assert response.url == "https://www.google.com"
-    assert response.success is None
-    assert response.answer is None
-
-
 def test_replay_response():
     replay = ReplayResponse(
         mp4_url="https://example.com/replay.mp4",
@@ -185,7 +165,6 @@ def test_replay_response():
         True,
         [{"type": "notte"}],
         [{"type": "notte", "country": "us"}],
-        [{"type": "notte", "geolocation": {"country": "us"}}],  # Backward compatibility with old syntax
     ],
 )
 def test_default_proxy_settings_notte(proxies: list[dict[str, Any]]):
@@ -221,32 +200,29 @@ def test_unknown_proxy_type_should_raise_error():
         _ = SessionStartRequest.model_validate({"proxies": [{"type": "unknown"}]})
 
 
-def test_cdp_url_with_headless_false_should_raise_error():
-    with pytest.raises(
-        ValidationError,
-        match=r"`headless=True` sessions still include session replays and access to the live viewer",
-    ):
-        _ = SessionStartRequest.model_validate({"cdp_url": "ws://localhost:9222", "headless": False})
+def test_cdp_url_with_headless_false_should_raise_error(monkeypatch):
+    assert_start_api_validation(monkeypatch, {"cdp_url": "ws://localhost:9222", "headless": False})
 
 
 def test_cdp_url_does_not_send_configured_viewport_defaults():
-    request = SessionStartRequest(cdp_url="ws://localhost:9222")
+    request = SessionStartRequest.from_data({"cdp_url": "ws://localhost:9222"})
     payload = request.model_dump(exclude_none=True)
 
     assert "viewport_width" not in payload
     assert "viewport_height" not in payload
-    assert payload["proxies"] is False
+    assert "proxies" not in payload
+    assert request.proxies is False
 
 
-def test_cdp_url_rejects_notte_proxies():
-    with pytest.raises(ValidationError, match="Proxies must be configured by the external CDP provider"):
-        _ = SessionStartRequest(cdp_url="ws://localhost:9222", proxies=True)
+def test_cdp_url_rejects_notte_proxies(monkeypatch):
+    assert_start_api_validation(monkeypatch, {"cdp_url": "ws://localhost:9222", "proxies": True})
 
 
 @pytest.mark.parametrize("width,height", [(1920, 1080), (1280, 720)])
-def test_cdp_url_rejects_explicit_viewport(width: int, height: int):
-    with pytest.raises(ValidationError, match="viewport_width must be None"):
-        _ = SessionStartRequest(cdp_url="ws://localhost:9222", viewport_width=width, viewport_height=height)
+def test_cdp_url_rejects_explicit_viewport(monkeypatch, width: int, height: int):
+    assert_start_api_validation(
+        monkeypatch, {"cdp_url": "ws://localhost:9222", "viewport_width": width, "viewport_height": height}
+    )
 
 
 def test_cdp_url_accepts_explicit_none_viewport():
@@ -256,7 +232,7 @@ def test_cdp_url_accepts_explicit_none_viewport():
 
 
 def test_remote_headless_true_is_accepted_for_legacy_sdks_but_not_serialized():
-    request = SessionStartRequest.model_validate({"headless": True})
+    request = SessionStartRequest.from_data({"headless": True})
     assert "headless" not in request.model_dump()
 
 
@@ -275,7 +251,7 @@ RFC_3339_DURATION = re.compile(r"^P(?!$)((\d+Y)?(\d+M)?(\d+D)?(T(?=\d)(\d+H)?(\d
 
 
 def _session_response(duration: dt.timedelta) -> SessionResponse:
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     return SessionResponse(
         session_id="0d5b2f2f-0f6e-4c1e-9d4b-3a1f1f0b2c3d",
         idle_timeout_minutes=3,
@@ -319,3 +295,16 @@ def test_session_response_serializes_error_close_reason():
 
     assert response.model_dump(mode="json")["close_reason"] == "error"
     assert SessionResponse.model_validate_json(response.model_dump_json()).close_reason == "error"
+
+
+def assert_start_api_validation(monkeypatch, data):
+    from notte_sdk import NotteClient
+    from notte_sdk.errors import NotteAPIError
+
+    from tests.sdk.test_generated_endpoints import fake
+
+    api = fake(monkeypatch, {"detail": "invalid session input"}, 422)
+    with pytest.raises(NotteAPIError) as error:
+        NotteClient(api_key="test").sessions.start(**data)  # pragma: allowlist secret
+    assert error.value.status_code == 422
+    assert len(api.calls) == 1

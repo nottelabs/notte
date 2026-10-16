@@ -108,7 +108,7 @@ def test_download_against_local_fixture(case: FixtureDownloadCase):
     - click-to-download on an <a download> (anchor path)
     - click-to-download on a button that synthesizes a blob URL (non-<a> path)
     - navigating directly to a raw asset and using selector="body"
-      (window.is_file() path)
+      (files.is_raw_file(window) path)
 
     For each case we also download the file back locally and assert the bytes
     match byte-for-byte.

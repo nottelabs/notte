@@ -7,16 +7,13 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Kernel.sh is a developer platform that provides browser infrastructure for web agents. By integrating with Notte, you can use Kernel browser infra to run reliable browser agents using Chrome DevTools Protocol (CDP).
+Kernel.sh is a developer platform that provides browser infrastructure for web automation. By integrating with Notte, you can use Kernel browser infra to run reliable browser automations using Chrome DevTools Protocol (CDP).
 
 ## Adding Kernel to existing Notte implementations
 
 ### 1. Install Notte and Kernel SDK
 
-```bash
-uv pip install notte-sdk
-uv pip install kernel
-```
+Install the `notte-sdk` and `kernel` packages in your Python environment.
 
 ### 2. Create and connect a browser
 
@@ -28,7 +25,7 @@ The Notte context manager stops the Notte session. The `finally` block separatel
 
 ## Benefits of using Kernel with Notte
 
-* **No local browser management**: Run agents without installing or maintaining browsers locally
+* **No local browser management**: Run automations without installing or maintaining browsers locally
 * **Scalability**: Launch multiple browser sessions in parallel for concurrent tasks
 * **Cloud infrastructure**: Leverage Kernel's optimized browser infrastructure
 * **Session control**: Programmatic control over browser lifecycle

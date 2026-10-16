@@ -1,4 +1,5 @@
-# @sniptest filename=agent_with_vault.py
+# @sniptest filename=session_with_vault.py
+from notte_core.credentials import EMAIL, PASSWORD
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -10,7 +11,8 @@ vault.add_credentials(
     email="my_cool_email@gmail.com",
     password="my_cool_password",
 )
-# Run an agent with secure credential access
-with client.Session() as session:
-    agent = client.Agent(vault=vault, session=session, max_steps=10)
-    response = agent.run(task="Go to the nottelabs/notte repo and star it. If it's already starred don't unstar it.")
+# Attach the vault to a session: EMAIL / PASSWORD placeholders are replaced
+# by the real credentials inside the browser, never in your code
+with client.Session(vault_id=vault.vault_id) as session:
+    session.execute(type="goto", url="https://github.com/login")
+    session.execute(type="form_fill", value={"email": EMAIL, "current_password": PASSWORD})

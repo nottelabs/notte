@@ -1,6 +1,6 @@
 """Tests for URL percentage calculation in scraping pipe."""
 
-from notte_browser.scraping.pipe import _calculate_url_percentage
+from notte_browser.scrape import _calculate_url_percentage
 
 
 def test_calculate_url_percentage_high_urls() -> None:
@@ -132,7 +132,7 @@ def test_calculate_url_percentage_threshold_50_percent() -> None:
 
 def test_calculate_url_percentage_uses_same_patterns_as_pruning() -> None:
     """Test that URL detection uses the same patterns as MarkdownPruningPipe."""
-    from notte_browser.scraping.pruning import MarkdownPruningPipe
+    from notte_core.pruning import mask_markdown
 
     # Create markdown with various URL formats
     text = (
@@ -143,7 +143,7 @@ def test_calculate_url_percentage_uses_same_patterns_as_pruning() -> None:
     )
 
     # Mask the document using MarkdownPruningPipe
-    masked = MarkdownPruningPipe.mask(text)
+    masked = mask_markdown(text)
 
     # Both the mask and the percentage calculation should identify the same URLs
     # The masked document should have the same number of unique URLs

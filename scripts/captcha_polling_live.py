@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from notte_core.common.logging import logger
+from notte_core.logging import logger
 from notte_sdk.client import NotteClient
 
 DEMOS = {

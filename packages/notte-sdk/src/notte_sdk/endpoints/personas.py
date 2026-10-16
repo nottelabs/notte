@@ -1,30 +1,30 @@
 import asyncio
+import time
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from functools import cached_property
 from typing import TYPE_CHECKING, Unpack, overload
+from urllib.parse import quote
 
-from notte_core.common.logging import logger
-from notte_core.common.resource import SyncResource
-from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault
+from notte_core.logging import logger
+from notte_core.resource import SyncResource
+from notte_core.telemetry import track_usage
 from typing_extensions import final, override
 
-from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk._generated.resources import PersonasOperations
+from notte_sdk._requests import wire_request
+from notte_sdk.endpoints.base import NotteEndpoint
 from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.types import (
     CreatePhoneNumberRequest,
     CreatePhoneNumberRequestDict,
     CreatePhoneNumberResponse,
-    DeletePersonaResponse,
     DeletePhoneNumberResponse,
     EmailResponse,
-    MessageReadRequest,
     MessageReadRequestDict,
     PersonaCreateRequest,
     PersonaCreateRequestDict,
-    PersonaListRequest,
-    PersonaListRequestDict,
     PersonaResponse,
     SMSResponse,
 )
@@ -33,8 +33,13 @@ if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
 
 
+def _phone_number_path(persona_id: str) -> str:
+    # Served by the API but missing from its OpenAPI schema, so there is no generated endpoint.
+    return f"/personas/{quote(persona_id, safe='')}/sms/number"
+
+
 @final
-class PersonasClient(BaseClient):
+class PersonasClient(PersonasOperations):
     """
     Client for the Notte API.
 
@@ -42,158 +47,7 @@ class PersonasClient(BaseClient):
     If you need to handle multiple sessions, you need to create a new client for each session.
     """
 
-    # Session
-    LIST_EMAILS = "{persona_id}/emails"
-    LIST_SMS = "{persona_id}/sms"
-    CREATE_NUMBER = "{persona_id}/sms/number"
-    DELETE_NUMBER = "{persona_id}/sms/number"
-    GET_PERSONA = "{persona_id}"
-    CREATE_PERSONA = "create"
-    DELETE_PERSONA = "{persona_id}"
-    LIST_PERSONAS = ""
-
-    def __init__(
-        self,
-        root_client: "NotteClient",
-        api_key: str | None = None,
-        server_url: str | None = None,
-        verbose: bool = False,
-    ):
-        """
-        Initialize a PersonasClient instance.
-
-        Initializes the client with an optional API key for persona management.
-        """
-        super().__init__(
-            root_client=root_client,
-            base_endpoint_path="personas",
-            server_url=server_url,
-            api_key=api_key,
-            verbose=verbose,
-        )
-
-    @staticmethod
-    def _list_emails_endpoint(persona_id: str) -> NotteEndpoint[EmailResponse]:
-        """
-        Returns a NotteEndpoint configured for reading persona emails.
-
-        The returned endpoint uses the email_read path from PersonasClient with the GET method
-        and expects a sequence of EmailResponse.
-        """
-        return NotteEndpoint(
-            path=PersonasClient.LIST_EMAILS.format(persona_id=persona_id),
-            response=EmailResponse,
-            method="GET",
-        )
-
-    @staticmethod
-    def _list_sms_endpoint(persona_id: str) -> NotteEndpoint[SMSResponse]:
-        """
-        Returns a NotteEndpoint configured for reading persona sms messages.
-
-        The returned endpoint uses the sms_read path from PersonasClient with the GET method
-        and expects a sequence of SMSResponse.
-        """
-        return NotteEndpoint(
-            path=PersonasClient.LIST_SMS.format(persona_id=persona_id),
-            response=SMSResponse,
-            method="GET",
-        )
-
-    @staticmethod
-    def _create_number_endpoint(persona_id: str) -> NotteEndpoint[CreatePhoneNumberResponse]:
-        """
-        Returns a NotteEndpoint configured for creating a virtual phone number.
-
-        The returned endpoint uses the create number path from PersonasClient with the POST method returns a CreatePhoneNumberResponse.
-        """
-        return NotteEndpoint(
-            path=PersonasClient.CREATE_NUMBER.format(persona_id=persona_id),
-            response=CreatePhoneNumberResponse,
-            method="POST",
-        )
-
-    @staticmethod
-    def _delete_number_endpoint(persona_id: str) -> NotteEndpoint[DeletePhoneNumberResponse]:
-        """
-        Returns a NotteEndpoint configured for deleting a virtual phone number.
-        """
-        return NotteEndpoint(
-            path=PersonasClient.DELETE_NUMBER.format(persona_id=persona_id),
-            response=DeletePhoneNumberResponse,
-            method="DELETE",
-        )
-
-    @staticmethod
-    def _create_persona_endpoint() -> NotteEndpoint[PersonaResponse]:
-        """
-        Returns a NotteEndpoint configured for creating a persona.
-
-        The returned endpoint uses the credentials from PersonasClient with the POST method and expects a PersonaCreateResponse.
-        """
-        return NotteEndpoint(
-            path=PersonasClient.CREATE_PERSONA,
-            response=PersonaResponse,
-            method="POST",
-        )
-
-    @staticmethod
-    def _get_persona_endpoint(persona_id: str) -> NotteEndpoint[PersonaResponse]:
-        """
-        Returns a NotteEndpoint configured for getting a persona.
-        """
-        return NotteEndpoint(
-            path=PersonasClient.GET_PERSONA.format(persona_id=persona_id),
-            response=PersonaResponse,
-            method="GET",
-        )
-
-    @staticmethod
-    def _delete_persona_endpoint(persona_id: str) -> NotteEndpoint[DeletePersonaResponse]:
-        return NotteEndpoint(
-            path=PersonasClient.DELETE_PERSONA.format(persona_id=persona_id),
-            response=DeletePersonaResponse,
-            method="DELETE",
-        )
-
-    @staticmethod
-    def _list_personas_endpoint() -> NotteEndpoint[PersonaResponse]:
-        return NotteEndpoint(
-            path=PersonasClient.LIST_PERSONAS,
-            response=PersonaResponse,
-            method="GET",
-        )
-
-    @track_usage("cloud.personas.create")
-    def create(self, **data: Unpack[PersonaCreateRequestDict]) -> PersonaResponse:
-        """
-        Create persona
-
-        Args:
-
-        Returns:
-            PersonaCreateResponse: The persona created
-        """
-        params = PersonaCreateRequest.model_validate(data)
-        response = self.request(PersonasClient._create_persona_endpoint().with_request(params))
-        return response
-
-    @track_usage("cloud.personas.get")
-    def get(self, persona_id: str) -> PersonaResponse:
-        """
-        Get persona
-        """
-        response = self.request(PersonasClient._get_persona_endpoint(persona_id))
-        return response
-
-    @track_usage("cloud.personas.delete")
-    def delete(self, persona_id: str) -> DeletePersonaResponse:
-        """
-        Delete persona
-        """
-        response = self.request(PersonasClient._delete_persona_endpoint(persona_id))
-        return response
-
+    # Legacy: phone-number routes are absent from the committed OpenAPI schema.
     @track_usage("cloud.personas.create_number")
     def create_number(self, persona_id: str, **data: Unpack[CreatePhoneNumberRequestDict]) -> CreatePhoneNumberResponse:
         """
@@ -205,7 +59,8 @@ class PersonasClient(BaseClient):
             CreatePhoneNumberResponse: The status with the phone number that was created
         """
         params = CreatePhoneNumberRequest.model_validate(data)
-        response = self.request(PersonasClient._create_number_endpoint(persona_id).with_request(params))
+        endpoint = NotteEndpoint(path=_phone_number_path(persona_id), response=CreatePhoneNumberResponse, method="POST")
+        response = self.request(endpoint.with_request(params))
         return response
 
     @track_usage("cloud.personas.delete_number")
@@ -213,42 +68,10 @@ class PersonasClient(BaseClient):
         """
         Delete phone number for persona
         """
-        return self.request(PersonasClient._delete_number_endpoint(persona_id))
-
-    @track_usage("cloud.personas.emails.list")
-    def list_emails(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
-        """
-        Reads recent emails sent to the persona
-
-        Args:
-            **data: Keyword arguments representing details for querying emails.
-
-        Returns:
-            Sequence[EmailResponse]: The list of emails found
-        """
-        request = MessageReadRequest.model_validate(data)
-        return self.request_list(PersonasClient._list_emails_endpoint(persona_id).with_params(request))
-
-    @track_usage("cloud.personas.sms.list")
-    def list_sms(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
-        """
-        Reads recent sms messages sent to the persona
-
-        Args:
-            **data: Keyword arguments representing details for querying sms messages.
-
-        Returns:
-            Sequence[SMSResponse]: The list of sms messages found
-        """
-        request = MessageReadRequest.model_validate(data)
-        return self.request_list(PersonasClient._list_sms_endpoint(persona_id).with_params(request))
-
-    def list(self, **data: Unpack[PersonaListRequestDict]) -> Sequence[PersonaResponse]:
-        """
-        List personas
-        """
-        request = PersonaListRequest.model_validate(data)
-        return self.request_list(PersonasClient._list_personas_endpoint().with_params(request))
+        endpoint = NotteEndpoint(
+            path=_phone_number_path(persona_id), response=DeletePhoneNumberResponse, method="DELETE"
+        )
+        return self.request(endpoint)
 
 
 class BasePersona(ABC):
@@ -259,6 +82,28 @@ class BasePersona(ABC):
     @abstractmethod
     async def asms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
         raise NotImplementedError("Subclasses must implement this method")
+
+    async def await_emails(
+        self, *, timeout: float = 60.0, poll_interval: float = 5.0, **data: Unpack[MessageReadRequestDict]
+    ) -> Sequence[EmailResponse]:
+        """Poll the inbox until at least one email matches `data` (e.g. `only_unread=True`); see `wait_for_emails`."""
+        deadline = time.monotonic() + timeout
+        while not (emails := await self.aemails(**data)):
+            if time.monotonic() + poll_interval > deadline:
+                raise TimeoutError(f"No email received within {timeout}s")
+            await asyncio.sleep(poll_interval)
+        return emails
+
+    async def await_sms(
+        self, *, timeout: float = 60.0, poll_interval: float = 5.0, **data: Unpack[MessageReadRequestDict]
+    ) -> Sequence[SMSResponse]:
+        """Poll the inbox until at least one SMS matches `data`; see `wait_for_sms`."""
+        deadline = time.monotonic() + timeout
+        while not (sms := await self.asms(**data)):
+            if time.monotonic() + poll_interval > deadline:
+                raise TimeoutError(f"No SMS received within {timeout}s")
+            await asyncio.sleep(poll_interval)
+        return sms
 
     @abstractmethod
     def _get_info(self) -> PersonaResponse:
@@ -302,6 +147,44 @@ class BasePersona(ABC):
     def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
         return asyncio.run(self.asms(**data))
 
+    def wait_for_emails(
+        self, *, timeout: float = 60.0, poll_interval: float = 5.0, **data: Unpack[MessageReadRequestDict]
+    ) -> Sequence[EmailResponse]:
+        """
+        Poll the persona inbox until at least one email matches, e.g. to read a sign-up code.
+
+        ```python
+        emails = persona.wait_for_emails(only_unread=True, timeout=120)
+        ```
+
+        Raises `TimeoutError` if nothing arrives within `timeout` seconds. Listed emails are marked as read.
+        """
+        deadline = time.monotonic() + timeout
+        while not (emails := self.emails(**data)):
+            if time.monotonic() + poll_interval > deadline:
+                raise TimeoutError(f"No email received within {timeout}s")
+            time.sleep(poll_interval)
+        return emails
+
+    def wait_for_sms(
+        self, *, timeout: float = 60.0, poll_interval: float = 5.0, **data: Unpack[MessageReadRequestDict]
+    ) -> Sequence[SMSResponse]:
+        """
+        Poll the persona inbox until at least one SMS matches, e.g. to read a 2FA code.
+
+        ```python
+        sms = persona.wait_for_sms(only_unread=True, timeout=120)
+        ```
+
+        Raises `TimeoutError` if nothing arrives within `timeout` seconds. Listed SMS are marked as read.
+        """
+        deadline = time.monotonic() + timeout
+        while not (sms := self.sms(**data)):
+            if time.monotonic() + poll_interval > deadline:
+                raise TimeoutError(f"No SMS received within {timeout}s")
+            time.sleep(poll_interval)
+        return sms
+
 
 @final
 class NottePersona(SyncResource, BasePersona):
@@ -333,7 +216,7 @@ class NottePersona(SyncResource, BasePersona):
     ) -> None:
         if _client is None:
             raise ValueError("NotteClient is required")
-        self._init_request = PersonaCreateRequest.model_validate(data)
+        self._init_request = wire_request(PersonaCreateRequest, data)
         self.response: PersonaResponse | None = None
         self.client = _client.personas
         self.vault_client = _client.vaults
@@ -432,7 +315,7 @@ class NottePersona(SyncResource, BasePersona):
 
         Use the `limit` and/or `timedelta` parameters to limit the number of emails returned.
         """
-        return self.client.list_emails(self.persona_id, **data)
+        return self.client.emails_list(self.persona_id, **data)
 
     @override
     async def asms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
@@ -458,7 +341,7 @@ class NottePersona(SyncResource, BasePersona):
 
         Use the `limit` and/or `timedelta` parameters to limit the number of sms returned.
         """
-        return self.client.list_sms(self.persona_id, **data)
+        return self.client.sms_list(self.persona_id, **data)
 
     def create_number(self, **data: Unpack[CreatePhoneNumberRequestDict]) -> CreatePhoneNumberResponse:
         """

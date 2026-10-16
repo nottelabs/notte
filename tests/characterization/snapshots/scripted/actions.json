@@ -1,0 +1,111 @@
+[
+  {
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button></button>",
+      "id": "B1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > button[id=\"static\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/scripted:4527775504046182633:3609651542926669075:-954529461061893870:-4051955420416454750",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/button"
+      },
+      "text_label": "Static button",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button></button>",
+      "id": "B2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div > section > button[id=\"generated\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/scripted:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:8448810613015999352:-619971591703300676:8491096245215466853:3704343198817248548",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div/section/button"
+      },
+      "text_label": "Generated button",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input placeholder=\"Generated input\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<input placeholder=\"Generated input\"></input>",
+      "id": "I1",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div > section > input[id=\"generated-input\"][placeholder=\"Generated input\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/scripted:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:8448810613015999352:-619971591703300676:-5314758301922741033:-5271692719140225829",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div/section/input"
+      },
+      "text_label": "Generated input",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<select aria_label=\"Generated choice\"></select>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<select aria_label=\"Generated choice\"></select>",
+      "id": "I2",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div > section > select[id=\"generated-select\"][aria-label=\"Generated choice\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/scripted:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:8448810613015999352:-619971591703300676:-5795081283996623268:5879217619774342225",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div/section/select"
+      },
+      "text_label": "Alpha Beta",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  }
+]

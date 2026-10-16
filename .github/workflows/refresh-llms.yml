@@ -22,6 +22,7 @@ permissions:
 
 jobs:
   refresh:
+    if: github.repository == 'nottelabs/notte'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 45
     env:

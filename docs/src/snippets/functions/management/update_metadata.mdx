@@ -1,0 +1,34 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/update_metadata.py */}
+
+<CodeGroup>
+
+```python update_metadata.py
+import requests
+
+endpoint = f"{api_url}/functions/{function_id}"
+headers = {"Authorization": f"Bearer {api_key}"}
+response = requests.patch(
+    endpoint,
+    headers=headers,
+    json={"name": "Price monitor", "description": "Checks competitor prices"},
+    timeout=30,
+)
+response.raise_for_status()
+metadata = requests.get(endpoint, headers=headers, timeout=30)
+metadata.raise_for_status()
+print(metadata.json()["name"])
+```
+
+```typescript update_metadata.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+const fn = client.NotteFunction({ function_id: functionId });
+await fn.updateMetadata({ name: 'Price monitor', description: 'Checks competitor prices' });
+const metadata = await fn.get();
+console.log(metadata.name);
+
+```
+
+</CodeGroup>

@@ -18,6 +18,7 @@ def _persona_response_dict(**overrides: Any) -> dict[str, Any]:
         "internal_email": "persona_123@example.com",
         "vault_id": None,
         "phone_number": None,
+        "created_at": "2026-10-13T00:00:00Z",
     }
     data.update(overrides)
     return data

@@ -14,6 +14,8 @@ jobs:
   example-tests:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 10
+    env:
+      SLACK_NIGHTLY_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_WEBHOOK_URL }}
     steps:
       - name: Generate timestamp
         id: timestamp
@@ -42,7 +44,7 @@ jobs:
         continue-on-error: true
 
       - name: Prepare error message
-        if: steps.test_release.outcome == 'failure'
+        if: steps.test_release.outcome == 'failure' && env.SLACK_NIGHTLY_WEBHOOK_URL != ''
         id: error_msg
         run: |
           # Escape quotes and backslashes for JSON
@@ -50,13 +52,17 @@ jobs:
           echo "escaped_error=$ERROR_MSG" >> $GITHUB_OUTPUT
 
       - name: Send Slack Notification on Failure
-        if: steps.test_release.outcome == 'failure'
+        if: steps.test_release.outcome == 'failure' && env.SLACK_NIGHTLY_WEBHOOK_URL != ''
         uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
-          webhook: ${{ secrets.SLACK_NIGHTLY_WEBHOOK_URL }}
+          webhook: ${{ env.SLACK_NIGHTLY_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
             {
               "username": "GitHub Nightly Release Pipeline (${{ steps.timestamp.outputs.timestamp }})",
               "text": "❌ Nightly Release Pipeline FAILED: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Pipeline Run>\n```\n${{ steps.error_msg.outputs.escaped_error }}\n```"
             }
+
+      - name: Propagate release test failure
+        if: steps.test_release.outcome == 'failure'
+        run: exit 1

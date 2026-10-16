@@ -6,10 +6,10 @@ If you want to change any parameter of the [notte config](../packages/notte-core
 export NOTTE_CONFIG_PATH="path/to/your/notte_config.toml"
 ```
 
-For instance, if you want to change the temperature of the LLM, you can create a blank `notte_config.toml` file and add the following:
+For instance, if you want to run local browsers in headless mode, you can create a blank `notte_config.toml` file and add the following:
 
 ```toml
-temperature = 0.5
+headless = true
 ```
 
 Note that it is very important to export the `NOTTE_CONFIG_PATH` environment variable before importing any notte module.
@@ -21,6 +21,31 @@ import notte
 ```
 
 Otherwise, the default config will be used and your changes will not be applied.
+
+## LLM settings
+
+The config file only covers browser, DOM parsing and timeout settings. Local LLM features (structured `scrape(instructions=..., response_format=...)` on a local `notte.Session`) are an optional extra installed with `pip install 'notte[llm]'`, and they are configured through environment variables instead:
+
+Set `OPENROUTER_API_KEY` to use OpenRouter with `google/gemini-3.5-flash` by default.
+For another OpenAI-compatible endpoint, set all three of `NOTTE_LLM_BASE_URL`,
+`NOTTE_LLM_API_KEY`, and `NOTTE_LLM_MODEL` (the endpoint's own model ID):
+
+- OpenAI: `NOTTE_LLM_BASE_URL=https://api.openai.com/v1`, `NOTTE_LLM_MODEL=gpt-4o`.
+- Gemini: `NOTTE_LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai`, `NOTTE_LLM_MODEL=gemini-3.5-flash`.
+- Ollama/custom: `NOTTE_LLM_BASE_URL=http://localhost:11434/v1`, your local model ID, and `NOTTE_LLM_API_KEY=ollama` for an unauthenticated local server. Ollama has not been live-tested.
+
+`NOTTE_LLM_API_KEY` overrides `OPENROUTER_API_KEY`. The latter is used only at the default
+OpenRouter URL, so it is never sent to a custom endpoint. The per-call `model=` argument
+selects a model at the configured endpoint without translating its ID.
+
+| Variable | Default |
+| --- | --- |
+| `NOTTE_LLM_BASE_URL` | `https://openrouter.ai/api/v1` |
+| `NOTTE_LLM_API_KEY` | `OPENROUTER_API_KEY` at the default URL; required elsewhere |
+| `NOTTE_LLM_MODEL` | `google/gemini-3.5-flash` at the default URL; required elsewhere |
+| `NOTTE_LLM_TEMPERATURE` | `0.0` |
+| `NOTTE_LLM_NB_RETRIES_STRUCTURED_OUTPUT` | `2` |
+| `NOTTE_LLM_CONTEXT_TOKENS` | `128000` (document clipping estimates four characters per token) |
 
 ## JavaScript result size
 

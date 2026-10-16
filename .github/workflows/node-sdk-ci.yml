@@ -7,8 +7,7 @@ on:
         description: Suite decisions from the shared push or PR selector.
         type: string
         default: ''
-  # Full live suite, including agent, persona and vault-with-agent tests that
-  # pull requests skip.
+  # Keep periodic coverage of the complete v2 Node suite.
   schedule:
     - cron: '0 */4 * * 1-5'
   workflow_dispatch:
@@ -52,7 +51,7 @@ jobs:
   tests:
     needs: changes
     if: fromJSON(needs.changes.outputs.scope).node_static
-    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
       matrix:
@@ -90,19 +89,12 @@ jobs:
       ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
       (github.event_name != 'pull_request' && github.ref == 'refs/heads/main'))
     needs: [changes, tests]
-    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    runs-on: ubuntu-latest
     timeout-minutes: 45
-    # All live suites for a ref share one queue so they do not hit the API at once.
     concurrency:
       group: notte-live-api-${{ github.ref }}
       queue: max
       cancel-in-progress: false
-    # Live files run serially within a shard. Pull requests run the smoke scope in
-    # one shard; main, scheduled and manual runs run everything in two.
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: ${{ fromJSON(github.event_name == 'pull_request' && '[1]' || '[1, 2]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -112,23 +104,22 @@ jobs:
           node-version: 22
       - run: npm ci
       - name: Wait for the API to be ready
-        # The staging API scales to zero when idle and wakes on the first request.
         uses: ./.github/actions/wait-for-api
         with:
           api-url: https://us-staging.notte.cc
-      - name: Run live integration suite
+
+      - name: Run complete live integration suite
         env:
           NOTTE_API_URL: https://us-staging.notte.cc
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_NODE || secrets.NOTTE_API_KEY }}
-          NOTTE_LIVE_SCOPE: ${{ github.event_name == 'pull_request' && 'smoke' || 'full' }}
         run: |
           test -n "$NOTTE_API_KEY" || { echo 'NOTTE_API_KEY is required'; exit 1; }
-          npm run test:integration -- --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+          npm run test:integration -- --maxWorkers 2 --retry 1
 
   generated:
     needs: changes
     if: fromJSON(needs.changes.outputs.scope).node_generated
-    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -138,9 +129,4 @@ jobs:
           cache: npm
           cache-dependency-path: node-sdk/package-lock.json
       - run: npm ci
-      - name: Wait for the API to be ready
-        # The staging API scales to zero when idle and wakes on the first request.
-        uses: ./.github/actions/wait-for-api
-        with:
-          api-url: https://us-staging.notte.cc
-      - run: npm run check:staging
+      - run: npm run check:generated

@@ -2,6 +2,7 @@
 title: Function Schedules
 description: Run Functions automatically on a cron schedule
 ---
+import ManageSchedule from '/snippets/functions/schedules/manage_schedule.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -14,9 +15,7 @@ A Function has at most one schedule. You can manage it from the **Schedule** tab
 
 Schedules use the AWS EventBridge cron format: **six** space-separated fields, minutes first. This is not the five-field Unix crontab format.
 
-```
-minutes  hours  day-of-month  month  day-of-week  year
-```
+`minutes hours day-of-month month day-of-week year`
 
 - Exactly one of `day-of-month` and `day-of-week` must be `?`; the other must be a real value.
 - Schedules fire in UTC.
@@ -40,44 +39,9 @@ Every scheduled run receives the same `variables`. They must supply every parame
 
 ## Create or Update a Schedule
 
-Setting a schedule replaces the existing one, if any.
+Setting a schedule replaces the existing one, if any. Set `function_id` / `functionId` to your function ID. For Python, set `api_url` to your API base URL and `api_key` to your API key. The complete example creates, reads, and then removes the schedule:
 
-<CodeGroup>
-```bash cURL
-curl -X POST https://api.notte.cc/functions/YOUR_FUNCTION_ID/schedule \
-  -H "Authorization: Bearer $NOTTE_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"cron": "0 9 ? * * *", "variables": {"url": "https://example.com"}}'
-```
-
-```python Python
-import os
-
-import requests
-
-function_id = "YOUR_FUNCTION_ID"
-
-response = requests.post(
-    f"https://api.notte.cc/functions/{function_id}/schedule",
-    headers={"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"},
-    json={"cron": "0 9 ? * * *", "variables": {"url": "https://example.com"}},
-)
-response.raise_for_status()
-print(response.json())  # {"status": "ENABLED"}
-```
-
-```typescript TypeScript
-import { NotteClient } from 'notte-sdk';
-
-const client = new NotteClient();
-const fn = client.NotteFunction({ function_id: 'YOUR_FUNCTION_ID' });
-
-await fn.setSchedule({
-  cron: '0 9 ? * * *',
-  variables: { url: 'https://example.com' },
-});
-```
-</CodeGroup>
+<ManageSchedule />
 
 ## Check a Schedule
 
@@ -87,9 +51,7 @@ The Function's metadata (`GET /functions/{function_id}`, or `fn.get()` in TypeSc
 - `schedule_variables`: the variables passed to each scheduled run
 - `schedule_state`: `enabled`, `paused`, or `null` when there is no schedule
 
-```typescript TypeScript
-const { schedule_cron, schedule_variables, schedule_state } = await fn.get();
-```
+The example above reads these fields after setting the schedule.
 
 Scheduled runs appear in the Function's run history like any other run. See [Function Management](/features/functions/management#monitoring-executions).
 
@@ -103,31 +65,7 @@ To resume it, fix the cause and set the schedule again with the same request as 
 
 Deleting the schedule stops future runs. The Function itself is unchanged and can still be invoked manually.
 
-<CodeGroup>
-```bash cURL
-curl -X DELETE https://api.notte.cc/functions/YOUR_FUNCTION_ID/schedule \
-  -H "Authorization: Bearer $NOTTE_API_KEY"
-```
-
-```python Python
-import os
-
-import requests
-
-function_id = "YOUR_FUNCTION_ID"
-
-response = requests.delete(
-    f"https://api.notte.cc/functions/{function_id}/schedule",
-    headers={"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"},
-)
-response.raise_for_status()
-print(response.json())  # {"status": "DELETED"}
-```
-
-```typescript TypeScript
-await fn.deleteSchedule();
-```
-</CodeGroup>
+The example above deletes the schedule in `finally`, including when a metadata request fails.
 
 ## Best Practices
 

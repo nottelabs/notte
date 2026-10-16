@@ -38,7 +38,7 @@ jobs:
   checks:
     needs: changes
     if: fromJSON(needs.changes.outputs.scope).paired_static
-    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -81,16 +81,11 @@ jobs:
       fromJSON(needs.changes.outputs.scope).paired_live &&
       ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
       (github.event_name != 'pull_request' && github.ref == 'refs/heads/main'))
-    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    runs-on: ubuntu-latest
     timeout-minutes: 20
-    # All live suites for a ref share one queue so they do not hit the API at once.
-    concurrency:
-      group: notte-live-api-${{ github.ref }}
-      queue: max
-      cancel-in-progress: false
-    # The examples are split across shards that run in parallel.
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         shard: [1, 2]
     env:
@@ -98,6 +93,10 @@ jobs:
       NOTTE_DOCS_LIVE: '1'
       NOTTE_DOCS_SHARD: ${{ matrix.shard }}/2
       VITEST_INTEGRATION: '1'
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -116,10 +115,10 @@ jobs:
       - run: npm ci --prefix node-sdk
       - run: npm run build --prefix node-sdk
       - name: Wait for the API to be ready
-        # The staging API scales to zero when idle and wakes on the first request.
         uses: ./.github/actions/wait-for-api
         with:
-          api-url: ${{ env.NOTTE_API_URL }}
+          api-url: https://us-staging.notte.cc
+
       - name: Execute both languages against the local SDK packages
         working-directory: node-sdk
         env:

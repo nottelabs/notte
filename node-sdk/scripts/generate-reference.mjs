@@ -15,7 +15,6 @@ const memberSlug = name => name.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').repl
 // Presentation order follows Python's task-oriented reference, not source order.
 const methodOrder = {
   Session: ['start', 'stop', 'observe', 'execute', 'scrape', 'replay', 'setCookies', 'getCookies', 'viewer', 'status', 'use', 'setCookiesFromFile'],
-  Agent: ['run', 'start', 'stop', 'status'],
   NotteFunction: ['createRun', 'run', 'getRun', 'retrieve', 'listRuns', 'download', 'getUrl'],
   NotteVault: ['addCredentials', 'getCredentials', 'deleteCredentials', 'listCredentials', 'setCreditCard', 'getCreditCard', 'deleteCreditCard', 'generatePassword'],
   NottePersona: ['delete', 'addCredentials', 'emails', 'sms'],
@@ -39,9 +38,8 @@ const actionOrder = [
   'SelectDropdownOptionAction', 'UploadFileAction', 'DownloadFileAction', 'ScrapeAction',
   'CaptchaSolveAction', 'SmsReadAction', 'EmailReadAction', 'EmailVerificationReadAction',
 ];
-const diagnosticMethods = new Set(['client/getconfig', 'client/getclient', 'session/getresponse', 'session/issessionactive', 'agent/isrunning']);
-// Preview routing remains addressable for compatibility, outside the task overview.
 const overviewHiddenMethods = new Set(['client/withdbpreview']);
+const diagnosticMethods = new Set(['client/getconfig', 'client/getclient', 'session/getresponse', 'session/issessionactive']);
 const portableType = text => text.replace(/import\("[^"]+"\)\./g, '');
 const fence = text => `\`\`\`typescript\n${text}\n\`\`\``;
 // JSDoc is prose, not JSX. Preserve code spans but escape MDX expressions/tags.
@@ -75,7 +73,7 @@ export function createReference(root = sdkRoot) {
   // Shared OpenAPI descriptions need Node-specific presentation, not SDK runtime edits.
   const schemaDoc = (text, node) => {
     text = text.replace(/You can use a Pydantic model or a JSON Schema dict \(cf\. https:\/\/docs\.pydantic\.dev\/latest\/concepts\/json_schema\/#generating-json-schema\.\)/g,
-      'Use a JSON Schema object; high-level Node agent and scrape methods also accept a Zod schema');
+      'Use a JSON Schema object; high-level Node scrape methods also accept a Zod schema');
     for (let parent = node; parent; parent = parent.parent) {
       if (parent.name?.getText() === 'ListPersonasData') {
         text = text.replace(/active sessions/g, 'active personas').replace(/return sessions/g, 'return personas').replace(/system sessions/g, 'system personas');
@@ -99,7 +97,19 @@ export function createReference(root = sdkRoot) {
     const file = `node-sdk/${relative(root, node.getSourceFile().fileName).replaceAll('\\', '/')}`;
     return `[Source: ${file}](https://github.com/nottelabs/notte/blob/main/${file})`;
   };
-  const page = (title, node, content) => `---\ntitle: ${attr(title)}\n---\nimport AgentMdNotice from '/partials/agent-md-notice.mdx';\n\n<AgentMdNotice />\n\n${marker}\n\n${node ? `${sourceLink(node)}\n\n` : ''}${content.trim()}\n`.replace(/ +$/gm, '');
+  // Curated summaries for the profile and mailbox-provider additions.
+  const descriptions = {
+    saveProfile: "Save a running session's browser state into a profile.",
+    SaveProfileOptions: "Choose a new or existing profile for a running session's browser state.",
+    ProfileResponse: "Profile identifiers, timestamps, and persisted browser domains.",
+    PersonaEmailProvider: "Supported mailbox providers for Notte personas.",
+    WaitAction: "Wait for a specified duration in browser automation.",
+    WaitActionOutput: "Browser wait-action fields returned in execution responses.",
+    NotteCoreActionsActionsWaitAction: "Browser wait-action fields accepted by the execute endpoint.",
+    ...Object.fromEntries(["files", "functions", "sessions", "vaults", "personas", "profiles"].map(name =>
+      [`client.${name}`, `Method signatures, arguments, and return types for client.${name} API operations.`])),
+  };
+  const page = (title, node, content) => `---\ntitle: ${attr(title)}\n${descriptions[title] ? `description: ${attr(descriptions[title])}\n` : ''}---\nimport AgentMdNotice from '/partials/agent-md-notice.mdx';\n\n<AgentMdNotice />\n\n${marker}\n\n${node ? `${sourceLink(node)}\n\n` : ''}${content.trim()}\n`.replace(/ +$/gm, '');
   const classes = [];
   const types = new Map();
   const typeNames = new Map();
@@ -310,7 +320,7 @@ export function createReference(root = sdkRoot) {
     }
   }
   const labels = { NotteClient: 'Client', NotteFunction: 'Function', NotteVault: 'Vault', NottePersona: 'Persona', SessionFiles: 'File Storage', RemoteFileStorage: 'File Storage', NotteAnything: 'Anything', NotteSecrets: 'Secrets', NotteUsage: 'Usage', NotteManagedAuth: 'Managed Auth' }; // pragma: allowlist secret (public navigation labels)
-  const classOrder = ['NotteClient', 'Session', 'Agent', 'NotteFunction', 'NotteVault', 'NottePersona', 'RemoteFileStorage'];
+  const classOrder = ['NotteClient', 'Session', 'NotteFunction', 'NotteVault', 'NottePersona', 'RemoteFileStorage'];
   for (const group of groups.sort((a, b) => (classOrder.indexOf(a.group) + 1 || 100) - (classOrder.indexOf(b.group) + 1 || 100))) {
     // Client factories remain linked from NotteClient's overview, not a nested sidebar.
     if (supportingClass(group.group) || group.group === 'NotteClient') continue;

@@ -1,10 +1,13 @@
 import asyncio
 import random
 
-from notte_core.common.logging import logger
+from notte_core.logging import logger
 
-from notte_browser.playwright_async_api import Error as PlaywrightError
-from notte_browser.playwright_async_api import Locator, Page
+from notte_browser.driver import Error as PlaywrightError
+from notte_browser.driver import Locator, Page
+from notte_browser.js import script
+
+_SELECT_OPTIONS = script("select_options.js")
 
 
 def escape_css_selector(selector: str) -> str:
@@ -453,10 +456,16 @@ class FormFiller:
                             label.locator("input, select"),  # Child elements
                             label.locator("+ input, + select"),  # Next siblings
                             label.locator("~ input, ~ select"),  # Any following siblings
-                            self.page.locator(
-                                f'input[aria-labelledby="{label.get_attribute("id")}"], select[aria-labelledby="{label.get_attribute("id")}"]'
-                            ),  # ARIA relationship
                         ]
+                        label_id = await label.get_attribute("id")
+                        if label_id:
+                            # ARIA relationship (aria-labelledby holds a space-separated list of ids)
+                            escaped_label_id = label_id.replace("\\", "\\\\").replace('"', '\\"')
+                            related_fields.append(
+                                self.page.locator(
+                                    f'input[aria-labelledby~="{escaped_label_id}"], select[aria-labelledby~="{escaped_label_id}"]'
+                                )
+                            )
 
                         for field in related_fields:
                             if await field.count() > 0:
@@ -576,12 +585,7 @@ class FormFiller:
             )
             try:
                 # If exact match fails, try case-insensitive match
-                options: list[dict[str, str]] = await field.evaluate("""select => {
-                    return Array.from(select.options).map(option => ({
-                        value: option.value,
-                        text: option.text
-                    }));
-                }""")
+                options: list[dict[str, str]] = await field.evaluate(_SELECT_OPTIONS)
 
                 # Try to find a matching option
                 target_value: str = value.lower()
@@ -640,12 +644,3 @@ class FormFiller:
         except Exception as e:
             logger.warning(f"Failed to fill {field_type} field: {str(e)}")
             return False
-
-    async def get_found_fields(self) -> dict[str, bool]:
-        """
-        Return a dictionary indicating which fields were found on the page.
-
-        Returns:
-            Dict mapping field types to boolean indicating if they were found.
-        """
-        return {field_type: bool(await self.find_field(field_type)) for field_type in self.FIELD_SELECTORS.keys()}

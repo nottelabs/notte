@@ -8,7 +8,7 @@ help:
 	@echo "Available commands:"
 	@echo "  make install     - Install dependencies and generate SDK"
 	@echo "  make sdk         - Generate SDK from OpenAPI spec (alias: make generate)"
-	@echo "  make check       - Check if SDK is up to date with staging"
+	@echo "  make check       - Check if SDK is up to date with the committed OpenAPI snapshot"
 	@echo "  make release <version> - Dry-run a release build (publishing happens in CI on a vX.Y.Z tag)"
 	@echo "  make tests       - Run all tests"
 	@echo "  make example <filename> - Run example file (e.g., make example persona)"
@@ -30,10 +30,10 @@ sdk generate:
 	@echo "Generating SDK from OpenAPI spec..."
 	npm run generate
 
-# Check if SDK is up to date with staging
+# Check if SDK is up to date with the committed OpenAPI snapshot
 check:
-	@echo "Checking if SDK is up to date with staging..."
-	npm run check:staging
+	@echo "Checking if SDK is up to date with the committed OpenAPI snapshot..."
+	npm run check:generated
 
 # Dry-run a release build at a given version, then restore the dev version.
 # Publishing happens in CI (.github/workflows/node-sdk-publish.yml) when a

@@ -11,9 +11,9 @@ from typing import Annotated, Any, ClassVar, Literal, get_args
 from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import override
 
-from notte_core.browser.dom_tree import NodeSelectors
-from notte_core.common.config import config
+from notte_core.config import config
 from notte_core.credentials.types import ValueWithPlaceholder
+from notte_core.dom_tree import NodeSelectors
 
 warnings.filterwarnings(
     "ignore", message='Field name "id" in "InteractionAction" shadows an attribute', category=UserWarning
@@ -45,11 +45,6 @@ class ActionParameter(BaseModel):
         if len(self.values) > 0:
             base += f" = [{', '.join(self.values)}]"
         return base
-
-
-class ActionParameterValue(BaseModel):
-    name: str
-    value: str | ValueWithPlaceholder
 
 
 # ############################################################
@@ -90,35 +85,6 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
             cls.ACTION_REGISTRY[name] = cls
 
     @classmethod
-    def non_agent_fields(cls) -> set[str]:
-        fields = {
-            # Base action fields
-            "id",
-            "category",
-            "description",
-            # Interaction action fields
-            "selector",
-            "selectors",
-            "press_enter",
-            "option_selector",
-            "text_label",
-            "timeout",
-            # executable action fields
-            "params",
-            "status",
-            "param",
-            # ScrapeAction fields (have sensible defaults, don't need agent exposure)
-            "only_images",
-            "scrape_links",
-            "scrape_images",
-            "ignored_tags",
-            "response_format",
-        }
-        if "selector" in cls.model_fields:
-            fields.remove("id")
-        return fields
-
-    @classmethod
     def name(cls) -> str:
         """Convert a CamelCase string to snake_case"""
         pattern = re.compile(r"(?<!^)(?=[A-Z])")
@@ -129,24 +95,6 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
         """Return the message to be displayed when the action is executed."""
         return f"🚀 Successfully executed action: {self.description}"
 
-    def model_dump_agent(self, include_selector: bool = False) -> dict[str, dict[str, Any]]:
-        fields = self.non_agent_fields()
-        if include_selector and "selector" in fields:
-            fields.remove("selector")
-            fields.add("id")
-        data = self.model_dump(exclude=fields)
-        selector = data.get("selector")
-        if selector:
-            # Handle both NodeSelectors (dict-like) and plain string selectors
-            if isinstance(selector, str):
-                data["selector"] = selector
-            elif isinstance(selector, dict):
-                data["selector"] = selector.get("playwright_selector") or selector.get("xpath_selector")  # pyright: ignore [reportUnknownMemberType]
-        return data
-
-    def model_dump_agent_json(self) -> str:
-        return json.dumps(self.model_dump(exclude=self.non_agent_fields()))
-
 
 class BrowserAction(BaseAction, metaclass=ABCMeta):
     """Base model for special actions that are always available and not related to the current page."""
@@ -154,6 +102,16 @@ class BrowserAction(BaseAction, metaclass=ABCMeta):
     category: str = "Special Browser Actions"
 
     BROWSER_ACTION_REGISTRY: ClassVar[dict[str, typeAlias["BrowserAction"]]] = {}
+    # Actions of the legacy agent loop. They stay registered so that steps recorded by agents still
+    # parse, but they are not offered as available actions anymore.
+    LEGACY_AGENT_ACTION_TYPES: ClassVar[frozenset[str]] = frozenset({"help", "completion"})
+    # Persona inbox reads don't act on the browser: use `persona.emails()` / `persona.sms()` instead.
+    # They stay registered so that recorded steps still parse.
+    PERSONA_INBOX_ACTION_TYPES: ClassVar[frozenset[str]] = frozenset({"email_read", "sms_read"})
+    # Executed by the Notte API only: cloud sessions accept them, local sessions cannot run them.
+    REMOTE_ONLY_ACTION_TYPES: ClassVar[frozenset[str]] = frozenset({"email_verification_read"})
+    # Recorded in the trajectory when `session.scrape()` runs, but not executable: call the method instead.
+    RECORD_ONLY_ACTION_TYPES: ClassVar[frozenset[str]] = frozenset({"scrape"})
 
     def __init_subclass__(cls, **kwargs: dict[Any, Any]):
         super().__init_subclass__(**kwargs)
@@ -175,7 +133,21 @@ class BrowserAction(BaseAction, metaclass=ABCMeta):
 
     @staticmethod
     def list() -> list["BrowserAction"]:
-        return [action.example() for action in BrowserAction.BROWSER_ACTION_REGISTRY.values()]
+        return [
+            action.example()
+            for name, action in BrowserAction.BROWSER_ACTION_REGISTRY.items()
+            if name not in BrowserAction.unlisted_action_types()
+        ]
+
+    @staticmethod
+    def unlisted_action_types() -> frozenset[str]:
+        """Registered action types that are not offered as available browser actions."""
+        return (
+            BrowserAction.LEGACY_AGENT_ACTION_TYPES
+            | BrowserAction.PERSONA_INBOX_ACTION_TYPES
+            | BrowserAction.REMOTE_ONLY_ACTION_TYPES
+            | BrowserAction.RECORD_ONLY_ACTION_TYPES
+        )
 
     @property
     @abstractmethod
@@ -199,7 +171,7 @@ class FormFillAction(BrowserAction):
     Fill a form with multiple values. Critical: If you detect a form on a page, try to use this action at first, and otherwise use the regular fill action.
 
     The `form_fill` action requires field keys that match the page's actual field mapping.
-    Do not guess keys from labels or HTML alone; use live observation or generated workflow
+    Do not guess keys from labels or HTML alone; use live observation or generated function
     code to confirm the field mapping first.
 
     **Example:**
@@ -308,12 +280,6 @@ class GotoAction(BrowserAction):
     model_config = {"extra": "forbid", "protected_namespaces": ()}  # type: ignore[reportUnknownMemberType]
 
     __pydantic_fields_set__ = {"url"}  # type: ignore[reportUnknownMemberType]
-
-    @classmethod
-    @override
-    def non_agent_fields(cls) -> set[str]:
-        # a latency knob for scripts, not a decision the agent should be making
-        return super().non_agent_fields() | {"wait_until"}
 
     @override
     def execution_message(self) -> str:
@@ -698,6 +664,8 @@ class HelpAction(BrowserAction):
     """
     Ask for clarification.
 
+    Legacy agent-loop action: kept so that recorded agent steps still parse.
+
     **Example:**
     ```python
     session.execute(type="help", reason="The page layout is unclear")
@@ -726,6 +694,8 @@ class HelpAction(BrowserAction):
 class CompletionAction(BrowserAction):
     """
     Complete the task by returning the answer and terminate the browser session.
+
+    Legacy agent-loop action: kept so that recorded agent steps still parse.
 
     **Example:**
     ```python
@@ -768,20 +738,20 @@ class CompletionAction(BrowserAction):
 
 
 class ToolAction(BrowserAction, metaclass=ABCMeta):
+    """Inbox reads (persona emails / SMS, workspace mailboxes): they don't act on the browser itself."""
+
     type: Literal["data"] = "data"  # pyright: ignore [reportIncompatibleVariableOverride]
 
 
-class ScrapeAction(ToolAction):
+class ScrapeAction(BrowserAction):
     """
-    Scrape the current page data in text format. If `instructions` is null then the whole page will be scraped. Otherwise, only the data that matches the instructions will be scraped. Instructions should be given as natural language, e.g. 'Extract the title and the price of the product'.
+    Record of a `session.scrape()` call in the session trajectory. Not executable: scrape with the method.
 
     **Example:**
     ```python
-    session.execute(type="scrape", instructions="Extract product title and price")
-    session.execute(type="scrape", only_main_content=True)
-    session.execute(type="scrape")  # Scrape entire page
-    session.execute(type="scrape", only_images=True)  # Scrape only images
-    session.execute(type="scrape", response_format={"type": "object", "properties": {...}})  # With JSON schema
+    markdown = session.scrape()
+    markdown = session.scrape(only_main_content=True)
+    data = session.scrape(instructions="Extract product title and price")
     ```
     """
 
@@ -798,17 +768,13 @@ class ScrapeAction(ToolAction):
         Field(
             description="Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded."
         ),
-    ] = True
+    ] = False
     selector: Annotated[
         str | None,
         Field(
             description="Playwright selector to scope the scrape to. Only content inside this selector will be scraped."
         ),
     ] = None
-    only_images: Annotated[
-        bool,
-        Field(description="Whether to only scrape images from the page. If True, the page content is excluded."),
-    ] = False
     scrape_links: Annotated[
         bool,
         Field(description="Whether to scrape links from the page. Links are scraped by default."),
@@ -830,9 +796,6 @@ class ScrapeAction(ToolAction):
 
     @override
     def execution_message(self) -> str:
-        if self.only_images:
-            return "Scraped images from the current page"
-
         if self.selector:
             content = f"content within selector '{self.selector}'"
         elif self.only_main_content:
@@ -869,12 +832,14 @@ class EmailReadAction(ToolAction):
     """
     Read recent emails from the mailbox.
 
+    Not a browser action: read the persona inbox directly instead.
+
     **Example:**
     ```python
     import datetime as dt
 
-    session.execute(type="email_read", limit=5, only_unread=True)
-    session.execute(type="email_read", timedelta=dt.timedelta(minutes=5))
+    emails = persona.emails(limit=5, only_unread=True)
+    emails = persona.wait_for_emails(timedelta=dt.timedelta(minutes=5), timeout=120)
     ```
     """
 
@@ -946,12 +911,14 @@ class SmsReadAction(ToolAction):
     """
     Read sms messages received recently.
 
+    Not a browser action: read the persona inbox directly instead.
+
     **Example:**
     ```python
     import datetime as dt
 
-    session.execute(type="sms_read", limit=10, only_unread=True)
-    session.execute(type="sms_read", timedelta=dt.timedelta(minutes=5))
+    sms = persona.sms(limit=10, only_unread=True)
+    sms = persona.wait_for_sms(timedelta=dt.timedelta(minutes=5), timeout=120)
     ```
     """
 
@@ -984,7 +951,7 @@ class SmsReadAction(ToolAction):
         return ActionParameter(name="timedelta", type="datetime")
 
 
-class EvaluateJsAction(ToolAction):
+class EvaluateJsAction(BrowserAction):
     """
     Evaluate JavaScript code on the current page and return the result.
     Useful for extracting structured data from a page without LLM processing.
@@ -1180,7 +1147,24 @@ class ClickAction(InteractionAction):
         return f"Clicked on the element with text label: {self.text_label}"
 
 
-class FillAction(InteractionAction):
+class BaseFillAction(InteractionAction, metaclass=ABCMeta):
+    """Fields shared by the fill actions: the value to type and whether to clear the field first.
+
+    `fill`, `multi_factor_fill` and `fallback_fill` differ only in how they type the value.
+    """
+
+    value: str | ValueWithPlaceholder
+    clear_before_fill: bool = True
+    param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def verify_value(cls, value: Any) -> Any:
+        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
+        return value
+
+
+class FillAction(BaseFillAction):
     """
     Fill an input field with a value.
 
@@ -1193,15 +1177,6 @@ class FillAction(InteractionAction):
 
     type: Literal["fill"] = "fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill an input field with a value"
-    value: str | ValueWithPlaceholder
-    clear_before_fill: bool = True
-    param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
-
-    @field_validator("value", mode="before")
-    @classmethod
-    def verify_value(cls, value: Any) -> Any:
-        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
-        return value
 
     @override
     def execution_message(self) -> str:
@@ -1209,7 +1184,7 @@ class FillAction(InteractionAction):
         return f"Filled input field{text_label}with the value: '{self.value}'"
 
 
-class MultiFactorFillAction(InteractionAction):
+class MultiFactorFillAction(BaseFillAction):
     """
     Fill an MFA input field with a value. CRITICAL: Only use it when filling in an OTP.
 
@@ -1221,22 +1196,13 @@ class MultiFactorFillAction(InteractionAction):
 
     type: Literal["multi_factor_fill"] = "multi_factor_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill an MFA input field with a value. CRITICAL: Only use it when filling in an OTP."
-    value: str | ValueWithPlaceholder
-    clear_before_fill: bool = True
-    param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
-
-    @field_validator("value", mode="before")
-    @classmethod
-    def verify_value(cls, value: Any) -> Any:
-        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
-        return value
 
     @override
     def execution_message(self) -> str:
         return f"Filled the MFA input field with the value: '{self.value}'"
 
 
-class FallbackFillAction(InteractionAction):
+class FallbackFillAction(BaseFillAction):
     """
     Fill an input field with a value. Only use if explicitly asked, or you failed to input with the normal fill action.
 
@@ -1248,15 +1214,6 @@ class FallbackFillAction(InteractionAction):
 
     type: Literal["fallback_fill"] = "fallback_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill an input field with a value. Only use if explicitly asked, or you failed to input with the normal fill action"
-    value: str | ValueWithPlaceholder
-    clear_before_fill: bool = True
-    param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
-
-    @field_validator("value", mode="before")
-    @classmethod
-    def verify_value(cls, value: Any) -> Any:
-        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
-        return value
 
     @override
     def execution_message(self) -> str:

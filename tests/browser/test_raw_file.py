@@ -3,7 +3,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
-from notte_core.utils.raw_file import get_file_ext, get_filename
+from notte_core.raw_file import get_file_ext, get_filename
 
 
 @pytest.mark.parametrize(
@@ -107,7 +107,7 @@ def test_get_file_ext(url: str | None, expected_extension: str | None) -> None:
         ),
     ],
 )
-@patch("notte_core.utils.raw_file.dt.datetime")
+@patch("notte_core.raw_file.dt.datetime")
 def test_get_filename_patterns(
     mock_datetime: MagicMock, headers: dict[str, Any], url: str, expected_filename_pattern: str
 ) -> None:

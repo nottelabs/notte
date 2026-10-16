@@ -1,23 +1,16 @@
 import time
 from typing import TYPE_CHECKING, final
 
-from pydantic import Field
+from notte_core.types import ManagedAuthOperation, ManagedAuthRunResponse
 
+from notte_sdk._requests import wire_request
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.types import ManagedAuthOperation, ManagedAuthRunResponse, SdkRequest
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
 
 
-class _AuthRequest(SdkRequest):
-    auth_retry: int = Field(default=0, ge=0, le=2)
-
-
-class _EmptyRequest(SdkRequest):
-    """Empty JSON body required by the SDK's POST transport."""
-
-
+# Legacy: all four managed-auth routes are absent from the committed OpenAPI schema.
 @final
 class ManagedAuthClient(BaseClient):
     def __init__(
@@ -39,7 +32,7 @@ class ManagedAuthClient(BaseClient):
         endpoint = NotteEndpoint(
             path=f"connections/{connection_id}/check",
             response=ManagedAuthRunResponse,
-            request=_EmptyRequest(),
+            request=wire_request(None, {}),
             method="POST",
         )
         return self.request(endpoint)
@@ -65,7 +58,7 @@ class ManagedAuthClient(BaseClient):
             NotteEndpoint(
                 path=f"connections/{connection_id}/refresh",
                 response=ManagedAuthOperation,
-                request=_AuthRequest(auth_retry=auth_retry),
+                request=wire_request(None, {"auth_retry": auth_retry} if auth_retry != 0 else {}),
                 method="POST",
             )
         )
@@ -78,7 +71,7 @@ class ManagedAuthClient(BaseClient):
             NotteEndpoint(
                 path=f"connections/{connection_id}/reauthenticate",
                 response=ManagedAuthOperation,
-                request=_AuthRequest(auth_retry=auth_retry),
+                request=wire_request(None, {"auth_retry": auth_retry} if auth_retry != 0 else {}),
                 method="POST",
             )
         )

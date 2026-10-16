@@ -25,11 +25,8 @@ with client.Session() as session:
     _ = session.set_cookies(cookies=cookies)  # type: ignore[arg-type]  # can also set cookie_file="path/to/cookies.json"
 
     # Use the cookies in your session
-    agent = client.Agent(session=session, max_steps=5)
-    res = agent.run(
-        task="go to nottelabs/notte get repo info. Fail if you are not logged in",
-        url="https://github.com/nottelabs/notte",
-    )
+    session.execute(type="goto", url="https://github.com/nottelabs/notte")
+    repo_info = session.scrape(instructions="extract the repo info and whether the user is logged in")
 
     # or get the cookies from the session
     cookies_resp = session.get_cookies()

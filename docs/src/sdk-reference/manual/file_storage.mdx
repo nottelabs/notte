@@ -6,95 +6,83 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-File storage lets you upload files for the browser to attach to forms, and retrieve files the browser downloads. Storage is scoped to a session: every file operation needs a session ID, and each session exposes its storage as `session.storage`. Files expire after a retention period, so download the ones you need.
+File storage allows agents to upload and download files from websites. Storage is persistent and session-scoped so you can retrieve files after the session ends.
 
 ```python
 from notte_sdk import NotteClient
 
 client = NotteClient()
+storage = client.FileStorage()
 
-with client.Session() as session:
-    # Upload a local file so the browser can attach it to a form
-    session.storage.upload("document.pdf")
+# Upload files before the session
+storage.upload("document.pdf")
 
+# Attach storage to session
+with client.Session(storage=storage) as session:
     agent = client.Agent(session=session)
     agent.run(task="Upload document.pdf and download the receipt")
 
-    # Download the files the browser saved during the session
-    for file in session.storage.list(source="session_download").files:
-        session.storage.download(file.id, local_dir="./downloads")
+# Download files after the session
+for file_name in storage.list_downloaded_files():
+    storage.download(file_name=file_name, local_dir="./downloads")
 ```
-
-To work with the files of an existing session, bind storage to its ID with `client.FileStorage(session_id="<session-id>")`.
 
 ## Methods
 
 ### upload
 
 ```python
-upload(file_path: str, upload_file_name: str | None = None) -> SessionFile
+upload(file_path: str, upload_file_name: str | None = None) -> bool
 ```
 
-Upload a local file to the session.
+Upload a local file to storage.
 
 **Parameters:**
 - `file_path` - Path to the local file
 - `upload_file_name` - Optional custom name for the file in storage
 
-**Returns:** `SessionFile` - The stored file (`id`, `filename`, `mime_type`, `size`, `checksum`, `source`, `created_at`, `expires_at`)
-
----
-
-### list
-
-```python
-list(source: FileSource | str | None = None, *, limit: int = 100, offset: int = 0) -> SessionFilesPage
-```
-
-List the session's files that have not expired.
-
-**Parameters:**
-- `source` - `"user_upload"` for files you uploaded, `"session_download"` for files the browser downloaded, or `None` for both
-- `limit` - Maximum number of files to return (default: 100)
-- `offset` - Number of files to skip, for pagination (default: 0)
-
-**Returns:** `SessionFilesPage` - `files` (a list of `SessionFile`), `total`, `limit` and `offset`
+**Returns:** `bool` - Success status
 
 ---
 
 ### download
 
 ```python
-download(file_id: str, local_dir: str = ".", *, force: bool = False) -> str
+download(file_name: str, local_dir: str, force: bool = False) -> bool
 ```
 
-Download a file to a local directory, keeping its stored filename.
+Download a file from storage to a local directory.
 
 **Parameters:**
-- `file_id` - ID of the file, from `upload()` or `list()`
-- `local_dir` - Local directory to save the file (default: current directory)
-- `force` - Overwrite an existing local file (default: False). Without it, an existing file raises `FileExistsError`.
+- `file_name` - Name of the file in storage
+- `local_dir` - Local directory to save the file
+- `force` - Overwrite existing file (default: False)
 
-**Returns:** `str` - Path of the downloaded file
+**Returns:** `bool` - Success status
 
 ---
 
-### delete
+### list_uploaded_files
 
 ```python
-delete(file_id: str) -> None
+list_uploaded_files() -> list[str]
 ```
 
-Delete a file from the session's storage.
+List files you've uploaded to storage.
 
-**Parameters:**
-- `file_id` - ID of the file to delete
+**Returns:** `list[str]` - List of uploaded filenames
 
 ---
 
-### File metadata
+### list_downloaded_files
 
-To get a single file's metadata without downloading it, use `client.files.metadata(session_id, file_id)`, which returns its `SessionFile`.
+```python
+list_downloaded_files() -> list[str]
+```
+
+List files downloaded by agents during sessions.
+
+**Returns:** `list[str]` - List of downloaded filenames
 
 ## Parameters
 

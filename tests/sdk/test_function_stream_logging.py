@@ -4,11 +4,11 @@ from unittest.mock import MagicMock
 
 import pytest
 import requests
-from notte_core.common.logging import logger
-from notte_sdk.endpoints import workflows
+from notte_core.logging import logger
+from notte_sdk._generated import operations as api
+from notte_sdk.endpoints import functions
 from notte_sdk.endpoints.base import BaseClient
-from notte_sdk.endpoints.sessions import SessionsClient
-from notte_sdk.endpoints.workflows import WorkflowsClient
+from notte_sdk.endpoints.functions import FunctionsClient
 
 
 @pytest.mark.parametrize("key_source", ["argument", "environment"])
@@ -37,7 +37,7 @@ def test_session_start_does_not_log_api_key(monkeypatch, key_source, explicit_st
             root_client.sessions.request.return_value.viewer_url = viewer_url.replace(
                 "&jwt=fake-session-jwt", f"?token={api_key}"
             )
-    client = WorkflowsClient(
+    client = FunctionsClient(
         root_client=root_client,
         api_key=api_key if key_source == "argument" else None,
         server_url="https://example.invalid",
@@ -60,11 +60,11 @@ def test_session_start_does_not_log_api_key(monkeypatch, key_source, explicit_st
         ]
     ]
     post = MagicMock(return_value=response)
-    monkeypatch.setattr(workflows.requests, "post", post)
+    monkeypatch.setattr(functions.requests, "post", post)
     captured = io.StringIO()
     handler = logger.add(captured, level="INFO")
     try:
-        completed = client.run(
+        completed = client.run_start(
             "run-123", function_id="function-123", variables={}, **({"stream": True} if explicit_stream else {})
         )
     finally:
@@ -78,9 +78,7 @@ def test_session_start_does_not_log_api_key(monkeypatch, key_source, explicit_st
         assert viewer_url in output
     else:
         assert "client.sessions.viewer" in output
-    root_client.sessions.request.assert_called_once_with(
-        SessionsClient._session_status_endpoint(session_id=session_id), timeout=2
-    )
+    root_client.sessions.request.assert_called_once_with(api.session_status(session_id=session_id), timeout=2)
     assert "Function is running" in output
     assert completed.session_id == session_id
     assert completed.result == {"ok": True}

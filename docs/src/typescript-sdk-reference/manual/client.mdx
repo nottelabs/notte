@@ -9,7 +9,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/client.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/client.ts)
 
-Entry point for sessions, agents, functions, vaults, personas, and session files.
+Entry point for sessions, functions, vaults, personas, and session files.
 
 ```typescript
 import { NotteClient } from 'notte-sdk';
@@ -37,7 +37,6 @@ Default:
 - [Session](/typescript-sdk-reference/client/session): Create a new session
 - [Files](/typescript-sdk-reference/client/files): Access files owned by a specific session, including closed sessions.
 - [FileStorage](/typescript-sdk-reference/client/filestorage): File storage to attach to a session, the counterpart of `client.FileStorage()`.
-- [Agent](/typescript-sdk-reference/client/agent): Create a new agent
 - [Vault](/typescript-sdk-reference/client/vault): Create or access a vault
 - [Persona](/typescript-sdk-reference/client/persona): Create or access a persona
 - [NotteFunction](/typescript-sdk-reference/client/nottefunction): Create or access a function
@@ -47,17 +46,17 @@ Default:
 
 <Accordion title="Properties">
 
+### files
+
+Generated file operations; use Files(sessionId) for local file IO helpers.
+
+See [client.files](/typescript-sdk-reference/resources/files) for method signatures and argument order.
+
 ### sessions
 
 Client-bound session API operations. `list()` retains its array return value.
 
 See [client.sessions](/typescript-sdk-reference/resources/sessions) for method signatures and argument order.
-
-### agents
-
-Client-bound agent API operations. `list()` retains its array return value.
-
-See [client.agents](/typescript-sdk-reference/resources/agents) for method signatures and argument order.
 
 ### vaults
 

@@ -9,31 +9,31 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import Any, Callable, ClassVar, Literal, Self
 
-import httpx
-from notte_core.browser.dom_tree import DomNode
-from notte_core.browser.snapshot import (
+from notte_core.config import BrowserType, CookieDict, PlaywrightProxySettings, config
+from notte_core.dom_tree import DomNode
+from notte_core.errors import SnapshotProcessingError
+from notte_core.logging import logger
+from notte_core.profiling import profiler
+from notte_core.raw_file import get_empty_dom_node, get_file_ext
+from notte_core.snapshot import (
     BrowserSnapshot,
     SnapshotMetadata,
     TabsData,
     ViewportData,
 )
-from notte_core.common.config import BrowserType, CookieDict, PlaywrightProxySettings, config
-from notte_core.common.logging import logger
-from notte_core.errors.processing import SnapshotProcessingError
-from notte_core.profiling import profiler
-from notte_core.utils.raw_file import get_empty_dom_node, get_file_ext, get_filename
-from notte_core.utils.url import is_valid_url
-from notte_sdk.types import (
+from notte_core.types import (
     DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
     DEFAULT_HEADLESS_VIEWPORT_WIDTH,
     AspectRatio,
     Cookie,
     LocalSessionStartRequest,
 )
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
+from notte_core.url import is_valid_url
+from pydantic import BaseModel
 from typing_extensions import override
 
-from notte_browser.dom.parsing import dom_tree_parsers
+from notte_browser.dom.parsing import parse_dom
+from notte_browser.driver import Browser, BrowserContext, CDPSession, Locator, Page, Playwright, Response
 from notte_browser.errors import (
     BrowserExpiredError,
     EmptyPageContentError,
@@ -43,10 +43,11 @@ from notte_browser.errors import (
     PageLoadingError,
     PlaywrightError,
     PlaywrightTimeoutError,
-    RemoteDebuggingNotAvailableError,
     UnexpectedBrowserError,
 )
-from notte_browser.playwright_async_api import CDPSession, Locator, Page, Response
+from notte_browser.js import script
+
+_PAGE_METADATA = script("page_metadata.js")
 
 WaitUntil = Literal["commit", "domcontentloaded", "load", "networkidle"]
 
@@ -174,45 +175,57 @@ class BrowserWindowOptions(BaseModel):
         )
 
 
-class BrowserResource(BaseModel):
-    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
-
-    page: Page = Field(exclude=True)
-    options: BrowserWindowOptions
-    browser_id: str | None = None
-    context_id: str | None = None
-
-
-class ScreenshotMask(BaseModel):
+class ScreenshotMask:
     async def mask(self, page: Page) -> list[Locator]:  # pyright: ignore[reportUnusedParameter]
         return []
 
 
-class BrowserWindow(BaseModel):
-    resource: BrowserResource
-    screenshot_mask: ScreenshotMask | None = None
-    on_close: Callable[[], Awaitable[None]] | None = None
-    page_callbacks: dict[str, Callable[[Page], None]] = Field(default_factory=dict)
-    goto_response: Response | None = Field(exclude=True, default=None)
+class BrowserWindow:
+    """Active page and browser operations; caller-supplied pages are borrowed.
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
+    launch/connect attach their owned transport to this window's close boundary.
+    Options remain validated data, while live Playwright handles are ordinary state.
+    """
 
-    # Cache of CDP sessions keyed by id(page). CDP sessions survive navigations on
-    # the same Page target, so creating/detaching per call raced with Chromium's
-    # target lifecycle after navigation and could park subsequent operations on a
-    # dead socket.
-    _cdp_sessions: dict[int, CDPSession] = PrivateAttr(default_factory=dict)
-
-    @override
-    def model_post_init(self, __context: Any) -> None:
-        self.resource.page.set_default_timeout(config.timeout_default_ms)
-
-        # Keep the final main-document response for navigation error handling and
-        # raw-file detection. Iframe, subresource, and intermediate redirect
-        # responses do not prove that the requested document reached the browser.
-        self.page_callbacks["response"] = self._record_navigation_response  # pyright: ignore [reportArgumentType]
-
+    def __init__(
+        self,
+        page: Page,
+        options: BrowserWindowOptions,
+        *,
+        on_close: Callable[[], Awaitable[None]] | None = None,
+        screenshot_mask: ScreenshotMask | None = None,
+    ) -> None:
+        self._page: Page = page
+        self.options: BrowserWindowOptions = options
+        self.screenshot_mask: ScreenshotMask | None = screenshot_mask
+        self.on_close: Callable[[], Awaitable[None]] | None = on_close
+        self.page_callbacks: dict[str, Callable[[Page], None]] = {}
+        self.goto_response: Response | None = None
+        self._cdp_sessions: dict[int, CDPSession] = {}
+        self._owned_context: BrowserContext | None = None
+        self._owned_browser: Browser | None = None
+        self._owned_driver: Playwright | None = None
+        page.set_default_timeout(config.timeout_default_ms)
+        # Only final main-document responses establish navigation/raw-file state.
+        self.page_callbacks["response"] = self._record_navigation_response  # pyright: ignore[reportArgumentType]
         self.apply_page_callbacks()
+
+    async def _close_owned(self) -> None:
+        from notte_browser.cleanup import cleanup_resources
+
+        cleanups: list[Callable[[], Awaitable[None]]] = []
+        if self._owned_context is not None:
+            cleanups.append(self._owned_context.close)
+        if self._owned_browser is not None:
+            cleanups.append(self._owned_browser.close)
+        if self._owned_driver is not None:
+            cleanups.append(self._owned_driver.stop)
+        try:
+            await cleanup_resources(*cleanups)
+        finally:
+            self._owned_context = None
+            self._owned_browser = None
+            self._owned_driver = None
 
     def _is_final_main_document_response(self, response: Response) -> bool:
         request = response.request
@@ -235,26 +248,19 @@ class BrowserWindow(BaseModel):
 
     @property
     def page(self) -> Page:
-        if (
-            self.resource.page.url != "about:blank"
-            and self.resource.page.is_closed()
-            and len(self.resource.page.context.pages) > 0
-        ):
+        if self._page.url != "about:blank" and self._page.is_closed() and len(self._page.context.pages) > 0:
             # reset to the last created page
-            self.page = self.resource.page.context.pages[-1]
-        return self.resource.page
+            self.page = self._page.context.pages[-1]
+        return self._page
 
     @property
     def tabs(self) -> list[Page]:
-        return self.resource.page.context.pages
+        return self._page.context.pages
 
     async def close(self) -> None:
         if self.on_close is not None:
             await self.on_close()
         await self._close_all_cdp_sessions()
-        for page in self.resource.page.context.pages:
-            if not page.is_closed():
-                await page.close()
 
     @page.setter
     def page(self, page: Page) -> None:
@@ -262,48 +268,27 @@ class BrowserWindow(BaseModel):
         # window close. The on-close handler on the new page will handle eviction
         # when it closes; the previous page may still be alive but no longer
         # referenced by this window.
-        _ = self._cdp_sessions.pop(id(self.resource.page), None)
-        self.resource.page = page
+        _ = self._cdp_sessions.pop(id(self._page), None)
+        self._page = page
         self.apply_page_callbacks()
 
-    def is_file(self) -> bool:
-        if self.goto_response is None:
-            return get_file_ext(headers=None, url=self.page.url) is not None
-
-        if self.goto_response.url != self.page.url:
-            self.goto_response = None
-            return self.is_file()
-
-        return (
-            "content-type" in self.goto_response.headers
-            and "text/html" not in self.goto_response.headers["content-type"]
-        )
-
-    async def download_file(self) -> tuple[bytes, str]:
-        if not self.is_file():
-            raise ValueError("Page is not a file")
-        resp = await self.page.request.get(self.page.url)
-
-        headers = resp.headers
-        filename = get_filename(headers, self.page.url)
-        return await resp.body(), filename
-
-    @property
-    def port(self) -> int:
-        if self.resource.options.debug_port is None:
-            raise RemoteDebuggingNotAvailableError()
-        return self.resource.options.debug_port
-
-    async def get_ws_url(self) -> str:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(f"http://localhost:{self.port}/json/version")
-            data = response.json()
-            return data["webSocketDebuggerUrl"]
+    async def switch_tab(self, tab_index: int, *, verbose: bool = False) -> None:
+        context = self.page.context
+        if tab_index != -1 and (tab_index < 0 or tab_index >= len(context.pages)):
+            raise ValueError(f"Tab index '{tab_index}' is out of range for context with {len(context.pages)} pages")
+        tab_page = context.pages[tab_index]
+        await tab_page.bring_to_front()
+        self.page = tab_page
+        await self.long_wait()
+        if verbose:
+            logger.info(
+                f"🪦 Switched to tab {tab_index} with url: {tab_page.url} ({len(context.pages)} tabs in context)"
+            )
 
     @property
     def is_chromium_based(self) -> bool:
         """Check if the browser is Chromium-based (supports CDP)."""
-        return self.resource.options.browser_type != "firefox"
+        return self.options.browser_type != "firefox"
 
     async def get_cdp_session(self, tab_idx: int | None = None) -> CDPSession:
         cdp_page = self.tabs[tab_idx] if tab_idx is not None else self.page
@@ -334,15 +319,6 @@ class BrowserWindow(BaseModel):
                 _ = await asyncio.wait_for(session.detach(), timeout=2.0)
             except Exception as e:  # noqa: BLE001 - best-effort cleanup on shutdown
                 logger.debug(f"CDP session detach failed during close: {type(e).__name__}: {e}")
-
-    async def page_id(self, tab_idx: int | None = None) -> str:
-        session = await self.get_cdp_session(tab_idx)
-        target_id: Any = await session.send("Target.getTargetInfo")  # pyright: ignore [reportUnknownMemberType]
-        return target_id["targetInfo"]["targetId"]
-
-    async def ws_page_url(self, tab_idx: int | None = None) -> str:
-        page_id = await self.page_id(tab_idx)
-        return f"ws://localhost:{self.port}/devtools/page/{page_id}"
 
     @profiler.profiled()
     async def long_wait(self) -> None:
@@ -378,18 +354,25 @@ class BrowserWindow(BaseModel):
 
     @profiler.profiled(service_name="observation")
     async def snapshot_metadata(self) -> SnapshotMetadata:
+        page = self.page
+        # Read the active document in one browser call. Keep int() on the Python
+        # side so fractional scroll offsets retain the existing truncation.
+        metadata = await page.evaluate(_PAGE_METADATA)
         return SnapshotMetadata(
-            title=await self.page.title(),
-            url=self.page.url,
+            title=metadata["title"],
+            url=page.url,
             viewport=ViewportData(
-                scroll_x=int(await self.page.evaluate("window.scrollX")),
-                scroll_y=int(await self.page.evaluate("window.scrollY")),
-                viewport_width=int(await self.page.evaluate("window.innerWidth")),
-                viewport_height=int(await self.page.evaluate("window.innerHeight")),
-                total_width=int(await self.page.evaluate("document.documentElement.scrollWidth")),
-                total_height=int(await self.page.evaluate("document.documentElement.scrollHeight")),
+                scroll_x=int(metadata["scroll_x"]),
+                scroll_y=int(metadata["scroll_y"]),
+                viewport_width=int(metadata["viewport_width"]),
+                viewport_height=int(metadata["viewport_height"]),
+                total_width=int(metadata["total_width"]),
+                total_height=int(metadata["total_height"]),
             ),
-            tabs=[await self.tab_metadata(i) for i, _ in enumerate(self.tabs)],
+            tabs=[
+                TabsData(tab_id=i, title=metadata["title"], url=page.url) if tab is page else await self.tab_metadata(i)
+                for i, tab in enumerate(self.tabs)
+            ],
         )
 
     # Per-attempt timeout for a single CDP screenshot (attach + capture + detach).
@@ -502,18 +485,11 @@ class BrowserWindow(BaseModel):
     @profiler.profiled(service_name="observation")
     async def snapshot(
         self,
-        screenshot: bool | None = None,
+        screenshot: bool = True,
         retries: int = config.empty_page_max_retry,
         selector: str | None = None,
         skip_dom: bool = False,
-        *,
-        capture_screenshot: bool = True,
     ) -> BrowserSnapshot:
-        """Capture page state; explicit HTML consumers may omit the image.
-
-        An omitted image is represented by empty bytes. Default snapshots and
-        the existing screenshot argument retain their prior behavior.
-        """
         if retries <= 0:
             raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
         html_content: str = ""
@@ -527,22 +503,16 @@ class BrowserWindow(BaseModel):
                 html_content_await = profiler.profiled(service_name="observation")(self.page.content)()
 
             html_content = await html_content_await
-            snapshot_screenshot = await self.screenshot() if capture_screenshot else b""
+            if screenshot:
+                snapshot_screenshot = await self.screenshot()
             if skip_dom:
                 dom_node = DomNode.empty_root()
             else:
-                dom_tree_pipe = dom_tree_parsers["default"]
-                dom_node = await dom_tree_pipe.forward(self.page)
+                dom_node = await parse_dom(self.page)
 
         except SnapshotProcessingError:
             await self.long_wait()
-            return await self.snapshot(
-                screenshot=screenshot,
-                retries=retries - 1,
-                selector=selector,
-                skip_dom=skip_dom,
-                capture_screenshot=capture_screenshot,
-            )
+            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector, skip_dom=skip_dom)
 
         except Exception as e:
             if "has been closed" in str(e):
@@ -565,22 +535,18 @@ class BrowserWindow(BaseModel):
             else:
                 raise UnexpectedBrowserError(url=self.page.url) from e
 
-        if dom_node is None or snapshot_screenshot is None:
+        if dom_node is None or (screenshot and snapshot_screenshot is None):
             if config.verbose:
                 logger.warning(f"Empty page content for {self.page.url}. Retry in {config.wait_retry_snapshot_ms}ms")
             await self.page.wait_for_timeout(config.wait_retry_snapshot_ms)
-            return await self.snapshot(
-                screenshot=screenshot,
-                retries=retries - 1,
-                selector=selector,
-                skip_dom=skip_dom,
-                capture_screenshot=capture_screenshot,
-            )
+            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector, skip_dom=skip_dom)
 
         try:
             snapshot_metadata = await self.snapshot_metadata()
 
-            if self.is_file():
+            from notte_browser.files import is_raw_file
+
+            if is_raw_file(self):
                 ext = get_file_ext(
                     headers=self.goto_response.headers if self.goto_response is not None else None, url=self.page.url
                 )
@@ -594,18 +560,11 @@ class BrowserWindow(BaseModel):
             return BrowserSnapshot(
                 metadata=snapshot_metadata,
                 html_content=html_content,
-                a11y_tree=None,
                 dom_node=dom_node,
                 screenshot=snapshot_screenshot,
             )
         except PlaywrightError:
-            return await self.snapshot(
-                screenshot=screenshot,
-                retries=retries - 1,
-                selector=selector,
-                skip_dom=skip_dom,
-                capture_screenshot=capture_screenshot,
-            )
+            return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector, skip_dom=skip_dom)
 
     async def goto_and_wait(
         self,
@@ -751,6 +710,7 @@ class BrowserWindow(BaseModel):
                 storeId=cookie.storeId,
                 value=cookie.value,
                 expires=cookie.expires,
+                partitionKey=cookie.partitionKey,
             )
 
         return [format_cookie(cookie) for cookie in await self.page.context.cookies()]  # type: ignore

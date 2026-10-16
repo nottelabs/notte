@@ -2,21 +2,12 @@ import time
 from typing import TYPE_CHECKING, Any, Literal, Unpack, cast, overload
 
 from notte_core.actions import ActionUnion, CaptchaSolveAction, InteractionActionUnion, WaitAction
-from notte_core.common.config import PerceptionType
-from notte_core.common.logging import logger
-from notte_core.common.telemetry import track_usage
-from notte_core.data.space import ImageData, StructuredData, TBaseModel
-from notte_core.errors.base import NotteBaseError
-from notte_core.errors.processing import ScrapeFailedError
-from pydantic import BaseModel, RootModel
-from requests.exceptions import ChunkedEncodingError
-from requests.exceptions import ConnectionError as RequestsConnectionError
-from requests.exceptions import Timeout as RequestsTimeout
-from typing_extensions import final
-
-from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.errors import NotteAPIError
-from notte_sdk.types import (
+from notte_core.config import PerceptionType
+from notte_core.data import StructuredData, TBaseModel
+from notte_core.errors import NotteBaseError, ScrapeFailedError
+from notte_core.logging import logger
+from notte_core.telemetry import track_usage
+from notte_core.types import (
     CaptchaExecuteParams,
     ExecutionResultResponse,
     ObserveRequest,
@@ -28,6 +19,14 @@ from notte_sdk.types import (
     ScrapeRequestDict,
     ScrapeResponse,
 )
+from pydantic import BaseModel, RootModel
+from requests.exceptions import ChunkedEncodingError
+from requests.exceptions import ConnectionError as RequestsConnectionError
+from requests.exceptions import Timeout as RequestsTimeout
+from typing_extensions import final
+
+from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.errors import NotteAPIError
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
@@ -111,11 +110,6 @@ class PageClient(BaseClient):
             path = path.format(session_id=session_id)
         return NotteEndpoint(path=path, response=ExecutionResultResponse, method="POST")
 
-    @overload
-    def scrape(  # pyright: ignore[reportOverlappingOverload]
-        self, session_id: str, /, *, only_images: Literal[True], raise_on_failure: bool = True
-    ) -> list[ImageData]: ...
-
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
     def scrape(
@@ -171,7 +165,7 @@ class PageClient(BaseClient):
     @track_usage("cloud.session.scrape")
     def scrape(
         self, session_id: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
-    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str:
         """
         Scrapes a page using provided parameters via the Notte API.
 
@@ -189,7 +183,6 @@ class PageClient(BaseClient):
             When using instructions/response_format and raise_on_failure=True: returns the extracted data directly.
             When raise_on_failure=False: returns StructuredData wrapper so user can check .success.
             For markdown scraping: returns str.
-            For image scraping: returns list[ImageData].
 
         Raises:
             ScrapeFailedError: If structured data extraction fails and raise_on_failure=True.
@@ -197,9 +190,6 @@ class PageClient(BaseClient):
         request = ScrapeRequest.model_validate(data)
         endpoint = PageClient._page_scrape_endpoint(session_id=session_id)
         response = self.request(endpoint.with_request(request))
-        # Handle images scraping
-        if request.only_images and response.images is not None:
-            return response.images
         # Handle structured data scraping
         structured = response.structured
         if request.requires_schema():
@@ -310,7 +300,7 @@ class PageClient(BaseClient):
             return result
 
         def failure(message: str, code: str) -> ExecutionResultResponse:
-            from notte_core.browser.observation import utc_now
+            from notte_core.observation import utc_now
 
             result = (
                 original

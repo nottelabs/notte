@@ -1,0 +1,318 @@
+### Content of 'WebArea' component with text 'body content'
+_[:]We use cookies.
+L1[:]<a href="https://www.anthropologie.com/help/privacy-policy">Learn more</a>
+_[:].
+_[:]Skip to main content
+L2[:]<a href="https://www.anthropologie.com/?ref=logo"></a>
+M1[:]<picture></picture>
+L3[:]<a href="https://www.anthropologie.com/anthrohome?brand-switch=1&ref=..."></a>
+M2[:]<picture></picture>
+L4[:]<a href="https://www.anthropologie.com/account/hearted-products"></a>
+L5[:]<a href="https://www.anthropologie.com/cart">Product Count
+1</a>
+_[:]Ship or Pick Up
+_[:]Delivery
+_[:]Payment
+_[:]Ship or Pick Up
+_[:]Already Have an Account?
+_[:]Sign in to check out faster.
+B1[:]<button type="button">Sign In</button>
+_[:]Check out as a guest
+_[:]Email Address
+I1[:]<input type="email" value="" name="emailAddress"></input>
+_[:]Please enter Email Address
+B2[:]<input type="checkbox" value="true" name="emailOptIn"></input>
+_[:]Please send me Anthropologie offers, promotions, and other commercial messages. (You may unsubscribe at any time.)
+B3[:]<button tabindex="0" role="tab">Ship</button>
+B4[:]<button tabindex="-1" role="tab">Pick Up</button>
+_[:]Shipping Address
+_[:]Country/Region
+_[:]Albania
+_[:]Andorra
+_[:]Anguilla
+_[:]Antigua and Barbuda
+_[:]Argentina
+_[:]Armenia
+_[:]Aruba
+_[:]Australia
+_[:]Austria
+_[:]Azerbaijan
+_[:]Bahamas
+_[:]Bahrain
+_[:]Bangladesh
+_[:]Barbados
+_[:]Belgium
+_[:]Belize
+_[:]Bermuda
+_[:]Bolivia
+_[:]Bosnia-Herzegovina
+_[:]Brazil
+_[:]British Virgin Islands
+_[:]Brunei Darussalam
+_[:]Bulgaria
+_[:]Canada
+_[:]Cayman Islands
+_[:]Chile
+_[:]China
+_[:]Colombia
+_[:]Cook Islands
+_[:]Costa Rica
+_[:]Croatia
+_[:]Cyprus
+_[:]Czech Republic
+_[:]Denmark
+_[:]Dominica
+_[:]Dominican Republic
+_[:]Ecuador
+_[:]El Salvador
+_[:]Estonia
+_[:]Falkland Islands
+_[:]Faroe Islands
+_[:]Fiji
+_[:]Finland
+_[:]France
+_[:]French Polynesia
+_[:]Germany
+_[:]Gibraltar
+_[:]Greece
+_[:]Greenland
+_[:]Grenada
+_[:]Guernsey
+_[:]Guyana
+_[:]Honduras
+_[:]Hong Kong SAR
+_[:]Hungary
+_[:]Iceland
+_[:]India
+_[:]Indonesia
+_[:]Ireland
+_[:]Isle Of Man
+_[:]Israel
+_[:]Italy
+_[:]Jamaica
+_[:]Japan
+_[:]Jersey
+_[:]Jordan
+_[:]Kazakhstan
+_[:]Kuwait
+_[:]Latvia
+_[:]Lebanon
+_[:]Liechtenstein
+_[:]Lithuania
+_[:]Luxembourg
+_[:]Macau SAR
+_[:]Macedona
+_[:]Malaysia
+_[:]Malta
+_[:]Mexico
+_[:]Monaco
+_[:]Montenegro
+_[:]Netherlands
+_[:]New Caledonia
+_[:]New Zealand
+_[:]Nicaragua
+_[:]Niue
+_[:]Norway
+_[:]Oman
+_[:]Palau
+_[:]Panama
+_[:]Papua New Guinea
+_[:]Paraguay
+_[:]Peru
+_[:]Philippines
+_[:]Poland
+_[:]Portugal
+_[:]Qatar
+_[:]Romania
+_[:]Saint Kitts and Nevis
+_[:]Saint Lucia
+_[:]Saint Pierre and Miquelon
+_[:]Saint Vincent and the Grenadines
+_[:]Sao Tome And Principe
+_[:]Saudi Arabia
+_[:]Serbia
+_[:]Singapore
+_[:]Slovakia
+_[:]Slovenia
+_[:]Solomon Islands
+_[:]South Africa
+_[:]South Korea
+_[:]Spain
+_[:]Suriname
+_[:]Sweden
+_[:]Switzerland
+_[:]Taiwan Region
+_[:]Thailand
+_[:]Timor Leste
+_[:]Trinidad And Tobago
+_[:]Turkey
+_[:]Turks and Caicos Islands
+_[:]Ukraine
+_[:]United Arab Emirates
+_[:]United Kingdom
+_[:]United States
+_[:]Uruguay
+_[:]Vanuatu
+_[:]Vatican City
+_[:]Venezuela
+_[:]First Name
+_[:]Please enter First Name
+_[:]Last Name
+_[:]Please enter Last Name
+_[:]Street Address
+_[:]Please enter Street Address
+_[:]Address 2
+_[:]PO Box
+_[:]City
+_[:]Please enter City
+_[:]State
+_[:]Select a State
+_[:]Alabama
+_[:]Alaska
+_[:]American Samoa
+_[:]Arizona
+_[:]Arkansas
+_[:]Armed Forces - Americas
+_[:]Armed Forces - Europe
+_[:]Armed Forces - Pacific
+_[:]California
+_[:]Colorado
+_[:]Connecticut
+_[:]Delaware
+_[:]District of Columbia
+_[:]Florida
+_[:]Georgia
+_[:]Guam
+_[:]Hawaii
+_[:]Idaho
+_[:]Illinois
+_[:]Indiana
+_[:]Iowa
+_[:]Kansas
+_[:]Kentucky
+_[:]Louisiana
+_[:]Maine
+_[:]Maryland
+_[:]Massachusetts
+_[:]Michigan
+_[:]Minnesota
+_[:]Mississippi
+_[:]Missouri
+_[:]Montana
+_[:]Nebraska
+_[:]Nevada
+_[:]New Hampshire
+_[:]New Jersey
+_[:]New Mexico
+_[:]New York
+_[:]North Carolina
+_[:]North Dakota
+_[:]Ohio
+_[:]Oklahoma
+_[:]Oregon
+_[:]Pennsylvania
+_[:]Puerto Rico
+_[:]Rhode Island
+_[:]South Carolina
+_[:]South Dakota
+_[:]Tennessee
+_[:]Texas
+_[:]Utah
+_[:]Vermont
+_[:]Virgin Islands
+_[:]Virginia
+_[:]Washington
+_[:]West Virginia
+_[:]Wisconsin
+_[:]Wyoming
+_[:]Please enter State
+_[:]ZIP Code
+_[:]Please enter ZIP Code
+_[:]Mobile Number
+_[:]+1
+_[:]Please enter Mobile Number
+_[:]Order Summary
+L6[:]<a href="tel:8003092500">800.309.2500</a>
+_[:]Subtotal
+_[:]$58.00
+_[:]Shipping
+_[:]TBD
+_[:]Estimated Tax
+_[:]$0.00
+_[:]Total
+_[:]$58.00
+B5[:]<button type="button" aria_expanded="false"></button>
+M3[:]<div>Promo Code</div>
+_[:]Apply
+B6[:]<button type="button">Ship to this address</button>
+_[:]Anthropologie Footer
+_[:]Questions?
+_[:]Contact Us
+_[:]Store Locator
+_[:]Shipping Information
+_[:]Returns & Exchanges
+_[:]Customer Service
+_[:]Privacy Policy
+_[:]Terms of Use
+_[:]CA Transparency
+_[:]Accessibility
+_[:]URBN.com
+_[:]Do Not Sell My Personal Info
+_[:]© 2025 URBN.com. All Rights Reserved.
+_[:]Can we help?
+_[:]For immediate assistance, please use our Chat feature below.
+_[:]Start chat
+_[:]Close
+_[:]normal
+_[:]Manage Cookie Preferences
+_[:]Make selections below to opt-in for optional cookies.
+_[:]Cookie use policy
+_[:]Allow All
+_[:]Manage Consent Preferences
+_[:]Strictly Necessary Cookies
+_[:]Always Active
+_[:]These cookies are necessary for the website to function and cannot be switched off in our systems. They are usually only set in response to actions made by you which amount to a request for services, such as setting your privacy preferences, logging in or filling in forms. You can set your browser to block or alert you about these cookies, but some parts of the site will not then work. These cookies do not store any personally identifiable information.
+_[:]Analytics
+_[:]Analytics
+_[:]Analytics cookies help us improve our website by collecting and reporting info on how you use it. They collect information in a way that does not directly identify anyone.
+_[:]Personalization
+_[:]Personalization
+_[:]Personalisation cookies collect information about your use of this site in order to display content and experiences that are relevant to you.
+_[:]Marketing
+_[:]Marketing
+_[:]Marketing cookies collect information about your use of this and other sites to enable display ads and other marketing that is more relevant to you.
+_[:]Cookie List
+_[:]Clear
+_[:]checkbox label
+_[:]label
+_[:]Apply
+_[:]Cancel
+_[:]Consent
+_[:]Leg.Interest
+_[:]checkbox label
+_[:]label
+_[:]checkbox label
+_[:]label
+_[:]checkbox label
+_[:]label
+_[:]Confirm My Choices
+_[:]Live chat:
+_[:]Chat with an Expert
+
+# interaction actions
+L1	click	'Learn more'	html > body > div:nth-of-type(1) > span > a[href="https://www.anthropologie.com/help/privacy-policy"]	html/body/div[1]/span/a	in_iframe=False	in_shadow_root=False
+L2	click	''	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > a.c-pwa-link.c-pwa-link--client.c-pwa-header-tabs__logo[href="https://www.anthropologie.com/?ref=logo"]	html/body/div[2]/div/div[1]/header/div/div/div/div[1]/div/div[1]/a	in_iframe=False	in_shadow_root=False
+M1	click	''	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > a > picture	html/body/div[2]/div/div[1]/header/div/div/div/div[1]/div/div[1]/a/picture	in_iframe=False	in_shadow_root=False
+L3	click	''	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(2) > a.c-pwa-link.c-pwa-header-tabs__logo[href="https://www.anthropologie.com/anthrohome?brand-switch=1&ref=tab"]	html/body/div[2]/div/div[1]/header/div/div/div/div[1]/div/div[2]/a	in_iframe=False	in_shadow_root=False
+M2	click	''	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(2) > a > picture	html/body/div[2]/div/div[1]/header/div/div/div/div[1]/div/div[2]/a/picture	in_iframe=False	in_shadow_root=False
+L4	click	''	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(2) > a.c-pwa-link.c-pwa-link--client.c-pwa-main-bar__heart-link[href="https://www.anthropologie.com/account/hearted-products"]	html/body/div[2]/div/div[1]/header/div/div/div/div[2]/a	in_iframe=False	in_shadow_root=False
+L5	click	'Product Count 1'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(2) > div > div > a.c-pwa-link.c-pwa-link--client.c-pwa-site-basket__link[href="https://www.anthropologie.com/cart"]	html/body/div[2]/div/div[1]/header/div/div/div/div[2]/div/div/a	in_iframe=False	in_shadow_root=False
+B1	click	'Sign In'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > button.o-pwa-button-secondary[type="button"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[1]/div[1]/div/div/div[2]/button	in_iframe=False	in_shadow_root=False
+I1	fill	'emailAddress'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(1) > div > div > input.c-pwa-input.c-pwa-input--email[type="email"][id="email-address"][name="emailAddress"][required]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[1]/div[2]/div/form/div[1]/div/div/input	in_iframe=False	in_shadow_root=False
+B2	click	'emailOptIn'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(2) > div > div > label > input.o-pwa-checkbox__input[type="checkbox"][aria-labelledby="email-opt-in--text"][id="email-opt-in"][name="emailOptIn"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[1]/div[2]/div/form/div[2]/div/div/label/input	in_iframe=False	in_shadow_root=False
+B3	click	'Ship'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1).c-pwa-tabs__tab.is-selected[id="urbn-tab-ship-tab"][role="tab"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[2]/div[1]/button[1]	in_iframe=False	in_shadow_root=False
+B4	click	'Pick Up'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2).c-pwa-tabs__tab[id="urbn-tab-pickup-tab"][role="tab"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[2]/div[1]/button[2]	in_iframe=False	in_shadow_root=False
+L6	click	'800.309.2500'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > a.c-pwa-contact[href="tel:8003092500"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[1]/div/a	in_iframe=False	in_shadow_root=False
+B5	click	'Promo Code'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > h3 > button.o-pwa-button-none.o-pwa-accordion__toggle[type="button"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[2]/div/div[1]/div/div/h3/button	in_iframe=False	in_shadow_root=False
+M3	click	'Promo Code'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > h3 > button > div	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[2]/div/div[1]/div/div/h3/button/div	in_iframe=False	in_shadow_root=False
+B6	click	'Ship to this address'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div:nth-of-type(3) > button.o-pwa-button-cart.s-pwa-proceed-button[type="button"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[2]/div/div[3]/button	in_iframe=False	in_shadow_root=False
