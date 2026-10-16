@@ -372,6 +372,13 @@
             ]
           },
           {
+            "group": "Observability",
+            "icon": "chart-line",
+            "pages": [
+              "integrations/braintrust"
+            ]
+          },
+          {
             "group": "Email",
             "icon": "envelope",
             "pages": [
