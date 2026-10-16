@@ -54,3 +54,6 @@ def enable_nest_asyncio() -> None:
     if os.environ.get("NOTTE_ENABLE_NEST_ASYNCIO", "true") == "true":
         _ = nest_asyncio.apply()  # pyright: ignore[reportUnknownMemberType]
         nest_asyncio_enabled = True
+
+
+from notte_core import _v1_aliases as _v1_aliases  # noqa: E402

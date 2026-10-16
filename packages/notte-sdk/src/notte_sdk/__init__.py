@@ -57,3 +57,6 @@ __all__ = [
     "UploadFile",
     "DownloadFile",
 ]
+
+
+from notte_sdk import _v1_aliases as _v1_aliases  # noqa: E402
