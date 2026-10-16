@@ -36,6 +36,8 @@ jobs:
       - run: npm run typecheck
       - run: pip install -r requirements.txt
       - run: python -m compileall -q bridge.py main.py install_driver.py test_selenium.py
+      - run: python -m unittest -v test_bridge
+      - run: npm test
   live:
     needs: static
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository

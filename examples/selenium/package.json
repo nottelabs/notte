@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/main.ts",
     "typecheck": "tsc --noEmit",
+    "test": "node --test test/bridge.test.ts",
     "test:live": "node --test test/selenium.live.test.ts"
   },
   "dependencies": {

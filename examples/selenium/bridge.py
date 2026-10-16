@@ -41,11 +41,13 @@ async def cdp_bridge(cdp_url: str):
 
                 tasks = [asyncio.create_task(pump(client, upstream)), asyncio.create_task(pump(upstream, client))]
                 try:
-                    await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+                    done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
                 finally:
                     for task in tasks:
                         task.cancel()
                     await asyncio.gather(*tasks, return_exceptions=True)
+                for task in done:
+                    task.result()
         except Exception:
             await client.close(1011, "Hosted browser connection closed")
 

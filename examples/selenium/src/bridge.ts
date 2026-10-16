@@ -53,7 +53,10 @@ export async function cdpBridge(cdpUrl: string) {
     const websocket = new WebSocketServer({ noServer: true });
     server.on('upgrade', (req, socket, head) => {
       // ChromeDriver's WebSocket handshake omits the port from Host.
-      if (req.headers.origin || ![address, '127.0.0.1'].includes(req.headers.host ?? '') || req.url !== nonce) { socket.destroy(); return; }
+      if (req.headers.origin || ![address, '127.0.0.1'].includes(req.headers.host ?? '') || req.url !== nonce) {
+        socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
+        return;
+      }
       websocket.handleUpgrade(req, socket, head, client => {
         const remote = new WebSocket(cdpUrl, { handshakeTimeout: 30_000 });
         const pending: { data: WebSocket.RawData; binary: boolean }[] = [];
@@ -70,7 +73,10 @@ export async function cdpBridge(cdpUrl: string) {
           remote.on('message', (data, binary) => client.readyState === WebSocket.OPEN && client.send(data, { binary }));
         });
         client.on('close', () => { sockets.delete(client); remote.close(); });
-        remote.on('close', () => { sockets.delete(remote); client.close(); });
+        remote.on('close', code => {
+          sockets.delete(remote);
+          client.close(code === 1000 || code === 1001 ? 1000 : 1011, 'Hosted browser connection closed');
+        });
       });
     });
     server.listen(0, '127.0.0.1');
