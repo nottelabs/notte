@@ -116,10 +116,27 @@ class ComputerUseTests(unittest.IsolatedAsyncioTestCase):
     async def test_model_drives_browser(self):
         self.assertTrue(os.getenv("GEMINI_API_KEY"))
         self.assertTrue(os.getenv("NOTTE_API_URL"))
-        result = await agent.run("Go to https://example.com and read its page title.")
-        self.assertEqual(result["title"], "Example Domain")
-        self.assertGreater(result["actions"], 0)
-        await closed(NotteClient(), result["session_id"])
+        client, ids = NotteClient(), []
+        original = client.sessions.start
+
+        def start(**kwargs):
+            result = original(**kwargs)
+            ids.append(result.session_id)
+            return result
+
+        try:
+            with (
+                patch.object(client.sessions, "start", side_effect=start),
+                patch.object(agent, "NotteClient", return_value=client),
+            ):
+                result = await agent.run("Go to https://example.com and read its page title.")
+            self.assertEqual(result["title"], "Example Domain")
+            self.assertGreater(result["actions"], 0)
+            self.assertEqual(ids, [result["session_id"]])
+        finally:
+            for session_id in ids:
+                await closed(client, session_id)
+                print(f"Verified closed model session {session_id}")
 
 
 if __name__ == "__main__":

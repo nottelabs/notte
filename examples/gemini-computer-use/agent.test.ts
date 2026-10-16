@@ -92,11 +92,24 @@ test('Provider failure closes the browser and sanitizes the error', { skip: !liv
   }
 });
 
-test('Gemini drives the registered cloud browser', { skip: !model, timeout: 180_000 }, async () => {
+test('Gemini drives the cloud browser and closes it on every outcome', { skip: !model, timeout: 180_000 }, async () => {
   assert.ok(process.env.GEMINI_API_KEY);
   assert.ok(process.env.NOTTE_API_URL);
-  const result = await run('Go to https://example.com and read its page title.');
-  assert.equal(result.title, 'Example Domain');
-  assert.ok(result.actions > 0, 'The model must execute a browser action');
-  await closed(result.session_id);
+  const original = globalThis.fetch, ids: string[] = [];
+  globalThis.fetch = async (input, init) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const response = await original(input, init);
+    if (new URL(url).pathname === '/sessions/start' && response.ok) ids.push((await response.clone().json()).session_id);
+    return response;
+  };
+  try {
+    const result = await run('Go to https://example.com and read its page title.');
+    assert.equal(result.title, 'Example Domain');
+    assert.ok(result.actions > 0, 'The model must execute a browser action');
+    assert.equal(ids.length, 1);
+    assert.equal(result.session_id, ids[0]);
+  } finally {
+    try { for (const id of ids) { await closed(id); console.info(`Verified closed model session ${id}`); } }
+    finally { globalThis.fetch = original; }
+  }
 });

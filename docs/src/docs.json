@@ -183,10 +183,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/gemini-computer-use",
-      "destination": "/integrations"
-    },
-    {
       "source": "/integrations/laminar",
       "destination": "/integrations"
     },
