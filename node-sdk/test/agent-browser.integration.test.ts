@@ -44,37 +44,42 @@ describe.skipIf(process.env.NOTTE_AGENT_BROWSER_LIVE !== '1')('agent-browser lif
   it('fills, clicks, reconnects, and stops the browser after an application error', async () => {
     const client = new NotteClient();
     let sessionId = '';
-    await expect(client.Session().use(async (session) => {
-      sessionId = session.getId()!;
-      const command = ['--session', `notte-${sessionId}`, '--json'];
-      async function browser(...args: string[]) {
-        let stdout: string;
-        try {
-          ({ stdout } = await execute('agent-browser', [...command, ...args], { timeout: 120_000 }));
-        } catch {
-          throw new Error('agent-browser command failed (CLI output withheld)');
+    try {
+      await expect(client.Session().use(async (session) => {
+        sessionId = session.getId()!;
+        const command = ['--session', `notte-${sessionId}`, '--json'];
+        const failedCommands: string[] = [];
+        async function browser(...args: string[]) {
+          let stdout: string;
+          try {
+            ({ stdout } = await execute('agent-browser', [...command, ...args], { timeout: 120_000 }));
+          } catch {
+            failedCommands.push(args[0]);
+            throw new Error(`agent-browser ${args[0]} failed (failed commands: ${failedCommands.join(', ')}; CLI output withheld)`);
+          }
+          const response = JSON.parse(stdout);
+          expect(response.success, `agent-browser ${args[0]} reported failure`).toBe(true);
+          return response.data;
         }
-        const response = JSON.parse(stdout);
-        expect(response.success).toBe(true);
-        return response.data;
-      }
-      try {
-        await browser('connect', await session.cdpUrl());
-        await browser('open', 'data:text/html,<label>Name<input id="name"></label><button id="save" onclick="document.getElementById(\'result\').textContent=\'Saved \'+document.getElementById(\'name\').value">Save</button><p id="result"></p>');
-        expect((await browser('snapshot', '-i')).snapshot).toContain('Save');
-        await browser('fill', '#name', 'Ada');
-        await browser('click', '#save');
-        expect((await browser('get', 'text', '#result')).text).toBe('Saved Ada');
-        await browser('close');
-        expect((await session.status()).status).toBe('active');
-        await browser('connect', await session.cdpUrl());
-        expect((await browser('get', 'text', '#result')).text).toBe('Saved Ada');
-        throw new Error('Injected application failure');
-      } finally {
-        await browser('close');
-      }
-    })).rejects.toThrow('Injected application failure');
-    expect(sessionId).toBeTruthy();
-    await expectSessionClosed(client, sessionId, 'agent-browser application failure');
+        try {
+          await browser('connect', await session.cdpUrl());
+          await browser('open', 'data:text/html,<label>Name<input id="name"></label><button id="save" onclick="document.getElementById(\'result\').textContent=\'Saved \'+document.getElementById(\'name\').value">Save</button><p id="result"></p>');
+          expect((await browser('snapshot', '-i')).snapshot).toContain('Save');
+          await browser('fill', '#name', 'Ada');
+          await browser('click', '#save');
+          expect((await browser('get', 'text', '#result')).text).toBe('Saved Ada');
+          await browser('close');
+          expect((await session.status()).status).toBe('active');
+          await browser('connect', await session.cdpUrl());
+          expect((await browser('get', 'text', '#result')).text).toBe('Saved Ada');
+          throw new Error('Injected application failure');
+        } finally {
+          await browser('close');
+        }
+      })).rejects.toThrow('Injected application failure');
+      expect(sessionId).toBeTruthy();
+    } finally {
+      if (sessionId) await expectSessionClosed(client, sessionId, 'agent-browser application failure');
+    }
   }, 200_000);
 });
