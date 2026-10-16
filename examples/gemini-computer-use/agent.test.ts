@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { NotteClient, sessionStatus } from 'notte-sdk';
 import { chromium, type Page } from 'playwright-core';
-import { execute, run } from './agent.ts';
+import { execute, perform, run } from './agent.ts';
 
 const live = process.env.NOTTE_GEMINI_LIVE === '1';
 const model = process.env.NOTTE_GEMINI_MODEL_LIVE === '1';
@@ -51,6 +51,10 @@ test('Browser actions fill a form and honor confirmation before clicking', { ski
       assert.equal(await page.title(), 'Saved Ada');
       await assert.rejects(execute(page, 'click', { x: 1000, y: 2 }), /coordinates/);
       await assert.rejects(execute(page, 'shell', {}), /Unsupported/);
+      await page.setContent('<button onclick="window.open(\'about:blank\',\'_blank\').document.title=\'Popup\'">Open</button>');
+      const destination = await perform(page, 'click', await point('button'));
+      assert.notEqual(destination, page);
+      assert.equal(await destination.title(), 'Popup');
     } finally { await browser.close(); }
   });
   await closed(id);
@@ -73,7 +77,11 @@ test('Provider failure closes the browser and sanitizes the error', { skip: !liv
     return response;
   };
   try {
-    await assert.rejects(run('Read the page title'), /^Error: Gemini computer task failed$/);
+    await assert.rejects(run('Read the page title'), (error: Error) => {
+      assert.match(error.message, /^Gemini API error 401:/);
+      assert.doesNotMatch(error.message, /https?:|wss?:|integration-test-not-a-real-key/);
+      return true;
+    });
     assert.equal(providerCalls, 1);
     assert.equal(ids.length, 1);
     await closed(ids[0]);

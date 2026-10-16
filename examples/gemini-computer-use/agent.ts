@@ -71,6 +71,17 @@ export async function execute(page: Page, name: string, args: Args): Promise<voi
   }
 }
 
+export async function perform(page: Page, name: string, args: Args): Promise<Page> {
+  const popup = ['click', 'double_click', 'middle_click', 'type', 'press_key', 'hotkey'].includes(name)
+    ? page.context().waitForEvent('page', { timeout: 1000 }).catch(() => undefined) : undefined;
+  await execute(page, name, args);
+  const destination = await popup;
+  if (!destination) return page;
+  await destination.setViewportSize(page.viewportSize()!);
+  await destination.waitForLoadState('domcontentloaded', { timeout: 30_000 });
+  return destination;
+}
+
 export async function run(task: string) {
   if (!process.env.GEMINI_API_KEY) throw new Error('Set GEMINI_API_KEY');
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: { timeout: 60_000, retryOptions: { attempts: 1 } } });
@@ -79,7 +90,7 @@ export async function run(task: string) {
     let browser: Browser | undefined;
     try {
       browser = await chromium.connectOverCDP(await session.cdpUrl());
-      const page = await browser.contexts()[0].newPage();
+      let page = await browser.contexts()[0].newPage();
       await page.setViewportSize({ width: 1440, height: 900 });
       let interaction = await ai.interactions.create({
         model: 'gemini-3.8-flash', tools,
@@ -89,7 +100,7 @@ export async function run(task: string) {
         ],
       });
       let actions = 0;
-      for (let turn = 0; turn < 12; turn++) {
+      for (let turn = 0; turn <= 12; turn++) {
         const calls = interaction.steps.filter(step => step.type === 'function_call');
         if (!calls.length) {
           if (interaction.status !== 'completed') throw new Error('Computer task did not complete');
@@ -97,9 +108,10 @@ export async function run(task: string) {
             ? (step.content ?? []).filter(part => part.type === 'text').map(part => part.text) : []).join(' ');
           return { answer, title: await page.title(), session_id: session.getId()!, actions };
         }
+        if (turn === 12) throw new Error('Computer task exceeded twelve turns');
         const results = [];
         for (const call of calls) {
-          await execute(page, call.name!, call.arguments as Args);
+          page = await perform(page, call.name!, call.arguments as Args);
           actions++;
           results.push({ type: 'function_result' as const, name: call.name, call_id: call.id, result: [
             { type: 'text' as const, text: JSON.stringify({ url: page.url() }) },
@@ -113,6 +125,16 @@ export async function run(task: string) {
       throw new Error('Computer task exceeded twelve turns');
     } catch (error) {
       if (error instanceof ApprovalRequired) throw error;
+      const failure = error as { status?: number; statusCode?: number; message?: string };
+      const code = failure?.status ?? failure?.statusCode;
+      if (typeof code === 'number') {
+        let detail = String(failure.message ?? '');
+        for (const value of [process.env.GEMINI_API_KEY, process.env.NOTTE_API_KEY]) {
+          if (value) detail = detail.replaceAll(value, '[REDACTED]');
+        }
+        detail = detail.replace(/(?:https?|wss?):\/\/\S+/g, '[URL]');
+        throw new Error(`Gemini API error ${code}: ${detail.slice(0, 240)}`);
+      }
       throw new Error('Gemini computer task failed');
     } finally {
       await browser?.close();

@@ -61,6 +61,12 @@ class ComputerUseTests(unittest.IsolatedAsyncioTestCase):
                         await agent.execute(page, "click", {"x": 1000, "y": 2})
                     with self.assertRaises(ValueError):
                         await agent.execute(page, "shell", {})
+                    await page.set_content(
+                        "<button onclick=\"window.open('about:blank','_blank').document.title='Popup'\">Open</button>"
+                    )
+                    destination = await agent.perform(page, "click", await point("button"))
+                    self.assertIsNot(destination, page)
+                    self.assertEqual(await destination.title(), "Popup")
                 finally:
                     await browser.close()
         await closed(client, session.session_id)
@@ -77,6 +83,8 @@ class ComputerUseTests(unittest.IsolatedAsyncioTestCase):
             return result
 
         class ProviderFailure:
+            calls = 0
+
             async def __aenter__(self):
                 return self
 
@@ -88,16 +96,19 @@ class ComputerUseTests(unittest.IsolatedAsyncioTestCase):
                 return self
 
             async def create(self, **_):
+                self.calls += 1
                 raise RuntimeError("Injected provider failure")
 
+        provider = ProviderFailure()
         with (
             patch.object(client.sessions, "start", side_effect=start),
             patch.object(agent, "NotteClient", return_value=client),
-            patch.object(agent.genai, "Client", return_value=SimpleNamespace(aio=ProviderFailure())),
+            patch.object(agent.genai, "Client", return_value=SimpleNamespace(aio=provider)),
             patch.dict(os.environ, {"GEMINI_API_KEY": "integration-test-not-a-real-key"}),  # pragma: allowlist secret
         ):
             with self.assertRaisesRegex(RuntimeError, "^Gemini computer task failed$"):
                 await agent.run("Read the page title")
+        self.assertEqual(provider.calls, 1)
         self.assertEqual(len(ids), 1)
         await closed(client, ids[0])
 

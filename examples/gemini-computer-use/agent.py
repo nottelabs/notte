@@ -2,12 +2,14 @@ import asyncio
 import base64
 import json
 import os
+import re
 import sys
 from typing import Any
 
 from google import genai
 from notte_sdk import NotteClient
 from playwright.async_api import Page, async_playwright
+from playwright.async_api import TimeoutError as BrowserTimeout
 
 
 def key(value: str) -> str:
@@ -97,6 +99,30 @@ async def execute(page: Page, name: str, args: dict[str, Any]) -> None:
         raise ValueError("Unsupported computer action")
 
 
+async def perform(page: Page, name: str, args: dict[str, Any]) -> Page:
+    popup = None
+    if name in {"click", "double_click", "middle_click", "type", "press_key", "hotkey"}:
+        popup = asyncio.create_task(page.context.wait_for_event("page", timeout=1000))
+        await asyncio.sleep(0)
+    try:
+        await execute(page, name, args)
+        if popup:
+            try:
+                destination = await popup
+                await destination.set_viewport_size(page.viewport_size)
+                await destination.wait_for_load_state("domcontentloaded", timeout=30_000)
+                return destination
+            except BrowserTimeout:
+                if not popup.done() or popup.exception() is None:
+                    raise
+        return page
+    finally:
+        if popup:
+            if not popup.done():
+                popup.cancel()
+            await asyncio.gather(popup, return_exceptions=True)
+
+
 async def run(task: str) -> dict[str, Any]:
     api_key = os.environ["GEMINI_API_KEY"]
     tool = {"type": "computer_use", "environment": "browser", "enable_prompt_injection_detection": True}
@@ -120,7 +146,7 @@ async def run(task: str) -> dict[str, Any]:
                     ],
                 )
                 actions = 0
-                for _ in range(12):
+                for turn in range(13):
                     calls = [step for step in interaction.steps if step.type == "function_call"]
                     if not calls:
                         if interaction.status != "completed":
@@ -138,9 +164,11 @@ async def run(task: str) -> dict[str, Any]:
                             "session_id": session.session_id,
                             "actions": actions,
                         }
+                    if turn == 12:
+                        raise RuntimeError("Computer task exceeded twelve turns")
                     results = []
                     for call in calls:
-                        await execute(page, call.name, call.arguments)
+                        page = await perform(page, call.name, call.arguments)
                         actions += 1
                         image = base64.b64encode(await page.screenshot()).decode()
                         results.append(
@@ -163,7 +191,15 @@ async def run(task: str) -> dict[str, Any]:
                 raise RuntimeError("Computer task exceeded twelve turns")
             except PermissionError:
                 raise
-            except Exception:
+            except Exception as error:
+                code = getattr(error, "status_code", None)
+                if isinstance(code, int):
+                    detail = str(error)
+                    for value in (api_key, os.getenv("NOTTE_API_KEY")):
+                        if value:
+                            detail = detail.replace(value, "[REDACTED]")
+                    detail = re.sub(r"(?:https?|wss?)://\S+", "[URL]", detail)
+                    raise RuntimeError(f"Gemini API error {code}: {detail[:240]}") from None
                 raise RuntimeError("Gemini computer task failed") from None
             finally:
                 if browser:
