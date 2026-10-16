@@ -1,0 +1,82 @@
+name: Braintrust integration
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/braintrust-integration.yml
+      - examples/braintrust/**
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - node-sdk/src/**
+      - node-sdk/package.json
+      - node-sdk/package-lock.json
+      - uv.lock
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/braintrust-integration.yml
+      - examples/braintrust/**
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - node-sdk/src/**
+      - node-sdk/package.json
+      - node-sdk/package-lock.json
+      - uv.lock
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+      - run: npm ci && npm run typecheck
+        working-directory: examples/braintrust/typescript
+      - run: python -m compileall -q examples/braintrust/python
+  live:
+    needs: static
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+      - run: uv sync --locked --package notte-sdk --no-dev
+      - run: uv pip install braintrust==0.46.0 playwright==1.64.0
+      - run: npm ci --prefix node-sdk && npm run build --prefix node-sdk
+      - run: npm ci && npm install --no-save --package-lock=false ../../../node-sdk && npm run typecheck
+        working-directory: examples/braintrust/typescript
+      - uses: ./.github/actions/wait-for-api
+        with:
+          api-url: https://us-staging.notte.cc
+          timeout: '300'
+      - name: Verify persisted success and error traces when Braintrust is configured
+        working-directory: examples/braintrust/typescript
+        env:
+          NOTTE_API_URL: https://us-staging.notte.cc
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+          BRAINTRUST_API_KEY: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && secrets.BRAINTRUST_API_KEY || '' }}
+          BRAINTRUST_PROJECT: notte-integration-tests
+          NOTTE_BRAINTRUST_PYTHON: ${{ github.workspace }}/.venv/bin/python
+        run: npm run test:live
