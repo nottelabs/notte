@@ -347,6 +347,13 @@
             ]
           },
           {
+            "group": "Computer Use",
+            "icon": "desktop",
+            "pages": [
+              "integrations/yutori"
+            ]
+          },
+          {
             "group": "Agent Frameworks",
             "icon": "robot",
             "pages": [
