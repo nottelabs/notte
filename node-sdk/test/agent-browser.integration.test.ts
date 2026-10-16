@@ -44,34 +44,53 @@ describe.skipIf(process.env.NOTTE_AGENT_BROWSER_LIVE !== '1')('agent-browser lif
   it.each(['application', 'native'] as const)('fills, clicks, reconnects, and stops after a %s error', async mode => {
     const client = new NotteClient();
     let sessionId = '';
+    let completedActions = false;
     try {
       await expect(client.Session().use(async (session) => {
         sessionId = session.getId()!;
         const command = ['--session', `notte-${sessionId}`, '--json'];
-        const env = { ...process.env, AGENT_BROWSER_CDP: await session.cdpUrl(), AGENT_BROWSER_DEFAULT_TIMEOUT: '1000' };
-        const failedCommands: string[] = [];
+        const env = { ...process.env, AGENT_BROWSER_CDP: await session.cdpUrl() };
+        let phase = 'navigation';
         async function browser(...args: string[]) {
+          let diagnostic = '';
           try {
             const { stdout } = await execute('agent-browser', [...command, ...args], { env, timeout: 120_000 });
+            diagnostic = stdout;
             const response = JSON.parse(stdout);
             if (!response.success) throw new Error('Unsuccessful CLI command');
             return response.data;
-          } catch {
-            failedCommands.push(args[0]);
-            throw new Error(`agent-browser ${args[0]} failed (failed commands: ${failedCommands.join(', ')}; CLI output withheld)`);
+          } catch (error) {
+            const processError = error as { stdout?: unknown; stderr?: unknown };
+            const detail = [diagnostic, processError?.stdout, processError?.stderr]
+              .filter((value): value is string => typeof value === 'string').join(' ');
+            const missing = phase === 'missing-selector' && args[2] === '#missing-owned-fixture'
+              && detail.includes('#missing-owned-fixture')
+              && /timeout|timed out|no (?:such )?element|not found/i.test(detail)
+              && !/websocket|econn|connection|target closed|session.*closed|cdp.*(?:error|closed)/i.test(detail);
+            throw new Error(`agent-browser ${args[0]} failed (${phase}; ${missing ? 'owned selector missing' : 'command error'}; raw output withheld)`);
           }
         }
         let failed = false;
         try {
           await browser('open', 'data:text/html,<label>Name<input id="name"></label><button id="save" onclick="document.getElementById(\'result\').textContent=\'Saved \'+document.getElementById(\'name\').value">Save</button><p id="result"></p>');
+          phase = 'snapshot';
           expect((await browser('snapshot', '-i')).snapshot).toContain('Save');
+          phase = 'fill';
           await browser('fill', '#name', 'Ada');
+          phase = 'click';
           await browser('click', '#save');
+          phase = 'read-after-click';
           expect((await browser('get', 'text', '#result')).text).toBe('Saved Ada');
+          phase = 'disconnect';
           await browser('close');
           expect((await session.status()).status).toBe('active');
+          phase = 'read-after-reconnect';
           expect((await browser('get', 'text', '#result')).text).toBe('Saved Ada');
-          if (mode === 'native') await browser('get', 'text', '#missing-owned-fixture');
+          completedActions = true;
+          if (mode === 'native') {
+            phase = 'missing-selector';
+            await browser('get', 'text', '#missing-owned-fixture');
+          }
           throw new Error('Injected application failure');
         } catch (error) {
           failed = true;
@@ -80,7 +99,8 @@ describe.skipIf(process.env.NOTTE_AGENT_BROWSER_LIVE !== '1')('agent-browser lif
           try { await browser('close'); }
           catch (error) { if (!failed) throw error; }
         }
-      })).rejects.toThrow(mode === 'native' ? 'agent-browser get failed' : 'Injected application failure');
+      })).rejects.toThrow(mode === 'native' ? 'owned selector missing' : 'Injected application failure');
+      expect(completedActions, 'The negative assertion must follow real actions and reconnect').toBe(true);
       expect(sessionId).toBeTruthy();
     } finally {
       if (sessionId) await expectSessionClosed(client, sessionId, 'agent-browser application failure');
