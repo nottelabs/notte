@@ -81,6 +81,7 @@ jobs:
     uses: ./.github/workflows/node-sdk-ci.yml
     with:
       scope: ${{ needs.changes.outputs.scope }}
+      reviewed_sha: ${{ github.sha }}
     secrets: inherit # pragma: allowlist secret
 
   docs:
@@ -101,6 +102,7 @@ jobs:
     uses: ./.github/workflows/paired-sdk-examples.yml
     with:
       scope: ${{ needs.changes.outputs.scope }}
+      reviewed_sha: ${{ github.sha }}
     secrets: inherit # pragma: allowlist secret
 
   readme:
@@ -111,6 +113,7 @@ jobs:
     uses: ./.github/workflows/readme-check.yml
     with:
       scope: ${{ needs.changes.outputs.scope }}
+      reviewed_sha: ${{ github.sha }}
     secrets: inherit # pragma: allowlist secret
 
   # Preserve the required check name and wait for all selected suite families.

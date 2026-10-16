@@ -291,8 +291,9 @@ jobs:
       - name: Run staging and live tests
         env:
           # Paid provider credentials remain exclusive to explicit maintainer dispatch.
+          NOTTE_CI_REVIEWED_SHA: ${{ inputs.reviewed_sha }}
           NOTTE_CI_LLM_PROVIDER: ${{ github.event_name == 'workflow_dispatch' && inputs.llm_provider || 'gemini' }}
-          OPENAI_API_KEY: ${{ github.event_name == 'workflow_dispatch' && inputs.llm_provider == 'openai' && secrets.OPENAI_API_KEY || '' }}
+          OPENAI_API_KEY: ${{ github.event_name == 'workflow_dispatch' && inputs.llm_provider == 'openai' && inputs.reviewed_sha == github.sha && secrets.OPENAI_API_KEY || '' }}
           NOTTE_LLM_BASE_URL: https://generativelanguage.googleapis.com/v1beta/openai
           NOTTE_LLM_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NOTTE_LLM_MODEL: gemini-3.5-flash-lite
@@ -307,6 +308,7 @@ jobs:
           case "$NOTTE_CI_LLM_PROVIDER" in
             gemini) ;;
             openai)
+              test "$NOTTE_CI_REVIEWED_SHA" = "$GITHUB_SHA" || { echo 'Use the coordinating CI workflow for a reviewed OpenAI run'; exit 1; }
               test -n "$OPENAI_API_KEY" || { echo 'Set the existing OpenAI repository secret for this dispatch'; exit 1; }
               export NOTTE_LLM_BASE_URL=https://api.openai.com/v1
               export NOTTE_LLM_API_KEY="$OPENAI_API_KEY"

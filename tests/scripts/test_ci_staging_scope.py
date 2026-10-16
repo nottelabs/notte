@@ -108,6 +108,8 @@ def test_only_selected_families_receive_the_shared_scope() -> None:
         assert job["needs"] == "changes"
         assert job["uses"] == f"./.github/workflows/{name}"
         expected_inputs = {"scope": "${{ needs.changes.outputs.scope }}"}
+        if family in {"python", "node", "paired", "readme"}:
+            expected_inputs["reviewed_sha"] = "${{ github.sha }}"
         if family == "python":
             expected_inputs.update(
                 reviewed_sha="${{ github.sha }}",
@@ -181,6 +183,8 @@ def test_live_selection_does_not_bypass_fork_protection() -> None:
         condition = workflow(name)["jobs"][job_id]["if"]
         assert "github.event.pull_request.head.repo.full_name == github.repository" in condition
         assert "fromJSON(needs.changes.outputs.scope)" in condition
+        if name in {"node-sdk-ci.yml", "paired-sdk-examples.yml", "readme-check.yml"}:
+            assert "github.event_name == 'workflow_dispatch' && inputs.reviewed_sha == github.sha" in condition
 
 
 def test_lightweight_docs_assertions_have_no_workspace_or_secrets() -> None:
@@ -273,11 +277,17 @@ def test_manual_ci_refuses_an_unreviewed_commit(tmp_path: Path, pr: str, actual:
 
 
 @pytest.mark.parametrize(
-    "provider,key,succeeds",
-    [("gemini", "", True), ("openai", "dummy-test-key", True), ("openai", "", False), ("unknown", "", False)],
+    "provider,key,reviewed,succeeds",
+    [
+        ("gemini", "", True, True),
+        ("openai", "dummy-test-key", True, True),
+        ("openai", "", True, False),
+        ("unknown", "", True, False),
+        ("openai", "dummy-test-key", False, False),
+    ],
 )
 def test_manual_provider_selection_runs_the_full_live_suite(
-    tmp_path: Path, provider: str, key: str, succeeds: bool
+    tmp_path: Path, provider: str, key: str, reviewed: bool, succeeds: bool
 ) -> None:
     step = next(
         s
@@ -286,7 +296,7 @@ def test_manual_provider_selection_runs_the_full_live_suite(
     )
     # Automatic PRs cannot opt in to the paid secret through supplied reusable inputs.
     assert step["env"]["OPENAI_API_KEY"] == (
-        "${{ github.event_name == 'workflow_dispatch' && inputs.llm_provider == 'openai' && secrets.OPENAI_API_KEY || '' }}"
+        "${{ github.event_name == 'workflow_dispatch' && inputs.llm_provider == 'openai' && inputs.reviewed_sha == github.sha && secrets.OPENAI_API_KEY || '' }}"
     )
     assert step["env"]["NOTTE_CI_LLM_PROVIDER"].startswith("${{ github.event_name == 'workflow_dispatch' && ")
     output = tmp_path / "invocation.json"
@@ -307,6 +317,8 @@ Path(os.environ["OUTPUT"]).write_text(json.dumps({
             "PATH": f"{tmp_path}:{os.environ['PATH']}",
             "OUTPUT": str(output),
             "NOTTE_CI_LLM_PROVIDER": provider,
+            "NOTTE_CI_REVIEWED_SHA": "a" * 40 if reviewed else "",
+            "GITHUB_SHA": "a" * 40,
             "OPENAI_API_KEY": key,
             "NOTTE_LLM_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai",
             "NOTTE_LLM_MODEL": "gemini-3.5-flash-lite",
