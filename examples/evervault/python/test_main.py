@@ -190,10 +190,58 @@ async def test_cancel_during_start_recovers_owned_id_and_closes():
         await notte.http.aclose()
 
 
+@pytest.mark.parametrize("phase", ["DELETE", "GET"])
+async def test_repeated_cancellation_during_cleanup_finishes_then_propagates(phase):
+    requests, transport = fixture()
+    notte = Notte("fixture-key", transport=transport)
+    entered, release = asyncio.Event(), asyncio.Event()
+    original = notte.request
+
+    async def delayed(method, path, **kwargs):
+        if method == phase:
+            entered.set()
+            await release.wait()
+        return await original(method, path, **kwargs)
+
+    notte.request = delayed
+
+    async def run():
+        async with notte.owned({}):
+            pass
+
+    task = asyncio.create_task(run())
+    try:
+        await entered.wait()
+        task.cancel()
+        await asyncio.sleep(0)
+        task.cancel()
+        await asyncio.sleep(0)
+        assert not task.done(), "Caller cancellation interrupted owned cleanup"
+        release.set()
+        with pytest.raises(asyncio.CancelledError):
+            await asyncio.wait_for(task, 3)
+        assert [request.method for request in requests] == ["POST", "DELETE", "GET"]
+    finally:
+        release.set()
+        await notte.http.aclose()
+
+
 async def test_vendor_auth_failure_does_not_return_response_body():
     _, transport = fixture(vendor_status=401)
     with pytest.raises(RuntimeError, match="^Evervault returned HTTP 401$"):
         await create_token("app", "key", "ev:fixture", TARGET, transport)
+
+
+async def test_http_deadline_bounds_a_server_that_never_finishes():
+    async def hang(_):
+        await asyncio.Event().wait()
+
+    notte = Notte("fixture-key", transport=httpx.MockTransport(hang))
+    try:
+        with pytest.raises(RuntimeError, match=r"^Notte transport failed \(TimeoutError\)$"):
+            await notte.request("GET", "/health", timeout=0.01)
+    finally:
+        await notte.http.aclose()
 
 
 async def test_failed_start_with_owned_id_still_closes_before_cdp():

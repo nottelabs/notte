@@ -12,6 +12,19 @@ from playwright.async_api import async_playwright
 CA_SHA256 = "4137d69968b54bcf27de628e80cbe2535a15604af8b5ed1236831c9285365968"  # pragma: allowlist secret (public CA fingerprint)
 
 
+async def settle(operation):
+    """Let a bounded ownership operation finish before propagating caller cancellation."""
+    task = asyncio.create_task(operation)
+    cancelled = False
+    while True:
+        try:
+            return await asyncio.shield(task), cancelled
+        except asyncio.CancelledError:
+            if task.cancelled():
+                raise
+            cancelled = True
+
+
 class Notte:
     def __init__(self, key, root="https://api.notte.cc", transport=None):
         parsed = urlparse(root)
@@ -27,7 +40,8 @@ class Notte:
 
     async def request(self, method, path, **kwargs):
         try:
-            return await self.http.request(method, path, **kwargs)
+            async with asyncio.timeout(kwargs.get("timeout", 30)):
+                return await self.http.request(method, path, **kwargs)
         except Exception as error:
             raise RuntimeError(f"Notte transport failed ({type(error).__name__})") from None
 
@@ -47,13 +61,7 @@ class Notte:
     @asynccontextmanager
     async def owned(self, options, trust=True):
         # Recover the bounded start response even when the caller cancels.
-        start = asyncio.create_task(self.request("POST", "/sessions/start", json=options, timeout=60))
-        cancelled = False
-        try:
-            response = await asyncio.shield(start)
-        except asyncio.CancelledError:
-            response = await start
-            cancelled = True
+        response, cancelled = await settle(self.request("POST", "/sessions/start", json=options, timeout=60))
         try:
             value = response.json()
             session_id = value.get("session_id")
@@ -87,7 +95,9 @@ class Notte:
 
             yield session_id, cdp
         finally:
-            await self.close(session_id)
+            _, cancelled_during_cleanup = await settle(self.close(session_id))
+            if cancelled_during_cleanup:
+                raise asyncio.CancelledError
 
 
 async def create_token(app_id, api_key, encrypted, target, transport=None):
@@ -103,15 +113,16 @@ async def create_token(app_id, api_key, encrypted, target, transport=None):
         raise ValueError("Use an encrypted value and an exact HTTPS destination")
     async with httpx.AsyncClient(timeout=30, follow_redirects=False, transport=transport) as http:
         try:
-            response = await http.post(
-                "https://api.evervault.com/browser-tokens",
-                auth=(app_id, api_key),
-                json={
-                    "data": [{"category": "credential.password", "value": encrypted, "id": "login-password"}],
-                    "ttl": 300,
-                    "permissions": [{"action": "decrypt", "target": parsed.hostname}],
-                },
-            )
+            async with asyncio.timeout(30):
+                response = await http.post(
+                    "https://api.evervault.com/browser-tokens",
+                    auth=(app_id, api_key),
+                    json={
+                        "data": [{"category": "credential.password", "value": encrypted, "id": "login-password"}],
+                        "ttl": 300,
+                        "permissions": [{"action": "decrypt", "target": parsed.hostname}],
+                    },
+                )
         except Exception:
             raise RuntimeError("Evervault transport failed") from None
     if not response.is_success:
