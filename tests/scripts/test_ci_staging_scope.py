@@ -27,6 +27,7 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
         ("inngest-integration.yml", "live"),
+        ("mongodb-integration.yml", "live"),
     }
     queued = set()
     for path in WORKFLOWS.glob("*.yml"):

@@ -378,6 +378,13 @@
             ]
           },
           {
+            "group": "Databases",
+            "icon": "database",
+            "pages": [
+              "integrations/mongodb"
+            ]
+          },
+          {
             "group": "Browser Drivers",
             "icon": "gamepad",
             "pages": [
