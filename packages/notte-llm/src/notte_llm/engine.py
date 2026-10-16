@@ -243,12 +243,14 @@ class LLMEngine:
         transport: httpx.AsyncBaseTransport | None = None,
         provider_order: list[str] | None = None,
         reasoning: dict[str, Any] | None = None,
+        extra_body: dict[str, Any] | None = None,
     ):
         self.settings: LlmSettings = LlmSettings.from_env(model=model)
         self.model: str = self.settings.model
         self.transport: httpx.AsyncBaseTransport | None = transport
         self.provider_order: list[str] | None = provider_order
         self.reasoning: dict[str, Any] | None = reasoning
+        self.extra_body: dict[str, Any] = dict(extra_body or {})
         self.sc: StructuredContent = StructuredContent(inner_tag="json", fail_if_inner_tag=False)
 
         if nb_retries_structured_output is None:
@@ -478,6 +480,9 @@ class LLMEngine:
         }
         if response_format is not None:
             body["response_format"] = response_format
+        # Explicit endpoint options override defaults; None removes an optional field.
+        body.update(self.extra_body)
+        body = {name: value for name, value in body.items() if value is not None}
         async with httpx.AsyncClient(transport=self.transport) as client:
             for attempt, retry_delay in enumerate((*_TRANSIENT_RETRY_DELAYS_SECONDS, None), start=1):
                 try:

@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 GROUPS = {
-    "python": {"python_static", "python_unit", "python_live", "python_docs", "cli_contract"},
+    "python": {"python_static", "python_unit", "python_live", "llm_provider_live", "python_docs", "cli_contract"},
     "node": {"node_static", "node_live", "node_generated"},
     "docs": {"docs_static", "docs_live"},
     "paired": {"paired_static", "paired_live"},
@@ -22,6 +22,7 @@ PYTHON_LIVE_TESTS = {
     "tests/actions/test_execution.py",
     "tests/browser/test_build_dom_tree_pointer_elements.py",
     "tests/browser/test_clipboard_isolation.py",
+    "tests/llm/test_provider_matrix.py",
     "tests/llm/test_schema_scraping.py",
     "tests/llm/test_structured_output.py",
     "tests/test_fetch_helper.py",
@@ -114,6 +115,29 @@ def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
         ):
             selected |= GROUPS["docs"] | GROUPS["paired"] | {"python_unit"}
         return selected
+    if path.startswith("packages/notte-llm/") and not path.endswith(("README.md", "CHANGELOG.md")):
+        return (
+            PYTHON_RUNTIME
+            | {"llm_provider_live"}
+            | GROUPS["readme"]
+            | ({"cli_contract"} if path.endswith("/pyproject.toml") else set())
+        )
+    if path.startswith("packages/notte-core/src/notte_core/") and path.split("/")[4] in {
+        "extraction.py",
+        "schema.py",
+        "data.py",
+        "pruning.py",
+        "errors.py",
+        "types.py",
+        "pruning",
+        "schema",
+        "extraction",
+    }:
+        return PYTHON_RUNTIME | {"llm_provider_live"} | SDK_EXAMPLES
+    if path.startswith("tests/llm/") or path.startswith("tests/golden/snapshots/"):
+        return PYTHON_RUNTIME | {"llm_provider_live"}
+    if path == ".github/scripts/configure_llm.py" or path == "scripts/llm_matrix_report.py":
+        return {"python_static", "python_unit", "llm_provider_live"}
     if path.startswith(("packages/", "src/")):
         if path.rsplit("/", 1)[-1] in {"README.md", "CHANGELOG.md"}:
             return {"python_static"}
@@ -161,7 +185,7 @@ def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
             return PYTHON_RUNTIME.copy()
         # README examples run under tests/conftest.py and its shared config.
         if path in {"tests/conftest.py", "tests/test_notte_config.toml"}:
-            return PYTHON_RUNTIME | GROUPS["readme"]
+            return PYTHON_RUNTIME | {"llm_provider_live"} | GROUPS["readme"]
         if path.startswith(("tests/data/", "tests/mock/")) or path in {
             "tests/ci_shard.py",
             "tests/ci_smtp.py",

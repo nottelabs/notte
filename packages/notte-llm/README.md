@@ -58,3 +58,27 @@ OpenRouter receives model fallbacks (`google/gemini-3.8-flash`, `openai/gpt-4.1-
 options. These extras are sent only when the configured hostname is `openrouter.ai`.
 For Vertex or other token-based endpoints, mint the access token outside the library and pass
 it as `NOTTE_LLM_API_KEY`; refresh it before it expires.
+
+For endpoint-specific request options, pass `extra_body` to `LlmExtractor.extract`
+(or to `LLMEngine`'s constructor). These explicit fields override request defaults
+for that call; `None` removes a default field. For example, pin Together without
+model or provider fallbacks and use its advertised output-token limit:
+
+```python
+result = await LlmExtractor(model="meta-llama/llama-3.3-70b-instruct").extract(
+    url="https://example.com",
+    document="# Example page",
+    response_format=Title,
+    instructions="Extract the title",
+    extra_body={
+        "models": None,
+        "provider": {"order": ["together"], "allow_fallbacks": False},
+        "max_completion_tokens": 2048,
+    },
+)
+```
+
+Explicit extras are forwarded to any configured endpoint, so use only fields that
+endpoint supports. The library does not discover provider limits or automatically
+lower its default 8192 completion tokens. Set `max_completion_tokens` to your
+endpoint's limit when it is lower. Overrides do not persist to subsequent calls.

@@ -1,6 +1,6 @@
 import datetime as dt
 import json
-from typing import Generic, Self
+from typing import Any, Generic, Self
 
 from notte_core.data import DictBaseModel, NoStructuredData, StructuredData
 from notte_core.logging import logger
@@ -103,7 +103,14 @@ class LlmExtractor:
         instructions: str | None,
         model: str | None = None,
         use_link_placeholders: bool = True,
+        extra_body: dict[str, Any] | None = None,
     ) -> StructuredData[BaseModel]:
+        """Extract data, forwarding optional endpoint request overrides for this call.
+
+        ``extra_body`` overrides Chat Completions fields; a None value removes a
+        default field (for example, ``{"models": None}`` disables model fallbacks).
+        Only send options supported by the configured endpoint.
+        """
         llmserve = self._service(model)
         verbose = llmserve.verbose
         masked_document = mask_markdown(document)
@@ -123,6 +130,7 @@ class LlmExtractor:
                     },
                     response_format=StructuredData[DictBaseModel],
                     use_strict_response_format=False,
+                    extra_body=extra_body,
                 )
                 if verbose:
                     logger.trace(f"LLM Structured Response with no schema:\n{structured}")
@@ -135,6 +143,7 @@ class LlmExtractor:
                     prompt_id="extract-json-schema/multi-entity",
                     response_format=_ExtractionResult[_response_format],
                     use_strict_response_format=True,
+                    extra_body=extra_body,
                     variables={
                         "url": url,
                         "failure_example": StructuredData(

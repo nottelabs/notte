@@ -168,6 +168,29 @@ class RoutingTests(unittest.TestCase):
             with self.subTest(workflow=workflow):
                 self.assertEqual(ci.scopes_for_path(f".github/workflows/{workflow}"), ci.GROUPS[family])
 
+    def test_provider_matrix_routes_library_schema_and_fixture_inputs(self) -> None:
+        for path in (
+            "packages/notte-llm/src/notte_llm/engine.py",
+            "packages/notte-llm/src/notte_llm/prompts/extract-json-schema/multi-entity/system.md",
+            "packages/notte-core/src/notte_core/schema.py",
+            "packages/notte-core/src/notte_core/extraction.py",
+            "packages/notte-core/src/notte_core/pruning.py",
+            "packages/notte-core/src/notte_core/data.py",
+            "tests/llm/test_provider_matrix.py",
+            "tests/llm/provider_matrix.py",
+            "tests/golden/snapshots/github_signin/scrape.md",
+            "tests/golden/snapshots/duckduckgo/scrape.md",
+            "tests/golden/snapshots/checkout/article/scrape.md",
+            ".github/scripts/configure_llm.py",
+            "scripts/llm_matrix_report.py",
+            "tests/conftest.py",
+        ):
+            with self.subTest(path=path):
+                self.assertIn("llm_provider_live", ci.scopes_for_path(path))
+        self.assertNotIn("llm_provider_live", ci.scopes_for_path("node-sdk/src/client.ts"))
+        self.assertNotIn("llm_provider_live", ci.scopes_for_path("packages/notte-browser/src/notte_browser/files.py"))
+        self.assertTrue(ci.select("schedule", "", "")["llm_provider_live"])
+
     def test_periodic_and_manual_coverage(self) -> None:
         scheduled = ci.select("schedule", "", "")
         self.assertTrue(scheduled["python_live"])

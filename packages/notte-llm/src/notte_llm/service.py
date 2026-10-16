@@ -44,10 +44,14 @@ class LLMService:
         response_format: type[TResponseFormat],
         variables: dict[str, Any] | None = None,
         use_strict_response_format: bool = True,
+        extra_body: dict[str, Any] | None = None,
     ) -> TResponseFormat:
         messages = self.lib.materialize(prompt_id, variables)
         return await LLMEngine(
-            model=self.base_model, nb_retries_structured_output=self.nb_retries_structured_output, verbose=self.verbose
+            model=self.base_model,
+            nb_retries_structured_output=self.nb_retries_structured_output,
+            verbose=self.verbose,
+            extra_body=extra_body,
         ).structured_completion(
             messages=messages,
             response_format=response_format,

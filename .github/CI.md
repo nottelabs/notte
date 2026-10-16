@@ -66,3 +66,26 @@ python3 -m unittest discover -s tests/scripts -p test_ci_scope.py
 ## V2 suite adaptation
 
 The Python workflow keeps `checks` (scoped pre-commit), `tests` (the complete offline suite, including local integration tests), and `staging-and-live` (the full marked staging/live suite in two queued shards). It adds lightweight `docs` assertions and the CLI contract matrix. The top-level `tests` aggregate waits for every selected family. Node keeps `tests`, `generated` (committed-spec drift validation), and `integration-tests` (the complete v2 live suite). Paired examples keep `checks` and `live`. Existing private-repository publishing guards are unchanged.
+
+## Local LLM provider matrix
+
+`llm-provider-matrix` runs 14 routes × four committed extraction cases when
+notte-llm, core extraction/schema helpers, `tests/llm`, golden snapshots, or its
+CI plumbing changes. It also runs on Python's four-hour weekday live schedule
+and manual full runs. Six workers run different pins concurrently; `loadgroup`
+keeps each route's cases sequential. The staging shards exclude this matrix.
+The matrix defaults to Gemini 3.5 Flash Lite and keeps Gemini 3.5 Flash as an
+additional route. The default live LLM configuration now uses `OPENROUTER_API_KEY`; optional Vertex
+credentials are minted outside the library exclusively for the direct matrix
+route. Cloud SDK extraction model IDs are independent of these local routes.
+
+Missing OpenRouter credentials skip the matrix with an explicit job-summary
+message, including on fork PRs. Vertex alone skips when its credentials are
+absent. Client-exhausted 429/503/overload and timeout failures skip individual
+cases with reasons; parsing, schema, authentication and request-shape errors
+fail. Together's token limit and Z.AI availability are checked against the live
+OpenRouter endpoint catalog; missing advertised pins stay visible as skips.
+The job summary and uploaded JUnit artifact report counts, actual format paths
+(including strict → JSON object → prompt-only negotiation), latency, and reasons.
+Run it locally with `uv run pytest tests/llm/test_provider_matrix.py -m live -n 6
+--dist loadgroup -v -rA --junitxml=llm-provider-matrix.xml -o junit_family=legacy`.

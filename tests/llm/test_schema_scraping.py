@@ -36,6 +36,7 @@ class MockLLMServiceForSchema(LLMService):
         response_format: type[Any],
         variables: dict[str, Any] | None = None,
         use_strict_response_format: bool = True,
+        extra_body: dict[str, Any] | None = None,
     ) -> Any:
         """Honor the service contract: return an instance of the requested wire model."""
         try:

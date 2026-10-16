@@ -2,7 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["google-auth[requests]>=2.60.0"]
 # ///
-"""Configure CI's compatible endpoint using OAuth credentials, outside notte-llm.
+"""Configure CI's optional direct Vertex matrix route using OAuth credentials, outside notte-llm.
 
 Run with `uv run --script .github/scripts/configure_llm.py`. The auth action
 creates the credential file. Refreshing those credentials uses the OAuth token
@@ -27,10 +27,10 @@ def main() -> None:
         print(f"::add-mask::{credentials.token}", flush=True)
     with env_file.open("a") as output:
         _ = output.write(
-            f"NOTTE_LLM_BASE_URL=https://aiplatform.googleapis.com/v1/projects/{project}"
+            f"NOTTE_VERTEX_BASE_URL=https://aiplatform.googleapis.com/v1/projects/{project}"
             "/locations/global/endpoints/openapi\n"
-            f"NOTTE_LLM_API_KEY={credentials.token}\n"
-            "NOTTE_LLM_MODEL=google/gemini-3.5-flash-lite\n"
+            f"NOTTE_VERTEX_API_KEY={credentials.token}\n"
+            "NOTTE_VERTEX_MODEL=google/gemini-3.5-flash-lite\n"
         )
 
 
