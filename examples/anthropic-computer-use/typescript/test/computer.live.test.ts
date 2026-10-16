@@ -33,8 +33,10 @@ async function assertClosed(id: string) {
 test('native tool protocol, real form actions, and permission refusal', { skip: !live, timeout: 90_000 }, async () => {
   const client = new NotteClient();
   const session = client.Session({ max_duration_minutes: 3 });
+  let id: string | undefined;
   try {
     await session.use(async () => {
+      id = session.getId()!;
       const browser = await chromium.connectOverCDP(await session.cdpUrl());
       try {
         const page = browser.contexts()[0].pages()[0];
@@ -61,7 +63,7 @@ test('native tool protocol, real form actions, and permission refusal', { skip: 
         } finally { await denied.close(); }
       } finally { await browser.close(); }
     });
-  } finally { if (session.getId()) await assertClosed(session.getId()!); }
+  } finally { if (id) await assertClosed(id); }
 });
 
 test('unchanged demo closes its session after a real provider HTTP 401', { skip: !live, timeout: 90_000 }, async () => {
