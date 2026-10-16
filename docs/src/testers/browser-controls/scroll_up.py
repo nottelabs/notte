@@ -1,15 +1,24 @@
 # @sniptest filename=scroll_up.py
-# @sniptest show=1-11
+# @sniptest show=1-20
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
 with client.Session() as session:
     # Create a page tall enough to scroll.
-    session.evaluate_js("document.body.innerHTML = '<main style=\"height:300vh\">Scroll demo</main>'")
-    session.execute(type="scroll_down", selector="html")
+    session.evaluate_js(
+        """(() => {
+            document.open();
+            document.write('<!doctype html><main>Scroll demo</main>');
+            document.close();
+            document.body.style.margin = '0';
+            document.querySelector('main').style.height = '300vh';
+            return document.documentElement.scrollHeight;
+        })()"""
+    )
+    session.execute(type="scroll_down")
     print("Moved down: " + session.evaluate_js("String(window.scrollY > 0)"))
-    session.execute(type="scroll_up", selector="html")
+    session.execute(type="scroll_up")
     print("Returned to top: " + session.evaluate_js("String(window.scrollY === 0)"))
 
 status = session.status()
