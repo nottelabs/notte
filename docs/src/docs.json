@@ -140,7 +140,7 @@
     },
     {
       "source": "/features/sessions/selenium",
-      "destination": "/features/sessions/playwright"
+      "destination": "/integrations/selenium"
     },
     {
       "source": "/zin",
@@ -383,7 +383,8 @@
             "icon": "gamepad",
             "pages": [
               "features/sessions/playwright",
-              "features/sessions/puppeteer"
+              "features/sessions/puppeteer",
+              "integrations/selenium"
             ]
           },
           {

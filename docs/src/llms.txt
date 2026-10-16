@@ -109,6 +109,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Connect with Playwright](https://docs.notte.cc/features/sessions/playwright.md): Use Playwright directly with Notte sessions via Chrome DevTools Protocol
 - [Connect with Puppeteer](https://docs.notte.cc/features/sessions/puppeteer.md): Use Puppeteer with Notte sessions via Chrome DevTools Protocol
+- [Selenium](https://docs.notte.cc/integrations/selenium.md): Run Selenium WebDriver commands on a hosted Notte browser.
 
 ## Browser Infrastructure
 
