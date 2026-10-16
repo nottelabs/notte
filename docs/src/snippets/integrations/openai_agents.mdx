@@ -75,6 +75,7 @@ export const result = await new NotteClient().Session({ max_duration_minutes: 3 
       allowed: ['browser_action', 'browser_observe', 'browser_scrape'],
     }),
   });
+  let operationFailed = false;
   try {
     await server.connect();
     const agent = new Agent({
@@ -91,12 +92,13 @@ export const result = await new NotteClient().Session({ max_duration_minutes: 3 
     console.log(answer.finalOutput.title);
     return { title: answer.finalOutput.title, session_id: session.getId()! };
   } catch {
+    operationFailed = true;
     throw new Error(`OpenAI agent failed (session ${session.getId()!})`);
   } finally {
     try {
       await server.close();
     } catch {
-      throw new Error(`OpenAI MCP cleanup failed (session ${session.getId()!})`);
+      if (!operationFailed) throw new Error(`OpenAI MCP cleanup failed (session ${session.getId()!})`);
     }
   }
 });
