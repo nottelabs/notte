@@ -11,16 +11,21 @@ export default defineTool({
     return new NotteClient().Session({ max_duration_minutes: 3 }).use(async session => {
       try {
         const browser = await chromium.connectOverCDP(await session.cdpUrl());
+        const abort = () => { void browser.close().catch(() => {}); };
+        ctx.abortSignal.addEventListener('abort', abort, { once: true });
         try {
           ctx.abortSignal.throwIfAborted();
           const page = await browser.contexts()[0].newPage();
           await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
           ctx.abortSignal.throwIfAborted();
           return { title: await page.title(), session_id: session.getId()! };
-        } finally { await browser.close(); }
+        } finally {
+          ctx.abortSignal.removeEventListener('abort', abort);
+          await browser.close();
+        }
       } catch {
         throw new Error(`Notte browser task failed (session ${session.getId()})`);
       }
-    });
+    }, { signal: ctx.abortSignal });
   },
 });

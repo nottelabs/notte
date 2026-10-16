@@ -13,15 +13,16 @@ const ctx = { abortSignal: new AbortController().signal } as Parameters<typeof r
 
 async function closed(id: string) {
   const client = new NotteClient();
-  for (let attempt = 0; attempt < 30; attempt++) {
-    const response = await sessionStatus({ client: client.getClient(), path: { session_id: id }, throwOnError: true, signal: AbortSignal.timeout(15_000) });
+  const signal = AbortSignal.timeout(15_000);
+  while (!signal.aborted) {
+    const response = await sessionStatus({ client: client.getClient(), path: { session_id: id }, throwOnError: true, signal });
     if (response.data.status === 'closed') return;
     await new Promise(resolve => setTimeout(resolve, 500));
   }
   throw new Error('The owned browser session did not close');
 }
 
-async function owned(operation: () => Promise<unknown>) {
+async function owned(operation: () => Promise<unknown>, pending?: AbortController) {
   if (live) {
     assert.ok(process.env.NOTTE_API_KEY);
     assert.ok(process.env.NOTTE_API_URL, 'Choose the browser API explicitly');
@@ -39,12 +40,22 @@ async function owned(operation: () => Promise<unknown>) {
     return;
   }
   let stopped = false, disconnected = false;
+  let rejectNavigation: ((error: Error) => void) | undefined;
   const session = { getId: () => 'owned', cdpUrl: async () => `wss://example.invalid?api_key=${credential}` };
   const page = {
-    goto: async (url: string) => { if (url === 'http://127.0.0.1:1') throw new Error(credential); },
+    goto: async (url: string) => {
+      if (url === 'http://127.0.0.1:1') throw new Error(credential);
+      if (pending) return await new Promise<void>((_, reject) => {
+        rejectNavigation = reject;
+        queueMicrotask(() => pending.abort());
+      });
+    },
     title: async () => 'Example Domain',
   };
-  const browser = { contexts: () => [{ newPage: async () => page }], close: async () => { disconnected = true; } };
+  const browser = { contexts: () => [{ newPage: async () => page }], close: async () => {
+    disconnected = true;
+    rejectNavigation?.(new Error('Connection closed'));
+  } };
   const sessionMock = mock.method(NotteClient.prototype, 'Session', (() => ({
     use: async (run: (value: typeof session) => Promise<unknown>) => {
       try { return await run(session); } finally { stopped = true; }
@@ -93,4 +104,12 @@ test('Cancellation before execution creates no browser', async () => {
     await assert.rejects(async () => await readPage.execute({ url: 'https://example.com' }, { ...ctx, abortSignal: controller.signal }), { name: 'AbortError' });
     assert.equal(session.mock.callCount(), 0);
   } finally { session.mock.restore(); }
+});
+
+test('Cancellation interrupts pending navigation and stops its owned browser', { skip: live, timeout: 5_000 }, async () => {
+  const controller = new AbortController();
+  await owned(() => assert.rejects(async () => await readPage.execute(
+    { url: 'https://example.com' }, { ...ctx, abortSignal: controller.signal },
+  ), /^Error: Notte browser task failed \(session owned\)$/), controller);
+  assert.ok(controller.signal.aborted);
 });
