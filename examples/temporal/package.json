@@ -1,0 +1,25 @@
+{
+  "name": "notte-temporal-example",
+  "private": true,
+  "type": "commonjs",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "build": "tsc",
+    "worker": "node dist/src/worker.js",
+    "start": "node dist/src/client.js",
+    "test:live": "npm run build && node --test dist/test/workflow.live.test.js"
+  },
+  "dependencies": {
+    "@temporalio/client": "1.24.0",
+    "@temporalio/worker": "1.24.0",
+    "@temporalio/workflow": "1.24.0",
+    "notte-sdk": "1.9.7",
+    "playwright-core": "1.63.0"
+  },
+  "devDependencies": {
+    "@temporalio/activity": "1.24.0",
+    "@temporalio/testing": "1.24.0",
+    "@types/node": "24.10.0",
+    "typescript": "6.0.3"
+  }
+}
