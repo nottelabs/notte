@@ -1,6 +1,30 @@
 ---
 title: Gemini Computer Use
-description: Integration with Gemini Computer Use
+description: Run Gemini's computer-use tool on a Notte cloud browser.
 ---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
-Todo
+<AgentMdNotice />
+
+[Gemini Computer Use](https://ai.google.dev/gemini-api/docs/computer-use) chooses browser actions from screenshots. Notte supplies the cloud browser; the Python and TypeScript examples execute Gemini's actions through Playwright over CDP.
+
+## Set up
+
+Clone the [Notte repository](https://github.com/nottelabs/notte) and open `examples/gemini-computer-use`. The README includes installation commands and runnable code for both languages.
+
+Set `NOTTE_API_KEY` from [Notte](https://console.notte.cc/apikeys) and `GEMINI_API_KEY` from [AI Studio](https://aistudio.google.com/api-keys). Gemini computer use needs a paid project; configure [billing](https://aistudio.google.com/billing) if needed.
+
+<Tabs>
+  <Tab title="Python">
+    Use Python 3.11+. Create a virtual environment, install `requirements.txt`, and run `python agent.py`.
+  </Tab>
+  <Tab title="TypeScript">
+    Use Node.js 24+. Run `npm ci`, then `npm start`.
+  </Tab>
+</Tabs>
+
+## Run a browser task
+
+The default task opens `https://example.com` and reads its title. Pass your own task as a command-line argument. Both examples return `answer`, `title`, `session_id`, and the number of browser actions performed.
+
+Each attempt owns its browser session and closes it on completion or error. The example stops on a request for confirmation or a blocked action, and limits the loop to twelve turns. Add your application's approval flow before using tasks that require confirmation. No local browser installation is needed.

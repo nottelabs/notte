@@ -359,7 +359,8 @@
               "integrations/mastra",
               "integrations/openclaw",
               "integrations/hermes",
-              "integrations/stagehand"
+              "integrations/stagehand",
+              "integrations/gemini-computer-use"
             ]
           },
           {

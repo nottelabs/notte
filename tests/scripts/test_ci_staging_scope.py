@@ -26,6 +26,7 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("docs-tests-cicd.yml", "execution"),
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
+        ("gemini-computer-use-integration.yml", "browser-handler"),
     }
     queued = set()
     for path in WORKFLOWS.glob("*.yml"):
