@@ -15,7 +15,7 @@ Create your API key at [Notte](https://console.notte.cc/apikeys), enter it in Re
 
 `server.json` contains the public installation settings. With Node.js 24+, run `npm run install-link` to produce a shareable Replit setup link. It contains no credentials; add authentication in Replit after opening it.
 
-Ask Agent to use Notte to start one browser, open `https://example.com`, read its heading, and stop that browser on success or error. Reuse the browser ID returned by Notte and keep stop instructions in follow-up tasks.
+Ask Agent to use Notte to start one browser, open `https://example.com`, read its title, and stop that browser on success or error. Reuse the browser ID returned by Notte and keep stop instructions in follow-up tasks.
 
 For maintainers, `npm ci`, `npm test`, and `npm run test:live` verify the installation link and hosted MCP contract. Live tests require `NOTTE_API_KEY`; `NOTTE_API_URL` selects another environment. They create only their own browsers and independently verify closure. Hosted Replit Agent execution has not been tested.
 
