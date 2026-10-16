@@ -27,11 +27,9 @@ identifies scripts needing fixtures/type validation; `live_tested` identifies
 catalog examples executed by the paired runner. The legacy execution backlog
 cannot grow on subsequent PRs. It is not a Python-only exception or a passing live test.
 
-Translation is incremental: there are 488 Python sources and 106
-TypeScript sources, including 93 same-name pairs. 395 Python sources still lack a
-same-name TypeScript counterpart; some describe Python-only integrations or
-function-runtime code. Review these individually before classifying exceptions.
-All 86 previously manual snippet files now use the catalog.
+Run `python docs/src/sniptest/parity.py` from the repository root for current
+source, pairing, and execution-backlog counts. Review unpaired examples individually
+before classifying exceptions; some describe Python-only integrations or function-runtime code.
 See `docs/src/sniptest/BACKLOG.md` for follow-up batches and SDK gaps that remain separate.
 
 ## Local validation
@@ -50,6 +48,18 @@ python docs/src/sniptest/generate.py --check
 ```
 
 Executable TypeScript examples compile against the built local package's public declarations.
+Run `npm ci --prefix docs` to install the pinned third-party integration SDKs.
+Integration pairs may use `typecheck_only=true` in both files when they need
+separate provider credentials. They retain full type checking; their end-to-end
+smoke tests run separately from the shared staging examples.
+
+Stagehand's opt-in smoke suite executes both published recipes unchanged and
+checks the extracted heading and closed session state. Install `stagehand==4.2.1`
+in the Python environment and run `npm ci --prefix docs` and the SDK build first.
+Set `NOTTE_API_KEY`, `ANTHROPIC_API_KEY`, `NOTTE_API_URL` to the target environment,
+and `NOTTE_DOCS_PYTHON` to the Python executable. From `node-sdk`, run
+`NOTTE_STAGEHAND_LIVE=1 VITEST_INTEGRATION=1 npx vitest run test/stagehand.integration.test.ts`.
+This creates two billed sessions and makes model calls.
 Extracted TypeScript scripts and fragments awaiting fixtures receive syntax checks,
 not a misleading claim of full type or live validation. Every catalog Python source
 is syntax-checked, shell commands pass `bash -n`, and JSON responses are parsed.
@@ -59,8 +69,8 @@ legacy execution backlog and executes both files unchanged;
 when adding examples needing other resources, extend the owned fixtures first.
 Do not add examples that depend on somebody's existing resource IDs.
 
-`live-examples.json` declares exact expected results for 59 pairs; the six
-original cases retain dedicated checks in the runner. Each new executable pair
+`live-examples.json` declares exact expected results for executable pairs;
+the original cases retain dedicated checks in the runner. Each new executable pair
 must have a nonempty behavior contract. CI rejects missing counterparts, pending
 Python counterparts, stale contracts, and contract typos. The runner collects
 Python globals using `runpy` and TypeScript module exports, with no test-time source

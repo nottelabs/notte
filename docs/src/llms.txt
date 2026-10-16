@@ -105,7 +105,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Mastra](https://docs.notte.cc/integrations/mastra.md): Give Mastra agents a browser with the Notte MCP server
 - [OpenClaw](https://docs.notte.cc/integrations/openclaw.md): Use Notte cloud browsers with OpenClaw
 - [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
-- [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Connecting Stagehand to Notte cloud browsers
+- [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Use Stagehand v4 with a Notte cloud browser in Python or TypeScript
 
 ## Workflow Automation
 
@@ -261,6 +261,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GET Session Cookies Get](https://docs.notte.cc/api-reference/sessions/session-cookies-get.md)
 - [POST Session Cookies Set](https://docs.notte.cc/api-reference/sessions/session-cookies-set.md)
 - [GET Session Debug Info](https://docs.notte.cc/api-reference/sessions/session-debug-info.md)
+- [GET Session Mouse Replay](https://docs.notte.cc/api-reference/sessions/session-mouse-replay.md)
 - [GET Session Network Logs](https://docs.notte.cc/api-reference/sessions/session-network-logs.md)
 - [GET Session Offset](https://docs.notte.cc/api-reference/sessions/session-offset.md)
 - [GET Session Profile Preview](https://docs.notte.cc/api-reference/sessions/session-profile-preview.md)
@@ -464,7 +465,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GoBackAction](https://docs.notte.cc/typescript-sdk-reference/types/gobackaction.md)
 - [GoForwardAction](https://docs.notte.cc/typescript-sdk-reference/types/goforwardaction.md)
 - [ReloadAction](https://docs.notte.cc/typescript-sdk-reference/types/reloadaction.md)
-- [WaitAction](https://docs.notte.cc/typescript-sdk-reference/types/waitaction.md)
+- [WaitActionOutput](https://docs.notte.cc/typescript-sdk-reference/types/waitactionoutput.md)
 - [PressKeyAction](https://docs.notte.cc/typescript-sdk-reference/types/presskeyaction.md)
 - [ScrollUpAction](https://docs.notte.cc/typescript-sdk-reference/types/scrollupaction.md)
 - [ScrollDownAction](https://docs.notte.cc/typescript-sdk-reference/types/scrolldownaction.md)

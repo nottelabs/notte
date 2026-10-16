@@ -1,7 +1,6 @@
 {
   "unpaired": [
     "agents/agent_fallback_example.py",
-    "agents/async_execution.py",
     "agents/config/bp_url_context.py",
     "agents/config/param_persona.py",
     "agents/config/param_response_format.py",
@@ -51,7 +50,6 @@
     "agents/lifecycle/status_checking.py",
     "agents/lifecycle/step_details.py",
     "agents/lifecycle/timeout_pattern.py",
-    "agents/parallel_agents.py",
     "agents/production.py",
     "agents/replay/basic_replay.py",
     "agents/replay/check_if_failed.py",
@@ -75,7 +73,6 @@
     "agents/replay/view_in_browser.py",
     "agents/replay/view_in_notebook.py",
     "agents/replay/watch_replay.py",
-    "agents/retry_pattern.py",
     "agents/session.py",
     "agents/simple.py",
     "agents/structured-output/basic_example.py",
@@ -232,7 +229,6 @@
     "integrations/mcp/crewai.py",
     "integrations/mcp/google_adk.py",
     "integrations/mcp/langchain.py",
-    "integrations/stagehand_connect.py",
     "integrations/steel/complete.py",
     "integrations/steel/connect.py",
     "integrations/steel/init.py",
