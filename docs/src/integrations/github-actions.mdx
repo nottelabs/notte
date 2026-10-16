@@ -1,0 +1,23 @@
+---
+title: GitHub Actions
+description: Review DOM-validated selector repairs in a manual GitHub Actions workflow.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Use a Notte browser to repair a JSON selector map in [GitHub Actions](https://github.com/features/actions). The [Python and TypeScript project](https://github.com/nottelabs/notte/tree/main/examples/github-actions) matches an exact accessible role and name, derives a stable CSS selector from the live DOM, and validates its uniqueness.
+
+## Set up
+
+Use Python 3.11+ or Node.js 24.8+ and a [Notte API key](https://console.notte.cc/apikeys). Clone the [Notte repository](https://github.com/nottelabs/notte) and open `examples/github-actions`. Run `uv sync --locked` or `npm ci`, set `NOTTE_API_KEY`, and run `uv run --locked python repair.py` or `npm start`.
+
+Edit `selectors.json` with your page URL and each selector's expected role (`link` or `button`) and exact name. The recipe writes a proposal and closes its browser. It refuses missing, ambiguous or unstable targets and cross-origin redirects. It updates selector data rather than generating application code; no model key is required.
+
+## Run the workflow
+
+Copy the project at the same path in your repository and copy the [manual workflow](https://github.com/nottelabs/notte/blob/main/.github/workflows/selector-repair.yml) into `.github/workflows`. Add `NOTTE_API_KEY` to Actions secrets, then run **Review browser selector repairs** on `main`. The default run produces an artifact for review.
+
+Enable `create_pr` only to open a draft PR. That job alone receives repository-write permissions. It checks the producing job's artifact digest, source hash, unchanged main commit, fixed map path and repair-branch contents before replacing known selector fields. Your repository must permit Actions-created PRs. Nothing merges automatically; `GITHUB_TOKEN`-created PRs normally need their required checks started separately.
+
+Real-browser tests cover repairs, refusals and cancellation with independent browser-closure checks. GitHub REST fixtures cover optional publication; creating a hosted GitHub PR has not been tested.

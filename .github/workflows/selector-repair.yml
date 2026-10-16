@@ -1,0 +1,103 @@
+name: Review browser selector repairs
+
+on:
+  workflow_dispatch:
+    inputs:
+      language:
+        type: choice
+        options: [python, typescript]
+        default: python
+      api_url:
+        description: Notte API endpoint matching your key
+        type: choice
+        options: ['https://api.notte.cc', 'https://us-staging.notte.cc', 'https://us-dev.notte.cc']
+        default: 'https://api.notte.cc'
+      create_pr:
+        description: Open a draft PR for the validated selector map
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: selector-repair-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      sha256: ${{ steps.proposal.outputs.sha256 }}
+      changed: ${{ steps.proposal.outputs.changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: '3.11'
+          enable-cache: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - if: inputs.language == 'python'
+        run: uv sync --locked
+        working-directory: examples/github-actions
+      - if: inputs.language == 'typescript'
+        run: npm ci
+        working-directory: examples/github-actions
+      - if: inputs.language == 'python'
+        run: uv run --locked python repair.py
+        working-directory: examples/github-actions
+        env:
+          NOTTE_API_URL: ${{ inputs.api_url }}
+          NOTTE_API_KEY: ${{ (inputs.api_url == 'https://api.notte.cc' && secrets.NOTTE_API_KEY) || (inputs.api_url != 'https://api.notte.cc' && (secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY)) || '' }}
+      - if: inputs.language == 'typescript'
+        run: npm start
+        working-directory: examples/github-actions
+        env:
+          NOTTE_API_URL: ${{ inputs.api_url }}
+          NOTTE_API_KEY: ${{ (inputs.api_url == 'https://api.notte.cc' && secrets.NOTTE_API_KEY) || (inputs.api_url != 'https://api.notte.cc' && (secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY)) || '' }}
+      - id: proposal
+        name: Bind the proposal to this browser-validation job
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          raw = Path('examples/github-actions/proposal.json').read_bytes()
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('sha256=' + hashlib.sha256(raw).hexdigest() + '\n')
+              output.write('changed=' + str(bool(json.loads(raw)['changes'])).lower() + '\n')
+          PY
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: selector-proposal
+          path: examples/github-actions/proposal.json
+          if-no-files-found: error
+          retention-days: 7
+  publish:
+    needs: repair
+    if: inputs.create_pr && needs.repair.outputs.changed == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: selector-proposal
+          path: selector-proposal
+      - name: Open a draft PR for the fixed JSON selector map
+        run: python3 examples/github-actions/publish.py
+        env:
+          PROPOSAL_SHA256: ${{ needs.repair.outputs.sha256 }}
+          GH_TOKEN: ${{ github.token }}
