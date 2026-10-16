@@ -84,7 +84,9 @@ class SeleniumLiveTests(unittest.TestCase):
                                 driver.quit()
                             metadata = requests.get(f"http://{address}/json/version", timeout=5).json()
                             self.assertTrue(metadata["webSocketDebuggerUrl"].startswith(f"ws://{address}/"))
-                            self.assertNotIn(session.cdp_url(), str(metadata))
+                            self.assertFalse(
+                                session.cdp_url() in str(metadata), "Discovery must hide the authenticated endpoint"
+                            )
                             self.assertEqual(
                                 requests.get(
                                     f"http://{address}/json/version",
