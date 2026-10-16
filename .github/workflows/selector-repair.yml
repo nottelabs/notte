@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   repair:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && contains(fromJSON('["https://api.notte.cc", "https://us-staging.notte.cc", "https://us-dev.notte.cc"]'), inputs.api_url)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
