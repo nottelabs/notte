@@ -6,6 +6,7 @@ if (!project) throw new Error('Set TRIGGER_PROJECT_REF');
 export default defineConfig({
   project,
   runtime: 'node-24',
+  build: { external: ['playwright-core'] },
   dirs: ['./src/trigger'],
   maxDuration: 120,
   retries: { enabledInDev: true },

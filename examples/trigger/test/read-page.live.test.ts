@@ -49,6 +49,6 @@ test('Trigger task browser handler', { skip: !live, timeout: 120_000 }, async (t
     assert.ok(result.session_id);
   }));
   await t.test('closes its browser when navigation fails', () => trackSessions(async () => {
-    await assert.rejects(readPage({ url: 'https://missing.notte.invalid' }), /Notte browser task failed/);
+    await assert.rejects(readPage({ url: 'https://missing.notte.invalid' }), /Notte browser task failed during navigation/);
   }));
 });

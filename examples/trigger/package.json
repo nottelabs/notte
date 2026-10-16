@@ -6,7 +6,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "trigger.dev dev --skip-update-check",
+    "dev": "trigger dev --skip-update-check",
     "typecheck": "tsc --noEmit",
     "test:live": "node --experimental-strip-types --test test/read-page.live.test.ts",
     "test:hosted": "node --experimental-strip-types --test test/hosted.live.test.ts"
