@@ -1,0 +1,19 @@
+{
+  "name": "notte-evervault-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "test:live": "tsx --test --test-name-pattern '^live native' test/*.test.ts && tsx --test --test-name-pattern '^live unknown' test/*.test.ts"
+  },
+  "dependencies": {
+    "playwright-core": "1.63.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3"
+  }
+}

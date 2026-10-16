@@ -112,6 +112,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 ## Browser Infrastructure
 
+- [Evervault Browser Tokens](https://docs.notte.cc/integrations/evervault.md): Prepare scoped password-token browser tasks with Evervault and Notte.
 - [Kernel.sh](https://docs.notte.cc/integrations/kernel.md): Integrate with Kernel browsers
 - [Steel](https://docs.notte.cc/integrations/steel.md): Run Notte with Steel cloud browsers (CDP)
 - [Massive](https://docs.notte.cc/integrations/massive.md): Use Massive residential proxies with Notte sessions

@@ -1,0 +1,19 @@
+---
+title: Evervault Browser Tokens
+description: Prepare scoped password-token browser tasks with Evervault and Notte.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+<Warning>
+This integration depends on Notte's Evervault browser trust profile rollout. Hosted Evervault tokenization and proxy replacement have not been verified.
+</Warning>
+
+[Evervault Browser Tokens](https://docs.evervault.com/browser-tokens) turn encrypted values into short-lived tokens. Evervault's proxy can replace those tokens in requests to an allowed hostname.
+
+The [Python and TypeScript examples](https://github.com/nottelabs/notte/tree/main/examples/evervault) create a password token, request a Notte browser with Evervault's HTTPS proxy, and fill a form you own. They require Notte to confirm the expected certificate trust before connecting to CDP. The form is not submitted.
+
+Use a Notte API key, an Evervault app with Browser Tokens access, an Evervault-encrypted password, and an owned HTTPS form with a password field. Follow the example README to install and run either language.
+
+The encrypted input stays in the Evervault request. The browser receives only the token. Decrypt permission is scoped to the form's exact hostname, certificate verification stays enabled, and the owned browser closes on success or failure. No payment flow is included.
