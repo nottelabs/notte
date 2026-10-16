@@ -30,11 +30,11 @@ export type ActionSpace = {
     /**
      * Actions
      */
-    readonly actions: Array<FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitAction | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction | ClickActionOutput | FillActionOutput | MultiFactorFillActionOutput | FallbackFillActionOutput | CheckActionOutput | SelectDropdownOptionActionOutput | UploadFileActionOutput | DownloadFileActionOutput>;
+    readonly actions: Array<FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitActionOutput | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction | ClickActionOutput | FillActionOutput | MultiFactorFillActionOutput | FallbackFillActionOutput | CheckActionOutput | SelectDropdownOptionActionOutput | UploadFileActionOutput | DownloadFileActionOutput>;
     /**
      * Browser Actions
      */
-    readonly browser_actions: Array<FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitAction | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction>;
+    readonly browser_actions: Array<FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitActionOutput | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction>;
     /**
      * Markdown
      */
@@ -56,11 +56,11 @@ List of available interaction actions in the current state
 Category of the action space (e.g., 'homepage', 'search-results', 'item')
 </ParamField>
 
-<ParamField body="actions" type={"(ClickActionOutput | FillActionOutput | MultiFactorFillActionOutput | FallbackFillActionOutput | CheckActionOutput | SelectDropdownOptionActionOutput | UploadFileActionOutput | DownloadFileActionOutput | FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitAction | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction)[]"} required>
+<ParamField body="actions" type={"(ClickActionOutput | FillActionOutput | MultiFactorFillActionOutput | FallbackFillActionOutput | CheckActionOutput | SelectDropdownOptionActionOutput | UploadFileActionOutput | DownloadFileActionOutput | FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitActionOutput | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction)[]"} required>
 
 </ParamField>
 
-<ParamField body="browser_actions" type={"(FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitAction | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction)[]"} required>
+<ParamField body="browser_actions" type={"(FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitActionOutput | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction)[]"} required>
 
 </ParamField>
 
@@ -98,4 +98,4 @@ Category of the action space (e.g., 'homepage', 'search-results', 'item')
 - [SpaceCategory](/typescript-sdk-reference/types/spacecategory)
 - [SwitchTabAction](/typescript-sdk-reference/types/switchtabaction)
 - [UploadFileActionOutput](/typescript-sdk-reference/types/uploadfileactionoutput)
-- [WaitAction](/typescript-sdk-reference/types/waitaction)
+- [WaitActionOutput](/typescript-sdk-reference/types/waitactionoutput)
