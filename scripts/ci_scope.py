@@ -76,6 +76,7 @@ INTEGRATION_WORKFLOWS = {
     "prime-intellect-integration.yml",
     "replit-integration.yml",
     "selenium-integration.yml",
+    "selector-repair.yml",
     "stripe-link-integration.yml",
     "temporal-integration.yml",
     "terraform-profiles-integration.yml",
@@ -98,7 +99,7 @@ def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
     if path.startswith(".github/workflows/"):
         name = path.removeprefix(".github/workflows/")
         if name in INTEGRATION_WORKFLOWS:
-            # These workflows run their own static and live integration checks.
+            # Dedicated integration workflows cover these standalone changes.
             # SDK changes in the same diff still select the SDK's live suites.
             return {"python_static", "python_unit"}
         family = WORKFLOWS.get(name)
