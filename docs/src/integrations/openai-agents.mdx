@@ -11,23 +11,11 @@ Connect the [OpenAI Agents SDK](https://developers.openai.com/api/docs/guides/ag
 
 ## Install
 
-Use Python 3.11+ or Node.js 22.18+.
+For Python 3.11+, run `pip install notte-sdk openai-agents==0.24.0`.
 
-<CodeGroup>
-```bash Python
-pip install notte-sdk openai-agents==0.24.0
-```
-```bash TypeScript
-npm install notte-sdk @openai/agents@0.20.0 zod
-```
-</CodeGroup>
+For Node.js 24+, run `npm install notte-sdk @openai/agents@0.20.0 openai@7.34.0 zod`.
 
-Set your [Notte API key](https://console.notte.cc/apikeys) and OpenAI API key:
-
-```bash
-export NOTTE_API_KEY=your-notte-api-key
-export OPENAI_API_KEY=your-openai-api-key
-```
+Set `NOTTE_API_KEY` to your [Notte API key](https://console.notte.cc/apikeys) and `OPENAI_API_KEY` to your [OpenAI API key](https://platform.openai.com/api-keys).
 
 ## Run an agent
 

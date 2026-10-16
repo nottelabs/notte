@@ -18,7 +18,7 @@ dependencies = [
     "urllib3>=2.2.3,<3",
     "secretstorage>=3.3; sys_platform == 'linux'",
     "notte-core==1.10.0.dev0",
-    "websockets>=17.2",
+    "websockets>=16.1.1",
     # Only needed to decrypt encrypted function download URLs (imported lazily).
     "cryptography>=43.0.3",
 ]

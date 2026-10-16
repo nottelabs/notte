@@ -1,0 +1,78 @@
+name: OpenAI Agents SDK integration
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/openai-agents-integration.yml
+      - docs/src/testers/integrations/openai_agents.*
+      - docs/package.json
+      - docs/package-lock.json
+      - node-sdk/test/openai-agents.integration.test.ts
+      - node-sdk/src/**
+      - node-sdk/package.json
+      - node-sdk/package-lock.json
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - uv.lock
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/openai-agents-integration.yml
+      - docs/src/testers/integrations/openai_agents.*
+      - docs/package.json
+      - docs/package-lock.json
+      - node-sdk/test/openai-agents.integration.test.ts
+      - node-sdk/src/**
+      - node-sdk/package.json
+      - node-sdk/package-lock.json
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - uv.lock
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
+    env:
+      NOTTE_API_URL: https://us-staging.notte.cc
+      NOTTE_OPENAI_AGENTS_LIVE: '1'
+      VITEST_INTEGRATION: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+      - run: uv sync --locked --package notte-sdk --no-dev
+      - run: uv pip install openai-agents==0.24.0 pytest pytest-timeout
+      - name: Verify recording compatibility with the resolved WebSocket client
+        run: uv run --no-sync pytest tests/sdk/test_websocket_compatibility.py -q
+      - run: npm ci --prefix node-sdk
+      - run: npm ci --prefix docs
+      - run: npm run build --prefix node-sdk
+      - name: Wait for the API
+        uses: ./.github/actions/wait-for-api
+        with:
+          api-url: ${{ env.NOTTE_API_URL }}
+          timeout: '300'
+      - name: Execute recipes and framework failure cleanup
+        working-directory: node-sdk
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          export NOTTE_DOCS_PYTHON="$GITHUB_WORKSPACE/.venv/bin/python"
+          npx vitest run test/openai-agents.integration.test.ts
