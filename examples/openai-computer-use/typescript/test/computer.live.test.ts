@@ -50,7 +50,7 @@ test('batched native actions, exact screenshot size, and permission refusal', { 
         assert.equal(result.type, 'computer_call_output');
         assert.equal(result.call_id, 'call_test');
         const image = Buffer.from(result.output.image_url!.split(',')[1], 'base64');
-        assert.equal(image.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+        assert.deepEqual(image.subarray(0, 8), Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
         assert.equal(image.readUInt32BE(16), 1024);
         assert.equal(image.readUInt32BE(20), 768);
         assert.equal(await page.locator('input').inputValue(), 'native-protocol');

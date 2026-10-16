@@ -167,9 +167,9 @@ class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
                 patch.dict(
                     os.environ,
                     {
-                        "OPENAI_API_KEY": "test-invalid-key",
+                        "OPENAI_API_KEY": "test-invalid-key",  # pragma: allowlist secret
                         "OPENAI_BASE_URL": f"http://127.0.0.1:{server.server_port}",
-                    },  # pragma: allowlist secret
+                    },
                 ),
                 self.assertRaisesRegex(
                     RuntimeError, r"Computer use failed: provider HTTP 401 \(session [a-f0-9-]+\)"
