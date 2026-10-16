@@ -133,6 +133,33 @@ async def test_browser_failure_redacts_cause_and_closes():
         await notte.http.aclose()
 
 
+@pytest.mark.parametrize("target", ["https://LOGIN.example.test/form", "https://login.example.test:443/form"])
+async def test_browser_normalized_origin_still_fills_the_owned_form(target):
+    _, transport = fixture()
+    notte = Notte("fixture-key", transport=transport)
+    _, fill, connect = browser_fixture()
+    try:
+        await fill_password(notte, PROXY, "fixture-token", target, connect)
+        fill.assert_awaited_once_with("fixture-token", timeout=15_000)
+    finally:
+        await notte.http.aclose()
+
+
+@pytest.mark.parametrize("target", ["https://different.example.test/form", "https://login.example.test:444/form"])
+async def test_different_origin_is_never_filled_and_owned_browser_closes(target):
+    requests, transport = fixture()
+    notte = Notte("fixture-key", transport=transport)
+    browser, fill, connect = browser_fixture()
+    try:
+        with pytest.raises(RuntimeError, match="^Browser token form fill failed$"):
+            await fill_password(notte, PROXY, "fixture-token", target, connect)
+        fill.assert_not_awaited()
+        browser.close.assert_awaited_once()
+        assert [request.method for request in requests] == ["POST", "DELETE", "GET"]
+    finally:
+        await notte.http.aclose()
+
+
 async def test_cancel_during_start_recovers_owned_id_and_closes():
     requests, transport = fixture()
     notte = Notte("fixture-key", transport=transport)

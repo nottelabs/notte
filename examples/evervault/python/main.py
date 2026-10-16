@@ -152,6 +152,15 @@ async def disconnect(browser):
         raise RuntimeError("Browser disconnect failed") from None
 
 
+def origin(url):
+    parsed = urlparse(url)
+    return (
+        parsed.scheme.lower(),
+        parsed.hostname,
+        parsed.port if parsed.port is not None else {"https": 443, "http": 80}.get(parsed.scheme),
+    )
+
+
 async def fill_password(notte, proxy, token, target, connect=None):
     async with async_playwright() as playwright:
         async with notte.owned(
@@ -165,7 +174,7 @@ async def fill_password(notte, proxy, token, target, connect=None):
                 browser = await (connect or playwright.chromium.connect_over_cdp)(await cdp(), timeout=30_000)
                 page = await (browser.contexts[0] if browser.contexts else await browser.new_context()).new_page()
                 await page.goto(target, wait_until="domcontentloaded", timeout=30_000)
-                if urlparse(page.url)[:2] != urlparse(target)[:2]:
+                if origin(page.url) != origin(target):
                     raise RuntimeError("Destination redirected outside its origin")
                 await page.locator('input[name="password"]').fill(token, timeout=15_000)
                 return {"session_id": session_id, "filled": True}
