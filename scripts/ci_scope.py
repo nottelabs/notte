@@ -64,6 +64,7 @@ INTEGRATION_WORKFLOWS = {
     "evervault-integration.yml",
     "fx-integration.yml",
     "gemini-computer-use-integration.yml",
+    "github-actions-integration.yml",
     "inngest-integration.yml",
     "laminar-integration.yml",
     "mongodb-integration.yml",
