@@ -52,6 +52,7 @@ jobs:
         uses: ./.github/actions/wait-for-api
         with:
           api-url: https://us-staging.notte.cc
+          timeout: '300'
       - name: Check tool execution and browser cleanup
         working-directory: examples/inngest
         env:
